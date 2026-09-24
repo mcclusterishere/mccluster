@@ -4,6 +4,772 @@
   "archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
   "devices": [
     {
+      "asset_id": "B1-ICT-PDU-01-A",
+      "label": "B1 Rack 1 PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-01-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-01-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-01-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-01-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-01-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-01-B",
+      "label": "B1 Rack 1 PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        -11.65
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-01-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-01-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-01-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-01-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-01-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-02-A",
+      "label": "B1 Rack 2 PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.35,
+        -11.0
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-02-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-02-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-02-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-02-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-02-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-02-B",
+      "label": "B1 Rack 2 PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        -10.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-02-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-02-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-02-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-02-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-02-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-03-A",
+      "label": "B1 Rack 3 PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        -9.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-03-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-03-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-03-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-03-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-03-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-03-B",
+      "label": "B1 Rack 3 PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.9,
+        -9.05
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-03-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-03-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-03-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-03-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-03-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-04-A",
+      "label": "B1 Rack 4 PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        64.45,
+        -8.4
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-04-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-04-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-04-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-04-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-04-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-PDU-04-B",
+      "label": "B1 Rack 4 PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        64.45,
+        -7.75
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-04-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-PDU-04-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-PDU-04-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-PDU-04-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-PDU-04-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-RACK-PDU-A",
+      "label": "B1 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-RACK-PDU-B",
+      "label": "B1 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        -11.65
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "B1-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "B1-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "B1-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "B1-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-ICT-RACK-UPS-01",
+      "label": "B1 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "B1-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "B1-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "B1-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "B1-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "B1-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "B1-NET-ACCESS-SW-01",
       "label": "B1 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -94,6 +860,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "B1-NET-FIBER-PANEL-01",
+      "label": "B1 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "B1-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "B1-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "B1-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "B1-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "B1-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -629,6 +1455,220 @@
       ]
     },
     {
+      "asset_id": "F1-ICT-RACK-PDU-A",
+      "label": "F1 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F1-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F1-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F1-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F1-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-ICT-RACK-PDU-B",
+      "label": "F1 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        1.85
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F1-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F1-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F1-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F1-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-ICT-RACK-UPS-01",
+      "label": "F1 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F1-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F1-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F1-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F1-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F1-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F1-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F1-NET-ACCESS-SW-01",
       "label": "F1 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -719,6 +1759,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F1-NET-FIBER-PANEL-01",
+      "label": "F1 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F1-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F1-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F1-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F1-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F1-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -1024,6 +2124,220 @@
       ]
     },
     {
+      "asset_id": "F2-ICT-RACK-PDU-A",
+      "label": "F2 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F2-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F2-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F2-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F2-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-ICT-RACK-PDU-B",
+      "label": "F2 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        15.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F2-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F2-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F2-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F2-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-ICT-RACK-UPS-01",
+      "label": "F2 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F2-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F2-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F2-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F2-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F2-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F2-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F2-NET-ACCESS-SW-01",
       "label": "F2 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -1114,6 +2428,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F2-NET-FIBER-PANEL-01",
+      "label": "F2 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F2-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F2-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F2-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F2-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F2-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -1419,6 +2793,220 @@
       ]
     },
     {
+      "asset_id": "F3-ICT-RACK-PDU-A",
+      "label": "F3 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F3-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F3-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F3-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F3-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-ICT-RACK-PDU-B",
+      "label": "F3 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        28.85
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F3-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F3-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F3-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F3-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-ICT-RACK-UPS-01",
+      "label": "F3 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F3-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F3-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F3-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F3-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F3-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F3-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F3-NET-ACCESS-SW-01",
       "label": "F3 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -1509,6 +3097,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F3-NET-FIBER-PANEL-01",
+      "label": "F3 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F3-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F3-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F3-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F3-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F3-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -1814,6 +3462,220 @@
       ]
     },
     {
+      "asset_id": "F4-ICT-RACK-PDU-A",
+      "label": "F4 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F4-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F4-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F4-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F4-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-ICT-RACK-PDU-B",
+      "label": "F4 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        42.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F4-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F4-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F4-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F4-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-ICT-RACK-UPS-01",
+      "label": "F4 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F4-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F4-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F4-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F4-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F4-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F4-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F4-NET-ACCESS-SW-01",
       "label": "F4 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -1904,6 +3766,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F4-NET-FIBER-PANEL-01",
+      "label": "F4 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F4-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F4-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F4-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F4-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F4-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -2209,6 +4131,220 @@
       ]
     },
     {
+      "asset_id": "F5-ICT-RACK-PDU-A",
+      "label": "F5 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F5-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F5-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F5-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F5-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-ICT-RACK-PDU-B",
+      "label": "F5 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        55.85
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F5-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F5-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F5-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F5-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-ICT-RACK-UPS-01",
+      "label": "F5 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F5-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F5-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F5-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F5-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F5-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F5-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F5-NET-ACCESS-SW-01",
       "label": "F5 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -2299,6 +4435,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F5-NET-FIBER-PANEL-01",
+      "label": "F5 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F5-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F5-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F5-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F5-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F5-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {
@@ -2604,6 +4800,220 @@
       ]
     },
     {
+      "asset_id": "F6-ICT-RACK-PDU-A",
+      "label": "F6 IDF Rack PDU A",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F6-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F6-ICT-RACK-PDU-A::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F6-ICT-RACK-PDU-A::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F6-ICT-RACK-PDU-A::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-ICT-RACK-PDU-A::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-ICT-RACK-PDU-B",
+      "label": "F6 IDF Rack PDU B",
+      "asset_type": "pdu",
+      "archetype": "pdu",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        69.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_STRIP",
+          "mesh_name": "F6-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INLET",
+          "mesh_name": "F6-ICT-RACK-PDU-B::PART::POWER_INLET",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTLET_BANK",
+          "mesh_name": "F6-ICT-RACK-PDU-B::PART::OUTLET_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "BREAKER_OR_PROTECTION",
+          "mesh_name": "F6-ICT-RACK-PDU-B::PART::BREAKER_OR_PROTECTION",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-ICT-RACK-PDU-B::PART::STATUS_INDICATOR",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-ICT-RACK-UPS-01",
+      "label": "F6 IDF Rack UPS",
+      "asset_type": "rack_ups",
+      "archetype": "rack_ups",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F6-ICT-RACK-UPS-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "F6-ICT-RACK-UPS-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_MODULE",
+          "mesh_name": "F6-ICT-RACK-UPS-01::PART::BATTERY_MODULE",
+          "inspectable": true
+        },
+        {
+          "component_id": "AC_INPUT",
+          "mesh_name": "F6-ICT-RACK-UPS-01::PART::AC_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OUTPUT_BANK",
+          "mesh_name": "F6-ICT-RACK-UPS-01::PART::OUTPUT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F6-ICT-RACK-UPS-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
+    },
+    {
       "asset_id": "F6-NET-ACCESS-SW-01",
       "label": "F6 48-Port PoE Access Switch 1",
       "asset_type": "access_switch",
@@ -2787,6 +5197,66 @@
         "poe_port_disabled",
         "uplink_degraded",
         "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F6-NET-FIBER-PANEL-01",
+      "label": "F6 Fiber Termination Panel",
+      "asset_type": "fiber_panel",
+      "archetype": "fiber_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F6-NET-FIBER-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LC_ADAPTERS",
+          "mesh_name": "F6-NET-FIBER-PANEL-01::PART::LC_ADAPTERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPLICE_TRAY",
+          "mesh_name": "F6-NET-FIBER-PANEL-01::PART::SPLICE_TRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F6-NET-FIBER-PANEL-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F6-NET-FIBER-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
       ]
     },
     {

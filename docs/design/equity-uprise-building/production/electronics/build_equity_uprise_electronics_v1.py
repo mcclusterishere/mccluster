@@ -1329,6 +1329,135 @@ def patch_panel_component_meshes(a):
     _record_componentized_device(a,"patch_panel",parts)
     return parts
 
+
+def rack_ups_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.565
+    rear_y=p[1]+.565
+
+    chassis=trimesh.creation.box(extents=[1.72,1.08,.68])
+    parts.append(_component_mesh(aid,"RACK_CHASSIS",_place(chassis,p),[58,62,68,255],"chassis","rack_ups"))
+
+    display=trimesh.creation.box(extents=[.34,.025,.16])
+    parts.append(_component_mesh(aid,"DISPLAY",_place(display,[p[0]-.42,front_y-.014,p[2]+.10]),[25,75,95,255],"operator_display","rack_ups",{
+        "simulated":True,"shows":["input_state","battery_percent","load_percent","runtime_minutes"]
+    }))
+
+    batteries=_box_group([.34,.74,.18],[
+        [p[0]-.28,p[1],p[2]-.16],
+        [p[0]+.12,p[1],p[2]-.16],
+        [p[0]+.52,p[1],p[2]-.16],
+    ])
+    parts.append(_component_mesh(aid,"BATTERY_MODULE",batteries,[42,46,50,255],"energy_storage","rack_ups",{
+        "module_count":3,"training_only":True
+    }))
+
+    ac_in=trimesh.creation.box(extents=[.16,.035,.12])
+    parts.append(_component_mesh(aid,"AC_INPUT",_place(ac_in,[p[0]-.60,rear_y+.010,p[2]+.08]),[28,30,34,255],"power_input","rack_ups",{
+        "connector":"rack UPS AC input"
+    }))
+
+    outlets=_box_group([.11,.035,.08],[
+        [p[0]-.20,rear_y+.010,p[2]+.11],
+        [p[0]-.02,rear_y+.010,p[2]+.11],
+        [p[0]+.16,rear_y+.010,p[2]+.11],
+        [p[0]+.34,rear_y+.010,p[2]+.11],
+        [p[0]-.20,rear_y+.010,p[2]-.03],
+        [p[0]-.02,rear_y+.010,p[2]-.03],
+        [p[0]+.16,rear_y+.010,p[2]-.03],
+        [p[0]+.34,rear_y+.010,p[2]-.03],
+    ])
+    parts.append(_component_mesh(aid,"OUTPUT_BANK",outlets,[26,28,32,255],"protected_outputs","rack_ups",{
+        "outlet_count":8,"service":"conditioned_backup_power"
+    }))
+
+    leds=_sphere_group(.025,[
+        [p[0]+.55,front_y-.020,p[2]+.15],
+        [p[0]+.55,front_y-.020,p[2]+.07],
+        [p[0]+.55,front_y-.020,p[2]-.01],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[55,220,105,255],"indicator","rack_ups",{
+        "state_driven":True,"indicators":["online","battery","alarm"]
+    }))
+
+    _record_componentized_device(a,"rack_ups",parts)
+    return parts
+
+def pdu_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.14
+    rear_y=p[1]+.14
+
+    strip=trimesh.creation.box(extents=[1.72,.24,.24])
+    parts.append(_component_mesh(aid,"RACK_STRIP",_place(strip,p),[48,52,58,255],"distribution_chassis","pdu"))
+
+    inlet=trimesh.creation.box(extents=[.15,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INLET",_place(inlet,[p[0]-.70,rear_y+.010,p[2]]),[24,26,30,255],"power_input","pdu",{
+        "connector":"IEC rack power inlet"
+    }))
+
+    outlet_centers=[]
+    for i in range(8):
+        outlet_centers.append([p[0]-.45+i*.13,front_y-.012,p[2]])
+    outlets=_box_group([.085,.035,.10],outlet_centers)
+    parts.append(_component_mesh(aid,"OUTLET_BANK",outlets,[24,28,32,255],"rack_outputs","pdu",{
+        "outlet_count":8,"connector":"IEC rack outlets"
+    }))
+
+    breaker=trimesh.creation.box(extents=[.10,.035,.12])
+    parts.append(_component_mesh(aid,"BREAKER_OR_PROTECTION",_place(breaker,[p[0]+.66,front_y-.012,p[2]]),[120,35,35,255],"overcurrent_protection","pdu",{
+        "training_representation":True
+    }))
+
+    status=trimesh.creation.icosphere(subdivisions=1,radius=.027)
+    parts.append(_component_mesh(aid,"STATUS_INDICATOR",_place(status,[p[0]+.78,front_y-.018,p[2]]),[50,220,105,255],"indicator","pdu",{
+        "state_driven":True
+    }))
+
+    _record_componentized_device(a,"pdu",parts)
+    return parts
+
+def fiber_panel_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.20
+    rear_y=p[1]+.20
+
+    frame=trimesh.creation.box(extents=[1.72,.38,.30])
+    parts.append(_component_mesh(aid,"RACK_FRAME",_place(frame,p),[62,66,72,255],"frame","fiber_panel"))
+
+    adapter_centers=[]
+    for row,zoff in enumerate((-.045,.045)):
+        for col in range(6):
+            adapter_centers.append([p[0]-.44+col*.17,front_y-.012,p[2]+zoff])
+    adapters=_box_group([.070,.030,.045],adapter_centers)
+    parts.append(_component_mesh(aid,"LC_ADAPTERS",adapters,[55,115,175,255],"fiber_adapters","fiber_panel",{
+        "adapter_count":12,"connector":"LC duplex","medium":"OS2 single-mode"
+    }))
+
+    tray=trimesh.creation.box(extents=[1.18,.22,.10])
+    parts.append(_component_mesh(aid,"SPLICE_TRAY",_place(tray,[p[0],p[1]+.04,p[2]-.08]),[42,46,52,255],"fiber_management","fiber_panel",{
+        "training_representation":True
+    }))
+
+    entries=_cylinder_group(.045,.05,[
+        [p[0]-.63,rear_y+.018,p[2]],
+        [p[0]+.63,rear_y+.018,p[2]],
+    ],[0,1,0])
+    parts.append(_component_mesh(aid,"CABLE_ENTRY",entries,[32,36,42,255],"backbone_entry","fiber_panel",{
+        "entry_count":2,"medium":"OS2 backbone"
+    }))
+
+    label=trimesh.creation.box(extents=[1.18,.018,.025])
+    parts.append(_component_mesh(aid,"LABEL_STRIP",_place(label,[p[0],front_y-.028,p[2]+.12]),[225,225,218,255],"labeling","fiber_panel",{
+        "label_scheme":"LC duplex backbone adapters"
+    }))
+
+    _record_componentized_device(a,"fiber_panel",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1340,6 +1469,12 @@ def physical_meshes_for_asset(a):
         return access_switch_component_meshes(a)
     if t=="patch_panel":
         return patch_panel_component_meshes(a)
+    if t=="rack_ups":
+        return rack_ups_component_meshes(a)
+    if t=="pdu":
+        return pdu_component_meshes(a)
+    if t=="fiber_panel":
+        return fiber_panel_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -1486,6 +1621,12 @@ modeled_patch_panels=[a for a in new_assets if a["classification"]["asset_type"]
 camera_component_records=[x for x in device_component_records if x.get("archetype")=="camera"]
 access_switch_component_records=[x for x in device_component_records if x.get("archetype")=="access_switch"]
 patch_panel_component_records=[x for x in device_component_records if x.get("archetype")=="patch_panel"]
+modeled_rack_ups=[a for a in new_assets if a["classification"]["asset_type"]=="rack_ups"]
+modeled_pdus=[a for a in new_assets if a["classification"]["asset_type"]=="pdu"]
+modeled_fiber_panels=[a for a in new_assets if a["classification"]["asset_type"]=="fiber_panel"]
+rack_ups_component_records=[x for x in device_component_records if x.get("archetype")=="rack_ups"]
+pdu_component_records=[x for x in device_component_records if x.get("archetype")=="pdu"]
+fiber_panel_component_records=[x for x in device_component_records if x.get("archetype")=="fiber_panel"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -1558,6 +1699,24 @@ ck("patch panel archetype exposes front and rear 48-port terminations",all(
     {"48x_RJ45_FRONT","48x_REAR_TERMINATION"}.issubset({p.get("id") for p in record.get("ports",[])})
     for record in patch_panel_component_records
 ), "")
+ck("all rack UPS assets use Step 4C component assemblies",len(rack_ups_component_records)==len(modeled_rack_ups),f"{len(rack_ups_component_records)}/{len(modeled_rack_ups)}")
+ck("rack UPS assemblies expose chassis, display, battery, input, outputs, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"RACK_CHASSIS","DISPLAY","BATTERY_MODULE","AC_INPUT","OUTPUT_BANK","STATUS_LEDS"})
+    and record.get("maturity")=="componentized"
+    for record in rack_ups_component_records
+), "")
+ck("all rack PDUs use Step 4C component assemblies",len(pdu_component_records)==len(modeled_pdus),f"{len(pdu_component_records)}/{len(modeled_pdus)}")
+ck("rack PDU assemblies expose strip, inlet, outlet bank, protection, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"RACK_STRIP","POWER_INLET","OUTLET_BANK","BREAKER_OR_PROTECTION","STATUS_INDICATOR"})
+    and record.get("maturity")=="componentized"
+    for record in pdu_component_records
+), "")
+ck("all fiber panels use Step 4C component assemblies",len(fiber_panel_component_records)==len(modeled_fiber_panels),f"{len(fiber_panel_component_records)}/{len(modeled_fiber_panels)}")
+ck("fiber panel assemblies expose frame, LC adapters, splice tray, cable entry, and labels",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"RACK_FRAME","LC_ADAPTERS","SPLICE_TRAY","CABLE_ENTRY","LABEL_STRIP"})
+    and record.get("maturity")=="componentized"
+    for record in fiber_panel_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -1573,6 +1732,8 @@ report={
  "data_jacks_total":len(jacks),"receptacles_total":len(outlets),"electrical_panelboards_total":len(panelboards),
  "step4c_componentized_devices_total":len(device_component_records),"step4c_componentized_camera_total":len(camera_component_records),
  "step4c_componentized_access_switch_total":len(access_switch_component_records),"step4c_componentized_patch_panel_total":len(patch_panel_component_records),
+ "step4c_componentized_rack_ups_total":len(rack_ups_component_records),"step4c_componentized_pdu_total":len(pdu_component_records),
+ "step4c_componentized_fiber_panel_total":len(fiber_panel_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1588,6 +1749,7 @@ print(" port-complete connections:",len(port_complete))
 print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(panelboards))
 print(" Step 4C componentized devices:",len(device_component_records))
 print("  cameras:",len(camera_component_records),"access switches:",len(access_switch_component_records),"patch panels:",len(patch_panel_component_records))
+print("  rack UPS:",len(rack_ups_component_records),"PDUs:",len(pdu_component_records),"fiber panels:",len(fiber_panel_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))

@@ -143,11 +143,47 @@ if rep.get("step4c_componentized_camera_total")!=len(camera_records):fail("Step 
 if rep.get("step4c_componentized_access_switch_total")!=len(access_switch_records):fail("Step 4C access-switch count mismatch")
 if rep.get("step4c_componentized_patch_panel_total")!=len(patch_panel_records):fail("Step 4C patch-panel count mismatch")
 
+rack_ups_records=[x for x in component_records if x.get("archetype")=="rack_ups"]
+pdu_records=[x for x in component_records if x.get("archetype")=="pdu"]
+fiber_panel_records=[x for x in component_records if x.get("archetype")=="fiber_panel"]
+modeled_rack_ups=[a for a in assets.values() if a["classification"].get("asset_type")=="rack_ups" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_pdus=[a for a in assets.values() if a["classification"].get("asset_type")=="pdu" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_fiber_panels=[a for a in assets.values() if a["classification"].get("asset_type")=="fiber_panel" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(rack_ups_records)!=len(modeled_rack_ups):fail(f"Step 4C rack-UPS coverage mismatch {len(rack_ups_records)}/{len(modeled_rack_ups)}")
+required_ups_parts={"RACK_CHASSIS","DISPLAY","BATTERY_MODULE","AC_INPUT","OUTPUT_BANK","STATUS_LEDS"}
+for record in rack_ups_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_ups_parts.issubset(parts):fail(f"{record.get('asset_id')} missing rack-UPS component(s): {sorted(required_ups_parts-parts)}")
+    if not {"AC_IN","UPS_OUTPUTS"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing UPS input/output ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} rack UPS archetype not componentized")
+
+if len(pdu_records)!=len(modeled_pdus):fail(f"Step 4C PDU coverage mismatch {len(pdu_records)}/{len(modeled_pdus)}")
+required_pdu_parts={"RACK_STRIP","POWER_INLET","OUTLET_BANK","BREAKER_OR_PROTECTION","STATUS_INDICATOR"}
+for record in pdu_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_pdu_parts.issubset(parts):fail(f"{record.get('asset_id')} missing PDU component(s): {sorted(required_pdu_parts-parts)}")
+    if not {"IEC_POWER_IN","IEC_OUTLETS"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing PDU power ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} PDU archetype not componentized")
+
+if len(fiber_panel_records)!=len(modeled_fiber_panels):fail(f"Step 4C fiber-panel coverage mismatch {len(fiber_panel_records)}/{len(modeled_fiber_panels)}")
+required_fiber_parts={"RACK_FRAME","LC_ADAPTERS","SPLICE_TRAY","CABLE_ENTRY","LABEL_STRIP"}
+for record in fiber_panel_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_fiber_parts.issubset(parts):fail(f"{record.get('asset_id')} missing fiber-panel component(s): {sorted(required_fiber_parts-parts)}")
+    if "OS2_LC_DUPLEX_ADAPTERS" not in {p.get("id") for p in record.get("ports",[])}:fail(f"{record.get('asset_id')} missing LC duplex adapter bank")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} fiber panel archetype not componentized")
+
+if rep.get("step4c_componentized_rack_ups_total")!=len(rack_ups_records):fail("Step 4C rack-UPS count mismatch")
+if rep.get("step4c_componentized_pdu_total")!=len(pdu_records):fail("Step 4C PDU count mismatch")
+if rep.get("step4c_componentized_fiber_panel_total")!=len(fiber_panel_records):fail("Step 4C fiber-panel count mismatch")
+
+
 # Prove the component catalog is not metadata-only: every componentized
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:
