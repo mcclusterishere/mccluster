@@ -1206,9 +1206,27 @@ def _cylinder_group(radius,height,centers,direction):
         meshes.append(_place(m,np.array(center,dtype=float),direction))
     return trimesh.util.concatenate(meshes)
 
+PRIMARY_COMPONENT_BY_ARCHETYPE={
+    "camera":"HOUSING",
+    "access_switch":"RACK_CHASSIS",
+    "patch_panel":"RACK_FRAME",
+    "rack_ups":"RACK_CHASSIS",
+    "pdu":"RACK_STRIP",
+    "fiber_panel":"RACK_FRAME",
+    "wireless_ap":"RADOME_HOUSING",
+    "workstation":"CHASSIS",
+    "monitor":"DISPLAY_PANEL",
+    "ip_phone":"BASE",
+    "mfp":"CHASSIS",
+    "access_reader":"FACEPLATE",
+    "intercom":"FACEPLATE",
+    "access_controller":"ENCLOSURE",
+}
+def _is_primary_component(archetype_key,component_id):
+    return component_id==PRIMARY_COMPONENT_BY_ARCHETYPE.get(archetype_key)
+
 def _record_componentized_device(a,archetype_key,parts):
     aid=a["asset_id"]; archetype=device_archetypes["archetypes"][archetype_key]
-    primary={"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME","RADOME_HOUSING","CHASSIS","DISPLAY_PANEL","BASE"}
     record={
         "asset_id":aid,
         "label":a["label"],
@@ -1219,7 +1237,7 @@ def _record_componentized_device(a,archetype_key,parts):
         "components":[
             {
                 "component_id":cid,
-                "mesh_name":aid if cid in primary else f"{aid}::PART::{cid}",
+                "mesh_name":aid if _is_primary_component(archetype_key,cid) else f"{aid}::PART::{cid}",
                 "inspectable":True,
             }
             for cid,_ in parts
@@ -1753,6 +1771,125 @@ def mfp_component_meshes(a):
     _record_componentized_device(a,"mfp",parts)
     return parts
 
+
+def access_reader_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.105
+    rear_y=p[1]+.105
+
+    mount=trimesh.creation.box(extents=[.30,.12,.52])
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],rear_y-.02,p[2]]),[90,94,98,255],"mounting_backplate","access_reader"))
+
+    face=trimesh.creation.box(extents=[.28,.12,.50])
+    parts.append(_component_mesh(aid,"FACEPLATE",_place(face,p),[38,42,48,255],"reader_faceplate","access_reader"))
+
+    zone=trimesh.creation.box(extents=[.20,.025,.22])
+    parts.append(_component_mesh(aid,"READER_ZONE",_place(zone,[p[0],front_y-.015,p[2]+.03]),[30,72,92,255],"credential_read_zone","access_reader",{
+        "sandbox_only":True
+    }))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.020)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0],front_y-.025,p[2]+.19]),[55,215,105,255],"indicator","access_reader",{"state_driven":True}))
+
+    beeper=trimesh.creation.cylinder(radius=.035,height=.025,sections=12)
+    parts.append(_component_mesh(aid,"BEEPER",_place(beeper,[p[0],front_y-.028,p[2]-.17],[0,1,0]),[70,74,78,255],"audible_indicator","access_reader"))
+
+    terminal=trimesh.creation.box(extents=[.16,.035,.08])
+    parts.append(_component_mesh(aid,"OSDP_TERMINAL",_place(terminal,[p[0],rear_y+.018,p[2]-.12]),[65,90,70,255],"reader_bus_terminal","access_reader",{
+        "port_id":"OSDP_RS485"
+    }))
+
+    _record_componentized_device(a,"access_reader",parts)
+    return parts
+
+def intercom_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.13
+    rear_y=p[1]+.13
+
+    face=trimesh.creation.box(extents=[.42,.20,.62])
+    parts.append(_component_mesh(aid,"FACEPLATE",_place(face,p),[72,76,82,255],"intercom_faceplate","intercom"))
+
+    button=trimesh.creation.cylinder(radius=.065,height=.035,sections=16)
+    parts.append(_component_mesh(aid,"CALL_BUTTON",_place(button,[p[0],front_y-.025,p[2]-.18],[0,1,0]),[45,100,130,255],"call_control","intercom",{
+        "simulated":True
+    }))
+
+    mic=_cylinder_group(.022,.028,[
+        [p[0]-.055,front_y-.025,p[2]+.18],
+        [p[0],front_y-.025,p[2]+.18],
+        [p[0]+.055,front_y-.025,p[2]+.18],
+    ],[0,1,0])
+    parts.append(_component_mesh(aid,"MICROPHONE",mic,[28,32,36,255],"audio_input","intercom"))
+
+    speaker_centers=[]
+    for row in range(3):
+        for col in range(4):
+            speaker_centers.append([p[0]-.09+col*.06,front_y-.025,p[2]-.01+row*.055])
+    speaker=_cylinder_group(.016,.026,speaker_centers,[0,1,0])
+    parts.append(_component_mesh(aid,"SPEAKER",speaker,[32,36,40,255],"audio_output","intercom"))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.020)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.14,front_y-.028,p[2]+.24]),[55,215,105,255],"indicator","intercom",{"state_driven":True}))
+
+    rj45=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(rj45,[p[0],rear_y+.020,p[2]-.20]),[28,34,40,255],"network_power_port","intercom",{
+        "services":["Ethernet/IP","PoE","intercom audio"]
+    }))
+
+    _record_componentized_device(a,"intercom",parts)
+    return parts
+
+def access_controller_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.24
+    rear_y=p[1]+.24
+
+    enclosure=trimesh.creation.box(extents=[1.22,.42,2.30])
+    parts.append(_component_mesh(aid,"ENCLOSURE",_place(enclosure,p),[72,76,80,255],"secured_panel_enclosure","access_controller"))
+
+    board=trimesh.creation.box(extents=[.82,.08,1.15])
+    parts.append(_component_mesh(aid,"CONTROLLER_BOARD",_place(board,[p[0],front_y-.045,p[2]+.20]),[38,92,62,255],"access_controller_logic","access_controller",{
+        "sandbox_only":True
+    }))
+
+    ethernet=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"ETHERNET_PORT",_place(ethernet,[p[0]-.31,front_y-.095,p[2]-.28]),[28,34,40,255],"network_port","access_controller",{
+        "port_id":"RJ45_ETH"
+    }))
+
+    terminals=_box_group([.09,.035,.07],[
+        [p[0]-.12+i*.12,front_y-.095,p[2]-.48] for i in range(5)
+    ])
+    parts.append(_component_mesh(aid,"OSDP_TERMINALS",terminals,[65,95,70,255],"reader_bus_terminals","access_controller",{
+        "port_id":"OSDP_BUSES","bus_count":5
+    }))
+
+    power=trimesh.creation.box(extents=[.16,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.35,rear_y+.018,p[2]-.72]),[28,30,34,255],"power_input","access_controller",{
+        "port_id":"AC_IN"
+    }))
+
+    battery=trimesh.creation.box(extents=[.72,.24,.52])
+    parts.append(_component_mesh(aid,"BATTERY_ZONE",_place(battery,[p[0],p[1]+.05,p[2]-.72]),[45,48,52,255],"backup_battery_zone","access_controller",{
+        "training_representation":True
+    }))
+
+    leds=_sphere_group(.022,[
+        [p[0]+.35,front_y-.095,p[2]+.62],
+        [p[0]+.35,front_y-.095,p[2]+.54],
+        [p[0]+.35,front_y-.095,p[2]+.46],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[55,215,105,255],"indicators","access_controller",{
+        "state_driven":True,"indicators":["panel","network","reader_bus"]
+    }))
+
+    _record_componentized_device(a,"access_controller",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1786,6 +1923,12 @@ def physical_meshes_for_asset(a):
         return ip_phone_component_meshes(a)
     if t=="mfp":
         return mfp_component_meshes(a)
+    if t=="access_reader":
+        return access_reader_component_meshes(a)
+    if t=="intercom":
+        return intercom_component_meshes(a)
+    if t=="access_controller":
+        return access_controller_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -1817,7 +1960,7 @@ def physical_meshes_for_asset(a):
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
     for component_id,mesh in physical_meshes_for_asset(a):
-        name=a["asset_id"] if component_id in {"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME","RADOME_HOUSING","CHASSIS","DISPLAY_PANEL","BASE"} else f"{a['asset_id']}::PART::{component_id}"
+        name=a["asset_id"] if _is_primary_component(a["classification"]["asset_type"],component_id) else f"{a['asset_id']}::PART::{component_id}"
         scene.add_geometry(mesh,node_name=name,geom_name=name)
 
 cable_colors={
@@ -1954,6 +2097,12 @@ workstation_component_records=[x for x in device_component_records if x.get("arc
 monitor_component_records=[x for x in device_component_records if x.get("archetype")=="monitor"]
 ip_phone_component_records=[x for x in device_component_records if x.get("archetype")=="ip_phone"]
 mfp_component_records=[x for x in device_component_records if x.get("archetype")=="mfp"]
+modeled_access_readers=[a for a in new_assets if a["classification"]["asset_type"]=="access_reader"]
+modeled_intercoms=[a for a in new_assets if a["classification"]["asset_type"]=="intercom"]
+modeled_access_controllers=[a for a in new_assets if a["classification"]["asset_type"]=="access_controller"]
+access_reader_component_records=[x for x in device_component_records if x.get("archetype")=="access_reader"]
+intercom_component_records=[x for x in device_component_records if x.get("archetype")=="intercom"]
+access_controller_component_records=[x for x in device_component_records if x.get("archetype")=="access_controller"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -2092,6 +2241,24 @@ ck("MFP assemblies expose chassis, ADF, scanner, output, control, network, and p
     and record.get("maturity")=="componentized"
     for record in mfp_component_records
 ), "")
+ck("all access readers use Step 4C component assemblies",len(access_reader_component_records)==len(modeled_access_readers),f"{len(access_reader_component_records)}/{len(modeled_access_readers)}")
+ck("access reader assemblies expose faceplate, reader zone, status, beeper, OSDP terminal, and mount",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"FACEPLATE","READER_ZONE","STATUS_LED","BEEPER","OSDP_TERMINAL","MOUNT"})
+    and record.get("maturity")=="componentized"
+    for record in access_reader_component_records
+), "")
+ck("all intercoms use Step 4C component assemblies",len(intercom_component_records)==len(modeled_intercoms),f"{len(intercom_component_records)}/{len(modeled_intercoms)}")
+ck("intercom assemblies expose faceplate, call button, mic, speaker, status, and PoE port",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"FACEPLATE","CALL_BUTTON","MICROPHONE","SPEAKER","STATUS_LED","RJ45_POE_PORT"})
+    and record.get("maturity")=="componentized"
+    for record in intercom_component_records
+), "")
+ck("all access controllers use Step 4C component assemblies",len(access_controller_component_records)==len(modeled_access_controllers),f"{len(access_controller_component_records)}/{len(modeled_access_controllers)}")
+ck("access controller assemblies expose enclosure, board, Ethernet, OSDP, power, battery, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"ENCLOSURE","CONTROLLER_BOARD","ETHERNET_PORT","OSDP_TERMINALS","POWER_INPUT","BATTERY_ZONE","STATUS_LEDS"})
+    and record.get("maturity")=="componentized"
+    for record in access_controller_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -2114,6 +2281,8 @@ report={
  "step4c_componentized_wireless_ap_total":len(wireless_ap_component_records),"step4c_componentized_workstation_total":len(workstation_component_records),
  "step4c_componentized_monitor_total":len(monitor_component_records),"step4c_componentized_ip_phone_total":len(ip_phone_component_records),
  "step4c_componentized_mfp_total":len(mfp_component_records),
+ "step4c_componentized_access_reader_total":len(access_reader_component_records),"step4c_componentized_intercom_total":len(intercom_component_records),
+ "step4c_componentized_access_controller_total":len(access_controller_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -2132,6 +2301,7 @@ print("  cameras:",len(camera_component_records),"access switches:",len(access_s
 print("  rack UPS:",len(rack_ups_component_records),"PDUs:",len(pdu_component_records),"fiber panels:",len(fiber_panel_component_records))
 print("  data jacks:",len(data_jack_component_records),"receptacles:",len(receptacle_component_records),"WAP spare jacks:",len(wap_spare_jack_component_records))
 print("  APs:",len(wireless_ap_component_records),"workstations:",len(workstation_component_records),"monitors:",len(monitor_component_records),"IP phones:",len(ip_phone_component_records),"MFPs:",len(mfp_component_records))
+print("  access readers:",len(access_reader_component_records),"intercoms:",len(intercom_component_records),"access controllers:",len(access_controller_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
