@@ -178,7 +178,12 @@
      points needs no dependency. Marks follow the house spec — 2px strokes, a
      recessive grid, an emphasised endpoint, and labels only where they carry
      information. */
-  function chart(days, id) {
+  function chart(days, opts) {
+    opts = opts || {};
+    var id = opts.id || "bdChart";
+    var xKey = opts.xKey || "day";
+    var series = opts.series || SERIES;
+    var labelFor = opts.labelFor || dayLabel;
     if (!days.length) return "";
     /* The right margin is reserved for the endpoint labels, which are the
        thing that stops identity resting on colour. 86 fits the longest of
@@ -188,7 +193,7 @@
 
     var max = 0;
     days.forEach(function (row) {
-      SERIES.forEach(function (s) { max = Math.max(max, row[s.key] || 0); });
+      series.forEach(function (s) { max = Math.max(max, Number(row[s.key]) || 0); });
     });
     /* A flat-zero window still needs a scale, or every point lands on the axis
        and all four grid labels read 0. */
@@ -206,7 +211,7 @@
         num(gv) + "</text>");
     }
 
-    SERIES.forEach(function (s) {
+    series.forEach(function (s) {
       var pts = days.map(function (row, i) { return [x(i), y(row[s.key])]; });
       var line = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
       var base = (P.t + ih).toFixed(1);
@@ -224,9 +229,9 @@
     });
 
     /* First and last date only — a label per point is unreadable at 90 days. */
-    svg.push('<text x="' + P.l + '" y="' + (H - 7) + '" class="bd-axis">' + esc(dayLabel(days[0].day)) + "</text>");
+    svg.push('<text x="' + P.l + '" y="' + (H - 7) + '" class="bd-axis">' + esc(labelFor(days[0][xKey])) + "</text>");
     svg.push('<text x="' + (W - P.r) + '" y="' + (H - 7) + '" text-anchor="end" class="bd-axis">' +
-      esc(dayLabel(days[days.length - 1].day)) + "</text>");
+      esc(labelFor(days[days.length - 1][xKey])) + "</text>");
 
     /* Hover layer: one full-height hit column per day, always wider than the
        mark it stands for. */
@@ -239,7 +244,7 @@
     });
 
     return '<svg id="' + id + '" viewBox="0 0 ' + W + " " + H + '" class="bd-svg" role="img" ' +
-      'aria-label="Page views and visitors per day">' + svg.join("") + "</svg>";
+      'aria-label="' + esc(opts.label || "Page views and visitors per day") + '">' + svg.join("") + "</svg>";
   }
 
   function table(days) {
@@ -350,7 +355,7 @@
               '<button class="bd-toggle" type="button" data-bd="table">' +
                 (state.showTable ? "Show chart" : "Show table") + "</button></div>" +
           "</header>" +
-          (state.showTable ? table(cur) : chart(cur, "bdChart")) +
+          (state.showTable ? table(cur) : chart(cur, { id: "bdChart" })) +
           '<div class="bd-tip" hidden></div>' +
         "</section>" +
 
@@ -457,5 +462,10 @@
     };
   }
 
-  w.MCCBoard = { rollup: rollup, mount: mount, ranges: RANGES, series: SERIES };
+  w.MCCBoard = {
+    rollup: rollup, mount: mount, ranges: RANGES, series: SERIES,
+    /* Shared so the Insights screen draws the same marks from the same
+       validated hues. One chart implementation, two boards. */
+    lineChart: chart, ranked: ranked, num: num, esc: esc, dayLabel: dayLabel
+  };
 })(window, document);
