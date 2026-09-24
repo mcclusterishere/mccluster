@@ -59,7 +59,32 @@ async function fn(action, body = {}) {
   if (!res.ok) throw new Error(data.error || ("Music service " + res.status));
   return data;
 }
+/* The ceilings Supabase will actually enforce, from the bucket definitions in
+   20260920041011_music_creator_platform_v1.sql. Checked here because the
+   server only rejects AFTER the bytes have been sent: pick a 600MB master on
+   a phone and you watch an upload bar crawl for minutes to earn a failure. */
+const BUCKET_MAX_BYTES = {
+  "creator-masters": 524288000,
+  "creator-previews": 52428800,
+  "creator-artwork": 20971520
+};
+/* `up` rounds away from the limit. Without it a file one byte over 500MB
+   reports as "500MB", and the refusal reads as though it were arguing with
+   itself: "That file is 500MB. The limit here is 500MB." */
+function describeSize(bytes, up) {
+  if (bytes < 1048576) return Math.max(1, Math[up ? "ceil" : "round"](bytes / 1024)) + "KB";
+  const mb = bytes / 1048576;
+  const rounded = up ? Math.ceil(mb * 10) / 10 : mb;
+  return (Number.isInteger(rounded) ? rounded : rounded.toFixed(1)) + "MB";
+}
 async function uploadGrant(bucket, file) {
+  const max = BUCKET_MAX_BYTES[bucket];
+  if (max && file.size > max) {
+    throw new Error(
+      `That file is ${describeSize(file.size, true)}. The limit here is ${describeSize(max)} — ` +
+      "pick a smaller export and try again."
+    );
+  }
   const grant = await fn("creator-upload-url", { bucket, file_name: fileName(file) });
   const { error } = await supabase.storage.from(bucket)
     .uploadToSignedUrl(grant.path, grant.token, file, { contentType: file.type || "application/octet-stream" });
