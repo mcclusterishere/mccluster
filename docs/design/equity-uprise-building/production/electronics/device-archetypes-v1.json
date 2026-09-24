@@ -382,10 +382,10 @@
       "october_demo_required": true
     },
     "access_switch": {
-      "maturity": "placeholder",
+      "maturity": "componentized",
       "display_name": "Managed Access Switch",
       "next_pass": true,
-      "minimum_ci_maturity": "placeholder",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "network_compute",
       "expected_components": [
@@ -414,13 +414,95 @@
         "trace_power",
         "inspect_vlan_role"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_1u",
+      "components": [
+        {
+          "id": "RACK_CHASSIS",
+          "role": "chassis",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_PORT_BANK",
+          "role": "access_ports",
+          "inspectable": true
+        },
+        {
+          "id": "UPLINK_CAGES",
+          "role": "uplink_ports",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_port",
+          "inspectable": true
+        },
+        {
+          "id": "FAN_BANK",
+          "role": "cooling",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "PORT_LABELS",
+          "role": "labeling",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
     },
     "patch_panel": {
-      "maturity": "placeholder",
+      "maturity": "componentized",
       "display_name": "Patch Panel",
       "next_pass": true,
-      "minimum_ci_maturity": "placeholder",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "network_compute",
       "expected_components": [
@@ -446,7 +528,68 @@
         "trace_permanent_link",
         "identify_mispatch"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_1u",
+      "components": [
+        {
+          "id": "RACK_FRAME",
+          "role": "frame",
+          "inspectable": true
+        },
+        {
+          "id": "48x_FRONT_JACKS",
+          "role": "front_ports",
+          "inspectable": true
+        },
+        {
+          "id": "REAR_TERMINATIONS",
+          "role": "rear_terminations",
+          "inspectable": true
+        },
+        {
+          "id": "LABEL_STRIP",
+          "role": "labeling",
+          "inspectable": true
+        },
+        {
+          "id": "CABLE_MANAGEMENT",
+          "role": "cable_management",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
     },
     "electrical_panel": {
       "maturity": "recognizable",
