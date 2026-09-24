@@ -376,6 +376,34 @@ if rep.get("step4c_componentized_av_microphone_total")!=len(av_microphone_record
 if rep.get("step4c_componentized_network_display_decoder_total")!=len(display_decoder_records):fail("Step 4C display-decoder count mismatch")
 if rep.get("step4c_componentized_speaker_total")!=len(speaker_records):fail("Step 4C speaker count mismatch")
 
+fire_detector_records=[x for x in component_records if x.get("archetype")=="fire_detector"]
+fire_notification_records=[x for x in component_records if x.get("archetype")=="fire_notification"]
+facp_records=[x for x in component_records if x.get("archetype")=="fire_alarm_control_panel"]
+fire_gateway_records=[x for x in component_records if x.get("archetype")=="fire_alarm_read_only_gateway"]
+modeled_fire_detectors=[a for a in assets.values() if a["classification"].get("asset_type")=="fire_detector" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_fire_notifications=[a for a in assets.values() if a["classification"].get("asset_type")=="fire_notification" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_facps=[a for a in assets.values() if a["classification"].get("asset_type")=="fire_alarm_control_panel" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_fire_gateways=[a for a in assets.values() if a["classification"].get("asset_type")=="fire_alarm_read_only_gateway" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+for records,modeled,label,required,ports in [
+    (fire_detector_records,modeled_fire_detectors,"fire detector",{"BASE","SENSING_CHAMBER","STATUS_LED","SLC_TERMINALS"},{"FIRE_ALARM_SLC"}),
+    (fire_notification_records,modeled_fire_notifications,"fire notification",{"HOUSING","STROBE","SOUNDER","NAC_TERMINALS"},{"FIRE_ALARM_NAC"}),
+    (facp_records,modeled_facps,"FACP",{"ENCLOSURE","DISPLAY","KEYPAD","STATUS_LEDS","SLC_TERMINALS","NAC_TERMINALS","POWER_SECTION"},{"AC_IN","SLC","NAC","READ_ONLY_GATEWAY_LINK"}),
+    (fire_gateway_records,modeled_fire_gateways,"fire gateway",{"ENCLOSURE","FIRE_INTERFACE","RJ45_PORT","POWER_INPUT","STATUS_LEDS"},{"FIRE_INTERFACE","RJ45_ETH","AC_IN"}),
+]:
+    if len(records)!=len(modeled):fail(f"Step 4C {label} coverage mismatch {len(records)}/{len(modeled)}")
+    for record in records:
+        parts={x.get("component_id") for x in record.get("components",[])}
+        if not required.issubset(parts):fail(f"{record.get('asset_id')} missing {label} component(s): {sorted(required-parts)}")
+        if not ports.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing {label} required ports")
+        if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} {label} archetype not componentized")
+
+if rep.get("step4c_componentized_fire_detector_total")!=len(fire_detector_records):fail("Step 4C fire-detector count mismatch")
+if rep.get("step4c_componentized_fire_notification_total")!=len(fire_notification_records):fail("Step 4C fire-notification count mismatch")
+if rep.get("step4c_componentized_fire_alarm_control_panel_total")!=len(facp_records):fail("Step 4C FACP count mismatch")
+if rep.get("step4c_componentized_fire_alarm_read_only_gateway_total")!=len(fire_gateway_records):fail("Step 4C fire-gateway count mismatch")
+
+
 
 
 
@@ -386,7 +414,7 @@ if rep.get("step4c_componentized_speaker_total")!=len(speaker_records):fail("Ste
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records+electrical_panel_records+bas_controller_records+environment_sensor_records+av_controller_records+av_dsp_records+av_camera_records+av_microphone_records+display_decoder_records+speaker_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records+electrical_panel_records+bas_controller_records+environment_sensor_records+av_controller_records+av_dsp_records+av_camera_records+av_microphone_records+display_decoder_records+speaker_records+fire_detector_records+fire_notification_records+facp_records+fire_gateway_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:

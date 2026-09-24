@@ -10,7 +10,7 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 775,
+  "step4c_componentized_devices_total": 819,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
@@ -37,6 +37,10 @@
   "step4c_componentized_av_microphone_total": 26,
   "step4c_componentized_network_display_decoder_total": 20,
   "step4c_componentized_speaker_total": 26,
+  "step4c_componentized_fire_detector_total": 28,
+  "step4c_componentized_fire_notification_total": 14,
+  "step4c_componentized_fire_alarm_control_panel_total": 1,
+  "step4c_componentized_fire_alarm_read_only_gateway_total": 1,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -204,10 +208,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 5373952,
-  "overlay_glb_sha256": "7d717f8e6ebb96448a85ee996efe35e358d5f502442e6ab83b62b845ace7ace4",
-  "checks_total": 73,
-  "checks_passed": 73,
+  "overlay_glb_bytes": 5518552,
+  "overlay_glb_sha256": "ef86b730c8642009f824d5b43a2c5333742226ca166cbb4e26ba2c2192ae8ce6",
+  "checks_total": 81,
+  "checks_passed": 81,
   "checks_failed": 0,
   "checks": [
     {
@@ -569,6 +573,46 @@
       "detail": ""
     },
     {
+      "name": "all fire detectors use Step 4C component assemblies",
+      "passed": true,
+      "detail": "28/28"
+    },
+    {
+      "name": "fire detector assemblies expose base, chamber, status, and SLC terminals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all fire notification appliances use Step 4C component assemblies",
+      "passed": true,
+      "detail": "14/14"
+    },
+    {
+      "name": "fire notification assemblies expose housing, strobe, sounder, and NAC terminals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire alarm control panel uses Step 4C component assembly",
+      "passed": true,
+      "detail": "1/1"
+    },
+    {
+      "name": "fire alarm control panel exposes enclosure, display, keypad, indicators, SLC, NAC, and power",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire alarm read-only gateway uses Step 4C component assembly",
+      "passed": true,
+      "detail": "1/1"
+    },
+    {
+      "name": "fire gateway exposes enclosure, fire interface, network, power, and indicators",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -607,7 +651,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 5373952
+      "detail": 5518552
     }
   ],
   "passed": true

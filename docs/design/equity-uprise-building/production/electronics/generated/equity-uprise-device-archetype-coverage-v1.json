@@ -501,8 +501,8 @@
       "instance_count": 1,
       "display_name": "Fire Alarm Control Panel",
       "family": "building_ot_life_safety",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "ENCLOSURE",
@@ -543,8 +543,8 @@
       "instance_count": 1,
       "display_name": "Fire Alarm Read-Only Gateway",
       "family": "building_ot_life_safety",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "ENCLOSURE",
@@ -580,8 +580,8 @@
       "instance_count": 28,
       "display_name": "Addressable Fire Detector",
       "family": "building_ot_life_safety",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "BASE",
@@ -614,8 +614,8 @@
       "instance_count": 14,
       "display_name": "Fire Notification Appliance",
       "family": "building_ot_life_safety",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "HOUSING",
