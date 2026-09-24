@@ -106,11 +106,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -120,8 +115,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -227,11 +221,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -241,8 +230,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -348,11 +336,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -362,8 +345,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -469,11 +451,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -483,8 +460,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -590,11 +566,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -604,8 +575,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -711,11 +681,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -725,8 +690,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -832,11 +796,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -846,8 +805,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -953,11 +911,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -967,8 +920,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1074,11 +1026,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1088,8 +1035,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1195,11 +1141,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1209,8 +1150,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1316,11 +1256,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1330,8 +1265,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1437,11 +1371,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1451,8 +1380,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1558,11 +1486,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1572,8 +1495,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1679,11 +1601,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1693,8 +1610,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1800,11 +1716,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1814,8 +1725,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -1921,11 +1831,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -1935,8 +1840,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -2042,11 +1946,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -2056,8 +1955,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     },
     {
@@ -2163,11 +2061,6 @@
           "status_led": "red",
           "video_stream": "faulted",
           "fov_visible_on_inspect": true
-        },
-        "lens_obstructed": {
-          "status_led": "green",
-          "video_stream": "obstructed",
-          "fov_visible_on_inspect": true
         }
       },
       "optics": {
@@ -2177,8 +2070,7 @@
       },
       "lab_behaviors": [
         "camera_link_down",
-        "poe_disabled",
-        "lens_obstructed"
+        "poe_disabled"
       ]
     }
   ]
