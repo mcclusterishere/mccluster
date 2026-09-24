@@ -10,13 +10,16 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 70,
+  "step4c_componentized_devices_total": 462,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
   "step4c_componentized_rack_ups_total": 7,
   "step4c_componentized_pdu_total": 22,
   "step4c_componentized_fiber_panel_total": 7,
+  "step4c_componentized_data_jack_total": 190,
+  "step4c_componentized_receptacle_total": 187,
+  "step4c_componentized_wap_spare_jack_total": 15,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -184,10 +187,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 2626760,
-  "overlay_glb_sha256": "6dc2d14f34886a553104132de37f2a95cfe7071bce1a4bab790705b99bd9ab62",
-  "checks_total": 38,
-  "checks_passed": 38,
+  "overlay_glb_bytes": 3719796,
+  "overlay_glb_sha256": "7d7053f82a625e34500dffb8e82c2e377b80f1eb954199e493d23c4dd12f3f07",
+  "checks_total": 44,
+  "checks_passed": 44,
   "checks_failed": 0,
   "checks": [
     {
@@ -374,6 +377,36 @@
       "detail": ""
     },
     {
+      "name": "all Cat6A data jacks use Step 4C component assemblies",
+      "passed": true,
+      "detail": "190/190"
+    },
+    {
+      "name": "data jack assemblies expose faceplate, keystone, label, and rear termination",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all receptacles use Step 4C component assemblies",
+      "passed": true,
+      "detail": "187/187"
+    },
+    {
+      "name": "receptacle assemblies expose faceplate, duplex body, ground contacts, and rear branch termination",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all reserved WAP jacks use Step 4C component assemblies",
+      "passed": true,
+      "detail": "15/15"
+    },
+    {
+      "name": "reserved WAP jack assemblies expose ceiling jack, keystone, label, and rear termination",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -412,7 +445,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 2626760
+      "detail": 3719796
     }
   ],
   "passed": true

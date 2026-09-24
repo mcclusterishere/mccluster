@@ -1034,8 +1034,8 @@
       "october_demo_required": true
     },
     "data_jack": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "physical_terminations",
       "display_name": "Cat6A Data Jack",
@@ -1060,7 +1060,62 @@
         "trace_patch_cord",
         "trace_permanent_link"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "single_gang_wall_or_furniture_faceplate",
+      "components": [
+        {
+          "id": "FACEPLATE",
+          "role": "mounting_faceplate",
+          "inspectable": true
+        },
+        {
+          "id": "KEYSTONE_JACK",
+          "role": "front_connector",
+          "inspectable": true
+        },
+        {
+          "id": "LABEL",
+          "role": "identifier",
+          "inspectable": true
+        },
+        {
+          "id": "REAR_TERMINATION",
+          "role": "permanent_link_termination",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_FRONT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "CAT6A_REAR",
+          "connector": "Cat6A IDC/keystone rear termination",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "jack_identity",
+        "front_patch_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "open_permanent_link",
+        "wrong_patch_target",
+        "damaged_front_jack"
+      ]
     },
     "edge_router": {
       "maturity": "placeholder",
@@ -1573,8 +1628,8 @@
       ]
     },
     "receptacle": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "physical_terminations",
       "display_name": "120V Receptacle",
@@ -1599,7 +1654,60 @@
         "trace_branch_circuit",
         "trace_equipment_cord"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "single_gang_duplex_120v_receptacle",
+      "components": [
+        {
+          "id": "FACEPLATE",
+          "role": "mounting_faceplate",
+          "inspectable": true
+        },
+        {
+          "id": "DUPLEX_RECEPTACLE",
+          "role": "load_connection",
+          "inspectable": true
+        },
+        {
+          "id": "GROUND_CONTACT",
+          "role": "equipment_ground",
+          "inspectable": true
+        },
+        {
+          "id": "REAR_BRANCH_TERMINATION",
+          "role": "branch_circuit_termination",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "NEMA_5_15_OUTLETS",
+          "connector": "2 x NEMA 5-15R",
+          "medium": "120VAC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_REAR",
+          "connector": "branch circuit conductors",
+          "medium": "120VAC branch circuit",
+          "services": [
+            "upstream_panel_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "circuit_identity",
+        "branch_trace",
+        "equipment_cord_trace"
+      ],
+      "planned_behaviors": [
+        "branch_power_loss",
+        "receptacle_unavailable",
+        "equipment_unplugged"
+      ]
     },
     "speaker": {
       "maturity": "placeholder",
@@ -1692,8 +1800,8 @@
       "october_demo_required": true
     },
     "wap_spare_jack": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "physical_terminations",
       "display_name": "Reserved WAP Cat6A Jack",
@@ -1718,7 +1826,60 @@
         "trace_reserved_permanent_link",
         "identify_unpatched_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_mounted_reserved_cat6a_jack",
+      "components": [
+        {
+          "id": "FACEPLATE_OR_CEILING_JACK",
+          "role": "ceiling_mount",
+          "inspectable": true
+        },
+        {
+          "id": "KEYSTONE",
+          "role": "reserved_front_connector",
+          "inspectable": true
+        },
+        {
+          "id": "LABEL",
+          "role": "identifier",
+          "inspectable": true
+        },
+        {
+          "id": "REAR_TERMINATION",
+          "role": "reserved_permanent_link_termination",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_FRONT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "reserved Ethernet/PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "CAT6A_REAR",
+          "connector": "Cat6A IDC/keystone rear termination",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "reserved Ethernet/PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "reserved_drop_identity",
+        "reserved_permanent_link_trace",
+        "unpatched_state"
+      ],
+      "planned_behaviors": [
+        "reserved_link_open",
+        "reserved_drop_mislabel",
+        "unexpected_patch"
+      ]
     },
     "interactive_terminal_surface": {
       "maturity": "recognizable",

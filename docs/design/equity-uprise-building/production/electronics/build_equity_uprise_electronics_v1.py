@@ -1458,6 +1458,92 @@ def fiber_panel_component_meshes(a):
     _record_componentized_device(a,"fiber_panel",parts)
     return parts
 
+
+def data_jack_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.055
+    rear_y=p[1]+.055
+
+    plate=trimesh.creation.box(extents=[.28,.045,.38])
+    parts.append(_component_mesh(aid,"FACEPLATE",_place(plate,p),[225,225,218,255],"mounting_faceplate","data_jack"))
+
+    keystone=trimesh.creation.box(extents=[.115,.035,.105])
+    parts.append(_component_mesh(aid,"KEYSTONE_JACK",_place(keystone,[p[0],front_y-.018,p[2]-.025]),[34,40,46,255],"front_connector","data_jack",{
+        "connector":"8P8C/RJ45","service":"Cat6A Ethernet/PoE pass-through"
+    }))
+
+    label=trimesh.creation.box(extents=[.19,.018,.040])
+    parts.append(_component_mesh(aid,"LABEL",_place(label,[p[0],front_y-.028,p[2]+.125]),[235,235,228,255],"identifier","data_jack",{
+        "label_source":"asset_id"
+    }))
+
+    rear=trimesh.creation.box(extents=[.13,.045,.11])
+    parts.append(_component_mesh(aid,"REAR_TERMINATION",_place(rear,[p[0],rear_y+.018,p[2]-.025]),[70,110,150,255],"permanent_link_termination","data_jack",{
+        "medium":"Cat6A permanent link"
+    }))
+
+    _record_componentized_device(a,"data_jack",parts)
+    return parts
+
+def receptacle_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.055
+    rear_y=p[1]+.055
+
+    plate=trimesh.creation.box(extents=[.30,.045,.44])
+    parts.append(_component_mesh(aid,"FACEPLATE",_place(plate,p),[232,230,220,255],"mounting_faceplate","receptacle"))
+
+    duplex=_cylinder_group(.082,.032,[
+        [p[0],front_y-.020,p[2]+.105],
+        [p[0],front_y-.020,p[2]-.105],
+    ],[0,1,0])
+    parts.append(_component_mesh(aid,"DUPLEX_RECEPTACLE",duplex,[210,208,198,255],"load_connection","receptacle",{
+        "connector":"2 x NEMA 5-15R","nominal_voltage":"120VAC"
+    }))
+
+    grounds=_cylinder_group(.024,.038,[
+        [p[0],front_y-.040,p[2]+.125],
+        [p[0],front_y-.040,p[2]-.085],
+    ],[0,1,0])
+    parts.append(_component_mesh(aid,"GROUND_CONTACT",grounds,[45,48,50,255],"equipment_ground","receptacle",{
+        "contact_count":2
+    }))
+
+    rear=trimesh.creation.box(extents=[.18,.050,.20])
+    parts.append(_component_mesh(aid,"REAR_BRANCH_TERMINATION",_place(rear,[p[0],rear_y+.020,p[2]]),[120,95,55,255],"branch_circuit_termination","receptacle",{
+        "medium":"120VAC branch circuit","training_representation":True
+    }))
+
+    _record_componentized_device(a,"receptacle",parts)
+    return parts
+
+def wap_spare_jack_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+
+    plate=trimesh.creation.box(extents=[.32,.32,.045])
+    parts.append(_component_mesh(aid,"FACEPLATE_OR_CEILING_JACK",_place(plate,p),[225,225,218,255],"ceiling_mount","wap_spare_jack"))
+
+    keystone=trimesh.creation.box(extents=[.115,.105,.035])
+    parts.append(_component_mesh(aid,"KEYSTONE",_place(keystone,[p[0],p[1],p[2]-.040]),[34,40,46,255],"reserved_front_connector","wap_spare_jack",{
+        "connector":"8P8C/RJ45","reserved":True
+    }))
+
+    label=trimesh.creation.box(extents=[.20,.055,.018])
+    parts.append(_component_mesh(aid,"LABEL",_place(label,[p[0],p[1]+.105,p[2]-.034]),[235,235,228,255],"identifier","wap_spare_jack",{
+        "label_source":"asset_id","reserved":True
+    }))
+
+    rear=trimesh.creation.box(extents=[.13,.11,.035])
+    parts.append(_component_mesh(aid,"REAR_TERMINATION",_place(rear,[p[0],p[1],p[2]+.040]),[70,110,150,255],"reserved_permanent_link_termination","wap_spare_jack",{
+        "medium":"Cat6A permanent link","reserved":True
+    }))
+
+    _record_componentized_device(a,"wap_spare_jack",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1475,6 +1561,12 @@ def physical_meshes_for_asset(a):
         return pdu_component_meshes(a)
     if t=="fiber_panel":
         return fiber_panel_component_meshes(a)
+    if t=="data_jack":
+        return data_jack_component_meshes(a)
+    if t=="receptacle":
+        return receptacle_component_meshes(a)
+    if t=="wap_spare_jack":
+        return wap_spare_jack_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -1627,6 +1719,12 @@ modeled_fiber_panels=[a for a in new_assets if a["classification"]["asset_type"]
 rack_ups_component_records=[x for x in device_component_records if x.get("archetype")=="rack_ups"]
 pdu_component_records=[x for x in device_component_records if x.get("archetype")=="pdu"]
 fiber_panel_component_records=[x for x in device_component_records if x.get("archetype")=="fiber_panel"]
+modeled_data_jacks=[a for a in new_assets if a["classification"]["asset_type"]=="data_jack"]
+modeled_receptacles=[a for a in new_assets if a["classification"]["asset_type"]=="receptacle"]
+modeled_wap_spare_jacks=[a for a in new_assets if a["classification"]["asset_type"]=="wap_spare_jack"]
+data_jack_component_records=[x for x in device_component_records if x.get("archetype")=="data_jack"]
+receptacle_component_records=[x for x in device_component_records if x.get("archetype")=="receptacle"]
+wap_spare_jack_component_records=[x for x in device_component_records if x.get("archetype")=="wap_spare_jack"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -1717,6 +1815,24 @@ ck("fiber panel assemblies expose frame, LC adapters, splice tray, cable entry, 
     and record.get("maturity")=="componentized"
     for record in fiber_panel_component_records
 ), "")
+ck("all Cat6A data jacks use Step 4C component assemblies",len(data_jack_component_records)==len(modeled_data_jacks),f"{len(data_jack_component_records)}/{len(modeled_data_jacks)}")
+ck("data jack assemblies expose faceplate, keystone, label, and rear termination",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"FACEPLATE","KEYSTONE_JACK","LABEL","REAR_TERMINATION"})
+    and record.get("maturity")=="componentized"
+    for record in data_jack_component_records
+), "")
+ck("all receptacles use Step 4C component assemblies",len(receptacle_component_records)==len(modeled_receptacles),f"{len(receptacle_component_records)}/{len(modeled_receptacles)}")
+ck("receptacle assemblies expose faceplate, duplex body, ground contacts, and rear branch termination",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"FACEPLATE","DUPLEX_RECEPTACLE","GROUND_CONTACT","REAR_BRANCH_TERMINATION"})
+    and record.get("maturity")=="componentized"
+    for record in receptacle_component_records
+), "")
+ck("all reserved WAP jacks use Step 4C component assemblies",len(wap_spare_jack_component_records)==len(modeled_wap_spare_jacks),f"{len(wap_spare_jack_component_records)}/{len(modeled_wap_spare_jacks)}")
+ck("reserved WAP jack assemblies expose ceiling jack, keystone, label, and rear termination",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"FACEPLATE_OR_CEILING_JACK","KEYSTONE","LABEL","REAR_TERMINATION"})
+    and record.get("maturity")=="componentized"
+    for record in wap_spare_jack_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -1734,6 +1850,8 @@ report={
  "step4c_componentized_access_switch_total":len(access_switch_component_records),"step4c_componentized_patch_panel_total":len(patch_panel_component_records),
  "step4c_componentized_rack_ups_total":len(rack_ups_component_records),"step4c_componentized_pdu_total":len(pdu_component_records),
  "step4c_componentized_fiber_panel_total":len(fiber_panel_component_records),
+ "step4c_componentized_data_jack_total":len(data_jack_component_records),"step4c_componentized_receptacle_total":len(receptacle_component_records),
+ "step4c_componentized_wap_spare_jack_total":len(wap_spare_jack_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1750,6 +1868,7 @@ print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(p
 print(" Step 4C componentized devices:",len(device_component_records))
 print("  cameras:",len(camera_component_records),"access switches:",len(access_switch_component_records),"patch panels:",len(patch_panel_component_records))
 print("  rack UPS:",len(rack_ups_component_records),"PDUs:",len(pdu_component_records),"fiber panels:",len(fiber_panel_component_records))
+print("  data jacks:",len(data_jack_component_records),"receptacles:",len(receptacle_component_records),"WAP spare jacks:",len(wap_spare_jack_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
