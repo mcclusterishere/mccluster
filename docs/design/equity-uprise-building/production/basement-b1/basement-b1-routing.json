@@ -10,36 +10,47 @@
     "authorized_floor1_return": {
       "type": "scene",
       "scene_id": "equity-uprise-floor-01",
-      "access": "mccluster-house-owner-or-underground-operations-admin"
+      "access": "authorized"
     },
     "underground_operations": {
       "type": "ui_state",
       "target": "underground_operations",
-      "access": "mccluster-house-owner-or-underground-operations-admin",
-      "live_b1_access": true
+      "access": "role-and-safety-authorized",
+      "sandbox_environment": true,
+      "live_real_world_control": false
     },
     "tunnel_network": {
       "type": "ui_state",
       "target": "underground_tunnel_network",
-      "access": "mccluster-house-owner-or-underground-operations-admin",
-      "live_tunnel_access": true
+      "access": "role-and-safety-authorized",
+      "known_infrastructure": true,
+      "sandbox_environment": true,
+      "live_real_world_control": false
     },
     "building_systems_training_sandbox": {
       "type": "ui_state",
-      "target": "b1_tunnel_training_clone",
+      "target": "canonical_b1_tunnel_sandbox",
       "access": "authorized-learner-or-instructor",
       "simulation": true,
-      "live_b1_access": false,
-      "live_tunnel_access": false
+      "canonical_geometry": true,
+      "separate_clone": false,
+      "live_real_world_control": false
     }
   },
   "normal_floor_selector_visible": false,
   "security": {
-    "ordinary_equity_uprise_admin_sufficient": false,
-    "competency_sufficient": false,
-    "live_access_authorities": [
-      "mccluster_house_owner",
-      "underground_operations_admin"
-    ]
+    "floor_hidden": false,
+    "general_floor_access": [
+      "equity_uprise_staff",
+      "equity_uprise_instructor",
+      "equity_uprise_security",
+      "equity_uprise_facilities",
+      "field_t",
+      "supervised_equity_uprise_learner"
+    ],
+    "hazardous_compartments_role_controlled": true,
+    "competency_alone_sufficient": false,
+    "audit_required": true,
+    "live_real_world_control": false
   }
 }
