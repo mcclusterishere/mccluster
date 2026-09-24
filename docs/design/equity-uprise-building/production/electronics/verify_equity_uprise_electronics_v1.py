@@ -10,17 +10,23 @@ CONN=HERE/"generated/equity-uprise-electronics-connections-v1.json"
 LABS=HERE/"generated/equity-uprise-it-lab-catalog-v1.json"
 REP=HERE/"generated/equity-uprise-electronics-step4a-report.json"  # compatibility path; report status is Step 4B
 GLB=HERE/"generated/equity-uprise-electronics-fabric-v1.glb"
+DEV=HERE/"generated/equity-uprise-device-components-v1.json"
+ARCH=HERE/"device-archetypes-v1.json"
 POL=HERE/"electronics-population-policy-v1.json"
 
 def load(p):return json.loads(Path(p).read_text())
 def fail(m):raise SystemExit("ELECTRONICS STEP 4B PHYSICAL INSTALLATION: FAIL\n"+m)
 
-r=load(REG); m=load(MAN); c=load(CONN); l=load(LABS); rep=load(REP); p=load(POL)
+r=load(REG); m=load(MAN); c=load(CONN); l=load(LABS); rep=load(REP); p=load(POL); dev=load(DEV); arch=load(ARCH)
 if r.get("registry_version")!="step4b-physical-installation-fabric-v1":fail("registry is not Step 4B")
 if rep.get("status")!="step4b-physical-installation-fabric" or rep.get("passed") is not True:fail("Step 4B report not passing")
 if m.get("status")!="step4b-physical-installation-fabric":fail("manifest is not Step 4B")
 if c.get("status")!="step4b-physical-installation-connections":fail("connection graph is not Step 4B")
 if not GLB.exists() or GLB.stat().st_size!=rep.get("overlay_glb_bytes"):fail("overlay GLB missing/stale")
+if dev.get("status")!="step4c-device-components":fail("device component catalog is not Step 4C")
+if arch.get("status")!="step4c-device-archetype-authority":fail("device archetype authority is not Step 4C")
+if m.get("device_component_catalog")!="docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json":fail("manifest missing Step 4C device catalog authority")
+if m.get("device_archetype_authority")!="docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json":fail("manifest missing Step 4C archetype authority")
 
 assets={a["asset_id"]:a for a in r["assets"]}
 conns=c.get("connections",[])
@@ -94,6 +100,23 @@ for a in assets.values():
         if not any(x["to_asset_id"]==a["asset_id"] and x["cable_type"]=="OSDP-RS485-STP" for x in conns):
             fail(f"{a['asset_id']} missing OSDP")
 
+component_records=dev.get("devices",[])
+camera_records=[x for x in component_records if x.get("archetype")=="camera"]
+modeled_cameras=[a for a in assets.values() if a["classification"].get("asset_type")=="camera" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+if len(camera_records)!=len(modeled_cameras):fail(f"Step 4C camera coverage mismatch {len(camera_records)}/{len(modeled_cameras)}")
+required_camera_parts={"MOUNT_PLATE","BRACKET_ARM","HOUSING","LENS_BARREL","LENS_GLASS","IR_LED_RING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"}
+for record in camera_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_camera_parts.issubset(parts):fail(f"{record.get('asset_id')} missing camera component(s): {sorted(required_camera_parts-parts)}")
+    ports=record.get("ports",[])
+    if not any(p.get("id")=="RJ45_POE_PORT" and {"Ethernet/IP","PoE"}.issubset(set(p.get("services",[]))) for p in ports):
+        fail(f"{record.get('asset_id')} missing functional RJ45/PoE port")
+    if record.get("maturity")!="lab_complete":fail(f"{record.get('asset_id')} camera archetype not lab_complete")
+    if not {"normal","unavailable","degraded","faulted"}.issubset(set(record.get("state_rules",{}))):
+        fail(f"{record.get('asset_id')} missing visible state rules")
+if rep.get("step4c_componentized_devices_total")!=len(component_records):fail("Step 4C device count mismatch")
+if rep.get("step4c_componentized_camera_total")!=len(camera_records):fail("Step 4C camera count mismatch")
+
 labs=l.get("labs",[])
 if len(labs)<40 or set(x["tier"] for x in labs)!=set(p["lab_tiers"]):fail("lab ladder incomplete")
 if rep.get("checks_failed")!=0:fail("report has failed checks")
@@ -109,6 +132,7 @@ print(" port-complete connections:",rep["port_complete_connections_total"])
 print(" data jacks:",rep["data_jacks_total"])
 print(" receptacles:",rep["receptacles_total"])
 print(" electrical panelboards:",rep["electrical_panelboards_total"])
+print(" Step 4C componentized cameras:",rep["step4c_componentized_camera_total"])
 print(" wireless links:",rep["wireless_links_total"])
 print(" labs:",rep["lab_scenarios_total"])
 print(" overlay bytes:",rep["overlay_glb_bytes"])
