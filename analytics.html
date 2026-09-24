@@ -19,6 +19,85 @@
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}pre{white-space:pre-wrap;word-break:break-all;background:#080b0f;border-radius:10px;padding:12px}
     table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid #252c35}
     .hidden{display:none}.danger{color:#fca5a5}.ok{color:#86efac}
+
+    /* ===================== THE BOARD =====================
+       The reporting half of this page. Tokens first so the SVG can reference
+       the same surfaces the cards use — a chart that hardcodes its own greys
+       drifts away from the panel it sits in. */
+    :root{--bd-card:#12161c;--bd-edge:#252c35;--bd-grid:rgba(255,255,255,.08);
+      --bd-faint:rgba(244,245,247,.40);--bd-dim:#9ca3af;--bd-well:#0d1117}
+    .bd-top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin:22px 0 14px}
+    .bd-top h2{margin:0;font-size:15px;letter-spacing:-.01em}
+    .bd-top .bd-sub{margin:3px 0 0}
+    .bd-ranges{display:flex;gap:4px;flex-wrap:wrap}
+    .bd-range{min-height:36px;padding:7px 12px;border-radius:9px;background:#202731;color:var(--bd-dim);
+      font-weight:700;font-size:13px;box-shadow:inset 0 0 0 1px var(--bd-edge)}
+    .bd-range.is-on{background:#2b3440;color:#fff;box-shadow:inset 0 0 0 1px #3d4856}
+
+    .bd-tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px}
+    .bd-tile{background:var(--bd-card);border:1px solid var(--bd-edge);border-radius:14px;padding:14px 15px}
+    .bd-tile__l{margin:0;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--bd-dim)}
+    .bd-tile__v{margin:7px 0 0;font-size:29px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+    .bd-delta{display:block;margin-top:7px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+    .bd-delta--up{color:#6ee7a0}.bd-delta--down{color:#fca5a5}
+    .bd-delta--flat,.bd-delta--none{color:var(--bd-faint);font-weight:600}
+
+    /* Not everything is a card, but these genuinely are separate objects. The
+       hero gets no extra lift: the chart inside it is the emphasis. */
+    .bd-card{background:var(--bd-card);border:1px solid var(--bd-edge);border-radius:16px;padding:15px 16px 17px}
+    .bd-card h2{margin:0;font-size:15px}
+    .bd-card h3{margin:0 0 11px;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--bd-dim)}
+    .bd-card--hero{position:relative}
+    .bd-card__h{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+    .bd-sub{margin:3px 0 0;font-size:12px;line-height:1.5;color:var(--bd-dim);max-width:46rem}
+    .bd-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .bd-key{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--bd-dim)}
+    .bd-key i{width:10px;height:10px;border-radius:3px;display:inline-block}
+    .bd-key--none{background:transparent;box-shadow:inset 0 0 0 1px var(--bd-faint)}
+    .bd-toggle{min-height:32px;padding:5px 10px;border-radius:8px;background:#202731;color:var(--bd-dim);
+      font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;box-shadow:inset 0 0 0 1px var(--bd-edge)}
+    .bd-toggle:hover{color:#fff}
+    .bd-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));margin-top:12px}
+
+    .bd-svg{display:block;width:100%;height:auto;overflow:visible}
+    .bd-axis{font-size:10.5px;fill:var(--bd-faint)}
+    .bd-mark{font-size:11px;font-weight:700}
+    .bd-hit{cursor:crosshair}
+    /* Inset in percentages, because the two things the tooltip must never
+       cover — the y-axis labels on the left and the series' direct labels on
+       the right — are drawn in SVG units that scale with the card. */
+    .bd-tip{position:absolute;right:12%;top:58px;min-width:9.5rem;pointer-events:none;
+      background:#0a0d11;border:1px solid #303846;border-radius:11px;padding:9px 11px;
+      box-shadow:0 14px 34px rgba(0,0,0,.5);font-size:12px}
+    .bd-tip b{display:block;margin-bottom:5px;font-size:11px;letter-spacing:.05em;color:var(--bd-dim)}
+    .bd-tip span{display:flex;align-items:center;gap:6px;line-height:1.75}
+    .bd-tip i{width:9px;height:9px;border-radius:3px;flex:none}
+    .bd-tip em{margin-left:auto;font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
+    .bd-tip--left{right:auto;left:11%}
+
+    /* Ranked lists. The bar is the magnitude, the number is the value, and the
+       bar sits behind the text rather than in its own column so a long path
+       still has the full width to wrap into. */
+    .bd-rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+    .bd-rank__row{position:relative;display:flex;align-items:center;gap:10px;
+      padding:8px 10px;border-radius:9px;overflow:hidden;font-size:13px}
+    .bd-rank__bar{position:absolute;left:0;top:0;bottom:0;background:#3f93d2;opacity:.20;border-radius:9px}
+    .bd-rank__k{position:relative;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bd-rank__v{position:relative;margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+    .bd-foot{margin:11px 0 0;font-size:11.5px;color:var(--bd-faint)}
+
+    .bd-empty{margin:0;font-size:13px;line-height:1.55;color:var(--bd-faint)}
+    .bd-gap{background:var(--bd-card);border:1px solid var(--bd-edge);border-radius:16px;padding:18px}
+    .bd-gap b{display:block;margin-bottom:5px;font-size:14px}
+    .bd-gap span{display:block;font-size:13px;line-height:1.6;color:var(--bd-dim);max-width:44rem}
+
+    .bd-scroll{overflow-x:auto}
+    .bd-table{width:100%;border-collapse:collapse;font-size:13px}
+    .bd-table caption{text-align:left;padding:0 0 9px;font-size:12px;color:var(--bd-faint)}
+    .bd-table th,.bd-table td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--bd-edge)}
+    .bd-table th{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--bd-dim)}
+    .bd-table td.n,.bd-table th.n{text-align:right;font-variant-numeric:tabular-nums}
+    .bd-prop{min-width:0}
   </style>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
@@ -53,27 +132,31 @@
     </section>
 
     <section class="grid cols" style="margin-top:16px">
-      <div class="card"><div class="muted">Page views</div><div id="mPageviews" class="metric">—</div></div>
-      <div class="card"><div class="muted">Sessions</div><div id="mSessions" class="metric">—</div></div>
-      <div class="card"><div class="muted">Visitors</div><div id="mVisitors" class="metric">—</div></div>
-      <div class="card"><div class="muted">Avg edge RTT</div><div id="mRtt" class="metric">—</div></div>
-    </section>
-
-    <section class="grid cols" style="margin-top:16px">
       <div class="card"><h2>Your properties</h2><div id="sites"></div></div>
       <div class="card"><h2>Install</h2><div id="install"><p class="muted">Choose a property.</p></div></div>
     </section>
 
-    <section class="grid cols" style="margin-top:16px">
-      <div class="card"><h2>Top pages</h2><div id="pages"></div></div>
-      <div class="card"><h2>Network</h2><div id="networks"></div></div>
-      <div class="card"><h2>Countries</h2><div id="countries"></div></div>
-    </section>
+    <!-- THE BOARD. The range picker sits with the heading it governs, not
+         buried inside a panel, because it changes every number below it. -->
+    <div class="bd-top">
+      <div>
+        <h2 id="bdWho">Traffic</h2>
+        <p class="bd-sub" id="bdScope">Choose a property.</p>
+      </div>
+      <div class="bd-ranges" id="bdRanges" role="group" aria-label="Time range"></div>
+    </div>
+    <div id="bdBoard" aria-live="polite"></div>
 
-    <section class="card" style="margin-top:16px"><h2>Recent events</h2><div id="recent"></div></section>
+    <section class="card" style="margin-top:16px">
+      <h2>Recent events</h2>
+      <p class="bd-sub">The raw rows behind the board, newest first — the check
+        you run when a number above looks wrong.</p>
+      <div id="recent" style="margin-top:11px"></div>
+    </section>
   </div>
 </main>
 <script src="js/backend.js"></script>
+<script src="js/analytics-board.js?v=__STAMP__"></script>
 <script src="js/analytics-product.js"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>

@@ -51,9 +51,13 @@
     state.sites.forEach(function(site){
       var domains=site.analytics_site_domains||[];
       var verified=domains.some(function(d){return !!d.verified_at&&d.enabled!==false;});
+      var own=site.id===FIRST_PARTY;
+      var sel=state.selected&&state.selected.id===site.id;
       var row=document.createElement("div");row.className="site";
-      row.innerHTML='<div><b>'+esc(site.name)+'</b><div class="muted">'+esc(domains.map(function(d){return d.hostname;}).join(", ")||"No domain")+'</div></div>'+
-        '<div class="row" style="flex:0 0 auto"><span class="badge '+(verified?"ok":"danger")+'">'+(verified?"verified":"verify domain")+'</span><button class="alt">Open</button></div>';
+      row.innerHTML='<div class="bd-prop"><b>'+esc(site.name)+'</b><div class="muted">'+
+        esc(own?"built in · no site key":(domains.map(function(d){return d.hostname;}).join(", ")||"No domain"))+'</div></div>'+
+        '<div class="row" style="flex:0 0 auto"><span class="badge '+(own?"ok":verified?"ok":"danger")+'">'+
+        (own?"live":verified?"verified":"verify domain")+'</span><button class="alt">'+(sel?"Showing":"Open")+'</button></div>';
       row.querySelector("button").onclick=function(){selectSite(site.id);};
       el.appendChild(row);
     });
@@ -84,44 +88,106 @@
     };
   }
 
-  function countBy(rows,fn){
-    var m=new Map();rows.forEach(function(r){var k=fn(r);if(!k)return;m.set(k,(m.get(k)||0)+1);});
-    return Array.from(m.entries()).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-  }
-  function list(elId,items){
-    var el=$(elId);if(!items.length){el.innerHTML='<p class="muted">No data yet.</p>';return;}
-    el.innerHTML='<table><tbody>'+items.map(function(x){return '<tr><td>'+esc(x[0])+'</td><td>'+x[1]+'</td></tr>';}).join("")+'</tbody></table>';
-  }
-  function renderMetrics(){
-    var human=state.events.filter(function(e){return e.is_bot!==true;});
-    var pv=human.filter(function(e){return e.name==="page_view";});
-    var sessions=new Set(human.map(function(e){return e.session_id;}).filter(Boolean));
-    var visitors=new Set(human.map(function(e){return e.device_id;}).filter(Boolean));
-    var rtts=human.map(function(e){return Number(e.edge&&e.edge["cf-client-tcp-rtt"]);}).filter(function(n){return isFinite(n)&&n>=0;});
-    $("mPageviews").textContent=pv.length;
-    $("mSessions").textContent=sessions.size;
-    $("mVisitors").textContent=visitors.size||"—";
-    $("mRtt").textContent=rtts.length?Math.round(rtts.reduce(function(a,b){return a+b;},0)/rtts.length)+" ms":"—";
-    list("pages",countBy(pv,function(e){return e.path||"/";}));
-    list("countries",countBy(human,function(e){return e.country||"Unknown";}));
-    list("networks",countBy(human,function(e){return (e.device&&e.device.network&&e.device.network.effective)||e.asn_org||"Unknown";}));
-    $("recent").innerHTML='<table><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>Network</th></tr></thead><tbody>'+
-      human.slice(0,50).map(function(e){return '<tr><td>'+esc(new Date(e.at).toLocaleString())+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.path)+'</td><td>'+esc((e.device&&e.device.network&&e.device.network.effective)||e.asn_org||"")+'</td></tr>';}).join("")+'</tbody></table>';
+  /* ===================== THE BOARD =====================
+     What used to live here was four integers and three two-column count
+     tables. The rows it counted were always enough to draw a real chart — the
+     page just threw the timestamps away. Now the same rows go through
+     MCCBoard.rollup and come back as a day series, and the board draws it.
+
+     TWO SCOPES, ONE QUERY SHAPE. A client's property is scoped by site_id under
+     the "analytics owners read site events" policy. This site's own traffic has
+     no site_id at all: js/analytics.js posts to the collector without a
+     site_key, so every one of those rows lands with site_id null and the
+     site-scoped filter excluded all of it. That is why this page reported
+     nothing about the site it is hosted on. The first-party property below is
+     that missing scope, readable only by the desk (RLS "only the desk reads
+     it"), so it is offered only when the account actually holds that. */
+  var FIRST_PARTY = "__first_party__";
+  var board = null;
+  var isDesk = false;
+
+  function askIsDesk(){
+    return token().then(function(t){
+      if(!t) return false;
+      return fetch(SUPA.url+"/rest/v1/rpc/eu_is_admin",{
+        method:"POST",headers:{apikey:SUPA.key,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:"{}"
+      }).then(function(r){return r.ok?r.json():false;}).then(function(v){return v===true;});
+    }).catch(function(){return false;});
   }
 
-  function loadEvents(site){
-    var since=new Date(Date.now()-7*86400000).toISOString();
-    return rest("events?site_id=eq."+encodeURIComponent(site.id)+"&at=gte."+encodeURIComponent(since)+"&select=at,name,path,session_id,device_id,country,city,asn_org,is_bot,device,edge&order=at.desc&limit=3000")
-      .then(function(rows){state.events=rows||[];renderMetrics();});
+  function scopeFilter(site){
+    return site.id===FIRST_PARTY ? "site_id=is.null" : "site_id=eq."+encodeURIComponent(site.id);
   }
+
+  /* Newest first, so a window that hits the cap keeps the days somebody is
+     actually looking at and loses the far edge — which the board then says out
+     loud rather than drawing a confident line through a short day. */
+  function fetchEvents(site,days){
+    var since=new Date(Date.now()-(days-1)*86400000);
+    since.setHours(0,0,0,0);
+    return rest("events?"+scopeFilter(site)+
+      "&at=gte."+encodeURIComponent(since.toISOString())+
+      "&select=at,name,path,session_id,device_id,country,city,asn_org,is_bot,device,edge,referrer"+
+      "&order=at.desc&limit=20000")
+      .then(function(rows){
+        state.events=rows||[];
+        renderRecent();
+        return {traffic:window.MCCBoard.rollup(state.events,{since:since,days:days})};
+      });
+  }
+
+  function renderRecent(){
+    var human=state.events.filter(function(e){return e.is_bot!==true;});
+    if(!human.length){$("recent").innerHTML='<p class="bd-empty">No events in this window.</p>';return;}
+    $("recent").innerHTML='<div class="bd-scroll"><table><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>Country</th><th>Network</th></tr></thead><tbody>'+
+      human.slice(0,50).map(function(e){
+        return '<tr><td>'+esc(new Date(e.at).toLocaleString())+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.path)+
+          '</td><td>'+esc(e.country||"—")+'</td><td>'+esc((e.device&&e.device.network&&e.device.network.effective)||e.asn_org||"—")+'</td></tr>';
+      }).join("")+'</tbody></table></div>';
+  }
+
+  function mountBoard(){
+    if(board||!window.MCCBoard) return;
+    board=window.MCCBoard.mount({
+      rangeHost:$("bdRanges"),
+      boardHost:$("bdBoard"),
+      /* The board asks for double the range so its deltas have a baseline; the
+         note explains a cap or an empty read in the page's own terms. */
+      fetch:function(days){
+        var site=state.selected;
+        if(!site) return Promise.reject(new Error("Choose a property to report on."));
+        return fetchEvents(site,days);
+      }
+    });
+  }
+
   function selectSite(id){
     var site=state.sites.find(function(s){return s.id===id;});if(!site)return;
-    state.selected=site;renderInstall(site);loadEvents(site).catch(function(e){$("recent").innerHTML='<p class="danger">'+esc(e.message)+'</p>';});
+    state.selected=site;
+    if(site.id===FIRST_PARTY){
+      $("install").innerHTML='<p><b>'+esc(site.name)+'</b></p><p class="muted">This property is the site you are '+
+        'reading this on. Its pixel is already built in — there is nothing to install and no domain to verify.</p>';
+    }else{
+      renderInstall(site);
+    }
+    $("bdWho").textContent="Traffic · "+site.name;
+    $("bdScope").textContent=site.id===FIRST_PARTY
+      ? "First-party events from this site, read straight from the collector."
+      : "Events attributed to this property by its site key.";
+    mountBoard();
+    if(board) board.reload();
   }
   function loadSites(){
     return rest("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc")
       .then(function(rows){
-        state.sites=rows||[];renderSites();
+        state.sites=(rows||[]).slice();
+        /* Listed first: it is the property with the traffic on it, and burying
+           it under a client's empty site is how this page came to look dead. */
+        if(isDesk) state.sites.unshift({
+          id:FIRST_PARTY,name:"This site (first-party)",public_key:null,
+          consent_mode:"required",analytics_site_domains:[]
+        });
+        renderSites();
         if(state.selected){var id=state.selected.id;state.selected=null;selectSite(id);}
         else if(state.sites[0])selectSite(state.sites[0].id);
       });
@@ -149,7 +215,10 @@
       $("auth").classList.remove("hidden");$("app").classList.add("hidden");return;
     }
     $("auth").classList.add("hidden");$("app").classList.remove("hidden");
-    loadSites().catch(function(e){$("sites").innerHTML='<p class="danger">'+esc(e.message)+'</p>';});
+    askIsDesk().then(function(desk){
+      isDesk=desk;
+      return loadSites();
+    }).catch(function(e){$("sites").innerHTML='<p class="danger">'+esc(e.message)+'</p>';});
   }
 
   $("createSite").onclick=createSite;
