@@ -23,4 +23,4 @@ Render readiness: **basic-render-ready-current-pass**.
 
 Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
-Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
+B1 is a known staffed technical workplace floor. Floor 1 navigation may route authorized people into the canonical B1 SANDBOX geometry; hazardous compartments remain role/safety controlled and no real-world infrastructure control is exposed.

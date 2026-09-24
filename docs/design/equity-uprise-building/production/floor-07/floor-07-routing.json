@@ -141,18 +141,22 @@
       "access": "public-intake-private-session"
     },
     "building_systems_lab": {
-      "type": "ui_state",
-      "target": "building_systems_lab",
-      "access": "authorized-learner-or-instructor-sandbox-only",
+      "type": "scene",
+      "target": "basement-b1",
+      "access": "authorized-learner-or-instructor",
       "simulation": true,
-      "live_b1_access": false
+      "canonical_b1_geometry": true,
+      "separate_clone": false,
+      "live_real_world_control": false
     },
     "underground_operations": {
-      "type": "ui_state",
-      "target": "underground_operations",
-      "access": "mccluster-house-owner-or-underground-operations-admin",
-      "hidden_from_normal_navigation": true,
-      "live_b1_access": true
+      "type": "scene",
+      "target": "basement-b1",
+      "access": "staff-or-authorized-participant",
+      "hidden_from_normal_navigation": false,
+      "known_floor": true,
+      "sandbox_environment": true,
+      "live_real_world_control": false
     },
     "emergency_exercise": {
       "type": "ui_state",

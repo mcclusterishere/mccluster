@@ -15,7 +15,7 @@
     {
       "name": "B1 elevation -13.5",
       "passed": true,
-      "detail": "{'level': 0, 'id': 'basement-b1', 'name': 'Underground Operations / Technical Service Basement', 'finished_floor_elevation_ft': -13.5, 'below_grade': True, 'open_air': False}"
+      "detail": "{'level': 0, 'id': 'basement-b1', 'name': 'Technical Operations / Infrastructure / Underground Operations', 'finished_floor_elevation_ft': -13.5, 'below_grade': True, 'open_air': False}"
     },
     {
       "name": "Floor 1 is level of exit discharge",
@@ -35,7 +35,7 @@
     {
       "name": "B1 title matches shared core",
       "passed": true,
-      "detail": "Underground Operations / Technical Service Basement != Underground Operations / Technical Service Basement"
+      "detail": "Technical Operations / Infrastructure / Underground Operations != Technical Operations / Infrastructure / Underground Operations"
     },
     {
       "name": "canonical maps are branch-agnostic",
@@ -43,19 +43,19 @@
       "detail": "{'capability_branch': None, 'source_branch': None}"
     },
     {
-      "name": "B1 live access is restricted",
+      "name": "B1 access uses role/safety authorization",
       "passed": true,
-      "detail": "mccluster-house-owner-or-underground-operations-admin"
+      "detail": "role-and-safety-authorized"
     },
     {
-      "name": "B1 training is sandbox only",
+      "name": "B1 training uses canonical sandbox geometry",
       "passed": true,
-      "detail": "{'mode': 'sandboxed_clone_only', 'live_b1_access': False, 'live_tunnel_access': False, 'live_controls_available': False, 'live_occupancy_visible': False, 'competency_evidence_allowed': True}"
+      "detail": "{'mode': 'canonical_sandbox_same_geometry', 'b1_access': True, 'tunnel_training_access': 'scenario-and-role-controlled', 'live_controls_available': False, 'real_world_operational_data_available': False, 'competency_evidence_allowed': True}"
     },
     {
-      "name": "ordinary EU admin cannot unlock live B1",
+      "name": "B1 floor is known with room-level restrictions",
       "passed": true,
-      "detail": "{'allowed': ['mccluster_house_owner', 'underground_operations_admin'], 'delegated_by': 'mccluster_house_owner', 'ordinary_equity_uprise_admin_sufficient': False, 'competency_sufficient': False, 'audit_required': True}"
+      "detail": "{'allowed': ['equity_uprise_staff', 'equity_uprise_instructor', 'equity_uprise_security', 'equity_uprise_facilities', 'field_t', 'mobility_operations', 'supervised_equity_uprise_learner'], 'floor_hidden': False, 'room_level_restrictions': True, 'competency_alone_sufficient': False, 'audit_required': True}"
     },
     {
       "name": "tunnel is not publicly visible",
@@ -63,9 +63,9 @@
       "detail": "False"
     },
     {
-      "name": "tunnel training clone has no live access",
+      "name": "tunnel training uses sandbox geometry without real-world control",
       "passed": true,
-      "detail": "{'mode': 'sandboxed_clone_only', 'live_b1_access': False, 'live_tunnel_access': False, 'live_occupancy_visible': False, 'live_controls_available': False, 'competency_evidence_allowed': True}"
+      "detail": "{'mode': 'canonical_sandbox_same_geometry', 'b1_training_access': True, 'tunnel_training_access': 'scenario-and-role-controlled', 'live_occupancy_visible': False, 'real_world_controls_available': False, 'competency_evidence_allowed': True}"
     },
     {
       "name": "tunnel has future reserved branches only",
@@ -398,19 +398,19 @@
       "detail": "None"
     },
     {
-      "name": "Floor 1 hides B1 from normal navigation",
+      "name": "Floor 1 directory shows known B1",
       "passed": true,
-      "detail": "{'normal_floor_selector': ['1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'mccluster-house-owner-or-underground-operations-admin-only', 'ordinary_equity_uprise_admin_can_see_b1': False, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': False, 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': True, 'authorized_reveal': ['mccluster_house_owner', 'underground_operations_admin']}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'access-controlled-restricted', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}}"
+      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-controlled-technical-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'staff-or-authorized-participant'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'controlled-technical-floor', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
     },
     {
-      "name": "Floor 1 ordinary EU admin cannot see B1",
+      "name": "Floor 1 authorized admins can see B1",
       "passed": true,
-      "detail": "{'normal_floor_selector': ['1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'mccluster-house-owner-or-underground-operations-admin-only', 'ordinary_equity_uprise_admin_can_see_b1': False, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': False, 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': True, 'authorized_reveal': ['mccluster_house_owner', 'underground_operations_admin']}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'access-controlled-restricted', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}}"
+      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-controlled-technical-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'staff-or-authorized-participant'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'controlled-technical-floor', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
     },
     {
-      "name": "Floor 1 training goes to sandbox clone",
+      "name": "Floor 1 training uses canonical B1 sandbox",
       "passed": true,
-      "detail": "{'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}"
+      "detail": "{'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}"
     },
     {
       "name": "Floor 1 manifest active",
@@ -433,14 +433,14 @@
       "detail": "['../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md', 'floor-01-digital-twin-program.json']"
     },
     {
-      "name": "Floor 1 building systems route sandbox only",
+      "name": "Floor 1 building systems route uses canonical sandbox",
       "passed": true,
-      "detail": "{'type': 'ui_state', 'target': 'building_systems_lab', 'access': 'authorized-learner-or-instructor-sandbox-only', 'simulation': True, 'live_b1_access': False}"
+      "detail": "{'type': 'scene', 'target': 'basement-b1', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'canonical_b1_geometry': True, 'separate_clone': False, 'live_real_world_control': False}"
     },
     {
-      "name": "Floor 1 underground route hidden live access",
+      "name": "Floor 1 underground route is visible controlled sandbox",
       "passed": true,
-      "detail": "{'type': 'ui_state', 'target': 'underground_operations', 'access': 'mccluster-house-owner-or-underground-operations-admin', 'hidden_from_normal_navigation': True, 'live_b1_access': True}"
+      "detail": "{'type': 'scene', 'target': 'basement-b1', 'access': 'staff-or-authorized-participant', 'hidden_from_normal_navigation': False, 'known_floor': True, 'sandbox_environment': True, 'live_real_world_control': False}"
     },
     {
       "name": "Floor 1 states include underground access",
@@ -533,19 +533,19 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-geometry-notes.md"
     },
     {
-      "name": "B1 scene manifest active restricted",
+      "name": "B1 scene manifest active controlled",
       "passed": true,
-      "detail": "core-v2-active-restricted"
+      "detail": "core-v2-active-controlled"
     },
     {
       "name": "B1 scene title current",
       "passed": true,
-      "detail": "Equity Uprise B1 \u2014 Underground Operations / Technical Service Basement"
+      "detail": "Equity Uprise B1 \u2014 Technical Operations / Infrastructure / Underground Operations"
     },
     {
-      "name": "B1 scene hidden from public navigation",
+      "name": "B1 scene appears in navigation",
       "passed": true,
-      "detail": "False"
+      "detail": "True"
     },
     {
       "name": "B1 scene tunnel authority ref",
@@ -568,19 +568,19 @@
       "detail": "basement-b1-object-inventory.json"
     },
     {
-      "name": "B1 sandbox cannot reach live B1",
+      "name": "B1 training route uses canonical geometry",
       "passed": true,
-      "detail": "{'type': 'ui_state', 'target': 'b1_tunnel_training_clone', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'live_b1_access': False, 'live_tunnel_access': False}"
+      "detail": "{'type': 'ui_state', 'target': 'canonical_b1_tunnel_sandbox', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'canonical_geometry': True, 'separate_clone': False, 'live_real_world_control': False}"
     },
     {
-      "name": "B1 sandbox cannot reach live tunnel",
+      "name": "B1 training route has no real-world control",
       "passed": true,
-      "detail": "{'type': 'ui_state', 'target': 'b1_tunnel_training_clone', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'live_b1_access': False, 'live_tunnel_access': False}"
+      "detail": "{'type': 'ui_state', 'target': 'canonical_b1_tunnel_sandbox', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'canonical_geometry': True, 'separate_clone': False, 'live_real_world_control': False}"
     },
     {
-      "name": "B1 ordinary EU admin insufficient",
+      "name": "B1 general floor not hidden and hazardous compartments controlled",
       "passed": true,
-      "detail": "{'ordinary_equity_uprise_admin_sufficient': False, 'competency_sufficient': False, 'live_access_authorities': ['mccluster_house_owner', 'underground_operations_admin']}"
+      "detail": "{'floor_hidden': False, 'general_floor_access': ['equity_uprise_staff', 'equity_uprise_instructor', 'equity_uprise_security', 'equity_uprise_facilities', 'field_t', 'supervised_equity_uprise_learner'], 'hazardous_compartments_role_controlled': True, 'competency_alone_sufficient': False, 'audit_required': True, 'live_real_world_control': False}"
     },
     {
       "name": "detailed B1 report exists",

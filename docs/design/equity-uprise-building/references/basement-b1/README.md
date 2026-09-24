@@ -1,4 +1,4 @@
-# Basement B1 — Underground Operations / Technical Service Basement — Core V2 Plan References
+# Basement B1 — Technical Operations / Infrastructure / Underground Operations — Core V2 Plan References
 
 > Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**
 

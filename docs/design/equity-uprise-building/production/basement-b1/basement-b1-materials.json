@@ -35,6 +35,7 @@
   ],
   "rules": [
     "Industrial/technical rather than theatrical bunker styling.",
-    "Restricted access is conveyed by systems and state, not fantasy weaponization."
+    "B1 is a known staffed workplace; controlled compartments communicate role/safety restrictions without making the floor secret.",
+    "No real-world infrastructure control is exposed."
   ]
 }

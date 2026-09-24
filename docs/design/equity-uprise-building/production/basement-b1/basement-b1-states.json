@@ -5,38 +5,39 @@
   "states": [
     {
       "id": "idle",
-      "label": "Restricted Idle",
-      "access": "mccluster-house-owner-or-underground-operations-admin"
+      "label": "Technical Operations Idle",
+      "access": "staff-or-authorized-participant"
     },
     {
       "id": "operations_overview",
-      "label": "Underground Operations Overview",
+      "label": "Technical / Underground Operations Overview",
       "camera_id": "b1_overview",
-      "access": "mccluster-house-owner-or-underground-operations-admin"
+      "access": "staff-or-authorized-participant"
     },
     {
       "id": "tunnel_operations",
       "label": "Tunnel Operations",
       "camera_id": "b1_ops_focus",
       "route_key": "underground_operations",
-      "access": "mccluster-house-owner-or-underground-operations-admin"
+      "access": "role-and-safety-authorized"
     },
     {
       "id": "systems_training_sandbox",
       "label": "Building Systems Training Sandbox",
       "route_key": "building_systems_training_sandbox",
       "access": "authorized-learner-or-instructor",
-      "live_b1_access": false
+      "canonical_geometry": true,
+      "live_real_world_control": false
     },
     {
       "id": "incident_mode",
       "label": "Underground Incident Mode",
-      "access": "mccluster-house-owner-or-underground-operations-admin"
+      "access": "authorized-operations"
     },
     {
       "id": "after_hours",
       "label": "After Hours",
-      "access": "mccluster-house-owner-or-underground-operations-admin",
+      "access": "authorized-staff",
       "lighting_multiplier": 0.45
     }
   ]
