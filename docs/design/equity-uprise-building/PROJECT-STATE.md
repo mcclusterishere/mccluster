@@ -739,33 +739,46 @@ Canonical files:
 **NEXT:** generate the first lab scenario set from causal source → system → riser → branch → endpoint traces.
 
 
-## Whole-Building Electronics / IT Fabric — STEP 4A IMPLEMENTED
+## Whole-Building Electronics / IT Fabric — STEP 4B PHYSICAL INSTALLATION ACTIVE
 
-The current Step 3B registry now has a deterministic whole-building electronics overlay.
+The electronics layer is no longer allowed to stop at a logical device graph. Step 4B makes the digital twin lab-able at the physical layer while preserving the existing canonical building, Services authority and sandbox-only safety boundary.
 
-Step 4A generates:
-- a B1 MDF/edge/core/server/security/fire-gateway design-intent stack;
-- per-floor IDF/access switching sized from modeled endpoint demand;
-- WAPs plus spare WAP Cat6A drops;
-- workstations, monitors, IP phones, MFPs, cameras, access control, intercom, BAS controllers/sensors and AV electronics;
-- logical VLANs, SSIDs and building services including DHCP, DNS, NTP, AAA/RADIUS, VPN, monitoring, VMS, BAS and AV control;
-- typed physical connection objects for copper, fiber, local AV, BAS field bus, access reader bus, fire alarm circuits and power;
-- transient Wi-Fi/cellular client profiles rather than pretending personal phones are permanent building assets;
-- a five-tier / 40-lab IT training catalog;
-- a GLB electronics/wiring overlay for later viewer integration.
+Implemented in source:
+- electronics are placed from approved floor inventory anchors / real support zones instead of whole-floor generic grids;
+- physical B1/F1–F6 normal and emergency panelboards are modeled, with L7 served from F6 as already authorized;
+- every plug-connected modeled load receives a receptacle/floor-box termination and equipment power cord;
+- every structured-cabling endpoint receives an explicit work-area/ceiling data jack and patch cord;
+- PoE is carried through the permanent-link/jack/patch chain;
+- BAS sensors receive both BACnet MS/TP and modeled Class 2 power;
+- physical connection records receive deterministic routes, from/to ports, pathway classes, concealment intent and route lengths;
+- Cat6A permanent links are checked against the 90 m design-intent limit;
+- generated device geometry now distinguishes racks, panels, endpoints, cameras, WAPs, phones, monitors, workstations, jacks and receptacles instead of representing nearly everything as the same generic box;
+- the canonical viewer gains **Physical Plant** and **Cabling** layers. Generated installation coordinates remain authoritative in the viewer; the old post-load relocation to conceptual anchors is removed;
+- lab cable highlighting consumes the actual routed connection geometry instead of drawing endpoint-to-endpoint shortcut lines.
 
-Important boundary:
-- this is a research-grounded **design-intent/training model**, not a construction, code, RF, fire-alarm or stamped engineering design;
-- physical diversity, exact AP placement, exact circuit sizes/capacities, IP addressing, carrier services and as-built rack/port assignments remain verification/commissioning work.
+Pre-Step-4B audit baseline:
+- **894** physical connection records;
+- **660** had no route geometry;
+- **437** lacked at least one port identifier.
 
-Canonical Step 4A source:
+The Step 4B generator/verifier now treats either condition as a failure. The physical layer must be traceable from endpoint to termination to horizontal/branch path to distribution/riser/core.
+
+Canonical source:
 - `ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md`
 - `production/electronics/electronics-population-policy-v1.json`
 - `production/electronics/build_equity_uprise_electronics_v1.py`
 - `production/electronics/verify_equity_uprise_electronics_v1.py`
+- `production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs`
+- canonical viewer: `equity-uprise-building-core-v2-3d.html`
 
-**NEXT:** load the generated electronics GLB/manifest into the viewer and turn the generated lab definitions into executable scenarios.
+Truth boundary:
+- this remains a digital-twin/training design, not stamped construction documents or a field-certified as-built;
+- LIVE building control remains disabled;
+- exact conductor sizing, breaker sizing, conduit fill, firestopping, grounding/bonding, final equipment selection, RF survey, cable certification and commissioning remain physical-project responsibilities.
 
+**OCTOBER 7 DEMO READINESS GATE:** the viewer must be able to expose the installed physical plant, isolate a floor, show real routed cable families, inspect endpoint/network/power dependencies, and execute learner faults against that same topology.
+
+Derived Step 4B artifacts are published through the repository's deterministic generated-output workflow; a source-only green build is not considered demo-ready until that generated snapshot is committed and freshness CI is green. Freshness revalidation must run again on the bot-published snapshot before merge.
 
 ## Federal Training Catalog — V1 IMPLEMENTED
 

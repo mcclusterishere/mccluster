@@ -1,4 +1,4 @@
-export const ELECTRONICS_SPATIAL_BINDING_VERSION = "1.0.0";
+export const ELECTRONICS_SPATIAL_BINDING_VERSION = "1.1.0";
 export const ELECTRONICS_SOURCE_UNITS = "feet";
 export const ELECTRONICS_TO_METERS = 0.3048;
 
@@ -69,17 +69,6 @@ const A = {
   }
 };
 
-const FALLBACK = {
-  0:{support:[46,64],work:[34,48],security:[36,54],ceiling:[36,40],av:[36,46],fire:[42,60]},
-  1:{support:[46,66],work:[36,40],security:[36,9],ceiling:[36,34],av:[36,52],fire:[36,55]},
-  2:{support:[46,66],work:[36,39],security:[50,26.5],ceiling:[36,39],av:[36,52],fire:[36,56]},
-  3:{support:[46,66],work:[36,41],security:[50,26.5],ceiling:[36,41],av:[36,52],fire:[36,56]},
-  4:{support:[46,66],work:[23,8.5],security:[50,26.5],ceiling:[36,39],av:[36,52],fire:[36,56]},
-  5:{support:[46,66],work:[36,41],security:[50,26.5],ceiling:[36,39],av:[36,52],fire:[36,56]},
-  6:{support:[46,66],work:[36,41],security:[50,26.5],ceiling:[36,39],av:[36,52],fire:[36,56]},
-  7:{support:[48,65],work:[36,36],security:[58,39],ceiling:[36,36],av:[36,36],fire:[40,60]}
-};
-
 const OFFSETS = [[0,0],[0.8,0],[-0.8,0],[0,0.8],[0,-0.8],[0.8,0.8],[-0.8,0.8],[0.8,-0.8],[-0.8,-0.8]];
 
 function levelOf(id){
@@ -99,7 +88,7 @@ function classOf(id){
   if(/SEC-(?:CAM|READER|INTERCOM)/.test(id)) return "security";
   if(/AV-(?:CAM|MIC|SPKR)|::AV-DECODER/.test(id)) return "av";
   if(/USER-(?:WS|MON)|VOICE-PHONE|PRINT-MFP/.test(id)) return "work";
-  if(/(?:NET-(?:ACCESS-SW|PATCH-PANEL|FIBER-PANEL|EDGE-RTR|CORE-SW|FW)|ICT-|BAS-CTRL|SEC-ACCESS-CTRL|AV-(?:CTRL|DSP)|WAN-|SRV-|SEC-NVR)/.test(id)) return "support";
+  if(/(?:NET-(?:ACCESS-SW|PATCH-PANEL|FIBER-PANEL|EDGE-RTR|CORE-SW|FW)|ICT-|ELEC-PANEL|BAS-CTRL|SEC-ACCESS-CTRL|AV-(?:CTRL|DSP)|WAN-|SRV-|SEC-NVR)/.test(id)) return "support";
   if(/FIRE-(?:FACP|GW)/.test(id)) return "support";
   return null;
 }
@@ -125,18 +114,17 @@ export function resolveElectronicsSpatialBinding(assetId){
   if(level===null || !cls || !A[level]) return null;
   const anchors=A[level][cls]||[], idx=Math.max(0,numericIndex(assetId));
   const anchor_id=anchors.length ? anchors[idx%anchors.length] : null;
-  const fallback_xy_ft=FALLBACK[level][cls]||[36,36];
   const offset_ft=OFFSETS[idx%OFFSETS.length];
   return {
     asset_id:assetId,
     level,
     class:cls,
     anchor_id,
-    fallback_xy_ft,
     offset_ft,
     aff_ft:affFor(assetId,cls),
-    physical_visibility:"bound_only",
-    authority:"canonical_floor_object_or_room_anchor",
+    placement_mode:"native_generator_coordinates",
+    physical_visibility:"generated_physical_installation",
+    authority:"step4b_native_physical_installation_with_canonical_context",
     exterior_intent:level===7
   };
 }

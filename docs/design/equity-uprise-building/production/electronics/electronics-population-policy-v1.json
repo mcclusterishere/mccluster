@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "status": "step4a-electronics-design-intent",
+  "schema_version": "1.1.0",
+  "status": "step4b-physical-installation-design-intent",
   "not_for_construction": true,
   "building_id": "equity-uprise-core-v2",
   "design_basis": {
@@ -25,9 +25,11 @@
     "backbone_fiber": "OS2 single-mode",
     "wap_active_cables": 1,
     "wap_spare_cables": 1,
-    "physical_path_diversity": "not yet modeled; dual logical uplinks currently share the building service/riser reservation",
+    "physical_path_diversity": "dual logical uplinks remain in the shared data-riser reservation; separate fiber strands/terminations are modeled, but geographically diverse shaft routing is not claimed",
     "rf_design_status": "design-intent only; predictive design plus validation survey required before as-built placement",
-    "external_carrier_status": "primary handoff modeled; secondary carrier path reserved but not claimed installed"
+    "external_carrier_status": "primary handoff modeled; secondary carrier path reserved but not claimed installed",
+    "physical_installation_model": "architecturally coordinated digital-twin routing using the locked service-riser envelopes, floor IDF/electrical support zone, ceiling pathways, work-area jacks and power outlets",
+    "route_truth": "every modeled physical connection must carry a deterministic route, endpoint ports, pathway class and design-intent length; routes remain digital-twin coordination rather than construction drawings"
   },
   "floor_profiles": {
     "0": {
@@ -390,7 +392,7 @@
     },
     "24VDC-CLASS2": {
       "medium": "low-voltage power pair",
-      "role": "controller/lock/sensor power",
+      "role": "controller/sensor/access low-voltage power where equipment selection supports 24VDC",
       "supports": [
         "Class 2 low-voltage power"
       ],
@@ -411,6 +413,22 @@
         "carrier LTE/5G"
       ],
       "provider_external": true
+    },
+    "208Y120V-FEEDER": {
+      "medium": "building feeder conductors in raceway",
+      "role": "normal/emergency riser-to-floor panel feeder concept",
+      "supports": [
+        "208Y/120V distribution design intent"
+      ],
+      "engineering_required": true
+    },
+    "NEMA5-15-POWER-CORD": {
+      "medium": "listed flexible equipment power cord",
+      "role": "receptacle/floor-box to plug-connected equipment",
+      "supports": [
+        "120V plug-connected equipment"
+      ],
+      "engineering_required": true
     }
   },
   "core_physical_assets": [
@@ -498,5 +516,64 @@
     "ADMIN",
     "ADVANCED",
     "EXPERT"
-  ]
+  ],
+  "physical_routing": {
+    "coordinate_system": "core-v2 local feet; z is absolute building elevation in builder output",
+    "service_zone_ft": {
+      "x1": 40,
+      "y1": 60.5,
+      "x2": 50,
+      "y2": 64.5
+    },
+    "floor_support_points_ft": {
+      "data_rack": [
+        45,
+        62.8
+      ],
+      "normal_panel": [
+        47.7,
+        62.8
+      ],
+      "emergency_panel": [
+        49,
+        62.8
+      ],
+      "tray_turn": [
+        40,
+        61.1
+      ]
+    },
+    "riser_centers_ft": {
+      "normal_power": [
+        57.25,
+        67.5
+      ],
+      "emergency_power": [
+        57.25,
+        70.5
+      ],
+      "data": [
+        58.5,
+        67.5
+      ],
+      "controls": [
+        58.5,
+        70.5
+      ],
+      "fire": [
+        54.25,
+        67.5
+      ]
+    },
+    "pathway_heights_aff_ft": {
+      "data_tray": 10.2,
+      "controls_tray": 9.9,
+      "fire_alarm": 10.45,
+      "power_branch": 9.4
+    },
+    "work_area_model": "switch patch cord -> patch panel -> Cat6A permanent link -> work-area/ceiling jack -> equipment patch cord",
+    "power_model": "building feeder -> floor panel -> branch circuit -> receptacle/floor box -> equipment power cord; PoE endpoints receive power only over the modeled Ethernet path",
+    "concealment_default": "concealed_above_ceiling_or_in_raceway",
+    "visible_lab_mode": "cable geometry may be exposed by the viewer for training/trace labs while remaining concealed in ordinary architectural presentation"
+  }
 }

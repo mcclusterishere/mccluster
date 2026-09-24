@@ -5,7 +5,7 @@ import {
   VIEWER_LAB_EXECUTION_TARGET,
   createViewerLabController,
 } from "./equity-uprise-viewer-lab-integration.mjs";
-import { resolveElectronicsSpatialBinding, ELECTRONICS_TO_METERS } from "../electronics/equity-uprise-electronics-spatial-bindings-v1.mjs";
+import { resolveElectronicsSpatialBinding, ELECTRONICS_TO_METERS, ELECTRONICS_SPATIAL_BINDING_VERSION } from "../electronics/equity-uprise-electronics-spatial-bindings-v1.mjs";
 
 const load = (relativePath) => JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8"));
 const text = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), "utf8");
@@ -58,6 +58,15 @@ assert.ok(manifestIds.every((id) => registryIds.has(id)), "every electronics man
 for (const connection of datasets.connections.connections || []) {
   assert.ok(registryIds.has(connection.from_asset_id), "connection source must resolve " + connection.connection_id);
   assert.ok(registryIds.has(connection.to_asset_id), "connection destination must resolve " + connection.connection_id);
+}
+
+assert.equal(datasets.manifest.status, "step4b-physical-installation-fabric");
+assert.equal(datasets.connections.status, "step4b-physical-installation-connections");
+for (const connection of datasets.connections.connections || []) {
+  assert.ok((connection.route || []).length >= 2, "physical connection must expose routed geometry: " + connection.connection_id);
+  assert.ok(connection.from_port && connection.to_port, "physical connection must expose both port IDs: " + connection.connection_id);
+  assert.ok(connection.metadata?.pathway_class, "physical connection must expose pathway class: " + connection.connection_id);
+  assert.equal(connection.metadata?.lab_traceable, true, "physical connection must be lab-traceable: " + connection.connection_id);
 }
 
 function controller(lab, difficulty, start = 1000) {
@@ -232,6 +241,7 @@ for (const required of [
 }
 assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
 assert.equal(ELECTRONICS_TO_METERS, 0.3048, "electronics source units must convert feet to meters");
+assert.equal(ELECTRONICS_SPATIAL_BINDING_VERSION, "1.1.0");
 for (const [id,level] of [
   ["B1-NET-CORE-SW-01-I001",0],
   ["F1-NET-WAP-01",1],
@@ -245,7 +255,9 @@ for (const [id,level] of [
   assert.ok(binding, "physical electronics asset must resolve spatially: "+id);
   assert.equal(binding.level, level);
   assert.ok(binding.anchor_id, "spatial binding must name a canonical anchor: "+id);
-  assert.equal(binding.authority, "canonical_floor_object_or_room_anchor");
+  assert.equal(binding.authority, "step4b_native_physical_installation_with_canonical_context");
+  assert.equal(binding.placement_mode, "native_generator_coordinates");
+  assert.equal(Object.prototype.hasOwnProperty.call(binding, "fallback_xy_ft"), false, "Step 4B may not expose fallback coordinates");
 }
 assert.equal(resolveElectronicsSpatialBinding("LOGIC-SVC-DNS"), null, "logical services must never become physical meshes");
 const spatialBindings = manifestIds.map((id) => resolveElectronicsSpatialBinding(id)).filter(Boolean);
@@ -269,33 +281,39 @@ for (const required of [
   "ELECTRONICS_SPATIAL_MODULE_URL",
   "electronics.scale.setScalar(FT)",
   "applyElectronicsSpatialBindings",
-  "electronicsBindingWorld",
+  "registerNativeElectronicsMesh",
+  "placement_mode:'native_generator_coordinates'",
   "o.userData.spatialBound=true",
   "electronicsUnboundCount",
   "spatialConnectionOverlay",
-  "room-bound devices",
-  "unresolved hidden",
-  "if(!binding?.anchor_id)return null",
-  "if(!anchor)return null",
-  "n.startsWith(id+'-I')",
+  "routePointWorld",
+  "physicalRoute=true",
   "ENGINEERING-XRAY-OVERLAY",
   "await buildingLoaded",
   "X-Ray: Loading",
   "setArchitectureGhost(true)",
   "SpriteMaterial",
   "depthTest:false",
-  "m.depthTest=!on",
   "rebuildEngineeringMarkers",
-  "visible room-bound devices",
-  "0 canonical device anchors resolved",
+  "physical device coordinates resolved",
   "engineeringRequestId",
   "requestId!==engineeringRequestId",
   "engineeringOverlay.remove(o)",
-  "if(engineeringMode&&!roomMode)syncEngineeringView()",
+  "syncElectronicsVisibility",
+  "id=\"plant\"",
+  "id=\"cabling\"",
+  "Physical Plant: Off",
+  "Cabling: Off",
+  "routed cables",
+  "plantLegend",
+  "Cat6A data / PoE",
+  "OS2 fiber",
+  "208Y/120V feeder",
 ]) {
-  assert.ok(viewer.includes(required), "electronics spatial integration guard missing: "+required);
+  assert.ok(viewer.includes(required), "electronics physical-installation viewer guard missing: "+required);
 }
 assert.equal(viewer.includes("anchor?anchor.clone():floorWorld"), false, "unresolved electronics may not fall back to generic physical coordinates");
+assert.equal(viewer.includes("electronicsBindingWorld"), false, "Step 4B viewer must not reposition generated devices back onto conceptual anchors");
 assert.ok(viewer.includes("double-click inspectable"));
 for (const required of [
   'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
@@ -305,11 +323,11 @@ for (const required of [
   assert.ok(viewer.includes(required), "Room Mode contract missing: " + required);
 }
 assert.ok(viewer.includes("services.visible=servicesOn&&!roomMode"), "Room Mode must hide raw building-services overlay");
-assert.ok(viewer.includes("electronics.visible=false"), "Room/Play Mode must keep raw electronics topology hidden by default");
+assert.ok(viewer.includes("electronics.visible=false"), "electronics layer must start hidden until an explicit plant/lab/engineering mode requests it");
 for (const required of [
   'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
   "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
-  "Play mode keeps the full electronics topology hidden. Learners see only symptom-relevant markers.",
+  "if(exp.learner_first&&!plantMode)await setPhysicalPlantMode(true);",
   "view.visuals.assets.forEach(x=>styleCanonical(f1",
   "Gyroscope live · left/right = yaw · up/down = pitch",
   "roomSensorMode='motion-primary'",

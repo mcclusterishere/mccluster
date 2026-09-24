@@ -24,7 +24,7 @@ const connections = load("../electronics/generated/equity-uprise-electronics-con
 const manifest = load("../electronics/generated/equity-uprise-electronics-manifest-v1.json");
 
 const labs = catalog.labs;
-assert.equal(ELECTRONICS_SANDBOX_VERSION, "1.0.0");
+assert.equal(ELECTRONICS_SANDBOX_VERSION, "1.1.0");
 assert.ok(Array.isArray(labs));
 assert.equal(labs.length, 40);
 
@@ -35,7 +35,7 @@ const sourceFaultIds = [...new Set(
 assert.deepEqual(
   [...SUPPORTED_FAULT_IDS].sort(),
   sourceFaultIds,
-  "Step 2 must explicitly support every current Step 4A fault token"
+  "Step 2 must explicitly support every current Step 4B fault token"
 );
 
 const selectorProbe = new ElectronicsSandbox({ registry, connections, manifest });
@@ -46,7 +46,7 @@ assert.equal(sourceSelectors.length, 33);
 assert.deepEqual(
   selectorCoverage.filter((entry) => !entry.resolved).map((entry) => entry.selector),
   [],
-  "every current Step 4A target selector must resolve against canonical electronics authority"
+  "every current Step 4B target selector must resolve against canonical electronics authority"
 );
 
 assert.ok(selectorCoverage.find((entry) => entry.selector === "CAT6A-HORIZONTAL")?.connection_ids.length > 0);
@@ -193,6 +193,12 @@ for (const labId of ["IT-LAB-017", "IT-LAB-027", "IT-LAB-029", "IT-LAB-034", "IT
   const wap = snapshot.asset_states.find((state) => state.asset_type === "wireless_ap");
   assert.ok(wap);
   assert.equal(wap.availability, "unavailable");
+  assert.ok(snapshot.asset_states.some(
+    (state) => state.asset_type === "data_jack" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "CAT6A-PATCH" && state.availability === "unavailable"
+  ));
   assert.ok(snapshot.connection_states.some(
     (state) => state.cable_type === "CAT6A-HORIZONTAL" && state.availability === "unavailable"
   ));
@@ -212,6 +218,9 @@ for (const labId of ["IT-LAB-017", "IT-LAB-027", "IT-LAB-029", "IT-LAB-034", "IT
   ));
   assert.ok(snapshot.connection_states.some(
     (state) => state.cable_type === "BACNET-MSTP-STP" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "24VDC-CLASS2" && state.availability === "unavailable"
   ));
 }
 
@@ -256,6 +265,15 @@ for (const labId of ["IT-LAB-017", "IT-LAB-027", "IT-LAB-029", "IT-LAB-034", "IT
     (state) => state.asset_type === "access_switch" && state.availability === "unavailable"
   ));
   assert.ok(snapshot.asset_states.some(
+    (state) => state.asset_type === "data_jack" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "CAT6A-HORIZONTAL" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "CAT6A-PATCH" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.asset_states.some(
     (state) => ["wireless_ap", "workstation", "ip_phone", "camera"].includes(state.asset_type) &&
       state.availability === "unavailable"
   ));
@@ -285,6 +303,21 @@ for (const labId of ["IT-LAB-017", "IT-LAB-027", "IT-LAB-029", "IT-LAB-034", "IT
   );
   const snapshot = sandbox.snapshot();
   assert.ok(snapshot.asset_states.some((state) => state.condition_flags.includes("normal_power_loss")));
+  assert.ok(snapshot.asset_states.some(
+    (state) => state.asset_type === "electrical_panel" && state.condition_flags.includes("normal_power_loss")
+  ));
+  assert.ok(snapshot.asset_states.some(
+    (state) => state.asset_type === "receptacle" && state.condition_flags.includes("normal_power_loss")
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "208Y120V-FEEDER" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "120VAC-BRANCH" && state.availability === "unavailable"
+  ));
+  assert.ok(snapshot.connection_states.some(
+    (state) => state.cable_type === "NEMA5-15-POWER-CORD" && state.availability === "unavailable"
+  ));
   assert.ok(snapshot.asset_states.some((state) => state.condition_flags.includes("core_link_degraded")));
   assert.ok(snapshot.asset_states.some((state) => state.condition_flags.includes("bas_alarm")));
   assert.ok(
@@ -351,12 +384,13 @@ console.log(JSON.stringify({
   electronics_connections: connections.connections.length,
   manifest_assets: manifest.new_asset_ids.length,
   representative_propagation_checks: [
-    "wifi_ap_link",
-    "bas_controller_to_mstp_sensors",
+    "wifi_ap_jack_patch_permanent_link",
+    "bas_controller_to_mstp_and_class2_sensors",
     "access_controller_to_osdp_readers",
     "fiber_uplink_failover",
-    "access_switch_to_floor_endpoints",
+    "access_switch_to_patch_panel_to_jack_to_endpoint",
     "firewall_ha",
+    "normal_power_feeder_panel_branch_outlet_cord_load",
     "cross_system_power_core_bas",
     "commissioning_documentation_mismatch",
     "it_ot_security_posture"

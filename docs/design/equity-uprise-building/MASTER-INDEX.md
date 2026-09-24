@@ -228,7 +228,7 @@ Step 3B consumes the deterministic services branch topology after the services b
 
 ## Electronics / IT infrastructure
 
-Canonical Step 4A authority/source:
+Canonical Step 4B physical-installation authority/source:
 - `ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md`
 - `production/electronics/electronics-population-policy-v1.json`
 - `production/electronics/build_equity_uprise_electronics_v1.py`
@@ -241,7 +241,9 @@ Generated electronics artifacts:
 - `production/electronics/generated/equity-uprise-electronics-step4a-report.json`
 - `production/electronics/generated/equity-uprise-electronics-fabric-v1.glb`
 
-The electronics layer extends, rather than replaces, the Digital-to-Physical Asset Registry and Step 3A/3B causal graph.
+The electronics layer extends, rather than replaces, the Digital-to-Physical Asset Registry and Step 3A/3B causal graph. Step 4B reconciles this graph with the locked Services/riser geometry: explicit panelboards, outlets, data jacks, equipment cords, routed copper/fiber/control/fire/power paths, port IDs and native physical device placement are now part of the canonical training model.
+
+The existing generated artifact filenames remain stable for downstream compatibility even though their internal status/version advances to Step 4B.
 
 
 ## Federal training authority

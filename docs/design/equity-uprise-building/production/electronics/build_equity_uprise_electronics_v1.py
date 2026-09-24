@@ -79,45 +79,192 @@ for n,path in FLOOR_INVENTORIES.items():
 
 def ffe(n): return float(levels[n]["finished_floor_elevation_ft"])
 def pos(n,x,y,z=4.0): return [float(x),float(y),ffe(n)+float(z)]
+
+# Step 4B installation anchors. These reference the approved floor inventories;
+# no device may use an arbitrary whole-floor fallback when a real room/object
+# anchor with geometry is available.
+ANCHOR_IDS={
+  0:{
+    "work":["B1-TELECOM-CONSOLE-01","B1-LAB-TABLE-01","B1-OPS-DESK-01"],
+    "security":["B1-OPS-GATE-01","B1-LOCK-PANEL-01","B1-EMERGENCY-COMMS-01"],
+    "ceiling":["B1-TELECOM-ROOM-01","B1-LAB-ZONE-01","B1-OPS-ZONE-01","B1-STAGING-ZONE-01"],
+    "av":["B1-LAB-DASHBOARD-01","B1-OPS-STATUS-01","B1-OPS-OCCUPANCY-01"],
+    "fire":["B1-FIRE-RISER-01","B1-FIRE-PUMP-01"],
+  },
+  1:{
+    "work":["F1-RECEPTION-MONITOR-01","F1-PASSPORT-TABLE-01","F1-PASSPORT-TABLE-02","F1-INTAKE-TABLE-01"],
+    "security":["F1-ENTRY-DOOR-INNER","F1-RECEPTION-DESK-01","F1-PASS-ELEV-CALL-01","F1-STAIR-A-BARRIER-DOWN","F1-STAIR-B-BARRIER-DOWN"],
+    "ceiling":["F1-ARRIVAL-INSET-01","F1-LOUNGE-RUG-01","F1-INTAKE-TABLE-01","F1-PASSPORT-TABLE-01"],
+    "av":["F1-JOURNEY-DISPLAY-01","F1-JOURNEY-DISPLAY-02","F1-JOURNEY-DISPLAY-03","F1-JOURNEY-DISPLAY-04","F1-INTAKE-DISPLAY-01","F1-LOUNGE-DISPLAY-01"],
+    "fire":["F1-FE-01","F1-FE-02"],
+  },
+  2:{
+    "work":["F2-FORUM-TABLE-01","F2-MEMBER-CHECKIN-01","F2-LOUNGE-TABLE-01"],
+    "security":["F2-MEMBER-CHECKIN-01","F2-FREIGHT-CONTROL-01"],
+    "ceiling":["F2-FORUM-TABLE-01","F2-LOUNGE-RUG-01","F2-MEMBER-CHECKIN-01"],
+    "av":["F2-DISPLAY-CURRENT-ISSUES","F2-DISPLAY-PERSPECTIVES","F2-DISPLAY-OPPORTUNITIES","F2-TALK-INTERFACE-01"],
+    "fire":["F2-FE-WEST-01","F2-FE-EAST-01"],
+  },
+  3:{
+    "work":["F3-OPPORTUNITY-TABLE-01","F3-INTERVIEW-A-TABLE-01","F3-INTERVIEW-B-TABLE-01","F3-MEMBER-CHECKIN-01"],
+    "security":["F3-MEMBER-CHECKIN-01","F3-INTERVIEW-A-DOOR-01","F3-INTERVIEW-B-DOOR-01","F3-FREIGHT-CONTROL-01"],
+    "ceiling":["F3-OPPORTUNITY-TABLE-01","F3-LOUNGE-RUG-01","F3-INTERVIEW-A-TABLE-01","F3-INTERVIEW-B-TABLE-01"],
+    "av":["F3-DISPLAY-MATCH","F3-DISPLAY-PEOPLE","F3-DISPLAY-APPLICATIONS","F3-PEOPLE-DISPLAY-01","F3-INTERVIEW-A-DISPLAY-01","F3-INTERVIEW-B-DISPLAY-01"],
+    "fire":["F3-FE-WEST-01","F3-FE-EAST-01"],
+  },
+  4:{
+    "work":["F4-EDIT-DESK-01","F4-RECORDING-WORKSURFACE-01","F4-LISTENING-TABLE-01","F4-FLOOR-CONTROL-01"],
+    "security":["F4-RECORDING-DOOR-01","F4-EDIT-DOOR-01","F4-FLOOR-CONTROL-01","F4-FREIGHT-CONTROL-01"],
+    "ceiling":["F4-LISTENING-TABLE-01","F4-RECORDING-WORKSURFACE-01","F4-EDIT-DESK-01","F4-GALLERY-TABLE-01"],
+    "av":["F4-DISPLAY-LISTEN","F4-DISPLAY-WATCH","F4-DISPLAY-ARCHIVE","F4-RECORDING-MONITOR-01","F4-EDIT-DISPLAY-01","F4-MIC-STAND-01"],
+    "fire":["F4-FE-WEST-01","F4-FE-EAST-01"],
+  },
+  5:{
+    "work":["F5-POLICY-TABLE-01","F5-SOURCE-TABLE-01","F5-PUB-TABLE-01","F5-PUB-WORKSTATION-01","F5-ARCHIVE-TABLE-01"],
+    "security":["F5-SOURCE-DOOR-01","F5-PUB-DOOR-01","F5-NAVIGATOR-01","F5-FREIGHT-CONTROL-01"],
+    "ceiling":["F5-POLICY-TABLE-01","F5-SOURCE-TABLE-01","F5-PUB-TABLE-01","F5-ARCHIVE-TABLE-01"],
+    "av":["F5-DISPLAY-RESEARCH","F5-DISPLAY-EVIDENCE","F5-DISPLAY-RECORD","F5-SOURCE-DISPLAY-01","F5-PUB-DISPLAY-01","F5-ARCHIVE-SEARCH-01"],
+    "fire":["F5-FE-WEST-01","F5-FE-EAST-01"],
+  },
+  6:{
+    "work":["F6-COMMAND-TABLE-01","F6-STRATEGY-TABLE-01","F6-BRIEFING-TABLE-01","F6-ROOF-TRANSITION-01"],
+    "security":["F6-STRATEGY-DOOR-01","F6-BRIEFING-DOOR-01","F6-ROOF-TRANSITION-01","F6-FREIGHT-CONTROL-01"],
+    "ceiling":["F6-COMMAND-TABLE-01","F6-STRATEGY-TABLE-01","F6-BRIEFING-TABLE-01","F6-SALON-TABLE-01"],
+    "av":["F6-DISPLAY-NOW","F6-DISPLAY-PAST","F6-DISPLAY-JOIN","F6-STRATEGY-DISPLAY-01","F6-BRIEFING-DISPLAY-01","F6-HALO-GLOBE-01"],
+    "fire":["F6-FE-WEST-01","F6-FE-EAST-01"],
+  },
+  7:{
+    "work":["F7-ECOSYSTEM-BEACON-01","F7-RETURN-HOME-01","F7-UPRISE-WORLD-PORTAL-01"],
+    "security":["F7-STAIR-A-DOOR-01","F7-STAIR-B-DOOR-01","F7-PASSENGER-OVERRUN-01"],
+    "ceiling":["F7-ROOF-DECK-01","F7-MEP-SCREEN-01","F7-MOBILITY-FIELD-01"],
+    "av":["F7-ECOSYSTEM-DISPLAY-01","F7-ROUTE-ACCESS-STATE-01"],
+    "fire":["F7-STAIR-A-HEADHOUSE-01","F7-STAIR-B-HEADHOUSE-01"],
+  },
+}
+ANCHOR_OFFSETS=[(0,0),(1.2,0),(-1.2,0),(0,1.2),(0,-1.2),(1.2,1.2),(-1.2,1.2),(1.2,-1.2),(-1.2,-1.2)]
+
+def placement_xy(obj):
+    p=obj.get("placement",{}) or {}
+    for key in ("center_ft","center"):
+        v=p.get(key)
+        if isinstance(v,dict) and "x" in v and "y" in v:return float(v["x"]),float(v["y"])
+        if isinstance(v,(list,tuple)) and len(v)>=2:return float(v[0]),float(v[1])
+    for key in ("bounds_ft","room_bounds_ft","band_ft"):
+        b=p.get(key)
+        if isinstance(b,dict) and all(k in b for k in ("x1","y1","x2","y2")):
+            return .5*(float(b["x1"])+float(b["x2"])),.5*(float(b["y1"])+float(b["y2"]))
+        if isinstance(b,(list,tuple)) and len(b)>=4:
+            return .5*(float(b[0])+float(b[2])),.5*(float(b[1])+float(b[3]))
+    if "x_ft" in p and "y_ft" in p:return float(p["x_ft"]),float(p["y_ft"])
+    return None
+
+def inventory_anchor(n,group,i=0):
+    ids=ANCHOR_IDS.get(n,{}).get(group,[])
+    if not ids:return None
+    objs={o.get("id") or o.get("object_id"):o for o in floor_objects.get(n,[])}
+    # Prefer the requested anchor, then any anchor in the same semantic group that
+    # has actual geometric placement in the approved floor inventory.
+    ordered=ids[i%len(ids):]+ids[:i%len(ids)]
+    for aid in ordered:
+        o=objs.get(aid)
+        xy=placement_xy(o) if o else None
+        if xy:return xy
+    return None
+
+def anchored_pos(n,group,i,z_aff,fallback_xy):
+    xy=inventory_anchor(n,group,i)
+    if not xy:xy=fallback_xy
+    dx,dy=ANCHOR_OFFSETS[i%len(ANCHOR_OFFSETS)]
+    return pos(n,xy[0]+dx,xy[1]+dy,z_aff)
+
 def default_pos(n,kind,i=0,count=1):
+    # Support equipment aligns with the Services Step 7 rack/panel zone.
     if kind in {"rack","switch","patch_panel","fiber_panel","ups","pdu","bas_controller","access_controller"}:
-        return pos(n,46.0+(i%2)*1.1,66.0+(i//2)*0.8,2.0+0.7*(i%8))
-    if kind=="wap":
-        arr=[(24,24),(48,48),(24,48),(48,24)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,10.2)
+        return pos(n,45.0+(i%2)*.9,62.8+(i//2)*.55,1.2+0.65*(i%8))
+    if kind=="electrical_panel": return pos(n,47.7+(i%2)*1.3,62.8,5.0)
+    if kind=="wap": return anchored_pos(n,"ceiling",i,10.2,(24,24))
     if kind=="camera":
-        arr=[(8,8),(64,8),(8,64),(64,64)]
-        x,y=arr[i%4]; return pos(n,x,y,9.5)
-    if kind in {"reader","intercom"}:
-        arr=[(52,34),(59,55),(18,55),(49,30)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,4.0)
-    if kind=="sensor":
-        arr=[(18,18),(54,18),(18,54),(54,54)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,7.0)
+        if 1<=n<=6:
+            x,y=((48.0,24.0),(48.0,50.0))[i%2]
+            return pos(n,x,y,8.8)
+        return anchored_pos(n,"security",i,8.8,(48,24))
+    if kind=="reader":
+        if 1<=n<=6:return pos(n,49.8,27.0,4.0)
+        return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="intercom":
+        if 1<=n<=6:return pos(n,50.35,27.225,4.0)
+        return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="fire_detector":
+        if 1<=n<=6:
+            x,y=((24,26),(38,26),(24,48),(38,48))[i%4]
+            return pos(n,x,y,10.56)
+        return anchored_pos(n,"ceiling",i,9.7,(38,26))
+    if kind=="fire_notification":
+        if 1<=n<=6:
+            x,y=((20,20),(48,50))[i%2]
+            return pos(n,x,y,6.6)
+        return anchored_pos(n,"fire",i,6.6,(38,26))
+    if kind=="sensor": return anchored_pos(n,"ceiling",i,7.8,(36,39))
     if kind in {"workstation","phone","monitor"}:
-        cols=max(1,int(math.ceil(math.sqrt(max(count,1)))))
-        row=i//cols; col=i%cols
-        return pos(n,27+col*5.0,34+row*5.0,3.1 if kind!="monitor" else 4.2)
-    if kind=="mfp": return pos(n,20,58,3.0)
+        return anchored_pos(n,"work",i,3.15 if kind!="monitor" else 4.25,(36,40))
+    if kind=="mfp": return anchored_pos(n,"work",i,3.0,(42,52))
     if kind in {"av_camera","av_mic","speaker"}:
-        arr=[(24,28),(48,28),(24,48),(48,48),(36,28),(36,48),(28,38),(44,38)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,8.5 if kind!="speaker" else 8.0)
-    if kind=="weather": return pos(n,36,42,6.0)
-    return pos(n,36+(i%5)*2,40+(i//5)*2,3.5)
+        return anchored_pos(n,"av",i,7.4 if kind=="av_camera" else (4.6 if kind=="av_mic" else 8.5),(36,50))
+    if kind=="fire": return anchored_pos(n,"fire",i,9.7,(38,26))
+    if kind=="weather": return pos(n,48,63,6.0)
+    return anchored_pos(n,"work",i,3.5,(36,40))
+
+# B1 detailed builder is geometric authority for these current-pass objects even
+# though the B1 inventory records themselves are semantic and omit placement.
+# Coordinates are derived from the explicit boxes/racks in
+# basement-b1/build_equity_uprise_basement_b1_v2.py.
+B1_DETAILED_POSITIONS={
+    "B1-ELEC-UPS-01-I001":[36.5,15.5,2.85],
+    "B1-ELEC-UPS-01-I002":[42.5,15.5,2.85],
+    "B1-TELECOM-CONSOLE-01":[37.5,24.0,3.15],
+    "B1-LAB-CONSOLE-01":[47.5,39.25,3.2],
+    "B1-LAB-DASHBOARD-01":[35.0,52.325,5.7],
+    "B1-OPS-STATUS-01":[26.5,61.325,5.3],
+    "B1-OPS-OCCUPANCY-01":[36.5,61.325,5.3],
+    "B1-OPS-ROUTE-01":[44.25,58.7,3.25],
+}
 
 def existing_position(a):
     loc=a.get("location",{})
+    n=loc.get("level_number")
+    if n is None:
+        lid_=loc.get("level_id")
+        if lid_=="B1": n=0
+        elif isinstance(lid_,str) and lid_.startswith(("F","L")):
+            try:n=int(lid_[1:])
+            except ValueError:n=None
+    n=0 if n is None else int(n)
     c=loc.get("center_ft")
     if c:
-        z=ffe(loc.get("level_number") or 0)+4.0
-        if len(c)>=3: z=ffe(loc.get("level_number") or 0)+float(c[2])
+        z=ffe(n)+4.0
+        if len(c)>=3: z=ffe(n)+float(c[2])
         return [float(c[0]),float(c[1]),z]
     b=loc.get("bounds_ft")
     if b and len(b)>=4:
-        return [0.5*(float(b[0])+float(b[2])),0.5*(float(b[1])+float(b[3])),ffe(loc.get("level_number") or 0)+4.0]
+        return [0.5*(float(b[0])+float(b[2])),0.5*(float(b[1])+float(b[3])),ffe(n)+4.0]
     aid=a["asset_id"]
+    if aid in B1_DETAILED_POSITIONS:
+        p=B1_DETAILED_POSITIONS[aid]
+        return [float(p[0]),float(p[1]),ffe(0)+float(p[2])]
+    # Reconcile registry assets back to their approved floor-inventory geometry.
+    obj=next((o for o in floor_objects.get(n,[]) if (o.get("id") or o.get("object_id"))==aid),None)
+    xy=placement_xy(obj) if obj else None
+    if xy:return [xy[0],xy[1],ffe(n)+4.2]
+    # Some older canonical display/terminal records carry only semantic placement
+    # rules. Bind them to another verified object in the same room/program group
+    # rather than inventing a whole-floor fallback coordinate.
+    label=(a.get("label","")+" "+a.get("classification",{}).get("asset_type","")).lower()
+    group="av" if any(k in label for k in ("display","monitor","dashboard","globe")) else ("work" if any(k in label for k in ("terminal","kiosk","console","workstation")) else None)
+    if group:
+        idx=max(0,sum(ord(ch) for ch in aid)%max(1,len(ANCHOR_IDS.get(n,{}).get(group,[]))))
+        xy=inventory_anchor(n,group,idx)
+        if xy:return [xy[0],xy[1],ffe(n)+4.2]
     if aid in trace_xy:
-        n=loc.get("level_number") or 0
         return [trace_xy[aid][0],trace_xy[aid][1],ffe(n)+4.0]
     return None
 
@@ -473,7 +620,7 @@ for n in range(0,8):
         strobe_count=2
         for i in range(det_count):
             aid=f"{lev}-FIRE-DET-{i+1:02d}"
-            add_asset(make_asset(aid,f"{lev} Addressable Fire Detector {i+1}","fire_detector",n,default_pos(n,"sensor",i),["FIRE-ALARM"],False,"floor_wide",security="restricted"))
+            add_asset(make_asset(aid,f"{lev} Addressable Fire Detector {i+1}","fire_detector",n,default_pos(n,"fire_detector",i),["FIRE-ALARM"],False,"floor_wide",security="restricted"))
             fire_slc.append((facp,aid))
         for i in range(strobe_count):
             aid=f"{lev}-FIRE-STROBE-{i+1:02d}"
@@ -573,6 +720,265 @@ for sf in range(0,7):
         add_conn(panel,target,"CAT6A-WAP-SPARE","data",["reserved Ethernet/PoE"],from_port=f"PORT-{port:02d}",to_port="SPARE-JACK",route=route,
                  metadata={"not_patched_to_switch":True,"future_wap_capacity":True})
 
+# Step 4B physical installation: turn the logical endpoint graph into a
+# lab-able structured-cabling and electrical distribution plant.
+#
+# Passive terminations are explicit assets. Physical routes use the same locked
+# service/riser coordinates as the Services authority. Exact conductor gauge,
+# breaker sizing, conduit fill and stamped construction routing remain deferred.
+def asset_type(aid):
+    return by_id.get(aid,{}).get("classification",{}).get("asset_type")
+
+def asset_level(aid):
+    n=by_id.get(aid,{}).get("location",{}).get("level_number")
+    return None if n is None else int(n)
+
+def route_length_ft(points):
+    total=0.0
+    for a,b in zip(points[:-1],points[1:]):
+        total+=math.sqrt(sum((float(b[i])-float(a[i]))**2 for i in range(3)))
+    return round(total,3)
+
+ROUTE=policy["physical_routing"]
+R=ROUTE["riser_centers_ft"]
+SUP=ROUTE["floor_support_points_ft"]
+H=ROUTE["pathway_heights_aff_ft"]
+
+def endpoint_outlet_position(aid):
+    p=positions.get(aid)
+    if not p:return None
+    t=asset_type(aid)
+    n=asset_level(aid)
+    if n is None:return None
+    # Desk/table loads use a floor-box style service point; wall/rack/display
+    # loads use a local receptacle close to the equipment.
+    if t in {"workstation","monitor"}:
+        return [p[0]+.22,p[1]+.18,ffe(n)+.12]
+    if t in {"network_display_decoder"}:
+        return [p[0]+.18,p[1],max(ffe(n)+1.3,p[2]-.55)]
+    if t in {"mfp"}:
+        return [p[0]-.25,p[1],ffe(n)+1.3]
+    if t in {"rack_ups","access_controller","bas_controller","av_controller","av_dsp"}:
+        return [p[0]-.28,p[1],ffe(n)+1.5]
+    return [p[0]+.18,p[1],ffe(n)+1.3]
+
+def endpoint_jack_position(aid):
+    p=positions.get(aid)
+    if not p:return None
+    t=asset_type(aid); n=asset_level(aid)
+    if n is None:return None
+    if t in {"wireless_ap","camera","av_camera","av_microphone"}:
+        return [p[0]-.18,p[1],min(ffe(n)+10.0,p[2])]
+    if t in {"intercom","access_controller","bas_controller"}:
+        return [p[0]-.18,p[1],max(ffe(n)+1.4,min(p[2],ffe(n)+4.2))]
+    return [p[0]-.22,p[1],ffe(n)+1.4]
+
+# Physical floor panelboards align with the Services Step 7 panel zone. L7 is
+# intentionally served from F6, matching the existing building-services authority.
+power_panels={}
+for n in range(0,7):
+    lev=lid(n)
+    normal=f"{lev}-ELEC-PANEL-N-01"
+    emergency=f"{lev}-ELEC-PANEL-E-01"
+    add_asset(make_asset(normal,f"{lev} Normal Power Panelboard","electrical_panel",n,default_pos(n,"electrical_panel",0),["ELEC-NORMAL"],False,"support_b",security="restricted"))
+    add_asset(make_asset(emergency,f"{lev} Emergency / Critical Power Panelboard","electrical_panel",n,default_pos(n,"electrical_panel",1),["ELEC-EMERGENCY"],False,"support_b",security="restricted"))
+    power_panels[n]={"normal":normal,"emergency":emergency}
+power_panels[7]=power_panels[6]
+
+# Feed every physical floor panel from the correct locked riser family.
+for n in range(0,7):
+    for mode,src in (("normal","ELEC-NORMAL"),("emergency","ELEC-EMERGENCY")):
+        add_conn(src,power_panels[n][mode],"208Y120V-FEEDER","power",["AC distribution"],
+                 metadata={"distribution_role":"floor_panel_feeder","served_level":lid(n),"engineering_required":True})
+
+# Close power gaps that were acceptable in the Step 4A logical fabric but are
+# not acceptable in a physical-installation model.
+for aid in sorted(a["asset_id"] for a in new_assets if a["classification"]["asset_type"] in {"av_controller","av_dsp"}):
+    if not any(x["to_asset_id"]==aid and x["cable_type"] in {"120VAC-BRANCH","IEC-POWER"} for x in connections):
+        add_conn("ELEC-NORMAL",aid,"120VAC-BRANCH","power",["AC"],metadata={"receptacle_required":True,"step4b_power_completion":True})
+for aid in (facp,firegw):
+    if not any(x["to_asset_id"]==aid and x["cable_type"] in {"120VAC-BRANCH","IEC-POWER"} for x in connections):
+        add_conn("ELEC-EMERGENCY",aid,"120VAC-BRANCH","power",["AC"],metadata={"dedicated_life_safety_power_design_intent":True,"step4b_power_completion":True})
+for ctrl,sensor in bas_sensor_bus:
+    add_conn(ctrl,sensor,"24VDC-CLASS2","power",["Class 2 low-voltage power"],
+             from_port="24V-OUT",to_port="24V-IN",metadata={"controller_selection_must_verify_voltage":True})
+
+# Split Cat6A permanent links at explicit work-area/ceiling jacks and split
+# plug-connected power at explicit receptacle/floor-box assets.
+JACK_TARGET_TYPES={
+    "wireless_ap","workstation","mfp","camera","access_controller","intercom",
+    "bas_controller","av_controller","av_dsp","av_camera","av_microphone",
+    "network_display_decoder","ip_phone"
+}
+initial_connections=list(connections)
+for conn in initial_connections:
+    target=conn["to_asset_id"]
+    t=asset_type(target)
+    n=asset_level(target)
+
+    if conn["cable_type"]=="CAT6A-HORIZONTAL" and t in JACK_TARGET_TYPES and n is not None and not target.endswith("::DATA-JACK"):
+        jp=endpoint_jack_position(target)
+        if jp:
+            jack=target+"::DATA-JACK"
+            add_asset(make_asset(jack,by_id[target]["label"]+" Data Jack","data_jack",n,jp,["DATA-STRUCTURED"],False,"work_area"))
+            old_to_port=conn.get("to_port") or "ETH0"
+            conn["to_asset_id"]=jack
+            conn["to_port"]="RJ45"
+            conn.setdefault("metadata",{})["termination_asset_id"]=jack
+            conn["metadata"]["work_area_endpoint_id"]=target
+            add_conn(jack,target,"CAT6A-PATCH","data",conn.get("protocols") or ["Ethernet/IP"],
+                     from_port="RJ45",to_port=old_to_port,power_transport=conn.get("power_transport"),
+                     metadata={"work_area_patch":True,"vlan":conn.get("metadata",{}).get("vlan")})
+
+    if conn["cable_type"]=="120VAC-BRANCH" and n is not None and target in by_id:
+        op=endpoint_outlet_position(target)
+        if op:
+            outlet=target+"::PWR-OUTLET"
+            add_asset(make_asset(outlet,by_id[target]["label"]+" Power Outlet","receptacle",n,op,["ELEC-NORMAL"],False,"work_area"))
+            original_source=conn["from_asset_id"]
+            mode="emergency" if original_source=="ELEC-EMERGENCY" else "normal"
+            panel_level=6 if n==7 else n
+            panel=power_panels[panel_level][mode]
+            conn["from_asset_id"]=panel
+            conn["to_asset_id"]=outlet
+            conn["from_port"]=None
+            conn["to_port"]="LINE"
+            conn.setdefault("metadata",{})["original_distribution_source"]=original_source
+            conn["metadata"]["load_asset_id"]=target
+            conn["metadata"]["branch_circuit_role"]="panel_to_receptacle"
+            add_conn(outlet,target,"NEMA5-15-POWER-CORD","power",["120VAC"],
+                     from_port="NEMA-5-15R",to_port="AC-IN",
+                     metadata={"plug_connected_load":True,"served_by_panel":panel})
+
+# The original add_conn calls generated connects_to relationships before the
+# passive terminations above existed. Rebuild only the Step 4A/B physical
+# connects_to edges from the final connection graph, then recompute upstream /
+# downstream arrays from the complete relationship set.
+relationships[:]=[x for x in relationships if not (x.get("type")=="connects_to" and str(x.get("relationship_id","")).startswith("REL::STEP4A::"))]
+new_relationships[:]=[x for x in new_relationships if x.get("type")!="connects_to"]
+for conn in connections:
+    add_rel("connects_to",conn["from_asset_id"],conn["to_asset_id"],"operational",
+            f"Physical/logical connection {conn['connection_id']} over {conn['cable_type']}")
+for a in assets:
+    a["systems"]["upstream_asset_ids"]=[]
+    a["systems"]["downstream_asset_ids"]=[]
+for rel in relationships:
+    src,dst=rel.get("from_asset_id"),rel.get("to_asset_id")
+    if src in by_id and dst in by_id:
+        by_id[src]["systems"]["downstream_asset_ids"]=uniq(by_id[src]["systems"].get("downstream_asset_ids",[])+[dst])
+        by_id[dst]["systems"]["upstream_asset_ids"]=uniq(by_id[dst]["systems"].get("upstream_asset_ids",[])+[src])
+
+def same_floor_route(start,end,n,height_aff,pathway):
+    if not start or not end:return []
+    z=ffe(n)+height_aff
+    # Route from support zone into the established north tray, then along the
+    # central ceiling spine before the final drop to the endpoint.
+    pts=[start,[SUP["tray_turn"][0],SUP["tray_turn"][1],z],[40.0,end[1],z],[end[0],end[1],z],end]
+    # Remove consecutive duplicate/near-duplicate points.
+    out=[]
+    for p in pts:
+        q=[round(float(v),4) for v in p]
+        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
+    return out
+
+def cross_floor_route(start,end,src_level,dst_level,riser_xy,height_aff):
+    if not start or not end:return []
+    sx,sy=riser_xy
+    z1=ffe(src_level)+height_aff
+    z2=ffe(dst_level)+height_aff
+    pts=[start,[sx,sy,z1],[sx,sy,z2],[40.0,61.1,z2],[40.0,end[1],z2],[end[0],end[1],z2],end]
+    out=[]
+    for p in pts:
+        q=[round(float(v),4) for v in p]
+        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
+    return out
+
+def feeder_route(conn,dst,n,mode):
+    xy=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+    z0=ffe(0)+8.6
+    zn=ffe(n)+H["power_branch"]
+    return [[xy[0],xy[1],z0],[xy[0],xy[1],zn],[SUP["normal_panel"][0] if mode=="normal" else SUP["emergency_panel"][0],SUP["normal_panel"][1],zn],dst]
+
+def route_for_connection(conn):
+    src,dst=conn["from_asset_id"],conn["to_asset_id"]
+    a,b=positions.get(src),positions.get(dst)
+    sa,sb=asset_level(src),asset_level(dst)
+    ctype=conn["cable_type"]
+
+    if ctype=="208Y120V-FEEDER" and b is not None and sb is not None:
+        return feeder_route(conn,b,sb,"emergency" if src=="ELEC-EMERGENCY" else "normal")
+    if a is None or b is None:return conn.get("route") or []
+
+    if ctype in {"10G-DAC","IEC-POWER","NEMA5-15-POWER-CORD","CAT6A-PATCH","HDMI","DISPLAYPORT"}:
+        return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+
+    if ctype=="OS2-SM-DUPLEX":
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["data"],H["data_tray"])
+        return same_floor_route(a,b,sa or sb or 0,H["data_tray"],"data")
+
+    if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}:
+        n=sb if sb is not None else sa
+        return same_floor_route(a,b,n,H["data_tray"],"data")
+
+    if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}:
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["controls"],H["controls_tray"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["controls_tray"],"controls")
+
+    if ctype in {"FIRE-ALARM-SLC","FIRE-ALARM-NAC"}:
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["fire"],H["fire_alarm"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["fire_alarm"],"fire_alarm")
+
+    if ctype=="120VAC-BRANCH":
+        if sa is not None and sb is not None and sa!=sb:
+            mode="emergency" if "PANEL-E-" in src else "normal"
+            riser=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+            return cross_floor_route(a,b,sa,sb,riser,H["power_branch"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["power_branch"],"power")
+
+    if ctype=="SPEAKER-PAIR":
+        return same_floor_route(a,b,sb if sb is not None else sa,9.2,"av")
+
+    return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+
+def port_prefix(ctype):
+    if "CAT6A" in ctype:return "RJ45"
+    if "OS2" in ctype:return "LC"
+    if "DAC" in ctype:return "SFP+"
+    if "HDMI" in ctype:return "HDMI"
+    if "DISPLAYPORT" in ctype:return "DP"
+    if "POWER" in ctype or "VAC" in ctype:return "PWR"
+    if "BACNET" in ctype:return "MSTP"
+    if "OSDP" in ctype:return "OSDP"
+    if "FIRE-ALARM" in ctype:return "FIRE"
+    if "SPEAKER" in ctype:return "SPKR"
+    return "PORT"
+
+from_counts=defaultdict(int); to_counts=defaultdict(int)
+for conn in connections:
+    ctype=conn["cable_type"]
+    route=route_for_connection(conn)
+    conn["route"]=route
+    conn.setdefault("metadata",{})["route_length_ft"]=route_length_ft(route) if len(route)>=2 else 0.0
+    conn["metadata"]["pathway_class"]=(
+        "data_riser_and_ceiling_pathway" if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX"}
+        else "power_riser_and_branch_raceway" if ctype in {"208Y120V-FEEDER","120VAC-BRANCH"}
+        else "controls_pathway" if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}
+        else "life_safety_pathway" if ctype.startswith("FIRE-ALARM")
+        else "local_equipment_patch"
+    )
+    conn["metadata"]["concealment"]="concealed_above_ceiling_or_in_raceway" if ctype not in {"CAT6A-PATCH","HDMI","DISPLAYPORT","IEC-POWER","NEMA5-15-POWER-CORD","10G-DAC"} else "local_visible_or_equipment_internal"
+    conn["metadata"]["lab_traceable"]=True
+    pref=port_prefix(ctype)
+    if not conn.get("from_port"):
+        from_counts[(conn["from_asset_id"],pref)]+=1
+        conn["from_port"]=f"{pref}-OUT-{from_counts[(conn['from_asset_id'],pref)]:02d}"
+    if not conn.get("to_port"):
+        to_counts[(conn["to_asset_id"],pref)]+=1
+        conn["to_port"]=f"{pref}-IN-{to_counts[(conn['to_asset_id'],pref)]:02d}"
+
 # wireless relationships: client pools to all APs on level
 for profile in transient_profiles:
     n=profile["level_number"]; lev=profile["level_id"]
@@ -668,17 +1074,43 @@ def color_for_type(t):
     for k,c in device_colors.items():
         if k in t:return c
     return device_colors["default"]
+def physical_mesh_for_asset(a):
+    p=positions.get(a["asset_id"])
+    if not p:return None
+    t=a["classification"]["asset_type"]
+    color=color_for_type(t)
+    if t in {"wireless_ap","fire_detector","environment_sensor"}:
+        radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
+        height=.14 if t=="wireless_ap" else .18
+        m=trimesh.creation.cylinder(radius=radius,height=height,sections=18)
+    elif t in {"camera","av_camera"}:
+        m=trimesh.creation.cylinder(radius=.24,height=.34,sections=16)
+    elif t=="speaker":
+        m=trimesh.creation.cylinder(radius=.32,height=.28,sections=16)
+    else:
+        size=[.8,.8,.5]
+        if t in {"rack","rack_ups"}: size=[2.0,2.2,6.2]
+        elif t in {"access_switch","collapsed_core_switch","firewall","edge_router","carrier_cpe","virtualization_host","nas_storage","backup_appliance","vms_nvr","patch_panel","fiber_panel","pdu","av_controller","av_dsp"}: size=[1.5,.8,.45]
+        elif t=="workstation": size=[.75,1.2,1.7]
+        elif t=="monitor": size=[1.8,.20,1.15]
+        elif t=="ip_phone": size=[.72,.48,.22]
+        elif t=="mfp": size=[1.55,1.45,2.9]
+        elif t in {"access_reader","intercom","data_jack","receptacle","wap_spare_jack"}: size=[.32,.18,.55 if t=="intercom" else .32]
+        elif t=="electrical_panel": size=[1.35,.36,3.8]
+        elif t=="network_display_decoder": size=[.55,.28,.18]
+        elif t=="av_microphone": size=[.22,.22,.55]
+        elif t in {"fire_notification"}: size=[.42,.18,.48]
+        elif t in {"access_controller","bas_controller","fire_alarm_control_panel","fire_alarm_read_only_gateway"}: size=[1.25,.42,2.4]
+        m=trimesh.creation.box(extents=size)
+    m.apply_translation(p)
+    m.visual.face_colors=color
+    m.metadata={"asset_id":a["asset_id"],"asset_type":t,"installation_status":"step4b_physical_design_intent"}
+    return m
+
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
-    p=positions.get(a["asset_id"])
-    if not p: continue
-    t=a["classification"]["asset_type"]
-    size=[0.8,0.8,0.5]
-    if t in {"rack","access_switch","collapsed_core_switch","firewall","virtualization_host","nas_storage","backup_appliance","vms_nvr","patch_panel","fiber_panel","pdu","rack_ups"}: size=[1.5,0.8,0.5]
-    if t=="wireless_ap": size=[1.0,1.0,0.15]
-    mesh=trimesh.creation.box(extents=size)
-    mesh.apply_translation(p)
-    mesh.visual.face_colors=color_for_type(t)
+    mesh=physical_mesh_for_asset(a)
+    if mesh is None: continue
     scene.add_geometry(mesh,node_name=a["asset_id"],geom_name=a["asset_id"])
 
 cable_colors={
@@ -686,7 +1118,8 @@ cable_colors={
  "10G-DAC":[120,120,120,200],"BACNET-MSTP-STP":[40,220,80,180],"OSDP-RS485-STP":[255,170,40,180],
  "FIRE-ALARM-SLC":[255,40,40,210],"FIRE-ALARM-NAC":[255,80,40,210],"120VAC-BRANCH":[255,210,50,150],
  "SPEAKER-PAIR":[80,220,220,180],"HDMI":[80,80,80,180],"DISPLAYPORT":[80,80,80,180],"IEC-POWER":[255,210,50,120],
- "CAT6A-PATCH":[40,120,255,100]
+ "CAT6A-PATCH":[40,120,255,100],"24VDC-CLASS2":[255,145,40,170],
+ "208Y120V-FEEDER":[255,220,60,190],"NEMA5-15-POWER-CORD":[255,210,50,110]
 }
 def cyl_between(a,b,radius,color):
     # Quantize the design-intent cable primitive so identical authority inputs
@@ -726,7 +1159,8 @@ for c in connections:
         if a and b: route=[a,b]
     if len(route)<2: continue
     for i in range(len(route)-1):
-        m=cyl_between(route[i],route[i+1],0.035 if "OS2" not in ctype else 0.045,cable_colors[ctype])
+        radius=.055 if ctype=="208Y120V-FEEDER" else (.045 if "OS2" in ctype else (.025 if ctype in {"CAT6A-PATCH","NEMA5-15-POWER-CORD","DISPLAYPORT","HDMI"} else .035))
+        m=cyl_between(route[i],route[i+1],radius,cable_colors[ctype])
         if m is not None: scene.add_geometry(m,node_name=f"{c['connection_id']}::{i}")
 
 OUT.mkdir(parents=True,exist_ok=True)
@@ -735,23 +1169,33 @@ GLB.write_bytes(glb if isinstance(glb,(bytes,bytearray)) else bytes(glb))
 glb_sha=hashlib.sha256(GLB.read_bytes()).hexdigest()
 
 # update registry
-registry["registry_version"]="step4a-whole-building-electronics-fabric-v1"
+registry["registry_version"]="step4b-physical-installation-fabric-v1"
 registry["assets"]=sorted(assets,key=lambda x:x["asset_id"])
 registry["relationships"]=sorted(relationships,key=lambda x:x["relationship_id"])
-registry.setdefault("metadata",{})["status"]="step4a-whole-building-electronics-fabric"
-registry["metadata"]["step4a"]={"new_assets":len(new_assets),"new_relationships":len(new_relationships),"physical_connections":len(connections),
-                                "wireless_links":len(wireless_links),"lab_scenarios":len(labs),"overlay_glb":MODEL_REL}
+registry.setdefault("metadata",{})["status"]="step4b-physical-installation-fabric"
+registry["metadata"]["step4b"]={
+    "new_assets":len(new_assets),
+    "new_relationships":len(new_relationships),
+    "physical_connections":len(connections),
+    "routed_connections":sum(1 for x in connections if len(x.get("route") or [])>=2),
+    "port_complete_connections":sum(1 for x in connections if x.get("from_port") and x.get("to_port")),
+    "wireless_links":len(wireless_links),
+    "lab_scenarios":len(labs),
+    "overlay_glb":MODEL_REL,
+    "physical_routing_authority":"electronics-population-policy-v1.json::physical_routing",
+}
 write(REG,registry)
 
 manifest={
- "schema_version":"1.0.0","status":"step4a-whole-building-electronics-fabric","not_for_construction":True,
- "design_basis":policy["design_basis"],"floor_profiles":policy["floor_profiles"],"cable_type_catalog":policy["cable_types"],
+ "schema_version":"1.1.0","status":"step4b-physical-installation-fabric","not_for_construction":True,
+ "design_basis":policy["design_basis"],"physical_routing":policy["physical_routing"],
+ "floor_profiles":policy["floor_profiles"],"cable_type_catalog":policy["cable_types"],
  "new_asset_ids":sorted(a["asset_id"] for a in new_assets),"transient_client_profiles":transient_profiles,
  "vlans":policy["vlans"],"ssids":policy["ssids"],"logical_services":policy["logical_services"],
  "overlay_glb":MODEL_REL,"overlay_sha256":glb_sha
 }
 write(MANIFEST,manifest)
-write(CONNECTIONS,{"schema_version":"1.0.0","status":"step4a-electronics-connections","connections":connections,"wireless_links":wireless_links})
+write(CONNECTIONS,{"schema_version":"1.1.0","status":"step4b-physical-installation-connections","connections":connections,"wireless_links":wireless_links})
 write(LABS,{"schema_version":"1.0.0","status":"step4a-it-lab-catalog","labs":labs})
 
 asset_types=Counter(a["classification"]["asset_type"] for a in new_assets)
@@ -760,25 +1204,67 @@ level_assets=Counter(a["location"]["level_id"] for a in new_assets if a["locatio
 checks=[]
 def ck(name,ok,detail=""):checks.append({"name":name,"passed":bool(ok),"detail":detail})
 allids={a["asset_id"] for a in assets}
+physical_connections=[x for x in connections if x["cable_type"] not in {"WIFI-6E-RF","CELLULAR-RF"}]
+routed=[x for x in physical_connections if len(x.get("route") or [])>=2]
+port_complete=[x for x in physical_connections if x.get("from_port") and x.get("to_port")]
+jacks=[a for a in new_assets if a["classification"]["asset_type"]=="data_jack"]
+outlets=[a for a in new_assets if a["classification"]["asset_type"]=="receptacle"]
+panelboards=[a for a in new_assets if a["classification"]["asset_type"]=="electrical_panel"]
+
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
 ck("approved cable types only",set(cable_types).issubset(policy["cable_types"]),sorted(cable_types))
-ck("all active WAPs have one horizontal data link",all(sum(1 for c in connections if c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="CAT6A-HORIZONTAL")==1 for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"),"")
+ck("all modeled physical connections have deterministic route geometry",len(routed)==len(physical_connections),f"{len(routed)}/{len(physical_connections)}")
+ck("all modeled physical connections have endpoint port identifiers",len(port_complete)==len(physical_connections),f"{len(port_complete)}/{len(physical_connections)}")
+ck("all modeled routes expose pathway and length metadata",all(
+    c.get("metadata",{}).get("pathway_class") and c.get("metadata",{}).get("route_length_ft",0)>=0
+    for c in physical_connections
+), "")
+ck("all Cat6A permanent links remain within 90 m design limit",all(
+    c.get("metadata",{}).get("route_length_ft",0)<=295.276
+    for c in connections if c["cable_type"] in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}
+), max([c.get("metadata",{}).get("route_length_ft",0) for c in connections if c["cable_type"] in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}] or [0]))
+ck("all active WAPs terminate through jack plus PoE patch",all(
+    any(c["to_asset_id"]==a["asset_id"]+"::DATA-JACK" and c["cable_type"]=="CAT6A-HORIZONTAL" for c in connections)
+    and any(c["from_asset_id"]==a["asset_id"]+"::DATA-JACK" and c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="CAT6A-PATCH" and c.get("power_transport")=="PoE" for c in connections)
+    for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"
+), "")
 ck("all WAPs have spare jack assets",sum(1 for a in new_assets if a["classification"]["asset_type"]=="wap_spare_jack")==sum(1 for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"),"")
 ck("all access switches have two core uplinks",all(sum(1 for c in connections if c["from_asset_id"]==a["asset_id"] and c["to_asset_id"] in cores)>=2 for a in new_assets if a["classification"]["asset_type"]=="access_switch"),"")
+ck("all plug-connected 120V branches terminate at outlets",not any(
+    c["cable_type"]=="120VAC-BRANCH" and asset_type(c["to_asset_id"]) not in {"receptacle","electrical_panel"}
+    for c in connections
+), "")
+ck("every generated receptacle serves a physical load with power cord",all(
+    any(c["from_asset_id"]==a["asset_id"] and c["cable_type"]=="NEMA5-15-POWER-CORD" for c in connections)
+    for a in outlets
+), f"{len(outlets)} outlets")
+ck("floor panelboards receive riser feeders",all(
+    any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="208Y120V-FEEDER" for c in connections)
+    for a in panelboards
+), f"{len(panelboards)} panelboards")
 ck("fire-alarm field devices are not direct LAN endpoints",not any(c["cable_type"].startswith("CAT6A") and (by_id[c["to_asset_id"]]["classification"]["asset_type"] in {"fire_detector","fire_notification"}) for c in connections if c["to_asset_id"] in by_id),"")
-ck("BAS sensors use field bus",all(any(c["from_asset_id"].startswith(a["location"]["level_id"]+"-BAS-CTRL") and c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="BACNET-MSTP-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="environment_sensor"),"")
+ck("BAS sensors use field bus and Class 2 power",all(
+    any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="BACNET-MSTP-STP" for c in connections)
+    and any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="24VDC-CLASS2" for c in connections)
+    for a in new_assets if a["classification"]["asset_type"]=="environment_sensor"
+), "")
 ck("access readers use OSDP",all(any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="OSDP-RS485-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="access_reader"),"")
 ck("logical services are non-physical",all(a["physical_representation"]["physical_status"]=="not_applicable" for a in new_assets if a["classification"]["asset_type"] in {"logical_service","vlan","ssid"}),"")
 ck("LIVE control remains disabled",not any(a["security"].get("live_control_allowed") for a in assets),"")
+ck("all physical Step 4B assets have spatial positions",all(
+    a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
+), "")
 ck("all eight levels represented in electronics population",set(level_assets).issuperset({"B1","F1","F2","F3","F4","F5","F6","L7"}),sorted(level_assets))
 ck("lab ladder spans five tiers",set(x["tier"] for x in labs)==set(policy["lab_tiers"]),sorted(set(x["tier"] for x in labs)))
 ck("at least forty IT labs generated",len(labs)>=40,len(labs))
 ck("overlay GLB generated",GLB.exists() and GLB.stat().st_size>1000,GLB.stat().st_size if GLB.exists() else 0)
 passed=all(x["passed"] for x in checks)
 report={
- "schema_version":"1.0.0","status":"step4a-whole-building-electronics-fabric","registry_assets_total":len(assets),
- "step4a_new_assets":len(new_assets),"step4a_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
+ "schema_version":"1.1.0","status":"step4b-physical-installation-fabric","registry_assets_total":len(assets),
+ "step4b_new_assets":len(new_assets),"step4b_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
+ "routed_connections_total":len(routed),"port_complete_connections_total":len(port_complete),
+ "data_jacks_total":len(jacks),"receptacles_total":len(outlets),"electrical_panelboards_total":len(panelboards),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -786,11 +1272,22 @@ report={
  "checks":checks,"passed":passed
 }
 write(REPORT,report)
-print("EQUITY UPRISE ELECTRONICS STEP 4A")
-print(" new assets:",len(new_assets))
+print("EQUITY UPRISE ELECTRONICS STEP 4B PHYSICAL INSTALLATION")
+print(" new/derived electronics assets:",len(new_assets))
 print(" physical connections:",len(connections))
+print(" routed connections:",len(routed))
+print(" port-complete connections:",len(port_complete))
+print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(panelboards))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
 print(" checks:",report["checks_passed"],"/",report["checks_total"])
-if not passed: raise SystemExit("Step 4A electronics verification failed")
+if not passed:
+    print(" failed checks:")
+    for item in checks:
+        if not item["passed"]:print("  -",item["name"],"::",item.get("detail",""))
+    unrouted=[x for x in physical_connections if len(x.get("route") or [])<2]
+    if unrouted:
+        print(" unrouted examples:")
+        for x in unrouted[:40]:print("  -",x["connection_id"],x["cable_type"],x["from_asset_id"],"->",x["to_asset_id"])
+    raise SystemExit("Step 4B electronics physical-installation verification failed")
