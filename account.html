@@ -91,6 +91,13 @@
     .fan__more[open] > summary::after { content: "\2013"; }
     .fan__more > summary:hover { color: var(--cream); }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
+    /* Not .ac__flip. Somebody who cannot get in is the one person on this card
+       who is stuck, and the control that unsticks them was the faintest thing
+       on screen — 0.82rem of dim underlined text under a solid primary button. */
+    .ac__forgot { display: block; width: 100%; margin-top: 0.7rem; padding: 0.85rem 1rem; cursor: pointer;
+      border: 0; border-radius: 13px; background: rgba(255,255,255,0.07); color: var(--cream);
+      box-shadow: inset 0 0 0 1px var(--edge); font-family: inherit; font-size: 0.92rem; font-weight: 800; }
+    .ac__forgot:hover { background: rgba(255,255,255,0.11); }
     .ac__tabs { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; margin-bottom:.85rem; padding:.28rem; border:1px solid var(--edge); border-radius:13px; background:rgba(255,255,255,.025); }
     .ac__tab { border:0; border-radius:9px; padding:.7rem .6rem; cursor:pointer; background:transparent; color:var(--cream-dim); font:800 .78rem var(--ui); }
     .ac__tab.is-on { background:rgba(255,255,255,.08); color:var(--cream); }
@@ -128,7 +135,7 @@
         <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
         <button class="ac__btn" id="acGo" type="button">Sign in</button>
-        <button class="ac__flip" id="acForgot" type="button">Forgot password?</button>
+        <button class="ac__forgot" id="acForgot" type="button">Forgot or don't know your password?</button>
         <p class="ac__note" id="acMsg"></p>
       </div>
 
@@ -316,15 +323,13 @@
     };
     el("acInPass").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acGo").click(); });
 
+    /* Hands off to the real workflow instead of firing the email from here and
+       reporting it in one line of status text. It also no longer refuses to
+       move until an email is typed: somebody who cannot get in should never be
+       told to fill in a field before they are allowed to ask for help. */
     el("acForgot").onclick = function () {
-      var em = el("acInEmail").value.trim(), btn = el("acForgot");
-      if (!em) { el("acMsg").textContent = "Enter your email first."; el("acInEmail").focus(); return; }
-      btn.disabled = true; btn.textContent = "Sending…"; el("acMsg").textContent = "";
-      MCC.requestPasswordReset(em, location.origin + "/reset-password.html").then(function () {
-        el("acMsg").textContent = "Check your email for a password reset link.";
-      }).catch(function (e) {
-        el("acMsg").textContent = e.message || "Could not send the reset email.";
-      }).finally(function () { btn.disabled = false; btn.textContent = "Forgot password?"; });
+      var em = el("acInEmail").value.trim();
+      location.href = "forgot-password.html" + (em ? "?email=" + encodeURIComponent(em) : "");
     };
 
     el("acResend").onclick = function () {

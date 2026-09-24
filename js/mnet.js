@@ -923,15 +923,12 @@
     $("mnSignInTab").onclick = function () { setAuthMode("signin"); };
     $("mnCreateTab").onclick = function () { setAuthMode("create"); };
     $("mnAuthGo").onclick = submitPasswordAuth;
+    /* Hands off to forgot-password.html, which explains what the link will do
+       and can resend. It no longer demands an email before it will help —
+       being locked out is not a reason to be refused the way out. */
     $("mnForgot").onclick = function () {
-      var email = $("mnEmail").value.trim(), button = $("mnForgot");
-      if (!email) { setStatus($("mnAuthStatus"), "Enter your email first.", "error"); $("mnEmail").focus(); return; }
-      button.disabled = true; button.textContent = "Sending…"; setStatus($("mnAuthStatus"), "");
-      MCC.requestPasswordReset(email, location.origin + "/reset-password.html").then(function () {
-        setStatus($("mnAuthStatus"), "Check your email for a password reset link.", "ok");
-      }).catch(function (e) {
-        setStatus($("mnAuthStatus"), e.message || "Could not send the reset email.", "error");
-      }).finally(function () { button.disabled = false; button.textContent = "Forgot password?"; });
+      var email = $("mnEmail").value.trim();
+      location.href = "forgot-password.html" + (email ? "?email=" + encodeURIComponent(email) : "");
     };
     $("mnResend").onclick = function () {
       var email = state.pendingVerificationEmail || $("mnEmail").value.trim(), button = $("mnResend");
