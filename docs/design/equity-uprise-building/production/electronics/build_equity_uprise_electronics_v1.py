@@ -1224,6 +1224,12 @@ PRIMARY_COMPONENT_BY_ARCHETYPE={
     "electrical_panel":"ENCLOSURE",
     "bas_controller":"ENCLOSURE",
     "environment_sensor":"HOUSING",
+    "av_controller":"RACK_CHASSIS",
+    "av_dsp":"RACK_CHASSIS",
+    "av_camera":"BODY",
+    "av_microphone":"BODY",
+    "network_display_decoder":"DECODER_CHASSIS",
+    "speaker":"GRILLE_OR_CABINET",
 }
 def _is_primary_component(archetype_key,component_id):
     return component_id==PRIMARY_COMPONENT_BY_ARCHETYPE.get(archetype_key)
@@ -2013,6 +2019,95 @@ def environment_sensor_component_meshes(a):
     _record_componentized_device(a,"environment_sensor",parts)
     return parts
 
+
+def av_controller_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]; front_y=p[1]-.42; rear_y=p[1]+.42
+    chassis=trimesh.creation.box(extents=[1.72,.80,.34])
+    parts.append(_component_mesh(aid,"RACK_CHASSIS",_place(chassis,p),[62,66,72,255],"controller_chassis","av_controller"))
+    status=_box_group([.055,.028,.055],[[p[0]-.62+i*.12,front_y-.020,p[2]] for i in range(5)])
+    parts.append(_component_mesh(aid,"FRONT_STATUS",status,[55,210,105,255],"front_status_panel","av_controller",{"state_driven":True}))
+    net=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"NETWORK_PORT",_place(net,[p[0]-.52,rear_y+.018,p[2]]),[28,34,40,255],"network_port","av_controller",{"port_id":"RJ45_ETH"}))
+    power=trimesh.creation.box(extents=[.15,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.58,rear_y+.018,p[2]]),[26,28,32,255],"power_port","av_controller",{"port_id":"AC_IN"}))
+    control=_box_group([.08,.035,.065],[[p[0]-.14+i*.10,rear_y+.018,p[2]] for i in range(4)])
+    parts.append(_component_mesh(aid,"CONTROL_IO",control,[75,95,110,255],"control_io","av_controller",{"port_id":"CONTROL_IO"}))
+    _record_componentized_device(a,"av_controller",parts); return parts
+
+def av_dsp_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]; front_y=p[1]-.42; rear_y=p[1]+.42
+    chassis=trimesh.creation.box(extents=[1.72,.80,.42])
+    parts.append(_component_mesh(aid,"RACK_CHASSIS",_place(chassis,p),[56,60,66,255],"dsp_chassis","av_dsp"))
+    meters=_box_group([.035,.025,.13],[[p[0]-.55+i*.10,front_y-.020,p[2]] for i in range(10)])
+    parts.append(_component_mesh(aid,"FRONT_METERS",meters,[60,205,115,255],"audio_meters","av_dsp",{"state_driven":True}))
+    net=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"NETWORK_PORT",_place(net,[p[0]-.60,rear_y+.018,p[2]+.08]),[28,34,40,255],"network_port","av_dsp",{"port_id":"RJ45_ETH"}))
+    audio=_box_group([.08,.035,.065],[[p[0]-.30+i*.10,rear_y+.018,p[2]+.08] for i in range(5)])
+    parts.append(_component_mesh(aid,"AUDIO_IO",audio,[75,95,110,255],"audio_io","av_dsp",{"port_id":"AUDIO_IO"}))
+    spk=_box_group([.08,.035,.065],[[p[0]-.25+i*.12,rear_y+.018,p[2]-.08] for i in range(5)])
+    parts.append(_component_mesh(aid,"SPEAKER_OUTPUTS",spk,[120,80,55,255],"speaker_outputs","av_dsp",{"port_id":"SPEAKER_OUT"}))
+    power=trimesh.creation.box(extents=[.15,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.60,rear_y+.018,p[2]-.06]),[26,28,32,255],"power_port","av_dsp",{"port_id":"AC_IN"}))
+    _record_componentized_device(a,"av_dsp",parts); return parts
+
+def av_camera_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    mount=trimesh.creation.cylinder(radius=.16,height=.10,sections=16)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.25]),[110,114,118,255],"camera_mount","av_camera"))
+    body=trimesh.creation.box(extents=[.42,.38,.28])
+    parts.append(_component_mesh(aid,"BODY",_place(body,p),[70,74,80,255],"camera_body","av_camera"))
+    lens=trimesh.creation.cylinder(radius=.095,height=.14,sections=18)
+    parts.append(_component_mesh(aid,"LENS",_place(lens,[p[0],p[1]-.24,p[2]],[0,1,0]),[24,28,34,255],"optics","av_camera"))
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.020)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.14,p[1]-.21,p[2]+.08]),[55,215,105,255],"indicator","av_camera",{"state_driven":True}))
+    port=trimesh.creation.box(extents=[.11,.035,.07])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(port,[p[0],p[1]+.21,p[2]-.06]),[28,34,40,255],"network_power_port","av_camera",{"port_id":"RJ45_POE_PORT"}))
+    _record_componentized_device(a,"av_camera",parts); return parts
+
+def av_microphone_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    mount=trimesh.creation.cylinder(radius=.12,height=.05,sections=16)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.22]),[115,118,122,255],"mount","av_microphone"))
+    body=trimesh.creation.cylinder(radius=.18,height=.28,sections=18)
+    parts.append(_component_mesh(aid,"BODY",_place(body,p),[64,68,74,255],"microphone_body","av_microphone"))
+    capsules=_sphere_group(.035,[[p[0]+dx,p[1]+dy,p[2]-.12] for dx,dy in [(-.07,0),(.07,0),(0,-.07),(0,.07)]])
+    parts.append(_component_mesh(aid,"CAPSULE_OR_ARRAY",capsules,[30,34,38,255],"microphone_array","av_microphone"))
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.018)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.13,p[1],p[2]-.12]),[55,215,105,255],"indicator","av_microphone",{"state_driven":True}))
+    port=trimesh.creation.box(extents=[.11,.07,.035])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(port,[p[0],p[1]+.10,p[2]+.17]),[28,34,40,255],"network_power_port","av_microphone",{"port_id":"RJ45_POE_PORT"}))
+    _record_componentized_device(a,"av_microphone",parts); return parts
+
+def network_display_decoder_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]; front_y=p[1]-.16; rear_y=p[1]+.16
+    chassis=trimesh.creation.box(extents=[.56,.28,.20])
+    parts.append(_component_mesh(aid,"DECODER_CHASSIS",_place(chassis,p),[62,66,72,255],"decoder_chassis","network_display_decoder"))
+    rj=trimesh.creation.box(extents=[.11,.035,.065])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(rj,[p[0]-.14,rear_y+.018,p[2]]),[28,34,40,255],"network_power_port","network_display_decoder",{"port_id":"RJ45_POE_PORT"}))
+    hdmi=trimesh.creation.box(extents=[.11,.035,.045])
+    parts.append(_component_mesh(aid,"HDMI_OUTPUT",_place(hdmi,[p[0]+.08,rear_y+.018,p[2]]),[45,50,56,255],"video_output","network_display_decoder",{"port_id":"HDMI_OUT"}))
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.018)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.20,front_y-.020,p[2]]),[55,215,105,255],"indicator","network_display_decoder",{"state_driven":True}))
+    _record_componentized_device(a,"network_display_decoder",parts); return parts
+
+def speaker_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    cabinet=trimesh.creation.cylinder(radius=.32,height=.24,sections=18)
+    parts.append(_component_mesh(aid,"GRILLE_OR_CABINET",_place(cabinet,p),[222,222,216,255],"speaker_enclosure","speaker"))
+    driver=trimesh.creation.cylinder(radius=.22,height=.045,sections=18)
+    parts.append(_component_mesh(aid,"DRIVER",_place(driver,[p[0],p[1],p[2]-.14]),[40,44,48,255],"audio_driver","speaker"))
+    mount=trimesh.creation.cylinder(radius=.18,height=.05,sections=16)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.15]),[115,118,122,255],"mount","speaker"))
+    terminals=_box_group([.06,.06,.035],[[p[0]-.05,p[1]+.18,p[2]+.04],[p[0]+.05,p[1]+.18,p[2]+.04]])
+    parts.append(_component_mesh(aid,"SPEAKER_TERMINALS",terminals,[120,80,55,255],"speaker_pair_terminals","speaker",{"port_id":"SPEAKER_PAIR"}))
+    _record_componentized_device(a,"speaker",parts); return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -2058,6 +2153,18 @@ def physical_meshes_for_asset(a):
         return bas_controller_component_meshes(a)
     if t=="environment_sensor":
         return environment_sensor_component_meshes(a)
+    if t=="av_controller":
+        return av_controller_component_meshes(a)
+    if t=="av_dsp":
+        return av_dsp_component_meshes(a)
+    if t=="av_camera":
+        return av_camera_component_meshes(a)
+    if t=="av_microphone":
+        return av_microphone_component_meshes(a)
+    if t=="network_display_decoder":
+        return network_display_decoder_component_meshes(a)
+    if t=="speaker":
+        return speaker_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -2238,6 +2345,18 @@ modeled_environment_sensors=[a for a in new_assets if a["classification"]["asset
 electrical_panel_component_records=[x for x in device_component_records if x.get("archetype")=="electrical_panel"]
 bas_controller_component_records=[x for x in device_component_records if x.get("archetype")=="bas_controller"]
 environment_sensor_component_records=[x for x in device_component_records if x.get("archetype")=="environment_sensor"]
+modeled_av_controllers=[a for a in new_assets if a["classification"]["asset_type"]=="av_controller"]
+modeled_av_dsps=[a for a in new_assets if a["classification"]["asset_type"]=="av_dsp"]
+modeled_av_cameras=[a for a in new_assets if a["classification"]["asset_type"]=="av_camera"]
+modeled_av_microphones=[a for a in new_assets if a["classification"]["asset_type"]=="av_microphone"]
+modeled_display_decoders=[a for a in new_assets if a["classification"]["asset_type"]=="network_display_decoder"]
+modeled_speakers=[a for a in new_assets if a["classification"]["asset_type"]=="speaker"]
+av_controller_component_records=[x for x in device_component_records if x.get("archetype")=="av_controller"]
+av_dsp_component_records=[x for x in device_component_records if x.get("archetype")=="av_dsp"]
+av_camera_component_records=[x for x in device_component_records if x.get("archetype")=="av_camera"]
+av_microphone_component_records=[x for x in device_component_records if x.get("archetype")=="av_microphone"]
+display_decoder_component_records=[x for x in device_component_records if x.get("archetype")=="network_display_decoder"]
+speaker_component_records=[x for x in device_component_records if x.get("archetype")=="speaker"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -2412,6 +2531,20 @@ ck("environment sensor assemblies expose housing, vents, status, BACnet, and Cla
     and record.get("maturity")=="componentized"
     for record in environment_sensor_component_records
 ), "")
+ck("all AV controllers use Step 4C component assemblies",len(av_controller_component_records)==len(modeled_av_controllers),f"{len(av_controller_component_records)}/{len(modeled_av_controllers)}")
+ck("all AV DSPs use Step 4C component assemblies",len(av_dsp_component_records)==len(modeled_av_dsps),f"{len(av_dsp_component_records)}/{len(modeled_av_dsps)}")
+ck("all AV cameras use Step 4C component assemblies",len(av_camera_component_records)==len(modeled_av_cameras),f"{len(av_camera_component_records)}/{len(modeled_av_cameras)}")
+ck("all AV microphones use Step 4C component assemblies",len(av_microphone_component_records)==len(modeled_av_microphones),f"{len(av_microphone_component_records)}/{len(modeled_av_microphones)}")
+ck("all display decoders use Step 4C component assemblies",len(display_decoder_component_records)==len(modeled_display_decoders),f"{len(display_decoder_component_records)}/{len(modeled_display_decoders)}")
+ck("all speakers use Step 4C component assemblies",len(speaker_component_records)==len(modeled_speakers),f"{len(speaker_component_records)}/{len(modeled_speakers)}")
+ck("AV component assemblies expose required physical subcomponents",all([
+    all({x["component_id"] for x in r["components"]}.issuperset({"RACK_CHASSIS","FRONT_STATUS","NETWORK_PORT","POWER_INPUT","CONTROL_IO"}) for r in av_controller_component_records),
+    all({x["component_id"] for x in r["components"]}.issuperset({"RACK_CHASSIS","FRONT_METERS","NETWORK_PORT","AUDIO_IO","SPEAKER_OUTPUTS","POWER_INPUT"}) for r in av_dsp_component_records),
+    all({x["component_id"] for x in r["components"]}.issuperset({"MOUNT","BODY","LENS","STATUS_LED","RJ45_POE_PORT"}) for r in av_camera_component_records),
+    all({x["component_id"] for x in r["components"]}.issuperset({"BODY","CAPSULE_OR_ARRAY","STATUS_LED","RJ45_POE_PORT","MOUNT"}) for r in av_microphone_component_records),
+    all({x["component_id"] for x in r["components"]}.issuperset({"DECODER_CHASSIS","RJ45_POE_PORT","HDMI_OUTPUT","STATUS_LED"}) for r in display_decoder_component_records),
+    all({x["component_id"] for x in r["components"]}.issuperset({"GRILLE_OR_CABINET","DRIVER","MOUNT","SPEAKER_TERMINALS"}) for r in speaker_component_records),
+]), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -2438,6 +2571,9 @@ report={
  "step4c_componentized_access_controller_total":len(access_controller_component_records),
  "step4c_componentized_electrical_panel_total":len(electrical_panel_component_records),"step4c_componentized_bas_controller_total":len(bas_controller_component_records),
  "step4c_componentized_environment_sensor_total":len(environment_sensor_component_records),
+ "step4c_componentized_av_controller_total":len(av_controller_component_records),"step4c_componentized_av_dsp_total":len(av_dsp_component_records),
+ "step4c_componentized_av_camera_total":len(av_camera_component_records),"step4c_componentized_av_microphone_total":len(av_microphone_component_records),
+ "step4c_componentized_network_display_decoder_total":len(display_decoder_component_records),"step4c_componentized_speaker_total":len(speaker_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -2458,6 +2594,7 @@ print("  data jacks:",len(data_jack_component_records),"receptacles:",len(recept
 print("  APs:",len(wireless_ap_component_records),"workstations:",len(workstation_component_records),"monitors:",len(monitor_component_records),"IP phones:",len(ip_phone_component_records),"MFPs:",len(mfp_component_records))
 print("  access readers:",len(access_reader_component_records),"intercoms:",len(intercom_component_records),"access controllers:",len(access_controller_component_records))
 print("  electrical panels:",len(electrical_panel_component_records),"BAS controllers:",len(bas_controller_component_records),"environment sensors:",len(environment_sensor_component_records))
+print("  AV controllers:",len(av_controller_component_records),"DSPs:",len(av_dsp_component_records),"AV cameras:",len(av_camera_component_records),"mics:",len(av_microphone_component_records),"decoders:",len(display_decoder_component_records),"speakers:",len(speaker_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))

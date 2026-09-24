@@ -341,6 +341,42 @@ if rep.get("step4c_componentized_electrical_panel_total")!=len(electrical_panel_
 if rep.get("step4c_componentized_bas_controller_total")!=len(bas_controller_records):fail("Step 4C BAS-controller count mismatch")
 if rep.get("step4c_componentized_environment_sensor_total")!=len(environment_sensor_records):fail("Step 4C environment-sensor count mismatch")
 
+av_controller_records=[x for x in component_records if x.get("archetype")=="av_controller"]
+av_dsp_records=[x for x in component_records if x.get("archetype")=="av_dsp"]
+av_camera_records=[x for x in component_records if x.get("archetype")=="av_camera"]
+av_microphone_records=[x for x in component_records if x.get("archetype")=="av_microphone"]
+display_decoder_records=[x for x in component_records if x.get("archetype")=="network_display_decoder"]
+speaker_records=[x for x in component_records if x.get("archetype")=="speaker"]
+modeled_av_controllers=[a for a in assets.values() if a["classification"].get("asset_type")=="av_controller" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_av_dsps=[a for a in assets.values() if a["classification"].get("asset_type")=="av_dsp" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_av_cameras=[a for a in assets.values() if a["classification"].get("asset_type")=="av_camera" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_av_microphones=[a for a in assets.values() if a["classification"].get("asset_type")=="av_microphone" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_display_decoders=[a for a in assets.values() if a["classification"].get("asset_type")=="network_display_decoder" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_speakers=[a for a in assets.values() if a["classification"].get("asset_type")=="speaker" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+for records,modeled,label,required,ports in [
+    (av_controller_records,modeled_av_controllers,"AV controller",{"RACK_CHASSIS","FRONT_STATUS","NETWORK_PORT","POWER_INPUT","CONTROL_IO"},{"AC_IN","RJ45_ETH","CONTROL_IO"}),
+    (av_dsp_records,modeled_av_dsps,"AV DSP",{"RACK_CHASSIS","FRONT_METERS","NETWORK_PORT","AUDIO_IO","SPEAKER_OUTPUTS","POWER_INPUT"},{"AC_IN","RJ45_ETH","AUDIO_IO","SPEAKER_OUT"}),
+    (av_camera_records,modeled_av_cameras,"AV camera",{"MOUNT","BODY","LENS","STATUS_LED","RJ45_POE_PORT"},{"RJ45_POE_PORT"}),
+    (av_microphone_records,modeled_av_microphones,"AV microphone",{"BODY","CAPSULE_OR_ARRAY","STATUS_LED","RJ45_POE_PORT","MOUNT"},{"RJ45_POE_PORT"}),
+    (display_decoder_records,modeled_display_decoders,"display decoder",{"DECODER_CHASSIS","RJ45_POE_PORT","HDMI_OUTPUT","STATUS_LED"},{"RJ45_POE_PORT","HDMI_OUT"}),
+    (speaker_records,modeled_speakers,"speaker",{"GRILLE_OR_CABINET","DRIVER","MOUNT","SPEAKER_TERMINALS"},{"SPEAKER_PAIR"}),
+]:
+    if len(records)!=len(modeled):fail(f"Step 4C {label} coverage mismatch {len(records)}/{len(modeled)}")
+    for record in records:
+        parts={x.get("component_id") for x in record.get("components",[])}
+        if not required.issubset(parts):fail(f"{record.get('asset_id')} missing {label} component(s): {sorted(required-parts)}")
+        if not ports.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing {label} ports")
+        if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} {label} archetype not componentized")
+
+if rep.get("step4c_componentized_av_controller_total")!=len(av_controller_records):fail("Step 4C AV-controller count mismatch")
+if rep.get("step4c_componentized_av_dsp_total")!=len(av_dsp_records):fail("Step 4C AV-DSP count mismatch")
+if rep.get("step4c_componentized_av_camera_total")!=len(av_camera_records):fail("Step 4C AV-camera count mismatch")
+if rep.get("step4c_componentized_av_microphone_total")!=len(av_microphone_records):fail("Step 4C AV-microphone count mismatch")
+if rep.get("step4c_componentized_network_display_decoder_total")!=len(display_decoder_records):fail("Step 4C display-decoder count mismatch")
+if rep.get("step4c_componentized_speaker_total")!=len(speaker_records):fail("Step 4C speaker count mismatch")
+
+
 
 
 
@@ -350,7 +386,7 @@ if rep.get("step4c_componentized_environment_sensor_total")!=len(environment_sen
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records+electrical_panel_records+bas_controller_records+environment_sensor_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records+electrical_panel_records+bas_controller_records+environment_sensor_records+av_controller_records+av_dsp_records+av_camera_records+av_microphone_records+display_decoder_records+speaker_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:
