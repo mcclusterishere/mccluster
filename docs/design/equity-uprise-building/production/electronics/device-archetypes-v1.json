@@ -1095,8 +1095,8 @@
       "october_demo_required": true
     },
     "fiber_panel": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "network_compute",
       "display_name": "Fiber Termination Panel",
@@ -1121,7 +1121,56 @@
         "trace_backbone_fiber",
         "inspect_label"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_1u_fiber_termination",
+      "components": [
+        {
+          "id": "RACK_FRAME",
+          "role": "frame",
+          "inspectable": true
+        },
+        {
+          "id": "LC_ADAPTERS",
+          "role": "fiber_adapters",
+          "inspectable": true
+        },
+        {
+          "id": "SPLICE_TRAY",
+          "role": "fiber_management",
+          "inspectable": true
+        },
+        {
+          "id": "CABLE_ENTRY",
+          "role": "backbone_entry",
+          "inspectable": true
+        },
+        {
+          "id": "LABEL_STRIP",
+          "role": "labeling",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OS2_LC_DUPLEX_ADAPTERS",
+          "connector": "LC duplex adapter bank",
+          "medium": "OS2 single-mode fiber",
+          "services": [
+            "10GbE backbone"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "adapter_identity",
+        "backbone_path_trace",
+        "fiber_label_inspection"
+      ],
+      "planned_behaviors": [
+        "backbone_link_loss",
+        "adapter_mislabel",
+        "fiber_path_degraded"
+      ]
     },
     "fire_alarm_control_panel": {
       "maturity": "placeholder",
@@ -1339,8 +1388,8 @@
       "october_demo_required": true
     },
     "pdu": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "network_compute",
       "display_name": "Rack Power Distribution Unit",
@@ -1366,11 +1415,69 @@
         "trace_upstream_ups",
         "trace_power_load"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_power_distribution",
+      "components": [
+        {
+          "id": "RACK_STRIP",
+          "role": "distribution_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INLET",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "OUTLET_BANK",
+          "role": "rack_outputs",
+          "inspectable": true
+        },
+        {
+          "id": "BREAKER_OR_PROTECTION",
+          "role": "overcurrent_protection",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_INDICATOR",
+          "role": "indicator",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "IEC_POWER_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "upstream_ups_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "IEC_OUTLETS",
+          "connector": "IEC rack outlet bank",
+          "medium": "AC",
+          "services": [
+            "rack_load_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "upstream_power_trace",
+        "downstream_load_trace",
+        "distribution_state"
+      ],
+      "planned_behaviors": [
+        "upstream_feed_loss",
+        "branch_overload",
+        "outlet_bank_unavailable"
+      ]
     },
     "rack_ups": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "network_compute",
       "display_name": "Rack UPS",
@@ -1398,7 +1505,72 @@
         "trace_protected_loads",
         "inspect_runtime_sandbox"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_2u_to_3u",
+      "components": [
+        {
+          "id": "RACK_CHASSIS",
+          "role": "chassis",
+          "inspectable": true
+        },
+        {
+          "id": "DISPLAY",
+          "role": "operator_display",
+          "inspectable": true
+        },
+        {
+          "id": "BATTERY_MODULE",
+          "role": "energy_storage",
+          "inspectable": true
+        },
+        {
+          "id": "AC_INPUT",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "OUTPUT_BANK",
+          "role": "protected_outputs",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicator",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC/NEMA rack UPS input",
+          "medium": "AC",
+          "services": [
+            "utility_or_emergency_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "UPS_OUTPUTS",
+          "connector": "IEC rack output bank",
+          "medium": "AC",
+          "services": [
+            "conditioned_backup_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "input_power_state",
+        "battery_runtime_state",
+        "protected_load_trace",
+        "ups_load_telemetry"
+      ],
+      "planned_behaviors": [
+        "input_power_loss",
+        "battery_low",
+        "overload_warning",
+        "protected_output_unavailable"
+      ]
     },
     "receptacle": {
       "maturity": "placeholder",
