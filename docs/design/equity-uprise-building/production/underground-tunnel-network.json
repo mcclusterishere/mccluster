@@ -1,39 +1,39 @@
 {
-  "schema_version": "0.1.0",
-  "status": "canonical-underground-backbone-authority",
+  "schema_version": "0.2.0",
+  "status": "canonical-known-underground-operations-backbone",
   "id": "equity-uprise-underground-network",
   "public_visibility": false,
   "developmental_stage": null,
-  "acronym_role": "private-backbone-not-developmental-floor",
+  "acronym_role": "known-operational-backbone-not-developmental-floor",
   "architectural_metaphor": {
     "roof": "outward/public ecosystem gateway",
     "developmental_floors": "E-Q-U-I-T-Y participant journey",
-    "basement": "restricted infrastructure/operations hub",
-    "tunnels": "private inter-building infrastructure/logistics/transport backbone"
+    "basement": "staffed technical/operations workplace",
+    "tunnels": "known inter-building infrastructure/logistics/transport backbone"
   },
   "live_access": {
     "required_authorities": [
-      "mccluster_house_owner",
-      "underground_operations_admin"
+      "equity_uprise_security",
+      "equity_uprise_facilities",
+      "mobility_operations",
+      "field_t",
+      "authorized_instructor_or_supervisor"
     ],
     "explicitly_not_sufficient": [
-      "equity_uprise_member",
-      "equity_uprise_host",
-      "equity_uprise_editor",
-      "equity_uprise_client",
-      "equity_uprise_staff",
-      "equity_uprise_admin",
-      "competency_level"
+      "general_public",
+      "unsupervised_visitor",
+      "competency_level_alone"
     ],
-    "delegated_by": "mccluster_house_owner",
+    "floor_exists_is_not_secret": true,
+    "sector_authorization_required": true,
     "audit_required": true
   },
   "training_access": {
-    "mode": "sandboxed_clone_only",
-    "live_b1_access": false,
-    "live_tunnel_access": false,
+    "mode": "canonical_sandbox_same_geometry",
+    "b1_training_access": true,
+    "tunnel_training_access": "scenario-and-role-controlled",
     "live_occupancy_visible": false,
-    "live_controls_available": false,
+    "real_world_controls_available": false,
     "competency_evidence_allowed": true
   },
   "b1_interfaces": [
@@ -245,10 +245,13 @@
     }
   ],
   "authority_rules": [
-    "B1 and tunnels are omitted from normal participant navigation.",
-    "Ordinary Equity Uprise admin does not imply underground operations authority.",
+    "The tunnel network is known operational infrastructure, not a secret passage.",
+    "B1 is a staffed workplace floor; specific tunnel sectors and controls remain role/safety controlled.",
+    "The digital-twin environment remains SANDBOX-only and does not expose or control real infrastructure.",
     "Training uses a sandboxed clone and never unlocks the live underground network.",
     "Future tunnel branches may not name or connect to a destination until that building has canonical authority.",
     "Competency and operational authorization remain separate."
-  ]
+  ],
+  "staff_visibility": true,
+  "directory_visibility": "staff-and-authorized-participant"
 }
