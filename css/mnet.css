@@ -45,6 +45,13 @@ html, body { background: var(--ink); }
 .mn__primary { width: 100%; margin-top: .85rem; padding: .95rem 1rem; }
 .mn__primary:disabled, .mn__post:disabled { opacity: .55; cursor: default; }
 .mn__text-link { display: block; margin-top: .9rem; color: var(--cream-dim); text-align: center; font-size: .79rem; }
+/* The way out for somebody locked out, so it gets a real target rather than
+   .78rem of dim underline sitting under a solid primary button. */
+.mn__secondary { display:block; width:100%; margin:.6rem 0 0; padding:.8rem 1rem; cursor:pointer;
+  border:0; border-radius:12px; background:rgba(255,255,255,.07); color:var(--cream);
+  box-shadow:inset 0 0 0 1px var(--edge, rgba(255,255,255,.14)); font:800 .88rem/1.2 var(--ui); }
+.mn__secondary:hover { background:rgba(255,255,255,.11); }
+.mn__secondary:disabled { opacity:.55; cursor:default; }
 .mn__text-button { display:block; margin:.72rem auto 0; padding:0; border:0; background:none; color:var(--cream-dim); text-decoration:underline; text-underline-offset:3px; cursor:pointer; font:700 .78rem/1.25 var(--ui); }
 .mn__text-button:hover { color:var(--cream); }
 .mn__text-button:disabled { opacity:.55; cursor:default; }
