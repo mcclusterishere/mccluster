@@ -361,10 +361,18 @@ def make_asset(aid,label,asset_type,level=None,position=None,systems=None,logica
     return a
 
 def add_asset(a):
-    if a["asset_id"] in by_id: return by_id[a["asset_id"]]
-    assets.append(a); new_assets.append(a); by_id[a["asset_id"]]=a
+    aid=a["asset_id"]
+    if aid in by_id:
+        # Rebuilds begin from the prior generated registry. Refresh the current
+        # deterministic position from the newly authored candidate before
+        # returning the existing identity; otherwise regenerated local cords can
+        # lose both endpoints even though the current builder knows their layout.
+        p=existing_position(a) or existing_position(by_id[aid])
+        if p: positions[aid]=p
+        return by_id[aid]
+    assets.append(a); new_assets.append(a); by_id[aid]=a
     p=existing_position(a)
-    if p: positions[a["asset_id"]]=p
+    if p: positions[aid]=p
     return a
 
 def add_rel(kind,src,dst,criticality="operational",note=None):
@@ -1033,20 +1041,45 @@ def local_equipment_route(conn,start,end):
         base=[start,[start[0],start[1],midz],[end[0],start[1],midz],[end[0],end[1],midz],end]
     return _finalize_pathway_route(conn,base,"local_equipment")
 
+def connection_endpoint_position(aid):
+    p=positions.get(aid)
+    if p is not None:return p
+    asset=by_id.get(aid)
+    if asset:
+        p=existing_position(asset)
+        if p is not None:
+            positions[aid]=p
+            return p
+    return None
+
 def route_for_connection(conn):
     src,dst=conn["from_asset_id"],conn["to_asset_id"]
-    a,b=positions.get(src),positions.get(dst)
+    a,b=connection_endpoint_position(src),connection_endpoint_position(dst)
     sa,sb=asset_level(src),asset_level(dst)
     ctype=conn["cable_type"]
     family=pathway_family_for_cable(ctype)
 
-    if a is None or b is None:return conn.get("route") or []
-
-    if ctype=="208Y120V-FEEDER" and sb is not None:
-        return feeder_route(conn,a,b,sb,"emergency" if src=="ELEC-EMERGENCY" else "normal")
+    # The building normal/emergency source is distribution authority rather than
+    # a physical device. Feeders originate at the declared riser base when that
+    # source intentionally has no equipment coordinate.
+    if ctype=="208Y120V-FEEDER" and b is not None and sb is not None:
+        mode="emergency" if src=="ELEC-EMERGENCY" else "normal"
+        if a is None:
+            riser=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+            a=[float(riser[0]),float(riser[1]),ffe(0)+8.6]
+        return feeder_route(conn,a,b,sb,mode)
 
     if family=="local_equipment":
-        return local_equipment_route(conn,a,b)
+        if a is not None and b is not None:
+            return local_equipment_route(conn,a,b)
+        prior=conn.get("route") or []
+        if len(prior)>=2:
+            start=a if a is not None else prior[0]
+            end=b if b is not None else prior[-1]
+            return local_equipment_route(conn,start,end)
+        return []
+
+    if a is None or b is None:return []
 
     if ctype=="OS2-SM-DUPLEX":
         if sa is not None and sb is not None and sa!=sb:
@@ -2597,6 +2630,13 @@ ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_asset
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
 ck("approved cable types only",set(cable_types).issubset(policy["cable_types"]),sorted(cable_types))
 ck("all modeled physical connections have deterministic route geometry",len(routed)==len(physical_connections),f"{len(routed)}/{len(physical_connections)}")
+ck("all non-root physical connection endpoints resolve deterministic positions",all(
+    connection_endpoint_position(c["from_asset_id"]) is not None or c["from_asset_id"] in {"ELEC-NORMAL","ELEC-EMERGENCY"}
+    for c in physical_connections
+) and all(
+    connection_endpoint_position(c["to_asset_id"]) is not None
+    for c in physical_connections
+), "")
 ck("all modeled physical connections have endpoint port identifiers",len(port_complete)==len(physical_connections),f"{len(port_complete)}/{len(physical_connections)}")
 ck("all modeled routes expose pathway and length metadata",all(
     c.get("metadata",{}).get("pathway_class") and c.get("metadata",{}).get("route_length_ft",0)>=0
