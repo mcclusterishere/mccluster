@@ -402,8 +402,26 @@ function clearLabVisuals(){
  if(electronics){if(engineeringMode||plantMode||cablingMode)syncElectronicsVisibility();else electronics.visible=false}
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
+function applyComponentVisualState(o,state){
+ const component=o.userData.componentId||electronicsComponentIdFromName(o.name),source=Array.isArray(o.material)?o.material:[o.material],cloned=source.map(m=>m.clone());
+ cloned.filter(Boolean).forEach(m=>{
+  wireMaterials.add(m);const native=m.userData?.step4bNativeColor;
+  if(component==='STATUS_LED'){
+    const led=state==='unavailable'?0x151719:state==='faulted'?0xff3030:state==='degraded'||state==='at_risk'?0xffb52d:0x28dc60;
+    if(m.color)m.color.setHex(led);if(m.emissive){m.emissive.setHex(led);m.emissiveIntensity=state==='unavailable'?0:.95}
+  }else{
+    if(m.color&&native!==undefined)m.color.setHex(native);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=0}
+    if(component==='LENS_GLASS'&&state==='unavailable'&&m.color)m.color.setHex(0x050607)
+  }
+  m.transparent=true;m.opacity=component==='LENS_GLASS'?.92:.97;m.depthWrite=true;m.needsUpdate=true
+ });
+ o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true
+}
 function styleCanonical(root,id,state){
- if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;if(root===electronics&&o.userData.spatialBound!==true)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
+ if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;if(root===electronics&&o.userData.spatialBound!==true)return;const n=o.name||'',assetId=o.userData.assetId||electronicsAssetIdFromName(n);if(assetId!==id&&n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);
+  if(root===electronics&&deviceRecordById.has(id)){applyComponentVisualState(o,state);hit=true;return}
+  const original=Array.isArray(o.material)?o.material:[o.material],cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true
+ });return hit
 }
 function sitePoint(x,y,h=.08){return new THREE.Vector3(ft(x),ft(h),-ft(y))}
 function areaOverlay(area){
@@ -561,6 +579,41 @@ function learnerAssetOverlay(asset){
  m.position.copy(p);m.position.y+=ft(.7);m.name=asset.canonical_id;m.renderOrder=42;m.userData.learnerMarker=true;labOverlay.add(m);return true
 }
 function escapeText(v){return String(v??'').replace(/[<>]/g,'')}
+function clearDeviceInteractionOverlay(){
+ while(deviceOverlay.children.length){const o=deviceOverlay.children.pop();o.geometry?.dispose?.();const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach(m=>m.dispose?.())}
+ deviceFovVisible=false;if(deviceFovButton){deviceFovButton.textContent='Show camera coverage'}
+}
+function deviceStateFor(assetId){
+ const state=(labView?.visuals?.assets||[]).find(x=>x.canonical_id===assetId);return state?.visual_state||'normal'
+}
+function deviceConnectionChain(assetId){
+ const all=deviceConnections?.connections||[],direct=all.filter(x=>x.from_asset_id===assetId||x.to_asset_id===assetId),extra=[];
+ direct.forEach(x=>{const other=x.from_asset_id===assetId?x.to_asset_id:x.from_asset_id;if(/::DATA-JACK$/.test(other))all.filter(y=>y.from_asset_id===other||y.to_asset_id===other).forEach(y=>{if(!direct.includes(y))extra.push(y)})});
+ return [...direct,...extra].slice(0,8)
+}
+function cameraCoverage(record){
+ clearDeviceInteractionOverlay();const origin=electronicsBoundWorld.get(record.asset_id);if(!origin)return false;
+ const a=record.aim_vector||[-1,0,0],aim=new THREE.Vector3(a[0],a[2]||0,-a[1]).normalize(),worldUp=new THREE.Vector3(0,1,0),side=new THREE.Vector3().crossVectors(aim,worldUp).normalize(),up=new THREE.Vector3().crossVectors(side,aim).normalize();
+ const range=ft(record.optics?.training_range_ft||24),hw=range*Math.tan(THREE.MathUtils.degToRad((record.optics?.horizontal_fov_deg||80)/2)),hh=range*Math.tan(THREE.MathUtils.degToRad((record.optics?.vertical_fov_deg||45)/2)),center=origin.clone().addScaledVector(aim,range);
+ const corners=[center.clone().addScaledVector(side,hw).addScaledVector(up,hh),center.clone().addScaledVector(side,-hw).addScaledVector(up,hh),center.clone().addScaledVector(side,-hw).addScaledVector(up,-hh),center.clone().addScaledVector(side,hw).addScaledVector(up,-hh)];
+ const pts=[];corners.forEach(p=>pts.push(origin.clone(),p));for(let i=0;i<4;i++)pts.push(corners[i],corners[(i+1)%4]);
+ const line=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x62ddff,transparent:true,opacity:.72,depthWrite:false}));line.name='DEVICE-FOV::'+record.asset_id;line.renderOrder=70;deviceOverlay.add(line);deviceFovVisible=true;deviceFovButton.textContent='Hide camera coverage';return true
+}
+function renderDeviceInspector(assetId){
+ const record=deviceRecordById.get(assetId);if(!record){deviceHud.hidden=true;return}
+ inspectedDeviceId=assetId;const state=deviceStateFor(assetId),links=deviceConnectionChain(assetId);
+ deviceKind.textContent=(record.archetype||record.asset_type)+' · '+(record.maturity||'modeled');
+ deviceTitle.textContent=record.label||assetId;
+ const feedState=state==='unavailable'?'offline':state==='faulted'?'faulted':state==='degraded'||state==='at_risk'?'degraded':'online';
+ deviceStatus.innerHTML='<strong>Current state</strong> · '+escapeText(state)+'<br><span>'+escapeText(assetId)+'</span>';
+ const portText=(record.ports||[]).map(p=>escapeText(p.id)+' · '+escapeText(p.connector)+' · '+escapeText((p.services||[]).join(' + '))).join('<br>');
+ const linkText=links.map(x=>escapeText(x.cable_type)+' · '+escapeText(x.from_asset_id)+' → '+escapeText(x.to_asset_id)+'<br><small>'+escapeText(x.from_port||'')+' → '+escapeText(x.to_port||'')+'</small>').join('<br>');
+ deviceDetails.innerHTML='<div class="devicerow"><span>Port</span><span>'+ (portText||'—') +'</span></div><div class="deviceparts"><strong>Physical connection path</strong><br>'+(linkText||'No routed connection found')+'</div>';
+ deviceParts.innerHTML='<strong>Modeled parts</strong><br>'+(record.components||[]).map(x=>'<span class="devicecomponent">'+escapeText(x.component_id)+'</span>').join('');
+ if(record.archetype==='camera'){deviceFeed.hidden=false;deviceFeed.className='devicefeed '+(feedState==='offline'||feedState==='faulted'?'offline':feedState==='degraded'?'degraded':'');deviceFeed.textContent='VIDEO STREAM · '+feedState.toUpperCase();deviceFovButton.hidden=false}else{deviceFeed.hidden=true;deviceFovButton.hidden=true}
+ deviceHud.hidden=false
+}
+function refreshInspectedDevice(){if(inspectedDeviceId&&!deviceHud.hidden)renderDeviceInspector(inspectedDeviceId)}
 function plainSystemState(v){return {normal:'Normal',changed:'Changed',at_risk:'Needs attention',degraded:'Unstable',faulted:'Problem detected',unavailable:'Not working',available:'Available'}[String(v||'').toLowerCase()]||escapeText(v||'Observed')}
 function renderDiagnosticLoop(exp){
  const steps=exp.diagnostic_loop||['OBSERVE','HYPOTHESIZE','TEST','FIX','VERIFY'],stage=exp.diagnostic_stage||'OBSERVE',order=[...steps,'COMPLETE'],at=Math.max(0,order.indexOf(stage));
@@ -607,7 +660,7 @@ async function applyLabView(view){
  }
  view.visuals.objects.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
- view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);if(roomMode){if(electronics)electronics.visible=false;refreshRoomHighlights();roomSelection.textContent=(view.learner_experience?.title||view.scenario?.title||'Active ticket')+' · Room Mode'}
+ view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);refreshInspectedDevice();if(roomMode){if(electronics)electronics.visible=false;refreshRoomHighlights();roomSelection.textContent=(view.learner_experience?.title||view.scenario?.title||'Active ticket')+' · Room Mode'}
 }
 async function prepareLabPresentation(view){
  const scenario=view?.scenario||{},exp=view?.learner_experience||{},target=String(scenario.viewer_focus??'');
