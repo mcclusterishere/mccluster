@@ -215,10 +215,10 @@
       "october_demo_required": true
     },
     "wireless_ap": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Ceiling Wi-Fi Access Point",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "wireless_security",
       "expected_components": [
@@ -243,13 +243,65 @@
         "show_simulated_service_volume",
         "inspect_associations"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_mounted_indoor_access_point",
+      "components": [
+        {
+          "id": "MOUNT",
+          "role": "ceiling_mount",
+          "inspectable": true
+        },
+        {
+          "id": "RADOME_HOUSING",
+          "role": "radio_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        },
+        {
+          "id": "CABLE_ENTRY",
+          "role": "cable_entry",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "radio_state",
+        "poe_state",
+        "association_summary",
+        "service_volume_visualization"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "uplink_loss",
+        "radio_degraded",
+        "association_surge"
+      ]
     },
     "workstation": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Desktop Workstation",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "user_endpoints",
       "expected_components": [
@@ -278,13 +330,92 @@
         "trace_network",
         "open_building_os"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "desk_or_workbench_desktop_endpoint",
+      "components": [
+        {
+          "id": "CHASSIS",
+          "role": "computer_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "FRONT_IO",
+          "role": "user_io",
+          "inspectable": true
+        },
+        {
+          "id": "REAR_IO",
+          "role": "rear_io",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_SUPPLY",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "NIC_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "DISPLAY_OUTPUTS",
+          "role": "video_outputs",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_INDICATOR",
+          "role": "indicator",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC C14 or modeled workstation AC inlet",
+          "medium": "120VAC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "DISPLAY_OUT",
+          "connector": "DisplayPort",
+          "medium": "DisplayPort cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "power_state",
+        "network_state",
+        "display_link_state",
+        "building_os_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "display_disconnect",
+        "simulated_os_fault"
+      ]
     },
     "monitor": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Display Monitor",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "user_endpoints",
       "expected_components": [
@@ -311,13 +442,76 @@
         "trace_video",
         "inspect_display_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "desk_stand_or_vesa_display",
+      "components": [
+        {
+          "id": "DISPLAY_PANEL",
+          "role": "display_surface",
+          "inspectable": true
+        },
+        {
+          "id": "BEZEL",
+          "role": "display_frame",
+          "inspectable": true
+        },
+        {
+          "id": "STAND_OR_MOUNT",
+          "role": "support",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_port",
+          "inspectable": true
+        },
+        {
+          "id": "VIDEO_INPUT",
+          "role": "video_port",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled display AC inlet",
+          "medium": "120VAC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "DISPLAYPORT_IN",
+          "connector": "DisplayPort",
+          "medium": "DisplayPort cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "display_state",
+        "power_state",
+        "video_link_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "video_signal_loss",
+        "panel_fault"
+      ]
     },
     "ip_phone": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "PoE IP Phone",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "user_endpoints",
       "expected_components": [
@@ -345,13 +539,84 @@
         "inspect_voice_state",
         "open_phone_interface"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "desk_mounted_poe_ip_phone",
+      "components": [
+        {
+          "id": "BASE",
+          "role": "phone_base",
+          "inspectable": true
+        },
+        {
+          "id": "HANDSET",
+          "role": "handset",
+          "inspectable": true
+        },
+        {
+          "id": "KEYPAD",
+          "role": "input_keys",
+          "inspectable": true
+        },
+        {
+          "id": "DISPLAY",
+          "role": "phone_display",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_LAN",
+          "role": "poe_network_port",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_PC",
+          "role": "pc_passthrough_port",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_LAN",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "voice"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_PC",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet passthrough"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "voice_registration_state",
+        "poe_state",
+        "network_state",
+        "phone_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "voice_registration_loss",
+        "network_link_loss"
+      ]
     },
     "mfp": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Managed Multifunction Printer",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "user_endpoints",
       "expected_components": [
@@ -379,7 +644,79 @@
         "trace_network",
         "open_printer_status"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "floor_or_counter_managed_multifunction_printer",
+      "components": [
+        {
+          "id": "CHASSIS",
+          "role": "printer_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "ADF",
+          "role": "automatic_document_feeder",
+          "inspectable": true
+        },
+        {
+          "id": "SCANNER_BED",
+          "role": "scanner_surface",
+          "inspectable": true
+        },
+        {
+          "id": "OUTPUT_TRAY",
+          "role": "paper_output",
+          "inspectable": true
+        },
+        {
+          "id": "CONTROL_PANEL",
+          "role": "operator_interface",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INLET",
+          "role": "power_port",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled printer AC inlet",
+          "medium": "120VAC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "printing"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "printer_state",
+        "scanner_state",
+        "network_state",
+        "consumable_state",
+        "printer_status_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "paper_jam",
+        "toner_low"
+      ]
     },
     "access_switch": {
       "maturity": "componentized",

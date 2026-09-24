@@ -213,13 +213,72 @@ if rep.get("step4c_componentized_data_jack_total")!=len(data_jack_records):fail(
 if rep.get("step4c_componentized_receptacle_total")!=len(receptacle_records):fail("Step 4C receptacle count mismatch")
 if rep.get("step4c_componentized_wap_spare_jack_total")!=len(wap_spare_jack_records):fail("Step 4C WAP-spare-jack count mismatch")
 
+wireless_ap_records=[x for x in component_records if x.get("archetype")=="wireless_ap"]
+workstation_records=[x for x in component_records if x.get("archetype")=="workstation"]
+monitor_records=[x for x in component_records if x.get("archetype")=="monitor"]
+ip_phone_records=[x for x in component_records if x.get("archetype")=="ip_phone"]
+mfp_records=[x for x in component_records if x.get("archetype")=="mfp"]
+modeled_wireless_aps=[a for a in assets.values() if a["classification"].get("asset_type")=="wireless_ap" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_workstations=[a for a in assets.values() if a["classification"].get("asset_type")=="workstation" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_monitors=[a for a in assets.values() if a["classification"].get("asset_type")=="monitor" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_ip_phones=[a for a in assets.values() if a["classification"].get("asset_type")=="ip_phone" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_mfps=[a for a in assets.values() if a["classification"].get("asset_type")=="mfp" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(wireless_ap_records)!=len(modeled_wireless_aps):fail(f"Step 4C wireless-AP coverage mismatch {len(wireless_ap_records)}/{len(modeled_wireless_aps)}")
+for record in wireless_ap_records:
+    required={"MOUNT","RADOME_HOUSING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing wireless-AP component(s): {sorted(required-parts)}")
+    ports={p.get("id") for p in record.get("ports",[])}
+    if "RJ45_POE_PORT" not in ports:fail(f"{record.get('asset_id')} missing PoE network port")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} wireless AP archetype not componentized")
+
+if len(workstation_records)!=len(modeled_workstations):fail(f"Step 4C workstation coverage mismatch {len(workstation_records)}/{len(modeled_workstations)}")
+for record in workstation_records:
+    required={"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing workstation component(s): {sorted(required-parts)}")
+    if not {"AC_IN","RJ45_ETH","DISPLAY_OUT"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing workstation power/network/display ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} workstation archetype not componentized")
+
+if len(monitor_records)!=len(modeled_monitors):fail(f"Step 4C monitor coverage mismatch {len(monitor_records)}/{len(modeled_monitors)}")
+for record in monitor_records:
+    required={"DISPLAY_PANEL","BEZEL","STAND_OR_MOUNT","POWER_INPUT","VIDEO_INPUT","STATUS_LED"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing monitor component(s): {sorted(required-parts)}")
+    if not {"AC_IN","DISPLAYPORT_IN"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing monitor power/video ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} monitor archetype not componentized")
+
+if len(ip_phone_records)!=len(modeled_ip_phones):fail(f"Step 4C IP-phone coverage mismatch {len(ip_phone_records)}/{len(modeled_ip_phones)}")
+for record in ip_phone_records:
+    required={"BASE","HANDSET","KEYPAD","DISPLAY","STATUS_LED","RJ45_LAN","RJ45_PC"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing IP-phone component(s): {sorted(required-parts)}")
+    if not {"RJ45_LAN","RJ45_PC"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing phone LAN/PC ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} IP phone archetype not componentized")
+
+if len(mfp_records)!=len(modeled_mfps):fail(f"Step 4C MFP coverage mismatch {len(mfp_records)}/{len(modeled_mfps)}")
+for record in mfp_records:
+    required={"CHASSIS","ADF","SCANNER_BED","OUTPUT_TRAY","CONTROL_PANEL","RJ45_PORT","POWER_INLET"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing MFP component(s): {sorted(required-parts)}")
+    if not {"AC_IN","RJ45_ETH"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing MFP power/network ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} MFP archetype not componentized")
+
+if rep.get("step4c_componentized_wireless_ap_total")!=len(wireless_ap_records):fail("Step 4C wireless-AP count mismatch")
+if rep.get("step4c_componentized_workstation_total")!=len(workstation_records):fail("Step 4C workstation count mismatch")
+if rep.get("step4c_componentized_monitor_total")!=len(monitor_records):fail("Step 4C monitor count mismatch")
+if rep.get("step4c_componentized_ip_phone_total")!=len(ip_phone_records):fail("Step 4C IP-phone count mismatch")
+if rep.get("step4c_componentized_mfp_total")!=len(mfp_records):fail("Step 4C MFP count mismatch")
+
+
 
 
 # Prove the component catalog is not metadata-only: every componentized
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:
