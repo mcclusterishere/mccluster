@@ -178,12 +178,48 @@ if rep.get("step4c_componentized_rack_ups_total")!=len(rack_ups_records):fail("S
 if rep.get("step4c_componentized_pdu_total")!=len(pdu_records):fail("Step 4C PDU count mismatch")
 if rep.get("step4c_componentized_fiber_panel_total")!=len(fiber_panel_records):fail("Step 4C fiber-panel count mismatch")
 
+data_jack_records=[x for x in component_records if x.get("archetype")=="data_jack"]
+receptacle_records=[x for x in component_records if x.get("archetype")=="receptacle"]
+wap_spare_jack_records=[x for x in component_records if x.get("archetype")=="wap_spare_jack"]
+modeled_data_jacks=[a for a in assets.values() if a["classification"].get("asset_type")=="data_jack" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_receptacles=[a for a in assets.values() if a["classification"].get("asset_type")=="receptacle" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_wap_spare_jacks=[a for a in assets.values() if a["classification"].get("asset_type")=="wap_spare_jack" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(data_jack_records)!=len(modeled_data_jacks):fail(f"Step 4C data-jack coverage mismatch {len(data_jack_records)}/{len(modeled_data_jacks)}")
+required_data_jack_parts={"FACEPLATE","KEYSTONE_JACK","LABEL","REAR_TERMINATION"}
+for record in data_jack_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_data_jack_parts.issubset(parts):fail(f"{record.get('asset_id')} missing data-jack component(s): {sorted(required_data_jack_parts-parts)}")
+    if not {"RJ45_FRONT","CAT6A_REAR"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing front/rear Cat6A ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} data jack archetype not componentized")
+
+if len(receptacle_records)!=len(modeled_receptacles):fail(f"Step 4C receptacle coverage mismatch {len(receptacle_records)}/{len(modeled_receptacles)}")
+required_receptacle_parts={"FACEPLATE","DUPLEX_RECEPTACLE","GROUND_CONTACT","REAR_BRANCH_TERMINATION"}
+for record in receptacle_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_receptacle_parts.issubset(parts):fail(f"{record.get('asset_id')} missing receptacle component(s): {sorted(required_receptacle_parts-parts)}")
+    if not {"NEMA_5_15_OUTLETS","BRANCH_CIRCUIT_REAR"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing front/rear power ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} receptacle archetype not componentized")
+
+if len(wap_spare_jack_records)!=len(modeled_wap_spare_jacks):fail(f"Step 4C WAP-spare-jack coverage mismatch {len(wap_spare_jack_records)}/{len(modeled_wap_spare_jacks)}")
+required_wap_spare_parts={"FACEPLATE_OR_CEILING_JACK","KEYSTONE","LABEL","REAR_TERMINATION"}
+for record in wap_spare_jack_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_wap_spare_parts.issubset(parts):fail(f"{record.get('asset_id')} missing WAP-spare-jack component(s): {sorted(required_wap_spare_parts-parts)}")
+    if not {"RJ45_FRONT","CAT6A_REAR"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing reserved front/rear Cat6A ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} WAP spare jack archetype not componentized")
+
+if rep.get("step4c_componentized_data_jack_total")!=len(data_jack_records):fail("Step 4C data-jack count mismatch")
+if rep.get("step4c_componentized_receptacle_total")!=len(receptacle_records):fail("Step 4C receptacle count mismatch")
+if rep.get("step4c_componentized_wap_spare_jack_total")!=len(wap_spare_jack_records):fail("Step 4C WAP-spare-jack count mismatch")
+
+
 
 # Prove the component catalog is not metadata-only: every componentized
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:
