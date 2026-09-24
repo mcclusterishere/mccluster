@@ -535,7 +535,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-01-A::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-01-A",
           "inspectable": true
         },
         {
@@ -604,7 +604,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-01-B::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-01-B",
           "inspectable": true
         },
         {
@@ -673,7 +673,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-02-A::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-02-A",
           "inspectable": true
         },
         {
@@ -742,7 +742,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-02-B::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-02-B",
           "inspectable": true
         },
         {
@@ -811,7 +811,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-03-A::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-03-A",
           "inspectable": true
         },
         {
@@ -880,7 +880,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-03-B::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-03-B",
           "inspectable": true
         },
         {
@@ -949,7 +949,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-04-A::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-04-A",
           "inspectable": true
         },
         {
@@ -1018,7 +1018,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-PDU-04-B::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-PDU-04-B",
           "inspectable": true
         },
         {
@@ -1087,7 +1087,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -1156,7 +1156,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "B1-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "B1-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -2628,6 +2628,98 @@
       ]
     },
     {
+      "asset_id": "B1-SEC-ACCESS-CTRL-01",
+      "label": "B1 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "B1-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "B1 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -3482,6 +3574,76 @@
       ]
     },
     {
+      "asset_id": "B1-SEC-INTERCOM-01",
+      "label": "B1 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.0,
+        27.0,
+        -9.3
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "B1-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "B1-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "B1-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "B1-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "B1-SEC-INTERCOM-01::DATA-JACK",
       "label": "B1 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -3545,6 +3707,138 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "B1-SEC-READER-01",
+      "label": "B1 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        50.0,
+        27.0,
+        -9.3
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "B1-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "B1-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "B1-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "B1-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-SEC-READER-02",
+      "label": "B1 OSDP Reader 2",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        51.2,
+        27.0,
+        -9.3
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-SEC-READER-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "B1-SEC-READER-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "B1-SEC-READER-02::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-READER-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "B1-SEC-READER-02::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "B1-SEC-READER-02::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -6557,7 +6851,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F1-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F1-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -6626,7 +6920,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F1-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F1-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -8748,6 +9042,98 @@
       ]
     },
     {
+      "asset_id": "F1-SEC-ACCESS-CTRL-01",
+      "label": "F1 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F1-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F1-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F1 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -9240,6 +9626,76 @@
       ]
     },
     {
+      "asset_id": "F1-SEC-INTERCOM-01",
+      "label": "F1 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F1-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F1-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F1-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F1-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F1-SEC-INTERCOM-01::DATA-JACK",
       "label": "F1 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -9303,6 +9759,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F1-SEC-READER-01",
+      "label": "F1 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F1-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F1-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F1-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F1-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -11981,7 +12503,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F2-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F2-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -12050,7 +12572,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F2-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F2-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -13134,6 +13656,98 @@
       ]
     },
     {
+      "asset_id": "F2-SEC-ACCESS-CTRL-01",
+      "label": "F2 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F2-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F2-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F2 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -13626,6 +14240,76 @@
       ]
     },
     {
+      "asset_id": "F2-SEC-INTERCOM-01",
+      "label": "F2 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        17.5
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F2-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F2-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F2-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F2-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F2-SEC-INTERCOM-01::DATA-JACK",
       "label": "F2 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -13689,6 +14373,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-SEC-READER-01",
+      "label": "F2 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        17.5
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F2-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F2-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F2-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F2-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -15567,7 +16317,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F3-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F3-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -15636,7 +16386,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F3-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F3-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -16980,6 +17730,98 @@
       ]
     },
     {
+      "asset_id": "F3-SEC-ACCESS-CTRL-01",
+      "label": "F3 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F3-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F3-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F3 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -17472,6 +18314,76 @@
       ]
     },
     {
+      "asset_id": "F3-SEC-INTERCOM-01",
+      "label": "F3 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        31.0
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F3-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F3-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F3-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F3-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F3-SEC-INTERCOM-01::DATA-JACK",
       "label": "F3 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -17535,6 +18447,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-SEC-READER-01",
+      "label": "F3 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        31.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F3-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F3-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F3-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F3-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -20655,7 +21633,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F4-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F4-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -20724,7 +21702,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F4-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F4-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -21874,6 +22852,98 @@
       ]
     },
     {
+      "asset_id": "F4-SEC-ACCESS-CTRL-01",
+      "label": "F4 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F4-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F4-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F4 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -22366,6 +23436,76 @@
       ]
     },
     {
+      "asset_id": "F4-SEC-INTERCOM-01",
+      "label": "F4 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        44.5
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F4-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F4-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F4-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F4-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F4-SEC-INTERCOM-01::DATA-JACK",
       "label": "F4 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -22429,6 +23569,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-SEC-READER-01",
+      "label": "F4 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        44.5
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F4-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F4-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F4-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F4-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -27625,7 +28831,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F5-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F5-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -27694,7 +28900,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F5-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F5-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -28972,6 +30178,98 @@
       ]
     },
     {
+      "asset_id": "F5-SEC-ACCESS-CTRL-01",
+      "label": "F5 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F5-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F5-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F5 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -29464,6 +30762,76 @@
       ]
     },
     {
+      "asset_id": "F5-SEC-INTERCOM-01",
+      "label": "F5 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        58.0
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F5-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F5-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F5-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F5-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F5-SEC-INTERCOM-01::DATA-JACK",
       "label": "F5 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -29527,6 +30895,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-SEC-READER-01",
+      "label": "F5 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        58.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F5-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F5-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F5-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F5-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -34983,7 +36417,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F6-ICT-RACK-PDU-A::PART::RACK_STRIP",
+          "mesh_name": "F6-ICT-RACK-PDU-A",
           "inspectable": true
         },
         {
@@ -35052,7 +36486,7 @@
       "components": [
         {
           "component_id": "RACK_STRIP",
-          "mesh_name": "F6-ICT-RACK-PDU-B::PART::RACK_STRIP",
+          "mesh_name": "F6-ICT-RACK-PDU-B",
           "inspectable": true
         },
         {
@@ -36301,6 +37735,98 @@
       ]
     },
     {
+      "asset_id": "F6-SEC-ACCESS-CTRL-01",
+      "label": "F6 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F6-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "F6-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "F6 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -36793,6 +38319,76 @@
       ]
     },
     {
+      "asset_id": "F6-SEC-INTERCOM-01",
+      "label": "F6 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        50.35,
+        27.225,
+        71.5
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F6-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "F6-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "F6-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "F6-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "F6-SEC-INTERCOM-01::DATA-JACK",
       "label": "F6 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -36856,6 +38452,72 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-SEC-READER-01",
+      "label": "F6 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        49.8,
+        27.0,
+        71.5
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "F6-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "F6-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "F6-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "F6-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     },
     {
@@ -41374,6 +43036,98 @@
       ]
     },
     {
+      "asset_id": "L7-SEC-ACCESS-CTRL-01",
+      "label": "L7 Access Control Panel",
+      "asset_type": "access_controller",
+      "archetype": "access_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        82.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINALS",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::OSDP_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BATTERY_ZONE",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::BATTERY_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "L7-SEC-ACCESS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
+    },
+    {
       "asset_id": "L7-SEC-ACCESS-CTRL-01::DATA-JACK",
       "label": "L7 Access Control Panel Data Jack",
       "asset_type": "data_jack",
@@ -41866,6 +43620,76 @@
       ]
     },
     {
+      "asset_id": "L7-SEC-INTERCOM-01",
+      "label": "L7 IP Intercom 1",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        61.5,
+        54.0,
+        85.2
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "L7-SEC-INTERCOM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "L7-SEC-INTERCOM-01::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "L7-SEC-INTERCOM-01::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "L7-SEC-INTERCOM-01::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-INTERCOM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "L7-SEC-INTERCOM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "L7-SEC-INTERCOM-01::DATA-JACK",
       "label": "L7 IP Intercom 1 Data Jack",
       "asset_type": "data_jack",
@@ -41932,6 +43756,76 @@
       ]
     },
     {
+      "asset_id": "L7-SEC-INTERCOM-02",
+      "label": "L7 IP Intercom 2",
+      "asset_type": "intercom",
+      "archetype": "intercom",
+      "maturity": "componentized",
+      "position_ft": [
+        15.2,
+        54.0,
+        85.2
+      ],
+      "components": [
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "L7-SEC-INTERCOM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CALL_BUTTON",
+          "mesh_name": "L7-SEC-INTERCOM-02::PART::CALL_BUTTON",
+          "inspectable": true
+        },
+        {
+          "component_id": "MICROPHONE",
+          "mesh_name": "L7-SEC-INTERCOM-02::PART::MICROPHONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER",
+          "mesh_name": "L7-SEC-INTERCOM-02::PART::SPEAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-INTERCOM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "L7-SEC-INTERCOM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
+    },
+    {
       "asset_id": "L7-SEC-INTERCOM-02::DATA-JACK",
       "label": "L7 IP Intercom 2 Data Jack",
       "asset_type": "data_jack",
@@ -41995,6 +43889,138 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "L7-SEC-READER-01",
+      "label": "L7 OSDP Reader 1",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        61.5,
+        54.0,
+        85.2
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "L7-SEC-READER-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "L7-SEC-READER-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "L7-SEC-READER-01::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-READER-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "L7-SEC-READER-01::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "L7-SEC-READER-01::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
+      ]
+    },
+    {
+      "asset_id": "L7-SEC-READER-02",
+      "label": "L7 OSDP Reader 2",
+      "asset_type": "access_reader",
+      "archetype": "access_reader",
+      "maturity": "componentized",
+      "position_ft": [
+        15.2,
+        54.0,
+        85.2
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "L7-SEC-READER-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FACEPLATE",
+          "mesh_name": "L7-SEC-READER-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "READER_ZONE",
+          "mesh_name": "L7-SEC-READER-02::PART::READER_ZONE",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-READER-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "BEEPER",
+          "mesh_name": "L7-SEC-READER-02::PART::BEEPER",
+          "inspectable": true
+        },
+        {
+          "component_id": "OSDP_TERMINAL",
+          "mesh_name": "L7-SEC-READER-02::PART::OSDP_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
       ]
     }
   ]

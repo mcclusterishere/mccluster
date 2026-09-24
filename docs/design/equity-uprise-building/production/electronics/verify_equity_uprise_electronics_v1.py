@@ -271,6 +271,42 @@ if rep.get("step4c_componentized_monitor_total")!=len(monitor_records):fail("Ste
 if rep.get("step4c_componentized_ip_phone_total")!=len(ip_phone_records):fail("Step 4C IP-phone count mismatch")
 if rep.get("step4c_componentized_mfp_total")!=len(mfp_records):fail("Step 4C MFP count mismatch")
 
+access_reader_records=[x for x in component_records if x.get("archetype")=="access_reader"]
+intercom_records=[x for x in component_records if x.get("archetype")=="intercom"]
+access_controller_records=[x for x in component_records if x.get("archetype")=="access_controller"]
+modeled_access_readers=[a for a in assets.values() if a["classification"].get("asset_type")=="access_reader" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_intercoms=[a for a in assets.values() if a["classification"].get("asset_type")=="intercom" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_access_controllers=[a for a in assets.values() if a["classification"].get("asset_type")=="access_controller" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(access_reader_records)!=len(modeled_access_readers):fail(f"Step 4C access-reader coverage mismatch {len(access_reader_records)}/{len(modeled_access_readers)}")
+for record in access_reader_records:
+    required={"FACEPLATE","READER_ZONE","STATUS_LED","BEEPER","OSDP_TERMINAL","MOUNT"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing access-reader component(s): {sorted(required-parts)}")
+    if "OSDP_RS485" not in {p.get("id") for p in record.get("ports",[])}:fail(f"{record.get('asset_id')} missing OSDP reader port")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} access reader archetype not componentized")
+
+if len(intercom_records)!=len(modeled_intercoms):fail(f"Step 4C intercom coverage mismatch {len(intercom_records)}/{len(modeled_intercoms)}")
+for record in intercom_records:
+    required={"FACEPLATE","CALL_BUTTON","MICROPHONE","SPEAKER","STATUS_LED","RJ45_POE_PORT"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing intercom component(s): {sorted(required-parts)}")
+    if "RJ45_POE_PORT" not in {p.get("id") for p in record.get("ports",[])}:fail(f"{record.get('asset_id')} missing intercom PoE port")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} intercom archetype not componentized")
+
+if len(access_controller_records)!=len(modeled_access_controllers):fail(f"Step 4C access-controller coverage mismatch {len(access_controller_records)}/{len(modeled_access_controllers)}")
+for record in access_controller_records:
+    required={"ENCLOSURE","CONTROLLER_BOARD","ETHERNET_PORT","OSDP_TERMINALS","POWER_INPUT","BATTERY_ZONE","STATUS_LEDS"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing access-controller component(s): {sorted(required-parts)}")
+    if not {"AC_IN","RJ45_ETH","OSDP_BUSES"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing access-controller power/network/OSDP ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} access controller archetype not componentized")
+
+if rep.get("step4c_componentized_access_reader_total")!=len(access_reader_records):fail("Step 4C access-reader count mismatch")
+if rep.get("step4c_componentized_intercom_total")!=len(intercom_records):fail("Step 4C intercom count mismatch")
+if rep.get("step4c_componentized_access_controller_total")!=len(access_controller_records):fail("Step 4C access-controller count mismatch")
+
+
 
 
 
@@ -278,7 +314,7 @@ if rep.get("step4c_componentized_mfp_total")!=len(mfp_records):fail("Step 4C MFP
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:

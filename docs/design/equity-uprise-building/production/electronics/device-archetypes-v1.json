@@ -994,10 +994,10 @@
       "october_demo_required": true
     },
     "access_reader": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "OSDP Access Reader",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "wireless_security",
       "expected_components": [
@@ -1022,13 +1022,68 @@
         "trace_reader_bus",
         "inspect_access_event_sandbox"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "door_frame_or_wall_mounted_osdp_reader",
+      "components": [
+        {
+          "id": "FACEPLATE",
+          "role": "reader_faceplate",
+          "inspectable": true
+        },
+        {
+          "id": "READER_ZONE",
+          "role": "credential_read_zone",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "BEEPER",
+          "role": "audible_indicator",
+          "inspectable": true
+        },
+        {
+          "id": "OSDP_TERMINAL",
+          "role": "reader_bus_terminal",
+          "inspectable": true
+        },
+        {
+          "id": "MOUNT",
+          "role": "mounting_backplate",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "OSDP_RS485",
+          "connector": "RS-485/OSDP terminal",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP secure reader bus"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "credential_read_state",
+        "reader_bus_state",
+        "sandbox_access_event_state"
+      ],
+      "planned_behaviors": [
+        "reader_bus_loss",
+        "reader_tamper",
+        "credential_denied",
+        "controller_unavailable"
+      ]
     },
     "intercom": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "IP Intercom",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "wireless_security",
       "expected_components": [
@@ -1053,11 +1108,70 @@
         "trace_network_and_poe",
         "open_intercom_interface"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_mounted_ip_intercom",
+      "components": [
+        {
+          "id": "FACEPLATE",
+          "role": "intercom_faceplate",
+          "inspectable": true
+        },
+        {
+          "id": "CALL_BUTTON",
+          "role": "call_control",
+          "inspectable": true
+        },
+        {
+          "id": "MICROPHONE",
+          "role": "audio_input",
+          "inspectable": true
+        },
+        {
+          "id": "SPEAKER",
+          "role": "audio_output",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "intercom audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "call_state",
+        "audio_path_state",
+        "network_state",
+        "poe_state",
+        "intercom_ui_launch_point"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "speaker_fault"
+      ]
     },
     "access_controller": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "wireless_security",
       "display_name": "Access Control Panel",
@@ -1088,7 +1202,88 @@
         "trace_power",
         "inspect_sandbox_access_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_mounted_secured_access_control_enclosure",
+      "components": [
+        {
+          "id": "ENCLOSURE",
+          "role": "secured_panel_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "CONTROLLER_BOARD",
+          "role": "access_controller_logic",
+          "inspectable": true
+        },
+        {
+          "id": "ETHERNET_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "OSDP_TERMINALS",
+          "role": "reader_bus_terminals",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "BATTERY_ZONE",
+          "role": "backup_battery_zone",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicators",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled panel AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "access_control"
+          ],
+          "required": true
+        },
+        {
+          "id": "OSDP_BUSES",
+          "connector": "RS-485 terminal blocks",
+          "medium": "OSDP-RS485-STP",
+          "services": [
+            "OSDP reader buses"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_state",
+        "network_state",
+        "reader_bus_state",
+        "backup_power_state",
+        "sandbox_access_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "reader_bus_fault",
+        "battery_low"
+      ]
     },
     "av_controller": {
       "maturity": "placeholder",
