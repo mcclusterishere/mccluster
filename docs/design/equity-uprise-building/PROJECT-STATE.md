@@ -1130,3 +1130,8 @@ Current learner-facing floor-native coverage:
 - cross-floor — F4 uplink→B1 core and F6 fiber→B1 core.
 
 This is the first usable layman diagnostic layer, not the final embodied simulation ceiling. Remaining learner-experience work is room-by-room camera/inspection coverage beyond Floor 1, richer synthetic people/report interactions, and visible physical consequences (for example lights, displays, connectivity and environmental behavior) driven by the existing sandbox state. One shared runtime, asset registry and canonical viewer remain authoritative.
+
+
+## B1 Workplace Derived-Artifact Refresh — 2026-09-24
+
+The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.
