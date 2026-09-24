@@ -1,0 +1,212 @@
+{
+  "schema_version": "1.0.0",
+  "status": "step4c-device-archetype-authority",
+  "not_for_construction": true,
+  "purpose": "Defines visible, inspectable, stateful device assemblies for the Equity Uprise digital-twin. Step 4B connection topology remains authoritative for wiring; Step 4C decomposes selected assets into recognizable functional components.",
+  "maturity_levels": [
+    "placeholder",
+    "recognizable",
+    "componentized",
+    "interactive",
+    "lab_complete"
+  ],
+  "archetypes": {
+    "camera": {
+      "maturity": "lab_complete",
+      "display_name": "PoE IP Security Camera",
+      "form_factor": "fixed bullet camera",
+      "installation": "wall_or_ceiling_mount",
+      "components": [
+        {
+          "id": "MOUNT_PLATE",
+          "role": "mount",
+          "inspectable": true
+        },
+        {
+          "id": "BRACKET_ARM",
+          "role": "mount",
+          "inspectable": true
+        },
+        {
+          "id": "HOUSING",
+          "role": "chassis",
+          "inspectable": true
+        },
+        {
+          "id": "LENS_BARREL",
+          "role": "optics",
+          "inspectable": true
+        },
+        {
+          "id": "LENS_GLASS",
+          "role": "optics",
+          "inspectable": true
+        },
+        {
+          "id": "IR_LED_RING",
+          "role": "illuminator",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "port",
+          "inspectable": true
+        },
+        {
+          "id": "CABLE_ENTRY",
+          "role": "cable_entry",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        },
+        "lens_obstructed": {
+          "status_led": "green",
+          "video_stream": "obstructed",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled",
+        "lens_obstructed"
+      ]
+    },
+    "av_camera": {
+      "maturity": "componentized",
+      "display_name": "Network AV Camera",
+      "form_factor": "PTZ/box camera",
+      "components": [
+        "BODY",
+        "LENS",
+        "STATUS_LED",
+        "RJ45_POE_PORT",
+        "MOUNT"
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator"
+      ],
+      "lab_behaviors": [
+        "camera_link_down"
+      ]
+    },
+    "wireless_ap": {
+      "maturity": "recognizable",
+      "display_name": "Ceiling Wi-Fi Access Point",
+      "next_pass": true
+    },
+    "workstation": {
+      "maturity": "recognizable",
+      "display_name": "Desktop Workstation",
+      "next_pass": true
+    },
+    "monitor": {
+      "maturity": "recognizable",
+      "display_name": "Display Monitor",
+      "next_pass": true
+    },
+    "ip_phone": {
+      "maturity": "recognizable",
+      "display_name": "PoE IP Phone",
+      "next_pass": true
+    },
+    "mfp": {
+      "maturity": "recognizable",
+      "display_name": "Managed Multifunction Printer",
+      "next_pass": true
+    },
+    "access_switch": {
+      "maturity": "placeholder",
+      "display_name": "Managed Access Switch",
+      "next_pass": true
+    },
+    "patch_panel": {
+      "maturity": "placeholder",
+      "display_name": "Patch Panel",
+      "next_pass": true
+    },
+    "electrical_panel": {
+      "maturity": "recognizable",
+      "display_name": "Electrical Panelboard",
+      "next_pass": true
+    },
+    "environment_sensor": {
+      "maturity": "recognizable",
+      "display_name": "Environmental Sensor",
+      "next_pass": true
+    },
+    "access_reader": {
+      "maturity": "recognizable",
+      "display_name": "OSDP Access Reader",
+      "next_pass": true
+    },
+    "intercom": {
+      "maturity": "recognizable",
+      "display_name": "IP Intercom",
+      "next_pass": true
+    }
+  }
+}
