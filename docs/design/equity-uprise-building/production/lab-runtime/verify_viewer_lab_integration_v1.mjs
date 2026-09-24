@@ -330,6 +330,15 @@ for (const required of [
   "Physical Plant: Off",
   "Cabling: Off",
   "routed cables",
+  "ROUTED-CABLING-OVERLAY",
+  "electronicsComponentWorld",
+  "connectionEndpointComponent",
+  "connectionEndpointWorld",
+  "routedConnectionWorldPoints",
+  "rebuildRoutedCablingOverlay",
+  "syncRoutedCablingOverlay",
+  "THREE.LineSegments",
+  "ROUTED-CABLES::",
   "plantLegend",
   "Cat6A data / PoE",
   "OS2 fiber",
@@ -359,6 +368,9 @@ for (const required of [
 }
 assert.equal(viewer.includes("anchor?anchor.clone():floorWorld"), false, "unresolved electronics may not fall back to generic physical coordinates");
 assert.equal(viewer.includes("electronicsBindingWorld"), false, "Step 4B viewer must not reposition generated devices back onto conceptual anchors");
+assert.ok(viewer.includes("if(engineeringMeshIsCable(o)){o.visible=false;return}"), "legacy baked cable meshes must remain hidden");
+assert.ok(viewer.includes("setArchitectureGhost((servicesOn||engineeringMode||cablingMode)&&!roomMode)"), "cabling mode must ghost architecture for route inspection");
+assert.ok(viewer.includes("connection.route||[]"), "routed cabling must consume canonical connection route points");
 assert.ok(viewer.includes("double-click inspectable"));
 for (const required of [
   'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',

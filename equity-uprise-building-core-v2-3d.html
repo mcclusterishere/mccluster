@@ -22,9 +22,10 @@ const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,e
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
+const cablingOverlay=new THREE.Group();cablingOverlay.name='ROUTED-CABLING-OVERLAY';cablingOverlay.visible=false;scene.add(cablingOverlay);
 const deviceOverlay=new THREE.Group();deviceOverlay.name='DEVICE-INTERACTION-OVERLAY';scene.add(deviceOverlay);
 let engineeringRequestId=0;
-let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map();
+let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map(),electronicsComponentWorld=new Map();
 let deviceCatalog=null,deviceCatalogPromise=null,deviceConnections=null,inspectedDeviceId=null,deviceFovVisible=false,deviceFeedRenderer=null,deviceFeedCamera=null,deviceFeedLastRender=0;const deviceRecordById=new Map();
 let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomMotionEnabledAt=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
@@ -127,7 +128,7 @@ function syncServicesVisibility(){
    })
   }
  }
- setArchitectureGhost((servicesOn||engineeringMode)&&!roomMode);
+ setArchitectureGhost((servicesOn||engineeringMode||cablingMode)&&!roomMode);
  const counts=electronics?syncElectronicsVisibility():{devices:0,cables:0};infrastructureStatus(counts)
 }
 let stackFrameCache=null;const frameObjectCache=new WeakMap();
@@ -420,10 +421,11 @@ function registerNativeElectronicsMesh(o,binding,assetId){
  const level=binding?.level??physicalLevelFromId(assetId);if(level===null)return false;
  const componentId=electronicsComponentIdFromName(o.name);
  o.userData.assetId=assetId;o.userData.componentId=componentId;o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4c_componentized_physical_device'};
+ electronicsComponentWorld.set(assetId+'::'+componentId,world.clone());
  if(!electronicsBoundWorld.has(assetId)||o.name===assetId||componentId==='HOUSING')electronicsBoundWorld.set(assetId,world.clone());return true
 }
 async function applyElectronicsSpatialBindings(root){
- const mod=await ensureElectronicsSpatialModule();await ensureDeviceCatalog();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);const boundAssets=new Set();
+ const mod=await ensureElectronicsSpatialModule();await ensureDeviceCatalog();electronicsBoundWorld.clear();electronicsComponentWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;cablingOverlay.userData.signature='';root.updateMatrixWorld(true);const boundAssets=new Set();
  root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const assetId=electronicsAssetIdFromName(o.name||''),binding=mod.resolveElectronicsSpatialBinding(assetId);if(registerNativeElectronicsMesh(o,binding,assetId)){boundAssets.add(assetId)}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
  electronicsBoundCount=boundAssets.size;root.updateMatrixWorld(true)
 }
@@ -433,20 +435,128 @@ async function ensureElectronicsLayer(){
  return labElectronicsPromise;
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
-function cableMatchesFocus(o){
- if(!/^[0-7]$/.test(currentFocus))return qualityProfile().cableMode!=='floor-only';const level=Number(currentFocus),lo=ft(elev[level]-.5),hi=ft((elev[level]||0)+13.5);
- const box=new THREE.Box3().setFromObject(o);return box.max.y>=lo&&box.min.y<=hi
+
+const CABLE_RENDER_STYLE={
+ '10G-DAC':{color:0x2878ff},
+ '120VAC-BRANCH':{color:0xffd232},
+ '208Y120V-FEEDER':{color:0xffdc3c},
+ '24VDC-CLASS2':{color:0xff9128},
+ 'BACNET-MSTP-STP':{color:0x28dc50},
+ 'CAT6A-HORIZONTAL':{color:0x2878ff},
+ 'CAT6A-PATCH':{color:0x56a8ff},
+ 'CAT6A-WAP-SPARE':{color:0x6f8fff},
+ 'DISPLAYPORT':{color:0x7b8cff},
+ 'FIRE-ALARM-NAC':{color:0xff2828},
+ 'FIRE-ALARM-SLC':{color:0xff4d4d},
+ 'HDMI':{color:0x7b8cff},
+ 'IEC-POWER':{color:0xffc832},
+ 'NEMA5-15-POWER-CORD':{color:0xffc832},
+ 'OS2-SM-DUPLEX':{color:0xdc50ff},
+ 'OSDP-RS485-STP':{color:0xff9128},
+ 'SPEAKER-PAIR':{color:0x50dcdc}
+};
+
+function cableStyle(ctype){return CABLE_RENDER_STYLE[ctype]||{color:0x9fb0bf}}
+function componentWorld(assetId,componentId){return componentId?electronicsComponentWorld.get(assetId+'::'+componentId):null}
+function connectionEndpointComponent(connection,side){
+ const assetId=side==='from'?connection.from_asset_id:connection.to_asset_id,record=deviceRecordById.get(assetId),a=record?.archetype||'',ctype=connection.cable_type||'',port=String(side==='from'?connection.from_port:connection.to_port||'');
+ if(a==='access_switch'){
+  if(ctype==='OS2-SM-DUPLEX'||ctype==='10G-DAC'||/SFP|UPLINK/i.test(port))return'UPLINK_CAGES';
+  if(ctype==='IEC-POWER'||/PWR|AC/i.test(port))return'POWER_INPUT';
+  return'RJ45_PORT_BANK'
+ }
+ if(a==='patch_panel')return ctype==='CAT6A-PATCH'?'48x_FRONT_JACKS':'REAR_TERMINATIONS';
+ if(a==='fiber_panel')return'LC_ADAPTERS';
+ if(a==='data_jack')return ctype==='CAT6A-HORIZONTAL'||ctype==='CAT6A-WAP-SPARE'?'REAR_TERMINATION':'KEYSTONE_JACK';
+ if(a==='wap_spare_jack')return ctype==='CAT6A-WAP-SPARE'?'REAR_TERMINATION':'KEYSTONE';
+ if(a==='wireless_ap'||a==='camera'||a==='av_camera'||a==='av_microphone')return'RJ45_POE_PORT';
+ if(a==='workstation'){
+  if(ctype==='DISPLAYPORT')return'DISPLAY_OUTPUTS';
+  if(/POWER|VAC|IEC|NEMA/.test(ctype))return'POWER_SUPPLY';
+  return'NIC_PORT'
+ }
+ if(a==='monitor')return ctype==='DISPLAYPORT'?'VIDEO_INPUT':'POWER_INPUT';
+ if(a==='ip_phone')return side==='from'&&/PC/i.test(port)?'RJ45_PC':'RJ45_LAN';
+ if(a==='mfp')return /POWER|VAC|IEC|NEMA/.test(ctype)?'POWER_INLET':'RJ45_PORT';
+ if(a==='intercom')return'RJ45_POE_PORT';
+ if(a==='access_reader')return'OSDP_TERMINAL';
+ if(a==='access_controller'){
+  if(ctype==='OSDP-RS485-STP')return'OSDP_TERMINALS';
+  if(/POWER|VAC|IEC|NEMA/.test(ctype))return'POWER_INPUT';
+  return'ETHERNET_PORT'
+ }
+ if(a==='environment_sensor')return ctype==='BACNET-MSTP-STP'?'BACNET_TERMINAL':'24V_TERMINAL';
+ if(a==='receptacle')return ctype==='120VAC-BRANCH'?'REAR_BRANCH_TERMINATION':'DUPLEX_RECEPTACLE';
+ if(a==='rack_ups')return side==='from'?'OUTPUT_BANK':'AC_INPUT';
+ if(a==='pdu')return side==='from'?'OUTLET_BANK':'POWER_INLET';
+ if(a==='speaker')return'SPEAKER_TERMINALS';
+ if(a==='fire_detector')return'SLC_TERMINALS';
+ if(a==='fire_notification')return'NAC_TERMINALS';
+ if(a==='fire_alarm_control_panel'){
+  if(ctype==='FIRE-ALARM-SLC')return'SLC_TERMINALS';
+  if(ctype==='FIRE-ALARM-NAC')return'NAC_TERMINALS';
+  return'POWER_SECTION'
+ }
+ if(a==='fire_alarm_read_only_gateway'){
+  if(/CAT6A/.test(ctype))return'RJ45_PORT';
+  if(/POWER|VAC|IEC|NEMA/.test(ctype))return'POWER_INPUT';
+  return'FIRE_INTERFACE'
+ }
+ return null
+}
+function connectionEndpointWorld(connection,side){
+ const assetId=side==='from'?connection.from_asset_id:connection.to_asset_id,componentId=connectionEndpointComponent(connection,side);
+ return componentWorld(assetId,componentId)?.clone()||electronicsBoundWorld.get(assetId)?.clone()||null
+}
+function routedConnectionWorldPoints(connection){
+ let pts=(connection.route||[]).map(routePointWorld),from=connectionEndpointWorld(connection,'from'),to=connectionEndpointWorld(connection,'to');
+ if(pts.length>=2){if(from)pts[0]=from;if(to)pts[pts.length-1]=to}
+ else if(from&&to)pts=[from,to];
+ return pts
+}
+function connectionMatchesFocus(connection){
+ if(!/^[0-7]$/.test(currentFocus))return qualityProfile().cableMode!=='floor-only';
+ const level=Number(currentFocus),lo=ft(elev[level]-.5),hi=ft((elev[level]||0)+13.5),pts=routedConnectionWorldPoints(connection);
+ return pts.some(p=>p.y>=lo&&p.y<=hi)||pts.some((p,i)=>i&&((pts[i-1].y<lo&&p.y>hi)||(pts[i-1].y>hi&&p.y<lo)))
+}
+function clearRoutedCablingOverlay(){
+ while(cablingOverlay.children.length){const o=cablingOverlay.children[cablingOverlay.children.length-1];cablingOverlay.remove(o);o.geometry?.dispose?.();o.material?.dispose?.()}
+ cablingOverlay.userData.connectionCount=0;cablingOverlay.userData.signature=''
+}
+function rebuildRoutedCablingOverlay(){
+ clearRoutedCablingOverlay();
+ if(!cablingMode||roomMode||!deviceConnections){cablingOverlay.visible=false;return 0}
+ const grouped=new Map(),visibleConnections=(deviceConnections.connections||[]).filter(connectionMatchesFocus);
+ for(const connection of visibleConnections){
+  const pts=routedConnectionWorldPoints(connection);if(pts.length<2)continue;
+  const key=connection.cable_type||'UNKNOWN';if(!grouped.has(key))grouped.set(key,[]);
+  const positions=grouped.get(key);for(let i=1;i<pts.length;i++){positions.push(pts[i-1].x,pts[i-1].y,pts[i-1].z,pts[i].x,pts[i].y,pts[i].z)}
+ }
+ let rendered=0;
+ for(const [ctype,positions] of grouped){
+  if(!positions.length)continue;const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  const material=new THREE.LineBasicMaterial({color:cableStyle(ctype).color,transparent:true,opacity:.88,depthTest:false,depthWrite:false});
+  const lines=new THREE.LineSegments(geometry,material);lines.name='ROUTED-CABLES::'+ctype;lines.renderOrder=80;lines.userData.cableType=ctype;lines.userData.physicalRoute=true;cablingOverlay.add(lines)
+ }
+ rendered=visibleConnections.filter(x=>routedConnectionWorldPoints(x).length>=2).length;cablingOverlay.userData.connectionCount=rendered;cablingOverlay.visible=true;return rendered
+}
+function syncRoutedCablingOverlay(){
+ if(!cablingMode||roomMode){cablingOverlay.visible=false;return 0}
+ const signature=[currentFocus,qualityMode,electronicsBoundCount,deviceConnections?.connections?.length||0].join('|');
+ if(cablingOverlay.userData.signature!==signature){const count=rebuildRoutedCablingOverlay();cablingOverlay.userData.signature=signature;cablingOverlay.userData.connectionCount=count}
+ cablingOverlay.visible=true;return cablingOverlay.userData.connectionCount||0
 }
 function syncElectronicsVisibility(){
- if(!electronics){clearEngineeringMarkers();engineeringOverlay.visible=false;return{devices:0,cables:0}}
+ if(!electronics){clearEngineeringMarkers();engineeringOverlay.visible=false;cablingOverlay.visible=false;return{devices:0,cables:0}}
  const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;
- const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode,visibleAssets=new Set();let cables=0;
- electronics.visible=allowPlant||allowXray||allowCables;
+ const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,visibleAssets=new Set();
+ electronics.visible=allowPlant||allowXray;
  electronics.traverse(o=>{if(!o.isMesh)return;
-   if(engineeringMeshIsCable(o)){const show=allowCables&&cableMatchesFocus(o);o.visible=show;if(show)cables++;return}
+   if(engineeringMeshIsCable(o)){o.visible=false;return}
    const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,assetId=o.userData.assetId||electronicsAssetIdFromName(o.name),world=electronicsBoundWorld.get(assetId),lodOk=focusLevel!==null||qualityMode!=='LOW'||performanceLodVisible('device',world),show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope&&lodOk;
    o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)visibleAssets.add(assetId)
  });
+ const cables=syncRoutedCablingOverlay();
  if(allowXray)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
  return{devices:visibleAssets.size,cables}
 }
@@ -473,7 +583,8 @@ async function setPhysicalPlantMode(on){
 }
 async function setCablingMode(on){
  cablingMode=!!on;const b=document.getElementById('cabling');b.classList.toggle('active',cablingMode);
- if(cablingMode){await buildingLoaded;await ensureElectronicsLayer()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
+ if(cablingMode){await buildingLoaded;await ensureElectronicsLayer();cablingOverlay.userData.signature=''}else{clearRoutedCablingOverlay()}
+ const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
 }
 async function setEngineeringMode(on){
  const requestId=++engineeringRequestId;engineeringMode=!!on;const button=document.getElementById('xray');button.classList.toggle('active',engineeringMode);
@@ -527,10 +638,10 @@ function findCanonicalCenter(id){
 }
 function routePointWorld(p){return new THREE.Vector3(ft(p[0]),ft(p[2]),-ft(p[1]))}
 function spatialConnectionOverlay(connection){
- const raw=(labDatasets?.connections?.connections||[]).find(x=>x.connection_id===connection.connection_id),route=raw?.route||[];
+ const raw=(labDatasets?.connections?.connections||[]).find(x=>x.connection_id===connection.connection_id)||connection;
  const color=labColor(connection.visual_state),mat=new THREE.LineBasicMaterial({color,transparent:true,opacity:.96,depthWrite:false});
- let pts=route.length>=2?route.map(routePointWorld):[];
- if(pts.length<2){const a=electronicsBoundWorld.get(connection.from_asset_id),b=electronicsBoundWorld.get(connection.to_asset_id);if(!a||!b){mat.dispose();return false}pts=[a.clone(),b.clone()]}
+ const pts=routedConnectionWorldPoints(raw);
+ if(pts.length<2){mat.dispose();return false}
  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);line.name='LAB-SPATIAL-CABLE::'+connection.connection_id;line.userData.physicalRoute=true;labOverlay.add(line);return true
 }
 

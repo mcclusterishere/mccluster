@@ -127,6 +127,21 @@ The X-Ray control is now a true visible engineering view rather than a state-onl
 - The full cable graph remains hidden; scenario-specific traces still render only between canonical rebound endpoints.
 - X-Ray lifecycle hardening keeps the engineering view active across lab visual clears/resets, rejects stale async activation work after rapid toggles, and detaches/disposes engineering markers before rebuilding them.
 
+### Step 4 routed wiring presentation — ACTIVE
+
+The canonical viewer now renders the electronics connection graph from the deterministic connection catalog rather than exposing the legacy baked straight-line cable meshes:
+- all **1,330** authored physical connections remain sourced from `equity-uprise-electronics-connections-v1.json`;
+- route geometry consumes each connection's canonical `route` polyline and preserves its authored pathway class, riser/tray path, and endpoint port identifiers;
+- first/last route points snap to the rebound physical device component when an inspectable port-bearing component exists, otherwise to the bound device center or authored route endpoint;
+- Cat6A/PoE, OS2 fiber, rack patch/DAC, normal/emergency power, BACnet, Class 2, OSDP, fire alarm, AV/display and speaker-pair families render in batched cable-type line groups;
+- the renderer uses one `THREE.LineSegments` object per visible cable family instead of one draw object per connection;
+- LOW quality remains floor-scoped; higher-quality stack views may show the whole routed graph;
+- Cabling mode ghosts the architectural shell for engineering inspection while Room Mode continues to suppress engineering overlays;
+- legacy `CABLE::` meshes inside the electronics GLB are always hidden and are no longer the Cabling-mode source of truth;
+- scenario-specific lab traces now reuse the same rebound route resolver as the persistent Cabling view.
+
+This is a visualization of deterministic design-intent routing, not an as-built construction claim. Exact field routing, conduit fill, conductor sizing and stamped electrical/low-voltage design remain outside the digital-twin authority.
+
 ### Play / Engineering spatial separation — ACTIVE
 
 The canonical viewer now separates the finished player environment from unresolved engineering design intent:
