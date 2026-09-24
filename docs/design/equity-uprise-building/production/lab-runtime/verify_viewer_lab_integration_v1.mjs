@@ -86,9 +86,9 @@ for (const camera of cameraRecords) {
     (port.services || []).includes("PoE")
   ), camera.asset_id + " missing functional RJ45/PoE port");
   assert.deepEqual(camera.lab_behaviors, ["camera_link_down","poe_disabled"]);
-  assert.ok((camera.planned_behaviors || []).includes("lens_obstructed"),
-    "lens obstruction must remain planned until runtime support exists");
 }
+assert.ok((deviceArchetypes.archetypes.camera.planned_behaviors || []).includes("lens_obstructed"),
+  "lens obstruction must remain planned until runtime support exists");
 
 function controller(lab, difficulty, start = 1000) {
   return createViewerLabController({
@@ -341,6 +341,7 @@ for (const required of [
   "VIDEO STREAM",
   "Show camera coverage",
   "findPhysicalDeviceFromHit",
+  "if(deviceRecordById.has(x.canonical_id))styleCanonical(e,x.canonical_id,x.visual_state)",
 ]) {
   assert.ok(viewer.includes(required), "electronics physical-installation viewer guard missing: "+required);
 }
