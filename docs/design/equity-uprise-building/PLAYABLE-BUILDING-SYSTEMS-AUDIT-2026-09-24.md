@@ -2,7 +2,7 @@
 
 > Status: **CANONICAL AUDIT / IMPLEMENTATION BASIS v1.0**
 >
-> Audit snapshot: McCluster branch `9c4e5721ba71ddf8d01905f75bf2efc064a322e1`
+> Audit snapshot: McCluster main `8508a1cfd01586abf9ef1bfa154645a3f9dc474c`
 >
 > Scope: physical device realism, cabling/power, RF and surveillance, tactical attack/defense, learning progression, people/characters, interactive device software, multiplayer/solo control, and low-end mobile performance.
 >
