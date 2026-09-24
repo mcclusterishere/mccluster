@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-07-09T17:37:58.808Z",
+ "generated_at": "2026-09-24T04:44:07Z",
  "isrc_prefix": "QT6KV",
- "count": 15,
+ "count": 16,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -187,6 +187,18 @@
    "order": 12,
    "no": 15,
    "isrc": "QT6KV2600018",
+   "albumSlug": "cia-mind-control"
+  },
+  {
+   "slug": "you-the-feds",
+   "title": "You the Feds",
+   "credit": "KKK",
+   "album": "CIA Mind Control",
+   "page": "album.html?album=cia-mind-control",
+   "length": "3:53",
+   "available": true,
+   "order": 13,
+   "no": 16,
    "albumSlug": "cia-mind-control"
   }
  ]
