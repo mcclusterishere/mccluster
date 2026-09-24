@@ -134,8 +134,8 @@ def route_config(n):
       "journey_progression":{"type":"ui_state","target":"journey_progression","access":"public-with-private-personalization","read_only":True},
       "concierge":{"type":"ui_state","target":"concierge","access":"public-summary-staff-private-view"},
       "service_intake":{"type":"ui_state","target":"service_intake","access":"public-intake-private-session"},
-      "building_systems_lab":{"type":"ui_state","target":"building_systems_lab","access":"authorized-learner-or-instructor-sandbox-only","simulation":True,"live_b1_access":False},
-      "underground_operations":{"type":"ui_state","target":"underground_operations","access":"mccluster-house-owner-or-underground-operations-admin","hidden_from_normal_navigation":True,"live_b1_access":True},
+      "building_systems_lab":{"type":"scene","target":"basement-b1","access":"authorized-learner-or-instructor","simulation":True,"canonical_b1_geometry":True,"separate_clone":False,"live_real_world_control":False},
+      "underground_operations":{"type":"scene","target":"basement-b1","access":"staff-or-authorized-participant","hidden_from_normal_navigation":False,"known_floor":True,"sandbox_environment":True,"live_real_world_control":False},
       "emergency_exercise":{"type":"ui_state","target":"emergency_exercise","access":"authorized-participant-or-instructor","simulation":True},
       "life_safety_status":{"type":"ui_state","target":"life_safety_status","access":"public-sanitized-authorized-detailed","read_only":True},
       "current_issues":{"type":"url","url":"/topics.html","access":"public"},
@@ -492,7 +492,7 @@ Render readiness: **{level.get('render_readiness','unspecified')}**.
         readme += """
 Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
-Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
+B1 is a known staffed technical workplace floor. Floor 1 navigation may route authorized people into the canonical B1 SANDBOX geometry; hazardous compartments remain role/safety controlled and no real-world infrastructure control is exposed.
 """
     if n==7:
         readme += """
