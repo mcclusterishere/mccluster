@@ -1202,8 +1202,8 @@
       "instance_count": 190,
       "display_name": "Cat6A Data Jack",
       "family": "physical_terminations",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "FACEPLATE",
@@ -1237,8 +1237,8 @@
       "instance_count": 187,
       "display_name": "120V Receptacle",
       "family": "physical_terminations",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "FACEPLATE",
@@ -1272,8 +1272,8 @@
       "instance_count": 15,
       "display_name": "Reserved WAP Cat6A Jack",
       "family": "physical_terminations",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "FACEPLATE_OR_CEILING_JACK",

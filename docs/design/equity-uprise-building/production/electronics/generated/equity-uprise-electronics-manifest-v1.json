@@ -1464,7 +1464,7 @@
   ],
   "device_archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
   "device_component_catalog": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json",
-  "step4c_componentized_devices_total": 70,
+  "step4c_componentized_devices_total": 462,
   "overlay_glb": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
-  "overlay_sha256": "6dc2d14f34886a553104132de37f2a95cfe7071bce1a4bab790705b99bd9ab62"
+  "overlay_sha256": "7d7053f82a625e34500dffb8e82c2e377b80f1eb954199e493d23c4dd12f3f07"
 }
