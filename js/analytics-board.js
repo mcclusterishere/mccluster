@@ -378,9 +378,18 @@
       var sum = function (rows, k) {
         return rows.reduce(function (n, r) { return n + (Number(r[k]) || 0); }, 0);
       };
-      var views = sum(cur, "page_views"), pViews = sum(prev, "page_views");
-      var vis = sum(cur, "visitors"), pVis = sum(prev, "visitors");
-      var sess = sum(cur, "sessions"), pSess = sum(prev, "sessions");
+      /* Range totals come from analytics_totals(), which counts distinct
+         visitors/sessions across the WHOLE range. Summing daily distincts
+         overcounts somebody who returns on multiple days. The day series is
+         still used for the chart. */
+      var totals = t.totals || {};
+      var prior = t.previous_totals || {};
+      var views = totals.page_views == null ? sum(cur, "page_views") : Number(totals.page_views);
+      var pViews = prior.page_views == null ? sum(prev, "page_views") : Number(prior.page_views);
+      var vis = totals.visitors == null ? sum(cur, "visitors") : Number(totals.visitors);
+      var pVis = prior.visitors == null ? sum(prev, "visitors") : Number(prior.visitors);
+      var sess = totals.sessions == null ? sum(cur, "sessions") : Number(totals.sessions);
+      var pSess = prior.sessions == null ? sum(prev, "sessions") : Number(prior.sessions);
       var perVisit = vis ? Math.round((views / vis) * 10) / 10 : null;
       var pPerVisit = pVis ? Math.round((pViews / pVis) * 10) / 10 : null;
       var compare = !!(state.request && state.request.compare);
