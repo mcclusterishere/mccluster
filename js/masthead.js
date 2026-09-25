@@ -245,19 +245,11 @@ html { scroll-behavior: smooth; }
       { href: "management.html",   label: "The Socials Room" },
       { href: "archive.html",      label: "The archive" },
     ] },
-    /* Equity Uprise is two halves and the map says so: the program page
-       is the finished record, these are the rooms where the movement is
-       used. A room reachable from nowhere may as well not exist, and
-       that goes double for the ones a visitor is meant to come back to. */
-    { group: "Equity Uprise", rooms: [
-      { href: "equity-uprise.html", label: "The movement & the record" },
-      { href: "topics.html",        label: "What we're listening about" },
-      { href: "fellowships.html",   label: "The fellowship directory" },
-      { href: "profile.html",       label: "People on the platform" },
-      { href: "dashboard.html",     label: "Your Uprise desk" },
-      { href: "fellowship.html",    label: "The Policy Fellowship terminal" },
-      { href: "docket-516.html",    label: "Docket 516: the public record" },
-    ] },
+    /* Equity Uprise is put away while the site concentrates on the music
+       and on Mnet, so its group is not listed here. The rooms all still
+       exist and still answer on their own URLs; the map simply stops
+       handing them to a visitor who came for a record. Restoring the
+       group is restoring these lines. */
     /* The Closet shares the fifth tab's wing with the studio, so the map
        files them together: one column of the bar, one group here. Sites
        itself is listed under "The house" with the rest of the studio, not

@@ -78,8 +78,6 @@
     nav.innerHTML =
       '<a class="appbar__tab" id="appbarNP" href="' + ROOT + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + ROOT + 'equity-uprise.html" data-appnav="uprise">' +
-        eqSvg(false) + '<span>Equity Uprise</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* THE FIFTH COLUMN GOES HOME.
@@ -96,9 +94,6 @@
 
          Chat did not lose anything: it is the second slot of this wing,
          one hold away, with the Inner Room and Give. */
-      '<a class="appbar__tab" href="' + ROOT + 'whip.html" data-appnav="sites">' +
-        '<img class="appbar__we" src="' + ROOT + 'assets/img/we-icon-dark-bar.png" alt="">' +
-        '<span>Whip</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Mnet</span></a>';
@@ -126,6 +121,7 @@
     return;
   }
   if (!dock) dock = buildBar();
+
 
   /* The fifth column is auth-aware. Start conservatively as a sign-in door;
      the shared state controller below promotes it to Feed as soon as a real
@@ -166,27 +162,10 @@
          thirty-three pages moved nothing until this line moved too. */
       home: "listen.html",
       slots: [
-        ["listen.html", "disc", "Listen", { title: "Listen: every record",
-          sub: "The whole shelf in one room, ordered by what listeners actually play, with a search across every track, album and credit." }],
         ["album.html", "note", "The album", { title: "I AM HERE, the album",
           sub: "Six tracks in the site's own player: the deck, lock-screen controls, and a memory. It picks up where you left off." }],
         ["films.html", "film", "Lyric Videos", { title: "Lyric videos, one swipe",
           sub: "The whole catalog as lyric videos. Swipe, and every record plays its own scene-cut film with the words live on the picture." }],
-        ["license.html", "card", "License", { title: "License the music",
-          sub: "Sync, film, ads, church rooms: what the record costs to use, who to ask, and what comes back signed." }],
-      ],
-    },
-    uprise: {
-      home: "equity-uprise.html",
-      slots: [
-        ["equity-uprise.html", "rise", "The Uprise", { title: "Equity Uprise",
-          sub: "The movement, the fellowship and the platform in one room: what it is, who carries it, and what it has already moved." }],
-        ["fellowship.html", "folk", "Fellowship", { title: "The Policy Fellowship",
-          sub: "The intake for the policy fellowship: seventeen questions, no account, and a reply from a person." }],
-        ["docket-516.html", "folder", "Docket 516", { title: "Docket 516, the archive",
-          sub: "The flagship case: the 115-kV rebuild, the filings index, and the remand that followed. Every document links to the Council's own copy." }],
-        ["verify.html", "seal", "Get Verified", { title: "Get M-Verified",
-          sub: "The verification desk: how the cohort is checked, and what the mark on a name is actually claiming." }],
       ],
     },
     home: {
@@ -194,49 +173,8 @@
       slots: [
         ["hire.html", "case", "Hire", { title: "Hire the agency",
           sub: "Brand films, photography, web builds, campaign strategy. One team, start to finish." }],
-        /* Sites moved to its own tab on 2026-08-19; the Console takes the
-           freed slot rather than leaving a gap, because a client who is
-           already paying should not have to go through Profile to file a
-           change. It keeps its Profile slot too — one room, two doors. */
-        ["console.html", "desk", "Console", { title: "The client console",
-          sub: "If the studio runs your site, this is your back room: file a change, watch it land, see your plan." }],
-        ["gallery.html", "frame", "The Gallery", { title: "The Gallery",
-          sub: "Photography and film in one wall: the events, the covers, the runways, the print shop behind them." }],
         [MAP, "grid", "Everything", { title: "Every room in the house",
-          sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the five wings do not carry." }],
-      ],
-    },
-    /* THE FIFTH WING, REPOINTED AGAIN. It was the Closet's, then the shake
-       run's, and from 2026-08-19 it is the studio's. Sites moved up out of
-       the home wing to take the column; the home wing gave its freed slot
-       to the Console, so the client back room is one tap from the front
-       door instead of buried under Profile.
-
-       The Closet, the Inner Room and Give keep their slots exactly as they
-       were, so nothing that was one tap away has become unreachable. */
-    sites: {
-      /* THE DROP IS PUT AWAY, NOT THROWN OUT. prayer-closet.html and its
-         ledger are untouched on disk; nothing links to them while Whip
-         Equipped holds the column, and putting the Hitman entries back is
-         a matter of restoring these two lines. */
-      home: "whip.html",
-      slots: [
-        /* The wing's first slot is the same door the tab is, so it says
-           the same thing -- which is why these two swapped places when the
-           column did. The Chat copy also used to carry "$87 a month",
-           which is not a price this business has charged for a long time:
-           the kind of number that only survives because nobody reads a
-           tooltip. Prices are not typed here any more; the conversation
-           quotes them from the ledger, and the Closet quotes them from
-           whatever checkout carries the drop. */
-        ["whip.html", "whipmark", "Whip Equipped", { title: "Whip Equipped LLC",
-          sub: "Three apps on one McCluster account: Rider, Driver and Rentals, run off a parts-licensed dealership in Acworth, Georgia." }],
-        ["sites.html", "chat", "Chat", { title: "Talk to the desk",
-          sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
-        ["inner-room.html", "lamp", "Inner Room", { title: "The Inner Room",
-          sub: "The chapters behind the garments: read, study, pray, keep your notes. Free, always; no purchase opens this door." }],
-        ["give.html", "gift", "Give", { title: "Support the work",
-          sub: "Give once, sponsor a season, or back a fund by name." }],
+          sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the three wings do not carry." }],
       ],
     },
     profile: {
@@ -246,10 +184,6 @@
           sub: "The McCluster network: your profile, posts, comments, reactions and the activity happening across the ecosystem." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
-        ["console.html", "desk", "Console", { title: "The client console",
-          sub: "If the studio runs your site, this is your back room: file a change, watch it land, see your plan." }],
-        ["press.html", "paper", "Press Kit", { title: "Press and media kit",
-          sub: "The bio, the headshots, the logo files and the credential scans, in the sizes a newsroom asks for." }],
       ],
     },
   };
@@ -261,18 +195,45 @@
   });
   /* ORDER is the bar's DOM order, and morph() reads it as such: the column a
      held tab keeps is its index here, so this list and the hand-written
-     markup in every page must stay in step. The M coin sits in the middle of
-     five by the owner's instruction, so uprise goes between music and home. */
-  var ORDER = ["music", "uprise", "home", "sites", "profile"];
+     markup in every page must stay in step.
+
+     THE ANCHOR LAW SCALES WITH THIS LIST. morph() opens a wing as
+     slots.length + 1 cells, so a bar of N tabs needs wings of N-1 rooms or
+     the capsule changes width on a long-press and drags the held tab out of
+     its own column. Three tabs, therefore two rooms per wing. Change this
+     list and every wing changes with it. */
+  var ORDER = ["music", "home", "profile"];
+
+  /* THE BAR IS THREE COLUMNS NOW, AND THIS ENFORCES IT.
+
+     Equity Uprise, Whip Equipped and PRIM3 are put away while the site
+     concentrates on the music and on Mnet. Put away, not deleted: every
+     page and every route still exists and still answers, and restoring a
+     column is adding its tab back to ORDER and its wing back to WINGS.
+
+     Thirty-two pages carry the bar as hand-written markup rather than
+     letting buildBar() make it, so editing this file alone would have left
+     the old five-tab bar on all of them. Those pages are edited too — but
+     a bar is also the kind of markup that gets copy-pasted into the next
+     page somebody writes, so anything in the DOM claiming a column this
+     build does not serve is removed here as well. Removed, not hidden with
+     CSS: a hidden nav still reaches a screen reader and still takes tab
+     focus, which is the opposite of putting something away. */
+  Array.prototype.forEach.call(dock.querySelectorAll("[data-appnav]"), function (tab) {
+    if (ORDER.indexOf(tab.getAttribute("data-appnav")) === -1 && tab.parentNode) {
+      tab.parentNode.removeChild(tab);
+    }
+  });
+
   /* the coin: the wing this page lives in wears the filled gold circle */
   var PAGE_WING = {
     "listen.html": "music",
     "album.html": "music", "films.html": "music", "catalogue.html": "music",
     "license.html": "music",
-    /* the civic world got its own tab, so the four rooms that used to sit
-       under the M coin by default now light their own */
-    "equity-uprise.html": "uprise", "docket-516.html": "uprise",
-    "fellowship.html": "uprise", "verify.html": "uprise", "feed.html": "uprise",
+    /* The civic rooms had their own column; it is put away, so they claim
+       no coin rather than lighting one that is not on the bar. The pages
+       still answer — nothing here deletes a room, it only stops the bar
+       pointing at one. */
     /* the front door is the house: the landing page opens on the emblem,
        so / and /index.html light the M coin; the record lives behind Music */
     "": "home", "index.html": "home",
@@ -281,13 +242,11 @@
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
     "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
-    /* the fifth wing: the studio and the rooms it shares a column with.
-       shakes.html and shake-desk.html are not listed because they are not
-       served any more — see _unfinished/README.md. */
-    "sites.html": "sites",
-    "whip.html": "sites", "ecosystem.html": "sites",
-    "prayer-closet.html": "sites", "inner-room.html": "sites",
-    "sent.html": "sites", "give.html": "sites"
+    /* The fifth column is put away with Whip Equipped. These rooms keep
+       working; they simply light no coin, and are reached through the map
+       under Everything. */
+    "sites.html": "home", "inner-room.html": "home",
+    "sent.html": "home", "give.html": "home"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
        wing: the site's own ledger files them under matthew, and neither page
        says the word "uprise" anywhere. Lighting a coin there would be an

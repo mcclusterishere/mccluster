@@ -1,584 +1,570 @@
 {
- "note": "PRAYER CLOSET: the season ledger. This file IS the admin panel: names (tag), statuses, colors, pricing, placements, and collaborators all edit here and every closet surface repaints on next load. No deploy per drop. Drop statuses: concept | preview | coming-soon | live | sold-out | archived. Prices stay null until garments are real (the house never sells what it can't ship); when a drop goes live, wire its offering slug and flip status. CHECKOUT: each drop's preorder block carries `shopify` and `square`. Shopify wins when both are set, so a drop moves to the store by pasting one link and never by deleting another. See js/closet.js checkoutOf(), and the store runbook in docs/store/.",
- "editionFormat": "HM-MT{chapter}-{drop}-{serial}, e.g. HM-MT6-001-0084. The registry itself is Phase 3 (see docs/prayer-closet.md).",
- "season": {
-  "id": "season-001",
-  "name": "SEASON 001: MATTHEW",
-  "line": "One drop, three colorways, cut from Matthew 10. Every mark on it carries a meaning and a verse — the garment attracts the eye, the Word gives it weight.",
-  "gospel": "Matthew",
-  "translation": {
-   "code": "web",
-   "name": "World English Bible",
-   "license": "Public domain"
+  "note": "PRAYER CLOSET: the season ledger. This file IS the admin panel: names (tag), statuses, colors, pricing, placements, and collaborators all edit here and every closet surface repaints on next load. No deploy per drop. Drop statuses: concept | preview | coming-soon | live | sold-out | archived. Prices stay null until garments are real (the house never sells what it can't ship); when a drop goes live, wire its offering slug and flip status. CHECKOUT: each drop's preorder block carries `shopify` and `square`. Shopify wins when both are set, so a drop moves to the store by pasting one link and never by deleting another. See js/closet.js checkoutOf(), and the store runbook in docs/store/.",
+  "editionFormat": "HM-MT{chapter}-{drop}-{serial}, e.g. HM-MT6-001-0084. The registry itself is Phase 3 (see docs/prayer-closet.md).",
+  "season": {
+    "id": "season-001",
+    "name": "SEASON 001: MATTHEW",
+    "line": "One drop, three colorways, cut from Matthew 10. Every mark on it carries a meaning and a verse — the garment attracts the eye, the Word gives it weight.",
+    "gospel": "Matthew",
+    "translation": {
+      "code": "web",
+      "name": "World English Bible",
+      "license": "Public domain"
+    },
+    "emblem": "assets/img/hm-mark.png",
+    "give": {
+      "label": "Sow into the season",
+      "line": "Production, samples, finishing, the studio: a gift moves the season forward. It buys nothing and promises nothing back; it plants.",
+      "square": null,
+      "note": "ADMIN: paste a Square payment link here (Square Dashboard → Payments → Payment Links → Donation) and the giving door opens on every closet surface. Null keeps it closed."
+    },
+    "specs": {
+      "note": "THE CLOTH: one spec for the season, shown on every drop room under the tech pack. A drop may carry its own specs{} to override. measure.rows is empty until a production sample is on the table and measured; while it is empty the room says sizing is confirmed by email instead of showing numbers nobody checked.",
+      "weight": "400 GSM",
+      "fabric": "Heavyweight brushed fleece",
+      "composition": "100% cotton",
+      "fit": "Oversized, dropped shoulder. Cut to wear roomy: take one size down if you want it closer to the body.",
+      "measure": {
+        "unit": "in",
+        "note": "Sizes run S to 2XL. The desk confirms your size by email before anything is cut, and a full size chart lands with the production sample.",
+        "rows": []
+      }
+    }
   },
-  "emblem": "assets/img/hm-mark.png",
-  "give": {
-   "label": "Sow into the season",
-   "line": "Production, samples, finishing, the studio: a gift moves the season forward. It buys nothing and promises nothing back; it plants.",
-   "square": null,
-   "note": "ADMIN: paste a Square payment link here (Square Dashboard → Payments → Payment Links → Donation) and the giving door opens on every closet surface. Null keeps it closed."
-  },
-  "specs": {
-   "note": "THE CLOTH: one spec for the season, shown on every drop room under the tech pack. A drop may carry its own specs{} to override. measure.rows is empty until a production sample is on the table and measured; while it is empty the room says sizing is confirmed by email instead of showing numbers nobody checked.",
-   "weight": "400 GSM",
-   "fabric": "Heavyweight brushed fleece",
-   "composition": "100% cotton",
-   "fit": "Oversized, dropped shoulder. Cut to wear roomy: take one size down if you want it closer to the body.",
-   "measure": {
-    "unit": "in",
-    "note": "Sizes run S to 2XL. The desk confirms your size by email before anything is cut, and a full size chart lands with the production sample.",
-    "rows": []
-   }
-  }
- },
- "drops": [
-  {
-   "slug": "sent",
-   "no": "001",
-   "tag": "The Halo Drop",
-   "title": "SENT",
-   "garment": "Heavyweight hoodie · oversized fleece. Joggers in the full set",
-   "phrase": "Heav Yeah",
-   "support": "Wise as Serpents. Innocent as Doves.",
-   "reference": "Matthew 10:16",
-   "book": "matthew",
-   "chapter": 10,
-   "theme": [
-    "Mission",
-    "Discipline",
-    "Courage",
-    "Wisdom"
-   ],
-   "color": {
-    "name": "Washed Black",
-    "hex": "#3a3a3c",
-    "ink": "#f4efe6",
-    "note": "washed black / charcoal. Heavyweight oversized fleece, DTG print, sampled off the production photography (four views, 2026-08-30). This entry read olive before the garment existed; the garment is the source of truth once it does."
-   },
-   "cover": "assets/img/closet/sent/sent-card.jpg",
-   "coverW": 663,
-   "coverH": 895,
-   "media": [
+  "drops": [
     {
-     "id": "st-front",
-     "type": "photo",
-     "role": "front",
-     "src": "assets/img/closet/sent/sent-front.jpg",
-     "w": 1254,
-     "h": 1254,
-     "note": "Front: the Heav'Yeah crest — winged cross, halo ring and barbed wire — with both sleeve prints in view"
-    },
-    {
-     "id": "st-back",
-     "type": "photo",
-     "role": "back",
-     "src": "assets/img/closet/sent/sent-back.jpg",
-     "w": 1254,
-     "h": 1254,
-     "note": "Back: the M chevron in steel and ruby over the HM AMMO halo mark, bullet through the H"
-    },
-    {
-     "id": "st-left",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/sent/sent-left.jpg",
-     "w": 1254,
-     "h": 1254,
-     "note": "Left sleeve: SEEK FIRST THE KINGDOM OF GOD, stacked under the crossed-spear hit"
-    },
-    {
-     "id": "st-right",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/sent/sent-right.jpg",
-     "w": 1254,
-     "h": 1254,
-     "note": "Right sleeve: MOST HIGH FASHION, stacked under the twin-diamond hit"
+      "slug": "sent",
+      "no": "001",
+      "tag": "The Halo Drop",
+      "title": "SENT",
+      "garment": "Heavyweight hoodie · oversized fleece. Joggers in the full set",
+      "phrase": "Heav Yeah",
+      "support": "Wise as Serpents. Innocent as Doves.",
+      "reference": "Matthew 10:16",
+      "book": "matthew",
+      "chapter": 10,
+      "theme": [
+        "Mission",
+        "Discipline",
+        "Courage",
+        "Wisdom"
+      ],
+      "color": {
+        "name": "Washed Black",
+        "hex": "#3a3a3c",
+        "ink": "#f4efe6",
+        "note": "washed black / charcoal. Heavyweight oversized fleece, DTG print, sampled off the production photography (four views, 2026-08-30). This entry read olive before the garment existed; the garment is the source of truth once it does."
+      },
+      "cover": "assets/img/closet/sent/sent-card.jpg",
+      "coverW": 663,
+      "coverH": 895,
+      "media": [
+        {
+          "id": "st-front",
+          "type": "photo",
+          "role": "front",
+          "src": "assets/img/closet/sent/sent-front.jpg",
+          "w": 1254,
+          "h": 1254,
+          "note": "Front: the Heav'Yeah crest — winged cross, halo ring and barbed wire — with both sleeve prints in view"
+        },
+        {
+          "id": "st-back",
+          "type": "photo",
+          "role": "back",
+          "src": "assets/img/closet/sent/sent-back.jpg",
+          "w": 1254,
+          "h": 1254,
+          "note": "Back: the M chevron in steel and ruby over the HM AMMO halo mark, bullet through the H"
+        },
+        {
+          "id": "st-left",
+          "type": "photo",
+          "role": "detail",
+          "src": "assets/img/closet/sent/sent-left.jpg",
+          "w": 1254,
+          "h": 1254,
+          "note": "Left sleeve: SEEK FIRST THE KINGDOM OF GOD, stacked under the crossed-spear hit"
+        },
+        {
+          "id": "st-right",
+          "type": "photo",
+          "role": "detail",
+          "src": "assets/img/closet/sent/sent-right.jpg",
+          "w": 1254,
+          "h": 1254,
+          "note": "Right sleeve: MOST HIGH FASHION, stacked under the twin-diamond hit"
+        }
+      ],
+      "status": "preview",
+      "collaborator": "hitman",
+      "editionQty": null,
+      "price": null,
+      "offering": null,
+      "preorder": {
+        "options": [
+          {
+            "id": "hoodie",
+            "label": "The hoodie",
+            "price": 66,
+            "square": "https://square.link/u/DhtsVxFW",
+            "shopify": null,
+            "note": "Hoodie only, any of the three colorways."
+          },
+          {
+            "id": "set",
+            "label": "The full set",
+            "price": 120,
+            "square": "https://square.link/u/qqDcUQS7",
+            "shopify": null,
+            "note": "Hoodie and joggers together."
+          }
+        ],
+        "deposit": null,
+        "shopify": null,
+        "square": "https://square.link/u/DhtsVxFW",
+        "how": "Preorder now, made to order. Size and colorway are chosen at checkout, so nothing has to come back by email. About four weeks from order to door.",
+        "note": "LIVE on Square: two Quick Pay links created 2026-08-30 on location LYTBAM2H7536B. Both ask for the shipping address and carry two custom fields (size, colorway), which is why the standard terms no longer promise an email for sizing. TO MOVE TO SHOPIFY LATER: fill `shopify` on an option and it outranks that option's `square` on next load, no code change. terms: null uses the standard honesty block; set an array of strings to override.",
+        "terms": null
+      },
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "2XL"
+      ],
+      "fulfillment": [
+        "direct",
+        "finished"
+      ],
+      "line": "The field set. Sent out sharp and clean, both at once.",
+      "why": "Matthew 10 is marching orders: go, travel light, be shrewd without losing your innocence. Washed black, washed blue, black — three colorways of one field set, because the mission is real and it is one mission.",
+      "briefing": {
+        "mission": "Marching orders: go light, go wise, go anyway.",
+        "points": [
+          {
+            "k": "Called by name",
+            "ref": "Matthew 10:2-4",
+            "v": 2,
+            "p": "The twelve get named before they get sent. Identity precedes assignment: you're a person on the roster, not a number in a crowd."
+          },
+          {
+            "k": "Travel light",
+            "ref": "Matthew 10:9-10",
+            "v": 9,
+            "p": "No gold, no bag, no second coat. The mission funds the mission, and everything you'd over-pack is weight the road doesn't need."
+          },
+          {
+            "k": "Serpents and doves",
+            "ref": "Matthew 10:16",
+            "v": 16,
+            "p": "The line on the back of the set: shrewd and clean at the same time. Neither cancels the other: wisdom without edge, innocence without naivety."
+          },
+          {
+            "k": "Every sparrow counted",
+            "ref": "Matthew 10:29-31",
+            "v": 29,
+            "p": "Fear gets answered with worth: not one sparrow falls unnoticed, and you are counted down to the hair. Courage here is arithmetic, not bravado."
+          }
+        ],
+        "questions": [
+          "What would 'travel light' have you put down this season?",
+          "Where do you need more serpent, and where more dove?",
+          "What's the assignment you keep waiting to feel ready for?"
+        ],
+        "prayer": "Lord, send me sharp and keep me clean. Give me wisdom that doesn't harden and innocence that doesn't fold. I'll go. Amen."
+      },
+      "placements": [
+        {
+          "id": "st-chest",
+          "area": "front",
+          "method": "dtg",
+          "phrase": "Heav Yeah",
+          "productionNotes": "front chest"
+        },
+        {
+          "id": "st-back",
+          "area": "back",
+          "method": "dtg",
+          "phrase": "Wise as Serpents. Innocent as Doves. · Matthew 10:16",
+          "productionNotes": "full back"
+        },
+        {
+          "id": "st-sleeve-l",
+          "area": "left-sleeve",
+          "method": "dtg",
+          "phrase": "Seek First the Kingdom of God",
+          "productionNotes": "left sleeve, stacked under a slash hit · drop 001's phrase"
+        },
+        {
+          "id": "st-sleeve-r",
+          "area": "right-sleeve",
+          "method": "dtg",
+          "phrase": "Most High Fashion",
+          "productionNotes": "right sleeve, stacked under a slash hit · drop 002's phrase"
+        },
+        {
+          "id": "st-hood",
+          "area": "hood",
+          "method": "dtg",
+          "phrase": "SENT",
+          "productionNotes": ""
+        },
+        {
+          "id": "st-leg-r",
+          "area": "right-leg",
+          "method": "dtg",
+          "phrase": "MT 10:16",
+          "productionNotes": "jogger right leg"
+        },
+        {
+          "id": "st-label",
+          "area": "inside-label",
+          "method": "dtg",
+          "phrase": "PRAYER CLOSET · HM-MT10",
+          "productionNotes": ""
+        }
+      ],
+      "colorways": [
+        {
+          "id": "washed-black",
+          "name": "Washed Black",
+          "hex": "#3a3a3c",
+          "ink": "#f4efe6",
+          "shot": true,
+          "note": "The photographed colorway: all four views on this drop are Washed Black."
+        },
+        {
+          "id": "washed-blue",
+          "name": "Washed Blue",
+          "hex": "#476990",
+          "ink": "#f4efe6",
+          "shot": false
+        },
+        {
+          "id": "black",
+          "name": "Black",
+          "hex": "#0d0b0a",
+          "ink": "#f4efe6",
+          "shot": false
+        }
+      ]
     }
-   ],
-   "status": "preview",
-   "collaborator": "hitman",
-   "editionQty": null,
-   "price": null,
-   "offering": null,
-   "preorder": {
-    "options": [
-     {
-      "id": "hoodie",
-      "label": "The hoodie",
-      "price": 66,
-      "square": "https://square.link/u/DhtsVxFW",
-      "shopify": null,
-      "note": "Hoodie only, any of the three colorways."
-     },
-     {
-      "id": "set",
-      "label": "The full set",
-      "price": 120,
-      "square": "https://square.link/u/qqDcUQS7",
-      "shopify": null,
-      "note": "Hoodie and joggers together."
-     }
-    ],
-    "deposit": null,
-    "shopify": null,
-    "square": "https://square.link/u/DhtsVxFW",
-    "how": "Preorder now, made to order. Size and colorway are chosen at checkout, so nothing has to come back by email. About four weeks from order to door.",
-    "note": "LIVE on Square: two Quick Pay links created 2026-08-30 on location LYTBAM2H7536B. Both ask for the shipping address and carry two custom fields (size, colorway), which is why the standard terms no longer promise an email for sizing. TO MOVE TO SHOPIFY LATER: fill `shopify` on an option and it outranks that option's `square` on next load, no code change. terms: null uses the standard honesty block; set an array of strings to override.",
-    "terms": null
-   },
-   "sizes": [
-    "S",
-    "M",
-    "L",
-    "XL",
-    "2XL"
-   ],
-   "fulfillment": [
-    "direct",
-    "finished"
-   ],
-   "line": "The field set. Sent out sharp and clean, both at once.",
-   "why": "Matthew 10 is marching orders: go, travel light, be shrewd without losing your innocence. Washed black, washed blue, black — three colorways of one field set, because the mission is real and it is one mission.",
-   "briefing": {
-    "mission": "Marching orders: go light, go wise, go anyway.",
-    "points": [
-     {
-      "k": "Called by name",
-      "ref": "Matthew 10:2-4",
-      "v": 2,
-      "p": "The twelve get named before they get sent. Identity precedes assignment: you're a person on the roster, not a number in a crowd."
-     },
-     {
-      "k": "Travel light",
-      "ref": "Matthew 10:9-10",
-      "v": 9,
-      "p": "No gold, no bag, no second coat. The mission funds the mission, and everything you'd over-pack is weight the road doesn't need."
-     },
-     {
-      "k": "Serpents and doves",
-      "ref": "Matthew 10:16",
-      "v": 16,
-      "p": "The line on the back of the set: shrewd and clean at the same time. Neither cancels the other: wisdom without edge, innocence without naivety."
-     },
-     {
-      "k": "Every sparrow counted",
-      "ref": "Matthew 10:29-31",
-      "v": 29,
-      "p": "Fear gets answered with worth: not one sparrow falls unnoticed, and you are counted down to the hair. Courage here is arithmetic, not bravado."
-     }
-    ],
-    "questions": [
-     "What would 'travel light' have you put down this season?",
-     "Where do you need more serpent, and where more dove?",
-     "What's the assignment you keep waiting to feel ready for?"
-    ],
-    "prayer": "Lord, send me sharp and keep me clean. Give me wisdom that doesn't harden and innocence that doesn't fold. I'll go. Amen."
-   },
-   "placements": [
+  ],
+  "benched": [
     {
-     "id": "st-chest",
-     "area": "front",
-     "method": "dtg",
-     "phrase": "Heav Yeah",
-     "productionNotes": "front chest"
-    },
-    {
-     "id": "st-back",
-     "area": "back",
-     "method": "dtg",
-     "phrase": "Wise as Serpents. Innocent as Doves. · Matthew 10:16",
-     "productionNotes": "full back"
-    },
-    {
-     "id": "st-sleeve-l",
-     "area": "left-sleeve",
-     "method": "dtg",
-     "phrase": "Seek First the Kingdom of God",
-     "productionNotes": "left sleeve, stacked under a slash hit · drop 001's phrase"
-    },
-    {
-     "id": "st-sleeve-r",
-     "area": "right-sleeve",
-     "method": "dtg",
-     "phrase": "Most High Fashion",
-     "productionNotes": "right sleeve, stacked under a slash hit · drop 002's phrase"
-    },
-    {
-     "id": "st-hood",
-     "area": "hood",
-     "method": "dtg",
-     "phrase": "SENT",
-     "productionNotes": ""
-    },
-    {
-     "id": "st-leg-r",
-     "area": "right-leg",
-     "method": "dtg",
-     "phrase": "MT 10:16",
-     "productionNotes": "jogger right leg"
-    },
-    {
-     "id": "st-label",
-     "area": "inside-label",
-     "method": "dtg",
-     "phrase": "PRAYER CLOSET · HM-MT10",
-     "productionNotes": ""
+      "slug": "commission",
+      "no": "004",
+      "title": "COMMISSION",
+      "garment": "Heavyweight hoodie + jogger set",
+      "phrase": "Walk in Purpose",
+      "support": "Go. Teach. Make Disciples.",
+      "reference": "Matthew 28:18-20",
+      "book": "matthew",
+      "chapter": 28,
+      "theme": [
+        "Authority",
+        "Resurrection",
+        "Teaching",
+        "Purpose"
+      ],
+      "color": {
+        "name": "Stone",
+        "hex": "#d6d2c8",
+        "ink": "#1a140d",
+        "note": "white / stone, final colorway locked before production"
+      },
+      "status": "concept",
+      "collaborator": "hitman",
+      "editionQty": null,
+      "price": null,
+      "offering": null,
+      "preorder": {
+        "deposit": null,
+        "square": null,
+        "note": "ADMIN: paste this drop's Square payment link (Square Dashboard → Payment Links) and set the deposit amount in dollars; the Acquire room flips from first-claim to a live Square preorder on next load. Square owns the price; the page only displays it."
+      },
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "2XL"
+      ],
+      "fulfillment": [
+        "direct",
+        "finished"
+      ],
+      "line": "The closer. The season ends where the book does: with a sending.",
+      "why": "Matthew 28 is the Great Commission: all authority, then go. The lightest colorway closes the season the way the resurrection closes the Gospel: walking out in daylight.",
+      "briefing": {
+        "mission": "The tomb is open and the credential is signed. Go make disciples.",
+        "points": [
+          {
+            "k": "He is risen",
+            "ref": "Matthew 28:5-6",
+            "v": 5,
+            "p": "The women get the news first and running becomes the right response. The season's lightest colorway starts at a grave that didn't hold."
+          },
+          {
+            "k": "All authority",
+            "ref": "Matthew 28:18",
+            "v": 18,
+            "p": "The commission opens with the credential, not the command. 'All authority in heaven and on earth' is the backing on every assignment that follows."
+          },
+          {
+            "k": "Go, teach, baptize",
+            "ref": "Matthew 28:19-20",
+            "v": 19,
+            "p": "The assignment is reproduction: disciples who make disciples. Not an audience. A lineage."
+          },
+          {
+            "k": "With you always",
+            "ref": "Matthew 28:20",
+            "v": 20,
+            "p": "The book closes on presence, not pressure: 'I am with you always, even to the end of the age.' The walk is accompanied."
+          }
+        ],
+        "questions": [
+          "If the authority is His, what exactly are you still waiting to be qualified for?",
+          "Who taught you, and who are you teaching?",
+          "Where does 'with you always' need to land in your week?"
+        ],
+        "prayer": "Jesus, You hold the authority and I hold the assignment. Walk with me all the days. I'll walk in purpose. Amen."
+      },
+      "placements": [
+        {
+          "id": "cm-chest",
+          "area": "front",
+          "method": "dtg",
+          "phrase": "Walk in Purpose",
+          "productionNotes": "front chest"
+        },
+        {
+          "id": "cm-back",
+          "area": "back",
+          "method": "dtg",
+          "phrase": "Go. Teach. Make Disciples. · Matthew 28:19",
+          "productionNotes": "full back"
+        },
+        {
+          "id": "cm-sleeve-l",
+          "area": "left-sleeve",
+          "method": "dtg",
+          "phrase": "COMMISSION",
+          "productionNotes": ""
+        },
+        {
+          "id": "cm-leg-l",
+          "area": "left-leg",
+          "method": "dtg",
+          "phrase": "MT 28:18-20",
+          "productionNotes": "jogger left leg"
+        },
+        {
+          "id": "cm-label",
+          "area": "inside-label",
+          "method": "dtg",
+          "phrase": "PRAYER CLOSET · HM-MT28",
+          "productionNotes": ""
+        }
+      ]
     }
-   ],
-   "colorways": [
+  ],
+  "tiers": [
     {
-     "id": "washed-black",
-     "name": "Washed Black",
-     "hex": "#3a3a3c",
-     "ink": "#f4efe6",
-     "shot": true,
-     "note": "The photographed colorway: all four views on this drop are Washed Black."
+      "id": "direct",
+      "name": "Direct Edition",
+      "what": "Cut and made to order, then shipped: the heavyweight garment, the full artwork, digital collection access, the scripture experience, the study, the mission card."
     },
     {
-     "id": "washed-blue",
-     "name": "Washed Blue",
-     "hex": "#476990",
-     "ink": "#f4efe6",
-     "shot": false
+      "id": "finished",
+      "name": "Finished Edition",
+      "localModCost": 25,
+      "what": "The base garment produced first, then finished by hand at the desk: embroidery, patches, inspection, a numbered edition, printed study material, premium packaging, and an authentication record."
     },
     {
-     "id": "black",
-     "name": "Black",
-     "hex": "#0d0b0a",
-     "ink": "#f4efe6",
-     "shot": false
+      "id": "collab-set",
+      "name": "Collaboration Set",
+      "what": "A limited hoodie-and-jogger set built with a collaborator. It may carry physical inserts, so it ships from McCluster Corp rather than direct."
     }
-   ]
-  }
- ],
- "benched": [
-  {
-   "slug": "commission",
-   "no": "004",
-   "title": "COMMISSION",
-   "garment": "Heavyweight hoodie + jogger set",
-   "phrase": "Walk in Purpose",
-   "support": "Go. Teach. Make Disciples.",
-   "reference": "Matthew 28:18-20",
-   "book": "matthew",
-   "chapter": 28,
-   "theme": [
-    "Authority",
-    "Resurrection",
-    "Teaching",
-    "Purpose"
-   ],
-   "color": {
-    "name": "Stone",
-    "hex": "#d6d2c8",
-    "ink": "#1a140d",
-    "note": "white / stone, final colorway locked before production"
-   },
-   "status": "concept",
-   "collaborator": "hitman",
-   "editionQty": null,
-   "price": null,
-   "offering": null,
-   "preorder": {
-    "deposit": null,
-    "square": null,
-    "note": "ADMIN: paste this drop's Square payment link (Square Dashboard → Payment Links) and set the deposit amount in dollars; the Acquire room flips from first-claim to a live Square preorder on next load. Square owns the price; the page only displays it."
-   },
-   "sizes": [
-    "S",
-    "M",
-    "L",
-    "XL",
-    "2XL"
-   ],
-   "fulfillment": [
-    "direct",
-    "finished"
-   ],
-   "line": "The closer. The season ends where the book does: with a sending.",
-   "why": "Matthew 28 is the Great Commission: all authority, then go. The lightest colorway closes the season the way the resurrection closes the Gospel: walking out in daylight.",
-   "briefing": {
-    "mission": "The tomb is open and the credential is signed. Go make disciples.",
-    "points": [
-     {
-      "k": "He is risen",
-      "ref": "Matthew 28:5-6",
-      "v": 5,
-      "p": "The women get the news first and running becomes the right response. The season's lightest colorway starts at a grave that didn't hold."
-     },
-     {
-      "k": "All authority",
-      "ref": "Matthew 28:18",
-      "v": 18,
-      "p": "The commission opens with the credential, not the command. 'All authority in heaven and on earth' is the backing on every assignment that follows."
-     },
-     {
-      "k": "Go, teach, baptize",
-      "ref": "Matthew 28:19-20",
-      "v": 19,
-      "p": "The assignment is reproduction: disciples who make disciples. Not an audience. A lineage."
-     },
-     {
-      "k": "With you always",
-      "ref": "Matthew 28:20",
-      "v": 20,
-      "p": "The book closes on presence, not pressure: 'I am with you always, even to the end of the age.' The walk is accompanied."
-     }
-    ],
-    "questions": [
-     "If the authority is His, what exactly are you still waiting to be qualified for?",
-     "Who taught you, and who are you teaching?",
-     "Where does 'with you always' need to land in your week?"
-    ],
-    "prayer": "Jesus, You hold the authority and I hold the assignment. Walk with me all the days. I'll walk in purpose. Amen."
-   },
-   "placements": [
+  ],
+  "collaborators": [
     {
-     "id": "cm-chest",
-     "area": "front",
-     "method": "dtg",
-     "phrase": "Walk in Purpose",
-     "productionNotes": "front chest"
+      "id": "hitman",
+      "name": "Hitman Halo",
+      "role": "Artist · collection collaborator",
+      "logo": "assets/img/hm-mark-wide.webp",
+      "logoNote": "THE OFFICIAL HITMAN MARK, landed 2026-08-30: the HM with the AMMO round between the letters under the halo. Three cuts of one artwork — hm-mark-wide.webp (the full mark, for the bar, the emblem row and the hero), hm-mark.png (512 square, for share cards and anything expecting a square), hm-mark-96.png (the favicon). This is the only HM mark any surface may use; never regenerate or substitute it.",
+      "bio": "Featured on the record: 'Upset' (Hitman Halo × Raheem × Rahndrx) lives in the McCluster catalogue. On this drop the Hitman identity reads as purpose, commission, discipline, precision, mission, transformation, and service.",
+      "drops": [
+        "seek-first",
+        "salt-and-light",
+        "sent",
+        "commission"
+      ],
+      "links": [
+        {
+          "label": "Hear 'Upset'",
+          "href": "album.html"
+        }
+      ]
     },
     {
-     "id": "cm-back",
-     "area": "back",
-     "method": "dtg",
-     "phrase": "Go. Teach. Make Disciples. · Matthew 28:19",
-     "productionNotes": "full back"
+      "id": "mccluster-corp",
+      "name": "McCluster Corp",
+      "role": "The house",
+      "logo": "assets/img/m-mark.png",
+      "bio": "The house behind the drop: production, fulfillment of finished editions, and the desk every drop ships from.",
+      "drops": [
+        "seek-first",
+        "salt-and-light",
+        "sent",
+        "commission"
+      ],
+      "links": [
+        {
+          "label": "The ecosystem",
+          "href": "ecosystem.html"
+        }
+      ]
+    }
+  ],
+  "benchNote": "THE BENCH: Season 001 runs three drops (the Trinity). COMMISSION (Mt 28) is kept whole here, off every surface; move it back into drops[] (or open Season 002 with it) and it re-hangs on next load.",
+  "emblems": [
+    {
+      "id": "m",
+      "name": "The M",
+      "art": "assets/img/closet/emblems/m-emblem.webp",
+      "w": 991,
+      "h": 1000,
+      "meaning": "The house mark. Steel and ruby, cut as a chevron: the name everything else on the garment is made under.",
+      "scripture": [
+        {
+          "ref": "Revelation 2:17",
+          "text": "He who has an ear, let him hear what the Spirit says to the assemblies. To him who overcomes, to him I will give of the hidden manna, and I will give him a white stone, and on the stone a new name written, which no one knows but he who receives it."
+        }
+      ],
+      "note": "The mark is white stone with the name cut into it. That is the verse, literally."
     },
     {
-     "id": "cm-sleeve-l",
-     "area": "left-sleeve",
-     "method": "dtg",
-     "phrase": "COMMISSION",
-     "productionNotes": ""
+      "id": "heav-yeah",
+      "name": "Heav' Yeah",
+      "art": "assets/img/closet/emblems/heav-yeah.webp",
+      "w": 1200,
+      "h": 900,
+      "meaning": "The front crest, and the whole point of the drop. It replaces the idiom 'hell yeah', because the answer is never yes to hell. The yes only ever goes one direction.",
+      "scripture": [
+        {
+          "ref": "2 Corinthians 1:20",
+          "text": "For however many are the promises of God, in him is the “Yes.” Therefore also through him is the “Amen”, to the glory of God through us."
+        },
+        {
+          "ref": "Matthew 5:37",
+          "text": "But let your ‘Yes’ be ‘Yes’ and your ‘No’ be ‘No.’ Whatever is more than these is of the evil one."
+        }
+      ],
+      "note": "Two verses because it is two claims: Christ is the Yes (2 Cor 1:20), and what you say yes to is not a small thing (Mt 5:37). Changing an idiom is a speech act, and Matthew 5 is the speech verse."
     },
     {
-     "id": "cm-leg-l",
-     "area": "left-leg",
-     "method": "dtg",
-     "phrase": "MT 28:18-20",
-     "productionNotes": "jogger left leg"
+      "id": "seek-first",
+      "name": "Seek First the Kingdom",
+      "art": "assets/img/closet/emblems/seek-first.webp",
+      "w": 486,
+      "h": 1000,
+      "meaning": "The left sleeve. The order of operations for a whole life, stacked vertically so you read it top to bottom like a command.",
+      "scripture": [
+        {
+          "ref": "Matthew 6:33",
+          "text": "But seek first God’s Kingdom, and his righteousness; and all these things will be given to you as well."
+        }
+      ],
+      "note": "Printed on the garment with the reference already on it."
     },
     {
-     "id": "cm-label",
-     "area": "inside-label",
-     "method": "dtg",
-     "phrase": "PRAYER CLOSET · HM-MT28",
-     "productionNotes": ""
-    }
-   ]
-  }
- ],
- "tiers": [
-  {
-   "id": "direct",
-   "name": "Direct Edition",
-   "what": "Cut and made to order, then shipped: the heavyweight garment, the full artwork, digital collection access, the scripture experience, the study, the mission card."
-  },
-  {
-   "id": "finished",
-   "name": "Finished Edition",
-   "localModCost": 25,
-   "what": "The base garment produced first, then finished by hand at the desk: embroidery, patches, inspection, a numbered edition, printed study material, premium packaging, and an authentication record."
-  },
-  {
-   "id": "collab-set",
-   "name": "Collaboration Set",
-   "what": "A limited hoodie-and-jogger set built with a collaborator. It may carry physical inserts, so it ships from McCluster Corp rather than direct."
-  }
- ],
- "collaborators": [
-  {
-   "id": "hitman",
-   "name": "Hitman Halo",
-   "role": "Artist · collection collaborator",
-   "logo": "assets/img/hm-mark-wide.webp",
-   "logoNote": "THE OFFICIAL HITMAN MARK, landed 2026-08-30: the HM with the AMMO round between the letters under the halo. Three cuts of one artwork — hm-mark-wide.webp (the full mark, for the bar, the emblem row and the hero), hm-mark.png (512 square, for share cards and anything expecting a square), hm-mark-96.png (the favicon). This is the only HM mark any surface may use; never regenerate or substitute it.",
-   "bio": "Featured on the record: 'Upset' (Hitman Halo × Raheem × Rahndrx) lives in the McCluster catalogue. On this drop the Hitman identity reads as purpose, commission, discipline, precision, mission, transformation, and service.",
-   "drops": [
-    "seek-first",
-    "salt-and-light",
-    "sent",
-    "commission"
-   ],
-   "links": [
-    {
-     "label": "Hear 'Upset'",
-     "href": "album.html"
-    }
-   ]
-  },
-  {
-   "id": "equity-uprise",
-   "name": "Equity Uprise",
-   "role": "Civic program · McCluster Corp",
-   "logo": "assets/img/equity-uprise-logo.webp",
-   "bio": "The civic fellowship recognized on the record by two governments. Future collaboration sets carry its mark and its mission.",
-   "drops": [],
-   "links": [
-    {
-     "label": "The program",
-     "href": "equity-uprise.html"
-    }
-   ]
-  },
-  {
-   "id": "mccluster-corp",
-   "name": "McCluster Corp",
-   "role": "The house",
-   "logo": "assets/img/m-mark.png",
-   "bio": "The house behind the drop: production, fulfillment of finished editions, and the desk every drop ships from.",
-   "drops": [
-    "seek-first",
-    "salt-and-light",
-    "sent",
-    "commission"
-   ],
-   "links": [
-    {
-     "label": "The ecosystem",
-     "href": "ecosystem.html"
-    }
-   ]
-  }
- ],
- "benchNote": "THE BENCH: Season 001 runs three drops (the Trinity). COMMISSION (Mt 28) is kept whole here, off every surface; move it back into drops[] (or open Season 002 with it) and it re-hangs on next load.",
- "emblems": [
-  {
-   "id": "m",
-   "name": "The M",
-   "art": "assets/img/closet/emblems/m-emblem.webp",
-   "w": 991,
-   "h": 1000,
-   "meaning": "The house mark. Steel and ruby, cut as a chevron: the name everything else on the garment is made under.",
-   "scripture": [
-    {
-     "ref": "Revelation 2:17",
-     "text": "He who has an ear, let him hear what the Spirit says to the assemblies. To him who overcomes, to him I will give of the hidden manna, and I will give him a white stone, and on the stone a new name written, which no one knows but he who receives it."
-    }
-   ],
-   "note": "The mark is white stone with the name cut into it. That is the verse, literally."
-  },
-  {
-   "id": "heav-yeah",
-   "name": "Heav' Yeah",
-   "art": "assets/img/closet/emblems/heav-yeah.webp",
-   "w": 1200,
-   "h": 900,
-   "meaning": "The front crest, and the whole point of the drop. It replaces the idiom 'hell yeah', because the answer is never yes to hell. The yes only ever goes one direction.",
-   "scripture": [
-    {
-     "ref": "2 Corinthians 1:20",
-     "text": "For however many are the promises of God, in him is the “Yes.” Therefore also through him is the “Amen”, to the glory of God through us."
+      "id": "drone",
+      "name": "The Overwatch",
+      "art": "assets/img/closet/emblems/drone.webp",
+      "w": 700,
+      "h": 273,
+      "meaning": "The drone at the top of the sleeve lockup. Not a weapon here — an eye. Something above you that does not blink, and is on your side.",
+      "scripture": [
+        {
+          "ref": "2 Chronicles 16:9",
+          "text": "For Yahweh’s eyes run back and forth throughout the whole earth, to show himself strong in the behalf of them whose heart is perfect toward him."
+        }
+      ],
+      "note": "Cut from the head of the Seek First lockup. Showing the whole lockup for all three of its marks said nothing; each one carries the part it is."
     },
     {
-     "ref": "Matthew 5:37",
-     "text": "But let your ‘Yes’ be ‘Yes’ and your ‘No’ be ‘No.’ Whatever is more than these is of the evil one."
-    }
-   ],
-   "note": "Two verses because it is two claims: Christ is the Yes (2 Cor 1:20), and what you say yes to is not a small thing (Mt 5:37). Changing an idiom is a speech act, and Matthew 5 is the speech verse."
-  },
-  {
-   "id": "seek-first",
-   "name": "Seek First the Kingdom",
-   "art": "assets/img/closet/emblems/seek-first.webp",
-   "w": 486,
-   "h": 1000,
-   "meaning": "The left sleeve. The order of operations for a whole life, stacked vertically so you read it top to bottom like a command.",
-   "scripture": [
-    {
-     "ref": "Matthew 6:33",
-     "text": "But seek first God’s Kingdom, and his righteousness; and all these things will be given to you as well."
-    }
-   ],
-   "note": "Printed on the garment with the reference already on it."
-  },
-  {
-   "id": "drone",
-   "name": "The Overwatch",
-   "art": "assets/img/closet/emblems/drone.webp",
-   "w": 700,
-   "h": 273,
-   "meaning": "The drone at the top of the sleeve lockup. Not a weapon here — an eye. Something above you that does not blink, and is on your side.",
-   "scripture": [
-    {
-     "ref": "2 Chronicles 16:9",
-     "text": "For Yahweh’s eyes run back and forth throughout the whole earth, to show himself strong in the behalf of them whose heart is perfect toward him."
-    }
-   ],
-   "note": "Cut from the head of the Seek First lockup. Showing the whole lockup for all three of its marks said nothing; each one carries the part it is."
-  },
-  {
-   "id": "star",
-   "name": "The Morning Star",
-   "art": "assets/img/closet/emblems/star.webp",
-   "w": 700,
-   "h": 410,
-   "meaning": "The interlaced six-point star in its compass, at the foot of the sleeve. A figure that is drawn from one unbroken band and keeps returning through itself.",
-   "scripture": [
-    {
-     "ref": "Revelation 22:16",
-     "text": "I, Jesus, have sent my angel to testify these things to you for the assemblies. I am the root and the offspring of David; the Bright and Morning Star."
-    }
-   ],
-   "note": "Root and offspring at once — the same line arriving from both ends, which is what the interlace draws. If the intent behind it was replication rather than the star of David, 2 Timothy 2:2 is the verse instead: what you were taught, commit to faithful people who will teach others also."
-  },
-  {
-   "id": "war-peace",
-   "name": "War and Peace",
-   "art": "assets/img/closet/emblems/war-peace.webp",
-   "w": 622,
-   "h": 700,
-   "meaning": "The twin slash on both sleeves. Two bars, two seasons: wartime and peacetime. You do not get to pick which one you are in, only how you carry it.",
-   "scripture": [
-    {
-     "ref": "Ecclesiastes 3:8",
-     "text": "a time to love, and a time to hate; a time for war, and a time for peace."
-    }
-   ],
-   "note": "Two lines for the two times. The verse is one sentence with the same shape."
-  },
-  {
-   "id": "thirty-three",
-   "name": "33",
-   "art": "assets/img/closet/emblems/thirty-three.webp",
-   "w": 896,
-   "h": 900,
-   "meaning": "The number in the crown of thorns. The age He was when it finished — and the chapter and verse of the sleeve, Matthew 6:33. The drop's own arithmetic: the number is the age and the address at the same time.",
-   "scripture": [
-    {
-     "ref": "John 19:30",
-     "text": "When Jesus therefore had received the vinegar, he said, “It is finished.” He bowed his head, and gave up his spirit."
+      "id": "star",
+      "name": "The Morning Star",
+      "art": "assets/img/closet/emblems/star.webp",
+      "w": 700,
+      "h": 410,
+      "meaning": "The interlaced six-point star in its compass, at the foot of the sleeve. A figure that is drawn from one unbroken band and keeps returning through itself.",
+      "scripture": [
+        {
+          "ref": "Revelation 22:16",
+          "text": "I, Jesus, have sent my angel to testify these things to you for the assemblies. I am the root and the offspring of David; the Bright and Morning Star."
+        }
+      ],
+      "note": "Root and offspring at once — the same line arriving from both ends, which is what the interlace draws. If the intent behind it was replication rather than the star of David, 2 Timothy 2:2 is the verse instead: what you were taught, commit to faithful people who will teach others also."
     },
     {
-     "ref": "Matthew 27:29",
-     "text": "They braided a crown of thorns and put it on his head, and a reed in his right hand; and they kneeled down before him, and mocked him, saying, “Hail, King of the Jews!”"
-    }
-   ],
-   "note": "The wreath is the crown of thorns (Mt 27:29); the number is what it cost (Jn 19:30)."
-  },
-  {
-   "id": "hitman",
-   "name": "The Hitman Halo",
-   "art": "assets/img/hm-mark-wide.webp",
-   "w": 1200,
-   "h": 850,
-   "meaning": "The HM with the round between the letters, under the halo. The name is a provocation on purpose: a hitman takes a contract and does not miss. The halo says whose contract. The scripture says what the target is — and is not.",
-   "scripture": [
-    {
-     "ref": "Ephesians 6:12",
-     "text": "For our wrestling is not against flesh and blood, but against the principalities, against the powers, against the world’s rulers of the darkness of this age, and against the spiritual forces of wickedness in the heavenly places."
+      "id": "war-peace",
+      "name": "War and Peace",
+      "art": "assets/img/closet/emblems/war-peace.webp",
+      "w": 622,
+      "h": 700,
+      "meaning": "The twin slash on both sleeves. Two bars, two seasons: wartime and peacetime. You do not get to pick which one you are in, only how you carry it.",
+      "scripture": [
+        {
+          "ref": "Ecclesiastes 3:8",
+          "text": "a time to love, and a time to hate; a time for war, and a time for peace."
+        }
+      ],
+      "note": "Two lines for the two times. The verse is one sentence with the same shape."
     },
     {
-     "ref": "2 Corinthians 10:4",
-     "text": "for the weapons of our warfare are not of the flesh, but mighty before God to the throwing down of strongholds,"
+      "id": "thirty-three",
+      "name": "33",
+      "art": "assets/img/closet/emblems/thirty-three.webp",
+      "w": 896,
+      "h": 900,
+      "meaning": "The number in the crown of thorns. The age He was when it finished — and the chapter and verse of the sleeve, Matthew 6:33. The drop's own arithmetic: the number is the age and the address at the same time.",
+      "scripture": [
+        {
+          "ref": "John 19:30",
+          "text": "When Jesus therefore had received the vinegar, he said, “It is finished.” He bowed his head, and gave up his spirit."
+        },
+        {
+          "ref": "Matthew 27:29",
+          "text": "They braided a crown of thorns and put it on his head, and a reed in his right hand; and they kneeled down before him, and mocked him, saying, “Hail, King of the Jews!”"
+        }
+      ],
+      "note": "The wreath is the crown of thorns (Mt 27:29); the number is what it cost (Jn 19:30)."
+    },
+    {
+      "id": "hitman",
+      "name": "The Hitman Halo",
+      "art": "assets/img/hm-mark-wide.webp",
+      "w": 1200,
+      "h": 850,
+      "meaning": "The HM with the round between the letters, under the halo. The name is a provocation on purpose: a hitman takes a contract and does not miss. The halo says whose contract. The scripture says what the target is — and is not.",
+      "scripture": [
+        {
+          "ref": "Ephesians 6:12",
+          "text": "For our wrestling is not against flesh and blood, but against the principalities, against the powers, against the world’s rulers of the darkness of this age, and against the spiritual forces of wickedness in the heavenly places."
+        },
+        {
+          "ref": "2 Corinthians 10:4",
+          "text": "for the weapons of our warfare are not of the flesh, but mighty before God to the throwing down of strongholds,"
+        }
+      ],
+      "note": "Ephesians 6:12 is load-bearing for this mark: it is the verse that says the target is never a person, which is the only thing that makes the name wearable. The AMMO headstamp on the round is the house's own."
     }
-   ],
-   "note": "Ephesians 6:12 is load-bearing for this mark: it is the verse that says the target is never a person, which is the only thing that makes the name wearable. The AMMO headstamp on the round is the house's own."
-  }
- ],
- "emblemsNote": "EVERY MARK ON THE GARMENT MEANS SOMETHING, and the meaning is carried here rather than in anyone's memory. Scripture is World English Bible, public domain, the same translation the chapter rooms serve. Quote it exactly or not at all."
+  ],
+  "emblemsNote": "EVERY MARK ON THE GARMENT MEANS SOMETHING, and the meaning is carried here rather than in anyone's memory. Scripture is World English Bible, public domain, the same translation the chapter rooms serve. Quote it exactly or not at all."
 }
