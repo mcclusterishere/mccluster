@@ -44,9 +44,25 @@ for x in conns:
     md=x.get("metadata") or {}
     if not md.get("pathway_class"):fail(f"{x['connection_id']} missing pathway class")
     if md.get("route_length_ft") is None:fail(f"{x['connection_id']} missing route length")
+    if md.get("pathway_route_version")!="step4-pathway-first-v1":fail(f"{x['connection_id']} not on pathway-first router")
+    family=md.get("pathway_family_id")
+    families=p.get("physical_routing",{}).get("pathway_families",{})
+    if family not in families:fail(f"{x['connection_id']} has unknown pathway family {family}")
+    if not md.get("support_system"):fail(f"{x['connection_id']} missing support-system metadata")
     for point in route:
         if not isinstance(point,list) or len(point)!=3:fail(f"{x['connection_id']} route point malformed")
         if not all(math.isfinite(float(v)) for v in point):fail(f"{x['connection_id']} route point non-finite")
+
+long_run_types={"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX","BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2","FIRE-ALARM-SLC","FIRE-ALARM-NAC","120VAC-BRANCH","SPEAKER-PAIR"}
+tray_turn=p.get("physical_routing",{}).get("floor_support_points_ft",{}).get("tray_turn")
+for x in conns:
+    if x["cable_type"] not in long_run_types:continue
+    md=x.get("metadata") or {};route=x.get("route") or []
+    if len(route)<6:fail(f"{x['connection_id']} pathway route is too schematic")
+    if float(md.get("visual_bend_radius_ft",0))<=0:fail(f"{x['connection_id']} missing non-zero bend radius")
+    if md.get("field_bend_radius_verification_required") is not True:fail(f"{x['connection_id']} missing field bend-radius verification flag")
+    if tray_turn and any(abs(float(q[0])-float(tray_turn[0]))<.01 and abs(float(q[1])-float(tray_turn[1]))<.01 for q in route[1:-1]):
+        fail(f"{x['connection_id']} still uses legacy single tray turn")
 
 # Horizontal permanent links remain within the 90 m design-intent limit.
 for x in conns:
