@@ -132,6 +132,7 @@ The X-Ray control is now a true visible engineering view rather than a state-onl
 The canonical viewer now renders the electronics connection graph from the deterministic connection catalog rather than exposing the legacy baked straight-line cable meshes:
 - all **1,330** authored physical connections remain sourced from `equity-uprise-electronics-connections-v1.json`;
 - route geometry consumes each connection's canonical `route` polyline and preserves its authored pathway class, riser/tray path, and endpoint port identifiers;
+- route generation is pathway-first: telecommunications, controls/security, life-safety, branch power, AV/audio, electrical feeders and local equipment cords use distinct pathway families, nearest branch spines/trunks, canonical risers, separation metadata and bend sweeps instead of one schematic center spine;
 - first/last route points snap to the rebound physical device component when an inspectable port-bearing component exists, otherwise to the bound device center or authored route endpoint;
 - Cat6A/PoE, OS2 fiber, rack patch/DAC, normal/emergency power, BACnet, Class 2, OSDP, fire alarm, AV/display and speaker-pair families render in batched cable-type line groups;
 - the renderer uses one `THREE.LineSegments` object per visible cable family instead of one draw object per connection;
