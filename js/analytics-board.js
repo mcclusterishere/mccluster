@@ -28,14 +28,20 @@
 (function (w, d) {
   "use strict";
 
+  /* Page views and VISITS, not visitors: both are counted continuously
+     back to the first event (visits from the `acquired` event the pixel has
+     always sent), whereas unique visitors only exist from 19 Sep 2026, when
+     the pixel began recording a visitor id. A visitors line would read as a
+     site nobody used before that date. */
   var SERIES = [
     { key: "page_views", label: "Page views", color: "#e5383b" },
-    { key: "visitors", label: "Visitors", color: "#3f93d2" }
+    { key: "visits", label: "Visits", color: "#3f93d2" }
   ];
   var RANGES = [
     { id: "7d", label: "7 days", days: 7 },
     { id: "30d", label: "30 days", days: 30 },
-    { id: "90d", label: "90 days", days: 90 }
+    { id: "90d", label: "90 days", days: 90 },
+    { id: "all", label: "All time", days: 0 }
   ];
   var ROW_CAP = 20000;
 
@@ -258,17 +264,18 @@
     });
 
     return '<svg id="' + id + '" viewBox="0 0 ' + W + " " + H + '" class="bd-svg" role="img" ' +
-      'aria-label="' + esc(opts.label || "Page views and visitors per day") + '">' + svg.join("") + "</svg>";
+      'aria-label="' + esc(opts.label || "Page views and visits per day") + '">' + svg.join("") + "</svg>";
   }
 
   function table(days) {
     return '<div class="bd-scroll"><table class="bd-table">' +
-      "<caption>Page views and visitors per day</caption>" +
+      "<caption>Page views, visits, visitors and plays per day</caption>" +
       "<thead><tr><th scope=\"col\">Day</th><th scope=\"col\" class=\"n\">Page views</th>" +
-      "<th scope=\"col\" class=\"n\">Visitors</th><th scope=\"col\" class=\"n\">Sessions</th></tr></thead><tbody>" +
+      "<th scope=\"col\" class=\"n\">Visits</th><th scope=\"col\" class=\"n\">Visitors</th><th scope=\"col\" class=\"n\">Plays</th></tr></thead><tbody>" +
       days.slice().reverse().map(function (r) {
         return "<tr><td>" + esc(r.day) + '</td><td class="n">' + (r.page_views || 0) +
-          '</td><td class="n">' + (r.visitors || 0) + '</td><td class="n">' + (r.sessions || 0) + "</td></tr>";
+          '</td><td class="n">' + (r.visits || 0) + '</td><td class="n">' + (r.visitors || 0) +
+          '</td><td class="n">' + (r.plays || 0) + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   }
 
@@ -341,7 +348,8 @@
 
       /* Split the doubled window: the back half is now, the front half is the
          baseline every delta is measured against. */
-      var half = Math.floor(all.length / 2);
+      var allTime = !state.range.days;
+      var half = allTime ? 0 : Math.floor(all.length / 2);
       var prev = half ? all.slice(0, half) : [];
       var cur = half ? all.slice(half) : all;
       var sum = function (rows, k) {
@@ -349,10 +357,20 @@
       };
 
       var views = sum(cur, "page_views"), pViews = sum(prev, "page_views");
-      var vis = sum(cur, "visitors"), pVis = sum(prev, "visitors");
-      var sess = sum(cur, "sessions"), pSess = sum(prev, "sessions");
-      var perVisit = vis ? Math.round((views / vis) * 10) / 10 : null;
-      var pPerVisit = pVis ? Math.round((pViews / pVis) * 10) / 10 : null;
+      var visits = sum(cur, "visits"), pVisits = sum(prev, "visits");
+      /* Unique across the window when the source can say so; a sum of
+         daily uniques counts a returning visitor once per day. */
+      var vis = t.unique_visitors != null ? t.unique_visitors : sum(cur, "visitors");
+      var pVis = t.unique_visitors_before != null ? t.unique_visitors_before : sum(prev, "visitors");
+      var plays = sum(cur, "plays"), pPlays = sum(prev, "plays");
+      var perVisit = visits ? Math.round((views / visits) * 10) / 10 : null;
+      var pPerVisit = pVisits ? Math.round((pViews / pVisits) * 10) / 10 : null;
+      /* Unique visitors only exist from the day the pixel began recording
+         a visitor id. A window that reaches back past it says so. */
+      var idSince = t.identity_since ? new Date(t.identity_since) : null;
+      var idNote = idSince && cur.length && new Date(cur[0].day + "T23:59:59") < idSince
+        ? "counted from " + idSince.toLocaleDateString([], { month: "short", day: "numeric" }) : null;
+      var noBase = allTime ? "all time" : null;
 
       var legend = SERIES.map(function (s) {
         return '<span class="bd-key"><i style="background:' + s.color + '"></i>' + esc(s.label) + "</span>";
@@ -360,17 +378,19 @@
 
       boardHost.innerHTML =
         '<div class="bd-tiles">' +
-          tile("Visitors", num(vis), delta(vis, pVis)) +
-          tile("Page views", num(views), delta(views, pViews)) +
-          tile("Sessions", num(sess), delta(sess, pSess)) +
-          tile("Views per visitor", perVisit == null ? "—" : perVisit,
-               perVisit == null ? null : delta(perVisit, pPerVisit)) +
+          tile("Page views", num(views), allTime ? null : delta(views, pViews), noBase) +
+          tile("Visits", num(visits), allTime ? null : delta(visits, pVisits), noBase) +
+          tile("Plays", num(plays), allTime ? null : delta(plays, pPlays), noBase) +
+          tile("Visitors", num(vis), idNote || allTime ? null : delta(vis, pVis), idNote || noBase) +
         "</div>" +
 
         '<section class="bd-card bd-card--hero">' +
           '<header class="bd-card__h">' +
-            "<div><h2>Traffic</h2><p class=\"bd-sub\">Per day for the last " + esc(state.range.label) +
+            "<div><h2>Traffic</h2><p class=\"bd-sub\">" +
+              (allTime ? "Every day since " + esc(cur.length ? cur[0].day : "the first event")
+                       : "Per day for the last " + esc(state.range.label)) +
               ", bots excluded" +
+              (perVisit == null ? "" : " · " + perVisit + " pages per visit") +
               (t.truncated ? " · capped at the first " + num(t.row_cap) + " events, so earlier days are short" : "") +
               (state.note ? " · " + esc(state.note) : "") + "</p></div>" +
             '<div class="bd-legend">' + legend +
@@ -423,7 +443,8 @@
           tip.innerHTML = "<b>" + esc(row.day) + "</b>" + SERIES.map(function (s) {
             return '<span><i style="background:' + s.color + '"></i>' + esc(s.label) +
               "<em>" + (row[s.key] || 0) + "</em></span>";
-          }).join("") + '<span><i class="bd-key--none"></i>Sessions<em>' + (row.sessions || 0) + "</em></span>";
+          }).join("") + '<span><i class="bd-key--none"></i>Visitors<em>' + (row.visitors || 0) + "</em></span>" +
+            '<span><i class="bd-key--none"></i>Plays<em>' + (row.plays || 0) + "</em></span>";
         };
         hit.addEventListener("mouseenter", show);
         hit.addEventListener("focus", show);
@@ -434,9 +455,10 @@
       var mine = ++seq;
       state.loading = true; state.error = null;
       paint();
-      /* Ask for double the window so the deltas have a real baseline. */
+      /* Ask for double the window so the deltas have a real baseline. All
+         time has no earlier period, so it asks for everything once. */
       Promise.resolve()
-        .then(function () { return opts.fetch(state.range.days * 2, state.range); })
+        .then(function () { return opts.fetch(state.range.days ? state.range.days * 2 : 0, state.range); })
         .then(function (out) {
           if (mine !== seq) return;                 // a newer range won
           state.model = out && out.traffic ? out.traffic : out || null;

@@ -119,21 +119,76 @@
     return site.id===FIRST_PARTY ? "site_id=is.null" : "site_id=eq."+encodeURIComponent(site.id);
   }
 
-  /* Newest first, so a window that hits the cap keeps the days somebody is
-     actually looking at and loses the far edge — which the board then says out
-     loud rather than drawing a confident line through a short day. */
+  /* THE BOARD READS TOTALS, NOT ROWS.
+     It used to download raw events and add them up in the browser, which
+     had two faults: the API hands back a capped number of rows per request,
+     so a busy week silently lost its early days, and it counted only
+     `page_view`, which the pixel began sending on 19 Sep 2026. Everything
+     before that is recorded under the old names (bar_boot per page load,
+     acquired per visit) and read as nothing.
+
+     The database now aggregates (analytics_daily / analytics_totals /
+     analytics_top, security invoker, so RLS still decides what is seen)
+     and counts the old names as what they were. Unique visitors are the
+     one thing that cannot come back: nothing before 19 Sep recorded a
+     visitor id, and the board says so rather than drawing zero people. */
+  var ALL_TIME=new Date("2000-01-01T00:00:00Z");
+  function rpc(name,args){return rest("rpc/"+name,{method:"POST",body:args});}
+  function localDayOf(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+
   function fetchEvents(site,days){
-    var since=new Date(Date.now()-(days-1)*86400000);
-    since.setHours(0,0,0,0);
-    return rest("events?"+scopeFilter(site)+
-      "&at=gte."+encodeURIComponent(since.toISOString())+
-      "&select=at,name,path,session_id,device_id,country,city,asn_org,is_bot,device,edge,referrer"+
-      "&order=at.desc&limit=20000")
-      .then(function(rows){
-        state.events=rows||[];
-        renderRecent();
-        return {traffic:window.MCCBoard.rollup(state.events,{since:since,days:days})};
-      });
+    var tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||"UTC";
+    var siteArg=site.id===FIRST_PARTY?null:site.id;
+    var until=new Date();
+    var since;
+    if(days){since=new Date(Date.now()-(days-1)*86400000);since.setHours(0,0,0,0);}
+    else since=ALL_TIME;
+    /* Ranked lists cover the half the board shows; the front half of a
+       doubled window only exists as the delta baseline. */
+    var shownFrom=days?new Date(since.getTime()+Math.floor(days/2)*86400000):since;
+    var top=function(dim){
+      return rpc("analytics_top",{p_dim:dim,p_since:shownFrom.toISOString(),p_until:until.toISOString(),p_site:siteArg,p_limit:12});
+    };
+    var recent=rest("events?"+scopeFilter(site)+
+      "&select=at,name,path,country,asn_org,is_bot,device&order=at.desc&limit=50")
+      .then(function(rows){state.events=rows||[];renderRecent();})
+      .catch(function(){state.events=[];renderRecent();});
+    return Promise.all([
+      rpc("analytics_daily",{p_since:since.toISOString(),p_until:until.toISOString(),p_site:siteArg,p_tz:tz}),
+      top("page"),top("source"),top("country"),top("network"),
+      /* Unique visitors cannot be summed day by day (someone who came on
+         two days would count twice), so the window and the one before it
+         are each counted once, in the database. */
+      rpc("analytics_totals",{p_since:shownFrom.toISOString(),p_until:until.toISOString(),p_site:siteArg}),
+      days?rpc("analytics_totals",{p_since:since.toISOString(),p_until:shownFrom.toISOString(),p_site:siteArg}):Promise.resolve([]),
+      recent
+    ]).then(function(r){
+      var daily=r[0]||[], totals=(r[5]||[])[0]||{}, before=(r[6]||[])[0]||null;
+      var byKey={};
+      daily.forEach(function(d){byKey[d.day]=d;});
+      /* Fill the axis: a day with nothing recorded is a zero, not a gap
+         the line jumps across. All time starts at the first event. */
+      var first=days?since:(totals.first_event?new Date(totals.first_event):(daily[0]?new Date(daily[0].day+"T00:00:00"):new Date()));
+      first=new Date(first.getFullYear(),first.getMonth(),first.getDate());
+      var by_day=[];
+      for(var t=new Date(first);t<=until;t.setDate(t.getDate()+1)){
+        var k=localDayOf(t), d=byKey[k]||{};
+        by_day.push({day:k,page_views:Number(d.page_views)||0,visitors:Number(d.visitors)||0,
+          sessions:Number(d.sessions)||0,visits:Number(d.visits)||0,plays:Number(d.plays)||0});
+      }
+      var ranked=function(rows,key){return (rows||[]).map(function(x){var o={count:Number(x.n)||0};o[key]=x.key;return o;});};
+      return {traffic:{
+        by_day:by_day,
+        top_pages:ranked(r[1],"path"),top_referrers:ranked(r[2],"source"),
+        top_countries:ranked(r[3],"country"),top_networks:ranked(r[4],"network"),
+        avg_rtt_ms:null,truncated:false,
+        first_event:totals.first_event||null,identity_since:totals.identity_since||null,
+        unique_visitors:totals.visitors==null?null:Number(totals.visitors),
+        unique_visitors_before:before&&before.visitors!=null?Number(before.visitors):null
+      }};
+    });
   }
 
   function renderRecent(){

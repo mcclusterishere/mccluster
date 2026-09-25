@@ -77,6 +77,26 @@
     });
   }
 
+  /* A read function with the window as arguments. The funnel view cannot
+     take a date, so it counted all of history on every read and timed out;
+     analytics_funnel filters first. */
+  function rpc(name, args) {
+    return fetch(SB + "/rest/v1/rpc/" + name, {
+      method: "POST",
+      headers: { apikey: KEY, authorization: "Bearer " + (S && S.access_token), "content-type": "application/json" },
+      body: JSON.stringify(args || {})
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.text().then(function (t) {
+          var msg = t;
+          try { msg = (JSON.parse(t) || {}).message || t; } catch (e) { /* plain text */ }
+          throw Object.assign(new Error(msg || ("HTTP " + r.status)), { status: r.status });
+        });
+      }
+      return r.json();
+    });
+  }
+
   /* ---------- the gate ----------
      Asked of the database, not of a string in this file. eu_is_admin() is
      the same predicate the RLS policy on public.events uses, so the page
@@ -494,7 +514,9 @@
     var q = "&day=gte." + since;
     var jobs = [
       ["engagement", "v_engagement_daily?select=*" + q + "&order=day.desc", paintEngagement],
-      ["funnel", "v_funnel_daily?select=*" + q + "&order=day.desc", paintFunnel],
+      ["funnel", function () {
+        return rpc("analytics_funnel", { p_since: new Date(since + "T00:00:00").toISOString() });
+      }, paintFunnel],
       ["stickiness", "v_stickiness?select=*&order=day.desc&limit=30", paintSticky],
       ["retention", "v_cohort_retention?select=*&order=cohort_week.asc,weeks_later.asc&limit=400", paintCohort],
       ["visitors", "v_visitors?select=platform,sessions,has_account,is_bot&limit=10000", paintVisitors],
@@ -513,7 +535,7 @@
 
     /* allSettled, not all. One view the caller cannot read is one blank
        panel that says why — not six blank panels that say nothing. */
-    return Promise.allSettled(jobs.map(function (j) { return api(j[1]); }))
+    return Promise.allSettled(jobs.map(function (j) { return typeof j[1] === "function" ? j[1]() : api(j[1]); }))
       .then(function (out) {
         var failed = 0;
         out.forEach(function (res, i) {
@@ -555,6 +577,9 @@
     });
     d.addEventListener("mcc:range", function (e) {
       var n = e && e.detail && Number(e.detail.days);
+      /* All time arrives as 0. These panels read the identity-era views,
+         which begin on 19 Sep 2026, so all time is simply everything. */
+      if (e && e.detail && e.detail.id === "all") n = 3650;
       if (!n || n === DAYS) return;
       DAYS = n;
       load();
