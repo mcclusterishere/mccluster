@@ -270,23 +270,34 @@ export class GuidedScenarioRunner {
 
 export function scenarioDefinitionByLabId(pack, labId) {
   requireValue(pack && Array.isArray(pack.scenarios), "INVALID_SCENARIO_PACK", "scenario pack must expose scenarios[]");
-  const definition = pack.scenarios.find((scenario) => scenario.source_lab_id === labId);
-  requireValue(Boolean(definition), "GUIDED_SCENARIO_NOT_FOUND", "no guided scenario for " + labId);
+  const matches = pack.scenarios.filter((scenario) => scenario.source_lab_id === labId);
+  requireValue(matches.length > 0, "GUIDED_SCENARIO_NOT_FOUND", "no guided scenario for " + labId);
+  requireValue(matches.length === 1, "GUIDED_SCENARIO_AMBIGUOUS", "multiple guided scenarios use source lab " + labId + "; address the scenario by scenario_id");
+  return clone(matches[0]);
+}
+
+export function scenarioDefinitionById(pack, scenarioId) {
+  requireValue(pack && Array.isArray(pack.scenarios), "INVALID_SCENARIO_PACK", "scenario pack must expose scenarios[]");
+  const definition = pack.scenarios.find((scenario) => scenario.scenario_id === scenarioId);
+  requireValue(Boolean(definition), "GUIDED_SCENARIO_NOT_FOUND", "no guided scenario for " + scenarioId);
   return clone(definition);
 }
 
 export function createGuidedScenarioFromPack({
   pack,
   labCatalog,
-  labId,
+  labId = null,
+  scenarioId = null,
   electronics,
   session_id,
   actor_id = "learner",
   execution_target = "SANDBOX",
 }) {
-  const definition = scenarioDefinitionByLabId(pack, labId);
-  const sourceLab = (labCatalog.labs || []).find((lab) => lab.lab_id === labId);
-  requireValue(Boolean(sourceLab), "SOURCE_LAB_NOT_FOUND", "source lab not found: " + labId);
+  requireValue(Boolean(scenarioId || labId), "GUIDED_SCENARIO_KEY_REQUIRED", "scenarioId or labId is required");
+  const definition = scenarioId ? scenarioDefinitionById(pack, scenarioId) : scenarioDefinitionByLabId(pack, labId);
+  const sourceLabId = definition.source_lab_id;
+  const sourceLab = (labCatalog.labs || []).find((lab) => lab.lab_id === sourceLabId);
+  requireValue(Boolean(sourceLab), "SOURCE_LAB_NOT_FOUND", "source lab not found: " + sourceLabId);
   return new GuidedScenarioRunner({
     definition,
     sourceLab,
