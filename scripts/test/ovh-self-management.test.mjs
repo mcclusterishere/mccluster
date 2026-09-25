@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -76,4 +77,14 @@ test('the OVH reconciler itself is a versioned deploy artifact with rollback', a
   assert.match(deploy, /scripts\/mccluster-vps-reconcile\.sh/);
   assert.match(deploy, /BACKUP_DIR}\/reconcile-script/);
   assert.match(deploy, /RECONCILE_SCRIPT/);
+});
+
+
+test('OVH self-management shell scripts remain syntactically valid', () => {
+  assert.doesNotThrow(() => execFileSync('bash', [
+    '-n',
+    'scripts/mccluster-vps-reconcile.sh',
+    'scripts/deploy-ovh-core.sh',
+    'scripts/bootstrap-vps-self-management.sh',
+  ], { stdio: 'pipe' }));
 });
