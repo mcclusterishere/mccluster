@@ -822,13 +822,14 @@
 
   function setView(name) {
     state.currentView = name;
-    ["feed","discover","messages","notifications","profile"].forEach(function (view) {
-      var ids={feed:"mnFeedView",discover:"mnDiscoverView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+    ["feed","discover","groups","messages","notifications","profile"].forEach(function (view) {
+      var ids={feed:"mnFeedView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
     });
     if(name==="discover")loadDiscover();
+    if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
     if(name==="profile")paintSelf();
@@ -1048,6 +1049,233 @@
       timer = setTimeout(ask, 350);            // a keystroke is not a question
     });
     field.addEventListener("blur", function () { clearTimeout(timer); ask(); });
+  })();
+
+
+  /* ================= GROUPS =================
+     Rooms inside the network, following two Mobbin references: Lex splits
+     "Your groups" from "Explore" inside one screen rather than making them
+     two places, and X's group detail leads with a cover, the name, one line
+     of what the room is for, and then its feed.
+
+     THE COVER IS GENERATED. Each group gets a gradient derived from its
+     slug, so the rooms are distinguishable at a glance and stay the same
+     colour between visits, without anybody having to make artwork for five
+     rooms that may become fifty. It is abstract colour and never a mark.
+     The pairs are picked, not computed from a hash into arbitrary hues, so
+     every room lands somewhere that was chosen to sit on this surface. */
+  var GROUP_SKINS = [
+    ["#e5383b", "#7a1721"], ["#3f93d2", "#17324f"], ["#c98500", "#4a3105"],
+    ["#199e70", "#0c3b2b"], ["#8b5cf6", "#2e1a52"], ["#d9a441", "#4b3512"],
+    ["#d4448c", "#4d1435"], ["#2bb3a3", "#0b3a35"], ["#6d7ce6", "#22265c"],
+    ["#e0692c", "#4a2009"], ["#5aa832", "#1b3610"], ["#b0568f", "#3a1a2f"]
+  ];
+  /* FNV-1a rather than the n*31 hash this first used. That one put
+     the-listening-room, first-listens and behind-the-record on the same
+     amber, because multiplying by 31 leaves short similar strings close
+     together in the low bits, which is exactly where a modulo reads. */
+  function skinSeed(slug) {
+    var str = String(slug || ""), h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h;
+  }
+  /* The seed alone is not enough. Twelve skins and five rooms still put two
+     of them on the same purple, and a cover exists to tell rooms apart, so
+     "usually distinct" is the wrong guarantee. The seed picks a starting
+     slot and a taken slot probes forward to the next free one, which is
+     deterministic for a given list and distinct up to the palette size.
+     Rooms only change colour if the list itself changes. */
+  var skinOf = {};
+  function assignSkins(list) {
+    skinOf = {};
+    var taken = {};
+    list.slice().sort(function (a, b) {
+      return String(a.slug).localeCompare(String(b.slug));   // order-independent
+    }).forEach(function (g) {
+      var i = skinSeed(g.slug) % GROUP_SKINS.length, n = 0;
+      while (taken[i] && n < GROUP_SKINS.length) { i = (i + 1) % GROUP_SKINS.length; n++; }
+      taken[i] = true;
+      skinOf[g.slug] = i;
+    });
+  }
+  function groupSkin(slug) {
+    var i = skinOf[slug];
+    if (i === undefined) i = skinSeed(slug) % GROUP_SKINS.length;
+    var pair = GROUP_SKINS[i];
+    return "linear-gradient(135deg," + pair[0] + " 0%," + pair[1] + " 100%)";
+  }
+  function people(n) {
+    n = Number(n || 0);
+    return n.toLocaleString() + " member" + (n === 1 ? "" : "s");
+  }
+
+  var groups = { all: [], seg: "yours", open: null, busy: false };
+
+  function groupCard(g) {
+    return '<article class="mng__card" data-group="' + esc(g.slug) + '">' +
+      '<div class="mng__cover" style="background:' + groupSkin(g.slug) + '">' +
+        "<b>" + esc((g.name || "?").trim().charAt(0).toUpperCase()) + "</b></div>" +
+      '<div class="mng__body">' +
+        '<h3 class="mng__name">' + esc(g.name) + "</h3>" +
+        '<p class="mng__purpose">' + esc(g.purpose || "") + "</p>" +
+        '<div class="mng__foot">' +
+          '<span class="mng__count">' + esc(people(g.member_count)) + "</span>" +
+          '<button type="button" class="mng__join' + (g.joined ? " is-in" : "") +
+            '" data-join="' + esc(g.slug) + '">' + (g.joined ? "Joined" : "Join") + "</button>" +
+        "</div></div></article>";
+  }
+
+  function renderGroups() {
+    var host = $("mngCards");
+    if (!host) return;
+    var mine = groups.all.filter(function (g) { return g.joined; });
+    var list = groups.seg === "yours" ? mine : groups.all;
+
+    if (!list.length) {
+      host.innerHTML = '<p class="mng__empty">' + (groups.seg === "yours"
+        ? "<b>You have not joined a room yet.</b>Explore is where they are. " +
+          "Joining one puts its posts in front of you and yours in front of the people already there."
+        : "<b>No rooms yet.</b>They arrive with the next release.") + "</p>";
+      return;
+    }
+    host.innerHTML = '<div class="mng__grid">' + list.map(groupCard).join("") + "</div>";
+  }
+
+  function loadGroups() {
+    var host = $("mngCards");
+    if (!host) return Promise.resolve();
+    if (!groups.all.length) host.innerHTML = '<p class="mng__empty">Loading rooms…</p>';
+    return api("/v1/mnet/groups").then(function (out) {
+      groups.all = (out && out.groups) || [];
+      assignSkins(groups.all);
+      renderGroups();
+    }).catch(function (e) {
+      host.innerHTML = '<p class="mng__empty"><b>The rooms did not load.</b>' +
+        esc(e.message || "") + "</p>";
+    });
+  }
+
+  /* Optimistic, then reconciled. A join that waits on a round trip before
+     the button changes feels broken on a phone; a join that never reconciles
+     lies when the request fails. */
+  function toggleJoin(slug, button) {
+    if (groups.busy) return;
+    var g = groups.all.filter(function (x) { return x.slug === slug; })[0];
+    if (!g) return;
+    groups.busy = true;
+    var was = !!g.joined;
+    g.joined = !was;
+    g.member_count = Math.max(0, Number(g.member_count || 0) + (was ? -1 : 1));
+    if (button) {
+      button.classList.toggle("is-in", g.joined);
+      button.textContent = g.joined ? "Joined" : "Join";
+      button.disabled = true;
+    }
+    return api("/v1/mnet/groups/" + encodeURIComponent(slug) + "/membership",
+      { method: was ? "DELETE" : "POST" })
+      .then(function (out) {
+        g.joined = !!(out && out.joined);
+      })
+      .catch(function () {
+        g.joined = was;                                  // put it back
+        g.member_count = Math.max(0, Number(g.member_count || 0) + (was ? 1 : -1));
+      })
+      .then(function () {
+        groups.busy = false;
+        if (groups.open && groups.open.slug === slug) { groups.open.joined = g.joined; paintGroup(); }
+        renderGroups();
+      });
+  }
+
+  function paintGroup() {
+    var g = groups.open;
+    if (!g) return;
+    $("mngHead").innerHTML =
+      '<div class="mng__banner" style="background:' + groupSkin(g.slug) + '"></div>' +
+      '<div class="mng__headin"><h2>' + esc(g.name) + "</h2>" +
+        '<span class="mng__meta">' +
+          esc(g.visibility === "open" ? "Open group" : g.visibility === "request" ? "Approval to join" : "Invitation only") +
+          " · " + esc(people(g.member_count)) + "</span>" +
+        "<p>" + esc(g.purpose || "") + "</p>" +
+        '<button type="button" class="mng__join' + (g.joined ? " is-in" : "") +
+          '" data-join="' + esc(g.slug) + '">' + (g.joined ? "Joined" : "Join this group") + "</button>" +
+      "</div>";
+    $("mngComposer").hidden = !g.joined;
+  }
+
+  function openGroup(slug) {
+    $("mnGroupsList").hidden = true;
+    $("mnGroupsOne").hidden = false;
+    $("mngFeed").innerHTML = '<p class="mng__empty">Loading…</p>';
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return api("/v1/mnet/groups/" + encodeURIComponent(slug)).then(function (out) {
+      groups.open = out.group;
+      if (skinOf[out.group.slug] === undefined) assignSkins(groups.all.concat([out.group]));
+      paintGroup();
+      var items = out.items || [];
+      $("mngFeed").innerHTML = items.length
+        ? items.map(function (it) { return postCard(it); }).join("")
+        : '<p class="mng__empty"><b>Nothing here yet.</b>' +
+          (out.group.joined ? "Be the first to say something."
+                            : "Join to see what gets posted, and to post yourself.") + "</p>";
+    }).catch(function (e) {
+      $("mngFeed").innerHTML = '<p class="mng__empty"><b>That room did not open.</b>' +
+        esc(e.message || "") + "</p>";
+    });
+  }
+
+  function closeGroup() {
+    groups.open = null;
+    $("mnGroupsOne").hidden = true;
+    $("mnGroupsList").hidden = false;
+    renderGroups();
+  }
+
+  function postToGroup() {
+    var g = groups.open, body = ($("mngPostBody").value || "").trim();
+    if (!g || !body) return;
+    var button = $("mngPost");
+    button.disabled = true;
+    setStatus($("mngPostStatus"), "Posting…");
+    api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
+      method: "POST",
+      body: { body: body, group_id: g.id }
+    }).then(function () {
+      $("mngPostBody").value = "";
+      setStatus($("mngPostStatus"), "");
+      return openGroup(g.slug);
+    }).catch(function (e) {
+      setStatus($("mngPostStatus"), e.message || "Could not post.", "bad");
+    }).then(function () { button.disabled = false; });
+  }
+
+  (function wireGroups() {
+    var view = $("mnGroupsView");
+    if (!view) return;
+    view.addEventListener("click", function (e) {
+      var seg = e.target.closest && e.target.closest("[data-mng-seg]");
+      if (seg) {
+        groups.seg = seg.getAttribute("data-mng-seg");
+        Array.prototype.forEach.call(view.querySelectorAll("[data-mng-seg]"), function (x) {
+          x.classList.toggle("is-on", x === seg);
+          x.setAttribute("aria-selected", x === seg ? "true" : "false");
+        });
+        renderGroups();
+        return;
+      }
+      /* The join button sits inside the card, and the card opens the room.
+         Checking join first is what stops a join from also navigating. */
+      var join = e.target.closest && e.target.closest("[data-join]");
+      if (join) { e.stopPropagation(); toggleJoin(join.getAttribute("data-join"), join); return; }
+      if (e.target.closest && e.target.closest("#mngBack")) { closeGroup(); return; }
+      var card = e.target.closest && e.target.closest("[data-group]");
+      if (card) openGroup(card.getAttribute("data-group"));
+    });
+    var post = $("mngPost");
+    if (post) post.addEventListener("click", postToGroup);
   })();
 
 })();

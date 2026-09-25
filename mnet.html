@@ -105,6 +105,7 @@
       <nav class="mn__tabs" aria-label="Mnet">
         <button type="button" class="is-active" data-mn-view="feed">Feed</button>
         <button type="button" data-mn-view="discover">Discover</button>
+        <button type="button" data-mn-view="groups">Groups</button>
         <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
         <button type="button" data-mn-view="profile">Me</button>
@@ -162,6 +163,38 @@
         <div class="mn__people" id="mnDiscoverResults"></div>
         <p class="mn__status mn__status--center" id="mnDiscoverStatus"></p>
       </section>
+
+    <!-- GROUPS. Two states in one panel: the directory, and one group
+         opened. They are not separate views because going into a group and
+         coming back out is the same errand, and a browser back button that
+         leaves the network entirely is the wrong answer to it. -->
+    <section class="mn__view" id="mnGroupsView" hidden>
+
+      <div id="mnGroupsList">
+        <div class="mng__split" id="mngSplit" role="tablist" aria-label="Groups">
+          <button type="button" class="mng__seg is-on" data-mng-seg="yours" role="tab" aria-selected="true">Your groups</button>
+          <button type="button" class="mng__seg" data-mng-seg="explore" role="tab" aria-selected="false">Explore</button>
+        </div>
+        <div id="mngCards" aria-live="polite"></div>
+      </div>
+
+      <div id="mnGroupsOne" hidden>
+        <button type="button" class="mng__back" id="mngBack">&#8592; All groups</button>
+        <header class="mng__head" id="mngHead"></header>
+        <div class="mng__composer" id="mngComposer" hidden>
+          <span class="mn__mini-avatar" id="mngComposerAvatar">M</span>
+          <div class="mng__composer-in">
+            <textarea id="mngPostBody" rows="2" maxlength="20000" aria-label="Post to this group"></textarea>
+            <div class="mng__composer-go">
+              <span class="mn__status" id="mngPostStatus" role="status"></span>
+              <button type="button" class="mn__primary mng__post" id="mngPost">Post</button>
+            </div>
+          </div>
+        </div>
+        <div id="mngFeed" aria-live="polite"></div>
+      </div>
+
+    </section>
 
       <section class="mn__view" id="mnMessagesView" hidden>
         <div class="mn__section-head">

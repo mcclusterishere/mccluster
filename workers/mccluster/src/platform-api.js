@@ -271,10 +271,65 @@ async function handleMnet(req,env,path,url){
     if(replyTo){if(!uuidLike(replyTo))return fail(req,env,'Invalid parent post',400);const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return fail(req,env,'Parent post not found',404);visibility=parent.visibility}
     const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
     const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
-    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:postMetadata(b),reply_to_id:replyTo,source_app_id:apps?.[0]?.id||null})});
+    /* A post can belong to a group. The membership is checked here rather
+       than trusted from the body: the client sends a group id, the server
+       decides whether this member is in it. A reply stays with its parent's
+       group, because a thread that changes rooms halfway is not a thread. */
+    let groupId=null;
+    if(replyTo){groupId=parent?.group_id||null;}
+    else if(b.group_id){
+      const gid=String(b.group_id);
+      if(!uuidLike(gid))return fail(req,env,'Invalid group',400);
+      const mine=await service(env,`network_group_members?group_id=eq.${gid}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
+      if(!mine?.length)return fail(req,env,'Join the group before posting in it',403);
+      groupId=gid;
+    }
+    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null})});
     const created=rows?.[0];
     if(created&&mediaIds.length)await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
     const hydrated=await hydratePostRows(env,rows||[],muid); return reply(req,env,{post:hydrated?.[0]?.post||created,actor:hydrated?.[0]?.actor||null},201);
+  }
+  /* ---------------- GROUPS ----------------
+     Rooms inside the network. The list is readable by anyone signed in,
+     because that is how you find one to join; everything else is scoped to
+     the caller's own membership. */
+  if(path==='/v1/mnet/groups'&&req.method==='GET'){
+    if(external)return fail(req,env,'Groups require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const [all,mine]=await Promise.all([
+      service(env,'network_groups?select=id,slug,name,purpose,visibility,member_count&order=member_count.desc,name.asc'),
+      service(env,`network_group_members?m_uid=eq.${muid}&state=eq.joined&select=group_id`)
+    ]);
+    const joined=new Set((mine||[]).map(r=>r.group_id));
+    return reply(req,env,{groups:(all||[]).map(g=>({...g,joined:joined.has(g.id)}))});
+  }
+  const groupOne=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})$/i);
+  if(groupOne&&req.method==='GET'){
+    if(external)return fail(req,env,'Groups require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupOne[1])}&select=id,slug,name,purpose,visibility,member_count&limit=1`);
+    const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
+    const mine=await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
+    const posts=await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`);
+    /* The same hydration the feed uses, so a post reads identically in a
+       group and in the open feed. */
+    const items=await hydratePostRows(env,posts||[],muid);
+    return reply(req,env,{group:{...group,joined:!!mine?.length},items});
+  }
+  const groupJoin=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})\/membership$/i);
+  if(groupJoin&&['POST','DELETE'].includes(req.method)){
+    if(external)return fail(req,env,'Groups require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupJoin[1])}&select=id,visibility&limit=1`);
+    const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
+    if(req.method==='DELETE'){
+      await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
+      return reply(req,env,{joined:false});
+    }
+    if(group.visibility==='invite')return fail(req,env,'This group is invitation only',403);
+    const state=group.visibility==='request'?'requested':'joined';
+    await service(env,'network_group_members',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({group_id:group.id,m_uid:muid,state})});
+    return reply(req,env,{joined:state==='joined',requested:state==='requested'});
   }
   const replies=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/replies$/i);
   if(replies&&req.method==='GET'){

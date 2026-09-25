@@ -241,3 +241,99 @@ html, body { background: var(--ink); }
   letter-spacing: .16em; text-transform: uppercase; color: var(--ruby-hot);
   margin-bottom: .45rem; }
 .mn__post-card.is-pinned { box-shadow: inset 0 0 0 1px rgba(229,56,59,.4); }
+
+/* ============================================================
+   GROUPS — the rooms inside the network.
+
+   Built from two Mobbin references. Lex splits Explore Groups from Your
+   Groups at the top of one screen rather than making them two places, and
+   X's group detail leads with a cover band, then the name, then one line
+   of what the room is for, then its feed. Both are followed here.
+
+   THE COVER IS GENERATED, NOT DRAWN. Each group gets a stable gradient
+   derived from its slug, so the rooms are visually distinguishable at a
+   glance and stay that way between visits, without anybody having to make
+   artwork for five rooms that may become fifty. It is abstract colour and
+   never a mark.
+   ============================================================ */
+
+.mng__split { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+  margin: 0 0 1rem; border-radius: 14px; background: rgba(255,255,255,.05); }
+.mng__seg { min-height: 40px; border: 0; cursor: pointer; border-radius: 11px;
+  background: transparent; color: rgba(244,239,230,.62);
+  font: 800 .82rem var(--mn-ui, inherit); letter-spacing: -.01em; }
+.mng__seg.is-on { background: rgba(255,255,255,.1); color: #f4efe6; }
+
+.mng__grid { display: grid; gap: .7rem; grid-template-columns: 1fr; }
+@media (min-width: 46rem) { .mng__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 72rem) { .mng__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.mng__card { display: grid; grid-template-rows: auto 1fr; min-width: 0; overflow: hidden;
+  border-radius: 16px; background: rgba(255,255,255,.035);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.mng__cover { height: 76px; position: relative; }
+/* The initial sits on the cover the way a group's mark would, without
+   being one: it is the first letter of the name, nothing more. */
+.mng__cover b { position: absolute; left: 14px; bottom: -18px; width: 42px; height: 42px;
+  display: grid; place-items: center; border-radius: 13px; font: 900 1.05rem/1 var(--mn-ui, inherit);
+  color: #0b0a09; background: #f4efe6; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.mng__body { padding: 1.5rem 1rem 1rem; display: grid; gap: .3rem; align-content: start; }
+.mng__name { margin: 0; font: 800 1rem/1.25 var(--mn-ui, inherit); letter-spacing: -.02em; }
+.mng__purpose { margin: 0; font: 400 .82rem/1.5 var(--body, inherit); color: rgba(244,239,230,.62);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mng__foot { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  margin-top: .55rem; }
+/* nowrap, because "1,284 members" wrapping to a second line dragged the
+   Join button down with it and knocked that card's footer out of line with
+   every other card in the row. */
+.mng__count { font: 600 .74rem var(--mn-ui, inherit); color: rgba(244,239,230,.42);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The footer is pinned to the bottom so every card in a row agrees on
+   where its button sits, whatever length the purpose line runs to. */
+.mng__body { grid-template-rows: auto auto 1fr; }
+.mng__foot { align-self: end; }
+
+.mng__join { min-height: 36px; flex: none; padding: .45rem .95rem; border: 0; cursor: pointer;
+  border-radius: 999px; font: 800 .78rem var(--mn-ui, inherit);
+  background: #e5383b; color: #fff; }
+.mng__join:disabled { opacity: .6; cursor: default; }
+/* Joined is a state, not a second call to action, so it stops shouting. */
+.mng__join.is-in { background: transparent; color: rgba(244,239,230,.7);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.22); }
+
+.mng__back { min-height: 40px; margin-bottom: .8rem; padding: .4rem .2rem; border: 0;
+  background: none; cursor: pointer; color: rgba(244,239,230,.62);
+  font: 700 .82rem var(--mn-ui, inherit); }
+.mng__back:hover { color: #f4efe6; }
+
+.mng__head { border-radius: 18px; overflow: hidden; margin-bottom: 1rem;
+  background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.mng__banner { height: 116px; }
+.mng__headin { padding: 1.1rem 1.05rem 1.15rem; display: grid; gap: .45rem; }
+.mng__headin h2 { margin: 0; font: 800 clamp(1.25rem,5vw,1.6rem)/1.15 var(--mn-ui, inherit);
+  letter-spacing: -.03em; }
+.mng__meta { font: 600 .76rem var(--mn-ui, inherit); color: rgba(244,239,230,.45); }
+.mng__headin p { margin: 0; font: 400 .88rem/1.55 var(--body, inherit); color: rgba(244,239,230,.68); }
+.mng__headin .mng__join { justify-self: start; margin-top: .3rem; min-height: 42px; padding: .6rem 1.3rem; }
+
+.mng__composer { display: grid; grid-template-columns: auto minmax(0,1fr); gap: .7rem;
+  padding: .9rem 1rem; margin-bottom: 1rem; border-radius: 16px;
+  background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.mng__composer-in { display: grid; gap: .5rem; min-width: 0; }
+.mng__composer textarea { width: 100%; min-width: 0; box-sizing: border-box; resize: vertical;
+  border: 0; border-radius: 11px; padding: .6rem .7rem; background: rgba(0,0,0,.28); color: #f4efe6;
+  font: 500 max(16px,.92rem)/1.5 var(--body, inherit);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.12); }
+.mng__composer textarea:focus { outline: none; box-shadow: inset 0 0 0 1px #e5383b; }
+.mng__composer-go { display: flex; align-items: center; justify-content: flex-end; gap: .7rem; }
+/* .mn__primary is the full-width submit used by the gate forms, and this
+   button reuses it for the look, not the width. In a composer row the
+   action sits at the end of the line beside its status, so the width is
+   taken back explicitly rather than by hoping the cascade lands right. */
+.mng__post { min-height: 40px; flex: none; width: auto; align-self: end;
+  padding: .5rem 1.4rem; border-radius: 999px; }
+
+.mng__empty { margin: 0; padding: 1.2rem 1.05rem; border-radius: 16px;
+  background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(244,239,230,.1);
+  font: 400 .88rem/1.6 var(--body, inherit); color: rgba(244,239,230,.6); }
+.mng__empty b { display: block; margin-bottom: .25rem; color: #f4efe6; font-weight: 700; }
