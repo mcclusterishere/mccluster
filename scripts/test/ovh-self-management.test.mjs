@@ -53,3 +53,12 @@ test('rollback ignores optional services that are not installed', async () => {
   assert.match(source, /systemctl list-unit-files "\$\{unit\}"/);
   assert.match(source, /systemctl try-restart "\$\{unit\}" \|\| true/);
 });
+
+
+test('reconciler ignores directory mtimes while still attesting live file content', async () => {
+  const source = await read('scripts/mccluster-vps-reconcile.sh');
+  assert.match(source, /rsync -acni --delete --omit-dir-times/,
+    'deploy manifest writes must not turn the Core directory mtime into false runtime drift');
+  assert.match(source, /--exclude '\.mccluster-deploy\.json'/,
+    'the separately attested deployment manifest must stay outside the Core file comparison');
+});
