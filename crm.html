@@ -81,6 +81,16 @@
     <p class="fd__k">Owner only · the pipeline</p>
     <h1>The Front<br>Desk</h1>
 
+    <!-- This desk and admin.html are two rooms working the same leads table.
+         Control Room is the one that is being kept. -->
+    <p style="margin:0 0 1.2rem;padding:.7rem .9rem;border-radius:14px;line-height:1.5;
+              font-size:.82rem;border:1px solid rgba(229,56,59,.35);background:rgba(229,56,59,.1)">
+      <b>Legacy surface.</b> This page and the Back Office both work the same
+      pipeline. New work goes to <a href="control.html" style="color:inherit">Control Room</a>,
+      which is the one being kept. Lead reads here still run on a policy scoped
+      to a single address, so a second workspace will look empty rather than say so.
+    </p>
+
     <div id="gate">
       <p class="fd__sub">Sign in and the leads are on the desk: newest first, sources marked, one tap to reply.</p>
       <input id="email" type="email" placeholder="matthew@mccluster.org" autocomplete="email">
@@ -136,6 +146,7 @@
 
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/workspace.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
@@ -178,17 +189,22 @@
       });
     }
 
+    /* Through the Worker, which resolves the caller's role and records the
+       change. The old PATCH went straight at the table and returned early
+       on !r.ok — so a refused change looked exactly like nothing happening. */
     function setStatus(id, status, card) {
-      hdrs().then(function (h) {
-        return fetch(SB_URL + "/rest/v1/leads?id=eq." + id, {
-          method: "PATCH", headers: h, body: JSON.stringify({ status: status }),
-        });
-      }).then(function (r) {
-        if (!r.ok) return;
+      window.MCC_WORKSPACE.api("/v1/leads/status", {
+        method: "POST",
+        body: { lead_id: id, status: status },
+      }).then(function () {
         card.querySelectorAll("[data-st]").forEach(function (b) {
           b.classList.toggle("on", b.getAttribute("data-st") === status);
         });
         card.classList.toggle("is-closed", status === "closed");
+      }).catch(function (err) {
+        alert(err && err.status === 403
+          ? "That account cannot move leads in this workspace."
+          : "That change did not save: " + ((err && err.message) || "unknown error"));
       });
     }
 

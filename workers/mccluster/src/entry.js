@@ -15,6 +15,9 @@ import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
+import { requireMembership, resolveWorkspaces } from './workspaces.js';
+import { setLeadStatus } from './leads.js';
+import { recentAudit } from './lib/audit.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -265,6 +268,48 @@ export default {
         return reply(request, env, body, status);
       } catch (error) {
         return fail(request, env, error.message || 'Core status request failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* WHICH WORKSPACES THIS TOKEN MAY OPEN. Ahead of every module route
+       on purpose: a page calls this first and hands the chosen org_id to
+       whatever it opens next. It never authorizes a write on its own —
+       the module still checks membership where the write happens. */
+    if (path === '/v1/workspaces/me' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await resolveWorkspaces(env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Workspace lookup failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* The ledger, read back. Scoped to one org and membership-checked, so
+       a tenant never reads another tenant's history. */
+    if (path === '/v1/audit/recent' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const orgId = url.searchParams.get('org_id');
+        await requireMembership(env, user, orgId);
+        const events = await recentAudit(env, orgId, url.searchParams.get('limit'));
+        return reply(request, env, { events });
+      } catch (error) {
+        return fail(request, env, error.message || 'Audit read failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* Working the pipeline. This used to be a browser PATCH straight at
+       public.leads behind an RLS policy comparing the JWT email to one
+       literal address — see src/leads.js for why that had to move. */
+    if (path === '/v1/leads/status' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await setLeadStatus(request, env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Lead update failed', error.status || 500, error.detail);
       }
     }
 

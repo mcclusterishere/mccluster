@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings"];
-  var CREATE_VIEWS = ["projects", "library", "schedule"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -33,6 +33,11 @@
     coreResume: null,
     commandResult: null,
     org: null,
+    /* The membership row behind state.org — which workspace this operator
+       is in and as what. Null means the server named none, which is not
+       the same as the console failing to ask. */
+    workspace: null,
+    audit: [],
     threads: [],
     leads: [],
     siteRequests: [],
@@ -1153,13 +1158,131 @@
     return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
-    var body = state.createView === "projects" ? renderProjects() : (state.createView === "library" ? renderLibrary() : renderSchedule());
-    return renderHeader("Create", "Projects own the creative objective. Library owns canonical assets. Schedule owns distribution.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    var body = state.createView === "projects" ? renderProjects()
+      : state.createView === "library" ? renderLibrary()
+      : state.createView === "channels" ? renderChannels()
+      : renderSchedule();
+    return renderHeader("Create", "Projects own the creative objective. Library owns canonical assets. Schedule owns distribution. Channels own where it goes.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+  }
+
+  /* CHANNELS — where publishing actually points.
+
+     Schedule could already queue a finished variant, and told anyone with
+     no connected account to "connect an account before publishing" — with
+     nothing anywhere in the console that could connect one. POST
+     /v1/social/accounts and POST /v1/social/campaigns both existed and
+     had never been called from anywhere. This is the room that calls them.
+
+     CREDENTIALS ARE NOT COLLECTED HERE, and the form says so. The Worker
+     refuses a client-supplied credential_ref outright and derives it from
+     what is configured server-side, so an account registered here comes
+     back 'disconnected' until that exists. Showing that plainly beats a
+     form that looks like it connected something and did not. */
+  function renderChannels() {
+    var accounts = socialAccountRows();
+    var banner = state.socialAccounts && !state.socialAccounts.ok
+      ? sourceBanner(state.socialAccounts, "Social accounts") : "";
+    var owner = state.workspace && state.workspace.role === "owner";
+
+    var accountList = accounts.length
+      ? '<div class="cr-list">' + accounts.map(function (a) {
+          var connected = a.status === "connected";
+          return row(
+            a.display_name || a.handle || a.external_account_id,
+            (a.platform || "unknown") + " · " + (a.handle || a.external_account_id),
+            connected ? "Connected" : titleCase(a.status || "disconnected"),
+            connected ? "ok" : "warn",
+            "",
+            { id: a.id, badge: connected ? "live" : "no creds" }
+          );
+        }).join("") + '</div>'
+      : empty("No connected account",
+          state.socialAccounts && state.socialAccounts.ok
+            ? "social_accounts is empty for this workspace. Nothing can publish until one exists."
+            : "The account list did not load, so this is not a statement that none exist.");
+
+    var campaigns = state.campaigns || [];
+    var campaignList = campaigns.length
+      ? '<div class="cr-list">' + campaigns.slice(0, 25).map(function (c) {
+          return row(c.name || "Untitled campaign",
+            (c.objective || "growth") + (c.starts_at ? " · from " + formatDate(c.starts_at) : ""),
+            titleCase(c.status || "draft"),
+            c.status === "active" ? "ok" : "info",
+            "", { id: c.id });
+        }).join("") + '</div>'
+      : empty("No campaigns", "social_campaigns has no rows for this workspace yet.");
+
+    if (!owner) {
+      return banner +
+        '<div class="cr-grid">' +
+          panel("Accounts", accounts.length + " registered", '<div class="cr-panel__body">' + accountList + '</div>', "cr-span-6") +
+          panel("Campaigns", campaigns.length + " total", '<div class="cr-panel__body">' + campaignList + '</div>', "cr-span-6") +
+        '</div>' +
+        '<div class="cr-gap"><b>Read only.</b><span>Registering an account or opening a campaign is owner work, and this session holds ' +
+          esc(state.workspace ? state.workspace.role : "no role") + ' in this workspace.</span></div>';
+    }
+
+    var accountForm =
+      '<div class="cr-panel__body"><div class="cr-gen">' +
+        '<select class="cr-select" id="crAccPlatform" aria-label="Platform">' +
+          viewOptions(["instagram", "tiktok", "youtube", "linkedin", "facebook"], "instagram") + '</select>' +
+        '<input class="cr-input" id="crAccExternal" type="text" aria-label="Account id on that platform" placeholder="Account id on that platform">' +
+        '<input class="cr-input" id="crAccHandle" type="text" aria-label="Handle" placeholder="Handle (optional)">' +
+        '<input class="cr-input" id="crAccName" type="text" aria-label="Display name" placeholder="Display name (optional)">' +
+        '<button class="cr-btn cr-btn--primary" type="button" data-action="connect-account"' +
+          (state.pending.account ? " disabled" : "") + '>' + (state.pending.account ? "Registering…" : "Register account") + '</button>' +
+      '</div>' + pendingNote("account") +
+      '<p class="cr-derived">Credentials are never entered here. The Worker derives them from what is configured on the server and refuses a client-supplied one, so a new account stays <b>disconnected</b> until that exists.</p></div>';
+
+    var campaignForm = accounts.length
+      ? '<div class="cr-panel__body"><div class="cr-gen">' +
+          '<select class="cr-select" id="crCmpAccount" aria-label="Account">' + accounts.map(function (a) {
+            return '<option value="' + esc(a.id) + '">' + esc(a.display_name || a.handle || a.external_account_id) + ' · ' + esc(a.platform || "") + '</option>';
+          }).join("") + '</select>' +
+          '<input class="cr-input" id="crCmpName" type="text" aria-label="Campaign name" placeholder="Campaign name">' +
+          '<select class="cr-select" id="crCmpObjective" aria-label="Objective">' +
+            viewOptions(["growth", "conversion", "retention", "awareness"], "growth") + '</select>' +
+          '<input class="cr-input" id="crCmpStarts" type="datetime-local" aria-label="Starts at (optional)">' +
+          '<input class="cr-input" id="crCmpEnds" type="datetime-local" aria-label="Ends at (optional)">' +
+          '<button class="cr-btn cr-btn--primary" type="button" data-action="create-campaign"' +
+            (state.pending.campaign ? " disabled" : "") + '>' + (state.pending.campaign ? "Opening…" : "Open campaign") + '</button>' +
+        '</div>' + pendingNote("campaign") + '</div>'
+      : '<div class="cr-panel__body">' + empty("Register an account first", "A campaign belongs to an account, so there is nothing to attach one to yet.") + '</div>';
+
+    return banner +
+      '<div class="cr-grid">' +
+        panel("Accounts", accounts.length + " registered", '<div class="cr-panel__body">' + accountList + '</div>', "cr-span-6") +
+        panel("Register an account", "social_accounts", accountForm, "cr-span-6") +
+        panel("Campaigns", campaigns.length + " total", '<div class="cr-panel__body">' + campaignList + '</div>', "cr-span-6") +
+        panel("Open a campaign", "social_campaigns", campaignForm, "cr-span-6") +
+      '</div>';
+  }
+
+  /* One result line per form: busy, what failed, or what was created. */
+  function pendingNote(key) {
+    var failure = state.pending[key + "Error"];
+    var done = state.pending[key + "Ok"];
+    if (failure) {
+      return '<p class="cr-derived"><span class="' + stateClass("bad") + '">Failed</span> ' +
+        esc(failure.message || "That did not save.") + (failure.status ? " · HTTP " + failure.status : "") + '</p>';
+    }
+    if (done) return '<p class="cr-derived"><span class="' + stateClass("ok") + '">Created</span> ' + esc(done) + '</p>';
+    return "";
   }
 
   function serviceRows() {
     var s = state.status || {};
     return [
+      {
+        key: "workspace",
+        title: "Workspace",
+        sub: state.workspace ? state.workspace.name + " · " + state.workspace.slug
+          : state.sources.workspace && state.sources.workspace.ok ? "No workspace on this account"
+          : "Workspace not resolved",
+        value: state.workspace ? titleCase(state.workspace.role)
+          : state.sources.workspace && state.sources.workspace.ok ? "None" : "Check",
+        kind: state.workspace ? "ok" : (state.sources.workspace && state.sources.workspace.ok ? "warn" : "bad")
+      },
       { key: "api", title: "Cloudflare / API", sub: "api.mccluster.org", value: state.health && state.health.ok ? "Healthy" : "Check", kind: state.health && state.health.ok ? "ok" : "bad" },
       { key: "db", title: "Supabase", sub: "Canonical data plane", value: s.database && s.database.reachable ? "Healthy" : "Check", kind: s.database && s.database.reachable ? "ok" : "warn" },
       {
@@ -1183,7 +1306,7 @@
   }
   function renderSystemOverview() {
     var services = serviceRows();
-    return sourceStates([["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth]]) +
+    return sourceStates([["Workspace", state.sources.workspace], ["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth], ["Audit ledger", state.sources.audit]]) +
       '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
       '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
       panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
@@ -1231,6 +1354,22 @@
       events.push({ id: p.id, action: "inspect-publish", severity: "ERROR", source: "Social", message: text(p.last_error, "Publish job failed"), time: p.updated_at || p.scheduled_at, kind: "bad" });
     });
     if (state.aiHealth && state.aiHealth.stale) events.push({ id: "host", action: "inspect-service", severity: "WARN", source: "OVH", message: "Host health result is stale", time: state.aiHealth.checked_at, kind: "warn" });
+    /* The ledger. Observability had only ever shown things that BROKE, so a
+       privileged change that worked — somebody moving a lead, spending on
+       media — left no trace on this screen at all. control_audit is the
+       record of what was deliberately done, and it belongs next to the
+       record of what failed. */
+    state.audit.forEach(function (a) {
+      var who = a.actor_kind === "user" ? "operator" : (a.actor_kind || "system");
+      var what = a.resource_type ? a.resource_type + " " + text(a.resource_id, "") : "";
+      var from = a.detail && a.detail.from, to = a.detail && a.detail.to;
+      events.push({
+        id: String(a.id), action: "inspect-audit", severity: "INFO", source: "Ledger",
+        message: a.event + (what ? " · " + what : "") +
+          (from && to ? " (" + from + " → " + to + ")" : "") + " · by " + who,
+        time: a.at, kind: "info"
+      });
+    });
     Object.keys(state.sources).forEach(function (key) {
       var s = state.sources[key];
       /* A source the console could not read is itself an observable event —
@@ -1286,7 +1425,8 @@
       body = inspectorSection("Target", sourceBanner(state.socialAccounts, "Social accounts"));
     } else if (!accounts.length) {
       body = inspectorSection("Target", '<div class="cr-gap"><b>No social account is connected.</b>' +
-        '<span>POST /v1/social/publish requires an account_id, and this organization has no rows in social_accounts. Connect an account before publishing.</span></div>');
+        '<span>POST /v1/social/publish requires an account_id, and this workspace has no rows in social_accounts.</span>' +
+        '<button class="cr-btn cr-btn--primary" type="button" data-action="create-channels" style="margin-top:12px">Register one in Channels</button></div>');
     } else {
       body = inspectorSection("Target", '<div class="cr-gen">' +
         '<select class="cr-select" id="crPubAccount" aria-label="Account">' + accounts.map(function (a) {
@@ -1878,6 +2018,71 @@
     else if (action === "create-projects") setSurface("create", "projects");
     else if (action === "create-library") setSurface("create", "library");
     else if (action === "create-schedule") setSurface("create", "schedule");
+    else if (action === "create-channels") setSurface("create", "channels");
+    else if (action === "connect-account") {
+      var platform = $("crAccPlatform") && $("crAccPlatform").value;
+      var external = $("crAccExternal") && $("crAccExternal").value.trim();
+      delete state.pending.accountOk;
+      if (!external) {
+        state.pending.accountError = badResult("failed", "The platform's own account id is required.", 0);
+        render(); return;
+      }
+      var accBody = { platform: platform, external_account_id: external };
+      var accHandle = $("crAccHandle") && $("crAccHandle").value.trim();
+      var accName = $("crAccName") && $("crAccName").value.trim();
+      if (accHandle) accBody.handle = accHandle;
+      if (accName) accBody.display_name = accName;
+      if (state.org && state.org.id) accBody.org_id = state.org.id;
+
+      state.pending.account = true;
+      delete state.pending.accountError;
+      render();
+      src(request("/v1/social/accounts", { method: "POST", body: accBody })).then(function (result) {
+        delete state.pending.account;
+        if (!result.ok) { state.pending.accountError = result; render(); return; }
+        var acc = result.data && result.data.account;
+        /* Say which of the two outcomes this was. A row in social_accounts
+           with no credential cannot publish, and the form that created it
+           is the right place to learn that. */
+        state.pending.accountOk = acc && acc.status === "connected"
+          ? "connected"
+          : "registered, still disconnected until a server credential exists";
+        loadSocialAccounts(true);
+      });
+    }
+    else if (action === "create-campaign") {
+      var cmpName = $("crCmpName") && $("crCmpName").value.trim();
+      var cmpAccount = $("crCmpAccount") && $("crCmpAccount").value;
+      delete state.pending.campaignOk;
+      if (!cmpName || !cmpAccount) {
+        state.pending.campaignError = badResult("failed", "A campaign needs a name and an account.", 0);
+        render(); return;
+      }
+      var cmpBody = {
+        account_id: cmpAccount,
+        name: cmpName,
+        objective: ($("crCmpObjective") && $("crCmpObjective").value) || "growth"
+      };
+      /* datetime-local has no zone; send a real instant. */
+      var starts = $("crCmpStarts") && $("crCmpStarts").value;
+      var ends = $("crCmpEnds") && $("crCmpEnds").value;
+      if (starts) cmpBody.starts_at = new Date(starts).toISOString();
+      if (ends) cmpBody.ends_at = new Date(ends).toISOString();
+      if (state.org && state.org.id) cmpBody.org_id = state.org.id;
+
+      state.pending.campaign = true;
+      delete state.pending.campaignError;
+      render();
+      src(request("/v1/social/campaigns", { method: "POST", body: cmpBody })).then(function (result) {
+        delete state.pending.campaign;
+        if (!result.ok) { state.pending.campaignError = result; render(); return; }
+        var campaign = result.data && result.data.campaign;
+        state.pending.campaignOk = (campaign && campaign.name) || "campaign";
+        /* It belongs on the list now, not after a reload. */
+        if (campaign) state.campaigns.unshift(campaign);
+        render();
+      });
+    }
     else if (action === "system-command") setSurface("system", "command");
     else if (action === "system-overview") setSurface("system", "overview");
     else if (action === "system-workload") setSurface("system", "workload");
@@ -2243,7 +2448,30 @@
     if (state.search) filterCurrentView(state.search);
   }
 
-  function discoverOrg() { return src(supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1")).then(function (r) { return rowsOf(r)[0] || null; }); }
+  /* Which workspace this console is operating on, answered by the server.
+
+     This was supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1") —
+     a hardcoded slug, so Control Room could only ever open the house.
+     A second tenant's operator got a console with no org, every scoped
+     read silently empty, and nothing on screen saying why. */
+  function discoverWorkspace() {
+    return src(request("/v1/workspaces/me")).then(function (result) {
+      var data = dataOf(result);
+      var list = (data && data.workspaces) || [];
+      var chosen = null;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].org_id === data.default_org_id) { chosen = list[i]; break; }
+      }
+      if (!chosen) {
+        chosen = list.filter(function (w) { return w.enabled; })[0] || null;
+      }
+      return {
+        source: result,
+        membership: chosen,
+        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name } : null
+      };
+    });
+  }
   function loadCreative(org) {
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
@@ -2268,7 +2496,12 @@
     }));
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
-      return discoverOrg().then(function (org) {
+      return discoverWorkspace().then(function (ws) {
+        var org = ws.org;
+        /* No workspace is a state to render, not an exception to throw.
+           The old code reached straight for org.id and died on a
+           TypeError, which surfaced as a generic console error. */
+        if (!org) return { workspace: ws, org: null };
         return Promise.all([
           src(request("/v1/core")),
           src(coreMcp("tools/list")),
@@ -2279,13 +2512,15 @@
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
           src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")),
           src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
-          loadCreative(org)
+          loadCreative(org),
+          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
         ]).then(function (r) {
           return {
-            org: org,
+            org: org, workspace: ws,
             coreBridge: r[0], coreTools: r[1], coreResume: r[2],
             status: r[3], apps: r[4], ai: r[5], aiHealth: r[6], decisions: r[7],
-            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], aiThreads: r[12], creative: r[13]
+            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], aiThreads: r[12], creative: r[13],
+            audit: r[14]
           };
         });
       });
@@ -2298,10 +2533,14 @@
         status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
         decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
         aiThreads: a.aiThreads || signedOut,
+        workspace: (a.workspace && a.workspace.source) || signedOut,
+        audit: a.audit || signedOut,
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.workspace = (a.workspace && a.workspace.membership) || null;
+      state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
       var coreToolsPayload = dataOf(state.sources.coreTools);
       state.coreTools = coreToolsPayload && Array.isArray(coreToolsPayload.tools) ? coreToolsPayload.tools : [];
