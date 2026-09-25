@@ -5,6 +5,8 @@ SOURCE_DIR="${1:-}"
 DEPLOY_SHA="${2:-}"
 TARGET_ROOT="${MCCLUSTER_TARGET_ROOT:-/opt/mccluster}"
 CORE_TARGET="${TARGET_ROOT}/core"
+RECONCILE_TARGET="${TARGET_ROOT}/reconcile"
+RECONCILE_SCRIPT="${RECONCILE_TARGET}/mccluster-vps-reconcile.sh"
 RELEASE_ROOT="${TARGET_ROOT}/releases"
 SYSTEMD_DIR="/etc/systemd/system"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -34,7 +36,7 @@ command -v systemctl >/dev/null
 mkdir -p "${RELEASE_ROOT}"
 # Only the exact checkout selected by the promotion/reconcile gate may be stamped.
 test "$(git -C "${SOURCE_DIR}" rev-parse HEAD)" = "${DEPLOY_SHA}"
-git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh
+git -C "${SOURCE_DIR}" diff --quiet HEAD -- core scripts/deploy-ovh-core.sh scripts/mccluster-vps-reconcile.sh
 
 # Validate the incoming Core tree before touching the live install.
 pushd "${SOURCE_DIR}/core" >/dev/null
@@ -75,6 +77,12 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
       rm -f /etc/mccluster-node/capabilities.json
     fi
+    if [[ -f "${BACKUP_DIR}/reconcile-script" ]]; then
+      install -d -o root -g root -m 0755 "${RECONCILE_TARGET}"
+      install -o root -g root -m 0755 "${BACKUP_DIR}/reconcile-script" "${RECONCILE_SCRIPT}"
+    elif [[ -f "${BACKUP_DIR}/new-reconcile-script" ]]; then
+      rm -f "${RECONCILE_SCRIPT}"
+    fi
     systemctl daemon-reload || true
     for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
       if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
@@ -92,6 +100,18 @@ if [[ -d "${CORE_TARGET}" ]]; then
   mkdir -p "${BACKUP_DIR}/core"
   rsync -a "${CORE_TARGET}/" "${BACKUP_DIR}/core/"
 fi
+
+# The reconciler is part of the deployment contract too. Keep it under /opt so
+# the reconciler's own ProtectSystem=full sandbox can update it on the first
+# promoted release, then rollback it together with Core if validation fails.
+mkdir -p "${BACKUP_DIR}"
+if [[ -f "${RECONCILE_SCRIPT}" ]]; then
+  cp -p "${RECONCILE_SCRIPT}" "${BACKUP_DIR}/reconcile-script"
+else
+  touch "${BACKUP_DIR}/new-reconcile-script"
+fi
+install -d -o root -g root -m 0755 "${RECONCILE_TARGET}"
+install -o root -g root -m 0755 "${SOURCE_DIR}/scripts/mccluster-vps-reconcile.sh" "${RECONCILE_SCRIPT}"
 
 mkdir -p "${CORE_TARGET}"
 rsync -a --delete \
