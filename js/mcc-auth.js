@@ -384,6 +384,58 @@
       });
     },
 
+    /* Change the password from inside a signed-in account.
+
+       updatePassword() above serves the reset-email page, where the link
+       itself is the proof of identity. Here there is no link, so the
+       current password is the proof: it is checked by signing in with it
+       first, which also gives Supabase a fresh sign-in, so a project with
+       "Secure password change" on does not demand a second email.
+
+       An account that has never had a password (made with Google, say)
+       passes currentPassword as null and gets one set as a second way in.
+       Supabase may still ask for a recent sign-in in that case; the error
+       says so plainly and the page offers the reset email instead. */
+    changePassword: function (currentPassword, newPassword) {
+      newPassword = String(newPassword || '');
+      if (newPassword.length < 8) return Promise.reject(new Error('Use at least 8 characters for your new password.'));
+      if (currentPassword != null && currentPassword === newPassword) {
+        return Promise.reject(new Error('That is the password you already have. Choose a different one.'));
+      }
+      return MCC.user().then(function (user) {
+        if (!user || !user.email) throw new Error('You are signed out. Sign in again, then change your password.');
+        if (currentPassword == null) return user;
+        return MCC.signInWithPassword(user.email, currentPassword).catch(function (e) {
+          var code = e && e.data && e.data.error_code;
+          if (e && e.status === 429) throw e;
+          if (code === 'invalid_credentials' || (e && e.status === 400)) {
+            throw new Error('That current password is not right. Try again, or email yourself a reset link below.');
+          }
+          throw e;
+        }).then(function () { return user; });
+      }).then(function () {
+        var session = readSession();
+        if (!session || !session.access_token) throw new Error('You are signed out. Sign in again, then change your password.');
+        return authApi('user', { method: 'PUT', token: session.access_token, body: { password: newPassword } });
+      }).catch(function (e) {
+        var code = e && e.data && e.data.error_code;
+        if (code === 'same_password') throw new Error('That is the password you already have. Choose a different one.');
+        if (code === 'reauthentication_needed' || code === 'reauthentication_not_valid') {
+          throw new Error('For your security this needs a recent sign-in. Email yourself a reset link below, or sign out and back in, then try again.');
+        }
+        throw e;
+      });
+    },
+
+    /* Does this account have a password to type? An email identity means
+       it was made with one; an account made only through Google or Apple
+       has none, and asking it for a "current password" is a dead end. */
+    hasPassword: function (user) {
+      var ids = user && user.identities;
+      if (!Array.isArray(ids) || !ids.length) return true;
+      return ids.some(function (i) { return i && i.provider === 'email'; });
+    },
+
     /* Passwordless email login was removed from the product UI after real
        users were stranded by one-time links. Keep this method as an explicit
        hard stop so an old page cannot silently revive that flow. */

@@ -115,6 +115,18 @@
     .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); }
     .ac__who { color: var(--cream); font-weight: 700; word-break: break-all; }
     .ac__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+    .ac__pw { margin-top: 1rem; border-radius: 13px; box-shadow: inset 0 0 0 1px var(--edge); background: rgba(255,255,255,0.03); }
+    .ac__pw > summary { list-style: none; cursor: pointer; padding: 0.95rem 1rem; font-weight: 700; color: var(--cream);
+      display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
+    .ac__pw > summary::-webkit-details-marker { display: none; }
+    .ac__pw > summary::after { content: "+"; color: var(--cream-dim); font-size: 1.2rem; line-height: 1; }
+    .ac__pw[open] > summary::after { content: "\2212"; }
+    .ac__pw form { padding: 0 1rem 1rem; }
+    .ac__pw .ac__passnote { margin-top: 0; }
+    .ac__show { display: flex; align-items: center; gap: 0.55rem; margin-top: 0.75rem; font-size: 0.85rem; color: var(--cream-dim); cursor: pointer; min-height: 32px; }
+    .ac__show input { width: 18px; height: 18px; margin: 0; accent-color: var(--ruby-hot); }
+    .ac__note.is-ok { color: #86efac; }
+    .ac__note.is-err { color: #fca5a5; }
     [hidden] { display: none !important; }
   </style>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
@@ -165,6 +177,28 @@
       <p class="ac__lab">Signed in</p>
       <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
       <a class="ac__ghost" href="console.html">Client console</a>
+
+      <!-- PASSWORD. There was a reset-by-email page and nothing else: a
+           signed-in person could not change the password they were using.
+           The current password is asked for first, so an unlocked phone is
+           not enough to take the account. An account made through Google
+           has no current password, so it is offered "Set a password"
+           instead. account.html?stay=1#password opens straight to this. -->
+      <details class="ac__pw" id="password">
+        <summary id="acPwTitle">Change password</summary>
+        <form id="acPwForm" novalidate>
+          <p class="ac__passnote" id="acPwWhy">Confirm the one you use now, then choose a new one.</p>
+          <input type="email" id="acPwUser" autocomplete="username" hidden readonly>
+          <input type="password" id="acPwCur" placeholder="Current password" autocomplete="current-password">
+          <input type="password" id="acPwNew" placeholder="New password (8 or more characters)" autocomplete="new-password" minlength="8">
+          <input type="password" id="acPwNew2" placeholder="New password again" autocomplete="new-password" minlength="8">
+          <label class="ac__show"><input type="checkbox" id="acPwShow"> <span>Show passwords</span></label>
+          <button class="ac__btn" id="acPwGo" type="submit">Change password</button>
+          <p class="ac__note" id="acPwMsg" role="status" aria-live="polite"></p>
+          <button class="ac__flip" id="acPwReset" type="button">Forgot your current password? Email me a reset link</button>
+        </form>
+      </details>
+
       <button class="ac__out" id="acOut" type="button">Sign out</button>
     </div>
 
@@ -279,6 +313,7 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
+      if (window.MCC && MCC.user) MCC.user().then(pwPaint);
       if (!stayOnAccount()) {
         location.replace("mnet.html");
         return;
@@ -381,6 +416,72 @@
 
     el("acOut").onclick = function () {
       MCC_AUTH.signOut().then(function () { location.reload(); });
+    };
+
+    /* ---------------------------------------------------------------
+       PASSWORD. MCC.changePassword checks the current password by signing
+       in with it, then sets the new one. Accounts made through Google have
+       no current password, so the form asks only for the new one.
+       --------------------------------------------------------------- */
+    var pwHas = true, pwEmail = "";
+    function pwNote(text, kind) {
+      var n = el("acPwMsg");
+      n.textContent = text || "";
+      n.className = "ac__note" + (kind ? " is-" + kind : "");
+    }
+    function pwPaint(user) {
+      if (!user || !window.MCC) return;
+      pwEmail = user.email || "";
+      el("acPwUser").value = pwEmail;
+      pwHas = MCC.hasPassword ? MCC.hasPassword(user) : true;
+      el("acPwCur").hidden = !pwHas;
+      el("acPwTitle").textContent = pwHas ? "Change password" : "Set a password";
+      el("acPwWhy").textContent = pwHas
+        ? "Confirm the one you use now, then choose a new one."
+        : "You signed up without a password. Add one to sign in with your email as well.";
+      el("acPwGo").textContent = pwHas ? "Change password" : "Set password";
+      el("acPwReset").hidden = !pwHas;
+      if (location.hash === "#password") {
+        el("password").open = true;
+        el("password").scrollIntoView({ block: "start" });
+        (pwHas ? el("acPwCur") : el("acPwNew")).focus({ preventScroll: true });
+      }
+    }
+    el("acPwShow").addEventListener("change", function () {
+      var type = el("acPwShow").checked ? "text" : "password";
+      ["acPwCur", "acPwNew", "acPwNew2"].forEach(function (id) { el(id).type = type; });
+    });
+    el("acPwForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var cur = el("acPwCur").value, next = el("acPwNew").value, again = el("acPwNew2").value;
+      if (pwHas && !cur) { pwNote("Enter the password you use now.", "err"); el("acPwCur").focus(); return; }
+      if (next.length < 8) { pwNote("Use at least 8 characters for your new password.", "err"); el("acPwNew").focus(); return; }
+      if (next !== again) { pwNote("The two new passwords do not match.", "err"); el("acPwNew2").focus(); return; }
+      var btn = el("acPwGo"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = pwHas ? "Changing…" : "Setting…"; pwNote("");
+      MCC.changePassword(pwHas ? cur : null, next).then(function () {
+        ["acPwCur", "acPwNew", "acPwNew2"].forEach(function (id) { el(id).value = ""; });
+        pwNote(pwHas ? "Password changed. Use the new one next time you sign in."
+                     : "Password set. You can now sign in with your email and this password.", "ok");
+        if (!pwHas) { pwHas = true; el("acPwCur").hidden = false; el("acPwTitle").textContent = "Change password"; el("acPwReset").hidden = false; }
+        btn.textContent = pwHas ? "Change password" : label;
+      }).catch(function (err) {
+        pwNote(err && err.message || "That did not work. Try again.", "err");
+        btn.textContent = label;
+      }).then(function () { btn.disabled = false; });
+    });
+    el("acPwReset").onclick = function () {
+      var b = el("acPwReset");
+      if (!pwEmail) { pwNote("Sign in again first.", "err"); return; }
+      b.disabled = true; pwNote("");
+      MCC.requestPasswordReset(pwEmail).then(function () {
+        pwNote("Reset link sent to " + pwEmail + ". Open it on this device to choose a new password.", "ok");
+        b.disabled = false;
+      }).catch(function (err) {
+        pwNote(err && err.message || "Could not send the reset email.", "err");
+        if (err && err.mailQuota && MCC.holdButton) MCC.holdButton(b, err.retryAfter, "Forgot your current password? Email me a reset link");
+        else b.disabled = false;
+      });
     };
 
     /* ---------------------------------------------------------------
