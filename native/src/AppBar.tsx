@@ -1,37 +1,13 @@
 /**
- * THE APPBAR — the house's own bar, not a tab bar invented for the app.
+ * THE APPBAR — the house's current three-room primary bar.
  *
- * The previous native pass replaced this with five made-up destinations
- * (Album / Films / Catalog / License / Desk) drawn in hand-made geometric
- * glyphs. That was the mistake: HERE already HAS a bottom bar, it is on
- * every one of the thirty-nine pages, and it is the five rooms of the whole
- * house. This is that bar, carried over rather than reinvented:
+ * The web shell is canonical: Music · HERE · Mnet/Profile. Equity Uprise
+ * and Prayer Closet are still real rooms, but they are put away from primary
+ * navigation rather than occupying permanent bar slots.
  *
- *   Music          → the record             (album.html)
- *   Equity Uprise  → the E=↗ lockup         (equity-uprise.html)
- *   HERE           → the M mark, the home   (index.html)
- *   Prayer Closet  → the HM mark            (prayer-closet.html)
- *   Profile        → the account            (account.html)
- *
- * Everything here is lifted from the real markup and css/style.css:
- *
- *   .appbar__tab { width:54px; height:54px; border-radius:50%; }
- *   .appbar__tab.is-here, .is-active { background: var(--metal); color:#fff;
- *     box-shadow: inset 0 1px 0 rgba(255,255,255,.6),
- *                 0 10px 26px -8px rgba(229,56,59,.6); }
- *   .appbar__tab > span { clip-path: inset(50%) }   ← labels are
- *     screen-reader-only; the bar is emblems, never text
- *   .appbar__tab[data-appnav="music"] ::before { clip-path:
- *     polygon(0 0,100% 50%,0 100%) }                ← the Music tab's
- *     resting face is a play triangle, and it becomes a pause bar while
- *     the record runs — the red coin in the middle of the real bar is
- *     this tab, active, filled with the metal gradient
- *   .appbar__m (Prayer Closet) { border-radius:8px;
- *     box-shadow: 0 0 12px rgba(255,92,46,.35), 0 0 0 1px rgba(244,239,230,.18) }
- *
- * The EQ lockup's path data is copied verbatim out of the inline <svg> in
- * index.html — same viewBox, same coordinates — so it is the actual
- * artwork, not a redrawing of it.
+ * The native bar follows that same information architecture instead of
+ * preserving an older five-tab snapshot. The M mark and account glyph use
+ * the same owner-supplied/established assets and shapes as the web shell.
  */
 import React from 'react';
 import { Image, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
@@ -116,10 +92,8 @@ export type RoomKey = 'music' | 'uprise' | 'here' | 'closet' | 'profile';
 
 export const ROOMS: { key: RoomKey; label: string; route: string }[] = [
   { key: 'music', label: 'Music', route: '/music' },
-  { key: 'uprise', label: 'Equity Uprise', route: '/uprise' },
   { key: 'here', label: 'HERE', route: '/here' },
-  { key: 'closet', label: 'Prayer Closet', route: '/closet' },
-  { key: 'profile', label: 'Profile', route: '/profile' },
+  { key: 'profile', label: 'Mnet', route: '/profile' },
 ];
 
 /**
