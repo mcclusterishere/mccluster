@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 251,
+  "candidate_count": 252,
   "capability_source_count": 97,
-  "support_only_count": 154,
+  "support_only_count": 155,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -44,6 +44,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public static B1 digital-twin review viewer for the restricted basement program; it contains no live B1/tunnel operational data and adds no separate product capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html",
+      "classification": "building_preview_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shelved combined Core V2 building viewer retained under _unfinished/equity-uprise for internal review; projection support only, not an independent program capability."
     },
     {
       "path": "_unfinished/equity-uprise/equity-uprise-fellowship.html",
