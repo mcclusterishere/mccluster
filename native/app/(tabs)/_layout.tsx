@@ -1,19 +1,12 @@
 /**
- * THE ONE BAR — the house's five rooms, in the house's own bar.
+ * THE ONE BAR — the same three primary rooms as the web shell.
  *
- * Not a tab bar designed for this app. This is `.appbar`, the same
- * navigation that sits on all thirty-nine pages of the site: a floating
- * blurred pill, clear of both edges, holding five circular emblem coins.
- * The active room fills with the metal gradient, which is the red coin in
- * the middle of the real bar.
+ * Music · HERE · Mnet/Profile are the only persistent bar destinations.
+ * Equity Uprise and Prayer Closet remain built routes, but they are hidden
+ * from the bar until the owner explicitly restores them to primary navigation.
  *
- * The route names match the site's rooms, so the app's information
- * architecture is the site's — Music, Equity Uprise, HERE, Prayer Closet,
- * Profile — rather than a music-player IA invented for a phone.
- *
- * Films / Catalog / License are still real screens; they moved OFF the bar
- * and belong inside the Music room, which is where they live on the web
- * (album.html links out to films.html, catalogue.html, license.html).
+ * Films / Catalog / License and Desk remain reachable screens inside the app
+ * without becoming additional bar tabs.
  */
 import React from 'react';
 import { Tabs, useRouter } from 'expo-router';
@@ -34,10 +27,11 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="music" options={{ title: 'Music' }} />
-      <Tabs.Screen name="uprise" options={{ title: 'Equity Uprise' }} />
       <Tabs.Screen name="here" options={{ title: 'HERE' }} />
-      <Tabs.Screen name="closet" options={{ title: 'Prayer Closet' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Mnet' }} />
+      {/* preserved rooms/screens that are reachable but not on the primary bar */}
+      <Tabs.Screen name="uprise" options={{ href: null }} />
+      <Tabs.Screen name="closet" options={{ href: null }} />
       {/* rooms inside Music, reachable but not on the bar */}
       <Tabs.Screen name="films" options={{ href: null }} />
       <Tabs.Screen name="catalogue" options={{ href: null }} />
@@ -50,16 +44,14 @@ export default function TabsLayout() {
 function HouseBar({ state, navigation, insetBottom }: any) {
   const { status } = useTransport();
 
-  /* which of the five rooms is lit; screens that are not on the bar
-     (films, catalogue, license) keep the Music coin lit, because that is
-     the room they belong to */
+  /* Only the three primary rooms can light a bar coin. Music child screens
+     inherit Music; hidden Uprise/Closet routes intentionally light none. */
   const activeRoute = state.routes[state.index]?.name as string;
-  const activeRoom: RoomKey =
-    activeRoute === 'uprise' ? 'uprise'
-      : activeRoute === 'here' ? 'here'
-      : activeRoute === 'closet' ? 'closet'
+  const activeRoom: RoomKey | null =
+    activeRoute === 'here' ? 'here'
       : activeRoute === 'profile' ? 'profile'
-      : 'music';
+      : ['music', 'films', 'catalogue', 'license'].includes(activeRoute) ? 'music'
+      : null;
 
   return (
     <View style={s.stack} pointerEvents="box-none">
