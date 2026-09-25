@@ -39,6 +39,13 @@ The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction
 10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
 11. **Never draw a logo.** See the section below. This one has already cost a rewrite.
 12. **`mcclusterishere/Here` is dead.** It publishes nothing: its deploy workflows are disabled and it has no CNAME. Do not write to it. If a task seems to want it, say so in the chat and work here instead.
+13. **Mobile first, responsive up.** Every interface built from a Mobbin reference, or from any reference, is designed at phone width first and then given room on tablet and desktop. Breakpoints only ever ADD: they widen a layout or add a column, never hide something the phone was shown or claw back a decision the phone layout made. Concretely, and checked rather than assumed:
+    - `@media (min-width: …)`, never `max-width`. A `max-width` query means the design was drawn for a desktop and is being taken back on a phone, which is the wrong way round.
+    - `minmax(0, 1fr)`, never a bare `1fr`. `1fr` means `minmax(AUTO, 1fr)`, and that auto floor is the widest min-content in the track, so one unbreakable child pushes the track past its own container and the page scrolls sideways.
+    - Form controls at `max(16px, …)`. Anything smaller makes iOS zoom the whole page on focus.
+    - Never `user-scalable=no` or `maximum-scale=1`. Blocking pinch zoom fails WCAG 1.4.4.
+    - SVG text is sized in USER UNITS and shrinks with the viewBox, so a chart that is legible at 1440 can render 4px type on a phone. Size it for the phone and scale down at a breakpoint, not the reverse.
+    - Verify by rendering at 390px and measuring `scrollWidth` against `clientWidth`. They must be equal. Eyeballing a screenshot does not catch a 25px overflow.
 
 ## THE LOGOS ARE NOT YOURS TO DRAW
 
