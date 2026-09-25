@@ -26,6 +26,8 @@
     aiMessages: {},
     selectedAiThreadId: null,
     aiChatPending: false,
+    aiChatStage: null,
+    aiChatStartedAt: null,
     aiChatError: null,
     aiChatDraft: "",
     coreBridge: null,
@@ -319,10 +321,15 @@
     });
   }
 
-  function waitForAiTask(taskId, attempts) {
-    attempts = attempts || 60;
+  /* The resident model runs on CPU on the OVH host, so a long answer can
+     take minutes. The budget matches the Ollama adapter's own 600s timeout
+     plus queue time; a fixed attempt count used to give up at two minutes
+     on answers that were still being written. */
+  var AI_REPLY_BUDGET_MS = 11 * 60 * 1000;
+  function waitForAiTask(taskId) {
     if (!taskId || !state.org || !state.org.id) return Promise.reject(new Error("Compute task identity unavailable"));
-    function poll(left) {
+    var deadline = Date.now() + AI_REPLY_BUDGET_MS;
+    function poll(delay) {
       return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
         var task = payload && payload.task;
         if (!task) throw new Error("AI compute task disappeared");
@@ -330,11 +337,84 @@
         if (task.status === "failed" || task.status === "canceled") {
           throw new Error(task.last_error || ("AI compute task " + task.status));
         }
-        if (left <= 1) throw new Error("AI compute task did not reach a terminal state");
-        return sleep(2000).then(function () { return poll(left - 1); });
+        state.aiChatStage = task.status === "running" ? "running" : "queued";
+        if (Date.now() > deadline) throw new Error("The model is still working after 11 minutes. Try again, or ask for a shorter answer.");
+        return sleep(delay).then(function () { return poll(Math.min(3000, delay + 250)); });
       });
     }
-    return poll(attempts);
+    return poll(1500);
+  }
+
+  function aiModelName() {
+    var threads = Object.keys(state.aiMessages);
+    for (var t = 0; t < threads.length; t += 1) {
+      var list = state.aiMessages[threads[t]] || [];
+      for (var i = list.length - 1; i >= 0; i -= 1) if (list[i].role === "assistant" && list[i].model) return list[i].model;
+    }
+    return "";
+  }
+
+  function aiSystemPrompt() {
+    var model = aiModelName();
+    return [
+      "You are McCluster AI, the resident assistant of McCluster Corp.",
+      "You are " + (model ? "the open-weight model " + model : "an open-weight model") + " running under Ollama on McCluster's own OVH server. You are not hosted by Alibaba, OpenAI, Anthropic or any cloud AI provider, and nothing leaves McCluster infrastructure to answer.",
+      "You are talking with the owner inside the McCluster Control Room. Today is " + new Date().toDateString() + ".",
+      "Talk the way a capable colleague does: direct, warm and specific. Lead with the answer. Use markdown when structure helps: short paragraphs, lists, and fenced code blocks tagged with a language.",
+      "Say plainly when you do not know something or are unsure. You cannot browse the web, run tools or take actions from this chat, so never claim that an action happened.",
+      "This conversation is stored in McCluster's own Supabase and you can see its earlier turns."
+    ].join(" ");
+  }
+
+  /* One inference for the thread as it stands. Split from sending so a
+     reply that failed can be retried without saving the question twice. */
+  function runAiReply(thread) {
+    var history = aiMessagesFor(thread.id)
+      .filter(function (message) { return ["user", "assistant"].indexOf(message.role) >= 0; })
+      .slice(-24)
+      .map(function (message) {
+        return { role: message.role, content: window.CR.md.stripThinking(message.content).slice(0, 6000) };
+      });
+    history.unshift({ role: "system", content: aiSystemPrompt() });
+    state.aiChatPending = true;
+    state.aiChatStage = "queued";
+    state.aiChatStartedAt = Date.now();
+    state.aiChatError = null;
+    render();
+    return callCoreTool("ai.chat", { messages: history, temperature: 0.4, num_ctx: 8192 })
+      .then(function (queued) {
+        var task = queued && queued.task;
+        if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
+        return waitForAiTask(task.id);
+      })
+      .then(function (task) {
+        var answer = window.CR.md.stripThinking(aiTaskAnswer(task));
+        if (!answer) throw new Error("Local AI completed without response content");
+        var output = task.output || {};
+        return saveAiMessage(thread, {
+          role: "assistant",
+          content: answer,
+          model: output.model || null,
+          implementation: task.implementation || task.selected_implementation || null,
+          compute_task_id: task.id,
+          metadata: { capability: "ai.chat", task_status: task.status, usage: output.usage || null }
+        });
+      })
+      .then(function (savedAssistant) {
+        state.aiMessages[thread.id].push(savedAssistant);
+        thread.last_message_at = savedAssistant.created_at;
+        state.aiThreads.sort(function (a, b) {
+          return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
+        });
+      })
+      .catch(function (error) {
+        state.aiChatError = error.message || String(error);
+      })
+      .then(function () {
+        state.aiChatPending = false;
+        state.aiChatStartedAt = null;
+        render();
+      });
   }
 
   function sendAiMessage(value) {
@@ -347,60 +427,38 @@
 
     return threadPromise.then(function (thread) {
       if (!thread) throw new Error("Select or create a chat first");
-      state.aiChatPending = true;
       state.aiChatDraft = "";
-      render();
       return saveAiMessage(thread, { role: "user", content: content }).then(function (saved) {
         var messages = aiMessagesFor(thread.id);
         messages.push(saved);
         state.aiMessages[thread.id] = messages;
         if (thread.title === "New chat") thread.title = content.replace(/\s+/g, " ").slice(0, 80);
         thread.last_message_at = saved.created_at;
-        render();
-
-        var history = messages
-          .filter(function (message) { return ["system", "user", "assistant"].indexOf(message.role) >= 0; })
-          .slice(-24)
-          .map(function (message) {
-            return { role: message.role, content: String(message.content || "").slice(0, 6000) };
-          });
-        history.unshift({
-          role: "system",
-          content: "You are McCluster AI, the resident assistant running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. Your conversation history is durably stored by McCluster."
-        });
-        return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 })
-          .then(function (queued) {
-            var task = queued && queued.task;
-            if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
-            return waitForAiTask(task.id, 60);
-          })
-          .then(function (task) {
-            var answer = aiTaskAnswer(task);
-            if (!answer) throw new Error("Local AI completed without response content");
-            var output = task.output || {};
-            return saveAiMessage(thread, {
-              role: "assistant",
-              content: answer,
-              model: output.model || null,
-              implementation: task.implementation || task.selected_implementation || null,
-              compute_task_id: task.id,
-              metadata: { capability: "ai.chat", task_status: task.status }
-            });
-          })
-          .then(function (savedAssistant) {
-            state.aiMessages[thread.id].push(savedAssistant);
-            thread.last_message_at = savedAssistant.created_at;
-            state.aiThreads.sort(function (a, b) {
-              return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
-            });
-          });
+        return runAiReply(thread);
       });
     }).catch(function (error) {
+      state.aiChatDraft = state.aiChatDraft || content;
       state.aiChatError = error.message || String(error);
-    }).then(function () {
-      state.aiChatPending = false;
       render();
     });
+  }
+
+  function retryAiReply() {
+    var thread = aiThreadById(state.selectedAiThreadId);
+    if (!thread || state.aiChatPending) return;
+    runAiReply(thread);
+  }
+
+  function copyText(value, button) {
+    var done = function () {
+      if (!button) return;
+      var label = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(function () { button.textContent = label; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(done).catch(function () {});
+    }
   }
 
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
@@ -583,12 +641,25 @@
   }
 
 
+  function aiElapsed() {
+    if (!state.aiChatStartedAt) return "";
+    var seconds = Math.max(0, Math.round((Date.now() - state.aiChatStartedAt) / 1000));
+    return seconds < 60 ? seconds + "s" : Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
+  }
+
+  /* Laid out after the ChatGPT and Perplexity iOS chats on Mobbin: your
+     turn is a bubble on the right, the model's answer is full-width
+     formatted prose with its actions underneath, and the composer stays
+     pinned to the bottom of the conversation. */
   function renderAi() {
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
     var selected = aiThreadById(state.selectedAiThreadId);
     var messages = selected ? aiMessagesFor(selected.id) : [];
     var messageError = selected && state.pending["aiMessages:" + selected.id + ":error"];
     var ready = coreToolAvailable("ai.chat");
+    var model = aiModelName();
+    var last = messages[messages.length - 1];
+    var canRetry = Boolean(selected && !state.aiChatPending && last && last.role === "user");
 
     var threads = state.aiThreads.length
       ? state.aiThreads.map(function (thread) {
@@ -596,44 +667,53 @@
             '" type="button" data-action="ai-select-thread" data-id="' + esc(thread.id) + '">' +
             '<b>' + esc(thread.title || "New chat") + '</b><small>' + esc(ago(thread.last_message_at || thread.updated_at || thread.created_at)) + '</small></button>';
         }).join("")
-      : '<p class="cr-muted" style="padding:4px 6px">No chats yet.</p>';
+      : '<p class="cr-muted cr-ai-chat__none">No chats yet.</p>';
 
     var body;
     if (selected && state.pending["aiMessages:" + selected.id] && !messages.length) {
-      body = '<div class="cr-ai-chat__empty"><strong>Loading this conversation…</strong><span>Reading durable messages from McCluster.</span></div>';
+      body = '<div class="cr-ai-chat__empty"><strong>Loading this conversation…</strong><span>Reading saved messages from McCluster.</span></div>';
     } else if (!messages.length) {
-      body = '<div class="cr-ai-chat__empty"><strong>Talk to your own AI.</strong><span>This conversation runs through McCluster Core to your self-hosted model and is stored in your own Supabase.</span></div>';
+      body = '<div class="cr-ai-chat__empty"><strong>Talk to your own AI.</strong><span>' +
+        (ready ? "Ask anything. It runs on your OVH server, not a cloud provider, and every turn is saved to your Supabase."
+               : "The self-hosted model is not answering the control plane right now. Check System → Backend.") + '</span></div>';
     } else {
       body = messages.map(function (message) {
-        var mine = message.role === "user";
-        var label = mine ? "You" : (message.role === "assistant" ? "McCluster AI" : titleCase(message.role));
-        var detail = !mine && (message.model || message.implementation)
-          ? " · " + [message.model, message.implementation].filter(Boolean).join(" · ")
-          : "";
-        return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
-          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span></div>' +
-          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
+        if (message.role === "user") {
+          return '<div class="cr-ai-message cr-ai-message--user"><div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
+        }
+        var detail = [message.model, ago(message.created_at)].filter(Boolean).join(" · ");
+        return '<div class="cr-ai-message cr-ai-message--assistant">' +
+          '<div class="cr-ai-message__body cr-md">' + window.CR.md.render(message.content || "") + '</div>' +
+          '<div class="cr-ai-message__actions"><button class="cr-ai-action" type="button" data-action="ai-copy" data-id="' + esc(message.id) + '">Copy</button>' +
+          '<span>' + esc(detail) + '</span></div></div>';
       }).join("");
     }
     if (state.aiChatPending) {
-      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>local compute</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> Thinking on your compute…</div></div>';
+      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__body">' +
+        '<span class="cr-spin"></span> ' + (state.aiChatStage === "running" ? "Writing on your OVH server" : "Waiting for your OVH server") +
+        ' · <span id="crAiElapsed">' + esc(aiElapsed()) + '</span></div></div>';
+    }
+    if (state.aiChatError) {
+      body += '<div class="cr-ai-chat__error" role="alert"><p>' + esc(state.aiChatError) + '</p>' +
+        (canRetry ? '<button class="cr-btn" type="button" data-action="ai-retry">Try again</button>' : "") + '</div>';
     }
 
-    return renderHeader("AI", "A persistent conversation with the resident McCluster model running through your own control plane.") +
+    var disabled = !ready || state.aiChatPending ? " disabled" : "";
+    return renderHeader("AI", "Your self-hosted model, in a conversation that remembers.") +
       sourceBanner(state.sources.aiThreads, "AI conversations") +
       '<div class="cr-ai-chat">' +
-        '<aside class="cr-ai-chat__sidebar"><div class="cr-ai-chat__sidehead">' +
+        '<aside class="cr-ai-chat__sidebar" aria-label="Chats"><div class="cr-ai-chat__sidehead">' +
           '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-new-thread"' + (state.pending.aiThreadCreate ? " disabled" : "") + '>+ New chat</button>' +
-          '<span class="cr-ai-local">' + (ready ? "LOCAL READY" : "AI OFFLINE") + '</span></div>' +
+          '<span class="cr-ai-local' + (ready ? "" : " is-off") + '">' + (ready ? "LOCAL READY" : "AI OFFLINE") + '</span></div>' +
           '<div class="cr-ai-chat__threads">' + threads + '</div></aside>' +
-        '<section class="cr-ai-chat__main">' +
-          '<header class="cr-ai-chat__head"><div><b>' + esc(selected ? selected.title : "McCluster AI") + '</b><p>ai.chat → McCluster compute fabric → self-hosted model</p></div><span class="cr-ai-local">' + (ready ? "QWEN LOCAL" : "CHECK CORE") + '</span></header>' +
-          '<div class="cr-ai-chat__messages">' + (messageError ? sourceBanner(messageError, "Conversation") : "") + body + '</div>' +
+        '<section class="cr-ai-chat__main" aria-label="Conversation">' +
+          '<header class="cr-ai-chat__head"><div><b>' + esc(selected ? selected.title : "McCluster AI") + '</b>' +
+            '<p>' + esc((model || "Self-hosted model") + " · Ollama on OVH · saved to Supabase") + '</p></div></header>' +
+          '<div class="cr-ai-chat__messages" id="crAiLog" aria-live="polite">' + (messageError ? sourceBanner(messageError, "Conversation") : "") + body + '</div>' +
           '<footer class="cr-ai-chat__composer">' +
-            (state.aiChatError ? '<p class="cr-fail">' + esc(state.aiChatError) + '</p>' : "") +
-            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="Message McCluster AI…" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending ? " disabled" : "") + '></textarea>' +
-            '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending ? " disabled" : "") + '>Send</button></div>' +
-            '<p class="cr-ai-chat__hint">Enter to send · Shift+Enter for a new line · conversation persists in McCluster.</p>' +
+            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="1" placeholder="Message McCluster AI" aria-label="Message McCluster AI"' + disabled + '></textarea>' +
+            '<button class="cr-btn cr-btn--primary cr-ai-send" type="button" data-action="ai-send" aria-label="Send"' + disabled + '>Send</button></div>' +
+            '<p class="cr-ai-chat__hint" id="crAiHint">Runs on McCluster-owned compute. Answers can be wrong.</p>' +
           '</footer></section></div>';
   }
 
@@ -1304,12 +1384,96 @@
       '<span class="cr-topology__edge e3"></span><button class="cr-topology__node host" data-action="inspect-service" data-key="host"><b>OVH</b><span>runtime</span></button>' +
       '<span class="cr-topology__edge e4"></span><button class="cr-topology__node creative" data-action="inspect-service" data-key="creative"><b>Media / GPU</b><span>creative compute</span></button></div>';
   }
+  /* The operator desks that still live on their own pages come from the
+     one surface registry (js/control-registry.js), the same list the
+     palette uses, so this screen cannot drift from what is reachable.
+     Consolidating means the Control Room is the door to all of them, not
+     that each is rebuilt here: they keep their own backends on the plane. */
+  function planeDesks() {
+    var registry = window.MCC_SURFACES;
+    if (!registry || typeof registry.byGroup !== "function") return [];
+    return registry.byGroup().filter(function (g) { return g.items.length; });
+  }
+  var PLANE_CONSOLES = [
+    { title: "Cloudflare", href: "https://dash.cloudflare.com/", sub: "Worker mccluster · DNS · routes" },
+    { title: "Supabase", href: "https://supabase.com/dashboard/project/zmnhbrjyhxzhkxmhkexs", sub: "Project zmnhbrjyhxzhkxmhkexs" },
+    { title: "GitHub", href: "https://github.com/mcclusterishere/mccluster", sub: "mcclusterishere/mccluster" }
+  ];
+
+  /* Every canonical piece of the plane, named by its real identifier, with
+     the live signal its state is read from. A piece whose signal did not
+     load reads "Unknown", never "Healthy". */
+  function planeRows() {
+    var jobs = state.ai && state.ai.execution && state.ai.execution.jobs || {};
+    var host = state.aiHealth;
+    var hostKnown = Boolean(host && host.checked_at);
+    var hostOk = hostKnown && !host.stale && String(host.overall || "") === "ok";
+    var bridgeOk = Boolean(state.coreBridge && state.coreBridge.ok && state.coreBridge.signed_dispatch);
+    var aiReady = coreToolAvailable("ai.chat");
+    function pick(ok, known) { return ok ? "ok" : (known ? "bad" : "warn"); }
+    return [
+      { key: "api", name: "Cloudflare Worker", id: "mccluster", where: "api.mccluster.org",
+        kind: pick(state.health && state.health.ok, state.sources.health && state.sources.health.ok !== undefined),
+        value: state.health && state.health.ok ? "Healthy" : "Unreachable", detail: "Ingress, auth, routing" },
+      { key: "db", name: "Supabase", id: "zmnhbrjyhxzhkxmhkexs", where: "ca-central-1",
+        kind: pick(state.status && state.status.database && state.status.database.reachable, Boolean(state.status)),
+        value: state.status && state.status.database && state.status.database.reachable ? "Healthy" : (state.status ? "Unreachable" : "Unknown"), detail: "Durable truth, auth, RLS" },
+      { key: "core", name: "Core broker", id: "signed MCP bridge", where: "OVH",
+        kind: pick(bridgeOk, Boolean(state.coreBridge)),
+        value: bridgeOk ? state.coreTools.length + " tools" : (state.coreBridge ? "Not signed" : "Unknown"),
+        detail: count(jobs.queued) + " queued · " + count(jobs.running) + " running · " + count(jobs.failed) + " failed" },
+      { key: "host", name: "OVH host", id: "ovh-primary", where: hostKnown ? "checked " + ago(host.checked_at) + " ago" : "no health report",
+        kind: hostOk ? "ok" : (hostKnown && !host.stale ? "bad" : "warn"),
+        value: hostKnown ? (host.stale ? "Stale" : (hostOk ? "Healthy" : titleCase(host.overall || "unknown"))) : "Unknown", detail: "Persistent execution" },
+      { key: "model", name: "Local model", id: aiModelName() || "qwen3:8b", where: "Ollama · loopback only",
+        kind: aiReady ? "ok" : "warn", value: aiReady ? "Ready" : "Offline", detail: "ai.chat on owned compute", talk: aiReady }
+    ];
+  }
+
+  function planeCard(p) {
+    return '<li class="cr-plane__item">' +
+      '<button class="cr-plane__main" type="button" data-action="inspect-service" data-key="' + esc(p.key === "model" ? "host" : p.key) + '">' +
+        '<span class="cr-plane__dot cr-plane__dot--' + esc(p.kind) + '" aria-hidden="true"></span>' +
+        '<span class="cr-plane__name"><b>' + esc(p.name) + '</b><code>' + esc(p.id) + '</code></span>' +
+        '<span class="cr-plane__where">' + esc(p.where) + '</span>' +
+        '<span class="cr-plane__detail">' + esc(p.detail) + '</span>' +
+        '<span class="' + stateClass(p.kind) + ' cr-plane__state">' + esc(p.value) + '</span>' +
+      '</button>' +
+      (p.talk ? '<button class="cr-btn cr-btn--primary cr-plane__talk" type="button" data-action="ai">Talk to it</button>' : "") +
+    '</li>';
+  }
+
+  function linkCard(item, external) {
+    return '<a class="cr-plane-link" href="' + esc(item.href) + '"' + (external ? ' target="_blank" rel="noopener"' : "") + '>' +
+      '<b>' + esc(item.title) + '</b><small>' + esc(item.sub) + '</small><span aria-hidden="true">' + (external ? "↗" : "›") + '</span></a>';
+  }
+
+  /* Backend overview, after Supabase's project status list and Render's
+     service table on Mobbin: one verdict first, then every piece with its
+     identifier, location and state, then the doors to every other desk. */
   function renderSystemOverview() {
-    var services = serviceRows();
+    var rows = planeRows();
+    var down = rows.filter(function (p) { return p.kind === "bad"; }).length;
+    var unsure = rows.filter(function (p) { return p.kind === "warn"; }).length;
+    var verdict = down ? down + " part" + (down === 1 ? "" : "s") + " of the plane " + (down === 1 ? "is" : "are") + " down"
+      : unsure ? unsure + " part" + (unsure === 1 ? " needs" : "s need") + " a look"
+      : "The whole plane is healthy";
+    var verdictKind = down ? "bad" : (unsure ? "warn" : "ok");
     return sourceStates([["Workspace", state.sources.workspace], ["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth], ["Audit ledger", state.sources.audit]]) +
-      '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
-      '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
-      panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
+      '<section class="cr-plane-hero cr-plane-hero--' + verdictKind + '"><span class="cr-plane__dot cr-plane__dot--' + verdictKind + '" aria-hidden="true"></span>' +
+        '<div><h2>' + esc(verdict) + '</h2><p>GitHub → Cloudflare → Supabase → OVH Core → local model' + (state.refreshedAt ? " · read " + esc(ago(state.refreshedAt)) + " ago" : "") + '</p></div>' +
+        '<button class="cr-btn" type="button" data-action="refresh-health">Run health check</button></section>' +
+      '<section class="cr-plane-section"><header class="cr-panel__head"><h2>Control plane</h2><span class="cr-panel__meta">' + rows.length + ' services</span></header>' +
+        '<ul class="cr-plane">' + rows.map(planeCard).join("") + '</ul></section>' +
+      planeDesks().map(function (g) {
+        return '<section class="cr-plane-section"><header class="cr-panel__head"><h2>' + esc(g.group) + ' desks</h2><span class="cr-panel__meta">' + g.items.length + '</span></header>' +
+          '<div class="cr-plane-links">' + g.items.map(function (d) {
+            return linkCard({ title: d.label, href: d.href, sub: d.blurb }, false);
+          }).join("") + '</div></section>';
+      }).join("") +
+      '<section class="cr-plane-section"><header class="cr-panel__head"><h2>Provider consoles</h2><span class="cr-panel__meta">opens in a new tab</span></header>' +
+        '<div class="cr-plane-links">' + PLANE_CONSOLES.map(function (d) { return linkCard(d, true); }).join("") + '</div></section>' +
+      '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-12") + '</div>';
   }
   var JOB_FILTERS = ["all", "running", "queued", "failed", "done"];
   function renderWorkload() {
@@ -1616,7 +1780,7 @@
       : (state.systemView === "overview" ? renderSystemOverview()
       : (state.systemView === "workload" ? renderWorkload()
       : (state.systemView === "observability" ? renderObservability() : renderResources())));
-    return renderHeader("System", "Command, observe, and intervene through one canonical control plane.", { values: SYSTEM_VIEWS, selected: state.systemView }) + body;
+    return renderHeader("System", "The whole backend on one screen: every service, every desk, one control plane.", { values: SYSTEM_VIEWS, selected: state.systemView }) + body;
   }
 
   function appCard(title, subtitle, href, meta, external) {
@@ -2012,6 +2176,16 @@
     else if (action === "ai-new-thread") createAiThread();
     else if (action === "ai-select-thread") { state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; render(); }
     else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value); }
+    else if (action === "ai-retry") retryAiReply();
+    else if (action === "ai-copy") {
+      var copied = aiMessagesFor(state.selectedAiThreadId).find(function (m) { return String(m.id) === String(el.getAttribute("data-id")); });
+      if (copied) copyText(window.CR.md.stripThinking(copied.content), el);
+    }
+    else if (action === "ai-copy-code") {
+      var block = el.closest(".cr-md-code");
+      var code = block && block.querySelector("pre");
+      if (code) copyText(code.textContent, el);
+    }
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
@@ -2386,6 +2560,7 @@
       el.style.display = !q || el.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
     });
   }
+  var aiElapsedTimer = null;
   function bindSurfaceControls() {
     bindActions($("crSurface"));
     window.CR.media.bind($("crSurface"));
@@ -2435,15 +2610,36 @@
     }
     var aiComposerInput = $("crAiComposer");
     if (aiComposerInput) {
+      /* On a phone Return is a new line and the button sends, as in every
+         mobile chat; with a keyboard Enter sends and Shift+Enter breaks. */
+      var touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      var hint = $("crAiHint");
+      if (hint && !touch) hint.textContent = "Enter to send · Shift+Enter for a new line · runs on McCluster-owned compute.";
+      var grow = function () {
+        aiComposerInput.style.height = "auto";
+        aiComposerInput.style.height = Math.min(aiComposerInput.scrollHeight, 200) + "px";
+      };
       aiComposerInput.value = state.aiChatDraft || "";
-      aiComposerInput.addEventListener("input", function () { state.aiChatDraft = aiComposerInput.value; });
+      grow();
+      aiComposerInput.addEventListener("input", function () { state.aiChatDraft = aiComposerInput.value; grow(); });
       aiComposerInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey && !touch && !e.isComposing) {
           e.preventDefault();
           var send = document.querySelector('[data-action="ai-send"]');
           if (send && !send.disabled) send.click();
         }
       });
+      if (!state.aiChatPending && !touch) aiComposerInput.focus({ preventScroll: true });
+    }
+    var aiLog = $("crAiLog");
+    if (aiLog) aiLog.scrollTop = aiLog.scrollHeight;
+    clearInterval(aiElapsedTimer);
+    if (state.aiChatPending && $("crAiElapsed")) {
+      aiElapsedTimer = setInterval(function () {
+        var tick = $("crAiElapsed");
+        if (!tick || !state.aiChatPending) { clearInterval(aiElapsedTimer); return; }
+        tick.textContent = aiElapsed();
+      }, 1000);
     }
     if (state.search) filterCurrentView(state.search);
   }
