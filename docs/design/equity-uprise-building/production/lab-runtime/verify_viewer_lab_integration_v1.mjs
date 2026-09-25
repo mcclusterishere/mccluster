@@ -162,9 +162,12 @@ assert.equal(completed.assessment.critical_safety_clear, true);
 assert.match(completed.assessment.automated_evidence_signal, /evidence|insufficient|practicing/i);
 
 const distributedScenarios = datasets.distributedPack.scenarios || [];
-const wifiScenario = distributedScenarios.find((scenario) => scenario.source_lab_id === "IT-LAB-017");
-assert.ok(wifiScenario, "distributed pack must include the Floor 2 Wi-Fi scenario");
+const wifiScenario = distributedScenarios.find((scenario) => scenario.scenario_id === "EU-DIST-F2-WIFI-OFFLINE-V1");
+assert.ok(wifiScenario, "distributed pack must preserve the current Floor 2 Wi-Fi scenario");
+assert.equal(wifiScenario.source_lab_id, "IT-LAB-017");
 assert.equal(wifiScenario.viewer_focus, "2");
+assert.equal(wifiScenario.home_floor, "F2");
+assert.equal(wifiScenario.program_context, "public_forum");
 assert.deepEqual(wifiScenario.floor_scope, ["F2"]);
 assert.ok((wifiScenario.actions || []).some((action) => action.action_id === "f2-wifi-diagnose"));
 
@@ -182,46 +185,88 @@ assert.ok(beginnerDiagnosis.decision_choices.every((choice) => choice.label && c
 assert.equal(beginnerTicket.learner_experience.engineering_default, false,
   "Foundation learner presentation must not force engineering X-Ray");
 
-const wifiTicket = controller("IT-LAB-017", "FOUNDATION", 19600).start();
+const wifiTicket = controller("EU-DIST-F2-WIFI-OFFLINE-V1", "FOUNDATION", 19600).start();
 assert.equal(wifiTicket.learner_experience.title, "The Wi-Fi on Floor 2 stopped working");
 assert.equal(wifiTicket.learner_experience.reinforcement.title, "Got WiFi?");
 assert.match(wifiTicket.learner_experience.reinforcement.url, /album\.html\?album=prim3/);
 assert.ok(wifiTicket.visuals.assets.some((asset) => asset.asset_type === "wireless_ap"),
   "Wi-Fi ticket must materialize a wireless access-point fault");
-assert.equal(distributedScenarios.length, 11, "distributed practical-lab pack must expose 11 floor/cross-floor scenarios including a beginner Wi-Fi ticket");
-assert.equal(new Set(distributedScenarios.map((scenario) => scenario.source_lab_id)).size, distributedScenarios.length,
-  "distributed source labs must be unique in the viewer selector");
+
+assert.equal(distributedScenarios.length, 26,
+  "distributed practical-lab pack must expose 24 floor-native labs plus 2 cross-floor incidents");
+assert.equal(new Set(distributedScenarios.map((scenario) => scenario.scenario_id)).size, distributedScenarios.length,
+  "distributed scenario IDs must remain unique even when source labs are intentionally reused");
+
 const representedFloors = new Set(distributedScenarios.flatMap((scenario) => scenario.floor_scope || []));
+const homeFloorCounts = new Map();
+for (const scenario of distributedScenarios) {
+  if (scenario.home_floor) homeFloorCounts.set(scenario.home_floor, (homeFloorCounts.get(scenario.home_floor) || 0) + 1);
+}
 for (const levelId of ["B1","F1","F2","F3","F4","F5","F6","L7"]) {
   assert.ok(representedFloors.has(levelId), "distributed lab pack must cover " + levelId);
+  assert.ok((homeFloorCounts.get(levelId) || 0) >= 3,
+    "distributed curriculum must expose at least 3 floor-native labs for " + levelId);
 }
+assert.ok(distributedScenarios.filter((scenario) => !scenario.home_floor).length >= 2,
+  "distributed curriculum must preserve cross-floor incidents");
+assert.ok(distributedScenarios.filter((scenario) => scenario.source_lab_id === "IT-LAB-017").length >= 2,
+  "scenario addressing must permit one canonical source skill on multiple floors");
+
 const rubricIds = new Set((datasets.rubrics.rubrics || []).map((rubric) => rubric.competency_id));
+const federalTrainingByLab = new Map();
+for (const binding of datasets.federalBindings.bindings || []) {
+  const trainingId = binding.catalog_id || binding.training_id || binding.course_id || binding.program_id || binding.binding_id;
+  for (const labId of binding.lab_ids || []) {
+    if (!federalTrainingByLab.has(labId)) federalTrainingByLab.set(labId, new Set());
+    if (trainingId) federalTrainingByLab.get(labId).add(trainingId);
+  }
+}
+const physicalLevelIds = new Set(["B1","F1","F2","F3","F4","F5","F6","L7"]);
 for (const scenario of distributedScenarios) {
   assert.equal(scenario.engineering_view, true);
-  assert.ok((scenario.competency_ids || []).length > 0, "distributed lab must bind competency IDs: " + scenario.scenario_id);
-  assert.ok((scenario.competency_ids || []).every((id) => rubricIds.has(id)), "distributed competency must resolve: " + scenario.scenario_id);
-  assert.ok((scenario.target_selectors || []).every((selector) => selector.startsWith("level:") || selector === "vms_nvr"),
-    "distributed lab selectors must remain floor-scoped or explicit dependency IDs: " + scenario.scenario_id);
-  const run = controller(scenario.source_lab_id, "FOUNDATION", 20000);
+  assert.ok((scenario.competency_ids || []).length > 0,
+    "distributed lab must bind competency IDs: " + scenario.scenario_id);
+  assert.ok((scenario.competency_ids || []).every((id) => rubricIds.has(id)),
+    "distributed competency must resolve: " + scenario.scenario_id);
+  assert.ok(Array.isArray(scenario.target_selectors) && scenario.target_selectors.length > 0,
+    "distributed lab must declare canonical target selectors: " + scenario.scenario_id);
+
+  const expectedFederal = [...(federalTrainingByLab.get(scenario.source_lab_id) || new Set())].sort();
+  assert.deepEqual([...(scenario.federal_training_ids || [])].sort(), expectedFederal,
+    "distributed federal-training IDs must mirror canonical bindings for " + scenario.scenario_id);
+
+  const run = controller(scenario.scenario_id, "FOUNDATION", 20000);
   const view = run.start();
   assert.equal(view.scenario.family, "DISTRIBUTED_TECHNICAL");
+  assert.equal(view.scenario.scenario_id, scenario.scenario_id);
+  assert.equal(view.scenario.source_lab_id, scenario.source_lab_id);
   assert.equal(view.scenario.engineering_view, true);
   assert.equal(view.scenario.viewer_focus, scenario.viewer_focus);
   assert.deepEqual(view.scenario.floor_scope, scenario.floor_scope);
   assert.ok(view.visuals.assets.length > 0 || view.visuals.connections.length > 0,
     "distributed lab must materialize a visible fault: " + scenario.scenario_id);
+
   const allowedLevels = new Set(scenario.floor_scope);
   for (const asset of view.visuals.assets) {
-    if (asset.level_id) assert.ok(allowedLevels.has(asset.level_id), "distributed lab leaked asset outside floor scope: " + asset.canonical_id);
+    if (physicalLevelIds.has(asset.level_id)) {
+      assert.ok(allowedLevels.has(asset.level_id),
+        "distributed lab leaked physical asset outside floor scope: " + asset.canonical_id);
+    }
   }
   for (const step of scenario.verification_path || []) {
     const out = run.execute(step.action_id, step.input || {});
-    assert.equal(out.result.status, "success", "distributed verification path failed: " + scenario.scenario_id + " / " + step.action_id);
+    assert.equal(out.result.status, "success",
+      "distributed verification path failed: " + scenario.scenario_id + " / " + step.action_id);
   }
   const done = run.complete().view;
   assert.equal(done.scenario.phase, "COMPLETED");
   assert.equal(done.assessment.critical_safety_clear, true);
 }
+assert.throws(
+  () => controller("IT-LAB-017", "FOUNDATION", 26000),
+  (error) => error.code === "VIEWER_DISTRIBUTED_SCENARIO_AMBIGUOUS",
+  "reused source labs must require scenario_id addressing rather than selecting an arbitrary floor"
+);
 
 const blocked = controller("blocked_stair_a", "FOUNDATION", 32000);
 const blockedView = blocked.start();
