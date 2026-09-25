@@ -53,8 +53,8 @@
       blurb: "The social network. Posts, follows, moderation.",
       keywords: "social network posts feed follows moderation community members accounts signed users", state: "live" },
     { id: "management", label: "Socials Room", href: "management.html", group: "Audience",
-      blurb: "Instagram and the other platforms, on the wall.",
-      keywords: "instagram social media scheduling posts management", state: "live" },
+      blurb: "Write once, post to Mnet and every connected platform.",
+      keywords: "instagram social media scheduling posts management compose publish broadcast telegram x facebook mnet crosspost hootsuite", state: "live" },
 
     /* ---- MUSIC --------------------------------------------------- */
     { id: "listen", label: "Listening Room", href: "listen.html", group: "Music",
