@@ -226,32 +226,6 @@
     },
     {
       "cat": "Photography",
-      "title": "The Shot Wall: find your photo",
-      "sub": "Event galleries · first one free with a follow",
-      "img": "assets/img/rally/rally-03.jpg",
-      "href": "shots.html",
-      "group": "On assignment",
-      "id": "the-shot-wall-find-your-photo",
-      "no": "11",
-      "role": "Photographer",
-      "deliverables": "Edited gallery · same-week delivery",
-      "location": "Bridgeport, CT",
-      "made": "Shot on location",
-      "offers": [
-        {
-          "label": "Prints",
-          "price": "from $45",
-          "note": "Museum stock, shipped"
-        },
-        {
-          "label": "Full-res license",
-          "price": "from $95",
-          "note": "Digital delivery, usage terms by email"
-        }
-      ]
-    },
-    {
-      "cat": "Photography",
       "title": "October 5th: the rally",
       "sub": "Environmental Injustice rally · Bridgeport Creates",
       "img": "assets/img/rally/rally-01.jpg",

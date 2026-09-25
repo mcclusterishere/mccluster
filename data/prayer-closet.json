@@ -423,12 +423,7 @@
         "sent",
         "commission"
       ],
-      "links": [
-        {
-          "label": "The ecosystem",
-          "href": "ecosystem.html"
-        }
-      ]
+      "links": []
     }
   ],
   "benchNote": "THE BENCH: Season 001 runs three drops (the Trinity). COMMISSION (Mt 28) is kept whole here, off every surface; move it back into drops[] (or open Season 002 with it) and it re-hangs on next load.",

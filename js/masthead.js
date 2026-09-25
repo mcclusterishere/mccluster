@@ -235,33 +235,16 @@ html { scroll-behavior: smooth; }
       { href: "sponsor.html",   label: "Sponsor the work" },
     ] },
     { group: "The work", rooms: [
-      { href: "gallery.html",      label: "The gallery & print shop" },
-      { href: "prints.html",       label: "The Print Shop" },
-      { href: "gallery.html#shop", label: "Buy a print" },
-      { href: "merch.html",        label: "The Rack: merch" },
-      { href: "walls.html",        label: "Every wall" },
       { href: "portfolio.html",    label: "The full portfolio" },
-      { href: "production.html",   label: "The production house" },
-      { href: "management.html",   label: "The Socials Room" },
-      { href: "archive.html",      label: "The archive" },
     ] },
     /* Equity Uprise is put away while the site concentrates on the music
        and on Mnet, so its group is not listed here. The rooms all still
        exist and still answer on their own URLs; the map simply stops
        handing them to a visitor who came for a record. Restoring the
        group is restoring these lines. */
-    /* The Closet shares the fifth tab's wing with the studio, so the map
-       files them together: one column of the bar, one group here. Sites
-       itself is listed under "The house" with the rest of the studio, not
-       repeated here — the group is named for what is peculiar to it. */
-    { group: "Hitman Halo", rooms: [
-      { href: "prayer-closet.html",  label: "Hitman Halo: Season 001" },
-      /* Season 001 was three drops and is one, in three colorways, by the
-         owner's call. Seek First and Salt & Light are retired; their rooms
-         and their redirects are gone with them. */
-      { href: "closet/sent.html",    label: "The Hitman Halo Drop · Heav'Yeah" },
-      { href: "inner-room.html",     label: "The Inner Room: read & pray" },
-    ] },
+    /* The Closet is put away with the other lines the site is not
+       concentrating on. Its rooms are intact on disk; the map simply stops
+       offering them. */
     { group: "The house", rooms: [
       { href: "hire.html",      label: "Hire the desk" },
       { href: "sites.html",     label: "McCluster Sites: your site, run by the studio" },
@@ -270,12 +253,10 @@ html { scroll-behavior: smooth; }
       { href: "account.html",   label: "Your profile" },
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
-      { href: "ecosystem.html", label: "The ecosystem" },
       /* HITMAN used to be reachable only because js/theme.js rewrote the
          fifth tab into it after boot. That override was retired when the
          shop took the tab, so this line is now the page's only door.
          Deleting it orphans a whole room. */
-      { href: "hitman-facility.html", label: "HITMAN: Prim3 Site 0" },
       /* The site measures every visit itself — address, network, device,
          what was clicked. This map is the only door to the page that says
          so, and a disclosure nobody can reach is not a disclosure. */

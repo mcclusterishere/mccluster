@@ -74,20 +74,8 @@
       keywords: "studio create make production", state: "live" },
 
     /* ---- EQUITY UPRISE ------------------------------------------- */
-    { id: "uprise-admin", label: "Uprise Desk", href: "uprise-admin.html", group: "Equity Uprise",
-      blurb: "The institutional desk.",
-      keywords: "equity uprise desk institutional policy fellows", state: "live" },
-    { id: "dashboard", label: "Uprise Dashboard", href: "dashboard.html", group: "Equity Uprise",
-      blurb: "Programme state at a glance.",
-      keywords: "uprise dashboard programme fellowship metrics", state: "live" },
-    { id: "ecosystem", label: "Ecosystem", href: "ecosystem.html", group: "Equity Uprise",
-      blurb: "Entities, vendors and affiliates.",
-      keywords: "ecosystem entities vendors affiliates org structure", state: "live" },
 
     /* ---- SYSTEM --------------------------------------------------- */
-    { id: "travel-desk", label: "Travel Desk", href: "travel-desk.html", group: "System",
-      blurb: "Owner console for travel.",
-      keywords: "travel flights trips bookings", state: "live" },
     { id: "account", label: "Your Account", href: "account.html", group: "System",
       blurb: "Sign-in, profile, consents.",
       keywords: "account sign in profile password consent settings email mail", state: "live" }
