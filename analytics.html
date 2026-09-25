@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
   <title>McCluster Analytics</title>
+  <!-- css/style.css was missing here, and it is what styles the app bar
+       js/tabbar.js injects and the footer material. Without it the tabs
+       rendered as raw underlined links and the brand marks painted at
+       their natural size, which is the wreckage at the foot of the page. -->
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <!-- THE PAGE'S OWN RULES COME LAST, ON PURPOSE.
+
+       They used to sit above these links, which meant css/style.css won
+       every tie at equal specificity. That is not theoretical: .hidden
+       {display:none} lost to the public site's .card{display:block}, so
+       the sign-in card stayed on screen with the class that was supposed
+       to remove it, and the page showed a sign-in prompt and a signed-in
+       dashboard at the same time. -->
   <style>
     :root{color-scheme:dark;background:#0b0d10;color:#f4f5f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
     *{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:28px}
@@ -98,8 +112,89 @@
     .bd-table th{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--bd-dim)}
     .bd-table td.n,.bd-table th.n{text-align:right;font-variant-numeric:tabular-nums}
     .bd-prop{min-width:0}
+
+    /* ===================== SECTIONS =====================
+       The Squarespace pattern: one Analytics destination with a row of
+       sections under the heading, instead of Traffic and Insights being
+       two places you have to remember to visit separately. The range
+       picker sits above the row because it governs every section. */
+    .an-tabs{display:flex;gap:4px;overflow-x:auto;margin:0 0 16px;
+      padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .an-tabs::-webkit-scrollbar{display:none}
+    .an-tab{flex:0 0 auto;min-height:38px;padding:8px 14px;border-radius:10px;
+      background:transparent;color:var(--bd-dim);font-weight:700;font-size:13.5px;
+      box-shadow:inset 0 0 0 1px transparent}
+    .an-tab:hover{color:#fff}
+    .an-tab.is-on{background:var(--bd-card);color:#fff;box-shadow:inset 0 0 0 1px var(--bd-edge)}
+
+    .an-grid{display:grid;gap:12px;grid-template-columns:1fr}
+    @media (min-width:52rem){.an-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .an-grid>.an-wide{grid-column:1/-1}}
+    @media (min-width:82rem){.an-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    .an-panel{min-width:0;background:var(--bd-card);border:1px solid var(--bd-edge);
+      border-radius:16px;padding:15px 16px 17px}
+    .an-panel h2{margin:0;font-size:15px}
+    .an-ph{display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+    .an-csv{min-height:32px;flex:none;padding:5px 10px;border-radius:8px;background:#202731;
+      color:var(--bd-dim);font-size:11px;font-weight:700;letter-spacing:.05em;
+      text-transform:uppercase;box-shadow:inset 0 0 0 1px var(--bd-edge)}
+    .an-csv:hover{color:#fff}
+
+    /* ===================== THE AUDIENCE PANELS =====================
+       These rules came with the markup from insights.html. Moving the panels
+       without them is what made the stats run together as "1,304people" and
+       the funnel render as a bullet list. Sized in this page's units rather
+       than the ones they were written against. */
+    .ins-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+    @media (min-width:34rem){.ins-stats{grid-template-columns:repeat(auto-fit,minmax(7rem,1fr))}}
+    .ins-stat b{display:block;font-size:clamp(1.45rem,5vw,2rem);font-weight:800;line-height:1;
+      letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+    .ins-stat span{display:block;margin-top:4px;font-size:11px;font-weight:600;letter-spacing:.07em;
+      text-transform:uppercase;color:var(--bd-faint)}
+    .ins-stat em{display:block;margin-top:2px;font-style:normal;color:var(--bd-faint);font-size:12.5px}
+
+    .ins-legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:11.5px;
+      font-weight:600;color:var(--bd-dim)}
+    .ins-legend span{display:inline-flex;align-items:center;gap:6px}
+    .ins-legend i{width:10px;height:10px;border-radius:3px}
+
+    /* Ranked magnitude bars. The bar sits BEHIND the text, so a long path or
+       track title keeps the panel's full width instead of being squeezed
+       into a column beside the chart. */
+    .insr{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+    .insr__row{position:relative;display:grid;align-items:center;gap:2px 10px;
+      grid-template-columns:minmax(0,1fr) auto;padding:9px 10px;border-radius:9px;
+      overflow:hidden;font-size:13.5px}
+    .insr__bar{position:absolute;inset:0 auto 0 0;opacity:.22;border-radius:9px}
+    .insr__k{position:relative;grid-column:1;grid-row:1;min-width:0;overflow:hidden;
+      text-overflow:ellipsis;white-space:nowrap}
+    .insr__v{position:relative;grid-column:2;grid-row:1;text-align:right;font-weight:800;
+      font-variant-numeric:tabular-nums}
+    /* The qualifier drops to its own line on a phone instead of fighting the
+       label for width, and rejoins the row once there is room. */
+    .insr__n{position:relative;grid-column:1/-1;grid-row:2;font-size:11.5px;color:var(--bd-faint)}
+    @media (min-width:34rem){
+      .insr__row{grid-template-columns:minmax(0,1fr) auto auto}
+      .insr__n{grid-column:2;grid-row:1;text-align:right}
+      .insr__v{grid-column:3}
+    }
+
+    .ins__none{margin:0;font-size:13px;line-height:1.55;color:var(--bd-faint)}
+    .ins__none b{display:block;color:#f4f5f7;font-weight:700;margin-bottom:2px}
+    .ins__none--stop{color:var(--bd-dim);background:rgba(229,56,59,.08);border-radius:9px;padding:10px 11px}
+    .ins-note{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:12.5px;line-height:1.45;
+      color:#d9a441;background:rgba(217,164,65,.1)}
+    figure{margin:0}
+    .an-sec svg.bd-svg{display:block;width:100%;height:auto;overflow:visible}
+
+    /* The Insights panels were built against control-system.css tokens on
+       their own page. They render here, so the few they need are mapped
+       onto this page's palette rather than pulling a second design system
+       in behind them. */
+    :root{--cs-text:#f4f5f7;--cs-dim:#9ca3af;--cs-faint:rgba(244,245,247,.42);
+      --cs-ui:inherit;--cs-edge:#252c35;--cs-2:#0d1117;--cs-3:#202731;
+      --cs-ruby:#e5383b;--cs-warn:#d9a441;--cs-1:#12161c}
   </style>
-  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body>
@@ -117,7 +212,55 @@
   </section>
 
   <div id="app" class="hidden">
-    <section class="card">
+
+
+    <!-- ONE BOARD, THREE SECTIONS.
+
+         Analytics and Insights were two screens over the same events, and
+         holding both in your head was the reader's problem. They are
+         sections of one page now: Traffic reads public.events directly,
+         Audience reads the views built over it, and Setup is the pixel
+         plumbing that only matters while you are installing it.
+
+         The range picker sits with the heading it governs and governs
+         everything under it, including the Audience panels, which listen
+         for it rather than carrying a second picker of their own. -->
+    <div class="bd-top">
+      <div>
+        <h2 id="bdWho">Traffic</h2>
+        <p class="bd-sub" id="bdScope">Choose a property.</p>
+      </div>
+      <div class="bd-ranges" id="bdRanges" role="group" aria-label="Time range"></div>
+    </div>
+
+    <nav class="an-tabs" id="anTabs" role="tablist" aria-label="Analytics sections">
+      <button type="button" class="an-tab is-on" data-sec="traffic" role="tab" aria-selected="true">Traffic</button>
+      <button type="button" class="an-tab" data-sec="audience" role="tab" aria-selected="false">Audience</button>
+      <button type="button" class="an-tab" data-sec="content" role="tab" aria-selected="false">Content</button>
+      <button type="button" class="an-tab" data-sec="setup" role="tab" aria-selected="false">Setup</button>
+    </nav>
+
+    <!-- ============ TRAFFIC ============ -->
+    <section class="an-sec" data-sec="traffic">
+      <div id="bdBoard" aria-live="polite"></div>
+      <section class="card" style="margin-top:16px">
+        <h2>Recent events</h2>
+        <p class="bd-sub">The raw rows behind the board, newest first — the check
+          you run when a number above looks wrong.</p>
+        <div id="recent" style="margin-top:11px"></div>
+      </section>
+    </section>
+
+    <!-- ============ SETUP ============
+         The pixel plumbing. It matters while you are installing a
+         property and never again, so it is a section rather than the
+         first thing the page shows you. -->
+    <section class="an-sec" data-sec="setup" hidden>
+      <section class="grid cols" style="margin-top:16px">
+      <div class="card"><h2>Your properties</h2><div id="sites"></div></div>
+      <div class="card"><h2>Install</h2><div id="install"><p class="muted">Choose a property.</p></div></div>
+      </section>
+      <section class="card">
       <h2>Create analytics property</h2>
       <div class="row">
         <input id="siteName" placeholder="Site name">
@@ -129,33 +272,105 @@
         <button id="createSite">Create</button>
       </div>
       <p class="muted">McCluster-managed site/domain products will be provisioned automatically. This form is for additional/external sites.</p>
+      </section>
     </section>
 
-    <section class="grid cols" style="margin-top:16px">
-      <div class="card"><h2>Your properties</h2><div id="sites"></div></div>
-      <div class="card"><h2>Install</h2><div id="install"><p class="muted">Choose a property.</p></div></div>
-    </section>
+    <!-- ============ AUDIENCE ============
+         Traffic is who arrived; these are who stayed, what they did in
+         order, and whether they came back. -->
+    <section class="an-sec" data-sec="audience" hidden>
+      <div class="an-grid">
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Audience</h2>
+            <button class="an-csv" type="button" data-csv="engagement">CSV</button></div>
+          <p class="bd-sub">A session counts as engaged if it converted, saw two
+            pages, or lasted ten seconds.</p>
+          <div class="ins-stats" id="insHero"></div>
+          <figure id="insTrend" style="margin-top:1rem"></figure>
+        </section>
 
-    <!-- THE BOARD. The range picker sits with the heading it governs, not
-         buried inside a panel, because it changes every number below it. -->
-    <div class="bd-top">
-      <div>
-        <h2 id="bdWho">Traffic</h2>
-        <p class="bd-sub" id="bdScope">Choose a property.</p>
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>The funnel</h2>
+            <button class="an-csv" type="button" data-csv="funnel">CSV</button></div>
+          <p class="bd-sub">Counted in people, not events, and drawn in one colour
+            because these are nine sizes of the same measure. Accounts come from the
+            auth records, because the browser cannot honestly report one.</p>
+          <div id="insFunnel"></div>
+        </section>
+
+        <section class="an-panel">
+          <div class="an-ph"><h2>Habit</h2>
+            <button class="an-csv" type="button" data-csv="stickiness">CSV</button></div>
+          <p class="bd-sub">Of everyone active this month, how many came back today.
+            The number a traffic chart can never show.</p>
+          <div class="ins-stats" id="insSticky"></div>
+          <div class="ins-note" id="insStickyNote" hidden></div>
+        </section>
+
+        <section class="an-panel">
+          <div class="an-ph"><h2>Where they came from</h2>
+            <button class="an-csv" type="button" data-csv="acquisition">CSV</button></div>
+          <p class="bd-sub">And whether they were any good. A thousand who bounce
+            lose to forty who stay.</p>
+          <div id="insAcq"></div>
+        </section>
+
+        <section class="an-panel">
+          <div class="an-ph"><h2>Where they go next</h2>
+            <button class="an-csv" type="button" data-csv="paths">CSV</button></div>
+          <p class="bd-sub">What people do in sequence, which is almost never what
+            the navigation assumes.</p>
+          <div id="insPaths"></div>
+        </section>
       </div>
-      <div class="bd-ranges" id="bdRanges" role="group" aria-label="Time range"></div>
-    </div>
-    <div id="bdBoard" aria-live="polite"></div>
+      <p class="bd-sub" id="insStamp" style="margin-top:1rem"></p>
+    </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>Recent events</h2>
-      <p class="bd-sub">The raw rows behind the board, newest first — the check
-        you run when a number above looks wrong.</p>
-      <div id="recent" style="margin-top:11px"></div>
+    <!-- ============ CONTENT ============ -->
+    <section class="an-sec" data-sec="content" hidden>
+      <section class="an-panel an-wide">
+        <div class="an-ph"><h2>The music</h2>
+          <button class="an-csv" type="button" data-csv="content">CSV</button></div>
+        <p class="bd-sub">Here the site <em>is</em> the media, so tracks are measured
+          as product: reach, repeat listeners, and plays per listener.</p>
+        <div id="insContent"></div>
+      </section>
     </section>
   </div>
 </main>
+<script>
+  /* Sections, not pages. Nothing is fetched on switch: every section has
+     already loaded and is simply hidden, so moving between them is instant
+     and the range you picked still applies. The hash is kept so a section
+     can be linked to — insights.html sends people to #audience. */
+  (function () {
+    "use strict";
+    var tabs = document.getElementById("anTabs");
+    if (!tabs) return;
+    function show(name) {
+      var found = false;
+      Array.prototype.forEach.call(document.querySelectorAll("[data-sec]"), function (n) {
+        var mine = n.getAttribute("data-sec") === name;
+        if (n.classList.contains("an-tab")) {
+          n.classList.toggle("is-on", mine);
+          n.setAttribute("aria-selected", mine ? "true" : "false");
+        } else {
+          n.hidden = !mine;
+          if (mine) found = true;
+        }
+      });
+      if (found) history.replaceState(null, "", "#" + name);
+    }
+    tabs.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-sec]");
+      if (b) show(b.getAttribute("data-sec"));
+    });
+    var want = (location.hash || "").replace(/^#/, "");
+    if (want && document.querySelector('section[data-sec="' + want + '"]')) show(want);
+  })();
+  </script>
 <script src="js/backend.js"></script>
+<script src="js/insights.js?v=__STAMP__" defer></script>
 <script src="js/analytics-board.js?v=__STAMP__"></script>
 <script src="js/analytics-product.js"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>

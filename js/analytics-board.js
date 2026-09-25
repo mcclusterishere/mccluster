@@ -447,6 +447,13 @@
         x.setAttribute("aria-pressed", x === b ? "true" : "false");
       });
       load();
+      /* One range control governs the whole page. The board owns the
+         buttons because it was here first; anything else on the page that
+         is scoped to a window listens for this instead of growing a second
+         picker that can disagree with this one. */
+      try {
+        d.dispatchEvent(new CustomEvent("mcc:range", { detail: { days: found.days, id: found.id } }));
+      } catch (e) { /* no CustomEvent: the board still works alone */ }
     });
 
     boardHost.addEventListener("click", function (e) {

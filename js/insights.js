@@ -324,29 +324,48 @@
           if (res.status === "fulfilled") jobs[i][2](res.value || [], null);
           else { failed++; jobs[i][2]([], res.reason || new Error("failed")); }
         });
-        el("insStamp").textContent = failed
+        var stamp = el("insStamp");
+        if (stamp) stamp.textContent = failed
           ? failed + " of " + jobs.length + " panels could not be read · " + new Date().toLocaleString()
           : "Read live from the analytics views · " + new Date().toLocaleString();
       });
   }
 
-  /* ---------- boot -------------------------------------------------- */
-  openTheGate().then(function (allowed) {
-    if (!allowed) return;                      // the gate card stays as written
-    el("insGate").hidden = true;
-    el("insApp").hidden = false;
+  /* ---------- boot ----------------------------------------------------
+     THESE PANELS LIVE ON THE ANALYTICS PAGE NOW.
 
-    el("insRange").addEventListener("click", function (e) {
-      var b = e.target.closest("button[data-days]");
-      if (!b) return;
-      DAYS = Number(b.getAttribute("data-days"));
-      Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) {
-        x.classList.toggle("ins-on", x === b);
-        x.setAttribute("aria-pressed", x === b ? "true" : "false");
-      });
+     Insights and Analytics were two screens reading the same events and
+     asking the reader to hold both in their head. There is one board: the
+     traffic half reads public.events directly, these panels read the views
+     over it, and they share ONE range control rather than growing a second
+     one that can disagree with the first. The board owns the buttons and
+     broadcasts; this listens. */
+  function shut(msg) {
+    ["insHero", "insFunnel", "insSticky", "insAcq", "insContent", "insPaths"].forEach(function (id) {
+      var host = el(id);
+      if (host) host.innerHTML = '<p class="ins__none ins__none--stop"><b>Desk only.</b> ' + esc(msg) + "</p>";
+    });
+    var t = el("insTrend"); if (t) t.innerHTML = "";
+    var st = el("insStamp"); if (st) st.textContent = "";
+  }
+
+  if (el("insHero")) {
+    d.addEventListener("mcc:range", function (e) {
+      var n = e && e.detail && Number(e.detail.days);
+      if (!n || n === DAYS) return;
+      DAYS = n;
       load();
     });
 
-    load();
-  });
+    openTheGate().then(function (allowed) {
+      if (!allowed) {
+        shut("These read the analytics views directly, so they open only for an " +
+             "account the database recognises as the desk.");
+        return;
+      }
+      var gate = el("insGate"); if (gate) gate.hidden = true;
+      var app = el("insApp"); if (app) app.hidden = false;
+      load();
+    });
+  }
 })(window, document);

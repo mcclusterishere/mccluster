@@ -5,218 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Insights · McCluster</title>
   <meta name="robots" content="noindex,nofollow">
-  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
-  <script src="js/theme.js?v=__STAMP__"></script>
+  <!-- Insights and Analytics were two screens reading the same events, and
+       holding both in your head was the reader's problem. They are one board
+       now. This page stays so every bookmark, link and keyboard shortcut that
+       points here still lands somewhere useful — on the section that carries
+       what Insights used to. -->
+  <link rel="canonical" href="analytics.html">
+  <meta http-equiv="refresh" content="0; url=analytics.html#audience">
+  <script>location.replace("analytics.html#audience");</script>
   <style>
-    /* ==========================================================
-       MOBILE FIRST, and meant literally: everything below the first
-       breakpoint is the phone layout, and the breakpoints only ever ADD
-       columns. No panel, no number, no chart and no export is withheld
-       from the small screen — a wider screen sees the same board with
-       more of it side by side.
-
-           base      phone          one column
-           34rem     big phone      stats go four across
-           52rem     tablet         two columns
-           82rem     desktop        three, with the wide panels spanning
-           104rem    large display  the grid stops growing and centres
-       ========================================================== */
-    .ins { width: 100%; max-width: 104rem; margin: 0 auto; color: var(--cs-text);
-      padding: 1rem 1rem 7rem; }
-    @media (min-width: 52rem) { .ins { padding: 1.6rem 1.6rem 6rem; } }
-
-    .ins__top { display: flex; flex-wrap: wrap; gap: .75rem; align-items: baseline;
-      justify-content: space-between; margin-bottom: 1.1rem; }
-    .ins__k { font: 700 .68rem/1 var(--cs-ui); letter-spacing: .2em; text-transform: uppercase;
-      color: var(--cs-ruby); margin: 0; }
-    .ins h1 { font: 800 clamp(1.6rem,6vw,2.2rem)/1.05 var(--cs-ui); letter-spacing: -.03em; margin: .3rem 0 0; }
-
-    /* The range picker governs every number under it, so it sits with the
-       heading. On a phone it takes the full width and the three buttons
-       share it rather than wrapping raggedly. */
-    .ins__range { display: flex; gap: .3rem; width: 100%; }
-    @media (min-width: 34rem) { .ins__range { width: auto; } }
-    .ins__range button { flex: 1; min-height: 44px; border: 0; cursor: pointer; border-radius: 9px;
-      padding: .5rem .8rem; background: var(--cs-2); color: var(--cs-dim);
-      font: 700 .8rem var(--cs-ui); box-shadow: inset 0 0 0 1px var(--cs-edge); }
-    @media (min-width: 34rem) { .ins__range button { flex: none; } }
-    .ins__range button.ins-on { background: var(--cs-3); color: var(--cs-text);
-      box-shadow: inset 0 0 0 1px var(--cs-edge-strong); }
-
-    .ins__grid { display: grid; gap: .85rem; grid-template-columns: 1fr; }
-    @media (min-width: 52rem) { .ins__grid { gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .ins__grid > .ins-wide { grid-column: 1 / -1; } }
-    @media (min-width: 82rem) { .ins__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-
-    .insp { min-width: 0; border-radius: var(--cs-r-lg); background: var(--cs-1);
-      box-shadow: inset 0 0 0 1px var(--cs-edge); padding: 1rem 1.05rem 1.15rem; }
-    .insp__head { display: flex; gap: .6rem; align-items: baseline; justify-content: space-between;
-      margin-bottom: .2rem; }
-    .insp h2 { font: 700 .95rem/1.2 var(--cs-ui); margin: 0; letter-spacing: -.01em; }
-    .insp__why { font: 400 .78rem/1.45 var(--body); color: var(--cs-faint); margin: .15rem 0 .9rem; }
-    .insp__csv { min-height: 34px; border: 0; cursor: pointer; border-radius: 8px; flex: none;
-      padding: .35rem .6rem; background: var(--cs-2); color: var(--cs-dim);
-      font: 700 .68rem var(--cs-ui); box-shadow: inset 0 0 0 1px var(--cs-edge); }
-    .insp__csv:hover { color: var(--cs-text); background: var(--cs-3); }
-
-    /* Hero numbers. Two across on a phone rather than four squeezed ones;
-       tabular so the digits hold still when the range changes. */
-    .ins-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
-    @media (min-width: 34rem) { .ins-stats { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); } }
-    .ins-stat b { display: block; font: 800 clamp(1.45rem,5vw,2rem)/1 var(--cs-ui);
-      letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-    .ins-stat span { display: block; margin-top: .25rem; font: 600 .68rem/1.3 var(--cs-ui);
-      letter-spacing: .07em; text-transform: uppercase; color: var(--cs-faint); }
-    .ins-stat em { font-style: normal; color: var(--cs-faint); font-size: .78rem; }
-
-    figure { margin: 0; }
-    .bd-svg, svg.bd-svg { display: block; width: 100%; height: auto; overflow: visible; }
-    /* SVG text is sized in USER UNITS, so it shrinks with the viewBox. On a
-       phone the chart is ~340px wide against an 820-unit box, which renders
-       10.5px type at about 4px — present, and unreadable. Phone gets larger
-       units and drops the endpoint labels, where the legend above the chart
-       already carries identity in real 12px HTML text; the labels come back
-       once there is width to render them legibly. */
-    .bd-axis { font-size: 19px; fill: var(--cs-faint); }
-    .bd-mark { display: none; }
-    @media (min-width: 52rem) {
-      .bd-axis { font-size: 10.5px; }
-      .bd-mark { display: block; font-size: 11px; font-weight: 700; }
-    }
-    .bd-hit { display: none; }               /* the crosshair layer belongs to the traffic board */
-    :root { --bd-grid: rgba(255,255,255,.08); --bd-card: #121011; --bd-faint: rgba(244,239,230,.38); }
-
-    /* Ranked magnitude bars. The bar sits BEHIND the text, so a long path
-       or track title still has the panel's full width to sit in instead
-       of being squeezed into a column beside a chart. */
-    .insr { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-    .insr__row { position: relative; display: grid; align-items: center; gap: .1rem .6rem;
-      grid-template-columns: minmax(0, 1fr) auto; padding: .55rem .6rem;
-      border-radius: 9px; overflow: hidden; font: 500 .84rem var(--cs-ui); }
-    .insr__bar { position: absolute; inset: 0 auto 0 0; opacity: .22; border-radius: 9px; }
-    .insr__k { position: relative; grid-column: 1; min-width: 0; overflow: hidden;
-      text-overflow: ellipsis; white-space: nowrap; }
-    .insr__v { position: relative; grid-column: 2; grid-row: 1; text-align: right;
-      font-weight: 800; font-variant-numeric: tabular-nums; }
-    /* The qualifier drops to its own line on a phone instead of fighting
-       the label for width. */
-    .insr__n { position: relative; grid-column: 1 / -1; font: 500 .72rem var(--cs-ui);
-      color: var(--cs-faint); }
-    @media (min-width: 34rem) {
-      .insr__row { grid-template-columns: minmax(0, 1fr) auto auto; }
-      .insr__n { grid-column: 2; grid-row: 1; text-align: right; }
-      .insr__v { grid-column: 3; }
-    }
-
-    .ins-legend { display: flex; gap: .9rem; flex-wrap: wrap; margin: 0 0 .6rem;
-      font: 600 .72rem var(--cs-ui); color: var(--cs-dim); }
-    .ins-legend span { display: inline-flex; align-items: center; gap: .35rem; }
-    .ins-legend i { width: 10px; height: 10px; border-radius: 3px; }
-
-    /* An empty panel says WHICH kind of empty it is. A refused read and a
-       genuine zero are not the same fact and must not look the same. */
-    .ins__none { font: 400 .8rem/1.55 var(--body); color: var(--cs-faint); margin: 0; }
-    .ins__none b { display: block; color: var(--cs-text); font-weight: 700; margin-bottom: .2rem; }
-    .ins__none--stop { color: var(--cs-dim); background: rgba(229,56,59,.08);
-      border-radius: 9px; padding: .6rem .7rem; }
-
-    .ins-note { font: 400 .76rem/1.45 var(--body); color: var(--cs-warn);
-      background: rgba(217,164,65,.1); border-radius: 9px; padding: .55rem .7rem; margin-top: .7rem; }
-    .ins-gate { max-width: 26rem; margin: 18vh auto; text-align: center; }
-    .ins-gate a { color: var(--cs-ruby); }
-    [hidden] { display: none !important; }
+    html,body{margin:0;min-height:100%;background:#0b0d10;color:#f4f5f7;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
+    main{max-width:34rem;margin:18vh auto;padding:0 1.2rem;text-align:center}
+    h1{font-size:1.6rem;letter-spacing:-.02em;margin:0 0 .6rem}
+    p{color:#9ca3af;line-height:1.6;margin:0 0 1.2rem}
+    a{display:inline-block;padding:.7rem 1.1rem;border-radius:11px;background:#e5383b;
+      color:#fff;text-decoration:none;font-weight:800}
   </style>
-  <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
-<body class="songpage">
-  <main class="ins">
-    <div class="ins-gate" id="insGate">
-      <p class="ins__k">McCluster</p>
-      <h1>Insights</h1>
-      <p class="insp__why">This board reads the analytics views directly, so it opens
-        only for an account the database recognises as the desk.
-        <a href="account.html">Sign in</a></p>
-    </div>
-
-    <div id="insApp" hidden>
-      <div class="ins__top">
-        <div>
-          <p class="ins__k">McCluster</p>
-          <h1>Insights</h1>
-        </div>
-        <div class="ins__range" id="insRange" role="group" aria-label="Time range">
-          <button type="button" data-days="7" class="ins-on" aria-pressed="true">7 days</button>
-          <button type="button" data-days="30" aria-pressed="false">30 days</button>
-          <button type="button" data-days="90" aria-pressed="false">90 days</button>
-        </div>
-      </div>
-
-      <div class="ins__grid">
-        <section class="insp ins-wide">
-          <div class="insp__head"><h2>Audience</h2>
-            <button class="insp__csv" type="button" data-csv="engagement">CSV</button></div>
-          <p class="insp__why">Traffic is who arrived. Audience is who stayed — a session
-            counts as engaged if it converted, saw two pages, or lasted ten seconds.</p>
-          <div class="ins-stats" id="insHero"></div>
-          <figure id="insTrend" style="margin-top:1rem"></figure>
-        </section>
-
-        <section class="insp ins-wide">
-          <div class="insp__head"><h2>The funnel</h2>
-            <button class="insp__csv" type="button" data-csv="funnel">CSV</button></div>
-          <p class="insp__why">Counted in people, not events, and drawn in one colour because
-            these are nine sizes of the same measure. Accounts come from the auth records,
-            not from the browser, because the browser cannot honestly report one.</p>
-          <div id="insFunnel"></div>
-        </section>
-
-        <section class="insp">
-          <div class="insp__head"><h2>Habit</h2>
-            <button class="insp__csv" type="button" data-csv="stickiness">CSV</button></div>
-          <p class="insp__why">Of everyone active this month, how many came back today.
-            The number a traffic chart can never show.</p>
-          <div class="ins-stats" id="insSticky"></div>
-          <div class="ins-note" id="insStickyNote" hidden></div>
-        </section>
-
-        <section class="insp">
-          <div class="insp__head"><h2>Where they came from</h2>
-            <button class="insp__csv" type="button" data-csv="acquisition">CSV</button></div>
-          <p class="insp__why">And whether they were any good. A thousand who bounce lose
-            to forty who stay, so each source carries its engagement beside its size.</p>
-          <div id="insAcq"></div>
-        </section>
-
-        <section class="insp">
-          <div class="insp__head"><h2>Where they go next</h2>
-            <button class="insp__csv" type="button" data-csv="paths">CSV</button></div>
-          <p class="insp__why">What people actually do in sequence, which is almost never
-            what the navigation assumes.</p>
-          <div id="insPaths"></div>
-        </section>
-
-        <section class="insp ins-wide">
-          <div class="insp__head"><h2>The music</h2>
-            <button class="insp__csv" type="button" data-csv="content">CSV</button></div>
-          <p class="insp__why">Here the site <em>is</em> the media, so tracks are measured
-            as product: reach, repeat listeners, and plays per listener.</p>
-          <div id="insContent"></div>
-        </section>
-      </div>
-      <p class="insp__why" id="insStamp" style="margin-top:1rem"></p>
-    </div>
+<body>
+  <main>
+    <h1>Insights moved</h1>
+    <p>It is a section of Analytics now, so traffic and what people did with it
+      read off one range picker instead of two screens.</p>
+    <a href="analytics.html#audience">Open Analytics · Audience</a>
   </main>
-
-  <script src="js/theme.js?v=__STAMP__"></script>
-  <script src="js/control-registry.js?v=__STAMP__"></script>
-  <!-- The traffic board publishes the chart and the validated hues; Insights
-       draws with them rather than growing a second chart implementation. -->
-  <script src="js/analytics-board.js?v=__STAMP__"></script>
-  <script src="js/insights.js?v=__STAMP__" defer></script>
-  <script src="js/control-palette.js?v=__STAMP__" defer></script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>
