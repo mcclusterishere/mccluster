@@ -87,7 +87,7 @@ try {
   const viewerProbe = await browser.newPage();
   await viewerProbe.goto(B + "index.html", { waitUntil: "domcontentloaded" });
   const viewerSource = await viewerProbe.evaluate(async () =>
-    await (await fetch("equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
+    await (await fetch("_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
   check("building viewer: Step 8 controls", [
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
     "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady",
@@ -124,27 +124,14 @@ try {
 
   const PAGES = [
     ["index.html", async (p) => {
-      check("index: 5 bar tabs", await p.locator(".appbar > .appbar__tab").count() === 5);
-      /* the owner's call: five tabs, and the M coin holds the middle of them.
-         morph() reads a held tab's column straight off ORDER in js/tabbar.js,
-         so DOM order and that list have to say the same thing or the tab you
-         are holding jumps a column when its wing opens. */
-      check("index: the M coin holds the middle of five", await p.evaluate(() =>
+      check("index: 3 bar tabs", await p.locator(".appbar > .appbar__tab").count() === 3);
+      /* Primary navigation is now Music · HERE · Mnet/Profile. The M coin
+         stays in the middle, and shelved columns must not survive in DOM. */
+      check("index: canonical tab order is music, home, profile", await p.evaluate(() =>
         [...document.querySelectorAll(".appbar > .appbar__tab")].map((a) => a.dataset.appnav).join()
-        === "music,uprise,home,sites,profile"));
-      check("index: the civic tab is a drawn mark, never an emoji", await p.evaluate(() => {
-        const t = document.querySelector('[data-appnav="uprise"]');
-        return !!t.querySelector("svg") && !/[^\x00-\x7F]/.test(t.textContent);
-      }));
-      /* the fifth tab is the studio, and it is a drawn glyph like the other
-         three — this column has changed hands twice and has never been an
-         image or an emoji, only a stroke drawing on the same 24-grid */
-      check("index: the studio tab is a drawn laptop, not an image", await p.evaluate(() => {
-        const t = document.querySelector('[data-appnav="sites"]');
-        return !!t && !!t.querySelector("svg") && !t.querySelector("img");
-      }));
-      check("index: the studio tab opens Sites",
-        await p.locator('[data-appnav="sites"]').getAttribute("href") === "sites.html");
+        === "music,home,profile"));
+      check("index: shelved columns are absent", await p.evaluate(() =>
+        !document.querySelector('[data-appnav="uprise"],[data-appnav="sites"]')));
       check("index: body clears the bar (has-appbar)", await p.evaluate(() => document.body.classList.contains("has-appbar")));
       /* the owner's call: the landing page opens on the emblem and belongs to
          the M coin; the record lives behind the Music tab, not pinned on top */
@@ -390,8 +377,8 @@ try {
          Nothing generates the hand-copied ones, so the only thing standing
          between the two variants and a slow drift apart is a page from the
          subdirectory side being checked as well. */
-      check("drop: the subdirectory bar carries all five tabs",
-        await p.locator(".appbar > .appbar__tab").count() === 5);
+      check("drop: the subdirectory bar carries the same three tabs",
+        await p.locator(".appbar > .appbar__tab").count() === 3);
       check("drop: every door climbs out of the subdirectory first", await p.evaluate(() =>
         [...document.querySelectorAll(".appbar > a")].every((a) => /^\.\.\//.test(a.getAttribute("href")))));
 
@@ -1001,9 +988,9 @@ try {
     typeof window.MCC_NP_PLAY === "undefined" && typeof window.MCC_NP_PAUSE === "undefined"));
   await page.click('[data-appnav="music"]', { timeout: 10000 }).catch((e) =>
     no("music tab clickable", String(e).slice(0, 100)));
-  await page.waitForURL("**/album.html", { timeout: 15000 }).then(
-    () => ok("with no transport there, one tap on Music still lands on the album"),
-    async () => no("with no transport there, one tap on Music still lands on the album",
+  await page.waitForURL("**/listen.html", { timeout: 15000 }).then(
+    () => ok("with no transport there, one tap on Music lands in the Listening Room"),
+    async () => no("with no transport there, one tap on Music did not land in the Listening Room",
       "still at " + page.url() + " veil=" +
       (await page.evaluate(() => document.documentElement.classList.contains("pt-out")).catch(() => "?"))));
 
@@ -1025,8 +1012,8 @@ try {
     await page.evaluate(() => window.__mccAlive === true &&
       document.querySelector("audio").paused).catch(() => false));
 
-  /* THE WING LAW: a wing carries four rooms, so the open bar is the same
-     five cells as the closed one and the tab you held never moves. */
+  /* THE WING LAW: a wing carries two rooms, so the open bar is the same
+     three cells as the closed one and the tab you held never moves. */
   await page.goto(B + "index.html", { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
   const hold = async (wing) => {
@@ -1038,27 +1025,13 @@ try {
     await page.waitForTimeout(300);
   };
   await hold("home");
-  check("holding a tab keeps the bar five cells wide",
-    await page.locator(".appbar > a").count() === 5,
+  check("holding a tab keeps the bar three cells wide",
+    await page.locator(".appbar > a").count() === 3,
     `got ${await page.locator(".appbar > a").count()}`);
-  /* the M coin is the third of five, and morph() puts the held tab back at
-     its ORDER index. A wing left one room short quietly drags it left. */
+  /* the M coin is the middle of three, and morph() keeps it at ORDER index 1. */
   check("the held tab never leaves its own column", await page.evaluate(() =>
-    [...document.querySelectorAll(".appbar > a")].findIndex((a) => a.matches('[data-appnav="home"]')) === 2));
-  check("the wing opens four rooms", await page.locator(".appbar__tab--slot").count() === 4);
-  /* and the newest tab, which is the one the anchor law clamps first if any
-     wing is ever left carrying fewer rooms than the bar has tabs */
-  await page.mouse.click(10, 100);
-  await page.waitForTimeout(300);
-  await hold("uprise");
-  check("holding the civic tab keeps it in the second column", await page.evaluate(() =>
-    [...document.querySelectorAll(".appbar > a")].findIndex((a) => a.matches('[data-appnav="uprise"]')) === 1),
-    await page.evaluate(() => [...document.querySelectorAll(".appbar > a")]
-      .map((a) => a.dataset.appnav || a.textContent.trim()).join(" | ")));
-  check("the civic wing opens its own four rooms", await page.locator(".appbar__tab--slot").count() === 4);
-  await page.mouse.click(10, 100);
-  await page.waitForTimeout(300);
-  await hold("home");
+    [...document.querySelectorAll(".appbar > a")].findIndex((a) => a.matches('[data-appnav="home"]')) === 1));
+  check("the wing opens two rooms", await page.locator(".appbar__tab--slot").count() === 2);
 
   /* the map is how every deeper room stays reachable with no top bar */
   await page.locator('.appbar__tab--slot:has-text("Everything")').click();
@@ -1080,12 +1053,9 @@ try {
   check("the map still carries the whole house", await page.locator(".mhd__grp a").count() >= 28,
     `${await page.locator(".mhd__grp a").count()} rooms`);
 
-  /* THE TWO ROOMS THAT LOST A TAB. The shop took the fifth column on
-     2026-08-17. HITMAN had NO other door in the whole house — it existed
-     only because js/theme.js rewrote that tab into it after boot — and the
-     current drop lost its wing slot. Both are rescued by the drawer, which
-     is exactly what the drawer is for, and this is the check that says so.
-     If either of these fires, a room is orphaned, not merely moved. */
+  /* Rooms removed from primary navigation still need a real door in the
+     full-house map. If one of these fires, it was orphaned rather than put
+     away. */
   for (const [room, href] of [["HITMAN", "hitman-facility.html"], ["the studio", "sites.html"],
                               ["the Closet", "prayer-closet.html"], ["the drop", "closet/seek-first.html"]]) {
     check(`the map still has a door to ${room}`,
