@@ -252,7 +252,7 @@ assert.equal(/\b\d{3}-\d{2}-\d{4}\b/.test(publicSerialized), false, "public-serv
 assert.equal(/\b\d{3}[-.) ]\d{3}[- ]\d{4}\b/.test(publicSerialized), false, "public-service viewer state may not expose phone-shaped PII");
 assert.ok(publicView.visuals.occupants.every((item) => item.synthetic_only === true && /Anonymous synthetic/.test(item.label)));
 
-const viewer = text("../../../../../equity-uprise-building-core-v2-3d.html");
+const viewer = text("../../../../../_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html");
 const viewerModuleMatch = viewer.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(viewerModuleMatch, "canonical viewer must expose one module script");
 const viewerSyntaxSource = viewerModuleMatch[1].trimStart().replace(/^(?:import[^;\n]+;\s*)+/, "");
