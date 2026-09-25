@@ -46,7 +46,7 @@ def load(p): return json.loads(Path(p).read_text())
 def write(p,d): p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(d,indent=2)+"\n")
 def uniq(xs): return sorted(set(x for x in xs if x))
 def lid(n): return "B1" if n==0 else ("L7" if n==7 else f"F{n}")
-def viewer(n): return f"equity-uprise-building-core-v2-3d.html?floor={n}&services=1"
+def viewer(n): return f"_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html?floor={n}&services=1"
 def clamp(v,a,b): return max(a,min(b,v))
 
 policy=load(POLICY)
