@@ -21,7 +21,7 @@ def load(rel): return json.loads((ROOT/rel).read_text())
 def write(path,data): path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(data,indent=2)+"\n")
 def canon(data): return json.dumps(data,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()
 def lid(n): return "B1" if n==0 else ("L7" if n==7 else f"F{n}")
-def viewer(n): return f"equity-uprise-building-core-v2-3d.html?floor={n}"
+def viewer(n): return f"_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html?floor={n}"
 
 def digest(c):
     h=hashlib.sha256(); h.update(b"equity-uprise-asset-registry-step2-v1\0")
@@ -124,7 +124,7 @@ assets=[]; decisions=[]
 building_glb="docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb"
 facade_glb="docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb"
 services_glb="docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb"
-whole="equity-uprise-building-core-v2-3d.html"
+whole="_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html"
 
 for cfg in contract["source_sets"]["floor_object_inventories"]:
     data=load(cfg["path"]); n=int(cfg["level_number"]); lev=cfg["level_id"]; ffe=float(levels[n]["finished_floor_elevation_ft"])
