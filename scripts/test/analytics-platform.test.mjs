@@ -242,3 +242,37 @@ test('one selected analytics range drives audience and content panels', async()=
   assert.match(insights,/day=gte/);
   assert.match(insights,/day=lte/);
 });
+
+
+test('every reporting section has a real SVG chart surface', async()=>{
+  const [html,board,insights]=await Promise.all([
+    read('analytics.html'),
+    read('js/analytics-board.js'),
+    read('js/insights.js')
+  ]);
+
+  const boardAt=html.indexOf('js/analytics-board.js');
+  const insightsAt=html.indexOf('js/insights.js');
+  assert.ok(boardAt >= 0 && insightsAt >= 0 && boardAt < insightsAt,
+    'shared chart renderer must load before insights binds to it');
+
+  assert.match(board,/function barChart\(/);
+  assert.match(board,/barChart: barChart/);
+
+  assert.match(insights,/B\.lineChart\(rows\.slice\(\)\.reverse\(\)/,
+    'Audience engagement must render a line chart');
+  for(const label of [
+    'People reaching each funnel stage',
+    'Daily, weekly and monthly active people',
+    'People by acquisition source',
+    'Most common next-page paths',
+    'Top tracks by starts',
+    'Media events in the selected range'
+  ]){
+    assert.ok(insights.includes(label), label+' must render through the shared SVG chart helper');
+  }
+
+  assert.match(html,/data-sec="traffic"/);
+  assert.match(html,/data-sec="audience"/);
+  assert.match(html,/data-sec="content"/);
+});
