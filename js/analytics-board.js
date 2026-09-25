@@ -33,9 +33,11 @@
     { key: "visitors", label: "Visitors", color: "#3f93d2" }
   ];
   var RANGES = [
-    { id: "7d", label: "7 days", days: 7 },
-    { id: "30d", label: "30 days", days: 30 },
-    { id: "90d", label: "90 days", days: 90 }
+    { id: "7d", label: "7 days", days: 7, mode: "fixed" },
+    { id: "30d", label: "30 days", days: 30, mode: "fixed" },
+    { id: "90d", label: "90 days", days: 90, mode: "fixed" },
+    { id: "all", label: "All time", mode: "all" },
+    { id: "custom", label: "Custom", mode: "custom" }
   ];
   var ROW_CAP = 20000;
 
@@ -292,8 +294,64 @@
     var rangeHost = opts.rangeHost, boardHost = opts.boardHost;
     if (!rangeHost || !boardHost) return null;
 
-    var state = { range: RANGES[0], model: null, error: null, loading: false, showTable: false, note: "" };
+    var state = {
+      range: RANGES[0], model: null, error: null, loading: false,
+      showTable: false, note: "", request: null, custom: null
+    };
     var seq = 0;
+
+    function localStart(value) {
+      var d = value ? new Date(value + "T00:00:00") : new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    function inputDay(d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
+    }
+    function windowFor(range) {
+      var now = new Date();
+      if (range.mode === "all") {
+        return {
+          id: range.id, label: "All time", mode: "all", compare: false,
+          since: "1970-01-01T00:00:00.000Z", query_since: "1970-01-01T00:00:00.000Z",
+          until: now.toISOString(), days: null
+        };
+      }
+      if (range.mode === "custom") {
+        if (!state.custom || !state.custom.from || !state.custom.to) throw new Error("Choose both custom dates.");
+        var from = localStart(state.custom.from), thru = localStart(state.custom.to);
+        if (thru < from) throw new Error("Custom end date must be on or after the start date.");
+        var until = new Date(thru.getTime()); until.setDate(until.getDate() + 1);
+        return {
+          id: range.id,
+          label: from.toLocaleDateString() + " – " + thru.toLocaleDateString(),
+          mode: "custom", compare: false,
+          since: from.toISOString(), query_since: from.toISOString(),
+          until: until.toISOString(),
+          days: Math.round((until - from) / 864e5)
+        };
+      }
+      var since = localStart();
+      since.setDate(since.getDate() - (range.days - 1));
+      var previous = new Date(since.getTime());
+      previous.setDate(previous.getDate() - range.days);
+      return {
+        id: range.id, label: range.label, mode: "fixed", compare: true,
+        since: since.toISOString(), query_since: previous.toISOString(),
+        until: now.toISOString(), days: range.days
+      };
+    }
+    function currentRows(all) {
+      if (!state.request || !state.request.compare) return all;
+      var cut = localDay(state.request.since);
+      return all.filter(function (r) { return String(r.day) >= cut; });
+    }
+    function previousRows(all) {
+      if (!state.request || !state.request.compare) return [];
+      var cut = localDay(state.request.since);
+      return all.filter(function (r) { return String(r.day) < cut; });
+    }
 
     function paint() {
       if (state.loading && !state.model) {
@@ -301,8 +359,6 @@
         return;
       }
       if (state.error) {
-        /* Unavailable is not zero, and a board that draws a flat line for a
-           failed read is lying. */
         boardHost.innerHTML = '<div class="bd-gap"><b>This did not load.</b><span>' +
           esc(state.error) + "</span></div>";
         return;
@@ -312,45 +368,42 @@
       var all = (t && t.by_day) || [];
       if (!t || !all.length) {
         boardHost.innerHTML = '<div class="bd-gap"><b>Nothing to chart yet.</b><span>' +
-          esc(state.note || ("The collector answered and has no events in the last " +
-            state.range.label + ". That is a real zero, not a failed read.")) + "</span></div>";
+          esc(state.note || ("The collector answered and has no events in " +
+            (state.request ? state.request.label : state.range.label) +
+            ". That is a real zero, not a failed read.")) + "</span></div>";
         return;
       }
 
-      /* Split the doubled window: the back half is now, the front half is the
-         baseline every delta is measured against. */
-      var half = Math.floor(all.length / 2);
-      var prev = half ? all.slice(0, half) : [];
-      var cur = half ? all.slice(half) : all;
+      var prev = previousRows(all), cur = currentRows(all);
       var sum = function (rows, k) {
         return rows.reduce(function (n, r) { return n + (Number(r[k]) || 0); }, 0);
       };
-
       var views = sum(cur, "page_views"), pViews = sum(prev, "page_views");
       var vis = sum(cur, "visitors"), pVis = sum(prev, "visitors");
       var sess = sum(cur, "sessions"), pSess = sum(prev, "sessions");
       var perVisit = vis ? Math.round((views / vis) * 10) / 10 : null;
       var pPerVisit = pVis ? Math.round((pViews / pVis) * 10) / 10 : null;
+      var compare = !!(state.request && state.request.compare);
 
-      var legend = SERIES.map(function (s) {
-        return '<span class="bd-key"><i style="background:' + s.color + '"></i>' + esc(s.label) + "</span>";
+      var legend = SERIES.map(function (series) {
+        return '<span class="bd-key"><i style="background:' + series.color + '"></i>' +
+          esc(series.label) + "</span>";
       }).join("");
 
       boardHost.innerHTML =
         '<div class="bd-tiles">' +
-          tile("Visitors", num(vis), delta(vis, pVis)) +
-          tile("Page views", num(views), delta(views, pViews)) +
-          tile("Sessions", num(sess), delta(sess, pSess)) +
+          tile("Visitors", num(vis), compare ? delta(vis, pVis) : null, compare ? "" : "selected range") +
+          tile("Page views", num(views), compare ? delta(views, pViews) : null, compare ? "" : "selected range") +
+          tile("Sessions", num(sess), compare ? delta(sess, pSess) : null, compare ? "" : "selected range") +
           tile("Views per visitor", perVisit == null ? "—" : perVisit,
-               perVisit == null ? null : delta(perVisit, pPerVisit)) +
+               compare && perVisit != null ? delta(perVisit, pPerVisit) : null,
+               compare ? "" : "selected range") +
         "</div>" +
-
         '<section class="bd-card bd-card--hero">' +
           '<header class="bd-card__h">' +
-            "<div><h2>Traffic</h2><p class=\"bd-sub\">Per day for the last " + esc(state.range.label) +
-              ", bots excluded" +
-              (t.truncated ? " · capped at the first " + num(t.row_cap) + " events, so earlier days are short" : "") +
-              (state.note ? " · " + esc(state.note) : "") + "</p></div>" +
+            "<div><h2>Traffic</h2><p class=\"bd-sub\">Per day · " +
+              esc(state.request ? state.request.label : state.range.label) +
+              " · bots excluded" + (state.note ? " · " + esc(state.note) : "") + "</p></div>" +
             '<div class="bd-legend">' + legend +
               '<button class="bd-toggle" type="button" data-bd="table">' +
                 (state.showTable ? "Show chart" : "Show table") + "</button></div>" +
@@ -358,18 +411,15 @@
           (state.showTable ? table(cur) : chart(cur, { id: "bdChart" })) +
           '<div class="bd-tip" hidden></div>' +
         "</section>" +
-
         '<div class="bd-grid">' +
           '<section class="bd-card"><h3>Top pages</h3>' +
-            ranked(t.top_pages, "path", "No page views in this window.") + "</section>" +
+            ranked(t.top_pages, "path", "No page views in this range.") + "</section>" +
           '<section class="bd-card"><h3>Where they came from</h3>' +
-            ranked(t.top_referrers, "source", "No page views in this window.") + "</section>" +
+            ranked(t.top_referrers, "source", "No acquisitions in this range.") + "</section>" +
           '<section class="bd-card"><h3>Countries</h3>' +
             ranked(t.top_countries, "country", "The edge attached no country to these events.") + "</section>" +
           '<section class="bd-card"><h3>Connection</h3>' +
-            ranked(t.top_networks, "network", "No network reported.") +
-            (t.avg_rtt_ms == null ? "" : '<p class="bd-foot">Average edge round trip ' +
-              t.avg_rtt_ms + " ms</p>") + "</section>" +
+            ranked(t.top_networks, "network", "No network reported.") + "</section>" +
         "</div>";
 
       if (!state.showTable) wireHover(cur);
@@ -380,47 +430,48 @@
       var tip = boardHost.querySelector(".bd-tip");
       var cross = svg && svg.querySelector(".bd-cross");
       if (!svg || !tip) return;
-
       var hide = function () { tip.hidden = true; if (cross) cross.style.display = "none"; };
       svg.addEventListener("mouseleave", hide);
       svg.addEventListener("blur", hide, true);
-
       Array.prototype.forEach.call(svg.querySelectorAll(".bd-hit"), function (hit) {
         var show = function () {
           var row = days[Number(hit.getAttribute("data-i"))];
           if (!row) return;
           if (cross) {
             var cx = Number(hit.getAttribute("x")) + Number(hit.getAttribute("width")) / 2;
-            cross.setAttribute("x1", cx); cross.setAttribute("x2", cx);
-            cross.style.display = "";
+            cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.style.display = "";
           }
-          /* Sit on the far side of the crosshair, so the tooltip never lands on
-             the point being read or on the endpoint labels at the right edge. */
           tip.classList.toggle("bd-tip--left", Number(hit.getAttribute("data-i")) > days.length / 2);
           tip.hidden = false;
-          tip.innerHTML = "<b>" + esc(row.day) + "</b>" + SERIES.map(function (s) {
-            return '<span><i style="background:' + s.color + '"></i>' + esc(s.label) +
-              "<em>" + (row[s.key] || 0) + "</em></span>";
-          }).join("") + '<span><i class="bd-key--none"></i>Sessions<em>' + (row.sessions || 0) + "</em></span>";
+          tip.innerHTML = "<b>" + esc(row.day) + "</b>" + SERIES.map(function (series) {
+            return '<span><i style="background:' + series.color + '"></i>' + esc(series.label) +
+              "<em>" + (row[series.key] || 0) + "</em></span>";
+          }).join("") + '<span><i class="bd-key--none"></i>Sessions<em>' +
+            (row.sessions || 0) + "</em></span>";
         };
         hit.addEventListener("mouseenter", show);
         hit.addEventListener("focus", show);
       });
     }
 
+    function broadcast() {
+      try { d.dispatchEvent(new CustomEvent("mcc:range", { detail: state.request })); }
+      catch (e) { /* no CustomEvent: traffic still works */ }
+    }
     function load() {
       var mine = ++seq;
+      try { state.request = windowFor(state.range); }
+      catch (e) { state.error = e.message; paint(); return; }
       state.loading = true; state.error = null;
       paint();
-      /* Ask for double the window so the deltas have a real baseline. */
-      Promise.resolve()
-        .then(function () { return opts.fetch(state.range.days * 2, state.range); })
+      Promise.resolve(opts.fetch(state.request))
         .then(function (out) {
-          if (mine !== seq) return;                 // a newer range won
+          if (mine !== seq) return;
           state.model = out && out.traffic ? out.traffic : out || null;
           state.note = (out && out.note) || "";
           state.loading = false;
           paint();
+          broadcast();
         })
         .catch(function (e) {
           if (mine !== seq) return;
@@ -429,31 +480,49 @@
           paint();
         });
     }
+    function setButtonState(id) {
+      Array.prototype.forEach.call(rangeHost.querySelectorAll("[data-range]"), function (x) {
+        var on = x.getAttribute("data-range") === id;
+        x.classList.toggle("is-on", on);
+        x.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
 
-    rangeHost.innerHTML = RANGES.map(function (r) {
-      return '<button class="bd-range' + (r.id === state.range.id ? " is-on" : "") +
-        '" type="button" data-range="' + r.id + '" aria-pressed="' +
-        (r.id === state.range.id ? "true" : "false") + '">' + esc(r.label) + "</button>";
-    }).join("");
+    var today = new Date(), monthAgo = new Date();
+    monthAgo.setDate(monthAgo.getDate() - 29);
+    state.custom = { from: inputDay(monthAgo), to: inputDay(today) };
+    rangeHost.innerHTML =
+      RANGES.map(function (r) {
+        return '<button class="bd-range' + (r.id === state.range.id ? " is-on" : "") +
+          '" type="button" data-range="' + r.id + '" aria-pressed="' +
+          (r.id === state.range.id ? "true" : "false") + '">' + esc(r.label) + "</button>";
+      }).join("") +
+      '<div class="bd-custom" data-custom hidden>' +
+        '<label>From<input type="date" data-custom-from value="' + state.custom.from + '"></label>' +
+        '<label>Through<input type="date" data-custom-to value="' + state.custom.to + '"></label>' +
+        '<button class="bd-range" type="button" data-custom-apply>Apply</button>' +
+      "</div>";
 
     rangeHost.addEventListener("click", function (e) {
+      var apply = e.target.closest && e.target.closest("[data-custom-apply]");
+      if (apply) {
+        var from = rangeHost.querySelector("[data-custom-from]");
+        var to = rangeHost.querySelector("[data-custom-to]");
+        state.custom = { from: from && from.value, to: to && to.value };
+        state.range = RANGES.filter(function (r) { return r.id === "custom"; })[0];
+        setButtonState("custom");
+        load();
+        return;
+      }
       var b = e.target.closest && e.target.closest("[data-range]");
       if (!b) return;
       var found = RANGES.filter(function (r) { return r.id === b.getAttribute("data-range"); })[0];
-      if (!found || found.id === state.range.id) return;
+      if (!found) return;
+      var custom = rangeHost.querySelector("[data-custom]");
+      if (custom) custom.hidden = found.id !== "custom";
       state.range = found;
-      Array.prototype.forEach.call(rangeHost.querySelectorAll("[data-range]"), function (x) {
-        x.classList.toggle("is-on", x === b);
-        x.setAttribute("aria-pressed", x === b ? "true" : "false");
-      });
-      load();
-      /* One range control governs the whole page. The board owns the
-         buttons because it was here first; anything else on the page that
-         is scoped to a window listens for this instead of growing a second
-         picker that can disagree with this one. */
-      try {
-        d.dispatchEvent(new CustomEvent("mcc:range", { detail: { days: found.days, id: found.id } }));
-      } catch (e) { /* no CustomEvent: the board still works alone */ }
+      setButtonState(found.id);
+      if (found.id !== "custom") load();
     });
 
     boardHost.addEventListener("click", function (e) {
@@ -465,7 +534,7 @@
 
     return {
       reload: load,
-      days: function () { return state.range.days; }
+      range: function () { return state.request; }
     };
   }
 
