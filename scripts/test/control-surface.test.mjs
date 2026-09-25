@@ -43,9 +43,12 @@ test('every operator page is in the registry', async () => {
   /* The list that made the Frankenstein. If a page is added to the
      system and not to the registry, it is unreachable from anywhere and
      this fails rather than letting it quietly go missing. */
+  /* This is the active operator plane, not every historical page that still
+     exists on disk. Equity Uprise admin/dashboard are shelved under
+     _unfinished, Travel Desk is a retained one-off, and ecosystem.html is a
+     case-study/deep-link surface rather than an operator desk. */
   const OPERATOR = ['admin.html','console.html','crm.html','analytics.html','desk.html',
-    'uprise-admin.html','music-admin.html','travel-desk.html','dashboard.html',
-    'management.html','studio.html','lanes.html','vault.html','ecosystem.html'];
+    'music-admin.html','management.html','studio.html','lanes.html','vault.html'];
   const R = await registry();
   const known = new Set(R.all.map((s) => fileOf(s.href)));
   for (const page of OPERATOR) {

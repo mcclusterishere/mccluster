@@ -56,7 +56,7 @@ test('the tab actually navigates to the room, href notwithstanding', async () =>
      one. Asserting markup proved nothing about where a tap goes. */
   const js = await read('js/tabbar.js');
   const wing = js.slice(js.indexOf('  var WINGS = {'));
-  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('uprise: {'));
+  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('home: {'));
   assert.match(music, /home: "listen\.html"/,
     'the music wing must open the listening room, because home is what a tap uses');
   assert.match(js, /var dest = w \? w\.home : \(slot \|\| a\.getAttribute\("href"\)\);/,
@@ -72,18 +72,20 @@ test('the listening room lights the Music tab', async () => {
     'the room belongs to the Music wing and the bar should say so');
 });
 
-test('the music wing still carries exactly four rooms', async () => {
-  /* The bar's own trim law, stated at WINGS: an open wing is the same
-     five-cell bar, so a wing carries four rooms and no more. Adding the
-     listening room without removing one would shrink the capsule on every
-     long-press and shove the held tab out of its column. */
+test('the music wing carries exactly two rooms for the three-tab bar', async () => {
+  /* The bar's trim law is N-1: the closed bar has three tabs, so an open
+     wing has the held tab plus exactly two room slots. The Listening Room
+     is the Music tab's home destination, not one of those two slots. */
   const js = await read('js/tabbar.js');
   const wing = js.slice(js.indexOf('  var WINGS = {'));
-  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('uprise: {'));
+  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('home: {'));
   const slots = music.match(/\["[a-z0-9-]+\.html",/g) || [];
-  assert.equal(slots.length, 4,
-    `the music wing must carry four rooms, found ${slots.length}: ${slots.join(' ')}`);
-  assert.match(music, /\["listen\.html",/, 'and the listening room must be one of them');
+  assert.equal(slots.length, 2,
+    `the music wing must carry two rooms, found ${slots.length}: ${slots.join(' ')}`);
+  assert.match(music, /\["album\.html",/, 'the album is the first Music wing room');
+  assert.match(music, /\["films\.html",/, 'lyric videos are the second Music wing room');
+  assert.doesNotMatch(music, /\["listen\.html",/,
+    'the listening room is the Music home destination, not a duplicate wing slot');
 });
 
 test('the bar built for pages that lack one agrees with the bar they ship', async () => {

@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 338,
+  "tracked_count": 329,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -369,17 +369,6 @@
       "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py",
       "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json",
       "docs/design/equity-uprise-building/production/workplace-occupancy-v1.json"
-    ],
-    "public_viewers": [
-      "equity-uprise-basement-b1-3d.html",
-      "equity-uprise-building-core-v2-3d.html",
-      "equity-uprise-floor-01-3d.html",
-      "equity-uprise-floor-02-3d.html",
-      "equity-uprise-floor-03-3d.html",
-      "equity-uprise-floor-04-3d.html",
-      "equity-uprise-floor-05-3d.html",
-      "equity-uprise-floor-06-3d.html",
-      "equity-uprise-floor-07-3d.html"
     ],
     "workflows": [
       ".github/workflows/deploy-pages.yml",

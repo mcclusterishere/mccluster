@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1.0",
-  "audit_date": "2026-09-22",
+  "audit_date": "2026-09-25",
   "repo": "mcclusterishere/mccluster",
-  "audited_head": "live-branch-reconciliation-2026-09-21-floor-01-b1-complete",
+  "audited_head": "three-tab-and-shelved-source-reconciliation-2026-09-25",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
   "discovery_rules": {
     "include": "Known Equity Uprise pages plus paths containing equity-uprise/equity_uprise, eu-/eu_ components, Equity Uprise Edge Functions, and Equity Uprise migrations.",
@@ -10,15 +10,190 @@
       "docs/design/equity-uprise-building/**",
       "docs/design/EQUITY-UPRISE-*.md",
       "redirects/**",
-      "_unfinished/**",
       "docs/uprise-world/**",
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 262,
-  "capability_source_count": 102,
-  "support_only_count": 160,
+  "candidate_count": 252,
+  "capability_source_count": 97,
+  "support_only_count": 155,
   "entries": [
+    {
+      "path": "_unfinished/equity-uprise/dashboard.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "conversation-agent",
+        "fellowship-matching",
+        "member-dashboard"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/docket-516.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "evidence-room"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html",
+      "classification": "building_preview_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public static B1 digital-twin review viewer for the restricted basement program; it contains no live B1/tunnel operational data and adds no separate product capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html",
+      "classification": "building_preview_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shelved combined Core V2 building viewer retained under _unfinished/equity-uprise for internal review; projection support only, not an independent program capability."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-fellowship.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "artist-creator",
+        "credentials-proof",
+        "partnership-sponsorship",
+        "program-support-funding",
+        "fellowship-cohort"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/equity-uprise.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "initiative-portfolio",
+        "institutional-desk",
+        "music-catalogue",
+        "partnership-sponsorship"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/feed.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability. Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/fellowship.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-applications"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/fellowships.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/profile.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "private-contact",
+        "profiles"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/topics.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "conversation-agent",
+        "public-issues"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/uprise-admin.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "admin-desk",
+        "host-listings",
+        "perspectives"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
+    {
+      "path": "_unfinished/equity-uprise/verify.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "verification"
+      ],
+      "support_only": false,
+      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+    },
     {
       "path": "_unfinished/README.md",
       "classification": "unrelated_experimental_support",
@@ -53,6 +228,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/socials-gallery-carousel.html",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shelved adjacent social/gallery experiment mentions Equity Uprise context but is not a canonical program capability."
     },
     {
       "path": "_unfinished/uprise-world/uprise-npc.js",
@@ -119,27 +301,11 @@
       "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
     },
     {
-      "path": "admin.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "AGENTS.md",
       "classification": "governance_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "album.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "music-catalogue"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
       "path": "assets/img/equity-uprise-logo.webp",
@@ -163,22 +329,6 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
-      "path": "card.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "catalogue.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "music-catalogue"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
       "path": "CLAUDE.md",
       "classification": "governance_support",
       "capability_ids": [],
@@ -186,25 +336,11 @@
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
-      "path": "closet/sent.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "CODEX.md",
       "classification": "governance_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "console.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "crm.html",
@@ -263,30 +399,10 @@
       "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
     },
     {
-      "path": "dashboard.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "conversation-agent",
-        "fellowship-matching",
-        "member-dashboard"
-      ],
-      "support_only": false
-    },
-    {
       "path": "data/albums.json",
       "classification": "capability_source",
       "capability_ids": [
         "music-catalogue"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
-      "path": "data/archive.json",
-      "classification": "capability_source",
-      "capability_ids": [
-        "institutional-desk",
-        "evidence-room"
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
@@ -409,23 +525,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "data/portfolio.json",
-      "classification": "capability_source",
-      "capability_ids": [
-        "rally-media",
-        "institutional-desk"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
-      "path": "data/prayer-closet.json",
-      "classification": "shared_data_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site data contains an Equity Uprise reference/asset but does not define a distinct program capability beyond mapped ledgers."
-    },
-    {
       "path": "data/roles.json",
       "classification": "shared_data_support",
       "capability_ids": [],
@@ -449,12 +548,11 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
-      "path": "docket-516.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "evidence-room"
-      ],
-      "support_only": false
+      "path": "desk.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Current operator outreach surface contains Equity Uprise references but does not define an independent program capability."
     },
     {
       "path": "docs/agent-web.md",
@@ -746,118 +844,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "equity-uprise-basement-b1-3d.html",
-      "classification": "building_preview_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Public static B1 digital-twin review viewer for the restricted basement program; it contains no live B1/tunnel operational data and adds no separate product capability."
-    },
-    {
-      "path": "equity-uprise-fellowship.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "artist-creator",
-        "credentials-proof",
-        "partnership-sponsorship",
-        "program-support-funding",
-        "fellowship-cohort"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "equity-uprise-floor-01-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-02-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-03-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-04-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-05-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-06-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise-floor-07-3d.html",
-      "classification": "building_projection_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
-    },
-    {
-      "path": "equity-uprise.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "credentials-proof",
-        "initiative-portfolio",
-        "institutional-desk",
-        "music-catalogue",
-        "partnership-sponsorship"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "feed.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "fellowship.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "fellowship-applications"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "fellowships.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "fellowship-directory",
-        "fellowship-matching",
-        "host-listings"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "films.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "gallery.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -872,16 +858,6 @@
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
-      "path": "give.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "program-support-funding",
-        "partnership-sponsorship"
-      ],
-      "support_only": false,
-      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
       "path": "hire.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -891,13 +867,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "hitman-facility.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "index.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -905,11 +874,11 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
-      "path": "inner-room.html",
-      "classification": "shared_site_support",
+      "path": "js/analytics-product.js",
+      "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+      "rationale": "Shared analytics frontend contains cross-product Equity Uprise context but does not define an independent Equity Uprise capability."
     },
     {
       "path": "js/chatfirst.js",
@@ -991,6 +960,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "js/insights.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared analytics insights frontend contains Equity Uprise authorization/context but does not define an independent Equity Uprise capability."
+    },
+    {
       "path": "js/lockroom.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1012,6 +988,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/office.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared office/operator frontend references Equity Uprise rooms but does not define an independent program capability."
     },
     {
       "path": "js/onboard.js",
@@ -1039,18 +1022,18 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "lanes.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Current music distribution operator surface references Equity Uprise context but does not define an independent program capability."
+    },
+    {
       "path": "LICENSE",
       "classification": "incidental_text_match",
       "capability_ids": [],
       "support_only": true,
       "rationale": "License text triggered a broad semantic marker but is not Equity Uprise program material."
-    },
-    {
-      "path": "license.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "listen.html",
@@ -1071,13 +1054,6 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
-      "path": "management.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "matthew-mccluster.html",
@@ -1177,13 +1153,6 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
-      "path": "prayer-closet.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
       "path": "press.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -1206,15 +1175,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "profile.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "private-contact",
-        "profiles"
-      ],
-      "support_only": false
     },
     {
       "path": "README.md",
@@ -1280,13 +1240,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
-    },
-    {
-      "path": "shots.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "sitemap.xml",
@@ -1991,31 +1944,11 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
-      "path": "topics.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "conversation-agent",
-        "public-issues"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "uprise-admin.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "admin-desk",
-        "host-listings",
-        "perspectives"
-      ],
-      "support_only": false
-    },
-    {
-      "path": "verify.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "verification"
-      ],
-      "support_only": false
+      "path": "vault.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Current music-rights operator surface references Equity Uprise context but does not define an independent program capability."
     },
     {
       "path": "walls/eu-rally.html",
@@ -2024,13 +1957,6 @@
         "rally-media"
       ],
       "support_only": false
-    },
-    {
-      "path": "whip.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "workers/mccluster/src/ai/envelope.js",

@@ -118,11 +118,12 @@ for (const width of [390, 1280]) {
     return ["seat", "never again", "limited", "hurry", "while they last"].filter((w) => new RegExp(w, "i").test(t));
   });
   check("nor hiding in a nav label", navPressure.length === 0, navPressure.join(", "));
-  check("the fifth tab is the chat, not a catalogue",
-    await p.evaluate(() => {
-      const t = document.querySelector('[data-appnav="sites"]');
-      return !!t && /chat/i.test(t.textContent) && !/sites/i.test(t.textContent.trim());
-    }));
+  check("the sales page carries the canonical three-tab bar",
+    await p.evaluate(() =>
+      [...document.querySelectorAll(".appbar > .appbar__tab")]
+        .map((a) => a.dataset.appnav).join() === "music,home,profile"));
+  check("the old Sites column stays shelved",
+    await p.evaluate(() => !document.querySelector('[data-appnav="sites"]')));
   check("and no hero standing between the reader and the first price",
     await p.evaluate(() => !document.querySelector(".buyhero, .hero2, .seats, .close, .math")));
   check("the first thing on the page is the count, then a card",

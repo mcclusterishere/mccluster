@@ -595,7 +595,7 @@ ck("Step 8 every system has monitoring/service-access evidence",all(x["monitorin
 ck("Step 8 floor routes avoid protected stair/elevator zones",not route_clashes,route_clashes[:20])
 ck("Step 8 closes secondary shared-path branches",len(step8_branch_records)==24,len(step8_branch_records))
 
-viewer=HERE.parents[4]/"equity-uprise-building-core-v2-3d.html"
+viewer=HERE.parents[4]/"_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html"
 viewer_step8_status=False
 if viewer.exists():
     vt=viewer.read_text()

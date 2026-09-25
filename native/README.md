@@ -36,7 +36,7 @@ on the expo-audio plugin, because HERE plays audio and never records it.
 app/
   _layout.tsx            root stack; one TransportProvider wraps everything
   (tabs)/
-    _layout.tsx          the one bar — five labelled tabs, edge to edge
+    _layout.tsx          the one bar — Music · HERE · Mnet/Profile
     index.tsx            Album — the media library, opening on the Living Cover
     films.tsx            full-screen vertical viewer, one film per page
     catalogue.tsx        the touch shelf + registration data
@@ -62,8 +62,9 @@ the transport persistent: leaving a track room does not stop the song.
 Native mobile law that sits under them:
 
 - one dominant job per screen, one primary action
-- the five-tab bar is edge to edge and always labelled — a floating capsule is
-  a desktop flourish, not mobile navigation
+- the primary bar mirrors the current web shell: exactly three destinations —
+  Music, HERE and Mnet/Profile; shelved rooms remain reachable without occupying
+  permanent tab slots
 - ruby marks action, live state, or registered emphasis, never decoration
 - rounded glass is reserved for persistent chrome; editorial content uses
   rules, fields and frames
