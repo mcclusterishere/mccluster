@@ -81,3 +81,20 @@ test('the bar always writes the three canonical tabs, unconditionally', async ()
   assert.doesNotMatch(markup, /\?\s*'|:\s*''/,
     'a tab is being written conditionally — the bar must be identical on every page');
 });
+
+
+test('the native shell mirrors the same three primary destinations', async () => {
+  const [appbar, layout] = await Promise.all([
+    read('native/src/AppBar.tsx'),
+    read('native/app/(tabs)/_layout.tsx'),
+  ]);
+  const rooms = /export const ROOMS:[\s\S]*?= \[([\s\S]*?)\n\];/.exec(appbar);
+  assert.ok(rooms, 'could not find native ROOMS');
+  const keys = [...rooms[1].matchAll(/key: '([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(keys, ['music', 'here', 'profile'],
+    'native primary navigation must stay aligned with Music · HERE · Mnet/Profile');
+  assert.match(layout, /name="uprise" options=\{\{ href: null \}\}/,
+    'Equity Uprise stays built but off the primary native bar');
+  assert.match(layout, /name="closet" options=\{\{ href: null \}\}/,
+    'Prayer Closet stays built but off the primary native bar');
+});
