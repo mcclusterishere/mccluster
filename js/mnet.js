@@ -119,6 +119,9 @@
     $("mnBio").value = p.bio || "";
     $("mnAvatarUrl").value = p.avatar_url || "";
     $("mnWebsite").value = p.website_url || "";
+    $("mnNewPassword").value = "";
+    $("mnNewPassword2").value = "";
+    setStatus($("mnPasswordChangeStatus"), "");
     $("mnProfileTitle").textContent = editing ? "Edit your profile." : "Finish your profile.";
     $("mnProfileBack").hidden = !editing;
   }
@@ -841,6 +844,33 @@
     showGate("profile");
   }
 
+  function changePassword() {
+    var password = $("mnNewPassword").value;
+    var confirm = $("mnNewPassword2").value;
+    var button = $("mnPasswordChange");
+    if (password.length < 8) {
+      setStatus($("mnPasswordChangeStatus"), "Use at least 8 characters.", "error");
+      return;
+    }
+    if (password !== confirm) {
+      setStatus($("mnPasswordChangeStatus"), "Those passwords do not match.", "error");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "Changing…";
+    setStatus($("mnPasswordChangeStatus"), "");
+    MCC.updatePassword(password).then(function () {
+      $("mnNewPassword").value = "";
+      $("mnNewPassword2").value = "";
+      setStatus($("mnPasswordChangeStatus"), "Password changed. Use the new password the next time you sign in.", "ok");
+    }).catch(function (e) {
+      setStatus($("mnPasswordChangeStatus"), e.message || "Could not change your password.", "error");
+    }).finally(function () {
+      button.disabled = false;
+      button.textContent = "Change password";
+    });
+  }
+
   function setAuthMode(mode) {
     var create = mode === "create";
     $("mnCreateNameWrap").hidden = !create;
@@ -949,6 +979,8 @@
     });
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
+    $("mnPasswordChange").onclick = changePassword;
+    $("mnNewPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") changePassword(); });
     wireAvatarPicker();
     wireTrackPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
