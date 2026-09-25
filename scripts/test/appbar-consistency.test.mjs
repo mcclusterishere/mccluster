@@ -4,9 +4,11 @@
    page. The profile icon is not seen on every single page. And on some
    pages PRIM3 is also not being able to be seen."
 
-   What was actually wrong: the bar never renders fewer than five tabs —
-   js/tabbar.js writes all five unconditionally — so no page was ever
-   missing the profile cell. TWENTY-NINE pages simply never loaded
+   What was actually wrong: pages had drifted between different copies of
+   the bar. The current house bar has exactly THREE destinations — Music,
+   HERE and Mnet/Profile — and js/tabbar.js normalizes every loaded copy to
+   that same three-tab contract. Pages that navigate around the house still
+   have to load the bar at all. TWENTY-NINE pages once did not, and
    tabbar.js at all, and one of them was whip.html, which is the
    DESTINATION OF THE FOURTH TAB. Tapping that tab took you somewhere
    with no bar to tap back from.
@@ -33,6 +35,7 @@ const EXEMPT = {
   'feed.html': 'redirect stub', 'merch.html': 'redirect stub',
   'prints.html': 'redirect stub', 'role.html': 'redirect stub',
   'sponsor.html': 'redirect stub', 'walls.html': 'redirect stub',
+  'insights.html': 'redirect stub to Analytics · Audience',
 };
 const immersive = (f) => /^equity-uprise-.*-3d\.html$/.test(f);
 
@@ -53,7 +56,8 @@ test('every tab destination has the bar it was reached from', async () => {
      no bar — tap it, and the navigation you tapped is gone. */
   const bar = await read('js/tabbar.js');
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-  assert.ok(hrefs.length >= 5, `expected the five tabs, found ${hrefs.length}`);
+  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
+    `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/,
@@ -61,15 +65,17 @@ test('every tab destination has the bar it was reached from', async () => {
   }
 });
 
-test('the bar always writes all five tabs, unconditionally', async () => {
+test('the bar always writes the three canonical tabs, unconditionally', async () => {
   const bar = await read('js/tabbar.js');
   const block = /nav\.innerHTML\s*=([\s\S]*?);\n/.exec(bar);
   assert.ok(block, 'could not find the bar markup');
   const markup = block[1];
-  for (const nav of ['music', 'uprise', 'home', 'sites', 'profile']) {
+  for (const nav of ['music', 'home', 'profile']) {
     assert.match(markup, new RegExp(`data-appnav="${nav}"`),
       `the ${nav} cell is missing from the bar`);
   }
+  assert.doesNotMatch(markup, /data-appnav="(?:uprise|sites)"/,
+    'shelved columns must not come back into the canonical three-tab bar');
   /* No conditional may wrap a cell: the moment one does, the bar starts
      differing between pages and this whole complaint comes back. */
   assert.doesNotMatch(markup, /\?\s*'|:\s*''/,
