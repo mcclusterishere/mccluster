@@ -178,3 +178,67 @@ test('business query parser answers music, creator and platform questions', ()=>
   assert.equal(views.metric,'platform.page_views.in_window');
   assert.equal(views.value,300);
 });
+
+
+test('analytics dashboard supports all-time and custom date windows without a raw-row history cap', async()=>{
+  const [board, product, html]=await Promise.all([
+    read('js/analytics-board.js'),
+    read('js/analytics-product.js'),
+    read('analytics.html')
+  ]);
+  assert.match(board,/id: "all", label: "All time", mode: "all"/);
+  assert.match(board,/id: "custom", label: "Custom", mode: "custom"/);
+  assert.match(board,/data-custom-from/);
+  assert.match(board,/data-custom-to/);
+  assert.match(html,/bd-custom/);
+  assert.match(product,/rpc\("analytics_daily"/);
+  assert.match(product,/rpc\("analytics_totals"/);
+  assert.match(product,/rpc\("analytics_top"/);
+  assert.doesNotMatch(product,/limit=20000/,
+    'historical reporting must not silently stop at the newest 20k raw events');
+  assert.match(product,/order=at\.desc&limit=50/,
+    'only the Recent Events diagnostic is allowed to use a small raw-row read');
+});
+
+test('analytics range totals use server-side distinct counts rather than summed daily visitors', async()=>{
+  const board=await read('js/analytics-board.js');
+  assert.match(board,/var totals = t\.totals \|\| \{\}/);
+  assert.match(board,/totals\.visitors/);
+  assert.match(board,/previous_totals/);
+  assert.match(board,/Summing daily distincts\s+overcounts/);
+});
+
+test('content analytics is windowed and exposes deep track and media detail', async()=>{
+  const [insights,html,migration]=await Promise.all([
+    read('js/insights.js'),
+    read('analytics.html'),
+    read('supabase/migrations/20260925135938_analytics_windowed_content_detail.sql')
+  ]);
+  assert.match(insights,/rpc\("analytics_content",args\)/);
+  assert.match(insights,/rpc\("analytics_content_events",args\)/);
+  assert.match(insights,/rpc\("analytics_acquisition",args\)/);
+  assert.match(insights,/rpc\("analytics_paths"/);
+  assert.match(insights,/rpc\("analytics_funnel"/);
+  for(const field of ['track starts','repeat listener-track pairs','full plays','completions','shares','Media event mix','Track performance']){
+    assert.ok(insights.includes(field), field+' must be visible in Content reporting');
+  }
+  assert.match(html,/full versus preview plays/);
+  assert.match(migration,/create or replace function public\.analytics_content\(/i);
+  assert.match(migration,/create or replace function public\.analytics_content_events\(/i);
+  assert.match(migration,/music_full_play/);
+  assert.match(migration,/music_preview_play/);
+  assert.match(migration,/music_complete/);
+  assert.match(migration,/track_share/);
+  assert.match(migration,/security invoker/i);
+  assert.match(migration,/revoke all on function public\.analytics_content.*from public, anon/i);
+});
+
+test('one selected analytics range drives audience and content panels', async()=>{
+  const insights=await read('js/insights.js');
+  assert.match(insights,/d\.addEventListener\("mcc:range"/);
+  assert.match(insights,/RANGE=next/);
+  assert.match(insights,/p_since:RANGE\.since/);
+  assert.match(insights,/p_until:RANGE\.until/);
+  assert.match(insights,/day=gte/);
+  assert.match(insights,/day=lte/);
+});
