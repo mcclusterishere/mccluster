@@ -44,19 +44,9 @@
     '<path d="M5.2 5.6h13.6a1.4 1.4 0 0 1 1.4 1.4v8.4H3.8V7a1.4 1.4 0 0 1 1.4-1.4z"/>' +
     '<path d="M2.2 15.4h19.6l-1 2a1.6 1.6 0 0 1-1.5.9H4.7a1.6 1.6 0 0 1-1.5-.9z"/>';
 
-  /* THE FIFTH TAB WEARS THE REAL MARK.
-     The laptop said "here is a page of things"; the bubble said "ask me";
-     the hanger said "there is something here to buy". None of them was the
-     brand. The tab is Hitman Halo now and it carries the actual HM — the
-     round between the letters, under the halo — as artwork rather than as
-     a line drawing of one, because that mark is the whole identity and a
-     traced approximation of it would be a worse version of something that
-     already exists.
-     Its wing slot keeps a glyph (ICONS.halo): the full mark is chrome,
-     glow and an AMMO headstamp, and at the 24px of a wing list all of that
-     collapses into mud. LAPTOP and CHAT stay because the icon map still
-     names them, and a glyph nobody draws is cheaper than a lookup that
-     returns nothing. */
+  /* Legacy room glyphs stay in the icon map because the full-house drawer
+     can still link to rooms that are no longer primary app-bar columns.
+     They are room icons, not app-bar destinations. */
   var CHAT =
     '<path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/>' +
     '<path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/>';
@@ -80,20 +70,8 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* THE FIFTH COLUMN GOES HOME.
-         It has changed hands four times. It carried the halo and opened
-         the Prayer Closet; the shake run took it on 2026-08-17; the owner
-         shelved the shake shop on 2026-08-19 and gave the column to
-         McCluster Sites; Chat took it after that.
-
-         It is the Closet's again, by the owner's call. The reason the
-         column went to a conversation was that the conversation was the
-         thing on this site that took money from strangers — and the home
-         page now opens with its own Lock In room, so the bar is no longer
-         the only door to one. What the bar was missing was the store.
-
-         Chat did not lose anything: it is the second slot of this wing,
-         one hold away, with the Inner Room and Give. */
+      /* THIRD COLUMN: identity. It resolves to Sign in while signed out and
+         to the member's Mnet feed once the shared session is verified. */
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Mnet</span></a>';
@@ -128,7 +106,7 @@
   if (!dock) dock = buildBar();
 
 
-  /* The fifth column is auth-aware. Start conservatively as a sign-in door;
+  /* The identity column is auth-aware. Start conservatively as a sign-in door;
      the shared state controller below promotes it to Feed as soon as a real
      McCluster session is verified. This also normalizes the many older pages
      that still carry a hand-written copy of the bar. */
@@ -147,19 +125,14 @@
      and hands off to the drawer in js/masthead.js */
   var MAP = "#map";
 
-  /* slots: [href, icon, label, peek {ic, title, sub, dyn}]: the twenty
-     rooms a visitor walks between live in the five wings; the rest of the
-     house is one slot away, behind Everything */
+  /* slots: [href, icon, label, peek {ic, title, sub, dyn}]. The primary
+     bar has three wings; deeper rooms remain one slot away through Everything. */
   var WINGS = {
-    /* the trim law, restated for five tabs: a wing carries exactly FOUR
-       rooms, so an open wing is the same FIVE-cell bar you started with.
-       The tab you held keeps its own column and the other four cells become
-       its rooms: the bar never changes width, it changes contents.
-       This is not decoration. morph() sizes the open bar off slots.length
-       (see the anchor law below), so a wing that carries three rooms while
-       the closed bar carries five tabs makes the capsule visibly shrink by
-       a cell on every long-press and shoves the held tab out of its column.
-       If a tab is ever added or removed, every wing changes with it. */
+    /* Trim law: a three-tab bar gives each wing exactly TWO room slots.
+       The tab you held keeps its own column and the other two cells become
+       that wing's rooms, so the capsule never changes width. morph() sizes
+       the open bar from slots.length; if ORDER changes, every wing must
+       change with it. */
     music: {
       /* THE TAP GOES TO THE WHOLE SHELF, NOT ONE RECORD. `home` is what a
          tap on a winged tab actually navigates to — see dest below, which
@@ -217,8 +190,8 @@
      column is adding its tab back to ORDER and its wing back to WINGS.
 
      Thirty-two pages carry the bar as hand-written markup rather than
-     letting buildBar() make it, so editing this file alone would have left
-     the old five-tab bar on all of them. Those pages are edited too — but
+     letting buildBar() make it, so editing this file alone could leave
+     stale columns in copied markup. Those pages are normalized too — but
      a bar is also the kind of markup that gets copy-pasted into the next
      page somebody writes, so anything in the DOM claiming a column this
      build does not serve is removed here as well. Removed, not hidden with
@@ -247,9 +220,8 @@
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
     "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
-    /* The fifth column is put away with Whip Equipped. These rooms keep
-       working; they simply light no coin, and are reached through the map
-       under Everything. */
+    /* Rooms from shelved columns keep working; they simply light the
+       closest surviving house coin and remain reachable through Everything. */
     "sites.html": "home", "inner-room.html": "home",
     "sent.html": "home", "give.html": "home"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
@@ -415,10 +387,8 @@
     hang: '<path d="M12 6a2 2 0 1 1 2-2"/><path d="M12 6l8.2 5.8a1.5 1.5 0 0 1-.9 2.7H4.7a1.5 1.5 0 0 1-.9-2.7z"/><path d="M6.5 14.5V20M17.5 14.5V20"/>',
     shot: '<path d="M3 8.5a2 2 0 0 1 2-2h2.2l1.3-2h6.8l1.3 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.8" r="3.6"/>',
     lamp: '<path d="M12 20V7"/><path d="M12 7c-2.6-2.2-5.6-2.6-8-2v12c2.4-.6 5.4-.2 8 2 2.6-2.2 5.6-2.6 8-2V5c-2.4-.6-5.4-.2-8 2z"/>',
-    /* the fifth wing's set, plus the four rooms the older wings gained when
-       every wing went from three slots to four. Drawn in the same 24-grid,
-       single-weight stroke as the rest: no fills, no emoji, nothing that
-       needs a font to arrive before the bar can be read. */
+    /* Legacy/deeper-room glyphs used by the drawer and wing slots. Drawn in
+       the same 24-grid, single-weight stroke as the rest. */
     frame: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.8" r="1.7"/><path d="M3.6 17l4.9-4.4 3.9 3.4 3-2.5 5.1 4.2"/>',
     gift: '<rect x="3" y="9.5" width="18" height="10.5" rx="2"/><path d="M3 13.2h18M12 9.5V20"/><path d="M12 9.5C10.6 6.2 8.7 4.8 7.4 5.7c-1.3 1 .3 3.8 4.6 3.8 4.3 0 5.9-2.8 4.6-3.8-1.3-.9-3.2.5-4.6 3.8z"/>',
     rise: '<path d="M4 20h16"/><path d="M4 15.4l5.1-5 3.7 3.2 6.4-6.9"/><path d="M14.6 6.7H20v5.2"/>',
@@ -591,8 +561,8 @@
       return '<a class="appbar__tab appbar__tab--slot" href="' + s[0] + '" data-dock="' + s[0] + '">' +
         ic(s[1]) + "<span>" + s[2] + "</span></a>";
     });
-    /* the anchor law, kept exactly: a wing carries four rooms, so the open
-       bar has the same five cells as the closed one, and the tab you are
+    /* the anchor law, kept exactly: a wing carries two rooms, so the open
+       bar has the same three cells as the closed one, and the tab you are
        holding simply stays in its own column. It does not move at all.
        The clamp is the law's own backstop, not a layout rule: if a wing is
        ever left short a slot, the held tab gets dragged left into a column
