@@ -250,7 +250,7 @@
     var top = t.arrived || 1;
     /* One hue throughout. These are nine magnitudes of one measure, not
        nine categories, so rank must not be painted as identity. */
-    host.innerHTML = bars(steps.map(function (s, i) {
+    var funnelRows = steps.map(function (s, i) {
       var v = t[s[0]] || 0;
       var prev = i ? (t[steps[i - 1][0]] || 0) : null;
       var drop = (prev && prev > v) ? ("−" + Math.round(((prev - v) / prev) * 100) + "% from above") : "";
@@ -259,7 +259,12 @@
         display: num(v) + " · " + (Math.round((v / top) * 1000) / 10) + "%",
         note: drop
       };
-    }), { hue: HUE_A });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(funnelRows, {
+        label: "People reaching each funnel stage", color: HUE_A, limit: 9
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(funnelRows, { hue: HUE_A }) + "</div>";
   }
 
   function paintSticky(rows, err) {
@@ -268,9 +273,17 @@
     DATA.stickiness = rows;
     var r = rows[0];
     if (!r) { host.innerHTML = why(null); return; }
+    var habitRows = [
+      { key:"Daily active", value:Number(r.dau)||0 },
+      { key:"Weekly active", value:Number(r.wau)||0 },
+      { key:"Monthly active", value:Number(r.mau)||0 }
+    ];
     host.innerHTML =
       stat(num(r.dau), "today") + stat(num(r.wau), "this week") + stat(num(r.mau), "this month") +
-      stat(r.dau_over_mau + "%", "come back daily");
+      stat(r.dau_over_mau + "%", "come back daily") +
+      (B.barChart ? '<div class="ins-chart-block">' + B.barChart(habitRows, {
+        label:"Daily, weekly and monthly active people", color:HUE_B, limit:3
+      }) + "</div>" : "");
     /* The honesty that makes the number usable: with four days of
        history "this month" is not a month, and 5% reads like churn when
        it is really youth. The view carries the window so this can say so. */
@@ -288,14 +301,19 @@
     if (err) { host.innerHTML = why(err); return; }
     DATA.acquisition = rows;
     if (!rows.length) { host.innerHTML = why(null); return; }
-    host.innerHTML = bars(rows.map(function (r) {
+    var acquisitionRows = rows.map(function (r) {
       return {
         key: String(r.source).replace(/^https?:\/\//, "").replace(/\/$/, "").slice(0, 42),
         value: Number(r.people) || 0,
         display: num(r.people),
         note: r.engagement_rate + "% engaged · " + r.avg_seconds + "s"
       };
-    }), { hue: HUE_B });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(acquisitionRows, {
+        label:"People by acquisition source", color:HUE_B, limit:10
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(acquisitionRows, { hue: HUE_B }) + "</div>";
   }
 
   function paintContent(rows, events, err) {
@@ -347,6 +365,11 @@
         stat(num(shares),"shares") +
       '</div>' +
       '<div class="an-grid" style="margin-top:1rem">' +
+        '<section class="an-panel an-wide"><h3>Top tracks by starts</h3>' +
+          (B.barChart ? B.barChart(tracks.map(function (r) {
+            return { key:r.track, value:Number(r.starts)||0 };
+          }), { label:"Top tracks by starts", color:HUE_A, limit:12 }) : "") +
+        '</section>' +
         '<section class="an-panel"><h3>Albums / collections</h3>' +
           bars(albumRows.map(function (a) {
             return {key:a.key,value:a.starts,display:num(a.starts),
@@ -354,7 +377,11 @@
           }),{hue:HUE_B}) +
         '</section>' +
         '<section class="an-panel"><h3>Media event mix</h3>' +
-          (eventRows.length ? bars(eventRows,{hue:HUE_A}) : why(null)) +
+          (eventRows.length
+            ? ((B.barChart ? B.barChart(eventRows, {
+                label:"Media events in the selected range", color:HUE_A, limit:12
+              }) : "") + bars(eventRows,{hue:HUE_A}))
+            : why(null)) +
         '</section>' +
       '</div>' +
       '<div class="bd-scroll" style="margin-top:1rem"><table class="bd-table">' +
@@ -385,13 +412,18 @@
     DATA.paths = rows;
     if (!rows.length) { host.innerHTML = why(null); return; }
     /* Pairs, so a bar per pair reads better than a table of three columns. */
-    host.innerHTML = bars(rows.map(function (r) {
+    var pathRows = rows.map(function (r) {
       return {
         key: r.from_page + "  →  " + r.to_page,
         value: Number(r.moves) || 0, display: num(r.moves),
         note: num(r.sessions) + " sessions"
       };
-    }), { hue: HUE_B });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(pathRows, {
+        label:"Most common next-page paths", color:HUE_B, limit:10
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(pathRows, { hue: HUE_B }) + "</div>";
   }
 
   /* ---------- load ------------------------------------------------- */
