@@ -1,9 +1,9 @@
 /**
  * A ROOM, in the house's materials.
  *
- * Four of the five rooms on the bar — Equity Uprise, HERE, Prayer Closet,
- * Profile — have not had their content ported from the web yet. This is the
- * shared shell they open in so that tapping a coin lands somewhere that
+ * Several preserved rooms — including Equity Uprise and Prayer Closet, which
+ * are no longer primary bar tabs — have not had all content ported from the
+ * web yet. This is the shared shell they open in so that navigating there
  * looks like HERE (the ambient pulse wash, the display face, the emblem)
  * instead of a blank screen or, worse, invented filler content that would
  * read as finished when it isn't.
