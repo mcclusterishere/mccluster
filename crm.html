@@ -30,7 +30,11 @@
       font-family: var(--ui); font-weight: 800; font-size: 0.95rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
     .fd__note { margin-top: 0.7rem; font-size: 0.82rem; color: var(--cream-dim); }
     /* the week, at a glance */
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.4rem 0; }
+    /* Namespaced away from .stats, which css/style.css:271 defines for the
+       public marketing section with `padding-bottom: clamp(3rem,7vw,6rem)`.
+       This page set no padding of its own, so that rule applied unopposed:
+       measured 89.6px of dead space under the tiles. */
+    .fd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.4rem 0; }
     .stat { border-radius: 18px; padding: 0.85rem 1rem;
       background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
@@ -86,7 +90,7 @@
     </div>
 
     <div id="desk" hidden>
-      <div class="stats">
+      <div class="fd-stats">
         <div class="stat"><b id="stAll">·</b><small>Leads · 7 days</small></div>
         <div class="stat"><b id="stAds">·</b><small>From ads</small></div>
         <div class="stat"><b id="stBook">·</b><small>Booked</small></div>
@@ -225,12 +229,12 @@
         var reply = "mailto:" + encodeURIComponent(r.email) +
           "?subject=" + encodeURIComponent("Re: your inquiry · McCluster") +
           "&body=" + encodeURIComponent("Hey " + r.name + ",\n\nGot your note" + (r.want ? " about " + r.want.toLowerCase() : "") + ". I'm on it. ");
-        return '<div class="lead' + (r.status === "closed" ? " is-closed" : "") + '" data-id="' + r.id + '">' +
+        return '<div class="lead' + (r.status ==="closed" ? " is-closed" : "") + '" data-id="' + r.id + '">' +
           '<div class="lead__top"><b>' + esc(r.name) + "</b>" +
           (r.want ? '<span class="lead__want">' + esc(r.want) + "</span>" : "") +
           '<span class="lead__when">' + ago(r.at) + " ago</span></div>" +
           (r.note ? '<p class="lead__note">' + esc(r.note) + "</p>" : "") +
-          '<p class="lead__meta"><span class="src' + (ads ? " src--ads" : "") + '">' + esc(ads ? "google ads" : r.source || "direct") + "</span>" +
+          '<p class="lead__meta"><span class="src' + (ads ?" src--ads" : "") + '">' + esc(ads ? "google ads" : r.source || "direct") + "</span>" +
           (r.campaign ? " · " + esc(r.campaign) : "") + " · " + esc(r.email) + " · from " + esc(r.page || "?") + "</p>" +
           '<div class="lead__acts">' +
           '<a class="reply" href="' + reply + '" data-reply>Reply &#8594;</a>' +

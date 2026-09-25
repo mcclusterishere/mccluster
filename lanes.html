@@ -17,10 +17,16 @@
     .lx h1 { font-family: var(--sig); text-transform: uppercase; line-height: .9;
       font-size: clamp(1.9rem,7vw,3rem); margin: 0 0 .2rem; }
     .lx__sub { font-weight: 600; font-size: .84rem; color: var(--cream-dim); margin: 0 0 1.4rem; max-width: 62ch; line-height: 1.6; }
-    .gate { max-width: 24rem; display: grid; gap: .5rem; }
-    .gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
+    /* Namespaced away from .gate, which css/style.css:2779 defines for the
+       public site as `position:fixed; inset:0; z-index:200` (300 later on).
+       This page only ever set max-width/display/gap, so the shared rule
+       applied unopposed and turned an inline sign-in card into a fixed,
+       full-viewport overlay that could not scroll. Measured: pos=fixed,
+       z-index 300, inset 0. */
+    .ln-gate { max-width: 24rem; display: grid; gap: .5rem; }
+    .ln-gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
       color: var(--cream); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
-    .gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
+    .ln-gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
       font: 800 .92rem var(--ui); color: #fff; background: var(--metal); }
     .err { color: #ff8a8c; font-weight: 700; font-size: .78rem; }
 
@@ -114,7 +120,7 @@
     }
 
     function gate(msg) {
-      $("lxIn").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
+      $("lxIn").innerHTML = '<div class="ln-gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
         '<input id="gEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
         '<input id="gPass" type="password" placeholder="Password" autocomplete="current-password">' +
         '<button id="gGo" type="button">Open the desk &#8594;</button></div>';
@@ -153,11 +159,11 @@
       var gs = GATES.filter(function (g) { return g.target_id === l.id; });
       var isOpen = !!OPEN[l.id];
       var c = CREDS[l.id] || {};
-      return '<div class="ln' + (l.onboarded ? " is-on" : (l.unlocked ? "" : " is-locked")) + (isOpen ? " is-open" : "") + '" data-ln="' + esc(l.id) + '">' +
+      return '<div class="ln' + (l.onboarded ?" is-on" : (l.unlocked ? "" : " is-locked")) + (isOpen ? " is-open" : "") + '" data-ln="' + esc(l.id) + '">' +
         '<div class="ln__top"><div>' +
           '<h3 class="ln__name">' + esc(l.label) + "</h3>" +
           '<p class="ln__meta">' +
-            '<span class="pill ' + (l.onboarded ? "live" : l.unlocked ? "open" : "lock") + '">' +
+            '<span class="pill ' + (l.onboarded ?"live" : l.unlocked ? "open" : "lock") + '">' +
               (l.onboarded ? "onboarded" : l.unlocked ? "unlocked" : "locked") + "</span>" +
             '<span class="pill">' + esc(l.lane) + "</span>" +
             '<span class="pill">' + esc(l.rail) + "</span>" +
@@ -165,7 +171,7 @@
             (l.exclusive ? '<span class="pill excl">exclusive</span>' : "") +
             (l.has_credentials ? '<span class="pill">wired</span>' : "") +
           "</p></div>" +
-          '<span class="ln__pct' + (l.pct >= 100 ? " full" : "") + '">' + l.pct + "%</span>" +
+          '<span class="ln__pct' + (l.pct >= 100 ?" full" : "") + '">' + l.pct + "%</span>" +
         "</div>" +
         '<div class="ln__bar"><span class="ln__fill" style="width:' + l.pct + '%"></span></div>' +
 

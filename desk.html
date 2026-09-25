@@ -15,10 +15,16 @@
     .dk { max-width: 44rem; margin: 0 auto; padding: clamp(1rem,3vh,1.8rem) clamp(1rem,4vw,1.6rem) 7rem;
       font-family: var(--ui); color: var(--cream); }
 
-    .gate { max-width: 24rem; display: grid; gap: .5rem; }
-    .gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
+    /* Namespaced away from .gate, which css/style.css:2779 defines for the
+       public site as `position:fixed; inset:0; z-index:200` (300 later on).
+       This page only ever set max-width/display/gap, so the shared rule
+       applied unopposed and turned an inline sign-in card into a fixed,
+       full-viewport overlay that could not scroll. Measured: pos=fixed,
+       z-index 300, inset 0. */
+    .dk-gate { max-width: 24rem; display: grid; gap: .5rem; }
+    .dk-gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
       color: var(--cream); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
-    .gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
+    .dk-gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
       font: 800 .92rem var(--ui); color: #fff; background: var(--metal); }
     .err { color: #ff8a8c; font-weight: 700; font-size: .78rem; }
 
@@ -120,7 +126,7 @@
     }
 
     function gate(msg) {
-      $("dk").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
+      $("dk").innerHTML = '<div class="dk-gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
         '<input id="gE" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
         '<input id="gP" type="password" placeholder="Password" autocomplete="current-password">' +
         '<button id="gGo" type="button">Open the desk &#8594;</button></div>';

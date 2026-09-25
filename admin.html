@@ -51,7 +51,11 @@
     .bo__who b { color: var(--cream); }
     .bo__bar .btn-flat { margin-left: auto; }
     /* ---- stats ---- */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
+    /* Namespaced away from .stats, which css/style.css:271 defines for the
+       public marketing section with `padding-bottom: clamp(3rem,7vw,6rem)`.
+       This page set no padding of its own, so that rule applied unopposed:
+       measured 89.6px of dead space under the tiles. */
+    .bo-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
     .stat { border-radius: 18px; padding: 0.9rem 1rem; min-width: 0;
       background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
@@ -140,7 +144,7 @@
         <button class="btn-flat" id="boOut" type="button">Sign out</button>
       </div>
 
-      <div class="stats" id="boStats"></div>
+      <div class="bo-stats" id="boStats"></div>
 
       <div class="lanes" id="boLanes"></div>
 
@@ -333,7 +337,7 @@
       var done = r.status === "closed" || r.status === "booked";
       var reply = "mailto:" + encodeURIComponent(r.email) +
         "?subject=" + encodeURIComponent(t ? "Your order · McCluster" : "Re: your note · McCluster");
-      var out = '<div class="row' + (done ? " is-done" : "") + '" data-id="' + esc(r.id) + '">' +
+      var out = '<div class="row' + (done ?" is-done" : "") + '" data-id="' + esc(r.id) + '">' +
         '<div class="row__top"><b>' + esc(r.name) + "</b>" +
         (t ? '<span class="row__tag">' + esc(t.digital ? "file" : "print") + "</span>"
            : rt ? '<span class="row__tag">' + (rt.set ? "set" : "merch") + "</span>"
