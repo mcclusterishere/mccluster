@@ -70,6 +70,18 @@
       keywords: "studio create make production", state: "live" },
 
     /* ---- EQUITY UPRISE ------------------------------------------- */
+    { id: "uprise-dashboard", label: "Uprise Dashboard", href: "dashboard.html", group: "Equity Uprise",
+      blurb: "Program-wide queue, health and execution view for Equity Uprise.",
+      keywords: "uprise equity dashboard operations queue triage", state: "live" },
+    { id: "uprise-admin", label: "Uprise Admin", href: "uprise-admin.html", group: "Equity Uprise",
+      blurb: "Administrative controls and approvals for Equity Uprise.",
+      keywords: "uprise admin approvals governance controls", state: "live" },
+    { id: "travel-desk", label: "Travel Desk", href: "travel-desk.html", group: "Equity Uprise",
+      blurb: "Travel and movement planning for active workstreams.",
+      keywords: "travel desk routing logistics itinerary", state: "live" },
+    { id: "ecosystem", label: "Ecosystem", href: "ecosystem.html", group: "Equity Uprise",
+      blurb: "Cross-plane systems map and status overview.",
+      keywords: "ecosystem control plane map status", state: "live" },
 
     /* ---- SYSTEM --------------------------------------------------- */
     { id: "account", label: "Your Account", href: "account.html", group: "System",

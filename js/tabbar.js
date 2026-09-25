@@ -78,8 +78,12 @@
     nav.innerHTML =
       '<a class="appbar__tab" id="appbarNP" href="' + ROOT + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
+      '<a class="appbar__tab" href="' + ROOT + 'dashboard.html" data-appnav="uprise">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M4 15.4l5.1-5 3.7 3.2 6.4-6.9"/><path d="M14.6 6.7H20v5.2"/></svg><span>Uprise</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
+      '<a class="appbar__tab" href="' + ROOT + 'sites.html" data-appnav="sites">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' + LAPTOP + '</svg><span>Sites</span></a>' +
       /* THE FIFTH COLUMN GOES HOME.
          It has changed hands four times. It carried the halo and opened
          the Prayer Closet; the shake run took it on 2026-08-17; the owner
@@ -167,10 +171,27 @@
          thirty-three pages moved nothing until this line moved too. */
       home: "listen.html",
       slots: [
+        ["listen.html", "disc", "Listening Room", { title: "Listening Room",
+          sub: "The full shelf, ordered from real signals when they exist and by sequence when they do not." }],
         ["album.html", "note", "The album", { title: "I AM HERE, the album",
           sub: "Six tracks in the site's own player: the deck, lock-screen controls, and a memory. It picks up where you left off." }],
         ["films.html", "film", "Lyric Videos", { title: "Lyric videos, one swipe",
           sub: "The whole catalog as lyric videos. Swipe, and every record plays its own scene-cut film with the words live on the picture." }],
+        ["catalogue.html", "paper", "Catalogue", { title: "Catalogue of record",
+          sub: "Track registry, metadata and codes that back the listening room." }],
+      ],
+    },
+    uprise: {
+      home: "dashboard.html",
+      slots: [
+        ["dashboard.html", "rise", "Dashboard", { title: "Uprise Dashboard",
+          sub: "The operating board for Equity Uprise and cross-team workstreams." }],
+        ["uprise-admin.html", "seal", "Admin", { title: "Uprise Admin",
+          sub: "Operational controls for Equity Uprise systems and approvals." }],
+        ["ecosystem.html", "grid", "Ecosystem", { title: "Ecosystem",
+          sub: "Shared system overview across the McCluster control plane." }],
+        ["travel-desk.html", "lamp", "Travel Desk", { title: "Travel Desk",
+          sub: "Movement, routing and travel operations in one room." }],
       ],
     },
     home: {
@@ -178,8 +199,25 @@
       slots: [
         ["hire.html", "case", "Hire", { title: "Hire the agency",
           sub: "Brand films, photography, web builds, campaign strategy. One team, start to finish." }],
+        ["portfolio.html", "frame", "Portfolio", { title: "Portfolio",
+          sub: "Selected projects, campaigns and production highlights." }],
+        ["gallery.html", "shot", "Gallery", { title: "Gallery",
+          sub: "Photography, visuals and published image sets." }],
         [MAP, "grid", "Everything", { title: "Every room in the house",
-          sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the three wings do not carry." }],
+          sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the wings do not carry." }],
+      ],
+    },
+    sites: {
+      home: "sites.html",
+      slots: [
+        ["sites.html", "laptop", "Sites", { title: "Sites",
+          sub: "The client-site command room and publishing surface." }],
+        ["inner-room.html", "chat", "Inner Room", { title: "Inner Room",
+          sub: "Client-facing conversation and check-in space." }],
+        ["sent.html", "paper", "Sent", { title: "Sent",
+          sub: "Outbound communication records and receipts." }],
+        ["give.html", "gift", "Give", { title: "Give",
+          sub: "Contribution and support flows." }],
       ],
     },
     profile: {
@@ -189,6 +227,10 @@
           sub: "The McCluster network: your profile, posts, comments, reactions and the activity happening across the ecosystem." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
+        ["pay.html", "card", "Pay", { title: "Payments",
+          sub: "Billing, subscriptions and saved payment methods." }],
+        ["onboard.html", "desk", "Onboard", { title: "Onboard",
+          sub: "First-run setup and account activation." }],
       ],
     },
   };
@@ -205,53 +247,32 @@
      THE ANCHOR LAW SCALES WITH THIS LIST. morph() opens a wing as
      slots.length + 1 cells, so a bar of N tabs needs wings of N-1 rooms or
      the capsule changes width on a long-press and drags the held tab out of
-     its own column. Three tabs, therefore two rooms per wing. Change this
+     its own column. Five tabs, therefore four rooms per wing. Change this
      list and every wing changes with it. */
-  var ORDER = ["music", "home", "profile"];
-
-  /* THE BAR IS THREE COLUMNS NOW, AND THIS ENFORCES IT.
-
-     Equity Uprise, Whip Equipped and PRIM3 are put away while the site
-     concentrates on the music and on Mnet. Put away, not deleted: every
-     page and every route still exists and still answers, and restoring a
-     column is adding its tab back to ORDER and its wing back to WINGS.
-
-     Thirty-two pages carry the bar as hand-written markup rather than
-     letting buildBar() make it, so editing this file alone would have left
-     the old five-tab bar on all of them. Those pages are edited too — but
-     a bar is also the kind of markup that gets copy-pasted into the next
-     page somebody writes, so anything in the DOM claiming a column this
-     build does not serve is removed here as well. Removed, not hidden with
-     CSS: a hidden nav still reaches a screen reader and still takes tab
-     focus, which is the opposite of putting something away. */
-  Array.prototype.forEach.call(dock.querySelectorAll("[data-appnav]"), function (tab) {
-    if (ORDER.indexOf(tab.getAttribute("data-appnav")) === -1 && tab.parentNode) {
-      tab.parentNode.removeChild(tab);
-    }
-  });
+  var ORDER = ["music", "uprise", "home", "sites", "profile"];
+  var HAS_ALL = ORDER.every(function (k) { return !!dock.querySelector('[data-appnav="' + k + '"]'); });
+  if (!HAS_ALL) {
+    var stale = dock;
+    dock = buildBar();
+    if (stale && stale.parentNode) stale.parentNode.removeChild(stale);
+  }
 
   /* the coin: the wing this page lives in wears the filled gold circle */
   var PAGE_WING = {
     "listen.html": "music",
     "album.html": "music", "films.html": "music", "catalogue.html": "music",
     "license.html": "music",
-    /* The civic rooms had their own column; it is put away, so they claim
-       no coin rather than lighting one that is not on the bar. The pages
-       still answer — nothing here deletes a room, it only stops the bar
-       pointing at one. */
+    "dashboard.html": "uprise", "uprise-admin.html": "uprise",
+    "ecosystem.html": "uprise", "travel-desk.html": "uprise",
     /* the front door is the house: the landing page opens on the emblem,
        so / and /index.html light the M coin; the record lives behind Music */
     "": "home", "index.html": "home",
     "hire.html": "home",
-    "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
     "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
-    /* The fifth column is put away with Whip Equipped. These rooms keep
-       working; they simply light no coin, and are reached through the map
-       under Everything. */
-    "sites.html": "home", "inner-room.html": "home",
-    "sent.html": "home", "give.html": "home"
+    "sites.html": "sites", "inner-room.html": "sites",
+    "sent.html": "sites", "give.html": "sites"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
        wing: the site's own ledger files them under matthew, and neither page
        says the word "uprise" anywhere. Lighting a coin there would be an
