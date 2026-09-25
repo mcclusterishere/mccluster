@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>The Lanes · distribution control</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
@@ -66,10 +66,14 @@
     .gates .no  { color: #ff8a8c; }
     .gates small { display: block; color: var(--cream-dim); font-size: .74rem; line-height: 1.5; margin-top: .15rem; }
     .gates .n { color: var(--cream-dim); font-weight: 800; font-size: .7rem; font-variant-numeric: tabular-nums; }
-    .cred { display: grid; grid-template-columns: repeat(auto-fit,minmax(9rem,1fr)); gap: .4rem; margin: .6rem 0; }
-    .cred label { display: grid; gap: .2rem; font-weight: 800; font-size: .58rem; letter-spacing: .1em;
+    /* minmax(0,...) on both axes of this pair. A bare 1fr track floors at
+       the widest min-content inside it, and these inputs carry placeholders
+       long enough to push that past the cell — which is what made this page
+       scroll sideways on a phone. */
+    .cred { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(9rem,100%),1fr)); gap: .4rem; margin: .6rem 0; }
+    .cred label { display: grid; grid-template-columns: minmax(0,1fr); min-width: 0; gap: .2rem; font-weight: 800; font-size: .58rem; letter-spacing: .1em;
       text-transform: uppercase; color: var(--cream-dim); }
-    .cred input, .cred select { padding: .6rem .7rem; border-radius: 9px; border: 0; font: 600 max(16px,.85rem) var(--ui);
+    .cred input, .cred select { width: 100%; min-width: 0; box-sizing: border-box; padding: .6rem .7rem; border-radius: 9px; border: 0; font: 600 max(16px,.85rem) var(--ui);
       color: var(--cream); background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--edge); }
     .acts { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .6rem; }
     .acts button, .acts a { border: 0; border-radius: 10px; cursor: pointer; text-decoration: none;
