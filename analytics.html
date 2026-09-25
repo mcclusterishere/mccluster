@@ -193,6 +193,9 @@
       color:#d9a441;background:rgba(217,164,65,.1)}
     figure{margin:0}
     .an-sec svg.bd-svg{display:block;width:100%;height:auto;overflow:visible}
+    .ins-chart-block{margin-top:1rem}
+    .ins-chart-detail{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bd-edge)}
+    .bd-bar-chart{min-height:9rem}
 
     /* The Insights panels were built against control-system.css tokens on
        their own page. They render here, so the few they need are mapped
@@ -378,8 +381,9 @@
   })();
   </script>
 <script src="js/backend.js"></script>
-<script src="js/insights.js?v=__STAMP__" defer></script>
+<!-- Shared chart primitives must exist before either reporting client binds. -->
 <script src="js/analytics-board.js?v=__STAMP__"></script>
+<script src="js/insights.js?v=__STAMP__" defer></script>
 <script src="js/analytics-product.js"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
