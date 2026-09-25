@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 252,
+  "candidate_count": 253,
   "capability_source_count": 97,
-  "support_only_count": 155,
+  "support_only_count": 156,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -1603,6 +1603,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generic lead-intake hardening migration secures shared CRM intake and does not define a distinct Equity Uprise capability."
+    },
+    {
+      "path": "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared owner analytics/read-authority migration is discovered by the Equity Uprise repo audit because it references owner/admin authority, but it does not define an independent Equity Uprise capability."
     },
     {
       "path": "supabase/production-ledger.json",
