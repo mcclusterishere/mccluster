@@ -77,18 +77,20 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
       rm -f /etc/mccluster-node/capabilities.json
     fi
-    if [[ -f "${BACKUP_DIR}/reconcile-script" ]]; then
-      install -d -o root -g root -m 0755 "${RECONCILE_TARGET}"
-      install -o root -g root -m 0755 "${BACKUP_DIR}/reconcile-script" "${RECONCILE_SCRIPT}"
-    elif [[ -f "${BACKUP_DIR}/new-reconcile-script" ]]; then
-      rm -f "${RECONCILE_SCRIPT}"
-    fi
     systemctl daemon-reload || true
     for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
       if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
         systemctl try-restart "${unit}" || true
       fi
     done
+  fi
+  # The reconciler has its own backup marker so it can be restored even if this
+  # was the first Core deployment and there was no prior Core tree to restore.
+  if [[ -f "${BACKUP_DIR}/reconcile-script" ]]; then
+    install -d -o root -g root -m 0755 "${RECONCILE_TARGET}"
+    install -o root -g root -m 0755 "${BACKUP_DIR}/reconcile-script" "${RECONCILE_SCRIPT}"
+  elif [[ -f "${BACKUP_DIR}/new-reconcile-script" ]]; then
+    rm -f "${RECONCILE_SCRIPT}"
   fi
   exit "${rc}"
 }
