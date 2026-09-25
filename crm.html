@@ -146,7 +146,7 @@
     "use strict";
     var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
     var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-    var OWNER = "matthew@mccluster.org";
+    var OWNER = "matthew@mccluster.org";   // the sign-in default only, never the gate
     var el = function (id) { return document.getElementById(id); };
     var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
     var STATUSES = ["new", "replied", "booked", "closed"];
@@ -158,9 +158,12 @@
       return Math.round(m / 1440) + "d";
     }
 
-    function authed() {
-      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
-      return u && (u.email || "").toLowerCase() === OWNER ? u : null;
+    /* Signed in is this browser's business; whether this account is the desk
+       is the database's. The second question is the one that decides whether
+       the leads below are readable at all, so it is asked of eu_is_admin()
+       rather than compared against a string here. See js/office.js. */
+    function signedIn() {
+      return (window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user()) || null;
     }
 
     el("signin").addEventListener("click", function () {
@@ -263,7 +266,13 @@
     });
 
     function boot() {
-      if (authed()) { el("gate").hidden = true; el("desk").hidden = false; load(); }
+      if (!signedIn()) return;
+      MCCOffice.open(function () {
+        el("gate").hidden = true; el("desk").hidden = false; load();
+      }, function () {
+        el("gateNote").textContent =
+          "Signed in, but this account is not on the desk, so the leads stay closed.";
+      });
     }
     boot();
     setTimeout(boot, 800); // the magic-link landing settles a beat after load

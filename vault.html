@@ -237,7 +237,12 @@
         gate("Signed in, but the vault refused the read. Run docs/the-vault.sql, and make sure this is the owner account.");
       });
     }
-    if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org") boot(); else gate();
+    /* The database decides, not a string in this file: MCCOffice.open asks
+       eu_is_admin(), the same predicate the RLS policies behind these reads
+       use. The old line compared an email AND tested MCC_SUPA.token(), which
+       returns a Promise and is therefore always truthy — so it tested nothing.
+       See js/office.js. */
+    MCCOffice.open(boot, function () { gate(); });
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
