@@ -62,3 +62,18 @@ test('reconciler ignores directory mtimes while still attesting live file conten
   assert.match(source, /--exclude '\.mccluster-deploy\.json'/,
     'the separately attested deployment manifest must stay outside the Core file comparison');
 });
+
+
+test('the OVH reconciler itself is a versioned deploy artifact with rollback', async () => {
+  const [service, bootstrap, deploy] = await Promise.all([
+    read('core/systemd/mccluster-vps-reconcile.service'),
+    read('scripts/bootstrap-vps-self-management.sh'),
+    read('scripts/deploy-ovh-core.sh'),
+  ]);
+
+  assert.match(service, /ExecStart=\/opt\/mccluster\/reconcile\/mccluster-vps-reconcile\.sh/);
+  assert.match(bootstrap, /\/opt\/mccluster\/reconcile\/mccluster-vps-reconcile\.sh/);
+  assert.match(deploy, /scripts\/mccluster-vps-reconcile\.sh/);
+  assert.match(deploy, /BACKUP_DIR}\/reconcile-script/);
+  assert.match(deploy, /RECONCILE_SCRIPT/);
+});
