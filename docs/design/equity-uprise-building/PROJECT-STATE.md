@@ -1113,12 +1113,15 @@ The practical technical lab architecture is no longer B1-centric.
 
 Implemented in the distributed pass:
 - floor-scoped electronics selectors for B1, F1–F6 and L7;
-- **eleven** guided practical scenarios spanning B1, every above-grade floor, the roof, two cross-floor backbone/uplink incidents, and a dedicated Floor 2 Wi-Fi outage;
+- **26** guided practical scenarios: **24 floor-native labs** with at least three on each of B1, F1, F2, F3, F4, F5, F6 and L7, plus **2 cross-floor** backbone/uplink incidents;
+- stable `scenario_id` addressing so one canonical `source_lab_id` may support multiple floor exercises without selecting an arbitrary floor;
+- legacy source-lab lookup fails closed when the same source skill is reused and requires the distributed `scenario_id` instead;
+- the current Floor 2 learner-first Wi-Fi scenario `EU-DIST-F2-WIFI-OFFLINE-V1` is preserved;
 - scenario-specific target-selector overrides so a source catalog lab can operate on one floor without mutating the canonical 40-lab catalog;
-- direct binding to canonical competency rubric IDs;
-- viewer metadata for floor scope and preferred camera/floor focus;
+- direct binding to canonical competency rubric IDs and federal-training IDs derived only from the canonical federal-training bindings;
+- viewer metadata for home floor, program context, floor scope and preferred camera/floor focus;
 - explicit generated-roof `L7-` electronics recognition in spatial binding;
-- deterministic verification that each distributed scenario starts, materializes a fault, stays within its declared floor scope, completes its canonical verification path and remains SANDBOX-only.
+- deterministic verification that all 26 distributed scenarios start, materialize a fault, stay within their declared floor scope, complete their canonical verification path and remain SANDBOX-only.
 
 ### Learner-first diagnostic sandbox V1 — ACTIVE
 
