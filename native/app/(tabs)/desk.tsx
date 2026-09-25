@@ -1,11 +1,9 @@
 /**
- * THE DESK — the fifth tab.
+ * THE DESK — a reachable utility screen, not a primary tab.
  *
- * The bar is five tabs and the law says it is always labelled, so the fifth
- * slot has to be a real room rather than a placeholder. This is the honest
- * version of that room for the first build: what the app is, what it can do
- * on device that a page cannot, and the doors to the parts of the house that
- * have not been brought over yet.
+ * The current bar has three destinations. This screen remains available for
+ * what the app can do on device that a page cannot, plus doors to parts of
+ * the house that have not been brought over yet.
  *
  * Signed-in state, the client console and the sales lane are the next
  * surfaces. Nothing here pretends they already exist.
