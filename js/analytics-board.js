@@ -249,6 +249,39 @@
       'aria-label="' + esc(opts.label || "Page views and visitors per day") + '">' + svg.join("") + "</svg>";
   }
 
+
+  function barChart(rows, opts) {
+    opts = opts || {};
+    if (!rows || !rows.length) return "";
+    var key = opts.key || "key";
+    var value = opts.value || "value";
+    var labelFor = opts.labelFor || function (v) { return String(v == null ? "—" : v); };
+    var title = opts.label || "Ranked values";
+    var maxRows = Math.max(1, Math.min(Number(opts.limit) || 12, rows.length));
+    var data = rows.slice(0, maxRows);
+    var W = 820, rowH = 34, P = { t: 18, r: 62, b: 20, l: 190 };
+    var H = P.t + P.b + data.length * rowH;
+    var iw = W - P.l - P.r;
+    var max = data.reduce(function (m, r) { return Math.max(m, Number(r[value]) || 0); }, 0) || 1;
+    var svg = [];
+    data.forEach(function (r, i) {
+      var v = Number(r[value]) || 0;
+      var y = P.t + i * rowH;
+      var w = Math.max(v > 0 ? 2 : 0, (v / max) * iw);
+      var label = labelFor(r[key]);
+      svg.push('<text x="' + (P.l - 10) + '" y="' + (y + 21) +
+        '" text-anchor="end" class="bd-axis">' + esc(label) + "</text>");
+      svg.push('<rect x="' + P.l + '" y="' + (y + 6) + '" width="' + iw +
+        '" height="18" rx="6" fill="var(--bd-grid)"/>');
+      svg.push('<rect x="' + P.l + '" y="' + (y + 6) + '" width="' + w.toFixed(1) +
+        '" height="18" rx="6" fill="' + (opts.color || SERIES[0].color) + '" fill-opacity=".78"/>');
+      svg.push('<text x="' + Math.min(W - 6, P.l + w + 8).toFixed(1) + '" y="' + (y + 20) +
+        '" class="bd-mark" fill="var(--bd-faint)">' + num(v) + "</text>");
+    });
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="bd-svg bd-bar-chart" role="img" aria-label="' +
+      esc(title) + '">' + svg.join("") + "</svg>";
+  }
+
   function table(days) {
     return '<div class="bd-scroll"><table class="bd-table">' +
       "<caption>Page views and visitors per day</caption>" +
@@ -551,6 +584,6 @@
     rollup: rollup, mount: mount, ranges: RANGES, series: SERIES,
     /* Shared so the Insights screen draws the same marks from the same
        validated hues. One chart implementation, two boards. */
-    lineChart: chart, ranked: ranked, num: num, esc: esc, dayLabel: dayLabel
+    lineChart: chart, barChart: barChart, ranked: ranked, num: num, esc: esc, dayLabel: dayLabel
   };
 })(window, document);
