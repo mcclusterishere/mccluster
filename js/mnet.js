@@ -997,4 +997,57 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+
+  /* ---------- THE HANDLE IS THE USERNAME, SO SAY SO WHILE THEY TYPE ----
+     Every account already picks one here and the database has always made
+     it unique. What it could not do was tell you BEFORE you submitted: you
+     filled the whole form, pressed save, and got the name back as an error.
+     mccluster_id_check answers while the field is still focused, and
+     answers with the reason rather than a bare "unavailable".
+
+     It is advisory on purpose. The unique index is what actually decides,
+     because somebody can claim the name between this answer and the save. */
+  (function handleAvailability() {
+    var field = $("mnHandle");
+    if (!field || !window.MCC_SUPA) return;
+
+    var note = document.createElement("p");
+    note.className = "mn__hint";
+    note.id = "mnHandleState";
+    note.setAttribute("role", "status");
+    field.closest(".mn__handle-row").insertAdjacentElement("afterend", note);
+
+    var timer = null, seq = 0;
+    function say(text, kind) {
+      note.textContent = text || "";
+      note.style.color = kind === "bad" ? "#ff8e8e" : kind === "ok" ? "#9fdaa9" : "";
+    }
+
+    function ask() {
+      var want = field.value.trim();
+      if (!want) { say(""); return; }
+      var mine = ++seq;
+      say("Checking…");
+      window.MCC_SUPA.token().then(function (t) {
+        if (!t) return null;
+        return fetch(window.MCC_SUPA.url + "/rest/v1/rpc/mccluster_id_check", {
+          method: "POST",
+          headers: { apikey: window.MCC_SUPA.key, authorization: "Bearer " + t,
+                     "content-type": "application/json" },
+          body: JSON.stringify({ p_id: want })
+        }).then(function (r) { return r.ok ? r.json() : null; });
+      }).then(function (out) {
+        if (mine !== seq) return;              // a newer keystroke won
+        if (!out) { say(""); return; }         // cannot check: the save still will
+        say(out.ok ? "@" + want + " is free." : out.reason, out.ok ? "ok" : "bad");
+      }).catch(function () { if (mine === seq) say(""); });
+    }
+
+    field.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(ask, 350);            // a keystroke is not a question
+    });
+    field.addEventListener("blur", function () { clearTimeout(timer); ask(); });
+  })();
+
 })();

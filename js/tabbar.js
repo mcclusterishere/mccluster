@@ -111,10 +111,15 @@
      hidden with CSS still reaches a screen reader and still takes tab
      focus.
 
-     matthew-mccluster.html is the first real user: it is the page a hiring
-     manager opens from a job application, and a bar reading
-     "Music · Equity Uprise · HERE · Shakes · Profile" is not what that
-     visitor should be handed. */
+     matthew-mccluster.html used to opt out, on the reasoning that a hiring
+     manager opening it from a job application should not be handed a bar
+     reading "Music · Equity Uprise · HERE · Shakes · Profile". The bar is
+     three columns now and the site is the music, the house and Mnet, so
+     that reasoning no longer holds: the page was simply a dead end with no
+     way onward. It carries the bar like everything else. demo.html and
+     embed.html still opt out, and should: one is a client's own site
+     preview and the other renders inside somebody else's page, and our
+     navigation belongs in neither. */
   var dock = document.querySelector(".appbar");
   if (document.body.hasAttribute("data-no-appbar")) {
     if (dock && dock.parentNode) dock.parentNode.removeChild(dock);
