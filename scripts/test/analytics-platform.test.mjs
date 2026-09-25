@@ -216,9 +216,9 @@ test('content analytics is windowed and exposes deep track and media detail', as
   ]);
   assert.match(insights,/rpc\("analytics_content",args\)/);
   assert.match(insights,/rpc\("analytics_content_events",args\)/);
-  assert.match(insights,/rpc\("analytics_acquisition",args\)/);
-  assert.match(insights,/rpc\("analytics_paths"/);
-  assert.match(insights,/rpc\("analytics_funnel"/);
+  assert.match(insights,/\["acquisition", null, \["analytics_acquisition",args\]/);
+  assert.match(insights,/\["paths", null, \["analytics_paths"/);
+  assert.match(insights,/\["funnel", null, \["analytics_funnel"/);
   for(const field of ['track starts','repeat listener-track pairs','full plays','completions','shares','Media event mix','Track performance']){
     assert.ok(insights.includes(field), field+' must be visible in Content reporting');
   }
