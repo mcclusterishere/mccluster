@@ -58,6 +58,9 @@
 
   var S = session();
   var DATA = {}, DAYS = 7;
+  /* The last answer per panel, so a layout change redraws at the new
+     width without asking the database again. */
+  var LAST = {};
 
   function api(path) {
     return fetch(SB + "/rest/v1/" + path, {
@@ -137,6 +140,11 @@
       return '<p class="ins__none ins__none--stop"><b>That view is missing.</b> ' +
         'The panel is waiting on a migration, not on traffic. ' + esc(m) + "</p>";
     }
+    if (/statement timeout|canceling statement/i.test(m) || err.status === 500 && /timeout/i.test(m)) {
+      return '<p class="ins__none ins__none--stop"><b>The database gave up on this read.</b> ' +
+        'It took longer than the 8 seconds a signed-in read is allowed, so it was cancelled. ' +
+        'This is a slow view, not an empty one.</p>';
+    }
     return '<p class="ins__none ins__none--stop"><b>This did not load.</b> ' + esc(m) + "</p>";
   }
 
@@ -191,16 +199,52 @@
 
     if (!rows.length || !B.lineChart) { el("insTrend").innerHTML = ""; return; }
     /* The view hands these back newest first; a time axis runs the other way. */
-    var series = [
+    line("insTrend", rows.slice().reverse(), [
       { key: "sessions", label: "Sessions", color: HUE_A },
       { key: "engaged_sessions", label: "Engaged", color: HUE_B }
-    ];
-    el("insTrend").innerHTML = legend(series) +
-      B.lineChart(rows.slice().reverse(), {
-        id: "insTrendSvg", xKey: "day", series: series,
-        label: "Sessions and engaged sessions per day",
-        labelFor: function (v) { return String(v).slice(5); }
-      });
+    ], "Sessions and engaged sessions per day");
+    paintQuality(rows);
+  }
+
+  /* ---------- drawing ----------------------------------------------
+     Every chart is drawn at the width its host is shown at (see
+     js/analytics-charts.js), with a tooltip that works on tap. */
+  var C = w.MCCCharts || {};
+  function tipRow(color, label, value) {
+    return '<span><i style="background:' + color + '"></i>' + esc(label) + "<em>" + esc(value) + "</em></span>";
+  }
+  function line(id, rows, series, label) {
+    var host = el(id);
+    if (!host || !B.lineChart) return;
+    host.innerHTML = legend(series) + '<div class="an-chart">' + B.lineChart(rows, {
+      id: id + "Svg", xKey: "day", series: series, label: label,
+      width: C.widthOf ? C.widthOf(host) : 340,
+      labelFor: function (v) { return String(v).slice(5); }
+    }) + "</div>";
+    if (C.wireTips) C.wireTips(host.querySelector(".an-chart"), rows, function (r) {
+      return "<b>" + esc(r.day) + "</b>" + series.map(function (sr) {
+        return tipRow(sr.color, sr.label, num(r[sr.key]));
+      }).join("");
+    });
+  }
+  function cols(id, rows, opts, tip) {
+    var host = el(id);
+    if (!host || !C.columns) return;
+    opts.width = C.widthOf(host);
+    host.innerHTML = '<div class="an-chart">' + C.columns(rows, opts) + "</div>";
+    C.wireTips(host.querySelector(".an-chart"), rows, tip);
+  }
+
+  /* Friction per day, from the same engagement rows: when the site
+     frustrated people, and when it broke. */
+  function paintQuality(rows) {
+    var host = el("insQuality");
+    if (!host) return;
+    if (!rows || !rows.length) { host.innerHTML = why(null); return; }
+    line("insQuality", rows.slice().reverse(), [
+      { key: "rage_clicks", label: "Rage clicks", color: HUE_A },
+      { key: "errors", label: "Errors", color: HUE_B }
+    ], "Rage clicks and errors per day");
   }
 
   function paintFunnel(rows, err) {
@@ -247,6 +291,14 @@
     /* The honesty that makes the number usable: with four days of
        history "this month" is not a month, and 5% reads like churn when
        it is really youth. The view carries the window so this can say so. */
+    var trend = el("insStickyTrend");
+    if (trend) {
+      if (rows.length > 1) line("insStickyTrend", rows.slice().reverse(), [
+        { key: "dau", label: "Daily", color: HUE_A },
+        { key: "mau", label: "Monthly", color: HUE_B }
+      ], "Daily and monthly active people");
+      else trend.innerHTML = "";
+    }
     if (r.window_is_full === false) {
       var n = el("insStickyNote");
       n.hidden = false;
@@ -300,6 +352,142 @@
     }), { hue: HUE_B });
   }
 
+  function paintCohort(rows, err) {
+    var host = el("insCohort");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    DATA.retention = rows;
+    host.innerHTML = rows.length ? (C.retention ? C.retention(rows) : "") : why(null);
+  }
+
+  function paintVisitors(rows, err) {
+    var stats = el("insVisitors"), host = el("insPlatforms");
+    if (!stats || !host) return;
+    if (err) { stats.innerHTML = why(err); host.innerHTML = ""; return; }
+    var people = rows.filter(function (r) { return !r.is_bot; });
+    DATA.visitors = people;
+    if (!people.length) { stats.innerHTML = why(null); host.innerHTML = ""; return; }
+    var back = people.filter(function (r) { return (Number(r.sessions) || 0) > 1; }).length;
+    var acct = people.filter(function (r) { return r.has_account; }).length;
+    stats.innerHTML = stat(num(people.length), "visitors") +
+      stat(Math.round((back / people.length) * 100) + "%", "came back", num(back) + " people") +
+      stat(num(acct), "have an account");
+    var by = {};
+    people.forEach(function (r) { var k = r.platform || "Unknown"; by[k] = (by[k] || 0) + 1; });
+    host.innerHTML = bars(Object.keys(by).map(function (k) {
+      return { key: k, value: by[k], display: num(by[k]),
+        note: Math.round((by[k] / people.length) * 100) + "%" };
+    }).sort(function (x, y) { return y.value - x.value; }).slice(0, 8), { hue: HUE_B });
+  }
+
+  function paintLive(rows, err) {
+    var host = el("insLive");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    DATA.live = rows;
+    var ago = function (t) {
+      var sec = Math.max(0, Math.round((Date.now() - new Date(t).getTime()) / 1000));
+      return sec < 60 ? sec + "s ago" : Math.round(sec / 60) + "m ago";
+    };
+    host.innerHTML = '<div class="an-now"><b>' + num(rows.length) + "</b><span>" +
+      (rows.length === 1 ? "person on the site right now" : "people on the site right now") + "</span></div>" +
+      (rows.length ? '<ul class="an-live">' + rows.map(function (r) {
+        var where = [r.city, r.country].filter(Boolean).join(", ") || "Location not reported";
+        return '<li><b>' + esc(r.on_page || "—") + "</b><span>" + esc(where) + " · " + num(r.events) +
+          " events · " + esc(ago(r.last_seen)) + "</span></li>";
+      }).join("") + "</ul>" : '<p class="ins__none">Nobody right now. That is a live read, not a failure.</p>');
+  }
+
+  /* Sessions per hour for the last 48 hours, bucketed in the reader's own
+     timezone, bots excluded. The YouTube Studio realtime pattern. */
+  function paintHourly(rows, err) {
+    var host = el("insHourly");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    var now = new Date(); now.setMinutes(0, 0, 0);
+    var start = now.getTime() - 47 * 36e5;
+    var buckets = [];
+    for (var i = 0; i < 48; i++) {
+      var t = new Date(start + i * 36e5);
+      buckets.push({ key: t.toISOString(), hour: t, value: 0 });
+    }
+    rows.forEach(function (r) {
+      if (r.is_bot) return;
+      var idx = Math.floor((new Date(r.started).getTime() - start) / 36e5);
+      if (idx >= 0 && idx < 48) buckets[idx].value += 1;
+    });
+    DATA.hourly = buckets.map(function (b) { return { hour: b.key, sessions: b.value }; });
+    var total = buckets.reduce(function (a, b) { return a + b.value; }, 0);
+    var label = function (iso) {
+      var t = new Date(iso);
+      return t.getTime() >= now.getTime() ? "Now" : t.toLocaleString([], { weekday: "short", hour: "numeric" });
+    };
+    el("insHourlyTotal").innerHTML = stat(num(total), "sessions in 48 hours") +
+      stat(num(buckets.slice(-24).reduce(function (a, b) { return a + b.value; }, 0)), "in the last 24");
+    cols("insHourly", buckets, { key: "value", xKey: "key", color: HUE_B, labelFor: label,
+      label: "Sessions per hour, last 48 hours" }, function (b) {
+      return "<b>" + esc(b.hour.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })) + "</b>" +
+        tipRow(HUE_B, "Sessions", num(b.value));
+    });
+  }
+
+  function paintPageHealth(rows, err) {
+    var busy = el("insPages"), slow = el("insSlow");
+    if (!busy || !slow) return;
+    if (err) { busy.innerHTML = why(err); slow.innerHTML = ""; return; }
+    DATA.pages = rows;
+    if (!rows.length) { busy.innerHTML = why(null); slow.innerHTML = ""; return; }
+    busy.innerHTML = bars(rows.slice(0, 12).map(function (r) {
+      return { key: r.path, value: Number(r.page_views) || 0, display: num(r.page_views),
+        note: Math.round(Number(r.avg_seconds) || 0) + "s avg · " + num(r.rage_clicks) + " rage · " + num(r.errors) + " errors" };
+    }), { hue: HUE_B });
+    /* Slowest by 75th-percentile largest paint, among pages with enough
+       views for the percentile to mean something. */
+    var measured = rows.filter(function (r) { return r.lcp_p75_ms != null && (Number(r.page_views) || 0) >= 20; })
+      .sort(function (a, b) { return b.lcp_p75_ms - a.lcp_p75_ms; }).slice(0, 8);
+    slow.innerHTML = measured.length ? bars(measured.map(function (r) {
+      return { key: r.path, value: Number(r.lcp_p75_ms) || 0, display: num(r.lcp_p75_ms) + " ms",
+        note: "server " + num(r.ttfb_p75_ms) + " ms" };
+    }), { hue: HUE_A }) : '<p class="ins__none">No page has 20 measured views yet.</p>';
+  }
+
+  function paintFriction(rows, err) {
+    var host = el("insFriction");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    DATA.friction = rows;
+    if (!rows.length) { host.innerHTML = why(null); return; }
+    host.innerHTML = bars(rows.map(function (r) {
+      return { key: (r.label ? "“" + r.label + "” " : "") + (r.element || "") + " · " + r.path,
+        value: Number(r.hits) || 0, display: num(r.hits),
+        note: String(r.kind || "").replace(/_/g, " ") + " · " + num(r.sessions) + " sessions" };
+    }), { hue: HUE_A });
+  }
+
+  function paintSignals(rows, err) {
+    var host = el("insSignals");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    DATA.signals = rows;
+    if (!rows.length) { host.innerHTML = why(null); return; }
+    host.innerHTML = bars(rows.map(function (r) {
+      return { key: r.track_key, value: Number(r.momentum_score) || 0,
+        display: num(r.momentum_score),
+        note: "keep " + num(r.keep_score) + (r.deep_cut ? " · deep cut" : "") };
+    }), { hue: HUE_B });
+  }
+
+  function paintUnmapped(rows, err) {
+    var host = el("insUnmapped");
+    if (!host) return;
+    if (err) { host.innerHTML = why(err); return; }
+    DATA.unmapped = rows;
+    if (!rows.length) { host.innerHTML = '<p class="ins__none">Every event name has a stage. Nothing to map.</p>'; return; }
+    host.innerHTML = bars(rows.map(function (r) {
+      return { key: r.name, value: Number(r.hits) || 0, display: num(r.hits) };
+    }), { hue: HUE_B });
+  }
+
   /* ---------- load ------------------------------------------------- */
   function load() {
     var since = new Date(Date.now() - DAYS * 864e5).toISOString().slice(0, 10);
@@ -307,7 +495,15 @@
     var jobs = [
       ["engagement", "v_engagement_daily?select=*" + q + "&order=day.desc", paintEngagement],
       ["funnel", "v_funnel_daily?select=*" + q + "&order=day.desc", paintFunnel],
-      ["stickiness", "v_stickiness?select=*&order=day.desc&limit=1", paintSticky],
+      ["stickiness", "v_stickiness?select=*&order=day.desc&limit=30", paintSticky],
+      ["retention", "v_cohort_retention?select=*&order=cohort_week.asc,weeks_later.asc&limit=400", paintCohort],
+      ["visitors", "v_visitors?select=platform,sessions,has_account,is_bot&limit=10000", paintVisitors],
+      ["live", "v_live?select=session_id,last_seen,on_page,city,country,events&order=last_seen.desc&limit=25", paintLive],
+      ["hourly", "v_sessions?select=started,is_bot&started=gte." + new Date(Date.now() - 48 * 36e5).toISOString() + "&limit=10000", paintHourly],
+      ["pages", "v_page_health?select=path,page_views,avg_seconds,rage_clicks,dead_clicks,errors,lcp_p75_ms,ttfb_p75_ms&order=page_views.desc.nullslast&limit=60", paintPageHealth],
+      ["friction", "v_friction?select=path,element,label,kind,hits,sessions&order=hits.desc&limit=15", paintFriction],
+      ["signals", "v_track_signals?select=track_key,keep_score,momentum_score,momentum_rank,deep_cut&order=momentum_rank.asc&limit=15", paintSignals],
+      ["unmapped", "v_event_taxonomy_unmapped?select=name,hits,last_seen&order=hits.desc&limit=15", paintUnmapped],
       ["acquisition", "v_acquisition_quality?select=*&order=sessions.desc&limit=12", paintAcquisition],
       ["content", "v_content_performance?select=*&order=listeners.desc&limit=15", paintContent],
       ["paths", "v_paths?select=*&order=moves.desc&limit=12", paintPaths]
@@ -321,8 +517,11 @@
       .then(function (out) {
         var failed = 0;
         out.forEach(function (res, i) {
-          if (res.status === "fulfilled") jobs[i][2](res.value || [], null);
-          else { failed++; jobs[i][2]([], res.reason || new Error("failed")); }
+          var rows = res.status === "fulfilled" ? (res.value || []) : [];
+          var err = res.status === "fulfilled" ? null : (res.reason || new Error("failed"));
+          if (err) failed++;
+          LAST[jobs[i][0]] = [jobs[i][2], rows, err];
+          jobs[i][2](rows, err);
         });
         var stamp = el("insStamp");
         if (stamp) stamp.textContent = failed
@@ -341,7 +540,8 @@
      one that can disagree with the first. The board owns the buttons and
      broadcasts; this listens. */
   function shut(msg) {
-    ["insHero", "insFunnel", "insSticky", "insAcq", "insContent", "insPaths"].forEach(function (id) {
+    ["insHero", "insFunnel", "insSticky", "insAcq", "insContent", "insPaths", "insCohort", "insVisitors",
+     "insLive", "insHourly", "insPages", "insFriction", "insSignals", "insUnmapped", "insQuality"].forEach(function (id) {
       var host = el(id);
       if (host) host.innerHTML = '<p class="ins__none ins__none--stop"><b>Desk only.</b> ' + esc(msg) + "</p>";
     });
@@ -350,6 +550,9 @@
   }
 
   if (el("insHero")) {
+    d.addEventListener("mcc:layout", function () {
+      Object.keys(LAST).forEach(function (k) { LAST[k][0](LAST[k][1], LAST[k][2]); });
+    });
     d.addEventListener("mcc:range", function (e) {
       var n = e && e.detail && Number(e.detail.days);
       if (!n || n === DAYS) return;

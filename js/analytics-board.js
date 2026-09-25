@@ -187,8 +187,13 @@
     if (!days.length) return "";
     /* The right margin is reserved for the endpoint labels, which are the
        thing that stops identity resting on colour. 86 fits the longest of
-       them ("Page views") at 11px plus its 8px offset. */
-    var W = 820, H = 250, P = { t: 16, r: 86, b: 28, l: 46 };
+       them ("Page views") at 11px plus its 8px offset.
+
+       W is the width the chart is SHOWN at, in CSS pixels, when the caller
+       knows it. A fixed 820 squeezed into a phone column drew the axis at
+       about 4px; drawn at its real width, 11 stays 11. */
+    var W = Math.max(300, Math.round(opts.width || 820));
+    var H = W < 560 ? 220 : 250, P = { t: 16, r: 86, b: 28, l: 42 };
     var iw = W - P.l - P.r, ih = H - P.t - P.b;
 
     var max = 0;
@@ -211,7 +216,16 @@
         num(gv) + "</text>");
     }
 
-    series.forEach(function (s) {
+    /* End labels first, so two series that finish at the same value do not
+       print on top of each other: from the lowest up, each is lifted at
+       least one line above the one below it, so none falls into the dates. */
+    var ends = series.map(function (s, k) { return { k: k, y: y(days[days.length - 1][s.key]) + 4 }; })
+      .sort(function (p, q) { return q.y - p.y; });
+    for (var e = 1; e < ends.length; e++) ends[e].y = Math.min(ends[e].y, ends[e - 1].y - 13);
+    var endY = {};
+    ends.forEach(function (p) { endY[p.k] = p.y; });
+
+    series.forEach(function (s, k) {
       var pts = days.map(function (row, i) { return [x(i), y(row[s.key])]; });
       var line = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
       var base = (P.t + ih).toFixed(1);
@@ -224,7 +238,7 @@
         '" r="4" fill="' + s.color + '" stroke="var(--bd-card)" stroke-width="2"/>');
       /* Direct label at the endpoint: identity never rests on colour. The right
          padding above is reserved for exactly this. */
-      svg.push('<text x="' + (last[0] + 8).toFixed(1) + '" y="' + (last[1] + 4).toFixed(1) +
+      svg.push('<text x="' + (last[0] + 8).toFixed(1) + '" y="' + endY[k].toFixed(1) +
         '" class="bd-mark" fill="' + s.color + '">' + esc(s.label) + "</text>");
     });
 
@@ -295,6 +309,14 @@
     var state = { range: RANGES[0], model: null, error: null, loading: false, showTable: false, note: "" };
     var seq = 0;
 
+    /* The hero card spans the board; its padding and border are 34px. A
+       hidden board measures 0, so fall back to a phone column and let the
+       mcc:layout redraw correct it once it is shown. */
+    function chartWidth() {
+      var wdt = boardHost.clientWidth;
+      return wdt > 200 ? wdt - 34 : 340;
+    }
+
     function paint() {
       if (state.loading && !state.model) {
         boardHost.innerHTML = '<p class="bd-empty" role="status">Reading the collector…</p>';
@@ -355,7 +377,7 @@
               '<button class="bd-toggle" type="button" data-bd="table">' +
                 (state.showTable ? "Show chart" : "Show table") + "</button></div>" +
           "</header>" +
-          (state.showTable ? table(cur) : chart(cur, { id: "bdChart" })) +
+          (state.showTable ? table(cur) : chart(cur, { id: "bdChart", width: chartWidth() })) +
           '<div class="bd-tip" hidden></div>' +
         "</section>" +
 
@@ -455,6 +477,8 @@
         d.dispatchEvent(new CustomEvent("mcc:range", { detail: { days: found.days, id: found.id } }));
       } catch (e) { /* no CustomEvent: the board still works alone */ }
     });
+
+    d.addEventListener("mcc:layout", function () { if (state.model && !state.loading) paint(); });
 
     boardHost.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest('[data-bd="table"]');

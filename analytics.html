@@ -21,9 +21,10 @@
        dashboard at the same time. -->
   <style>
     :root{color-scheme:dark;background:#0b0d10;color:#f4f5f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
-    *{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:28px}
+    *{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:16px}
+    @media (min-width:40rem){.wrap{padding:28px}}
     header{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
-    h1,h2,h3,p{margin-top:0}.muted{color:#9ca3af}.grid{display:grid;gap:16px}.cols{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    h1,h2,h3,p{margin-top:0}.muted{color:#9ca3af}.grid{display:grid;gap:16px}.cols{grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr))}
     .card{background:#12161c;border:1px solid #252c35;border-radius:16px;padding:18px}
     input,select,button,textarea{font:inherit}input,select,textarea{width:100%;background:#0d1117;color:#fff;border:1px solid #303846;border-radius:10px;padding:11px}
     button{background:#fff;color:#080b0f;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
@@ -185,6 +186,37 @@
     .ins-note{margin-top:11px;padding:9px 11px;border-radius:9px;font-size:12.5px;line-height:1.45;
       color:#d9a441;background:rgba(217,164,65,.1)}
     figure{margin:0}
+
+    /* ===================== CHARTS DRAWN AT THEIR OWN WIDTH =====================
+       js/analytics-charts.js sizes every viewBox to the host's real width,
+       so these rules only place things; nothing here scales type. */
+    .an-chart{position:relative}
+    .an-svg{display:block;width:100%;height:auto}
+    .an-hit{cursor:pointer;outline:none}
+    .an-tip{position:absolute;top:4px;right:10px;min-width:9rem;max-width:calc(100% - 50px);pointer-events:none;
+      background:#0a0d11;border:1px solid #303846;border-radius:11px;padding:9px 11px;
+      box-shadow:0 14px 34px rgba(0,0,0,.5);font-size:12.5px;z-index:2}
+    .an-tip--left{right:auto;left:46px}
+    .an-tip b{display:block;margin-bottom:5px;font-size:11.5px;letter-spacing:.03em;color:var(--bd-dim)}
+    .an-tip span{display:flex;align-items:center;gap:6px;line-height:1.75}
+    .an-tip i{width:9px;height:9px;border-radius:3px;flex:none}
+    .an-tip em{margin-left:auto;padding-left:10px;font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
+
+    .an-now{display:flex;align-items:baseline;gap:10px;margin:4px 0 12px}
+    .an-now b{font-size:2.4rem;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+    .an-now span{font-size:13px;color:var(--bd-dim)}
+    .an-live{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+    .an-live li{display:grid;gap:2px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.025);min-width:0}
+    .an-live b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .an-live span{font-size:12px;color:var(--bd-faint);overflow-wrap:anywhere}
+
+    .an-ret{overflow-x:auto;margin-top:4px}
+    .an-ret__t{width:100%;border-collapse:separate;border-spacing:2px;font-size:13px}
+    .an-ret__t th,.an-ret__t td{padding:9px 8px;border:0;border-radius:6px;white-space:nowrap}
+    .an-ret__t thead th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bd-dim)}
+    .an-ret__t .n{text-align:right;font-variant-numeric:tabular-nums}
+    .an-ret__cell{color:#f4f5f7;font-weight:700}
+    .an-ret__na{color:var(--bd-faint);text-align:center}
     .an-sec svg.bd-svg{display:block;width:100%;height:auto;overflow:visible}
 
     /* The Insights panels were built against control-system.css tokens on
@@ -235,8 +267,10 @@
 
     <nav class="an-tabs" id="anTabs" role="tablist" aria-label="Analytics sections">
       <button type="button" class="an-tab is-on" data-sec="traffic" role="tab" aria-selected="true">Traffic</button>
+      <button type="button" class="an-tab" data-sec="live" role="tab" aria-selected="false">Live</button>
       <button type="button" class="an-tab" data-sec="audience" role="tab" aria-selected="false">Audience</button>
       <button type="button" class="an-tab" data-sec="content" role="tab" aria-selected="false">Content</button>
+      <button type="button" class="an-tab" data-sec="health" role="tab" aria-selected="false">Health</button>
       <button type="button" class="an-tab" data-sec="setup" role="tab" aria-selected="false">Setup</button>
     </nav>
 
@@ -249,6 +283,27 @@
           you run when a number above looks wrong.</p>
         <div id="recent" style="margin-top:11px"></div>
       </section>
+    </section>
+
+    <!-- ============ LIVE ============
+         Who is here now and the shape of the last two days, after the
+         YouTube Studio realtime screen on Mobbin: one number, then hours. -->
+    <section class="an-sec" data-sec="live" hidden>
+      <div class="an-grid">
+        <section class="an-panel">
+          <div class="an-ph"><h2>Right now</h2>
+            <button class="an-csv" type="button" data-csv="live">CSV</button></div>
+          <p class="bd-sub">Sessions active in the last few minutes, newest first.</p>
+          <div id="insLive"></div>
+        </section>
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>The last 48 hours</h2>
+            <button class="an-csv" type="button" data-csv="hourly">CSV</button></div>
+          <p class="bd-sub">Sessions started per hour, in your time zone, bots left out. Tap a bar for the hour.</p>
+          <div class="ins-stats" id="insHourlyTotal"></div>
+          <div id="insHourly" style="margin-top:12px"></div>
+        </section>
+      </div>
     </section>
 
     <!-- ============ SETUP ============
@@ -272,6 +327,13 @@
         <button id="createSite">Create</button>
       </div>
       <p class="muted">McCluster-managed site/domain products will be provisioned automatically. This form is for additional/external sites.</p>
+      </section>
+      <section class="an-panel" style="margin-top:16px">
+        <div class="an-ph"><h2>Events with no stage</h2>
+          <button class="an-csv" type="button" data-csv="unmapped">CSV</button></div>
+        <p class="bd-sub">Names the pixel sends that the taxonomy has no stage for, so the
+          funnel counts them as generic engagement. All time.</p>
+        <div id="insUnmapped"></div>
       </section>
     </section>
 
@@ -304,7 +366,24 @@
           <p class="bd-sub">Of everyone active this month, how many came back today.
             The number a traffic chart can never show.</p>
           <div class="ins-stats" id="insSticky"></div>
+          <div id="insStickyTrend" style="margin-top:14px"></div>
           <div class="ins-note" id="insStickyNote" hidden></div>
+        </section>
+
+        <section class="an-panel">
+          <div class="an-ph"><h2>Do they come back</h2>
+            <button class="an-csv" type="button" data-csv="retention">CSV</button></div>
+          <p class="bd-sub">Each row is the week people first arrived; each column is how
+            many of them returned that many weeks later. Darker is more.</p>
+          <div id="insCohort"></div>
+        </section>
+
+        <section class="an-panel">
+          <div class="an-ph"><h2>Who they are</h2>
+            <button class="an-csv" type="button" data-csv="visitors">CSV</button></div>
+          <p class="bd-sub">Every device the pixel has seen, bots left out. All time.</p>
+          <div class="ins-stats" id="insVisitors"></div>
+          <div id="insPlatforms" style="margin-top:12px"></div>
         </section>
 
         <section class="an-panel">
@@ -335,6 +414,46 @@
           as product: reach, repeat listeners, and plays per listener.</p>
         <div id="insContent"></div>
       </section>
+      <section class="an-panel an-wide" style="margin-top:12px">
+        <div class="an-ph"><h2>Momentum</h2>
+          <button class="an-csv" type="button" data-csv="signals">CSV</button></div>
+        <p class="bd-sub">What is rising right now, by momentum score, with how well each
+          track keeps a listener beside it.</p>
+        <div id="insSignals"></div>
+      </section>
+    </section>
+
+    <!-- ============ HEALTH ============
+         Where the site hurts: frustration, errors, slow pages and the exact
+         elements people fight with. -->
+    <section class="an-sec" data-sec="health" hidden>
+      <div class="an-grid">
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Frustration and errors</h2>
+            <button class="an-csv" type="button" data-csv="engagement">CSV</button></div>
+          <p class="bd-sub">Rage clicks and script errors per day, for the range above.</p>
+          <div id="insQuality"></div>
+        </section>
+        <section class="an-panel">
+          <div class="an-ph"><h2>Where people get stuck</h2>
+            <button class="an-csv" type="button" data-csv="friction">CSV</button></div>
+          <p class="bd-sub">The exact buttons and fields people click that do nothing, or
+            click again and again. All time.</p>
+          <div id="insFriction"></div>
+        </section>
+        <section class="an-panel">
+          <div class="an-ph"><h2>Busiest pages</h2>
+            <button class="an-csv" type="button" data-csv="pages">CSV</button></div>
+          <p class="bd-sub">Page views, with time on page and what went wrong there. All time.</p>
+          <div id="insPages"></div>
+        </section>
+        <section class="an-panel">
+          <div class="an-ph"><h2>Slowest pages</h2></div>
+          <p class="bd-sub">How long the main content takes to paint for three visitors in
+            four (75th percentile), on pages with at least 20 views.</p>
+          <div id="insSlow"></div>
+        </section>
+      </div>
     </section>
   </div>
 </main>
@@ -360,6 +479,9 @@
         }
       });
       if (found) history.replaceState(null, "", "#" + name);
+      /* A hidden section has no width to draw at, so its charts redraw
+         now that it has one. */
+      if (window.MCCCharts) window.MCCCharts.relayout();
     }
     tabs.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest("[data-sec]");
@@ -371,6 +493,7 @@
   </script>
 <script src="js/backend.js"></script>
 <script src="js/insights.js?v=__STAMP__" defer></script>
+<script src="js/analytics-charts.js?v=__STAMP__"></script>
 <script src="js/analytics-board.js?v=__STAMP__"></script>
 <script src="js/analytics-product.js"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
