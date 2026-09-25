@@ -230,9 +230,10 @@
     }else{
       renderInstall(site);
     }
-    try{document.dispatchEvent(new CustomEvent("mcc:analytics-property",{detail:{
+    window.MCC_ANALYTICS_PROPERTY={
       site_id:siteUuid(site),site_name:site.name,first_party:site.id===FIRST_PARTY
-    }}));}catch(_){}
+    };
+    try{document.dispatchEvent(new CustomEvent("mcc:analytics-property",{detail:window.MCC_ANALYTICS_PROPERTY}));}catch(_){}
     $("bdWho").textContent="Traffic · "+site.name;
     $("bdScope").textContent=site.id===FIRST_PARTY
       ? "First-party events from this site, read straight from the collector."
