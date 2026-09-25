@@ -10,7 +10,7 @@ Group=root
 Environment=HOME=/var/lib/mccluster/reconcile
 Environment=MCCLUSTER_REPO_URL=https://github.com/mcclusterishere/mccluster.git
 Environment=MCCLUSTER_DEPLOY_REF=deploy/ovh-production
-ExecStart=/usr/local/sbin/mccluster-vps-reconcile
+ExecStart=/opt/mccluster/reconcile/mccluster-vps-reconcile.sh
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
