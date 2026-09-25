@@ -980,7 +980,9 @@
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnPasswordChange").onclick = changePassword;
-    $("mnNewPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") changePassword(); });
+    $("mnNewPassword2").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); changePassword(); }
+    });
     wireAvatarPicker();
     wireTrackPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
