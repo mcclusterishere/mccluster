@@ -482,20 +482,14 @@ The Step 2 selector resolver supports floor-scoped selectors:
 - `level:<B1|F1-F6|L7>:type:<asset_type>`
 - `level:<B1|F1-F6|L7>:cable:<cable_type>`
 
-The distributed pack now contains eleven executable guided scenarios:
-- B1 rack/IDF power failure;
-- Floor 1 workstation-link failure;
-- Floor 2 Wi-Fi access-point/link failure;
-- Floor 2 public-forum AV multicast flood;
-- Floor 3 voice-VLAN failure;
-- Floor 4 media-production AV QoS degradation;
-- Floor 5 research-workstation VLAN mismatch;
-- Floor 6 command camera/VMS loss;
-- Level 7 roof BAS controller outage;
-- F4-to-B1 access-switch uplink failure;
-- F6-to-B1 backbone-fiber cut.
+The distributed pack now contains **26 executable guided scenarios**:
+- **24 floor-native scenarios** — three each on B1, F1, F2, F3, F4, F5, F6 and L7;
+- **2 cross-floor incidents** — F4-to-B1 uplink failure and F6-to-B1 backbone-fiber failure;
+- the current Floor 2 beginner Wi-Fi outage remains `EU-DIST-F2-WIFI-OFFLINE-V1` and keeps its learner-first diagnostic flow.
 
-Every scenario remains simulation-only and carries direct canonical competency IDs. Scenario definitions may narrow a Step 4A catalog lab's generic target selectors to an exact floor without changing the source catalog.
+Distributed scenarios are addressed by stable `scenario_id`. `source_lab_id` remains canonical provenance and may be reused across floors when one source skill legitimately supports multiple building exercises. A legacy lookup by `source_lab_id` is permitted only when exactly one distributed scenario resolves; reused/ambiguous source IDs fail closed and require `scenario_id`.
+
+Every scenario remains simulation-only, declares a home floor/program context when floor-native, carries direct canonical competency IDs, and inherits federal-training IDs only from the canonical federal-training bindings. Scenario definitions may narrow a Step 4A catalog lab's generic target selectors to an exact floor without changing the source catalog.
 
 ### Learner presentation contract
 
