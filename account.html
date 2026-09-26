@@ -581,7 +581,7 @@
       note.textContent = "Waiting for your browser or operating-system permission…";
       MCC_LOCATION.request().then(function (result) {
         if (result && result.ok) note.textContent = "Precise location shared for this visit.";
-        else if (result && result.reason === "denied") note.textContent = "Location permission was denied. Your account and swag eligibility are unaffected.";
+        else if (result && result.reason === "denied_or_unavailable" && result.code === 1) note.textContent = "Location permission was denied. Your account and swag eligibility are unaffected.";
         else if (result && result.reason === "privacy_signal") note.textContent = "Your browser privacy signal prevents precise-location collection.";
         else note.textContent = "Precise location was not available.";
       }).finally(function () { btn.disabled = false; });
