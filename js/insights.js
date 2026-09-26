@@ -316,14 +316,17 @@
       '<div class="ins-chart-detail">' + bars(acquisitionRows, { hue: HUE_B }) + "</div>";
   }
 
+  function trackKey(value) {
+    return String(value||"").toLowerCase().replace(/[-_]+/g," ").replace(/\s+/g," ").trim();
+  }
+
   function signupByTrack(rows) {
     var out = {};
     (rows||[]).forEach(function (r) {
       if (!r.track) return;
-      var k = String(r.track);
-      var x = out[k] || (out[k] = { accounts:0, confirmed:0, seconds:0, timed:0 });
+      var k = trackKey(r.track);
+      var x = out[k] || (out[k] = { label:String(r.track), accounts:0, seconds:0, timed:0 });
       x.accounts++;
-      if (r.confirmed_at) x.confirmed++;
       if (r.seconds_before_signup != null) { x.seconds += Number(r.seconds_before_signup)||0; x.timed++; }
     });
     return out;
@@ -336,7 +339,7 @@
         track:String(r.track||"—"),
         x:Number(r.listeners)||0,
         y:Number(r.plays_per_listener)||0,
-        accounts:(signupMap[r.track]&&signupMap[r.track].accounts)||0
+        accounts:(signupMap[trackKey(r.track)]&&signupMap[trackKey(r.track)].accounts)||0
       };
     });
     var W=760,H=310,P={l:48,r:24,t:24,b:44};
@@ -377,7 +380,6 @@
         repeats = total("repeat_listeners"), full = total("full_plays"),
         completes = total("completions"), shares = total("shares");
     var attributed=(signups||[]).filter(function(r){return !!r.track;});
-    var confirmed=(signups||[]).filter(function(r){return !!r.confirmed_at;});
     var bySignup=signupByTrack(signups||[]);
 
     var albums = {};
@@ -404,13 +406,13 @@
              (Number(b.starts)||0)-(Number(a.starts)||0);
     });
 
-    var signupTracks=Object.keys(bySignup).map(function(track){
-      var s=bySignup[track], match=tracks.find(function(r){return r.track===track;})||{};
+    var signupTracks=Object.keys(bySignup).map(function(key){
+      var s=bySignup[key], match=tracks.find(function(r){return trackKey(r.track)===key;})||{};
       var listeners=Number(match.listeners)||0;
-      return {track:track,accounts:s.accounts,confirmed:s.confirmed,
+      return {track:s.label,accounts:s.accounts,
         avg_seconds:s.timed?Math.round(s.seconds/s.timed):null,
         conversion:listeners?Math.round((s.accounts/listeners)*1000)/10:null};
-    }).sort(function(a,b){return b.accounts-a.accounts||b.confirmed-a.confirmed;});
+    }).sort(function(a,b){return b.accounts-a.accounts;});
 
     host.innerHTML =
       '<div class="ins-stats">' +
@@ -420,7 +422,6 @@
         stat(num(full),"full plays") +
         stat(num(completes),"completions") +
         stat(num((signups||[]).length),"accounts created",num(attributed.length)+" music-attributed") +
-        stat(num(confirmed.length),"email-confirmed accounts") +
       '</div>' +
       '<div class="an-grid" style="margin-top:1rem">' +
         '<section class="an-panel an-wide"><h3>Reach vs repeat listening</h3>'+
@@ -443,14 +444,14 @@
         '<section class="an-panel an-wide"><h3>Accounts attributed to music</h3>'+
           ((signups||[]).length
             ? '<p class="bd-sub">Last-touch attribution: same-session music wins; otherwise the last real music event on the same device within 24 hours. This measures influence, not proof that a song caused the signup.</p>'+
-              '<div class="bd-scroll"><table class="bd-table"><thead><tr><th>Track</th><th class="n">Accounts</th><th class="n">Confirmed</th><th class="n">Listen → account</th><th>Avg. time to signup</th></tr></thead><tbody>'+
+              '<div class="bd-scroll"><table class="bd-table"><thead><tr><th>Track</th><th class="n">Accounts</th><th class="n">Listen → account</th><th>Avg. time to signup</th></tr></thead><tbody>'+
               (signupTracks.length?signupTracks.map(function(r){
-                return '<tr><td><b>'+esc(r.track)+'</b></td><td class="n">'+num(r.accounts)+'</td><td class="n">'+num(r.confirmed)+
+                return '<tr><td><b>'+esc(r.track)+'</b></td><td class="n">'+num(r.accounts)+
                   '</td><td class="n">'+esc(r.conversion==null?"—":r.conversion+"%")+'</td><td>'+
                   esc(r.avg_seconds==null?"—":(r.avg_seconds<60?r.avg_seconds+"s":Math.round(r.avg_seconds/60)+"m"))+'</td></tr>';
-              }).join(""):'<tr><td colspan="5">No signup in this range has a verified pre-signup music touch yet.</td></tr>')+
+              }).join(""):'<tr><td colspan="4">No signup in this range has a recorded pre-signup music touch yet.</td></tr>')+
               '</tbody></table></div>'+
-              '<p class="bd-foot">'+num(attributed.length)+' of '+num((signups||[]).length)+' accounts in this range have a verified music touch. Attribution starts when the signup-context instrument ships; older accounts cannot be reconstructed reliably.</p>'
+              '<p class="bd-foot">'+num(attributed.length)+' of '+num((signups||[]).length)+' recorded account creations in this range have a music touch from this browser. Attribution begins when this instrument ships; older accounts are not backfilled by guesswork.</p>'
             : '<p class="bd-empty">No account creations in this range, or this is not the first-party property.</p>')+
         '</section>' +
       '</div>' +
@@ -462,7 +463,7 @@
         tracks.map(function (r) {
           var first=r.first_heard?new Date(r.first_heard).toLocaleDateString():"—";
           var last=r.last_heard?new Date(r.last_heard).toLocaleDateString():"—";
-          var s=bySignup[r.track]||{accounts:0};
+          var s=bySignup[trackKey(r.track)]||{accounts:0};
           return '<tr><td><b>'+esc(r.track||"—")+'</b></td><td>'+esc(r.album||"—")+'</td>' +
             '<td class="n">'+num(r.starts)+'</td><td class="n">'+num(r.listeners)+'</td>' +
             '<td class="n">'+num(r.repeat_listeners)+'</td><td class="n">'+
@@ -471,20 +472,49 @@
             '<td class="n">'+num(s.accounts)+'</td><td>'+esc(first)+'</td><td>'+esc(last)+'</td></tr>';
         }).join("") +
         '</tbody></table></div>' +
-      '<p class="bd-foot">Legacy album plays and newer player events are normalized into one selected-window report. Account attribution is based on a real matched pre-signup event, never on account metadata alone.</p>';
+      '<p class="bd-foot">Legacy album plays and newer player events are normalized into one selected-window report. The account-created event is emitted only after Supabase reports a genuinely new signup; duplicate/existing-account attempts are excluded.</p>';
     paintJourney();
   }
 
-  function journeyGraph(edgeRows, signupRows) {
-    var edges=(edgeRows||[]).map(function(e){return Object.assign({},e);});
-    var signup=signupByTrack(signupRows||[]);
-    Object.keys(signup).forEach(function(track){
-      edges.push({from_type:"track",from_key:track,to_type:"outcome",to_key:"Account created",
-        people:signup[track].accounts,sessions:signup[track].accounts});
+  function conversionEdges(rows) {
+    var by={};
+    function add(fromType,fromKey,toType,toKey) {
+      if(!fromKey||!toKey)return;
+      var key=[fromType,fromKey,toType,toKey].join("\u0001");
+      var x=by[key]||(by[key]={from_type:fromType,from_key:String(fromKey),
+        to_type:toType,to_key:String(toKey),people:0,sessions:0});
+      x.people++; x.sessions++;
+    }
+    (rows||[]).forEach(function(r){
+      var source=r.source||"direct";
+      var page=r.track_page||r.landing_path||"account";
+      add("source",source,"page",page);
+      if(r.track){
+        add("page",page,"track",r.track);
+        add("track",r.track,"outcome","Account created");
+      }else{
+        add("page",page,"outcome","Account created");
+      }
     });
-    if(!edges.length)return "";
+    return Object.keys(by).map(function(k){return by[k];});
+  }
 
-    var types=["source","page","track","outcome"], caps={source:6,page:8,track:10,outcome:2};
+  function navigationEdges(rows) {
+    return (rows||[]).map(function(r){
+      return {from_type:"page_from",from_key:r.from_page,to_type:"page_to",to_key:r.to_page,
+        people:Number(r.sessions)||0,sessions:Number(r.sessions)||0,moves:Number(r.moves)||0};
+    }).filter(function(r){return r.from_key&&r.to_key;});
+  }
+
+  function journeyGraph(edgeRows) {
+    var edges=(edgeRows||[]).map(function(e){return Object.assign({},e);});
+    if(!edges.length)return "";
+    var conversion=edges.some(function(e){return e.from_type==="source"||e.to_type==="outcome";});
+    var types=conversion?["source","page","track","outcome"]:["page_from","page_to"];
+    var caps=conversion?{source:6,page:8,track:10,outcome:2}:{page_from:10,page_to:10};
+    var xs=conversion?{source:90,page:330,track:590,outcome:850}:{page_from:180,page_to:760};
+    var heads={source:"Source",page:"Page",track:"Track",outcome:"Outcome",
+      page_from:"From page",page_to:"Next page"};
     var weights={};
     edges.forEach(function(e){
       [[e.from_type,e.from_key],[e.to_type,e.to_key]].forEach(function(n){
@@ -502,25 +532,26 @@
         selected[e.to_type]&&selected[e.to_type].indexOf(e.to_key)>=0;
     });
     var maxRows=Math.max.apply(null,types.map(function(t){return selected[t].length||1;}));
-    var W=940,H=Math.max(360,80+maxRows*54),xs={source:90,page:330,track:590,outcome:850};
-    var pos={};
+    var W=940,H=Math.max(360,80+maxRows*54),pos={};
     types.forEach(function(t){
-      var arr=selected[t], step=(H-80)/(arr.length+1);
+      var arr=selected[t],step=(H-80)/(arr.length+1);
       arr.forEach(function(label,i){pos[t+"|"+label]={x:xs[t],y:50+step*(i+1),type:t,label:label};});
     });
     var maxEdge=Math.max.apply(null,edges.map(function(e){return Number(e.sessions)||Number(e.people)||1;}))||1;
-    var svg=['<svg viewBox="0 0 '+W+' '+H+'" class="ins-network" role="img" aria-label="Source, page, track and account relationship graph">'];
-    [210,460,720].forEach(function(x){svg.push('<line x1="'+x+'" y1="28" x2="'+x+'" y2="'+(H-24)+'" class="ins-net-grid"/>');});
-    types.forEach(function(t){
-      svg.push('<text x="'+xs[t]+'" y="22" text-anchor="middle" class="ins-net-head">'+esc(t==="outcome"?"Outcome":t.charAt(0).toUpperCase()+t.slice(1))+'</text>');
-    });
+    var svg=['<svg viewBox="0 0 '+W+' '+H+'" class="ins-network" role="img" aria-label="Analytics relationship graph">'];
+    if(conversion)[210,460,720].forEach(function(x){svg.push('<line x1="'+x+'" y1="28" x2="'+x+'" y2="'+(H-24)+'" class="ins-net-grid"/>');});
+    else svg.push('<line x1="470" y1="28" x2="470" y2="'+(H-24)+'" class="ins-net-grid"/>');
+    types.forEach(function(t){svg.push('<text x="'+xs[t]+'" y="22" text-anchor="middle" class="ins-net-head">'+esc(heads[t]||t)+'</text>');});
     edges.forEach(function(e){
-      var a=pos[e.from_type+"|"+e.from_key],b=pos[e.to_type+"|"+e.to_key];
-      if(!a||!b)return;
+      var aa=pos[e.from_type+"|"+e.from_key],bb=pos[e.to_type+"|"+e.to_key];
+      if(!aa||!bb)return;
       var n=Number(e.sessions)||Number(e.people)||1,w=1.1+5*Math.sqrt(n/maxEdge);
-      svg.push('<path d="M'+(a.x+72)+' '+a.y+' C '+(a.x+135)+' '+a.y+', '+(b.x-135)+' '+b.y+', '+(b.x-72)+' '+b.y+
+      var detail=e.moves!=null
+        ? num(e.moves)+" moves · "+num(e.sessions)+" sessions"
+        : num(e.people)+" account"+(Number(e.people)===1?"":"s");
+      svg.push('<path d="M'+(aa.x+72)+' '+aa.y+' C '+(aa.x+135)+' '+aa.y+', '+(bb.x-135)+' '+bb.y+', '+(bb.x-72)+' '+bb.y+
         '" fill="none" class="ins-net-edge" stroke-width="'+w.toFixed(2)+'"><title>'+esc(e.from_key)+' → '+esc(e.to_key)+
-        ': '+num(e.people)+' people · '+num(e.sessions)+' sessions</title></path>');
+        ': '+esc(detail)+'</title></path>');
     });
     Object.keys(pos).forEach(function(k){
       var n=pos[k],label=n.label.length>26?n.label.slice(0,25)+"…":n.label;
@@ -533,19 +564,19 @@
 
   function paintJourney() {
     var host=el("insPaths"); if(!host)return;
-    var rows=DATA.paths||[], signups=DATA.signup_attribution||[];
-    if(!rows.length&&!signups.length){host.innerHTML=why(null);return;}
-    var all=rows.slice();
-    var sb=signupByTrack(signups);
-    Object.keys(sb).forEach(function(track){
-      all.push({from_type:"track",from_key:track,to_type:"outcome",to_key:"Account created",
-        people:sb[track].accounts,sessions:sb[track].accounts});
-    });
-    host.innerHTML=journeyGraph(rows,signups)+
-      '<div class="bd-scroll ins-chart-detail"><table class="bd-table"><thead><tr><th>From</th><th>Relationship</th><th>To</th><th class="n">People</th><th class="n">Sessions</th></tr></thead><tbody>'+
-      all.slice(0,40).map(function(r){return '<tr><td>'+esc(r.from_key)+'</td><td>'+esc(r.from_type+' → '+r.to_type)+
-        '</td><td>'+esc(r.to_key)+'</td><td class="n">'+num(r.people)+'</td><td class="n">'+num(r.sessions)+'</td></tr>';}).join("")+
-      '</tbody></table></div>';
+    var signups=DATA.signup_attribution||[],pathRows=DATA.paths||[];
+    var conversion=conversionEdges(signups);
+    var edges=conversion.length?conversion:navigationEdges(pathRows);
+    if(!edges.length){host.innerHTML=why(null);return;}
+    var mode=conversion.length?"signup journeys":"page-to-page navigation";
+    host.innerHTML='<p class="bd-foot" style="margin-bottom:.65rem">Showing '+esc(mode)+'.</p>'+
+      journeyGraph(edges)+
+      '<div class="bd-scroll ins-chart-detail"><table class="bd-table"><thead><tr><th>From</th><th>Relationship</th><th>To</th><th class="n">Weight</th></tr></thead><tbody>'+
+      edges.slice(0,40).map(function(r){
+        var weight=r.moves!=null?num(r.moves):num(r.people);
+        return '<tr><td>'+esc(r.from_key)+'</td><td>'+esc(r.from_type+' → '+r.to_type)+
+          '</td><td>'+esc(r.to_key)+'</td><td class="n">'+weight+'</td></tr>';
+      }).join("")+'</tbody></table></div>';
   }
 
   function paintPaths(rows, err) {
@@ -575,7 +606,7 @@
       ["funnel", null, ["analytics_funnel",{p_since:RANGE.since,p_until:RANGE.until}], paintFunnel],
       ["stickiness", "v_stickiness?select=*&day=lte." + encodeURIComponent(through) + "&order=day.desc&limit=1", null, paintSticky],
       ["acquisition", null, ["analytics_acquisition",args], paintAcquisition],
-      ["paths", null, ["analytics_relationship_edges",Object.assign({p_limit:40},args)], paintPaths]
+      ["paths", null, ["analytics_paths",Object.assign({p_limit:40},args)], paintPaths]
     ];
 
     var stamp=el("insStamp");
@@ -593,7 +624,9 @@
     });
 
     var signupRead = SITE_ID===null
-      ? rpc("analytics_signup_attribution",{p_since:RANGE.since,p_until:RANGE.until,p_limit:500})
+      ? api("events?site_id=is.null&name=eq.account_created&at=gte."+encodeURIComponent(RANGE.since)+
+          "&at=lt."+encodeURIComponent(RANGE.until)+
+          "&select=at,props,session_id,device_id&order=at.desc&limit=5000")
       : Promise.resolve([]);
     var content = Promise.allSettled([
       rpc("analytics_content",args),
@@ -604,7 +637,14 @@
         paintContent([],[],out[0].reason||new Error("failed"),[]); return 1;
       }
       var eventRows=out[1].status==="fulfilled"?(out[1].value||[]):[];
-      var signupRows=out[2].status==="fulfilled"?(out[2].value||[]):[];
+      var signupRows=out[2].status==="fulfilled"?(out[2].value||[]).map(function(e){
+        var p=e.props||{};
+        return {created_at:e.at,source:p.source||"direct",medium:p.medium||"none",
+          campaign:p.campaign||"",landing_path:p.landing_path||null,
+          track:p.attributed===true?p.track||null:null,album:p.album||null,
+          track_page:p.track_page||null,
+          seconds_before_signup:p.seconds_since_track==null?null:Number(p.seconds_since_track)};
+      }):[];
       paintContent(out[0].value||[],eventRows,
         out[1].status==="rejected"?out[1].reason:null,signupRows);
       return (out[1].status==="rejected"?1:0)+(out[2].status==="rejected"?1:0);
