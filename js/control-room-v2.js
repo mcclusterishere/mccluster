@@ -8,8 +8,8 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations", "client-console"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music-review", "vault", "lanes", "studio"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -71,26 +71,14 @@
   };
 
   var bridge = {
-    /* Operator backends no longer appear as peer rooms. Control owns their
-       destination and mounts remaining legacy functionality inside this shell
-       until each feature is fully native. Specialized products remain Apps. */
+    /* Specialized products are Apps. Operator administration does not leave
+       Control; former back-office room names are only routing aliases. */
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
     halo: { title: "Hitman Halo", href: "prayer-closet.html", subtitle: "Specialized intelligence workspace" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
     spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
-  };
-  var embeddedWork = {
-    outreach: { title:"Outreach", subtitle:"Templates, contact queue, email moves and follow-up timing.", src:"desk.html?control_embed=1" },
-    operations: { title:"Operations", subtitle:"Back-office orders, merch, walls and rights controls.", src:"admin.html?control_embed=1" },
-    "client-console": { title:"Client Console", subtitle:"Client site state and change requests.", src:"console.html?control_embed=1" }
-  };
-  var embeddedCreate = {
-    "music-review": { title:"Music Review", subtitle:"Creator review and release operations.", src:"music-admin.html?control_embed=1" },
-    vault: { title:"Vault", subtitle:"Music catalog and protected asset operations.", src:"vault.html?control_embed=1" },
-    lanes: { title:"Lanes", subtitle:"Music workflow lanes and release operations.", src:"lanes.html?control_embed=1" },
-    studio: { title:"Studio", subtitle:"Existing media studio tools.", src:"studio.html?control_embed=1" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
@@ -411,11 +399,21 @@
 
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
 
+  function normalizeWorkView(v) {
+    if (WORK_VIEWS.indexOf(v) >= 0) return v;
+    if (["crm", "front-desk"].indexOf(v) >= 0) return "pipeline";
+    if (["desk", "outreach-desk"].indexOf(v) >= 0) return "outreach";
+    if (["admin", "back-office"].indexOf(v) >= 0) return "operations";
+    if (["client-console", "console"].indexOf(v) >= 0) return "clients";
+    return "inbox";
+  }
   function normalizeCreateView(v) {
     if (CREATE_VIEWS.indexOf(v) >= 0) return v;
-    if (["campaigns", "canvas"].indexOf(v) >= 0) return "projects";
+    if (["campaigns", "canvas", "studio"].indexOf(v) >= 0) return "projects";
     if (v === "assets") return "library";
     if (["calendar", "published"].indexOf(v) >= 0) return "schedule";
+    if (["management", "socials", "socials-room"].indexOf(v) >= 0) return "channels";
+    if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -429,7 +427,7 @@
   function readHash() {
     var raw = (location.hash || "#home").slice(1).toLowerCase().split(":");
     state.surface = SURFACES.indexOf(raw[0]) >= 0 ? raw[0] : "home";
-    if (state.surface === "work") state.workView = WORK_VIEWS.indexOf(raw[1]) >= 0 ? raw[1] : state.workView;
+    if (state.surface === "work") state.workView = normalizeWorkView(raw[1]);
     if (state.surface === "create") state.createView = normalizeCreateView(raw[1]);
     if (state.surface === "system") state.systemView = normalizeSystemView(raw[1]);
   }
@@ -447,7 +445,7 @@
   function setSurface(surface, view, replace) {
     if (SURFACES.indexOf(surface) < 0) return;
     state.surface = surface;
-    if (surface === "work" && WORK_VIEWS.indexOf(view) >= 0) state.workView = view;
+    if (surface === "work" && view) state.workView = normalizeWorkView(view);
     if (surface === "create") state.createView = normalizeCreateView(view);
     if (surface === "system") state.systemView = normalizeSystemView(view);
     state.selectedProjectId = null;
@@ -1014,9 +1012,15 @@
 
   function renderClients() {
     var rows = state.leads.filter(function (l) { return l.status === "booked" || l.status === "closed"; }).map(function (l) { return { id: l.id, action: "inspect-lead", name: l.name || l.email, service: l.want || l.campaign || "Client work", status: l.status, last: l.at || l.created_at }; });
-    return sourceBanner(state.sources.leads, "Leads") +
-      derivedNote("Clients are leads that reached booked or closed. That is the only client signal the canonical schema persists.") +
-      renderTable([{ label: "Client", key: "name" }, { label: "Work", key: "service" }, { label: "State", key: "status" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], rows, "No client records yet");
+    var requests = (state.siteRequests || []).map(function (r) {
+      return { site: r.site_name || r.site_slug || r.site_id || "Client site", request: r.body || r.kind || "Site request", status: r.status || "new", last: r.created_at };
+    });
+    return sourceStates([["Leads", state.sources.leads], ["Site requests", state.sources.siteRequests]]) +
+      derivedNote("Clients are booked/closed leads; site change requests stay beside them so the owner no longer needs a separate Business Console.") +
+      '<div class="cr-grid">' +
+        panel("Clients", rows.length + " records", renderTable([{ label: "Client", key: "name" }, { label: "Work", key: "service" }, { label: "State", key: "status" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], rows, "No client records yet"), "cr-span-6") +
+        panel("Site requests", requests.length + " requests", renderTable([{ label: "Site", key: "site" }, { label: "Request", key: "request" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], requests, "No site requests yet"), "cr-span-6") +
+      '</div>';
   }
 
   function renderTasks() {
@@ -1040,13 +1044,10 @@
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
-  function renderEmbeddedTool(tool) {
-    if (!tool) return empty("Tool unavailable", "This Control destination is not configured.");
-    return '<div class="cr-embedded"><p class="cr-embedded__note"><b>' + esc(tool.title) + ' lives inside Control now.</b> ' +
-      esc(tool.subtitle || "") + '</p><iframe class="cr-embedded__frame" src="' + esc(tool.src) + '" title="' + esc(tool.title) + '"></iframe></div>';
-  }
   function renderWorkView(view) {
-    if (embeddedWork[view]) return renderEmbeddedTool(embeddedWork[view]);
+    if (view === "outreach" || view === "operations") {
+      return window.CR.workTools ? window.CR.workTools.render(view) : empty("Work tool unavailable", "The native Control module did not load.");
+    }
     if (view === "inbox") return renderWorkInbox();
     if (view === "pipeline") return renderPipeline();
     if (view === "people") return renderPeople();
@@ -1170,12 +1171,13 @@
     return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
-    var body = embeddedCreate[state.createView] ? renderEmbeddedTool(embeddedCreate[state.createView])
-      : state.createView === "projects" ? renderProjects()
+    var body = state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
-      : renderSchedule();
-    return renderHeader("Create", "Projects, assets, distribution, channels and music operations live under one Create surface.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+      : state.createView === "music"
+        ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
+        : renderSchedule();
+    return renderHeader("Create", "Projects, assets, publishing, channels and music operations are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -1192,6 +1194,7 @@
      back 'disconnected' until that exists. Showing that plainly beats a
      form that looks like it connected something and did not. */
   function renderChannels() {
+    var compose = window.CR.socialCompose ? '<div class="cro-grid cro-grid--2">' + window.CR.socialCompose.render() + '</div>' : "";
     var accounts = socialAccountRows();
     var banner = state.socialAccounts && !state.socialAccounts.ok
       ? sourceBanner(state.socialAccounts, "Social accounts") : "";
@@ -1226,7 +1229,7 @@
       : empty("No campaigns", "social_campaigns has no rows for this workspace yet.");
 
     if (!owner) {
-      return banner +
+      return compose + banner +
         '<div class="cr-grid">' +
           panel("Accounts", accounts.length + " registered", '<div class="cr-panel__body">' + accountList + '</div>', "cr-span-6") +
           panel("Campaigns", campaigns.length + " total", '<div class="cr-panel__body">' + campaignList + '</div>', "cr-span-6") +
@@ -1262,7 +1265,7 @@
         '</div>' + pendingNote("campaign") + '</div>'
       : '<div class="cr-panel__body">' + empty("Register an account first", "A campaign belongs to an account, so there is nothing to attach one to yet.") + '</div>';
 
-    return banner +
+    return compose + banner +
       '<div class="cr-grid">' +
         panel("Accounts", accounts.length + " registered", '<div class="cr-panel__body">' + accountList + '</div>', "cr-span-6") +
         panel("Register an account", "social_accounts", accountForm, "cr-span-6") +
@@ -1636,7 +1639,7 @@
     return '<a class="cr-app-card" href="' + esc(href || "#") + '"' + (external ? ' target="_blank" rel="noopener"' : "") + '><strong>' + esc(title) + '</strong><small>' + esc(subtitle || "") + '</small><span class="cr-app-card__foot"><span>' + esc(meta || "Specialized app") + '</span><span>Open ↗</span></span></a>';
   }
   function renderAnalytics() {
-    return '<div class="cr-embedded cr-embedded--analytics"><iframe class="cr-embedded__frame cr-embedded__frame--analytics" src="analytics.html?control_embed=1" title="McCluster Analytics"></iframe></div>';
+    return '<div id="crAnalyticsMount"></div>';
   }
 
   function renderApps() {
@@ -1658,6 +1661,7 @@
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
     bindSurfaceControls();
+    if (state.surface === "analytics" && window.CR.analytics) window.CR.analytics.mount($("crAnalyticsMount"));
     /* Selecting a thread and landing on the inbox both need the transcript;
        doing it after render keeps the fetch out of the render path. */
     /* Create's own sources load when Create is opened, the same way the
@@ -1965,8 +1969,9 @@
       [/^(home|attention|today)$/i, function () { setSurface("home"); }],
       [/\b(ai|chat|qwen|home ai|mccluster ai)\b/i, function () { setSurface("ai"); }],
       [/\b(analytics|traffic|audience|insights|forensics|page views?|visitors?|sessions?)\b/i, function () { setSurface("analytics"); }],
-      [/\b(outreach|email campaign|follow[- ]?up)\b/i, function () { setSurface("work", "outreach"); }],
-      [/\b(back office|rights|merch operations)\b/i, function () { setSurface("work", "operations"); }],
+      [/\b(outreach|outreach desk|email campaign|follow[- ]?up)\b/i, function () { setSurface("work", "outreach"); }],
+      [/\b(back office|merch operations|operations desk)\b/i, function () { setSurface("work", "operations"); }],
+      [/\b(client console|business console)\b/i, function () { setSurface("work", "clients"); }],
       [/\b(inbox|messages?|conversations?)\b/i, function () { setSurface("work", "inbox"); }],
       [/\b(pipeline|leads?|deals?|opportunit)/i, function () { setSurface("work", "pipeline"); }],
       [/\b(people|person|contacts?)\b/i, function () { setSurface("work", "people"); }],
@@ -1977,10 +1982,8 @@
       [/\b(bookings?|appointments?)\b/i, function () { setSurface("work", "bookings"); }],
       [/\b(library|assets?)\b/i, function () { setSurface("create", "library"); }],
       [/\b(schedule|calendar|published|publishing)\b/i, function () { setSurface("create", "schedule"); }],
-      [/\b(music review|creator review)\b/i, function () { setSurface("create", "music-review"); }],
-      [/\b(vault)\b/i, function () { setSurface("create", "vault"); }],
-      [/\b(lanes?)\b/i, function () { setSurface("create", "lanes"); }],
-      [/\b(studio)\b/i, function () { setSurface("create", "studio"); }],
+      [/\b(music review|creator review|vault|lanes?|catalogue|catalog|isrc)\b/i, function () { setSurface("create", "music"); }],
+      [/\b(studio)\b/i, function () { setSurface("create", "projects"); }],
       [/\b(projects?|create|media|campaigns?|canvas)\b/i, function () { setSurface("create", "projects"); }],
       [/\b(workload|agents?|runs?|jobs?|core)\b/i, function () { setSurface("system", "workload"); }],
       [/\b(observability|logs?|traces?|incidents?)\b/i, function () { setSurface("system", "observability"); }],
@@ -2009,10 +2012,26 @@
 
   function paletteCommands() {
     return [
-      ["Home", "Attention, signals, current work", "home"], ["McCluster AI", "Persistent chat with your self-hosted model", "ai"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"], ["Work · Outreach", "Templates and outbound follow-up", "work-outreach"], ["Work · Operations", "Orders, merch, walls and rights", "work-operations"], ["Work · Client Console", "Client change requests", "work-client-console"],
-      ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"], ["Create · Music Review", "Creator review and release operations", "create-music-review"], ["Create · Vault", "Protected music assets", "create-vault"], ["Create · Lanes", "Music workflow lanes", "create-lanes"], ["Create · Studio", "Media studio tools", "create-studio"], ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
-      ["System · Command", "Speak to the signed Core capability bus", "system-command"], ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
-      /* Object-level intents, not just destinations. */
+      ["Home", "Attention, signals, current work", "home"],
+      ["McCluster AI", "Persistent chat with your self-hosted model", "ai"],
+      ["Work · Inbox", "Unified incoming conversations", "work-inbox"],
+      ["Work · Pipeline", "Leads and opportunities", "work-pipeline"],
+      ["Work · People", "Canonical people", "work-people"],
+      ["Work · Clients", "Client work and site requests", "work-clients"],
+      ["Work · Outreach", "Templates and outbound follow-up", "work-outreach"],
+      ["Work · Operations", "Orders, merch, walls and rights", "work-operations"],
+      ["Create · Projects", "Creative objectives and media generation", "create-projects"],
+      ["Create · Library", "Canonical assets", "create-library"],
+      ["Create · Schedule", "Distribution and publishing", "create-schedule"],
+      ["Create · Channels", "Social destinations and composer", "create-channels"],
+      ["Create · Music", "Review, catalogue, rights and distribution", "create-music"],
+      ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
+      ["System · Command", "Speak to the signed Core capability bus", "system-command"],
+      ["System · Overview", "Topology and service health", "system-overview"],
+      ["System · Workload", "Agents, jobs, queues", "system-workload"],
+      ["System · Observability", "Events, traces, incidents", "system-observability"],
+      ["System · Resources", "Providers, usage, API access", "system-resources"],
+      ["Apps", "Specialized products", "apps"],
       ["Show failed work", "Workload, filtered to failures", "goto-failed"],
       ["Open waiting conversations", "Threads whose last message came in", "goto-waiting"],
       ["Run system health", "Ask Core for a fresh host health result", "refresh-health"]
@@ -2040,18 +2059,15 @@
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
+    else if (action === "work-clients") setSurface("work", "clients");
     else if (action === "work-outreach") setSurface("work", "outreach");
     else if (action === "work-operations") setSurface("work", "operations");
-    else if (action === "work-client-console") setSurface("work", "client-console");
     else if (action === "analytics") setSurface("analytics");
     else if (action === "create-projects") setSurface("create", "projects");
     else if (action === "create-library") setSurface("create", "library");
     else if (action === "create-schedule") setSurface("create", "schedule");
-    else if (action === "create-music-review") setSurface("create", "music-review");
-    else if (action === "create-vault") setSurface("create", "vault");
-    else if (action === "create-lanes") setSurface("create", "lanes");
-    else if (action === "create-studio") setSurface("create", "studio");
     else if (action === "create-channels") setSurface("create", "channels");
+    else if (action === "create-music") setSurface("create", "music");
     else if (action === "connect-account") {
       var platform = $("crAccPlatform") && $("crAccPlatform").value;
       var external = $("crAccExternal") && $("crAccExternal").value.trim();
@@ -2422,6 +2438,9 @@
   function bindSurfaceControls() {
     bindActions($("crSurface"));
     window.CR.media.bind($("crSurface"));
+    if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
+    if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
+    if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
@@ -2625,6 +2644,15 @@
   function tryResume() { token().then(function (t) { if (t && $("crApp").hidden) boot(); }); }
   /* The media module renders into the Create canvas and needs the shell's
      request client, panel chrome and render loop. It owns nothing else. */
+  if (window.CR.analytics) window.CR.analytics.init({ request: request, supa: supa });
+  if (window.CR.workTools) window.CR.workTools.init({
+    request: request, supa: supa, render: render,
+    refresh: function () { return load(true); },
+    getState: function () { return state; }
+  });
+  if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
+  if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
+
   window.CR.media.init({
     request: request,
     panel: panel,
