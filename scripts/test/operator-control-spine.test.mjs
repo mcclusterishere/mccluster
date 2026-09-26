@@ -49,7 +49,7 @@ test('owner approvals stay human-gated at Cloudflare', () => {
 
 
 test('resident local AI chat is durable and multi-turn', () => {
-  assert.match(source, /SURFACES = \["home", "ai", "work", "create", "system", "apps"\]/);
+  assert.match(source, /SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
   assert.match(source, /ops_ai_threads/);
   assert.match(source, /ops_ai_messages/);
   assert.match(source, /function waitForAiTask\(/);
