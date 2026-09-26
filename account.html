@@ -282,13 +282,24 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
-      if (!stayOnAccount()) {
-        location.replace("mnet.html");
-        return;
-      }
+
       houseOwner(u).then(function (yes) {
-        if (yes) { openPlane(); return; }
-        openFan();
+        if (yes && !stayOnAccount()) { openPlane(); return; }
+        if (yes) { openFan(); return; }
+
+        var check = (window.MCC_FAN && window.MCC_ACCOUNT_INTEGRITY)
+          ? MCC_FAN.load().then(function (row) {
+              return { row:row, complete:MCC_ACCOUNT_INTEGRITY.completeProfile(row) };
+            }).catch(function () { return { row:null, complete:false }; })
+          : Promise.resolve({ row:null, complete:false });
+
+        check.then(function (state) {
+          if (!state.complete || stayOnAccount()) {
+            openFan();
+            return;
+          }
+          location.replace("mnet.html");
+        });
       });
     }
 
