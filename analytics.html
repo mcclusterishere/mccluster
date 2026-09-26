@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex">
   <title>McCluster Analytics</title>
   <!-- css/style.css was missing here, and it is what styles the app bar
@@ -21,13 +21,19 @@
        dashboard at the same time. -->
   <style>
     :root{color-scheme:dark;background:#0b0d10;color:#f4f5f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
-    *{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:28px}
-    header{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
-    h1,h2,h3,p{margin-top:0}.muted{color:#9ca3af}.grid{display:grid;gap:16px}.cols{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-    .card{background:#12161c;border:1px solid #252c35;border-radius:16px;padding:18px}
-    input,select,button,textarea{font:inherit}input,select,textarea{width:100%;background:#0d1117;color:#fff;border:1px solid #303846;border-radius:10px;padding:11px}
+    *{box-sizing:border-box}body{margin:0;overflow-x:hidden}
+    .wrap{width:100%;max-width:none;margin:auto;padding:1rem max(1rem,env(safe-area-inset-right)) calc(7rem + env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left))}
+    header{display:flex;flex-direction:column;gap:.55rem;align-items:flex-start;margin-bottom:1.1rem}
+    header h1{font-size:clamp(1.65rem,8vw,2.2rem);margin-bottom:.25rem}
+    h1,h2,h3,p{margin-top:0}.muted{color:#9ca3af}.grid{display:grid;gap:12px}.cols{grid-template-columns:minmax(0,1fr)}
+    .card{background:#12161c;border:1px solid #252c35;border-radius:16px;padding:15px}
+    input,select,button,textarea{font:inherit;font-size:max(16px,1rem)}
+    input,select,textarea{width:100%;background:#0d1117;color:#fff;border:1px solid #303846;border-radius:10px;padding:11px}
     button{background:#fff;color:#080b0f;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    button.alt{background:#202731;color:#fff}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+    button.alt{background:#202731;color:#fff}.row{display:flex;flex-direction:column;gap:10px;align-items:stretch}.row>*{flex:1 1 auto;min-width:0}
+    @media (min-width:44rem){.wrap{max-width:1180px;padding:1.5rem 1.75rem 8rem}.cols{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+      header{flex-direction:row;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
+      .row{flex-direction:row;align-items:center;flex-wrap:wrap}.row>*{flex:1 1 0}}
     .metric{font-size:30px;font-weight:800}.site{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #252c35;padding:12px 0}
     .site:first-child{border-top:0}.badge{font-size:12px;border:1px solid #384252;border-radius:999px;padding:3px 8px}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}pre{white-space:pre-wrap;word-break:break-all;background:#080b0f;border-radius:10px;padding:12px}
@@ -197,6 +203,46 @@
     .ins-chart-detail{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bd-edge)}
     .bd-bar-chart{min-height:9rem}
 
+    /* Mobile-first visual grammar. Different questions use different marks:
+       funnel = stage loss, donut = composition, lollipop = compact comparison,
+       scatter = relationships, flow = sequence/attribution. */
+    .an-viz-tag{flex:none;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--bd-faint)}
+    .ins-lollipop{min-height:9rem}
+    .ins-lollipop-line{stroke:rgba(63,147,210,.55);stroke-width:4;stroke-linecap:round}
+    .ins-lollipop-dot{fill:#3f93d2;stroke:#f4f5f7;stroke-width:1.25}
+    .ins-funnel{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:.75rem}
+    .ins-funnel__step{min-width:20%;border-radius:8px;padding:.65rem .75rem;display:grid;
+      grid-template-columns:minmax(0,1fr) auto;gap:.2rem .65rem;align-items:center}
+    .ins-funnel__step span{min-width:0;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ins-funnel__step b{font-variant-numeric:tabular-nums}.ins-funnel__step small{grid-column:1/-1;font-size:10px;opacity:.8}
+    .ins-donut-wrap{display:grid;place-items:center;margin-top:.75rem}.ins-donut{display:block;width:min(12rem,68vw);height:auto}
+    .ins-donut__track{fill:none;stroke:#202731;stroke-width:18}.ins-donut__big{fill:#f4f5f7;font-size:18px;font-weight:800}
+    .ins-donut__small{fill:var(--bd-faint);font-size:9px;text-transform:uppercase}
+    .an-segmented{display:flex;height:22px;border-radius:999px;overflow:hidden;background:#202731;margin:.85rem 0 .7rem}
+    .an-segment{min-width:2px}.an-segment--0{background:#e5383b}.an-segment--1{background:#3f93d2}
+    .an-segment--2{background:rgba(229,56,59,.48)}.an-segment--3{background:rgba(63,147,210,.48)}
+    .an-segment-legend{display:grid;grid-template-columns:minmax(0,1fr);gap:.45rem}
+    .an-segment-legend span{display:flex;align-items:center;gap:.45rem;font-size:12px;color:var(--bd-dim)}
+    .an-segment-legend i{width:10px;height:10px;border-radius:3px}.an-segment-legend b{margin-left:auto;color:#f4f5f7}
+    @media (min-width:34rem){.an-segment-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .rel-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.rel-graph{min-width:720px;width:100%;height:auto;display:block}
+    .rel-link{fill:none;stroke:rgba(159,170,184,.42);stroke-linecap:round}.rel-node{fill:#202731;stroke:#455160;stroke-width:1}
+    .rel-node--track{fill:#172332}.rel-node--account{fill:#24191b}.rel-label{fill:#f4f5f7;font-size:12px;font-weight:700}
+    .rel-note{fill:#9ca3af;font-size:10px}.ins-net-axis{stroke:rgba(255,255,255,.2);stroke-width:1}
+    .ins-scatter{min-height:17rem}.ins-scatter-dot{fill:#e5383b;fill-opacity:.72;stroke:#f4f5f7;stroke-opacity:.4;stroke-width:1}
+    .ins-scatter-label{fill:#f4f5f7;font-size:10px;font-weight:650}
+    .an-journeys,.an-forensics{display:grid;gap:.55rem}.an-journey,.an-forensic{border:1px solid var(--bd-edge);border-radius:12px;background:var(--bd-well)}
+    .an-journey summary,.an-forensic summary{display:grid;grid-template-columns:minmax(0,1fr);gap:.55rem;padding:.8rem;cursor:pointer}
+    .an-journey summary span,.an-forensic summary span{min-width:0}.an-journey summary b,.an-forensic summary b{display:block;overflow-wrap:anywhere}
+    .an-journey summary small,.an-forensic summary small{display:block;margin-top:.15rem;color:var(--bd-faint);overflow-wrap:anywhere}
+    .an-journey__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:.75rem;padding:.8rem;border-top:1px solid var(--bd-edge)}
+    .an-journey__grid span{min-width:0;overflow-wrap:anywhere;font-size:12px;color:var(--bd-dim)}
+    .an-journey__grid b{display:block;margin-bottom:.2rem;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--bd-faint)}
+    .an-journey__grid code{white-space:normal;word-break:break-all}
+    @media (min-width:44rem){.an-journey summary,.an-forensic summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+      .an-journey__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .an-overview-kpis{margin-bottom:.25rem}
+
     /* The Insights panels were built against control-system.css tokens on
        their own page. They render here, so the few they need are mapped
        onto this page's palette rather than pulling a second design system
@@ -244,11 +290,25 @@
     </div>
 
     <nav class="an-tabs" id="anTabs" role="tablist" aria-label="Analytics sections">
+      <button type="button" class="an-tab" id="anOverviewTab" data-sec="overview" role="tab" aria-selected="false" hidden>Overview</button>
       <button type="button" class="an-tab is-on" data-sec="traffic" role="tab" aria-selected="true">Traffic</button>
       <button type="button" class="an-tab" data-sec="audience" role="tab" aria-selected="false">Audience</button>
       <button type="button" class="an-tab" data-sec="content" role="tab" aria-selected="false">Content</button>
+      <button type="button" class="an-tab" id="anIdentityTab" data-sec="identity" role="tab" aria-selected="false" hidden>Identity</button>
       <button type="button" class="an-tab" data-sec="setup" role="tab" aria-selected="false">Setup</button>
     </nav>
+
+    <!-- ============ OWNER OVERVIEW ============
+         All platform domains promised by the business analytics API, rendered
+         in one range-aware mobile-first surface. Hidden for customer properties. -->
+    <section class="an-sec" data-sec="overview" hidden>
+      <section class="an-panel an-wide">
+        <div class="an-ph"><h2>Platform overview</h2><span class="an-viz-tag">full suite</span></div>
+        <p class="bd-sub">Accounts, platform activity, Mnet, music, creators, licensing and revenue. Every number below follows the same selected time window.</p>
+        <div id="overviewBody" style="margin-top:1rem"></div>
+        <p class="bd-sub" id="overviewStamp" style="margin-top:1rem"></p>
+      </section>
+    </section>
 
     <!-- ============ TRAFFIC ============ -->
     <section class="an-sec" data-sec="traffic">
@@ -347,6 +407,31 @@
         <div id="insContent"></div>
       </section>
     </section>
+
+    <!-- ============ OWNER IDENTITY / FORENSICS ============
+         Capability-gated at the Worker. Never shown for customer properties. -->
+    <section class="an-sec" data-sec="identity" hidden>
+      <div class="an-grid">
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Signup attribution</h2><span class="an-viz-tag">relationship flow</span></div>
+          <p class="bd-sub">Source → track → account creation. Last-touch and assisted-track attribution describe observed journeys; they do not claim a song caused a signup.</p>
+          <div class="ins-stats" id="identityCoverage"></div>
+          <div id="identityFlow" style="margin-top:1rem"></div>
+        </section>
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Track → account relationships</h2><span class="an-viz-tag">scatter</span></div>
+          <p class="bd-sub">Listener reach on the horizontal axis; attributed accounts vertically. The rate denominator comes from the full selected-window content report.</p>
+          <div id="identityTracks"></div>
+        </section>
+        <section class="an-panel an-wide"><h2>Account journeys</h2>
+          <p class="bd-sub">Owner-only signup, source, last track, elapsed time, network and approximate location context.</p>
+          <div id="identityJourneys"></div></section>
+        <section class="an-panel an-wide"><h2>Forensics</h2>
+          <p class="bd-sub">Recent owner-only raw telemetry from the same selected range: IP, approximate edge location, network, device/session and browser context.</p>
+          <div id="forensicsEvents"></div></section>
+      </div>
+      <p class="bd-sub" id="identityStamp" style="margin-top:1rem"></p>
+    </section>
   </div>
 </main>
 <script>
@@ -385,6 +470,7 @@
 <script src="js/analytics-board.js?v=__STAMP__"></script>
 <script src="js/insights.js?v=__STAMP__" defer></script>
 <script src="js/analytics-product.js"></script>
+<script src="js/analytics-suite.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
