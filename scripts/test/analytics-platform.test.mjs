@@ -217,7 +217,7 @@ test('content analytics is windowed and exposes deep track and media detail', as
   assert.match(insights,/rpc\("analytics_content",args\)/);
   assert.match(insights,/rpc\("analytics_content_events",args\)/);
   assert.match(insights,/\["acquisition", null, \["analytics_acquisition",args\]/);
-  assert.match(insights,/\["paths", null, \["analytics_relationship_edges"/);
+  assert.match(insights,/\["paths", null, \["analytics_paths"/);
   assert.match(insights,/\["funnel", null, \["analytics_funnel"/);
   for(const field of ['track starts','repeat listener-track pairs','full plays','completions','Accounts attributed to music','Media event mix','Track performance']){
     assert.ok(insights.includes(field), field+' must be visible in Content reporting');
@@ -270,26 +270,33 @@ test('analytics uses chart forms that match the question instead of bars everywh
   assert.match(html,/data-sec="content"/);
 });
 
-test('analytics exposes owner detail and verified signup attribution without weakening RLS', async()=>{
-  const [product,insights,migration,privacy]=await Promise.all([
+test('analytics exposes owner detail and verified signup attribution through the existing event authority', async()=>{
+  const [product,insights,analytics,auth,privacy,account,mnet]=await Promise.all([
     read('js/analytics-product.js'),
     read('js/insights.js'),
-    read('supabase/migrations/20260926191000_analytics_attribution_relationships_detail.sql'),
-    read('privacy.html')
+    read('js/analytics.js'),
+    read('js/mcc-auth.js'),
+    read('privacy.html'),
+    read('account.html'),
+    read('mnet.html')
   ]);
   for(const field of ['ip','region','postal','latitude','longitude','timezone','user_agent']){
-    assert.ok(product.includes(field), field+' must be available in owner session/event detail');
+    assert.ok(product.includes(field), field+' must be available in owner recent-event/session detail');
   }
-  assert.match(product,/rpc\("analytics_session_detail"/);
-  assert.match(insights,/rpc\("analytics_signup_attribution"/);
-  assert.match(insights,/analytics_relationship_edges/);
-  assert.match(migration,/create or replace function public\.analytics_signup_attribution\(/i);
-  assert.match(migration,/create or replace function public\.analytics_relationship_edges\(/i);
-  assert.match(migration,/create or replace function public\.analytics_session_detail\(/i);
-  assert.match(migration,/security invoker/i);
-  assert.match(migration,/security definer/i);
-  assert.match(migration,/public\.eu_is_admin\(\)/,
-    'auth.users attribution must remain desk-only');
-  assert.match(migration,/real pre-signup event must match/i);
+  assert.match(product,/function groupRecentSessions\(/);
+  assert.match(product,/order=at\.desc&limit=800/);
+  assert.match(insights,/name=eq\.account_created/);
+  assert.match(insights,/\["paths", null, \["analytics_paths"/);
+  assert.match(insights,/function journeyGraph\(/);
+  assert.match(insights,/function reachRepeatScatter\(/);
+  assert.match(analytics,/recordAccountCreated: function \(snapshot\)/);
+  assert.match(analytics,/queueEvent\("account_created",p\)/);
+  assert.match(auth,/recordAccountCreated\(attribution\)/);
+  assert.match(auth,/if \(result\.existing \|\| !root\.MCC_ANALYTICS_CONTEXT/);
+  assert.doesNotMatch(auth,/profileData\.analytics_attribution/);
   assert.match(privacy,/Account attribution/i);
+  assert.ok(account.indexOf('js/analytics.js')>=0 && account.indexOf('js/analytics.js')<account.indexOf('js/mcc-auth.js'),
+    'account signup must load first-party analytics before auth');
+  assert.ok(mnet.indexOf('js/analytics.js')>=0 && mnet.indexOf('js/analytics.js')<mnet.indexOf('js/mcc-auth.js'),
+    'Mnet signup must load first-party analytics before auth');
 });
