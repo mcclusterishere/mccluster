@@ -52,6 +52,13 @@ if ("serviceWorker" in navigator) {
 }
 
 window.MCC_TRACK = (function () {
+  /* The site-entry privacy acknowledgement is evaluated by live-content.js
+     before this file loads. Until it is accepted, return a true no-op BEFORE
+     minting a persistent device id or a session id. */
+  if (window.MCC_PRIVACY && window.MCC_PRIVACY.acknowledged === false) {
+    return function () {};
+  }
+
   /* Self-contained constants: this file loads before backend.js. */
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
