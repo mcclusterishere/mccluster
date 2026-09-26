@@ -130,7 +130,10 @@ export default {
       const put = (name, value) => {
         if (value !== undefined && value !== null && value !== '') headers[name] = String(value);
       };
-      put('cf-ipcountry', cf.country);
+      /* CF-IPCountry is a reserved Cloudflare header and may be stripped on
+         a Worker subrequest to a non-Cloudflare origin. Mirror the observed
+         request.cf country into a house-owned header so it survives the hop. */
+      put('x-mcc-country', cf.country || request.headers.get('cf-ipcountry'));
       put('cf-region', cf.region);
       put('cf-region-code', cf.regionCode);
       put('cf-ipcity', cf.city);
