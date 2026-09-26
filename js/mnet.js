@@ -122,6 +122,7 @@
     $("mnNewPassword").value = "";
     $("mnNewPassword2").value = "";
     setStatus($("mnPasswordChangeStatus"), "");
+    $("mnProfileSecurity").hidden = !editing;
     $("mnProfileTitle").textContent = editing ? "Edit your profile." : "Finish your profile.";
     $("mnProfileBack").hidden = !editing;
   }
