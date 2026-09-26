@@ -36,8 +36,10 @@
           <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
         <div id="mnCreateNameWrap" hidden>
-          <label class="mn__label" for="mnCreateName">Display name <span>optional</span></label>
-          <input class="mn__input" id="mnCreateName" type="text" autocomplete="name" placeholder="Your name">
+          <label class="mn__label" for="mnCreateFirst">First name</label>
+          <input class="mn__input" id="mnCreateFirst" type="text" autocomplete="given-name" placeholder="First name" required>
+          <label class="mn__label" for="mnCreateLast">Last name</label>
+          <input class="mn__input" id="mnCreateLast" type="text" autocomplete="family-name" placeholder="Last name" required>
         </div>
         <label class="mn__label" for="mnEmail">Email</label>
         <input class="mn__input" id="mnEmail" type="email" autocomplete="email" placeholder="you@example.com">
@@ -282,6 +284,8 @@
   </dialog>
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/account-integrity.js?v=__STAMP__"></script>
+  <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
