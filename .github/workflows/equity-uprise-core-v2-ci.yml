@@ -7,6 +7,7 @@ on:
     branches:
       - main
       - 'reconcile/equity-uprise-core-v2-*'
+      - 'fix/equity-generated-artifacts-and-pr-guard-20260926'
   workflow_dispatch:
     inputs:
       publish_generated:
