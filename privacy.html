@@ -76,7 +76,7 @@
         mailboxes and sites we host. It is written to be read. Where a practice would sound
         better in vaguer words, the plainer words are used instead.</p>
 
-      <p class="pv__lede"><b>Last updated 22 September 2026.</b></p>
+      <p class="pv__lede"><b>Last updated 26 September 2026.</b></p>
 
       <nav class="pv__toc" aria-label="Contents">
         <p>Contents</p>
@@ -125,6 +125,10 @@
           server-side.</td></tr>
         <tr><td>Country, region, city, timezone</td><td>To know where the music is being
           heard.</td></tr>
+        <tr><td>Precise device location, when you grant location permission</td>
+          <td>Latitude and longitude, plus device-reported accuracy. Where your device
+          provides them, altitude, heading and speed may also be recorded. This is separate
+          from the rough location derived from your IP address.</td></tr>
         <tr><td>Browser and device type</td><td>To know what to build for and what is
           broken.</td></tr>
         <tr><td>Your network (the ISP or carrier your connection belongs to)</td>
@@ -146,10 +150,13 @@
         <li><b>No keystrokes, and no reading of what you type.</b> A copy from a page is
           recorded as having happened; the words are not banked. Anything marked as your own
           record — your address, your phone — is exempt even from that.</li>
-        <li>No microphone, no camera, no contacts. <b>No precise device location</b> — we
-          never ask your browser or phone for GPS, and the only location we have is the
-          rough one an IP address implies, which is usually your city and is sometimes
-          wrong by a hundred miles.</li>
+        <li>No microphone, no camera, no contacts. <b>Precise device location can be
+          collected when your browser or phone grants location permission.</b> If that
+          permission is already granted, the site may read the location automatically;
+          otherwise a location-aware feature uses the browser's normal permission flow.
+          We may record latitude and longitude, device-reported accuracy and, when supplied
+          by the device, altitude, heading and speed. IP-derived location remains a separate
+          rough signal.</li>
         <li><b>Nothing is sold. Ever.</b> Not to advertisers, not to data brokers, not to
           anyone. There is no "trusted partners" clause here because there are none.</li>
       </ul>
