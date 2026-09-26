@@ -152,7 +152,7 @@ jobs:
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
       - name: Require committed generated artifacts to be current
-        if: ${{ github.event_name == 'push' && github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[publish-generated]') }}
+        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[publish-generated]')) }}
         shell: bash
         run: |
           set -euo pipefail
