@@ -296,9 +296,19 @@
       password = String(password || '');
       if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
       if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
+      var profileData = Object.assign({}, data || {});
+      /* Analytics attribution is deliberately metadata, never authority.
+         The database accepts these IDs only as join hints and requires a
+         real pre-signup event before attributing a page or track. */
+      try {
+        var analyticsAttribution = root.MCC_ANALYTICS_CONTEXT &&
+          root.MCC_ANALYTICS_CONTEXT.signupAttribution &&
+          root.MCC_ANALYTICS_CONTEXT.signupAttribution();
+        if (analyticsAttribution) profileData.analytics_attribution = analyticsAttribution;
+      } catch (_) {}
       return authApi('signup', {
         method: 'POST',
-        body: { email: email, password: password, data: data || {} }
+        body: { email: email, password: password, data: profileData }
       }).then(function (session) {
         if (session && session.access_token) {
           writeSession(session);
