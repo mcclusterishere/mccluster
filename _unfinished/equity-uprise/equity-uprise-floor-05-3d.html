@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__">
+<meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="b645d127bb8f">
 <title>Equity Uprise — Floor 5 Policy + Proof</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <style>
@@ -10,7 +10,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:
 .hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 9px}.c{display:flex;flex-wrap:wrap;gap:6px}
 button{border:1px solid #555;border-radius:999px;background:#252525;color:#fff;padding:7px 10px;font:700 11px system-ui}
 .s{position:fixed;right:14px;bottom:14px;background:#111d;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}
-</style>  <script src="js/live-content.js?v=__STAMP__"></script>
+</style>  <script src="js/live-content.js?v=b645d127bb8f"></script>
 </head><body>
 <div id="app"></div>
 <div class="hud"><h1>EQUITY UPRISE · FLOOR 5 · POLICY + PROOF</h1>
@@ -52,7 +52,7 @@ function frameLoadedModel(){
   ctl.target.copy(center);camera.near=.02;camera.far=Math.max(ft(280),span*8);camera.updateProjectionMatrix();ctl.update();
   return {size,center};
 }
-new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=__STAMP__',g=>{
+new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=b645d127bb8f',g=>{
   model=g.scene;model.rotation.x=-Math.PI/2;model.updateMatrixWorld(true);scene.add(model);
   let n=0;model.traverse(o=>{if(o.isMesh){n++;o.castShadow=o.receiveShadow=true;o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true});if((o.name||'').toLowerCase().includes('ceiling'))ceil.push(o)}});
   const f=frameLoadedModel();status.textContent=n+' meshes · 80 inventory records · '+(f.size.x/FT).toFixed(1)+"' × "+(f.size.z/FT).toFixed(1)+"'";
@@ -74,5 +74,5 @@ document.getElementById('ceil').onclick=e=>{const hide=e.target.textContent.star
 document.getElementById('wire').onclick=e=>{wire=!wire;model?.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)});
 r.setAnimationLoop(()=>{ctl.update();r.render(scene,camera)});
-</script>  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+</script>  <script src="js/site-editor.js?v=b645d127bb8f" defer></script>
 </body></html>

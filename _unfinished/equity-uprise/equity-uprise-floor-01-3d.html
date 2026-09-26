@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="equity-uprise-build" content="__STAMP__">
+<meta name="equity-uprise-build" content="b645d127bb8f">
 <title>Equity Uprise — Floor 1 Hybrid 3D</title>
 <script type="importmap">
 {
@@ -32,7 +32,7 @@ button.active{background:#8b1e1e;border-color:#b52c31}
 #north{color:#ff575d;font-weight:800}
 #boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center;max-width:calc(100vw - 30px)}
 </style>
-  <script src="js/live-content.js?v=__STAMP__"></script>
+  <script src="js/live-content.js?v=b645d127bb8f"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -110,7 +110,7 @@ function frameLoadedModel(){
   controls.target.copy(center);camera.near=.02;camera.far=Math.max(ft(240),span*8);camera.updateProjectionMatrix();controls.update();
 }
 const loader=new GLTFLoader();
-loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
+loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=b645d127bb8f',g=>{
   model=g.scene;
   // Trimesh authoring coordinates are Z-up (X/Y floor plane, Z height).
   // Three.js renders Y-up, so rotate the imported GLB onto the floor.
@@ -191,6 +191,6 @@ grid.visible=false;
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
 </script>
-  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+  <script src="js/site-editor.js?v=b645d127bb8f" defer></script>
 </body>
 </html>
