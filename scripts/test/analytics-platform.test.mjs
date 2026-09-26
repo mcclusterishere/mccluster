@@ -233,18 +233,27 @@ test('content analytics is windowed and exposes deep track and media detail', as
   assert.match(migration,/revoke all on function public\.analytics_content.*from public, anon/i);
 });
 
-test('one selected analytics range drives audience and content panels', async()=>{
-  const insights=await read('js/insights.js');
+test('one selected analytics range drives every panel immediately and stale reads cannot repaint it', async()=>{
+  const [board,insights,suite]=await Promise.all([
+    read('js/analytics-board.js'),read('js/insights.js'),read('js/analytics-suite.js')
+  ]);
+  assert.match(board,/broadcast\(\);\s*state\.loading = true/,
+    'range must broadcast before Traffic finishes loading');
+  assert.match(board,/if \(state\.loading\)[\s\S]*Updating/);
   assert.match(insights,/d\.addEventListener\("mcc:range"/);
   assert.match(insights,/RANGE=next/);
+  assert.match(insights,/var LOAD_SEQ = 0/);
+  assert.match(insights,/if \(mine !== LOAD_SEQ\) return/);
   assert.match(insights,/p_since:RANGE\.since/);
   assert.match(insights,/p_until:RANGE\.until/);
-  assert.match(insights,/day=gte/);
-  assert.match(insights,/day=lte/);
+  assert.match(suite,/d\.addEventListener\("mcc:range"/);
+  assert.match(suite,/mine!==state\.seq/);
+  assert.match(suite,/\/v1\/analytics\/business/);
+  assert.match(suite,/\/v1\/analytics\/identity/);
 });
 
 
-test('every reporting section has a real SVG chart surface', async()=>{
+test('reporting uses visualization grammar instead of forcing every metric into bars', async()=>{
   const [html,board,insights]=await Promise.all([
     read('analytics.html'),
     read('js/analytics-board.js'),
@@ -258,21 +267,84 @@ test('every reporting section has a real SVG chart surface', async()=>{
 
   assert.match(board,/function barChart\(/);
   assert.match(board,/barChart: barChart/);
-
   assert.match(insights,/B\.lineChart\(rows\.slice\(\)\.reverse\(\)/,
-    'Audience engagement must render a line chart');
-  for(const label of [
-    'People reaching each funnel stage',
-    'Daily, weekly and monthly active people',
-    'People by acquisition source',
-    'Most common next-page paths',
-    'Top tracks by starts',
-    'Media events in the selected range'
-  ]){
-    assert.ok(insights.includes(label), label+' must render through the shared SVG chart helper');
-  }
-
+    'Audience engagement must remain a time-series line');
+  assert.match(insights,/function funnelView\(/);
+  assert.match(insights,/function lollipop\(/);
+  assert.match(insights,/function donut\(/);
+  assert.match(insights,/function scatterTracks\(/);
+  assert.match(insights,/function pathFlow\(/);
+  assert.match(insights,/Page to next-page relationship flow/);
+  assert.match(html,/data-sec="overview"/);
   assert.match(html,/data-sec="traffic"/);
   assert.match(html,/data-sec="audience"/);
   assert.match(html,/data-sec="content"/);
+  assert.match(html,/data-sec="identity"/);
+  assert.match(html,/relationship flow/);
+  assert.match(html,/scatter/);
+});
+
+
+test('owner analytics exposes the promised full suite without creating a second data plane', async()=>{
+  const [router,suite,html]=await Promise.all([
+    read('workers/mccluster/src/analytics/router.js'),
+    read('js/analytics-suite.js'),
+    read('analytics.html')
+  ]);
+  assert.match(router,/\/v1\/analytics\/business/);
+  assert.match(router,/\/v1\/analytics\/identity/);
+  assert.match(router,/\/v1\/analytics\/forensics/);
+  assert.match(router,/await requireHouseOps\(env, user\)/);
+  assert.match(router,/signup_rate_pct/);
+  assert.match(router,/assisted_tracks/);
+  assert.match(router,/events\?uid=in\.\(/,
+    'historical identity bridge must be scoped to accounts in the selected range');
+  assert.doesNotMatch(router,/events\?uid=not\.is\.null&device_id=not\.is\.null/,
+    'never revive the rejected global oldest-row bridge scan');
+  assert.match(suite,/Accounts|accounts/i);
+  assert.match(suite,/Platform activity/);
+  assert.match(suite,/Mnet/);
+  assert.match(suite,/Music journey/);
+  assert.match(suite,/Commerce/);
+  assert.match(html,/id="anOverviewTab"/);
+  assert.match(html,/id="anIdentityTab"/);
+});
+
+test('real new-account conversion attribution is collected and duplicate signup attempts are excluded', async()=>{
+  const [analytics,auth,account,mnet]=await Promise.all([
+    read('js/analytics.js'),read('js/mcc-auth.js'),read('account.html'),read('mnet.html')
+  ]);
+  assert.match(analytics,/MCC_ANALYTICS_CONTEXT/);
+  assert.match(analytics,/queueEvent\("account_created"/);
+  assert.match(analytics,/signup_user_id/);
+  assert.match(auth,/prepareSignupAttribution/);
+  assert.match(auth,/result\.existing/);
+  assert.match(auth,/recordAccountCreated\(bundle\.attribution, result\.user\)/);
+  assert.match(account,/js\/analytics\.js/);
+  assert.match(mnet,/js\/analytics\.js/);
+});
+
+test('country enrichment survives the Worker to collector hop', async()=>{
+  const [entry,collector]=await Promise.all([
+    read('workers/mccluster/src/entry.js'),read('supabase/functions/collect/index.ts')
+  ]);
+  assert.match(entry,/put\('x-mcc-country', cf\.country/);
+  assert.match(collector,/country: pick\("x-mcc-country"/);
+});
+
+test('business analytics supports exact custom windows instead of silently extending them to now', async()=>{
+  const router=await read('workers/mccluster/src/analytics/router.js');
+  assert.match(router,/url\.searchParams\.get\('since'\)/);
+  assert.match(router,/url\.searchParams\.get\('until'\)/);
+  assert.match(router,/if \(untilIso\) q\.append\(timeColumn, `lt\.\$\{untilIso\}`\)/);
+  assert.match(router,/at >= sinceMs && at < untilMs/);
+});
+
+test('analytics shell is mobile-first and only widens at min-width breakpoints', async()=>{
+  const html=await read('analytics.html');
+  assert.match(html,/viewport-fit=cover/);
+  assert.match(html,/font-size:max\(16px,1rem\)/);
+  assert.match(html,/@media \(min-width:/);
+  assert.doesNotMatch(html,/@media \(max-width:/);
+  assert.match(html,/grid-template-columns:minmax\(0,1fr\)/);
 });
