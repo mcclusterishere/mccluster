@@ -96,6 +96,20 @@
         <label class="mn__label" for="mnWebsite">Website <span>optional</span></label>
         <input class="mn__input" id="mnWebsite" type="url" inputmode="url" placeholder="https://…">
 
+        <section class="mn__profile-security" id="mnProfileSecurity" aria-labelledby="mnSecurityTitle" hidden>
+          <h2 id="mnSecurityTitle">Security</h2>
+          <p class="mn__hint">Change the password for this M Account. The new password works everywhere you use this McCluster identity.</p>
+
+          <label class="mn__label" for="mnNewPassword">New password</label>
+          <input class="mn__input" id="mnNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
+
+          <label class="mn__label" for="mnNewPassword2">Confirm new password</label>
+          <input class="mn__input" id="mnNewPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
+
+          <button class="mn__secondary" id="mnPasswordChange" type="button">Change password</button>
+          <p class="mn__status" id="mnPasswordChangeStatus" role="status"></p>
+        </section>
+
         <button class="mn__primary" id="mnProfileSave" type="submit">Save profile and enter Mnet</button>
         <p class="mn__status" id="mnProfileStatus" role="status"></p>
       </form>
