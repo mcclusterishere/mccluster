@@ -211,6 +211,16 @@
     .ins-chart-block{margin-top:1rem}
     .ins-chart-detail{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bd-edge)}
     .bd-bar-chart{min-height:9rem}
+    .ins-network-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ins-network-scroll>svg{min-width:46rem}
+    .ins-network .ins-net-edge{stroke:#3f93d2;opacity:.34}
+    .ins-net-grid{stroke:rgba(255,255,255,.07);stroke-width:1}
+    .ins-net-axis{stroke:rgba(255,255,255,.20);stroke-width:1}
+    .ins-net-head{fill:var(--bd-faint);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .ins-net-node rect{fill:#171d25;stroke:#3b4655;stroke-width:1}
+    .ins-net-node text,.ins-net-label{fill:#f4f5f7;font-size:11.5px;font-weight:650}
+    .ins-scatter-dot{fill:#e5383b;fill-opacity:.72;stroke:#f4f5f7;stroke-opacity:.38;stroke-width:1}
+    .ins-scatter{min-height:18rem}
 
     /* The Insights panels were built against control-system.css tokens on
        their own page. They render here, so the few they need are mapped
@@ -347,11 +357,12 @@
           <div id="insAcq"></div>
         </section>
 
-        <section class="an-panel">
-          <div class="an-ph"><h2>Where they go next</h2>
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Relationship map</h2>
             <button class="an-csv" type="button" data-csv="paths">CSV</button></div>
-          <p class="bd-sub">What people do in sequence, which is almost never what
-            the navigation assumes.</p>
+          <p class="bd-sub">Weighted relationships instead of another bar chart:
+            acquisition source → entry page → music touch → account creation.
+            Line weight is the number of sessions moving through that relationship.</p>
           <div id="insPaths"></div>
         </section>
       </div>
