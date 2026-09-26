@@ -133,7 +133,9 @@ export default {
       /* request.cf.country and CF-IPCountry are documented as the same value,
          but production currently has city/lat/ASN rows with country missing.
          Prefer request.cf and keep the edge header as a harmless fallback. */
-      put('cf-ipcountry', cf.country || request.headers.get('cf-ipcountry'));
+      /* CF-IPCountry is a reserved Cloudflare header and may be dropped on
+         the subrequest. Preserve the same observed value under our own name. */
+      put('x-mcc-country', cf.country || request.headers.get('cf-ipcountry'));
       put('cf-region', cf.region);
       put('cf-region-code', cf.regionCode);
       put('cf-ipcity', cf.city);
