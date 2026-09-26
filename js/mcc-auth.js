@@ -299,16 +299,23 @@
       var profileData = Object.assign({}, data || {});
       /* Analytics attribution is deliberately metadata, never authority.
          The database accepts these IDs only as join hints and requires a
-         real pre-signup event before attributing a page or track. */
+         real pre-signup event before attributing a page or track. Flush the
+         current analytics batch before creating the auth row so the proof
+         event cannot lose a race with signup. */
+      var attributionRead = Promise.resolve(null);
       try {
-        var analyticsAttribution = root.MCC_ANALYTICS_CONTEXT &&
-          root.MCC_ANALYTICS_CONTEXT.signupAttribution &&
-          root.MCC_ANALYTICS_CONTEXT.signupAttribution();
-        if (analyticsAttribution) profileData.analytics_attribution = analyticsAttribution;
+        if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution) {
+          attributionRead = root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution();
+        } else if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.signupAttribution) {
+          attributionRead = Promise.resolve(root.MCC_ANALYTICS_CONTEXT.signupAttribution());
+        }
       } catch (_) {}
-      return authApi('signup', {
-        method: 'POST',
-        body: { email: email, password: password, data: profileData }
+      return Promise.resolve(attributionRead).then(function (analyticsAttribution) {
+        if (analyticsAttribution) profileData.analytics_attribution = analyticsAttribution;
+        return authApi('signup', {
+          method: 'POST',
+          body: { email: email, password: password, data: profileData }
+        });
       }).then(function (session) {
         if (session && session.access_token) {
           writeSession(session);
