@@ -107,6 +107,15 @@
     "OSDP-RS485-STP": 10,
     "SPEAKER-PAIR": 26
   },
+  "pathway_family_counts": {
+    "av_audio": 26,
+    "controls_security": 68,
+    "life_safety": 42,
+    "local_equipment": 747,
+    "power_branch": 187,
+    "power_feeder": 14,
+    "telecommunications": 246
+  },
   "new_assets_by_level": {
     "B1": 122,
     "BUILDING": 31,
@@ -208,10 +217,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 5518552,
-  "overlay_glb_sha256": "ef86b730c8642009f824d5b43a2c5333742226ca166cbb4e26ba2c2192ae8ce6",
-  "checks_total": 81,
-  "checks_passed": 81,
+  "overlay_glb_bytes": 13675824,
+  "overlay_glb_sha256": "c6d9a5594a42e3931464dc60b8fadceae1af87aa5b218c1aee28c52125489716",
+  "checks_total": 86,
+  "checks_passed": 86,
   "checks_failed": 0,
   "checks": [
     {
@@ -253,6 +262,11 @@
       "detail": "1330/1330"
     },
     {
+      "name": "all non-root physical connection endpoints resolve deterministic positions",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all modeled physical connections have endpoint port identifiers",
       "passed": true,
       "detail": "1330/1330"
@@ -263,9 +277,29 @@
       "detail": ""
     },
     {
+      "name": "all modeled routes use pathway-first v1 metadata",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "long-run cabling has supported bend-aware pathway routes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "legacy single tray-turn routing is eliminated",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "local equipment cords remain non-zero and traceable",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all Cat6A permanent links remain within 90 m design limit",
       "passed": true,
-      "detail": 106.175
+      "detail": 116.288
     },
     {
       "name": "all active WAPs terminate through jack plus PoE patch",
@@ -651,7 +685,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 5518552
+      "detail": 13675824
     }
   ],
   "passed": true
