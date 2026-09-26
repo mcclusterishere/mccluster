@@ -54,7 +54,7 @@ PROVENANCE_DRIFT=""
 if [[ ! -d "${LIVE_CORE}" ]]; then
   CORE_DRIFT="live core missing"
 else
-  CORE_DRIFT="$(rsync -acni --delete \
+  CORE_DRIFT="$(rsync -acni --delete --omit-dir-times \
     --exclude '.env' \
     --exclude '.env.*' \
     --exclude '.mccluster-artifacts' \

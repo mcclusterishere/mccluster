@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 
 const read = (path) => readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 
@@ -52,4 +53,38 @@ test('rollback ignores optional services that are not installed', async () => {
   const source = await read('scripts/deploy-ovh-core.sh');
   assert.match(source, /systemctl list-unit-files "\$\{unit\}"/);
   assert.match(source, /systemctl try-restart "\$\{unit\}" \|\| true/);
+});
+
+
+test('reconciler ignores directory mtimes while still attesting live file content', async () => {
+  const source = await read('scripts/mccluster-vps-reconcile.sh');
+  assert.match(source, /rsync -acni --delete --omit-dir-times/,
+    'deploy manifest writes must not turn the Core directory mtime into false runtime drift');
+  assert.match(source, /--exclude '\.mccluster-deploy\.json'/,
+    'the separately attested deployment manifest must stay outside the Core file comparison');
+});
+
+
+test('the OVH reconciler itself is a versioned deploy artifact with rollback', async () => {
+  const [service, bootstrap, deploy] = await Promise.all([
+    read('core/systemd/mccluster-vps-reconcile.service'),
+    read('scripts/bootstrap-vps-self-management.sh'),
+    read('scripts/deploy-ovh-core.sh'),
+  ]);
+
+  assert.match(service, /ExecStart=\/opt\/mccluster\/reconcile\/mccluster-vps-reconcile\.sh/);
+  assert.match(bootstrap, /\/opt\/mccluster\/reconcile\/mccluster-vps-reconcile\.sh/);
+  assert.match(deploy, /scripts\/mccluster-vps-reconcile\.sh/);
+  assert.match(deploy, /BACKUP_DIR}\/reconcile-script/);
+  assert.match(deploy, /RECONCILE_SCRIPT/);
+});
+
+
+test('OVH self-management shell scripts remain syntactically valid', () => {
+  assert.doesNotThrow(() => execFileSync('bash', [
+    '-n',
+    'scripts/mccluster-vps-reconcile.sh',
+    'scripts/deploy-ovh-core.sh',
+    'scripts/bootstrap-vps-self-management.sh',
+  ], { stdio: 'pipe' }));
 });

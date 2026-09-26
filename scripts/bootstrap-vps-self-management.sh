@@ -16,9 +16,11 @@ for cmd in git rsync flock node npm systemctl; do
   command -v "${cmd}" >/dev/null || { echo "missing required command: ${cmd}" >&2; exit 2; }
 done
 
-install -d -o root -g root -m 0755 /var/lib/mccluster/reconcile
+install -d -o root -g root -m 0755 /var/lib/mccluster/reconcile /opt/mccluster/reconcile
 
-install -o root -g root -m 0755   "${SOURCE_DIR}/scripts/mccluster-vps-reconcile.sh"   /usr/local/sbin/mccluster-vps-reconcile
+install -o root -g root -m 0755 \
+  "${SOURCE_DIR}/scripts/mccluster-vps-reconcile.sh" \
+  /opt/mccluster/reconcile/mccluster-vps-reconcile.sh
 
 for unit in   mccluster-vps-reconcile.service   mccluster-vps-reconcile.timer   mccluster-core-system-health.service   mccluster-core-system-health.timer; do
   install -o root -g root -m 0644     "${SOURCE_DIR}/core/systemd/${unit}"     "/etc/systemd/system/${unit}"

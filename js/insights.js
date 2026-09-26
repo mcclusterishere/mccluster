@@ -57,7 +57,13 @@
   }
 
   var S = session();
-  var DATA = {}, DAYS = 7;
+  var DATA = {}, ALLOWED = false, SITE_ID = null;
+  var RANGE = (function () {
+    var now = new Date(), since = new Date();
+    since.setHours(0,0,0,0); since.setDate(since.getDate() - 6);
+    return { id:"7d", label:"7 days", mode:"fixed", days:7,
+      since:since.toISOString(), until:now.toISOString(), query_since:since.toISOString() };
+  })();
 
   function api(path) {
     return fetch(SB + "/rest/v1/" + path, {
@@ -67,6 +73,27 @@
         return r.text().then(function (t) {
           var msg = t;
           try { msg = (JSON.parse(t) || {}).message || t; } catch (e) { /* plain text */ }
+          throw Object.assign(new Error(msg || ("HTTP " + r.status)), { status: r.status });
+        });
+      }
+      return r.json();
+    });
+  }
+
+  function rpc(name, body) {
+    return fetch(SB + "/rest/v1/rpc/" + name, {
+      method: "POST",
+      headers: {
+        apikey: KEY,
+        authorization: "Bearer " + (S && S.access_token),
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.text().then(function (t) {
+          var msg = t;
+          try { msg = (JSON.parse(t) || {}).message || t; } catch (e) {}
           throw Object.assign(new Error(msg || ("HTTP " + r.status)), { status: r.status });
         });
       }
@@ -223,7 +250,7 @@
     var top = t.arrived || 1;
     /* One hue throughout. These are nine magnitudes of one measure, not
        nine categories, so rank must not be painted as identity. */
-    host.innerHTML = bars(steps.map(function (s, i) {
+    var funnelRows = steps.map(function (s, i) {
       var v = t[s[0]] || 0;
       var prev = i ? (t[steps[i - 1][0]] || 0) : null;
       var drop = (prev && prev > v) ? ("−" + Math.round(((prev - v) / prev) * 100) + "% from above") : "";
@@ -232,7 +259,12 @@
         display: num(v) + " · " + (Math.round((v / top) * 1000) / 10) + "%",
         note: drop
       };
-    }), { hue: HUE_A });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(funnelRows, {
+        label: "People reaching each funnel stage", color: HUE_A, limit: 9
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(funnelRows, { hue: HUE_A }) + "</div>";
   }
 
   function paintSticky(rows, err) {
@@ -241,9 +273,17 @@
     DATA.stickiness = rows;
     var r = rows[0];
     if (!r) { host.innerHTML = why(null); return; }
+    var habitRows = [
+      { key:"Daily active", value:Number(r.dau)||0 },
+      { key:"Weekly active", value:Number(r.wau)||0 },
+      { key:"Monthly active", value:Number(r.mau)||0 }
+    ];
     host.innerHTML =
       stat(num(r.dau), "today") + stat(num(r.wau), "this week") + stat(num(r.mau), "this month") +
-      stat(r.dau_over_mau + "%", "come back daily");
+      stat(r.dau_over_mau + "%", "come back daily") +
+      (B.barChart ? '<div class="ins-chart-block">' + B.barChart(habitRows, {
+        label:"Daily, weekly and monthly active people", color:HUE_B, limit:3
+      }) + "</div>" : "");
     /* The honesty that makes the number usable: with four days of
        history "this month" is not a month, and 5% reads like churn when
        it is really youth. The view carries the window so this can say so. */
@@ -261,28 +301,109 @@
     if (err) { host.innerHTML = why(err); return; }
     DATA.acquisition = rows;
     if (!rows.length) { host.innerHTML = why(null); return; }
-    host.innerHTML = bars(rows.map(function (r) {
+    var acquisitionRows = rows.map(function (r) {
       return {
         key: String(r.source).replace(/^https?:\/\//, "").replace(/\/$/, "").slice(0, 42),
         value: Number(r.people) || 0,
         display: num(r.people),
         note: r.engagement_rate + "% engaged · " + r.avg_seconds + "s"
       };
-    }), { hue: HUE_B });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(acquisitionRows, {
+        label:"People by acquisition source", color:HUE_B, limit:10
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(acquisitionRows, { hue: HUE_B }) + "</div>";
   }
 
-  function paintContent(rows, err) {
+  function paintContent(rows, events, err) {
     var host = el("insContent");
     if (err) { host.innerHTML = why(err); return; }
-    DATA.content = rows;
-    if (!rows.length) { host.innerHTML = why(null); return; }
-    host.innerHTML = bars(rows.map(function (r) {
+    DATA.content = rows || [];
+    DATA.content_events = events || [];
+    if (!rows || !rows.length) { host.innerHTML = why(null); return; }
+
+    var total = function (key) {
+      return rows.reduce(function (n, r) { return n + (Number(r[key]) || 0); }, 0);
+    };
+    var starts = total("starts"), listenerPairs = total("listeners"),
+        repeats = total("repeat_listeners"), full = total("full_plays"),
+        previews = total("preview_plays"), completes = total("completions"),
+        shares = total("shares");
+
+    var albums = {};
+    rows.forEach(function (r) {
+      var key = r.album || "Unassigned";
+      var a = albums[key] || (albums[key] = { key:key, starts:0, full:0, completes:0, shares:0 });
+      a.starts += Number(r.starts)||0; a.full += Number(r.full_plays)||0;
+      a.completes += Number(r.completions)||0; a.shares += Number(r.shares)||0;
+    });
+    var albumRows = Object.keys(albums).map(function (k) { return albums[k]; })
+      .sort(function (a,b) { return b.starts-a.starts; });
+
+    var eventRows = (events||[]).map(function (r) {
       return {
-        key: r.track, value: Number(r.listeners) || 0, display: num(r.listeners),
-        note: num(r.plays) + " plays · " + r.plays_per_listener + " each · " +
-              num(r.repeat_listeners) + " came back"
+        key: String(r.event_name||"").replace(/_/g," "),
+        value: Number(r.events)||0,
+        display: num(r.events),
+        note: num(r.people)+" people · "+num(r.sessions)+" sessions"
       };
-    }), { hue: HUE_A });
+    });
+
+    var tracks = rows.slice().sort(function (a,b) {
+      return (Number(b.listeners)||0)-(Number(a.listeners)||0) ||
+             (Number(b.starts)||0)-(Number(a.starts)||0);
+    });
+
+    host.innerHTML =
+      '<div class="ins-stats">' +
+        stat(num(starts),"track starts") +
+        stat(num(listenerPairs),"listener-track relationships","deduped within each track") +
+        stat(num(repeats),"repeat listener-track pairs") +
+        stat(num(full),"full plays") +
+        stat(num(completes),"completions") +
+        stat(num(shares),"shares") +
+      '</div>' +
+      '<div class="an-grid" style="margin-top:1rem">' +
+        '<section class="an-panel an-wide"><h3>Top tracks by starts</h3>' +
+          (B.barChart ? B.barChart(tracks.map(function (r) {
+            return { key:r.track, value:Number(r.starts)||0 };
+          }), { label:"Top tracks by starts", color:HUE_A, limit:12 }) : "") +
+        '</section>' +
+        '<section class="an-panel"><h3>Albums / collections</h3>' +
+          bars(albumRows.map(function (a) {
+            return {key:a.key,value:a.starts,display:num(a.starts),
+              note:num(a.full)+" full · "+num(a.completes)+" complete · "+num(a.shares)+" shares"};
+          }),{hue:HUE_B}) +
+        '</section>' +
+        '<section class="an-panel"><h3>Media event mix</h3>' +
+          (eventRows.length
+            ? ((B.barChart ? B.barChart(eventRows, {
+                label:"Media events in the selected range", color:HUE_A, limit:12
+              }) : "") + bars(eventRows,{hue:HUE_A}))
+            : why(null)) +
+        '</section>' +
+      '</div>' +
+      '<div class="bd-scroll" style="margin-top:1rem"><table class="bd-table">' +
+        '<caption>Track performance for '+esc(RANGE.label||"selected range")+'</caption>' +
+        '<thead><tr><th>Track</th><th>Album</th><th class="n">Starts</th>' +
+        '<th class="n">Listeners</th><th class="n">Repeat</th><th class="n">Starts/listener</th>' +
+        '<th class="n">Full</th><th class="n">Preview</th><th class="n">Complete</th>' +
+        '<th class="n">Shares</th><th>First</th><th>Last</th></tr></thead><tbody>' +
+        tracks.map(function (r) {
+          var first=r.first_heard?new Date(r.first_heard).toLocaleDateString():"—";
+          var last=r.last_heard?new Date(r.last_heard).toLocaleDateString():"—";
+          return '<tr><td><b>'+esc(r.track||"—")+'</b></td><td>'+esc(r.album||"—")+'</td>' +
+            '<td class="n">'+num(r.starts)+'</td><td class="n">'+num(r.listeners)+'</td>' +
+            '<td class="n">'+num(r.repeat_listeners)+'</td><td class="n">'+
+            esc(r.plays_per_listener==null?"—":r.plays_per_listener)+'</td>' +
+            '<td class="n">'+num(r.full_plays)+'</td><td class="n">'+num(r.preview_plays)+'</td>' +
+            '<td class="n">'+num(r.completions)+'</td><td class="n">'+num(r.shares)+'</td>' +
+            '<td>'+esc(first)+'</td><td>'+esc(last)+'</td></tr>';
+        }).join("") +
+        '</tbody></table></div>' +
+      '<p class="bd-foot">Legacy album plays and the newer music-player events are normalized into one selected-window report. ' +
+        'Preview/full/completion columns appear only where those newer events exist.</p>';
   }
 
   function paintPaths(rows, err) {
@@ -291,44 +412,76 @@
     DATA.paths = rows;
     if (!rows.length) { host.innerHTML = why(null); return; }
     /* Pairs, so a bar per pair reads better than a table of three columns. */
-    host.innerHTML = bars(rows.map(function (r) {
+    var pathRows = rows.map(function (r) {
       return {
         key: r.from_page + "  →  " + r.to_page,
         value: Number(r.moves) || 0, display: num(r.moves),
         note: num(r.sessions) + " sessions"
       };
-    }), { hue: HUE_B });
+    });
+    host.innerHTML =
+      (B.barChart ? B.barChart(pathRows, {
+        label:"Most common next-page paths", color:HUE_B, limit:10
+      }) : "") +
+      '<div class="ins-chart-detail">' + bars(pathRows, { hue: HUE_B }) + "</div>";
   }
 
   /* ---------- load ------------------------------------------------- */
+  function dayOf(iso) {
+    var d = new Date(iso);
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function rangeArgs() {
+    return { p_since:RANGE.since, p_until:RANGE.until, p_site:SITE_ID };
+  }
   function load() {
-    var since = new Date(Date.now() - DAYS * 864e5).toISOString().slice(0, 10);
-    var q = "&day=gte." + since;
+    if (!ALLOWED) return Promise.resolve();
+    var from = dayOf(RANGE.since);
+    var throughDate = new Date(new Date(RANGE.until).getTime() - 1);
+    var through = dayOf(throughDate);
+    var q = "&day=gte." + encodeURIComponent(from) + "&day=lte." + encodeURIComponent(through);
+    var args = rangeArgs();
     var jobs = [
-      ["engagement", "v_engagement_daily?select=*" + q + "&order=day.desc", paintEngagement],
-      ["funnel", "v_funnel_daily?select=*" + q + "&order=day.desc", paintFunnel],
-      ["stickiness", "v_stickiness?select=*&order=day.desc&limit=1", paintSticky],
-      ["acquisition", "v_acquisition_quality?select=*&order=sessions.desc&limit=12", paintAcquisition],
-      ["content", "v_content_performance?select=*&order=listeners.desc&limit=15", paintContent],
-      ["paths", "v_paths?select=*&order=moves.desc&limit=12", paintPaths]
+      ["engagement", "v_engagement_daily?select=*" + q + "&order=day.desc", null, paintEngagement],
+      ["funnel", null, ["analytics_funnel",{p_since:RANGE.since,p_until:RANGE.until}], paintFunnel],
+      ["stickiness", "v_stickiness?select=*&day=lte." + encodeURIComponent(through) + "&order=day.desc&limit=1", null, paintSticky],
+      ["acquisition", null, ["analytics_acquisition",args], paintAcquisition],
+      ["paths", null, ["analytics_paths",Object.assign({p_limit:20},args)], paintPaths]
     ];
 
-    el("insStamp").textContent = "Reading the analytics views…";
+    var stamp=el("insStamp");
+    if(stamp) stamp.textContent="Reading "+(RANGE.label||"selected range")+"…";
 
-    /* allSettled, not all. One view the caller cannot read is one blank
-       panel that says why — not six blank panels that say nothing. */
-    return Promise.allSettled(jobs.map(function (j) { return api(j[1]); }))
-      .then(function (out) {
-        var failed = 0;
-        out.forEach(function (res, i) {
-          if (res.status === "fulfilled") jobs[i][2](res.value || [], null);
-          else { failed++; jobs[i][2]([], res.reason || new Error("failed")); }
-        });
-        var stamp = el("insStamp");
-        if (stamp) stamp.textContent = failed
-          ? failed + " of " + jobs.length + " panels could not be read · " + new Date().toLocaleString()
-          : "Read live from the analytics views · " + new Date().toLocaleString();
+    var core = Promise.allSettled(jobs.map(function (j) {
+      return j[2] ? rpc(j[2][0],j[2][1]) : api(j[1]);
+    })).then(function (out) {
+      var failed=0;
+      out.forEach(function (res,i) {
+        if(res.status==="fulfilled") jobs[i][3](res.value||[],null);
+        else {failed++;jobs[i][3]([],res.reason||new Error("failed"));}
       });
+      return failed;
+    });
+
+    var content = Promise.allSettled([
+      rpc("analytics_content",args),
+      rpc("analytics_content_events",args)
+    ]).then(function (out) {
+      if(out[0].status==="rejected"){
+        paintContent([],[],out[0].reason||new Error("failed")); return 1;
+      }
+      var eventRows=out[1].status==="fulfilled"?(out[1].value||[]):[];
+      paintContent(out[0].value||[],eventRows,
+        out[1].status==="rejected"?out[1].reason:null);
+      return out[1].status==="rejected"?1:0;
+    });
+
+    return Promise.all([core,content]).then(function (counts) {
+      var failed=(counts[0]||0)+(counts[1]||0);
+      if(stamp) stamp.textContent=failed
+        ? failed+" analytics reads failed · "+(RANGE.label||"selected range")+" · "+new Date().toLocaleString()
+        : "Read live · "+(RANGE.label||"selected range")+" · "+new Date().toLocaleString();
+    });
   }
 
   /* ---------- boot ----------------------------------------------------
@@ -351,11 +504,19 @@
 
   if (el("insHero")) {
     d.addEventListener("mcc:range", function (e) {
-      var n = e && e.detail && Number(e.detail.days);
-      if (!n || n === DAYS) return;
-      DAYS = n;
+      var next=e&&e.detail;
+      if(!next||!next.since||!next.until) return;
+      RANGE=next;
       load();
     });
+    d.addEventListener("mcc:analytics-property", function (e) {
+      var detail=e&&e.detail||{};
+      SITE_ID=detail.site_id==null?null:detail.site_id;
+      if(ALLOWED) load();
+    });
+    if(w.MCC_ANALYTICS_PROPERTY){
+      SITE_ID=w.MCC_ANALYTICS_PROPERTY.site_id==null?null:w.MCC_ANALYTICS_PROPERTY.site_id;
+    }
 
     openTheGate().then(function (allowed) {
       if (!allowed) {
@@ -363,6 +524,7 @@
              "account the database recognises as the desk.");
         return;
       }
+      ALLOWED=true;
       var gate = el("insGate"); if (gate) gate.hidden = true;
       var app = el("insApp"); if (app) app.hidden = false;
       load();

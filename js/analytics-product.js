@@ -25,6 +25,23 @@
       });
     });
   }
+  function rpc(name,body){
+    return token().then(function(t){
+      if(!t) throw new Error("signed out");
+      return fetch(SUPA.url+"/rest/v1/rpc/"+name,{
+        method:"POST",
+        headers:{apikey:SUPA.key,Authorization:"Bearer "+t,"Content-Type":"application/json"},
+        body:JSON.stringify(body||{})
+      });
+    }).then(function(r){
+      return r.text().then(function(raw){
+        var body=null; try{body=raw?JSON.parse(raw):null;}catch(_){body=raw;}
+        if(!r.ok) throw new Error((body&&body.message)||raw||("HTTP "+r.status));
+        return body;
+      });
+    });
+  }
+
   function api(path,opts){
     opts=opts||{};
     return token().then(function(t){
@@ -119,21 +136,64 @@
     return site.id===FIRST_PARTY ? "site_id=is.null" : "site_id=eq."+encodeURIComponent(site.id);
   }
 
-  /* Newest first, so a window that hits the cap keeps the days somebody is
-     actually looking at and loses the far edge — which the board then says out
-     loud rather than drawing a confident line through a short day. */
-  function fetchEvents(site,days){
-    var since=new Date(Date.now()-(days-1)*86400000);
-    since.setHours(0,0,0,0);
+  /* Historical reporting comes from server-side aggregates, not a capped raw
+     event download. That matters now that the collector holds more than 74k
+     rows and the oldest production signal predates the current page_view
+     event. The RPCs normalize that legacy period and return the complete
+     selected range without a browser row ceiling. Raw rows are fetched only
+     for the 50-row Recent Events diagnostic table. */
+  function siteUuid(site){ return site.id===FIRST_PARTY ? null : site.id; }
+  function topRows(rows,key){
+    return (rows||[]).map(function(r){var o={count:Number(r.n)||0};o[key]=r.key;return o;});
+  }
+  function recentEvents(site,request){
     return rest("events?"+scopeFilter(site)+
-      "&at=gte."+encodeURIComponent(since.toISOString())+
+      "&at=gte."+encodeURIComponent(request.since)+
+      "&at=lt."+encodeURIComponent(request.until)+
       "&select=at,name,path,session_id,device_id,country,city,asn_org,is_bot,device,edge,referrer"+
-      "&order=at.desc&limit=20000")
-      .then(function(rows){
-        state.events=rows||[];
-        renderRecent();
-        return {traffic:window.MCCBoard.rollup(state.events,{since:since,days:days})};
-      });
+      "&order=at.desc&limit=50").then(function(rows){
+        state.events=rows||[]; renderRecent();
+      }).catch(function(){ state.events=[]; renderRecent(); });
+  }
+  function fetchAnalytics(site,request){
+    var sid=siteUuid(site);
+    var tz="UTC";
+    try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch(_){}
+    var current={p_since:request.since,p_until:request.until,p_site:sid};
+    var daily={p_since:request.query_since,p_until:request.until,p_site:sid,p_tz:tz};
+    var jobs=[
+      rpc("analytics_daily",daily),
+      rpc("analytics_totals",current),
+      rpc("analytics_top",{p_dim:"page",p_since:request.since,p_until:request.until,p_site:sid,p_limit:12}),
+      rpc("analytics_top",{p_dim:"source",p_since:request.since,p_until:request.until,p_site:sid,p_limit:12}),
+      rpc("analytics_top",{p_dim:"country",p_since:request.since,p_until:request.until,p_site:sid,p_limit:12}),
+      rpc("analytics_top",{p_dim:"network",p_since:request.since,p_until:request.until,p_site:sid,p_limit:12})
+    ];
+    if(request.compare){
+      jobs.push(rpc("analytics_totals",{
+        p_since:request.query_since,p_until:request.since,p_site:sid
+      }));
+    }
+    return Promise.all(jobs).then(function(out){
+      recentEvents(site,request);
+      var totals=(out[1]&&out[1][0])||{};
+      var previous=request.compare&&out[6]&&out[6][0] ? out[6][0] : null;
+      return {traffic:{
+        by_day:out[0]||[],
+        totals:totals,
+        previous_totals:previous,
+        top_pages:topRows(out[2],"path"),
+        top_referrers:topRows(out[3],"source"),
+        top_countries:topRows(out[4],"country"),
+        top_networks:topRows(out[5],"network"),
+        bots_excluded:true,
+        truncated:false,
+        first_event:totals.first_event||null,
+        identity_since:totals.identity_since||null
+      },note:request.mode==="all"&&totals.first_event
+        ? "history begins "+new Date(totals.first_event).toLocaleDateString()
+        : ""};
+    });
   }
 
   function renderRecent(){
@@ -153,10 +213,10 @@
       boardHost:$("bdBoard"),
       /* The board asks for double the range so its deltas have a baseline; the
          note explains a cap or an empty read in the page's own terms. */
-      fetch:function(days){
+      fetch:function(request){
         var site=state.selected;
         if(!site) return Promise.reject(new Error("Choose a property to report on."));
-        return fetchEvents(site,days);
+        return fetchAnalytics(site,request);
       }
     });
   }
@@ -170,6 +230,10 @@
     }else{
       renderInstall(site);
     }
+    window.MCC_ANALYTICS_PROPERTY={
+      site_id:siteUuid(site),site_name:site.name,first_party:site.id===FIRST_PARTY
+    };
+    try{document.dispatchEvent(new CustomEvent("mcc:analytics-property",{detail:window.MCC_ANALYTICS_PROPERTY}));}catch(_){}
     $("bdWho").textContent="Traffic · "+site.name;
     $("bdScope").textContent=site.id===FIRST_PARTY
       ? "First-party events from this site, read straight from the collector."

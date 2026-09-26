@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 187,
-  "latest_version": "20260922100615",
-  "latest_name": "site_content_service_role_path",
-  "ledger_sha256": "bb3b44e24f0e55c1b5a492eb53a4b9b0ce2cd971636780d66a8d75376fc45db7",
+  "migration_count": 192,
+  "latest_version": "20260925135938",
+  "latest_name": "analytics_windowed_content_detail",
+  "ledger_sha256": "5da6ada8ef6f9e4985164dd6057d19ae3d4d98feb407083d9e93fd9fa703eef2",
   "migrations": [
     {
       "version": "0001",
@@ -754,6 +754,26 @@
     {
       "version": "20260922100615",
       "name": "site_content_service_role_path"
+    },
+    {
+      "version": "20260925040000",
+      "name": "mnet_handles_groups_and_welcome"
+    },
+    {
+      "version": "20260925121408",
+      "name": "mnet_handles_groups_and_welcome"
+    },
+    {
+      "version": "20260925130908",
+      "name": "analytics_all_time_and_owner_reads"
+    },
+    {
+      "version": "20260925131104",
+      "name": "analytics_funnel_windowed"
+    },
+    {
+      "version": "20260925135938",
+      "name": "analytics_windowed_content_detail"
     }
   ]
 }
