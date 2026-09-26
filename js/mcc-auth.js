@@ -375,7 +375,7 @@
       password = String(password || '');
       if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
       return MCC.refreshIfNeeded().then(function (session) {
-        if (!session || !session.access_token) throw new Error('Open the password-reset email again and try once more.');
+        if (!session || !session.access_token) throw new Error('Your session expired. Sign in again, or request a new password-reset link if you cannot sign in.');
         return authApi('user', {
           method: 'PUT',
           token: session.access_token,
