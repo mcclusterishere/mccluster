@@ -119,6 +119,21 @@
     .bd-table th{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--bd-dim)}
     .bd-table td.n,.bd-table th.n{text-align:right;font-variant-numeric:tabular-nums}
     .bd-prop{min-width:0}
+    .an-session-list{display:grid;gap:8px}
+    .an-session{border:1px solid var(--bd-edge);border-radius:12px;background:var(--bd-well)}
+    .an-session summary{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;padding:11px 12px;cursor:pointer}
+    .an-session summary>span{min-width:0;display:flex;flex-direction:column;gap:2px}
+    .an-session summary small{color:var(--bd-faint);font-size:11.5px;overflow-wrap:anywhere}
+    .an-session code{overflow-wrap:anywhere}
+    .an-session-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;padding:0 12px 12px}
+    .an-session-grid>div{min-width:0;padding-top:8px;border-top:1px solid var(--bd-edge)}
+    .an-session-grid b{display:block;margin-bottom:3px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--bd-faint)}
+    .an-session-grid span{display:block;font-size:12.5px;line-height:1.45;overflow-wrap:anywhere}
+    @media (min-width:44rem){
+      .an-session summary{grid-template-columns:minmax(0,1fr) auto}
+      .an-session summary>span:last-child{text-align:right}
+      .an-session-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
 
     /* ===================== SECTIONS =====================
        The Squarespace pattern: one Analytics destination with a row of
@@ -196,6 +211,16 @@
     .ins-chart-block{margin-top:1rem}
     .ins-chart-detail{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bd-edge)}
     .bd-bar-chart{min-height:9rem}
+    .ins-network-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ins-network-scroll>svg{min-width:46rem}
+    .ins-network .ins-net-edge{stroke:#3f93d2;opacity:.34}
+    .ins-net-grid{stroke:rgba(255,255,255,.07);stroke-width:1}
+    .ins-net-axis{stroke:rgba(255,255,255,.20);stroke-width:1}
+    .ins-net-head{fill:var(--bd-faint);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .ins-net-node rect{fill:#171d25;stroke:#3b4655;stroke-width:1}
+    .ins-net-node text,.ins-net-label{fill:#f4f5f7;font-size:11.5px;font-weight:650}
+    .ins-scatter-dot{fill:#e5383b;fill-opacity:.72;stroke:#f4f5f7;stroke-opacity:.38;stroke-width:1}
+    .ins-scatter{min-height:18rem}
 
     /* The Insights panels were built against control-system.css tokens on
        their own page. They render here, so the few they need are mapped
@@ -254,9 +279,16 @@
     <section class="an-sec" data-sec="traffic">
       <div id="bdBoard" aria-live="polite"></div>
       <section class="card" style="margin-top:16px">
+        <h2>Visitor sessions</h2>
+        <p class="bd-sub">Owner/site-owner detail from the same first-party event stream:
+          IP, approximate IP-derived location, ISP/ASN, device, entry/exit pages,
+          errors and conversions. Open a row for the full trace context.</p>
+        <div id="sessions" style="margin-top:11px"></div>
+      </section>
+      <section class="card" style="margin-top:16px">
         <h2>Recent events</h2>
-        <p class="bd-sub">The raw rows behind the board, newest first — the check
-          you run when a number above looks wrong.</p>
+        <p class="bd-sub">The raw rows behind the board, newest first — now with the
+          location, IP and network fields the collector already stores.</p>
         <div id="recent" style="margin-top:11px"></div>
       </section>
     </section>
@@ -325,11 +357,12 @@
           <div id="insAcq"></div>
         </section>
 
-        <section class="an-panel">
-          <div class="an-ph"><h2>Where they go next</h2>
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Relationship map</h2>
             <button class="an-csv" type="button" data-csv="paths">CSV</button></div>
-          <p class="bd-sub">What people do in sequence, which is almost never what
-            the navigation assumes.</p>
+          <p class="bd-sub">When signup conversions exist, this shows source → track page →
+            music touch → account creation. Until those conversions accumulate, it falls back
+            to page-to-page navigation. Line weight is the observed relationship volume.</p>
           <div id="insPaths"></div>
         </section>
       </div>

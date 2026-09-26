@@ -219,7 +219,7 @@ test('content analytics is windowed and exposes deep track and media detail', as
   assert.match(insights,/\["acquisition", null, \["analytics_acquisition",args\]/);
   assert.match(insights,/\["paths", null, \["analytics_paths"/);
   assert.match(insights,/\["funnel", null, \["analytics_funnel"/);
-  for(const field of ['track starts','repeat listener-track pairs','full plays','completions','shares','Media event mix','Track performance']){
+  for(const field of ['track starts','repeat listener-track pairs','full plays','completions','Accounts attributed to music','Media event mix','Track performance']){
     assert.ok(insights.includes(field), field+' must be visible in Content reporting');
   }
   assert.match(html,/full versus preview plays/);
@@ -244,7 +244,7 @@ test('one selected analytics range drives audience and content panels', async()=
 });
 
 
-test('every reporting section has a real SVG chart surface', async()=>{
+test('analytics uses chart forms that match the question instead of bars everywhere', async()=>{
   const [html,board,insights]=await Promise.all([
     read('analytics.html'),
     read('js/analytics-board.js'),
@@ -257,22 +257,46 @@ test('every reporting section has a real SVG chart surface', async()=>{
     'shared chart renderer must load before insights binds to it');
 
   assert.match(board,/function barChart\(/);
-  assert.match(board,/barChart: barChart/);
-
   assert.match(insights,/B\.lineChart\(rows\.slice\(\)\.reverse\(\)/,
-    'Audience engagement must render a line chart');
-  for(const label of [
-    'People reaching each funnel stage',
-    'Daily, weekly and monthly active people',
-    'People by acquisition source',
-    'Most common next-page paths',
-    'Top tracks by starts',
-    'Media events in the selected range'
-  ]){
-    assert.ok(insights.includes(label), label+' must render through the shared SVG chart helper');
-  }
-
+    'ordered engagement history should stay a line chart');
+  assert.match(insights,/function journeyGraph\(/,
+    'source/page/track/account relationships need a node-edge graph');
+  assert.match(insights,/function reachRepeatScatter\(/,
+    'track reach versus replay intensity needs a scatter plot');
+  assert.match(html,/Relationship map/);
+  assert.match(html,/Visitor sessions/);
   assert.match(html,/data-sec="traffic"/);
   assert.match(html,/data-sec="audience"/);
   assert.match(html,/data-sec="content"/);
+});
+
+test('analytics exposes owner detail and verified signup attribution through the existing event authority', async()=>{
+  const [product,insights,analytics,auth,privacy,account,mnet]=await Promise.all([
+    read('js/analytics-product.js'),
+    read('js/insights.js'),
+    read('js/analytics.js'),
+    read('js/mcc-auth.js'),
+    read('privacy.html'),
+    read('account.html'),
+    read('mnet.html')
+  ]);
+  for(const field of ['ip','region','postal','latitude','longitude','timezone','user_agent']){
+    assert.ok(product.includes(field), field+' must be available in owner recent-event/session detail');
+  }
+  assert.match(product,/function groupRecentSessions\(/);
+  assert.match(product,/order=at\.desc&limit=800/);
+  assert.match(insights,/name=eq\.account_created/);
+  assert.match(insights,/\["paths", null, \["analytics_paths"/);
+  assert.match(insights,/function journeyGraph\(/);
+  assert.match(insights,/function reachRepeatScatter\(/);
+  assert.match(analytics,/recordAccountCreated: function \(snapshot\)/);
+  assert.match(analytics,/queueEvent\("account_created",p\)/);
+  assert.match(auth,/recordAccountCreated\(attribution\)/);
+  assert.match(auth,/if \(result\.existing \|\| !root\.MCC_ANALYTICS_CONTEXT/);
+  assert.doesNotMatch(auth,/profileData\.analytics_attribution/);
+  assert.match(privacy,/Account attribution/i);
+  assert.ok(account.indexOf('js/analytics.js')>=0 && account.indexOf('js/analytics.js')<account.indexOf('js/mcc-auth.js'),
+    'account signup must load first-party analytics before auth');
+  assert.ok(mnet.indexOf('js/analytics.js')>=0 && mnet.indexOf('js/analytics.js')<mnet.indexOf('js/mcc-auth.js'),
+    'Mnet signup must load first-party analytics before auth');
 });

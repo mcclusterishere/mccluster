@@ -130,7 +130,10 @@ export default {
       const put = (name, value) => {
         if (value !== undefined && value !== null && value !== '') headers[name] = String(value);
       };
-      put('cf-ipcountry', cf.country);
+      /* Cloudflare documents request.cf.country as the same value as the
+         inbound CF-IPCountry header. Keep the header fallback because live
+         telemetry proved city/region were arriving while country was null. */
+      put('cf-ipcountry', cf.country || request.headers.get('cf-ipcountry'));
       put('cf-region', cf.region);
       put('cf-region-code', cf.regionCode);
       put('cf-ipcity', cf.city);

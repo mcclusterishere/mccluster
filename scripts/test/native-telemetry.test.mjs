@@ -300,7 +300,7 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const js = await read('workers/mccluster/src/entry.js');
   assert.match(js, /path === '\/v1\/collect'/, 'the first-party intake route must exist');
   assert.match(js, /request\.cf/, 'only the Worker can see where the visitor is');
-  for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
+  for (const f of ['country', 'asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
                     'colo', 'metroCode', 'httpProtocol', 'tlsVersion', 'tlsCipher',
                     'clientTcpRtt', 'clientQuicRtt', 'clientAcceptEncoding', 'requestPriority']) {
     assert.match(js, new RegExp(`cf\\.${f}\\b`), `${f} must be forwarded`);
@@ -312,6 +312,8 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const route = code(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 6500));
   assert.doesNotMatch(route, /ja3Hash|\bja4\b|tlsClientCiphersSha1|tlsClientExtensionsSha1/,
     'transport telemetry must not become a TLS fingerprint');
+  assert.match(js, /cf\.country \|\| request\.headers\.get\('cf-ipcountry'\)/,
+    'country enrichment must fall back to the inbound Cloudflare country header');
   assert.match(js, /\$\{env\.SUPABASE_URL\}\/functions\/v1\/collect/,
     'the Worker must forward to the collector, not write its own rows');
   assert.doesNotMatch(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 4000),
@@ -331,23 +333,35 @@ test('network telemetry records quality and transitions without inventing identi
     'navigation transport protocol must be attached to real-user performance data');
 });
 
-test('precise location is permission-gated and privacy signals win', async () => {
+test('location remains IP-derived and the browser is never asked for GPS', async () => {
   const js = await read('js/analytics.js');
-  const ts = await read('supabase/functions/collect/index.ts');
-  assert.match(js, /root\.MCC_LOCATION = \{/,
-    'the site must expose an explicit location request hook');
-  assert.match(js, /navigator\.permissions\.query\(\{ name: "geolocation" \}\)/,
-    'the browser permission state must be checked before automatic reads');
-  assert.match(js, /if \(p\.state === "granted"\) preciseLocation\(\);/,
-    'automatic precise reads are allowed only after permission was already granted');
-  assert.match(js, /enableHighAccuracy: true/,
-    'an explicitly granted location should use the device location service rather than IP inference');
-  assert.match(js, /function privacyQuiet\(\)/,
-    'client-side privacy signals must short-circuit precise location');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'the server must reject precise-location rows under GPC/DNT even if a client forges them');
+  const html = await read('privacy.html');
+  assert.match(js, /precise_location_not_collected/,
+    'the old public MCC_LOCATION hook should fail closed instead of prompting for GPS');
+  assert.doesNotMatch(js, /navigator\.geolocation|getCurrentPosition|enableHighAccuracy/,
+    'analytics must not ask the browser or phone for precise location');
+  assert.doesNotMatch(js, /navigator\.permissions\.query\(\{ name: "geolocation" \}\)/,
+    'analytics must not probe geolocation permission state');
+  assert.match(html, /No precise device location/i,
+    'the code and public notice must agree that GPS-level location is not collected');
 });
 
+test('signup attribution emits a conversion only after a real new account is created', async () => {
+  const js = await read('js/analytics.js');
+  const auth = await read('js/mcc-auth.js');
+  assert.match(js, /window\.MCC_ANALYTICS_CONTEXT = \{/);
+  assert.match(js, /prepareSignupAttribution: function \(\)/);
+  assert.match(js, /return Promise\.resolve\(flush\(false\)\)/,
+    'queued listening events must be flushed before the auth row is created');
+  assert.match(js, /recordAccountCreated: function \(snapshot\)/);
+  assert.match(js, /queueEvent\("account_created",p\)/);
+  assert.match(js, /if \(privacySignal\(\)\) return null/);
+  assert.match(auth, /recordAccountCreated\(attribution\)/);
+  assert.match(auth, /if \(result\.existing \|\| !root\.MCC_ANALYTICS_CONTEXT/,
+    'an existing-account signup response must never count as a new account conversion');
+  assert.doesNotMatch(auth, /profileData\.analytics_attribution/,
+    'analytics join hints do not belong in auth user metadata');
+});
 test('the client prefers the first-party domain and can still fall back', async () => {
   const js = await read('js/analytics.js');
   assert.match(js, /var COLLECT = "https:\/\/api\.mccluster\.org\/v1\/collect"/,

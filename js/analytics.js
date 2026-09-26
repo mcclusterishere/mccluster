@@ -194,6 +194,63 @@ window.MCC_TRACK = (function () {
     }
   } catch (e4) { ACQ = null; }
 
+  /* Account creation is the point where an anonymous analytics visit may
+     legitimately become an account conversion. This snapshot is analytics
+     provenance only — never an authorization claim. GPC/DNT means no
+     device/session linkage is attached to the account at all. */
+  function privacySignal() {
+    return navigator.globalPrivacyControl === true ||
+      navigator.doNotTrack === "1" || window.doNotTrack === "1";
+  }
+  function signupAttributionSnapshot() {
+    if (privacySignal()) return null;
+    var s = sessionId(), heard = [];
+    try { heard = root.MCC_HEARD && root.MCC_HEARD.read ? root.MCC_HEARD.read() : []; } catch (_) {}
+    var last = heard && heard[0] || null;
+    if (last && (!last.at || Date.now()-Number(last.at) > 24*60*60*1000)) last = null;
+    return {
+      version: 1,
+      device_id: deviceId || null,
+      session_id: s || null,
+      source: ACQ && ACQ.src || "direct",
+      medium: ACQ && ACQ.med || "none",
+      campaign: ACQ && ACQ.cmp || "",
+      landing_path: location.pathname.split("/").pop() || "index.html",
+      captured_at: new Date().toISOString(),
+      last_track: last && last.t || null,
+      last_album: last && last.a || null,
+      last_track_page: last && last.p || null,
+      last_track_at: last && last.at ? new Date(Number(last.at)).toISOString() : null
+    };
+  }
+  window.MCC_ANALYTICS_CONTEXT = {
+    signupAttribution: signupAttributionSnapshot,
+    prepareSignupAttribution: function () {
+      var snapshot = signupAttributionSnapshot();
+      if (!snapshot) return Promise.resolve(null);
+      /* Flush the listening/page events first so the account-created
+         conversion cannot outrun its preceding music touch. */
+      return Promise.resolve(flush(false)).then(function () { return snapshot; });
+    },
+    recordAccountCreated: function (snapshot) {
+      var p = { attributed:false };
+      if (snapshot) {
+        p.source=snapshot.source; p.medium=snapshot.medium; p.campaign=snapshot.campaign;
+        p.landing_path=snapshot.landing_path;
+        if (snapshot.last_track) {
+          p.attributed=true; p.track=snapshot.last_track; p.album=snapshot.last_album||"";
+          p.track_page=snapshot.last_track_page||"";
+          p.last_track_at=snapshot.last_track_at||null;
+          if (snapshot.last_track_at) {
+            p.seconds_since_track=Math.max(0,Math.round((Date.now()-new Date(snapshot.last_track_at).getTime())/1000));
+          }
+        }
+      }
+      queueEvent("account_created",p);
+      return flush(false);
+    }
+  };
+
   /* The session token, when there is one, so the collector can attribute
      the event to an account. It is VERIFIED there, never believed — this
      is the token itself, not a uid this file decoded and asserted. */
@@ -232,24 +289,25 @@ window.MCC_TRACK = (function () {
        thing somebody did and recording everything except that. */
     if (keepalive) opts.keepalive = true;
     try {
-      fetch(COLLECT, opts).then(function (r) {
+      return fetch(COLLECT, opts).then(function (r) {
         /* A blocked or unreachable first-party route is worth one retry at
            the writer directly. Not a loop: two attempts, then the batch is
            gone, because nobody's page should stall over a statistic. */
-        if (!r || r.ok) return;
-        return fetch(COLLECT_FALLBACK, opts).catch(function () {});
+        if (!r || r.ok) return r;
+        return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; });
       }).catch(function () {
-        try { fetch(COLLECT_FALLBACK, opts).catch(function () {}); } catch (e2) {}
+        try { return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; }); }
+        catch (e2) { return null; }
       });
-    } catch (e) { /* a statistic is never worth an exception in a page */ }
+    } catch (e) { return Promise.resolve(null); }
   }
 
   function flush(keepalive) {
     if (timer) { clearTimeout(timer); timer = null; }
-    if (!queue.length) return;
+    if (!queue.length) return Promise.resolve(null);
     var batch = queue;
     queue = [];
-    send(batch, keepalive);
+    return send(batch, keepalive);
   }
 
   /* HIDDEN IS THE ONLY RELIABLE GOODBYE ON A PHONE. pagehide covers an
@@ -553,7 +611,7 @@ window.MCC_MODEL = (function () {
       safe(function () {
         var t = String(params.track);
         var list = read().filter(function (r) { return r && r.t !== t; });
-        list.unshift({ t: t, a: String(params.album || ""), at: Date.now() });
+        list.unshift({ t: t, a: String(params.album || ""), p: location.pathname.split("/").pop() || "index.html", at: Date.now() });
         localStorage.setItem(KEY, JSON.stringify(list.slice(0, CAP)));
       });
     }
@@ -736,62 +794,14 @@ window.MCC_MODEL = (function () {
     T("network_change", { reason: "offline", network: networkState() });
   });
 
-  /* Precise location is special: the browser owns the permission prompt.
-     Never manufacture a location, never infer a street from fingerprinting,
-     and never prompt on page load. If permission is already granted we may
-     read it; otherwise MCC_LOCATION.request() must be called from an explicit
-     user action. */
-  function privacyQuiet() {
-    return navigator.globalPrivacyControl === true ||
-      navigator.doNotTrack === "1" || root.doNotTrack === "1";
-  }
-  function geoNumber(value, places) {
-    if (typeof value !== "number" || !isFinite(value)) return null;
-    var k = Math.pow(10, places);
-    return Math.round(value * k) / k;
-  }
-  function preciseLocation() {
-    return new Promise(function (resolve) {
-      if (privacyQuiet()) return resolve({ ok: false, reason: "privacy_signal" });
-      if (!navigator.geolocation) return resolve({ ok: false, reason: "unsupported" });
-      navigator.geolocation.getCurrentPosition(function (pos) {
-        var co = pos.coords || {};
-        var payload = {
-          source: "browser_geolocation",
-          lat: geoNumber(co.latitude, 5),
-          lon: geoNumber(co.longitude, 5),
-          accuracy_m: geoNumber(co.accuracy, 1),
-          altitude_m: geoNumber(co.altitude, 1),
-          altitude_accuracy_m: geoNumber(co.altitudeAccuracy, 1),
-          heading_deg: geoNumber(co.heading, 1),
-          speed_mps: geoNumber(co.speed, 2),
-          observed_at: new Date(pos.timestamp || Date.now()).toISOString(),
-        };
-        T("precise_location", payload);
-        resolve({ ok: true, location: payload });
-      }, function (err) {
-        resolve({ ok: false, reason: "denied_or_unavailable", code: err && err.code || null });
-      }, { enableHighAccuracy: true, maximumAge: 300000, timeout: 10000 });
-    });
-  }
+  /* Location stays server-side and approximate. The public privacy notice
+     promises that this site does not ask the browser or phone for GPS, so
+     analytics uses Cloudflare's IP-derived city/region/coordinates instead.
+     Do not add navigator.geolocation here without changing that promise. */
   root.MCC_LOCATION = {
-    request: preciseLocation,
-    status: function () {
-      if (privacyQuiet()) return Promise.resolve("privacy_signal");
-      if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("unknown");
-      return navigator.permissions.query({ name: "geolocation" }).then(function (p) { return p.state; }).catch(function () { return "unknown"; });
-    },
+    request: function () { return Promise.resolve({ ok:false, reason:"precise_location_not_collected" }); },
+    status: function () { return Promise.resolve("not_collected"); }
   };
-  if (!privacyQuiet() && navigator.permissions && navigator.permissions.query) {
-    navigator.permissions.query({ name: "geolocation" }).then(function (p) {
-      T("location_permission", { state: p.state });
-      if (p.state === "granted") preciseLocation();
-      p.addEventListener && p.addEventListener("change", function () {
-        T("location_permission", { state: p.state });
-        if (p.state === "granted") preciseLocation();
-      });
-    }).catch(function () {});
-  }
 
   /* =========================================================
      3. THE PAGE VIEW — the anchor row every other row hangs off

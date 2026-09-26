@@ -296,18 +296,38 @@
       password = String(password || '');
       if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
       if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
-      return authApi('signup', {
-        method: 'POST',
-        body: { email: email, password: password, data: data || {} }
-      }).then(function (session) {
+      var profileData = Object.assign({}, data || {});
+      var attributionRead = Promise.resolve(null);
+      try {
+        if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution) {
+          attributionRead = root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution();
+        } else if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.signupAttribution) {
+          attributionRead = Promise.resolve(root.MCC_ANALYTICS_CONTEXT.signupAttribution());
+        }
+      } catch (_) {}
+      return Promise.resolve(attributionRead).then(function (analyticsAttribution) {
+        return authApi('signup', {
+          method: 'POST',
+          body: { email: email, password: password, data: profileData }
+        }).then(function (session) {
+          return { response:session, attribution:analyticsAttribution };
+        });
+      }).then(function (bundle) {
+        var session=bundle.response, attribution=bundle.attribution, result;
         if (session && session.access_token) {
           writeSession(session);
           root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
-          return { session: true, user: session.user || null, confirm: false, existing: false };
+          result={ session: true, user: session.user || null, confirm: false, existing: false };
+        } else {
+          var identities = session && session.user && session.user.identities;
+          var existing = Array.isArray(identities) && identities.length === 0;
+          result={ session: false, user: session && session.user || null, confirm: !existing, existing: existing };
         }
-        var identities = session && session.user && session.user.identities;
-        var existing = Array.isArray(identities) && identities.length === 0;
-        return { session: false, user: session && session.user || null, confirm: !existing, existing: existing };
+        if (result.existing || !root.MCC_ANALYTICS_CONTEXT || !root.MCC_ANALYTICS_CONTEXT.recordAccountCreated) {
+          return result;
+        }
+        return Promise.resolve(root.MCC_ANALYTICS_CONTEXT.recordAccountCreated(attribution))
+          .catch(function () { return null; }).then(function () { return result; });
       });
     },
 
