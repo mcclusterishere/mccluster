@@ -1,0 +1,54 @@
+name: Account Privacy Integrity CI
+
+on:
+  pull_request:
+    paths:
+      - 'account.html'
+      - 'mnet.html'
+      - 'privacy.html'
+      - 'js/live-content.js'
+      - 'js/analytics.js'
+      - 'js/account-integrity.js'
+      - 'js/mcc-auth.js'
+      - 'js/mnet.js'
+      - 'js/fan-intake.js'
+      - 'scripts/test/account-integrity.test.mjs'
+      - 'scripts/test/fan-list-bridge.test.mjs'
+      - '.github/workflows/account-privacy-integrity-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'account.html'
+      - 'mnet.html'
+      - 'privacy.html'
+      - 'js/live-content.js'
+      - 'js/analytics.js'
+      - 'js/account-integrity.js'
+      - 'js/mcc-auth.js'
+      - 'js/mnet.js'
+      - 'js/fan-intake.js'
+      - 'scripts/test/account-integrity.test.mjs'
+      - 'scripts/test/fan-list-bridge.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Parse account and privacy clients
+        run: |
+          node --check js/live-content.js
+          node --check js/analytics.js
+          node --check js/account-integrity.js
+          node --check js/mcc-auth.js
+          node --check js/mnet.js
+      - name: Run account and privacy contracts
+        run: |
+          node --test scripts/test/account-integrity.test.mjs
+          node --test scripts/test/fan-list-bridge.test.mjs
