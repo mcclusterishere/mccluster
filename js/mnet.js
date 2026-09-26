@@ -895,16 +895,33 @@
       state.user = user;
       if (!user) throw new Error("Your session did not open.");
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
-      return MCC.autoTouch().catch(function () {}).then(function () {
-        if (!state.pollTimer) state.pollTimer = setInterval(function () {
-          if (document.visibilityState !== "visible" || !state.user) return;
-          loadNotificationsSilently();
-          if (state.currentView === "messages") loadConversations();
-          if (state.currentConversation && $("mnConversationDialog").open) loadConversationMessages(state.currentConversation);
-        }, 15000);
-        return bootstrap().catch(function (error) {
-          showSignedInLoadError(error);
+
+      /* An auth row is not yet a complete member profile. OAuth providers can
+         create an auth record without walking through the password form, so
+         enforce mailing-profile completion here too instead of trusting only
+         the signup UI. */
+      var completeness = (window.MCC_FAN && window.MCC_ACCOUNT_INTEGRITY)
+        ? MCC_FAN.load().then(function (row) {
+            return MCC_ACCOUNT_INTEGRITY.completeProfile(row);
+          }).catch(function () { return false; })
+        : Promise.resolve(false);
+
+      return completeness.then(function (complete) {
+        if (!complete) {
+          location.href = "account.html?complete=1";
           return null;
+        }
+        return MCC.autoTouch().catch(function () {}).then(function () {
+          if (!state.pollTimer) state.pollTimer = setInterval(function () {
+            if (document.visibilityState !== "visible" || !state.user) return;
+            loadNotificationsSilently();
+            if (state.currentView === "messages") loadConversations();
+            if (state.currentConversation && $("mnConversationDialog").open) loadConversationMessages(state.currentConversation);
+          }, 15000);
+          return bootstrap().catch(function (error) {
+            showSignedInLoadError(error);
+            return null;
+          });
         });
       });
     });
@@ -922,9 +939,20 @@
     button.textContent = create ? "Creating…" : "Signing in…";
     setStatus($("mnAuthStatus"), "");
 
-    var name = $("mnCreateName").value.trim() || email.split("@")[0];
+    var nameCheck = create && window.MCC_ACCOUNT_INTEGRITY
+      ? MCC_ACCOUNT_INTEGRITY.validateName($("mnCreateFirst").value, $("mnCreateLast").value)
+      : null;
+    if (create && (!nameCheck || !nameCheck.ok)) {
+      setStatus($("mnAuthStatus"), (nameCheck && nameCheck.message) || "First and last name are required.", "error");
+      button.disabled = false;
+      button.textContent = "Create account";
+      return;
+    }
     var action = create
-      ? MCC.signUpWithPassword(email, password, { name:name, full_name:name })
+      ? MCC.signUpWithPassword(email, password, {
+          name:nameCheck.full_name, full_name:nameCheck.full_name,
+          first_name:nameCheck.first_name, last_name:nameCheck.last_name
+        })
       : MCC.signInWithPassword(email, password);
 
     Promise.resolve(action).then(function (result) {
