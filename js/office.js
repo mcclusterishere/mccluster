@@ -1,23 +1,8 @@
-/* ============================================================
-   THE OFFICE STRIP — six owner rooms, one back office.
-   Injected on every owner page so the desks stop feeling like five
-   separate sites. Same origin, same login (the session token lives in
-   this browser); this strip is only navigation, never a gate.
-
-   IT ALSO CARRIES THE ONE GATE ANSWER. Five of these rooms used to
-   decide who was the owner like this:
-
-       if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org")
-
-   Two defects in one line. MCC_SUPA.token() returns a PROMISE, which is
-   always truthy, so the token half never tested anything — the gate was
-   a bare string compare. And a string in the page is not the authority
-   the data answers to: every read behind these rooms is governed by RLS,
-   which asks eu_is_admin(). When the two disagreed the room opened onto
-   data the database then refused, which is how a desk ends up showing
-   zeros instead of leads.
-
-   So there is one answer, asked of the database, shared by every room.
+/* Shared operator authorization helper.
+   Control Room is the only admin shell. Retired owner pages may still call
+   MCCOffice while their compatibility redirect resolves, but this file no
+   longer renders navigation. Authorization is the database's eu_is_admin()
+   predicate, not an email literal in browser code.
    ============================================================ */
 (function (w) {
   "use strict";
