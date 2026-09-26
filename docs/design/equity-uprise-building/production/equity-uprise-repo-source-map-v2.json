@@ -902,13 +902,6 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
-      "path": "js/control-registry.js",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared owner/operator navigation registry used across back-office surfaces; it references Equity Uprise routing but does not define an independent Equity Uprise program capability."
-    },
-    {
       "path": "js/crm.js",
       "classification": "capability_source",
       "capability_ids": [
