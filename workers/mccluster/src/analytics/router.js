@@ -33,16 +33,17 @@ function countFromRange(value) {
   return n;
 }
 
-async function sbCount(env, table, column = 'id', sinceIso = null) {
-  return sbCountFiltered(env, table, column, {}, sinceIso, 'created_at');
+async function sbCount(env, table, column = 'id', sinceIso = null, untilIso = null) {
+  return sbCountFiltered(env, table, column, {}, sinceIso, 'created_at', untilIso);
 }
 
-async function sbCountFiltered(env, table, column = 'id', filters = {}, sinceIso = null, timeColumn = 'created_at') {
+async function sbCountFiltered(env, table, column = 'id', filters = {}, sinceIso = null, timeColumn = 'created_at', untilIso = null) {
   const q = new URLSearchParams({ select: column });
   Object.entries(filters || {}).forEach(([name, value]) => {
     if (value != null && value !== '') q.set(name, String(value));
   });
-  if (sinceIso) q.set(timeColumn, `gte.${sinceIso}`);
+  if (sinceIso) q.append(timeColumn, `gte.${sinceIso}`);
+  if (untilIso) q.append(timeColumn, `lt.${untilIso}`);
   const res = await sb(env, `${table}?${q.toString()}`, {
     headers: { prefer: 'count=exact', range: '0-0' }
   });
@@ -154,14 +155,23 @@ function localDay(iso, timeZone) {
 export async function businessSnapshot(env, windowSpec = null) {
   const users = await listAuthUsers(env);
   const sinceMs = windowSpec ? Date.parse(windowSpec.since) : null;
-  const inWindow = (row) => !windowSpec || (Number.isFinite(sinceMs) && Date.parse(row?.created_at || '') >= sinceMs);
+  const untilMs = windowSpec ? Date.parse(windowSpec.until) : null;
+  const inWindow = (row) => {
+    if (!windowSpec) return true;
+    const at = Date.parse(row?.created_at || '');
+    return Number.isFinite(at) && Number.isFinite(sinceMs) && Number.isFinite(untilMs) &&
+      at >= sinceMs && at < untilMs;
+  };
   const createdUsers = users.filter(inWindow);
   const confirmed = users.filter((u) => Boolean(u?.email_confirmed_at || u?.confirmed_at));
   const unconfirmed = users.filter((u) => !u?.email_confirmed_at && !u?.confirmed_at);
   const confirmedCreated = createdUsers.filter((u) => Boolean(u?.email_confirmed_at || u?.confirmed_at));
   const unconfirmedCreated = createdUsers.filter((u) => !u?.email_confirmed_at && !u?.confirmed_at);
   const activeUsers = windowSpec
-    ? users.filter((u) => Number.isFinite(sinceMs) && Date.parse(u?.last_sign_in_at || '') >= sinceMs)
+    ? users.filter((u) => {
+        const at = Date.parse(u?.last_sign_in_at || '');
+        return Number.isFinite(at) && at >= sinceMs && at < untilMs;
+      })
     : [];
 
   const timeZone = env.MCCLUSTER_TIMEZONE || 'America/New_York';
@@ -172,6 +182,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   }
 
   const since = windowSpec?.since || null;
+  const until = windowSpec?.until || null;
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
@@ -187,46 +198,49 @@ export async function businessSnapshot(env, windowSpec = null) {
     sbCount(env, 'network_follows', 'follower_m_uid'),
     sbCount(env, 'network_reactions', 'post_id'),
     sbCount(env, 'network_profiles', 'm_uid'),
-    since ? sbCount(env, 'network_posts', 'id', since) : Promise.resolve(null),
-    since ? sbCount(env, 'network_follows', 'follower_m_uid', since) : Promise.resolve(null),
-    since ? sbCount(env, 'network_reactions', 'post_id', since) : Promise.resolve(null),
-    since ? sbCount(env, 'network_profiles', 'm_uid', since) : Promise.resolve(null),
+    since ? sbCount(env, 'network_posts', 'id', since, until) : Promise.resolve(null),
+    since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null),
+    since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null),
+    since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null),
 
     sbCountFiltered(env, 'events', 'id', {}, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', {}, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', {}, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.page_view' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.page_view' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null),
 
     sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_full_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_full_play' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_complete' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_complete' }, since, 'at') : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null),
 
     sbCount(env, 'music_creator_profiles', 'm_uid'),
-    since ? sbCount(env, 'music_creator_profiles', 'm_uid', since) : Promise.resolve(null),
+    since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null),
     sbCount(env, 'creator_tracks'),
-    since ? sbCount(env, 'creator_tracks', 'id', since) : Promise.resolve(null),
+    since ? sbCount(env, 'creator_tracks', 'id', since, until) : Promise.resolve(null),
     sbCountFiltered(env, 'creator_tracks', 'id', { status: 'eq.published' }),
     sbCountFiltered(env, 'music_license_offers', 'id', { active: 'eq.true', checkout_enabled: 'eq.true' }),
     sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }),
-    since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since) : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since, 'created_at', until) : Promise.resolve(null),
     sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }),
-    since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since) : Promise.resolve(null),
+    since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null),
     sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')
   ]);
 
   const paidRowsInWindow = since
-    ? paidOrderRows.filter((row) => Date.parse(row.created_at || '') >= Date.parse(since))
+    ? paidOrderRows.filter((row) => {
+        const at = Date.parse(row.created_at || '');
+        return at >= Date.parse(since) && at < Date.parse(until);
+      })
     : paidOrderRows;
   const sum = (rows, field) => rows.reduce((n, row) => n + Number(row?.[field] || 0), 0);
 
