@@ -331,21 +331,29 @@ test('network telemetry records quality and transitions without inventing identi
     'navigation transport protocol must be attached to real-user performance data');
 });
 
-test('precise location is permission-gated and privacy signals win', async () => {
+test('location remains IP-derived and the browser is never asked for GPS', async () => {
   const js = await read('js/analytics.js');
-  const ts = await read('supabase/functions/collect/index.ts');
-  assert.match(js, /root\.MCC_LOCATION = \{/,
-    'the site must expose an explicit location request hook');
-  assert.match(js, /navigator\.permissions\.query\(\{ name: "geolocation" \}\)/,
-    'the browser permission state must be checked before automatic reads');
-  assert.match(js, /if \(p\.state === "granted"\) preciseLocation\(\);/,
-    'automatic precise reads are allowed only after permission was already granted');
-  assert.match(js, /enableHighAccuracy: true/,
-    'an explicitly granted location should use the device location service rather than IP inference');
-  assert.match(js, /function privacyQuiet\(\)/,
-    'client-side privacy signals must short-circuit precise location');
-  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
-    'the server must reject precise-location rows under GPC/DNT even if a client forges them');
+  const html = await read('privacy.html');
+  assert.match(js, /precise_location_not_collected/,
+    'the old public MCC_LOCATION hook should fail closed instead of prompting for GPS');
+  assert.doesNotMatch(js, /navigator\.geolocation|getCurrentPosition|enableHighAccuracy/,
+    'analytics must not ask the browser or phone for precise location');
+  assert.doesNotMatch(js, /navigator\.permissions\.query\(\{ name: "geolocation" \}\)/,
+    'analytics must not probe geolocation permission state');
+  assert.match(html, /No precise device location/i,
+    'the code and public notice must agree that GPS-level location is not collected');
+});
+
+test('signup attribution records only first-party analytics provenance and honours privacy signals', async () => {
+  const js = await read('js/analytics.js');
+  const auth = await read('js/mcc-auth.js');
+  assert.match(js, /window\.MCC_ANALYTICS_CONTEXT = \{/);
+  assert.match(js, /signupAttribution: function \(\)/);
+  assert.match(js, /if \(privacySignal\(\)\) return null/);
+  assert.match(js, /device_id: deviceId/);
+  assert.match(js, /session_id: s/);
+  assert.match(auth, /profileData\.analytics_attribution = analyticsAttribution/);
+  assert.match(auth, /Analytics attribution is deliberately metadata, never authority/);
 });
 
 test('the client prefers the first-party domain and can still fall back', async () => {
