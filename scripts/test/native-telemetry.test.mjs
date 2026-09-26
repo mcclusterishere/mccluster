@@ -300,7 +300,7 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const js = await read('workers/mccluster/src/entry.js');
   assert.match(js, /path === '\/v1\/collect'/, 'the first-party intake route must exist');
   assert.match(js, /request\.cf/, 'only the Worker can see where the visitor is');
-  for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
+  for (const f of ['country', 'asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
                     'colo', 'metroCode', 'httpProtocol', 'tlsVersion', 'tlsCipher',
                     'clientTcpRtt', 'clientQuicRtt', 'clientAcceptEncoding', 'requestPriority']) {
     assert.match(js, new RegExp(`cf\\.${f}\\b`), `${f} must be forwarded`);
@@ -312,6 +312,8 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const route = code(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 6500));
   assert.doesNotMatch(route, /ja3Hash|\bja4\b|tlsClientCiphersSha1|tlsClientExtensionsSha1/,
     'transport telemetry must not become a TLS fingerprint');
+  assert.match(js, /cf\.country \|\| request\.headers\.get\('cf-ipcountry'\)/,
+    'country enrichment must fall back to the inbound Cloudflare country header');
   assert.match(js, /\$\{env\.SUPABASE_URL\}\/functions\/v1\/collect/,
     'the Worker must forward to the collector, not write its own rows');
   assert.doesNotMatch(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 4000),
@@ -348,7 +350,10 @@ test('signup attribution records only first-party analytics provenance and honou
   const js = await read('js/analytics.js');
   const auth = await read('js/mcc-auth.js');
   assert.match(js, /window\.MCC_ANALYTICS_CONTEXT = \{/);
-  assert.match(js, /signupAttribution: function \(\)/);
+  assert.match(js, /signupAttribution: signupAttributionSnapshot/);
+  assert.match(js, /prepareSignupAttribution: function \(\)/);
+  assert.match(js, /flush\(false\)/,
+    'queued listening events must be flushed before the auth row is created');
   assert.match(js, /if \(privacySignal\(\)\) return null/);
   assert.match(js, /device_id: deviceId/);
   assert.match(js, /session_id: s/);
