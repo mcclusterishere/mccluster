@@ -103,10 +103,16 @@
       <ul>
         <li><b>An account.</b> Email address and password. The password is hashed by our
           authentication provider and is never visible to us.</li>
-        <li><b>Your details, if you fill them in.</b> Name, postal address, phone, and the
-          year you were born. All optional. The birth year exists because sharing a minor's
-          details is a different legal question from sharing an adult's, and the answer has
-          to be recorded before the ask.</li>
+        <li><b>Your account identity and shipping details.</b> Legal first and last name
+          and a complete mailing address are required to complete a new M Account. They are
+          used for account integrity, abuse prevention, monthly McCluster swag eligibility,
+          and physical fulfillment. Phone and birth year remain optional. The birth year
+          exists because sharing a minor's details is a different legal question from
+          sharing an adult's, and the answer has to be recorded before the ask.</li>
+        <li><b>Your privacy acknowledgement.</b> We record the version of this notice that
+          was presented when you create an account. The site-entry gate also stores the
+          current notice version and acknowledgement time in first-party browser storage
+          (with a first-party cookie fallback) so the gate does not reappear on every page.</li>
         <li><b>What you post.</b> On Mnet: posts, replies, follows, blocks, mutes, your
           profile photo and anything you attach.</li>
         <li><b>Purchases.</b> What you bought and the email it is tied to. <b>Card numbers
@@ -129,10 +135,14 @@
           <td>Latitude and longitude, plus device-reported accuracy. Where your device
           provides them, altitude, heading and speed may also be recorded. This is separate
           from the rough location derived from your IP address.</td></tr>
-        <tr><td>Browser and device type</td><td>To know what to build for and what is
-          broken.</td></tr>
-        <tr><td>Your network (the ISP or carrier your connection belongs to)</td>
-          <td>To tell a real listener from a datacentre, and to spot abuse.</td></tr>
+        <tr><td>Browser and device facts</td><td>Screen/viewport size, pixel ratio,
+          language, timezone, platform/mobile/touch hints and capability/performance facts
+          that the browser exposes, such as CPU-core or device-memory hints on supported
+          browsers. Used to know what to build for and what is broken.</td></tr>
+        <tr><td>Your network and edge connection</td>
+          <td>ISP/carrier or ASN when available, plus edge-supplied connection metadata
+          such as protocol, TLS version/cipher, latency, delivery and bot-classification
+          signals. Used for reliability, abuse prevention and fraud detection.</td></tr>
         <tr><td>A device identifier we generate</td><td>To tell one returning visitor from
           two new ones. Ours alone; it follows you nowhere else.</td></tr>
         <tr><td>Referring page</td><td>To know how you arrived.</td></tr>
@@ -147,6 +157,10 @@
       <ul>
         <li>No Google Analytics. No advertising pixels. No Meta pixel, no TikTok pixel.</li>
         <li>No cross-site tracking. Nothing we set is readable by any other website.</li>
+        <li><b>No IMEI, hardware serial number or MAC address.</b> Ordinary web pages do not
+          receive those hardware identifiers. We use a random first-party installation ID
+          instead and do not use canvas/audio/font or transport fingerprinting to recreate
+          a hardware identity.</li>
         <li><b>No keystrokes, and no reading of what you type.</b> A copy from a page is
           recorded as having happened; the words are not banked. Anything marked as your own
           record — your address, your phone — is exempt even from that.</li>
@@ -168,6 +182,9 @@
         <tr><td>Ranking the listening room</td><td>Plays, saves and downloads, aggregated</td></tr>
         <tr><td>Showing you what you last played</td><td>Kept <b>on your device</b>, not on our servers</td></tr>
         <tr><td>Fulfilling an order</td><td>Purchase record and email</td></tr>
+        <tr><td>Monthly McCluster swag eligibility and fulfillment</td><td>Account identity,
+          mailing address and eligibility/selection records. No purchase or payment is
+          required, and buying something does not improve eligibility or odds.</td></tr>
         <tr><td>Emailing you about new music</td><td>Only with the box ticked, and only once your address is confirmed</td></tr>
         <tr><td>Answering you</td><td>What you sent us</td></tr>
         <tr><td>Preventing abuse and fraud</td><td>IP, device identifier, rate-limit counters</td></tr>
@@ -175,10 +192,19 @@
       </table></div>
 
       <div class="pv__note">
-        <p><b>Consent is unbundled and it gates nothing.</b> A listener who ticks no boxes
-          still gets the full record and every download format. Conditioning the music on
-          consent is the part the privacy laws actually prohibit, and it would be a bad trade
-          to offer someone who just wanted a song.</p>
+        <p><b>The entry acknowledgement is notice, not a blank check.</b> The public site
+          asks you to acknowledge this Privacy Policy before entering. That acknowledgement
+          does not override browser or operating-system permissions, Global Privacy Control,
+          Do Not Track, or a separate consent choice. Precise location still uses the
+          browser's own permission prompt. Marketing and onward-sharing boxes remain
+          optional and can be withdrawn.</p>
+      </div>
+      <div class="pv__note">
+        <p><b>Monthly swag is free.</b> Account completion can make a user eligible for
+          monthly McCluster swag, but no purchase or payment is required and purchasing
+          does not improve the chance of receiving anything. Before a chance-based drawing
+          is activated, its official rules will state eligibility, entry period, prizes,
+          selection method, odds or how odds are determined, and fulfillment terms.</p>
       </div>
 
       <h2 id="public">3 &middot; What is public on Mnet</h2>
@@ -212,8 +238,9 @@
         Your identity, follows and profile travel with you, because they are one system
         rather than several pretending to be.</p>
       <p>What does <b>not</b> travel: a fellowship application does not become marketing,
-        and a purchase does not put you on the mailing list. The mailing list has exactly
-        one door in, and it is the box you tick yourself.</p>
+        a purchase does not put you on the mailing list, and acknowledging this Privacy
+        Policy does not opt you into marketing, onward sharing or precise location. The
+        mailing list has exactly one door in, and it is the box you tick yourself.</p>
 
       <h2 id="rights">6 &middot; Your rights, and how to use them</h2>
       <p>Depending on where you live — Connecticut, the rest of the US, the UK, the EU —

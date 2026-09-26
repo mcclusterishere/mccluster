@@ -6,11 +6,17 @@ on:
       - 'analytics.html'
       - 'js/mc-analytics.js'
       - 'js/analytics-product.js'
+      - 'js/analytics.js'
+      - 'js/live-content.js'
+      - 'js/name-integrity.js'
+      - 'account.html'
+      - 'privacy.html'
       - 'workers/mccluster/src/entry.js'
       - 'workers/mccluster/src/analytics/**'
       - 'supabase/functions/collect/**'
       - 'supabase/migrations/**'
       - 'scripts/test/analytics-platform.test.mjs'
+      - 'scripts/test/account-identity-gate.test.mjs'
       - '.github/workflows/analytics-platform-ci.yml'
   push:
     branches: [main]
@@ -18,11 +24,17 @@ on:
       - 'analytics.html'
       - 'js/mc-analytics.js'
       - 'js/analytics-product.js'
+      - 'js/analytics.js'
+      - 'js/live-content.js'
+      - 'js/name-integrity.js'
+      - 'account.html'
+      - 'privacy.html'
       - 'workers/mccluster/src/entry.js'
       - 'workers/mccluster/src/analytics/**'
       - 'supabase/functions/collect/**'
       - 'supabase/migrations/**'
       - 'scripts/test/analytics-platform.test.mjs'
+      - 'scripts/test/account-identity-gate.test.mjs'
 
 permissions:
   contents: read
@@ -39,10 +51,15 @@ jobs:
         run: |
           node --check js/mc-analytics.js
           node --check js/analytics-product.js
+          node --check js/analytics.js
+          node --check js/live-content.js
+          node --check js/name-integrity.js
           node --check workers/mccluster/src/analytics/router.js
           node --check workers/mccluster/src/entry.js
       - name: Run analytics product contracts
         run: node --test scripts/test/analytics-platform.test.mjs
+      - name: Run account identity and privacy gate contracts
+        run: node --test scripts/test/account-identity-gate.test.mjs
 
   collector-contract:
     runs-on: ubuntu-latest
