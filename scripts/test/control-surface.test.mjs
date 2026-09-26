@@ -79,7 +79,7 @@ test('customer dashboards remain usable but operators are routed into Control',a
   assert.ok(analytics.includes('data-control-target="#analytics"'));
   assert.ok(consoleHtml.includes('data-control-target="#work:clients"'));
   const redirect=await read('js/owner-control-redirect.js');
-  assert.match(redirect,/rpc\/eu_is_admin/);
+  assert.match(redirect,/api\.mccluster\.org\/v1\/status/);
 });
 
 test('the old six-room office strip is deleted at the source',async()=>{
