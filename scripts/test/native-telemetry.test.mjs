@@ -346,21 +346,22 @@ test('location remains IP-derived and the browser is never asked for GPS', async
     'the code and public notice must agree that GPS-level location is not collected');
 });
 
-test('signup attribution records only first-party analytics provenance and honours privacy signals', async () => {
+test('signup attribution emits a conversion only after a real new account is created', async () => {
   const js = await read('js/analytics.js');
   const auth = await read('js/mcc-auth.js');
   assert.match(js, /window\.MCC_ANALYTICS_CONTEXT = \{/);
-  assert.match(js, /signupAttribution: signupAttributionSnapshot/);
   assert.match(js, /prepareSignupAttribution: function \(\)/);
-  assert.match(js, /flush\(false\)/,
+  assert.match(js, /return Promise\.resolve\(flush\(false\)\)/,
     'queued listening events must be flushed before the auth row is created');
+  assert.match(js, /recordAccountCreated: function \(snapshot\)/);
+  assert.match(js, /queueEvent\("account_created",p\)/);
   assert.match(js, /if \(privacySignal\(\)\) return null/);
-  assert.match(js, /device_id: deviceId/);
-  assert.match(js, /session_id: s/);
-  assert.match(auth, /profileData\.analytics_attribution = analyticsAttribution/);
-  assert.match(auth, /Analytics attribution is deliberately metadata, never authority/);
+  assert.match(auth, /recordAccountCreated\(attribution\)/);
+  assert.match(auth, /if \(result\.existing \|\| !root\.MCC_ANALYTICS_CONTEXT/,
+    'an existing-account signup response must never count as a new account conversion');
+  assert.doesNotMatch(auth, /profileData\.analytics_attribution/,
+    'analytics join hints do not belong in auth user metadata');
 });
-
 test('the client prefers the first-party domain and can still fall back', async () => {
   const js = await read('js/analytics.js');
   assert.match(js, /var COLLECT = "https:\/\/api\.mccluster\.org\/v1\/collect"/,
