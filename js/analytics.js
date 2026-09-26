@@ -202,20 +202,28 @@ window.MCC_TRACK = (function () {
     return navigator.globalPrivacyControl === true ||
       navigator.doNotTrack === "1" || window.doNotTrack === "1";
   }
+  function signupAttributionSnapshot() {
+    if (privacySignal()) return null;
+    var s = sessionId();
+    return {
+      version: 1,
+      device_id: deviceId || null,
+      session_id: s || null,
+      source: ACQ && ACQ.src || "direct",
+      medium: ACQ && ACQ.med || "none",
+      campaign: ACQ && ACQ.cmp || "",
+      landing_path: location.pathname.split("/").pop() || "index.html",
+      captured_at: new Date().toISOString()
+    };
+  }
   window.MCC_ANALYTICS_CONTEXT = {
-    signupAttribution: function () {
-      if (privacySignal()) return null;
-      var s = sessionId();
-      return {
-        version: 1,
-        device_id: deviceId || null,
-        session_id: s || null,
-        source: ACQ && ACQ.src || "direct",
-        medium: ACQ && ACQ.med || "none",
-        campaign: ACQ && ACQ.cmp || "",
-        landing_path: location.pathname.split("/").pop() || "index.html",
-        captured_at: new Date().toISOString()
-      };
+    signupAttribution: signupAttributionSnapshot,
+    prepareSignupAttribution: function () {
+      var snapshot = signupAttributionSnapshot();
+      if (!snapshot) return Promise.resolve(null);
+      /* Flush the listening/page events first so the database can prove the
+         pre-signup touch before the auth row is created. */
+      return Promise.resolve(flush(false)).then(function () { return snapshot; });
     }
   };
 
@@ -257,24 +265,25 @@ window.MCC_TRACK = (function () {
        thing somebody did and recording everything except that. */
     if (keepalive) opts.keepalive = true;
     try {
-      fetch(COLLECT, opts).then(function (r) {
+      return fetch(COLLECT, opts).then(function (r) {
         /* A blocked or unreachable first-party route is worth one retry at
            the writer directly. Not a loop: two attempts, then the batch is
            gone, because nobody's page should stall over a statistic. */
-        if (!r || r.ok) return;
-        return fetch(COLLECT_FALLBACK, opts).catch(function () {});
+        if (!r || r.ok) return r;
+        return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; });
       }).catch(function () {
-        try { fetch(COLLECT_FALLBACK, opts).catch(function () {}); } catch (e2) {}
+        try { return fetch(COLLECT_FALLBACK, opts).catch(function () { return null; }); }
+        catch (e2) { return null; }
       });
-    } catch (e) { /* a statistic is never worth an exception in a page */ }
+    } catch (e) { return Promise.resolve(null); }
   }
 
   function flush(keepalive) {
     if (timer) { clearTimeout(timer); timer = null; }
-    if (!queue.length) return;
+    if (!queue.length) return Promise.resolve(null);
     var batch = queue;
     queue = [];
-    send(batch, keepalive);
+    return send(batch, keepalive);
   }
 
   /* HIDDEN IS THE ONLY RELIABLE GOODBYE ON A PHONE. pagehide covers an
