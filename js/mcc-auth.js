@@ -296,18 +296,36 @@
       password = String(password || '');
       if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
       if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
-      return authApi('signup', {
-        method: 'POST',
-        body: { email: email, password: password, data: data || {} }
-      }).then(function (session) {
+
+      var attributionRead = Promise.resolve(null);
+      try {
+        if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution) {
+          attributionRead = root.MCC_ANALYTICS_CONTEXT.prepareSignupAttribution();
+        } else if (root.MCC_ANALYTICS_CONTEXT && root.MCC_ANALYTICS_CONTEXT.signupAttribution) {
+          attributionRead = Promise.resolve(root.MCC_ANALYTICS_CONTEXT.signupAttribution());
+        }
+      } catch (_) {}
+
+      return Promise.resolve(attributionRead).then(function (attribution) {
+        return authApi('signup', {
+          method: 'POST',
+          body: { email: email, password: password, data: data || {} }
+        }).then(function (session) { return { session: session, attribution: attribution }; });
+      }).then(function (bundle) {
+        var session = bundle.session, result;
         if (session && session.access_token) {
           writeSession(session);
           root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
-          return { session: true, user: session.user || null, confirm: false, existing: false };
+          result = { session: true, user: session.user || null, confirm: false, existing: false };
+        } else {
+          var identities = session && session.user && session.user.identities;
+          var existing = Array.isArray(identities) && identities.length === 0;
+          result = { session: false, user: session && session.user || null, confirm: !existing, existing: existing };
         }
-        var identities = session && session.user && session.user.identities;
-        var existing = Array.isArray(identities) && identities.length === 0;
-        return { session: false, user: session && session.user || null, confirm: !existing, existing: existing };
+        if (result.existing || !root.MCC_ANALYTICS_CONTEXT ||
+            !root.MCC_ANALYTICS_CONTEXT.recordAccountCreated) return result;
+        return Promise.resolve(root.MCC_ANALYTICS_CONTEXT.recordAccountCreated(bundle.attribution, result.user))
+          .catch(function () { return null; }).then(function () { return result; });
       });
     },
 
