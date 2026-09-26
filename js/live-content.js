@@ -21,6 +21,71 @@
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 
+  /* PRIVACY ENTRY GATE.
+     This is an acknowledgement of the published notice, not a browser-
+     permission bypass. In particular it cannot grant geolocation: the
+     browser/OS remains the authority for precise location. The gate runs
+     before this file's own CMS request, and analytics.js also reads the
+     same state before creating a device/session identifier. */
+  var PRIVACY_VERSION = "2026-09-26";
+  var PRIVACY_KEY = "mcc_privacy_ack";
+  function privacyAccepted() {
+    try { return localStorage.getItem(PRIVACY_KEY) === PRIVACY_VERSION; }
+    catch (e) { return false; }
+  }
+  function acceptPrivacy() {
+    try { localStorage.setItem(PRIVACY_KEY, PRIVACY_VERSION); }
+    catch (e) {
+      try { sessionStorage.setItem(PRIVACY_KEY, PRIVACY_VERSION); } catch (_) {}
+    }
+    location.reload();
+  }
+  var privacyOk = privacyAccepted();
+  if (!privacyOk) {
+    try { privacyOk = sessionStorage.getItem(PRIVACY_KEY) === PRIVACY_VERSION; } catch (_) {}
+  }
+  w.MCC_PRIVACY = {
+    version: PRIVACY_VERSION,
+    acknowledged: privacyOk,
+    accept: acceptPrivacy
+  };
+
+  function mountPrivacyGate() {
+    if (PAGE === "privacy.html" || privacyOk || d.getElementById("mccPrivacyGate")) return;
+    var style = d.createElement("style");
+    style.textContent =
+      "#mccPrivacyGate{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:20px;background:#080b0f;color:#f4f5f7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}" +
+      "#mccPrivacyGate *{box-sizing:border-box}" +
+      "#mccPrivacyGate .pg{width:min(100%,520px);padding:24px;border:1px solid #303846;border-radius:18px;background:#12161c}" +
+      "#mccPrivacyGate h1{margin:0 0 10px;font-size:clamp(24px,7vw,38px);line-height:1}" +
+      "#mccPrivacyGate p{margin:0 0 14px;color:#b6bec9;line-height:1.55;font-size:15px}" +
+      "#mccPrivacyGate a{color:#fff;text-decoration:underline}" +
+      "#mccPrivacyGate button{width:100%;min-height:48px;margin-top:8px;border:0;border-radius:11px;background:#fff;color:#080b0f;font:800 max(16px,1rem)/1 system-ui;cursor:pointer}";
+    (d.head || d.documentElement).appendChild(style);
+    var gate = d.createElement("div");
+    gate.id = "mccPrivacyGate";
+    gate.setAttribute("role", "dialog");
+    gate.setAttribute("aria-modal", "true");
+    gate.setAttribute("aria-labelledby", "mccPrivacyTitle");
+    gate.innerHTML =
+      '<div class="pg"><h1 id="mccPrivacyTitle">Before you enter.</h1>' +
+      '<p>McCluster uses first-party analytics to record activity on its own services, including IP address, approximate network-derived location, browser/device/network details, and what is used or played.</p>' +
+      '<p>Precise device location is separate: this acknowledgement cannot grant it. Your browser or operating system still controls that permission.</p>' +
+      '<p><a href="privacy.html">Read the Privacy Notice</a> before continuing.</p>' +
+      '<button type="button" id="mccPrivacyAccept">I agree and continue</button></div>';
+    d.body.appendChild(gate);
+    d.documentElement.style.overflow = "hidden";
+    var b = d.getElementById("mccPrivacyAccept");
+    if (b) b.addEventListener("click", acceptPrivacy);
+  }
+
+  if (PAGE !== "privacy.html" && !privacyOk) {
+    d.documentElement.setAttribute("data-privacy-pending", "1");
+    if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountPrivacyGate, { once: true });
+    else mountPrivacyGate();
+    return;
+  }
+
   /* A stable name for an element that has no data-edit of its own.
      Structural only -- tag, id, class and sibling index -- so it keeps
      working when the TEXT changes, which is the thing being edited. It
