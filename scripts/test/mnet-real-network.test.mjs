@@ -111,3 +111,19 @@ test('Mnet keeps one canonical M Account identity instead of creating a second a
   assert.match(migration,/references public\.m_people\(id\)/);
   assert.doesNotMatch(migration,/create table if not exists public\.mnet_users/);
 });
+
+
+test('Edit Profile exposes secure M Account password changes without creating a profile password field', async()=>{
+  const html=await read('mnet.html');
+  const js=await read('js/mnet.js');
+  const auth=await read('js/mcc-auth.js');
+  assert.match(html,/id="mnProfileSecurity"[^>]*hidden/);
+  assert.match(html,/id="mnNewPassword"[^>]*autocomplete="new-password"/);
+  assert.match(html,/id="mnNewPassword2"[^>]*autocomplete="new-password"/);
+  assert.match(html,/id="mnPasswordChange"/);
+  assert.match(js,/\$\("mnProfileSecurity"\)\.hidden = !editing/);
+  assert.match(js,/MCC\.updatePassword\(password\)/);
+  assert.match(js,/e\.preventDefault\(\); changePassword\(\)/);
+  assert.match(auth,/body: \{ password: password \}/);
+  assert.doesNotMatch(html,/name="password"/);
+});
