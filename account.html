@@ -424,7 +424,8 @@
     }
 
     function paintFan(row) {
-      var meta = (MCC.user && MCC.user() && MCC.user().user_metadata) || {};
+      var session = MCC.session ? MCC.session() : null;
+      var meta = session && session.user && session.user.user_metadata || {};
       var legal = row && row.legal_name || "";
       var parts = legal.trim().split(/\s+/).filter(Boolean);
       el("fnFirst").value = meta.first_name || parts.shift() || "";
