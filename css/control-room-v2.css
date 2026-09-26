@@ -249,9 +249,3 @@
 
 /* Remaining specialist back-office implementations are mounted inside the
    canonical Control shell while they are converted to native subviews. */
-.cr-embedded{min-width:0}
-.cr-embedded__note{margin:0 0 10px;padding:10px 12px;border:1px solid var(--cr-line);border-radius:10px;background:var(--cr-panel);color:var(--cr-dim);font-size:11px;line-height:1.5}
-.cr-embedded__note b{color:var(--cr-text)}
-.cr-embedded__frame{display:block;width:100%;height:calc(100svh - 190px);min-height:620px;border:1px solid var(--cr-line);border-radius:12px;background:#0b0d10}
-.cr-embedded--analytics{margin:-2px}
-.cr-embedded__frame--analytics{height:calc(100svh - 116px);min-height:720px;border:0;border-radius:0}
