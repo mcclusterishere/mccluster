@@ -9,13 +9,13 @@
     if(!S||!S.token||!S.url||!S.key)return;
     S.token().then(function(t){
       if(!t)return false;
-      return fetch(S.url+"/rest/v1/rpc/eu_is_admin",{
-        method:"POST",
-        headers:{apikey:S.key,authorization:"Bearer "+t,"content-type":"application/json"},
-        body:"{}"
-      }).then(function(r){return r.ok?r.json():false;});
+      return fetch("https://api.mccluster.org/v1/status",{
+        method:"GET",
+        headers:{authorization:"Bearer "+t},
+        cache:"no-store"
+      }).then(function(r){return r.ok;});
     }).then(function(ok){
-      if(ok===true) location.replace("control.html"+target);
+      if(ok) location.replace("control.html"+target);
     }).catch(function(){});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",check);
