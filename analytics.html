@@ -120,6 +120,21 @@
     .bd-table td.n,.bd-table th.n{text-align:right;font-variant-numeric:tabular-nums}
     .bd-prop{min-width:0}
 
+    /* Relationship views are flows, not rankings. Keep labels large enough on
+       phones and let the graph scroll instead of shrinking them into dust. */
+    .rel-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    .rel-graph{min-width:720px;width:100%;height:auto;display:block}
+    .rel-link{fill:none;stroke:rgba(159,170,184,.42);stroke-linecap:round}
+    .rel-node{fill:#202731;stroke:#455160;stroke-width:1}
+    .rel-node--track{fill:#172332}
+    .rel-node--account{fill:#24191b}
+    .rel-label{fill:#f4f5f7;font-size:12px;font-weight:700}
+    .rel-note{fill:#9ca3af;font-size:10px}
+    .forensics-table td{vertical-align:top}
+    .forensics-table code{white-space:normal;word-break:break-word}
+    .forensics-detail{display:grid;gap:4px;min-width:12rem}
+    .forensics-detail span{color:var(--bd-dim);font-size:11px}
+
     /* ===================== SECTIONS =====================
        The Squarespace pattern: one Analytics destination with a row of
        sections under the heading, instead of Traffic and Insights being
@@ -247,6 +262,7 @@
       <button type="button" class="an-tab is-on" data-sec="traffic" role="tab" aria-selected="true">Traffic</button>
       <button type="button" class="an-tab" data-sec="audience" role="tab" aria-selected="false">Audience</button>
       <button type="button" class="an-tab" data-sec="content" role="tab" aria-selected="false">Content</button>
+      <button type="button" class="an-tab" id="anIdentityTab" data-sec="identity" role="tab" aria-selected="false" hidden>Identity</button>
       <button type="button" class="an-tab" data-sec="setup" role="tab" aria-selected="false">Setup</button>
     </nav>
 
@@ -346,6 +362,39 @@
           scoped to the same date range selected above.</p>
         <div id="insContent"></div>
       </section>
+    </section>
+
+    <section class="an-sec" data-sec="identity" id="anIdentitySection" hidden>
+      <div class="an-grid">
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Signup attribution</h2>
+            <button class="an-csv" type="button" id="identityCsv">CSV</button></div>
+          <p class="bd-sub">Owner-only reconstruction of the seven days before an account was created.
+            Last-touch means the final track heard before signup; assisted tracks are every track heard in that window.
+            This is attribution, not proof that a song caused the signup.</p>
+          <div class="ins-stats" id="identityCoverage"></div>
+          <div id="identityFlow" style="margin-top:1rem"></div>
+        </section>
+
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Track → account relationships</h2></div>
+          <p class="bd-sub">Which records are present in account-creation journeys, with listener-to-signup rates where a device bridge exists.</p>
+          <div id="identityTracks"></div>
+        </section>
+
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Account journeys</h2></div>
+          <p class="bd-sub">The account, source, last song, elapsed time and observed network/location context used to audit the attribution.</p>
+          <div id="identityJourneys"></div>
+        </section>
+
+        <section class="an-panel an-wide">
+          <div class="an-ph"><h2>Forensics</h2></div>
+          <p class="bd-sub">Recent owner-only raw telemetry: IP, approximate edge location, ASN/network, device/session and browser context. This section is never exposed to customer analytics properties.</p>
+          <div id="forensicsEvents"></div>
+        </section>
+      </div>
+      <p class="bd-sub" id="identityStamp" style="margin-top:1rem"></p>
     </section>
   </div>
 </main>

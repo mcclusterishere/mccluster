@@ -300,6 +300,10 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const js = await read('workers/mccluster/src/entry.js');
   assert.match(js, /path === '\/v1\/collect'/, 'the first-party intake route must exist');
   assert.match(js, /request\.cf/, 'only the Worker can see where the visitor is');
+  assert.match(js, /put\('x-mcc-country', cf\.country/,
+    'country must use a house-owned header so a reserved Cloudflare header cannot vanish on the Supabase hop');
+  assert.match(await read('supabase/functions/collect/index.ts'), /country: pick\("x-mcc-country"/,
+    'the collector must prefer the durable McCluster country header');
   for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
                     'colo', 'metroCode', 'httpProtocol', 'tlsVersion', 'tlsCipher',
                     'clientTcpRtt', 'clientQuicRtt', 'clientAcceptEncoding', 'requestPriority']) {

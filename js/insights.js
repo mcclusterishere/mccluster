@@ -406,12 +406,38 @@
         'Preview/full/completion columns appear only where those newer events exist.</p>';
   }
 
+  function pathFlow(rows) {
+    var use=rows.slice(0,14), left=[], right=[];
+    use.forEach(function(r){
+      if(left.indexOf(r.from_page)<0)left.push(r.from_page);
+      if(right.indexOf(r.to_page)<0)right.push(r.to_page);
+    });
+    var W=760,H=Math.max(300,Math.max(left.length,right.length)*42+70);
+    function y(i,n){return 42+(H-84)*(n<=1?.5:i/(n-1));}
+    function short(s){s=String(s||"");return s.length>34?s.slice(0,33)+"…":s;}
+    var L={},R={};
+    left.forEach(function(n,i){L[n]={x:24,y:y(i,left.length)};});
+    right.forEach(function(n,i){R[n]={x:500,y:y(i,right.length)};});
+    var links=use.map(function(r){
+      var a=L[r.from_page],b=R[r.to_page],w=Math.max(1.5,Math.min(12,1+(Number(r.moves)||0)*.8));
+      return '<path class="rel-link" stroke-width="'+w+'" d="M 224 '+a.y+' C 350 '+a.y+', 375 '+b.y+', 500 '+b.y+'"/>';
+    }).join("");
+    function nodes(list,pos,cls){
+      return list.map(function(n){
+        var p=pos[n];
+        return '<g><rect class="rel-node '+cls+'" x="'+p.x+'" y="'+(p.y-14)+'" width="200" height="28" rx="7"/>'+
+          '<text class="rel-label" x="'+(p.x+9)+'" y="'+(p.y+4)+'">'+esc(short(n))+'</text></g>';
+      }).join("");
+    }
+    return '<div class="rel-scroll"><svg class="rel-graph" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Page to next-page relationship flow">'+
+      links+nodes(left,L,"")+nodes(right,R,"rel-node--track")+'</svg></div>';
+  }
+
   function paintPaths(rows, err) {
     var host = el("insPaths");
     if (err) { host.innerHTML = why(err); return; }
     DATA.paths = rows;
     if (!rows.length) { host.innerHTML = why(null); return; }
-    /* Pairs, so a bar per pair reads better than a table of three columns. */
     var pathRows = rows.map(function (r) {
       return {
         key: r.from_page + "  →  " + r.to_page,
@@ -419,10 +445,7 @@
         note: num(r.sessions) + " sessions"
       };
     });
-    host.innerHTML =
-      (B.barChart ? B.barChart(pathRows, {
-        label:"Most common next-page paths", color:HUE_B, limit:10
-      }) : "") +
+    host.innerHTML = pathFlow(rows) +
       '<div class="ins-chart-detail">' + bars(pathRows, { hue: HUE_B }) + "</div>";
   }
 

@@ -68,6 +68,41 @@ test('operator business analytics is capability-gated and never exposes raw auth
   assert.doesNotMatch(router,/select=.*email/i, 'business analytics must return aggregate counts, not user email rows');
 });
 
+test('owner identity analytics is capability-gated and customer analytics never receives raw identity telemetry', async()=>{
+  const [router,product,html]=await Promise.all([
+    read('workers/mccluster/src/analytics/router.js'),
+    read('js/analytics-product.js'),
+    read('analytics.html')
+  ]);
+  assert.match(router,/\/v1\/analytics\/identity/);
+  assert.match(router,/\/v1\/analytics\/forensics/);
+  assert.match(router,/handleIdentityAnalytics/);
+  assert.match(router,/handleForensics/);
+  assert.match(router,/await requireHouseOps\(env, user\)/);
+  assert.match(router,/minutes_after_last_track/);
+  assert.match(router,/assisted_tracks/);
+  assert.match(router,/\bip:\s*loc\?\.ip/);
+  assert.match(product,/state\.selected\.id===FIRST_PARTY/);
+  assert.match(product,/\/v1\/analytics\/identity/);
+  assert.match(product,/\/v1\/analytics\/forensics/);
+  assert.match(html,/id="anIdentityTab"[^>]*hidden/);
+  assert.match(html,/source→song→account|Source → Track → Account|source → track → account/i);
+});
+
+test('relationship analytics uses flows instead of forcing every relationship into a bar chart', async()=>{
+  const [insights,product,html]=await Promise.all([
+    read('js/insights.js'),
+    read('js/analytics-product.js'),
+    read('analytics.html')
+  ]);
+  assert.match(insights,/function pathFlow\(/);
+  assert.match(insights,/Page to next-page relationship flow/);
+  assert.doesNotMatch(insights,/label:"Most common next-page paths"/);
+  assert.match(product,/function relationGraph\(/);
+  assert.match(product,/source to song to account relationship graph/i);
+  assert.match(html,/\.rel-graph/);
+});
+
 test('business query parser understands rolling user-growth questions', ()=>{
   const now=new Date('2026-09-20T04:00:00.000Z');
   const win=parseBusinessWindow('How many users joined in the last 5 days?', now);
@@ -265,7 +300,6 @@ test('every reporting section has a real SVG chart surface', async()=>{
     'People reaching each funnel stage',
     'Daily, weekly and monthly active people',
     'People by acquisition source',
-    'Most common next-page paths',
     'Top tracks by starts',
     'Media events in the selected range'
   ]){
