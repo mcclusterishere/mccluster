@@ -32,6 +32,7 @@ Snapshot taken 2026-09-26 from project `zmnhbrjyhxzhkxmhkexs`.
 - Events in the prior 30 days: **58,545**.
 - Events with first-party device ID, IP and user agent: **49,169** each.
 - Events with city, edge latitude/longitude and ASN: **46,327** each.
+- Country column populated in the same window: **0**. The Worker now falls back to the incoming `CF-IPCountry` header when `request.cf.country` is unexpectedly absent; production should be re-measured after deployment.
 - Events linked to a signed-in user: **6,826**.
 - Precise-location events: **2**.
 
