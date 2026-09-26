@@ -7,8 +7,8 @@ const read=(p)=>readFile(p,'utf8');
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
-    'analytics_daily','analytics_totals','analytics_top','analytics_engagement_site',
-    'analytics_funnel_site','analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
+    'analytics_daily','analytics_totals','analytics_top','analytics_funnel',
+    'analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
   ]){
     assert.ok(js.includes('rpc("'+rpc+'"'),rpc+' is not wired into Control Analytics');
   }
@@ -86,12 +86,10 @@ test('identity bridge reconstruction keeps recent rows and bounds the attributio
   assert.match(router,/order=at\.desc/);
 });
 
-test('Audience analytics stays scoped to the selected property',async()=>{
+test('Audience analytics never mixes external properties into global engagement or funnel data',async()=>{
   const js=await read('js/control-room/analytics.js');
-  assert.match(js,/rpc\("analytics_engagement_site",\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}\)/);
-  assert.match(js,/rpc\("analytics_funnel_site",\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}\)/);
-  assert.doesNotMatch(js,/v_engagement_daily/);
-  const sql=await read('supabase/migrations/20260926235000_control_analytics_site_scoped_audience.sql');
-  assert.match(sql,/e\.site_id is not distinct from p_site/);
-  assert.match(sql,/where p_site is null/);
+  assert.match(js,/site===null\?S\.supa\("v_engagement_daily/);
+  assert.match(js,/site===null\?rpc\("analytics_funnel"/);
+  assert.match(js,/Control will not mix another property into this view/);
+  assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
 });
