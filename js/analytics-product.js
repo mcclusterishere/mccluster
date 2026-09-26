@@ -1,7 +1,7 @@
 (function(){
   "use strict";
   var SUPA=window.MCC_SUPA, AUTH=window.MCC_AUTH;
-  var state={sites:[],selected:null,events:[]};
+  var state={sites:[],selected:null,events:[],sessions:[]};
   var $=function(id){return document.getElementById(id);};
 
   function host(v){
@@ -150,10 +150,19 @@
     return rest("events?"+scopeFilter(site)+
       "&at=gte."+encodeURIComponent(request.since)+
       "&at=lt."+encodeURIComponent(request.until)+
-      "&select=at,name,path,session_id,device_id,country,city,asn_org,is_bot,device,edge,referrer"+
+      "&select=at,name,path,session_id,device_id,ip,country,region,city,postal,latitude,longitude,timezone,asn,asn_org,user_agent,is_bot,device,edge,referrer,source_host"+
       "&order=at.desc&limit=50").then(function(rows){
         state.events=rows||[]; renderRecent();
       }).catch(function(){ state.events=[]; renderRecent(); });
+  }
+  function sessionDetails(site,request){
+    return rpc("analytics_session_detail",{
+      p_since:request.since,p_until:request.until,p_site:siteUuid(site),p_limit:50
+    }).then(function(rows){
+      state.sessions=rows||[]; renderSessions();
+    }).catch(function(e){
+      state.sessions=[]; renderSessions(e);
+    });
   }
   function fetchAnalytics(site,request){
     var sid=siteUuid(site);
@@ -176,6 +185,7 @@
     }
     return Promise.all(jobs).then(function(out){
       recentEvents(site,request);
+      sessionDetails(site,request);
       var totals=(out[1]&&out[1][0])||{};
       var previous=request.compare&&out[6]&&out[6][0] ? out[6][0] : null;
       return {traffic:{
@@ -196,14 +206,52 @@
     });
   }
 
+  function locationLabel(r){
+    return [r.city,r.region,r.country].filter(Boolean).join(", ") || "—";
+  }
   function renderRecent(){
     var human=state.events.filter(function(e){return e.is_bot!==true;});
     if(!human.length){$("recent").innerHTML='<p class="bd-empty">No events in this window.</p>';return;}
-    $("recent").innerHTML='<div class="bd-scroll"><table><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>Country</th><th>Network</th></tr></thead><tbody>'+
+    $("recent").innerHTML='<div class="bd-scroll"><table class="bd-table"><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>Location</th><th>IP</th><th>Network</th></tr></thead><tbody>'+
       human.slice(0,50).map(function(e){
         return '<tr><td>'+esc(new Date(e.at).toLocaleString())+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.path)+
-          '</td><td>'+esc(e.country||"—")+'</td><td>'+esc((e.device&&e.device.network&&e.device.network.effective)||e.asn_org||"—")+'</td></tr>';
-      }).join("")+'</tbody></table></div>';
+          '</td><td>'+esc(locationLabel(e))+'</td><td><code>'+esc(e.ip||"—")+'</code></td><td>'+esc(e.asn_org||"—")+'</td></tr>';
+      }).join("")+'</tbody></table></div>'+
+      '<p class="bd-foot">Location is IP-derived and approximate. GPC/DNT rows intentionally omit IP, city, coordinates, session and device identifiers.</p>';
+  }
+  function renderSessions(err){
+    var host=$("sessions");
+    if(!host)return;
+    if(err){host.innerHTML='<p class="bd-empty danger">Session detail did not load: '+esc(err.message||err)+'</p>';return;}
+    if(!state.sessions.length){host.innerHTML='<p class="bd-empty">No identifiable sessions in this window.</p>';return;}
+    host.innerHTML='<div class="an-session-list">'+state.sessions.map(function(s){
+      var where=locationLabel(s);
+      var coords=(s.latitude!=null&&s.longitude!=null)
+        ? Number(s.latitude).toFixed(3)+", "+Number(s.longitude).toFixed(3)+" · IP-derived" : "—";
+      var dev=s.device||{}, net=dev.network||{};
+      var deviceBits=[
+        dev.platform||"",dev.mobile===true?"mobile":"",dev.vw&&dev.vh?(dev.vw+"×"+dev.vh):"",
+        net.effective?("network "+net.effective):""
+      ].filter(Boolean).join(" · ");
+      return '<details class="an-session"><summary><span><b>'+esc(where)+'</b><small>'+
+        esc(new Date(s.started_at).toLocaleString())+' → '+esc(new Date(s.ended_at).toLocaleTimeString())+
+        '</small></span><span><code>'+esc(s.ip||"privacy-suppressed")+'</code><small>'+
+        esc(Number(s.events||0).toLocaleString())+' events · '+esc(Number(s.pages||0).toLocaleString())+' pages</small></span></summary>'+
+        '<div class="an-session-grid">'+
+          '<div><b>Network</b><span>'+esc(s.network||"—")+(s.asn?" · AS"+esc(s.asn):"")+'</span></div>'+
+          '<div><b>Region</b><span>'+esc(where)+(s.postal?" · "+esc(s.postal):"")+'</span></div>'+
+          '<div><b>Approx. coordinates</b><span>'+esc(coords)+'</span></div>'+
+          '<div><b>Timezone</b><span>'+esc(s.timezone||"—")+'</span></div>'+
+          '<div><b>Entry → exit</b><span>'+esc(s.entry_page||"—")+' → '+esc(s.exit_page||"—")+'</span></div>'+
+          '<div><b>Referrer</b><span>'+esc(s.referrer||"direct")+'</span></div>'+
+          '<div><b>Device</b><span>'+esc(deviceBits||s.user_agent||"—")+'</span></div>'+
+          '<div><b>Signed in</b><span>'+(s.signed_in?"yes":"no")+'</span></div>'+
+          '<div><b>Session ID</b><span><code>'+esc(s.session_id||"—")+'</code></span></div>'+
+          '<div><b>Device ID</b><span><code>'+esc(s.device_id||"—")+'</code></span></div>'+
+          '<div><b>Errors</b><span>'+esc(s.errors||0)+'</span></div>'+
+          '<div><b>Conversions</b><span>'+esc(s.conversions||0)+'</span></div>'+
+        '</div></details>';
+    }).join("")+'</div>';
   }
 
   function mountBoard(){
