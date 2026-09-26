@@ -179,7 +179,7 @@
          ever banking the words. -->
     <div class="ac__card fan" id="fanCard" data-private hidden>
       <p class="ac__lab">Your details</p>
-      <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
+      <p class="ac__sub" id="fanWhy">Complete your account identity and mailing address. This is required before member features open and is the address used for physical McCluster mail or swag when applicable.</p>
 
       <!-- THE ASK COMES FIRST, AND HERE IS WHY IT MOVED.
            This used to be a bare checkbox sitting under a legal name, a
@@ -209,15 +209,15 @@
 
         <input type="text" id="fnFirst" placeholder="First name" autocomplete="given-name" required>
         <input type="text" id="fnLast" placeholder="Last name" autocomplete="family-name" required>
-        <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
+        <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1" required>
         <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
         <div class="fan__row">
-          <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
-          <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
+          <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2" required>
+          <input type="text" id="fnRegion" placeholder="State / region" autocomplete="address-level1" required>
         </div>
         <div class="fan__row">
-          <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
-          <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
+          <input type="text" id="fnPostal" placeholder="ZIP / postal code" autocomplete="postal-code" required>
+          <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name" required>
         </div>
         <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
         <p class="fan__note" id="fnPhoneNote" hidden></p>
@@ -247,7 +247,7 @@
     var HOUSE = "matthew@mccluster.org";
 
     function stayOnAccount() {
-      return /(?:\?|&)stay=1(?:&|$)/.test(location.search);
+      return /(?:\?|&)(?:stay|complete)=1(?:&|$)/.test(location.search);
     }
 
     function openPlane() {
@@ -304,7 +304,7 @@
       el("acMsg").textContent = "";
       el("acCreateMsg").textContent = "";
       setTimeout(function () {
-        var target = create ? el("acCreateName") : el("acInEmail");
+        var target = create ? el("acCreateFirst") : el("acInEmail");
         if (target) target.focus();
       }, 0);
     }
@@ -540,6 +540,10 @@
            the trigger may have refused a consent or cleared a verification,
            and the form must show what is actually stored. */
         paintFan(row);
+        if (/(?:\?|&)complete=1(?:&|$)/.test(location.search) &&
+            window.MCC_ACCOUNT_INTEGRITY && MCC_ACCOUNT_INTEGRITY.completeProfile(row)) {
+          location.replace("mnet.html");
+        }
       }).catch(function (e) {
         el("fnSave").disabled = false;
         el("fnMsg").textContent = e.message || "That did not save.";
