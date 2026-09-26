@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0013_link_offerings_to_square_plans.
--- Executable reconstruction SQL: supabase/replay_migrations/0013_link_offerings_to_square_plans.sql
--- Intentionally no-op in production; this version is already registered live.

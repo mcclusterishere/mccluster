@@ -1,6 +1,0 @@
-# Postfix: forwarding.
-hosts = REPLACE_DB_HOST
-dbname = postgres
-user = mailserver
-password = REPLACE_DB_PASSWORD
-query = SELECT destination FROM public.mail_v_aliases WHERE source='%s'

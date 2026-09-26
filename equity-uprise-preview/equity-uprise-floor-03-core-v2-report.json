@@ -1,0 +1,99 @@
+{
+  "scene_id": "equity-uprise-floor-03",
+  "version": "fellowship-network-hybrid-v1",
+  "mesh_count": 317,
+  "glb_bytes": 205264,
+  "sha256": "88509c6b20badd3cd984a339acd553848c3233f70c940694490d35f4fadd1b26",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 63,
+  "inventory_records_modeled": 63,
+  "inventory_records_missing": [],
+  "checks_total": 13,
+  "checks_passed": 13,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "63 inventory records",
+      "passed": true,
+      "actual": 63,
+      "expected": 63
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 63,
+      "expected": 63
+    },
+    {
+      "name": "six opportunity chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "two interview rooms",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "eight interview chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "identity wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "people lounge modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "checkin modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}
