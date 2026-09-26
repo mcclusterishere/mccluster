@@ -22,9 +22,9 @@
       "detail": "56 capabilities"
     },
     {
-      "name": "capability source exists: institutional-desk -> equity-uprise.html",
+      "name": "capability source exists: institutional-desk -> _unfinished/equity-uprise/equity-uprise.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise.html"
     },
     {
       "name": "capability source exists: institutional-desk -> js/equity-uprise-institutional.js",
@@ -52,9 +52,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/ecosystem.html"
     },
     {
-      "name": "capability source exists: public-issues -> topics.html",
+      "name": "capability source exists: public-issues -> _unfinished/equity-uprise/topics.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/topics.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/topics.html"
     },
     {
       "name": "capability source exists: public-issues -> data/eu-topics.json",
@@ -67,9 +67,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/equity-uprise-platform.md"
     },
     {
-      "name": "capability source exists: perspectives -> uprise-admin.html",
+      "name": "capability source exists: perspectives -> _unfinished/equity-uprise/uprise-admin.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/uprise-admin.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/uprise-admin.html"
     },
     {
       "name": "capability source exists: perspectives -> supabase/replay_migrations/0017_equity_uprise_platform.sql",
@@ -82,24 +82,24 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-converse/index.ts"
     },
     {
-      "name": "capability source exists: conversation-agent -> topics.html",
+      "name": "capability source exists: conversation-agent -> _unfinished/equity-uprise/topics.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/topics.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/topics.html"
     },
     {
-      "name": "capability source exists: conversation-agent -> dashboard.html",
+      "name": "capability source exists: conversation-agent -> _unfinished/equity-uprise/dashboard.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/dashboard.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/dashboard.html"
     },
     {
-      "name": "capability source exists: member-dashboard -> dashboard.html",
+      "name": "capability source exists: member-dashboard -> _unfinished/equity-uprise/dashboard.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/dashboard.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/dashboard.html"
     },
     {
-      "name": "capability source exists: profiles -> profile.html",
+      "name": "capability source exists: profiles -> _unfinished/equity-uprise/profile.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/profile.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/profile.html"
     },
     {
       "name": "capability source exists: profiles -> docs/equity-uprise-platform.md",
@@ -107,9 +107,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/equity-uprise-platform.md"
     },
     {
-      "name": "capability source exists: private-contact -> profile.html",
+      "name": "capability source exists: private-contact -> _unfinished/equity-uprise/profile.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/profile.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/profile.html"
     },
     {
       "name": "capability source exists: private-contact -> docs/equity-uprise-platform.md",
@@ -117,9 +117,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/equity-uprise-platform.md"
     },
     {
-      "name": "capability source exists: fellowship-directory -> fellowships.html",
+      "name": "capability source exists: fellowship-directory -> _unfinished/equity-uprise/fellowships.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/fellowships.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/fellowships.html"
     },
     {
       "name": "capability source exists: fellowship-directory -> data/eu-fellowships.json",
@@ -137,14 +137,14 @@
       "detail": "/home/runner/work/mccluster/mccluster/llms.txt"
     },
     {
-      "name": "capability source exists: fellowship-matching -> fellowships.html",
+      "name": "capability source exists: fellowship-matching -> _unfinished/equity-uprise/fellowships.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/fellowships.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/fellowships.html"
     },
     {
-      "name": "capability source exists: fellowship-matching -> dashboard.html",
+      "name": "capability source exists: fellowship-matching -> _unfinished/equity-uprise/dashboard.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/dashboard.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/dashboard.html"
     },
     {
       "name": "capability source exists: fellowship-matching -> docs/equity-uprise-platform.md",
@@ -162,19 +162,19 @@
       "detail": "/home/runner/work/mccluster/mccluster/llms.txt"
     },
     {
-      "name": "capability source exists: host-listings -> fellowships.html",
+      "name": "capability source exists: host-listings -> _unfinished/equity-uprise/fellowships.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/fellowships.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/fellowships.html"
     },
     {
-      "name": "capability source exists: host-listings -> uprise-admin.html",
+      "name": "capability source exists: host-listings -> _unfinished/equity-uprise/uprise-admin.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/uprise-admin.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/uprise-admin.html"
     },
     {
-      "name": "capability source exists: fellowship-applications -> fellowship.html",
+      "name": "capability source exists: fellowship-applications -> _unfinished/equity-uprise/fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/fellowship.html"
     },
     {
       "name": "capability source exists: fellowship-applications -> js/equity-uprise-fellowship-live.js",
@@ -197,9 +197,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
     },
     {
-      "name": "capability source exists: verification -> verify.html",
+      "name": "capability source exists: verification -> _unfinished/equity-uprise/verify.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/verify.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/verify.html"
     },
     {
       "name": "capability source exists: stakeholder-intake -> supabase/functions/eu-intake/index.ts",
@@ -227,14 +227,14 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
     },
     {
-      "name": "capability source exists: partnership-sponsorship -> equity-uprise-fellowship.html",
+      "name": "capability source exists: partnership-sponsorship -> _unfinished/equity-uprise/equity-uprise-fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise-fellowship.html"
     },
     {
-      "name": "capability source exists: partnership-sponsorship -> equity-uprise.html",
+      "name": "capability source exists: partnership-sponsorship -> _unfinished/equity-uprise/equity-uprise.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise.html"
     },
     {
       "name": "capability source exists: initiative-portfolio -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
@@ -247,9 +247,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql"
     },
     {
-      "name": "capability source exists: initiative-portfolio -> equity-uprise.html",
+      "name": "capability source exists: initiative-portfolio -> _unfinished/equity-uprise/equity-uprise.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise.html"
     },
     {
       "name": "capability source exists: research-projects -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
@@ -292,9 +292,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-workspace/index.ts"
     },
     {
-      "name": "capability source exists: evidence-room -> docket-516.html",
+      "name": "capability source exists: evidence-room -> _unfinished/equity-uprise/docket-516.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/docket-516.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/docket-516.html"
     },
     {
       "name": "capability source exists: evidence-room -> data/docket-516-files.json",
@@ -317,14 +317,14 @@
       "detail": "/home/runner/work/mccluster/mccluster/assets/credentials"
     },
     {
-      "name": "capability source exists: credentials-proof -> equity-uprise.html",
+      "name": "capability source exists: credentials-proof -> _unfinished/equity-uprise/equity-uprise.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise.html"
     },
     {
-      "name": "capability source exists: credentials-proof -> equity-uprise-fellowship.html",
+      "name": "capability source exists: credentials-proof -> _unfinished/equity-uprise/equity-uprise-fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise-fellowship.html"
     },
     {
       "name": "capability source exists: credentials-proof -> data/dossier.json",
@@ -422,9 +422,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/music-platform.md"
     },
     {
-      "name": "capability source exists: music-catalogue -> equity-uprise.html",
+      "name": "capability source exists: music-catalogue -> _unfinished/equity-uprise/equity-uprise.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise.html"
     },
     {
       "name": "capability source exists: music-catalogue -> data/albums.json",
@@ -452,9 +452,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/listen.html"
     },
     {
-      "name": "capability source exists: artist-creator -> equity-uprise-fellowship.html",
+      "name": "capability source exists: artist-creator -> _unfinished/equity-uprise/equity-uprise-fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise-fellowship.html"
     },
     {
       "name": "capability source exists: artist-creator -> creator.html",
@@ -532,9 +532,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-derivatives/index.ts"
     },
     {
-      "name": "capability source exists: admin-desk -> uprise-admin.html",
+      "name": "capability source exists: admin-desk -> _unfinished/equity-uprise/uprise-admin.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/uprise-admin.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/uprise-admin.html"
     },
     {
       "name": "capability source exists: control-approvals -> supabase/functions/eu-control/index.ts",
@@ -667,9 +667,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/uprise-world/AUDIT-REPORT.md"
     },
     {
-      "name": "capability source exists: program-support-funding -> equity-uprise-fellowship.html",
+      "name": "capability source exists: program-support-funding -> _unfinished/equity-uprise/equity-uprise-fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise-fellowship.html"
     },
     {
       "name": "capability source exists: program-support-funding -> data/cause.json",
@@ -732,9 +732,9 @@
       "detail": "/home/runner/work/mccluster/mccluster/js/music-creator-profile.js"
     },
     {
-      "name": "capability source exists: fellowship-cohort -> equity-uprise-fellowship.html",
+      "name": "capability source exists: fellowship-cohort -> _unfinished/equity-uprise/equity-uprise-fellowship.html",
       "passed": true,
-      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/equity-uprise/equity-uprise-fellowship.html"
     },
     {
       "name": "capability source exists: fellowship-cohort -> data/fellows.json",

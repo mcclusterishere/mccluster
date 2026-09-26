@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 262,
-  "capability_source_count": 102,
-  "support_only_count": 160,
-  "checks_total": 948,
-  "checks_passed": 948,
+  "candidate_count": 253,
+  "capability_source_count": 97,
+  "support_only_count": 156,
+  "checks_total": 917,
+  "checks_passed": 917,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -20,23 +20,38 @@
     "LICENSE",
     "README.md",
     "_unfinished/README.md",
+    "_unfinished/equity-uprise/dashboard.html",
+    "_unfinished/equity-uprise/docket-516.html",
+    "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-fellowship.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html",
+    "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html",
+    "_unfinished/equity-uprise/equity-uprise.html",
+    "_unfinished/equity-uprise/feed.html",
+    "_unfinished/equity-uprise/fellowship.html",
+    "_unfinished/equity-uprise/fellowships.html",
+    "_unfinished/equity-uprise/profile.html",
+    "_unfinished/equity-uprise/topics.html",
+    "_unfinished/equity-uprise/uprise-admin.html",
+    "_unfinished/equity-uprise/verify.html",
     "_unfinished/shake-shop/shake-desk.html",
     "_unfinished/shake-shop/shakes.css",
     "_unfinished/shake-shop/shakes.html",
     "_unfinished/shake-shop/shakes.js",
+    "_unfinished/socials-gallery-carousel.html",
     "_unfinished/uprise-world/uprise-npc.js",
     "_unfinished/uprise-world/uprise-world.html",
     "_unfinished/uprise-world/uprise-world.js",
     "_unfinished/uprise-world/uprise-world.json",
-    "admin.html",
-    "album.html",
     "assets/img/equity-uprise-logo.webp",
     "assets/img/eu-favicon.png",
     "audit/2026-09-13-p0-supabase-containment.md",
-    "card.html",
-    "catalogue.html",
-    "closet/sent.html",
-    "console.html",
     "crm.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -45,9 +60,7 @@
     "css/offers.css",
     "css/onboard.css",
     "css/style.css",
-    "dashboard.html",
     "data/albums.json",
-    "data/archive.json",
     "data/brands.json",
     "data/catalogue.json",
     "data/cause.json",
@@ -61,12 +74,10 @@
     "data/merch.json",
     "data/offers.json",
     "data/playlists.json",
-    "data/portfolio.json",
-    "data/prayer-closet.json",
     "data/roles.json",
     "data/sites.json",
     "demos/shiloh/data/impact.json",
-    "docket-516.html",
+    "desk.html",
     "docs/agent-web.md",
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
@@ -105,26 +116,10 @@
     "docs/the-mission-fund.md",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
-    "equity-uprise-basement-b1-3d.html",
-    "equity-uprise-fellowship.html",
-    "equity-uprise-floor-01-3d.html",
-    "equity-uprise-floor-02-3d.html",
-    "equity-uprise-floor-03-3d.html",
-    "equity-uprise-floor-04-3d.html",
-    "equity-uprise-floor-05-3d.html",
-    "equity-uprise-floor-06-3d.html",
-    "equity-uprise-floor-07-3d.html",
-    "equity-uprise.html",
-    "feed.html",
-    "fellowship.html",
-    "fellowships.html",
-    "films.html",
     "gallery.html",
-    "give.html",
     "hire.html",
-    "hitman-facility.html",
     "index.html",
-    "inner-room.html",
+    "js/analytics-product.js",
     "js/chatfirst.js",
     "js/control-registry.js",
     "js/crm.js",
@@ -134,16 +129,17 @@
     "js/fan-intake.js",
     "js/here-material.js",
     "js/hire-offers.js",
+    "js/insights.js",
     "js/lockroom.js",
     "js/masthead.js",
     "js/offers.js",
+    "js/office.js",
     "js/onboard.js",
     "js/payments.js",
     "js/tabbar.js",
-    "license.html",
+    "lanes.html",
     "listen.html",
     "llms.txt",
-    "management.html",
     "matthew-mccluster.html",
     "native/app/(tabs)/_layout.tsx",
     "native/app/(tabs)/desk.tsx",
@@ -156,11 +152,9 @@
     "policy-memo-dna.html",
     "policy.html",
     "portfolio.html",
-    "prayer-closet.html",
     "press.html",
     "privacy.html",
     "production.html",
-    "profile.html",
     "redirects/equity-uprise.html",
     "redirects/walls/eu-rally.html",
     "scripts/kb-build.mjs",
@@ -169,7 +163,6 @@
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/control-surface.test.mjs",
     "scripts/test/signup-authority.test.mjs",
-    "shots.html",
     "sitemap.xml",
     "sites-details.html",
     "sites.html",
@@ -217,6 +210,7 @@
     "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql",
     "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql",
     "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql",
+    "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -259,11 +253,8 @@
     "supabase/tests/run-eu-tests.sh",
     "tools/eu-export-seed.sh",
     "tools/verify-llms.py",
-    "topics.html",
-    "uprise-admin.html",
-    "verify.html",
+    "vault.html",
     "walls/eu-rally.html",
-    "whip.html",
     "workers/mccluster/src/ai/envelope.js",
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/index.js",
@@ -276,12 +267,362 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "262 entries"
+      "detail": "253 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
       "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
+    },
+    {
+      "name": "_unfinished/equity-uprise/dashboard.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/dashboard.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/dashboard.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/docket-516.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/docket-516.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/docket-516.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_preview_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_preview_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-fellowship.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-fellowship.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-fellowship.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-01-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-02-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-03-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-04-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-05-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-06-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_projection_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise-floor-07-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/equity-uprise.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/feed.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/feed.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/feed.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/feed.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowship.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowship.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowship.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowships.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowships.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/fellowships.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/profile.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/profile.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/profile.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/topics.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/topics.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/topics.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/uprise-admin.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/uprise-admin.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/uprise-admin.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/equity-uprise/verify.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/equity-uprise/verify.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "_unfinished/equity-uprise/verify.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "_unfinished/README.md capability ids known",
@@ -380,6 +721,26 @@
     },
     {
       "name": "_unfinished/shake-shop/shakes.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/socials-gallery-carousel.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "_unfinished/socials-gallery-carousel.html classified",
+      "passed": true,
+      "detail": "classification='unrelated_experimental_support'"
+    },
+    {
+      "name": "_unfinished/socials-gallery-carousel.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "_unfinished/socials-gallery-carousel.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -524,26 +885,6 @@
       "detail": ""
     },
     {
-      "name": "admin.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "admin.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "admin.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "admin.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "AGENTS.md capability ids known",
       "passed": true,
       "detail": ""
@@ -562,21 +903,6 @@
       "name": "AGENTS.md support rationale present",
       "passed": true,
       "detail": ""
-    },
-    {
-      "name": "album.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "album.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "album.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "assets/img/equity-uprise-logo.webp capability ids known",
@@ -639,41 +965,6 @@
       "detail": ""
     },
     {
-      "name": "card.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "card.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "card.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "card.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "catalogue.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "catalogue.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "catalogue.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
       "name": "CLAUDE.md capability ids known",
       "passed": true,
       "detail": ""
@@ -694,26 +985,6 @@
       "detail": ""
     },
     {
-      "name": "closet/sent.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "closet/sent.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "closet/sent.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "closet/sent.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "CODEX.md capability ids known",
       "passed": true,
       "detail": ""
@@ -730,26 +1001,6 @@
     },
     {
       "name": "CODEX.md support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "console.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "console.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "console.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "console.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -914,21 +1165,6 @@
       "detail": ""
     },
     {
-      "name": "dashboard.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "dashboard.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "dashboard.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
       "name": "data/albums.json capability ids known",
       "passed": true,
       "detail": ""
@@ -940,21 +1176,6 @@
     },
     {
       "name": "data/albums.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "data/archive.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/archive.json classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "data/archive.json support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
@@ -1159,41 +1380,6 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "data/portfolio.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/portfolio.json classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "data/portfolio.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "data/prayer-closet.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/prayer-closet.json classified",
-      "passed": true,
-      "detail": "classification='shared_data_support'"
-    },
-    {
-      "name": "data/prayer-closet.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "data/prayer-closet.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "data/roles.json capability ids known",
       "passed": true,
       "detail": ""
@@ -1249,19 +1435,24 @@
       "detail": ""
     },
     {
-      "name": "docket-516.html capability ids known",
+      "name": "desk.html capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "docket-516.html classified",
+      "name": "desk.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification='shared_site_support'"
     },
     {
-      "name": "docket-516.html support-only semantics coherent",
+      "name": "desk.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "desk.html support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "docs/agent-web.md capability ids known",
@@ -1984,266 +2175,6 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "equity-uprise-basement-b1-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-basement-b1-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_preview_support'"
-    },
-    {
-      "name": "equity-uprise-basement-b1-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-basement-b1-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-fellowship.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-fellowship.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "equity-uprise-fellowship.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-01-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-01-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-01-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-01-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-02-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-02-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-02-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-02-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-03-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-03-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-03-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-03-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-04-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-04-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-04-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-04-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-05-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-05-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-05-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-05-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-06-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-06-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-06-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-06-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-07-3d.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise-floor-07-3d.html classified",
-      "passed": true,
-      "detail": "classification='building_projection_support'"
-    },
-    {
-      "name": "equity-uprise-floor-07-3d.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "equity-uprise-floor-07-3d.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "equity-uprise.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "equity-uprise.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "feed.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "feed.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "feed.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "feed.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "fellowship.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "fellowship.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "fellowship.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "fellowships.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "fellowships.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "fellowships.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "films.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "films.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "films.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "films.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "gallery.html capability ids known",
       "passed": true,
       "detail": ""
@@ -2284,21 +2215,6 @@
       "detail": ""
     },
     {
-      "name": "give.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "give.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "give.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
       "name": "hire.html capability ids known",
       "passed": true,
       "detail": ""
@@ -2312,26 +2228,6 @@
       "name": "hire.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "hitman-facility.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "hitman-facility.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "hitman-facility.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "hitman-facility.html support rationale present",
-      "passed": true,
-      "detail": ""
     },
     {
       "name": "index.html capability ids known",
@@ -2354,22 +2250,22 @@
       "detail": ""
     },
     {
-      "name": "inner-room.html capability ids known",
+      "name": "js/analytics-product.js capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "inner-room.html classified",
+      "name": "js/analytics-product.js classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification='shared_frontend_support'"
     },
     {
-      "name": "inner-room.html support-only semantics coherent",
+      "name": "js/analytics-product.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "inner-room.html support rationale present",
+      "name": "js/analytics-product.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -2529,6 +2425,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "js/insights.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/insights.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/insights.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/insights.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/lockroom.js capability ids known",
       "passed": true,
       "detail": ""
@@ -2584,6 +2500,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "js/office.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/office.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/office.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/office.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/onboard.js capability ids known",
       "passed": true,
       "detail": ""
@@ -2634,6 +2570,26 @@
       "detail": ""
     },
     {
+      "name": "lanes.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "lanes.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "lanes.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "lanes.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "LICENSE capability ids known",
       "passed": true,
       "detail": ""
@@ -2650,26 +2606,6 @@
     },
     {
       "name": "LICENSE support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "license.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "license.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "license.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "license.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -2702,26 +2638,6 @@
       "name": "llms.txt support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "management.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "management.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "management.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "management.html support rationale present",
-      "passed": true,
-      "detail": ""
     },
     {
       "name": "matthew-mccluster.html capability ids known",
@@ -2939,26 +2855,6 @@
       "detail": ""
     },
     {
-      "name": "prayer-closet.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "prayer-closet.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "prayer-closet.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "prayer-closet.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "press.html capability ids known",
       "passed": true,
       "detail": ""
@@ -3012,21 +2908,6 @@
       "name": "production.html support rationale present",
       "passed": true,
       "detail": ""
-    },
-    {
-      "name": "profile.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "profile.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "profile.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "README.md capability ids known",
@@ -3200,26 +3081,6 @@
     },
     {
       "name": "scripts/test/signup-authority.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "shots.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "shots.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "shots.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "shots.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4064,6 +3925,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20260925130908_analytics_all_time_and_owner_reads.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/production-ledger.json capability ids known",
       "passed": true,
       "detail": ""
@@ -4809,49 +4690,24 @@
       "detail": ""
     },
     {
-      "name": "topics.html capability ids known",
+      "name": "vault.html capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "topics.html classified",
+      "name": "vault.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification='shared_site_support'"
     },
     {
-      "name": "topics.html support-only semantics coherent",
+      "name": "vault.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "uprise-admin.html capability ids known",
+      "name": "vault.html support rationale present",
       "passed": true,
       "detail": ""
-    },
-    {
-      "name": "uprise-admin.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "uprise-admin.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "verify.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "verify.html classified",
-      "passed": true,
-      "detail": "classification='capability_source'"
-    },
-    {
-      "name": "verify.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "walls/eu-rally.html capability ids known",
@@ -4867,26 +4723,6 @@
       "name": "walls/eu-rally.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "whip.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "whip.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "whip.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "whip.html support rationale present",
-      "passed": true,
-      "detail": ""
     },
     {
       "name": "workers/mccluster/src/ai/envelope.js capability ids known",
