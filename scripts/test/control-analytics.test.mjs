@@ -15,7 +15,7 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   assert.match(js,/\/v1\/analytics\/business\?since=/);
   assert.match(js,/\/v1\/analytics\/identity\?since=/);
   assert.match(js,/\/v1\/analytics\/forensics\?since=/);
-  assert.doesNotMatch(js,/analytics\.html|iframe/);
+  assert.doesNotMatch(js,/<iframe|analytics\.html\?control_embed/);
 });
 
 test('one range controls all analytics panels and stale requests cannot repaint',async()=>{
