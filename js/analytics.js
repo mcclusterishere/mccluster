@@ -1,3 +1,21 @@
+/* Privacy gate enforcement: no McCluster analytics, device/session IDs,
+   service-worker registration or location reads begin until the current site-entry
+   notice has been acknowledged. The policy page itself can still be read. */
+var MCC_PRIVACY_REQUIRED_VERSION = "2026-09-26";
+function mccPrivacyAcknowledged() {
+  try {
+    var v = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");
+    if (v && v.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
+  } catch (_) {}
+  try {
+    var s = JSON.parse(sessionStorage.getItem("mcc_privacy_ack") || "null");
+    if (s && s.version === MCC_PRIVACY_REQUIRED_VERSION) return true;
+  } catch (_) {}
+  return document.cookie.split(";").some(function (part) {
+    return part.trim() === "mcc_privacy_ack=" + MCC_PRIVACY_REQUIRED_VERSION;
+  });
+}
+if (mccPrivacyAcknowledged()) {
 /* ============================================================
    THE HOUSE'S OWN EYES.
 
@@ -1129,3 +1147,7 @@ window.MCC_MODEL = (function () {
 
   root.MCC_SENSE = { visitor: visitor, machine: machine, attention: attention, vitals: function () { return vitals; } };
 })(window);
+
+} else {
+  window.MCC_TRACK = function () { return false; };
+}
