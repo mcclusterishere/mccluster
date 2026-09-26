@@ -125,10 +125,11 @@ test('the email ask sits above the address fields', async () => {
   const html = await read('account.html');
   const ask = html.indexOf('id="fnMarketing"');
   const addr = html.indexOf('id="fnAddr1"');
-  const legal = html.indexOf('id="fnLegal"');
-  assert.ok(ask > 0 && addr > 0 && legal > 0, 'all three fields should still exist');
-  assert.ok(ask < legal && ask < addr,
-    'the ask must come before the paperwork, which is the whole point of moving it');
+  const first = html.indexOf('id="fnFirst"');
+  const last = html.indexOf('id="fnLast"');
+  assert.ok(ask > 0 && addr > 0 && first > 0 && last > 0, 'the consent, legal-name and address fields should still exist');
+  assert.ok(ask < first && ask < last && ask < addr,
+    'the optional marketing ask stays separate from the required account paperwork');
 });
 
 test('the address form is a drawer, and the consent is not inside it', async () => {
