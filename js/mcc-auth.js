@@ -294,11 +294,23 @@
     signUpWithPassword: function (email, password, data) {
       email = String(email || '').trim().toLowerCase();
       password = String(password || '');
+      data = data || {};
       if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
       if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
+      if (!data.first_name || !data.last_name) {
+        return Promise.reject(new Error('First and last name are required to create an M Account.'));
+      }
+      if (root.MCC_ACCOUNT_INTEGRITY && root.MCC_ACCOUNT_INTEGRITY.validateName) {
+        var nameCheck = root.MCC_ACCOUNT_INTEGRITY.validateName(data.first_name, data.last_name);
+        if (!nameCheck.ok) return Promise.reject(new Error(nameCheck.message || 'Enter your real first and last name.'));
+        data.first_name = nameCheck.first_name;
+        data.last_name = nameCheck.last_name;
+        data.full_name = nameCheck.full_name;
+        data.name = nameCheck.full_name;
+      }
       return authApi('signup', {
         method: 'POST',
-        body: { email: email, password: password, data: data || {} }
+        body: { email: email, password: password, data: data }
       }).then(function (session) {
         if (session && session.access_token) {
           writeSession(session);
