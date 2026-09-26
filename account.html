@@ -114,6 +114,9 @@
     .ac__ghost:hover { background: rgba(255,255,255,0.1); }
     .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); }
     .ac__who { color: var(--cream); font-weight: 700; word-break: break-all; }
+    .ac__security { margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid var(--edge); }
+    .ac__security label { display: block; margin-top: 0.75rem; color: var(--cream); font-size: 0.82rem; font-weight: 700; }
+    .ac__security .ac__sub { margin-top: 0.45rem; font-size: 0.84rem; line-height: 1.5; }
     .ac__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
     [hidden] { display: none !important; }
   </style>
@@ -185,6 +188,18 @@
       <p class="ac__lab">Signed in</p>
       <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
       <a class="ac__ghost" href="console.html">Client console</a>
+
+      <section class="ac__security" aria-labelledby="acSecurityTitle">
+        <p class="ac__lab" id="acSecurityTitle">Security</p>
+        <p class="ac__sub">Change the password for this M Account. The new password works everywhere you use this McCluster identity.</p>
+        <label for="acNewPassword">New password</label>
+        <input type="password" id="acNewPassword" autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
+        <label for="acNewPassword2">Confirm new password</label>
+        <input type="password" id="acNewPassword2" autocomplete="new-password" minlength="8" placeholder="Type it again">
+        <button class="ac__btn" id="acPasswordChange" type="button">Change password</button>
+        <p class="ac__note" id="acPasswordChangeStatus" role="status"></p>
+      </section>
+
       <button class="ac__out" id="acOut" type="button">Sign out</button>
     </div>
 
@@ -430,6 +445,42 @@
       }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
     };
     el("acCreatePass2").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acCreateGo").click(); });
+
+    function changeAccountPassword() {
+      var password = el("acNewPassword").value;
+      var confirm = el("acNewPassword2").value;
+      var button = el("acPasswordChange");
+      var status = el("acPasswordChangeStatus");
+      if (password.length < 8) {
+        status.textContent = "Use at least 8 characters.";
+        return;
+      }
+      if (password !== confirm) {
+        status.textContent = "Those passwords do not match.";
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "Changing…";
+      status.textContent = "";
+      MCC.updatePassword(password).then(function () {
+        el("acNewPassword").value = "";
+        el("acNewPassword2").value = "";
+        status.textContent = "Password changed. Use the new password the next time you sign in.";
+      }).catch(function (e) {
+        status.textContent = e.message || "Could not change your password.";
+      }).finally(function () {
+        button.disabled = false;
+        button.textContent = "Change password";
+      });
+    }
+
+    el("acPasswordChange").onclick = changeAccountPassword;
+    el("acNewPassword2").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        changeAccountPassword();
+      }
+    });
 
     el("acOut").onclick = function () {
       MCC_AUTH.signOut().then(function () { location.reload(); });
