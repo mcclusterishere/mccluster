@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1.0",
-  "audit_date": "2026-09-25",
+  "audit_date": "2026-09-26",
   "repo": "mcclusterishere/mccluster",
-  "audited_head": "three-tab-and-shelved-source-reconciliation-2026-09-25",
+  "audited_head": "audit/branch-reconciliation-20260926",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
   "discovery_rules": {
     "include": "Known Equity Uprise pages plus paths containing equity-uprise/equity_uprise, eu-/eu_ components, Equity Uprise Edge Functions, and Equity Uprise migrations.",
@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 253,
+  "candidate_count": 255,
   "capability_source_count": 97,
-  "support_only_count": 156,
+  "support_only_count": 158,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -563,6 +563,20 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "docs/control-plane/branch-reconciliation-2026-09-26.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine-readable branch-governance ledger mentions Equity Uprise donor/history branches but does not define building program, geometry, capability, or runtime authority."
+    },
+    {
+      "path": "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane branch-governance documentation mentions Equity Uprise only to classify historical donor branches and sequencing; it does not define building program, geometry, capability, or runtime authority."
     },
     {
       "path": "docs/control-plane/GMAIL-CONNECT.md",
