@@ -196,6 +196,97 @@
     }).join("") + "</p>";
   }
 
+  /* Different questions need different marks. Rankings can stay bars, but
+     retention is a dot plot, stage loss is a funnel, composition is a donut,
+     relationships are flows, and reach-vs-repeat is a scatter plot. */
+  function lollipop(rows, label) {
+    if (!rows.length) return "";
+    var W=620,H=Math.max(150,48*rows.length+28), left=150, right=575;
+    var top=Math.max.apply(null,rows.map(function(r){return Number(r.value)||0;}))||1;
+    var body=rows.map(function(r,i){
+      var y=34+i*48, x=left+((Number(r.value)||0)/top)*(right-left);
+      return '<g><text class="bd-axis" x="8" y="'+(y+4)+'">'+esc(r.key)+'</text>'+
+        '<line class="ins-lollipop-line" x1="'+left+'" y1="'+y+'" x2="'+x+'" y2="'+y+'"/>'+
+        '<circle class="ins-lollipop-dot" cx="'+x+'" cy="'+y+'" r="6"/>'+
+        '<text class="bd-mark" x="'+Math.min(x+10,right-4)+'" y="'+(y+4)+'">'+esc(num(r.value))+'</text></g>';
+    }).join("");
+    return '<svg class="bd-svg ins-lollipop" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(label)+'">'+body+'</svg>';
+  }
+
+  function funnelView(rows) {
+    if(!rows.length)return "";
+    var top=Math.max(1,Number(rows[0].value)||0);
+    return '<div class="ins-funnel" role="img" aria-label="People moving through the conversion funnel">'+
+      rows.map(function(r,i){
+        var pct=Math.max(18,((Number(r.value)||0)/top)*100);
+        var alpha=Math.max(.22,.88-i*.07);
+        return '<div class="ins-funnel__step" style="width:'+pct.toFixed(1)+'%;background:rgba(229,56,59,'+alpha.toFixed(2)+')">'+
+          '<span>'+esc(r.key)+'</span><b>'+esc(r.display)+'</b>'+(r.note?'<small>'+esc(r.note)+'</small>':"")+'</div>';
+      }).join("")+'</div>';
+  }
+
+  function donut(a,b,aLabel,bLabel) {
+    a=Number(a)||0;b=Number(b)||0;var total=a+b;
+    if(!total)return '<p class="ins__none">No composition to draw in this range.</p>';
+    var pa=a/total, c=326.73, da=(c*pa).toFixed(2), db=(c*(1-pa)).toFixed(2);
+    return '<div class="ins-donut-wrap"><svg class="ins-donut" viewBox="0 0 140 140" role="img" aria-label="'+
+      esc(aLabel+" "+Math.round(pa*100)+" percent, "+bLabel+" "+Math.round((1-pa)*100)+" percent")+'">'+
+      '<circle class="ins-donut__track" cx="70" cy="70" r="52"/>'+
+      '<circle cx="70" cy="70" r="52" fill="none" stroke="'+HUE_A+'" stroke-width="18" stroke-dasharray="'+da+' '+(c-da)+'" transform="rotate(-90 70 70)"/>'+
+      '<circle cx="70" cy="70" r="52" fill="none" stroke="'+HUE_B+'" stroke-width="18" stroke-dasharray="'+db+' '+(c-db)+'" stroke-dashoffset="'+(-Number(da)).toFixed(2)+'" transform="rotate(-90 70 70)"/>'+
+      '<text class="ins-donut__big" x="70" y="68" text-anchor="middle">'+esc(num(total))+'</text>'+
+      '<text class="ins-donut__small" x="70" y="85" text-anchor="middle">plays</text></svg>'+
+      legend([{label:aLabel+" · "+num(a),color:HUE_A},{label:bLabel+" · "+num(b),color:HUE_B}])+'</div>';
+  }
+
+  function scatterTracks(rows) {
+    var use=(rows||[]).filter(function(r){return Number(r.listeners)>0;}).slice(0,24);
+    if(!use.length)return '<p class="ins__none">No listener relationships to plot.</p>';
+    var W=660,H=360,l=54,r=22,t=22,b=48;
+    var maxX=Math.max.apply(null,use.map(function(x){return Number(x.listeners)||0;}))||1;
+    var maxY=Math.max.apply(null,use.map(function(x){return Number(x.repeat_listeners)||0;}))||1;
+    var maxS=Math.max.apply(null,use.map(function(x){return Number(x.starts)||0;}))||1;
+    var dots=use.map(function(x,i){
+      var cx=l+(Number(x.listeners)||0)/maxX*(W-l-r);
+      var cy=t+(1-(Number(x.repeat_listeners)||0)/maxY)*(H-t-b);
+      var rad=4+Math.sqrt((Number(x.starts)||0)/maxS)*7;
+      var label=i<6?'<text class="ins-scatter-label" x="'+(cx+rad+4)+'" y="'+(cy+4)+'">'+esc(String(x.track||"").slice(0,18))+'</text>':"";
+      return '<g><circle class="ins-scatter-dot" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+rad.toFixed(1)+'"><title>'+
+        esc((x.track||"track")+": "+num(x.listeners)+" listeners, "+num(x.repeat_listeners)+" repeat, "+num(x.starts)+" starts")+
+        '</title></circle>'+label+'</g>';
+    }).join("");
+    return '<svg class="bd-svg ins-scatter" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Track reach versus repeat listeners">'+
+      '<line class="ins-net-axis" x1="'+l+'" y1="'+(H-b)+'" x2="'+(W-r)+'" y2="'+(H-b)+'"/>'+
+      '<line class="ins-net-axis" x1="'+l+'" y1="'+t+'" x2="'+l+'" y2="'+(H-b)+'"/>'+
+      '<text class="bd-axis" x="'+((W+l-r)/2)+'" y="'+(H-12)+'" text-anchor="middle">listeners →</text>'+
+      '<text class="bd-axis" x="14" y="'+((H+t-b)/2)+'" transform="rotate(-90 14 '+((H+t-b)/2)+')" text-anchor="middle">repeat listeners →</text>'+
+      dots+'</svg>';
+  }
+
+  function pathFlow(rows) {
+    var use=(rows||[]).slice(0,14), left=[], right=[];
+    use.forEach(function(r){
+      if(left.indexOf(r.from_page)<0)left.push(r.from_page);
+      if(right.indexOf(r.to_page)<0)right.push(r.to_page);
+    });
+    var W=760,H=Math.max(300,Math.max(left.length,right.length)*42+70);
+    function y(i,n){return 42+(H-84)*(n<=1?.5:i/(n-1));}
+    function short(v){v=String(v||"");return v.length>34?v.slice(0,33)+"…":v;}
+    var L={},R={};
+    left.forEach(function(n,i){L[n]={x:24,y:y(i,left.length)};});
+    right.forEach(function(n,i){R[n]={x:500,y:y(i,right.length)};});
+    var links=use.map(function(row){
+      var a=L[row.from_page],bb=R[row.to_page],w=Math.max(1.5,Math.min(12,1+(Number(row.moves)||0)*.8));
+      return '<path class="rel-link" stroke-width="'+w+'" d="M 224 '+a.y+' C 350 '+a.y+', 375 '+bb.y+', 500 '+bb.y+'"/>';
+    }).join("");
+    function nodes(list,pos,cls){
+      return list.map(function(n){var p=pos[n];return '<g><rect class="rel-node '+cls+'" x="'+p.x+'" y="'+(p.y-14)+'" width="200" height="28" rx="7"/>'+
+        '<text class="rel-label" x="'+(p.x+9)+'" y="'+(p.y+4)+'">'+esc(short(n))+'</text></g>';}).join("");
+    }
+    return '<div class="rel-scroll"><svg class="rel-graph" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Page to next-page relationship flow">'+
+      links+nodes(left,L,"")+nodes(right,R,"rel-node--track")+'</svg></div>';
+  }
+
   /* ---------- panels ---------------------------------------------- */
   function paintEngagement(rows, err) {
     if (err) { el("insHero").innerHTML = why(err); el("insTrend").innerHTML = ""; return; }
@@ -260,10 +351,7 @@
         note: drop
       };
     });
-    host.innerHTML =
-      (B.barChart ? B.barChart(funnelRows, {
-        label: "People reaching each funnel stage", color: HUE_A, limit: 9
-      }) : "") +
+    host.innerHTML = funnelView(funnelRows) +
       '<div class="ins-chart-detail">' + bars(funnelRows, { hue: HUE_A }) + "</div>";
   }
 
@@ -281,9 +369,8 @@
     host.innerHTML =
       stat(num(r.dau), "today") + stat(num(r.wau), "this week") + stat(num(r.mau), "this month") +
       stat(r.dau_over_mau + "%", "come back daily") +
-      (B.barChart ? '<div class="ins-chart-block">' + B.barChart(habitRows, {
-        label:"Daily, weekly and monthly active people", color:HUE_B, limit:3
-      }) + "</div>" : "");
+      '<div class="ins-chart-block">' + lollipop(habitRows,
+        "Daily, weekly and monthly active people") + "</div>";
     /* The honesty that makes the number usable: with four days of
        history "this month" is not a month, and 5% reads like churn when
        it is really youth. The view carries the window so this can say so. */
@@ -365,10 +452,13 @@
         stat(num(shares),"shares") +
       '</div>' +
       '<div class="an-grid" style="margin-top:1rem">' +
-        '<section class="an-panel an-wide"><h3>Top tracks by starts</h3>' +
-          (B.barChart ? B.barChart(tracks.map(function (r) {
-            return { key:r.track, value:Number(r.starts)||0 };
-          }), { label:"Top tracks by starts", color:HUE_A, limit:12 }) : "") +
+        '<section class="an-panel an-wide"><h3>Reach vs repeat</h3>' +
+          '<p class="bd-sub">Each point is a track. Right means more listeners; higher means more repeat listeners; point size is total starts.</p>' +
+          scatterTracks(tracks) +
+          '<div class="ins-chart-detail">'+bars(tracks.slice(0,12).map(function(r){return {
+            key:r.track,value:Number(r.starts)||0,display:num(r.starts),
+            note:num(r.listeners)+" listeners · "+num(r.repeat_listeners)+" repeat"
+          };}),{hue:HUE_A})+'</div>' +
         '</section>' +
         '<section class="an-panel"><h3>Albums / collections</h3>' +
           bars(albumRows.map(function (a) {
@@ -376,13 +466,11 @@
               note:num(a.full)+" full · "+num(a.completes)+" complete · "+num(a.shares)+" shares"};
           }),{hue:HUE_B}) +
         '</section>' +
-        '<section class="an-panel"><h3>Media event mix</h3>' +
-          (eventRows.length
-            ? ((B.barChart ? B.barChart(eventRows, {
-                label:"Media events in the selected range", color:HUE_A, limit:12
-              }) : "") + bars(eventRows,{hue:HUE_A}))
-            : why(null)) +
-        '</section>' +
+        '<section class="an-panel"><h3>Full vs preview</h3>' +
+          donut(full,previews,"full plays","preview plays") +
+          '<div class="ins-chart-detail"><h3>Media event mix</h3>' +
+            (eventRows.length ? bars(eventRows,{hue:HUE_A}) : why(null)) +
+          '</div></section>' +
       '</div>' +
       '<div class="bd-scroll" style="margin-top:1rem"><table class="bd-table">' +
         '<caption>Track performance for '+esc(RANGE.label||"selected range")+'</caption>' +
@@ -419,10 +507,7 @@
         note: num(r.sessions) + " sessions"
       };
     });
-    host.innerHTML =
-      (B.barChart ? B.barChart(pathRows, {
-        label:"Most common next-page paths", color:HUE_B, limit:10
-      }) : "") +
+    host.innerHTML = pathFlow(rows) +
       '<div class="ins-chart-detail">' + bars(pathRows, { hue: HUE_B }) + "</div>";
   }
 
@@ -434,8 +519,10 @@
   function rangeArgs() {
     return { p_since:RANGE.since, p_until:RANGE.until, p_site:SITE_ID };
   }
+  var LOAD_SEQ = 0;
   function load() {
     if (!ALLOWED) return Promise.resolve();
+    var mine = ++LOAD_SEQ;
     var from = dayOf(RANGE.since);
     var throughDate = new Date(new Date(RANGE.until).getTime() - 1);
     var through = dayOf(throughDate);
@@ -455,6 +542,7 @@
     var core = Promise.allSettled(jobs.map(function (j) {
       return j[2] ? rpc(j[2][0],j[2][1]) : api(j[1]);
     })).then(function (out) {
+      if (mine !== LOAD_SEQ) return 0;
       var failed=0;
       out.forEach(function (res,i) {
         if(res.status==="fulfilled") jobs[i][3](res.value||[],null);
@@ -467,6 +555,7 @@
       rpc("analytics_content",args),
       rpc("analytics_content_events",args)
     ]).then(function (out) {
+      if (mine !== LOAD_SEQ) return 0;
       if(out[0].status==="rejected"){
         paintContent([],[],out[0].reason||new Error("failed")); return 1;
       }
@@ -477,6 +566,7 @@
     });
 
     return Promise.all([core,content]).then(function (counts) {
+      if (mine !== LOAD_SEQ) return;
       var failed=(counts[0]||0)+(counts[1]||0);
       if(stamp) stamp.textContent=failed
         ? failed+" analytics reads failed · "+(RANGE.label||"selected range")+" · "+new Date().toLocaleString()

@@ -72,7 +72,7 @@ function callerIp(h: Headers_): string | null {
 // header set in `edge` so the next widening of this function is driven by what
 // actually arrived in production rather than by what the docs promised.
 const GEO_HEADERS = [
-  "cf-ipcountry", "cf-region", "cf-region-code", "cf-ipcity", "cf-postal-code",
+  "x-mcc-country", "cf-ipcountry", "cf-region", "cf-region-code", "cf-ipcity", "cf-postal-code",
   "cf-iplatitude", "cf-iplongitude", "cf-timezone", "cf-ipcontinent",
   "cf-asn", "cf-as-organization", "cf-ray", "cf-ipasnum",
   "cf-colo", "cf-metro-code", "cf-is-eu-country",
@@ -110,7 +110,7 @@ function geo(h: Headers_) {
     return Number.isFinite(f) ? f : null;
   };
   return {
-    country: pick("cf-ipcountry", "x-vercel-ip-country", "x-country-code"),
+    country: pick("x-mcc-country", "cf-ipcountry", "x-vercel-ip-country", "x-country-code"),
     region: pick("cf-region", "x-vercel-ip-country-region", "x-region"),
     city: pick("cf-ipcity", "x-vercel-ip-city"),
     postal: pick("cf-postal-code"),

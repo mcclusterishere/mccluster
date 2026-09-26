@@ -387,8 +387,14 @@
     }
 
     function paint() {
-      if (state.loading && !state.model) {
-        boardHost.innerHTML = '<p class="bd-empty" role="status">Reading the collector…</p>';
+      boardHost.setAttribute("aria-busy", state.loading ? "true" : "false");
+      /* Never relabel an old chart with a newly selected range. On phones that
+         looked exactly like the period button did nothing. Clear the prior
+         period while the new one is in flight and name the range being read. */
+      if (state.loading) {
+        boardHost.innerHTML = '<div class="bd-gap" role="status"><b>Updating ' +
+          esc(state.request ? state.request.label : state.range.label) +
+          '…</b><span>Reading the selected window from the analytics store.</span></div>';
         return;
       }
       if (state.error) {
@@ -504,6 +510,10 @@
       var mine = ++seq;
       try { state.request = windowFor(state.range); }
       catch (e) { state.error = e.message; paint(); return; }
+      /* The range is global state, not a side effect of a successful Traffic
+         request. Broadcast immediately so Audience, Content and owner-only
+         suites switch period at the same moment as the selected chip. */
+      broadcast();
       state.loading = true; state.error = null;
       paint();
       Promise.resolve(opts.fetch(state.request))
@@ -513,7 +523,6 @@
           state.note = (out && out.note) || "";
           state.loading = false;
           paint();
-          broadcast();
         })
         .catch(function (e) {
           if (mine !== seq) return;
