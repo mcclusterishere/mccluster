@@ -146,23 +146,53 @@
   function topRows(rows,key){
     return (rows||[]).map(function(r){var o={count:Number(r.n)||0};o[key]=r.key;return o;});
   }
+  function groupRecentSessions(rows){
+    var by={};
+    (rows||[]).forEach(function(e){
+      if(e.is_bot===true||!e.session_id)return;
+      var x=by[e.session_id]||(by[e.session_id]={
+        session_id:e.session_id,started_at:e.at,ended_at:e.at,device_id:e.device_id||null,
+        ip:e.ip||null,country:e.country||null,region:e.region||null,city:e.city||null,
+        postal:e.postal||null,latitude:e.latitude,longitude:e.longitude,timezone:e.timezone||null,
+        asn:e.asn||null,network:e.asn_org||null,user_agent:e.user_agent||null,
+        entry_page:null,exit_page:null,entry_at:null,exit_at:null,referrer:null,
+        events:0,pages:0,clicks:0,errors:0,conversions:0,device:e.device||{}
+      });
+      if(new Date(e.at)<new Date(x.started_at))x.started_at=e.at;
+      if(new Date(e.at)>new Date(x.ended_at))x.ended_at=e.at;
+      ["device_id","ip","country","region","city","postal","timezone","asn","network","user_agent"].forEach(function(k){
+        var source=k==="network"?e.asn_org:e[k]; if(x[k]==null&&source!=null)x[k]=source;
+      });
+      if((!x.device||!Object.keys(x.device).length)&&e.device)x.device=e.device;
+      x.events++;
+      if(e.name==="page_view"||e.name==="view"){
+        x.pages++;
+        if(!x.entry_at||new Date(e.at)<new Date(x.entry_at)){x.entry_at=e.at;x.entry_page=e.path;}
+        if(!x.exit_at||new Date(e.at)>new Date(x.exit_at)){x.exit_at=e.at;x.exit_page=e.path;}
+      }
+      if(e.name==="click"||e.name==="cta_click")x.clicks++;
+      if(e.name==="js_error"||e.name==="js_rejection")x.errors++;
+      if(["conversion","form_submit","checkout","purchase","account_created"].indexOf(e.name)>=0)x.conversions++;
+      if(!x.referrer&&e.referrer)x.referrer=e.referrer;
+    });
+    return Object.keys(by).map(function(k){return by[k];})
+      .sort(function(a,b){return new Date(b.ended_at)-new Date(a.ended_at);}).slice(0,50);
+  }
   function recentEvents(site,request){
+    /* Recent-event/session inspection is intentionally bounded. Aggregate
+       reporting above is server-side and complete; this is the drill-down
+       window behind it, not the source of historical totals. */
     return rest("events?"+scopeFilter(site)+
       "&at=gte."+encodeURIComponent(request.since)+
       "&at=lt."+encodeURIComponent(request.until)+
       "&select=at,name,path,session_id,device_id,ip,country,region,city,postal,latitude,longitude,timezone,asn,asn_org,user_agent,is_bot,device,edge,referrer,source_host"+
-      "&order=at.desc&limit=50").then(function(rows){
-        state.events=rows||[]; renderRecent();
-      }).catch(function(){ state.events=[]; renderRecent(); });
-  }
-  function sessionDetails(site,request){
-    return rpc("analytics_session_detail",{
-      p_since:request.since,p_until:request.until,p_site:siteUuid(site),p_limit:50
-    }).then(function(rows){
-      state.sessions=rows||[]; renderSessions();
-    }).catch(function(e){
-      state.sessions=[]; renderSessions(e);
-    });
+      "&order=at.desc&limit=800").then(function(rows){
+        state.events=rows||[];
+        state.sessions=groupRecentSessions(state.events);
+        renderRecent(); renderSessions();
+      }).catch(function(e){
+        state.events=[];state.sessions=[];renderRecent();renderSessions(e);
+      });
   }
   function fetchAnalytics(site,request){
     var sid=siteUuid(site);
@@ -185,7 +215,6 @@
     }
     return Promise.all(jobs).then(function(out){
       recentEvents(site,request);
-      sessionDetails(site,request);
       var totals=(out[1]&&out[1][0])||{};
       var previous=request.compare&&out[6]&&out[6][0] ? out[6][0] : null;
       return {traffic:{
@@ -245,13 +274,13 @@
           '<div><b>Entry → exit</b><span>'+esc(s.entry_page||"—")+' → '+esc(s.exit_page||"—")+'</span></div>'+
           '<div><b>Referrer</b><span>'+esc(s.referrer||"direct")+'</span></div>'+
           '<div><b>Device</b><span>'+esc(deviceBits||s.user_agent||"—")+'</span></div>'+
-          '<div><b>Signed in</b><span>'+(s.signed_in?"yes":"no")+'</span></div>'+
+  
           '<div><b>Session ID</b><span><code>'+esc(s.session_id||"—")+'</code></span></div>'+
           '<div><b>Device ID</b><span><code>'+esc(s.device_id||"—")+'</code></span></div>'+
           '<div><b>Errors</b><span>'+esc(s.errors||0)+'</span></div>'+
           '<div><b>Conversions</b><span>'+esc(s.conversions||0)+'</span></div>'+
         '</div></details>';
-    }).join("")+'</div>';
+    }).join("")+'</div><p class="bd-foot">Session inspector groups the 800 newest raw events in the selected window into the 50 most recent identifiable sessions. Aggregate totals above remain complete and server-side.</p>';
   }
 
   function mountBoard(){
