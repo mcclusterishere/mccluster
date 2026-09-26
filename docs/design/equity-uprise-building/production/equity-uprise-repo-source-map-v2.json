@@ -1235,13 +1235,6 @@
       "rationale": "Shared app-bar consistency regression test covers shell/navigation presentation across pages; it does not define a distinct Equity Uprise building capability."
     },
     {
-      "path": "scripts/test/control-surface.test.mjs",
-      "classification": "build_validation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Regression test for shared operator-surface discoverability and access boundaries; validation support only, not an independent Equity Uprise program capability."
-    },
-    {
       "path": "scripts/test/signup-authority.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
