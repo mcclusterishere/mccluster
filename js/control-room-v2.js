@@ -1,5 +1,5 @@
 /* McCluster Control Room v2
-   Locked operator architecture: Home / Work / Create / System / Apps.
+   Canonical operator architecture: Home / AI / Work / Create / Analytics / System / Apps.
    This browser client composes existing canonical APIs and Supabase records.
    It does not introduce a second backend, auth stack, job queue, CRM, or media store. */
 (function () {
@@ -7,9 +7,9 @@
 
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
-  var SURFACES = ["home", "ai", "work", "create", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels"];
+  var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations", "client-console"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music-review", "vault", "lanes", "studio"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -71,20 +71,26 @@
   };
 
   var bridge = {
-    /* The Desk and the CRM are no longer operator bridges: Work/Inbox reads
-       the canonical transcript and owns takeover/release/send, and
-       Work/Pipeline reads and writes lead stage directly. Both pages remain
-       on the site for their own audiences; the Control Room no longer sends
-       an operator to them to do work it now does natively. */
-    crm: { title: "CRM", href: "crm.html", subtitle: "Legacy lead surface, superseded by Work · Pipeline" },
-    backOffice: { title: "Back Office", href: "admin.html", subtitle: "Legacy order and booking surface retained during migration" },
-    studio: { title: "Studio", href: "studio.html", subtitle: "Existing media generation tools" },
+    /* Operator backends no longer appear as peer rooms. Control owns their
+       destination and mounts remaining legacy functionality inside this shell
+       until each feature is fully native. Specialized products remain Apps. */
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
     halo: { title: "Hitman Halo", href: "prayer-closet.html", subtitle: "Specialized intelligence workspace" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
     spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
+  };
+  var embeddedWork = {
+    outreach: { title:"Outreach", subtitle:"Templates, contact queue, email moves and follow-up timing.", src:"desk.html?control_embed=1" },
+    operations: { title:"Operations", subtitle:"Back-office orders, merch, walls and rights controls.", src:"admin.html?control_embed=1" },
+    "client-console": { title:"Client Console", subtitle:"Client site state and change requests.", src:"console.html?control_embed=1" }
+  };
+  var embeddedCreate = {
+    "music-review": { title:"Music Review", subtitle:"Creator review and release operations.", src:"music-admin.html?control_embed=1" },
+    vault: { title:"Vault", subtitle:"Music catalog and protected asset operations.", src:"vault.html?control_embed=1" },
+    lanes: { title:"Lanes", subtitle:"Music workflow lanes and release operations.", src:"lanes.html?control_embed=1" },
+    studio: { title:"Studio", subtitle:"Existing media studio tools.", src:"studio.html?control_embed=1" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
@@ -1034,7 +1040,13 @@
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
+  function renderEmbeddedTool(tool) {
+    if (!tool) return empty("Tool unavailable", "This Control destination is not configured.");
+    return '<div class="cr-embedded"><p class="cr-embedded__note"><b>' + esc(tool.title) + ' lives inside Control now.</b> ' +
+      esc(tool.subtitle || "") + '</p><iframe class="cr-embedded__frame" src="' + esc(tool.src) + '" title="' + esc(tool.title) + '"></iframe></div>';
+  }
   function renderWorkView(view) {
+    if (embeddedWork[view]) return renderEmbeddedTool(embeddedWork[view]);
     if (view === "inbox") return renderWorkInbox();
     if (view === "pipeline") return renderPipeline();
     if (view === "people") return renderPeople();
@@ -1158,11 +1170,12 @@
     return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
-    var body = state.createView === "projects" ? renderProjects()
+    var body = embeddedCreate[state.createView] ? renderEmbeddedTool(embeddedCreate[state.createView])
+      : state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
       : renderSchedule();
-    return renderHeader("Create", "Projects own the creative objective. Library owns canonical assets. Schedule owns distribution. Channels own where it goes.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Projects, assets, distribution, channels and music operations live under one Create surface.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -1622,6 +1635,10 @@
   function appCard(title, subtitle, href, meta, external) {
     return '<a class="cr-app-card" href="' + esc(href || "#") + '"' + (external ? ' target="_blank" rel="noopener"' : "") + '><strong>' + esc(title) + '</strong><small>' + esc(subtitle || "") + '</small><span class="cr-app-card__foot"><span>' + esc(meta || "Specialized app") + '</span><span>Open ↗</span></span></a>';
   }
+  function renderAnalytics() {
+    return '<div class="cr-embedded cr-embedded--analytics"><iframe class="cr-embedded__frame cr-embedded__frame--analytics" src="analytics.html?control_embed=1" title="McCluster Analytics"></iframe></div>';
+  }
+
   function renderApps() {
     var registered = state.apps.map(function (a) { return appCard(a.name || a.app_key, [a.product_family, a.kind].filter(Boolean).join(" · ") || "Registered application", a.public_url || "#", a.app_key || "registered", true); }).join("") || '<div class="cr-panel__body cr-muted">No registered applications were returned.</div>';
     var specialty = [bridge.whip, bridge.spatial, bridge.prim3, bridge.halo, bridge.manufacture].map(function (a) { return appCard(a.title, a.subtitle, a.href, "Specialized workspace", a.external); }).join("");
@@ -1637,6 +1654,7 @@
     else if (state.surface === "ai") root.innerHTML = renderAi();
     else if (state.surface === "work") root.innerHTML = renderWork();
     else if (state.surface === "create") root.innerHTML = renderCreate();
+    else if (state.surface === "analytics") root.innerHTML = renderAnalytics();
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
     bindSurfaceControls();
@@ -1946,7 +1964,10 @@
       }],
       [/^(home|attention|today)$/i, function () { setSurface("home"); }],
       [/\b(ai|chat|qwen|home ai|mccluster ai)\b/i, function () { setSurface("ai"); }],
-      [/\b(inbox|messages?|conversations?|desk)\b/i, function () { setSurface("work", "inbox"); }],
+      [/\b(analytics|traffic|audience|insights|forensics|page views?|visitors?|sessions?)\b/i, function () { setSurface("analytics"); }],
+      [/\b(outreach|email campaign|follow[- ]?up)\b/i, function () { setSurface("work", "outreach"); }],
+      [/\b(back office|rights|merch operations)\b/i, function () { setSurface("work", "operations"); }],
+      [/\b(inbox|messages?|conversations?)\b/i, function () { setSurface("work", "inbox"); }],
       [/\b(pipeline|leads?|deals?|opportunit)/i, function () { setSurface("work", "pipeline"); }],
       [/\b(people|person|contacts?)\b/i, function () { setSurface("work", "people"); }],
       [/\b(companies|company|organizations?)\b/i, function () { setSurface("work", "companies"); }],
@@ -1956,7 +1977,11 @@
       [/\b(bookings?|appointments?)\b/i, function () { setSurface("work", "bookings"); }],
       [/\b(library|assets?)\b/i, function () { setSurface("create", "library"); }],
       [/\b(schedule|calendar|published|publishing)\b/i, function () { setSurface("create", "schedule"); }],
-      [/\b(projects?|create|studio|media|campaigns?|canvas)\b/i, function () { setSurface("create", "projects"); }],
+      [/\b(music review|creator review)\b/i, function () { setSurface("create", "music-review"); }],
+      [/\b(vault)\b/i, function () { setSurface("create", "vault"); }],
+      [/\b(lanes?)\b/i, function () { setSurface("create", "lanes"); }],
+      [/\b(studio)\b/i, function () { setSurface("create", "studio"); }],
+      [/\b(projects?|create|media|campaigns?|canvas)\b/i, function () { setSurface("create", "projects"); }],
       [/\b(workload|agents?|runs?|jobs?|core)\b/i, function () { setSurface("system", "workload"); }],
       [/\b(observability|logs?|traces?|incidents?)\b/i, function () { setSurface("system", "observability"); }],
       [/\b(resources?|usage|spend|providers?|integrations?|api keys?)\b/i, function () { setSurface("system", "resources"); }],
@@ -1984,8 +2009,8 @@
 
   function paletteCommands() {
     return [
-      ["Home", "Attention, signals, current work", "home"], ["McCluster AI", "Persistent chat with your self-hosted model", "ai"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"],
-      ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"],
+      ["Home", "Attention, signals, current work", "home"], ["McCluster AI", "Persistent chat with your self-hosted model", "ai"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"], ["Work · Outreach", "Templates and outbound follow-up", "work-outreach"], ["Work · Operations", "Orders, merch, walls and rights", "work-operations"], ["Work · Client Console", "Client change requests", "work-client-console"],
+      ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"], ["Create · Music Review", "Creator review and release operations", "create-music-review"], ["Create · Vault", "Protected music assets", "create-vault"], ["Create · Lanes", "Music workflow lanes", "create-lanes"], ["Create · Studio", "Media studio tools", "create-studio"], ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
       ["System · Command", "Speak to the signed Core capability bus", "system-command"], ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
       /* Object-level intents, not just destinations. */
       ["Show failed work", "Workload, filtered to failures", "goto-failed"],
@@ -2015,9 +2040,17 @@
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
+    else if (action === "work-outreach") setSurface("work", "outreach");
+    else if (action === "work-operations") setSurface("work", "operations");
+    else if (action === "work-client-console") setSurface("work", "client-console");
+    else if (action === "analytics") setSurface("analytics");
     else if (action === "create-projects") setSurface("create", "projects");
     else if (action === "create-library") setSurface("create", "library");
     else if (action === "create-schedule") setSurface("create", "schedule");
+    else if (action === "create-music-review") setSurface("create", "music-review");
+    else if (action === "create-vault") setSurface("create", "vault");
+    else if (action === "create-lanes") setSurface("create", "lanes");
+    else if (action === "create-studio") setSurface("create", "studio");
     else if (action === "create-channels") setSurface("create", "channels");
     else if (action === "connect-account") {
       var platform = $("crAccPlatform") && $("crAccPlatform").value;
