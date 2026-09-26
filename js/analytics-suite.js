@@ -275,7 +275,13 @@
 
   function setOwnerTabs(show) {
     ["anOverviewTab","anIdentityTab"].forEach(function(id){var x=$(id);if(x)x.hidden=!show;});
-    if (!show && /#(?:overview|identity)$/.test(location.hash)) location.hash="#traffic";
+    if (!show) {
+      var active=d.querySelector('.an-tab.is-on');
+      if (active && /^(overview|identity)$/.test(active.getAttribute("data-sec") || "")) {
+        var traffic=d.querySelector('.an-tab[data-sec="traffic"]');
+        if (traffic) traffic.click();
+      }
+    }
     /* The owner should land on the suite, not discover it by accident after
        another complaint. Respect explicit deep links, but default the first
        house-property load to Overview. */
