@@ -1,0 +1,4286 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-09-26",
+  "repository": "mcclusterishere/mccluster",
+  "authority_branch": "main",
+  "policy": {
+    "statuses": [
+      "absorbed",
+      "superseded",
+      "archive",
+      "still-live"
+    ],
+    "branch_history_is_evidence_not_architecture_authority": true,
+    "implementation_rule": "Any harvested concept must be rebuilt on a fresh branch from current main and proved against current privacy, security, idempotency, deployment, generated-artifact and human-approval contracts.",
+    "deletion_rule": "This ledger does not delete branches. Absorbed branches are cleanup candidates; archive and still-live branches are retention-protected until separately reviewed."
+  },
+  "counts": {
+    "absorbed": 192,
+    "archive": 20,
+    "superseded": 90,
+    "still-live": 6
+  },
+  "donor_themes": {
+    "analytics-v3": {
+      "priority": 1,
+      "decision": "rebuild from current main",
+      "sources": [
+        "feat/analytics-identity-forensics-20260926",
+        "feat/analytics-attribution-relationships-detail-20260926"
+      ],
+      "harvest": [
+        "owner-only signup attribution",
+        "real account_created conversion",
+        "source/song/account relationship views",
+        "page-path relationships",
+        "reach-vs-repeat analysis",
+        "country-forwarding repair"
+      ],
+      "reject": [
+        "page_view titles treated as music",
+        "stale async dashboard overwrite",
+        "mismatched attribution denominator",
+        "50k oldest-row bridge truncation",
+        "removing permissioned precise geolocation"
+      ]
+    },
+    "account-integrity-v2": {
+      "priority": 2,
+      "decision": "rebuild missing enforcement on top of merged #245",
+      "sources": [
+        "feat/privacy-gate-account-integrity-20260926"
+      ],
+      "harvest": [
+        "shared signup-layer first/last-name enforcement",
+        "incomplete-profile routing",
+        "cross-surface account/privacy CI"
+      ],
+      "reject": [
+        "parallel privacy gate",
+        "client-only identity proof claims"
+      ]
+    },
+    "sovereign-assets-preview": {
+      "priority": 3,
+      "decision": "reconstruct only missing backend primitives",
+      "sources": [
+        "selfhost/preview-runtime-v1",
+        "selfhost/sovereign-media-fabric-v1",
+        "product/mccluster-console-v1"
+      ],
+      "harvest": [
+        "content-addressed asset ingress",
+        "asset gateway",
+        "owned preview runtime",
+        "runtime sovereignty audit"
+      ],
+      "reject": [
+        "old duplicate MCP implementation",
+        "parallel owner console"
+      ]
+    },
+    "provider-estate-control-graph": {
+      "priority": 4,
+      "decision": "targeted current-main gap audit before implementation",
+      "sources": [
+        "architecture/platform-reconstruction-v1",
+        "feature/global-infrastructure-plane"
+      ],
+      "harvest": [
+        "provider adapters",
+        "estate snapshots",
+        "GitHub/Cloudflare/Supabase/OVH control graph"
+      ],
+      "reject": [
+        "parallel control plane",
+        "historical provider assumptions without live evidence"
+      ]
+    },
+    "governed-first-touch-outreach": {
+      "priority": 5,
+      "decision": "rebuild as governed McCluster Work/control-plane action",
+      "sources": [
+        "feat/first-touch-outreach-agent"
+      ],
+      "harvest": [
+        "suppression checks",
+        "reply/bounce/complaint/unsubscribe stops",
+        "public-evidence gate",
+        "per-domain throttling",
+        "explicit live-send enablement"
+      ],
+      "reject": [
+        "100-per-day default",
+        "standalone Gmail subsystem"
+      ]
+    },
+    "floor-native-scenario-ids": {
+      "priority": 6,
+      "decision": "defer until Equity Uprise returns to active implementation priority",
+      "sources": [
+        "feat/equity-uprise-floor-native-lab-depth-v1",
+        "fix/floor-native-curriculum-current-20260925"
+      ],
+      "harvest": [
+        "stable scenario_id separate from source_lab_id",
+        "reusable skills across floors",
+        "minimum floor-native scenario coverage",
+        "cross-floor incidents"
+      ],
+      "reject": [
+        "whole-branch merge",
+        "stale runtime/generated artifacts"
+      ]
+    }
+  },
+  "branches": [
+    {
+      "branch": "architecture/canonical-control-plane-v1",
+      "sha": "b33525145c77719c1d2b5a95d27ef1e10aa648ec",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#99)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        99
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "architecture/canonical-platform-contract-v1",
+      "sha": "63a7142135bab3ef81bc6cc8ad97cac857d8a2c4",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#101)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        101
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "architecture/equity-uprise-core-v2",
+      "sha": "1a8433acaf2e6224447edf4acfc493d666b82ad6",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "architecture/finish-ten-v1",
+      "sha": "9259b95e78754c06683a0d1958b415fc7f4531b0",
+      "status": "superseded",
+      "reason": "closed without merge (#104); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        104
+      ]
+    },
+    {
+      "branch": "architecture/legacy-quarantine-complete-v1",
+      "sha": "4421010ecf5a2142ccad12da99e1e3dc28512201",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#100)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        100
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "architecture/platform-reconstruction-v1",
+      "sha": "2dc6f071ccb3157573f9c941147ba1742b40b820",
+      "status": "superseded",
+      "reason": "closed without merge (#111); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "provider-estate-control-graph",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        111
+      ]
+    },
+    {
+      "branch": "archive/we-rental-era-2026-09-08",
+      "sha": "33ba69b67c130d5ee3109732b773de02083be541",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-floor1-finalize-20260921",
+      "sha": "88e49b8c4d86575fd2457229b1047591bf896fac",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-live-acceptance-step8",
+      "sha": "9b81623551a6c21b222353de914271624d8b71ba",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-live-diagnostic",
+      "sha": "712acf3e48bf10201a96b713a9085c3333e54a9b",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-live-interactions",
+      "sha": "962cd44b0fa417881c08086acea6b7af2b35a987",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-playable-building-v1-clean",
+      "sha": "660035b65c3f0f595441357acc3d5df8282d1afd",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#210)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        210
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "audit/equity-uprise-playable-building-v1",
+      "sha": "8e73b0b226a24a1a4e7e7c53e744ba8c6b37e7e6",
+      "status": "superseded",
+      "reason": "closed without merge (#208); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        208
+      ]
+    },
+    {
+      "branch": "authority/equity-uprise-facade-building-systems",
+      "sha": "c714e7c077bdecc4bb3250db3ab2fb2827fd3edc",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#157)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        157
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "backup/pr93-pre-reconcile-20260913",
+      "sha": "de2aa051e21d4e7a36a2a74fb9741a8490a0cb90",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "canon/equity-uprise-living-workplace",
+      "sha": "9c4e5721ba71ddf8d01905f75bf2efc064a322e1",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#207)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        207
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "chatgpt/esmer-owner-backend",
+      "sha": "e31b1401b18f9efc779e8e06045ed5286516d332",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#33)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        33
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-finish-step4",
+      "sha": "c513a3138cb9262c3404ccbc09615bf28b156586",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-finish-step5",
+      "sha": "d203468ef18436cea0e3b4b6b19c1929f8c3afba",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-finish-step6",
+      "sha": "0f89e1ab43da0d7cf9f6538c7c5b742d89824e41",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-finish-step7",
+      "sha": "c0508a8c140e2de1f3c7ad5dffc9bbd0efe1a9da",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-finish-step8",
+      "sha": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-step8-complete",
+      "sha": "45116643d2dc4ffb4ca5bd237a083d23181cbb56",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-facade-v1-structural-shell",
+      "sha": "2fe78f264237c905cd002365de747b3da071ea5b",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-floor5-final",
+      "sha": "ce23d6eb8c0b036f963ce4864254a5510995459c",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-floor6-final",
+      "sha": "85447f7b0191f568cbb7e4a58fe525afa92d475f",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-floor6-globe-final",
+      "sha": "f451964df686faf882a639d91da864594ffd7205",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-floor6-halo-southwest",
+      "sha": "28ad09fd1e76b398ad17486f03eb95df1c63bb57",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-services-step2",
+      "sha": "41b7404343b8208676084aa2fc1bab12994bee4e",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "checkpoint/equity-uprise-services-step3-b1-connected",
+      "sha": "57ae8ce5e349329509c0ee70edcb525e16a37f72",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "chore/equity-uprise-context-index-generated",
+      "sha": "1cf3885deeafaf82886aef9636379d920a238934",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "chore/port-ai-context-migrations",
+      "sha": "22ee87ff8c7a3084381d049037ff7e82f8747a5e",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ci/reconcile-production-migration-ledger-v1",
+      "sha": "aab58b4fecf7cdf1a385edfe7b07e5f6c1ed2389",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#86)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        86
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/analytics-dashboard-charts-601s0k",
+      "sha": "1ac15b5101c9827dc6fbf4c2457ad737159bedc2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#228)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        228
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/app-store-deployment-audit-sncef9",
+      "sha": "8a2844f6849b15ff7e920b9d773357ace65fc3d0",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/backend-control-integration-601s0k",
+      "sha": "a40a68c41ec4b8e616d6a27168485764d684300a",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/breach-vision-prototype-601s0k",
+      "sha": "7caaf509a2b15e774f5215613405efb8142e8bd5",
+      "status": "superseded",
+      "reason": "closed without merge (#215); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        215
+      ]
+    },
+    {
+      "branch": "claude/cloudflare-supabase-access-jhjpxv",
+      "sha": "e2d28d1be06963fa9c6ea7755cb5bdf0fb922251",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/control-plane-on-main-601s0k",
+      "sha": "d4f29013f0f7155ad70f0a35a3f0d1b27fa20470",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#190)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        190
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/core-mcp-continuity",
+      "sha": "969cf1df2f77d4ad2ba756f568602e44754cae94",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/core-mcp-remote-bridge",
+      "sha": "269f168594514f467b27a64397d6081a91022cc5",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/esmer-stripe-backend-s8js2r",
+      "sha": "1b4228f4d4544fc8f9721942d9c1e08091a5ea0a",
+      "status": "superseded",
+      "reason": "closed without merge (#38); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        38
+      ]
+    },
+    {
+      "branch": "claude/fix-creator-studio-button-601s0k",
+      "sha": "31afb2e6ab380fb14867a4a4f5f9fc656901e26b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#204)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        204
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/gev-spatial-intelligence-c6ep2b",
+      "sha": "61eb712c8a48d54f22e441b00a02bd23beafb895",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        44,
+        45,
+        46
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/jet-360-scroll-lock-transitions-o0kgjy",
+      "sha": "a5dd8bfb16d2d5306690c34d879bb26206bd0903",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#8, #9, #10, #11, #12, #13, #14, #15, #16, #17, #18, #19, #20)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/level3-media-repo-deploy-re1i8a",
+      "sha": "a2ecf313cdb576e0fd72d594a10714d4867aff4c",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/real-password-reset-601s0k",
+      "sha": "11197c3b346a6ead0d872d56037aafcbf1ff598e",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#216)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        216
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/salvage-ovh-reconciler-tests-601s0k",
+      "sha": "eb5089cee980c434103a64765d0991138a3a3a91",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#205)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        205
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "claude/we-hero-visuals-assets-bekxbk",
+      "sha": "08c42daaa9c21da3168166b7f39c47e266d1a5c3",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "closure/ten-point-backlog",
+      "sha": "e23bde7bb0d978dfa4064dacf6e8e15f5554706a",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "codex/finish-mcp-continuity",
+      "sha": "b76979c96603da0c3aa835433b4d11f2f2217dfb",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#106)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        106
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "codex/mccluster-core-execution-plane",
+      "sha": "aaea707b12468934fbc91d55a4647c1827247224",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#52)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        52
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "codex/worker-build-provenance",
+      "sha": "050ccde7846a6a17811ec55035f6e6f00410f335",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#107)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        107
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "comms/beta1-backend-v1",
+      "sha": "989596edb5822a6fe0676651ad9978c7999be39d",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#95)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        95
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/agent-kit",
+      "sha": "1e3decfe0a364cd74dc3a5906d833557913dee35",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        3
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/fix-cloudflare-worker-build",
+      "sha": "e1572eb4349ef1b7f5686bc060dd63a3e9a809c9",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#7)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        7
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/homepage-is-the-platform",
+      "sha": "e0b7e5c65cf9e26c039d96eae34a369ede0e7ce4",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/kill-core-name-on-main",
+      "sha": "c29fed46e6bf5d09f8f9134a86a1fdb5053a03e1",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        5
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/live-site-from-mccluster",
+      "sha": "5585dc2be54a9418115e778a44a3b4ac955d6d83",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#6)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        6
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "control-plane/whip-core-best-practices",
+      "sha": "83831da26aadc834ed5a0f33e104890efdd5ad9c",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        4
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "copilot/fix-github-actions-job",
+      "sha": "0fdad78dd91b6796ff3210e85a465c4a4072244f",
+      "status": "superseded",
+      "reason": "closed without merge (#233); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        233
+      ]
+    },
+    {
+      "branch": "core/autonomous-game-studio-v0.1",
+      "sha": "ff0fb3e9b54d7281553caa91b8216eb0f8e3eca1",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        79
+      ]
+    },
+    {
+      "branch": "core/autonomous-game-studio-v0.2-reconciled",
+      "sha": "43fe2f63f99f437a27ba669df9c570c49d312c39",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        85
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/completion-evidence-contract-v1-current",
+      "sha": "b6bdcb7293da0cf0726bc2552fd3152018039b25",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/completion-evidence-contract-v1",
+      "sha": "973e1f0745735689c06a287590ef4b9daa0f8b27",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#102)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        102
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/compute-broker-p1-hotfix",
+      "sha": "7eac3f3539d59d0be02a7fc5d997baf0192aa9b2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#70)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        70
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/compute-gateway-hardening-v1",
+      "sha": "561019ec2e82a488b800a87e7c7c2713e8a4c051",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        69
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/compute-node-v1",
+      "sha": "b585666b2cfd93f096e82123775fe6ca3f32804b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#61)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        61
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/conversation-objective-ingestion-v1",
+      "sha": "b84d0a77fd64cf21c78cdb9e3cd0767ac1656ad7",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#94)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        94
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/initiative-os-v1",
+      "sha": "8bbff684666b38c9d05959ffd2ae310127662868",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#75)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        75
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/node-agent-v1-rebuild",
+      "sha": "58e5a831dc1e255c5c45cf8f0083b64f2bb6e86b",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        67
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/node-agent-v1",
+      "sha": "820b91e6cdb4db69b799e8bdc77886b2d3141bf3",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        65
+      ]
+    },
+    {
+      "branch": "core/objective-dag-planner-v1",
+      "sha": "8cfd9266dbbc20ce08a0a252f409527ed09e516b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#92)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        92
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/prim3-autonomous-studio-v1",
+      "sha": "a7428f22987164cd94a28de41d7dd8cb90ec57e6",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#88)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        88
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/runner-v0",
+      "sha": "25ed7ee3c50566ee53948ded695a355856218cbe",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        56
+      ]
+    },
+    {
+      "branch": "core/runtime-v1",
+      "sha": "0af140bef123c4b9db80e9d587cbc8412464e611",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        59
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "core/supabase-secret-key",
+      "sha": "b218c2adb2f18714f2b6c57c8f653d0271cb3737",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#62)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        62
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "db/reconcile-live-fabric-v1",
+      "sha": "e0e11e875062f55fdbcefc2ac1fdd8775bbc3cca",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        83
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ddex/qt6kv-pipe",
+      "sha": "978e6e9dedc162e82e1274c1b89f0b891671f938",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#49)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        49
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "deploy/creative-orchestrator-costs",
+      "sha": "9d47b8334be704571d4cfcab58eaa096125abb11",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#27)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        27
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "deploy/creative-orchestrator-reconciliation",
+      "sha": "a9dfe89d8885d8b367d014e2f83199b3cce41ed4",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#28)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        28
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "deploy/creative-orchestrator-webhooks",
+      "sha": "ed28e37ea4db781b7cff47a4054b9d3a24249ffb",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#26)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        26
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "deploy/ovh-dc6fcec",
+      "sha": "a06f7e1ae71c71116de6ed7f66879984d918361e",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "deploy/ovh-production",
+      "sha": "8374ba3460bb21d47cc5fc94fbe4f6df74be0c4a",
+      "status": "still-live",
+      "reason": "canonical OVH production promotion pointer",
+      "merge_policy": "operational-ref-do-not-delete",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "design/music-engine-v2",
+      "sha": "93bede32bc12853aab8c9dfdc4f77ab1eecde6e8",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#145)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        145
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "do-not-use",
+      "sha": "28c2f3e704adce907f53d13e45fcdddfe429aebd",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "equity-uprise-institutional-v2-copy",
+      "sha": "28c2f3e704adce907f53d13e45fcdddfe429aebd",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "equity-uprise-institutional-v2",
+      "sha": "d85f7c2b6d03d4861c5dfdf82a3026d20410137c",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "equity-uprise-policy-os",
+      "sha": "0afe91554ffaed4c5cbb2d8a02bc50b4e69ae279",
+      "status": "superseded",
+      "reason": "closed without merge (#36, #37); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        34
+      ],
+      "closed_unmerged_prs": [
+        36,
+        37
+      ]
+    },
+    {
+      "branch": "equity-uprise-runtime-hardening",
+      "sha": "c68ce93b696cd0a7acdd39e349e72493a06c572c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#41)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        41
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/account-identity-privacy-swag-gate",
+      "sha": "28372ebd34109dd1816165d777e6d18acffb7cf6",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#245)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        245
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/analytics-attribution-relationships-detail-20260926",
+      "sha": "5423a823e926a011311e9103f988c74ed96305f0",
+      "status": "still-live",
+      "reason": "open PR #242: Deepen analytics with signup attribution, relationship graphs, and visitor detail",
+      "merge_policy": "do-not-merge-as-is; reconcile/rebuild from current main",
+      "donor_candidate": true,
+      "donor_theme": "analytics-v3",
+      "open_pr": 242,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/analytics-identity-forensics-20260926",
+      "sha": "14436c42a4745cc926e8b5dc19f8936dffd6da50",
+      "status": "still-live",
+      "reason": "open PR #244: Deepen analytics with signup attribution and owner forensics",
+      "merge_policy": "do-not-merge-as-is; reconcile/rebuild from current main",
+      "donor_candidate": true,
+      "donor_theme": "analytics-v3",
+      "open_pr": 244,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/control-room-functional-depth-claude",
+      "sha": "f5a647f2fa0e995e1de8add44d4095fef733c6ae",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/control-room-responsive-shell",
+      "sha": "cd90e8fcd3b55e8d29a27e4fb884661053c71d4b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#108)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        108
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/equity-uprise-device-archetypes-camera-v1",
+      "sha": "11514d859ac36508c5881d623f9fa2e17e8901c6",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#206)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        206
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/equity-uprise-distributed-building-labs-v1",
+      "sha": "bf5e1158b6a360d43a235e517014fcfcd1d01447",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#198)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        198
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/equity-uprise-floor-native-lab-depth-v1",
+      "sha": "5a84daa192020737faf5aa857414947c59618203",
+      "status": "still-live",
+      "reason": "open PR #200: Deepen Equity Uprise labs into floor-native curriculum",
+      "merge_policy": "do-not-merge-as-is; reconcile/rebuild from current main",
+      "donor_candidate": true,
+      "donor_theme": "floor-native-scenario-ids",
+      "open_pr": 200,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/equity-uprise-layman-diagnostic-sandbox-v1",
+      "sha": "a3ea68739fb239bafd7b7ce973e45f0db638fed7",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#201)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        201
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/equity-uprise-services-step3-b1-plant",
+      "sha": "7f3f2a9d2910425fdc585767ed90d08be27e12bb",
+      "status": "superseded",
+      "reason": "closed without merge (#166); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        166
+      ]
+    },
+    {
+      "branch": "feat/first-touch-outreach-agent",
+      "sha": "966bedc4913c13e664fe25ae97110ef6d0c148e6",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "governed-first-touch-outreach",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/gated-niggy-nigg",
+      "sha": "9fffbc06d5cfb2e2b63ff01e29c98e2ee54454b5",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/mnet-real-network",
+      "sha": "5e2d50dcf94d8024b4b5b60011df4b9ee0277f7a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#147)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        147
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/mnet-social-surface",
+      "sha": "dcc248c14913020ce242f1fece6780bba7e01be0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#139)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        139
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/music-isrc-registry",
+      "sha": "06340d251ac31c045f88298970d8b38a127ae57a",
+      "status": "superseded",
+      "reason": "closed without merge (#109); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        109
+      ]
+    },
+    {
+      "branch": "feat/music-now-video",
+      "sha": "04b933dfc7f15c646457b17669fb4f3dc482ae77",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#146)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        146
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/operator-business-queries",
+      "sha": "ae85068587546a476a58ef23a610d81363e87c1b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#142)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        142
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/operator-os-control-plane",
+      "sha": "e3912bfd6f23b881266e4f8c2b59027ea9348e7a",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/operator-os-control-spine",
+      "sha": "0fa370cc3f7786facd1cfefa1235a6ec568d7710",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#113)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        113
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/owned-meeting-delegate",
+      "sha": "bb865c589cd7f297a436e7f8302ccd22a7eb0ebc",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/owned-meeting-delegate-mainline",
+      "sha": "b521b7eb895e45b2714fdbe58adc8f0b38a6ae0c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#151)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        151
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/prim3-emblem-and-gate",
+      "sha": "48bc0bab4f455618b880f64a2e31e747209e6062",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/privacy-gate-account-integrity-20260926",
+      "sha": "a3afe4ee47dc3b2d122d5128a7fd65c105de5fb7",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "account-integrity-v2",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/site-persistent-player",
+      "sha": "ba13c6fa1f2dfd30c6276f2ad96bfb2598db15d3",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/social-growth-engine",
+      "sha": "6153db05912f9412643f4fbc9542785f9d68d8ec",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#29)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        29
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feat/unified-music-creator-platform",
+      "sha": "5e8cf1f6e098e623903c71a034823089a2635034",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#144)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        144
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/equity-uprise-room-mode-v1",
+      "sha": "64830fac75487f50c00aaf663c5dc9d44a7e8a56",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#191)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        191
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/gev-spatial-intelligence",
+      "sha": "54803a6a503dc5b52f4596e4902872e89ece0cca",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#42)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        42
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/global-infrastructure-plane",
+      "sha": "0ac3e22bf5f83af998b51950ad4b1698eac94298",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "provider-estate-control-graph",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/governed-actions-v1",
+      "sha": "d05bcabbd8974f6767908cb619e1055fcb689a67",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/m-account-live-reconcile",
+      "sha": "1f4a7da3af74b089bb4609432afb37d6e8d444bf",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#25)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        25
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/m-account-platform-20260905",
+      "sha": "997e6b65702fdf93c21a2c20357325a6e059f5e6",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#22)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        22
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/m-account-platform-v2",
+      "sha": "365478608cd3a35b6ad353d658a9d0092cf5b245",
+      "status": "superseded",
+      "reason": "closed without merge (#24); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        24
+      ]
+    },
+    {
+      "branch": "feature/m-account-social-providers",
+      "sha": "aa6635071dcc10427d014d2330cad533779b586b",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/mc-analytics-intelligence-v2",
+      "sha": "75f15b5578aa67f332cc05686cc36258d1e0fdde",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/mc-analytics-platform-v1",
+      "sha": "9f730dacc7a32d86f6dbeaba107958eaa0439843",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#138)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        138
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/mccluster-ontology-v1",
+      "sha": "dfe911e7659e56fb786b8b89f52cb45666906c3a",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/operational-ontology-v1",
+      "sha": "f387030ee2e507dbd8ec38334e3bcc0f7d709d15",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#123)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        123
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/operator-local-ai-chat",
+      "sha": "2cd58866c3d312d8b7a96a060b905b35bc84ddf2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#120)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        120
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/prim3-smsgate-relay-v1",
+      "sha": "6f90d992d9c4b0120349beca05cf41a142a9ded0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#125)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        125
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/s477-smart-church",
+      "sha": "991d968b0cc6e3541305a4315747de7085834e51",
+      "status": "superseded",
+      "reason": "closed without merge (#2); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        2
+      ]
+    },
+    {
+      "branch": "feature/telemetry-observability-v2",
+      "sha": "1f766bf856fdc17b036a3629364650fb58e08baa",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#137)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        137
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "feature/universal-ingestion-v1",
+      "sha": "8f19ce71a8f8fb83b871293e0661dce4390ab9c7",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#124)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        124
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/ai-spend-view-replay",
+      "sha": "e0ace874a1bf5422ccd9501d52b2fbdb95cd7f7a",
+      "status": "superseded",
+      "reason": "closed without merge (#135); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        135
+      ]
+    },
+    {
+      "branch": "fix/analytics-depth-preserve-location-20260926",
+      "sha": "92f16ebd5fe18be4df3dfe0b22c99a54fae94821",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/analytics-history-content-20260925",
+      "sha": "10f3b78580bd63bc7daf43835228d307354a5ef4",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#231)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        231
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/audit-reflection-reliability",
+      "sha": "bcbe45a891745c95b44f5fb04c600e609dcfcb33",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#127)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        127
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/audit-supabase-function-auth",
+      "sha": "a7b336b231a428e57e766a748326688b3a719cc9",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#126)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        126
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/auth-recovery-signup-feedback",
+      "sha": "e077963e3599e87eacf4743f8259186130f77b55",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#141)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        141
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/breach-vision-current-20260925",
+      "sha": "59c1233afc970d2b4f6c3bf0f88b943fae0f23de",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#232)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        232
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/canonical-deployment-ownership",
+      "sha": "533196631c7246ed748cfc4608dccf1aa13c2979",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#114)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        114
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/control-plane-drift-guard",
+      "sha": "e9129f8d60cc07bdd5c0f04532affc4618358e56",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#112)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        112
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-generated-artifacts-and-pr-guard-20260926",
+      "sha": "e3dc63447dd5822a1c1df09c9a2f1d0149ff31cb",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-pr-generated-artifact-guard-20260926",
+      "sha": "3876a879deec246df44d080031566b2d555bc4ef",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#241)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        241
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-distributed-generated-hygiene",
+      "sha": "270cfa19dac53a28b738c22aad440afe85bdb957",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#199)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        199
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-electronics-no-fallback-geometry",
+      "sha": "90bf4ace7c0ee7290c679a78d677a324511c3bc5",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#195)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        195
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-electronics-spatial-integration",
+      "sha": "aa3f614aae3440d411a65df8ae2a9f4e253a6ad1",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#194)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        194
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-live-acceptance-lab-root-race",
+      "sha": "0aa66a61b93b0bb83762f581f85a5be40ed755dc",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#188)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        188
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-pathway-first-current-20260925",
+      "sha": "5ef4e3d1d541e0df5866e02276fe0484c4400c85",
+      "status": "superseded",
+      "reason": "closed without merge (#235); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        235
+      ]
+    },
+    {
+      "branch": "fix/equity-uprise-pathway-first-post231-20260926",
+      "sha": "884ba97505338dc1e5828c1f21077a61191427fe",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#238)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        238
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-performance-deploy-stamp-verifier",
+      "sha": "7bf9e23a834df8262f06e954c28642eb65e81975",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#214)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        214
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-play-spatial-integration",
+      "sha": "15a61a6578bfed8857f68dfb6c8d8cb9677d9f6d",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#193)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        193
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-room-mode-ipad-realism",
+      "sha": "df210d108ae247779c1c779560b48277be5850f6",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#192)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        192
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-viewer-demand-rendering",
+      "sha": "94adf50408413701c1f1254651c7fe8a69cda74e",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-viewer-interaction-performance",
+      "sha": "d0a9cdb9200c2a7bc1c9a2de4e6a489be040016e",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-viewer-interaction-performance-v2",
+      "sha": "36b775c18d28c32dfceb25fbe36a6126dce29646",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#189)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        189
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/equity-uprise-xray-visible-engineering-view",
+      "sha": "4475b3e30b71d0db36a605bfca91f750e34a2596",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#196, #197)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        196,
+        197
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/floor-native-curriculum-current-20260925",
+      "sha": "efebc684a8c1e94fbd3e4dcbc1763644f3da000a",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "floor-native-scenario-ids",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/full-supabase-ledger-contract",
+      "sha": "a021359e2401b17bf13ddb913d0a6a4bd5a916f9",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#129)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        129
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/google-mccluster-shared-auth",
+      "sha": "d6856cc1f2439d1b064aa5c2c6c10ceb4445aa38",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#21)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        21
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/health-promoted-runtime-semantics",
+      "sha": "a93385da320f06ca1f3d105e11cd4a7613b75dc4",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#131)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        131
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/initiative-os-unicode-null",
+      "sha": "0fe5d31ef30f1aee25ff379e7c78b88b638cb5af",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#78)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        78
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/job-queue-contract",
+      "sha": "c031304136e0138fb61c2213488243c9c5a19787",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#115)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        115
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/kb-search-comment-signature",
+      "sha": "9fed6afbe0fb621b49b10b41544f558ee11dbd95",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#134)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        134
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/lead-rescore-completion-evidence",
+      "sha": "0f7f8e3cb08d12aac41011197c4e011d7aa2a153",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#119)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        119
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/mnet-profile-password-20260925",
+      "sha": "f2bae4255e84e528b612262695855bcf3cec0b93",
+      "status": "superseded",
+      "reason": "closed without merge (#236); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        236
+      ]
+    },
+    {
+      "branch": "fix/mnet-profile-password-post238-20260926",
+      "sha": "bbc7281c75768395c1cf3b5d907484bfea85745b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#239)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        239
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/operator-ai-live-migration-version",
+      "sha": "280e83ec3a898e378bc8c4844120bc26f42e4a41",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#121)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        121
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/ovh-harness-hardening-20260925",
+      "sha": "f796e1f8c18e2bf7692c276d6a86bc9a61a87094",
+      "status": "superseded",
+      "reason": "closed without merge (#229); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        229
+      ]
+    },
+    {
+      "branch": "fix/ovh-self-management-bootstrap",
+      "sha": "3d3bc6b2adf70ea26f35f08b464815f62d9f749a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#116)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        116
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/password-auth-session-state",
+      "sha": "9e36df474e11673f303b58925ff8539954515d9f",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#140)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        140
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/privacy-precise-location-disclosure-20260926",
+      "sha": "ebb6753babe4f86683114944135a19201283324c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#243)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        243
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/reconciler-sandbox-writes",
+      "sha": "7537e0be798ace84d679f09cb4afebbf8adbaa50",
+      "status": "superseded",
+      "reason": "closed without merge (#117); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        117
+      ]
+    },
+    {
+      "branch": "fix/reconciler-write-sandbox",
+      "sha": "dee42028dcc27262ac04664707febd5ade9eea7a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#118)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        118
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/replay-ai-spend-view-current-20260926",
+      "sha": "cdcfac90e5e2b2e19b756763708bb5bd70634cb9",
+      "status": "superseded",
+      "reason": "closed without merge (#237); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        237
+      ]
+    },
+    {
+      "branch": "fix/shared-oauth-consent-owner-gate",
+      "sha": "f9fd4e14e641849f159d1a3fd5137487ea3bd546",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#110)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        110
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/supabase-historical-ledger-anchors",
+      "sha": "72b73c66eb9a43e659befd12fb29946738ddea3d",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#133)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        133
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/supabase-production-ledger-separation",
+      "sha": "fef73d601790bcc7524a893019e9a11eb137c796",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#136)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        136
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "fix/three-tab-contract-20260925",
+      "sha": "22a9d3b00a2f3dead05eacacd257d3e1137c5190",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        230
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "gh-pages",
+      "sha": "beed1cb65d877875b0c1d7797f33546b8a5a9383",
+      "status": "still-live",
+      "reason": "publication branch; retain until GitHub Pages configuration proves it is unnecessary",
+      "merge_policy": "operational-ref-do-not-delete",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "grok/ai-harness-plane",
+      "sha": "0e2f2190ce90b3bc0822cc06671bae434f681430",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        35
+      ]
+    },
+    {
+      "branch": "grok/spatial-plane",
+      "sha": "c4d2c30b79b7f1fac0f0a6b3e9c108cc792e2989",
+      "status": "superseded",
+      "reason": "closed without merge (#43); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        43
+      ]
+    },
+    {
+      "branch": "hardening/control-plane-authority",
+      "sha": "16e73783ab34d8ca62ff2778649aa32733e202b4",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "hardening/control-plane-public-surface-20260907",
+      "sha": "f97263e711281032d430735dff74d22ed7deda20",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#31)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        31
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "hardening/social-p0-20260907",
+      "sha": "3297b7236695ffdf418d81dc9225917c42980aa0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#30)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        30
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "hotfix/mnet-signed-in-feed",
+      "sha": "23c53e2f69d5a1f7e63ccc3a5f66a649a427ae57",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#143)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        143
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "hotfix/post-merge-migration-chain",
+      "sha": "6a6357ce699a103b9f94611b598438bba10551a0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#40)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        40
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "jay-johnson-active-plan",
+      "sha": "5ea1e6205ad2e49c7cf75831c770ad3915a9521c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#1)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        1
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "main",
+      "sha": "b645d127bb8fb09afbf964e49299571097b9c75e",
+      "status": "still-live",
+      "reason": "canonical source branch; architecture authority",
+      "merge_policy": "canonical-authority",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "maintenance/equity-uprise-authority-generated-refresh",
+      "sha": "573f2b0de1b2c72db2e01c5bfd27086af8fe7a62",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "noop",
+      "sha": "ea2e3e808bb3fec1342bee5eb8c319d017199e1e",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "oauth/mcp-owner-auth-v1",
+      "sha": "e0c1d657d3bb6aa24a6544fd5310103237ab60b7",
+      "status": "superseded",
+      "reason": "closed without merge (#105); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        105
+      ]
+    },
+    {
+      "branch": "openai/conversation-objective-synthesis-v1",
+      "sha": "4baba048ee2126f8b6f4fa6d4e07ce5a307dd518",
+      "status": "superseded",
+      "reason": "closed without merge (#76); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        76
+      ]
+    },
+    {
+      "branch": "openai/core-objective-reflection-v1",
+      "sha": "b3c5328f530ce27c65655a47b902599e66078e1c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#73)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        73
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "openai/dependency-aware-plans-v1",
+      "sha": "bfced899ebedd121031f62cd85296fc8514e66b8",
+      "status": "superseded",
+      "reason": "closed without merge (#74); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        74
+      ]
+    },
+    {
+      "branch": "openai/three-node-event-mesh-v1",
+      "sha": "c19cec1fed16ae82cec4ff17289db02ce16a346d",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        77
+      ]
+    },
+    {
+      "branch": "ops/bootstrap-ovh-now",
+      "sha": "4ef83de7d2d5cca7b1cbf4875648e879d95ab3a8",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/deploy-provenance-v1",
+      "sha": "cadb99a856168e30f5f58bcf652926b2e523bcf2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#91)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        91
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/halo-health-contract-v1",
+      "sha": "3da01ea737a0da1aa24b019e13ac5621ea2bc62f",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#96)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        96
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/ovh-game-workstation-bootstrap",
+      "sha": "f05285e7386bb53a7652a7b75cf9c8b7a73f4ad2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#90)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        90
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/ovh-repo-sync",
+      "sha": "9fd3d73dab4315d7d0cf57a374f5a4c3ec14edc4",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        89
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/system-health-v1",
+      "sha": "7316ad6eae85c58aa1b54d534819dc2d8a70aa18",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#103)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        103
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ops/vps-self-managing-control-plane-v1",
+      "sha": "2cffc16522e2d0fa1558e861da751f5bc628e736",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#93)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        93
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-66-module-contract",
+      "sha": "096f1424514880d5582140b568e7dfc65f986275",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#55)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        55
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-episode1-lessons",
+      "sha": "c57b2537a4143801c8cf7598279b090f7c31d720",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        53
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-lms-foundation",
+      "sha": "abaa8d75ee1218ee14c1d5d835bc0364890fa866",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        50,
+        51
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-mission-readiness-engine",
+      "sha": "d655771490f41e741b31d5523c557167e2d73c42",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#63, #64)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        63,
+        64
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-objective-surgical-map",
+      "sha": "a43031d92c26497ce2dc4f7099a5d7037b0b5557",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#58)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        58
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-prim-brand-tracking",
+      "sha": "49eb82d609a817d1f1da7dc18eefb7695ddca356",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#60)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        60
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-range-hidden-hotfix",
+      "sha": "d8f42ccf0b25255ff229471b7d9cf1cdfcc0ef74",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#68)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        68
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-range-systems-harness-label",
+      "sha": "0a892d01813027294d04a09be68742da6c7be305",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-song-certification-map",
+      "sha": "0ad2fcdc0d8a70540ef07759e8aa3bb496591f5b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#57)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        57
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3-tr01-vertical-slice",
+      "sha": "bff38893deb9624569bfe8f78f5d6f3d94ebdedc",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#66)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        66
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3/halo-tech-culture-context-v1",
+      "sha": "3f25b3b11020e957012769c29ae5d3f8762ccfb1",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#72)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        72
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "prim3/halo-world-canon-v1",
+      "sha": "f00c2ae9d6f34e75ba6cc77d4baf9fb7c8f347a9",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#71)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        71
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "product/mccluster-console-v1",
+      "sha": "e2376202af92000955bea78073cc0a5f70053484",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "sovereign-assets-preview",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/autonomy-fabric-stack-v1-clean",
+      "sha": "df617e43cab5355770d9596f9bdc617a68527c57",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/autonomy-fabric-stack-v1",
+      "sha": "d0a1d523a4a6ff689b5a3cd7083ba7da55e05804",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        81
+      ]
+    },
+    {
+      "branch": "reconcile/autonomy-fabric-stack-v2",
+      "sha": "93dbb5d260463a600faf5c99b24f42580f98e5d1",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        80
+      ]
+    },
+    {
+      "branch": "reconcile/client-privilege-hardening-live-ledger",
+      "sha": "aec84f0fcdcac72d095d954ab18cf27e1491095a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#130)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        130
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/core-harness-20260912",
+      "sha": "cc66675f03d2bf0ab5fa03ac9fd69286e6aaf74c",
+      "status": "superseded",
+      "reason": "explicitly quarantined by canonical architecture",
+      "merge_policy": "historical evidence only",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        54
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-20260908",
+      "sha": "c4d633cb74c87c04f8ea8ac8d349459da9c967d7",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#39)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        39
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-b1-real-3d",
+      "sha": "a08635b3e058908603bbf1b65c2981903495b23d",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-20260921",
+      "sha": "b2047e05853a731fe36afb66ac462ba98ea5a220",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#149)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        149
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-asset-registry-step1",
+      "sha": "5ea8251bf6be216c5ab9e12ce8e67527fd7e4862",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#173)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        173
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-asset-registry-step2",
+      "sha": "9696e75da7c89813fd11a5e245a0d2b463de0991",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#174)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        174
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-asset-registry-step3a",
+      "sha": "765de815a5a7ebe7ba6b2ae50702007b066ff1f5",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#175)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        175
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-asset-registry-step3b",
+      "sha": "cb8bc1eb66a3deee205813dbb8b2de61a0ebaead",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#176)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        176
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-authority-refresh",
+      "sha": "68246152b59016c7ec30b66e01533c7221ce20be",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#158)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        158
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-b1-final",
+      "sha": "a2a820209371742aaf961f0d3f190386c216b084",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#156)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        156
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-b1-real-3d",
+      "sha": "0e961db4b469289b98406b3c52e30429d4612e8d",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-b1-workplace-generated",
+      "sha": "4806c983d8f5f88d8737a1d10c167c393b095843",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#209)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        209
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-building-services-nervous-system",
+      "sha": "41b7404343b8208676084aa2fc1bab12994bee4e",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#163)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        163
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-context-index",
+      "sha": "daf2d1c1c26df2325299cb5910470f1d9567cd65",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-electronics-step4a",
+      "sha": "1ebf6acbc24fea2aef3adb589e4a302b2ca06119",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#177)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        177
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-facade-architectural-finish",
+      "sha": "c0508a8c140e2de1f3c7ad5dffc9bbd0efe1a9da",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#161)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        161
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-facade-geometry",
+      "sha": "41cb6a8968a41469d5bbc8ee0760287636f03391",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#160)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        160
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-facade-spec",
+      "sha": "cc3114c26e1540a992d497f50e0de6d16f9ae592",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#159)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        159
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-facade-step8-solar-environment",
+      "sha": "03c670b7928ab476ef4d09a7fe0165f23b7f6da5",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#162)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        162
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor2-lock",
+      "sha": "95f8daa43bf0207e1c4c3c8679949637bfbcaa42",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor3-generated",
+      "sha": "9633d91f30d07838b31d394f90214665a879a631",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor4-generated",
+      "sha": "2077af513b0ab4edbba499df68abb0d0df7aefcc",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor5-generated",
+      "sha": "ce23d6eb8c0b036f963ce4864254a5510995459c",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-generated",
+      "sha": "85447f7b0191f568cbb7e4a58fe525afa92d475f",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-halo-circled-corner",
+      "sha": "1ea2be33215ac64645410727f91198bd785517f3",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#153)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        153
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-halo-placement",
+      "sha": "74426ed46861f4a65d9f9eab8d67391fa0658fb9",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-halo-position",
+      "sha": "157609e86f29fb5138b3b0d245f5dbb1c270a25b",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-halo-southwest",
+      "sha": "770d36bd374e928f0e0a14fd620740aee42bceb1",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#152)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        152
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-floor6-halo-southwest-v2",
+      "sha": "28ad09fd1e76b398ad17486f03eb95df1c63bb57",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-generated-refresh-20260926",
+      "sha": "2f02062fe69700b110c1f88c54831310ff2809a2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#240)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        240
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step1",
+      "sha": "3af47229ec311d9e3d2e0ff30a13cdb54c8e4936",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#180)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        180
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step2",
+      "sha": "a87b4837a24de9420c812c9a6772b5c3866ade04",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#181)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        181
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step3-cisa-itot",
+      "sha": "2c21b5f39a22005cf135c47e20a61e466e461095",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#182)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        182
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step4-fema-ops",
+      "sha": "f370e229bf97733d1a7b8eba360af4a37110e546",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#183)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        183
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step5-public-service",
+      "sha": "0efa65c2bc90f2c90c93a65b99bb7f2bf2b1a4f0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#184)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        184
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step6-assessment",
+      "sha": "1a3d3a3baa257d20e7b1618f0570349330ff4ff5",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#185)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        185
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step7-difficulty",
+      "sha": "3a88f2b7d6675b6a77627d626f037051d0a16d18",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#186)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        186
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-lab-runtime-step8-viewer",
+      "sha": "d014589f606b7ef3079747f170757048cc1bc73b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#187)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        187
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-level7-roof",
+      "sha": "628d074e8093176e4b4d37f0d1dc3d6bbc436a24",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#155)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        155
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-physical-plant-v1",
+      "sha": "7355ca225bd604611512842cebeb3967e6438f9d",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#202)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        202
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-playable-audit-generated",
+      "sha": "61056284fae36b2071dd4a91668995d756d2361b",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#211)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        211
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-generated-refresh",
+      "sha": "a85f2a351300fa8be9e90df6466e2b5eaa619156",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#164)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        164
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step3-b1-plant-connections",
+      "sha": "e4ba86273ea16f098c5b62ce35bccd56c0663a5b",
+      "status": "superseded",
+      "reason": "closed without merge (#165); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        165
+      ]
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step3",
+      "sha": "8a484dcfe0c37bad27a0ac439dc8281ba4959b4d",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#167)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        167
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step4",
+      "sha": "b5e16bcdac4a78c6f0d5422d8fb5dd54b1c0f1ba",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#168)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        168
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step5",
+      "sha": "8bdf02fbc8ea82379c3c40b5b3db198b8abb8987",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#169)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        169
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step6",
+      "sha": "8b4c3509299d7ed9a0bc22655c6d99e1a207f747",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#170)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        170
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step7",
+      "sha": "c3fd2a1e81fd22ae81149054e44c4bde6b237137",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#171)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        171
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-services-step8",
+      "sha": "f28ca023d43db649e96cdd1c613e861a3524ef14",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#172)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        172
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step4-pathway-first-routing",
+      "sha": "b1a688230bc605cb2b5dc2bc9fd4e457c99b596a",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-a-maturity-coverage",
+      "sha": "fd15ce5185aac580241389f7253d87c0784e8374",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#212)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        212
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-b-performance-shell",
+      "sha": "de8dad873e1357305b7a5a719276d0da8cfbfab4",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#213)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        213
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-av-life-safety",
+      "sha": "1ea2c9b2776e05d161d1195040cc2805ebe348bf",
+      "status": "superseded",
+      "reason": "closed without merge (#224); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        224
+      ]
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-av-media",
+      "sha": "7c49fb07656f75d5a6d32f86cfe36bb455dda376",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#223)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        223
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-electrical-bas",
+      "sha": "e60d78f60927f7b3b4c494b9a8fa3ce8d302c9b5",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#222)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        222
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-life-safety",
+      "sha": "7b5d1f55cbeff599cd70067c66279b5c67463f7a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#225)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        225
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-network-archetypes",
+      "sha": "4cf9081f92958b5332c55136eba2950bc94c7700",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#217)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        217
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-physical-terminations",
+      "sha": "c945feb127804e0786354acc3815c1b4a9583c63",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#219)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        219
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-rack-power-backbone",
+      "sha": "e73d6c0e1420f8416da10fe27c347691654aa8f9",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#218)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        218
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-security-access",
+      "sha": "f27fb167031c7814c732b72de29f30f18deab5ec",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#221)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        221
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-core-v2-step-c-user-endpoints",
+      "sha": "4c72a6c7914f11e26db450f5cc88471549f11b8c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#220)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        220
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-facade-architectural-finish",
+      "sha": "45c4f5e6bdc44df543005872509c2c389fa29506",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-federal-training-catalog",
+      "sha": "8d7f26f3ce541c53ffa1db4c57602e09de4edd5a",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#178)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        178
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-federal-training-catalog-v1",
+      "sha": "d0897fcd2466b7c84f37b822fc36ffced4497ff3",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-federal-training-postmerge-generated-fix",
+      "sha": "aa8d94e4acf6762a808d043d38aecd9abd12738c",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#179)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        179
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-floor6-halo-placement",
+      "sha": "88e28334c88357f2a4c3b5be7aebb44bb67d1d24",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-floor6-halo-position-generated",
+      "sha": "fc3588dca5c661ac19213b758de5536a0fcdc60a",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-floor6-halo-southwest",
+      "sha": "a382f7ae609aa07df016878626a21f37c6f234f1",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-services-step3-b1-plant-connections",
+      "sha": "431ca8eec52b314a3434414c1a9c4a2885503628",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/equity-uprise-step4-pathway-first-routing",
+      "sha": "cd9a28e90d432a93842230592aaeddc6cb94f16c",
+      "status": "superseded",
+      "reason": "closed without merge (#227); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        227
+      ]
+    },
+    {
+      "branch": "reconcile/equity-uprise-step4-routed-wiring-viewer",
+      "sha": "eb8894ac4a4e2c93341474cf651a23ef104236bb",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#226)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        226
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/live-edge-function-source",
+      "sha": "f854255df2b6714c6ee64e9c1feb8d5feadcd670",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#128)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        128
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "reconcile/migration-20260919113319",
+      "sha": "1b63cb5840f6c3d02ec0d189d240e10dbb67b173",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/harden-migration-ledger-v1",
+      "sha": "a5d89165a53ddce0c971b4829ca341d4075a037e",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#82)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        82
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/identity-spine-whip-p0-20260907",
+      "sha": "446bbdcb94673995e7c63c6bfb82751618c6ce9f",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/lock-migrations-client-access",
+      "sha": "e60bd3bce2459385554a4a7e0db9470169063989",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#23)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        23
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/p0-supabase-containment-20260913",
+      "sha": "d10891446d1b11abd36f4d2ed6a3fe1496cadc82",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#87)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        87
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/production-boundary-hardening-v1",
+      "sha": "ebba6d4e6a838308fa2931aebb1ed4ad139215a2",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#97)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        97
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/security-definer-execution-v1",
+      "sha": "c3dfec1bea5d846ab68bd00d0670b471b5be7ae0",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#84)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        84
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/supply-chain-hardening-v1",
+      "sha": "a25fb284f4a16ed4a2f70a8e52b91563c2ed38ab",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#98)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        98
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "security/whip-media-hardening-2026-09-08",
+      "sha": "236e66af156a1c602b32f5a53a6121a0cc659854",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#32)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        32
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "selfhost/preview-runtime-v1",
+      "sha": "fcb3a64789ff3987a427c19533e045c25fa92292",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "sovereign-assets-preview",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "selfhost/sovereign-media-fabric-v1",
+      "sha": "f1baa11bd92ccf9255e0e59e5ae445c564956296",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": true,
+      "donor_theme": "sovereign-assets-preview",
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "tmp-ignore",
+      "sha": "28c2f3e704adce907f53d13e45fcdddfe429aebd",
+      "status": "archive",
+      "reason": "historical/checkpoint/backup branch retained as evidence, not architecture authority",
+      "merge_policy": "never merge wholesale",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "ui/claude-operator-os",
+      "sha": "a213940b1ee6febfec59d04467d19e889463ddcc",
+      "status": "superseded",
+      "reason": "not a current canonical/operational ref and retains historical divergence from main",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "upload/cia-mind-control-you-the-feds",
+      "sha": "9c7c2edb65ae81bcf5d3a0b130f5a6b9b167e254",
+      "status": "absorbed",
+      "reason": "branch tip represented by merged PR history (#203)",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [
+        203
+      ],
+      "closed_unmerged_prs": []
+    },
+    {
+      "branch": "verify-ovh-ssh-secrets",
+      "sha": "e8dedec3e6344eb48be86ac8651fd2e360899ff1",
+      "status": "superseded",
+      "reason": "closed without merge (#122); not a current promotion path",
+      "merge_policy": "salvage concepts only from fresh main",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": [
+        122
+      ]
+    },
+    {
+      "branch": "we-site-visual-refresh",
+      "sha": "5df695a797e7337c370c10270957ba9415d68edc",
+      "status": "absorbed",
+      "reason": "branch has no unique commits ahead of current main in audit comparison",
+      "merge_policy": "cleanup candidate after retention review",
+      "donor_candidate": false,
+      "donor_theme": null,
+      "open_pr": null,
+      "merged_prs": [],
+      "closed_unmerged_prs": []
+    }
+  ]
+}
