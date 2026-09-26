@@ -194,6 +194,31 @@ window.MCC_TRACK = (function () {
     }
   } catch (e4) { ACQ = null; }
 
+  /* Account creation is the point where an anonymous analytics visit may
+     legitimately become an account conversion. This snapshot is analytics
+     provenance only — never an authorization claim. GPC/DNT means no
+     device/session linkage is attached to the account at all. */
+  function privacySignal() {
+    return navigator.globalPrivacyControl === true ||
+      navigator.doNotTrack === "1" || window.doNotTrack === "1";
+  }
+  window.MCC_ANALYTICS_CONTEXT = {
+    signupAttribution: function () {
+      if (privacySignal()) return null;
+      var s = sessionId();
+      return {
+        version: 1,
+        device_id: deviceId || null,
+        session_id: s || null,
+        source: ACQ && ACQ.src || "direct",
+        medium: ACQ && ACQ.med || "none",
+        campaign: ACQ && ACQ.cmp || "",
+        landing_path: location.pathname.split("/").pop() || "index.html",
+        captured_at: new Date().toISOString()
+      };
+    }
+  };
+
   /* The session token, when there is one, so the collector can attribute
      the event to an account. It is VERIFIED there, never believed — this
      is the token itself, not a uid this file decoded and asserted. */
@@ -736,62 +761,14 @@ window.MCC_MODEL = (function () {
     T("network_change", { reason: "offline", network: networkState() });
   });
 
-  /* Precise location is special: the browser owns the permission prompt.
-     Never manufacture a location, never infer a street from fingerprinting,
-     and never prompt on page load. If permission is already granted we may
-     read it; otherwise MCC_LOCATION.request() must be called from an explicit
-     user action. */
-  function privacyQuiet() {
-    return navigator.globalPrivacyControl === true ||
-      navigator.doNotTrack === "1" || root.doNotTrack === "1";
-  }
-  function geoNumber(value, places) {
-    if (typeof value !== "number" || !isFinite(value)) return null;
-    var k = Math.pow(10, places);
-    return Math.round(value * k) / k;
-  }
-  function preciseLocation() {
-    return new Promise(function (resolve) {
-      if (privacyQuiet()) return resolve({ ok: false, reason: "privacy_signal" });
-      if (!navigator.geolocation) return resolve({ ok: false, reason: "unsupported" });
-      navigator.geolocation.getCurrentPosition(function (pos) {
-        var co = pos.coords || {};
-        var payload = {
-          source: "browser_geolocation",
-          lat: geoNumber(co.latitude, 5),
-          lon: geoNumber(co.longitude, 5),
-          accuracy_m: geoNumber(co.accuracy, 1),
-          altitude_m: geoNumber(co.altitude, 1),
-          altitude_accuracy_m: geoNumber(co.altitudeAccuracy, 1),
-          heading_deg: geoNumber(co.heading, 1),
-          speed_mps: geoNumber(co.speed, 2),
-          observed_at: new Date(pos.timestamp || Date.now()).toISOString(),
-        };
-        T("precise_location", payload);
-        resolve({ ok: true, location: payload });
-      }, function (err) {
-        resolve({ ok: false, reason: "denied_or_unavailable", code: err && err.code || null });
-      }, { enableHighAccuracy: true, maximumAge: 300000, timeout: 10000 });
-    });
-  }
+  /* Location stays server-side and approximate. The public privacy notice
+     promises that this site does not ask the browser or phone for GPS, so
+     analytics uses Cloudflare's IP-derived city/region/coordinates instead.
+     Do not add navigator.geolocation here without changing that promise. */
   root.MCC_LOCATION = {
-    request: preciseLocation,
-    status: function () {
-      if (privacyQuiet()) return Promise.resolve("privacy_signal");
-      if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("unknown");
-      return navigator.permissions.query({ name: "geolocation" }).then(function (p) { return p.state; }).catch(function () { return "unknown"; });
-    },
+    request: function () { return Promise.resolve({ ok:false, reason:"precise_location_not_collected" }); },
+    status: function () { return Promise.resolve("not_collected"); }
   };
-  if (!privacyQuiet() && navigator.permissions && navigator.permissions.query) {
-    navigator.permissions.query({ name: "geolocation" }).then(function (p) {
-      T("location_permission", { state: p.state });
-      if (p.state === "granted") preciseLocation();
-      p.addEventListener && p.addEventListener("change", function () {
-        T("location_permission", { state: p.state });
-        if (p.state === "granted") preciseLocation();
-      });
-    }).catch(function () {});
-  }
 
   /* =========================================================
      3. THE PAGE VIEW — the anchor row every other row hangs off
