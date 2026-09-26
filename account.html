@@ -139,14 +139,34 @@
         <p class="ac__note" id="acMsg"></p>
       </div>
 
-      <div id="acCreatePane" hidden>
+      <div id="acCreatePane" data-private hidden>
         <p class="ac__lab">Create your M Account</p>
-        <input type="text" id="acCreateName" placeholder="Display name (optional)" autocomplete="name">
-        <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email">
-        <input type="password" id="acCreatePass" placeholder="Create password" autocomplete="new-password" minlength="8">
-        <input type="password" id="acCreatePass2" placeholder="Confirm password" autocomplete="new-password" minlength="8">
+        <p class="ac__sub">Use your legal name and current mailing address. A complete address makes the account eligible for McCluster monthly swag selections.</p>
+        <div class="fan__row">
+          <input type="text" id="acCreateFirst" placeholder="Legal first name" autocomplete="given-name" maxlength="80" required>
+          <input type="text" id="acCreateLast" placeholder="Legal last name" autocomplete="family-name" maxlength="80" required>
+        </div>
+        <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email" required>
+        <input type="text" id="acCreateAddr1" placeholder="Mailing address" autocomplete="address-line1" required>
+        <input type="text" id="acCreateAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
+        <div class="fan__row">
+          <input type="text" id="acCreateCity" placeholder="City" autocomplete="address-level2" required>
+          <input type="text" id="acCreateRegion" placeholder="State / region" autocomplete="address-level1" required>
+        </div>
+        <div class="fan__row">
+          <input type="text" id="acCreatePostal" placeholder="ZIP / postal code" autocomplete="postal-code" required>
+          <input type="text" id="acCreateCountry" placeholder="Country" autocomplete="country-name" value="United States" required>
+        </div>
+        <input type="password" id="acCreatePass" placeholder="Create password" autocomplete="new-password" minlength="8" required>
+        <input type="password" id="acCreatePass2" placeholder="Confirm password" autocomplete="new-password" minlength="8" required>
+        <label class="fan__check">
+          <input type="checkbox" id="acCreatePrivacy" required>
+          <span><b>I agree to the current Privacy Policy.</b>
+            <em>This acknowledges the notice. Precise location and other protected device permissions are requested separately by your browser or operating system.</em></span>
+        </label>
+        <p class="fan__fine"><a href="privacy.html">Read the Privacy Policy</a>. No purchase or payment is required for monthly swag eligibility.</p>
         <button class="ac__btn" id="acCreateGo" type="button">Create account</button>
-        <p class="ac__passnote">Use at least 8 characters.</p>
+        <p class="ac__passnote">Use at least 8 characters. Obvious placeholder or fake-name input is rejected; this is not government-ID verification.</p>
         <p class="ac__note" id="acCreateMsg"></p>
         <button class="ac__flip" id="acResend" type="button" hidden>Resend verification email</button>
       </div>
@@ -170,15 +190,16 @@
 
     <!-- THE INTAKE. Writes to public.fan_profiles, which has no role, no org
          and no membership column: nothing typed here can make anybody an
-         admin. The two consents are separate, optional, and gate nothing —
-         the record is already unlocked by the time this form is on screen. -->
+         admin. Account identity/shipping completeness is required for the
+         account workflow; marketing and onward-sharing consent remain separate
+         and optional. -->
     <!-- data-private: everything painted below is the visitor's own record —
          legal name, street address, phone. The copy sensor in js/analytics.js
          reads this attribute and will record that a copy happened without
          ever banking the words. -->
     <div class="ac__card fan" id="fanCard" data-private hidden>
-      <p class="ac__lab">Your details</p>
-      <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
+      <p class="ac__lab">Complete your account</p>
+      <p class="ac__sub" id="fanWhy">Your legal name and mailing address are required for account integrity and monthly McCluster swag eligibility. Marketing and sharing choices below remain optional.</p>
 
       <!-- THE ASK COMES FIRST, AND HERE IS WHY IT MOVED.
            This used to be a bare checkbox sitting under a legal name, a
@@ -200,24 +221,23 @@
         You can untick it here any time.
         <a href="privacy.html">What we record, and how to have it deleted</a>.</p>
 
-      <!-- Closed by default for somebody arriving from a download: they came
-           for a song, not to fill in a postal address. openFan() opens it on
-           its own when there is already something saved in here. -->
-      <details class="fan__more" id="fanMore">
-        <summary>Mailing address &mdash; for merch and anything physical</summary>
+      <details class="fan__more" id="fanMore" open>
+        <summary>Legal name and mailing address &mdash; required</summary>
 
-        <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name">
-        <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
+        <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name" required>
+        <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1" required>
         <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
         <div class="fan__row">
-          <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
-          <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
+          <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2" required>
+          <input type="text" id="fnRegion" placeholder="State / region" autocomplete="address-level1" required>
         </div>
         <div class="fan__row">
-          <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
-          <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
+          <input type="text" id="fnPostal" placeholder="ZIP / postal code" autocomplete="postal-code" required>
+          <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name" required>
         </div>
-        <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
+        <button class="ac__ghost" id="fnLocation" type="button">Share precise location</button>
+        <p class="fan__note" id="fnLocationNote">Optional. Your browser or operating system will ask separately. Denying it does not block your account or swag eligibility.</p>
+        <input type="tel" id="fnPhone" placeholder="Phone (optional)" autocomplete="tel" inputmode="tel">
         <p class="fan__note" id="fnPhoneNote" hidden></p>
         <input type="number" id="fnBirth" placeholder="Year you were born" inputmode="numeric" min="1900" max="2100">
 
@@ -232,11 +252,13 @@
       <p class="ac__note" id="fnMsg"></p>
     </div>
   </main>
+  <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
   <!-- The social door. It shares mccdb_session with backend.js, so a Google
        sign-in lands in exactly the same session the email form produces. -->
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/fan-intake.js?v=__STAMP__"></script>
+  <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
@@ -279,13 +301,15 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
-      if (!stayOnAccount()) {
-        location.replace("mnet.html");
-        return;
-      }
       houseOwner(u).then(function (yes) {
         if (yes) { openPlane(); return; }
-        openFan();
+        window.MCC_FAN.load().then(function (row) {
+          if (profileComplete(row) && !stayOnAccount()) {
+            location.replace("mnet.html");
+            return;
+          }
+          openFan();
+        }).catch(function () { openFan(); });
       });
     }
 
@@ -301,7 +325,7 @@
       el("acMsg").textContent = "";
       el("acCreateMsg").textContent = "";
       setTimeout(function () {
-        var target = create ? el("acCreateName") : el("acInEmail");
+        var target = create ? el("acCreateFirst") : el("acInEmail");
         if (target) target.focus();
       }, 0);
     }
@@ -351,14 +375,42 @@
     var pendingVerificationEmail = "";
 
     el("acCreateGo").onclick = function () {
-      var name = el("acCreateName").value.trim(), em = el("acCreateEmail").value.trim();
+      var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
+      var em = el("acCreateEmail").value.trim();
       var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
-      if (!em || !pw) { el("acCreateMsg").textContent = "Email and password are required."; return; }
+      var required = ["acCreateAddr1","acCreateCity","acCreateRegion","acCreatePostal","acCreateCountry"];
+      if (!first || !last || !em || !pw || required.some(function (id) { return !el(id).value.trim(); })) {
+        el("acCreateMsg").textContent = "Legal first and last name, email, and a complete mailing address are required.";
+        return;
+      }
+      var nameCheck = window.MCC_NAME_INTEGRITY && MCC_NAME_INTEGRITY.validate(first, last);
+      if (!nameCheck || !nameCheck.ok) {
+        el("acCreateMsg").textContent = (nameCheck && nameCheck.reason) || "Enter a plausible legal first and last name.";
+        return;
+      }
+      if (!el("acCreatePrivacy").checked) {
+        el("acCreateMsg").textContent = "Read and agree to the Privacy Policy before creating the account.";
+        return;
+      }
       if (pw.length < 8) { el("acCreateMsg").textContent = "Use at least 8 characters."; return; }
       if (pw !== pw2) { el("acCreateMsg").textContent = "Those passwords do not match."; return; }
       btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = ""; el("acResend").hidden = true;
-      var display = name || em.split("@")[0];
-      MCC.signUpWithPassword(em, pw, { name: display, full_name: display }).then(function (result) {
+      var display = nameCheck.legal_name;
+      var metadata = {
+        name: display,
+        full_name: display,
+        first_name: nameCheck.first_name,
+        last_name: nameCheck.last_name,
+        shipping_address_line1: el("acCreateAddr1").value.trim(),
+        shipping_address_line2: el("acCreateAddr2").value.trim(),
+        shipping_city: el("acCreateCity").value.trim(),
+        shipping_region: el("acCreateRegion").value.trim(),
+        shipping_postal_code: el("acCreatePostal").value.trim(),
+        shipping_country: el("acCreateCountry").value.trim(),
+        privacy_policy_version: "2026-09-26",
+        privacy_acknowledged_at: new Date().toISOString()
+      };
+      MCC.signUpWithPassword(em, pw, metadata).then(function (result) {
         if (result && result.session) {
           if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
           paint();
@@ -415,19 +467,40 @@
         : "Sharing with partners is only offered to listeners 18 or older.";
     }
 
+    function signupMetadata() {
+      try {
+        var s = JSON.parse(localStorage.getItem("mccdb_session") || "null");
+        return (s && s.user && s.user.user_metadata) || {};
+      } catch (_) { return {}; }
+    }
+
+    function metadataFallback(id) {
+      var m = signupMetadata();
+      var map = {
+        fnLegal: "full_name",
+        fnAddr1: "shipping_address_line1",
+        fnAddr2: "shipping_address_line2",
+        fnCity: "shipping_city",
+        fnRegion: "shipping_region",
+        fnPostal: "shipping_postal_code",
+        fnCountry: "shipping_country"
+      };
+      return map[id] ? (m[map[id]] || "") : "";
+    }
+
+    function profileComplete(row) {
+      return !!(row && row.legal_name && row.address_line1 && row.city &&
+        row.region && row.postal_code && row.country);
+    }
+
     function paintFan(row) {
       FAN.forEach(function (id) {
-        var v = row ? row[COL[id]] : "";
+        var v = row ? row[COL[id]] : metadataFallback(id);
         el(id).value = (v === null || v === undefined) ? "" : v;
       });
       el("fnMarketing").checked = !!(row && row.marketing_consent);
       el("fnShare").checked = !!(row && row.share_consent);
-      /* Somebody who has already given an address is coming back to edit it,
-         so the drawer that holds it should not make them hunt for it. A
-         first-time visitor from a download gets it closed. */
-      if (FAN.some(function (id) { return el(id).value !== ""; })) {
-        el("fanMore").open = true;
-      }
+      el("fanMore").open = true;
       syncShareGate();
       if (row && row.phone_e164 && !row.phone_verified_at) {
         el("fnPhoneNote").hidden = false;
@@ -437,9 +510,7 @@
 
     function openFan() {
       el("fanCard").hidden = false;
-      if (source()) el("fanWhy").textContent =
-        "The record is unlocked and downloading. Want to know when the next one lands?";
-      window.MCC_FAN.load().then(paintFan).catch(function () { syncShareGate(); });
+      window.MCC_FAN.load().then(paintFan).catch(function () { paintFan(null); });
       /* Text messaging is off in this project, so the form does not pretend
          a code is coming. It still keeps the number. */
       window.MCC_FAN.phoneEnabled().then(function (on) {
@@ -500,9 +571,37 @@
 
     el("fnBirth").addEventListener("input", syncShareGate);
 
+    el("fnLocation").onclick = function () {
+      var note = el("fnLocationNote"), btn = el("fnLocation");
+      if (!window.MCC_LOCATION || !MCC_LOCATION.request) {
+        note.textContent = "Precise location is not available in this browser.";
+        return;
+      }
+      btn.disabled = true;
+      note.textContent = "Waiting for your browser or operating-system permission…";
+      MCC_LOCATION.request().then(function (result) {
+        if (result && result.ok) note.textContent = "Precise location shared for this visit.";
+        else if (result && result.reason === "denied") note.textContent = "Location permission was denied. Your account and swag eligibility are unaffected.";
+        else if (result && result.reason === "privacy_signal") note.textContent = "Your browser privacy signal prevents precise-location collection.";
+        else note.textContent = "Precise location was not available.";
+      }).finally(function () { btn.disabled = false; });
+    };
+
     el("fnSave").onclick = function () {
       var values = { source: source() };
       FAN.forEach(function (id) { values[COL[id]] = el(id).value.trim(); });
+      var required = ["legal_name","address_line1","city","region","postal_code","country"];
+      if (required.some(function (key) { return !values[key]; })) {
+        el("fnMsg").textContent = "Your legal name and complete mailing address are required.";
+        return;
+      }
+      var parts = values.legal_name.split(/\s+/).filter(Boolean);
+      var check = window.MCC_NAME_INTEGRITY && MCC_NAME_INTEGRITY.validate(parts.shift() || "", parts.join(" "));
+      if (!check || !check.ok) {
+        el("fnMsg").textContent = (check && check.reason) || "Enter a plausible full legal name.";
+        return;
+      }
+      values.legal_name = check.legal_name;
       values.birth_year = values.birth_year ? Number(values.birth_year) : null;
       values.marketing_consent = el("fnMarketing").checked;
       values.share_consent = el("fnShare").checked && !el("fnShare").disabled;
@@ -515,6 +614,9 @@
            the trigger may have refused a consent or cleared a verification,
            and the form must show what is actually stored. */
         paintFan(row);
+        if (profileComplete(row) && !stayOnAccount()) {
+          setTimeout(function () { location.replace("mnet.html"); }, 250);
+        }
       }).catch(function (e) {
         el("fnSave").disabled = false;
         el("fnMsg").textContent = e.message || "That did not save.";
