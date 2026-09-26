@@ -58,6 +58,250 @@ async function sbRows(env, path) {
   return Array.isArray(rows) ? rows : [];
 }
 
+async function sbRowsPaged(env, path, maxRows = 100000) {
+  const pageSize = 1000;
+  const out = [];
+  for (let start = 0; start < maxRows; start += pageSize) {
+    const rows = await sbJson(env, path, { headers: { range: `${start}-${start + pageSize - 1}` } });
+    if (!Array.isArray(rows) || !rows.length) break;
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out.slice(0, maxRows);
+}
+
+function finiteDate(value, fallback) {
+  const n = Date.parse(String(value || ''));
+  return Number.isFinite(n) ? new Date(n) : fallback;
+}
+
+function normalizedTrack(row, trackMap = new Map()) {
+  const props = row?.props && typeof row.props === 'object' ? row.props : {};
+  const creatorId = String(props.creator_track_id || '').trim();
+  if (creatorId && trackMap.has(creatorId)) return trackMap.get(creatorId);
+  let raw = String(props.track || props.song || props.title || creatorId || '').trim();
+  if (!raw) return '';
+  if (raw.toLowerCase() === 'whodidtheshoot') raw = 'who did the shoot';
+  return raw.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function acquisitionSource(row) {
+  const props = row?.props && typeof row.props === 'object' ? row.props : {};
+  const direct = String(props.src || props.source || '').trim();
+  if (direct) return direct;
+  const acq = String(props.acq || '').trim();
+  if (acq) return acq.split('/')[0] || 'direct';
+  const ref = String(row?.referrer || '').trim();
+  if (!ref) return 'direct';
+  try { return new URL(ref).hostname || 'direct'; } catch { return ref.slice(0, 120); }
+}
+
+function publicDeviceSummary(device) {
+  const d = device && typeof device === 'object' ? device : {};
+  return {
+    platform: d.platform || null,
+    mobile: typeof d.mobile === 'boolean' ? d.mobile : null,
+    screen: d.w && d.h ? `${d.w}×${d.h}` : null,
+    viewport: d.vw && d.vh ? `${d.vw}×${d.vh}` : null,
+    dpr: d.dpr ?? null,
+    cpu: d.cpu ?? null,
+    memory_gb_bucket: d.mem ?? null,
+    touch_points: d.touch ?? null,
+    language: d.lang || null,
+    timezone: d.tz || null,
+    standalone: typeof d.standalone === 'boolean' ? d.standalone : null,
+    network: d.network || null,
+    client_hints: d.client_hints || null
+  };
+}
+
+async function identityAnalytics(env, sinceIso, untilIso) {
+  const now = new Date();
+  const until = finiteDate(untilIso, now);
+  const since = finiteDate(sinceIso, new Date(until.getTime() - 7 * 86400000));
+  if (since >= until) throw Object.assign(new Error('Invalid analytics range'), { status: 400 });
+
+  const users = await listAuthUsers(env);
+  const created = users.filter((u) => {
+    const at = Date.parse(u?.created_at || '');
+    return Number.isFinite(at) && at >= since.getTime() && at < until.getTime();
+  });
+
+  const behaviorSince = new Date(since.getTime() - 7 * 86400000).toISOString();
+  const untilEnc = encodeURIComponent(until.toISOString());
+  const sinceEnc = encodeURIComponent(behaviorSince);
+  const eventSelect = [
+    'at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
+    'country','region','city','postal','latitude','longitude','timezone','asn','asn_org','device','edge'
+  ].join(',');
+
+  const [bridges, behavior, tracks] = await Promise.all([
+    sbRowsPaged(env,
+      `events?uid=not.is.null&device_id=not.is.null&select=${eventSelect}&order=at.asc`,
+      50000),
+    sbRowsPaged(env,
+      `events?site_id=is.null&device_id=not.is.null&at=gte.${sinceEnc}&at=lt.${untilEnc}` +
+      `&name=in.(album_play,song_start,track_start,music_play,acquired,page_view)` +
+      `&select=${eventSelect}&order=at.asc`,
+      50000),
+    sbRows(env, 'creator_tracks?select=id,title,artist,slug')
+  ]);
+
+  const trackMap = new Map((tracks || []).map((t) => [
+    String(t.id),
+    String(t.title || t.slug || t.id) + (t.artist ? ` · ${t.artist}` : '')
+  ]));
+  const bridgeByUid = new Map();
+  for (const e of bridges) {
+    if (!e?.uid || !e?.device_id) continue;
+    const list = bridgeByUid.get(String(e.uid)) || [];
+    list.push(e);
+    bridgeByUid.set(String(e.uid), list);
+  }
+
+  const byDevice = new Map();
+  for (const e of behavior) {
+    if (!e?.device_id) continue;
+    const key = String(e.device_id);
+    const list = byDevice.get(key) || [];
+    list.push(e);
+    byDevice.set(key, list);
+  }
+
+  const journeys = [];
+  for (const u of created) {
+    const createdAt = Date.parse(u.created_at || '');
+    const candidates = bridgeByUid.get(String(u.id)) || [];
+    const bridge = candidates.find((e) => Date.parse(e.at || '') >= createdAt) || candidates[0] || null;
+    const deviceId = bridge?.device_id ? String(bridge.device_id) : null;
+    const events = deviceId ? (byDevice.get(deviceId) || []) : [];
+    const pre = events.filter((e) => {
+      const at = Date.parse(e.at || '');
+      return Number.isFinite(at) && at <= createdAt && at >= createdAt - 7 * 86400000;
+    });
+    const music = pre.filter((e) => normalizedTrack(e, trackMap));
+    const lastMusic = music.length ? music[music.length - 1] : null;
+    const tracksHeard = [...new Set(music.map((e) => normalizedTrack(e, trackMap)).filter(Boolean))];
+    const acquired = pre.filter((e) => e.name === 'acquired');
+    const sourceEvent = acquired.length ? acquired[acquired.length - 1] : pre.find((e) => e.referrer) || null;
+    const loc = [...pre].reverse().find((e) => e.ip || e.city || e.region || e.latitude != null) || bridge || null;
+    const lastAt = lastMusic ? Date.parse(lastMusic.at || '') : NaN;
+    const meta = u?.user_metadata && typeof u.user_metadata === 'object' ? u.user_metadata : {};
+
+    journeys.push({
+      user_id: u.id,
+      email: u.email || null,
+      first_name: meta.first_name || null,
+      last_name: meta.last_name || null,
+      created_at: u.created_at,
+      confirmed_at: u.email_confirmed_at || u.confirmed_at || null,
+      device_id: deviceId,
+      session_id: lastMusic?.session_id || loc?.session_id || bridge?.session_id || null,
+      source: sourceEvent ? acquisitionSource(sourceEvent) : 'direct',
+      last_track: lastMusic ? normalizedTrack(lastMusic, trackMap) : null,
+      last_track_at: lastMusic?.at || null,
+      minutes_after_last_track: Number.isFinite(lastAt)
+        ? Math.max(0, Math.round((createdAt - lastAt) / 60000))
+        : null,
+      assisted_tracks: tracksHeard,
+      ip: loc?.ip || null,
+      country: loc?.country || null,
+      region: loc?.region || null,
+      city: loc?.city || null,
+      postal: loc?.postal || null,
+      latitude: loc?.latitude ?? null,
+      longitude: loc?.longitude ?? null,
+      timezone: loc?.timezone || null,
+      asn: loc?.asn ?? null,
+      network: loc?.asn_org || null,
+      user_agent: loc?.user_agent || null,
+      device: publicDeviceSummary(loc?.device)
+    });
+  }
+
+  const listenerSets = new Map();
+  for (const e of behavior) {
+    const at = Date.parse(e?.at || '');
+    if (!(at >= since.getTime() && at < until.getTime())) continue;
+    const track = normalizedTrack(e, trackMap);
+    if (!track || !e.device_id) continue;
+    if (!listenerSets.has(track)) listenerSets.set(track, new Set());
+    listenerSets.get(track).add(String(e.device_id));
+  }
+
+  const stats = new Map();
+  const sourceEdges = new Map();
+  for (const j of journeys) {
+    for (const track of j.assisted_tracks || []) {
+      const s = stats.get(track) || { track, listeners: listenerSets.get(track)?.size || 0, assisted_accounts: 0, last_touch_accounts: 0, total_minutes_to_signup: 0 };
+      s.assisted_accounts++;
+      stats.set(track, s);
+    }
+    if (j.last_track) {
+      const s = stats.get(j.last_track) || { track:j.last_track, listeners: listenerSets.get(j.last_track)?.size || 0, assisted_accounts: 0, last_touch_accounts: 0, total_minutes_to_signup: 0 };
+      s.last_touch_accounts++;
+      if (j.minutes_after_last_track != null) s.total_minutes_to_signup += Number(j.minutes_after_last_track) || 0;
+      stats.set(j.last_track, s);
+      const edgeKey = `${j.source || 'direct'}\u0000${j.last_track}`;
+      sourceEdges.set(edgeKey, (sourceEdges.get(edgeKey) || 0) + 1);
+    }
+  }
+
+  const tracksOut = [...stats.values()].map((s) => ({
+    track: s.track,
+    listeners: s.listeners,
+    assisted_accounts: s.assisted_accounts,
+    last_touch_accounts: s.last_touch_accounts,
+    signup_rate_pct: s.listeners ? Math.round((s.last_touch_accounts / s.listeners) * 1000) / 10 : null,
+    avg_minutes_to_signup: s.last_touch_accounts ? Math.round(s.total_minutes_to_signup / s.last_touch_accounts) : null
+  })).sort((a,b) => b.last_touch_accounts - a.last_touch_accounts || b.assisted_accounts - a.assisted_accounts || b.listeners - a.listeners);
+
+  return {
+    range: { since: since.toISOString(), until: until.toISOString(), attribution_window_days: 7 },
+    coverage: {
+      accounts: created.length,
+      bridged_accounts: journeys.filter((j) => j.device_id).length,
+      attributed_accounts: journeys.filter((j) => j.last_track).length,
+      accounts_with_ip: journeys.filter((j) => j.ip).length,
+      accounts_with_location: journeys.filter((j) => j.city || j.latitude != null).length
+    },
+    tracks: tracksOut,
+    source_track_edges: [...sourceEdges.entries()].map(([key, accounts]) => {
+      const [source, track] = key.split('\u0000');
+      return { source, track, accounts };
+    }).sort((a,b) => b.accounts - a.accounts),
+    journeys: journeys.sort((a,b) => Date.parse(b.created_at || '') - Date.parse(a.created_at || ''))
+  };
+}
+
+async function handleIdentityAnalytics(request, env, user, url) {
+  await requireHouseOps(env, user);
+  if (request.method !== 'GET') return json({ ok:false, error:'GET only' }, 405);
+  const data = await identityAnalytics(env, url.searchParams.get('since'), url.searchParams.get('until'));
+  return json({ ok:true, ...data });
+}
+
+async function handleForensics(request, env, user, url) {
+  await requireHouseOps(env, user);
+  if (request.method !== 'GET') return json({ ok:false, error:'GET only' }, 405);
+  const until = finiteDate(url.searchParams.get('until'), new Date());
+  const since = finiteDate(url.searchParams.get('since'), new Date(until.getTime() - 7 * 86400000));
+  const limit = Math.max(1, Math.min(Number(url.searchParams.get('limit') || 100), 250));
+  const select = [
+    'at','name','path','props','uid','device_id','session_id','ip','user_agent','referrer',
+    'country','region','city','postal','latitude','longitude','timezone','asn','asn_org','device','edge'
+  ].join(',');
+  const rows = await sbRows(env,
+    `events?site_id=is.null&at=gte.${encodeURIComponent(since.toISOString())}` +
+    `&at=lt.${encodeURIComponent(until.toISOString())}&select=${select}&order=at.desc&limit=${limit}`
+  );
+  return json({
+    ok:true,
+    range:{since:since.toISOString(),until:until.toISOString()},
+    events:rows.map((e) => ({ ...e, device:publicDeviceSummary(e.device) }))
+  });
+}
+
 function cleanTxt(value) {
   return String(value || '').replace(/^"|"$/g, '').replace(/"\s+"/g, '').replace(/\\(["\\])/g, '$1');
 }
@@ -504,6 +748,13 @@ export async function handleAnalyticsRequest(request, env, user) {
   }
   if (path === '/v1/analytics/ask') {
     return handleBusinessQuestion(request, env, user);
+  }
+
+  if (path === '/v1/analytics/identity') {
+    return handleIdentityAnalytics(request, env, user, url);
+  }
+  if (path === '/v1/analytics/forensics') {
+    return handleForensics(request, env, user, url);
   }
 
   const match = path.match(/^\/v1\/analytics\/domains\/([0-9a-f-]{36})\/verify$/i);
