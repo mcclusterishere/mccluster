@@ -3,7 +3,7 @@
 
   var $ = function (id) { return d.getElementById(id); };
   var HUE_A = "#e5383b", HUE_B = "#3f93d2";
-  var state = { property:null, range:null, overview:null, identity:null, forensics:[], seq:0 };
+  var state = { property:null, range:null, overview:null, identity:null, forensics:[], seq:0, ownerShown:false };
   var B = w.MCCBoard || {};
 
   function esc(v) {
@@ -275,7 +275,17 @@
 
   function setOwnerTabs(show) {
     ["anOverviewTab","anIdentityTab"].forEach(function(id){var x=$(id);if(x)x.hidden=!show;});
-    if(!show && /#(?:overview|identity)$/.test(location.hash)) location.hash="#traffic";
+    if (!show && /#(?:overview|identity)$/.test(location.hash)) location.hash="#traffic";
+    /* The owner should land on the suite, not discover it by accident after
+       another complaint. Respect explicit deep links, but default the first
+       house-property load to Overview. */
+    if (show && !state.ownerShown) {
+      state.ownerShown=true;
+      if (!location.hash) {
+        var tab=$("anOverviewTab");
+        if(tab)tab.click();
+      }
+    }
   }
   function load() {
     var range=state.range, prop=state.property;
