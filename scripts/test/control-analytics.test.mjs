@@ -7,12 +7,11 @@ const read=(p)=>readFile(p,'utf8');
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
-    'analytics_daily','analytics_totals','analytics_top','analytics_funnel',
-    'analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
+    'analytics_daily','analytics_totals','analytics_top','analytics_engagement_site',
+    'analytics_funnel_site','analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
   ]){
     assert.ok(js.includes('rpc("'+rpc+'"'),rpc+' is not wired into Control Analytics');
   }
-  assert.match(js,/v_engagement_daily/);
   assert.match(js,/\/v1\/analytics\/business\?since=/);
   assert.match(js,/\/v1\/analytics\/identity\?since=/);
   assert.match(js,/\/v1\/analytics\/forensics\?since=/);
@@ -52,7 +51,7 @@ test('Control Analytics is mobile-first',async()=>{
   assert.match(css,/overflow-x:auto/);
 });
 
-test('owner identity and forensics endpoints are capability gated and exact-window aware',async()=>{
+test('owner identity and forensics endpoints are owner-only and exact-window aware',async()=>{
   const router=await read('workers/mccluster/src/analytics/router.js');
   assert.match(router,/path === '\/v1\/analytics\/identity'/);
   assert.match(router,/path === '\/v1\/analytics\/forensics'/);
@@ -61,8 +60,9 @@ test('owner identity and forensics endpoints are capability gated and exact-wind
   const idStart=router.indexOf('async function handleIdentityAnalytics');
   const fStart=router.indexOf('async function handleForensics');
   const cleanStart=router.indexOf('function cleanTxt',fStart);
-  assert.match(router.slice(idStart,fStart),/await requireHouseOps\(env, user\)/);
-  assert.match(router.slice(fStart,cleanStart),/await requireHouseOps\(env, user\)/);
+  assert.match(router.slice(idStart,fStart),/await requireHouseOwner\(env, user\)/);
+  assert.match(router.slice(fStart,cleanStart),/await requireHouseOwner\(env, user\)/);
+  assert.match(router,/membership\?\.role !== 'owner'/);
   assert.match(router,/url\.searchParams\.get\('since'\)/);
   assert.match(router,/url\.searchParams\.get\('until'\)/);
   assert.match(router,/minutes_after_last_track/);
@@ -75,4 +75,23 @@ test('business snapshot supports explicit selected-window bounds',async()=>{
   assert.match(router,/rawUntil = url\.searchParams\.get\('until'\)/);
   assert.match(router,/at >= sinceMs && at < untilMs/);
   assert.match(router,/if \(untilIso\) q\.append\(timeColumn/);
+});
+
+
+test('identity bridge reconstruction keeps recent rows and bounds the attribution interval',async()=>{
+  const router=await read('workers/mccluster/src/analytics/router.js');
+  assert.match(router,/const bridgeSince = new Date\(since\.getTime\(\) - 7 \* 86400000\)/);
+  assert.match(router,/const bridgeUntil = new Date\(until\.getTime\(\) \+ 7 \* 86400000\)/);
+  assert.match(router,/device_id=not\.is\.null.*at=gte\./s);
+  assert.match(router,/order=at\.desc/);
+});
+
+test('Audience analytics stays scoped to the selected property',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  assert.match(js,/rpc\("analytics_engagement_site",\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}\)/);
+  assert.match(js,/rpc\("analytics_funnel_site",\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}\)/);
+  assert.doesNotMatch(js,/v_engagement_daily/);
+  const sql=await read('supabase/migrations/20260926235000_control_analytics_site_scoped_audience.sql');
+  assert.match(sql,/e\.site_id is not distinct from p_site/);
+  assert.match(sql,/where p_site is null/);
 });
