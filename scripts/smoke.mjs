@@ -202,6 +202,14 @@ try {
       check("account: normal recovery language exists", await p.locator("#acForgot").count() === 1 &&
         /Forgot password\?/.test(await p.locator("#acForgot").innerText()));
       check("account: verification resend exists", await p.locator("#acResend").count() === 1);
+      check("account: signed-in security card exposes password change", await p.locator("#acNewPassword").count() === 1 &&
+        await p.locator("#acNewPassword2").count() === 1 && await p.locator("#acPasswordChange").count() === 1 &&
+        /Change password/.test(await p.locator("#acPasswordChange").innerText()));
+      check("account: password fields use new-password autocomplete", await p.evaluate(() =>
+        document.querySelector("#acNewPassword")?.autocomplete === "new-password" &&
+        document.querySelector("#acNewPassword2")?.autocomplete === "new-password"));
+      check("account: password change is wired to canonical auth", await p.evaluate(() =>
+        /MCC\.updatePassword\(password\)/.test(document.documentElement.innerHTML)));
       check("account: obsolete login language is absent", await p.evaluate(() =>
         !/email me a sign-in link|send sign-in link|one-time login link/i.test(document.body.innerText)));
       check("account: person tab is sign-in while signed out", await p.evaluate(() => {
