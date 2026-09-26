@@ -204,7 +204,10 @@ window.MCC_TRACK = (function () {
   }
   function signupAttributionSnapshot() {
     if (privacySignal()) return null;
-    var s = sessionId();
+    var s = sessionId(), heard = [];
+    try { heard = root.MCC_HEARD && root.MCC_HEARD.read ? root.MCC_HEARD.read() : []; } catch (_) {}
+    var last = heard && heard[0] || null;
+    if (last && (!last.at || Date.now()-Number(last.at) > 24*60*60*1000)) last = null;
     return {
       version: 1,
       device_id: deviceId || null,
@@ -213,7 +216,11 @@ window.MCC_TRACK = (function () {
       medium: ACQ && ACQ.med || "none",
       campaign: ACQ && ACQ.cmp || "",
       landing_path: location.pathname.split("/").pop() || "index.html",
-      captured_at: new Date().toISOString()
+      captured_at: new Date().toISOString(),
+      last_track: last && last.t || null,
+      last_album: last && last.a || null,
+      last_track_page: last && last.p || null,
+      last_track_at: last && last.at ? new Date(Number(last.at)).toISOString() : null
     };
   }
   window.MCC_ANALYTICS_CONTEXT = {
@@ -221,9 +228,26 @@ window.MCC_TRACK = (function () {
     prepareSignupAttribution: function () {
       var snapshot = signupAttributionSnapshot();
       if (!snapshot) return Promise.resolve(null);
-      /* Flush the listening/page events first so the database can prove the
-         pre-signup touch before the auth row is created. */
+      /* Flush the listening/page events first so the account-created
+         conversion cannot outrun its preceding music touch. */
       return Promise.resolve(flush(false)).then(function () { return snapshot; });
+    },
+    recordAccountCreated: function (snapshot) {
+      var p = { attributed:false };
+      if (snapshot) {
+        p.source=snapshot.source; p.medium=snapshot.medium; p.campaign=snapshot.campaign;
+        p.landing_path=snapshot.landing_path;
+        if (snapshot.last_track) {
+          p.attributed=true; p.track=snapshot.last_track; p.album=snapshot.last_album||"";
+          p.track_page=snapshot.last_track_page||"";
+          p.last_track_at=snapshot.last_track_at||null;
+          if (snapshot.last_track_at) {
+            p.seconds_since_track=Math.max(0,Math.round((Date.now()-new Date(snapshot.last_track_at).getTime())/1000));
+          }
+        }
+      }
+      queueEvent("account_created",p);
+      return flush(false);
     }
   };
 
@@ -587,7 +611,7 @@ window.MCC_MODEL = (function () {
       safe(function () {
         var t = String(params.track);
         var list = read().filter(function (r) { return r && r.t !== t; });
-        list.unshift({ t: t, a: String(params.album || ""), at: Date.now() });
+        list.unshift({ t: t, a: String(params.album || ""), p: location.pathname.split("/").pop() || "index.html", at: Date.now() });
         localStorage.setItem(KEY, JSON.stringify(list.slice(0, CAP)));
       });
     }
