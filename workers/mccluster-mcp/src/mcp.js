@@ -46,6 +46,8 @@ const REMOTE_CAPABILITIES = new Set([
   'system.health',
   'ai.chat',
   'compute.task.get',
+  'core.ai.turn.submit',
+  'core.ai.turn.get',
   'research.web',
   'media.models.search',
   'media.model.recommend',
