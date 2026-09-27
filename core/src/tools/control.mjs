@@ -8,6 +8,7 @@ import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
+import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -43,6 +44,32 @@ const BASE_TOOLS = [
     name: 'core.compute.task.get', title: 'Read compute task',
     description: 'Read one durable compute task owned by the requested organization, including status, result, and error. Read-only.',
     inputSchema: { type: 'object', required: ['org_id', 'task_id'], properties: { org_id: { type: 'string' }, task_id: { type: 'string' } }, additionalProperties: false }
+  },
+  {
+    name: 'core.ai.turn.submit', title: 'Submit durable McCluster conversation turn',
+    description: 'Atomically persist a resident McCluster user turn and queue VPS-owned inference. Once accepted, the browser may disconnect without canceling the turn.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'thread_id', 'message_id', 'content'],
+      properties: {
+        org_id: { type: 'string' },
+        thread_id: { type: 'string' },
+        message_id: { type: 'string' },
+        content: { type: 'string', minLength: 1, maxLength: 12000 },
+        input_mode: { type: 'string', enum: ['text', 'voice'] }
+      },
+      additionalProperties: false
+    }
+  },
+  {
+    name: 'core.ai.turn.get', title: 'Read durable McCluster conversation turn',
+    description: 'Read the VPS-owned resident AI job plus its persisted user and assistant messages. Read-only.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'turn_id'],
+      properties: { org_id: { type: 'string' }, turn_id: { type: 'string' } },
+      additionalProperties: false
+    }
   },
   {
     name: 'core.repo.inspect', title: 'Inspect repository',
@@ -105,6 +132,23 @@ export async function callControlTool(name, args = {}, options = {}) {
     const task = await computeTaskById({ orgId, taskId });
     if (!task) throw Object.assign(new Error('compute task not found'), { status: 404 });
     return { task };
+  }
+
+  if (name === 'core.ai.turn.submit') {
+    return submitResidentAiTurn({
+      orgId: requireOrg(args.org_id),
+      threadId: args.thread_id,
+      messageId: args.message_id,
+      content: args.content,
+      inputMode: args.input_mode,
+    });
+  }
+
+  if (name === 'core.ai.turn.get') {
+    return getResidentAiTurn({
+      orgId: requireOrg(args.org_id),
+      turnId: args.turn_id,
+    });
   }
 
   if (name === 'core.repo.inspect') {
