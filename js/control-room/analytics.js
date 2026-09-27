@@ -134,13 +134,14 @@
     else if(x.name==="forensics")S.data.forensics=v||{};
     else if(x.name==="business")S.data.business=v||null;
   }
-  function runLimited(tasks,limit,onResult){
+  function runLimited(tasks,limit,onResult,shouldContinue){
     limit=Math.max(1,Number(limit)||1);
     return new Promise(function(resolve){
       var out=new Array(tasks.length),next=0,active=0;
       function pump(){
+        if(shouldContinue&&!shouldContinue()){if(active===0)resolve(out);return;}
         if(next>=tasks.length&&active===0){resolve(out);return;}
-        while(active<limit&&next<tasks.length){
+        while(active<limit&&next<tasks.length&&(!shouldContinue||shouldContinue())){
           (function(i){
             var task=tasks[i];active++;
             Promise.resolve().then(function(){return task.run();}).then(
@@ -187,7 +188,7 @@
       applyResult(x);
       S.error=S.errors.daily||S.errors.totals||null;
       paint();
-    }).then(function(){
+    },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
       S.loading=false;S.loaded=true;S.error=S.errors.daily||S.errors.totals||null;paint();
     });
