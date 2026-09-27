@@ -1,0 +1,123 @@
+name: One-shot deploy OVH inference gate c34d5d12
+
+on:
+  push:
+    branches:
+      - ops/deploy-ovh-c34d5d12-one-shot
+    paths:
+      - .github/workflows/one-shot-ovh-c34d5d12.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-shot-ovh-c34d5d12
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy exact OVH inference-gate hotfix
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    env:
+      TARGET_SHA: c34d5d12debfba96e3a23272558a461b2272d177
+
+    steps:
+      - name: Checkout main for provenance validation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate and checkout exact hotfix
+        run: |
+          set -euo pipefail
+          git fetch origin main deploy/ovh-production
+          git cat-file -e "${TARGET_SHA}^{commit}"
+          git merge-base --is-ancestor "${TARGET_SHA}" origin/main
+          test "$(git rev-parse origin/deploy/ovh-production)" = "${TARGET_SHA}"
+          git checkout --detach "${TARGET_SHA}"
+          test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
+
+      - name: Validate Core before transfer
+        working-directory: core
+        run: |
+          set -euo pipefail
+          npm run check
+          npm test
+
+      - name: Configure pinned SSH trust
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY"
+          test -n "$OVH_KNOWN_HOSTS"
+          test -n "$OVH_HOST"
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Transfer exact checkout to OVH staging
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_HOST"
+          test -n "$OVH_USER"
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          SSH_OPTS="-p $PORT -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTS "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
+          rsync -az --delete -e "ssh $SSH_OPTS" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+
+      - name: Deploy exact hotfix with rollback protection
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
+            "sudo bash '$STAGE/scripts/deploy-ovh-core.sh' '$STAGE' '$TARGET_SHA' && rm -rf '$STAGE'"
+
+      - name: Verify exact revision and resident AI services
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
+            "set -e; \
+             systemctl is-active --quiet mccluster-core-runner.service; \
+             systemctl is-active --quiet mccluster-core-tool-broker.service; \
+             systemctl is-active --quiet mccluster-ollama-adapter.service; \
+             systemctl is-active --quiet mccluster-compute-node.service; \
+             curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4790/health; \
+             grep -Fq '\"commit_sha\":\"$TARGET_SHA\"' /opt/mccluster/core/.mccluster-deploy.json; \
+             cat /opt/mccluster/core/.mccluster-deploy.json"
+
+      - name: Verify public Core reports exact deployment
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [[ "$deployed" = "$TARGET_SHA" ]]; then
+              printf '%s\n' "$body"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
+            sleep 5
+          done
+          exit 1
