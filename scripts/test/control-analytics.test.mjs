@@ -25,6 +25,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/var q=\+\+S\.seq/);
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
+  assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
   assert.match(js,/S\.loading=true;S\.error=null;S\.errors=\{\};paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
@@ -86,10 +87,14 @@ test('identity bridge reconstruction keeps recent rows and bounds the attributio
   assert.match(router,/order=at\.desc/);
 });
 
-test('Audience analytics never mixes external properties into global engagement or funnel data',async()=>{
+test('Audience analytics stays inside the exact selected property and timestamp window',async()=>{
   const js=await read('js/control-room/analytics.js');
-  assert.match(js,/site===null\?S\.supa\("v_engagement_daily/);
+  assert.match(js,/daily=\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}/);
+  assert.doesNotMatch(js,/v_engagement_daily/);
+  assert.match(js,/Audience trend/);
+  assert.match(js,/S\.data\.traffic&&S\.data\.traffic\.byDay/);
   assert.match(js,/site===null\?rpc\("analytics_funnel"/);
+  assert.match(js,/settled\("business",site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
 });
