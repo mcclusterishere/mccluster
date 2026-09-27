@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { mkdir, readdir, readFile, writeFile, rename, lstat, stat } from 'node:fs/promises';
 
-const ROOT = path.resolve(process.env.MCCLUSTER_HOME_ROOT || '/var/lib/mccluster-core/home');
+const ROOT = path.resolve(process.env.MCCLUSTER_HOME_ROOT || path.join(process.env.HOME || '/var/lib/mccluster-core', 'home'));
 const MAX_FILE_BYTES = Math.max(16 * 1024, Math.min(4 * 1024 * 1024, Number(process.env.MCCLUSTER_HOME_MAX_FILE_BYTES || 1024 * 1024)));
 const STANDARD_DIRS = Object.freeze(['notes', 'artifacts', 'scratch', 'state', 'inbox', 'outbox']);
 
