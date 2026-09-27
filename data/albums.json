@@ -200,10 +200,15 @@
    "slug": "cia-mind-control",
    "name": "CIA Mind Control",
    "artist": "KKK",
-   "tag": "The album · 2 tracks",
+   "tag": "The album · 3 tracks",
    "art": "assets/img/cia-mind-control-cover.jpg",
    "by": "",
    "tracks": [
+    {
+     "title": "Pull Up",
+     "src": "assets/audio/pull-up.mp3",
+     "poster": "assets/img/cia-mind-control-cover.jpg"
+    },
     {
      "title": "Niggy Nigg Niggr",
      "src": "assets/audio/niggy-nigg-preview.mp3",
