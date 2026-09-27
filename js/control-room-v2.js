@@ -256,8 +256,9 @@
       : { recognition: false, synthesis: false, recognitionEngine: null };
   }
 
-  function stopAiVoiceListening() {
-    if (VOICE && VOICE.stopListening) VOICE.stopListening();
+  function stopAiVoiceListening(discard) {
+    if (discard && VOICE && VOICE.cancelListening) VOICE.cancelListening();
+    else if (VOICE && VOICE.stopListening) VOICE.stopListening();
     state.aiVoiceListening = false;
     state.aiVoiceTranscript = "";
   }
@@ -2353,10 +2354,10 @@
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
     else if (action === "ai") setSurface("ai");
-    else if (action === "ai-new-thread") { stopAiVoiceListening(); stopAiVoiceSpeech(); createAiThread(); }
-    else if (action === "ai-select-thread") { stopAiVoiceListening(); stopAiVoiceSpeech(); state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; state.aiVoiceError = null; render(); }
+    else if (action === "ai-new-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); createAiThread(); }
+    else if (action === "ai-select-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; state.aiVoiceError = null; render(); }
     else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value, { inputMode: "text", speakReply: false }); }
-    else if (action === "ai-voice-toggle") { if (state.aiVoiceListening) { stopAiVoiceListening(); render(); } else startAiVoiceTurn(); }
+    else if (action === "ai-voice-toggle") { if (state.aiVoiceListening) { stopAiVoiceListening(false); render(); } else startAiVoiceTurn(); }
     else if (action === "ai-stop-speaking") { stopAiVoiceSpeech(); render(); }
     else if (action === "ai-speak-message") { var voiceMessage = aiMessageById(el && el.getAttribute("data-id")); if (voiceMessage && voiceMessage.role === "assistant") speakAiText(voiceMessage.content); }
     else if (action === "work-inbox") setSurface("work", "inbox");
