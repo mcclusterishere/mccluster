@@ -27,6 +27,7 @@
     selectedAiThreadId: null,
     aiChatPending: false,
     aiChatError: null,
+    aiChatTask: null,
     aiChatDraft: "",
     coreBridge: null,
     coreTools: [],
@@ -320,6 +321,8 @@
       return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
         var task = payload && payload.task;
         if (!task) throw new Error("AI compute task disappeared");
+        state.aiChatTask = task;
+        render();
         if (task.status === "done") return task;
         if (task.status === "failed" || task.status === "canceled") {
           throw new Error(task.last_error || ("AI compute task " + task.status));
@@ -342,6 +345,7 @@
     return threadPromise.then(function (thread) {
       if (!thread) throw new Error("Select or create a chat first");
       state.aiChatPending = true;
+      state.aiChatTask = null;
       state.aiChatDraft = "";
       render();
       return saveAiMessage(thread, { role: "user", content: content }).then(function (saved) {
@@ -366,7 +370,9 @@
           .then(function (queued) {
             var task = queued && queued.task;
             if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
-            return waitForAiTask(task.id, 60);
+            state.aiChatTask = task;
+            render();
+            return waitForAiTask(task.id, 330);
           })
           .then(function (task) {
             var answer = aiTaskAnswer(task);
@@ -393,6 +399,7 @@
       state.aiChatError = error.message || String(error);
     }).then(function () {
       state.aiChatPending = false;
+      state.aiChatTask = null;
       render();
     });
   }
@@ -620,10 +627,18 @@
       }).join("");
     }
     if (state.aiChatPending) {
-      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>local compute</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> Thinking on your compute…</div></div>';
+      var taskStatus = state.aiChatTask && state.aiChatTask.status || "queued";
+      var pendingCopy = taskStatus === "running"
+        ? "Thinking on your compute…"
+        : taskStatus === "leased"
+          ? "Local compute reserved. Starting inference…"
+          : "Queued for local compute. Your message is saved and has not been lost.";
+      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + '</div></div>';
     }
 
     return renderHeader("AI", "A persistent conversation with the resident McCluster model running through your own control plane.") +
+      sourceBanner(state.sources.coreBridge, "Core bridge") +
+      sourceBanner(state.sources.coreTools, "AI execution path") +
       sourceBanner(state.sources.aiThreads, "AI conversations") +
       '<div class="cr-ai-chat">' +
         '<aside class="cr-ai-chat__sidebar"><div class="cr-ai-chat__sidehead">' +
