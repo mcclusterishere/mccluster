@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../../js/control-room-v2.js', import.meta.url), 'utf8');
+const voice = await readFile(new URL('../../js/control-room/voice.js', import.meta.url), 'utf8');
+const controlHtml = await readFile(new URL('../../control.html', import.meta.url), 'utf8');
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
 const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
@@ -76,6 +79,26 @@ test('resident local AI chat is durable and multi-turn', () => {
   assert.match(source, /sourceBanner\(state\.sources\.coreTools, "AI execution path"\)/);
   assert.match(source, /Message McCluster AI/);
 });
+
+test('resident AI voice stays on the canonical durable chat path', () => {
+  assert.doesNotThrow(() => new vm.Script(voice));
+  assert.doesNotThrow(() => new vm.Script(source));
+  assert.match(controlHtml, /js\/control-room\/voice\.js/);
+  assert.match(voice, /window\.SpeechRecognition \|\| window\.webkitSpeechRecognition/);
+  assert.match(voice, /window\.speechSynthesis/);
+  assert.match(voice, /new window\.SpeechSynthesisUtterance/);
+  assert.match(voice, /cancelListening/);
+  assert.match(source, /stopAiVoiceListening\(true\)/);
+  assert.match(source, /function startAiVoiceTurn\(/);
+  assert.match(source, /sendAiMessage\(spoken, \{ inputMode: "voice", speakReply: true \}\)/);
+  assert.match(source, /metadata: \{ input_mode: inputMode \}/);
+  assert.match(source, /data-action="ai-voice-toggle"/);
+  assert.match(source, /data-action="ai-stop-speaking"/);
+  assert.match(source, /data-action="ai-speak-message"/);
+  assert.match(source, /if \(opts\.speakReply\) speakAiText\(savedAssistant\.content\)/);
+  assert.doesNotMatch(source, /\/v1\/ai\/voice/);
+});
+
 
 
 test('resident AI history is owner-only durable state', () => {

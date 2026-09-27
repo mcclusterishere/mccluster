@@ -29,6 +29,10 @@
     aiChatError: null,
     aiChatTask: null,
     aiChatDraft: "",
+    aiVoiceListening: false,
+    aiVoiceSpeaking: false,
+    aiVoiceError: null,
+    aiVoiceTranscript: "",
     coreBridge: null,
     coreTools: [],
     coreResume: null,
@@ -92,6 +96,7 @@
   var okResult = SRC.okResult, badResult = SRC.badResult, classifySourceError = SRC.classifySourceError;
   var src = SRC.src, rowsOf = SRC.rowsOf, dataOf = SRC.dataOf, pickRows = SRC.pickRows;
   var sourceBanner = SRC.sourceBanner, sourceStates = SRC.sourceStates;
+  var VOICE = window.CR.voice || null;
 
   function token() { return window.MCC_SUPA && window.MCC_SUPA.token ? window.MCC_SUPA.token() : Promise.resolve(null); }
   function sbBase() { return window.MCC_SUPA && window.MCC_SUPA.url; }
@@ -243,6 +248,94 @@
     var output = task && task.output || {};
     var answer = output.content || output.text || output.answer;
     return typeof answer === "string" ? answer.trim() : "";
+  }
+
+  function aiVoiceCapabilities() {
+    return VOICE && VOICE.capabilities
+      ? VOICE.capabilities()
+      : { recognition: false, synthesis: false, recognitionEngine: null };
+  }
+
+  function stopAiVoiceListening(discard) {
+    if (discard && VOICE && VOICE.cancelListening) VOICE.cancelListening();
+    else if (VOICE && VOICE.stopListening) VOICE.stopListening();
+    state.aiVoiceListening = false;
+    state.aiVoiceTranscript = "";
+  }
+
+  function stopAiVoiceSpeech() {
+    if (VOICE && VOICE.cancelSpeech) VOICE.cancelSpeech();
+    state.aiVoiceSpeaking = false;
+  }
+
+  function speakAiText(value) {
+    var content = String(value || "").trim();
+    var caps = aiVoiceCapabilities();
+    if (!content || !caps.synthesis || !VOICE || !VOICE.speak) return false;
+    state.aiVoiceError = null;
+    return VOICE.speak(content, {
+      lang: navigator.language || "en-US",
+      onState: function (next) {
+        state.aiVoiceSpeaking = Boolean(next && next.speaking);
+        render();
+      },
+      onError: function (error) {
+        state.aiVoiceSpeaking = false;
+        state.aiVoiceError = error && error.message ? error.message : String(error || "Voice playback failed");
+        render();
+      }
+    });
+  }
+
+  function startAiVoiceTurn() {
+    var caps = aiVoiceCapabilities();
+    if (!caps.recognition || !VOICE || !VOICE.startListening) {
+      state.aiVoiceError = "Voice input is not available in this browser. You can still use the device keyboard dictation button or type.";
+      render();
+      return;
+    }
+    if (state.aiChatPending) {
+      state.aiVoiceError = "Wait for the current AI turn to finish before starting another voice turn.";
+      render();
+      return;
+    }
+
+    state.aiVoiceError = null;
+    state.aiVoiceTranscript = "";
+    state.aiChatDraft = "";
+    stopAiVoiceSpeech();
+
+    VOICE.startListening({
+      lang: navigator.language || "en-US",
+      onState: function (next) {
+        state.aiVoiceListening = Boolean(next && next.listening);
+        render();
+      },
+      onTranscript: function (result) {
+        var spoken = String(result && result.text || "").trim();
+        state.aiVoiceTranscript = spoken;
+        state.aiChatDraft = spoken;
+        if (!result || !result.final) {
+          render();
+          return;
+        }
+        state.aiVoiceListening = false;
+        state.aiVoiceTranscript = "";
+        state.aiChatDraft = "";
+        render();
+        if (spoken) sendAiMessage(spoken, { inputMode: "voice", speakReply: true });
+      },
+      onError: function (error) {
+        state.aiVoiceListening = false;
+        state.aiVoiceError = error && error.message ? error.message : String(error || "Voice input failed");
+        render();
+      }
+    });
+  }
+
+  function aiMessageById(id) {
+    var messages = state.selectedAiThreadId ? aiMessagesFor(state.selectedAiThreadId) : [];
+    return messages.find(function (message) { return String(message.id) === String(id); }) || null;
   }
 
   function loadAiMessages(threadId, force) {
@@ -498,10 +591,12 @@
     return poll(attempts);
   }
 
-  function sendAiMessage(value) {
+  function sendAiMessage(value, opts) {
+    opts = opts || {};
     var content = String(value || "").trim();
     if (!content || state.aiChatPending) return Promise.resolve();
     state.aiChatError = null;
+    var inputMode = opts.inputMode === "voice" ? "voice" : "text";
     var threadPromise = state.selectedAiThreadId
       ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
       : createAiThread();
@@ -512,7 +607,11 @@
       state.aiChatTask = null;
       state.aiChatDraft = "";
       render();
-      return saveAiMessage(thread, { role: "user", content: content }).then(function (saved) {
+      return saveAiMessage(thread, {
+        role: "user",
+        content: content,
+        metadata: { input_mode: inputMode }
+      }).then(function (saved) {
         var messages = aiMessagesFor(thread.id);
         messages.push(saved);
         state.aiMessages[thread.id] = messages;
@@ -561,6 +660,7 @@
             state.aiThreads.sort(function (a, b) {
               return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
             });
+            if (opts.speakReply) speakAiText(savedAssistant.content);
           });
       });
     }).catch(function (error) {
@@ -619,6 +719,10 @@
   }
   function setSurface(surface, view, replace) {
     if (SURFACES.indexOf(surface) < 0) return;
+    if (state.surface === "ai" && surface !== "ai") {
+      stopAiVoiceListening(true);
+      stopAiVoiceSpeech();
+    }
     state.surface = surface;
     if (surface === "work" && view) state.workView = normalizeWorkView(view);
     if (surface === "create") state.createView = normalizeCreateView(view);
@@ -768,6 +872,7 @@
     var messages = selected ? aiMessagesFor(selected.id) : [];
     var messageError = selected && state.pending["aiMessages:" + selected.id + ":error"];
     var ready = coreToolAvailable("ai.chat");
+    var voiceCaps = aiVoiceCapabilities();
 
     var threads = state.aiThreads.length
       ? state.aiThreads.map(function (thread) {
@@ -789,8 +894,11 @@
         var detail = !mine && (message.model || message.implementation)
           ? " · " + [message.model, message.implementation].filter(Boolean).join(" · ")
           : "";
+        var speakControl = !mine && voiceCaps.synthesis
+          ? '<button class="cr-ai-voice-replay" type="button" data-action="ai-speak-message" data-id="' + esc(message.id) + '" aria-label="Speak this McCluster AI reply">Speak</button>'
+          : "";
         return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
-          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span></div>' +
+          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + speakControl + '</div>' +
           '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
       }).join("");
     }
@@ -818,9 +926,17 @@
           '<div class="cr-ai-chat__messages">' + (messageError ? sourceBanner(messageError, "Conversation") : "") + body + '</div>' +
           '<footer class="cr-ai-chat__composer">' +
             (state.aiChatError ? '<p class="cr-fail">' + esc(state.aiChatError) + '</p>' : "") +
-            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="Message McCluster AI…" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending ? " disabled" : "") + '></textarea>' +
-            '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending ? " disabled" : "") + '>Send</button></div>' +
-            '<p class="cr-ai-chat__hint">Enter to send · Shift+Enter for a new line · conversation persists in McCluster.</p>' +
+            (state.aiVoiceError ? '<p class="cr-fail cr-ai-voice-error">' + esc(state.aiVoiceError) + '</p>' : "") +
+            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="' + (state.aiVoiceListening ? "Listening…" : "Message McCluster AI…") + '" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '></textarea>' +
+            '<button class="cr-btn cr-btn--voice' + (state.aiVoiceListening ? " is-listening" : "") + '" type="button" data-action="ai-voice-toggle"' + (!ready || state.aiChatPending || !voiceCaps.recognition ? " disabled" : "") + ' aria-pressed="' + (state.aiVoiceListening ? "true" : "false") + '">' + (state.aiVoiceListening ? "Stop" : "Talk") + '</button>' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '>Send</button></div>' +
+            '<div class="cr-ai-voice-status" role="status" aria-live="polite">' +
+              '<span>' + (voiceCaps.recognition ? (state.aiVoiceListening ? "Listening now" : "Mic ready") : "Mic unavailable") + '</span>' +
+              '<span>' + (voiceCaps.synthesis ? (state.aiVoiceSpeaking ? "Speaking reply" : "Voice reply ready") : "Speech playback unavailable") + '</span>' +
+              (state.aiVoiceSpeaking ? '<button class="cr-ai-voice-stop" type="button" data-action="ai-stop-speaking">Stop voice</button>' : "") +
+              (state.aiVoiceTranscript ? '<span class="cr-ai-voice-transcript">Heard: ' + esc(state.aiVoiceTranscript) + '</span>' : "") +
+            '</div>' +
+            '<p class="cr-ai-chat__hint">Talk sends one voice turn and reads that reply aloud. Voice recognition is provided by your browser/device; the resulting text uses the same durable McCluster conversation. Enter sends text · Shift+Enter adds a line.</p>' +
           '</footer></section></div>';
   }
 
@@ -2236,9 +2352,12 @@
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
     else if (action === "ai") setSurface("ai");
-    else if (action === "ai-new-thread") createAiThread();
-    else if (action === "ai-select-thread") { state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; render(); }
-    else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value); }
+    else if (action === "ai-new-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); createAiThread(); }
+    else if (action === "ai-select-thread") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; state.aiVoiceError = null; render(); }
+    else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value, { inputMode: "text", speakReply: false }); }
+    else if (action === "ai-voice-toggle") { if (state.aiVoiceListening) { stopAiVoiceListening(false); render(); } else startAiVoiceTurn(); }
+    else if (action === "ai-stop-speaking") { stopAiVoiceSpeech(); render(); }
+    else if (action === "ai-speak-message") { var voiceMessage = aiMessageById(el && el.getAttribute("data-id")); if (voiceMessage && voiceMessage.role === "assistant") speakAiText(voiceMessage.content); }
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
