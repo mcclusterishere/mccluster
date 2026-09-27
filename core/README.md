@@ -39,6 +39,12 @@ There are two Unix identities plus one shared worktree group:
 
 OpenCode also has explicit tool-policy denies for web access, subagents, external directories, Git pushes/commits/remotes, GitHub CLI, SSH/SCP/SFTP, curl, wget, `.env`, private-key, and credential files. The parent runner performs Git commits/pushes after inspecting the diff.
 
+## Persistent resident AI sessions
+
+The browser is a terminal, not the owner of a McCluster conversation. Resident Control turns are accepted through `core.ai.turn.submit`, which atomically writes the user's message and a `resident_ai_turn` row into the canonical Supabase job system. From that point forward the OVH runner owns execution and persists the assistant reply even if the browser disconnects, reloads, sleeps, or is closed.
+
+Canonical conversation/memory truth remains in Supabase (`ops_ai_threads`, `ops_ai_messages`, and private `ai_context`). The VPS persistent directories above are McCluster's machine workspace, checkpoints, repositories, and artifacts; they are deliberately not a second conversation database or shadow memory service.
+
 ## Local model
 
 The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
@@ -51,7 +57,10 @@ A larger model can be tested later, but do not make a ~19–20 GB model the alwa
 /opt/mccluster/core                 root-owned deployed runner code
 /etc/mccluster/core.env             root:mccluster-core 0640 — production secrets
 /etc/mccluster/agent.env            root:mccluster-agent 0640 — loopback OpenCode password only
-/var/lib/mccluster-core             runner HOME / GitHub CLI credential store
+/var/lib/mccluster-core             McCluster runner HOME / GitHub CLI credential store
+/var/lib/mccluster-core/workspace   persistent McCluster working files and resumable machine state
+/var/lib/mccluster-core/sessions    persistent execution-session/checkpoint files (not canonical conversation memory)
+/var/lib/mccluster-core/artifacts   persistent locally generated artifacts owned by McCluster Core
 /var/lib/mccluster-agent            OpenCode HOME/config/state
 /srv/mccluster/repos                persistent source clones
 /srv/mccluster/worktrees            disposable autonomous coding worktrees
