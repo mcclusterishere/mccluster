@@ -86,7 +86,7 @@ test('resident AI voice stays on the canonical durable chat path', () => {
   assert.match(controlHtml, /js\/control-room\/voice\.js/);
   assert.match(voice, /window\.SpeechRecognition \|\| window\.webkitSpeechRecognition/);
   assert.match(voice, /window\.speechSynthesis/);
-  assert.match(voice, /new SpeechSynthesisUtterance/);
+  assert.match(voice, /new window\.SpeechSynthesisUtterance/);
   assert.match(voice, /cancelListening/);
   assert.match(source, /stopAiVoiceListening\(true\)/);
   assert.match(source, /function startAiVoiceTurn\(/);
