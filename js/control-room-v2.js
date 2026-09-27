@@ -634,7 +634,15 @@
         ["failed", "canceled"].indexOf(status) < 0 &&
         !assistantTaskIds.has(String(m.compute_task_id));
     });
-    if (!unresolved.length) return Promise.resolve(messages);
+    var unlinked = messages.filter(function (message, index) {
+      if (!message || message.role !== "user" || message.compute_task_id) return false;
+      for (var i = index + 1; i < messages.length; i += 1) {
+        if (messages[i].role === "assistant") return false;
+        if (messages[i].role === "user") break;
+      }
+      return true;
+    });
+    if (!unresolved.length && !unlinked.length) return Promise.resolve(messages);
 
     var key = "aiRecover:" + thread.id;
     if (state.pending[key]) return Promise.resolve(messages);
@@ -698,6 +706,17 @@
         failures.push(error.message || String(error));
         return null;
       });
+    });
+
+    unlinked.forEach(function (userMessage) {
+      inspections.push(
+        queueAiTaskForSavedUser(thread, userMessage, messages).then(function (queued) {
+          return { userMessage: queued.userMessage, task: queued.task };
+        }).catch(function (error) {
+          failures.push("Undispatched saved turn " + String(userMessage.id).slice(0, 12) + ": " + (error.message || String(error)));
+          return null;
+        })
+      );
     });
 
     return Promise.all(inspections).then(function (items) {
