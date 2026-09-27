@@ -778,6 +778,10 @@
     {
       "version": "20260927195014",
       "name": "mnet_welcome_every_new_member"
+    },
+    {
+      "version": "20260927222835",
+      "name": "resident_ai_durable_vps_turn"
     }
   ]
 }
