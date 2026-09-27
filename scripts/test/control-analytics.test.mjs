@@ -76,6 +76,65 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
 });
 
 
+test('custom range edits survive progressive Analytics repaints',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  const from={value:'',oninput:null},through={value:'',oninput:null};
+  const host={
+    innerHTML:'',
+    querySelector:(sel)=>sel==='#craFrom'?from:sel==='#craThrough'?through:null,
+    querySelectorAll:()=>[]
+  };
+  A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
+  A.mount(host);
+  A.state.rangeId='custom';
+  from.value='2026-09-01';through.value='2026-09-27';
+  assert.equal(typeof from.oninput,'function');
+  assert.equal(typeof through.oninput,'function');
+  from.oninput();through.oninput();
+  assert.equal(A.state.from,'2026-09-01');
+  assert.equal(A.state.through,'2026-09-27');
+  assert.match(A.render(),/value="2026-09-01"/);
+  assert.match(A.render(),/value="2026-09-27"/);
+});
+
+test('all six Analytics sections render representative successful data',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
+  A.state.range={label:'7 days',since:'2026-09-20T00:00:00Z',until:'2026-09-27T00:00:00Z'};
+  A.state.loaded=true;
+  A.state.data={
+    traffic:{byDay:[{day:'2026-09-27',page_views:10,visitors:4,sessions:5}],totals:{page_views:10,visitors:4,sessions:5,plays:3,events:20},pages:[{path:'index.html',count:10}],sources:[{source:'direct',count:5}],countries:[{country:'US',count:4}],networks:[{network:'wifi',count:4}]},
+    funnel:[{arrived:10,heard_something:8,engaged:6,searched:3,asked_for_something:2,made_an_account:1,confirmed_the_email:1,reached_checkout:1,paid:0}],
+    acquisition:[{source:'direct',people:4}],paths:[{from_page:'index.html',to_page:'listen.html',moves:3}],
+    content:[{track:'pull up',album:'cia-mind-control',starts:3,listeners:2,repeat_listeners:1,plays_per_listener:1.5,full_plays:1,completions:1,shares:1}],
+    contentEvents:[{event_name:'album_play',events:3}],
+    identity:{coverage:{accounts:1,bridged_accounts:1,attributed_accounts:1,accounts_with_ip:1,accounts_with_location:1},tracks:[{track:'pull up',last_touch_accounts:1,assisted_accounts:1}],journeys:[{created_at:'2026-09-27T00:00:00Z',first_name:'Test',source:'direct',last_track:'pull up',minutes_after_last_track:5}]},
+    forensics:{events:[{at:'2026-09-27T00:00:00Z',name:'page_view',path:'index.html',country:'US',device:{platform:'test'}}]},
+    business:{snapshot:{users:{total:1,created_in_window:1},window:true,music:{plays:{in_window:3,total:3},revenue:{gross_cents_in_window:100,gross_cents:100}}}}
+  };
+  const expected={
+    overview:/Traffic trend/,
+    audience:/Conversion funnel/,
+    content:/Reach vs repeat/,
+    identity:/Source → track → account/,
+    forensics:/Owner-only telemetry/,
+    setup:/Install \/ verify/
+  };
+  for(const [section,marker] of Object.entries(expected)){
+    A.state.section=section;
+    assert.doesNotThrow(()=>A.render(),section+' threw');
+    assert.match(A.render(),marker,section+' did not render its expected panel');
+  }
+});
+
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
