@@ -1938,6 +1938,10 @@
     return '<a class="cr-app-card" href="' + esc(href || "#") + '"' + (external ? ' target="_blank" rel="noopener"' : "") + '><strong>' + esc(title) + '</strong><small>' + esc(subtitle || "") + '</small><span class="cr-app-card__foot"><span>' + esc(meta || "Specialized app") + '</span><span>Open ↗</span></span></a>';
   }
   function renderAnalytics() {
+    if (!window.CR.analytics) {
+      return renderHeader("Analytics", "Traffic, audience, content and diagnostics in the canonical Control shell.") +
+        '<div class="cr-canvas">' + empty("Analytics unavailable", "The native Analytics module did not load. Refresh Control Room; this surface will not fail silently.") + '</div>';
+    }
     return '<div id="crAnalyticsMount"></div>';
   }
 
@@ -1960,7 +1964,17 @@
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
     bindSurfaceControls();
-    if (state.surface === "analytics" && window.CR.analytics) window.CR.analytics.mount($("crAnalyticsMount"));
+    if (state.surface === "analytics" && window.CR.analytics) {
+      var analyticsHost = $("crAnalyticsMount");
+      if (analyticsHost) {
+        try {
+          window.CR.analytics.mount(analyticsHost);
+        } catch (analyticsErr) {
+          analyticsHost.innerHTML = empty("Analytics failed to start", "The native Analytics module threw during startup. Refresh Control Room; if it repeats, inspect the browser console.");
+          try { console.error("Control Analytics mount failed", analyticsErr); } catch (_) {}
+        }
+      }
+    }
     /* Selecting a thread and landing on the inbox both need the transcript;
        doing it after render keeps the fetch out of the render path. */
     /* Create's own sources load when Create is opened, the same way the
