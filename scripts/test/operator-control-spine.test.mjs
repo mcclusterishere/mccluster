@@ -9,6 +9,7 @@ const controlHtml = await readFile(new URL('../../control.html', import.meta.url
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
 const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
+const aiHarness = await readFile(new URL('../../docs/control-plane/AI-HARNESS.md', import.meta.url), 'utf8');
 
 test('Operator OS commands the signed Core MCP surface, not the legacy task route', () => {
   assert.match(source, /request\("\/v1\/core\/mcp"/);
@@ -50,6 +51,16 @@ test('owner approvals stay human-gated at Cloudflare', () => {
   assert.match(source, /pending_approvals/);
 });
 
+
+test('resident AI canonical name is McCluster', () => {
+  assert.match(aiHarness, /^# McCluster AI Harness/m);
+  assert.match(aiHarness, /The resident AI is named \*\*McCluster\*\*/);
+  for (const artifact of [source, voice, aiHarness]) {
+    assert.doesNotMatch(artifact, /\bCluster AI\b/);
+    assert.doesNotMatch(artifact, /\bresident Cluster\b/);
+    assert.doesNotMatch(artifact, /\b(?:ask|talk to|message) Cluster\b/i);
+  }
+});
 
 test('resident local AI chat is durable and multi-turn', () => {
   assert.match(source, /SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
