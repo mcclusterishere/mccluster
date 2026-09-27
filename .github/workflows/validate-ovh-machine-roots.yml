@@ -1,0 +1,37 @@
+name: Validate OVH McCluster machine roots
+
+on:
+  push:
+    branches:
+      - ops/validate-ovh-machine-roots-20260927
+    paths:
+      - .github/workflows/validate-ovh-machine-roots.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate exact machine-roots hotfix
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: 61e0b91d430894dda3a549659f3a671cbee13ea5
+    steps:
+      - name: Checkout exact hotfix
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+      - name: Verify exact target
+        run: test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+      - name: Validate deploy script syntax
+        run: bash -n scripts/deploy-ovh-core.sh
+      - name: Syntax-check Core
+        working-directory: core
+        run: npm run check
+      - name: Run Core tests
+        working-directory: core
+        run: npm test
+      - name: Run machine-root regression explicitly
+        working-directory: core
+        run: node --test test/mccluster-machine-roots.test.mjs
