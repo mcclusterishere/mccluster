@@ -62,8 +62,9 @@ node holds the repo at `/srv/mccluster/repos/mccluster` on branch
 background reflection and an interactive compute task could contend for the
 same model outside one scheduler.
 
-Repo correction added 2026-09-27: every Core local-model consumer now enters
-through the loopback Ollama adapter. The adapter serializes inference in memory,
+Repo correction added 2026-09-27: resident Core inference for chat, analysis,
+planning, reflection, objective synthesis, SMS assistance, and meeting debriefs now
+enters through the loopback Ollama adapter. The adapter serializes inference in memory,
 reports queue/busy state, and orders waiting work by priority. Durable
 `ai.chat` compute tasks retain priority `0`; unattended analysis/planning
 uses negative priority. Private SMS, meeting, and conversation-synthesis
