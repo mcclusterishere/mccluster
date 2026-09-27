@@ -11,7 +11,7 @@
    does not already have one nearby, and carries over the email typed in
    the same form so nobody retypes it. Pages with their own forgot button
    (account.html, mnet.html) are left exactly as they are. */
-(function (d) {
+(function (w, d) {
   "use strict";
 
   function hasOwnLink(scope) {
@@ -28,8 +28,12 @@
 
   function addLink(input) {
     var scope = scopeOf(input);
-    if (hasOwnLink(scope) || input.getAttribute("data-forgot-link") === "1") return;
-    input.setAttribute("data-forgot-link", "1");
+    var anchor = input.parentElement && input.parentElement.tagName === "LABEL" ? input.parentElement : input;
+    /* Idempotence is read from the DOM, not a marker on the input: a gate
+       redrawn from a string can carry a stale marker with no link. */
+    var next = anchor.nextElementSibling;
+    if (next && next.classList && next.classList.contains("mcc-forgot")) return;
+    if (hasOwnLink(scope)) return;
     var a = d.createElement("a");
     a.className = "mcc-forgot";
     a.href = "forgot-password.html";
@@ -42,7 +46,6 @@
       a.href = "forgot-password.html" + (value ? "?email=" + encodeURIComponent(value) : "");
     });
     /* After the field, or after its label when the label wraps it. */
-    var anchor = input.parentElement && input.parentElement.tagName === "LABEL" ? input.parentElement : input;
     anchor.insertAdjacentElement("afterend", a);
   }
 
@@ -51,6 +54,21 @@
       d.querySelectorAll('input[type="password"][autocomplete="current-password"]'), addLink);
   }
 
-  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", run);
-  else run();
-})(document);
+  /* desk.html, lanes.html and vault.html redraw their sign-in gate with
+     innerHTML after a failed attempt, which drops the link and brings a
+     fresh password field, at exactly the moment somebody needs the link.
+     Watch for added nodes and run again (addLink is idempotent). */
+  var queued = false;
+  function watch() {
+    run();
+    if (!w.MutationObserver) return;
+    new MutationObserver(function () {
+      if (queued) return;
+      queued = true;
+      setTimeout(function () { queued = false; run(); }, 50);
+    }).observe(d.body, { childList: true, subtree: true });
+  }
+
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", watch);
+  else watch();
+})(window, document);

@@ -213,13 +213,22 @@
      link may still be on the sign-in or profile screen, so wait for the app
      to appear rather than touring a door. */
   function whenAppReady(cb) {
-    var tries = 0;
-    (function poll() {
-      var app = d.getElementById("mnApp");
-      if (app && !app.hidden) return cb(true);
-      if (++tries > 60) return cb(false);
-      setTimeout(poll, 500);
-    })();
+    /* No time limit: signing in and finishing the Mnet profile can take
+       minutes, and the walkthrough should still start the moment the app
+       appears. Watches #mnApp's hidden attribute rather than polling. */
+    var app = d.getElementById("mnApp");
+    if (!app) return;
+    if (!app.hidden) return cb(true);
+    if (!w.MutationObserver) {
+      var t = setInterval(function () { if (!app.hidden) { clearInterval(t); cb(true); } }, 500);
+      return;
+    }
+    var mo = new MutationObserver(function () {
+      if (app.hidden) return;
+      mo.disconnect();
+      cb(true);
+    });
+    mo.observe(app, { attributes: true, attributeFilter: ["hidden"] });
   }
 
   /* The welcome's button lives inside the conversation, which is a modal
