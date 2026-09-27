@@ -43,6 +43,7 @@ test('local AI client uses the loopback adapter and preserves normalized usage',
   });
 
   assert.equal(seen.url, 'http://127.0.0.1:4790/execute');
+  assert.equal(new URL(seen.url).hostname, '127.0.0.1');
   assert.equal(seen.body.capability, 'ai.chat');
   assert.equal(seen.body.priority, -20);
   assert.equal(result.message.content, 'hello back');
