@@ -36,6 +36,7 @@ function normalizePriority(value) {
 }
 
 async function execute(body, queuedAt) {
+  const queueWaitMs = Math.max(0, Date.now() - queuedAt);
   if (body.capability !== 'ai.chat') {
     throw Object.assign(new Error(`unsupported capability: ${body.capability}`), { status: 400, code: 'UNSUPPORTED_CAPABILITY' });
   }
@@ -77,7 +78,7 @@ async function execute(body, queuedAt) {
     model: MODEL,
     implementation: body.implementation || null,
     content: String(data?.message?.content || ''),
-    queue_wait_ms: Math.max(0, Date.now() - queuedAt),
+    queue_wait_ms: queueWaitMs,
     usage: {
       prompt_eval_count: data?.prompt_eval_count ?? null,
       eval_count: data?.eval_count ?? null,
