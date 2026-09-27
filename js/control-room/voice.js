@@ -55,7 +55,7 @@
       return false;
     }
 
-    stopListening();
+    cancelListening();
     cancelSpeech();
 
     var recognition = new Recognition();
@@ -137,7 +137,7 @@
       return false;
     }
 
-    stopListening();
+    cancelListening();
     cancelSpeech();
 
     var utterance = new SpeechSynthesisUtterance(value);
