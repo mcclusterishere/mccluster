@@ -118,7 +118,7 @@ export async function residentAiTurn(job) {
     throw error;
   }
 
-  const answer = clean(response?.content || response?.text || response?.answer, 30000);
+  const answer = clean(response?.message?.content || response?.content || response?.text || response?.answer, 30000);
   if (!answer) throw new Error('McCluster completed the resident AI turn without response content');
 
   const assistantBody = {
