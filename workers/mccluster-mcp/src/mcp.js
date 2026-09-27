@@ -43,6 +43,10 @@ const REMOTE_CAPABILITIES = new Set([
   // nothing and removes the failure mode where a reconnecting client
   // starts by guessing.
   'core.resume',
+  'workspace.status',
+  'workspace.list',
+  'workspace.read',
+  'workspace.write',
   'system.health',
   'ai.chat',
   'compute.task.get',
