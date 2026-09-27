@@ -350,14 +350,22 @@ export async function handleAiRequest(request, env, user) {
     const { status, data } = await callContextFunction(request, env, 'context-ingest', body);
 
     let synthesis;
-    try {
-      synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
-    } catch (error) {
+    if (body.synthesize_objectives === false) {
       synthesis = {
         queued: false,
-        error: 'objective_synthesis_enqueue_failed',
-        detail: String(error?.message || error).slice(0, 500)
+        skipped: true,
+        reason: 'caller_disabled'
       };
+    } else {
+      try {
+        synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
+      } catch (error) {
+        synthesis = {
+          queued: false,
+          error: 'objective_synthesis_enqueue_failed',
+          detail: String(error?.message || error).slice(0, 500)
+        };
+      }
     }
 
     const response = data && typeof data === 'object' && !Array.isArray(data)
