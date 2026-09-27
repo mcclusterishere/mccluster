@@ -76,6 +76,9 @@ test('resident local AI chat is VPS-owned and survives browser loss', () => {
   assert.match(source, /callCoreTool\("core\.ai\.turn\.get"/);
   assert.match(source, /execution_kind: "resident_ai_turn"/);
   assert.match(source, /McCluster is still working on this saved turn; you can close this window and return later\./);
+  assert.match(source, /var keepPendingAfterRecovery = false/);
+  assert.match(source, /keepPendingAfterRecovery = state\.aiChatPending === true/);
+  assert.match(source, /if \(!keepPendingAfterRecovery\)/);
   assert.doesNotMatch(source, /callCoreTool\("ai\.chat", \{ messages: history/);
   assert.match(durableTurnMigration, /insert into public\.ops_ai_messages/);
   assert.match(durableTurnMigration, /insert into public\.ops_agent_jobs/);
