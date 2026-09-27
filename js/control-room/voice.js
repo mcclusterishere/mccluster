@@ -78,7 +78,7 @@
       for (var i = event.resultIndex; i < event.results.length; i++) {
         var result = event.results[i];
         var transcript = result && result[0] ? String(result[0].transcript || "") : "";
-        if (result.isFinal) finalText += transcript;
+        if (result.isFinal) finalText = (finalText + " " + transcript).trim();
         else interimText += transcript;
       }
       var combined = (finalText + (finalText && interimText ? " " : "") + interimText).trim();
@@ -96,8 +96,9 @@
     recognition.onend = function () {
       if (ended) return;
       ended = true;
-      if (activeRecognition === recognition) activeRecognition = null;
-      if (options.onState) options.onState({ listening: false, speaking: false });
+      var wasActive = activeRecognition === recognition;
+      if (wasActive) activeRecognition = null;
+      if ((wasActive || !activeRecognition) && options.onState) options.onState({ listening: false, speaking: false });
       if (recognition.__mcclusterDiscard) return;
       var text = (finalText || interimText).trim();
       if (text && options.onTranscript) {
@@ -140,7 +141,7 @@
     cancelListening();
     cancelSpeech();
 
-    var utterance = new SpeechSynthesisUtterance(value);
+    var utterance = new window.SpeechSynthesisUtterance(value);
     activeUtterance = utterance;
     utterance.lang = options.lang || navigator.language || "en-US";
     utterance.rate = Number(options.rate || 1);
@@ -152,15 +153,16 @@
       if (options.onState) options.onState({ listening: false, speaking: true });
     };
     utterance.onend = function () {
-      if (activeUtterance === utterance) activeUtterance = null;
+      if (activeUtterance !== utterance) return;
+      activeUtterance = null;
       if (options.onState) options.onState({ listening: false, speaking: false });
     };
     utterance.onerror = function (event) {
       var code = event && event.error ? String(event.error) : "speech-synthesis-error";
-      var wasCanceled = activeUtterance !== utterance && (code === "canceled" || code === "interrupted");
+      if (activeUtterance !== utterance && (code === "canceled" || code === "interrupted")) return;
       if (activeUtterance === utterance) activeUtterance = null;
       if (options.onState) options.onState({ listening: false, speaking: false });
-      if (!wasCanceled && options.onError) {
+      if (options.onError) {
         options.onError(Object.assign(new Error("Voice playback failed: " + code), { code: code }));
       }
     };
