@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-22.1",
+  "catalogVersion": "2026-09-27.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -41,6 +41,83 @@
         "continuity",
         "session"
       ]
+    },
+    {
+      "id": "workspace.status",
+      "title": "Inspect McCluster home",
+      "description": "Read the persistent McCluster VPS workspace contract and top-level directories.",
+      "domain": "workspace",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": { "type": "object" },
+      "tags": ["workspace", "continuity", "self-hosted"]
+    },
+    {
+      "id": "workspace.list",
+      "title": "List McCluster home",
+      "description": "List one directory inside McCluster's persistent VPS working home.",
+      "domain": "workspace",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "properties": { "path": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "outputSchema": { "type": "object" },
+      "tags": ["workspace", "files", "self-hosted"]
+    },
+    {
+      "id": "workspace.read",
+      "title": "Read McCluster home file",
+      "description": "Read one bounded UTF-8 file from McCluster's persistent VPS working home.",
+      "domain": "workspace",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": { "path": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "outputSchema": { "type": "object" },
+      "tags": ["workspace", "files", "self-hosted"]
+    },
+    {
+      "id": "workspace.write",
+      "title": "Write McCluster home file",
+      "description": "Atomically write one bounded UTF-8 file inside McCluster's persistent VPS working home. This cannot escape the dedicated workspace.",
+      "domain": "workspace",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["path", "content"],
+        "properties": {
+          "path": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": { "type": "object" },
+      "tags": ["workspace", "files", "self-hosted", "bounded-write"]
     },
     {
       "id": "system.health",
@@ -1962,6 +2039,50 @@
         "read_only": true,
         "self_hosted": true
       }
+    },
+    {
+      "id": "core.workspace-status",
+      "capability": "workspace.status",
+      "provider": "mccluster-core",
+      "tool": "core.workspace.status",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": { "hosting": "owned", "billing": "free" },
+      "features": { "persistent": true, "self_hosted": true, "read_only": true }
+    },
+    {
+      "id": "core.workspace-list",
+      "capability": "workspace.list",
+      "provider": "mccluster-core",
+      "tool": "core.workspace.list",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": { "hosting": "owned", "billing": "free" },
+      "features": { "persistent": true, "self_hosted": true, "read_only": true }
+    },
+    {
+      "id": "core.workspace-read",
+      "capability": "workspace.read",
+      "provider": "mccluster-core",
+      "tool": "core.workspace.read",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": { "hosting": "owned", "billing": "free" },
+      "features": { "persistent": true, "self_hosted": true, "read_only": true }
+    },
+    {
+      "id": "core.workspace-write",
+      "capability": "workspace.write",
+      "provider": "mccluster-core",
+      "tool": "core.workspace.write",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": { "hosting": "owned", "billing": "free" },
+      "features": { "persistent": true, "self_hosted": true, "bounded_write": true }
     },
     {
       "id": "worker.health",
