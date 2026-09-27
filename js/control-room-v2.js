@@ -713,6 +713,7 @@
 
       var messageId = newAiTurnId();
       var submittedAt = new Date().toISOString();
+      var keepPendingAfterRecovery = false;
       var optimistic = {
         id: messageId,
         thread_id: thread.id,
@@ -776,10 +777,15 @@
         state.aiChatError = error.message || String(error);
         return sleep(1000).then(function () {
           return loadAiMessages(thread.id, true).catch(function () { return []; });
+        }).then(function (rows) {
+          keepPendingAfterRecovery = state.aiChatPending === true;
+          return rows;
         });
       }).then(function () {
-        state.aiChatPending = false;
-        state.aiChatTask = null;
+        if (!keepPendingAfterRecovery) {
+          state.aiChatPending = false;
+          state.aiChatTask = null;
+        }
         render();
       });
     }).catch(function (error) {
