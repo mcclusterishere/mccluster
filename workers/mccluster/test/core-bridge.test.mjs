@@ -306,6 +306,35 @@ test('status reports the bridge and signed-dispatch state for an owner', async (
 });
 
 
+test('durable McCluster turns are pinned to the authenticated house organization', async () => {
+  const called = { jsonrpc: '2.0', id: 160, result: { content: [{ type: 'text', text: '{"queued":true}' }] } };
+  await withPlane({ broker: called }, async (seen) => {
+    const { status } = await handleCoreMcp(
+      rpcRequest({
+        jsonrpc: '2.0',
+        id: 160,
+        method: 'tools/call',
+        params: {
+          name: 'core.ai.turn.submit',
+          arguments: {
+            org_id: '99999999-9999-4999-8999-999999999999',
+            thread_id: '123e4567-e89b-42d3-a456-426614174001',
+            message_id: '123e4567-e89b-42d3-a456-426614174002',
+            content: 'hello'
+          }
+        }
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(status, 200);
+    const dispatch = seen.find((call) => call.href === 'https://core.example.org/mcp');
+    assert.ok(dispatch?.body, 'durable turn dispatch body missing');
+    const forwarded = JSON.parse(new TextDecoder().decode(dispatch.body));
+    assert.equal(forwarded.params.arguments.org_id, ORG_ID);
+  });
+});
+
 test('tools/call overwrites client actor metadata with authenticated owner identity before signing', async () => {
   const called = { jsonrpc: '2.0', id: 16, result: { content: [{ type: 'text', text: '{"ok":true}' }] } };
   await withPlane({ broker: called }, async (seen) => {
