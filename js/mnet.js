@@ -794,10 +794,24 @@
       setView("messages"); return loadConversations().then(function(){return openConversation(x.conversation_id);});
     }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not start a conversation.","error"); });
   }
+  /* Links in a message were printed as dead text. The body is escaped
+     first and only then scanned, so nothing a sender types becomes markup:
+     an https address becomes a link, and McCluster's own walkthrough
+     address (the one in Matthew's welcome) becomes a button that starts
+     the tour in place. */
+  var TOUR_URL=/^https:\/\/(?:matthew\.)?mccluster\.org\/mnet\.html\?tour=1$/;
+  function messageHtml(body) {
+    return esc(body||"").replace(/https:\/\/[^\s<>"']+/g,function(url){
+      var clean=url.replace(/[.,;:!?)]+$/,""), tail=url.slice(clean.length);
+      var raw=clean.replace(/&amp;/g,"&");
+      if (TOUR_URL.test(raw)) return '<a class="mn__tour-cta" href="mnet.html?tour=1" data-tour-start>Start the walkthrough</a>'+tail;
+      return '<a class="mn__message-link" href="'+clean+'" target="_blank" rel="noopener noreferrer">'+clean+'</a>'+tail;
+    });
+  }
   function renderMessages(rows) {
     $("mnConversationMessages").innerHTML=rows.length?rows.map(function(m){
       var mine=m.sender_m_uid===identity().m_uid;
-      return '<article class="mn__message'+(mine?' is-mine':'')+'"><p>'+esc(m.body||"")+'</p><small>'+esc(mine?"You":m.sender&&m.sender.display_name||m.sender&&m.sender.mccluster_id||"Mnet")+' · '+esc(timeAgo(m.created_at))+'</small></article>';
+      return '<article class="mn__message'+(mine?' is-mine':'')+'"><p>'+messageHtml(m.body)+'</p><small>'+esc(mine?"You":m.sender&&m.sender.display_name||m.sender&&m.sender.mccluster_id||"Mnet")+' · '+esc(timeAgo(m.created_at))+'</small></article>';
     }).join(""):'<div class="mn__empty">No messages yet.</div>';
     $("mnConversationMessages").scrollTop=$("mnConversationMessages").scrollHeight;
   }

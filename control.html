@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
-<body class="cr">
+<body class="cr" data-no-appbar>
   <section class="cr-gate" id="cpGate">
     <div class="cr-gate__brand">
       <img src="assets/img/hm-mark-wide.webp" alt="">
@@ -35,13 +35,13 @@
     <aside class="cr-rail" aria-label="Control Room navigation">
       <a class="cr-rail__brand" href="#home" aria-label="McCluster Control Room"><img src="assets/img/hm-mark-wide.webp" alt=""></a>
       <nav class="cr-nav">
-        <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span></button>
-        <button class="cr-nav__item" type="button" data-surface="ai"><span class="cr-nav__icon" aria-hidden="true">✺</span><span class="cr-nav__label">AI</span></button>
-        <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span></button>
-        <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span></button>
-        <button class="cr-nav__item" type="button" data-surface="analytics"><span class="cr-nav__icon" aria-hidden="true">⌁</span><span class="cr-nav__label">Analytics</span></button>
-        <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span></button>
-        <button class="cr-nav__item" type="button" data-surface="apps"><span class="cr-nav__icon" aria-hidden="true">⠿</span><span class="cr-nav__label">Apps</span></button>
+        <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11.5h4.5V15h4v5.5h4.5V9"/></svg></span><span class="cr-nav__label">Home</span></button>
+        <button class="cr-nav__item" type="button" data-surface="ai"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M11 3.5l1.7 4.8 4.8 1.7-4.8 1.7L11 16.5l-1.7-4.8L4.5 10l4.8-1.7z"/><path d="M18 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span><span class="cr-nav__label">AI</span></button>
+        <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3.5 13 6.5 5h11l3 8v6.5h-17z"/><path d="M3.5 13h5l1.5 2.5h4L15.5 13h5"/></svg></span><span class="cr-nav__label">Work</span></button>
+        <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span class="cr-nav__label">Create</span></button>
+        <button class="cr-nav__item" type="button" data-surface="analytics"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 20h16"/><path d="M7 16.5v-5M12 16.5v-10M17 16.5v-7"/></svg></span><span class="cr-nav__label">Analytics</span></button>
+        <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span><span class="cr-nav__label">System</span></button>
+        <button class="cr-nav__item" type="button" data-surface="apps"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg></span><span class="cr-nav__label">Apps</span></button>
       </nav>
       <div class="cr-rail__foot"><button class="cr-avatar" id="crAccount" type="button" aria-label="Account menu">M</button></div>
     </aside>
@@ -61,17 +61,17 @@
     </aside>
 
     <nav class="cr-bottom" aria-label="Control Room navigation">
-      <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span></button>
-      <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span></button>
-      <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span></button>
-      <button class="cr-nav__item" type="button" data-surface="analytics"><span class="cr-nav__icon" aria-hidden="true">⌁</span><span class="cr-nav__label">Analytics</span></button>
-      <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span></button>
+      <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11.5h4.5V15h4v5.5h4.5V9"/></svg></span><span class="cr-nav__label">Home</span></button>
+      <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3.5 13 6.5 5h11l3 8v6.5h-17z"/><path d="M3.5 13h5l1.5 2.5h4L15.5 13h5"/></svg></span><span class="cr-nav__label">Work</span></button>
+      <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span class="cr-nav__label">Create</span></button>
+      <button class="cr-nav__item" type="button" data-surface="analytics"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 20h16"/><path d="M7 16.5v-5M12 16.5v-10M17 16.5v-7"/></svg></span><span class="cr-nav__label">Analytics</span></button>
+      <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span><span class="cr-nav__label">System</span></button>
     </nav>
   </div>
 
   <div class="cr-palette" id="crPalette" aria-hidden="true"><div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster"><input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Search, navigate, or give McCluster an objective…" aria-label="Search Control Room"><div class="cr-palette__results" id="crPaletteResults"></div></div></div>
 
-  <aside class="cr-account-menu" id="crAccountMenu" aria-label="Account actions"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
+  <aside class="cr-account-menu" id="crAccountMenu" aria-label="Account actions"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><a class="cr-btn cr-btn--ghost" href="account.html?stay=1#password">Change password</a><a class="cr-btn cr-btn--ghost" href="mnet.html">Open Mnet</a><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
 
   <script src="js/backend.js?v=__STAMP__"></script>
   <!-- Internal Control Room modules. Same application, loaded before it. -->
@@ -88,5 +88,6 @@
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/forgot-link.js?v=__STAMP__" defer></script>
 </body>
 </html>
