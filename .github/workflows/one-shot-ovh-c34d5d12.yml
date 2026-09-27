@@ -1,4 +1,4 @@
-name: One-shot deploy OVH inference gate c34d5d12
+name: One-shot targeted OVH inference gate c34d5d12
 
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy exact OVH inference-gate hotfix
+    name: Deploy exact targeted OVH inference-gate hotfix
     runs-on: ubuntu-latest
     environment: ovh-production
     env:
@@ -62,7 +62,108 @@ jobs:
           printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 0600 ~/.ssh/known_hosts
 
-      - name: Transfer exact checkout to OVH staging
+      - name: Inspect current OVH service state
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" '
+            echo "manifest:"; cat /opt/mccluster/core/.mccluster-deploy.json || true
+            for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-preview-gateway.service; do
+              printf "%s=" "$unit"; systemctl is-active "$unit" || true
+            done
+            echo "adapter:"; curl --silent --show-error --max-time 5 http://127.0.0.1:4790/health || true
+            echo "preview:"; curl --silent --show-error --max-time 5 http://127.0.0.1:4799/health || true
+          '
+
+      - name: Build targeted rollback-safe deploy helper
+        run: |
+          cat > /tmp/deploy-inference-hotfix.sh <<'HOTFIX'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+
+          SOURCE_DIR="$1"
+          DEPLOY_SHA="$2"
+          TARGET_ROOT="/opt/mccluster"
+          CORE_TARGET="$TARGET_ROOT/core"
+          RELEASE_ROOT="$TARGET_ROOT/releases"
+          SYSTEMD_DIR="/etc/systemd/system"
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP_DIR="$RELEASE_ROOT/pre-inference-hotfix-$STAMP"
+          DEPLOY_MANIFEST="$CORE_TARGET/.mccluster-deploy.json"
+          ADAPTER_UNIT="mccluster-ollama-adapter.service"
+
+          [[ "$EUID" -eq 0 ]]
+          [[ -d "$SOURCE_DIR/core" ]]
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          command -v rsync >/dev/null
+          command -v node >/dev/null
+          command -v npm >/dev/null
+          command -v systemctl >/dev/null
+          test "$(git -C "$SOURCE_DIR" rev-parse HEAD)" = "$DEPLOY_SHA"
+          git -C "$SOURCE_DIR" diff --quiet HEAD -- core
+
+          pushd "$SOURCE_DIR/core" >/dev/null
+          npm run check
+          npm test
+          popd >/dev/null
+
+          mkdir -p "$BACKUP_DIR/core" "$BACKUP_DIR/units"
+          rsync -a "$CORE_TARGET/" "$BACKUP_DIR/core/"
+          if [[ -f "$SYSTEMD_DIR/$ADAPTER_UNIT" ]]; then
+            cp -p "$SYSTEMD_DIR/$ADAPTER_UNIT" "$BACKUP_DIR/units/$ADAPTER_UNIT"
+          fi
+
+          rollback() {
+            local rc=$?
+            if [[ $rc -eq 0 ]]; then return 0; fi
+            echo "targeted inference deploy failed (rc=$rc); rolling back" >&2
+            rsync -a --delete "$BACKUP_DIR/core/" "$CORE_TARGET/" || true
+            if [[ -f "$BACKUP_DIR/units/$ADAPTER_UNIT" ]]; then
+              install -m 0644 "$BACKUP_DIR/units/$ADAPTER_UNIT" "$SYSTEMD_DIR/$ADAPTER_UNIT" || true
+            fi
+            systemctl daemon-reload || true
+            for unit in mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-core-runner.service mccluster-core-tool-broker.service; do
+              systemctl try-restart "$unit" || true
+            done
+            exit "$rc"
+          }
+          trap rollback ERR
+
+          rsync -a --delete             --exclude '.env'             --exclude '.env.*'             --exclude '.mccluster-artifacts'             "$SOURCE_DIR/core/" "$CORE_TARGET/"
+
+          cat >"$DEPLOY_MANIFEST" <<EOF
+          {"schema_version":1,"commit_sha":"$DEPLOY_SHA","deployed_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","deployment_mode":"targeted-inference-hotfix"}
+          EOF
+          chown -R root:root "$CORE_TARGET"
+          chmod 0644 "$DEPLOY_MANIFEST"
+
+          install -m 0644 "$SOURCE_DIR/core/systemd/$ADAPTER_UNIT" "$SYSTEMD_DIR/$ADAPTER_UNIT"
+          systemctl daemon-reload
+
+          systemctl restart mccluster-ollama-adapter.service
+          systemctl restart mccluster-compute-node.service
+          systemctl restart mccluster-core-runner.service
+
+          systemctl is-active --quiet mccluster-core-runner.service
+          systemctl is-active --quiet mccluster-core-tool-broker.service
+          systemctl is-active --quiet mccluster-ollama-adapter.service
+          systemctl is-active --quiet mccluster-compute-node.service
+
+          ADAPTER_HEALTH="$(curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 10 http://127.0.0.1:4790/health)"
+          printf '%s\n' "$ADAPTER_HEALTH"
+          printf '%s' "$ADAPTER_HEALTH" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const x=JSON.parse(d);if(!x.ok||x.service!=='mccluster-ollama-adapter')process.exit(1)})"
+
+          grep -Fq "\"commit_sha\":\"$DEPLOY_SHA\"" "$DEPLOY_MANIFEST"
+          echo "targeted_inference_deploy=$DEPLOY_SHA"
+          echo "backup=$BACKUP_DIR"
+          HOTFIX
+          chmod +x /tmp/deploy-inference-hotfix.sh
+
+      - name: Transfer exact checkout and targeted deploy helper
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
@@ -76,8 +177,9 @@ jobs:
           SSH_OPTS="-p $PORT -o StrictHostKeyChecking=yes"
           ssh $SSH_OPTS "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
           rsync -az --delete -e "ssh $SSH_OPTS" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+          rsync -az -e "ssh $SSH_OPTS" /tmp/deploy-inference-hotfix.sh "$OVH_USER@$OVH_HOST:$STAGE/deploy-inference-hotfix.sh"
 
-      - name: Deploy exact hotfix with rollback protection
+      - name: Deploy inference hotfix without touching preview gateway
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
@@ -86,8 +188,7 @@ jobs:
           set -euo pipefail
           PORT="${OVH_PORT:-22}"
           STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
-          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
-            "sudo bash '$STAGE/scripts/deploy-ovh-core.sh' '$STAGE' '$TARGET_SHA' && rm -rf '$STAGE'"
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST"             "sudo bash '$STAGE/deploy-inference-hotfix.sh' '$STAGE' '$TARGET_SHA' && rm -rf '$STAGE'"
 
       - name: Verify exact revision and resident AI services
         env:
@@ -97,15 +198,7 @@ jobs:
         run: |
           set -euo pipefail
           PORT="${OVH_PORT:-22}"
-          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
-            "set -e; \
-             systemctl is-active --quiet mccluster-core-runner.service; \
-             systemctl is-active --quiet mccluster-core-tool-broker.service; \
-             systemctl is-active --quiet mccluster-ollama-adapter.service; \
-             systemctl is-active --quiet mccluster-compute-node.service; \
-             curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4790/health; \
-             grep -Fq '\"commit_sha\":\"$TARGET_SHA\"' /opt/mccluster/core/.mccluster-deploy.json; \
-             cat /opt/mccluster/core/.mccluster-deploy.json"
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST"             "set -e;              systemctl is-active --quiet mccluster-core-runner.service;              systemctl is-active --quiet mccluster-core-tool-broker.service;              systemctl is-active --quiet mccluster-ollama-adapter.service;              systemctl is-active --quiet mccluster-compute-node.service;              curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4790/health;              grep -Fq '\"commit_sha\":\"$TARGET_SHA\"' /opt/mccluster/core/.mccluster-deploy.json;              cat /opt/mccluster/core/.mccluster-deploy.json"
 
       - name: Verify public Core reports exact deployment
         run: |
