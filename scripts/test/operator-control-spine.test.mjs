@@ -9,13 +9,15 @@ const controlHtml = await readFile(new URL('../../control.html', import.meta.url
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
 const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
+const durableTurnMigration = await readFile(new URL('../../supabase/migrations/20260927222835_resident_ai_durable_vps_turn.sql', import.meta.url), 'utf8');
 const aiHarness = await readFile(new URL('../../docs/control-plane/AI-HARNESS.md', import.meta.url), 'utf8');
 
 test('Operator OS commands the signed Core MCP surface, not the legacy task route', () => {
   assert.match(source, /request\("\/v1\/core\/mcp"/);
   assert.match(source, /coreMcp\("tools\/list"\)/);
   assert.match(source, /callCoreTool\("objective\.plan"/);
-  assert.match(source, /callCoreTool\("ai\.chat"/);
+  assert.match(source, /callCoreTool\("core\.ai\.turn\.submit"/);
+  assert.match(source, /callCoreTool\("core\.ai\.turn\.get"/);
   assert.match(source, /callCoreTool\("compute\.task\.get"/);
   assert.match(source, /callCoreTool\("core\.resume"/);
   assert.match(source, /callCoreTool\("research\.web"/);
@@ -62,30 +64,24 @@ test('resident AI canonical name is McCluster', () => {
   }
 });
 
-test('resident local AI chat is durable and multi-turn', () => {
+test('resident local AI chat is VPS-owned and survives browser loss', () => {
   assert.match(source, /SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
   assert.match(source, /ops_ai_threads/);
   assert.match(source, /ops_ai_messages/);
-  assert.match(source, /function waitForAiTask\(/);
   assert.match(source, /function sendAiMessage\(/);
-  assert.match(source, /callCoreTool\("ai\.chat", \{ messages: history/);
-  assert.match(source, /compute_task_id/);
-  assert.match(source, /state\.aiChatTask = task/);
-  assert.match(source, /waitForAiTask\(task\.id, 330\)/);
-  assert.match(source, /function attachAiTaskToUserMessage\(/);
-  assert.match(source, /function persistAiAssistantFromTask\(/);
-  assert.match(source, /function reconcileAiTaskReplies\(/);
-  assert.match(source, /var inspections = unresolved\.map\(function \(userMessage\)/);
-  assert.match(source, /Promise\.all\(inspections\)/);
-  assert.match(source, /items\.filter\(Boolean\)\.map\(recoverOne\)/);
-  assert.match(source, /function persist\(left\)/);
-  assert.doesNotMatch(source, /Reply recovery link could not be saved; keep this chat open/);
-  assert.match(source, /\["failed", "canceled"\]\.indexOf\(status\) < 0/);
-  assert.match(source, /terminalError\.task = task/);
-  assert.match(source, /on_conflict=id/);
-  assert.match(source, /id: task\.id/);
-  assert.match(source, /compute_task_id: task\.id/);
-  assert.match(source, /Queued for local compute\. Your message is saved and has not been lost\./);
+  assert.match(source, /function newAiTurnId\(/);
+  assert.match(source, /function waitForResidentAiTurn\(/);
+  assert.match(source, /function reconcileResidentAiTurns\(/);
+  assert.match(source, /callCoreTool\("core\.ai\.turn\.submit"/);
+  assert.match(source, /callCoreTool\("core\.ai\.turn\.get"/);
+  assert.match(source, /execution_kind: "resident_ai_turn"/);
+  assert.match(source, /McCluster is still working on this saved turn; you can close this window and return later\./);
+  assert.doesNotMatch(source, /callCoreTool\("ai\.chat", \{ messages: history/);
+  assert.match(durableTurnMigration, /insert into public\.ops_ai_messages/);
+  assert.match(durableTurnMigration, /insert into public\.ops_agent_jobs/);
+  assert.match(durableTurnMigration, /'resident_ai_turn'/);
+  assert.match(durableTurnMigration, /security invoker/i);
+  assert.match(durableTurnMigration, /revoke all on function public\.ops_ai_submit_turn[\s\S]*authenticated/);
   assert.match(source, /sourceBanner\(state\.sources\.coreBridge, "Core bridge"\)/);
   assert.match(source, /sourceBanner\(state\.sources\.coreTools, "AI execution path"\)/);
   assert.match(source, /Message McCluster AI/);
@@ -102,11 +98,11 @@ test('resident AI voice stays on the canonical durable chat path', () => {
   assert.match(source, /stopAiVoiceListening\(true\)/);
   assert.match(source, /function startAiVoiceTurn\(/);
   assert.match(source, /sendAiMessage\(spoken, \{ inputMode: "voice", speakReply: true \}\)/);
-  assert.match(source, /metadata: \{ input_mode: inputMode \}/);
+  assert.match(source, /input_mode: inputMode/);
   assert.match(source, /data-action="ai-voice-toggle"/);
   assert.match(source, /data-action="ai-stop-speaking"/);
   assert.match(source, /data-action="ai-speak-message"/);
-  assert.match(source, /if \(opts\.speakReply\) speakAiText\(savedAssistant\.content\)/);
+  assert.match(source, /if \(opts\.speakReply\) speakAiText\(payload\.assistant_message\.content\)/);
   assert.doesNotMatch(source, /\/v1\/ai\/voice/);
 });
 

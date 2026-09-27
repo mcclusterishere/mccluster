@@ -178,6 +178,17 @@
 
   function sleep(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
 
+  function newAiTurnId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    if (!window.crypto || typeof window.crypto.getRandomValues !== "function") throw new Error("Secure browser UUID generation is unavailable");
+    var bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    var hex = Array.prototype.map.call(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-" + hex.slice(12, 16) + "-" + hex.slice(16, 20) + "-" + hex.slice(20);
+  }
+
   function waitForComputeTask(taskId, attempts) {
     attempts = attempts || 45;
     if (!taskId || !state.org || !state.org.id) return Promise.reject(new Error("Compute task identity unavailable"));
@@ -351,7 +362,8 @@
         delete state.pending[key + ":error"];
         render();
         var thread = aiThreadById(threadId);
-        return reconcileAiTaskReplies(thread, state.aiMessages[threadId]);
+        return reconcileAiTaskReplies(thread, state.aiMessages[threadId])
+          .then(function (rows) { return reconcileResidentAiTurns(thread, rows); });
       })
       .catch(function (error) {
         delete state.pending[key];
@@ -565,6 +577,98 @@
       return state.aiMessages[thread.id] || messages;
     });
   }
+  function reconcileResidentAiTurns(thread, messages) {
+    if (!thread || !coreToolAvailable("core.ai.turn.get")) return Promise.resolve(messages);
+    var assistantJobIds = new Set(messages.filter(function (m) {
+      return m.role === "assistant" && m.metadata && m.metadata.agent_job_id;
+    }).map(function (m) { return String(m.metadata.agent_job_id); }));
+    var unresolved = messages.filter(function (m) {
+      var meta = m.metadata || {};
+      return m.role === "user" &&
+        meta.execution_kind === "resident_ai_turn" &&
+        meta.agent_job_id &&
+        !assistantJobIds.has(String(meta.agent_job_id));
+    });
+    if (!unresolved.length) return Promise.resolve(messages);
+
+    var key = "aiResidentRecover:" + thread.id;
+    if (state.pending[key]) return Promise.resolve(messages);
+    state.pending[key] = true;
+    var pending = false;
+    var failures = [];
+
+    function replaceMessage(message) {
+      if (!message || !message.id) return;
+      var list = state.aiMessages[thread.id] || [];
+      var idx = list.findIndex(function (m) { return String(m.id) === String(message.id); });
+      if (idx >= 0) list[idx] = message;
+      else list.push(message);
+    }
+
+    return Promise.all(unresolved.map(function (userMessage) {
+      var turnId = String(userMessage.metadata.agent_job_id);
+      return callCoreTool("core.ai.turn.get", { org_id: state.org.id, turn_id: turnId }).then(function (payload) {
+        var turn = payload && payload.turn;
+        if (!turn) throw new Error("Saved McCluster turn disappeared: " + turnId);
+        if (payload.user_message) replaceMessage(payload.user_message);
+        if (payload.assistant_message) replaceMessage(payload.assistant_message);
+        if (turn.status === "queued" || turn.status === "running") pending = true;
+        if (turn.status === "failed" || turn.status === "canceled") {
+          failures.push(turn.last_error || ("Saved McCluster turn " + turn.status));
+        }
+      }).catch(function (error) {
+        failures.push(error.message || String(error));
+      });
+    })).then(function () {
+      delete state.pending[key];
+      state.aiMessages[thread.id].sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+      if (failures.length) state.aiChatError = "Saved McCluster turn recovery: " + failures.join(" | ");
+      state.aiChatPending = pending;
+      state.aiChatTask = null;
+      render();
+      if (pending && state.surface === "ai" && String(state.selectedAiThreadId) === String(thread.id)) {
+        setTimeout(function () { loadAiMessages(thread.id, true); }, 2500);
+      }
+      return state.aiMessages[thread.id];
+    }, function (error) {
+      delete state.pending[key];
+      state.aiChatPending = false;
+      state.aiChatTask = null;
+      state.aiChatError = "Saved McCluster turn recovery failed: " + (error.message || String(error));
+      render();
+      return state.aiMessages[thread.id] || messages;
+    });
+  }
+
+  function waitForResidentAiTurn(turnId, attempts) {
+    attempts = attempts || 330;
+    if (!turnId || !state.org || !state.org.id) return Promise.reject(new Error("Resident AI turn identity unavailable"));
+    function poll(left) {
+      return callCoreTool("core.ai.turn.get", { org_id: state.org.id, turn_id: turnId }).then(function (payload) {
+        var turn = payload && payload.turn;
+        if (!turn) throw new Error("Resident McCluster turn disappeared");
+        state.aiChatTask = turn;
+        render();
+        if (turn.status === "done") {
+          if (!payload.assistant_message) throw new Error("McCluster turn completed without a persisted assistant message");
+          return payload;
+        }
+        if (turn.status === "failed" || turn.status === "canceled") {
+          var terminalError = new Error(turn.last_error || ("McCluster turn " + turn.status));
+          terminalError.turn = turn;
+          throw terminalError;
+        }
+        if (left <= 1) {
+          var timeoutError = new Error("McCluster is still working on this saved turn; you can close this window and return later.");
+          timeoutError.turn = turn;
+          throw timeoutError;
+        }
+        return sleep(2000).then(function () { return poll(left - 1); });
+      });
+    }
+    return poll(attempts);
+  }
+
   function waitForAiTask(taskId, attempts) {
     attempts = attempts || 60;
     if (!taskId || !state.org || !state.org.id) return Promise.reject(new Error("Compute task identity unavailable"));
@@ -603,69 +707,83 @@
 
     return threadPromise.then(function (thread) {
       if (!thread) throw new Error("Select or create a chat first");
+      if (!coreToolAvailable("core.ai.turn.submit") || !coreToolAvailable("core.ai.turn.get")) {
+        throw new Error("Durable McCluster turn service is not available on this deployment");
+      }
+
+      var messageId = newAiTurnId();
+      var submittedAt = new Date().toISOString();
+      var optimistic = {
+        id: messageId,
+        thread_id: thread.id,
+        org_id: thread.org_id,
+        role: "user",
+        content: content,
+        model: null,
+        implementation: null,
+        compute_task_id: null,
+        metadata: {
+          input_mode: inputMode,
+          execution_kind: "resident_ai_turn",
+          agent_job_id: messageId,
+          task_status: "submitting"
+        },
+        created_at: submittedAt
+      };
+
       state.aiChatPending = true;
       state.aiChatTask = null;
       state.aiChatDraft = "";
+      var messages = aiMessagesFor(thread.id);
+      messages.push(optimistic);
+      state.aiMessages[thread.id] = messages;
+      if (thread.title === "New chat") thread.title = content.replace(/\s+/g, " ").slice(0, 80);
+      thread.last_message_at = submittedAt;
       render();
-      return saveAiMessage(thread, {
-        role: "user",
-        content: content,
-        metadata: { input_mode: inputMode }
-      }).then(function (saved) {
-        var messages = aiMessagesFor(thread.id);
-        messages.push(saved);
-        state.aiMessages[thread.id] = messages;
-        if (thread.title === "New chat") thread.title = content.replace(/\s+/g, " ").slice(0, 80);
-        thread.last_message_at = saved.created_at;
-        render();
 
-        var history = messages
-          .filter(function (message) { return ["system", "user", "assistant"].indexOf(message.role) >= 0; })
-          .slice(-24)
-          .map(function (message) {
-            return { role: message.role, content: String(message.content || "").slice(0, 6000) };
-          });
-        history.unshift({
-          role: "system",
-          content: "You are McCluster AI, the resident assistant running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. Your conversation history is durably stored by McCluster."
+      return callCoreTool("core.ai.turn.submit", {
+        org_id: thread.org_id,
+        thread_id: thread.id,
+        message_id: messageId,
+        content: content,
+        input_mode: inputMode
+      }).then(function (queued) {
+        if (!queued || !queued.turn_id) throw new Error("McCluster did not return a durable turn id");
+        optimistic.metadata.task_status = queued.job_status || "queued";
+        state.aiChatTask = { id: queued.turn_id, status: queued.job_status || "queued", job_type: "resident_ai_turn" };
+        render();
+        return waitForResidentAiTurn(queued.turn_id, 330);
+      }).then(function (payload) {
+        var list = state.aiMessages[thread.id] || [];
+        if (payload.user_message) {
+          var userIdx = list.findIndex(function (m) { return String(m.id) === String(payload.user_message.id); });
+          if (userIdx >= 0) list[userIdx] = payload.user_message;
+          else list.push(payload.user_message);
+        }
+        if (payload.assistant_message && !list.some(function (m) { return String(m.id) === String(payload.assistant_message.id); })) {
+          list.push(payload.assistant_message);
+        }
+        list.sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+        state.aiMessages[thread.id] = list;
+        if (payload.assistant_message) {
+          thread.last_message_at = payload.assistant_message.created_at || thread.last_message_at;
+          if (opts.speakReply) speakAiText(payload.assistant_message.content);
+        }
+        state.aiThreads.sort(function (a, b) {
+          return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
         });
-        return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 })
-          .then(function (queued) {
-            var task = queued && queued.task;
-            if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
-            state.aiChatTask = task;
-            render();
-            return attachAiTaskToUserMessage(thread, saved, task)
-              .then(function (updatedUser) {
-                var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
-                if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
-              })
-              .then(function () { return waitForAiTask(task.id, 330); })
-              .catch(function (error) {
-                var terminal = error && error.task && ["failed", "canceled"].indexOf(error.task.status) >= 0;
-                if (!terminal) throw error;
-                return attachAiTaskToUserMessage(thread, saved, error.task, error.message).then(function (updatedUser) {
-                  var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
-                  if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
-                  throw error;
-                });
-              });
-          })
-          .then(function (task) {
-            return persistAiAssistantFromTask(thread, task);
-          })
-          .then(function (savedAssistant) {
-            state.aiMessages[thread.id].push(savedAssistant);
-            thread.last_message_at = savedAssistant.created_at;
-            state.aiThreads.sort(function (a, b) {
-              return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
-            });
-            if (opts.speakReply) speakAiText(savedAssistant.content);
-          });
+      }).catch(function (error) {
+        state.aiChatError = error.message || String(error);
+        return sleep(1000).then(function () {
+          return loadAiMessages(thread.id, true).catch(function () { return []; });
+        });
+      }).then(function () {
+        state.aiChatPending = false;
+        state.aiChatTask = null;
+        render();
       });
     }).catch(function (error) {
       state.aiChatError = error.message || String(error);
-    }).then(function () {
       state.aiChatPending = false;
       state.aiChatTask = null;
       render();

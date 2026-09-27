@@ -391,7 +391,15 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
       org_id: orgId,
       control_repository: process.env.MCCLUSTER_CANONICAL_REPOSITORY || 'mcclusterishere/mccluster',
       edge: process.env.MCCLUSTER_EDGE_URL || 'https://api.mccluster.org',
-      supabase_project: process.env.MCCLUSTER_SUPABASE_PROJECT_REF || 'zmnhbrjyhxzhkxmhkexs'
+      supabase_project: process.env.MCCLUSTER_SUPABASE_PROJECT_REF || 'zmnhbrjyhxzhkxmhkexs',
+      execution_home: process.env.HOME || '/var/lib/mccluster-core',
+      workspace_root: process.env.MCCLUSTER_WORKSPACE_ROOT || '/var/lib/mccluster-core/workspace',
+      session_root: process.env.MCCLUSTER_SESSION_ROOT || '/var/lib/mccluster-core/sessions',
+      artifact_root: process.env.MCCLUSTER_ARTIFACT_ROOT || '/var/lib/mccluster-core/artifacts',
+      repository_root: process.env.MCCLUSTER_REPO_ROOT || '/srv/mccluster/repos',
+      worktree_root: process.env.MCCLUSTER_WORKTREE_ROOT || '/srv/mccluster/worktrees',
+      conversation_truth: 'supabase:ops_ai_threads+ops_ai_messages',
+      private_memory_truth: 'supabase:ai_context'
     },
     runtime: deploy.ok ? deploy.value : null,
     catalog: catalog.ok ? catalog.value : null,

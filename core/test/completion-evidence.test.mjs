@@ -40,6 +40,7 @@ const validSamples = [
   [job('lead_rescore'), { executor: 'lead_rescore:v1', summary: 'Lead scores refreshed for organization org-1', recomputed_count: 7, target_score: null }],
   [job('host_health'), { executor: 'host_health:v2', checked_at: now, host: { hostname: 'mccluster-ovh' }, services: { core_runner: 'active' }, deployment: { deployed_sha: A } }],
   [job('sms_assistant_turn'), { executor: 'sms_assistant_turn:v1', action: 'reply', thread_id: 'thread-1', inbound_message_id: 'in-1', outbound_message_id: 'out-1', outbox_transport: 'android-sim-relay' }],
+  [job('resident_ai_turn'), { executor: 'resident_ai_turn:v1', thread_id: 'thread-1', user_message_id: 'user-1', assistant_message_id: 'assistant-1', model: 'qwen3:8b', implementation: 'mccluster-owned', replayed: false }],
 ];
 
 test('every currently supported Core job type can produce and verify evidence', () => {

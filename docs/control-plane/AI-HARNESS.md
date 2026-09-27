@@ -18,6 +18,12 @@ The resident AI is named **McCluster**. User-facing copy may say **McCluster** o
 
 The public website must never read raw `ai_context` tables directly.
 
+## Resident session durability
+
+The Control browser is a terminal into McCluster, not the owner of McCluster's execution lifetime. A resident conversation turn is accepted only when the user message and its canonical `ops_agent_jobs` work item have been durably committed together. After acceptance, OVH McCluster Core owns inference, retries, completion evidence, and assistant-message persistence. Closing, reloading, backgrounding, or losing the browser must not cancel an accepted turn.
+
+McCluster's VPS is a persistent execution environment. Its `HOME`, workspace, session/checkpoint, artifact, repository, and worktree roots survive individual web sessions and service restarts. Filesystem state is machine state, not canonical conversational memory: `ops_ai_threads` + `ops_ai_messages` remain the resident conversation record, and private cross-model memory remains in `ai_context`. Do not create a second transcript database, vector store, or shadow memory under the VPS filesystem.
+
 ## Privacy boundary
 
 Raw conversations, private reasoning artifacts supplied by providers, company-sensitive context, credentials, and unredacted context dumps MUST NOT be committed to this public repository.

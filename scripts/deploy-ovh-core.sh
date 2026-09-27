@@ -140,7 +140,11 @@ for unit in "${SOURCE_DIR}"/core/systemd/*.service "${SOURCE_DIR}"/core/systemd/
     printf '%s\n' "${name}" >> "${BACKUP_DIR}/new-units"
   fi
 done
-install -d -o mccluster-core -g mccluster-core -m 0750 /var/lib/mccluster-core/previews
+install -d -o mccluster-core -g mccluster-core -m 0750 \
+  /var/lib/mccluster-core/previews \
+  /var/lib/mccluster-core/workspace \
+  /var/lib/mccluster-core/sessions \
+  /var/lib/mccluster-core/artifacts
 # This rule only delegates starting constrained build instances; Core keeps NoNewPrivileges.
 if [[ -d /etc/polkit-1/rules.d ]]; then
   if [[ -f /etc/polkit-1/rules.d/50-mccluster-preview-build.rules ]]; then
