@@ -18,6 +18,33 @@ test('Control Analytics cold render is safe before the first network load',async
   assert.match(context.window.CR.analytics.render(),/>Analytics</);
 });
 
+test('Control Analytics mount paints immediately and fails visibly instead of going blank',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  A.init({
+    request:()=>Promise.reject(new Error('API unavailable')),
+    supa:()=>Promise.reject(new Error('Supabase unavailable'))
+  });
+  const host={
+    innerHTML:'',
+    querySelector:()=>null,
+    querySelectorAll:()=>[]
+  };
+  assert.doesNotThrow(()=>A.mount(host));
+  assert.match(host.innerHTML,/>Analytics</);
+  await new Promise((resolve)=>setTimeout(resolve,0));
+  assert.match(host.innerHTML,/Analytics load failed/);
+  assert.match(host.innerHTML,/did not load/);
+  for(const section of ['overview','audience','content','identity','forensics','setup']){
+    A.state.section=section;
+    assert.doesNotThrow(()=>A.render(),section+' should render in a failed-data state');
+    assert.ok(A.render().length>200,section+' rendered an empty surface');
+  }
+});
+
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
