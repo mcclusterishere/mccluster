@@ -2,6 +2,10 @@
 
 McCluster is the model-agnostic AI control plane for the company. Models are replaceable reasoning engines; McCluster owns memory, operational state, capabilities, tools, policies, provenance, and approval gates.
 
+## Canonical name
+
+The resident AI is named **McCluster**. User-facing copy may say **McCluster** or **McCluster AI**. Do not shorten the AI name to **Cluster** in prompts, interface labels, documentation, logs, tests, or operator communications. Generic infrastructure uses of the noun “cluster” remain valid when they do not refer to the AI.
+
 ## Canonical architecture
 
 - GitHub `mcclusterishere/mccluster`: code, schemas, adapters, policies, tests, public-safe documentation, and audit history.
