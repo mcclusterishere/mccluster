@@ -1,4 +1,5 @@
-const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
+import { localAiChat } from '../compute/local-ai-client.mjs';
+
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 
 function bounded(value, max) {
@@ -24,41 +25,33 @@ export async function localAnalysis(job) {
     evidence,
   });
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      stream: false,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      options: {
-        temperature: 0.2,
-        num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
-      },
-    }),
-    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000)),
+  const data = await localAiChat({
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    temperature: 0.2,
+    numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+    priority: -20,
+    metadata: { job_type: job.job_type || 'local_analysis', job_id: job.id || null },
   });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
   const text = String(data?.message?.content || '').trim();
-  if (!text) throw new Error('Ollama returned an empty analysis');
+  if (!text) throw new Error('Local AI returned an empty analysis');
 
   let parsed = null;
   try { parsed = JSON.parse(text); } catch { parsed = { summary: text }; }
 
   return {
-    executor: 'local_analysis:v1',
-    model: MODEL,
+    executor: 'local_analysis:v2',
+    model: data?.model || MODEL,
     evidence_scope: 'job_input_only',
     analysis: parsed,
     usage: {
       prompt_eval_count: data?.prompt_eval_count ?? null,
       eval_count: data?.eval_count ?? null,
       total_duration_ns: data?.total_duration ?? null,
+      queue_wait_ms: data?.queue_wait_ms ?? null,
     },
   };
 }
