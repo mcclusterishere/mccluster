@@ -151,11 +151,15 @@ async function identityAnalytics(env, sinceIso, untilIso) {
      selected window. We never scan the first N global bridge rows: that was
      the stale donor bug that could silently miss newer identities. */
   const bridges = [];
+  const bridgeSince = new Date(since.getTime() - 7 * 86400000).toISOString();
+  const bridgeUntil = new Date(until.getTime() + 7 * 86400000).toISOString();
   for (const ids of chunks(userIds)) {
     if (!ids.length) continue;
     bridges.push(...await sbRowsPaged(env,
-      `events?uid=in.(${ids.join(',')})&device_id=not.is.null&select=${eventSelect}&order=at.asc`,
-      50000
+      `events?uid=in.(${ids.join(',')})&device_id=not.is.null` +
+      `&at=gte.${encodeURIComponent(bridgeSince)}&at=lt.${encodeURIComponent(bridgeUntil)}` +
+      `&select=${eventSelect}&order=at.desc`,
+      100000
     ));
   }
 
@@ -315,13 +319,13 @@ async function identityAnalytics(env, sinceIso, untilIso) {
 }
 
 async function handleIdentityAnalytics(request, env, user, url) {
-  await requireHouseOps(env, user);
+  await requireHouseOwner(env, user);
   if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
   return json({ok:true,...await identityAnalytics(env,url.searchParams.get('since'),url.searchParams.get('until'))});
 }
 
 async function handleForensics(request, env, user, url) {
-  await requireHouseOps(env, user);
+  await requireHouseOwner(env, user);
   if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
   const until = finiteDate(url.searchParams.get('until'), new Date());
   const since = finiteDate(url.searchParams.get('since'), new Date(until.getTime()-7*86400000));
@@ -342,7 +346,7 @@ function cleanTxt(value) {
   return String(value || '').replace(/^"|"$/g, '').replace(/"\s+"/g, '').replace(/\\(["\\])/g, '$1');
 }
 
-async function requireHouseOps(env, user) {
+async function houseMembership(env, user) {
   if (!user?.id) throw Object.assign(new Error('Authentication required'), { status: 401 });
   const orgs = await sbJson(env, `orgs?slug=eq.${HOUSE_SLUG}&select=id,slug&limit=1`);
   const org = Array.isArray(orgs) ? orgs[0] : null;
@@ -353,7 +357,20 @@ async function requireHouseOps(env, user) {
     `org_members?org_id=eq.${encodeURIComponent(org.id)}&profile_id=eq.${encodeURIComponent(user.id)}&select=org_id,profile_id,role&limit=1`
   );
   const membership = Array.isArray(memberships) ? memberships[0] : null;
+  return { org, membership };
+}
+
+async function requireHouseOps(env, user) {
+  const { org, membership } = await houseMembership(env, user);
   await requireCapability(env, membership, 'ops.use');
+  return { org, membership };
+}
+
+async function requireHouseOwner(env, user) {
+  const { org, membership } = await houseMembership(env, user);
+  if (membership?.role !== 'owner') {
+    throw Object.assign(new Error('McCluster house owner access required'), { status: 403 });
+  }
   return { org, membership };
 }
 

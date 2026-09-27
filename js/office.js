@@ -1,23 +1,8 @@
-/* ============================================================
-   THE OFFICE STRIP — six owner rooms, one back office.
-   Injected on every owner page so the desks stop feeling like five
-   separate sites. Same origin, same login (the session token lives in
-   this browser); this strip is only navigation, never a gate.
-
-   IT ALSO CARRIES THE ONE GATE ANSWER. Five of these rooms used to
-   decide who was the owner like this:
-
-       if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org")
-
-   Two defects in one line. MCC_SUPA.token() returns a PROMISE, which is
-   always truthy, so the token half never tested anything — the gate was
-   a bare string compare. And a string in the page is not the authority
-   the data answers to: every read behind these rooms is governed by RLS,
-   which asks eu_is_admin(). When the two disagreed the room opened onto
-   data the database then refused, which is how a desk ends up showing
-   zeros instead of leads.
-
-   So there is one answer, asked of the database, shared by every room.
+/* Shared operator authorization helper.
+   Control Room is the only admin shell. Retired owner pages may still call
+   MCCOffice while their compatibility redirect resolves, but this file no
+   longer renders navigation. Authorization is the database's eu_is_admin()
+   predicate, not an email literal in browser code.
    ============================================================ */
 (function (w) {
   "use strict";
@@ -54,39 +39,5 @@
   w.MCCOffice = { isDesk: isDesk, open: open };
 })(window);
 
-(function boot() {
-  "use strict";
-  var ROOMS = [
-    ["admin.html", "Back Office"],
-    ["crm.html",   "Front Desk"],
-    ["desk.html",  "Outreach"],
-    ["inbox.html", "Inbox"],
-    ["vault.html", "Vault"],
-    ["lanes.html", "Lanes"],
-  ];
-  var here = location.pathname.split("/").pop() || "";
-  if (!ROOMS.some(function (r) { return r[0] === here; })) return;
-
-  // loaded from <head>, so the body may not exist yet
-  if (!document.body) {
-    document.addEventListener("DOMContentLoaded", boot);
-    return;
-  }
-
-  var bar = document.createElement("nav");
-  bar.setAttribute("aria-label", "The office");
-  bar.style.cssText = "position:sticky;top:0;z-index:260;display:flex;gap:.25rem;" +
-    "overflow-x:auto;padding:.5rem clamp(.8rem,3vw,1.4rem);background:rgba(10,8,7,.96);" +
-    "backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);" +
-    "border-bottom:1px solid rgba(244,239,230,.14)";
-  bar.innerHTML = ROOMS.map(function (r) {
-    var on = r[0] === here;
-    return '<a href="' + r[0] + '" style="flex:0 0 auto;text-decoration:none;' +
-      "font:800 .68rem 'Manrope',system-ui,sans-serif;letter-spacing:.08em;" +
-      "text-transform:uppercase;border-radius:99px;padding:.45rem .85rem;" +
-      (on ? "color:#fff;background:linear-gradient(165deg,#ff5a5c,#b3121b);"
-          : "color:rgba(244,239,230,.75);box-shadow:inset 0 0 0 1px rgba(244,239,230,.18);") +
-      '">' + r[1] + "</a>";
-  }).join("");
-  document.body.insertBefore(bar, document.body.firstChild);
-})();
+/* The old multi-room navigation strip was intentionally retired.
+   MCCOffice remains only as the shared eu_is_admin authorization helper. */

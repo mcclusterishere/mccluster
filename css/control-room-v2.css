@@ -241,10 +241,11 @@
   .cr-ai-chat__main{min-height:calc(100svh - 260px)}
 }
 @media(max-width:760px){
-  .cr-bottom{grid-template-columns:repeat(6,1fr)}
-  .cr-bottom .cr-nav__label{font-size:8px}
   .cr-ai-chat__messages{padding:13px}
   .cr-ai-message{max-width:94%}
   .cr-ai-chat__composerbox{grid-template-columns:1fr}
   .cr-ai-chat__composerbox .cr-btn{width:100%}
 }
+
+/* Remaining specialist back-office implementations are mounted inside the
+   canonical Control shell while they are converted to native subviews. */

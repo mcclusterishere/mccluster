@@ -1,113 +1,156 @@
-/* THE OPERATOR SURFACE.
-   ============================================================
-   The complaint: "I'm having trouble as the admin getting to my back
-   end, it's like a Frankenstein system."
-
-   The measurement behind it: the Control Room shipped a rail of six
-   surfaces and linked to THREE of the sixteen places the owner actually
-   works. Thirteen were reachable only by typing the URL from memory.
-
-   Three things pinned here so it cannot drift back.
-   ============================================================ */
+/* Canonical operator navigation contract:
+   one admin shell, native Control views, compatibility redirects only. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (p) => readFile(join(ROOT, p), 'utf8');
+const ROOT=join(dirname(fileURLToPath(import.meta.url)),'..','..');
+const read=(p)=>readFile(join(ROOT,p),'utf8');
+const fileOf=(href)=>String(href).split(/[?#]/)[0];
 
-/* A surface's href is a URL, not a path: it may legitimately carry a
-   query string ("index.html?edit=1" opens the page in edit mode) or a
-   fragment. The file on disk is the part before those. */
-const fileOf = (href) => String(href).split(/[?#]/)[0];
-
-async function registry() {
-  const src = await read('js/control-registry.js');
-  const scope = { window: {} };
-  new Function('window', src)(scope.window);
+async function registry(){
+  const src=await read('js/control-registry.js');
+  const scope={window:{}};
+  new Function('window',src)(scope.window);
   return scope.window.MCC_SURFACES;
 }
 
-/* 1. NO ORPHANS ------------------------------------------------- */
-
-test('every surface in the registry is a page that exists', async () => {
-  const R = await registry();
-  for (const s of R.all) {
-    await assert.doesNotReject(read(fileOf(s.href)), `${s.label} points at ${s.href}, which is not there`);
+test('the operator registry has one physical admin destination',async()=>{
+  const R=await registry();
+  assert.ok(R.all.length>=15,'Control must expose enough destinations to replace the old room directory');
+  for(const s of R.all){
+    assert.equal(fileOf(s.href),'control.html',s.label+' escaped the canonical Control shell');
+    assert.equal(s.state,'live');
   }
 });
 
-test('every operator page is in the registry', async () => {
-  /* The list that made the Frankenstein. If a page is added to the
-     system and not to the registry, it is unreachable from anywhere and
-     this fails rather than letting it quietly go missing. */
-  /* This is the active operator plane, not every historical page that still
-     exists on disk. Equity Uprise admin/dashboard are shelved under
-     _unfinished, Travel Desk is a retained one-off, and ecosystem.html is a
-     case-study/deep-link surface rather than an operator desk. */
-  const OPERATOR = ['admin.html','console.html','crm.html','analytics.html','desk.html',
-    'music-admin.html','management.html','studio.html','lanes.html','vault.html'];
-  const R = await registry();
-  const known = new Set(R.all.map((s) => fileOf(s.href)));
-  for (const page of OPERATOR) {
-    assert.ok(known.has(page), `${page} is an operator surface but is in no group — unreachable`);
+test('Control owns native Work Create Analytics and System navigation',async()=>{
+  const [html,js]=await Promise.all([read('control.html'),read('js/control-room-v2.js')]);
+  for(const key of ['home','ai','work','create','analytics','system','apps']){
+    assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
+  }
+  assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
+  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"\]/);
+  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "music"\]/);
+});
+
+test('the old admin room iframe strategy is dead',async()=>{
+  const [html,js]=await Promise.all([read('control.html'),read('js/control-room-v2.js')]);
+  assert.doesNotMatch(js,/<iframe|renderEmbeddedTool|embeddedWork|embeddedCreate|control_embed=1/);
+  assert.doesNotMatch(html,/control_embed=1/);
+  assert.match(js,/window\.CR\.workTools\.render/);
+  assert.match(js,/window\.CR\.musicOps\.render/);
+  assert.match(js,/window\.CR\.analytics\.mount/);
+  assert.match(js,/window\.CR\.socialCompose\.render/);
+});
+
+test('former owner rooms are compatibility URLs that return to Control',async()=>{
+  const expected={
+    'inbox.html':'#work:inbox',
+    'crm.html':'#work:pipeline',
+    'desk.html':'#work:outreach',
+    'admin.html':'#work:operations',
+    'management.html':'#create:channels',
+    'music-admin.html':'#create:music',
+    'vault.html':'#create:music',
+    'lanes.html':'#create:music',
+    'studio.html':'#create:projects',
+    'insights.html':'#analytics'
+  };
+  for(const [page,target] of Object.entries(expected)){
+    const html=await read(page);
+    assert.match(html,/js\/control-compat\.js/,page+' no longer returns to Control');
+    assert.ok(html.includes('data-control-target="'+target+'"'),page+' routes to the wrong Control view');
+  }
+  const compat=await read('js/control-compat.js');
+  assert.match(compat,/location\.replace\("control\.html"\+target\)/);
+  assert.doesNotMatch(compat,/control_embed|iframe|control-embed/);
+});
+
+test('customer dashboards remain usable but operators are routed into Control',async()=>{
+  const analytics=await read('analytics.html');
+  const consoleHtml=await read('console.html');
+  for(const html of [analytics,consoleHtml]){
+    assert.doesNotMatch(html,/js\/control-compat\.js/,'customer dashboard must not be unconditionally retired');
+    assert.match(html,/js\/owner-control-redirect\.js/,'operators should not get a second admin desk');
+  }
+  assert.ok(analytics.includes('data-control-target="#analytics"'));
+  assert.ok(consoleHtml.includes('data-control-target="#work:clients"'));
+  const redirect=await read('js/owner-control-redirect.js');
+  assert.match(redirect,/api\.mccluster\.org\/v1\/status/);
+});
+
+test('the old six-room office strip is deleted at the source',async()=>{
+  const office=await read('js/office.js');
+  assert.match(office,/MCCOffice = \{ isDesk: isDesk, open: open \}/);
+  assert.doesNotMatch(office,/var ROOMS|Back Office.*Front Desk|insertBefore\(bar/);
+});
+
+test('mobile Control navigation stays five primary destinations',async()=>{
+  const html=await read('control.html');
+  const m=html.match(/<nav class="cr-bottom"[\s\S]*?<\/nav>/);
+  assert.ok(m,'mobile Control navigation is missing');
+  assert.equal((m[0].match(/data-surface=/g)||[]).length,5,'phone navigation must not become a room directory');
+  for(const key of ['home','work','create','analytics','system']){
+    assert.ok(m[0].includes('data-surface="'+key+'"'),key+' is missing from mobile Control');
   }
 });
 
-/* 2. THE PALETTE IS EVERYWHERE ---------------------------------- */
-
-test('every operator page can reach every other one', async () => {
-  const R = await registry();
-  for (const s of R.all) {
-    const html = await read(fileOf(s.href));
-    assert.match(html, /js\/control-palette\.js/,
-      `${s.label} (${s.href}) has no command palette — landing there is a dead end`);
-    assert.match(html, /js\/control-registry\.js/,
-      `${fileOf(s.href)} loads the palette but not the registry it reads`);
-  }
+test('house-owner account entry opens Control, not the retired Studio door',async()=>{
+  const html=await read('account.html');
+  assert.match(html,/location\.replace\("control\.html#home"\)/);
+  assert.doesNotMatch(html,/location\.replace\("studio\.html"\)/);
 });
 
-/* 3. SEARCH LANDS ON THE RIGHT DESK ----------------------------- */
-
-test('plain-language queries reach the right surface', async () => {
-  const R = await registry();
-  /* Each of these was typed at the real thing. "who signed up" is the
-     one that caught a real bug: "up" substring-matched "Uprise", so the
-     Equity Uprise dashboard outranked the front desk. */
-  const cases = [
-    ['who signed up', ['Analytics', 'Front Desk', 'Mnet']],
-    ['leads',         ['Front Desk']],
-    ['unsubscribe',   ['Outreach Desk']],
-    ['mail',          ['Outreach Desk']],
-    ['isrc',          ['The Vault']],
-    ['instagram',     ['Socials Room']],
-    ['distribution',  ['The Lanes']],
-    ['orders',        ['Back Office']],
+test('operator search resolves concepts to logical Control views',async()=>{
+  const R=await registry();
+  const cases=[
+    ['leads','#work:pipeline'],
+    ['unsubscribe','#work:outreach'],
+    ['orders','#work:operations'],
+    ['instagram','#create:channels'],
+    ['isrc','#create:music'],
+    ['distribution','#create:music'],
+    ['forensics','#analytics'],
+    ['traffic','#analytics']
   ];
-  for (const [q, allowed] of cases) {
-    const top = R.search(q)[0];
-    assert.ok(top, `"${q}" found nothing`);
-    assert.ok(allowed.includes(top.label),
-      `"${q}" put ${top.label} first; expected one of ${allowed.join(' / ')}`);
+  for(const [q,hash] of cases){
+    const top=R.search(q)[0];
+    assert.ok(top,'"'+q+'" found nothing');
+    assert.ok(top.href.endsWith(hash),'"'+q+'" landed on '+top.href+' instead of '+hash);
   }
 });
 
-test('a short token cannot hijack the ranking', async () => {
-  const R = await registry();
-  /* The specific regression: two-letter fragments are dropped, and a
-     keyword hit must be a whole word, so "up" can no longer match
-     "Uprise" and outrank a better answer. */
-  const top = R.search('who signed up')[0].label;
-  assert.ok(!/^Uprise/.test(top), `"up" is hijacking the ranking again: got ${top}`);
+test('native modules are loaded before the Control shell starts',async()=>{
+  const html=await read('control.html');
+  const shellAt=html.indexOf('js/control-room-v2.js');
+  for(const path of [
+    'js/control-room/work-tools.js',
+    'js/control-room/social-compose.js',
+    'js/control-room/music-ops.js',
+    'js/control-room/analytics.js'
+  ]){
+    const at=html.indexOf(path);
+    assert.ok(at>=0&&at<shellAt,path+' must load before control-room-v2.js');
+  }
+  assert.match(html,/css\/control-admin\.css/);
+  assert.match(html,/css\/control-analytics\.css/);
 });
 
-test('state is declared honestly', async () => {
-  const R = await registry();
-  for (const s of R.all) {
-    assert.ok(['live', 'legacy', 'dark'].includes(s.state),
-      `${s.label} has state "${s.state}" — a surface shown as working when it is not costs a click and teaches nothing`);
-  }
-  assert.equal(R.get('admin').state, 'legacy', 'the back office is mid-migration and must say so');
+
+test('review regressions stay fixed in native Control tools',async()=>{
+  const [social,music,css]=await Promise.all([
+    read('js/control-room/social-compose.js'),
+    read('js/control-room/music-ops.js'),
+    read('css/control-analytics.css')
+  ]);
+  assert.match(social,/var rows=\[\],succeeded=false/);
+  assert.match(social,/if\(succeeded\)S\.draft=""/);
+  assert.match(music,/var ai=a\.ai&&typeof a\.ai==="object"\?a\.ai:\{\}/);
+  assert.doesNotMatch(music,/a\.ai_json/);
+  assert.match(css,/\.cra-axis\{fill:var\(--cr-faint\);font-size:20px\}/);
+  assert.match(css,/\.cra-scatter__label\{fill:#dfe5ec;font-size:18px\}/);
+  assert.match(css,/@media \(min-width:54rem\)[\s\S]*\.cra-axis\{font-size:10px\}[\s\S]*\.cra-scatter__label\{font-size:9px\}/);
 });
