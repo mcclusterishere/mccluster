@@ -8,8 +8,8 @@ import {
   withAssistantDisclosure,
 } from '../comms-policy.mjs';
 import { extractJsonObject } from '../reflection-policy.mjs';
+import { localAiChat } from '../compute/local-ai-client.mjs';
 
-const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 const OWNER_ALIAS = String(process.env.MCCLUSTER_PERSONAL_ALIAS || 'PRIM3').trim().slice(0, 80) || 'PRIM3';
 const COMMS_PROFILE = String(process.env.MCCLUSTER_COMMS_PROFILE || 'personal').trim().toLowerCase();
@@ -179,24 +179,18 @@ export async function smsAssistantTurn(job) {
     'Return JSON only: {"action":"reply|escalate|ignore","reply":"...","reason":"..."}.',
   ].join(' ');
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      stream: false,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: JSON.stringify({ thread_id: thread.id, conversation: context, latest_message_id: inbound.id }) },
-      ],
-      options: { temperature: 0.2, num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384) },
-    }),
-    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000)),
+  const data = await localAiChat({
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: JSON.stringify({ thread_id: thread.id, conversation: context, latest_message_id: inbound.id }) },
+    ],
+    temperature: 0.2,
+    numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+    priority: -5,
+    metadata: { job_type: job.job_type || 'sms_assistant_turn', job_id: job.id || null, thread_id: thread.id },
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
   const raw = String(data?.message?.content || '').trim();
-  if (!raw) throw new Error('Ollama returned an empty communications decision');
+  if (!raw) throw new Error('Local AI returned an empty communications decision');
   const decision = normalizeAssistantDecision(extractJsonObject(raw));
 
   if (decision.action === 'ignore') {
@@ -221,6 +215,7 @@ export async function smsAssistantTurn(job) {
       prompt_eval_count: data?.prompt_eval_count ?? null,
       eval_count: data?.eval_count ?? null,
       total_duration_ns: data?.total_duration ?? null,
+      queue_wait_ms: data?.queue_wait_ms ?? null,
     },
   };
 }
