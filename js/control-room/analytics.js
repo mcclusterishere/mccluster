@@ -108,22 +108,90 @@
   }
   function paint(){if(!S.host)return;S.host.innerHTML=render();bind(S.host);}
   function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
+  function blankData(){
+    return {
+      traffic:{byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
+      funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
+      identity:{},forensics:{},business:null
+    };
+  }
+  function applyResult(x){
+    if(!x)return;
+    if(!x.ok){S.errors[x.name]=x.error;return;}
+    var v=x.value,t=S.data.traffic;
+    if(x.name==="daily")t.byDay=v||[];
+    else if(x.name==="totals")t.totals=v&&v[0]||{};
+    else if(x.name==="pages")t.pages=top(v,"path");
+    else if(x.name==="sources")t.sources=top(v,"source");
+    else if(x.name==="countries")t.countries=top(v,"country");
+    else if(x.name==="networks")t.networks=top(v,"network");
+    else if(x.name==="funnel")S.data.funnel=v||[];
+    else if(x.name==="acquisition")S.data.acquisition=v||[];
+    else if(x.name==="paths")S.data.paths=v||[];
+    else if(x.name==="content")S.data.content=v||[];
+    else if(x.name==="contentEvents")S.data.contentEvents=v||[];
+    else if(x.name==="identity")S.data.identity=v||{};
+    else if(x.name==="forensics")S.data.forensics=v||{};
+    else if(x.name==="business")S.data.business=v||null;
+  }
+  function runLimited(tasks,limit,onResult,shouldContinue){
+    limit=Math.max(1,Number(limit)||1);
+    return new Promise(function(resolve){
+      var out=new Array(tasks.length),next=0,active=0;
+      function pump(){
+        if(shouldContinue&&!shouldContinue()){if(active===0)resolve(out);return;}
+        if(next>=tasks.length&&active===0){resolve(out);return;}
+        while(active<limit&&next<tasks.length&&(!shouldContinue||shouldContinue())){
+          (function(i){
+            var task=tasks[i];active++;
+            Promise.resolve().then(function(){return task.run();}).then(
+              function(value){out[i]={name:task.name,ok:true,value:value};},
+              function(error){out[i]={name:task.name,ok:false,error:error};}
+            ).then(function(){
+              active--;
+              if(onResult)onResult(out[i]);
+              pump();
+            });
+          })(next++);
+        }
+      }
+      pump();
+    });
+  }
   function load(){
-    var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}S.range=r;var q=++S.seq;S.loading=true;S.error=null;S.errors={};paint();var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
-    var jobs=[
-      settled("daily",rpc("analytics_daily",daily)),settled("totals",rpc("analytics_totals",args)),
-      settled("pages",rpc("analytics_top",{p_dim:"page",p_since:r.since,p_until:r.until,p_site:site,p_limit:12})),
-      settled("sources",rpc("analytics_top",{p_dim:"source",p_since:r.since,p_until:r.until,p_site:site,p_limit:12})),
-      settled("countries",rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:12})),
-      settled("networks",rpc("analytics_top",{p_dim:"network",p_since:r.since,p_until:r.until,p_site:site,p_limit:12})),
-      settled("funnel",site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([])),
-      settled("acquisition",rpc("analytics_acquisition",args)),settled("paths",rpc("analytics_paths",Object.assign({p_limit:40},args))),
-      settled("content",rpc("analytics_content",args)),settled("contentEvents",rpc("analytics_content_events",args)),
-      settled("identity",site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]})),
-      settled("forensics",site===null?S.request("/v1/analytics/forensics?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=150"):Promise.resolve({events:[]})),
-      settled("business",site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null))
+    var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
+    S.range=r;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.data=blankData();paint();
+    var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
+    /* One Control open used to throw every analytics primitive at PostgREST at
+       once. On production data that turned one dashboard view into a dozen
+       competing scans and some reads hit statement cancellation before any
+       result could paint. Keep the full suite, but bound fan-out and paint
+       each completed read immediately. */
+    var tasks=[
+      {name:"daily",run:function(){return rpc("analytics_daily",daily);}},
+      {name:"totals",run:function(){return rpc("analytics_totals",args);}},
+      {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"pages",run:function(){return rpc("analytics_top",{p_dim:"page",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"sources",run:function(){return rpc("analytics_top",{p_dim:"source",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"countries",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"networks",run:function(){return rpc("analytics_top",{p_dim:"network",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"contentEvents",run:function(){return rpc("analytics_content_events",args);}},
+      {name:"content",run:function(){return rpc("analytics_content",args);}},
+      {name:"acquisition",run:function(){return rpc("analytics_acquisition",args);}},
+      {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
+      {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
+      {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
+      {name:"forensics",run:function(){return site===null?S.request("/v1/analytics/forensics?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=150"):Promise.resolve({events:[]});}}
     ];
-    return Promise.all(jobs).then(function(out){if(q!==S.seq)return;var m={};out.forEach(function(x){if(x.ok)m[x.name]=x.value;else S.errors[x.name]=x.error;});S.data.business=m.business||null;S.data.traffic={byDay:m.daily||[],totals:m.totals&&m.totals[0]||{},pages:top(m.pages,"path"),sources:top(m.sources,"source"),countries:top(m.countries,"country"),networks:top(m.networks,"network")};S.data.funnel=m.funnel||[];S.data.acquisition=m.acquisition||[];S.data.paths=m.paths||[];S.data.content=m.content||[];S.data.contentEvents=m.contentEvents||[];S.data.identity=m.identity||{};S.data.forensics=m.forensics||{};S.loading=false;S.loaded=true;S.error=S.errors.daily||S.errors.totals||null;paint();});
+    return runLimited(tasks,3,function(x){
+      if(q!==S.seq)return;
+      applyResult(x);
+      S.error=S.errors.daily||S.errors.totals||null;
+      paint();
+    },function(){return q===S.seq;}).then(function(){
+      if(q!==S.seq)return;
+      S.loading=false;S.loaded=true;S.error=S.errors.daily||S.errors.totals||null;paint();
+    });
   }
   function bind(root){
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
