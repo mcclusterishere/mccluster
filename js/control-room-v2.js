@@ -29,6 +29,8 @@
     aiChatError: null,
     aiChatTask: null,
     aiChatDraft: "",
+    aiMemoryStatus: "idle",
+    aiMemoryError: null,
     aiVoiceListening: false,
     aiVoiceSpeaking: false,
     aiVoiceError: null,
@@ -344,14 +346,19 @@
     var key = "aiMessages:" + threadId;
     if (state.pending[key]) return Promise.resolve([]);
     state.pending[key] = true;
-    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.asc&limit=200")
+    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.desc&limit=500")
       .then(function (rows) {
-        state.aiMessages[threadId] = Array.isArray(rows) ? rows : [];
+        state.aiMessages[threadId] = Array.isArray(rows) ? rows.slice().reverse() : [];
         delete state.pending[key];
         delete state.pending[key + ":error"];
         render();
         var thread = aiThreadById(threadId);
-        return reconcileAiTaskReplies(thread, state.aiMessages[threadId]);
+        return reconcileAiTaskReplies(thread, state.aiMessages[threadId]).then(function (reconciled) {
+          if (thread && reconciled && reconciled.length) {
+            syncResidentAiThread(thread, reconciled).catch(function () {});
+          }
+          return reconciled;
+        });
       })
       .catch(function (error) {
         delete state.pending[key];
@@ -405,6 +412,105 @@
       var saved = Array.isArray(rows) ? rows[0] : null;
       if (!saved) throw new Error("Chat message was not persisted");
       return saved;
+    });
+  }
+
+  function syncResidentAiThread(thread, messages) {
+    if (!thread || !thread.id || !state.org || !state.org.id) return Promise.resolve(null);
+    var durable = (Array.isArray(messages) ? messages : [])
+      .filter(function (message) {
+        return message && ["system", "user", "assistant", "tool"].indexOf(message.role) >= 0 &&
+          String(message.content || "").trim();
+      })
+      .slice(-200);
+    if (!durable.length) return Promise.resolve(null);
+    var latest = durable[durable.length - 1];
+    state.aiMemoryStatus = "syncing";
+    state.aiMemoryError = null;
+    return request("/v1/ai/ingest", {
+      method: "POST",
+      body: {
+        org_id: state.org.id,
+        provider: "local",
+        account_label: "resident-mccluster",
+        adapter_version: "control-room-v2",
+        external_conversation_id: "resident-ai:" + thread.id,
+        title: thread.title || "McCluster conversation",
+        model_family: "McCluster",
+        started_at: thread.created_at || durable[0].created_at || null,
+        last_message_at: latest.created_at || null,
+        idempotency_key: "resident-ai:" + thread.id + ":" + latest.id,
+        synthesize_objectives: false,
+        metadata: {
+          source: "control-room",
+          canonical_transcript: "ops_ai_messages",
+          resident_ai: "McCluster"
+        },
+        messages: durable.map(function (message, index) {
+          return {
+            id: message.id,
+            role: message.role,
+            model: message.model || null,
+            content: String(message.content || ""),
+            occurred_at: message.created_at || null,
+            ordinal: index,
+            metadata: {
+              implementation: message.implementation || null,
+              compute_task_id: message.compute_task_id || null
+            }
+          };
+        })
+      }
+    }).then(function (result) {
+      state.aiMemoryStatus = "synced";
+      state.aiMemoryError = null;
+      return result;
+    }).catch(function (error) {
+      state.aiMemoryStatus = "degraded";
+      state.aiMemoryError = error && error.message ? error.message : String(error || "Memory sync failed");
+      throw error;
+    });
+  }
+
+  function retrieveResidentAiContext(query, recentMessages) {
+    if (!state.org || !state.org.id || !String(query || "").trim()) return Promise.resolve("");
+    var recent = new Set((Array.isArray(recentMessages) ? recentMessages : []).map(function (message) {
+      return String(message && message.content || "").trim().replace(/\s+/g, " ").toLowerCase();
+    }).filter(Boolean));
+    state.aiMemoryStatus = state.aiMemoryStatus === "syncing" ? "syncing" : "retrieving";
+    return request("/v1/ai/retrieve", {
+      method: "POST",
+      body: {
+        org_id: state.org.id,
+        query: String(query).slice(0, 4000),
+        limit: 10,
+        include_messages: true,
+        include_memories: true
+      }
+    }).then(function (result) {
+      var lines = [];
+      (result && Array.isArray(result.memories) ? result.memories : []).forEach(function (memory) {
+        var content = String(memory && memory.content || "").trim();
+        if (!content) return;
+        var subject = String(memory.subject || memory.memory_type || "memory").trim();
+        lines.push("[memory] " + subject + ": " + content.slice(0, 1800));
+      });
+      (result && Array.isArray(result.messages) ? result.messages : []).forEach(function (message) {
+        var content = String(message && message.content || "").trim();
+        var normalized = content.replace(/\s+/g, " ").toLowerCase();
+        if (!content || recent.has(normalized)) return;
+        var title = String(message.conversation_title || "past conversation").trim();
+        var role = String(message.role || "message").trim();
+        lines.push("[past " + role + " · " + title + "] " + content.slice(0, 1800));
+      });
+      var joined = lines.join("\n").slice(0, 12000);
+      state.aiMemoryStatus = "synced";
+      state.aiMemoryError = null;
+      return joined;
+    }).catch(function (error) {
+      state.aiMemoryStatus = "degraded";
+      state.aiMemoryError = error && error.message ? error.message : String(error || "Memory retrieval failed");
+      return "";
     });
   }
 
@@ -625,11 +731,20 @@
           .map(function (message) {
             return { role: message.role, content: String(message.content || "").slice(0, 6000) };
           });
-        history.unshift({
+        var baseSystem = {
           role: "system",
-          content: "You are McCluster AI, the resident assistant running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. Your conversation history is durably stored by McCluster."
-        });
-        return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 })
+          content: "You are McCluster, the resident AI running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. The canonical transcript is durably stored in McCluster, and relevant older memory may be supplied separately."
+        };
+        return retrieveResidentAiContext(content, history).then(function (memoryContext) {
+          history.unshift(baseSystem);
+          if (memoryContext) {
+            history.splice(1, 0, {
+              role: "system",
+              content: "Durable McCluster memory retrieved from prior conversations and memory records follows. Use it only when relevant. Prefer newer/current conversation evidence when there is a conflict, and do not invent details beyond the retrieved text.\n\n" + memoryContext
+            });
+          }
+          return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 });
+        })
           .then(function (queued) {
             var task = queued && queued.task;
             if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
@@ -660,6 +775,7 @@
             state.aiThreads.sort(function (a, b) {
               return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
             });
+            syncResidentAiThread(thread, state.aiMessages[thread.id]).catch(function () {});
             if (opts.speakReply) speakAiText(savedAssistant.content);
           });
       });
