@@ -168,8 +168,13 @@
     return current;
   }
 
-  function callCoreTool(name, args) {
-    return coreMcp("tools/call", { name: name, arguments: args || {} })
+  function callCoreTool(name, args, options) {
+    options = options || {};
+    var params = { name: name, arguments: args || {} };
+    if (options.idempotencyKey) {
+      params._meta = { "mccluster/idempotency-key": String(options.idempotencyKey).slice(0, 240) };
+    }
+    return coreMcp("tools/call", params)
       .then(parseCoreToolResult)
       .then(unwrapCoreResult);
   }
@@ -514,6 +519,51 @@
     });
   }
 
+  function aiHistoryThroughMessage(messages, userMessage) {
+    var targetId = userMessage && userMessage.id ? String(userMessage.id) : "";
+    var end = (Array.isArray(messages) ? messages : []).findIndex(function (message) {
+      return targetId && String(message.id) === targetId;
+    });
+    var bounded = end >= 0 ? messages.slice(0, end + 1) : (Array.isArray(messages) ? messages : []);
+    return bounded
+      .filter(function (message) { return ["system", "user", "assistant"].indexOf(message.role) >= 0; })
+      .slice(-24)
+      .map(function (message) {
+        return { role: message.role, content: String(message.content || "").slice(0, 6000) };
+      });
+  }
+
+  function queueAiTaskForSavedUser(thread, userMessage, messages) {
+    if (!thread || !userMessage || !userMessage.id) return Promise.reject(new Error("Saved AI user turn is incomplete"));
+    var history = aiHistoryThroughMessage(messages, userMessage);
+    var baseSystem = {
+      role: "system",
+      content: "You are McCluster, the resident AI running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. The canonical transcript is durably stored in McCluster, and relevant older memory may be supplied separately."
+    };
+    return retrieveResidentAiContext(userMessage.content, history).then(function (memoryContext) {
+      history.unshift(baseSystem);
+      if (memoryContext) {
+        history.splice(1, 0, {
+          role: "system",
+          content: "Durable McCluster memory retrieved from prior conversations and memory records follows. Use it only when relevant. Prefer newer/current conversation evidence when there is a conflict, and do not invent details beyond the retrieved text.\n\n" + memoryContext
+        });
+      }
+      return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 }, {
+        idempotencyKey: "resident-ai-turn:" + userMessage.id
+      });
+    }).then(function (queued) {
+      var task = queued && queued.task;
+      if (!task || !task.id) throw new Error("McCluster did not return a durable compute task");
+      state.aiChatTask = task;
+      render();
+      return attachAiTaskToUserMessage(thread, userMessage, task).then(function (updatedUser) {
+        var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
+        if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
+        return { userMessage: updatedUser, task: task, replayed: Boolean(queued.replayed) };
+      });
+    });
+  }
+
   function attachAiTaskToUserMessage(thread, message, task, taskError, attempts) {
     if (!message || !message.id || !task || !task.id) return Promise.reject(new Error("AI task link is incomplete"));
     attempts = Math.max(1, Number(attempts || 5));
@@ -725,46 +775,17 @@
         thread.last_message_at = saved.created_at;
         render();
 
-        var history = messages
-          .filter(function (message) { return ["system", "user", "assistant"].indexOf(message.role) >= 0; })
-          .slice(-24)
-          .map(function (message) {
-            return { role: message.role, content: String(message.content || "").slice(0, 6000) };
-          });
-        var baseSystem = {
-          role: "system",
-          content: "You are McCluster, the resident AI running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. The canonical transcript is durably stored in McCluster, and relevant older memory may be supplied separately."
-        };
-        return retrieveResidentAiContext(content, history).then(function (memoryContext) {
-          history.unshift(baseSystem);
-          if (memoryContext) {
-            history.splice(1, 0, {
-              role: "system",
-              content: "Durable McCluster memory retrieved from prior conversations and memory records follows. Use it only when relevant. Prefer newer/current conversation evidence when there is a conflict, and do not invent details beyond the retrieved text.\n\n" + memoryContext
-            });
-          }
-          return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 });
-        })
+        return queueAiTaskForSavedUser(thread, saved, messages)
           .then(function (queued) {
-            var task = queued && queued.task;
-            if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
-            state.aiChatTask = task;
-            render();
-            return attachAiTaskToUserMessage(thread, saved, task)
-              .then(function (updatedUser) {
+            return waitForAiTask(queued.task.id, 330).catch(function (error) {
+              var terminal = error && error.task && ["failed", "canceled"].indexOf(error.task.status) >= 0;
+              if (!terminal) throw error;
+              return attachAiTaskToUserMessage(thread, saved, error.task, error.message).then(function (updatedUser) {
                 var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
                 if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
-              })
-              .then(function () { return waitForAiTask(task.id, 330); })
-              .catch(function (error) {
-                var terminal = error && error.task && ["failed", "canceled"].indexOf(error.task.status) >= 0;
-                if (!terminal) throw error;
-                return attachAiTaskToUserMessage(thread, saved, error.task, error.message).then(function (updatedUser) {
-                  var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
-                  if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
-                  throw error;
-                });
+                throw error;
               });
+            });
           })
           .then(function (task) {
             return persistAiAssistantFromTask(thread, task);
