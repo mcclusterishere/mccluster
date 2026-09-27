@@ -329,6 +329,23 @@ function policyEvidence(job, output) {
       break;
     }
 
+    case 'resident_ai_turn': {
+      requireValue(job, Boolean(text(output.thread_id)), 'resident AI turn must report thread_id');
+      requireValue(job, Boolean(text(output.user_message_id)), 'resident AI turn must report user_message_id');
+      requireValue(job, Boolean(text(output.assistant_message_id)), 'resident AI turn must report assistant_message_id');
+      requireValue(job, Boolean(text(output.model)), 'resident AI turn must identify the model');
+      records.push({
+        kind: 'message_persisted',
+        channel: 'resident_ai',
+        thread_id: text(output.thread_id),
+        user_message_id: text(output.user_message_id),
+        assistant_message_id: text(output.assistant_message_id),
+        model: text(output.model),
+        replayed: output.replayed === true,
+      });
+      break;
+    }
+
     case 'sms_assistant_turn': {
       requireValue(job, ['reply', 'escalate', 'ignore'].includes(output.action), 'SMS assistant must report reply|escalate|ignore');
       requireValue(job, Boolean(text(output.thread_id)) && Boolean(text(output.inbound_message_id)), 'SMS assistant must identify thread and inbound message');
