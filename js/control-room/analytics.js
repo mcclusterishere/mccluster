@@ -200,7 +200,7 @@
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
     if(through)through.oninput=function(){S.through=through.value||"";};
-    var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=(from||{}).value||S.from||"";S.through=(through||{}).value||S.through||"";load();};
+    var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
   }
