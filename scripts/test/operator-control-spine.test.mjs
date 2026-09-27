@@ -8,6 +8,7 @@ const voice = await readFile(new URL('../../js/control-room/voice.js', import.me
 const controlHtml = await readFile(new URL('../../control.html', import.meta.url), 'utf8');
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const aiRouter = await readFile(new URL('../../workers/mccluster/src/ai/router.js', import.meta.url), 'utf8');
+const toolBroker = await readFile(new URL('../../core/src/tool-broker.mjs', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
 const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
 const aiHarness = await readFile(new URL('../../docs/control-plane/AI-HARNESS.md', import.meta.url), 'utf8');
@@ -82,6 +83,8 @@ test('resident McCluster chat survives browser closure and rehydrates from priva
   assert.match(source, /syncResidentAiThread\(thread, state\.aiMessages\[thread\.id\]\)/);
   assert.match(aiRouter, /body\.synthesize_objectives === false/);
   assert.match(aiRouter, /reason: 'caller_disabled'/);
+  assert.match(toolBroker, /meta\['mccluster\/idempotency-key'\]/);
+  assert.match(toolBroker, /options\.idempotencyKey = idempotencyKey/);
 });
 
 test('resident local AI chat is durable and multi-turn', () => {
