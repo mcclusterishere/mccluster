@@ -56,10 +56,23 @@ not. Proved by queueing a correct job: it came back `done`, and reported the
 node holds the repo at `/srv/mccluster/repos/mccluster` on branch
 `oauth/mcp-owner-auth-v1` with two uncommitted files.
 
-**`objective_reflection` fails intermittently with `fetch failed`.** It calls
-Ollama directly on `127.0.0.1:11434`. The node runs `max_leases: 1`, so when a
-compute task holds the model, a second caller can time out. Transient, and the
-job succeeds on most nights.
+**`objective_reflection` failed intermittently with `fetch failed` in the
+2026-09-19 production audit.** It called Ollama directly on
+`127.0.0.1:11434` while the node also advertised `max_leases: 1`, so a
+background reflection and an interactive compute task could contend for the
+same model outside one scheduler.
+
+Repo correction added 2026-09-27: resident Core inference for chat, analysis,
+planning, reflection, objective synthesis, SMS assistance, and meeting debriefs now
+enters through the loopback Ollama adapter. The adapter serializes inference in memory,
+reports queue/busy state, and orders waiting work by priority. Durable
+`ai.chat` compute tasks retain priority `0`; unattended analysis/planning
+uses negative priority. Private SMS, meeting, and conversation-synthesis
+context stays in process and is not copied into `ops_compute_tasks`. The
+separate low-privilege OpenCode service used by `code_patch` remains a direct
+Ollama consumer and is not claimed as part of this serialized resident-AI gate.
+This is a repository-state correction until the OVH production promotion and
+live end-to-end chat check are completed.
 
 ## The morning report was being thrown away
 

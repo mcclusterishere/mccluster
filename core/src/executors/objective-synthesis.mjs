@@ -4,8 +4,8 @@ import { checkpointJobInput, enqueueJob, recentObjectives } from '../supabase.mj
 import { createObjective, updateObjective } from '../objective-store.mjs';
 import { extractJsonObject } from '../reflection-policy.mjs';
 import { normalizeObjectiveSynthesis } from '../objective-synthesis-policy.mjs';
+import { localAiChat } from '../compute/local-ai-client.mjs';
 
-const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 
 function deterministicUuid(seed) {
@@ -89,28 +89,22 @@ export async function objectiveSynthesis(job) {
       'Return JSON only with action ignore|create|update, confidence 0..1, reason, and for create/update: name, description, priority, success_metric. For update also return objective_id from the supplied active objective set.',
     ].join(' ');
 
-    const response = await fetch(`${OLLAMA}/api/chat`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        stream: false,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: JSON.stringify({ canonical_objectives: activeObjectives, conversation: messages, source }) },
-        ],
-        options: { temperature: 0, num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384) },
-      }),
-      signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000)),
+    const data = await localAiChat({
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: JSON.stringify({ canonical_objectives: activeObjectives, conversation: messages, source }) },
+      ],
+      temperature: 0,
+      numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+      priority: -15,
+      metadata: { job_type: job.job_type || 'objective_synthesis', job_id: job.id || null, private_context: true },
     });
 
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
     const raw = String(data?.message?.content || '').trim();
-    if (!raw) throw new Error('Ollama returned an empty objective synthesis');
+    if (!raw) throw new Error('Local AI returned an empty objective synthesis');
 
     synthesis = normalizeObjectiveSynthesis(extractJsonObject(raw), { existingObjectiveIds: activeObjectives.map((objective) => objective.id) });
-    usage = { prompt_eval_count: data?.prompt_eval_count ?? null, eval_count: data?.eval_count ?? null, total_duration_ns: data?.total_duration ?? null };
+    usage = { prompt_eval_count: data?.prompt_eval_count ?? null, eval_count: data?.eval_count ?? null, total_duration_ns: data?.total_duration ?? null, queue_wait_ms: data?.queue_wait_ms ?? null };
     evidenceMeta = {
       private_context: true,
       conversation_id: source.conversation_id,

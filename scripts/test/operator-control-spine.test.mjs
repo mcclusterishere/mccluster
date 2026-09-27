@@ -56,6 +56,24 @@ test('resident local AI chat is durable and multi-turn', () => {
   assert.match(source, /function sendAiMessage\(/);
   assert.match(source, /callCoreTool\("ai\.chat", \{ messages: history/);
   assert.match(source, /compute_task_id/);
+  assert.match(source, /state\.aiChatTask = task/);
+  assert.match(source, /waitForAiTask\(task\.id, 330\)/);
+  assert.match(source, /function attachAiTaskToUserMessage\(/);
+  assert.match(source, /function persistAiAssistantFromTask\(/);
+  assert.match(source, /function reconcileAiTaskReplies\(/);
+  assert.match(source, /var inspections = unresolved\.map\(function \(userMessage\)/);
+  assert.match(source, /Promise\.all\(inspections\)/);
+  assert.match(source, /items\.filter\(Boolean\)\.map\(recoverOne\)/);
+  assert.match(source, /function persist\(left\)/);
+  assert.doesNotMatch(source, /Reply recovery link could not be saved; keep this chat open/);
+  assert.match(source, /\["failed", "canceled"\]\.indexOf\(status\) < 0/);
+  assert.match(source, /terminalError\.task = task/);
+  assert.match(source, /on_conflict=id/);
+  assert.match(source, /id: task\.id/);
+  assert.match(source, /compute_task_id: task\.id/);
+  assert.match(source, /Queued for local compute\. Your message is saved and has not been lost\./);
+  assert.match(source, /sourceBanner\(state\.sources\.coreBridge, "Core bridge"\)/);
+  assert.match(source, /sourceBanner\(state\.sources\.coreTools, "AI execution path"\)/);
   assert.match(source, /Message McCluster AI/);
 });
 

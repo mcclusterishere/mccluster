@@ -166,7 +166,7 @@ async function executeHttp(executor, task) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...(executor.headers || {}) },
-      body: JSON.stringify({ capability: task.capability, implementation: task.implementation, input: task.input, metadata: task.metadata || {} }),
+      body: JSON.stringify({ capability: task.capability, implementation: task.implementation, input: task.input, metadata: task.metadata || {}, priority: Number(task.priority || 0) }),
       signal: controller.signal
     });
     const text = await res.text();
