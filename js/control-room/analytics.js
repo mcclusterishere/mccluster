@@ -70,8 +70,8 @@
   function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
-    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{};
-    var core=kpi("Page views",n(tot.page_views),S.range.label)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
+    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{},rangeLabel=S.range&&S.range.label||"Selected range";
+    var core=kpi("Page views",n(tot.page_views),rangeLabel)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
     var scoped=house
       ? kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),b.window?"created":"all time")+kpi("Music plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"plays")+kpi("Gross music",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"revenue")
       : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
@@ -135,7 +135,7 @@
   }
   window.CR.analytics={
     init:function(opts){S.request=opts.request;S.supa=opts.supa;},
-    mount:function(host){S.host=host;paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
+    mount:function(host){S.host=host;if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
     refresh:function(){return loadSites().then(load);},
     render:render,
     state:S

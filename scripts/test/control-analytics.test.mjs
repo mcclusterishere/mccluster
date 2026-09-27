@@ -1,8 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 const read=(p)=>readFile(p,'utf8');
+
+test('Control Analytics cold render is safe before the first network load',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  context.window.CR.analytics.init({
+    request:()=>Promise.resolve({}),
+    supa:()=>Promise.resolve([])
+  });
+  assert.doesNotThrow(()=>context.window.CR.analytics.render());
+  assert.match(context.window.CR.analytics.render(),/>Analytics</);
+});
 
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
