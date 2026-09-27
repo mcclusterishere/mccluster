@@ -14,6 +14,7 @@ let lastError = null;
 const pending = [];
 
 function send(res, status, body) {
+  if (res.destroyed || res.writableEnded) return;
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'content-type': 'application/json',
@@ -35,7 +36,14 @@ function normalizePriority(value) {
   return Math.max(-100, Math.min(100, parsed));
 }
 
-async function execute(body, queuedAt) {
+function callerAbortedError() {
+  return Object.assign(new Error('Local AI caller disconnected before inference completed'), {
+    status: 499,
+    code: 'CALLER_ABORTED',
+  });
+}
+
+async function execute(body, queuedAt, callerSignal) {
   const queueWaitMs = Math.max(0, Date.now() - queuedAt);
   if (body.capability !== 'ai.chat') {
     throw Object.assign(new Error(`unsupported capability: ${body.capability}`), { status: 400, code: 'UNSUPPORTED_CAPABILITY' });
@@ -63,7 +71,12 @@ async function execute(body, queuedAt) {
         num_ctx: Math.min(16384, Math.max(2048, Number(input.num_ctx || 8192))),
       },
     }),
-    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
+    signal: callerSignal
+      ? AbortSignal.any([
+          callerSignal,
+          AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
+        ])
+      : AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS || 600000)),
   });
 
   const data = await response.json().catch(() => null);
@@ -94,7 +107,15 @@ function pump() {
   active = item;
   lastStartedAt = new Date().toISOString();
 
-  execute(item.body, item.queuedAt)
+  if (item.signal?.aborted) {
+    active = null;
+    item.cleanup?.();
+    item.reject(callerAbortedError());
+    queueMicrotask(pump);
+    return;
+  }
+
+  execute(item.body, item.queuedAt, item.signal)
     .then((result) => {
       lastError = null;
       lastCompletedAt = new Date().toISOString();
@@ -106,25 +127,45 @@ function pump() {
       item.reject(error);
     })
     .finally(() => {
+      item.cleanup?.();
       active = null;
       queueMicrotask(pump);
     });
 }
 
-function enqueueInference(body) {
+function enqueueInference(body, signal) {
   if (pending.length >= MAX_QUEUE) {
     throw Object.assign(new Error('Local AI queue is full'), { status: 503, code: 'AI_QUEUE_FULL' });
   }
+  if (signal?.aborted) throw callerAbortedError();
 
   return new Promise((resolve, reject) => {
-    pending.push({
+    const item = {
       body,
       priority: normalizePriority(body.priority),
       sequence: ++sequence,
       queuedAt: Date.now(),
+      signal,
       resolve,
       reject,
-    });
+      cleanup: null,
+    };
+    const onAbort = () => {
+      const index = pending.indexOf(item);
+      if (index >= 0) {
+        pending.splice(index, 1);
+        item.cleanup?.();
+        reject(callerAbortedError());
+      }
+      // If this item is active, execute() observes the same signal and aborts
+      // the upstream Ollama fetch rather than burning the only model slot for
+      // a caller that can no longer receive the result.
+    };
+    if (signal) {
+      signal.addEventListener('abort', onAbort, { once: true });
+      item.cleanup = () => signal.removeEventListener('abort', onAbort);
+    }
+    pending.push(item);
     pump();
   });
 }
@@ -148,7 +189,13 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && req.url === '/execute') {
       const body = await readJson(req);
-      const result = await enqueueInference(body);
+      const caller = new AbortController();
+      const abortCaller = () => caller.abort();
+      req.once('aborted', abortCaller);
+      res.once('close', () => {
+        if (!res.writableEnded) abortCaller();
+      });
+      const result = await enqueueInference(body, caller.signal);
       return send(res, 200, result);
     }
 
