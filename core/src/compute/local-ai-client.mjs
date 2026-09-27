@@ -1,6 +1,16 @@
 const ADAPTER = String(process.env.MCCLUSTER_OLLAMA_ADAPTER_URL || 'http://127.0.0.1:4790').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 
+function assertLoopbackAdapter(value) {
+  const url = new URL(value);
+  if (!['http:', 'https:'].includes(url.protocol) || !['127.0.0.1', '::1', '[::1]', 'localhost'].includes(url.hostname)) {
+    throw new Error('MCCLUSTER_OLLAMA_ADAPTER_URL must be a loopback HTTP(S) endpoint');
+  }
+  return value;
+}
+
+assertLoopbackAdapter(ADAPTER);
+
 function normalizePriority(value) {
   const parsed = Math.trunc(Number(value || 0));
   if (!Number.isFinite(parsed)) return 0;
