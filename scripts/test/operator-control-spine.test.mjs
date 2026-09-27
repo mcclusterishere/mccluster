@@ -60,7 +60,10 @@ test('resident local AI chat is durable and multi-turn', () => {
   assert.match(source, /waitForAiTask\(task\.id, 330\)/);
   assert.match(source, /function attachAiTaskToUserMessage\(/);
   assert.match(source, /function persistAiAssistantFromTask\(/);
-  assert.match(source, /function reconcileAiTaskReply\(/);
+  assert.match(source, /function reconcileAiTaskReplies\(/);
+  assert.match(source, /unresolved\.forEach\(function \(userMessage\)/);
+  assert.match(source, /\["failed", "canceled"\]\.indexOf\(status\) < 0/);
+  assert.match(source, /terminalError\.task = task/);
   assert.match(source, /on_conflict=id/);
   assert.match(source, /id: task\.id/);
   assert.match(source, /compute_task_id: task\.id/);
