@@ -722,7 +722,7 @@
   function setSurface(surface, view, replace) {
     if (SURFACES.indexOf(surface) < 0) return;
     if (state.surface === "ai" && surface !== "ai") {
-      stopAiVoiceListening();
+      stopAiVoiceListening(true);
       stopAiVoiceSpeech();
     }
     state.surface = surface;
