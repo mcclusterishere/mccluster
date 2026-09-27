@@ -20,6 +20,7 @@ import { smsAssistantTurn } from './executors/sms-assistant-turn.mjs';
 import { leadRescore } from './executors/lead-rescore.mjs';
 import { meetingDelegateDispatch } from './executors/meeting-delegate-dispatch.mjs';
 import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs';
+import { residentAiTurn } from './executors/resident-ai-turn.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -43,6 +44,7 @@ const executors = new Map([
   ['lead_rescore', leadRescore],
   ['meeting_delegate_dispatch', meetingDelegateDispatch],
   ['meeting_delegate_collect', meetingDelegateCollect],
+  ['resident_ai_turn', residentAiTurn],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
