@@ -171,9 +171,14 @@ systemctl enable --now mccluster-preview-gateway.service
 systemctl restart mccluster-preview-gateway.service
 curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4799/health >/dev/null
 
-# Runner and broker are the minimum healthy Core surface.
+# The resident AI path is part of the minimum healthy Core surface.
+# A release that leaves the adapter unable to reach Ollama must roll back
+# instead of stamping a deployment where Control can queue work but never reply.
 systemctl is-active --quiet mccluster-core-runner.service
 systemctl is-active --quiet mccluster-core-tool-broker.service
+systemctl is-active --quiet mccluster-ollama-adapter.service
+systemctl is-active --quiet mccluster-compute-node.service
+curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:4790/health >/dev/null
 
 grep -Fq "\"commit_sha\":\"${DEPLOY_SHA}\"" "${DEPLOY_MANIFEST}"
 printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"
