@@ -276,7 +276,6 @@
     return VOICE.speak(content, {
       lang: navigator.language || "en-US",
       onState: function (next) {
-        state.aiVoiceListening = Boolean(next && next.listening);
         state.aiVoiceSpeaking = Boolean(next && next.speaking);
         render();
       },
@@ -310,7 +309,6 @@
       lang: navigator.language || "en-US",
       onState: function (next) {
         state.aiVoiceListening = Boolean(next && next.listening);
-        state.aiVoiceSpeaking = Boolean(next && next.speaking);
         render();
       },
       onTranscript: function (result) {
