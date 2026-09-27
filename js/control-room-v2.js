@@ -257,7 +257,8 @@
         delete state.pending[key];
         delete state.pending[key + ":error"];
         render();
-        return state.aiMessages[threadId];
+        var thread = aiThreadById(threadId);
+        return reconcileAiTaskReply(thread, state.aiMessages[threadId]);
       })
       .catch(function (error) {
         delete state.pending[key];
@@ -311,6 +312,100 @@
       var saved = Array.isArray(rows) ? rows[0] : null;
       if (!saved) throw new Error("Chat message was not persisted");
       return saved;
+    });
+  }
+
+  function attachAiTaskToUserMessage(thread, message, task) {
+    if (!message || !message.id || !task || !task.id) return Promise.reject(new Error("AI task link is incomplete"));
+    var metadata = Object.assign({}, message.metadata || {}, {
+      capability: "ai.chat",
+      task_status: task.status || "queued"
+    });
+    return supa("ops_ai_messages?id=eq." + encodeURIComponent(message.id) + "&thread_id=eq." + encodeURIComponent(thread.id) + "&select=*", {
+      method: "PATCH",
+      body: { compute_task_id: task.id, metadata: metadata },
+      prefer: "return=representation"
+    }).then(function (rows) {
+      var updated = Array.isArray(rows) ? rows[0] : null;
+      if (!updated) throw new Error("AI task recovery link was not persisted");
+      return updated;
+    });
+  }
+
+  function persistAiAssistantFromTask(thread, task) {
+    var answer = aiTaskAnswer(task);
+    if (!answer) return Promise.reject(new Error("Local AI completed without response content"));
+    var output = task.output || {};
+    var body = {
+      id: task.id,
+      thread_id: thread.id,
+      org_id: thread.org_id,
+      role: "assistant",
+      content: answer,
+      model: output.model || null,
+      implementation: task.implementation || task.selected_implementation || null,
+      compute_task_id: task.id,
+      metadata: { capability: "ai.chat", task_status: task.status }
+    };
+    return supa("ops_ai_messages?on_conflict=id&select=*", {
+      method: "POST",
+      body: body,
+      prefer: "resolution=ignore-duplicates,return=representation"
+    }).then(function (rows) {
+      var saved = Array.isArray(rows) ? rows[0] : null;
+      if (saved) return saved;
+      return supa("ops_ai_messages?id=eq." + encodeURIComponent(task.id) + "&thread_id=eq." + encodeURIComponent(thread.id) + "&select=*&limit=1")
+        .then(function (existing) {
+          var row = Array.isArray(existing) ? existing[0] : null;
+          if (!row) throw new Error("Completed AI reply could not be recovered");
+          return row;
+        });
+    });
+  }
+
+  function reconcileAiTaskReply(thread, messages) {
+    if (!thread || !coreToolAvailable("compute.task.get")) return Promise.resolve(messages);
+    var assistantTaskIds = new Set(messages.filter(function (m) { return m.role === "assistant" && m.compute_task_id; })
+      .map(function (m) { return String(m.compute_task_id); }));
+    var unresolved = messages.filter(function (m) {
+      return m.role === "user" && m.compute_task_id && !assistantTaskIds.has(String(m.compute_task_id));
+    });
+    if (!unresolved.length) return Promise.resolve(messages);
+
+    var userMessage = unresolved[unresolved.length - 1];
+    var taskId = String(userMessage.compute_task_id);
+    var key = "aiRecover:" + thread.id;
+    if (state.pending[key]) return Promise.resolve(messages);
+    state.pending[key] = true;
+
+    return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
+      var task = payload && payload.task;
+      if (!task) throw new Error("Saved AI compute task disappeared");
+      state.aiChatTask = task;
+      if (task.status === "done") return task;
+      if (task.status === "failed" || task.status === "canceled") {
+        throw new Error(task.last_error || ("Saved AI compute task " + task.status));
+      }
+      state.aiChatPending = true;
+      render();
+      return waitForAiTask(taskId, 330);
+    }).then(function (task) {
+      return persistAiAssistantFromTask(thread, task);
+    }).then(function (saved) {
+      if (!state.aiMessages[thread.id].some(function (m) { return String(m.id) === String(saved.id); })) {
+        state.aiMessages[thread.id].push(saved);
+      }
+      state.aiMessages[thread.id].sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+      return state.aiMessages[thread.id];
+    }).catch(function (error) {
+      state.aiChatError = "Saved AI turn needs attention: " + (error.message || String(error));
+      return state.aiMessages[thread.id] || messages;
+    }).then(function (rows) {
+      delete state.pending[key];
+      state.aiChatPending = false;
+      state.aiChatTask = null;
+      render();
+      return rows;
     });
   }
 
@@ -372,20 +467,18 @@
             if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
             state.aiChatTask = task;
             render();
-            return waitForAiTask(task.id, 330);
+            return attachAiTaskToUserMessage(thread, saved, task)
+              .then(function (updatedUser) {
+                var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
+                if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
+              })
+              .catch(function (error) {
+                state.aiChatError = "Reply recovery link could not be saved; keep this chat open: " + (error.message || String(error));
+              })
+              .then(function () { return waitForAiTask(task.id, 330); });
           })
           .then(function (task) {
-            var answer = aiTaskAnswer(task);
-            if (!answer) throw new Error("Local AI completed without response content");
-            var output = task.output || {};
-            return saveAiMessage(thread, {
-              role: "assistant",
-              content: answer,
-              model: output.model || null,
-              implementation: task.implementation || task.selected_implementation || null,
-              compute_task_id: task.id,
-              metadata: { capability: "ai.chat", task_status: task.status }
-            });
+            return persistAiAssistantFromTask(thread, task);
           })
           .then(function (savedAssistant) {
             state.aiMessages[thread.id].push(savedAssistant);
