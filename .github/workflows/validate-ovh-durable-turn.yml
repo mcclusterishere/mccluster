@@ -1,0 +1,42 @@
+name: Validate OVH durable McCluster turn hotfix
+
+on:
+  push:
+    branches:
+      - ops/validate-ovh-durable-turn-20260927
+    paths:
+      - .github/workflows/validate-ovh-durable-turn.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Exact production-baseline Core validation
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: 153ff05cbba95342d603cc0bc539b1aa5aa3c5b8
+
+    steps:
+      - name: Checkout exact hotfix
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Verify exact target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+
+      - name: Syntax-check Core
+        working-directory: core
+        run: npm run check
+
+      - name: Run full Core test suite
+        working-directory: core
+        run: npm test
+
+      - name: Run resident turn tests explicitly
+        working-directory: core
+        run: node --test test/resident-ai-turn.test.mjs test/control-tools.test.mjs test/completion-evidence.test.mjs
