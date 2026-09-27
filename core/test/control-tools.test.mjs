@@ -8,7 +8,7 @@ import { researchWeb } from '../src/tools/research.mjs';
 const names = new Set(CONTROL_TOOLS.map((tool) => tool.name));
 
 test('Core exposes repository objective code game world and web-research tools', () => {
-  for (const name of ['core.compute.task.get', 'core.repo.inspect', 'core.objective.plan', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web', 'core.ontology.schema', 'core.ontology.query', 'core.ontology.neighbors', 'core.ontology.action.apply', 'core.ingest.connectors', 'core.ingest.records', 'core.ingest.run.begin', 'core.ingest.record.write', 'core.ingest.run.finish', 'core.entity.aliases', 'core.entity.resolve', 'core.facts.query', 'core.facts.claim']) {
+  for (const name of ['core.compute.task.get', 'core.ai.turn.submit', 'core.ai.turn.get', 'core.repo.inspect', 'core.objective.plan', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web', 'core.ontology.schema', 'core.ontology.query', 'core.ontology.neighbors', 'core.ontology.action.apply', 'core.ingest.connectors', 'core.ingest.records', 'core.ingest.run.begin', 'core.ingest.record.write', 'core.ingest.run.finish', 'core.entity.aliases', 'core.entity.resolve', 'core.facts.query', 'core.facts.claim']) {
     assert.ok(names.has(name), `missing ${name}`);
   }
 });
