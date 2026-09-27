@@ -1,7 +1,7 @@
 import { enqueueJob, recentJobs, recentObjectives } from '../supabase.mjs';
 import { allowedReflectionJobTypes, extractJsonObject, normalizeReflectionPlan } from '../reflection-policy.mjs';
+import { localAiChat } from '../compute/local-ai-client.mjs';
 
-const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 
 function bounded(value, max) {
@@ -13,38 +13,28 @@ function sleep(ms) {
 }
 
 export async function fetchReflectionResponse(messages, {
-  fetchImpl = globalThis.fetch,
+  chatImpl = localAiChat,
   sleepImpl = sleep,
   attempts = Math.min(5, Math.max(1, Number(process.env.MCCLUSTER_OLLAMA_RETRY_ATTEMPTS || 3))),
   timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
+  metadata = {},
 } = {}) {
   let lastError = null;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const response = await fetchImpl(`${OLLAMA}/api/chat`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          model: MODEL,
-          stream: false,
-          messages,
-          options: {
-            temperature: 0.1,
-            num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
-          },
-        }),
-        signal: AbortSignal.timeout(timeoutMs),
+      return await chatImpl({
+        messages,
+        temperature: 0.1,
+        numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+        priority: -20,
+        timeoutMs,
+        metadata,
       });
-
-      const data = await response.json().catch(() => null);
-      if (response.ok) return data;
-
-      const error = new Error(data?.error || `Ollama returned ${response.status}`);
-      if (response.status < 500 || attempt === attempts) throw Object.assign(error, { retryable: false });
-      lastError = error;
     } catch (error) {
-      if (error?.retryable === false || error?.name === 'TimeoutError' || error?.name === 'AbortError' || attempt === attempts) {
+      const status = Number(error?.status || 0);
+      const retryable = error?.retryable !== false && (!status || status === 408 || status === 425 || status === 429 || status >= 500);
+      if (!retryable || error?.name === 'TimeoutError' || error?.name === 'AbortError' || attempt === attempts) {
         throw error;
       }
       lastError = error;
@@ -53,7 +43,7 @@ export async function fetchReflectionResponse(messages, {
     await sleepImpl(Math.min(5_000, 500 * (2 ** (attempt - 1))));
   }
 
-  throw lastError || new Error('Ollama reflection failed');
+  throw lastError || new Error('Local AI reflection failed');
 }
 
 export async function objectiveReflection(job) {
@@ -94,9 +84,11 @@ export async function objectiveReflection(job) {
   const data = await fetchReflectionResponse([
     { role: 'system', content: system },
     { role: 'user', content: user },
-  ]);
+  ], {
+    metadata: { job_type: job.job_type || 'objective_reflection', job_id: job.id || null },
+  });
   const text = String(data?.message?.content || '').trim();
-  if (!text) throw new Error('Ollama returned an empty reflection');
+  if (!text) throw new Error('Local AI returned an empty reflection');
 
   const parsed = extractJsonObject(text);
   const plan = normalizeReflectionPlan(parsed || { summary: text, next_jobs: [] }, { maxJobs });
@@ -126,7 +118,7 @@ export async function objectiveReflection(job) {
 
   return {
     executor: 'objective_reflection:v2',
-    model: MODEL,
+    model: data?.model || MODEL,
     evidence_scope: 'canonical_objectives_and_recent_jobs',
     objective,
     summary: plan.summary,
@@ -141,6 +133,7 @@ export async function objectiveReflection(job) {
       prompt_eval_count: data?.prompt_eval_count ?? null,
       eval_count: data?.eval_count ?? null,
       total_duration_ns: data?.total_duration ?? null,
+      queue_wait_ms: data?.queue_wait_ms ?? null,
     },
   };
 }

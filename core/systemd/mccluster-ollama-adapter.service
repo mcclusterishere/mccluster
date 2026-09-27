@@ -11,6 +11,7 @@ WorkingDirectory=/opt/mccluster/core
 Environment=MCCLUSTER_OLLAMA_URL=http://127.0.0.1:11434
 Environment=MCCLUSTER_OLLAMA_MODEL=qwen3:8b
 Environment=MCCLUSTER_OLLAMA_ADAPTER_PORT=4790
+Environment=MCCLUSTER_OLLAMA_ADAPTER_MAX_QUEUE=32
 ExecStart=/usr/bin/node /opt/mccluster/core/src/compute/ollama-adapter.mjs
 Restart=always
 RestartSec=3
