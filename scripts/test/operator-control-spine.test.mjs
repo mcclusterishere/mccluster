@@ -7,6 +7,7 @@ const source = await readFile(new URL('../../js/control-room-v2.js', import.meta
 const voice = await readFile(new URL('../../js/control-room/voice.js', import.meta.url), 'utf8');
 const controlHtml = await readFile(new URL('../../control.html', import.meta.url), 'utf8');
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
+const aiRouter = await readFile(new URL('../../workers/mccluster/src/ai/router.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
 const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
 const aiHarness = await readFile(new URL('../../docs/control-plane/AI-HARNESS.md', import.meta.url), 'utf8');
@@ -60,6 +61,23 @@ test('resident AI canonical name is McCluster', () => {
     assert.doesNotMatch(artifact, /\bresident Cluster\b/);
     assert.doesNotMatch(artifact, /\b(?:ask|talk to|message) Cluster\b/i);
   }
+});
+
+test('resident McCluster chat survives browser closure and rehydrates from private memory', () => {
+  assert.match(source, /ops_ai_threads/);
+  assert.match(source, /ops_ai_messages/);
+  assert.match(source, /order=created_at\.desc&limit=500/);
+  assert.match(source, /rows\.slice\(\)\.reverse\(\)/);
+  assert.match(source, /function syncResidentAiThread\(/);
+  assert.match(source, /request\("\/v1\/ai\/ingest"/);
+  assert.match(source, /external_conversation_id: "resident-ai:" \+ thread\.id/);
+  assert.match(source, /synthesize_objectives: false/);
+  assert.match(source, /function retrieveResidentAiContext\(/);
+  assert.match(source, /request\("\/v1\/ai\/retrieve"/);
+  assert.match(source, /Durable McCluster memory retrieved from prior conversations/);
+  assert.match(source, /syncResidentAiThread\(thread, state\.aiMessages\[thread\.id\]\)/);
+  assert.match(aiRouter, /body\.synthesize_objectives === false/);
+  assert.match(aiRouter, /reason: 'caller_disabled'/);
 });
 
 test('resident local AI chat is durable and multi-turn', () => {
