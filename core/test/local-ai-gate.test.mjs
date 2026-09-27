@@ -58,6 +58,10 @@ test('adapter serializes requests by priority and exposes queue health', async (
   assert.match(source, /pending\.sort\(\(a, b\) => b\.priority - a\.priority \|\| a\.sequence - b\.sequence\)/);
   assert.match(source, /queue_depth: pending\.length/);
   assert.match(source, /busy: Boolean\(active\)/);
+  assert.match(source, /CALLER_ABORTED/);
+  assert.match(source, /pending\.splice\(index, 1\)/);
+  assert.match(source, /req\.once\('aborted', abortCaller\)/);
+  assert.match(source, /AbortSignal\.any/);
 });
 
 test('compute node forwards durable task priority into the adapter', async () => {
