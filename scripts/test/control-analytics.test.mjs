@@ -82,10 +82,10 @@ test('custom range edits survive progressive Analytics repaints',async()=>{
   vm.createContext(context);
   vm.runInContext(js,context);
   const A=context.window.CR.analytics;
-  const from={value:'',oninput:null},through={value:'',oninput:null};
+  const from={value:'',oninput:null},through={value:'',oninput:null},apply={onclick:null};
   const host={
     innerHTML:'',
-    querySelector:(sel)=>sel==='#craFrom'?from:sel==='#craThrough'?through:null,
+    querySelector:(sel)=>sel==='#craFrom'?from:sel==='#craThrough'?through:sel==='[data-cra-apply]'?apply:null,
     querySelectorAll:()=>[]
   };
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
@@ -99,6 +99,11 @@ test('custom range edits survive progressive Analytics repaints',async()=>{
   assert.equal(A.state.through,'2026-09-27');
   assert.match(A.render(),/value="2026-09-01"/);
   assert.match(A.render(),/value="2026-09-27"/);
+  from.value='';from.oninput();
+  assert.equal(A.state.from,'');
+  assert.equal(typeof apply.onclick,'function');
+  apply.onclick();
+  assert.equal(A.state.from,'','Apply must not resurrect a deliberately cleared date');
 });
 
 test('all six Analytics sections render representative successful data',async()=>{
