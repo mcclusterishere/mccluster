@@ -63,6 +63,11 @@ test('former owner rooms are compatibility URLs that return to Control',async()=
     const html=await read(page);
     assert.match(html,/js\/control-compat\.js/,page+' no longer returns to Control');
     assert.ok(html.includes('data-control-target="'+target+'"'),page+' routes to the wrong Control view');
+    if(page==='insights.html'){
+      assert.doesNotMatch(html,/url=analytics\.html|location\.replace\("analytics\.html|href="analytics\.html/,'Insights carries a competing redirect away from Control');
+      assert.match(html,/url=control\.html#analytics/);
+      assert.match(html,/location\.replace\("control\.html#analytics"\)/);
+    }
   }
   const compat=await read('js/control-compat.js');
   assert.match(compat,/location\.replace\("control\.html"\+target\)/);
@@ -121,6 +126,16 @@ test('operator search resolves concepts to logical Control views',async()=>{
     assert.ok(top,'"'+q+'" found nothing');
     assert.ok(top.href.endsWith(hash),'"'+q+'" landed on '+top.href+' instead of '+hash);
   }
+});
+
+
+
+test('Analytics never degrades into an empty Control surface',async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/Analytics unavailable/);
+  assert.match(js,/Analytics failed to start/);
+  assert.match(js,/var analyticsHost = \$\("crAnalyticsMount"\)/);
+  assert.match(js,/try \{[\s\S]*window\.CR\.analytics\.mount\(analyticsHost\);[\s\S]*catch \(analyticsErr\)/);
 });
 
 test('native modules are loaded before the Control shell starts',async()=>{
