@@ -258,7 +258,7 @@
         delete state.pending[key + ":error"];
         render();
         var thread = aiThreadById(threadId);
-        return reconcileAiTaskReply(thread, state.aiMessages[threadId]);
+        return reconcileAiTaskReplies(thread, state.aiMessages[threadId]);
       })
       .catch(function (error) {
         delete state.pending[key];
@@ -315,12 +315,14 @@
     });
   }
 
-  function attachAiTaskToUserMessage(thread, message, task) {
+  function attachAiTaskToUserMessage(thread, message, task, taskError) {
     if (!message || !message.id || !task || !task.id) return Promise.reject(new Error("AI task link is incomplete"));
     var metadata = Object.assign({}, message.metadata || {}, {
       capability: "ai.chat",
       task_status: task.status || "queued"
     });
+    if (taskError) metadata.task_error = String(taskError).slice(0, 1000);
+    else delete metadata.task_error;
     return supa("ops_ai_messages?id=eq." + encodeURIComponent(message.id) + "&thread_id=eq." + encodeURIComponent(thread.id) + "&select=*", {
       method: "PATCH",
       body: { compute_task_id: task.id, metadata: metadata },
@@ -363,49 +365,88 @@
     });
   }
 
-  function reconcileAiTaskReply(thread, messages) {
+  function reconcileAiTaskReplies(thread, messages) {
     if (!thread || !coreToolAvailable("compute.task.get")) return Promise.resolve(messages);
     var assistantTaskIds = new Set(messages.filter(function (m) { return m.role === "assistant" && m.compute_task_id; })
       .map(function (m) { return String(m.compute_task_id); }));
     var unresolved = messages.filter(function (m) {
-      return m.role === "user" && m.compute_task_id && !assistantTaskIds.has(String(m.compute_task_id));
+      var status = m.metadata && m.metadata.task_status;
+      return m.role === "user" && m.compute_task_id &&
+        ["failed", "canceled"].indexOf(status) < 0 &&
+        !assistantTaskIds.has(String(m.compute_task_id));
     });
     if (!unresolved.length) return Promise.resolve(messages);
 
-    var userMessage = unresolved[unresolved.length - 1];
-    var taskId = String(userMessage.compute_task_id);
     var key = "aiRecover:" + thread.id;
     if (state.pending[key]) return Promise.resolve(messages);
     state.pending[key] = true;
+    var failures = [];
+    var chain = Promise.resolve();
 
-    return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
-      var task = payload && payload.task;
-      if (!task) throw new Error("Saved AI compute task disappeared");
-      state.aiChatTask = task;
-      if (task.status === "done") return task;
-      if (task.status === "failed" || task.status === "canceled") {
-        throw new Error(task.last_error || ("Saved AI compute task " + task.status));
-      }
-      state.aiChatPending = true;
-      render();
-      return waitForAiTask(taskId, 330);
-    }).then(function (task) {
-      return persistAiAssistantFromTask(thread, task);
-    }).then(function (saved) {
-      if (!state.aiMessages[thread.id].some(function (m) { return String(m.id) === String(saved.id); })) {
-        state.aiMessages[thread.id].push(saved);
-      }
+    function replaceLocalMessage(updated) {
+      var list = state.aiMessages[thread.id] || [];
+      var idx = list.findIndex(function (m) { return String(m.id) === String(updated.id); });
+      if (idx >= 0) list[idx] = updated;
+    }
+
+    function addAssistant(saved) {
+      var list = state.aiMessages[thread.id] || [];
+      if (!list.some(function (m) { return String(m.id) === String(saved.id); })) list.push(saved);
+    }
+
+    unresolved.forEach(function (userMessage) {
+      chain = chain.then(function () {
+        var taskId = String(userMessage.compute_task_id);
+        return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
+          var task = payload && payload.task;
+          if (!task) throw new Error("Saved AI compute task disappeared: " + taskId);
+          state.aiChatTask = task;
+          if (task.status === "done") return persistAiAssistantFromTask(thread, task).then(addAssistant);
+          if (task.status === "failed" || task.status === "canceled") {
+            var terminalMessage = task.last_error || ("Saved AI compute task " + task.status);
+            return attachAiTaskToUserMessage(thread, userMessage, task, terminalMessage).then(function (updated) {
+              replaceLocalMessage(updated);
+              failures.push(terminalMessage);
+            });
+          }
+
+          state.aiChatPending = true;
+          render();
+          return waitForAiTask(taskId, 330).then(function (finished) {
+            return persistAiAssistantFromTask(thread, finished).then(addAssistant);
+          });
+        }).catch(function (error) {
+          var terminal = error && error.task && ["failed", "canceled"].indexOf(error.task.status) >= 0;
+          if (terminal) {
+            return attachAiTaskToUserMessage(thread, userMessage, error.task, error.message).then(function (updated) {
+              replaceLocalMessage(updated);
+              failures.push(error.message || String(error));
+            }).catch(function (persistError) {
+              failures.push((error.message || String(error)) + "; recovery status save failed: " + (persistError.message || String(persistError)));
+            });
+          }
+          failures.push(error.message || String(error));
+        });
+      });
+    });
+
+    return chain.then(function () {
       state.aiMessages[thread.id].sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+      if (failures.length) state.aiChatError = "Saved AI turn recovery: " + failures.join(" | ");
       return state.aiMessages[thread.id];
-    }).catch(function (error) {
-      state.aiChatError = "Saved AI turn needs attention: " + (error.message || String(error));
-      return state.aiMessages[thread.id] || messages;
     }).then(function (rows) {
       delete state.pending[key];
       state.aiChatPending = false;
       state.aiChatTask = null;
       render();
       return rows;
+    }, function (error) {
+      delete state.pending[key];
+      state.aiChatPending = false;
+      state.aiChatTask = null;
+      state.aiChatError = "Saved AI turn recovery failed: " + (error.message || String(error));
+      render();
+      return state.aiMessages[thread.id] || messages;
     });
   }
 
@@ -420,9 +461,15 @@
         render();
         if (task.status === "done") return task;
         if (task.status === "failed" || task.status === "canceled") {
-          throw new Error(task.last_error || ("AI compute task " + task.status));
+          var terminalError = new Error(task.last_error || ("AI compute task " + task.status));
+          terminalError.task = task;
+          throw terminalError;
         }
-        if (left <= 1) throw new Error("AI compute task did not reach a terminal state");
+        if (left <= 1) {
+          var timeoutError = new Error("AI compute task did not reach a terminal state");
+          timeoutError.task = task;
+          throw timeoutError;
+        }
         return sleep(2000).then(function () { return poll(left - 1); });
       });
     }
@@ -475,7 +522,16 @@
               .catch(function (error) {
                 state.aiChatError = "Reply recovery link could not be saved; keep this chat open: " + (error.message || String(error));
               })
-              .then(function () { return waitForAiTask(task.id, 330); });
+              .then(function () { return waitForAiTask(task.id, 330); })
+              .catch(function (error) {
+                var terminal = error && error.task && ["failed", "canceled"].indexOf(error.task.status) >= 0;
+                if (!terminal) throw error;
+                return attachAiTaskToUserMessage(thread, saved, error.task, error.message).then(function (updatedUser) {
+                  var idx = state.aiMessages[thread.id].findIndex(function (m) { return String(m.id) === String(updatedUser.id); });
+                  if (idx >= 0) state.aiMessages[thread.id][idx] = updatedUser;
+                  throw error;
+                });
+              });
           })
           .then(function (task) {
             return persistAiAssistantFromTask(thread, task);
