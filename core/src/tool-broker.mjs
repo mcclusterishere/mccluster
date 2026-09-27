@@ -162,10 +162,13 @@ async function handleMcp(req, res, rpc) {
     const name = rpc?.params?.name;
     const args = rpc?.params?.arguments || {};
     try {
-      const actor = rpc?.params?._meta?.['mccluster/actor'];
+      const meta = rpc?.params?._meta || {};
+      const actor = meta['mccluster/actor'];
       const options = actor && typeof actor === 'object'
         ? { actor: { user_id: actor.user_id, kind: actor.kind || 'owner', source: actor.source || 'signed-edge' } }
         : {};
+      const idempotencyKey = String(meta['mccluster/idempotency-key'] || '').trim().slice(0, 240);
+      if (idempotencyKey) options.idempotencyKey = idempotencyKey;
       const result = capabilities.has(name)
         ? await capabilities.call(name, args, options)
         : await registry.call(name, args, options);
