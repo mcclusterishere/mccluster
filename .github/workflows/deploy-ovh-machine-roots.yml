@@ -1,0 +1,177 @@
+name: Deploy OVH McCluster machine roots
+
+on:
+  push:
+    branches:
+      - ops/deploy-ovh-machine-roots-20260927
+    paths:
+      - .github/workflows/deploy-ovh-machine-roots.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-ovh-machine-roots
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Install persistent McCluster machine roots
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    env:
+      PREVIOUS_SHA: 2a4336d66829d30f53f0ecc46402716d2e7d1df6
+      TARGET_SHA: d094c44ee40cfed036447860513c00ad9c59e675
+
+    steps:
+      - name: Checkout exact target
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+
+      - name: Validate production ref and bounded diff
+        run: |
+          set -euo pipefail
+          git fetch origin deploy/ovh-production
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test "$(git rev-parse origin/deploy/ovh-production)" = "$TARGET_SHA"
+          git merge-base --is-ancestor "$PREVIOUS_SHA" "$TARGET_SHA"
+          unexpected="$(git diff --name-only "$PREVIOUS_SHA" "$TARGET_SHA" | grep -Ev '^(core/src/tools/resume\.mjs|core/test/mccluster-machine-roots\.test\.mjs|scripts/deploy-ovh-core\.sh)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected files in machine-roots release:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+      - name: Validate release
+        run: |
+          set -euo pipefail
+          bash -n scripts/deploy-ovh-core.sh
+          cd core
+          npm run check
+          npm test
+          node --test test/mccluster-machine-roots.test.mjs
+
+      - name: Configure pinned SSH trust
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY"
+          test -n "$OVH_KNOWN_HOSTS"
+          test -n "$OVH_HOST"
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Build targeted installer
+        run: |
+          cat > /tmp/deploy-machine-roots.sh <<'INSTALL'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          SOURCE_DIR="$1"
+          DEPLOY_SHA="$2"
+          CORE_TARGET="/opt/mccluster/core"
+          RELEASE_ROOT="/opt/mccluster/releases"
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP_DIR="$RELEASE_ROOT/pre-machine-roots-$STAMP"
+          DEPLOY_MANIFEST="$CORE_TARGET/.mccluster-deploy.json"
+
+          [[ "$EUID" -eq 0 ]]
+          test "$(git -C "$SOURCE_DIR" rev-parse HEAD)" = "$DEPLOY_SHA"
+          git -C "$SOURCE_DIR" diff --quiet HEAD -- core
+
+          pushd "$SOURCE_DIR/core" >/dev/null
+          npm run check
+          npm test
+          popd >/dev/null
+
+          mkdir -p "$BACKUP_DIR/core"
+          rsync -a "$CORE_TARGET/" "$BACKUP_DIR/core/"
+
+          rollback() {
+            local rc=$?
+            if [[ $rc -eq 0 ]]; then return 0; fi
+            echo "machine-roots deploy failed (rc=$rc); rolling back" >&2
+            rsync -a --delete "$BACKUP_DIR/core/" "$CORE_TARGET/" || true
+            systemctl restart mccluster-core-tool-broker.service || true
+            exit "$rc"
+          }
+          trap rollback ERR
+
+          rsync -a --delete             --exclude '.env'             --exclude '.env.*'             --exclude '.mccluster-artifacts'             "$SOURCE_DIR/core/" "$CORE_TARGET/"
+
+          install -d -o mccluster-core -g mccluster-core -m 0750             /var/lib/mccluster-core/workspace             /var/lib/mccluster-core/sessions             /var/lib/mccluster-core/artifacts
+
+          cat >"$DEPLOY_MANIFEST" <<EOF
+          {"schema_version":1,"commit_sha":"$DEPLOY_SHA","deployed_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","deployment_mode":"targeted-mccluster-machine-roots"}
+          EOF
+          chown -R root:root "$CORE_TARGET"
+          chmod 0644 "$DEPLOY_MANIFEST"
+
+          systemctl restart mccluster-core-tool-broker.service
+          systemctl is-active --quiet mccluster-core-tool-broker.service
+          systemctl is-active --quiet mccluster-core-runner.service
+          systemctl is-active --quiet mccluster-ollama-adapter.service
+          systemctl is-active --quiet mccluster-compute-node.service
+
+          for dir in workspace sessions artifacts; do
+            test -d "/var/lib/mccluster-core/$dir"
+            test "$(stat -c '%U:%G' "/var/lib/mccluster-core/$dir")" = "mccluster-core:mccluster-core"
+          done
+
+          cd "$CORE_TARGET"
+          node --test test/mccluster-machine-roots.test.mjs
+          grep -Fq "conversation_truth: 'supabase:ops_ai_threads+ops_ai_messages'" src/tools/resume.mjs
+          grep -Fq "private_memory_truth: 'supabase:ai_context'" src/tools/resume.mjs
+          grep -Fq "\"commit_sha\":\"$DEPLOY_SHA\"" "$DEPLOY_MANIFEST"
+
+          echo "machine_roots_deploy=$DEPLOY_SHA"
+          echo "backup=$BACKUP_DIR"
+          INSTALL
+          chmod +x /tmp/deploy-machine-roots.sh
+
+      - name: Transfer exact checkout and installer
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          SSH_OPTS="-p $PORT -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTS "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
+          rsync -az --delete -e "ssh $SSH_OPTS" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+          rsync -az -e "ssh $SSH_OPTS" /tmp/deploy-machine-roots.sh "$OVH_USER@$OVH_HOST:$STAGE/deploy-machine-roots.sh"
+
+      - name: Install machine roots and resume contract
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST"             "sudo bash '$STAGE/deploy-machine-roots.sh' '$STAGE' '$TARGET_SHA' && rm -rf '$STAGE'"
+
+      - name: Verify public Core revision
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [[ "$deployed" = "$TARGET_SHA" ]]; then
+              printf '%s\n' "$body"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
+            sleep 5
+          done
+          exit 1
