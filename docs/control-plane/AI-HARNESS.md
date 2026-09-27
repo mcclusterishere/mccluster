@@ -26,6 +26,20 @@ The `ai_context` schema is private and is not a public website datastore. Anonym
 
 Git may contain intentionally redacted or generated context summaries when useful, but never the raw private corpus by default.
 
+## Resident McCluster continuity
+
+The Control browser is a terminal into McCluster, not McCluster's memory boundary.
+
+- `public.ops_ai_threads` and `public.ops_ai_messages` are the canonical owner-only resident-chat transcript. Closing a tab, changing devices, or restarting the browser must not delete a conversation.
+- Completed and in-flight resident chat compute is linked by durable `compute_task_id`; reopening Control reconciles missing assistant replies from the durable compute task.
+- Resident chat is mirrored idempotently into the private `ai_context` plane with provider `local` / account label `resident-mccluster`. This mirror exists for retrieval and enrichment; it does not replace the canonical `ops_ai_*` transcript.
+- Before inference, Control may retrieve bounded relevant older messages and active memory items from `ai_context`. Recent/current thread evidence outranks older retrieved context when they conflict.
+- The browser reloads the newest bounded message window, not the oldest one, so a long thread cannot appear to jump backward after reopening.
+- The OVH Core host owns a persistent working home at `MCCLUSTER_HOME_ROOT` (default `/var/lib/mccluster-core/home`) for notes, artifacts, scratch, state, inbox, and outbox. This is separate from disposable code worktrees under `/srv/mccluster/worktrees`.
+- Conversation truth stays in Supabase. Do not dump raw private chat transcripts into the VPS filesystem as a substitute for the private context plane.
+
+This gives McCluster a persistent machine/workspace while keeping browser sessions, model context windows, and disposable coding sandboxes replaceable.
+
 ## Ingestion contract
 
 All providers normalize into one McCluster conversation shape before storage. Current ingress is the authenticated Supabase Edge Function `context-ingest`.
