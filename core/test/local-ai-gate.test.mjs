@@ -13,7 +13,7 @@ const executorFiles = [
   'meeting-delegate-collect.mjs',
 ];
 
-test('all Core local-model executors use the shared adapter gate', async () => {
+test('resident Core local-model executors use the shared adapter gate', async () => {
   for (const name of executorFiles) {
     const source = await readFile(new URL(`../src/executors/${name}`, import.meta.url), 'utf8');
     assert.match(source, /local-ai-client\.mjs/, `${name} must import the shared local AI client`);
