@@ -16,7 +16,7 @@ async function messageById({ orgId, id }) {
   return Array.isArray(body) ? body[0] || null : null;
 }
 
-async function recentThreadMessages({ orgId, threadId, limit = 24 }) {
+async function recentThreadMessages({ orgId, threadId, throughCreatedAt = null, limit = 24 }) {
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`,
     thread_id: `eq.${threadId}`,
@@ -24,6 +24,7 @@ async function recentThreadMessages({ orgId, threadId, limit = 24 }) {
     order: 'created_at.desc',
     limit: String(Math.min(40, Math.max(1, Number(limit) || 24))),
   });
+  if (throughCreatedAt) params.set('created_at', `lte.${throughCreatedAt}`);
   const { body = [] } = await rest(`ops_ai_messages?${params.toString()}`);
   return (Array.isArray(body) ? body : []).reverse();
 }
@@ -82,7 +83,17 @@ export async function residentAiTurn(job) {
 
   await updateUserState({ orgId, userMessage, status: 'running' }).catch(() => null);
 
-  const history = (await recentThreadMessages({ orgId, threadId, limit: 24 }))
+  const threadMessages = await recentThreadMessages({
+    orgId,
+    threadId,
+    throughCreatedAt: userMessage.created_at,
+    limit: 24,
+  });
+  const turnIndex = threadMessages.findIndex((message) => String(message.id) === userMessageId);
+  if (turnIndex < 0) throw new Error('resident AI turn history does not contain its queued user message');
+
+  const history = threadMessages
+    .slice(0, turnIndex + 1)
     .filter((message) => ['system', 'user', 'assistant'].includes(message.role))
     .map((message) => ({
       role: message.role,

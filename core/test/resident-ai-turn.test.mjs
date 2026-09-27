@@ -12,6 +12,7 @@ const THREAD = '00000000-0000-4000-8000-000000000002';
 const USER = '00000000-0000-4000-8000-000000000003';
 const ASSISTANT = '00000000-0000-4000-8000-000000000004';
 const JOB = '00000000-0000-4000-8000-000000000005';
+const LATER = '00000000-0000-4000-8000-000000000006';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -57,10 +58,18 @@ test('resident AI turn persists the adapter message even after the browser is ir
     }
 
     if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('thread_id=eq.' + THREAD) && (init.method || 'GET') === 'GET') {
-      return json([{
-        id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
-        content: 'keep working if I close this', metadata: { agent_job_id: JOB }, created_at: '2026-09-27T22:29:00Z'
-      }]);
+      const parsed = new URL(url);
+      assert.equal(parsed.searchParams.get('created_at'), 'lte.2026-09-27T22:29:00Z');
+      return json([
+        {
+          id: LATER, thread_id: THREAD, org_id: ORG, role: 'user',
+          content: 'later prompt must not leak backward', metadata: { agent_job_id: LATER }, created_at: '2026-09-27T22:31:00Z'
+        },
+        {
+          id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+          content: 'keep working if I close this', metadata: { agent_job_id: JOB }, created_at: '2026-09-27T22:29:00Z'
+        }
+      ]);
     }
 
     if (url.includes('/rest/v1/ops_ai_messages?') && (init.method || 'GET') === 'PATCH') {
@@ -75,6 +84,7 @@ test('resident AI turn persists the adapter message even after the browser is ir
       assert.equal(request.priority, 100);
       assert.equal(request.metadata.source, 'resident-ai-turn');
       assert.ok(request.input.messages.some((message) => message.content === 'keep working if I close this'));
+      assert.ok(!request.input.messages.some((message) => message.content === 'later prompt must not leak backward'));
       return json({
         model: 'qwen3:8b',
         implementation: 'core-local',
