@@ -100,11 +100,11 @@ async function houseOrgId(env) {
 // Core executes code, drives builds and reaches provider credentials. Any
 // authenticated Supabase user is nowhere near a sufficient gate for that, so
 // this reuses the same house-owner rule the /v1/ai harness applies.
-async function isHouseOwner(env, user) {
-  const orgId = await houseOrgId(env);
-  if (!orgId || !user?.id) return false;
+async function isHouseOwner(env, user, orgId = null) {
+  const resolvedOrgId = orgId || await houseOrgId(env);
+  if (!resolvedOrgId || !user?.id) return false;
   const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`,
+    `${env.SUPABASE_URL}/rest/v1/org_members?org_id=eq.${encodeURIComponent(resolvedOrgId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`,
     { headers: serviceHeaders(env) }
   );
   if (!res.ok) throw Object.assign(new Error('Owner membership lookup unavailable'), { status: 503 });
@@ -316,7 +316,8 @@ export async function handleCoreMcp(request, env, user) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return { status: 503, body: rpcError(id, -32002, 'McCluster is not configured') };
   }
-  if (!await isHouseOwner(env, user)) {
+  const houseOrg = await houseOrgId(env);
+  if (!houseOrg || !await isHouseOwner(env, user, houseOrg)) {
     return { status: 403, body: rpcError(id, -32003, 'McCluster house owner access required') };
   }
 
@@ -335,6 +336,13 @@ export async function handleCoreMcp(request, env, user) {
   try {
     const forwardedParams = { ...(rpc?.params ?? {}) };
     if (method === 'tools/call') {
+      const toolName = forwardedParams.name;
+      if (toolName === 'core.ai.turn.submit' || toolName === 'core.ai.turn.get') {
+        forwardedParams.arguments = {
+          ...(forwardedParams.arguments || {}),
+          org_id: houseOrg
+        };
+      }
       forwardedParams._meta = {
         ...(forwardedParams._meta || {}),
         'mccluster/actor': {
