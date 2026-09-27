@@ -1,0 +1,197 @@
+name: One-shot deploy OVH durable McCluster turns
+
+on:
+  push:
+    branches:
+      - ops/deploy-ovh-durable-turn-20260927
+    paths:
+      - .github/workflows/one-shot-ovh-durable-turn.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-shot-ovh-durable-turn
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy exact durable-turn OVH release
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    env:
+      PREVIOUS_SHA: c34d5d12debfba96e3a23272558a461b2272d177
+      TARGET_SHA: 2a4336d66829d30f53f0ecc46402716d2e7d1df6
+
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+
+      - name: Validate exact production release and bounded diff
+        run: |
+          set -euo pipefail
+          git fetch origin deploy/ovh-production
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test "$(git rev-parse origin/deploy/ovh-production)" = "$TARGET_SHA"
+          git merge-base --is-ancestor "$PREVIOUS_SHA" "$TARGET_SHA"
+          unexpected="$(git diff --name-only "$PREVIOUS_SHA" "$TARGET_SHA" | grep -Ev '^(core/package\.json|core/src/completion-evidence\.mjs|core/src/executors/resident-ai-turn\.mjs|core/src/resident-ai\.mjs|core/src/runner\.mjs|core/src/tools/control\.mjs|core/test/resident-ai-turn\.test\.mjs|core/test/control-tools\.test\.mjs|core/test/completion-evidence\.test\.mjs)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected production files:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+      - name: Validate Core
+        working-directory: core
+        run: |
+          set -euo pipefail
+          npm run check
+          npm test
+
+      - name: Configure pinned SSH trust
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY"
+          test -n "$OVH_KNOWN_HOSTS"
+          test -n "$OVH_HOST"
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Build rollback-safe targeted deploy helper
+        run: |
+          cat > /tmp/deploy-durable-turn.sh <<'HOTFIX'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+
+          SOURCE_DIR="$1"
+          DEPLOY_SHA="$2"
+          TARGET_ROOT="/opt/mccluster"
+          CORE_TARGET="$TARGET_ROOT/core"
+          RELEASE_ROOT="$TARGET_ROOT/releases"
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP_DIR="$RELEASE_ROOT/pre-durable-turn-$STAMP"
+          DEPLOY_MANIFEST="$CORE_TARGET/.mccluster-deploy.json"
+
+          [[ "$EUID" -eq 0 ]]
+          [[ -d "$SOURCE_DIR/core" ]]
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          command -v rsync >/dev/null
+          command -v node >/dev/null
+          command -v npm >/dev/null
+          command -v systemctl >/dev/null
+          test "$(git -C "$SOURCE_DIR" rev-parse HEAD)" = "$DEPLOY_SHA"
+          git -C "$SOURCE_DIR" diff --quiet HEAD -- core
+
+          pushd "$SOURCE_DIR/core" >/dev/null
+          npm run check
+          npm test
+          popd >/dev/null
+
+          mkdir -p "$BACKUP_DIR/core"
+          rsync -a "$CORE_TARGET/" "$BACKUP_DIR/core/"
+
+          rollback() {
+            local rc=$?
+            if [[ $rc -eq 0 ]]; then return 0; fi
+            echo "durable-turn deploy failed (rc=$rc); rolling back" >&2
+            rsync -a --delete "$BACKUP_DIR/core/" "$CORE_TARGET/" || true
+            systemctl restart mccluster-core-tool-broker.service || true
+            systemctl restart mccluster-core-runner.service || true
+            exit "$rc"
+          }
+          trap rollback ERR
+
+          rsync -a --delete             --exclude '.env'             --exclude '.env.*'             --exclude '.mccluster-artifacts'             "$SOURCE_DIR/core/" "$CORE_TARGET/"
+
+          cat >"$DEPLOY_MANIFEST" <<EOF
+          {"schema_version":1,"commit_sha":"$DEPLOY_SHA","deployed_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","deployment_mode":"targeted-durable-resident-ai-turn"}
+          EOF
+          chown -R root:root "$CORE_TARGET"
+          chmod 0644 "$DEPLOY_MANIFEST"
+
+          systemctl restart mccluster-core-tool-broker.service
+          systemctl restart mccluster-core-runner.service
+
+          systemctl is-active --quiet mccluster-core-tool-broker.service
+          systemctl is-active --quiet mccluster-core-runner.service
+          systemctl is-active --quiet mccluster-ollama-adapter.service
+          systemctl is-active --quiet mccluster-compute-node.service
+
+          curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 1 --max-time 10 http://127.0.0.1:4790/health >/dev/null
+
+          cd "$CORE_TARGET"
+          node --test test/resident-ai-turn.test.mjs test/control-tools.test.mjs test/completion-evidence.test.mjs
+          node --input-type=module -e "
+            import { CONTROL_TOOLS } from './src/tools/control.mjs';
+            const names = new Set(CONTROL_TOOLS.map(x => x.name));
+            for (const name of ['core.ai.turn.submit','core.ai.turn.get']) {
+              if (!names.has(name)) throw new Error('missing '+name);
+            }
+            console.log('durable_turn_tools=present');
+          "
+
+          grep -Fq "\"commit_sha\":\"$DEPLOY_SHA\"" "$DEPLOY_MANIFEST"
+          echo "durable_turn_deploy=$DEPLOY_SHA"
+          echo "backup=$BACKUP_DIR"
+          HOTFIX
+          chmod +x /tmp/deploy-durable-turn.sh
+
+      - name: Transfer exact checkout and helper
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          SSH_OPTS="-p $PORT -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTS "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
+          rsync -az --delete -e "ssh $SSH_OPTS" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+          rsync -az -e "ssh $SSH_OPTS" /tmp/deploy-durable-turn.sh "$OVH_USER@$OVH_HOST:$STAGE/deploy-durable-turn.sh"
+
+      - name: Deploy durable turn backend
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${TARGET_SHA}"
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST"             "sudo bash '$STAGE/deploy-durable-turn.sh' '$STAGE' '$TARGET_SHA' && rm -rf '$STAGE'"
+
+      - name: Verify deployed revision and services over SSH
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST"             "set -e;              systemctl is-active --quiet mccluster-core-tool-broker.service;              systemctl is-active --quiet mccluster-core-runner.service;              systemctl is-active --quiet mccluster-ollama-adapter.service;              systemctl is-active --quiet mccluster-compute-node.service;              grep -Fq '\"commit_sha\":\"$TARGET_SHA\"' /opt/mccluster/core/.mccluster-deploy.json;              cat /opt/mccluster/core/.mccluster-deploy.json"
+
+      - name: Verify public Core reports exact release
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [[ "$deployed" = "$TARGET_SHA" ]]; then
+              printf '%s\n' "$body"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
+            sleep 5
+          done
+          exit 1
