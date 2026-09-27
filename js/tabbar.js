@@ -253,10 +253,6 @@
     var email = (user && user.email) || payload.email || "";
     return meta.name || meta.full_name || (email ? email.split("@")[0] : "Member");
   }
-  function authInitials(value) {
-    return String(value || "M").trim().split(/\s+/).slice(0, 2)
-      .map(function (p) { return p.charAt(0); }).join("").toUpperCase() || "M";
-  }
   function ensureAuthStyle() {
     if (document.getElementById("mccAuthStateStyle")) return;
     var style = document.createElement("style");
@@ -266,13 +262,6 @@
       ".mcc-auth-chip__dot{width:.46rem;height:.46rem;border-radius:50%;background:#787878;box-shadow:0 0 0 3px rgba(255,255,255,.04)}"+
       ".mcc-auth-in .mcc-auth-chip{color:var(--cream,#f4efe6);border-color:rgba(229,56,59,.42)}"+
       ".mcc-auth-in .mcc-auth-chip__dot{background:#6fd584;box-shadow:0 0 0 3px rgba(111,213,132,.11)}"+
-      /* The initials are a <span>, and css/style.css hides every
-         ".appbar__tab > span" as a 1px screen-reader label. That rule crushed
-         the initials to one invisible pixel, so a signed-in visitor saw an
-         empty bubble where the profile tab should be. This selector is more
-         specific and undoes exactly that hiding for the avatar alone. */
-      ".appbar__tab > span.appbar__auth-avatar{position:static;width:1.75rem;height:1.75rem;overflow:visible;clip:auto;clip-path:none;white-space:nowrap;display:grid;place-items:center;border-radius:50%;background:rgba(229,56,59,.17);box-shadow:inset 0 0 0 1px rgba(229,56,59,.5);color:var(--cream,#f4efe6);font:900 .68rem/1 var(--ui,system-ui);letter-spacing:.02em}"+
-      ".appbar__tab.is-here > span.appbar__auth-avatar{background:rgba(10,8,7,.28);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);color:#fff}"+
       ".mcc-auth-in .appbar [data-appnav=profile]{color:var(--cream,#f4efe6)}"+
       ".mcc-auth-in .appbar [data-appnav=profile]::after{content:'';position:absolute;top:.34rem;right:calc(50% - .9rem);width:.42rem;height:.42rem;border-radius:50%;background:#6fd584;box-shadow:0 0 0 2px rgba(14,14,15,.9)}"+
       "@media(max-width:420px){.mcc-auth-chip{bottom:calc(5.15rem + env(safe-area-inset-bottom));font-size:.62rem;padding:.38rem .55rem}}";
@@ -297,19 +286,11 @@
       tab.setAttribute("aria-label", signedIn ? "Open your Mnet feed" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
       if (label) label.textContent = signedIn ? "Feed" : "Sign in";
-      if (signedIn) {
-        if (!av) {
-          av = document.createElement("span");
-          av.className = "appbar__auth-avatar";
-          if (label) tab.insertBefore(av, label); else tab.appendChild(av);
-        }
-        av.textContent = authInitials(name);
-        av.hidden = false;
-        if (svg) svg.style.display = "none";
-      } else {
-        if (av) av.hidden = true;
-        if (svg) svg.style.display = "";
-      }
+      /* The person icon stays, signed in or not: that is the owner's call.
+         Signed in is shown by the green dot on the tab (the ::after rule
+         below), not by swapping the icon for initials. */
+      if (av) av.remove();
+      if (svg) svg.style.display = "";
     }
 
     ensureAuthStyle();
