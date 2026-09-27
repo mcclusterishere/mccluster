@@ -45,6 +45,37 @@ test('Control Analytics mount paints immediately and fails visibly instead of go
   }
 });
 
+test('Control Analytics bounds concurrent reads instead of stampeding PostgREST',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let active=0,peak=0,completed=0;
+  const delayed=(value)=>new Promise((resolve)=>{
+    active++;peak=Math.max(peak,active);
+    setTimeout(()=>{active--;completed++;resolve(value);},8);
+  });
+  A.init({
+    request:()=>delayed({}),
+    supa:(path)=>String(path).startsWith('analytics_sites?')?Promise.resolve([]):delayed([])
+  });
+  let paints=0,html='';
+  const host={
+    get innerHTML(){return html;},
+    set innerHTML(value){html=value;paints++;},
+    querySelector:()=>null,
+    querySelectorAll:()=>[]
+  };
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,120));
+  assert.ok(completed>=12,'expected the full analytics suite to complete');
+  assert.ok(peak<=3,'analytics opened '+peak+' concurrent reads');
+  assert.ok(paints>4,'completed reads should repaint progressively');
+  assert.equal(A.state.loading,false);
+});
+
+
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
@@ -67,7 +98,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.error=null;S\.errors=\{\};paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.data=blankData\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 
@@ -135,7 +166,7 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/Audience trend/);
   assert.match(js,/S\.data\.traffic&&S\.data\.traffic\.byDay/);
   assert.match(js,/site===null\?rpc\("analytics_funnel"/);
-  assert.match(js,/settled\("business",site===null\?S\.request/);
+  assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
 });
