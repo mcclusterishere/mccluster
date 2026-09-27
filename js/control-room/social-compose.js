@@ -33,9 +33,21 @@
       mnet?S.request("/v1/mnet/posts?app_key=mccluster-web",{method:"POST",body:{body:body}}):Promise.resolve(null),
       keys.length?call({action:"queue",channels:keys,body:body,kind:"post"}):Promise.resolve(null)
     ]).then(function(out){
-      var rows=[];if(mnet)rows.push(out[0].status==="fulfilled"?{label:"Mnet",detail:"Posted to your profile."}:{label:"Mnet",detail:(out[0].reason&&out[0].reason.message)||"Could not post."});
-      if(keys.length){if(out[1].status!=="fulfilled")keys.forEach(function(k){rows.push({label:label(k),detail:(out[1].reason&&out[1].reason.message)||"Queue refused this."});});else{var x=out[1].value||{};(x.queued||[]).forEach(function(k){rows.push({label:label(k),detail:x.approved_by?"Queued and approved.":"Queued; approval required."});});(x.refused||[]).forEach(function(r){rows.push({label:label(r.channel),detail:r.why||"refused"});});}}
-      S.result=rows;if(rows.length)S.draft="";return load();
+      var rows=[],succeeded=false;
+      if(mnet){
+        if(out[0].status==="fulfilled"){rows.push({label:"Mnet",detail:"Posted to your profile."});succeeded=true;}
+        else rows.push({label:"Mnet",detail:(out[0].reason&&out[0].reason.message)||"Could not post."});
+      }
+      if(keys.length){
+        if(out[1].status!=="fulfilled")keys.forEach(function(k){rows.push({label:label(k),detail:(out[1].reason&&out[1].reason.message)||"Queue refused this."});});
+        else{
+          var x=out[1].value||{},queued=x.queued||[];
+          if(queued.length)succeeded=true;
+          queued.forEach(function(k){rows.push({label:label(k),detail:x.approved_by?"Queued and approved.":"Queued; approval required."});});
+          (x.refused||[]).forEach(function(r){rows.push({label:label(r.channel),detail:r.why||"refused"});});
+        }
+      }
+      S.result=rows;if(succeeded)S.draft="";return load();
     }).catch(function(err){S.error=err;if(S.rerender)S.rerender();});
   }
   function bind(root){
