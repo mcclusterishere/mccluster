@@ -1049,10 +1049,13 @@
             '<div class="cr-ai-voice-status" role="status" aria-live="polite">' +
               '<span>' + (voiceCaps.recognition ? (state.aiVoiceListening ? "Listening now" : "Mic ready") : "Mic unavailable") + '</span>' +
               '<span>' + (voiceCaps.synthesis ? (state.aiVoiceSpeaking ? "Speaking reply" : "Voice reply ready") : "Speech playback unavailable") + '</span>' +
+              '<span title="' + esc(state.aiMemoryError || "Transcript is stored in Supabase; relevant older context is retrieved from private ai_context.") + '">' +
+                (state.aiMemoryStatus === "degraded" ? "Memory degraded" : state.aiMemoryStatus === "syncing" ? "Saving memory…" : state.aiMemoryStatus === "retrieving" ? "Recalling…" : "Memory durable") +
+              '</span>' +
               (state.aiVoiceSpeaking ? '<button class="cr-ai-voice-stop" type="button" data-action="ai-stop-speaking">Stop voice</button>' : "") +
               (state.aiVoiceTranscript ? '<span class="cr-ai-voice-transcript">Heard: ' + esc(state.aiVoiceTranscript) + '</span>' : "") +
             '</div>' +
-            '<p class="cr-ai-chat__hint">Talk sends one voice turn and reads that reply aloud. Voice recognition is provided by your browser/device; the resulting text uses the same durable McCluster conversation. Enter sends text · Shift+Enter adds a line.</p>' +
+            '<p class="cr-ai-chat__hint">Closing this window does not end the conversation. The transcript is durable in McCluster, older context is recalled from the private memory plane, and unfinished compute replies are reconciled when you return. Talk sends one voice turn and reads that reply aloud. Enter sends text · Shift+Enter adds a line.</p>' +
           '</footer></section></div>';
   }
 
