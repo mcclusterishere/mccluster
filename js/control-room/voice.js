@@ -25,8 +25,19 @@
     if (!activeRecognition) return;
     var current = activeRecognition;
     activeRecognition = null;
+    current.__mcclusterDiscard = false;
     try { current.stop(); } catch (e) {
       try { current.abort(); } catch (ignore) {}
+    }
+  }
+
+  function cancelListening() {
+    if (!activeRecognition) return;
+    var current = activeRecognition;
+    activeRecognition = null;
+    current.__mcclusterDiscard = true;
+    try { current.abort(); } catch (e) {
+      try { current.stop(); } catch (ignore) {}
     }
   }
 
@@ -87,6 +98,7 @@
       ended = true;
       if (activeRecognition === recognition) activeRecognition = null;
       if (options.onState) options.onState({ listening: false, speaking: false });
+      if (recognition.__mcclusterDiscard) return;
       var text = (finalText || interimText).trim();
       if (text && options.onTranscript) {
         options.onTranscript({ text: text, final: true, interim: "" });
@@ -144,10 +156,11 @@
       if (options.onState) options.onState({ listening: false, speaking: false });
     };
     utterance.onerror = function (event) {
+      var code = event && event.error ? String(event.error) : "speech-synthesis-error";
+      var wasCanceled = activeUtterance !== utterance && (code === "canceled" || code === "interrupted");
       if (activeUtterance === utterance) activeUtterance = null;
       if (options.onState) options.onState({ listening: false, speaking: false });
-      if (options.onError) {
-        var code = event && event.error ? String(event.error) : "speech-synthesis-error";
+      if (!wasCanceled && options.onError) {
         options.onError(Object.assign(new Error("Voice playback failed: " + code), { code: code }));
       }
     };
@@ -160,6 +173,7 @@
     capabilities: capabilities,
     startListening: startListening,
     stopListening: stopListening,
+    cancelListening: cancelListening,
     speak: speak,
     cancelSpeech: cancelSpeech
   };
