@@ -7,8 +7,8 @@ import {
   addMeetingSessionEvent,
   updateMeetingSession,
 } from '../meeting/store.mjs';
+import { localAiChat } from '../compute/local-ai-client.mjs';
 
-const OLLAMA = String(process.env.MCCLUSTER_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
 
 function clean(value, max = 100000) {
@@ -67,7 +67,7 @@ function parseModelJson(text) {
   }
 }
 
-async function summarizeMeeting({ transcript, brief, mode }) {
+async function summarizeMeeting({ transcript, brief, mode, jobId }) {
   const system = [
     'You are McCluster Core meeting debrief.',
     'Use only the supplied transcript and meeting brief.',
@@ -79,41 +79,32 @@ async function summarizeMeeting({ transcript, brief, mode }) {
     'Do not execute or promise any external action.'
   ].join(' ');
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      stream: false,
-      messages: [
-        { role: 'system', content: system },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            meeting_mode: mode,
-            brief: brief || {},
-            transcript,
-          }),
-        },
-      ],
-      options: {
-        temperature: 0.1,
-        num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+  const data = await localAiChat({
+    messages: [
+      { role: 'system', content: system },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          meeting_mode: mode,
+          brief: brief || {},
+          transcript,
+        }),
       },
-    }),
-    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000)),
+    ],
+    temperature: 0.1,
+    numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+    priority: -10,
+    metadata: { job_type: 'meeting_delegate_collect', job_id: jobId || null, private_context: true },
   });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
-
   return {
-    model: MODEL,
+    model: data?.model || MODEL,
     debrief: parseModelJson(data?.message?.content || ''),
     usage: {
       prompt_eval_count: data?.prompt_eval_count ?? null,
       eval_count: data?.eval_count ?? null,
       total_duration_ns: data?.total_duration ?? null,
+      queue_wait_ms: data?.queue_wait_ms ?? null,
     },
   };
 }
@@ -168,6 +159,7 @@ export async function meetingDelegateCollect(job) {
           transcript,
           brief: input.brief || {},
           mode: input.mode || 'notes',
+          jobId: job.id,
         })
       : {
           model: null,
