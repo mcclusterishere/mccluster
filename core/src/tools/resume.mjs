@@ -31,6 +31,7 @@
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import { recentJobs, recentObjectives, rest, workerId } from '../supabase.mjs';
+import { workspaceStatus } from './workspace.mjs';
 
 const DEPLOY_MANIFEST = process.env.MCCLUSTER_DEPLOY_MANIFEST || '/opt/mccluster/core/.mccluster-deploy.json';
 /* Overridable so a test can point at a deliberately corrupt file without
@@ -321,7 +322,7 @@ export function partitionJobs(jobs, nowMs = Date.now(), staleMs = STALE_LEASE_MS
 export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = Date.now() } = {}) {
   if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400 });
 
-  const [deploy, catalog, recent, running, queued, objectives, approvals, health] = await Promise.all([
+  const [deploy, catalog, recent, running, queued, objectives, approvals, health, agentHome] = await Promise.all([
     source(deployFingerprint),
     source(catalogVersion),
     source(async () => checkedRows(await recentJobs({ orgId, sinceHours, limit }), 'ops_agent_jobs')),
@@ -329,7 +330,8 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     source(() => queuedJobs(orgId)),
     source(async () => checkedRows(await recentObjectives({ orgId, limit }), 'ops_objectives')),
     source(() => pendingApprovals(orgId)),
-    source(() => systemHealth(orgId))
+    source(() => systemHealth(orgId)),
+    source(workspaceStatus)
   ]);
 
   /* A section that answered can still have answered badly. The top-level
@@ -354,7 +356,8 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     queued_jobs: statusOf(queued),
     objectives: statusOf(objectives),
     approvals: statusOf(approvals),
-    health: healthStatus
+    health: healthStatus,
+    agent_home: statusOf(agentHome)
   };
   const degraded = Object.entries(sources)
     .filter(([, status]) => status !== 'ok')
@@ -373,7 +376,7 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     degraded_sources: degraded,
     source_errors: Object.fromEntries([
       ...[['recent_jobs', recent], ['running_jobs', running], ['queued_jobs', queued],
-          ['objectives', objectives], ['approvals', approvals]]
+          ['objectives', objectives], ['approvals', approvals], ['agent_home', agentHome]]
         .filter(([, result]) => !result.ok)
         .map(([name, result]) => [name, result.error]),
       /* These three can fail inside a call that still returned, so their
@@ -391,7 +394,10 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
       org_id: orgId,
       control_repository: process.env.MCCLUSTER_CANONICAL_REPOSITORY || 'mcclusterishere/mccluster',
       edge: process.env.MCCLUSTER_EDGE_URL || 'https://api.mccluster.org',
-      supabase_project: process.env.MCCLUSTER_SUPABASE_PROJECT_REF || 'zmnhbrjyhxzhkxmhkexs'
+      supabase_project: process.env.MCCLUSTER_SUPABASE_PROJECT_REF || 'zmnhbrjyhxzhkxmhkexs',
+      agent_home: agentHome.ok ? agentHome.value : null,
+      conversation_truth: 'Supabase ops_ai_threads/ops_ai_messages + private ai_context',
+      disposable_code_worktrees: '/srv/mccluster/worktrees'
     },
     runtime: deploy.ok ? deploy.value : null,
     catalog: catalog.ok ? catalog.value : null,
