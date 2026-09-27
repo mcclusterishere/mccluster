@@ -75,6 +75,10 @@ test('resident McCluster chat survives browser closure and rehydrates from priva
   assert.match(source, /function retrieveResidentAiContext\(/);
   assert.match(source, /request\("\/v1\/ai\/retrieve"/);
   assert.match(source, /Durable McCluster memory retrieved from prior conversations/);
+  assert.match(source, /"mccluster\/idempotency-key"/);
+  assert.match(source, /idempotencyKey: "resident-ai-turn:" \+ userMessage\.id/);
+  assert.match(source, /var unlinked = messages\.filter/);
+  assert.match(source, /queueAiTaskForSavedUser\(thread, userMessage, messages\)/);
   assert.match(source, /syncResidentAiThread\(thread, state\.aiMessages\[thread\.id\]\)/);
   assert.match(aiRouter, /body\.synthesize_objectives === false/);
   assert.match(aiRouter, /reason: 'caller_disabled'/);
