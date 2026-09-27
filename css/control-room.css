@@ -136,7 +136,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
   border-radius: 2px;
   background: var(--cr-ruby-hot);
 }
-.cr-nav__icon { font-size: 17px; line-height: 1; }
+.cr-nav__icon { font-size: 17px; line-height: 1; display: grid; place-items: center; }
+/* Drawn icons, not text symbols: a phone font draws some symbols tiny and
+   others (⌁) not at all, which left the bottom tabs as bare words. */
+.cr-nav__icon svg { width: 22px; height: 22px; display: block; }
 .cr-nav__label { font-size: 10px; font-weight: 750; letter-spacing: .01em; }
 .cr-rail__foot { margin-top: auto; display: grid; justify-items: center; gap: 8px; width: 100%; }
 .cr-avatar {
