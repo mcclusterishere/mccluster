@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../../js/control-room-v2.js', import.meta.url), 'utf8');
@@ -80,10 +81,14 @@ test('resident local AI chat is durable and multi-turn', () => {
 });
 
 test('resident AI voice stays on the canonical durable chat path', () => {
+  assert.doesNotThrow(() => new vm.Script(voice));
+  assert.doesNotThrow(() => new vm.Script(source));
   assert.match(controlHtml, /js\/control-room\/voice\.js/);
   assert.match(voice, /window\.SpeechRecognition \|\| window\.webkitSpeechRecognition/);
   assert.match(voice, /window\.speechSynthesis/);
   assert.match(voice, /new SpeechSynthesisUtterance/);
+  assert.match(voice, /cancelListening/);
+  assert.match(source, /stopAiVoiceListening\(true\)/);
   assert.match(source, /function startAiVoiceTurn\(/);
   assert.match(source, /sendAiMessage\(spoken, \{ inputMode: "voice", speakReply: true \}\)/);
   assert.match(source, /metadata: \{ input_mode: inputMode \}/);
