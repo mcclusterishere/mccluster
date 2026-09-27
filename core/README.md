@@ -39,6 +39,14 @@ There are two Unix identities plus one shared worktree group:
 
 OpenCode also has explicit tool-policy denies for web access, subagents, external directories, Git pushes/commits/remotes, GitHub CLI, SSH/SCP/SFTP, curl, wget, `.env`, private-key, and credential files. The parent runner performs Git commits/pushes after inspecting the diff.
 
+## Persistent McCluster home
+
+McCluster has a bounded persistent workspace rooted at `MCCLUSTER_HOME_ROOT`, defaulting to `/var/lib/mccluster-core/home`. The Core tool broker exposes status/list/read/write capabilities for this directory only. Paths are relative, traversal and symlink escapes are rejected, writes are size-bounded and atomic, and the directory survives browser closure and code deploys because it lives under the persistent Core state root.
+
+Standard directories are `notes/`, `artifacts/`, `scratch/`, `state/`, `inbox/`, and `outbox/`.
+
+This workspace is not the conversation database. Resident chat truth remains in Supabase, and autonomous code work remains in disposable `/srv/mccluster/worktrees` worktrees.
+
 ## Local model
 
 The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
@@ -52,6 +60,7 @@ A larger model can be tested later, but do not make a ~19–20 GB model the alwa
 /etc/mccluster/core.env             root:mccluster-core 0640 — production secrets
 /etc/mccluster/agent.env            root:mccluster-agent 0640 — loopback OpenCode password only
 /var/lib/mccluster-core             runner HOME / GitHub CLI credential store
+/var/lib/mccluster-core/home        persistent McCluster working home (notes/artifacts/state)
 /var/lib/mccluster-agent            OpenCode HOME/config/state
 /srv/mccluster/repos                persistent source clones
 /srv/mccluster/worktrees            disposable autonomous coding worktrees
