@@ -197,7 +197,10 @@
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
-    var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=(root.querySelector("#craFrom")||{}).value||"";S.through=(root.querySelector("#craThrough")||{}).value||"";load();};
+    var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
+    if(from)from.oninput=function(){S.from=from.value||"";};
+    if(through)through.oninput=function(){S.through=through.value||"";};
+    var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
   }
