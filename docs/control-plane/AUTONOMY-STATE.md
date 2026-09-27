@@ -68,9 +68,11 @@ enters through the loopback Ollama adapter. The adapter serializes inference in 
 reports queue/busy state, and orders waiting work by priority. Durable
 `ai.chat` compute tasks retain priority `0`; unattended analysis/planning
 uses negative priority. Private SMS, meeting, and conversation-synthesis
-context stays in process and is not copied into `ops_compute_tasks`. This is a
-repository-state correction until the OVH production promotion and live
-end-to-end chat check are completed.
+context stays in process and is not copied into `ops_compute_tasks`. The
+separate low-privilege OpenCode service used by `code_patch` remains a direct
+Ollama consumer and is not claimed as part of this serialized resident-AI gate.
+This is a repository-state correction until the OVH production promotion and
+live end-to-end chat check are completed.
 
 ## The morning report was being thrown away
 
