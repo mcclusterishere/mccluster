@@ -112,6 +112,86 @@ test('a permitted role passes the grant check and proceeds to the model lookup',
   });
 });
 
+
+test('prompt-only generation refuses models that require structured media input', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) {
+      return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    }
+    if (href.includes('/rest/v1/control_role_capabilities?')) {
+      return jsonResponse(MATRIX);
+    }
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/kling-video/v3/standard/image-to-video',
+        display_name: 'Kling 3.0 Standard I2V',
+        capability: 'image-to-video',
+        parameter_schema: {},
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    await assert.rejects(
+      () => createGeneration(generationRequest(), env, { id: 'user-1' }),
+      (error) => error.status === 422 && /structured media input/.test(error.message)
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+    assert.equal(seen.some((href) => href.includes('fal.run')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
+test('catalog-declared required media fields fail before spending', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    if (href.includes('/rest/v1/control_role_capabilities?')) return jsonResponse(MATRIX);
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/example',
+        display_name: 'Schema model',
+        capability: 'text-to-video',
+        parameter_schema: { type: 'object', required: ['prompt', 'duration'] },
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    await assert.rejects(
+      () => createGeneration(generationRequest(), env, { id: 'user-1' }),
+      (error) => error.status === 422 &&
+        Array.isArray(error.detail?.missing_fields) &&
+        error.detail.missing_fields.includes('duration')
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
 test('non-numeric metrics score as zero instead of NaN', () => {
   const scored = scoreMetrics({ views: 'n/a', likes: 12, reach: undefined, retention_3s: 'x' });
   assert.equal(Number.isFinite(scored.score), true);
