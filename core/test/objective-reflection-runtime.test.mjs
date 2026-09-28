@@ -44,3 +44,64 @@ test('objective reflection does not retry non-retryable local-AI errors', async 
 
   assert.equal(calls, 1);
 });
+
+test('background reflection defaults cannot monopolize the interactive AI lane', async () => {
+  const priorAttempts = process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS;
+  const priorTimeout = process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS;
+  delete process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS;
+  delete process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS;
+  let observed = null;
+
+  try {
+    await fetchReflectionResponse(
+      [{ role: 'user', content: 'background reflection' }],
+      {
+        chatImpl: async (request) => {
+          observed = request;
+          return { message: { content: '{"summary":"ok"}' } };
+        },
+        sleepImpl: async () => {},
+      },
+    );
+    assert.equal(observed.timeoutMs, 90000);
+    assert.equal(observed.numCtx, 8192);
+  } finally {
+    if (priorAttempts === undefined) delete process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS;
+    else process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS = priorAttempts;
+    if (priorTimeout === undefined) delete process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS;
+    else process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS = priorTimeout;
+  }
+});
+
+test('background reflection ignores unsafe high timeout and retry environment values', async () => {
+  const priorAttempts = process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS;
+  const priorTimeout = process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS;
+  process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS = '9';
+  process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS = '600000';
+  let calls = 0;
+  let timeout = null;
+
+  try {
+    await assert.rejects(
+      fetchReflectionResponse(
+        [{ role: 'user', content: 'background reflection' }],
+        {
+          chatImpl: async (request) => {
+            calls += 1;
+            timeout = request.timeoutMs;
+            throw new TypeError('fetch failed');
+          },
+          sleepImpl: async () => {},
+        },
+      ),
+      /fetch failed/,
+    );
+    assert.equal(calls, 1);
+    assert.equal(timeout, 90000);
+  } finally {
+    if (priorAttempts === undefined) delete process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS;
+    else process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS = priorAttempts;
+    if (priorTimeout === undefined) delete process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS;
+    else process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS = priorTimeout;
+  }
+});
