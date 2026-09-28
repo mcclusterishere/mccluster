@@ -1,5 +1,5 @@
 import core from './index.js';
-import { fail, logEvent, reply } from './lib/http.js';
+import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
 import { getUsage, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
@@ -29,6 +29,9 @@ async function authUser(req, env) {
   if (!res.ok) return null;
   return res.json();
 }
+
+/* Routes below that authenticate before checking the method. */
+const OWNER_GATED_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -204,11 +207,24 @@ export default {
       }
     }
 
+    /* The browser's CORS preflight carries no Authorization header, so it
+       must be answered before any sign-in gate. These four prefixes
+       authenticate before they look at the method; sending their preflight
+       through authUser returned 401, the browser refused to make the real
+       request, and Control > Analytics showed "business / identity /
+       forensics did not load: Load failed". Core answers every other
+       preflight the same way (index.js). */
+    if (request.method === 'OPTIONS' && OWNER_GATED_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))) {
+      return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+    }
+
     if (path === '/v1/analytics' || path.startsWith('/v1/analytics/')) {
       try {
         const user = await authUser(request, env);
         const analyticsResponse = await handleAnalyticsRequest(request, env, user);
-        if (analyticsResponse) return analyticsResponse;
+        /* The analytics router builds bare JSON responses; without CORS
+           headers the browser discards a 200 it already received. */
+        if (analyticsResponse) return applyCors(request, env, analyticsResponse);
       } catch (error) {
         return fail(request, env, error.message || 'Analytics request failed', error.status || 500, error.detail);
       }
