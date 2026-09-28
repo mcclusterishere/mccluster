@@ -1,4 +1,4 @@
-# Gated audio — a record behind an M Account
+# Gated audio — a record you earn
 
 A gated track ships **two files that live in two different places**, and the
 split is the whole security model.
@@ -6,14 +6,50 @@ split is the whole security model.
 | | where it lives | who can get it |
 | --- | --- | --- |
 | preview cut | `assets/audio/<slug>-preview.mp3`, committed | anyone |
-| master, every format | private Supabase bucket `mcc-gated-audio`, never committed | signed-in listeners, via a signed URL |
+| master | private Supabase bucket `mcc-gated-audio`, never committed | one play at a time, as a URL the API Worker signs |
 
 The site is a static host. A file committed under `assets/` is world-readable
-the moment it deploys, so a "locked" player pointed at a committed master is
-decoration — the URL is in the page source. The master therefore is not in
-this repository at all. `storage.objects` RLS is what enforces the gate, and
-the browser trades the listener's own access token for a short-lived signed
-URL. Nothing about the enforcement lives in JavaScript.
+the moment it deploys, so the master is not in this repository at all. The
+bucket is **not** readable by signed-in accounts: a browser that could sign its
+own URL could pick its own lifetime and replay forever, so no count would hold.
+Only the API Worker (`workers/mccluster/src/music/router.js`) signs, with the
+service role, one short-lived URL per play it has granted.
+
+## The rule
+
+The owner's rule, enforced by the Worker and the database, never by the page:
+
+1. An account. Signed out, the row plays the preview and offers one.
+2. **Five different other songs heard all the way through** before the first
+   play. The row shows progress: `2/5 SONGS · finish 3 more to unlock`.
+3. **One play.** Pressing play spends it; the Worker signs a URL good for ten
+   minutes. The player refuses to rewind it, and ending it or moving to
+   another track is the end of that play. There is no download or ringtone:
+   a file to keep is not one play.
+4. After that, **one more full song for every play.**
+
+The numbers live in `GATES` in the Worker and are repeated in the track's
+`listen_gate` block in `data/albums.json`; `scripts/test/music-platform.test.mjs`
+fails if they disagree. House operators (`ops.use`) play it without spending.
+
+## The listen ledger
+
+`js/listen-ledger.js` tells the API when a song starts from the top and when
+it ends. It never says how long the song is. The Worker knows every song's
+length from `workers/mccluster/src/music/tracks.js`, generated from the audio
+files by `node scripts/music-track-lengths.mjs` (re-run it after adding a
+song; a test fails while it is stale). A listen counts only when the server
+saw at least 95% of the song's length pass between the start and the end, so
+skipping to the end or playing at double speed does not count, and starting a
+song closes the listener's previous unfinished one, so songs cannot be heard
+in parallel. The album page, the discovery player and the pocket player all
+report; the gated record never counts toward itself.
+
+Tables: `music_listens` and `music_gated_plays`, written only by the service
+role; listeners can read their own rows. Functions: `music_listen_start`,
+`music_listen_finish`, `music_gate_state`, `music_gate_claim` (service role
+only; the claim takes an advisory lock so two taps cannot spend one play
+twice).
 
 ## Adding one
 
@@ -55,6 +91,9 @@ adding a format to the registry is all it takes to start offering it. Needs
 
 ## Formats
 
+Formats are still produced and uploaded, but no page offers them to listeners
+while the record is on the one-play rule: a downloaded file is not one play.
+
 `formats` is a list on the gated block. Each entry needs `ext`, `label` and
 `object`; `note` is the small grey line under the label in the picker.
 
@@ -80,18 +119,17 @@ uploaded yet.
 the bucket does not exist. **No workflow applies migrations in this repo** —
 that is a `supabase db push` by hand.
 
-## The three states a row can be in
+## The states a row can be in
 
 `js/gated-audio.js` resolves exactly one of these and never guesses:
 
-- **locked** — no session. Plays the preview, offers a free account.
-- **unlocked** — signed. Plays the master from a signed URL, offers the
-  download. The row clock switches to the master's length.
-- **unavailable** — storage said 404 or fell over. Says so. It never nags a
-  listener for an account they already have, and never reads as empty.
-
-Signing in in another tab takes over a playing preview at the same second;
-the preview is the head of the same master, so the clock lines up.
+- **preview** — no session. Plays the preview, offers a free account.
+- **locked** — signed in, not earned yet. Plays the preview and says how many
+  songs are left.
+- **earned** — the next press of play spends one play.
+- **full** — the one play, happening now.
+- **unavailable** — the API or storage said no for a reason that is ours.
+  Says so, and never nags a listener for an account they already have.
 
 ## Three things that break this quietly
 

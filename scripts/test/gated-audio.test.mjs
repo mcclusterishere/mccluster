@@ -98,15 +98,21 @@ test('the gated registry and the publisher agree on where the master lives', asy
   }
 });
 
-test('the bucket is private and only signed-in listeners may read it', async () => {
+test('the bucket is private and only the API signs a play of the master', async () => {
   const sql = await read('supabase/replay_migrations/20260918230000_gated_audio.sql');
   assert.match(sql, /'mcc-gated-audio',\s*'mcc-gated-audio',\s*false/,
     'the bucket must be created private');
-  assert.match(sql, /for select\s+to authenticated/,
-    'the read policy must be scoped to authenticated, never public: anon ' +
-    'holds the publishable key too');
   assert.doesNotMatch(sql, /for (insert|update|delete)/,
     'no browser-side write policy belongs on a bucket of masters');
+  /* A browser that can sign its own URL can pick its own lifetime and
+     replay forever, so no play count could hold. Only the Worker signs,
+     one short-lived URL per play it granted. */
+  const client = await read('js/gated-audio.js');
+  assert.doesNotMatch(client, /storage\/v1\/object\/sign/, 'the browser must not sign the master itself');
+  assert.match(client, /\/v1\/music\/gates\//);
+  const worker = await read('workers/mccluster/src/music/router.js');
+  assert.match(worker, /storage\/v1\/object\/sign/);
+  assert.match(worker, /music_gate_claim/);
 });
 
 test('an album billed to another name says so everywhere it credits', async () => {

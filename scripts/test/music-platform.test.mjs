@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 const json=async(p)=>JSON.parse(await read(p));
 
-test('gated single is one logical track with signed-out preview and signed-in full asset', async()=>{
+test('gated single is one logical track: public preview, master only as an earned play', async()=>{
   const albums=await json('data/albums.json');
   const album=albums.albums.find(a=>a.slug==='cia-mind-control');
   const track=album.tracks.find(t=>t.title==='Niggy Nigg Niggr');
@@ -13,18 +13,53 @@ test('gated single is one logical track with signed-out preview and signed-in fu
   assert.equal(track.gated.bucket,'mcc-gated-audio');
   assert.equal(track.gated.object,'niggy-nigg/niggy-nigg.mp3');
   assert.equal(track.gated.access_mode,'account');
-  assert.equal(track.gated.preview_visibility,'signed_out_only');
-  assert.equal(track.gated.full_visibility,'signed_in');
+  assert.equal(track.gated.preview_visibility,'until_earned');
+  assert.equal(track.gated.full_visibility,'earned_play');
+  /* the catalogue states the owner's rule; the Worker enforces it, and the
+     two must say the same numbers */
+  const router=await read('workers/mccluster/src/music/router.js');
+  const gate=router.match(/'niggy-nigg':\s*\{\s*first:\s*(\d+),\s*each:\s*(\d+)/);
+  assert.ok(gate,'the Worker no longer gates niggy-nigg');
+  assert.equal(track.gated.listen_gate.first_distinct_full_listens,Number(gate[1]));
+  assert.equal(track.gated.listen_gate.full_listens_per_play,Number(gate[2]));
+  assert.equal(Number(gate[1]),5,'the owner asked for five different songs before the first play');
+  assert.equal(Number(gate[2]),1,'the owner asked for one more song per play after that');
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
 
-test('signed-in album gate never arms the public preview while the master resolves', async()=>{
+test('the album only plays the master for a play the API granted, and never twice', async()=>{
   const album=await read('album.html');
   assert.match(album,/function hasStoredSession\(\)/);
   assert.match(album,/function paintGateOpening\(row\)/);
-  assert.match(album,/row\.setAttribute\("data-src", ""\)/);
   assert.match(album,/if \(signed\) paintGateOpening\(row\);\s*\n\s*else paintGate\(row, \{ state: "preview" \}\);/);
+  /* pressing play on an earned row spends it through the API first */
+  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target\)/);
+  assert.match(album,/window\.MCC_GATED\.claim\(gateSpec\(row\)\)/);
+  /* the master URL is only ever set from a granted claim */
+  const masterSets=album.match(/setAttribute\("data-src", out\.url\)/g)||[];
+  assert.equal(masterSets.length,1,'the master URL must come from exactly one place: a granted claim');
+  /* ending or leaving spends it; rewinding is blocked */
+  assert.match(album,/function spend\(row\)/);
+  assert.match(album,/spend\(rows\[cur\]\);\s*\n\s*next\(\);/);
+  assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
+  /* no file to keep */
+  assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);
+});
+
+test('every player reports full listens from the top, and the gated record never counts', async()=>{
+  const album=await read('album.html');
+  const engine=await read('js/music-engine.js');
+  const pip=await read('js/pip.js');
+  assert.match(album,/js\/listen-ledger\.js/);
+  assert.match(await read('listen.html'),/js\/listen-ledger\.js/);
+  assert.match(album,/function countStart\(\)[\s\S]*data-gated-bucket[\s\S]*deck\.currentTime > 3/);
+  assert.match(album,/MCC_LISTENS\.finish\(listen\.handle\)/);
+  assert.match(engine,/function countStart\(\)[\s\S]*current\.gated[\s\S]*audio\.currentTime > 3/);
+  assert.match(engine,/MCC_LISTENS\.finish\(listen\.handle\)/);
+  assert.match(pip,/if \(!next\.gated\) ledger\(/);
+  const ledger=await read('js/listen-ledger.js');
+  assert.doesNotMatch(ledger,/seconds|duration/,'the browser must never tell the server how long a song is');
 });
 
 test('discovery has one persistent transport and inline play controls', async()=>{

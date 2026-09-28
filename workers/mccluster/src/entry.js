@@ -15,6 +15,7 @@ import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
+import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
 import { recentAudit } from './lib/audit.js';
@@ -31,7 +32,7 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const OWNER_GATED_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -208,14 +209,24 @@ export default {
     }
 
     /* The browser's CORS preflight carries no Authorization header, so it
-       must be answered before any sign-in gate. These four prefixes
+       must be answered before any sign-in gate. These prefixes
        authenticate before they look at the method; sending their preflight
        through authUser returned 401, the browser refused to make the real
        request, and Control > Analytics showed "business / identity /
        forensics did not load: Load failed". Core answers every other
        preflight the same way (index.js). */
-    if (request.method === 'OPTIONS' && OWNER_GATED_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))) {
+    if (request.method === 'OPTIONS' && AUTH_FIRST_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`))) {
       return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+    }
+
+    if (path === '/v1/music' || path.startsWith('/v1/music/')) {
+      try {
+        const user = await authUser(request, env);
+        const musicResponse = await handleMusicRequest(request, env, user);
+        if (musicResponse) return musicResponse;
+      } catch (error) {
+        return fail(request, env, error.message || 'Music request failed', error.status || 500, error.detail);
+      }
     }
 
     if (path === '/v1/analytics' || path.startsWith('/v1/analytics/')) {
