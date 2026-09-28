@@ -5,7 +5,7 @@ process.env.SUPABASE_URL ||= 'https://db.test';
 process.env.SUPABASE_SECRET_KEY ||= 'test-secret';
 process.env.MCCLUSTER_OLLAMA_ADAPTER_URL ||= 'http://127.0.0.1:4790';
 
-const { residentAiTurn } = await import('../src/executors/resident-ai-turn.mjs');
+const { residentAiTurn, needsCurrentResearch } = await import('../src/executors/resident-ai-turn.mjs');
 
 const ORG = '00000000-0000-4000-8000-000000000001';
 const THREAD = '00000000-0000-4000-8000-000000000002';
@@ -112,6 +112,109 @@ test('resident AI turn persists the adapter message even after the browser is ir
     assert.equal(output.replayed, false);
     assert.ok(calls.some((call) => call.url === 'http://127.0.0.1:4790/execute'));
     assert.ok(calls.some((call) => call.url.includes('on_conflict=id') && call.method === 'POST'));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test('freshness-triggering resident turns ground Qwen with timestamped web discovery', async () => {
+  assert.equal(needsCurrentResearch('What is the latest situation today?'), true);
+  assert.equal(needsCurrentResearch('Explain Rutherford scattering.'), false);
+
+  const originalFetch = globalThis.fetch;
+  let assistantLookup = 0;
+  let brokerCalls = 0;
+  let adapterMessages = null;
+  let persistedMetadata = null;
+
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('id=eq.' + ASSISTANT)) {
+      assistantLookup += 1;
+      return json(assistantLookup === 1 ? [] : [{
+        id: ASSISTANT, thread_id: THREAD, org_id: ORG, role: 'assistant',
+        content: 'Current answer with source.', model: 'qwen3:8b',
+        implementation: 'core-local', metadata: persistedMetadata || {}, created_at: '2026-09-27T22:30:00Z'
+      }]);
+    }
+
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('id=eq.' + USER) && (init.method || 'GET') === 'GET') {
+      return json([{
+        id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest situation today?', metadata: { agent_job_id: JOB }, created_at: '2026-09-27T22:29:00Z'
+      }]);
+    }
+
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('thread_id=eq.' + THREAD) && (init.method || 'GET') === 'GET') {
+      return json([{
+        id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest situation today?', metadata: { agent_job_id: JOB }, created_at: '2026-09-27T22:29:00Z'
+      }]);
+    }
+
+    if (url.includes('/rest/v1/ops_ai_messages?') && (init.method || 'GET') === 'PATCH') {
+      return json([{
+        id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest situation today?', metadata: { agent_job_id: JOB }, created_at: '2026-09-27T22:29:00Z'
+      }]);
+    }
+
+    if (url === 'http://127.0.0.1:4777/v1/capabilities/call') {
+      brokerCalls += 1;
+      const request = JSON.parse(String(init.body));
+      assert.equal(request.capability, 'research.web');
+      assert.match(request.arguments.objective, /latest situation today/i);
+      return json({
+        capability: 'research.web',
+        result: {
+          fetched_at: '2026-09-27T22:29:30Z',
+          provider: 'brave',
+          objective: request.arguments.objective,
+          result_count: 1,
+          results: [{
+            title: 'Current source',
+            url: 'https://example.com/current',
+            snippet: 'Current discovery evidence.'
+          }]
+        }
+      });
+    }
+
+    if (url === 'http://127.0.0.1:4790/execute') {
+      const request = JSON.parse(String(init.body));
+      adapterMessages = request.input.messages;
+      assert.ok(adapterMessages.some((message) => /CURRENT-WEB-DISCOVERY EVIDENCE/.test(message.content)));
+      assert.ok(adapterMessages.some((message) => /https:\/\/example\.com\/current/.test(message.content)));
+      assert.ok(adapterMessages.some((message) => /Never present stale model memory as current information/.test(message.content)));
+      return json({
+        model: 'qwen3:8b',
+        implementation: 'core-local',
+        content: 'Current answer with source.',
+        queue_wait_ms: 1
+      });
+    }
+
+    if (url.includes('/rest/v1/ops_ai_messages?on_conflict=id') && (init.method || 'GET') === 'POST') {
+      const body = JSON.parse(String(init.body));
+      persistedMetadata = body.metadata;
+      assert.equal(body.metadata.current_research.attempted, true);
+      assert.equal(body.metadata.current_research.ok, true);
+      assert.equal(body.metadata.current_research.provider, 'brave');
+      assert.equal(body.metadata.current_research.result_count, 1);
+      return json([{ ...body, created_at: '2026-09-27T22:30:00Z' }]);
+    }
+
+    throw new Error('unexpected fetch: ' + (init.method || 'GET') + ' ' + url);
+  };
+
+  try {
+    const output = await residentAiTurn(job());
+    assert.equal(brokerCalls, 1);
+    assert.ok(adapterMessages);
+    assert.equal(output.current_research.ok, true);
+    assert.equal(output.current_research.fetched_at, '2026-09-27T22:29:30Z');
   } finally {
     globalThis.fetch = originalFetch;
   }
