@@ -113,6 +113,10 @@ test('the bucket is private and only the API signs a play of the master', async 
   const worker = await read('workers/mccluster/src/music/router.js');
   assert.match(worker, /storage\/v1\/object\/sign/);
   assert.match(worker, /music_gate_claim/);
+  const gate = await read('supabase/migrations/20260928012324_music_listen_gate.sql');
+  assert.match(gate, /drop policy if exists "gated audio is readable by signed-in listeners" on storage\.objects/,
+    'the bucket must stop being readable by every signed-in account');
+  assert.match(gate, /revoke all on function public\.music_gate_claim[^;]*from public, anon, authenticated/);
 });
 
 test('an album billed to another name says so everywhere it credits', async () => {
