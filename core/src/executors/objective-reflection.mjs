@@ -15,8 +15,12 @@ function sleep(ms) {
 export async function fetchReflectionResponse(messages, {
   chatImpl = localAiChat,
   sleepImpl = sleep,
-  attempts = Math.min(5, Math.max(1, Number(process.env.MCCLUSTER_OLLAMA_RETRY_ATTEMPTS || 3))),
-  timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
+  /* Reflection is background work sharing one local Qwen lane with interactive
+     resident chat. Do not let it monopolize that lane for multi-minute retry
+     chains. Job-level retries already exist and release the runner between
+     attempts, allowing priority-100 resident turns to run first. */
+  attempts = Math.min(1, Math.max(1, Number(process.env.MCCLUSTER_REFLECTION_AI_ATTEMPTS || 1))),
+  timeoutMs = Math.min(90_000, Math.max(15_000, Number(process.env.MCCLUSTER_REFLECTION_AI_TIMEOUT_MS || 90_000))),
   metadata = {},
 } = {}) {
   let lastError = null;
@@ -26,7 +30,7 @@ export async function fetchReflectionResponse(messages, {
       return await chatImpl({
         messages,
         temperature: 0.1,
-        numCtx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+        numCtx: Math.min(8192, Math.max(2048, Number(process.env.MCCLUSTER_REFLECTION_CONTEXT || 8192))),
         priority: -20,
         timeoutMs,
         metadata,
