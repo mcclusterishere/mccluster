@@ -131,7 +131,7 @@ test('all six Analytics sections render representative successful data',async()=
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
     forensics:/Owner-only telemetry/,
-    setup:/Install \/ verify/
+    setup:/Your websites/
   };
   for(const [section,marker] of Object.entries(expected)){
     A.state.section=section;
@@ -168,7 +168,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
 
 test('Analytics uses distinct visual forms for distinct questions',async()=>{
   const js=await read('js/control-room/analytics.js');
-  for(const fn of ['line','donut','rank','funnel','scatter','flow']){
+  for(const fn of ['line','donut','rank','funnel','reachSvg','flow']){
     assert.match(js,new RegExp('function '+fn+'\\('),fn+' visual is missing');
   }
   assert.match(js,/Traffic trend/);
