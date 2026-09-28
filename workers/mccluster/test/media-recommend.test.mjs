@@ -60,9 +60,9 @@ test('balanced routing still prefers high-tier models over premium when policy s
       body:JSON.stringify({capability:'text-to-video',preference:'balanced',required:{commercial_use:true},top_k:2})
     });
     const result=await recommendModels(request,{SUPABASE_URL:'https://db.test',SUPABASE_SERVICE_ROLE_KEY:'secret'});
-    assert.equal(result.candidates[0].model.id,'premium');
-    // Premium base (40) still beats high + balanced bonus (32+8), so ties are
-    // resolved deterministically rather than pretending balanced is a new quality metric.
+    assert.equal(result.candidates[0].model.id,'high');
+    // Premium base (40) ties high + balanced bonus (32+8). The stable
+    // deterministic tie-break then keeps the result reproducible.
     assert.equal(result.candidates[0].score,result.candidates[1].score);
   }finally{
     globalThis.fetch=original;
