@@ -164,6 +164,10 @@
       color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
+    /* Heal the 3 only: the door from the EP to the Action Network gateway */
+    .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
+      border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
+      text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
 
     /* the record: soft app rows with the art up front; the playing row
        becomes a glowing card in the career's color, the way the streaming
@@ -642,6 +646,7 @@
              only appears when there is a tagline to separate. -->
         <p class="alb__by">by <b id="albArtist">Matthew McCluster</b><span id="albBySep"> · </span><span id="albBy">Have no fear.</span></p>
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
+        <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
         <div class="lrail" id="labelRail" aria-label="The label"></div>
       </div>
@@ -921,6 +926,7 @@
       document.getElementById("albArtist").textContent = ARTIST;
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
+      document.getElementById("albGate").hidden = ALBUM !== "heal-the-3";
       document.getElementById("nowFrom").textContent = "Playing from " + head.name;
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");

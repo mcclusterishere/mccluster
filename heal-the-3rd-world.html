@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Heal the 3rd World · Look. Listen. Do something.</title>
+  <meta name="description" content="Heal the 3rd World: the Heal the 3 EP by McCluster and VVS Madè, and the door into the Uprise Action Network. Look at where things come from, listen, then do something.">
+  <link rel="canonical" href="https://matthew.mccluster.org/heal-the-3rd-world.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#050404">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Heal the 3rd World">
+  <meta property="og:description" content="Look. Listen. Don't just stand there. Enter the network.">
+  <meta property="og:url" content="https://matthew.mccluster.org/heal-the-3rd-world.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/heal-the-3-cover.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- the house stylesheet carries the app bar; the gateway's own styles sit on top -->
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/action.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/gateway.css?v=__STAMP__">
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="an-body gw">
+  <header class="an-top">
+    <a class="an-top__home" href="index.html">McCluster</a>
+    <span class="an-top__net">Heal the 3rd World</span>
+    <a class="an-top__acct" id="gwAcct" href="account.html">Sign in</a>
+  </header>
+
+  <main id="gw">
+    <!-- ACT I · LOOK. Scored by Deep End, the dark side of the EP. -->
+    <section class="gw-act gw-act--look" id="look" data-score="deep" aria-labelledby="gwLookH">
+      <video class="gw-bg" muted loop playsinline preload="none" poster="assets/frames/warroom_0001.jpg" aria-hidden="true">
+        <source src="assets/video/warroom.mp4" type="video/mp4">
+      </video>
+      <div class="gw-veil" aria-hidden="true"></div>
+      <div class="gw-in">
+        <p class="gw-n">Act I &middot; Look</p>
+        <h1 class="gw-h" id="gwLookH">Look.</h1>
+        <p class="gw-lede">Everything in your hands came from somewhere. Each chapter here is one real story, told from its sources, with something you can do about it.</p>
+        <ul class="gw-chapters" id="gwChapters" aria-live="polite"></ul>
+        <ol class="gw-facts" id="gwFacts"></ol>
+      </div>
+    </section>
+
+    <!-- ACT II · LISTEN. The EP itself; the full player stays one tap away. -->
+    <section class="gw-act gw-act--listen" id="listen" data-score="listen" aria-labelledby="gwListenH">
+      <div class="gw-in">
+        <p class="gw-n">Act II &middot; Listen</p>
+        <h2 class="gw-h" id="gwListenH">Listen.</h2>
+        <figure class="gw-cover">
+          <img src="assets/img/heal-the-3-cover.jpg" alt="Heal the 3 cover art" width="1024" height="1024" loading="lazy">
+        </figure>
+        <p class="gw-lede">Heal the 3, the EP, with VVS Mad&egrave;. Two sides: the deep end, and the healing.</p>
+        <ol class="gw-tracks">
+          <li><button type="button" class="gw-track" data-play="deep"><b>Deep End</b><small>the dark side</small><i aria-hidden="true">&#9654;</i></button></li>
+          <li><button type="button" class="gw-track" data-play="heal"><b>Heal the 3rd World</b><small>the light side</small><i aria-hidden="true">&#9654;</i></button></li>
+        </ol>
+        <a class="an-btn an-btn--ghost an-btn--block" href="album.html?album=heal-the-3">Open the EP in the player &#8594;</a>
+      </div>
+    </section>
+
+    <!-- ACT III · DON'T JUST STAND THERE. Scored by Heal the 3rd World. -->
+    <section class="gw-act gw-act--do" id="do" data-score="heal" aria-labelledby="gwDoH">
+      <video class="gw-bg" muted loop playsinline preload="none" poster="assets/frames/angel_0001.jpg" aria-hidden="true">
+        <source src="assets/video/angel.mp4" type="video/mp4">
+      </video>
+      <div class="gw-veil" aria-hidden="true"></div>
+      <div class="gw-in">
+        <p class="gw-n">Act III &middot; Do something</p>
+        <h2 class="gw-h" id="gwDoH">Don&rsquo;t just stand there.</h2>
+        <p class="gw-lede">A million people watching is attention. A million people organized is power.</p>
+        <div class="gw-meter" id="gwMeter" hidden>
+          <p class="an-meter__n"><b id="gwPeople">0</b> <span id="gwPeopleLabel">people in the network</span></p>
+          <div class="an-bar" role="progressbar" id="gwBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+          <p class="an-meter__goal" id="gwGoal"></p>
+        </div>
+        <p class="gw-q">What do you have?</p>
+        <div class="gw-lanes" id="gwLanes"></div>
+      </div>
+    </section>
+
+    <!-- ACT IV · ENTER. The light. -->
+    <section class="gw-act gw-act--enter" id="enter" data-score="heal" aria-labelledby="gwEnterH">
+      <div class="gw-in">
+        <p class="gw-n">Act IV &middot; Enter</p>
+        <h2 class="gw-h" id="gwEnterH">The world doesn&rsquo;t need another comment section.</h2>
+        <p class="gw-lede">It needs organized people. One McCluster account is your place in every campaign: your number, what you bring, and everyone you bring in.</p>
+        <a class="an-btn an-btn--hot an-btn--block" id="gwEnter" href="action/">Enter the network &#8594;</a>
+        <a class="an-btn an-btn--block gw-btn-ink" href="mnet.html">Mnet &#8594;</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="an-foot gw-foot">
+    <p class="an-crumb">
+      <a href="index.html">McCluster</a><span aria-hidden="true">&#8594;</span>
+      <span>Heal the 3rd World</span><span aria-hidden="true">&#8594;</span>
+      <span>Equity Uprise</span><span aria-hidden="true">&#8594;</span>
+      <a href="mnet.html">Mnet Action Network</a><span aria-hidden="true">&#8594;</span>
+      <a href="action/">Campaigns</a>
+    </p>
+    <p class="an-foot__law">Every figure on this page is a live count. No money is collected here.</p>
+  </footer>
+
+  <!-- the score: off until the listener turns it on -->
+  <button type="button" class="gw-sound" id="gwSound" aria-pressed="false">
+    <span class="gw-sound__dot" aria-hidden="true"></span><span id="gwSoundLabel">Play the score</span>
+  </button>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/gateway.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

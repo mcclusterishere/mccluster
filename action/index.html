@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>You saw it. Now do something. · Uprise Action Network</title>
+  <meta name="description" content="The Uprise Action Network turns attention into organized people: join a campaign, bring your time, skills and reach, and follow every source, phase and dollar in public.">
+  <link rel="canonical" href="https://matthew.mccluster.org/action/">
+  <link rel="icon" type="image/png" href="/assets/img/m-mark.png">
+  <meta name="theme-color" content="#0a0807">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="You saw it. Now do something.">
+  <meta property="og:description" content="Join the Uprise Action Network. People first: time, skills, research and reach, with every source and every dollar in public.">
+  <meta property="og:url" content="https://matthew.mccluster.org/action/">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="/assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- the house stylesheet carries the app bar; this page's own styles sit on top -->
+  <link rel="stylesheet" href="/css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="/css/action.css?v=__STAMP__">
+  <script src="/js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="an-body">
+  <header class="an-top">
+    <a class="an-top__home" href="/">McCluster</a>
+    <span class="an-top__net">Uprise Action Network</span>
+    <a class="an-top__acct" id="anAcct" href="/account.html">Sign in</a>
+  </header>
+
+  <main class="an" id="an" aria-busy="true">
+    <!-- THE HOOK. Filled from the campaign row; this copy is what shows
+         while it loads, and what a reader without JavaScript gets. -->
+    <section class="an-hero">
+      <p class="an-kicker" id="anKicker">Uprise Action Network</p>
+      <p class="an-from" id="anFrom" hidden></p>
+      <h1 class="an-h1" id="anHeadline">You saw it.<br>Now do something.</h1>
+      <p class="an-title" id="anTitle"></p>
+      <p class="an-lede" id="anBody">Attention is not power. Organized people are. Pick what you can bring and join the network.</p>
+      <div class="an-cta" id="anCta" hidden>
+        <a class="an-btn an-btn--hot" href="#join">Join the Action Network</a>
+        <a class="an-btn" href="#evidence">See the evidence</a>
+      </div>
+      <noscript><p class="an-note">This page needs JavaScript to load the campaign.</p></noscript>
+    </section>
+
+    <!-- NO CAMPAIGN NAMED, OR ONE THAT IS NOT OPEN: the live list. -->
+    <section class="an-sec" id="anIndex" hidden>
+      <h2 class="an-h2">Open campaigns</h2>
+      <ul class="an-list" id="anIndexList"></ul>
+      <p class="an-note" id="anIndexNote"></p>
+    </section>
+
+    <div id="anCampaign" hidden>
+      <!-- PEOPLE FIRST. A real count against the phase goal, never a
+           rounded-up or seeded number. -->
+      <section class="an-sec an-meter" aria-labelledby="anPeopleLabel">
+        <p class="an-meter__n"><b id="anPeople">0</b> <span id="anPeopleLabel">people in the network</span></p>
+        <div class="an-bar" role="progressbar" id="anPeopleBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anPeopleGoal"></p>
+      </section>
+
+      <!-- MONEY: rendered only when the owner has switched this
+           campaign's money on. Off, it is not on the page at all. -->
+      <section class="an-sec an-meter an-meter--money" id="anMoney" hidden aria-labelledby="anMoneyLabel">
+        <p class="an-meter__n"><b id="anRaised">$0</b> <span id="anMoneyLabel">received</span></p>
+        <div class="an-bar an-bar--gold" role="progressbar" id="anMoneyBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anMoneyGoal"></p>
+        <a class="an-btn an-btn--gold an-btn--block" id="anGive" href="/give.html">Give $5 &#8594;</a>
+      </section>
+
+      <section class="an-sec" aria-labelledby="anMissionH">
+        <h2 class="an-h2" id="anMissionH">The mission</h2>
+        <ol class="an-phases" id="anPhases"></ol>
+      </section>
+
+      <!-- DON'T JUST STAND THERE. What you have, what you can do, and the
+           account that makes you a participant. -->
+      <section class="an-sec an-join" id="join" aria-labelledby="anJoinH">
+        <h2 class="an-h2" id="anJoinH">Don&rsquo;t just stand there.</h2>
+        <p class="an-lede an-lede--sm" id="anJoinSub">What do you have? Tap everything that&rsquo;s true.</p>
+        <div class="an-chips" id="anHave" role="group" aria-label="What you have"></div>
+
+        <p class="an-q">What can you do?</p>
+        <div class="an-chips" id="anSkills" role="group" aria-label="Your skills"></div>
+
+        <div class="an-auth" id="anAuth" hidden>
+          <div class="an-seg" role="tablist" aria-label="Account">
+            <button type="button" role="tab" id="anModeNew" aria-selected="true">New here</button>
+            <button type="button" role="tab" id="anModeIn" aria-selected="false">I have an account</button>
+          </div>
+          <div class="an-fields" id="anNewFields">
+            <div class="an-row">
+              <label class="an-field"><span>First name</span><input id="anFirst" autocomplete="given-name" maxlength="80"></label>
+              <label class="an-field"><span>Last name</span><input id="anLast" autocomplete="family-name" maxlength="80"></label>
+            </div>
+          </div>
+          <label class="an-field"><span>Email</span><input id="anEmail" type="email" autocomplete="email" inputmode="email" maxlength="200"></label>
+          <label class="an-field"><span>Password</span><input id="anPass" type="password" autocomplete="new-password" minlength="8" maxlength="200"></label>
+          <label class="an-check" id="anPrivacyRow"><input type="checkbox" id="anPrivacy"> <span>I&rsquo;ve read the <a href="/privacy.html">Privacy Policy</a>.</span></label>
+          <a class="an-small" id="anForgot" href="/forgot-password.html" hidden>Forgot password?</a>
+          <button type="button" class="an-btn an-btn--ghost an-btn--block" id="anGoogle" hidden>Continue with Google</button>
+        </div>
+
+        <button type="button" class="an-btn an-btn--hot an-btn--block" id="anJoin">Join the Action Network</button>
+        <p class="an-msg" id="anMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- YOU. Everything on the card is the participant's own row. -->
+      <section class="an-sec an-card" id="anCard" hidden aria-labelledby="anCardNo">
+        <p class="an-card__k">You are participant</p>
+        <p class="an-card__no" id="anCardNo">#1</p>
+        <dl class="an-stats">
+          <div><dt>Joined from</dt><dd id="anCardFrom">Direct</dd></div>
+          <div><dt>Actions</dt><dd id="anCardActions">0</dd></div>
+          <div><dt>Recruited</dt><dd id="anCardRecruited">0</dd></div>
+          <div><dt>Phase</dt><dd id="anCardPhase">Mobilize</dd></div>
+        </dl>
+        <p class="an-card__skills" id="anCardSkills"></p>
+
+        <h3 class="an-h3">Recruit</h3>
+        <p class="an-note">Your link counts everyone it brings in.</p>
+        <div class="an-share">
+          <input class="an-share__url" id="anShareUrl" readonly aria-label="Your campaign link">
+          <button type="button" class="an-btn an-btn--hot" id="anShare">Share</button>
+        </div>
+        <button type="button" class="an-btn an-btn--ghost an-btn--block" id="anCardSave">Save my participant card</button>
+
+        <h3 class="an-h3">Do something now</h3>
+        <div class="an-lanes" id="anLanes"></div>
+        <p class="an-msg" id="anLaneMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- THE EVIDENCE. Every fact carries the report it came from. -->
+      <section class="an-sec" id="evidence" aria-labelledby="anEvidenceH">
+        <h2 class="an-h2" id="anEvidenceH">What we know</h2>
+        <ol class="an-facts" id="anFacts"></ol>
+        <div class="an-verify">
+          <h3 class="an-h3">About the video you saw</h3>
+          <p>Reels travel without their sources. A clip can be real, old, or from somewhere else entirely, so this page does not rest on it: every fact above links to the report it comes from.</p>
+          <p>Before you share any clip, ask who filmed it, where, and when. Search a frame of it to find where it first appeared, and share the original source rather than a repost. Blur or skip footage of children.</p>
+        </div>
+        <h3 class="an-h3">Read further</h3>
+        <ul class="an-sources" id="anSources"></ul>
+      </section>
+
+      <!-- THE LEDGER. Only published rows; the allocation note says what
+           is and is not decided. -->
+      <section class="an-sec" id="ledger" aria-labelledby="anLedgerH">
+        <h2 class="an-h2" id="anLedgerH">Every dollar, in public</h2>
+        <p class="an-lede an-lede--sm" id="anAllocation"></p>
+        <ul class="an-ledger" id="anLedger"></ul>
+      </section>
+
+      <section class="an-sec an-mnet" aria-labelledby="anMnetH">
+        <h2 class="an-h2" id="anMnetH">The world doesn&rsquo;t need another comment section.</h2>
+        <p class="an-lede an-lede--sm">It needs organized people. Your McCluster account is your Mnet identity: the same one across every campaign.</p>
+        <a class="an-btn an-btn--block" href="/mnet.html">Enter Mnet &#8594;</a>
+      </section>
+    </div>
+  </main>
+
+  <footer class="an-foot">
+    <p class="an-crumb">
+      <a href="/">McCluster</a><span aria-hidden="true">&#8594;</span>
+      <a href="/heal-the-3rd-world.html">Heal the 3rd World</a><span aria-hidden="true">&#8594;</span>
+      <span>Equity Uprise</span><span aria-hidden="true">&#8594;</span>
+      <a href="/mnet.html">Mnet Action Network</a><span aria-hidden="true">&#8594;</span>
+      <span id="anCrumb">Campaigns</span>
+    </p>
+    <p class="an-foot__law">No money is collected on this page unless a campaign says so above. No gift is tax-deductible today. Figures on this page are live counts, not estimates.</p>
+  </footer>
+
+  <script src="/js/analytics.js?v=__STAMP__"></script>
+  <script src="/js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="/js/name-integrity.js?v=__STAMP__"></script>
+  <script src="/js/action.js?v=__STAMP__"></script>
+  <script src="/js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

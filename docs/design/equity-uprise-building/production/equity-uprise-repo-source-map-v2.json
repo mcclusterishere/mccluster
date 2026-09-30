@@ -2033,6 +2033,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generated song-length table for the listen ledger; carries the equity-uprise album slug as catalogue data only, no program capability."
+    },
+    {
+      "path": "action/index.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
+    },
+    {
+      "path": "heal-the-3rd-world.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
+    },
+    {
+      "path": "scripts/test/action-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
+    },
+    {
+      "path": "supabase/pending_migrations/20260930230000_uprise_action_network.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes. Moves to supabase/migrations under its applied version."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
