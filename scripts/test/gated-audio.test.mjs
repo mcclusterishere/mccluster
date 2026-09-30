@@ -117,6 +117,16 @@ test('the bucket is private and only the API signs a play of the master', async 
   assert.match(gate, /drop policy if exists "gated audio is readable by signed-in listeners" on storage\.objects/,
     'the bucket must stop being readable by every signed-in account');
   assert.match(gate, /revoke all on function public\.music_gate_claim[^;]*from public, anon, authenticated/);
+  /* the play is a Worker-served stream against a one-play token, and a
+     listen counts on beats while playing, not on start-to-end time */
+  const hard = await read('supabase/migrations/20260930222516_music_listen_gate_hardening.sql');
+  assert.match(hard, /create function public\.music_stream_open/);
+  assert.match(hard, /least\(extract\(epoch from now\(\) - last_beat_at\), 20\)/);
+  assert.match(hard, /create unique index music_listens_one_open_idx/);
+  const listenerPlay = worker.split('const token = newToken();')[1].split('async function streamPlay')[0];
+  assert.ok(listenerPlay.length > 100, 'could not find the listener branch of gatePlay');
+  assert.doesNotMatch(listenerPlay, /signObject/, 'a listener play must not return a storage URL');
+  assert.match(listenerPlay, /\/v1\/music\/stream\//);
 });
 
 test('an album billed to another name says so everywhere it credits', async () => {
