@@ -69,6 +69,25 @@
 .ae__btn[disabled] { cursor: default; opacity: 0.55; }
 .ae__btn--ghost { color: var(--cream); background: var(--glass-hi); }
 
+.ae__shop { display: grid; gap: 0.75rem; margin: 1rem 0 0; }
+.ae__item { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 0.9rem; align-items: start;
+  padding: 0.75rem; border-radius: 16px; background: var(--glass-lo); border: 1px solid var(--edge); }
+.ae__item img { width: 5rem; height: 5rem; border-radius: 12px; object-fit: cover; background: var(--glass-hi); }
+.ae__item h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.ae__item p { margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--cream-dim); line-height: 1.5; }
+.ae__price { font-weight: 800; color: var(--cream); }
+.ae__item .ae__btn { margin-top: 0.6rem; }
+.ae__credit { display: flex; align-items: center; gap: 0.6rem; margin: 0.9rem 0 0; font-weight: 700; font-size: 0.9rem; }
+.ae__credit input { width: 1.25rem; height: 1.25rem; accent-color: var(--artist-accent); }
+.ae__notice { margin: 1rem 0 0; padding: 0.8rem 1rem; border-radius: 12px; background: var(--glass-hi); font-weight: 700; }
+.ae__ledger { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.35rem;
+  font-size: 0.86rem; color: var(--cream-dim); }
+.ae__ledger b { color: var(--cream); }
+.ae__link { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; align-items: end; margin: 0.8rem 0 0; }
+.ae__link input { min-width: 0; font: inherit; font-size: max(16px, 0.9rem); color: var(--cream);
+  background: var(--glass-lo); border: 1px solid var(--edge); border-radius: 12px; padding: 0.7rem 0.8rem; }
+.ae__fine { font-size: 0.76rem !important; line-height: 1.6; margin-top: 1rem !important; }
+
 .ae__foot { margin: 3rem 0 0; padding: 1.2rem 0 0; border-top: 1px solid var(--edge);
   color: var(--cream-dim); font-size: 0.82rem; line-height: 1.6; }
 .ae__foot a { color: var(--cream); }
@@ -77,5 +96,12 @@
   .ae { padding: 1.6rem 2rem 10rem; }
   .ae__hero { margin-top: 3rem; }
   .ae__ava { width: 5.5rem; height: 5.5rem; }
-  .ae__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+  .ae__cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0 1.5rem; }
+  .ae__item { grid-template-columns: 6.5rem minmax(0, 1fr); }
+  .ae__item img { width: 6.5rem; height: 6.5rem; }
 }
+
+/* A display rule must never beat the hidden attribute. */
+.ae [hidden] { display: none !important; }
+.ae__ph { display: block; width: 5rem; height: 5rem; border-radius: 12px; background: var(--glass-hi); }
+@media (min-width: 48rem) { .ae__ph { width: 6.5rem; height: 6.5rem; } }

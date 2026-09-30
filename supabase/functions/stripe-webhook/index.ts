@@ -3,6 +3,9 @@ import Stripe from "npm:stripe@14";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const WH = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+// Events from connected accounts (artist direct charges) arrive on a Connect
+// endpoint, which Stripe signs with its own secret. Optional until set.
+const WH_CONNECT = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET") || "";
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const dbHeaders = { apikey: SRV, Authorization: `Bearer ${SRV}`, "Content-Type": "application/json" };
@@ -70,6 +73,22 @@ async function grantMusicOrder(session: Stripe.Checkout.Session) {
   }
 }
 
+async function rpc(fn: string, args: Record<string, unknown>) {
+  return db(`rpc/${fn}`, { method: "POST", body: JSON.stringify(args) });
+}
+
+// ARTIST ROOMS: the ledger, editions and referral credit are written by
+// SECURITY DEFINER functions so a replayed event changes nothing.
+async function settleArtistOrder(session: Stripe.Checkout.Session) {
+  const orderId = session.metadata?.artist_order_id || "";
+  if (session.metadata?.kind !== "artist_sale" || !orderId || session.payment_status !== "paid") return;
+  await rpc("artist_mark_order_paid", {
+    p_order: orderId,
+    p_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
+    p_email: String(session.customer_details?.email || session.customer_email || ""),
+  });
+}
+
 async function revokeMusicByPaymentIntent(paymentIntent: string) {
   if (!paymentIntent) return;
   const rows = await db(`music_orders?stripe_payment_intent_id=eq.${encodeURIComponent(paymentIntent)}&select=id&limit=1`);
@@ -93,7 +112,12 @@ Deno.serve(async (req) => {
   try {
     event = await stripe.webhooks.constructEventAsync(raw, sig, WH);
   } catch {
-    return new Response("bad signature", { status: 400 });
+    if (!WH_CONNECT) return new Response("bad signature", { status: 400 });
+    try {
+      event = await stripe.webhooks.constructEventAsync(raw, sig, WH_CONNECT);
+    } catch {
+      return new Response("bad signature", { status: 400 });
+    }
   }
 
   try {
@@ -115,6 +139,7 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       await grantMusicOrder(s);
+      await settleArtistOrder(s);
     }
 
     if (event.type === "checkout.session.expired") {
@@ -124,6 +149,9 @@ Deno.serve(async (req) => {
           method: "PATCH",
           body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
         });
+      }
+      if (s.metadata?.kind === "artist_sale" && s.metadata.artist_order_id) {
+        await rpc("artist_cancel_order", { p_order: s.metadata.artist_order_id, p_status: "canceled" });
       }
     }
 
@@ -135,11 +163,19 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ status: "failed", stripe_payment_intent_id: p.id, updated_at: new Date().toISOString() }),
         });
       }
+      if (p.metadata?.kind === "artist_sale" && p.metadata.artist_order_id) {
+        await rpc("artist_cancel_order", { p_order: p.metadata.artist_order_id, p_status: "failed" });
+      }
     }
 
     if (event.type === "charge.refunded") {
       const c = event.data.object as Stripe.Charge;
       await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      // Artist orders reverse only on a full refund; a partial refund is the
+      // artist's goodwill and leaves the ledger and referral credit standing.
+      if (c.refunded === true && typeof c.payment_intent === "string") {
+        await rpc("artist_mark_order_refunded", { p_payment_intent: c.payment_intent });
+      }
     }
 
     if (event.type === "customer.subscription.deleted") {

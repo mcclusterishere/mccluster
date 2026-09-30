@@ -60,11 +60,21 @@
 
       <section class="ae__sec" id="aeBackers" hidden>
         <h2 id="aeBackersHead">Back the next drop</h2>
-        <div class="ae__card">
-          <p id="aeBackersCopy"></p>
-          <p id="aeLedger">Sign in with M to see your backer ledger.</p>
-          <button class="ae__btn" id="aeBackBtn" type="button" disabled>Opens with the first drop</button>
+        <p id="aeBackersCopy"></p>
+        <div class="ae__notice" id="aeNotice" role="status" hidden></div>
+        <div class="ae__shop" id="aeShop"><div class="ae__status" id="aeShopStatus">Opens with the first drop.</div></div>
+        <label class="ae__credit" id="aeCreditRow" hidden>
+          <input type="checkbox" id="aeUseCredit" checked> Use my store credit (<span id="aeCredit">$0.00</span>)
+        </label>
+        <div class="ae__card" id="aeMine" hidden>
+          <h3>Your backing</h3>
+          <ul class="ae__ledger" id="aeLedger"><li>Nothing backed yet.</li></ul>
+          <h3 style="margin-top:1rem">Your link</h3>
+          <p>Share it. When someone buys through it you earn store credit here. Same price for them as anyone else. Tell people you earn credit when you share it.</p>
+          <div class="ae__link" id="aeLinkRow" hidden><input id="aeLinkUrl" readonly aria-label="Your referral link"><button class="ae__btn ae__btn--ghost" id="aeCopy" type="button">Copy</button></div>
+          <button class="ae__btn ae__btn--ghost" id="aeGetLink" type="button">Get my link</button>
         </div>
+        <p class="ae__fine">Sold by the artist through their own Stripe account. McCluster Corp, a Connecticut public charity, runs the platform and receives only its platform fee. Backing is a purchase, not an investment: no financial return, no buyback, no promised resale value.</p>
       </section>
     </div>
 

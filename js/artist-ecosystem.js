@@ -131,16 +131,117 @@
     }
   }
 
-  /* BACKERS. Rewards backing, not investment. Nothing can be bought here
-     until the ledger tables exist and a drop is live; see
-     docs/explore/ARTIST-ECOSYSTEM.md for why the line sits where it does. */
+  /* BACKERS + SHOP. Rewards backing, not investment. The room only sells
+     when its artist_ecosystems row is live and the artist's own Stripe
+     account is ready; artist-checkout makes the charge on that account.
+     See docs/explore/ARTIST-ECOSYSTEM.md for where the lines sit. */
+  var session = null, credit = 0;
+  function money(c) { return "$" + (Number(c || 0) / 100).toFixed(2); }
+  function authed(path, init) {
+    init = init || {};
+    return fetch(SB + path, {
+      method: init.method || "GET",
+      headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" },
+      body: init.body ? JSON.stringify(init.body) : undefined
+    }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || d.message || r.status); return d; }); });
+  }
+  function notice(msg) { var n = $("aeNotice"); n.textContent = msg; n.hidden = !msg; }
+
+  // A referral code rides in this tab only: no tracking cookie, and the
+  // price is the same whoever sent you.
+  var refKey = "ae_ref:" + slug;
+  var refIn = (new URLSearchParams(location.search).get("ref") || "").trim().toLowerCase();
+  try { if (/^[a-z0-9-]{6,48}$/.test(refIn)) sessionStorage.setItem(refKey, refIn); } catch (_) {}
+  function refCode() { try { return sessionStorage.getItem(refKey) || ""; } catch (_) { return ""; } }
+
   function paintBackers(cfg) {
     var b = cfg.backers || {};
     $("aeBackers").hidden = false;
     if (b.headline) $("aeBackersHead").textContent = b.headline;
     $("aeBackersCopy").textContent = b.copy || "";
-    $("aePulseBackers").textContent = b.live ? "0" : "–";
-    $("aePulseDrop").textContent = b.live ? "Open" : "Soon";
+    $("aePulseDrop").textContent = "Soon";
+    var outcome = new URLSearchParams(location.search).get("purchase");
+    if (outcome === "success") notice("Thank you. Your backing is recorded below once payment confirms.");
+    if (outcome === "canceled") notice("Checkout closed. Nothing was charged.");
+
+    api("artist_products?artist_slug=eq." + encodeURIComponent(slug) +
+        "&select=id,sku,title,description,image_url,price_cents,edition_size,status&order=sort_order.asc")
+      .then(function (items) {
+        if (!items || !items.length) return;   // room not live or nothing listed: keep "Opens with the first drop."
+        $("aePulseDrop").textContent = "Open";
+        $("aeShop").innerHTML = items.map(function (it) {
+          // No photo supplied: an empty tile, never the house mark on the artist's product.
+          var pic = /^https:\/\//.test(it.image_url || "") ? '<img src="' + attr(it.image_url) + '" alt="">' : '<span class="ae__ph"></span>';
+          var ed = it.edition_size ? " · Edition of " + it.edition_size : "";
+          var out = it.status === "sold_out";
+          return '<article class="ae__item">' + pic +
+            '<div><h3>' + esc(it.title) + '</h3>' +
+            '<p><span class="ae__price">' + money(it.price_cents) + '</span>' + esc(ed) + '</p>' +
+            (it.description ? '<p>' + esc(it.description) + '</p>' : '') +
+            '<button class="ae__btn" type="button" data-buy="' + attr(it.id) + '"' + (out ? " disabled" : "") + '>' +
+            (out ? "Sold out" : "Back it") + '</button></div></article>';
+        }).join("");
+      })
+      .catch(function () { /* shop stays closed */ });
+  }
+
+  doc.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-buy]") : null;
+    if (!b) return;
+    e.preventDefault();
+    if (!session) { location.href = "account.html?next=" + encodeURIComponent(here()); return; }
+    b.disabled = true; b.textContent = "Opening checkout…";
+    authed("/functions/v1/artist-checkout", { method: "POST", body: {
+      artist: slug, product_id: b.getAttribute("data-buy"), ref: refCode() || undefined,
+      use_credit: credit > 0 && $("aeUseCredit").checked
+    } }).then(function (d) {
+      track("artist_checkout_start", { product_id: b.getAttribute("data-buy"), referred: !!refCode() });
+      location.href = d.url;
+    }).catch(function (err) {
+      b.disabled = false; b.textContent = "Back it";
+      var m = String(err.message || "");
+      notice(m === "sold_out" ? "That one just sold out." :
+        m === "artist_payouts_not_ready" ? "The shop opens once the artist finishes payout setup." :
+        "Checkout is not available right now.");
+    });
+  });
+
+  function paintMine(cfg) {
+    $("aeMine").hidden = false;
+    authed("/rest/v1/backer_ledger?artist_slug=eq." + encodeURIComponent(slug) +
+      "&select=kind,amount_cents,item_ref,note,at&order=at.desc&limit=30")
+      .then(function (rows) {
+        var label = { backed: "Backed", refunded: "Refunded", item_shipped: "Shipped", item_delivered: "Delivered",
+          store_credit_earned: "Credit earned", store_credit_spent: "Credit used",
+          store_credit_returned: "Credit returned", store_credit_reversed: "Credit reversed" };
+        var backed = 0;
+        rows.forEach(function (r) { if (r.kind === "backed") backed += r.amount_cents; if (r.kind === "refunded") backed -= r.amount_cents; });
+        if (!rows.length) return;
+        $("aeLedger").innerHTML = '<li>Total backed with ' + esc(cfg.name) + ': <b>' + money(backed) + '</b></li>' +
+          rows.map(function (r) {
+            return '<li><b>' + esc(label[r.kind] || r.kind) + '</b> ' + money(r.amount_cents) +
+              (r.item_ref ? ' · ' + esc(r.item_ref) : '') + ' · ' + esc(new Date(r.at).toLocaleDateString()) + '</li>';
+          }).join("");
+      }).catch(function () {});
+    authed("/rest/v1/rpc/artist_my_credit", { method: "POST", body: { p_slug: slug } })
+      .then(function (c) {
+        credit = Number(c) || 0;
+        $("aeCredit").textContent = money(credit);
+        $("aeCreditRow").hidden = credit <= 0;
+      }).catch(function () {});
+    $("aeGetLink").addEventListener("click", function () {
+      var btn = this; btn.disabled = true;
+      authed("/rest/v1/rpc/artist_referral_link", { method: "POST", body: { p_slug: slug } })
+        .then(function (code) {
+          $("aeLinkUrl").value = location.origin + location.pathname + "?a=" + slug + "&ref=" + code;
+          $("aeLinkRow").hidden = false; btn.hidden = true;
+        }).catch(function () { btn.disabled = false; btn.textContent = "Links open with the first drop"; });
+    });
+    $("aeCopy").addEventListener("click", function () {
+      var v = $("aeLinkUrl").value;
+      if (root.navigator.clipboard) root.navigator.clipboard.writeText(v).then(function () { $("aeCopy").textContent = "Copied"; });
+      else { $("aeLinkUrl").select(); }
+    });
   }
 
   /* ME. The one M session. Signing in here signs you in everywhere. */
@@ -148,14 +249,17 @@
     var me = $("aeMe");
     me.href = "account.html?next=" + encodeURIComponent(here());
     if (!root.MCC) return;
-    root.MCC.user().then(function (u) {
+    root.MCC.refreshIfNeeded().then(function (s) {
+      if (!s || !s.access_token) return null;
+      session = s;
+      return root.MCC.user();
+    }).then(function (u) {
       if (!u) return;
       var meta = u.user_metadata || {};
       me.textContent = meta.mccluster_id ? "@" + meta.mccluster_id : "Signed in";
       me.classList.add("is-in");
       me.href = "account.html";
-      $("aeLedger").textContent = "Your backer ledger for " + cfg.name +
-        ": nothing backed yet. Everything you put in and everything you receive will be listed here.";
+      if ((cfg.sections || {}).backers) paintMine(cfg);
     });
   }
 })(window);

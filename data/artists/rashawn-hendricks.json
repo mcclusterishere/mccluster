@@ -13,7 +13,7 @@
     "note": "No colour or mark has been supplied. Until the artist supplies artwork the page uses the house tokens and his name set in type. Never draw a logo."
   },
   "links": {
-    "instagram": null,
+    "instagram": "https://www.instagram.com/rahndrx/",
     "website": null
   },
   "sections": {
@@ -26,6 +26,6 @@
     "live": false,
     "model": "rewards",
     "headline": "Back the next drop",
-    "copy": "Backing pays for the next run of merch and music. You get the pieces you back, a numbered spot on the backer wall, and a ledger of everything you have put in and received. This is support and a pre-order, not an investment: there is no financial return and no promised resale value."
+    "copy": "Backing pays for the next run of merch and music. You get the pieces you back, numbered when a piece is limited, and a ledger of everything you have put in and received. Share your link and earn store credit when people you send back a drop."
   }
 }

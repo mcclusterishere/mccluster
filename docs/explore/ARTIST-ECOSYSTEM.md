@@ -1,7 +1,6 @@
 # Artist ecosystems — exploration (first artist: Rashawn Hendricks)
 
-Status: **exploration branch**, `explore/artist-ecosystem-rashawn-hendricks`. Nothing
-here is linked from the house, and nothing has been applied to Supabase.
+Status: **exploration branch**, `explore/artist-ecosystem-rashawn-hendricks`. Not linked from the house. Migration and edge functions are written and tested locally but **not applied or deployed**.
 
 Not legal advice. The commerce section is a map of where the risk sits so the
 owner can take specific questions to a securities/consumer-protection lawyer and
@@ -50,16 +49,83 @@ His room can still greet you by your McCluster ID and keep per-room state
 
 - `artist.html?a=<slug>` — the room. Config-driven, mobile-first, verified at
   390px (`scrollWidth === clientWidth`) and 1280px.
-- `js/artist-ecosystem.js` — reads `data/artists/<slug>.json`; paints brand,
-  music (shared engine), social, backers, pulse; shows your M session.
-- `css/artist-ecosystem.css` — per-artist `--artist-accent`, house tokens otherwise.
-- `data/artists/rashawn-hendricks.json` — his config. Every field he has not
-  supplied is `null` and renders as absent. No bio, photo, colour or mark was
-  invented, and no logo is drawn (hard rule 11).
-- `docs/explore/artist-ecosystem-schema.sql` — **proposed** tables, not applied.
+- `js/artist-ecosystem.js` / `css/artist-ecosystem.css` — brand, music (shared
+  engine), social, shop, backer ledger, store credit, referral link.
+- `data/artists/rashawn-hendricks.json` — his config. Instagram:
+  `@rahndrx`. Every field he has not supplied is `null` and renders as absent.
+  No bio, photo, colour or mark was invented, and no logo is drawn.
+- `supabase/migrations/20260930120000_artist_ecosystems_commerce_v1.sql` —
+  rooms, products, orders, backer ledger, referral links/attributions, and the
+  SECURITY DEFINER functions that do all money math. **Not applied yet.**
+  Tested on a local Postgres: applies twice cleanly; referral credit, credit
+  spend, abandoned checkout, refund clawback, replayed webhooks, self-referral
+  and limited editions all behave; browsers cannot write any of it.
+- `supabase/functions/artist-checkout` — new. Direct charge on the artist's
+  connected account with an application fee. **Not deployed yet.**
+- `supabase/functions/stripe-webhook` — settles/cancels/refunds artist orders
+  and accepts an optional `STRIPE_CONNECT_WEBHOOK_SECRET`.
+- `scripts/test/artist-ecosystem.test.mjs` — locks the money rules in.
 
-Preview locally: `python3 -m http.server` then
-`/artist.html?a=rashawn-hendricks`.
+## The Stripe marketplace configuration
+
+McCluster Corp is the Stripe **platform**. Each artist is a **connected
+account**. This is the same model `org-connect-onboard` + `l3-checkout`
+already run for Level 3 Media, so nothing new is invented.
+
+```
+fan ──Checkout──► DIRECT CHARGE on Rashawn's connected account
+                     │  Rashawn = merchant of record: his name on the card
+                     │  statement, his sales tax, his refunds and disputes
+                     └─ application_fee_amount ──► McCluster Corp (platform fee)
+```
+
+Why direct charges and not destination charges or "separate charges and
+transfers": with those two, the **charity** is the merchant of record and the
+whole sale passes through its books before it is paid out. With direct charges
+the charity's books only ever show its fee. That is the cleanest line for a
+501(c)(3), and it is why referral rewards are store credit (a discount on the
+artist's own account) rather than cash the charity would have to pay out.
+
+Money per $40.00 sale, default settings (`platform_fee_bps` 1000, editable per
+room, capped at 30% by the schema):
+
+| | |
+| --- | --- |
+| Fan pays | $40.00 (minus any store credit they choose to spend) |
+| McCluster platform fee | $4.00 |
+| Stripe processing | taken from Rashawn's side of a direct charge |
+| Rashawn keeps | the rest, paid out by Stripe on his schedule |
+| Referrer (if any) | $4.00 store credit in Rashawn's room (`referral_credit_bps` 1000) |
+
+### One-time setup in the McCluster Stripe dashboard (owner)
+
+1. **Connect → Settings**: platform profile set to *marketplace*; business
+   name McCluster Corp. Branding (icon, colour) from the supplied M artwork.
+2. **Connect → Onboarding options**: Express accounts, US, capabilities
+   `card_payments` + `transfers` (what `org-connect-onboard` already requests).
+3. **Developers → Webhooks → Add endpoint** pointing at the existing
+   `stripe-webhook` function, with **"Listen to events on Connected
+   accounts"** turned on. Events: `checkout.session.completed`,
+   `checkout.session.expired`, `payment_intent.payment_failed`,
+   `charge.refunded`, `account.updated`. Copy its signing secret into the
+   Supabase secret `STRIPE_CONNECT_WEBHOOK_SECRET`. Without this, artist
+   orders are charged but never marked paid.
+4. Optional, per artist: Stripe Tax on the artist's account, then set
+   `config.stripe_tax = true` on their `artist_ecosystems` row.
+
+### Going live for Rashawn (in order)
+
+1. Owner approves and applies the migration; deploy `artist-checkout` and the
+   updated `stripe-webhook`.
+2. Rashawn creates or uses his M Account.
+3. Operator creates his org and makes him owner (`orgs`, `org_members` role
+   `owner`), then inserts his `artist_ecosystems` row (status `draft`).
+4. Rashawn runs payout setup (`org-connect-onboard` with his `org_id`). Stripe
+   collects his identity, bank and tax details. The checkout refuses to sell
+   until that account reads `ready`.
+5. Add his products (`artist_products`, status `live`), flip the room to
+   `live`. The shop, ledger and referral links light up.
+6. Test end-to-end in Stripe test mode first: buy, abandon, refund, referral.
 
 ## Found while building: signed-out creator profiles are broken in production
 
@@ -73,6 +139,12 @@ every signed-out visitor today, and this room would too. Fix on `main`, not
 here: either restore `grant execute on function public.current_m_uid() to anon`
 or split the policy into an `anon` policy (`status='active'`) and an
 `authenticated` one. Same check applies to `creator_tracks`.
+
+Also worth a look on `main`: `music-checkout` charges on the **platform**
+account and only records a `creator_net_cents` figure, so for music licences the
+charity is currently the merchant of record for creators' sales. The artist
+rooms avoid that; music licensing should probably move to the same
+direct-charge pattern.
 
 ## The commerce ideas, ranked by how safe they are right now
 
@@ -167,20 +239,9 @@ or sell, no arrow implying returns. `docs/music-pulse.sql` and the play-count
 tables already hold most of it. The room shows `–` rather than a number it
 cannot back.
 
-## Build order if the owner says go
+## Still out of scope
 
-1. Fix the `current_m_uid` anon grant on `main` (above).
-2. Rashawn claims `@rashawn-hendricks` in `creator.html` with his own M Account
-   and uploads releases. The room lights up with no further code.
-3. Rashawn supplies: Instagram URL, photo(s), bio in his words, any brand
-   colour or artwork. His consent to the page is the first of these.
-4. Register the org + app (`artist_ecosystems`, schema file) so entering the
-   room records membership via `MCC.touch('artist-ecosystem', 'rashawn-hendricks')`.
-5. M Network: a public profile route by handle, then a per-artist feed filtered
-   by `source_org_id`. Add both to the canonical network layer, not the room.
-6. Merch drop with rewards backing + backer ledger (green 1–3), Stripe
-   Checkout, payouts to his Connect account.
-7. Referral links, single level (green 4–5).
-8. Only then consider yellow 6–8, each with a lawyer's review.
-9. Own domain for the room: route through the `mccluster` Worker. No new
-   Worker, no second backend.
+Cash referral payouts, fan storefronts at their own price, multi-level
+commissions, a fan resale market, any buyback. Each is in yellow or red above
+and needs a lawyer and the accountant before code. Before any cash moves to
+fans, the accountant decides whether the charity may pay them at all.
