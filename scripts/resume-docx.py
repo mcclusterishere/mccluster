@@ -5,11 +5,16 @@ Applicant tracking systems read Word files more reliably than PDFs, and a
 recruiter uploading to a client portal often has to send one. The file is
 generated from the HTML page so the two never say different things:
 
+    pip install -r scripts/requirements-resume.txt
     python3 scripts/resume-docx.py resume-it-support.html \
         assets/resume/matthew-mccluster-resume-it-support.docx
 
 Deliberately plain: one column, real Word headings, no tables, text boxes,
-images or columns, standard fonts. Needs python-docx.
+images or columns, standard fonts. (The npm package called "docx" in
+package.json is an unrelated JavaScript library.)
+scripts/test/resume-docx-sync.test.mjs fails if the committed file no
+longer carries everything the page says, so re-run this after editing the
+page.
 """
 import re
 import sys
