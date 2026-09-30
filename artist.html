@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Artist · McCluster</title>
+  <meta name="description" content="An artist's own room on McCluster: their music on the shared engine, their people on the M Network, one M Account.">
+  <!-- EXPLORATION: artist ecosystems are not linked from the house yet. -->
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/artist-ecosystem.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>html, body { background: var(--ink); }</style>
+</head>
+<body>
+  <main class="ae" id="ae">
+    <header class="ae__bar">
+      <!-- The shared room. Music is where every ecosystem meets. -->
+      <a class="ae__home" href="listen.html"><img src="assets/img/m-mark.png" alt=""><span>McCluster Music</span></a>
+      <a class="ae__me" id="aeMe" href="account.html">Sign in with M</a>
+    </header>
+
+    <section class="ae__hero">
+      <div id="aeBanner"></div>
+      <div class="ae__who">
+        <img class="ae__ava" id="aeAva" alt="" hidden>
+        <div style="min-width:0">
+          <p class="ae__kicker" id="aeKicker">Artist</p>
+          <h1 class="ae__name" id="aeName">Opening…</h1>
+        </div>
+      </div>
+      <p class="ae__bio" id="aeBio" hidden></p>
+      <div class="ae__links" id="aeLinks"></div>
+    </section>
+
+    <div class="ae__pulse" id="aePulse" hidden>
+      <div class="ae__tile"><b id="aePulseReleases">–</b><span>Releases</span></div>
+      <div class="ae__tile"><b id="aePulseBackers">–</b><span>Backers</span></div>
+      <div class="ae__tile"><b id="aePulseDrop">–</b><span>Next drop</span></div>
+    </div>
+
+    <section class="ae__sec" id="aeMusic" hidden>
+      <h2>Music</h2>
+      <p>Plays right here on the McCluster engine. The same player follows you back to the shared room.</p>
+      <div class="ae__tracks" id="aeTracks"><div class="ae__status">Loading releases…</div></div>
+    </section>
+
+    <div class="ae__cards">
+      <section class="ae__sec" id="aeSocial" hidden>
+        <h2>The people</h2>
+        <div class="ae__card">
+          <h3>One M Account, every room</h3>
+          <p id="aeSocialCopy">Your McCluster login works here. No second account, no second username: follow, post and message on the M Network with the same profile you use everywhere.</p>
+          <a class="ae__btn ae__btn--ghost" id="aeSocialGo" href="mnet.html">Open the M Network</a>
+        </div>
+      </section>
+
+      <section class="ae__sec" id="aeBackers" hidden>
+        <h2 id="aeBackersHead">Back the next drop</h2>
+        <div class="ae__card">
+          <p id="aeBackersCopy"></p>
+          <p id="aeLedger">Sign in with M to see your backer ledger.</p>
+          <button class="ae__btn" id="aeBackBtn" type="button" disabled>Opens with the first drop</button>
+        </div>
+      </section>
+    </div>
+
+    <footer class="ae__foot">
+      <p id="aeFootName">This room</p>
+      <p>Runs on McCluster: one login, one player, one network. <a href="listen.html">Back to McCluster Music</a>.</p>
+    </footer>
+  </main>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/music-engine.js?v=__STAMP__"></script>
+  <script src="js/artist-ecosystem.js?v=__STAMP__"></script>
+</body>
+</html>

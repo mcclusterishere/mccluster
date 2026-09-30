@@ -1,0 +1,31 @@
+{
+  "note": "ARTIST ECOSYSTEM CONFIG. One file per artist; artist.html?a=<slug> reads it. Branding and copy live here, identity/music/social live on the McCluster plane. Fields set to null are PENDING from the artist and render as absent, never as invented copy.",
+  "slug": "rashawn-hendricks",
+  "status": "exploration",
+  "name": "Rashawn Hendricks",
+  "music_handle": "rashawn-hendricks",
+  "mnet_handle": null,
+  "bio": null,
+  "avatar": null,
+  "banner": null,
+  "brand": {
+    "accent": null,
+    "note": "No colour or mark has been supplied. Until the artist supplies artwork the page uses the house tokens and his name set in type. Never draw a logo."
+  },
+  "links": {
+    "instagram": null,
+    "website": null
+  },
+  "sections": {
+    "music": true,
+    "social": true,
+    "backers": true,
+    "pulse": true
+  },
+  "backers": {
+    "live": false,
+    "model": "rewards",
+    "headline": "Back the next drop",
+    "copy": "Backing pays for the next run of merch and music. You get the pieces you back, a numbered spot on the backer wall, and a ledger of everything you have put in and received. This is support and a pre-order, not an investment: there is no financial return and no promised resale value."
+  }
+}

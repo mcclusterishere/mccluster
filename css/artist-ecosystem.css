@@ -1,0 +1,81 @@
+/* ARTIST ECOSYSTEM — one artist's front door on the McCluster plane.
+   Drawn at phone width first. Breakpoints only add room; they never hide
+   what the phone was shown. --artist-accent comes from the artist's config
+   and falls back to the house ruby when none was supplied. */
+
+.ae { --artist-accent: var(--ruby-hot);
+  max-width: 44rem; margin: 0 auto;
+  padding: 1rem 16px 9rem; font-family: var(--ui); color: var(--cream); }
+
+.ae__bar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.ae__home { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0;
+  color: var(--cream-dim); text-decoration: none; font-weight: 700; font-size: 0.82rem; }
+.ae__home img { width: 1.6rem; height: 1.6rem; flex: none; }
+.ae__me { border: 0; border-radius: 100px; cursor: pointer; text-decoration: none;
+  font: inherit; font-weight: 800; font-size: 0.82rem; white-space: nowrap;
+  padding: 0.6rem 1rem; color: var(--on-ruby); background: var(--artist-accent); }
+.ae__me.is-in { color: var(--cream); background: var(--glass-hi); }
+
+.ae__hero { margin: 2rem 0 0; }
+.ae__banner { display: block; width: 100%; aspect-ratio: 16 / 7; object-fit: cover;
+  border-radius: 18px; margin: 0 0 1.2rem; }
+.ae__who { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+.ae__ava { width: 4.2rem; height: 4.2rem; border-radius: 50%; object-fit: cover; flex: none; }
+.ae__kicker { font-weight: 800; font-size: 0.74rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--artist-accent); margin: 0; overflow-wrap: anywhere; }
+.ae__name { font-family: var(--display); font-weight: 400; line-height: 0.95;
+  font-size: clamp(2.6rem, 13vw, 5.2rem); margin: 0.35rem 0 0; overflow-wrap: anywhere; }
+.ae__bio { color: var(--cream-dim); line-height: 1.6; margin: 1rem 0 0; }
+.ae__links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0 0; }
+.ae__chip { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 1rem;
+  border-radius: 100px; border: 1px solid var(--edge); color: var(--cream);
+  text-decoration: none; font-weight: 700; font-size: 0.85rem; }
+
+.ae__pulse { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem; margin: 1.6rem 0 0; }
+.ae__tile { border-radius: 14px; padding: 0.8rem 0.7rem; min-width: 0;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); }
+.ae__tile b { display: block; font-family: var(--display); font-weight: 400;
+  font-size: 1.6rem; line-height: 1; }
+.ae__tile span { display: block; margin-top: 0.35rem; font-size: 0.72rem; font-weight: 700;
+  color: var(--cream-dim); overflow-wrap: anywhere; }
+
+.ae__sec { margin: 2.4rem 0 0; }
+.ae__sec > h2 { font-family: var(--display); font-weight: 400; font-size: 1.7rem;
+  letter-spacing: 0.02em; margin: 0; }
+.ae__sec > p { color: var(--cream-dim); line-height: 1.6; margin: 0.4rem 0 0; }
+.ae__status { color: var(--cream-dim); line-height: 1.6; padding: 1rem 0; }
+
+.ae__tracks { display: grid; gap: 0.5rem; margin: 1rem 0 0; }
+.ae__track { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 14px;
+  background: var(--glass-lo); }
+.ae__track img { width: 3.2rem; height: 3.2rem; border-radius: 10px; object-fit: cover; }
+.ae__track h3 { font-size: 0.95rem; margin: 0; overflow-wrap: anywhere; }
+.ae__track p { font-size: 0.78rem; color: var(--cream-dim); margin: 0.2rem 0 0; }
+.ae__play { width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center; background: var(--artist-accent); color: var(--on-ruby); }
+.ae__play svg { width: 1.1rem; height: 1.1rem; fill: currentColor; }
+.ae__play[aria-pressed="true"] { background: var(--cream); color: var(--ink); }
+
+.ae__card { margin: 1rem 0 0; padding: 1.1rem; border-radius: 16px;
+  border: 1px solid var(--edge); background: var(--glass-lo); }
+.ae__card h3 { margin: 0; font-size: 1rem; }
+.ae__card p { color: var(--cream-dim); line-height: 1.6; margin: 0.4rem 0 0; font-size: 0.92rem; }
+.ae__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem;
+  margin: 0.9rem 0 0; padding: 0 1.2rem; border-radius: 100px; border: 0; cursor: pointer;
+  font: inherit; font-weight: 800; font-size: 0.88rem; text-decoration: none;
+  color: var(--on-ruby); background: var(--artist-accent); }
+.ae__btn[disabled] { cursor: default; opacity: 0.55; }
+.ae__btn--ghost { color: var(--cream); background: var(--glass-hi); }
+
+.ae__foot { margin: 3rem 0 0; padding: 1.2rem 0 0; border-top: 1px solid var(--edge);
+  color: var(--cream-dim); font-size: 0.82rem; line-height: 1.6; }
+.ae__foot a { color: var(--cream); }
+
+@media (min-width: 48rem) {
+  .ae { padding: 1.6rem 2rem 10rem; }
+  .ae__hero { margin-top: 3rem; }
+  .ae__ava { width: 5.5rem; height: 5.5rem; }
+  .ae__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+}
