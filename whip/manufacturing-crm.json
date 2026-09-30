@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-09-30",
+  "program": "WE / Whip Equipped motorcycle manufacturing",
+  "rules": {
+    "evidence_states": [
+      "confirmed-completed",
+      "confirmed-missed",
+      "rescheduled",
+      "scheduled",
+      "tentative",
+      "contacted",
+      "needs-verification"
+    ],
+    "cost_states": [
+      "quoted",
+      "estimate",
+      "planning-assumption",
+      "unknown"
+    ],
+    "note": "Never promote a planning assumption to a vendor quote without source evidence."
+  },
+  "architecture": {
+    "base_vehicle_track": {
+      "partner": "Oreion Motors / Kent Knox",
+      "role": "Base motorcycle engineering, parts/production package, compliance/manufacturing support",
+      "known_unit_cost_usd": 1350,
+      "cost_state": "quoted",
+      "strategy": "Keep the repeatable production motorcycle economically separate from advanced R&D demonstrators."
+    },
+    "advanced_rd_track": {
+      "partner": "TBD — candidate advanced prototyping/R&D integrator",
+      "role": "Advanced Vehicle R&D / Systems Integration Partner",
+      "concept": "Receive a production/base motorcycle and engineer grant-funded demonstrators with advanced electronics, sensing, communications, autonomy/AI interfaces and other approved research payloads. Drone integration requires a separately selected drone/UAS partner and defined interface.",
+      "commercial_model": "Treat prototype engineering as program/NRE first; track repeatable per-unit integration cost only after design freeze.",
+      "prototype_cost_usd": null,
+      "cost_state": "unknown",
+      "funding_path": [
+        "federal/state R&D grants",
+        "dual-use research programs",
+        "university/research partnerships"
+      ],
+      "caution": "Do not record the user's couple-thousand-per-bike idea as a quote."
+    }
+  },
+  "relationships": [
+    {
+      "org": "Oreion Motors",
+      "contact": "Kent Knox",
+      "status": "confirmed-completed",
+      "role": "base vehicle / manufacturing / compliance",
+      "next_action": "Maintain manufacturing and production-package workstream."
+    },
+    {
+      "org": "Prefix Corporation",
+      "contact": "Kurt Zeile",
+      "status": "confirmed-completed",
+      "role": "prototype / production-intent / DFM",
+      "evidence": "Post-meeting summary exists for 2026-09-25.",
+      "next_action": "Capture ROM/NRE/tooling outputs and assess fit for advanced R&D integrator role."
+    },
+    {
+      "org": "Element",
+      "contact": "Mahesh Kodukula / Dan Pino",
+      "status": "confirmed-completed",
+      "role": "FCC / PTCRB / carrier / DVP testing",
+      "evidence": "User recalls completed technical consultation; resulting requirements included exact module/model, 20 cm use case, carrier approval and ~6-week test path.",
+      "next_action": "Freeze module/antenna/use case before formal scope."
+    },
+    {
+      "org": "Motorcycle Industry Council",
+      "contact": "Daniel Dégallier",
+      "status": "confirmed-completed",
+      "role": "OEM industry/regulatory readiness",
+      "evidence": "Post-call follow-up email 2026-09-25."
+    },
+    {
+      "org": "Northpoint Commercial Finance",
+      "contact": "Jake Clothier",
+      "status": "confirmed-completed",
+      "role": "dealer floorplan / manufacturer finance",
+      "evidence": "Post-meeting summary exists for 2026-09-29.",
+      "next_action": "Capture onboarding thresholds and readiness milestones."
+    },
+    {
+      "org": "Tweddle",
+      "contact": "Nicholas Horan",
+      "status": "confirmed-missed",
+      "role": "service information / diagnostics / EPC",
+      "evidence": "Missed 2026-09-23; Nick offered replacement times; Oct 2 placeholder is invalid because Nick said he cannot do Oct 2.",
+      "next_action": "Request new availability."
+    },
+    {
+      "org": "Team Worldwide / Moto Transporters",
+      "contact": "Randy Sinker / Courtney Upton / Andre Neita",
+      "status": "confirmed-missed",
+      "role": "factory-to-dealer finished-bike logistics",
+      "evidence": "Randy stated 2026-09-24 was the second missed call.",
+      "next_action": "Send careful recovery apology and request a final reschedule."
+    },
+    {
+      "org": "Georgia Ports Authority",
+      "contact": "Stacy Watson / David Porter",
+      "status": "confirmed-missed",
+      "role": "inbound supply chain / ports / site routing",
+      "evidence": "Meeting accepted; notetaker not admitted; user recalls not meeting.",
+      "next_action": "Apologize and request reschedule."
+    },
+    {
+      "org": "Georgia Center of Innovation",
+      "contact": "Costas Simoglou",
+      "status": "confirmed-missed",
+      "role": "mobility ecosystem / Curiosity Lab / research routing",
+      "evidence": "Meeting accepted; notetaker not admitted; user recalls not meeting.",
+      "next_action": "Apologize and request reschedule."
+    },
+    {
+      "org": "Georgia Tech / GaMEP",
+      "contact": "Paul Todd",
+      "status": "confirmed-missed",
+      "role": "plant requirements / operational excellence / manufacturing engineering",
+      "evidence": "Paul asked whether 2026-09-25 meeting was still on; user recalls not meeting.",
+      "next_action": "Apologize and request reschedule."
+    },
+    {
+      "org": "Georgia DCA + GDEcD / OneGeorgia",
+      "contact": "Kelly Lane / Mackenzie Bennett",
+      "status": "confirmed-missed",
+      "role": "OneGeorgia assessment / local authority / incentives",
+      "evidence": "Accepted 2026-09-29; notetaker not admitted; user confirms not meeting.",
+      "next_action": "Apologize and request reschedule."
+    },
+    {
+      "org": "Georgia GDEcD Global Commerce",
+      "contact": "Mackenzie Bennett",
+      "status": "confirmed-missed",
+      "role": "state site selection / incentives",
+      "evidence": "User confirms no meeting.",
+      "next_action": "Fold into DCA/GDEcD recovery unless Mackenzie requests separate call."
+    },
+    {
+      "org": "Toombs County",
+      "contact": "Michele Johnson",
+      "status": "needs-verification",
+      "role": "site selection / local incentives / utilities",
+      "evidence": "User states county canceled the meeting.",
+      "next_action": "Verify cancellation thread and re-open only if still a finalist."
+    },
+    {
+      "org": "WorkSource Georgia / TCSG",
+      "contact": "Brandon Ona / Annie Harp / Jamon Williams / Emily Brinson / Danny Mitchell",
+      "status": "scheduled",
+      "role": "recruiting / OJT / apprenticeship / workforce support",
+      "next_action": "Meet 2026-10-05 09:00 ET."
+    },
+    {
+      "org": "AdvanceCT",
+      "contact": "Jack Forte / Tim Miller",
+      "status": "tentative",
+      "role": "Connecticut economic development / manufacturing support",
+      "next_action": "Confirm proposed 2026-10-05 11:30 ET."
+    },
+    {
+      "org": "Sedgwick",
+      "contact": "Debbie Flint / Wayne Mitchell",
+      "status": "rescheduled",
+      "role": "recall readiness / post-sale infrastructure",
+      "evidence": "2026-09-28 missed; Debbie rescheduled.",
+      "next_action": "Meet confirmed 2026-10-05 16:30 ET."
+    }
+  ]
+}
