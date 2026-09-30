@@ -398,6 +398,8 @@
        end it for them. */
     audio.addEventListener("ended", advance);
     audio.addEventListener("durationchange", setPositionState);
+    /* the song the album was playing goes on here: keep counting it */
+    ledger(function (L) { if (!pocketListen) pocketListen = L.adopt(L.keyOf(st.src), pocketPlaying); });
 
     setMetadata();
     wireMediaControls();
@@ -485,7 +487,32 @@
       .catch(function () { queue = []; return queue; });
   }
 
+  /* THE LISTEN LEDGER rides along. A song the pocket rolls into starts from
+     the top, so a signed-in listener's full listens here count toward an
+     earned record exactly as they do on the album (js/listen-ledger.js;
+     the API times them). The ledger script is only fetched for somebody
+     signed in, and the gated record never counts toward itself. */
+  var pocketListen = null;
+  function pocketPlaying() { return !!audio && !audio.paused; }
+  function signedInHere() {
+    try {
+      var s = JSON.parse(localStorage.getItem("mccdb_session") || "null");
+      return !!(s && s.access_token);
+    } catch (e) { return false; }
+  }
+  function ledger(cb) {
+    if (window.MCC_LISTENS) { cb(window.MCC_LISTENS); return; }
+    if (!signedInHere()) return;
+    var tag = document.createElement("script");
+    tag.src = abs("js/listen-ledger.js");
+    tag.onload = function () { if (window.MCC_LISTENS) cb(window.MCC_LISTENS); };
+    document.head.appendChild(tag);
+  }
+
   function advance() {
+    /* ended or skipped: the API decides whether the song was heard through */
+    if (pocketListen && window.MCC_LISTENS) window.MCC_LISTENS.finish(pocketListen);
+    pocketListen = null;
     var roll = function (list) {
       var i = -1;
       for (var k = 0; k < list.length; k++) if (list[k].src === st.src) { i = k; break; }
@@ -520,6 +547,7 @@
       }
       lastStash = 0;
       stash(true);
+      if (!next.gated) ledger(function (L) { pocketListen = L.start(L.keyOf(next), pocketPlaying); });
       if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title });
     };
     if (queue) roll(queue); else loadAlbum().then(roll);

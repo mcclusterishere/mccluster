@@ -362,14 +362,25 @@
     });
   }
 
-  function sourceFor(t) {
+  /* A gated record is earned (js/gated-audio.js): locked or signed-out
+     listeners get the preview, and an earned play is only spent when the
+     listener actually opens the track. `peek` repaints without spending. */
+  function sourceFor(t, peek) {
     if (t.creatorTrackId) return creatorSourceFor(t);
     if (!t.gated) return Promise.resolve({ state: "full", url: t.src });
     return gateReady().then(function (g) {
       if (!g) return { state: "preview", url: t.src, reason: "auth-loading" };
       return g.resolve(t.gated).then(function (out) {
-        if (out.state === "full") return { state: "full", url: out.url };
-        if (out.state === "preview") return { state: "preview", url: t.src, reason: out.reason };
+        if (out.state === "earned" && !peek) {
+          return g.claim(t.gated).then(function (c) {
+            return c.state === "full"
+              ? { state: "full", url: c.url, granted: true }
+              : { state: "preview", url: t.src, reason: c.state };
+          });
+        }
+        if (out.state === "preview" || out.state === "locked" || out.state === "earned") {
+          return { state: "preview", url: t.src, reason: out.state };
+        }
         return out;
       });
     });
@@ -461,6 +472,7 @@
       }
       currentAccess = out.state;
       previewLimit = out.state === "preview" ? (t.preview_seconds == null ? 30 : Number(t.preview_seconds)) : 0;
+      dropListen();
       audio.src = out.url;
       audio.currentTime = 0;
       startedAt = Date.now();
@@ -498,7 +510,8 @@
       if (!t) throw new Error("Track not found");
 
       var same = current && key(current.albumSlug, current.title) === key(t.albumSlug, t.title);
-      if (same && !force) {
+      /* a spent play is not resumed: opening it again asks for a new one */
+      if (same && !force && currentAccess !== "spent") {
         if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
         audio.pause();
         return { state: currentAccess };
@@ -517,6 +530,8 @@
         }
         currentAccess = out.state;
         previewLimit = out.state === "preview" && t.gated ? Number(t.gated.preview_seconds || 0) : 0;
+        dropListen();
+        grantMax = 0;
         audio.src = out.url;
         audio.currentTime = 0;
         startedAt = Date.now();
@@ -539,9 +554,11 @@
 
   function upgradeCurrent() {
     if (!current || !current.gated) return;
+    /* the one earned play keeps playing whatever changes around it */
+    if (currentAccess === "full" || currentAccess === "spent") return;
     var wasPlaying = !audio.paused;
     var at = audio.currentTime || 0;
-    sourceFor(current).then(function (out) {
+    sourceFor(current, true).then(function (out) {
       if (!out || (out.state !== "full" && out.state !== "preview")) return;
       if (out.state === currentAccess) return;
       currentAccess = out.state;
@@ -557,10 +574,32 @@
     });
   }
 
-  audio.addEventListener("play", function () { paint(); syncNowFilm(false); });
+  /* THE LISTEN LEDGER. A song heard from the top is timed by the API;
+     the gated record never counts toward itself. */
+  var listen = null, grantMax = 0;
+  function enginePlaying() { return !audio.paused; }
+  function countStart() {
+    if (!current || current.gated || current.creatorTrackId || !root.MCC_LISTENS) return;
+    if (listen && listen.item === current) return;
+    var key = root.MCC_LISTENS.keyOf(current);
+    var h = audio.currentTime > 3
+      ? root.MCC_LISTENS.adopt(key, enginePlaying)
+      : root.MCC_LISTENS.start(key, enginePlaying);
+    listen = h ? { item: current, handle: h } : null;
+  }
+  function dropListen() {
+    if (listen && root.MCC_LISTENS) root.MCC_LISTENS.release(listen.handle);
+    listen = null;
+  }
+  function granted() { return current && current.gated && currentAccess === "full"; }
+  audio.addEventListener("play", function () { countStart(); paint(); syncNowFilm(false); });
+  audio.addEventListener("seeking", function () {
+    if (granted() && audio.currentTime < grantMax - 0.75) audio.currentTime = grantMax;
+  });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
   audio.addEventListener("timeupdate", function () {
+    if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
       audio.pause();
       audio.currentTime = Math.max(0, previewLimit - .05);
@@ -570,6 +609,12 @@
     syncNowFilm(false);
   });
   audio.addEventListener("ended", function () {
+    if (listen && listen.item === current && root.MCC_LISTENS) root.MCC_LISTENS.finish(listen.handle);
+    listen = null;
+    if (granted()) {
+      currentAccess = "spent";
+      if (root.MCC_GATED) root.MCC_GATED.forget();
+    }
     trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000) });
     paint();
     if (!previewLimit && queue.length > 1) playAdjacent(1);

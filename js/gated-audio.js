@@ -1,45 +1,35 @@
 /* ============================================================
-   GATED AUDIO — the full record lives where the account can be checked.
+   GATED AUDIO — a record you earn.
 
    THE ONLY HONEST WAY TO GATE A FILE ON A STATIC HOST.
 
    This site is GitHub Pages. Anything committed under assets/ is
-   world-readable the moment it deploys, and no amount of front-end
-   code changes that: a "locked" player pointed at a public MP3 is
-   theatre, because the URL is sitting in the page source. So the
-   full master is NOT in this repository. It lives in a PRIVATE
-   Supabase Storage bucket, and the only way to get a playable URL
-   for it is to ask Supabase for a signed one while holding an M
-   Account access token. Supabase does the checking, not this file.
+   world-readable the moment it deploys, so the full master is NOT in
+   this repository. It lives in a PRIVATE Supabase bucket. What ships
+   publicly is a short preview cut, and that is supposed to be public.
 
-   What ships publicly is a short preview cut. That is a real file,
-   it really is public, and it is supposed to be.
+   THE RULE (the owner's, enforced by the API Worker, not by this file)
+     signed out           → the preview, and an invitation to an account
+     signed in, locked    → the preview, and how many songs are left:
+                            five DIFFERENT other songs heard all the way
+                            through before the first play
+     earned               → ONE play. The Worker spends it and signs one
+                            short-lived URL for that play alone
+     after a play         → locked again until one more full song
+     storage/API down     → told exactly that
 
-   WHAT A VISITOR GETS
-     no account   → the preview, and a plain invitation to make one
-     account      → a signed URL to the master, plus the download
-     storage down → told exactly that
-
-   The third case is the one most sites get wrong. An outage is not
-   a locked door, and a locked door is not an empty shelf. Each one
-   says its own name, because a listener who made an account and
-   still cannot hear the record deserves to know it is our fault.
-
-   A signed URL expires. LIFETIME_S below is how long Supabase is
-   asked to honour one; refresh() re-signs well before that, so a
-   deck that has been open all afternoon does not fail on play.
+   A browser can no longer sign its own URL for the master (the bucket
+   stopped being readable by every account), so nothing in this file is
+   the lock. It only asks, and paints the answer. There is no download:
+   a file to keep is not "one play".
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
-  var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-
-  var LIFETIME_S = 3600;   /* what we ask Supabase to sign for */
-  var REFRESH_MS = 45 * 60 * 1000;  /* re-sign before that runs out */
-
-  /* One entry per gated object, so two rows pointing at the same
-     master do not sign it twice. */
+  var API = "https://api.mccluster.org";
+  /* Progress changes as songs finish; a short memory saves repeat asks
+     when a page paints the same row twice. */
+  var STATE_MS = 20 * 1000;
   var cache = {};
 
   function sessionToken() {
@@ -49,114 +39,89 @@
     } catch (e) { return null; }
   }
 
-  function objectPath(gated) {
-    return String(gated.bucket) + "/" + String(gated.object)
-      .split("/").map(encodeURIComponent).join("/");
-  }
+  /* The server knows a gated record by the folder its master lives in. */
+  function keyOf(gated) { return String((gated && gated.object) || "").split("/")[0]; }
 
-  /* Sign one object. Resolves to a state, never rejects: every caller
-     here is painting a row, and a thrown error would leave that row
-     lying about which of the three situations it is in. */
-  function sign(gated) {
+  function ask(path, method) {
     var token = sessionToken();
-    if (!token) return Promise.resolve({ state: "preview", reason: "account" });
-
-    return fetch(SB + "/storage/v1/object/sign/" + objectPath(gated), {
-      method: "POST",
-      headers: {
-        apikey: KEY,
-        authorization: "Bearer " + token,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({ expiresIn: LIFETIME_S })
+    if (!token) return Promise.resolve({ status: 401, data: null });
+    return fetch(API + path, {
+      method: method || "GET",
+      headers: { authorization: "Bearer " + token },
+      cache: "no-store"
     }).then(function (r) {
-      /* 401/403 is a door, and the listener can open it by signing in
-         or by having the account they already made recognised. 404 is
-         the master simply not being uploaded yet, which is ours to
-         fix and must never be dressed up as a paywall. */
-      if (r.status === 401 || r.status === 403) {
-        return { state: "preview", reason: "account" };
-      }
-      if (r.status === 404) {
-        return { state: "unavailable", reason: "missing" };
-      }
-      if (!r.ok) return { state: "unavailable", reason: "http-" + r.status };
-      return r.json().then(function (d) {
-        var signed = d && (d.signedURL || d.signedUrl);
-        if (!signed) return { state: "unavailable", reason: "no-url" };
-        return {
-          state: "full",
-          url: SB + "/storage/v1" + signed,
-          signed_at: Date.now()
-        };
-      });
-    }).catch(function () {
-      return { state: "unavailable", reason: "network" };
-    });
+      return r.json().catch(function () { return null; }).then(function (d) { return { status: r.status, data: d }; });
+    }).catch(function () { return { status: 0, data: null }; });
   }
 
-  function key(gated) { return gated.bucket + "/" + gated.object; }
+  function fromGate(gate) {
+    if (!gate) return { state: "unavailable", reason: "no-gate" };
+    return gate.allowed
+      ? { state: "earned", gate: gate, operator: !!gate.operator }
+      : { state: "locked", gate: gate };
+  }
 
+  /* Where does this listener stand? Resolves, never rejects: every caller
+     is painting a row, and a thrown error would leave the row lying
+     about which situation it is in. */
   function resolve(gated) {
-    if (!gated || !gated.bucket || !gated.object) {
-      return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
-    }
-    var k = key(gated);
-    var hit = cache[k];
-    if (hit && hit.state === "full" && (Date.now() - hit.signed_at) < REFRESH_MS) {
-      return Promise.resolve(hit);
-    }
-    /* An in-flight sign is shared rather than raced, so a row that
-       repaints twice does not ask Supabase twice. */
+    var key = keyOf(gated);
+    if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
+    if (!sessionToken()) return Promise.resolve({ state: "preview", reason: "account" });
+    var hit = cache[key];
     if (hit && hit.inflight) return hit.inflight;
-
-    var p = sign(gated).then(function (out) {
-      cache[k] = out;
+    if (hit && Date.now() - hit.at < STATE_MS) return Promise.resolve(hit.out);
+    var p = ask("/v1/music/gates/" + encodeURIComponent(key)).then(function (r) {
+      var out = r.status === 200 ? fromGate(r.data && r.data.gate)
+        : r.status === 401 ? { state: "preview", reason: "account" }
+        : { state: "unavailable", reason: r.status ? "http-" + r.status : "network" };
+      cache[key] = { at: Date.now(), out: out };
       return out;
     });
-    cache[k] = { inflight: p };
+    cache[key] = { inflight: p };
     return p;
   }
 
-  /* The download. A signed Supabase URL is cross-origin, and the
-     download attribute is ignored across origins, so the browser
-     would navigate to the file instead of saving it and the listener
-     would lose the page. Pulling the bytes and handing over a blob
-     is what actually saves, and it is also the only way the file
-     lands with the record's name on it instead of a signing token. */
-  function download(gated, filename) {
-    return resolve(gated).then(function (out) {
-      if (out.state !== "full") return out;
-      return fetch(out.url).then(function (r) {
-        if (!r.ok) return { state: "unavailable", reason: "http-" + r.status };
-        return r.blob().then(function (blob) {
-          var url = root.URL.createObjectURL(blob);
-          var a = root.document.createElement("a");
-          a.href = url;
-          a.download = filename || "track.mp3";
-          root.document.body.appendChild(a);
-          a.click();
-          root.document.body.removeChild(a);
-          /* revoke on the next turn: Safari has not finished reading
-             the blob when click() returns */
-          root.setTimeout(function () { root.URL.revokeObjectURL(url); }, 30000);
-          return { state: "saved" };
-        });
-      }).catch(function () {
-        return { state: "unavailable", reason: "network" };
-      });
+  /* Spend one earned play. Only ever called when the listener presses
+     play on the record: the answer is a URL good for that one play. */
+  function claim(gated) {
+    var key = keyOf(gated);
+    delete cache[key];
+    if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
+    return ask("/v1/music/gates/" + encodeURIComponent(key) + "/play", "POST").then(function (r) {
+      if (r.status === 200 && r.data && r.data.url) return { state: "full", url: r.data.url, gate: r.data.gate };
+      if (r.status === 403) return { state: "locked", gate: r.data && r.data.gate };
+      if (r.status === 401) return { state: "preview", reason: "account" };
+      if (r.status === 404) return { state: "unavailable", reason: "missing" };
+      return { state: "unavailable", reason: r.status ? "http-" + r.status : "network" };
     });
   }
 
-  /* Sign-in and sign-out both have to repaint every gated row, and
-     neither reloads the page. Callers register here. */
+  /* One short line a row can show for where the listener stands. */
+  function progress(out) {
+    var g = out && out.gate;
+    if (!out) return null;
+    if (out.state === "earned") return out.operator ? { b: "PLAY", s: "owner" } : { b: "PLAY ONCE", s: "you earned it" };
+    if (out.state !== "locked" || !g) return null;
+    var first = Number(g.need_first) || 5, done = Number(g.distinct_songs) || 0;
+    if (done < first) {
+      var left = first - done;
+      return { b: done + "/" + first + " SONGS", s: "finish " + left + " more to unlock" };
+    }
+    return { b: "LOCKED", s: "finish " + (Number(g.need_each) || 1) + " more song to play it again" };
+  }
+
+  /* Sign-in, sign-out and a counted song all have to repaint every gated
+     row, and none of them reloads the page. Callers register here. */
   var watchers = [];
   function onChange(fn) { if (typeof fn === "function") watchers.push(fn); }
   function forget() { cache = {}; watchers.forEach(function (fn) { try { fn(); } catch (e) {} }); }
 
   root.MCC_GATED = {
     resolve: resolve,
-    download: download,
+    claim: claim,
+    progress: progress,
+    keyOf: keyOf,
     forget: forget,
     onChange: onChange,
     signedIn: function () { return !!sessionToken(); }
@@ -170,10 +135,17 @@
     });
   }
 
+  /* A song that counted moves the gate; repaint whoever is showing it. */
+  function hookListens() {
+    if (!root.MCC_LISTENS) return false;
+    root.MCC_LISTENS.onFinish(function (d) { if (d && d.counted) forget(); });
+    return true;
+  }
+  if (!hookListens() && root.addEventListener) root.addEventListener("mcc:listens-ready", hookListens, { once: true });
+
   /* This file is deferred, so a page that paints its shelf from a fetch
      can finish either before or after it. Whoever is late listens for
-     this; nobody polls, and a row is never left locked because two
-     scripts finished in the wrong order. */
+     this; nobody polls. */
   try {
     root.dispatchEvent(new CustomEvent("mcc:gated-ready"));
   } catch (e) { /* no CustomEvent: the ready check below still catches it */ }

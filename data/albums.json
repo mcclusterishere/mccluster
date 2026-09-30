@@ -233,8 +233,9 @@
        }
       ],
       "access_mode": "account",
-      "preview_visibility": "signed_out_only",
-      "full_visibility": "signed_in"
+      "preview_visibility": "until_earned",
+      "full_visibility": "earned_play",
+      "listen_gate": { "first_distinct_full_listens": 5, "full_listens_per_play": 1 }
      }
     },
     {

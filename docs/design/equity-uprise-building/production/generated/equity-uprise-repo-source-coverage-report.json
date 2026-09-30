@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 253,
+  "candidate_count": 255,
   "capability_source_count": 97,
-  "support_only_count": 156,
-  "checks_total": 917,
-  "checks_passed": 917,
+  "support_only_count": 158,
+  "checks_total": 925,
+  "checks_passed": 925,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -158,6 +158,7 @@
     "production.html",
     "redirects/equity-uprise.html",
     "redirects/walls/eu-rally.html",
+    "resume-it-support.html",
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
@@ -258,6 +259,7 @@
     "workers/mccluster/src/ai/envelope.js",
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/index.js",
+    "workers/mccluster/src/music/tracks.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
     "workers/mccluster/test/halo-projection.test.mjs",
@@ -267,7 +269,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "253 entries"
+      "detail": "255 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4846,6 +4848,46 @@
     },
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "resume-it-support.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "resume-it-support.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "resume-it-support.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "resume-it-support.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/music/tracks.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/music/tracks.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "workers/mccluster/src/music/tracks.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/music/tracks.js support rationale present",
       "passed": true,
       "detail": ""
     }

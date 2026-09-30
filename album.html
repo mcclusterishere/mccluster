@@ -220,36 +220,19 @@
     }
     .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
       color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
-    .tr .reclock .dl { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-      touch-action: manipulation; width: 34px; height: 34px; border-radius: 50%; padding: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-      display: grid; place-items: center; color: rgba(244,239,230,0.55); }
-    .tr .reclock .dl svg { width: 15px; height: 15px; display: block; fill: none;
-      stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .tr .reclock .dl:hover { color: var(--cream); }
-    .tr .reclock .dl[disabled] { opacity: 0.45; cursor: default; }
+    /* where a signed-in listener stands: calm, because it is information,
+       not the call to action. The earned play uses .unlock and flashes. */
+    .tr .reclock .gatechip { font-family: var(--ui); white-space: nowrap;
+      display: grid; gap: 0.05rem; text-align: center; line-height: 1.05;
+      color: var(--cream); padding: 0.34rem 0.7rem; border-radius: 999px;
+      background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+    .tr .reclock .gatechip b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+    .tr .reclock .gatechip span { font-weight: 700; font-size: 0.56rem; color: var(--cream-dim); letter-spacing: 0.02em; }
+    .tr .reclock .gatechip--on { background: color-mix(in srgb, var(--pulse) 26%, transparent); box-shadow: inset 0 0 0 1px var(--pulse); }
     /* a locked row still says how long the PREVIEW is, so the clock in
        the row is never lying about what this file actually contains */
     .tr li.locked .t small::after { content: " · preview"; color: var(--cream-dim); }
 
-    /* the format picker: a strip inside the row, never a modal */
-    .tr li.picking { flex-wrap: wrap; }
-    .tr .fmts { flex: 0 0 100%; display: flex; gap: 0.4rem; margin: 0.55rem 0 0.15rem; }
-    .tr .fmts button { flex: 1; -webkit-appearance: none; appearance: none; border: 0;
-      cursor: pointer; touch-action: manipulation; font-family: var(--ui);
-      display: grid; gap: 0.06rem; padding: 0.42rem 0.3rem; border-radius: 12px;
-      color: var(--cream); text-align: center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); }
-    .tr .fmts button b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.02em; }
-    .tr .fmts button span { font-weight: 600; font-size: 0.56rem; color: var(--cream-dim); }
-    .tr .fmts button.is-busy { opacity: 0.5; }
-    /* one missing format does not make the record unavailable, so it says so
-       on its own line and the others still work */
-    .tr .fmts button.is-gone { opacity: 0.45; }
-    .tr .fmts button.is-gone b { text-decoration: line-through; }
-    .tr .fmts button.is-gone span::after { content: " · not up yet"; }
     @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
 
     /* the deck: the mini player riding above the bar */
@@ -865,13 +848,19 @@
       "Antisocial": "antisocial", "Lightroom": "lightroom",
     };
 
+    /* The name the listen ledger knows a song by: its file name without
+       the extension, or a gated record's bucket folder. Same rule as
+       js/listen-ledger.js and scripts/music-track-lengths.mjs. */
+    function listenKey(t) {
+      if (t.gated && t.gated.object) return String(t.gated.object).split("/")[0];
+      return String(t.src || "").split(/[?#]/)[0].split("/").pop().replace(/\.[a-z0-9]+$/i, "").toLowerCase();
+    }
     function trackRow(t, i) {
       var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
+        ' data-key="' + escAttr(listenKey(t)) + '"' +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
-             ' data-gated-name="' + escAttr(g.download_as || t.title) + '"' +
-             ' data-gated-formats="' + escAttr(JSON.stringify(g.formats || [])) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
         (t.video ? ' data-video="' + t.video + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
@@ -991,18 +980,20 @@
     /* ============================================================
        THE GATE ON A RECORD. Some tracks ship a short preview here and
        keep the master in a private Supabase bucket. js/gated-audio.js
-       does the asking; this only paints the answer and repoints the row.
+       asks the API where this listener stands; this only paints the
+       answer and, when they press play on an earned record, spends it.
 
-       Three states, three different sentences, because they are three
+       Five states, five different sentences, because they are five
        different situations and a listener can act on only one of them:
-         locked      → make an account, the record is waiting
-         unlocked    → play it, and here is the file to keep
+         preview     → signed out: make an account, the record is waiting
+         locked      → signed in: here is how many songs are left
+         earned      → press play: ONE play, no rewinds, no file to keep
+         full        → the one play, happening now
          unavailable → our fault, not yours
 
-       The swap is live. Sign in in another tab while a preview is
-       playing and the master takes over at the same second, because
-       the preview is the head of the same master and the clock lines
-       up. Nothing restarts.
+       The rule is the owner's and the Worker enforces it: five DIFFERENT
+       other songs heard all the way through before the first play, then
+       one more full song for every play after that.
        ============================================================ */
     /* The clock on a row is read off whatever that row actually points at,
        which for a gated track changes under it: locked it is the 12-second
@@ -1022,32 +1013,6 @@
         probe.src = "";
       });
     }
-    function rowFormats(row) {
-      try { return JSON.parse(row.getAttribute("data-gated-formats") || "[]"); }
-      catch (e) { return []; }
-    }
-    function closeFormats(row) {
-      var sheet = row.querySelector("[data-fmts]");
-      if (sheet) sheet.remove();
-      row.classList.remove("picking");
-    }
-    /* The picker is a strip inside the row, not a modal. A modal over a
-       track list steals the whole screen to answer "which file", and on a
-       phone that is the difference between one tap and three. */
-    function toggleFormats(row, formats) {
-      if (row.querySelector("[data-fmts]")) { closeFormats(row); return; }
-      rows.forEach(closeFormats);
-      var sheet = document.createElement("div");
-      sheet.className = "fmts";
-      sheet.setAttribute("data-fmts", "");
-      sheet.innerHTML = formats.map(function (f, i) {
-        return '<button type="button" data-fmt="' + i + '">' +
-          "<b>" + esc(f.label || f.ext.toUpperCase()) + "</b>" +
-          (f.note ? "<span>" + esc(f.note) + "</span>" : "") + "</button>";
-      }).join("");
-      row.appendChild(sheet);
-      row.classList.add("picking");
-    }
     function gatedRows() {
       return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
     }
@@ -1060,34 +1025,41 @@
     function swapCurrent(row) {
       /* "is this the row the deck is on" comes off the DOM, not off init()'s
          cursor: the deck and its index live inside init(), and reaching into
-         that scope from out here is how this threw a ReferenceError and took
-         the download button down with it. paintRows() owns the "on" class. */
-      if (!row.classList.contains("on")) return;
-      var at = deck.currentTime, wasPlaying = !deck.paused;
+         that scope from out here is how this threw a ReferenceError once.
+         paintRows() owns the "on" class. Only ever swaps back to the
+         preview; the master is loaded by the play that earned it. */
+      if (!row.classList.contains("on") || !deck.paused) return;
       deck.src = row.getAttribute("data-src");
-      deck.addEventListener("loadedmetadata", function once() {
-        deck.removeEventListener("loadedmetadata", once);
-        if (at && at < deck.duration) { try { deck.currentTime = at; } catch (e) {} }
-        if (wasPlaying) deck.play().catch(function () {});
-      });
+    }
+    function chip(cls, b, sub) {
+      return '<span class="' + cls + '"><b>' + esc(b) + '</b><span>' + esc(sub) + '</span></span>';
     }
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
-      /* the slot is painted before the source is swapped, so a swap that
-         ever fails cannot also cost the listener the button */
+      var pv = row.getAttribute("data-preview-src");
+      row.setAttribute("data-gate", out.state);
+      var line = window.MCC_GATED && window.MCC_GATED.progress ? window.MCC_GATED.progress(out) : null;
       if (out.state === "full") {
         row.classList.add("unlocked");
-        slot.innerHTML = '<button class="dl" type="button" data-dl ' +
-          'aria-label="Download ' + escAttr(row.getAttribute("data-title")) + '">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-          '<path d="M12 3v11m0 0l-4-4m4 4l4-4M4 19h16"/></svg></button>';
-        if (row.getAttribute("data-src") !== out.url) {
-          row.setAttribute("data-src", out.url);
-          swapCurrent(row);
-          probeDuration(row);
-        }
+        slot.innerHTML = chip("gatechip gatechip--on", "ONE PLAY", "no rewinds");
+        return;
+      }
+      /* every state below plays the public preview, never a master */
+      if (pv && row.getAttribute("data-src") !== pv) {
+        row.setAttribute("data-src", pv);
+        swapCurrent(row);
+        probeDuration(row);
+      }
+      if (out.state === "earned") {
+        row.classList.add("unlocked");
+        /* The one thing on the row worth interrupting for, so it flashes
+           like the account ask does. */
+        slot.innerHTML = chip("unlock", line ? line.b : "PLAY ONCE", line ? line.s : "you earned it");
+      } else if (out.state === "locked") {
+        row.classList.add("locked");
+        slot.innerHTML = chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "finish more songs to unlock");
       } else if (out.state === "preview") {
         row.classList.add("locked");
         /* The ask, not the mechanism. Nobody wants "an account" — they came
@@ -1096,18 +1068,11 @@
            and it stops flashing for anyone who asked the OS for less motion. */
         /* ?from carries the record into the intake so the listener is told
            why they are being asked. It is a marketing segment and nothing
-           more: the database derives the tier from it, and neither value
-           grants any access, so an edited URL is worth nothing. */
+           more: neither value grants any access, so an edited URL is worth
+           nothing. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
         slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '">' +
           '<b>FULL SONG</b><span>tap here · free</span></a>';
-        /* back to the preview if a sign-out invalidated a signed URL */
-        var pv = row.getAttribute("data-preview-src");
-        if (pv && row.getAttribute("data-src") !== pv) {
-          row.setAttribute("data-src", pv);
-          swapCurrent(row);
-          probeDuration(row);
-        }
       } else {
         row.classList.add("gone");
         slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
@@ -1125,19 +1090,13 @@
       var slot = row.querySelector("[data-reclock]");
       row.classList.remove("locked", "unlocked", "gone");
       row.classList.add("unlocking");
-      if (slot) slot.innerHTML = '<span class="gonetxt">Opening full track&hellip;</span>';
-      /* A signed-in listener must never race the public preview while the
-         private URL is being minted. An empty source is deliberate here:
-         the row becomes playable the moment resolve() returns the master. */
-      row.setAttribute("data-src", "");
+      if (slot) slot.innerHTML = '<span class="gonetxt">Checking&hellip;</span>';
     }
     function paintGates() {
-      var list = gatedRows();
+      /* a row in the middle of its one play keeps it */
+      var list = gatedRows().filter(function (r) { return !r.hasAttribute("data-granted"); });
       if (!list.length) return;
 
-      /* Preview is a signed-OUT state, not a second edition of the song.
-         If a session already exists, never paint or arm the preview even for
-         the few milliseconds before the signer module finishes loading. */
       var signed = window.MCC_GATED
         ? window.MCC_GATED.signedIn()
         : hasStoredSession();
@@ -1156,52 +1115,13 @@
       watchGate();
       list.forEach(function (row) {
         window.MCC_GATED.resolve(gateSpec(row)).then(function (out) {
-          paintGate(row, out);
+          if (!row.hasAttribute("data-granted")) paintGate(row, out);
         });
       });
     }
-    document.getElementById("tracks").addEventListener("click", function (e) {
-      var pick = e.target.closest ? e.target.closest("[data-fmt]") : null;
-      if (pick) {
-        e.stopPropagation(); e.preventDefault();
-        var prow = pick.closest("li");
-        var fmts = rowFormats(prow);
-        var chosen = fmts[Number(pick.getAttribute("data-fmt"))];
-        if (!chosen) return;
-        pick.classList.add("is-busy");
-        window.MCC_GATED.download(
-          { bucket: prow.getAttribute("data-gated-bucket"), object: chosen.object },
-          prow.getAttribute("data-gated-name") + "." + chosen.ext
-        ).then(function (out) {
-          pick.classList.remove("is-busy");
-          /* A format that is not uploaded yet must say so on ITS OWN line.
-             Repainting the whole row would claim the record is unavailable
-             when only the ringtone is missing. */
-          if (out && out.state !== "saved") pick.classList.add("is-gone");
-          else closeFormats(prow);
-        });
-        return;
-      }
-      var b = e.target.closest ? e.target.closest("[data-dl]") : null;
-      if (!b) return;
-      e.stopPropagation(); e.preventDefault();
-      var row = b.closest("li");
-      var formats = rowFormats(row);
-      if (formats.length > 1) { toggleFormats(row, formats); return; }
-      b.disabled = true;
-      var only = formats[0];
-      var spec = only
-        ? { bucket: row.getAttribute("data-gated-bucket"), object: only.object }
-        : gateSpec(row);
-      var name = row.getAttribute("data-gated-name") + (only ? "." + only.ext : ".mp3");
-      window.MCC_GATED.download(spec, name).then(function (out) {
-        b.disabled = false;
-        if (out && out.state !== "saved") paintGate(row, out);
-      });
-    }, true);
-    /* registered once the signer exists, not at parse time: this inline
-       script runs before the deferred module, so an early call here would
-       have silently dropped every sign-out repaint */
+    /* registered once the gate module exists, not at parse time: this
+       inline script runs before the deferred module, so an early call here
+       would have silently dropped every sign-out repaint */
     var gateWatching = false;
     function watchGate() {
       if (gateWatching || !window.MCC_GATED) return;
@@ -1316,6 +1236,9 @@
     var bar = document.getElementById("deckbar");
     var KEY = "mcc_here_radio";
     var cur = -1;
+    /* the listen being timed for the ledger, and how far the one earned
+       play of a gated record has got (it cannot be rewound past that) */
+    var listen = null, grantMax = 0;
 
     var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     var el = function (id) { return document.getElementById(id); };
@@ -1385,7 +1308,11 @@
       });
     }
     function load(i, at) {
-      cur = (i + rows.length) % rows.length;
+      var to = (i + rows.length) % rows.length;
+      /* leaving a record mid-play spends it: the play was the grant */
+      if (cur > -1 && cur !== to) spend(rows[cur]);
+      if (cur !== to && listen) { if (window.MCC_LISTENS) window.MCC_LISTENS.release(listen.handle); listen = null; }
+      cur = to;
       deck.src = rows[cur].getAttribute("data-src");
       /* the track's own grade: chamber silk, glows and filament all follow */
       document.documentElement.style.setProperty("--pulse",
@@ -1411,10 +1338,68 @@
       media(); paintRows(); paintDeck();
     }
     function play(i, at) {
+      var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
+      var row = rows[target];
+      /* An earned record is spent the moment it is played, not before:
+         ask the API for this one play, then load what it signs. */
+      if (row && row.getAttribute("data-gate") === "earned" && !row.hasAttribute("data-granted") && window.MCC_GATED) {
+        claimThenPlay(target);
+        return;
+      }
+      playNow(i, at);
+    }
+    function playNow(i, at) {
       if (i !== undefined && i !== cur) load(i, at);
       else if (cur < 0) load(0, at);
       deck.play().catch(function () {});
       if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: rows[cur].getAttribute("data-title"), album: ALBUM });
+    }
+    function claimThenPlay(target) {
+      var row = rows[target];
+      var slot = row.querySelector("[data-reclock]");
+      if (slot) slot.innerHTML = '<span class="gonetxt">Opening&hellip;</span>';
+      window.MCC_GATED.claim(gateSpec(row)).then(function (out) {
+        if (out.state !== "full") {
+          /* not earned after all (another tab spent it, or signed out):
+             say where they stand and play the preview */
+          paintGate(row, out);
+          playNow(target);
+          return;
+        }
+        row.setAttribute("data-granted", "");
+        row.setAttribute("data-src", out.url);
+        paintGate(row, out);
+        grantMax = 0;
+        if (cur === target) cur = -1;   /* force a fresh load of the master */
+        load(target, 0);
+        probeDuration(row);
+        deck.play().catch(function () {});
+        if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
+      });
+    }
+    /* The one play is over (it ended, or they moved on): the row goes back
+       to the preview and asks the API where the listener stands now. */
+    function spend(row) {
+      if (!row || !row.hasAttribute("data-granted")) return;
+      row.removeAttribute("data-granted");
+      row.setAttribute("data-src", row.getAttribute("data-preview-src") || "");
+      if (window.MCC_GATED) window.MCC_GATED.forget();
+    }
+    function granted() { return cur > -1 && rows[cur].hasAttribute("data-granted"); }
+    /* A song heard from the top starts a listen; a song picked up partway
+       (a reload, or back from another page) adopts the listen already
+       running for it. The API counts only time the deck was playing. The
+       gated record never counts. */
+    function deckPlaying() { return !deck.paused; }
+    function countStart() {
+      var row = rows[cur];
+      if (!row || row.hasAttribute("data-gated-bucket") || !window.MCC_LISTENS) return;
+      if (listen && listen.row === row) return;
+      var key = row.getAttribute("data-key");
+      var h = deck.currentTime > 3
+        ? window.MCC_LISTENS.adopt(key, deckPlaying)
+        : window.MCC_LISTENS.start(key, deckPlaying);
+      listen = h ? { row: row, handle: h } : null;
     }
     function next() { play(cur + 1); }
     function prev() { if (deck.currentTime > 4) { deck.currentTime = 0; return; } play(cur - 1); }
@@ -1440,13 +1425,25 @@
 
     var ICO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
     var ICO_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
-    deck.addEventListener("play", function () { paintRows(); paintDeck(); announce(true); save();
+    deck.addEventListener("play", function () { countStart(); paintRows(); paintDeck(); announce(true); save();
       el("playAll").innerHTML = ICO_PAUSE + "Pause"; roomPlay(true); });
     deck.addEventListener("pause", function () { paintRows(); paintDeck(); announce(false); save();
       el("playAll").innerHTML = ICO_PLAY + "Play"; roomPlay(false); });
     var tick = 0;
-    deck.addEventListener("timeupdate", function () { paintDeck(); roomTick(); if (++tick % 8 === 0) save(); });
-    deck.addEventListener("ended", function () { next(); }); // the record keeps spinning, wraps at the end
+    deck.addEventListener("timeupdate", function () {
+      if (granted()) grantMax = Math.max(grantMax, deck.currentTime);
+      paintDeck(); roomTick(); if (++tick % 8 === 0) save();
+    });
+    /* one play means one pass: the earned record cannot be rewound */
+    deck.addEventListener("seeking", function () {
+      if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
+    });
+    deck.addEventListener("ended", function () {
+      if (listen && listen.row === rows[cur] && window.MCC_LISTENS) window.MCC_LISTENS.finish(listen.handle);
+      listen = null;
+      spend(rows[cur]);
+      next(); // the record keeps spinning, wraps at the end
+    });
 
     /* ============================================================
        BANKING THE SECOND SOMEBODY ACTUALLY LEFT ON.
@@ -1877,6 +1874,7 @@
        for a URL to the master. Both load after the shelf paints, because a
        locked row is the correct first frame and never a spinner. -->
   <script defer src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script defer src="js/listen-ledger.js?v=__STAMP__"></script>
   <script defer src="js/gated-audio.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
