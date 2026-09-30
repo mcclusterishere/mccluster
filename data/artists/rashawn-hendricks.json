@@ -2,6 +2,12 @@
   "note": "ARTIST ECOSYSTEM CONFIG. One file per artist; artist.html?a=<slug> reads it. Branding and copy live here, identity/music/social live on the McCluster plane. Fields set to null are PENDING from the artist and render as absent, never as invented copy.",
   "slug": "rashawn-hendricks",
   "status": "exploration",
+  "consent": {
+    "page": true,
+    "confirmed": "2026-09-30",
+    "via": "owner, from the recorded brainstorm with Rashawn",
+    "note": "Consent covers the room existing. Photos, bio and artwork still come from Rashawn; nothing is pulled from Instagram."
+  },
   "name": "Rashawn Hendricks",
   "music_handle": "rashawn-hendricks",
   "mnet_handle": null,
