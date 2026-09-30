@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music", "action-network"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -813,6 +813,7 @@
     if (["calendar", "published"].indexOf(v) >= 0) return "schedule";
     if (["management", "socials", "socials-room"].indexOf(v) >= 0) return "channels";
     if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
+    if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -1599,8 +1600,10 @@
       : state.createView === "channels" ? renderChannels()
       : state.createView === "music"
         ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
+      : state.createView === "action-network"
+        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Action Network unavailable", "The native Control module did not load."))
         : renderSchedule();
-    return renderHeader("Create", "Projects, assets, publishing, channels and music operations are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
+    return renderHeader("Create", "Projects, assets, publishing, channels, music operations and Action Network campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
 
   /* CHANNELS — where publishing actually points.
@@ -2881,6 +2884,7 @@
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
+    if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
@@ -3092,6 +3096,7 @@
   });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
+  if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, render: render });
 
   window.CR.media.init({
     request: request,

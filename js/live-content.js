@@ -110,7 +110,14 @@
 
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var PAGE = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  /* A root page is keyed by its file name, as it always was. A page in a
+     folder keeps the folder (/action/ is "action/index.html"), so it can
+     never pick up the home page's edits by sharing the name index.html. */
+  var PAGE = (function (p) {
+    p = p.toLowerCase();
+    var cut = p.lastIndexOf("/");
+    return p.slice(1, cut + 1) + (p.slice(cut + 1) || "index.html");
+  })(location.pathname);
 
   /* A stable name for an element that has no data-edit of its own.
      Structural only -- tag, id, class and sibling index -- so it keeps
