@@ -36,6 +36,7 @@ const EXEMPT = {
   'prints.html': 'redirect stub', 'role.html': 'redirect stub',
   'sponsor.html': 'redirect stub', 'walls.html': 'redirect stub',
   'insights.html': 'redirect stub to Analytics · Audience',
+  '404.html': 'the not-found page GitHub Pages serves for a bad address; it forwards /action/<slug> and links home',
 };
 const immersive = (f) => /^equity-uprise-.*-3d\.html$/.test(f);
 

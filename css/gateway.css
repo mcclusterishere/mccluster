@@ -1,0 +1,120 @@
+/* ============================================================
+   HEAL THE 3RD WORLD — the gateway. Four acts, dark to light:
+   Look (the dark, scored by Deep End) → Listen (the EP) →
+   Don't just stand there (warming, scored by Heal the 3rd World) →
+   Enter (the light). Sits on top of css/action.css, which carries the
+   fonts, tokens, buttons and meters. Phone first; wider screens only
+   get more room.
+   ============================================================ */
+/* the body ends in the light: the space under the footer that clears the
+   app bar is cream like Act IV; Act I paints its own dark */
+body.an-body.gw { background: #f4efe6; }
+.gw-act--look { background: #050404; }
+
+.gw-act { position: relative; overflow: hidden; min-height: 100svh; padding: 4.5rem 0 4rem; isolation: isolate; }
+.gw-in { position: relative; z-index: 2; width: 100%; max-width: 40rem; margin: 0 auto; padding: 0 var(--an-pad); }
+.gw-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.32; filter: saturate(0.7); }
+.gw-veil { position: absolute; inset: 0; z-index: 1; }
+
+.gw-n { margin: 0; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--an-hot); }
+.gw-h {
+  margin: 0.6rem 0 0.4rem; font-family: var(--an-display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(3.4rem, 19vw, 7rem); line-height: 0.88; overflow-wrap: anywhere;
+}
+.gw-act--do .gw-h, .gw-act--enter .gw-h { font-size: clamp(2.6rem, 13vw, 5.5rem); }
+.gw-lede { margin: 0.9rem 0 0; max-width: 56ch; font-weight: 600; font-size: 1.02rem; line-height: 1.65; color: var(--an-dim); }
+.gw-q { margin: 2rem 0 0.6rem; font-weight: 800; font-size: 1rem; }
+
+/* ---- I: look ---- */
+.gw-act--look .gw-veil { background: linear-gradient(180deg, rgba(5,4,4,0.55) 0%, rgba(5,4,4,0.82) 55%, #050404 100%); }
+.gw-chapters { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; gap: 12px; }
+.gw-chapters li { scroll-margin-top: 80px; }
+.gw-chapters a {
+  display: block; padding: 1.2rem 1.1rem; border-radius: 18px; text-decoration: none;
+  background: rgba(21, 17, 15, 0.86); box-shadow: inset 0 0 0 1px var(--an-rule);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.gw-chapters li.is-target a { box-shadow: inset 0 0 0 2px var(--an-hot); }
+.gw-chapters small { display: block; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--an-hot); }
+.gw-chapters b { display: block; margin-top: 0.3rem; font-family: var(--an-display); font-weight: 400; font-size: clamp(1.8rem, 9vw, 2.6rem); line-height: 0.95; text-transform: uppercase; }
+.gw-chapters span { display: block; margin-top: 0.45rem; font-weight: 600; font-size: 0.95rem; color: var(--an-dim); }
+.gw-chapters em { display: inline-block; margin-top: 0.8rem; font-style: normal; font-weight: 800; font-size: 0.9rem; color: var(--an-ink); }
+.gw-chapters .gw-empty { padding: 1.1rem; border-radius: 18px; background: rgba(21, 17, 15, 0.86); color: var(--an-dim); font-weight: 600; }
+
+.gw-facts { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 0; }
+.gw-facts li { padding: 0.9rem 0; border-top: 1px solid var(--an-rule); }
+.gw-facts p { margin: 0; font-weight: 700; font-size: 1rem; line-height: 1.5; }
+.gw-facts a { display: inline-block; margin-top: 0.35rem; font-weight: 800; font-size: 0.78rem; color: var(--an-faint); text-decoration: none; }
+.gw-facts a::after { content: " \2197"; }
+
+/* ---- II: listen ---- */
+.gw-act--listen { background: linear-gradient(180deg, #050404 0%, #0e0b09 100%); }
+.gw-cover { margin: 1.5rem auto 0; max-width: 22rem; }
+.gw-cover img { display: block; width: 100%; height: auto; }
+.gw-tracks { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 8px; }
+.gw-track {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; width: 100%;
+  min-height: 60px; padding: 0.8rem 1rem; border: 0; border-radius: 14px; text-align: left; cursor: pointer;
+  background: var(--an-raise-2); box-shadow: inset 0 0 0 1px var(--an-rule); color: var(--an-ink);
+  font: 800 max(16px, 1rem)/1.25 var(--an-ui); -webkit-tap-highlight-color: transparent;
+}
+.gw-track b { font-weight: 800; }
+.gw-track small { grid-column: 1; font-weight: 600; font-size: 0.82rem; color: var(--an-dim); }
+.gw-track i { grid-column: 2; grid-row: 1 / span 2; font-style: normal; color: var(--an-hot); }
+.gw-track.is-playing { box-shadow: inset 0 0 0 2px var(--an-gold); }
+.gw-track.is-playing i { color: var(--an-gold); }
+.gw-track:focus-visible { outline: 2px solid var(--an-gold); outline-offset: 2px; }
+
+/* ---- III: do something (the warming) ---- */
+.gw-act--do { background: linear-gradient(180deg, #0e0b09 0%, #2a1c12 70%, #6b5334 100%); }
+.gw-act--do .gw-veil { background: linear-gradient(180deg, rgba(14,11,9,0.9) 0%, rgba(42,28,18,0.72) 60%, rgba(107,83,52,0.6) 100%); }
+.gw-act--do .gw-n { color: var(--an-gold); }
+.gw-meter { margin-top: 1.75rem; }
+.gw-meter .an-bar i { background: var(--an-gold); }
+.gw-lanes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.gw-lanes a {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0.8rem 1.1rem;
+  border-radius: 14px; text-decoration: none; background: rgba(244, 239, 230, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.22); font-weight: 800; font-size: 1.02rem;
+}
+.gw-lanes a::after { content: "\2192"; color: var(--an-gold); }
+
+/* ---- IV: enter (the light) ---- */
+.gw-act--enter { background: #f4efe6; color: #15110f; min-height: 80svh; }
+.gw-act--enter .gw-n { color: #b3261e; }
+.gw-act--enter .gw-lede { color: #4a4038; }
+.gw-btn-ink { background: #15110f; color: #f4efe6; box-shadow: none; }
+.gw-foot { max-width: none; background: #f4efe6; color: #15110f; border-top-color: rgba(21,17,15,0.14); }
+.gw-foot .an-crumb { max-width: 40rem; margin: 0 auto; color: #4a4038; }
+.gw-foot .an-crumb a { color: #15110f; }
+.gw-foot .an-crumb span[aria-hidden] { color: #8a7d70; }
+.gw-foot .an-foot__law { max-width: 40rem; margin: 0.9rem auto 0; color: #6a5e53; }
+
+/* ---- the score ---- */
+.gw-sound {
+  /* left, and above the house app bar; the sign-in chip holds the right */
+  position: fixed; z-index: 20; left: 16px; bottom: calc(5.45rem + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 0.55rem; min-height: 48px; max-width: calc(100vw - 32px);
+  padding: 0.7rem 1.1rem; border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(21, 17, 15, 0.92); color: var(--an-ink); box-shadow: inset 0 0 0 1px var(--an-rule), 0 12px 30px -12px rgba(0,0,0,0.8);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font: 800 max(16px, 0.9rem)/1.2 var(--an-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gw-sound__dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--an-faint); }
+.gw-sound[aria-pressed="true"] .gw-sound__dot { background: var(--an-hot); box-shadow: 0 0 0 4px rgba(255, 77, 61, 0.25); }
+.gw-sound:focus-visible { outline: 2px solid var(--an-gold); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-bg { display: none; }
+}
+
+@media (min-width: 600px) {
+  .gw-act { padding: 6rem 0 5rem; }
+  .gw-lanes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 960px) {
+  .gw-in, .gw-foot .an-crumb, .gw-foot .an-foot__law { max-width: 52rem; }
+  .gw-act--listen .gw-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 3rem; align-items: start; }
+  .gw-act--listen .gw-n, .gw-act--listen .gw-h { grid-column: 1 / -1; }
+  .gw-act--listen .gw-cover { grid-column: 1; grid-row: 3 / span 3; margin-top: 0.5rem; }
+}
