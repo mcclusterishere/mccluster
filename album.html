@@ -1311,7 +1311,7 @@
       var to = (i + rows.length) % rows.length;
       /* leaving a record mid-play spends it: the play was the grant */
       if (cur > -1 && cur !== to) spend(rows[cur]);
-      if (cur !== to) listen = null;
+      if (cur !== to && listen) { if (window.MCC_LISTENS) window.MCC_LISTENS.release(listen.handle); listen = null; }
       cur = to;
       deck.src = rows[cur].getAttribute("data-src");
       /* the track's own grade: chamber silk, glows and filament all follow */
@@ -1386,14 +1386,19 @@
       if (window.MCC_GATED) window.MCC_GATED.forget();
     }
     function granted() { return cur > -1 && rows[cur].hasAttribute("data-granted"); }
-    /* Only a song heard from the top can count; a resume keeps the listen
-       that is already being timed. The gated record never counts. */
+    /* A song heard from the top starts a listen; a song picked up partway
+       (a reload, or back from another page) adopts the listen already
+       running for it. The API counts only time the deck was playing. The
+       gated record never counts. */
+    function deckPlaying() { return !deck.paused; }
     function countStart() {
       var row = rows[cur];
       if (!row || row.hasAttribute("data-gated-bucket") || !window.MCC_LISTENS) return;
       if (listen && listen.row === row) return;
-      if (deck.currentTime > 3) return;
-      var h = window.MCC_LISTENS.start(row.getAttribute("data-key"));
+      var key = row.getAttribute("data-key");
+      var h = deck.currentTime > 3
+        ? window.MCC_LISTENS.adopt(key, deckPlaying)
+        : window.MCC_LISTENS.start(key, deckPlaying);
       listen = h ? { row: row, handle: h } : null;
     }
     function next() { play(cur + 1); }

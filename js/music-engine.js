@@ -472,7 +472,7 @@
       }
       currentAccess = out.state;
       previewLimit = out.state === "preview" ? (t.preview_seconds == null ? 30 : Number(t.preview_seconds)) : 0;
-      listen = null;
+      dropListen();
       audio.src = out.url;
       audio.currentTime = 0;
       startedAt = Date.now();
@@ -530,7 +530,7 @@
         }
         currentAccess = out.state;
         previewLimit = out.state === "preview" && t.gated ? Number(t.gated.preview_seconds || 0) : 0;
-        listen = null;
+        dropListen();
         grantMax = 0;
         audio.src = out.url;
         audio.currentTime = 0;
@@ -577,12 +577,19 @@
   /* THE LISTEN LEDGER. A song heard from the top is timed by the API;
      the gated record never counts toward itself. */
   var listen = null, grantMax = 0;
+  function enginePlaying() { return !audio.paused; }
   function countStart() {
     if (!current || current.gated || current.creatorTrackId || !root.MCC_LISTENS) return;
     if (listen && listen.item === current) return;
-    if (audio.currentTime > 3) return;
-    var h = root.MCC_LISTENS.start(root.MCC_LISTENS.keyOf(current));
+    var key = root.MCC_LISTENS.keyOf(current);
+    var h = audio.currentTime > 3
+      ? root.MCC_LISTENS.adopt(key, enginePlaying)
+      : root.MCC_LISTENS.start(key, enginePlaying);
     listen = h ? { item: current, handle: h } : null;
+  }
+  function dropListen() {
+    if (listen && root.MCC_LISTENS) root.MCC_LISTENS.release(listen.handle);
+    listen = null;
   }
   function granted() { return current && current.gated && currentAccess === "full"; }
   audio.addEventListener("play", function () { countStart(); paint(); syncNowFilm(false); });

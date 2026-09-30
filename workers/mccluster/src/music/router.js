@@ -7,21 +7,29 @@
    granted play.
 
    Nothing here trusts the browser about time. A listen counts only when
-   this Worker saw the song start and saw it end with at least 95% of the
-   song's measured length (src/music/tracks.js) of real time in between,
-   so skipping to the end or playing at double speed does not count, and
-   the database closes a listener's open listen whenever they start
-   another, so songs cannot be "heard" in parallel.
+   the player's beats (one every ~15 seconds while the song is actually
+   playing) add up to 95% of the song's measured length
+   (src/music/tracks.js). Each beat credits the real time since the last
+   one, capped at 20 seconds, so pausing, skipping to the end or playing
+   at double speed does not count. One listen is open per listener at a
+   time (a lock and a unique index in the database), so songs cannot be
+   "heard" in parallel.
+
+   An earned play is not a storage URL. It is a token for
+   /v1/music/stream/:token, which this Worker serves from the private
+   bucket for a few minutes and a handful of requests, then refuses.
 
      POST /v1/music/listens                 { track }  → { listen_id }
+     POST /v1/music/listens/:id/beat                    → { heard_seconds }
      POST /v1/music/listens/:id/finish                  → { counted, gates }
      GET  /v1/music/gates/:track                        → { gate }
      POST /v1/music/gates/:track/play                   → { url } or 403 locked
+     GET  /v1/music/stream/:token                       → the audio, while the token holds
 
    House operators (ops.use) play gated records without spending anything,
    so the owner can always hear their own catalogue. */
 
-import { fail, reply } from '../lib/http.js';
+import { corsHeaders, fail, reply } from '../lib/http.js';
 import { requireCapability } from '../lib/capabilities.js';
 import { resolveWorkspaces } from '../workspaces.js';
 import { TRACKS } from './tracks.js';
@@ -32,14 +40,26 @@ export const GATES = {
     each: 1,
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
-    /* long enough to press play, pause once and finish a short record;
-       short enough that a copied link is not a second copy of the song */
-    url_seconds: 600
+    /* the owner's own playback: a signed storage URL, no gate */
+    url_seconds: 600,
+    /* a listener's one play: long enough to press play and finish a short
+       record, with room for the range requests an audio element makes;
+       short enough that a copied link is not a second copy (the request
+       allowance is GATES_MAX_HITS) */
+    stream_seconds: 300
   }
 };
 
 export const COUNT_SHARE = 0.95;
+const GATES_MAX_HITS = 16;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TOKEN = /^[0-9a-f]{64}$/;
+
+function newToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 function need(user) {
   if (!user?.id) throw Object.assign(new Error('Sign in to count your listens'), { status: 401 });
@@ -121,6 +141,13 @@ async function startListen(request, env, user) {
   return reply(request, env, { ok: true, listen_id: listenId, counts: true, min_seconds: minSeconds });
 }
 
+async function beatListen(request, env, user, listenId) {
+  const userId = need(user);
+  if (!UUID.test(listenId)) return fail(request, env, 'Unknown listen', 404);
+  const heard = await rpc(env, 'music_listen_beat', { p_user: userId, p_listen: listenId });
+  return reply(request, env, { ok: true, heard_seconds: heard == null ? null : Number(heard) });
+}
+
 async function finishListen(request, env, user, listenId) {
   const userId = need(user);
   if (!UUID.test(listenId)) return fail(request, env, 'Unknown listen', 404);
@@ -145,21 +172,45 @@ async function gatePlay(request, env, user, key) {
     return reply(request, env, { ok: true, url, expires_in: gate.url_seconds, gate: { allowed: true, operator: true } });
   }
 
-  const state = await rpc(env, 'music_gate_claim', gateArgs(userId, key));
+  const token = newToken();
+  const state = await rpc(env, 'music_gate_claim', {
+    ...gateArgs(userId, key), p_token: token, p_stream_seconds: gate.stream_seconds
+  });
   if (!state?.claimed) {
     return reply(request, env, { error: 'Locked', locked: true, gate: state }, 403);
   }
-  try {
-    const url = await signObject(env, gate.bucket, gate.object, gate.url_seconds);
-    return reply(request, env, { ok: true, url, expires_in: gate.url_seconds, gate: state });
-  } catch (error) {
-    /* A play the listener earned is not spent on our outage. */
-    await fetch(`${env.SUPABASE_URL}/rest/v1/music_gated_plays?id=eq.${encodeURIComponent(state.play_id)}`, {
-      method: 'DELETE',
-      headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` }
-    }).catch(() => {});
-    throw error;
+  const url = `${new URL(request.url).origin}/v1/music/stream/${token}`;
+  return reply(request, env, { ok: true, url, expires_in: gate.stream_seconds, gate: state });
+}
+
+/* The one play itself. The token is the credential (an <audio> element
+   cannot send an Authorization header); the database counts every request
+   against it and stops answering once it is used up or stale. */
+async function streamPlay(request, env, token) {
+  if (!TOKEN.test(token)) return fail(request, env, 'Unknown play', 404);
+  const key = await rpc(env, 'music_stream_open', { p_token: token, p_max_hits: GATES_MAX_HITS });
+  const gate = key && GATES[key];
+  if (!gate) return fail(request, env, 'This play has ended', 410);
+  const path = `${gate.bucket}/${String(gate.object).split('/').map(encodeURIComponent).join('/')}`;
+  const headers = {
+    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+    authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`
+  };
+  const range = request.headers.get('range');
+  if (range) headers.range = range;
+  const upstream = await fetch(`${env.SUPABASE_URL}/storage/v1/object/authenticated/${path}`, { headers });
+  if (!upstream.ok && upstream.status !== 206) {
+    return fail(request, env, upstream.status === 404 ? 'The full track is not uploaded' : 'Could not open the full track',
+      upstream.status === 404 ? 404 : 502);
   }
+  const out = new Headers(corsHeaders(request, env));
+  for (const name of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
+    const value = upstream.headers.get(name);
+    if (value) out.set(name, value);
+  }
+  out.set('cache-control', 'no-store, private');
+  out.set('content-disposition', 'inline');
+  return new Response(upstream.body, { status: upstream.status, headers: out });
 }
 
 export async function handleMusicRequest(request, env, user) {
@@ -171,6 +222,12 @@ export async function handleMusicRequest(request, env, user) {
 
   const finish = path.match(/^\/v1\/music\/listens\/([^/]+)\/finish$/);
   if (finish && request.method === 'POST') return finishListen(request, env, user, finish[1]);
+
+  const beat = path.match(/^\/v1\/music\/listens\/([^/]+)\/beat$/);
+  if (beat && request.method === 'POST') return beatListen(request, env, user, beat[1]);
+
+  const stream = path.match(/^\/v1\/music\/stream\/([^/]+)$/);
+  if (stream && request.method === 'GET') return streamPlay(request, env, stream[1]);
 
   const gate = path.match(/^\/v1\/music\/gates\/([a-z0-9-]+)(\/play)?$/);
   if (gate && !gate[2] && request.method === 'GET') return gateState(request, env, user, gate[1]);

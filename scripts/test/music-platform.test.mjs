@@ -59,7 +59,8 @@ test('every player reports full listens from the top, and the gated record never
   assert.match(engine,/MCC_LISTENS\.finish\(listen\.handle\)/);
   assert.match(pip,/if \(!next\.gated\) ledger\(/);
   const ledger=await read('js/listen-ledger.js');
-  assert.doesNotMatch(ledger,/seconds|duration/,'the browser must never tell the server how long a song is');
+  assert.doesNotMatch(ledger,/seconds\s*:|duration/,'the browser must never tell the server how long a song is');
+  assert.match(ledger,/\/beat"/,'listens are credited by beats while playing, not by start-to-end time');
 });
 
 test('discovery has one persistent transport and inline play controls', async()=>{
