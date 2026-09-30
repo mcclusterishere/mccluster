@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Matthew McCluster · IT Support &amp; Field Technician Résumé</title>
+  <meta name="description" content="Matthew McCluster, IT support and field technician résumé: desktop and endpoint support, data-center and network infrastructure, Windows Server, Cisco, workstation builds and rollouts. Connecticut.">
+  <meta name="author" content="Matthew McCluster">
+    <link rel="canonical" href="https://matthew.mccluster.org/resume-it-support.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0807">
+  <!-- A role-tailored cut of matthew-mccluster.html, sent to recruiters by
+       link. Kept out of search so the original stays the one public résumé. -->
+  <meta name="robots" content="noindex, follow">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    body { background: var(--ink); }
+    .bio { max-width: 46rem; margin: 0 auto; padding: clamp(4.6rem, 9vh, 6rem) clamp(1.1rem, 4vw, 2rem) 8rem; }
+    .bio__mark { width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 1.1rem;
+      background: linear-gradient(150deg, rgba(229,56,59,0.2), rgba(20,16,14,0.85)); border: 1.5px solid rgba(229,56,59,0.5); }
+    .bio__mark img { width: 54%; }
+    .bio__k { font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .bio h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(2.8rem, 12vw, 4.8rem); margin-top: 0.4rem; }
+    .bio__role { color: var(--cream); font-size: 1.06rem; font-weight: 700; margin-top: 0.5rem; }
+    .bio__lede { color: var(--cream-dim); line-height: 1.75; margin-top: 1.1rem; font-size: 1.04rem; }
+    .bio__lede b { color: var(--cream); }
+    .bio__lede a, .bio a.lnk { color:var(--ruby-text); text-decoration: none; border-bottom: 1px solid rgba(232,200,119,0.35); }
+    .bio h2 { font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 1.4rem; color: var(--cream);
+      margin-top: 2.6rem; border-bottom: 1px solid rgba(229,56,59,0.3); padding-bottom: 0.45rem; }
+    .bio h2 + p { margin-top: 0.9rem; }
+    .bio p { color: var(--cream-dim); line-height: 1.7; }
+    .bio__facts { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.5rem; }
+    .bio__facts li { color: var(--cream-dim); line-height: 1.5; padding-left: 1.1rem; position: relative; }
+    .bio__facts li::before { content: ""; display: inline-block; width: .42em; height: .54em; background: #e5383b; clip-path: polygon(0 0,100% 50%,0 100%); position: absolute; left: 0; top: .42em; }
+    .bio__facts b { color: var(--cream); }
+    .tl { list-style: none; padding: 0; margin: 1rem 0 0; }
+    .tl li { border-left: 2px solid rgba(229,56,59,0.35); padding: 0 0 1.05rem 1rem; position: relative; }
+    .tl li::before { content: ""; position: absolute; left: -5px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: #e5383b; }
+    .tl .yr { display: block; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .tl .ti { color: var(--cream); font-weight: 700; }
+    .tl .wh { color: var(--cream-dim); font-size: 0.9rem; }
+    /* the accomplishments under each role — added when the résumé went
+       multi-role, because titles with no bullets tell a hiring manager
+       nothing and give a keyword parser nothing to match */
+    .tl .dt { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.3rem; }
+    .tl .dt li { border: 0; padding: 0 0 0 0.9rem; position: relative; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.55; }
+    .tl .dt li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: rgba(229,56,59,0.7); }
+    .ids { display: grid; gap: 0.55rem; margin-top: 1rem; }
+    .id { border: 1px solid var(--edge); border-radius: 11px; background: var(--glass-hi); padding: 0.7rem 0.9rem; }
+    .id b { color: var(--cream); } .id .v { color:var(--ruby-text); font-variant-numeric: tabular-nums; float: right; }
+    .id a { color:var(--ruby-text); text-decoration: none; font-variant-numeric: tabular-nums; float: right; border-bottom: 1px solid rgba(232,200,119,0.35); }
+    .find { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
+    .find a { text-decoration: none; border: 1px solid rgba(244,239,230,0.2); border-radius: 100px; padding: 0.55rem 1rem;
+      color: var(--cream); font-weight: 700; font-size: 0.9rem; }
+    .find a:hover { border-color:var(--ruby-text); color:var(--ruby-text); }
+    .bio__cta { display: grid; gap: 0.55rem; margin-top: 1.6rem; }
+    .bio__cta a { display: block; text-align: center; text-decoration: none; font-weight: 800; border-radius: 100px; padding: 0.9rem 1rem; }
+    /* The ink sits on the gradient, so the darkest stop sets the floor:
+       #b8862f gives it 5.8:1, #e5383b only 4.4:1, and the right-hand third
+       of the button — where the arrow lives — falls under AA. The stop is
+       lifted to a warmer red that clears at 4.9:1 without leaving the
+       brand. This is the one button on the page a recruiter is meant to
+       press, so it does not get to be the marginal one. */
+    .bio__cta .hot { background: linear-gradient(120deg, #b8862f, #e84a45); color: #17110d; }
+    .bio__cta .cool { border: 1px solid rgba(244,239,230,0.25); color: var(--cream); }
+    html[data-theme="light"] .bio__cta .cool { border-color: rgba(26,20,13,0.3); }
+    .bio__foot { margin-top: 3rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; }
+    .bio__foot a { color:var(--ruby-text); text-decoration: none; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <!-- last, so its @media print block overrides the coat -->
+  <link rel="stylesheet" href="css/professional.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/resume-print.css?v=__STAMP__">
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<!--: this page is a résumé landing. The house bar reads
+     "Music · Equity Uprise · HERE · Shakes · Profile", and a Shakes tab on
+     the page a hiring manager opens from a job application is the single
+     most expensive thing on it. The footer keeps the way back into the
+     house. Remove this attribute to put the bar back. -->
+<!-- THE IT SUPPORT CUT OF THE RÉSUMÉ.
+
+     matthew-mccluster.html is the résumé and stays exactly as it is. This
+     page is the same person, the same facts and the same look, reordered
+     for field-technician and L1/L2 support roles: the support and
+     infrastructure work leads, and nothing here is claimed that the
+     original does not already say. Same stylesheets, same print layout, so
+     it prints and saves as a PDF the same way. -->
+<body class="songpage">
+
+  <main class="bio">
+    <span class="bio__mark" aria-hidden="true"><img src="assets/img/m-mark.png" alt=""></span>
+    <p class="bio__k">IT support · field technician · infrastructure</p>
+    <h1>Matthew McCluster</h1>
+    <p class="bio__role">IT Support &amp; Field Technician · Infrastructure Engineer</p>
+
+    <p class="rsm-contact">
+      <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>
+      · Connecticut, United States
+      · <a href="https://matthew.mccluster.org/">matthew.mccluster.org</a>
+    </p>
+
+    <div class="rsm-get">
+      <a class="rsm-get__pdf" href="assets/resume/matthew-mccluster-resume-it-support.pdf"
+         download="Matthew-McCluster-Resume-IT-Support.pdf" data-cta="it-resume-pdf">
+        Download this résumé <small>PDF</small>
+      </a>
+      <button class="rsm-get__print" type="button" id="rsmPrint" data-cta="it-resume-print">
+        Print this page
+      </button>
+      <a class="rsm-get__doc" href="matthew-mccluster.html" data-cta="it-resume-full">
+        Full résumé <small>&#8594;</small>
+      </a>
+    </div>
+
+    <p class="bio__lede"><b>Matthew McCluster</b> is a Connecticut-based IT support technician and infrastructure
+      engineer with five years in enterprise IT: hands-on desktop, laptop and business-application support at
+      <b>Robert Half</b>, and data-center, Cisco networking and Windows and Linux server work at <b>IPC Systems</b>.
+      He works on site and independently, communicates clearly with non-technical users, and documents what he
+      does. Since 2025 he has also designed and run the platform behind McCluster Corp, from the database and APIs
+      to deployment.</p>
+
+    <h2>What I bring to L1/L2 field support</h2>
+    <ul class="bio__facts">
+      <li><b>End-user support:</b> Hardware, software, desktop, laptop and business-application issues; login, access, device and connectivity problems</li>
+      <li><b>Deployments:</b> Technology rollouts, system setup, workstation builds and user training</li>
+      <li><b>Hardware:</b> Dell, Oracle and Sun server installs, PERC RAID, rack buildout, PDUs and environmental monitoring</li>
+      <li><b>Systems:</b> Windows Server, RedHat, CentOS</li>
+      <li><b>Networking:</b> Cisco Nexus 9000/4500, DHCP scope configuration, CAT6 and multi/single-mode fiber, connectivity troubleshooting</li>
+      <li><b>Equipment moves &amp; decommissioning:</b> Data-center transformation of a 5,000 sq ft facility; DoD-standard data destruction (dBAN) and ISO-standard e-waste handling</li>
+      <li><b>Working style:</b> On site, independent, clear with non-technical users, documents the work, trains new team members</li>
+    </ul>
+
+    <h2>IT experience</h2>
+    <ul class="tl">
+      <li><span class="yr">2021 to 2023</span><span class="ti">Infrastructure Engineer</span><br><span class="wh">IPC Systems · Fairfield, Connecticut</span>
+        <ul class="dt">
+          <li>Troubleshot access, connectivity, platform and system issues for business, technical and operations teams.</li>
+          <li>Data-center transformation of a 5,000 sq ft facility: rack buildout (Ortronics 45U, APC NetShelter 42U), CAT6 and multi/single-mode fiber, PDUs and environmental monitoring.</li>
+          <li>Dell, Oracle and Sun server installs across Windows Server, RedHat and CentOS, with PERC RAID configuration.</li>
+          <li>Cisco Nexus 9000/4500 networking and DHCP scope configuration.</li>
+          <li>Supported IPC trading turrets (Touch, Pulse, IQMax, Edge) under trading-floor uptime pressure.</li>
+          <li>DoD-standard data destruction (dBAN) and ISO-standard e-waste handling; instructed new team members.</li>
+        </ul>
+      </li>
+      <li><span class="yr">2018 to 2021</span><span class="ti">Desktop / IT Support Technician</span><br><span class="wh">Robert Half · Norwalk, Connecticut</span>
+        <ul class="dt">
+          <li>Customer-facing support for hardware, software, desktop, laptop and business-application issues.</li>
+          <li>Resolved login, platform-access, device and connectivity problems; communicated clearly with non-technical users.</li>
+          <li>Supported technology rollouts, system setup, workstation builds and user training.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Other experience</h2>
+    <ul class="tl">
+      <li><span class="yr">2025 to Present</span><span class="ti">Founder / Digital Program Operator</span><br><span class="wh">McCluster Corp · Equity Uprise · Connecticut &amp; Georgia</span>
+        <ul class="dt">
+          <li>Designed and operates the organization's platform end to end: Postgres schema and row-level security, serverless API functions, payments, and an automated release gate that blocks a bad deploy.</li>
+          <li>Built and maintains the public web properties and the data behind them.</li>
+        </ul>
+      </li>
+      <li><span class="yr">2021 to 2026</span><span class="ti">Digital Marketing &amp; Outreach Platform Manager</span><br><span class="wh">F.R.E.E.D.O.M. Inc. · Bridgeport, Connecticut</span>
+        <ul class="dt">
+          <li>Supported staff with platform access, posting, technical issues and digital workflow needs.</li>
+          <li>Coordinated live streaming, recording and media production for weekly public programming.</li>
+          <li>Moved traditional outreach and communication processes onto modern digital systems.</li>
+        </ul>
+      </li>
+      <li><span class="yr">2024 to September 2026</span><span class="ti">Owner-Operator</span><br><span class="wh">Whip Equipped LLC · Acworth, Georgia</span>
+        <ul class="dt">
+          <li>Founded and organized a parts-licensed automotive dealership; runs sourcing, sales, licensing and compliance.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>Credentials</h2>
+    <ul class="bio__facts">
+      <li><b>CompTIA ITF+ Certification:</b> December 1, 2022.</li>
+      <li><b>IT Bootcamp Certificate:</b> CT State Community College (Housatonic), September 20, 2023.</li>
+    </ul>
+
+    <h2>Recognition</h2>
+    <ul class="bio__facts">
+      <li><b>Georgia Governor's Proclamation</b> and <b>City of Bridgeport Proclamation</b> (2025) for the Equity Uprise civic fellowship he founded.</li>
+    </ul>
+
+    <div class="bio__cta">
+      <a class="hot" href="mailto:matthew@mccluster.org?subject=IT%20support%20role" data-cta="it-role">Talk to me about the role &#8594;</a>
+      <a class="cool" href="matthew-mccluster.html" data-cta="it-full">The full résumé &#8594;</a>
+    </div>
+
+    <p class="bio__foot">
+      <a href="matthew-mccluster.html">Full résumé</a> ·
+      <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
+      © 2026 Matthew McCluster · McCluster Corp. All rights reserved.
+    </p>
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>if (window.MCC_TRACK) window.MCC_TRACK("bio_view", { cut: "it-support" });</script>
+  <script>
+  document.getElementById("rsmPrint").addEventListener("click", function () { window.print(); });
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>
