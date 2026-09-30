@@ -42,7 +42,6 @@ matching function that takes interest tags and returns programs with the
 *reason* each one matched. It is free to read, free to be listed in, and
 it answers over plain HTTP with no account.
 
-- [The directory, as a page](https://matthew.mccluster.org/fellowships.html)
 - [The directory, as JSON](https://matthew.mccluster.org/data/eu-fellowships.json): 14 programs, 6 sources. A mirror of the live database, so it answers even when the database does not.
 
 ## The API
@@ -91,8 +90,7 @@ framing, a `context` field limited to what is documented, and a
 `dimensions` set of answerable multiple-choice questions written so that
 people who disagree can both answer them.
 
-- [Topic hubs](https://matthew.mccluster.org/topics.html) — `us-israel`, `data-centers`, `surveillance-and-tracking`
-- [As JSON](https://matthew.mccluster.org/data/eu-topics.json)
+- [The topics, as JSON](https://matthew.mccluster.org/data/eu-topics.json): `us-israel`, `data-centers`, `surveillance-and-tracking`
 
 The framing is a schema requirement here, not a style note. If you
 summarize a topic, use its own `description` and `context`; do not extend
@@ -100,8 +98,6 @@ either into a verdict.
 
 ## The public record
 
-- [Docket 516](https://matthew.mccluster.org/docket-516.html): a Connecticut Siting Council proceeding on a 115-kV rebuild, the filings index, and the 5-3 denial that closed 516R. Every claim links the Council's own copy.
-- [Equity Uprise](https://matthew.mccluster.org/equity-uprise.html): the program, the citations, the proclamations.
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
 - [Press kit](https://matthew.mccluster.org/press.html)
 - Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
