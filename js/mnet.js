@@ -355,9 +355,8 @@
       postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          '<button class="mn__action' + (liked ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '">' +
-            (liked ? "Liked" : "Like") + (likes ? " · " + likes : "") + '</button>' +
-          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">Comment' + (replies ? " · " + replies : "") + '</button>' +
+          '<button class="mn__action mn__action--primary" type="button" data-action="act" data-post="' + esc(id) + '">Take action' + (replies ? " · " + replies + " responses" : "") + '</button>' +
+          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">See action</button>' +
           '<button class="mn__action' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '">' + (saved ? "Saved" : "Save") + '</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '">Delete</button>' : '') +
         '</div>') +
@@ -365,8 +364,8 @@
   }
 
   function bindFeedActions(root) {
-    root.querySelectorAll("[data-action=like]").forEach(function (b) {
-      b.onclick = function () { toggleLike(b.dataset.post, b); };
+    root.querySelectorAll("[data-action=act]").forEach(function (b) {
+      b.onclick = function () { openThread(b.dataset.post, { actionMode:true }); };
     });
     root.querySelectorAll("[data-action=comments]").forEach(function (b) {
       b.onclick = function () { openThread(b.dataset.post); };
@@ -387,7 +386,7 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = '<div class="mn__empty">Mnet is live. There are no posts yet — yours can be the first.</div>';
+      host.innerHTML = '<div class="mn__empty">No initiatives are active yet. When organizers post one, this is where you take action.</div>';
       return;
     }
     host.innerHTML = state.feed.map(function (item) {
