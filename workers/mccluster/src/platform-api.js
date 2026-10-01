@@ -268,7 +268,16 @@ async function handleMnet(req,env,path,url){
     }
     if(!body&&!assets.length)return fail(req,env,'Post body or media is required',400);
     let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
+    const requestedActionKind=String(b.action_kind||'').trim().toLowerCase();
+    const actionKinds=new Set(['claim','progress','proof','research','recruit','attend','resource','complete']);
     if(replyTo){if(!uuidLike(replyTo))return fail(req,env,'Invalid parent post',400);const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return fail(req,env,'Parent post not found',404);visibility=parent.visibility}
+    /* Replies are action responses, not comments. They must declare what the
+       member did/is doing. Proof/progress/complete responses require media,
+       turning the thread beneath an initiative into an evidence stream. */
+    if(replyTo){
+      if(!actionKinds.has(requestedActionKind))return fail(req,env,'Choose an action before responding to this initiative',400);
+      if(['progress','proof','complete'].includes(requestedActionKind)&&!assets.length)return fail(req,env,'Progress and completed actions require photo or video proof',400);
+    }
     const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
     const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
     /* A post can belong to a group. The membership is checked here rather
@@ -284,7 +293,7 @@ async function handleMnet(req,env,path,url){
       if(!mine?.length)return fail(req,env,'Join the group before posting in it',403);
       groupId=gid;
     }
-    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null})});
+    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:{...postMetadata(b),...(replyTo?{action_kind:requestedActionKind,action_response:true}: {})},reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null})});
     const created=rows?.[0];
     if(created&&mediaIds.length)await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
     const hydrated=await hydratePostRows(env,rows||[],muid); return reply(req,env,{post:hydrated?.[0]?.post||created,actor:hydrated?.[0]?.actor||null},201);
@@ -340,13 +349,10 @@ async function handleMnet(req,env,path,url){
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    if(external)return fail(req,env,'Reaction mutation requires a McCluster user session',403);
-    const b=await json(req),muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
-    const posts=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`),post=posts?.[0];
-    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
-    const reaction=String(b.reaction||'like').slice(0,40);
-    if(req.method==='DELETE'){await service(env,`network_reactions?post_id=eq.${react[1]}&actor_m_uid=eq.${muid}&reaction=eq.${encodeURIComponent(reaction)}`,{method:'DELETE',headers:{prefer:'return=minimal'}});return reply(req,env,{reaction:null})}
-    const rows=await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({post_id:react[1],actor_m_uid:muid,reaction})}); return reply(req,env,{reaction:rows?.[0]},201);
+    /* Mnet is action-first. A reaction without work behind it is not a
+       network contribution. Legacy reaction rows remain readable during
+       migration, but the public API no longer creates likes. */
+    return fail(req,env,'Mnet does not use likes. Take action on the initiative and post progress or proof instead.',409);
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){
