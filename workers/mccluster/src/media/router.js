@@ -87,6 +87,41 @@ async function saveAssets(env, orgId, jobId, result) {
   });
 }
 
+function validateModelInput(model, input, hadStructuredInput) {
+  const capability = String(model?.capability || '').toLowerCase();
+  const schema = model?.parameter_schema && typeof model.parameter_schema === 'object'
+    ? model.parameter_schema
+    : {};
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  const missing = required.filter((field) => {
+    const value = input?.[field];
+    return value === undefined || value === null || value === '';
+  });
+  if (missing.length) {
+    throw Object.assign(new Error('Media model input is missing required fields'), {
+      status: 422,
+      detail: { model_id: model.id, capability: model.capability, missing_fields: missing }
+    });
+  }
+
+  /* Empty legacy parameter schemas cannot tell us the provider's exact field
+     names. Do not let a prompt-only caller accidentally submit an edit/I2V/
+     lipsync/upscale model anyway. A structured input object proves the caller
+     deliberately supplied provider/media controls; provider validation can
+     then handle the exact schema until the catalog row is normalized. */
+  if (!capability.startsWith('text-to-') && !hadStructuredInput) {
+    throw Object.assign(new Error('This media model requires structured media input, not a prompt-only request'), {
+      status: 422,
+      detail: {
+        model_id: model.id,
+        capability: model.capability,
+        provider_model_id: model.provider_model_id,
+        required_action: 'supply model input/reference media or choose a text-to-* model'
+      }
+    });
+  }
+}
+
 function budgetCents(value) {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
@@ -259,9 +294,11 @@ export async function createGeneration(request, env, user) {
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
   if (model.provider !== 'fal') throw Object.assign(new Error('Provider adapter not installed'), { status: 501 });
 
+  const hadStructuredInput = Boolean(body.input && typeof body.input === 'object' && Object.keys(body.input).length);
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
+  validateModelInput(model, input, hadStructuredInput);
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
