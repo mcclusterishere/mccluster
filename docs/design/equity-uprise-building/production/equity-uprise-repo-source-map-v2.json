@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 255,
+  "candidate_count": 260,
   "capability_source_count": 97,
-  "support_only_count": 158,
+  "support_only_count": 163,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -299,6 +299,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": "action/index.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
     },
     {
       "path": "AGENTS.md",
@@ -872,6 +879,13 @@
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
+      "path": "heal-the-3rd-world.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
+    },
+    {
       "path": "hire.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -1205,6 +1219,13 @@
       "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
     },
     {
+      "path": "resume-it-support.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+    },
+    {
       "path": "scripts/kb-build.mjs",
       "classification": "capability_source",
       "capability_ids": [
@@ -1226,6 +1247,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/test/action-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
     },
     {
       "path": "scripts/test/appbar-consistency.test.mjs",
@@ -1612,6 +1640,20 @@
       "rationale": "Shared owner analytics/read-authority migration is discovered by the Equity Uprise repo audit because it references owner/admin authority, but it does not define an independent Equity Uprise capability."
     },
     {
+      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Uprise Action Network schema for campaigns, participants, actions and ledger; backend support for mobilization, not a separate building capability."
+    },
+    {
+      "path": "supabase/pending_migrations/20260930235930_mnet_action_network_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending schema extending canonical Mnet with campaign-room links, missions, evidence, verified contributions and initiative actions; not a separate building capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -1991,6 +2033,13 @@
       "rationale": "Routes the sanitized Equity Uprise Halo Globe projection while preserving the owner-only Seek First surface."
     },
     {
+      "path": "workers/mccluster/src/music/tracks.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated song-length table for the listen ledger; carries the equity-uprise album slug as catalogue data only, no program capability."
+    },
+    {
       "path": "workers/mccluster/src/seek-first/catalogs.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2019,48 +2068,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
-    },
-    {
-      "path": "resume-it-support.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
-    },
-    {
-      "path": "workers/mccluster/src/music/tracks.js",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Generated song-length table for the listen ledger; carries the equity-uprise album slug as catalogue data only, no program capability."
-    },
-    {
-      "path": "action/index.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
-    },
-    {
-      "path": "heal-the-3rd-world.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
-    },
-    {
-      "path": "scripts/test/action-network.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
-    },
-    {
-      "path": "supabase/pending_migrations/20260930230000_uprise_action_network.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending (unapplied) schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes. Moves to supabase/migrations under its applied version."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
