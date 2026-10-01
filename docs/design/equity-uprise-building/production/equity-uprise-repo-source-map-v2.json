@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 262,
+  "candidate_count": 260,
   "capability_source_count": 97,
-  "support_only_count": 165,
+  "support_only_count": 163,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -570,13 +570,6 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
-    },
-    {
-      "path": "docs/architecture/MNET-ACTION-NETWORK-V2.md",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Architecture contract for making canonical Mnet the Action Network; product/runtime guidance, not a physical building capability."
     },
     {
       "path": "docs/control-plane/branch-reconciliation-2026-09-26.json",
@@ -1270,13 +1263,6 @@
       "rationale": "Shared app-bar consistency regression test covers shell/navigation presentation across pages; it does not define a distinct Equity Uprise building capability."
     },
     {
-      "path": "scripts/test/mnet-action-network-v2.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Contract tests for Mnet Action Network v2 identity, mission, funding-off and RLS invariants; not a program capability."
-    },
-    {
       "path": "scripts/test/signup-authority.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1654,11 +1640,11 @@
       "rationale": "Shared owner analytics/read-authority migration is discovered by the Equity Uprise repo audit because it references owner/admin authority, but it does not define an independent Equity Uprise capability."
     },
     {
-      "path": "supabase/pending_migrations/20260930230000_uprise_action_network.sql",
+      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (unapplied) schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes. Moves to supabase/migrations under its applied version."
+      "rationale": "Applied Uprise Action Network schema for campaigns, participants, actions and ledger; backend support for mobilization, not a separate building capability."
     },
     {
       "path": "supabase/pending_migrations/20260930235930_mnet_action_network_v2.sql",
