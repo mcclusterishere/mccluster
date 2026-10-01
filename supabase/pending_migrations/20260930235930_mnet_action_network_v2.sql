@@ -233,3 +233,93 @@ returns jsonb language sql stable security definer set search_path='' as $$
 $$;
 revoke all on function public.action_my_missions() from public,anon;
 grant execute on function public.action_my_missions() to authenticated,service_role;
+
+
+-- ============================================================
+-- ACTION-FIRST SOCIAL CONTRACT
+-- ============================================================
+-- Admin initiatives are the root social object. Member responses are
+-- structured action/proof records attached to an initiative, not likes.
+
+alter table public.network_posts
+  add column if not exists action_mode text not null default 'none'
+    check (action_mode in ('none','initiative','proof','progress','outcome')),
+  add column if not exists initiative_post_id uuid references public.network_posts(id) on delete set null,
+  add column if not exists mission_id uuid references public.action_missions(id) on delete set null;
+
+create index if not exists network_posts_initiative_idx
+  on public.network_posts(initiative_post_id,created_at desc)
+  where initiative_post_id is not null;
+
+create table if not exists public.network_initiative_actions (
+  id uuid primary key default gen_random_uuid(),
+  initiative_post_id uuid not null references public.network_posts(id) on delete cascade,
+  mission_id uuid references public.action_missions(id) on delete set null,
+  actor_m_uid uuid not null references public.m_people(id) on delete cascade,
+  action_kind text not null
+    check (action_kind in ('claim','progress','proof','research','recruit','attend','resource','complete')),
+  body text not null default '',
+  media jsonb not null default '[]'::jsonb check (jsonb_typeof(media)='array'),
+  evidence jsonb not null default '[]'::jsonb check (jsonb_typeof(evidence)='array'),
+  status text not null default 'submitted'
+    check (status in ('claimed','in_progress','submitted','verified','needs_revision','rejected')),
+  verified_by_m_uid uuid references public.m_people(id) on delete set null,
+  verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((status <> 'verified' and verified_at is null) or (status='verified' and verified_at is not null))
+);
+create index if not exists network_initiative_actions_post_idx
+  on public.network_initiative_actions(initiative_post_id,status,created_at desc);
+create index if not exists network_initiative_actions_actor_idx
+  on public.network_initiative_actions(actor_m_uid,status,created_at desc);
+
+alter table public.network_initiative_actions enable row level security;
+
+create policy "members read initiative action stream" on public.network_initiative_actions
+  for select to authenticated using (true);
+create policy "members submit their own initiative actions" on public.network_initiative_actions
+  for insert to authenticated with check (
+    actor_m_uid=public.current_m_uid()
+    and status in ('claimed','in_progress','submitted')
+    and exists (
+      select 1 from public.network_posts p
+       where p.id=network_initiative_actions.initiative_post_id
+         and p.action_mode='initiative' and p.deleted_at is null
+    )
+  );
+create policy "owner verifies initiative actions" on public.network_initiative_actions
+  for all to authenticated using (public.eu_is_admin()) with check (public.eu_is_admin());
+
+grant select,insert on public.network_initiative_actions to authenticated;
+grant all on public.network_initiative_actions to service_role;
+
+comment on table public.network_initiative_actions is
+  'Action-first response stream beneath admin initiatives. Replaces empty engagement with claims, progress, proof and verified outcomes.';
+
+-- The dispatch desk can match people using what they offered when joining,
+-- canonical identity, group membership, and prior verified work.
+create or replace function public.action_dispatch_pool(p_campaign text)
+returns jsonb language plpgsql stable security definer set search_path='' as $$
+begin
+  if not public.eu_is_admin() then
+    raise exception 'owner only' using errcode='42501';
+  end if;
+  return (
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'm_uid',p.m_uid,'participant_no',p.participant_no,'joined_at',p.joined_at,
+      'skills',to_jsonb(p.skills),'contributions',to_jsonb(p.contributions),
+      'origin',p.origin,
+      'open_assignments',(select count(*) from public.action_mission_assignments a
+        where a.m_uid=p.m_uid and a.state in ('accepted','in_progress','submitted','needs_revision')),
+      'verified_missions',(select count(*) from public.action_mission_assignments a
+        where a.m_uid=p.m_uid and a.state='verified'),
+      'verified_contributions',(select count(*) from public.action_contributions c
+        where c.m_uid=p.m_uid and c.verified)
+    ) order by p.joined_at), '[]'::jsonb)
+    from public.action_participants p where p.campaign_id=p_campaign and p.m_uid is not null
+  );
+end;
+$$;
+revoke all on function public.action_dispatch_pool(text) from public,anon;
+grant execute on function public.action_dispatch_pool(text) to authenticated,service_role;
