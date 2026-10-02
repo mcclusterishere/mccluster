@@ -516,3 +516,12 @@ html, body { background: #0a0807; }
 .mn__frontpage-head div{display:grid;gap:2px}.mn__frontpage-head span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}.mn__frontpage-head strong{font-size:14px}.mn__frontpage-head a{font-size:12px;color:var(--ruby-hot,#e5383b);text-decoration:none}
 .mn__frontpage-stage{position:relative;height:min(62vh,620px);background:#080706}.mn__frontpage-stage iframe{width:100%;height:100%;border:0;background:#080706}
 @media(max-width:620px){.mn__frontpage{margin-left:-10px;margin-right:-10px;border-radius:18px}.mn__frontpage-stage{height:58vh}}
+
+/* Action Network identity: action is the product, not generic social posting. */
+.mn__manifesto{margin:18px 0 20px;padding:24px 20px 20px;border:1px solid var(--mn-rule-2);border-radius:24px;background:radial-gradient(circle at 92% 0,rgba(255,77,61,.22),transparent 38%),linear-gradient(145deg,#191310,#0b0908 72%);overflow:hidden}
+.mn__manifesto p,.mn__rail-k{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.mn__manifesto h1{max-width:9ch;margin:7px 0 18px;font-family:var(--mn-display);font-size:clamp(2.7rem,12vw,4.8rem);font-weight:400;line-height:.88;text-transform:uppercase}
+.mn__manifesto div{display:flex;gap:7px;overflow:auto;scrollbar-width:none}.mn__manifesto div::-webkit-scrollbar{display:none}.mn__manifesto span{flex:none;padding:8px 11px;border:1px solid var(--mn-rule-2);border-radius:999px;color:var(--mn-dim);font-size:.72rem;font-weight:800}
+.mn__rail-head>div{min-width:0}.mn__rail-k{margin-bottom:3px}
+.mn__post{padding-inline:16px}
+@media(min-width:700px){.mn__manifesto{padding:30px}.mn__manifesto h1{font-size:4.8rem}}
