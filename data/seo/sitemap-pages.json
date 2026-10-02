@@ -186,6 +186,21 @@
       "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
       "lastmod": "2026-10-02",
       "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/it-support-systems.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.85
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/data-center-networking.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.85
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/field-technology-telematics.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.85
     }
   ]
 }
