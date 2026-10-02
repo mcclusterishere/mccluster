@@ -205,3 +205,28 @@ html[data-theme="light"] .ob__segs i { background: rgba(26,20,13,0.16); }
 
 /* a disabled button still has to read as a button, not as a hole */
 html[data-theme="light"] .ob__next[disabled] { background: #ded6c8; color: #6b6355; }
+
+
+/* Shared McCluster polish migration */
+.ob__step:not([hidden]) { animation:mcc-rise .5s var(--mcc-ease) both; }
+.pick > button {
+  transition:transform .25s var(--mcc-spring),background .22s var(--mcc-ease),border-color .22s,box-shadow .25s;
+}
+.pick > button[aria-pressed="true"] { transform:scale(1.012); }
+.pick > button[aria-pressed="true"]::after {
+  content:"✓"; float:right; width:1.35rem; height:1.35rem; display:grid; place-items:center;
+  margin-left:.5rem; border-radius:50%; background:var(--ruby-hot); color:#fff;
+  font-size:.7rem; font-weight:900; animation:mcc-badge-in .4s var(--mcc-spring) both;
+}
+.ob__next { transition:transform .22s var(--mcc-spring),box-shadow .25s,filter .2s,opacity .2s; }
+.ob__next:not([disabled]):active { transform:scale(.96); }
+.obsum,.oback,.ws__card,.rev li { transition:transform .25s var(--mcc-ease),box-shadow .3s var(--mcc-ease),border-color .2s; }
+.ws__list li.is-done::before { animation:mcc-pop .48s var(--mcc-spring); }
+@media (hover:hover) {
+  .pick > button:hover,.rev li:hover { transform:translateY(-2px); }
+  .obsum:hover,.oback:hover,.ws__card:hover { transform:translateY(-1px); box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 18px 44px -38px rgba(244,239,230,.28); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .ob__step:not([hidden]),.pick > button[aria-pressed="true"]::after,.ws__list li.is-done::before { animation:none !important; }
+  .pick > button,.ob__next,.obsum,.oback,.ws__card,.rev li { transition:none !important; transform:none !important; }
+}
