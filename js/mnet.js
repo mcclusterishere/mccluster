@@ -925,14 +925,15 @@
 
   function setView(name) {
     state.currentView = name;
-    ["feed","discover","groups","messages","notifications","profile"].forEach(function (view) {
-      var ids={feed:"mnFeedView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+    ["feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
+      var ids={feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
     });
     moveThumb(true);
-    if(name==="missions")loadMissions();\n    if(name==="discover")loadDiscover();
+    if(name==="missions")loadMissions();
+    if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
