@@ -162,3 +162,6 @@ test("Action Network profile treats the member website as the identity front pag
  assert.match(js,/function paintFrontPage\(p, id, name\)/); assert.match(js,/p\.front_page_url \|\| p\.website_url/);
  assert.match(js,/paintFrontPage\(p, id, name\)/); assert.match(css,/\.mn__frontpage-stage/);
 });
+
+
+test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
