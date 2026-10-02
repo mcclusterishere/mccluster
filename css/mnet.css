@@ -426,3 +426,86 @@ html, body { background: #0a0807; }
   .mn { max-width: 46rem; }
   .mn__tabs { justify-content: flex-start; }
 }
+
+
+/* ---------- motion polish: tactile, not noisy ---------- */
+.mn__composer:focus-within {
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 14px 42px -26px rgba(255,77,61,.55);
+  transform: translateY(-1px);
+}
+.mn__composer { transform: translateY(0); }
+.mn__composer-head textarea { transition: color .2s, opacity .2s, transform .3s var(--mn-ease); }
+.mn__composer:focus-within .mn__composer-head textarea { transform: translateX(2px); }
+
+.mn__post-card.is-just-posted { animation: mn-post-arrive .8s var(--mn-spring) both; }
+.mn__post-card.is-just-posted::after {
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  box-shadow: inset 0 0 0 1px rgba(255,77,61,.7);
+  animation: mn-post-glow 1.4s var(--mn-ease) both;
+}
+.mn__post-card { position: relative; }
+
+.mn__post-media-item > img,
+.mn__post-media-item > video { animation: mn-media-reveal .5s var(--mn-ease) both; }
+.mn__post-media-loading { position: relative; overflow: hidden; }
+.mn__post-media-loading::after {
+  content:""; position:absolute; inset:0; transform:translateX(-110%);
+  background:linear-gradient(100deg,transparent,rgba(244,239,230,.08),transparent);
+  animation:mn-sweep 1.25s ease-in-out infinite;
+}
+
+.mn__badge:not([hidden]), .mn__bell-dot:not([hidden]) { animation: mn-badge-in .45s var(--mn-spring) both; }
+.mn__count { display:inline-block; transform-origin:center; }
+.mn__action.is-pop .mn__count { animation: mn-count-pop .42s var(--mn-spring); }
+
+.mn__thread[open] { animation: mn-dialog-in .38s var(--mn-spring) both; }
+.mn__thread[open]::backdrop { animation: mn-backdrop-in .3s ease both; }
+.mn__thread::backdrop { background: rgba(4,3,3,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+.mn__camp, .mn__track, .mn__person, .mng__card {
+  will-change: transform;
+}
+@media (hover:hover) {
+  .mn__camp:hover, .mn__track:hover, .mn__person:hover, .mng__card:hover {
+    transform: translateY(-2px);
+  }
+  .mn__brand:hover .mn__brand-mark { transform: rotate(-5deg) scale(1.06); }
+  .mn__post-card:hover { box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 18px 44px -38px rgba(244,239,230,.35); }
+}
+.mn__primary:active, .mn__secondary:active, .mn__quiet:active, .mn__follow:active, .mng__seg:active {
+  transform: scale(.97);
+}
+
+@keyframes mn-post-arrive {
+  0% { opacity:0; transform:translateY(-10px) scale(.975); }
+  55% { opacity:1; transform:translateY(2px) scale(1.006); }
+  100% { transform:none; }
+}
+@keyframes mn-post-glow {
+  0% { opacity:0; }
+  25% { opacity:1; }
+  100% { opacity:0; }
+}
+@keyframes mn-media-reveal {
+  from { opacity:0; transform:scale(1.018); filter:blur(5px); }
+  to { opacity:1; transform:none; filter:none; }
+}
+@keyframes mn-sweep { to { transform:translateX(110%); } }
+@keyframes mn-badge-in {
+  from { opacity:0; transform:scale(.45) rotate(-12deg); }
+  to { opacity:1; transform:none; }
+}
+@keyframes mn-count-pop {
+  0%,100% { transform:none; }
+  45% { transform:translateY(-2px) scale(1.2); }
+}
+@keyframes mn-dialog-in {
+  from { opacity:0; transform:translateY(18px) scale(.97); }
+  to { opacity:1; transform:none; }
+}
+@keyframes mn-backdrop-in { from { opacity:0; } to { opacity:1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mn__composer, .mn__composer:focus-within { transform:none !important; }
+}
