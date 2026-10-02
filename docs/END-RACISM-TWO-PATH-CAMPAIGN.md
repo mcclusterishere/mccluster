@@ -97,3 +97,57 @@ Both paths ultimately route resources or participation toward the End Racism ini
 ## Implementation gate
 
 Do not deploy the campaign tables until the core Mission Engine migration is production-ready. The campaign must reference the canonical mission/assignment/points primitives rather than inventing a parallel reward system.
+
+
+## V1 profile badge — Racist for Life™
+
+For the first release, replace recurring Racist Tax subscription mechanics with a single satirical self-declared profile badge:
+
+**RACIST FOR LIFE™**
+**SELF-DECLARED**
+
+The badge is never earned by an algorithm, moderation decision, administrator judgment, demographic attribute, failed mission, or third-party report. It becomes eligible only after the member personally chooses the self-declared path.
+
+The member controls whether it appears on their public front profile.
+
+### I Changed My Mind
+
+A member with the self-declared badge can choose **I CHANGED MY MIND** from their own profile controls.
+
+That action:
+- stops presenting Racist for Life as the member's current campaign state;
+- preserves the append-only state-transition audit history;
+- can route the member directly into the End Racism mission sequence;
+- does not fabricate mission completion or verified-action credit;
+- may support a separate current-state presentation such as **I CHANGED MY MIND**.
+
+Changing public presentation is not deletion of the underlying audit event.
+
+## Member-controlled front-profile badges
+
+Action profiles need a member-owned badge manager. A member can:
+
+- see badges they are eligible to display;
+- show or hide each optional public badge;
+- reorder displayed badges;
+- preview the front-profile presentation;
+- change self-declared campaign presentation through an allowed state transition;
+- distinguish earned/verified badges from self-declared/satirical badges.
+
+A member cannot grant themselves an earned or verified badge. Eligibility for verified badges comes from the canonical Action ledger or other authoritative product contract.
+
+Suggested badge provenance classes:
+
+- `verified_action` — derived from verified missions;
+- `skill` — derived from verified skill progression;
+- `fellowship` — awarded through the fellowship contract;
+- `self_declared` — member-selected identity/campaign satire;
+- `system` — product/account milestones that do not imply mission verification.
+
+Public badge rendering must expose provenance sufficiently to prevent a self-declared badge from being mistaken for an Action-verified factual judgment.
+
+### Authorization
+
+Only the member may change their optional public badge visibility/order or invoke their self-declared **I Changed My Mind** transition through ordinary profile controls.
+
+Administrative tooling may moderate content or disable an abusive presentation under the platform's moderation rules, but must not assign **Racist for Life**, reverse **I Changed My Mind**, or make a private self-declaration public on a member's behalf.
