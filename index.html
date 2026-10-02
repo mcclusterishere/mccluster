@@ -38,104 +38,191 @@
        (the headquarters property). This site is the album's world, not
        the portfolio. Entity decision recorded in docs/here-inventory.md. -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "@id": "https://matthew.mccluster.org/#website",
-        "url": "https://matthew.mccluster.org/",
-        "name": "I AM HERE: the album by Matthew McCluster",
-        "about": { "@id": "https://matthew.mccluster.org/#album" },
-        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" }
-      },
-      {
-        "@type": "MusicAlbum",
-        "@id": "https://matthew.mccluster.org/#album",
-        "name": "I AM HERE",
-        "url": "https://matthew.mccluster.org/album.html",
-        "image": "https://matthew.mccluster.org/assets/img/here-cover.jpg",
-        "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "albumProductionType": "https://schema.org/StudioAlbum",
-        "albumReleaseType": "https://schema.org/AlbumRelease",
-        "numTracks": 6,
-        "datePublished": "2026",
-        "copyrightHolder": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
-        "track": {
-          "@type": "ItemList",
-          "numberOfItems": 6,
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/films.html", "duration": "PT2M10S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } },
-            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/films.html", "duration": "PT1M55S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } },
-            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/films.html", "duration": "PT2M17S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } },
-            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/films.html", "duration": "PT1M36S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } },
-            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/films.html", "duration": "PT2M57S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } },
-            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/films.html", "duration": "PT2M12S", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" } } }
-          ]
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://matthew.mccluster.org/#website",
+      "url": "https://matthew.mccluster.org/",
+      "name": "Matthew McCluster / McCluster Corp",
+      "about": [
+        {
+          "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+        },
+        {
+          "@id": "https://matthew.mccluster.org/#album"
         }
-      },
-      {
-        "@type": "Person",
-        "@id": "https://matthew.mccluster.org/#matthew-mccluster",
-        "name": "Matthew McCluster",
-        "alternateName": ["McCluster", "Matthew Christian Perry McCluster"],
-        "url": "https://matthew.mccluster.org/",
-        "image": "https://matthew.mccluster.org/assets/img/m-mark.png",
-        "jobTitle": "Artist, Creative Director & Founder",
-        "worksFor": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
-        "identifier": [
-          { "@type": "PropertyValue", "propertyID": "ISNI", "value": "0000 0005 2956 3111" },
-          { "@type": "PropertyValue", "propertyID": "ORCID", "value": "0009-0000-8988-8955" }
-        ],
-        "disambiguatingDescription": "Bridgeport, Connecticut-born creative director and founder of McCluster Corp and the Equity Uprise civic fellowship. Identified by ORCID 0009-0000-8988-8955 and ISNI 0000 0005 2956 3111.",
-        "sameAs": [
-          "https://orcid.org/0009-0000-8988-8955",
-          "https://isni.org/isni/0000000529563111",
-          "https://www.linkedin.com/in/matthew-mccluster-863048248",
-          "https://credits.muso.ai/profile/c1d1f2fa-1ba4-42d5-a430-20b2c2e77db7",
-          "https://instagram.com/McClusterishere",
-          "https://youtube.com/@McClusterishere",
-          "https://tiktok.com/@McClusterishere"
-        ]
-      },
-      {
-        "@type": "Organization",
-        "@id": "https://matthew.mccluster.org/#mccluster-corp",
-        "name": "McCluster Corp",
-        "url": "https://matthew.mccluster.org/",
-        "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
-        "founder": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "identifier": [
-          { "@type": "PropertyValue", "propertyID": "CT Public Charity License", "value": "CHR.0069693" },
-          { "@type": "PropertyValue", "propertyID": "ISNI", "value": "0000 0005 2872 7276" },
-          { "@type": "PropertyValue", "propertyID": "ISRC Prefix", "value": "QT6KV" }
-        ],
-        "sameAs": [
-          "https://isni.org/isni/0000000528727276",
-          "https://instagram.com/McClusterishere",
-          "https://youtube.com/@McClusterishere"
-        ]
-      },
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "HERE", "item": "https://matthew.mccluster.org/" },
-          { "@type": "ListItem", "position": 2, "name": "The Album", "item": "https://matthew.mccluster.org/album.html" }
-        ]
-      },
-      {
-        "@type": "VideoObject",
-        "name": "I AM HERE: the studio film",
-        "description": "The cinematic studio film for I AM HERE, the album by Matthew McCluster.",
-        "thumbnailUrl": "https://matthew.mccluster.org/assets/frames/hero_0001.jpg",
-        "uploadDate": "2026-07-05",
-        "contentUrl": "https://matthew.mccluster.org/assets/video/hero.mp4",
-        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" }
+      ],
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
       }
-    ]
-  }
-  </script>
+    },
+    {
+      "@type": "MusicAlbum",
+      "@id": "https://matthew.mccluster.org/#album",
+      "name": "I AM HERE",
+      "url": "https://matthew.mccluster.org/album.html",
+      "image": "https://matthew.mccluster.org/assets/img/here-cover.jpg",
+      "byArtist": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "albumProductionType": "https://schema.org/StudioAlbum",
+      "albumReleaseType": "https://schema.org/AlbumRelease",
+      "numTracks": 6,
+      "datePublished": "2026",
+      "copyrightHolder": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "track": {
+        "@type": "ItemList",
+        "numberOfItems": 6,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Who Did The Shoot",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT2M10S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Runway Walk",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT1M55S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Write a Song",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT2M17S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Here",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT1M36S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Antisocial",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT2M57S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          },
+          {
+            "@type": "ListItem",
+            "position": 6,
+            "item": {
+              "@type": "MusicRecording",
+              "name": "Lightroom",
+              "url": "https://matthew.mccluster.org/films.html",
+              "duration": "PT2M12S",
+              "byArtist": {
+                "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://matthew.mccluster.org/#mccluster-corp",
+      "name": "McCluster Corp",
+      "url": "https://matthew.mccluster.org/",
+      "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "identifier": [
+        {
+          "@type": "PropertyValue",
+          "propertyID": "CT Public Charity License",
+          "value": "CHR.0069693"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "ISNI",
+          "value": "0000 0005 2872 7276"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "ISRC Prefix",
+          "value": "QT6KV"
+        }
+      ],
+      "sameAs": [
+        "https://isni.org/isni/0000000528727276"
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "HERE",
+          "item": "https://matthew.mccluster.org/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "The Album",
+          "item": "https://matthew.mccluster.org/album.html"
+        }
+      ]
+    },
+    {
+      "@type": "VideoObject",
+      "name": "I AM HERE: the studio film",
+      "description": "The cinematic studio film for I AM HERE, the album by Matthew McCluster.",
+      "thumbnailUrl": "https://matthew.mccluster.org/assets/frames/hero_0001.jpg",
+      "uploadDate": "2026-07-05",
+      "contentUrl": "https://matthew.mccluster.org/assets/video/hero.mp4",
+      "author": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      }
+    }
+  ]
+}
+</script>
 
   <meta name="copyright" content="© 2026 Matthew McCluster / McCluster Corp. All Rights Reserved">
   <meta name="rights" content="Intellectual property of McCluster Corp. All rights reserved.">
