@@ -309,7 +309,10 @@
       showGate("app");
       paintSelf();
       setView("profile");
-      return loadFeed(true);
+      return loadFeed(true).then(function () {
+        var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
+        if (first) { first.classList.add("is-just-posted"); setTimeout(function () { first.classList.remove("is-just-posted"); }, 1600); }
+      });
     }).catch(function (e) {
       var m = e.message || "Could not save your profile.";
       if (/mccluster_id_taken/.test(m)) m = "That McCluster ID is already taken.";

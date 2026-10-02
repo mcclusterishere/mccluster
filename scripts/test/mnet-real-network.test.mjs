@@ -139,6 +139,11 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.ok(!strings.some((s) => s.includes('—')), 'no em dashes in strings the script shows');
   assert.match(css, /@keyframes mn-rise/);
   assert.match(css, /@keyframes mn-pop/);
+  assert.match(css, /@keyframes mn-dialog-in/);
+  assert.match(css, /@keyframes mn-media-reveal/);
+  assert.match(css, /\.mn__composer:focus-within/);
+  assert.match(css, /\.mn__post-card\.is-just-posted/);
+  assert.match(js, /first\.classList\.add\("is-just-posted"\)/);
   assert.match(css, /\.mn__tabs-thumb \{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
