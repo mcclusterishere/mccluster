@@ -926,7 +926,14 @@
       document.getElementById("albArtist").textContent = ARTIST;
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
-      document.getElementById("albGate").hidden = ALBUM !== "heal-the-3";
+      /* a record that opens onto a cause gets a door to its gateway */
+      var GATEWAYS = {
+        "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"],
+        "cia-mind-control": ["end-racism.html", "Enter End Racism"]
+      };
+      var gate = document.getElementById("albGate"), gw = GATEWAYS[ALBUM];
+      gate.hidden = !gw;
+      if (gw) { gate.href = gw[0]; gate.textContent = gw[1] + " \u2192"; }
       document.getElementById("nowFrom").textContent = "Playing from " + head.name;
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");

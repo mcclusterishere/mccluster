@@ -2056,11 +2056,25 @@
       "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
     },
     {
-      "path": "supabase/pending_migrations/20260930230000_uprise_action_network.sql",
+      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (unapplied) schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes. Moves to supabase/migrations under its applied version."
+      "rationale": "Applied schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes."
+    },
+    {
+      "path": "end-racism.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
+    },
+    {
+      "path": "supabase/pending_migrations/20261002120000_end_racism_campaign.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy. Moves to supabase/migrations under its applied version."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

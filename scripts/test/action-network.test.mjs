@@ -125,21 +125,62 @@ test('the pages follow the mobile rules', async () => {
   for (const js of ['js/action.js', 'js/gateway.js']) assert.doesNotMatch(await read(js), /\(\?<[=!]/, js);
 });
 
-test('the gateway never plays sound or film on its own, and scores dark to light', async () => {
-  const [html, js] = await Promise.all([read('heal-the-3rd-world.html'), read('js/gateway.js')]);
-  assert.doesNotMatch(html, /\bautoplay\b/);
-  assert.match(html, /id="look" data-score="deep"/);
-  assert.match(html, /id="do" data-score="heal"/);
-  assert.match(js, /return act === "look" \? "deep" : "heal";/);
+/* both gateways run js/gateway.js; what differs is the page's config */
+async function gateway(page) {
+  const html = await read(page);
+  const cfg = JSON.parse(html.match(/<script type="application\/json" id="gwConfig">([\s\S]*?)<\/script>/)[1]);
+  return { html, cfg };
+}
+
+test('the gateways never play sound or film on their own, and score dark to light', async () => {
+  const js = await read('js/gateway.js');
   assert.match(js, /var soundOn = false;/);
   assert.match(js, /if \(v && !quiet && !saveData\)/);
+  assert.match(js, /var sec = \$\(act\), key = sec && sec\.getAttribute\("data-score"\);/);
+  const scores = { 'heal-the-3rd-world.html': ['deep', 'heal'], 'end-racism.html': ['feds', 'pullup'] };
+  for (const [page, [dark, light]] of Object.entries(scores)) {
+    const { html, cfg } = await gateway(page);
+    assert.doesNotMatch(html, /\bautoplay\b/, page);
+    assert.match(html, new RegExp(`id="look" data-score="${dark}"`), page);
+    assert.match(html, new RegExp(`id="do" data-score="${light}"`), page);
+    assert.match(html, new RegExp(`id="enter" data-score="${light}"`), page);
+    /* every song an act or a button names exists, and plays from this site */
+    const named = [...html.matchAll(/data-(?:score|play)="([a-z]+)"/g)].map((m) => m[1]).filter((k) => k !== 'listen');
+    for (const k of named) assert.match(cfg.songs[k]?.src || '', /^assets\/audio\//, `${page}: ${k}`);
+    assert.ok(cfg.songs[cfg.listen], `${page}: listen default`);
+  }
+});
+
+test('End Racism features its own campaign, its cover whole, and no gated track', async () => {
+  const { html, cfg } = await gateway('end-racism.html');
+  assert.equal(cfg.feature, 'end-racism');
+  assert.match(await read('js/gateway.js'), /if \(FEATURE\) list = list\.filter\(function \(c\) \{ return c\.slug === FEATURE; \}\);/);
   /* the supplied cover art is shown whole, never cropped */
-  assert.match(html, /src="assets\/img\/heal-the-3-cover\.jpg"/);
-  assert.doesNotMatch(await read('css/gateway.css'), /\.gw-cover img \{[^}]*object-fit:\s*cover/);
-  /* the album keeps working and only Heal the 3 grows the door */
+  assert.match(html, /src="assets\/img\/cia-mind-control-cover\.jpg"/);
+  assert.doesNotMatch(await read('css/gateway.css'), /\.gw-cover[^{]*img \{[^}]*object-fit:\s*cover/);
+  /* the earned record never plays here: only the album player can spend a play */
+  assert.doesNotMatch(html, /niggy|mcc-gated-audio/i);
+  assert.match(html, /href="album\.html\?album=cia-mind-control"/);
+});
+
+test('the albums keep working and only a record with a cause grows a door', async () => {
   const album = await read('album.html');
-  assert.match(album, /document\.getElementById\("albGate"\)\.hidden = ALBUM !== "heal-the-3";/);
+  const map = album.match(/var GATEWAYS = (\{[\s\S]*?\});/)[1];
+  assert.deepEqual(Object.keys(JSON.parse(map)), ['heal-the-3', 'cia-mind-control']);
+  assert.match(album, /gate\.hidden = !gw;/);
   assert.match(album, /id="albGate" href="heal-the-3rd-world\.html" hidden/);
+});
+
+test('Campaign 002 is money-off, sourced, and fits the campaign table', async () => {
+  const dir = 'supabase/migrations';
+  let file = (await readdir(join(ROOT, dir))).find((f) => f.endsWith('_end_racism_campaign.sql'));
+  const sql = await read(file ? join(dir, file) : 'supabase/pending_migrations/20261002120000_end_racism_campaign.sql');
+  assert.match(sql, /'end-racism-002', 'end-racism', 'live'/);
+  assert.match(sql, /'mobilize', 10000, null, false,/, 'money off, no money goal');
+  assert.match(sql, /on conflict \(id\) do nothing;/);
+  const facts = JSON.parse(sql.match(/'(\[\s*\{"text"[\s\S]*?\])'::jsonb/)[1].replace(/''/g, "'"));
+  assert.equal(facts.length, 4);
+  for (const f of facts) { assert.ok(f.text && f.source); assert.match(f.url, /^https:\/\//); }
 });
 
 test('a page in a folder never inherits the home page content edits', async () => {

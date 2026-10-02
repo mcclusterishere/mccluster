@@ -1,17 +1,23 @@
 /* ============================================================
-   HEAL THE 3RD WORLD — the gateway (heal-the-3rd-world.html).
+   THE GATEWAYS — a record as the front door to a campaign.
 
-   The cultural front door to the Uprise Action Network. Four acts:
+   heal-the-3rd-world.html (Heal the 3) and end-racism.html (CIA Mind
+   Control) are the same four acts, and both run on this file:
      I   LOOK        the chapters (live campaigns) and what is true,
-                     scored by Deep End, the dark side of the EP
-     II  LISTEN      the EP itself; the full player is one tap away
+                     scored by the record's dark side
+     II  LISTEN      the record itself; the full player is one tap away
      III DO SOMETHING the network's real count and the lanes,
-                     scored by Heal the 3rd World, the light side
+                     scored by the record's light side
      IV  ENTER       into the campaign, and Mnet
 
+   What differs lives in the page, as data: <script type=
+   "application/json" id="gwConfig"> names the songs, the lock-screen
+   credit, and (for a single-cause gateway) the one campaign it
+   features. Each act's data-score names the song that scores it.
+
    Campaigns are chapters, not songs: the chapter list is
-   action_campaigns_live(), and /heal-the-3rd-world.html#cobalt opens
-   on that chapter and points Acts III and IV at it.
+   action_campaigns_live(), and #<slug> opens on that chapter and
+   points Acts III and IV at it.
 
    The score never starts itself. Browsers refuse sound without a tap,
    and a page that ambushes a phone with audio loses the person holding
@@ -28,10 +34,20 @@
 
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var SONGS = {
-    deep: { title: "Deep End", src: "assets/audio/deep-end.m4a" },
-    heal: { title: "Heal the 3rd World", src: "assets/audio/heal-the-3rd-world.m4a" }
+  var CFG = (function () {
+    try { return JSON.parse(doc.getElementById("gwConfig").textContent); } catch (e) { return null; }
+  })() || {
+    name: "heal-the-3rd-world",
+    songs: {
+      deep: { title: "Deep End", src: "assets/audio/deep-end.m4a" },
+      heal: { title: "Heal the 3rd World", src: "assets/audio/heal-the-3rd-world.m4a" }
+    },
+    listen: "deep",
+    media: { artist: "McCluster \u00d7 VVS Mad\u00e8", album: "Heal the 3", art: "assets/img/heal-the-3-cover.jpg", sizes: "1024x1024" }
   };
+  var SONGS = CFG.songs;
+  /* a single-cause gateway shows its own campaign and no other */
+  var FEATURE = CFG.feature || null;
   var HAVE = [
     ["give", "I have $5"],
     ["time", "I have time"],
@@ -99,9 +115,12 @@
     }
     root.requestAnimationFrame(step);
   }
+  /* each act names its song in data-score; Listen plays whatever the
+     listener picked, or keeps what is already playing */
   function scoreFor(act) {
-    if (act === "listen") return chosen || current || "deep";
-    return act === "look" ? "deep" : "heal";
+    var sec = $(act), key = sec && sec.getAttribute("data-score");
+    if (!key || key === "listen") return chosen || current || CFG.listen;
+    return SONGS[key] ? key : CFG.listen;
   }
   function paintSound() {
     $("gwSound").setAttribute("aria-pressed", soundOn ? "true" : "false");
@@ -124,13 +143,14 @@
     if (prev) fade(a, 1, 900);
     if ("mediaSession" in root.navigator) {
       try {
+        var m = CFG.media || {};
         root.navigator.mediaSession.metadata = new root.MediaMetadata({
-          title: SONGS[key].title, artist: "McCluster × VVS Madè", album: "Heal the 3",
-          artwork: [{ src: "assets/img/heal-the-3-cover.jpg", sizes: "1024x1024", type: "image/jpeg" }]
+          title: SONGS[key].title, artist: m.artist || "", album: m.album || "",
+          artwork: m.art ? [{ src: m.art, sizes: m.sizes || "512x512", type: "image/jpeg" }] : []
         });
       } catch (e) {}
     }
-    track("gateway_score", { song: key, act: actNow });
+    track("gateway_score", { gateway: CFG.name, song: key, act: actNow });
     paintSound();
   }
   function silence() {
@@ -224,7 +244,7 @@
       if (h[0] === "give" && !c.money) return;
       var a = el("a", null, h[1]);
       a.href = actionHref(c.slug, { have: h[0] }, "#join");
-      a.addEventListener("click", function () { track("gateway_lane", { campaign: c.slug, have: h[0] }); });
+      a.addEventListener("click", function () { track("gateway_lane", { gateway: CFG.name, campaign: c.slug, have: h[0] }); });
       lanes.appendChild(a);
     });
     $("gwEnter").href = actionHref(c.slug, null, "#join");
@@ -243,11 +263,13 @@
 
   function load() {
     var want = String(root.location.hash || "").replace(/^#/, "").toLowerCase();
+    if (FEATURE) want = FEATURE;
     return rpc("action_campaigns_live").then(function (list) {
       list = Array.isArray(list) ? list : [];
+      if (FEATURE) list = list.filter(function (c) { return c.slug === FEATURE; });
       paintChapters(list, want);
       var pick = list.filter(function (c) { return c.slug === want; })[0] || list[0];
-      if (pick && want === pick.slug) {
+      if (pick && want === pick.slug && !FEATURE) {
         var target = $(pick.slug);
         if (target) target.scrollIntoView({ block: "start" });
       }
@@ -276,7 +298,7 @@
     });
     paintSound();
     watchActs();
-    track("gateway_view", { chapter: String(root.location.hash || "").replace(/^#/, ""), src: q.get("src") || q.get("utm_source") || "", reel: q.get("reel") || q.get("utm_content") || "" });
+    track("gateway_view", { gateway: CFG.name, chapter: String(root.location.hash || "").replace(/^#/, ""), src: q.get("src") || q.get("utm_source") || "", reel: q.get("reel") || q.get("utm_content") || "" });
     load();
   }
 

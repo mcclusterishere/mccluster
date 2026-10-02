@@ -51,6 +51,9 @@ body.an-body.gw { background: #f4efe6; }
 .gw-act--listen { background: linear-gradient(180deg, #050404 0%, #0e0b09 100%); }
 .gw-cover { margin: 1.5rem auto 0; max-width: 22rem; }
 .gw-cover img { display: block; width: 100%; height: auto; }
+/* a landscape cover gets more width; still shown whole, never cropped */
+.gw-cover--wide { max-width: 34rem; }
+.gw-note { margin: 0.9rem 0 0; font-weight: 600; font-size: 0.88rem; line-height: 1.55; color: var(--an-faint); }
 .gw-tracks { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 8px; }
 .gw-track {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; width: 100%;
