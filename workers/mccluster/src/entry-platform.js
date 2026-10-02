@@ -1,6 +1,7 @@
 import existing from './entry.js';
 import { build } from '../.wrangler/build-provenance.mjs';
 import { handlePlatformApi } from './platform-api-metered.js';
+import { publishDueNetworkPosts } from './platform-api.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
@@ -51,6 +52,11 @@ export default {
     return existing.fetch(request, env, ctx);
   },
   async scheduled(controller, env, ctx) {
+    /* Scheduled Action Network posts ride the same five-minute cron as the
+       social queue. A failure here is logged and never stops the rest. */
+    ctx.waitUntil(publishDueNetworkPosts(env, { limit: 20 }).catch((error) => {
+      console.error(JSON.stringify({ event: 'mnet_scheduled_publish_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
     if (existing.scheduled) return existing.scheduled(controller, env, ctx);
   }
 };

@@ -51,6 +51,15 @@
     '<path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/>' +
     '<path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/>';
 
+  /* THE RECORD BUTTON. The owner's one addition to the bar: a way to make
+     something for the Action Network from anywhere in the house. It is a
+     door, not a wing (holding it opens nothing), so it carries no WINGS
+     entry and morph() keeps it in its own column while a wing is open. The
+     glyph is a plain record mark drawn in the bar's own stroke, not a logo. */
+  var CREATE_TAB =
+    '<a class="appbar__tab appbar__tab--create" href="' + ROOT + 'create.html" data-appnav="create" aria-label="Create">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/>' +
+      '<circle class="appbar__rec" cx="12" cy="12" r="4.2"/></svg><span>Create</span></a>';
   function eqSvg(np) {
     var a = np ? ' class="np-arrow"' : '', b = np ? ' class="np-bar"' : '';
     return '<svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true">' + EQ_PATHS +
@@ -70,8 +79,9 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* THIRD COLUMN: identity. It resolves to Sign in while signed out and
-         to the member's Mnet feed once the shared session is verified. */
+      CREATE_TAB +
+      /* LAST COLUMN: identity. It resolves to Sign in while signed out and
+         to the member's Action Network feed once the session is verified. */
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Network</span></a>';
@@ -104,6 +114,15 @@
     return;
   }
   if (!dock) dock = buildBar();
+  /* Pages that carry the bar as hand-written markup predate the record
+     button; give them the same cell, in the same column, right before the
+     identity tab. */
+  if (!dock.querySelector('[data-appnav="create"]')) {
+    var idTab = dock.querySelector('[data-appnav="profile"]');
+    var holder = document.createElement("div");
+    holder.innerHTML = CREATE_TAB;
+    dock.insertBefore(holder.firstChild, idTab || null);
+  }
 
 
   /* The identity column is auth-aware. Start conservatively as a sign-in door;
@@ -128,9 +147,10 @@
   /* slots: [href, icon, label, peek {ic, title, sub, dyn}]. The primary
      bar has three wings; deeper rooms remain one slot away through Everything. */
   var WINGS = {
-    /* Trim law: a three-tab bar gives each wing exactly TWO room slots.
-       The tab you held keeps its own column and the other two cells become
-       that wing's rooms, so the capsule never changes width. morph() sizes
+    /* Trim law: three winged tabs give each wing exactly TWO room slots.
+       The tab you held keeps its own column, the record button keeps its
+       own, and the other two cells become that wing's rooms, so the capsule
+       never changes width. morph() sizes
        the open bar from slots.length; if ORDER changes, every wing must
        change with it. */
     music: {
@@ -176,13 +196,17 @@
      markup in every page must stay in step.
 
      THE ANCHOR LAW SCALES WITH THIS LIST. morph() opens a wing as
-     slots.length + 1 cells, so a bar of N tabs needs wings of N-1 rooms or
-     the capsule changes width on a long-press and drags the held tab out of
-     its own column. Three tabs, therefore two rooms per wing. Change this
-     list and every wing changes with it. */
-  var ORDER = ["music", "home", "profile"];
+     slots.length + 1 cells plus every FIXED column, so a bar of N winged
+     tabs needs wings of N-1 rooms or the capsule changes width on a
+     long-press and drags the held tab out of its own column. Three winged
+     tabs, therefore two rooms per wing; the record button is FIXED and
+     simply keeps its cell. Change this list and every wing changes with it. */
+  var ORDER = ["music", "home", "create", "profile"];
+  /* columns that never open a wing and keep their cell while one is open */
+  var FIXED = { create: true };
 
-  /* THE BAR IS THREE COLUMNS NOW, AND THIS ENFORCES IT.
+  /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
+     THIS ENFORCES IT.
 
      Equity Uprise, Whip Equipped and PRIM3 are put away while the site
      concentrates on the music and on Mnet. Put away, not deleted: every
@@ -218,6 +242,7 @@
     "hire.html": "home",
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
+    "create.html": "create",
     "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
     "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
     /* Rooms from shelved columns keep working; they simply light the
@@ -554,12 +579,16 @@
        The clamp is the law's own backstop, not a layout rule: if a wing is
        ever left short a slot, the held tab gets dragged left into a column
        that is not its own. That is the symptom to look for. */
-    var total = slotHtml.length + 1;
+    var fixedCount = ORDER.filter(function (k) { return FIXED[k]; }).length;
+    var total = slotHtml.length + 1 + fixedCount;
     var anchorAt = Math.min(ORDER.indexOf(key), total - 1);
     var cells = [], si = 0;
     for (var i = 0; i < total; i++) {
+      var fixedKey = FIXED[ORDER[i]] ? ORDER[i] : null;
+      var fixedTab = fixedKey && tmp.querySelector('[data-appnav="' + fixedKey + '"]');
       if (i === anchorAt) cells.push(anchor ? anchor.outerHTML : "");
-      else cells.push(slotHtml[si++]);
+      else if (fixedTab) cells.push(fixedTab.outerHTML);
+      else cells.push(slotHtml[si++] || "");
     }
     dock.innerHTML = cells.join("");
     paintSound(); // the anchor is a fresh copy off HOME_BAR; it knows nothing yet

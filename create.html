@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Create · Action Network</title>
+  <meta name="description" content="Record with your own camera, trim it, write the caption and post it to the Action Network now or at a time you choose.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/create.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="songpage">
+  <main class="cr" id="cr" data-step="start">
+
+    <!-- STEP 0 · START: what are you making? -->
+    <section class="cr__start" id="crStart" aria-labelledby="crTitle">
+      <header class="cr__head">
+        <a class="cr__back" href="mnet.html" aria-label="Back to the Action Network">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </a>
+        <h1 class="cr__title" id="crTitle">Create</h1>
+        <span class="cr__head-gap" aria-hidden="true"></span>
+      </header>
+
+      <div class="cr__gate" id="crSignedOut" hidden>
+        <p class="cr__gate-k">Sign in first</p>
+        <p class="cr__gate-p">Posts go out under your M Account, so you need to be signed in to make one.</p>
+        <a class="cr__btn cr__btn--hot" href="mnet.html">Sign in on the Action Network</a>
+      </div>
+
+      <div class="cr__make" id="crMake">
+        <label class="cr__record" for="crVideoCam">
+          <span class="cr__record-ring" aria-hidden="true"><span class="cr__record-dot"></span></span>
+          <span class="cr__record-label"><b>Record</b><small>Opens your camera</small></span>
+        </label>
+        <input class="cr__file" id="crVideoCam" type="file" accept="video/*" capture="environment">
+
+        <div class="cr__tiles">
+          <label class="cr__tile" for="crPhotoCam">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.2l1.3-2h6.8l1.3 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.8" r="3.6"/></svg>
+            <span>Photo</span>
+          </label>
+          <input class="cr__file" id="crPhotoCam" type="file" accept="image/*" capture="environment">
+          <label class="cr__tile" for="crLibrary">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.4" cy="9.8" r="1.7"/><path d="M3.6 17l4.9-4.4 3.9 3.4 3-2.5 5.1 4.2"/></svg>
+            <span>Library</span>
+          </label>
+          <input class="cr__file" id="crLibrary" type="file" accept="video/*,image/*">
+          <button class="cr__tile" id="crWrite" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+            <span>Write</span>
+          </button>
+        </div>
+
+        <!-- Live is the next build. It is shown as what it is: not on yet. -->
+        <div class="cr__live" aria-disabled="true">
+          <span class="cr__live-dot" aria-hidden="true"></span>
+          <span><b>Go live</b><small>Coming next. Live goes out from your profile here first, then to the accounts you connect.</small></span>
+        </div>
+
+        <section class="cr__queue" id="crQueue" hidden aria-labelledby="crQueueH">
+          <h2 class="cr__queue-h" id="crQueueH">Waiting to go out</h2>
+          <ol class="cr__queue-list" id="crQueueList"></ol>
+        </section>
+      </div>
+    </section>
+
+    <!-- STEP 1 · EDIT: see it, trim it, sound on or off -->
+    <section class="cr__edit" id="crEdit" hidden aria-label="Edit">
+      <header class="cr__bar">
+        <button class="cr__icon" id="crEditClose" type="button" aria-label="Discard and start again">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <b class="cr__bar-t" id="crEditTitle">Trim</b>
+        <button class="cr__next" id="crEditNext" type="button">Next</button>
+      </header>
+      <div class="cr__stage" id="crStage">
+        <video id="crVideo" playsinline webkit-playsinline preload="metadata" hidden></video>
+        <img id="crImage" alt="" hidden>
+        <button class="cr__play" id="crPlay" type="button" aria-label="Play" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+        </button>
+      </div>
+      <div class="cr__tools" id="crTools" hidden>
+        <div class="cr__strip" id="crStrip">
+          <canvas class="cr__frames" id="crFrames" aria-hidden="true"></canvas>
+          <div class="cr__shade cr__shade--l" id="crShadeL"></div>
+          <div class="cr__shade cr__shade--r" id="crShadeR"></div>
+          <div class="cr__window" id="crWindow"></div>
+          <button class="cr__handle cr__handle--l" id="crHandleL" type="button" role="slider" aria-label="Start of the clip"></button>
+          <button class="cr__handle cr__handle--r" id="crHandleR" type="button" role="slider" aria-label="End of the clip"></button>
+          <i class="cr__head-line" id="crPlayhead" aria-hidden="true"></i>
+        </div>
+        <div class="cr__times">
+          <span id="crTStart">0:00</span>
+          <span class="cr__tlen" id="crTLen">0:00</span>
+          <span id="crTEnd">0:00</span>
+        </div>
+        <button class="cr__chip" id="crMute" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="cr__wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+          <span id="crMuteL">Sound on</span>
+        </button>
+      </div>
+      <p class="cr__upl" id="crUpload" role="status"><i id="crUploadBar"></i><span id="crUploadT">Uploading…</span></p>
+    </section>
+
+    <!-- STEP 2 · DETAILS: caption, track, who sees it, when -->
+    <section class="cr__details" id="crDetails" hidden aria-label="Details">
+      <header class="cr__bar">
+        <button class="cr__icon" id="crDetailsBack" type="button" aria-label="Back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <b class="cr__bar-t">New post</b>
+        <span class="cr__head-gap" aria-hidden="true"></span>
+      </header>
+
+      <div class="cr__form">
+        <div class="cr__cap">
+          <div class="cr__thumb" id="crThumb" hidden></div>
+          <label class="cr__sr" for="crCaption">Caption</label>
+          <textarea id="crCaption" maxlength="5000" rows="4" placeholder="Say what this is and why it matters."></textarea>
+        </div>
+        <p class="cr__count"><span id="crCount">0</span> / 5,000</p>
+
+        <label class="cr__field">
+          <span>Add a song</span>
+          <select id="crTrack"><option value="">No song</option></select>
+        </label>
+        <label class="cr__field">
+          <span>Who sees it</span>
+          <select id="crVisibility">
+            <option value="public">Everyone</option>
+            <option value="network">Followers</option>
+            <option value="private">Only me</option>
+          </select>
+        </label>
+
+        <fieldset class="cr__when">
+          <legend>When</legend>
+          <div class="cr__seg" role="radiogroup" aria-label="When">
+            <button type="button" role="radio" aria-checked="true" data-when="now" class="is-on">Now</button>
+            <button type="button" role="radio" aria-checked="false" data-when="later">Later</button>
+          </div>
+          <div class="cr__later" id="crLater" hidden>
+            <label class="cr__field"><span>Date</span><input type="date" id="crDate"></label>
+            <label class="cr__field"><span>Time</span><input type="time" id="crTime" step="300"></label>
+            <p class="cr__hint" id="crWhenHint"></p>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="cr__send">
+        <p class="cr__status" id="crStatus" role="status"></p>
+        <button class="cr__btn cr__btn--hot" id="crPost" type="button">Post</button>
+      </div>
+    </section>
+
+    <!-- STEP 3 · DONE -->
+    <section class="cr__done" id="crDone" hidden aria-live="polite">
+      <span class="cr__done-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </span>
+      <h2 class="cr__done-h" id="crDoneH">Posted</h2>
+      <p class="cr__done-p" id="crDoneP">It is on the Action Network now.</p>
+      <a class="cr__btn cr__btn--hot" href="mnet.html">Open the Action Network</a>
+      <button class="cr__btn" id="crAgain" type="button">Make another</button>
+    </section>
+  </main>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/create.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

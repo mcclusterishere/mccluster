@@ -142,11 +142,27 @@ function postTrack(t){
   if(art&&!/^[a-z]+:/i.test(art)&&!art.startsWith('//'))out.art=art;
   return out;
 }
+/* A VIDEO MAY CARRY A CLIP. The create editor trims by reference rather
+   than by re-encoding on a phone: the post keeps the whole upload and says
+   which stretch of it to play, and the feed plays that stretch through a
+   media fragment (#t=start,end). Bounded and numeric only, like the track. */
+function postClip(c){
+  if(!c||typeof c!=='object')return null;
+  const n=v=>{const x=Number(v);return Number.isFinite(x)&&x>0?Math.min(Math.round(x),6*3600000):null};
+  const out={},start=n(c.start_ms),end=n(c.end_ms);
+  if(start!==null)out.start_ms=start;
+  if(end!==null)out.end_ms=end;
+  if(out.start_ms!==undefined&&out.end_ms!==undefined&&out.end_ms<=out.start_ms+250)return null;
+  if(c.muted===true)out.muted=true;
+  return Object.keys(out).length?out:null;
+}
 function postMetadata(b){
   const meta=(b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata))?{...b.metadata}:{};
-  delete meta.track;
+  delete meta.track; delete meta.clip;
   const track=postTrack(b.track||(b.metadata&&b.metadata.track));
   if(track)meta.track=track;
+  const clip=postClip(b.clip||(b.metadata&&b.metadata.clip));
+  if(clip)meta.clip=clip;
   return meta;
 }
 
@@ -201,6 +217,85 @@ async function handleDeveloper(req,env,path,url){
     const rows=await service(env,`api_usage_events?consumer_id=eq.${cid}&select=product_key,endpoint,method,units,status_code,occurred_at&order=occurred_at.desc&limit=500`); const ledger=await service(env,`api_credit_ledger?consumer_id=eq.${cid}&select=delta`); const balance=(ledger||[]).reduce((a,x)=>a+Number(x.delta||0),0); return reply(req,env,{credit_balance:balance,usage:rows||[]});
   }
   return null;
+}
+
+/* ONE PATH FOR EVERY POST. The live composer and the scheduler both come
+   through here, so a post published by the cron at 9pm has passed exactly
+   the checks it would have passed if it had been sent by hand. */
+async function prepareNetworkPost(env,muid,b,appKey){
+  const body=String(b.body||'').trim().slice(0,20000),mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
+  let assets=[];
+  if(mediaIds.length){
+    assets=await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type,mime_type,width,height,duration_ms,alt_text`);
+    if((assets||[]).length!==mediaIds.length)return {error:'One or more media assets are unavailable',status:400};
+  }
+  if(!body&&!assets.length)return {error:'Post body or media is required',status:400};
+  let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
+  if(replyTo){if(!uuidLike(replyTo))return {error:'Invalid parent post',status:400};const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return {error:'Parent post not found',status:404};visibility=parent.visibility}
+  const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
+  /* A post can belong to a group. The membership is checked here rather
+     than trusted from the body: the client sends a group id, the server
+     decides whether this member is in it. A reply stays with its parent's
+     group, because a thread that changes rooms halfway is not a thread. */
+  let groupId=null;
+  if(replyTo){groupId=parent?.group_id||null;}
+  else if(b.group_id){
+    const gid=String(b.group_id);
+    if(!uuidLike(gid))return {error:'Invalid group',status:400};
+    const mine=await service(env,`network_group_members?group_id=eq.${gid}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
+    if(!mine?.length)return {error:'Join the group before posting in it',status:403};
+    groupId=gid;
+  }
+  return {assets:assets||[],draft:{body,media_asset_ids:mediaIds,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
+}
+async function insertNetworkPost(env,muid,draft,assets){
+  const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
+  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id})});
+  const created=rows?.[0],ids=draft.media_asset_ids||[];
+  if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
+  return rows||[];
+}
+/* A time at least two minutes out and at most ninety days out. Anything
+   sooner is "post now"; anything later is a calendar, not a schedule. */
+function scheduleTime(value){
+  const t=Date.parse(String(value||''));
+  if(!Number.isFinite(t))return {error:'That time could not be read'};
+  const now=Date.now();
+  if(t<now+120000)return {error:'Pick a time at least two minutes from now, or post now'};
+  if(t>now+90*86400000)return {error:'Schedule within the next 90 days'};
+  return {at:new Date(t).toISOString()};
+}
+function scheduledView(row){
+  if(!row)return null;
+  const p=row.payload||{};
+  return {id:row.id,publish_at:row.publish_at,status:row.status,error:row.error||'',body:String(p.body||'').slice(0,280),media_count:(p.media_asset_ids||[]).length,visibility:p.visibility||'public',track:p.metadata?.track||null,created_at:row.created_at||null};
+}
+/* THE CRON HALF. Each due row is claimed with a conditional PATCH
+   (scheduled -> publishing) so two overlapping runs can never publish the
+   same post twice; whichever run loses the claim simply moves on. */
+export async function publishDueNetworkPosts(env,{limit=20}={}){
+  if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return {published:0,failed:0};
+  const out={published:0,failed:0};
+  let due;
+  try{due=await service(env,`network_scheduled_posts?status=eq.scheduled&publish_at=lte.${encodeURIComponent(new Date().toISOString())}&order=publish_at.asc&limit=${limit}&select=id,author_m_uid,payload`);}
+  catch(e){if(e?.detail?.code==='PGRST205'||e?.status===404)return out;throw e;}
+  for(const row of due||[]){
+    const stamp=new Date().toISOString();
+    const claimed=await service(env,`network_scheduled_posts?id=eq.${row.id}&status=eq.scheduled`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'publishing',updated_at:stamp})});
+    if(!claimed?.length)continue;
+    try{
+      const p=row.payload||{};
+      const prepared=await prepareNetworkPost(env,row.author_m_uid,{...p,reply_to_id:null},p.app_key||'mnet-web');
+      if(prepared.error)throw new Error(prepared.error);
+      const rows=await insertNetworkPost(env,row.author_m_uid,prepared.draft,prepared.assets);
+      await service(env,`network_scheduled_posts?id=eq.${row.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'published',post_id:rows?.[0]?.id||null,error:'',updated_at:new Date().toISOString()})});
+      out.published++;
+    }catch(e){
+      await service(env,`network_scheduled_posts?id=eq.${row.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'failed',error:String(e?.message||'Publishing failed').slice(0,400),updated_at:new Date().toISOString()})}).catch(()=>{});
+      out.failed++;
+    }
+  }
+  return out;
 }
 
 async function handleMnet(req,env,path,url){
@@ -260,34 +355,47 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/posts'&&req.method==='POST'){
     if(external)return fail(req,env,'Post creation currently requires a McCluster user session',403);
     const b=await json(req),muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
-    const body=String(b.body||'').trim().slice(0,20000),mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
-    let assets=[];
-    if(mediaIds.length){
-      assets=await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type,mime_type,width,height,duration_ms,alt_text`);
-      if((assets||[]).length!==mediaIds.length)return fail(req,env,'One or more media assets are unavailable',400);
+    const prepared=await prepareNetworkPost(env,muid,b,appKey);
+    if(prepared.error)return fail(req,env,prepared.error,prepared.status||400);
+    /* POST NOW, OR LATER. A publish_at in the future holds the post in
+       network_scheduled_posts and the five-minute cron publishes it, running
+       every check above again at that moment: media still owned and ready,
+       still a member of the group. Replies are never scheduled; a reply
+       belongs to the moment it answers. */
+    if(b.publish_at!==undefined&&b.publish_at!==null&&b.publish_at!==''){
+      const when=scheduleTime(b.publish_at);
+      if(when.error)return fail(req,env,when.error,400);
+      if(prepared.draft.reply_to_id)return fail(req,env,'A reply goes out when you send it',400);
+      try{
+        const rows=await service(env,'network_scheduled_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,publish_at:when.at,payload:{...prepared.draft,app_key:appKey}})});
+        return reply(req,env,{scheduled:scheduledView(rows?.[0])},201);
+      }catch(e){
+        if(e?.detail?.code==='PGRST205'||e?.status===404)return fail(req,env,'Scheduling is not switched on yet. Post now, or try again later.',503);
+        throw e;
+      }
     }
-    if(!body&&!assets.length)return fail(req,env,'Post body or media is required',400);
-    let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
-    if(replyTo){if(!uuidLike(replyTo))return fail(req,env,'Invalid parent post',400);const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return fail(req,env,'Parent post not found',404);visibility=parent.visibility}
-    const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
-    const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
-    /* A post can belong to a group. The membership is checked here rather
-       than trusted from the body: the client sends a group id, the server
-       decides whether this member is in it. A reply stays with its parent's
-       group, because a thread that changes rooms halfway is not a thread. */
-    let groupId=null;
-    if(replyTo){groupId=parent?.group_id||null;}
-    else if(b.group_id){
-      const gid=String(b.group_id);
-      if(!uuidLike(gid))return fail(req,env,'Invalid group',400);
-      const mine=await service(env,`network_group_members?group_id=eq.${gid}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
-      if(!mine?.length)return fail(req,env,'Join the group before posting in it',403);
-      groupId=gid;
-    }
-    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null})});
+    const rows=await insertNetworkPost(env,muid,prepared.draft,prepared.assets);
     const created=rows?.[0];
-    if(created&&mediaIds.length)await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
     const hydrated=await hydratePostRows(env,rows||[],muid); return reply(req,env,{post:hydrated?.[0]?.post||created,actor:hydrated?.[0]?.actor||null},201);
+  }
+  if(path==='/v1/mnet/scheduled'&&req.method==='GET'){
+    if(external)return fail(req,env,'Scheduled posts require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    try{
+      const rows=await service(env,`network_scheduled_posts?author_m_uid=eq.${muid}&status=in.(scheduled,publishing,failed)&order=publish_at.asc&limit=50&select=id,publish_at,status,payload,error,created_at`);
+      return reply(req,env,{scheduled:(rows||[]).map(scheduledView)});
+    }catch(e){
+      if(e?.detail?.code==='PGRST205'||e?.status===404)return reply(req,env,{scheduled:[],available:false});
+      throw e;
+    }
+  }
+  const scheduledOne=path.match(/^\/v1\/mnet\/scheduled\/([0-9a-f-]{36})$/i);
+  if(scheduledOne&&req.method==='DELETE'){
+    if(external)return fail(req,env,'Scheduled posts require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const out=await service(env,`network_scheduled_posts?id=eq.${scheduledOne[1]}&author_m_uid=eq.${muid}&status=in.(scheduled,failed)`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'cancelled',updated_at:new Date().toISOString()})});
+    if(!out?.length)return fail(req,env,'That post is not waiting any more',404);
+    return reply(req,env,{cancelled:true,id:scheduledOne[1]});
   }
   /* ---------------- GROUPS ----------------
      Rooms inside the network. The list is readable by anyone signed in,

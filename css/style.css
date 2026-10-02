@@ -1866,6 +1866,11 @@ html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url
 @keyframes dockIn{from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 .appbar__tab--wing{color:#e5383b}
 @media (prefers-reduced-motion:reduce){.appbar--morph .appbar__tab{animation:none} }
+/* the record button: the owner's one addition to the bar. The inner dot is
+   filled; the ring takes the tab's own colour like every other glyph. */
+.appbar__tab--create .appbar__rec{fill:#e5383b;stroke:none}
+.appbar__tab--create.is-here .appbar__rec,.appbar__tab--create.is-active .appbar__rec{fill:#fff}
+html[data-theme="light"] .appbar__tab--create .appbar__rec{fill:#c81d25}
 .offer-hero{margin:1.6rem 0 0;border-radius:20px;overflow:hidden;border:1px solid rgba(232,200,119,0.35);box-shadow:0 24px 70px rgba(0,0,0,0.5)}
 .offer-hero img{display:block;width:100%}
 .hire__pill{font:inherit;cursor:pointer}
