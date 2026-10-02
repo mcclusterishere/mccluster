@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 275,
+  "candidate_count": 282,
   "capability_source_count": 97,
-  "support_only_count": 178,
+  "support_only_count": 185,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2201,6 +2201,55 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "data/seo/entity-graph.json",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical SEO/AEO entity graph; references Equity Uprise only as public identity context, not a building capability."
+    },
+    {
+      "path": "data/seo/evidence-ledger.json",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SEO/AEO evidence ledger; records Equity Uprise-related public evidence but adds no building capability."
+    },
+    {
+      "path": "data/seo/sitemap-pages.json",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Search sitemap allowlist; includes Equity Uprise-related public URLs but adds no building capability."
+    },
+    {
+      "path": "feed.xml",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public newsroom Atom feed; contains Equity Uprise recognition text but adds no building capability."
+    },
+    {
+      "path": "newsroom.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public evidence-backed newsroom; contains Equity Uprise recognition text but adds no building capability."
+    },
+    {
+      "path": "services.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Commercial services authority page; references Equity Uprise case work but adds no building capability."
+    },
+    {
+      "path": "tools/build-hire-schema.mjs",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SEO structured-data generator for approved offers; references Equity Uprise commercial mode but adds no building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

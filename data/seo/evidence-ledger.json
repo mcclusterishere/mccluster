@@ -1,0 +1,135 @@
+{
+  "schema_version": "mccluster-evidence-ledger/v1",
+  "policy": {
+    "publish_rule": "Only entries with verification_status=verified and publish=true may render into the public newsroom.",
+    "private_evidence": "Do not expose private records, account data, or non-public contact information."
+  },
+  "items": [
+    {
+      "id": "cga-matthew-2025",
+      "type": "recognition",
+      "date": "2025-10-05",
+      "title": "Connecticut General Assembly issues an Official Citation to Matthew Christian Perry McCluster",
+      "summary": "The Connecticut General Assembly issued an Official Citation recognizing Matthew Christian Perry McCluster. The primary document is preserved on the site.",
+      "evidence": [
+        {
+          "label": "Connecticut General Assembly citation to Matthew McCluster",
+          "path": "assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": true
+    },
+    {
+      "id": "georgia-proclamation-2025",
+      "type": "recognition",
+      "date": "2025-10-27",
+      "title": "Georgia proclamation designates Youth Innovation & Civic Leadership Week",
+      "summary": "A State of Georgia proclamation signed October 27, 2025 designates December 12-18, 2025 as Georgia Youth Innovation & Civic Leadership Week.",
+      "evidence": [
+        {
+          "label": "State of Georgia proclamation",
+          "path": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "verification_status": "verified",
+      "publish": true
+    },
+    {
+      "id": "bridgeport-human-rights-day-2025",
+      "type": "recognition",
+      "date": "2025-12-10",
+      "title": "Bridgeport proclamation recognizes Equity Uprise Human Rights Day",
+      "summary": "The City of Bridgeport issued a proclamation for Equity Uprise Human Rights Day on December 10, 2025.",
+      "evidence": [
+        {
+          "label": "City of Bridgeport proclamation",
+          "path": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "verification_status": "verified",
+      "publish": true
+    },
+    {
+      "id": "comptia-itf-2022",
+      "type": "credential",
+      "date": "2022-12-01",
+      "title": "CompTIA ITF+ certification",
+      "evidence": [
+        {
+          "label": "CompTIA ITF+ certificate",
+          "path": "assets/credentials/comptia-itf-plus.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": false
+    },
+    {
+      "id": "ct-state-it-bootcamp-2023",
+      "type": "credential",
+      "date": "2023-09-20",
+      "title": "CT State Community College IT Bootcamp certificate",
+      "evidence": [
+        {
+          "label": "IT Bootcamp certificate",
+          "path": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": false
+    },
+    {
+      "id": "ipc-engagement",
+      "type": "career_evidence",
+      "date": "2023-06-01",
+      "title": "IPC Systems data-center engagement evidence",
+      "evidence": [
+        {
+          "label": "IPC data-center engagement document",
+          "path": "assets/credentials/ipc-data-center-engagement.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": false,
+      "note": "Use conservatively. Do not attribute duties the primary engagement document assigns to another person."
+    },
+    {
+      "id": "ct-charity-registration-2025",
+      "type": "registration_evidence",
+      "date": "2025-10-28",
+      "title": "Connecticut public-charity registration certificate for McCluster Corp",
+      "evidence": [
+        {
+          "label": "Connecticut public-charity registration certificate",
+          "path": "assets/credentials/mccluster-corp-public-charity-registration.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "verification_status": "verified",
+      "publish": false,
+      "status_note": "The inspected certificate's period ended September 30, 2026. Renewal status must be re-verified before describing the registration as current."
+    }
+  ]
+}

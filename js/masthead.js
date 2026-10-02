@@ -236,6 +236,8 @@ html { scroll-behavior: smooth; }
     ] },
     { group: "The work", rooms: [
       { href: "portfolio.html",    label: "The full portfolio" },
+      { href: "services.html",     label: "Services & case work" },
+      { href: "engineering/index.html", label: "Engineering & IT evidence" },
     ] },
     /* Equity Uprise is put away while the site concentrates on the music
        and on Action Network, so its group is not listed here. The rooms all still
@@ -253,6 +255,7 @@ html { scroll-behavior: smooth; }
       { href: "account.html",   label: "Your profile" },
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
+      { href: "newsroom.html",  label: "Verified newsroom & public record" },
       /* HITMAN used to be reachable only because js/theme.js rewrote the
          fifth tab into it after boot. That override was retired when the
          shop took the tab, so this line is now the page's only door.

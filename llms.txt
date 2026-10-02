@@ -7,9 +7,7 @@
 > food-delivery shop with a live open/closed state. Everything below is
 > readable without an account.
 
-Run by McCluster Corp, a registered Connecticut public charity
-(CHR.0069693), founded by Matthew McCluster. Bridgeport and New Haven,
-Connecticut.
+Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, Connecticut. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.
 
 ## Hiring Matthew McCluster
 
@@ -31,6 +29,8 @@ F.R.E.E.D.O.M. Inc., McCluster Corp).
   · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.pdf)
   · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx)
 - [Full résumé](https://matthew.mccluster.org/matthew-mccluster.html)
+- [Engineering & IT evidence](https://matthew.mccluster.org/engineering/)
+- [Commercial services & case work](https://matthew.mccluster.org/services.html)
 - Contact: matthew@mccluster.org
 
 ## If you only read one thing
@@ -100,15 +100,16 @@ either into a verdict.
 
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
 - [Press kit](https://matthew.mccluster.org/press.html)
+- [Verified newsroom & public record](https://matthew.mccluster.org/newsroom.html) · [Atom feed](https://matthew.mccluster.org/feed.xml)
 - Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
 
 ## Optional
 
-- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 14 tracks with ISRCs
-- [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 25 items
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 17 tracks in the current catalogue data
+- [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 21 items
 - [Sitemap](https://matthew.mccluster.org/sitemap.xml)
 - [Crawl policy](https://matthew.mccluster.org/robots.txt)
-- [Source](https://github.com/mcclusterishere/Here)
+- [Source](https://github.com/mcclusterishere/mccluster)
 
 ## Terms
 

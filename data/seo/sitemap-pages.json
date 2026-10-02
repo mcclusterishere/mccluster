@@ -1,0 +1,191 @@
+{
+  "schema_version": "mccluster-sitemap/v1",
+  "note": "Explicit indexable-page allowlist. Admin, account, onboarding and noindex surfaces do not belong here.",
+  "pages": [
+    {
+      "url": "https://matthew.mccluster.org/",
+      "lastmod": "2026-07-28",
+      "priority": 1
+    },
+    {
+      "url": "https://matthew.mccluster.org/album.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/listen.html",
+      "lastmod": "2026-09-20",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/portfolio.html",
+      "lastmod": "2026-08-07",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/catalogue.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/license.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/sites.html",
+      "lastmod": "2026-08-23",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/sites-details.html",
+      "lastmod": "2026-08-23",
+      "priority": 0.5
+    },
+    {
+      "url": "https://matthew.mccluster.org/gallery.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/prayer-closet.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/closet/sent.html",
+      "lastmod": "2026-07-30",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/inner-room.html",
+      "lastmod": "2026-07-28",
+      "priority": 0.6
+    },
+    {
+      "url": "https://matthew.mccluster.org/policy.html",
+      "lastmod": "2026-08-08",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/policy-memo-dna.html",
+      "lastmod": "2026-08-08",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/case-designer-kicks.html",
+      "lastmod": "2026-08-08",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+      "lastmod": "2026-09-30",
+      "priority": 1
+    },
+    {
+      "url": "https://matthew.mccluster.org/resume-it-support.html",
+      "lastmod": "2026-09-30",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/heal-the-3rd-world.html",
+      "lastmod": "2026-09-30",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/end-racism.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/press.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/card.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/management.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/hire.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/films.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/shots.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.7
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/eu-rally.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/cover-art.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/brunch-and-beats.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/candler-crossing.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/dressed-for-success.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/vaunt-runway.html",
+      "lastmod": "2026-08-17",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/privacy.html",
+      "lastmod": "2026-09-20",
+      "priority": 0.3
+    },
+    {
+      "url": "https://matthew.mccluster.org/newsroom.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/services.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/",
+      "lastmod": "2026-10-02",
+      "priority": 0.9
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/ipc-infrastructure.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.8
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "lastmod": "2026-10-02",
+      "priority": 0.8
+    }
+  ]
+}

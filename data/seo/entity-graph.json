@@ -1,0 +1,207 @@
+{
+  "schema_version": "mccluster-seo-entity/v1",
+  "canonical_url": "https://matthew.mccluster.org/matthew-mccluster.html",
+  "person": {
+    "@type": "Person",
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+    "name": "Matthew McCluster",
+    "alternateName": [
+      "McCluster",
+      "Matthew Christian Perry McCluster"
+    ],
+    "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://matthew.mccluster.org/assets/img/og-card.jpg",
+      "width": 1200,
+      "height": 630,
+      "caption": "Matthew McCluster"
+    },
+    "jobTitle": [
+      "Infrastructure Engineer",
+      "Platform Builder",
+      "Creative Director & Founder"
+    ],
+    "description": "Infrastructure engineer, platform operator, creative director, photographer, web designer and songwriter working across Connecticut and Georgia.",
+    "disambiguatingDescription": "Bridgeport, Connecticut-born infrastructure and creative professional; founder of McCluster Corp and Equity Uprise. Identified by ORCID 0009-0000-8988-8955 and ISNI 0000 0005 2956 3111. Not the professional athlete or comedian with a similar surname.",
+    "birthPlace": {
+      "@type": "Place",
+      "name": "Bridgeport, Connecticut, United States"
+    },
+    "workLocation": [
+      {
+        "@type": "Place",
+        "name": "Connecticut, United States"
+      },
+      {
+        "@type": "Place",
+        "name": "Georgia, United States"
+      }
+    ],
+    "worksFor": {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
+    },
+    "founder": {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
+    },
+    "knowsAbout": [
+      "Data center infrastructure",
+      "Network engineering",
+      "Windows Server administration",
+      "Linux system administration",
+      "IT support",
+      "Desktop support",
+      "Microsoft 365",
+      "Active Directory",
+      "Cisco networking",
+      "DHCP",
+      "Structured cabling",
+      "PostgreSQL",
+      "Row-level security",
+      "Serverless APIs",
+      "Web development",
+      "Creative direction",
+      "Photography",
+      "Media production",
+      "Music production",
+      "Songwriting",
+      "Civic technology"
+    ],
+    "hasOccupation": [
+      {
+        "@type": "Occupation",
+        "name": "Infrastructure Engineer"
+      },
+      {
+        "@type": "Occupation",
+        "name": "IT Support Specialist"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Platform Builder"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Creative Director"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Photographer"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Songwriter"
+      }
+    ],
+    "hasCredential": [
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "CompTIA IT Fundamentals+ (ITF+)",
+        "credentialCategory": "certification",
+        "dateCreated": "2022-12-01",
+        "url": "https://matthew.mccluster.org/assets/credentials/comptia-itf-plus.pdf"
+      },
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "IT Bootcamp Certificate, CT State Community College (Housatonic)",
+        "credentialCategory": "certificate",
+        "dateCreated": "2023-09-20",
+        "url": "https://matthew.mccluster.org/assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+      }
+    ],
+    "award": [
+      "Connecticut General Assembly Official Citation to Matthew Christian Perry McCluster (October 5, 2025)",
+      "State of Georgia Proclamation, signed October 27, 2025, designating Georgia Youth Innovation & Civic Leadership Week for December 12-18, 2025",
+      "City of Bridgeport Proclamation: Equity Uprise Human Rights Day (December 10, 2025)"
+    ],
+    "identifier": [
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISNI",
+        "value": "0000 0005 2956 3111"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ORCID",
+        "value": "0009-0000-8988-8955"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "SSRN",
+        "value": "9761733"
+      }
+    ],
+    "sameAs": [
+      "https://github.com/mcclusterishere",
+      "https://orcid.org/0009-0000-8988-8955",
+      "https://isni.org/isni/0000000529563111",
+      "https://www.linkedin.com/in/matthew-mccluster-863048248",
+      "https://credits.muso.ai/profile/c1d1f2fa-1ba4-42d5-a430-20b2c2e77db7",
+      "https://instagram.com/McClusterishere",
+      "https://youtube.com/@McClusterishere",
+      "https://tiktok.com/@McClusterishere"
+    ],
+    "subjectOf": [
+      {
+        "@type": "CreativeWork",
+        "name": "Connecticut General Assembly Official Citation",
+        "url": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "Georgia Youth Innovation & Civic Leadership Week Proclamation",
+        "url": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "Equity Uprise Human Rights Day Proclamation",
+        "url": "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+      }
+    ]
+  },
+  "organization": {
+    "@type": "Organization",
+    "@id": "https://matthew.mccluster.org/#mccluster-corp",
+    "name": "McCluster Corp",
+    "url": "https://matthew.mccluster.org/",
+    "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
+    "founder": {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    "foundingDate": "2025",
+    "description": "Creative, technical and civic organization founded by Matthew McCluster.",
+    "identifier": [
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISNI",
+        "value": "0000 0005 2872 7276"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "CT public-charity registration certificate",
+        "value": "CHR.0069693"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISRC Prefix",
+        "value": "QT6KV"
+      }
+    ],
+    "sameAs": [
+      "https://isni.org/isni/0000000528727276"
+    ]
+  },
+  "music_credit": {
+    "@type": "MusicRecording",
+    "@id": "https://matthew.mccluster.org/matthew-mccluster.html#sjw",
+    "name": "SJW",
+    "byArtist": {
+      "@type": "MusicGroup",
+      "name": "A$hon Voyage"
+    },
+    "producer": {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    "url": "https://soundcloud.com/ashon_voyage/sjw-prod-matthew-mccluster"
+  }
+}

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 279,
+  "candidate_count": 286,
   "capability_source_count": 97,
-  "support_only_count": 182,
-  "checks_total": 1021,
-  "checks_passed": 1021,
+  "support_only_count": 189,
+  "checks_total": 1049,
+  "checks_passed": 1049,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -77,6 +77,9 @@
     "data/offers.json",
     "data/playlists.json",
     "data/roles.json",
+    "data/seo/entity-graph.json",
+    "data/seo/evidence-ledger.json",
+    "data/seo/sitemap-pages.json",
     "data/sites.json",
     "demos/shiloh/data/impact.json",
     "desk.html",
@@ -121,6 +124,7 @@
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
     "end-racism.html",
+    "feed.xml",
     "gallery.html",
     "heal-the-3rd-world.html",
     "hire.html",
@@ -154,6 +158,7 @@
     "native/src/AppBar.tsx",
     "native/src/RoomScreen.tsx",
     "native/src/content.ts",
+    "newsroom.html",
     "platform/sql/001_init.sql",
     "platform/src/server.mjs",
     "policy-memo-dna.html",
@@ -173,6 +178,7 @@
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "scripts/test/song-test.test.mjs",
+    "services.html",
     "sitemap.xml",
     "sites-details.html",
     "sites.html",
@@ -272,6 +278,7 @@
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/run-eu-tests.sh",
     "supabase/tests/supabase_api_roles.stub.sql",
+    "tools/build-hire-schema.mjs",
     "tools/eu-export-seed.sh",
     "tools/verify-llms.py",
     "vault.html",
@@ -293,7 +300,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "279 entries"
+      "detail": "286 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5392,6 +5399,146 @@
     },
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/entity-graph.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/entity-graph.json classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "data/seo/entity-graph.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/seo/entity-graph.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/evidence-ledger.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/evidence-ledger.json classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "data/seo/evidence-ledger.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/seo/evidence-ledger.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/sitemap-pages.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/sitemap-pages.json classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "data/seo/sitemap-pages.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/seo/sitemap-pages.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "feed.xml capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "feed.xml classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "feed.xml support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "feed.xml support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "newsroom.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "newsroom.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "newsroom.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "newsroom.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "services.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "services.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "services.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "services.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tools/build-hire-schema.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tools/build-hire-schema.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "tools/build-hire-schema.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "tools/build-hire-schema.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
