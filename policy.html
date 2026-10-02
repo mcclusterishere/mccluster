@@ -26,93 +26,112 @@
        search engine can connect "Urban Leadership Fellowship" to a named
        author with a dated, sourced deliverable instead of a claim. -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "ProfilePage",
-        "@id": "https://matthew.mccluster.org/policy.html",
-        "name": "Policy Work · Matthew McCluster",
-        "mainEntity": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfilePage",
+      "@id": "https://matthew.mccluster.org/policy.html",
+      "name": "Policy Work · Matthew McCluster",
+      "mainEntity": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      {
-        "@type": "Person",
-        "@id": "https://matthew.mccluster.org/#matthew-mccluster",
-        "name": "Matthew McCluster",
-        "url": "https://matthew.mccluster.org/policy.html",
-        "jobTitle": "Policy researcher and creative director",
-        "knowsAbout": [
-          "Environmental justice policy",
-          "Food policy and school nutrition",
-          "Utility siting and energy infrastructure",
-          "Public-record research",
-          "Civic technology"
-        ],
-        "alumniOf": {
-          "@type": "EducationalOrganization",
-          "name": "Urban Leadership Fellowship",
-          "description": "Policy reform cohort, Atlanta, Georgia"
-        },
-        "hasCredential": {
-          "@type": "EducationalOccupationalCredential",
-          "name": "Urban Leadership Fellowship · policy reform cohort",
-          "credentialCategory": "Fellowship",
-          "dateCreated": "2025",
-          "recognizedBy": { "@type": "Organization", "name": "Urban Leadership Fellowship" }
-        }
-      },
-      {
-        "@type": "Report",
-        "@id": "https://matthew.mccluster.org/policy.html#school-meals",
-        "name": "A Policy Blueprint for Healthy School Meals in Georgia",
-        "headline": "A Policy Blueprint for Healthy School Meals in Georgia",
-        "datePublished": "2025",
-        "inLanguage": "en",
-        "about": ["Environmental justice", "School nutrition", "Food additives", "Georgia public policy"],
-        "spatialCoverage": { "@type": "State", "name": "Georgia" },
-        "author": [
-          { "@type": "Person", "name": "Senge Ngalame" },
-          { "@type": "Person", "name": "Josh Thomas" },
-          { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-          { "@type": "Person", "name": "Brandon Isome" }
-        ],
-        "publisher": { "@type": "Organization", "name": "Urban Leadership Fellowship" },
-        "associatedMedia": {
-          "@type": "VideoObject",
-          "name": "A Policy Blueprint for Healthy School Meals in Georgia — presentation deck",
-          "description": "The cohort's final policy presentation: county economics, food-additive bill tracking, a costed twenty-school pilot, vendor screening, and next steps for the Georgia Department of Education.",
-          "thumbnailUrl": "https://matthew.mccluster.org/assets/credentials/img/ulf-school-meals-policy.jpg",
-          "contentUrl": "https://matthew.mccluster.org/assets/video/ulf-school-meals-policy.mp4",
-          "uploadDate": "2026-08-08",
-          "duration": "PT5M"
-        }
-      },
-      {
-        "@type": "Report",
-        "@id": "https://matthew.mccluster.org/policy-memo-dna.html",
-        "name": "Policy Memorandum: Opposition to Legislation Mandating DNA Collection from Misdemeanor Offenders",
-        "datePublished": "2024-11-29",
-        "inLanguage": "en",
-        "about": ["Fourth Amendment", "DNA collection policy", "Criminal justice reform"],
-        "spatialCoverage": { "@type": "State", "name": "Georgia" },
-        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "url": "https://matthew.mccluster.org/policy-memo-dna.html"
-      },
-      {
-        "@type": "Report",
-        "@id": "https://matthew.mccluster.org/policy.html#docket-516",
-        "name": "Docket 516 Explainer: the UI 115-kV Railroad Transmission Line Rebuild",
-        "headline": "Docket 516 Explainer: the UI 115-kV Railroad Transmission Line Rebuild",
-        "datePublished": "2025",
-        "inLanguage": "en",
-        "about": ["Environmental justice", "Utility siting", "Connecticut Siting Council", "Public records"],
-        "spatialCoverage": { "@type": "State", "name": "Connecticut" },
-        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "url": "https://matthew.mccluster.org/docket-516.html"
+      "about": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       }
-    ]
-  }
+    },
+    {
+      "@type": "Report",
+      "@id": "https://matthew.mccluster.org/policy.html#school-meals",
+      "name": "A Policy Blueprint for Healthy School Meals in Georgia",
+      "headline": "A Policy Blueprint for Healthy School Meals in Georgia",
+      "datePublished": "2025",
+      "inLanguage": "en",
+      "about": [
+        "Environmental justice",
+        "School nutrition",
+        "Food additives",
+        "Georgia public policy"
+      ],
+      "spatialCoverage": {
+        "@type": "State",
+        "name": "Georgia"
+      },
+      "author": [
+        {
+          "@type": "Person",
+          "name": "Senge Ngalame"
+        },
+        {
+          "@type": "Person",
+          "name": "Josh Thomas"
+        },
+        {
+          "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+        },
+        {
+          "@type": "Person",
+          "name": "Brandon Isome"
+        }
+      ],
+      "publisher": {
+        "@type": "Organization",
+        "name": "Urban Leadership Fellowship"
+      },
+      "associatedMedia": {
+        "@type": "VideoObject",
+        "name": "A Policy Blueprint for Healthy School Meals in Georgia — presentation deck",
+        "description": "The cohort's final policy presentation: county economics, food-additive bill tracking, a costed twenty-school pilot, vendor screening, and next steps for the Georgia Department of Education.",
+        "thumbnailUrl": "https://matthew.mccluster.org/assets/credentials/img/ulf-school-meals-policy.jpg",
+        "contentUrl": "https://matthew.mccluster.org/assets/video/ulf-school-meals-policy.mp4",
+        "uploadDate": "2026-08-08",
+        "duration": "PT5M"
+      }
+    },
+    {
+      "@type": "Report",
+      "@id": "https://matthew.mccluster.org/policy-memo-dna.html",
+      "name": "Policy Memorandum: Opposition to Legislation Mandating DNA Collection from Misdemeanor Offenders",
+      "datePublished": "2024-11-29",
+      "inLanguage": "en",
+      "about": [
+        "Fourth Amendment",
+        "DNA collection policy",
+        "Criminal justice reform"
+      ],
+      "spatialCoverage": {
+        "@type": "State",
+        "name": "Georgia"
+      },
+      "author": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "url": "https://matthew.mccluster.org/policy-memo-dna.html"
+    },
+    {
+      "@type": "Report",
+      "@id": "https://matthew.mccluster.org/policy.html#docket-516",
+      "name": "Docket 516 Explainer: the UI 115-kV Railroad Transmission Line Rebuild",
+      "headline": "Docket 516 Explainer: the UI 115-kV Railroad Transmission Line Rebuild",
+      "datePublished": "2025",
+      "inLanguage": "en",
+      "about": [
+        "Environmental justice",
+        "Utility siting",
+        "Connecticut Siting Council",
+        "Public records"
+      ],
+      "spatialCoverage": {
+        "@type": "State",
+        "name": "Connecticut"
+      },
+      "author": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "url": "https://matthew.mccluster.org/docket-516.html"
+    }
+  ]
+}
   </script>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
