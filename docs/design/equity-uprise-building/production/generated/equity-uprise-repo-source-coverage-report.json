@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 263,
+  "candidate_count": 266,
   "capability_source_count": 97,
-  "support_only_count": 166,
-  "checks_total": 957,
-  "checks_passed": 957,
+  "support_only_count": 169,
+  "checks_total": 969,
+  "checks_passed": 969,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -145,6 +145,7 @@
     "listen.html",
     "llms.txt",
     "matthew-mccluster.html",
+    "mnet.html",
     "native/app/(tabs)/_layout.tsx",
     "native/app/(tabs)/desk.tsx",
     "native/app/(tabs)/uprise.tsx",
@@ -165,6 +166,7 @@
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
+    "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/signup-authority.test.mjs",
@@ -220,6 +222,7 @@
     "supabase/migrations/20260930235851_uprise_action_network.sql",
     "supabase/migrations/20261002014251_end_racism_campaign.sql",
     "supabase/migrations/20261002015418_song_test.sql",
+    "supabase/pending_migrations/action_network_gamification_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -277,12 +280,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "263 entries"
+      "detail": "266 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
-      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
+      "detail": "{\"missing_from_map\":[],\"stale_in_map\":[]}"
     },
     {
       "name": "_unfinished/equity-uprise/dashboard.html capability ids known",
@@ -5056,6 +5059,66 @@
     },
     {
       "name": "scripts/test/song-test.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mnet.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mnet.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "mnet.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "mnet.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-gamification.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-gamification.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/action-gamification.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/action-gamification.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending_migrations/action_network_gamification_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending_migrations/action_network_gamification_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending_migrations/action_network_gamification_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending_migrations/action_network_gamification_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     }
