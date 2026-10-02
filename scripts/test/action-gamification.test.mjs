@@ -42,3 +42,16 @@ test("Action Network exposes a native mission participant flow",async()=>{
  assert.match(js,/action_proofs/);
  assert.match(js,/if\(name==="missions"\)loadMissions\(\)/);
 });
+
+
+test("Control has a media-first Mission proof review desk",async()=>{
+ const js=await read("js/control-room/action-network.js");
+ assert.match(js,/Proof review/);
+ assert.match(js,/<video controls playsinline/);
+ assert.match(js,/Submitted mission proof/);
+ assert.match(js,/Verify action/);
+ assert.match(js,/Reject proof/);
+ assert.match(js,/rpc\/review_action_proof/);
+ assert.match(js,/does not certify a member’s character, beliefs, race/);
+ assert.match(js,/Self-declared satire badges remain self-declared/);
+});
