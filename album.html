@@ -1185,10 +1185,15 @@
       });
     }
     function fetchPlays() {
+      var fresh = false;
       try {
         var c = JSON.parse(localStorage.getItem("mcc_plays_cache") || "null");
-        if (c && c.rows) paintPlays(c.rows);
+        if (c && c.rows) {
+          paintPlays(c.rows);
+          fresh = !!c.at && Date.now() - c.at < 15 * 60 * 1000;
+        }
       } catch (e) {}
+      if (fresh) return;
       fetch(SB_URL + "/rest/v1/rpc/play_counts", {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },

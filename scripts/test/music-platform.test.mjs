@@ -252,3 +252,10 @@ test('public play counts use the dedicated album-play track index', async()=>{
   assert.match(sql,/revoke all on function public\.play_counts\(\) from public/);
   assert.match(sql,/grant execute on function public\.play_counts\(\) to anon, authenticated, service_role/);
 });
+
+
+test('album throttles the expensive public play-count RPC behind a fresh cache', async()=>{
+  const album=await read('album.html');
+  assert.match(album,/Date\.now\(\) - c\.at < 15 \* 60 \* 1000/);
+  assert.match(album,/if \(fresh\) return;\s*fetch\(SB_URL \+ "\/rest\/v1\/rpc\/play_counts"/);
+});
