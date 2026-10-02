@@ -19,7 +19,7 @@ const ROW = '44444444-4444-4444-8444-444444444444';
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 
-function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true } = {}) {
+function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true, stalePublishing = false, existingScheduledPost = false } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), method = init.method || 'GET';
@@ -36,10 +36,14 @@ function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true } =
     if (u.includes('/network_scheduled_posts')) {
       if (tableMissing) return ok({ code: 'PGRST205', message: 'Could not find the table' }, 404);
       if (method === 'POST') return ok([{ id: ROW, publish_at: body.publish_at, status: 'scheduled', payload: body.payload }], 201);
-      if (method === 'GET') return ok([{ id: ROW, author_m_uid: MUID, payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }]);
-      if (method === 'PATCH' && u.includes('status=eq.scheduled')) return ok(claimWins ? [{ id: ROW }] : []);
+      if (method === 'GET') {
+        if (u.includes('status=eq.publishing')) return ok(stalePublishing ? [{ id: ROW, author_m_uid: MUID, status: 'publishing', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }] : []);
+        return ok(stalePublishing ? [] : [{ id: ROW, author_m_uid: MUID, status: 'scheduled', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }]);
+      }
+      if (method === 'PATCH' && (u.includes('status=eq.scheduled') || u.includes('status=eq.publishing'))) return ok(claimWins ? [{ id: ROW }] : []);
       return new Response(null, { status: 204 });
     }
+    if (u.includes('/network_posts') && method === 'GET' && u.includes('scheduled_post_id=')) return ok(existingScheduledPost ? [{ id: POST }] : []);
     if (u.includes('/network_posts') && method === 'POST') return ok([{ id: POST, author_m_uid: MUID, ...body }], 201);
     if (u.includes('/network_reactions') || u.includes('/network_posts?reply_to_id') || u.includes('/network_bookmarks')) return ok([]);
     if (u.includes('/network_profiles') || u.includes('/platform_profiles')) return ok([]);
@@ -81,6 +85,21 @@ test('the cron claims each row before it publishes, then records the post', asyn
   const claim = calls.findIndex((c) => c.method === 'PATCH' && c.u.includes('status=eq.scheduled'));
   const insert = calls.findIndex((c) => c.u.endsWith('/network_posts') && c.method === 'POST');
   assert.ok(claim > -1 && claim < insert, 'claimed before inserting');
+  const done = calls.find((c) => c.method === 'PATCH' && c.body?.status === 'published');
+  assert.equal(done.body.post_id, POST);
+});
+
+test('a stale publishing claim is recovered after a Worker dies', async () => {
+  const calls = fakeDb({ stalePublishing: true });
+  assert.deepEqual(await publishDueNetworkPosts(ENV), { published: 1, failed: 0 });
+  const insert = calls.find((c) => c.u.endsWith('/network_posts') && c.method === 'POST');
+  assert.equal(insert.body.scheduled_post_id, ROW);
+});
+
+test('a post inserted before a Worker crash is acknowledged, never duplicated', async () => {
+  const calls = fakeDb({ stalePublishing: true, existingScheduledPost: true });
+  assert.deepEqual(await publishDueNetworkPosts(ENV), { published: 1, failed: 0 });
+  assert.ok(!calls.some((c) => c.u.endsWith('/network_posts') && c.method === 'POST'), 'existing scheduled post is reused');
   const done = calls.find((c) => c.method === 'PATCH' && c.body?.status === 'published');
   assert.equal(done.body.post_id, POST);
 });
