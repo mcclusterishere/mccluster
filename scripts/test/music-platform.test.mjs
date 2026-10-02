@@ -224,3 +224,6 @@ test('Now Playing preserves live video artwork instead of flattening every track
   assert.match(css,/prefers-reduced-motion: reduce/);
   assert.match(albums,/"video":/);
 });
+
+
+test("Music creator profiles converge on Action Network identity",async()=>{const js=await read("js/music-creator-profile.js");assert.match(js,/Put this music into action/);assert.match(js,/mnet\.html\?profile=/);});
