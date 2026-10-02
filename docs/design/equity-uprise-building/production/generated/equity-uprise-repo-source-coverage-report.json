@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 266,
+  "candidate_count": 269,
   "capability_source_count": 97,
-  "support_only_count": 169,
-  "checks_total": 969,
-  "checks_passed": 969,
+  "support_only_count": 172,
+  "checks_total": 981,
+  "checks_passed": 981,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -263,6 +263,7 @@
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/run-eu-tests.sh",
+    "supabase/tests/supabase_api_roles.stub.sql",
     "tools/eu-export-seed.sh",
     "tools/verify-llms.py",
     "vault.html",
@@ -271,16 +272,18 @@
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/index.js",
     "workers/mccluster/src/music/tracks.js",
+    "workers/mccluster/src/platform-api.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
     "workers/mccluster/test/halo-projection.test.mjs",
+    "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs"
   ],
   "checks": [
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "266 entries"
+      "detail": "269 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5119,6 +5122,66 @@
     },
     {
       "name": "supabase/pending_migrations/action_network_gamification_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/supabase_api_roles.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/supabase_api_roles.stub.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/tests/supabase_api_roles.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/supabase_api_roles.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/platform-api.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/platform-api.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/platform-api.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/platform-api.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mission-proof-media.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mission-proof-media.test.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/test/mission-proof-media.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/mission-proof-media.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

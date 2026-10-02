@@ -536,3 +536,30 @@ html, body { background: #0a0807; }
 .mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
 .mn__actionboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
 .mn__mission-strip,.mn__understand{display:flex;align-items:center;justify-content:space-between;gap:12px}.mn__mission-strip{margin-top:14px;padding-top:14px;border-top:1px solid var(--mn-rule)}.mn__mission-strip h3{margin:3px 0 0;font-size:.9rem}.mn__mission-strip a,.mn__understand>a{color:var(--mn-hot);font-weight:800;text-decoration:none}.mn__understand{background:linear-gradient(135deg,rgba(4,45,82,.32),var(--mn-panel));flex-wrap:wrap}.mn__understand small{display:block;max-width:62ch;margin-top:7px;color:var(--mn-dim);line-height:1.45}
+
+/* ---------- the Action Record (Missions tab) ----------
+   Verified work first, what it unlocks second, points last. */
+.mn__record { margin: 0 0 18px; padding: 16px; border-radius: 22px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); animation: mn-rise 0.45s var(--mn-ease) both; }
+.mn__record-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.mn__record-head h2 { margin: 2px 0 0; font-family: var(--mn-display); font-weight: 400; font-size: 1.7rem; line-height: 1; text-transform: uppercase; }
+.mn__record-head strong { flex: none; color: var(--mn-gold); font-weight: 800; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.mn__record-unlock { margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.88rem; line-height: 1.45; }
+.mn__record-unlock b { color: var(--mn-ink); }
+.mn__record-unlock.is-open { background: rgba(232, 200, 119, 0.12); box-shadow: inset 0 0 0 1px rgba(232, 200, 119, 0.4); }
+.mn__record-skills, .mn__record-cohorts, .mn__record-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.mn__record-skills li { display: grid; grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) auto; align-items: center; gap: 10px; font-size: 0.85rem; }
+.mn__record-skills span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-dim); text-transform: capitalize; }
+.mn__record-skills i { height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--mn-hot) var(--pct), var(--mn-raise-2) var(--pct)); }
+.mn__record-skills b { font-variant-numeric: tabular-nums; }
+.mn__record-cohorts li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--mn-raise-2); }
+.mn__record-cohorts span { color: var(--mn-dim); font-size: 0.82rem; }
+.mn__record-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 4px 4px 4px 0; border-top: 1px solid var(--mn-rule); }
+.mn__record-item button { min-height: 48px; display: grid; justify-items: start; gap: 2px; padding: 6px 0; border: 0; background: none; color: var(--mn-ink); text-align: left; cursor: pointer; font: inherit; }
+.mn__record-item button b { font-weight: 800; }
+.mn__record-item button span { color: var(--mn-dim); font-size: 0.8rem; }
+.mn__record-item.is-verified button span { color: #8fe0a8; }
+.mn__record-item.is-rejected button span { color: #ff9b8f; }
+.mn__record-item small { grid-column: 1 / -1; color: var(--mn-dim); font-size: 0.8rem; }
+.mn__record-receipt { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-weight: 800; font-size: 0.82rem; text-decoration: none; }
+.mn__record-empty { margin: 12px 0 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .mn__record { animation: none; } }

@@ -2110,6 +2110,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending Action Network mission, proof, reward, skill and cohort schema; not a building capability."
+    },
+    {
+      "path": "supabase/tests/supabase_api_roles.stub.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test-only stand-ins (API roles, auth.uid, eu_is_admin) for running the Mission Engine migration in a scratch database; never applied to a project."
+    },
+    {
+      "path": "workers/mccluster/src/platform-api.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical platform API Worker routes; references the eu_is_admin owner check for the mission proof review route; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/mission-proof-media.test.mjs",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test for the owner-only mission proof media route; not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

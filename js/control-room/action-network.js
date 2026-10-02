@@ -85,6 +85,8 @@
       '<section class="cro-card"><h2>Latest joins</h2>'+joins+'</section></div>';
   }
   function proofMedia(p){
+    /* an upload from the member's camera: the Worker signs it for the desk */
+    if(p.metadata&&p.metadata.asset_id)return '<div data-proof-upload="'+e(p.id)+'" data-proof-kind="'+e(p.metadata.media_type||p.proof_type)+'"><div class="cro-note">Loading the uploaded proof…</div></div>'+(p.proof_url?'<p style="margin-top:8px"><a class="cr-btn" href="'+e(p.proof_url)+'" target="_blank" rel="noopener">Also linked ↗</a></p>':"");
     var u=e(p.proof_url||""); if(!u)return '<div class="cro-note">Text proof only.</div>';
     if(p.proof_type==="video")return '<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>';
     if(p.proof_type==="photo")return '<img alt="Submitted mission proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
@@ -92,7 +94,7 @@
   }
   function loadProofs(){
     A.proofBusy=true;redraw();
-    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,created_at,action_mission_assignments!inner(id,m_uid,status,action_missions!inner(id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
+    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,metadata,created_at,action_mission_assignments!inner(id,m_uid,status,action_missions!inner(id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
       .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
       .then(function(){A.proofBusy=false;redraw();});
   }
@@ -186,8 +188,21 @@
       if(x.url&&!/^https:\/\//i.test(x.url))throw new Error(label+" #"+(i+1)+": url must start with https://");});
     return v;
   }
+  function loadUploads(root){
+    if(!A.request)return;
+    root.querySelectorAll("[data-proof-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return; box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/proofs/"+encodeURIComponent(box.getAttribute("data-proof-upload"))+"/media").then(function(m){
+        var u=e(m&&m.url||""); if(!u)throw new Error("no url");
+        box.innerHTML=(m.media_type==="video"||box.getAttribute("data-proof-kind")==="video")
+          ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+          :'<img alt="Submitted mission proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+      }).catch(function(){box.innerHTML='<div class="cro-note">The uploaded proof could not be opened.</div>';});
+    });
+  }
   function bind(root){
     if(!root)return;
+    loadUploads(root);
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
     root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
@@ -235,5 +250,5 @@
       if(!title){alert("A title, please.");return;}
       run(cr,function(){return A.supa("action_campaigns",{method:"POST",body:{id:id,slug:slug,title:title,status:"draft"}}).then(function(){A.sel=id;A.tab="content";});},"Draft created. Write its content, facts and sources, then set it live.");};
   }
-  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.rerender=opts.render;},render:render,bind:bind,load:load,state:A};
+  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;},render:render,bind:bind,load:load,state:A};
 })();

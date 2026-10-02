@@ -641,6 +641,29 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/media/upload-url'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'upload-url',file_name:b.file_name,mime_type:b.mime_type,byte_size:b.byte_size,alt_text:b.alt_text}));}
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
   if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
+  /* MISSION PROOF MEDIA, for the reviewer only. A proof upload is the
+     member's own unattached file, which the media function will not sign for
+     anyone else. The desk asks here: the caller must be the owner desk, the
+     file must be the one recorded on that proof, and it must belong to the
+     member who submitted it. The link expires in fifteen minutes. */
+  const proofMedia=path.match(/^\/v1\/mnet\/missions\/proofs\/([0-9a-f-]{36})\/media$/i);
+  if(proofMedia&&req.method==='GET'){
+    if(external)return fail(req,env,'Proof review requires a McCluster user session',403);
+    if((await userRpc(req,env,'eu_is_admin',{}))!==true)return fail(req,env,'Proof not found',404);
+    const proofs=await service(env,`action_proofs?id=eq.${proofMedia[1]}&select=id,metadata,assignment_id&limit=1`),proof=proofs?.[0];
+    const assetId=proof?.metadata?.asset_id;
+    if(!proof||!uuidLike(assetId))return fail(req,env,'Proof has no upload',404);
+    const [assignments,assets]=await Promise.all([
+      service(env,`action_mission_assignments?id=eq.${proof.assignment_id}&select=m_uid&limit=1`),
+      service(env,`network_media_assets?id=eq.${assetId}&select=id,bucket_id,object_path,owner_m_uid,media_type,mime_type&limit=1`)
+    ]);
+    const asset=assets?.[0];
+    if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    const signed=await res.json().catch(()=>null);
+    if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
+    return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
+  }
   /* THE OWNER'S TWO LEVERS. Both check mnet_is_admin() inside the function
      rather than here, so the rule lives beside the data and a future caller
      cannot route around it. */

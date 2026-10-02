@@ -3099,7 +3099,7 @@
   });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
-  if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, render: render });
+  if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
 
   window.CR.media.init({

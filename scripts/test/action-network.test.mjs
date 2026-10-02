@@ -210,7 +210,7 @@ test('Control carries the campaign desk, and the money switch asks first', async
   assert.match(html, /js\/control-room\/action-network\.js/);
   assert.match(v2, /window\.CR\.actionNetwork\.render\(\)/);
   assert.match(v2, /window\.CR\.actionNetwork\.bind\(/);
-  assert.match(v2, /window\.CR\.actionNetwork\.init\(\{ supa: supa, render: render \}\)/);
+  assert.match(v2, /window\.CR\.actionNetwork\.init\(\{ supa: supa, request: request, render: render \}\)/);
   assert.match(mod, /rpc\/action_funnel/);
   assert.match(mod, /if\(on&&!confirm\("Turn money ON/);
   assert.match(mod, /published:false/, 'ledger entries start private');

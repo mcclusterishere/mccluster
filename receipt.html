@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Verified action · Action Network</title>
+  <meta name="description" content="A verified action on the Action Network. Don't just watch. Act.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* Phone first; wider screens only get more air around the card. */
+    .rc { --hot: #ff4d3d; --ink: #f4efe6; --dim: #ada296; --raise: #141110;
+      box-sizing: border-box; width: 100%; max-width: 30rem; margin: 0 auto; padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 1.5rem;
+      color: var(--ink); font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .rc *, .rc *::before, .rc *::after { box-sizing: border-box; }
+    html { overflow-x: clip; }
+    html, body { background: #0a0807; }
+    .rc [hidden] { display: none !important; }
+    .rc__card { position: relative; overflow: hidden; padding: 28px 22px 24px; border-radius: 26px;
+      background: radial-gradient(120% 90% at 0% 0%, rgba(255, 77, 61, 0.32), transparent 62%), var(--raise);
+      box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.35); animation: rc-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    @keyframes rc-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
+    .rc__big { margin: 0; font-family: var(--sig, "Anton", "Impact", sans-serif); font-weight: 400; font-size: clamp(2.3rem, 11vw, 3.2rem); line-height: 0.95; text-transform: uppercase; letter-spacing: 0.01em; }
+    .rc__tag { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 0; padding: 6px 12px; border-radius: 999px; background: var(--hot); color: #1a0503; font-weight: 800; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; }
+    .rc__tag svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .rc__mission { margin: 14px 0 0; font-weight: 800; font-size: 1.35rem; line-height: 1.25; overflow-wrap: anywhere; }
+    .rc__when { margin: 6px 0 0; color: var(--dim); font-size: 0.9rem; }
+    .rc__foot { display: flex; align-items: center; gap: 10px; margin-top: 26px; padding-top: 16px; border-top: 1px solid rgba(244, 239, 230, 0.12); }
+    .rc__foot img { width: 30px; height: 30px; object-fit: contain; }
+    .rc__foot b { display: block; font-size: 0.82rem; letter-spacing: 0.18em; }
+    .rc__foot span { display: block; color: var(--dim); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; }
+    .rc__btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; margin-top: 10px; padding: 0 18px; border: 0; border-radius: 16px; cursor: pointer; text-decoration: none;
+      background: #1c1816; color: var(--ink); box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.18); font: 800 max(16px, 1rem) "Manrope", system-ui, sans-serif; }
+    .rc__btn--hot { background: var(--hot); color: #1a0503; box-shadow: 0 14px 30px -14px rgba(255, 77, 61, 0.8); }
+    .rc__acts { margin-top: 16px; }
+    .rc__note { margin: 12px 0 0; min-height: 1.2em; color: var(--dim); font-size: 0.85rem; text-align: center; }
+    .rc__missing { padding: 24px 4px; text-align: center; color: var(--dim); line-height: 1.5; }
+    .rc__missing b { display: block; color: var(--ink); font-size: 1.2rem; margin-bottom: 6px; }
+    @media (min-width: 40rem) { .rc { padding-top: 48px; } }
+    @media (prefers-reduced-motion: reduce) { .rc__card { animation: none; } }
+  </style>
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="songpage">
+  <main class="rc">
+    <p class="rc__missing" id="rcLoading">Loading…</p>
+    <div class="rc__missing" id="rcMissing" hidden>
+      <b>No verified action here.</b>
+      This receipt does not exist, or the action has not been verified yet.
+      <a class="rc__btn rc__btn--hot" href="mnet.html">Find a mission</a>
+    </div>
+
+    <article class="rc__card" id="rcCard" hidden aria-labelledby="rcBig">
+      <h1 class="rc__big" id="rcBig">I did something about it</h1>
+      <p class="rc__tag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Verified action</p>
+      <p class="rc__mission" id="rcMission"></p>
+      <p class="rc__when" id="rcWhen"></p>
+      <div class="rc__foot">
+        <img src="assets/img/m-mark.png" alt="">
+        <div><b>ACTION NETWORK</b><span>DON'T JUST WATCH. ACT.</span></div>
+      </div>
+    </article>
+
+    <div class="rc__acts" id="rcActs" hidden>
+      <a class="rc__btn rc__btn--hot" id="rcTake" href="mnet.html">Take this mission too</a>
+      <button class="rc__btn" id="rcShare" type="button">Share this receipt</button>
+      <button class="rc__btn" id="rcStory" type="button">Save as a Story image</button>
+      <p class="rc__note" id="rcNote" role="status"></p>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    "use strict";
+    var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+    var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    function $(id) { return document.getElementById(id); }
+    var id = null;
+    try { id = new URLSearchParams(location.search).get("a"); } catch (e) {}
+    var R = null;
+
+    function missing() { $("rcLoading").hidden = true; $("rcMissing").hidden = false; }
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) { missing(); return; }
+
+    fetch(SB_URL + "/rest/v1/rpc/action_receipt", {
+      method: "POST",
+      headers: { apikey: SB_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ p_assignment_id: id })
+    }).then(function (res) { return res.ok ? res.json() : null; }).then(function (r) {
+      if (!r || !r.title) { missing(); return; }
+      R = r;
+      $("rcLoading").hidden = true;
+      $("rcMission").textContent = r.title;
+      var when = r.verified_at ? new Date(r.verified_at) : null;
+      $("rcWhen").textContent = when ? "Verified " + when.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "";
+      /* the receipt leads back to the exact mission, not the feed */
+      $("rcTake").href = "mnet.html?mission=" + encodeURIComponent(r.mission_id);
+      $("rcTake").hidden = !r.mission_open;
+      $("rcCard").hidden = false; $("rcActs").hidden = false;
+      document.title = "Verified: " + r.title + " · Action Network";
+    }).catch(missing);
+
+    function note(t) { $("rcNote").textContent = t; }
+    $("rcShare").addEventListener("click", function () {
+      var text = "I did something about it: " + (R && R.title) + ". Verified on the Action Network.";
+      if (navigator.share) { navigator.share({ title: "Verified action", text: text, url: location.href }).catch(function () {}); return; }
+      (navigator.clipboard ? navigator.clipboard.writeText(location.href) : Promise.reject()).then(function () { note("Link copied."); }, function () { note(location.href); });
+    });
+
+    /* A 1080 x 1920 Story card drawn from the same words. The supplied M
+       artwork is placed whole and scaled proportionally, never redrawn. */
+    $("rcStory").addEventListener("click", function () {
+      if (!R) return;
+      var c = document.createElement("canvas"); c.width = 1080; c.height = 1920;
+      var x = c.getContext("2d");
+      var g = x.createRadialGradient(0, 0, 0, 0, 0, 1500);
+      g.addColorStop(0, "#4a1410"); g.addColorStop(0.55, "#0a0807"); g.addColorStop(1, "#0a0807");
+      x.fillStyle = g; x.fillRect(0, 0, 1080, 1920);
+      x.fillStyle = "#f4efe6"; x.textBaseline = "top";
+      x.font = "400 150px Anton, Impact, sans-serif";
+      ["I DID", "SOMETHING", "ABOUT IT"].forEach(function (l, i) { x.fillText(l, 90, 380 + i * 160); });
+      x.fillStyle = "#ff4d3d"; roundRect(x, 90, 900, 520, 90, 45); x.fill();
+      x.fillStyle = "#1a0503"; x.font = "800 44px Manrope, system-ui, sans-serif"; x.fillText("VERIFIED ACTION", 140, 922);
+      x.fillStyle = "#f4efe6"; x.font = "800 64px Manrope, system-ui, sans-serif";
+      wrap(x, R.title, 90, 1060, 900, 80, 4);
+      x.fillStyle = "#ada296"; x.font = "800 40px Manrope, system-ui, sans-serif";
+      x.fillText("ACTION NETWORK", 210, 1650); x.fillText("DON'T JUST WATCH. ACT.", 210, 1705);
+      var img = new Image();
+      img.onload = function () { var s = 96 / Math.max(img.naturalWidth, img.naturalHeight); x.drawImage(img, 90, 1648, img.naturalWidth * s, img.naturalHeight * s); save(); };
+      img.onerror = save; img.src = "assets/img/m-mark.png";
+      function save() {
+        c.toBlob(function (b) {
+          if (!b) { note("Could not draw the image."); return; }
+          var f = new File([b], "verified-action.png", { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: "Verified action" }).catch(function () {}); return; }
+          var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "verified-action.png"; a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000); note("Saved.");
+        }, "image/png");
+      }
+    });
+    function roundRect(x, l, t, w, h, r) { x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath(); }
+    function wrap(x, text, l, t, w, lh, max) {
+      var words = String(text).split(/\s+/), line = "", n = 0;
+      for (var i = 0; i < words.length && n < max; i++) {
+        var test = line ? line + " " + words[i] : words[i];
+        if (x.measureText(test).width > w && line) { x.fillText(line, l, t + n * lh); n++; line = words[i]; } else line = test;
+      }
+      if (n < max && line) x.fillText(line, l, t + n * lh);
+    }
+  })();
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
