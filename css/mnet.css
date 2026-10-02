@@ -509,3 +509,10 @@ html, body { background: #0a0807; }
 @media (prefers-reduced-motion: reduce) {
   .mn__composer, .mn__composer:focus-within { transform:none !important; }
 }
+
+/* A member's public site is the front of the same identity, not a second profile. */
+.mn__frontpage{margin:0 0 18px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--mcc-surface,#100e0d);box-shadow:0 22px 60px -48px #000}
+.mn__frontpage-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.mn__frontpage-head div{display:grid;gap:2px}.mn__frontpage-head span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}.mn__frontpage-head strong{font-size:14px}.mn__frontpage-head a{font-size:12px;color:var(--ruby-hot,#e5383b);text-decoration:none}
+.mn__frontpage-stage{position:relative;height:min(62vh,620px);background:#080706}.mn__frontpage-stage iframe{width:100%;height:100%;border:0;background:#080706}
+@media(max-width:620px){.mn__frontpage{margin-left:-10px;margin-right:-10px;border-radius:18px}.mn__frontpage-stage{height:58vh}}
