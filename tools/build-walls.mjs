@@ -78,18 +78,9 @@ function ldFor(ev) {
   const stills = (ev.media || []).filter((m) => m.type !== "film");
   const cover = ev.cover ? `${SITE}/${ev.cover}` : null;
 
-  const me = {
-    "@type": "Person",
-    "@id": `${SITE}/#matthew-mccluster`,
-    name: ME.name,
-    url: ME.page,
-    email: ME.email,
-    jobTitle: "Photographer and Creative Director",
-    worksFor: { "@type": "Organization", "@id": `${SITE}/#mccluster-corp`, name: ME.org },
-    sameAs: ME.sameAs,
-  };
+  const me = { "@id": `${SITE}/#matthew-mccluster` };
 
-  const graph = [me];
+  const graph = [];
 
   /* The client as its own entity, cited by the coverage. This is the join:
      the client is the subject, the photographer is the creator, and both
@@ -116,7 +107,8 @@ function ldFor(ev) {
   if (start) event.startDate = start;
   if (ev.about) event.description = ev.about;
   if (cover) event.image = cover;
-  if (clientNode) event.organizer = { "@id": `${url}#client` };
+  /* A client is the subject of coverage, not automatically the event organizer. */
+  if (ev.organizer) event.organizer = { "@type": "Organization", name: ev.organizer };
   if (ev.venue || ev.city) {
     event.location = {
       "@type": "Place",
@@ -185,7 +177,7 @@ function pageFor(ev) {
       </figure>`;
     }
     if (m.type === "video") {
-      return `      <figure><video src="${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="${esc(m.poster)}"` : ""}></video></figure>`;
+      return `      <figure><video src="../${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="../${esc(m.poster)}"` : ""}></video></figure>`;
     }
     return `      <figure class="wrv${i === 0 ? " wl__feat" : ""}" style="--i:${i % 5}"><img src="../${esc(m.src)}" alt="${esc(altFor(ev, m, i))}" loading="lazy" width="1800" height="1200">${
       m.sell ? `<figcaption><a href="../gallery.html#shop">Own this frame &#8594;</a></figcaption>` : ""
@@ -370,13 +362,4 @@ writeFileSync(join(ROOT, "walls.html"), `<!doctype html>
 `);
 console.log(`walls.html  -> gallery.html (consolidated stub)`);
 
-/* ---- sitemap: the wall pages, with a real lastmod ---- */
-const smPath = join(ROOT, "sitemap.xml");
-let sm = readFileSync(smPath, "utf8");
-sm = sm.replace(/\s*<url><loc>https:\/\/here\.mccluster\.org\/walls[^<]*<\/loc>[\s\S]*?<\/url>/g, "");
-const today = new Date().toISOString().slice(0, 10);
-const rows =
-  live.map((ev) => `  <url><loc>${SITE}/walls/${ev.id}.html</loc><lastmod>${today}</lastmod><priority>0.8</priority></url>`).join("\n") + "\n";
-sm = sm.replace("</urlset>", rows + "</urlset>");
-writeFileSync(smPath, sm);
-console.log(`sitemap.xml  +${live.length + 1} urls`);
+/* Sitemap ownership moved to tools/build-sitemap.mjs. This generator writes wall pages only. */
