@@ -20,7 +20,7 @@
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var MIN_CLIP = 1; // seconds
   var MAX_IMAGE_BYTES = 25 * 1024 * 1024;
-  var MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
+  var MAX_VIDEO_BYTES = 500 * 1024 * 1024;
   var DRAFT_KEY = "mnet_create_draft_v1";
   var DRAFT_TTL = 7 * 86400000;
   var OK_TYPES = /^(image\/(jpeg|png|webp|avif|gif)|video\/(mp4|webm|quicktime))$/;
@@ -136,7 +136,7 @@
     var video = type.indexOf("video/") === 0, limit = video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
     if (!file.size) { alert("That file is empty. Choose another one."); return; }
     if (file.size > limit) {
-      alert(video ? "That video is over 1 GB. Choose a smaller video." : "That image is over 25 MB. Choose a smaller image.");
+      alert(video ? "That video is over 500 MB. Choose a smaller video." : "That image is over 25 MB. Choose a smaller image.");
       return;
     }
     S.file = file;
