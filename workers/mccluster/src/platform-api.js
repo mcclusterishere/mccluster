@@ -319,6 +319,23 @@ export async function publishDueNetworkPosts(env,{limit=20}={}){
   return out;
 }
 
+/* CLOUDFLARE STREAM, for live. Needs CF_ACCOUNT_ID and a Stream-scoped
+   CF_STREAM_TOKEN; without them going live answers 503 and nothing else
+   changes. */
+function liveEnabled(env){return !!(env.CF_ACCOUNT_ID&&env.CF_STREAM_TOKEN)}
+async function cfStream(env,method,path,body){
+  const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(env.CF_ACCOUNT_ID)}/stream${path}`,{method,headers:{authorization:`Bearer ${env.CF_STREAM_TOKEN}`,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const data=await res.json().catch(()=>null);
+  if(!res.ok||data?.success===false)throw Object.assign(new Error(data?.errors?.[0]?.message||'Cloudflare Stream request failed'),{status:502,detail:data});
+  return data?.result??null;
+}
+/* Ending deletes the Stream input first, so the publish URL dies with the
+   broadcast even if the database write after it fails. */
+async function endLiveSession(env,sess,byUser,reason){
+  if(sess.cf_input_uid&&liveEnabled(env))await cfStream(env,'DELETE',`/live_inputs/${sess.cf_input_uid}`).catch(e=>{if(!/not.?found/i.test(String(e?.message)))throw e;});
+  await service(env,`network_live_sessions?id=eq.${sess.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'ended',ended_at:new Date().toISOString(),ended_by:byUser,end_reason:reason})});
+}
+
 async function handleMnet(req,env,path,url){
   const external=await apiKeyPrincipal(req,env);
   const user=external?null:await authUser(req,env);
@@ -641,6 +658,69 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/media/upload-url'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'upload-url',file_name:b.file_name,mime_type:b.mime_type,byte_size:b.byte_size,alt_text:b.alt_text}));}
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
   if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
+  /* GOING LIVE. The owner desk and accepted fellows broadcast from a phone or
+     browser over WebRTC to Cloudflare Stream; anyone can watch. Each broadcast
+     gets its own Stream live input, created here and deleted when it ends, so
+     a publish (WHIP) URL is never reused. That URL is a credential: it is
+     returned only to the host who asked, and never written to the database.
+     Viewers get the playback (WHEP) URL from network_live_sessions, whose RLS
+     shows only broadcasts with a heartbeat in the last two minutes. */
+  if(path.startsWith('/v1/mnet/live')){
+    if(external)return fail(req,env,'Live requires a McCluster user session',403);
+    if(path==='/v1/mnet/live/eligibility'&&req.method==='GET')
+      return reply(req,env,{can_host:(await userRpc(req,env,'live_can_host',{}))===true,enabled:liveEnabled(env)});
+    if(path==='/v1/mnet/live'&&req.method==='POST'){
+      if((await userRpc(req,env,'live_can_host',{}))!==true)return fail(req,env,'Going live is open to fellows. Three verified actions, then apply.',403);
+      if(!liveEnabled(env))return fail(req,env,'Live video is not switched on yet.',503);
+      const b=await json(req),title=String(b.title||'').trim().slice(0,120);
+      if(!title)return fail(req,env,'Give the broadcast a title.',400);
+      const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
+      /* One broadcast per host: anything they left running is ended first. */
+      const open=await service(env,`network_live_sessions?host_user_id=eq.${user.id}&status=in.(starting,live)&select=id,cf_input_uid`);
+      for(const o of open||[])await endLiveSession(env,o,user.id,'replaced');
+      const input=await cfStream(env,'POST','/live_inputs',{meta:{name:`action-network-live ${muid}`},recording:{mode:'off'}});
+      const whip=input?.webRTC?.url,whep=input?.webRTCPlayback?.url;
+      if(!input?.uid||!whip||!whep){if(input?.uid)await cfStream(env,'DELETE',`/live_inputs/${input.uid}`).catch(()=>{});return fail(req,env,'Cloudflare did not return a live input.',502);}
+      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep})});
+      const sess=rows?.[0];
+      return reply(req,env,{session:{id:sess.id,title:sess.title,whep_url:whep,status:sess.status},whip_url:whip},201);
+    }
+    const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish)$/i);
+    if(one){
+      const rows=await service(env,`network_live_sessions?id=eq.${one[1]}&select=*&limit=1`),sess=rows?.[0];
+      if(!sess)return fail(req,env,'Broadcast not found',404);
+      const host=sess.host_user_id===user.id,act=one[2].toLowerCase();
+      if(act==='end'&&req.method==='POST'){
+        const desk=!host&&(await userRpc(req,env,'eu_is_admin',{}))===true;
+        if(!host&&!desk)return fail(req,env,'Broadcast not found',404);
+        if(sess.status!=='ended')await endLiveSession(env,sess,user.id,desk?'desk':'host');
+        return reply(req,env,{id:sess.id,status:'ended'});
+      }
+      if(!host)return fail(req,env,'Broadcast not found',404);
+      if(sess.status==='ended')return fail(req,env,'This broadcast has ended.',410);
+      const now=new Date().toISOString();
+      if(act==='on-air'&&req.method==='POST'){
+        let postId=sess.post_id;
+        if(!postId){
+          const apps=await service(env,`platform_apps?app_key=eq.mccluster-web&enabled=eq.true&select=id&limit=1`);
+          const posts=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:sess.host_m_uid,body:`Live now: ${sess.title}`,post_type:'update',visibility:'public',metadata:{live:{session_id:sess.id}},source_app_id:apps?.[0]?.id||null})});
+          postId=posts?.[0]?.id||null;
+        }
+        await service(env,`network_live_sessions?id=eq.${sess.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'live',started_at:sess.started_at||now,last_seen_at:now,post_id:postId})});
+        return reply(req,env,{id:sess.id,status:'live',post_id:postId});
+      }
+      if(act==='heartbeat'&&req.method==='POST'){
+        await service(env,`network_live_sessions?id=eq.${sess.id}&status=eq.live`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({last_seen_at:now})});
+        return reply(req,env,{id:sess.id,ok:true});
+      }
+      if(act==='publish'&&req.method==='GET'){
+        const input=await cfStream(env,'GET',`/live_inputs/${sess.cf_input_uid}`);
+        if(!input?.webRTC?.url)return fail(req,env,'The live input is gone. Start a new broadcast.',410);
+        return reply(req,env,{whip_url:input.webRTC.url,whep_url:sess.whep_url});
+      }
+    }
+    return fail(req,env,'Not found',404);
+  }
   /* MISSION PROOF MEDIA, for the reviewer only. A proof upload is the
      member's own unattached file, which the media function will not sign for
      anyone else. The desk asks here: the caller must be the owner desk, the

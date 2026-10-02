@@ -212,6 +212,7 @@
       openDeepLinkedMission();
       /* A deep link to a mission wins over the first-run tour. */
       if (!/[?&]mission=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
+      if (window.MCC_LIVE) window.MCC_LIVE.start();
       return loadFeed(true).then(loadNotificationsSilently);
     });
   }
@@ -1533,7 +1534,13 @@
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
   }
   function sbRpc(name,args){return sbRest("rpc/"+name,{method:"POST",body:JSON.stringify(args||{})});}
-  window.MCC_MNET = { markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); } };
+  /* The few things the separate live module needs from this one. */
+  window.MCC_MNET = {
+    markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
+    api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    identity: function () { return identity(); },
+    refreshFeed: function () { return loadFeed(true); }
+  };
   function missionHref(id){return "mnet.html?mission="+encodeURIComponent(id);}
   function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
