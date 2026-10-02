@@ -27,7 +27,7 @@
 
   var S = {
     file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
-    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false
+    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false
   };
 
   function $(id) { return document.getElementById(id); }
@@ -192,6 +192,7 @@
   function put(url, file, token, signed) {
     return new Promise(function (resolve, reject) {
       var x = new XMLHttpRequest();
+      S.xhr = x;
       x.open(signed ? "PUT" : "POST", url);
       x.setRequestHeader("apikey", SB_KEY);
       x.setRequestHeader("authorization", "Bearer " + token);
@@ -200,21 +201,23 @@
       x.upload.onprogress = function (e) {
         if (e.lengthComputable) uploadLine("Uploading… " + Math.round(e.loaded / e.total * 100) + "%", "", Math.round(e.loaded / e.total * 100));
       };
-      x.onload = function () { x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("Upload rejected (" + x.status + ")")); };
-      x.onerror = function () { reject(new Error("The upload was interrupted. Check your connection.")); };
+      x.onload = function () { S.xhr = null; x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("Upload rejected (" + x.status + ")")); };
+      x.onerror = function () { S.xhr = null; reject(new Error("The upload was interrupted. Check your connection.")); };
+      x.onabort = function () { S.xhr = null; reject(Object.assign(new Error("Upload cancelled."), { cancelled: true })); };
       x.send(file);
     });
   }
   function startUpload() {
     var file = S.file, mine = {};
     if (!file) return;
-    S.uploadError = null; $("crUploadRetry").hidden = true;
-    uploadLine("Preparing upload…", "", 2);
+    S.uploadError = null; S.uploadCancelled = false; S.uploadGrantAsset = null; $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = false;
+    uploadLine(navigator.onLine === false ? "Waiting for a connection…" : "Preparing upload…", "", 2);
     S.upload = mine.p = api("/v1/mnet/media/upload-url", {
       method: "POST", body: { file_name: file.name || (S.kind + ".bin"), mime_type: file.type, byte_size: file.size }
     }).then(function (grant) {
       var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset;
       if (!path || !asset) throw new Error("The upload slot was not created.");
+      S.uploadGrantAsset = asset;
       var tok = grant.upload.token, s = session();
       var url = tok
         ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) + "?token=" + encodeURIComponent(tok)
@@ -224,22 +227,46 @@
       }).then(function (fin) { return (fin && fin.asset) || asset; });
     }).then(function (asset) {
       if (S.upload !== mine.p) return asset; // discarded while uploading
-      S.asset = asset;
+      S.asset = asset; S.uploadGrantAsset = null; $("crUploadCancel").hidden = true;
       uploadLine("Uploaded. Ready to post.", "ok", 100);
       return asset;
     }, function (e) {
       if (S.upload === mine.p) {
         S.uploadError = e;
-        uploadLine(e.message || "Upload failed.", "error", 0);
-        $("crUploadRetry").hidden = false;
+        uploadLine(e.message || "Upload failed.", e.cancelled ? "" : "error", 0);
+        $("crUploadRetry").hidden = !!e.cancelled;
+        $("crUploadCancel").hidden = true;
       }
       throw e;
     });
     S.upload.catch(function () {});
   }
+  function discardUploadAsset(asset) {
+    if (!asset || !asset.id) return Promise.resolve();
+    return api("/v1/mnet/media/discard", { method: "POST", body: { asset_id: asset.id } }).catch(function () {});
+  }
+  function cancelUpload() {
+    S.uploadCancelled = true;
+    var reserved = S.uploadGrantAsset;
+    if (S.xhr) try { S.xhr.abort(); } catch (e) {}
+    S.uploadGrantAsset = null; S.asset = null;
+    $("crUploadCancel").hidden = true; $("crUploadRetry").hidden = true;
+    uploadLine("Upload cancelled.", "", 0);
+    discardUploadAsset(reserved);
+  }
   $("crUploadRetry").addEventListener("click", function () {
     if (!S.file || S.busy) return;
+    if (navigator.onLine === false) { uploadLine("Waiting for a connection…", "", 0); return; }
     startUpload();
+  });
+  $("crUploadCancel").addEventListener("click", cancelUpload);
+  window.addEventListener("online", function () {
+    if (S.file && S.uploadError && !S.uploadCancelled && !S.asset) {
+      uploadLine("Connection restored. Ready to retry.", "", 0); $("crUploadRetry").hidden = false;
+    }
+  });
+  window.addEventListener("offline", function () {
+    if (S.file && !S.asset) uploadLine("Connection lost. The upload can be retried.", "error", 0);
   });
 
   /* ---------- the trim ---------- */
@@ -517,11 +544,14 @@
   /* ---------- reset ---------- */
   function reset() {
     pause();
+    var abandoned = S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null);
+    if (S.xhr) try { S.xhr.abort(); } catch (e) {}
+    if (abandoned) discardUploadAsset(abandoned);
     if (S.url) try { URL.revokeObjectURL(S.url); } catch (e) {}
     v.removeAttribute("src"); try { v.load(); } catch (e) {}
     $("crImage").removeAttribute("src");
     S.file = null; S.kind = ""; S.url = ""; S.dur = 0; S.start = 0; S.end = 0; S.muted = false;
-    S.upload = null; S.asset = null; S.when = "now"; S.uploadError = null;
+    S.upload = null; S.asset = null; S.when = "now"; S.uploadError = null; S.xhr = null; S.uploadGrantAsset = null; S.uploadCancelled = false;
     $("crMute").setAttribute("aria-pressed", "false");
     $("crMuteL").textContent = "Sound on";
     $("crCaption").value = ""; $("crCount").textContent = "0";
@@ -532,7 +562,7 @@
       x.classList.toggle("is-on", on);
       x.setAttribute("aria-checked", on ? "true" : "false");
     });
-    uploadLine("", "", 0); $("crUploadRetry").hidden = true;
+    uploadLine("", "", 0); $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = true;
     $("crDraftNotice").hidden = true;
     status("");
   }
