@@ -302,13 +302,12 @@
   }
 
   function saveDemographics() {
-    var selected = Array.prototype.slice.call(document.querySelectorAll('input[name="mnRace"]:checked')).map(function (x) { return x.value; });
-    var skip = !!($("mnRaceSkip") && $("mnRaceSkip").checked);
-    if (!selected.length && !skip) return Promise.reject(new Error("Choose how you identify, or select Prefer not to say."));
-    if (selected.length && skip) return Promise.reject(new Error("Choose identities or Prefer not to say, not both."));
-    var muid = identity().m_uid, token = sessionToken();
-    if (!muid || !token) return Promise.reject(new Error("Your identity is still loading. Try saving again."));
-    return fetch(SB_URL + "/rest/v1/action_member_demographics?on_conflict=m_uid", {method:"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json",prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({m_uid:muid,race_ethnicity:selected,prefer_not_to_say:skip,measurement_consent:!skip})}).then(function(res){if(!res.ok)return res.text().then(function(t){throw new Error(t||"Could not save demographic response.");});});
+    /* Demographic measurement ships only when its backend contract is live.
+       Profile creation/editing must never depend on an optional pending migration. */
+    var fields = Array.prototype.slice.call(document.querySelectorAll('input[name="mnRace"]'));
+    var skipNode = $("mnRaceSkip");
+    if (!fields.length && !skipNode) return Promise.resolve();
+    return Promise.resolve();
   }
 
   function saveProfile(event) {
