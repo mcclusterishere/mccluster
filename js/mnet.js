@@ -410,6 +410,7 @@
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
+      actionCardHtml(id) +
       trackCardHtml(item, post) +
       postMediaHtml(post) +
       (opts.actions === false ? '' :
@@ -425,7 +426,37 @@
     '</article>';
   }
 
+  /* A VERIFIED ACTION ON THE FEED. Drawn only for posts the server vouches
+     for (action_feed_cards): post metadata is member-writable, so a post that
+     merely claims to be an action gets no card. */
+  function actionCardHtml(postId) {
+    var c = postId && state.actionCards && state.actionCards[postId];
+    if (!c) return "";
+    return '<div class="mn__actcard">' +
+      '<p class="mn__actcard-eyebrow">Verified action</p>' +
+      '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
+      '<p class="mn__actcard-foot">Action Network · Don\u2019t just watch. Act.</p>' +
+      '<div class="mn__actcard-row">' +
+        (c.mission_open ? '<a class="mn__primary" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '">Take this mission too</a>' : '') +
+        '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
+      '</div></div>';
+  }
+  function loadActionCards(items) {
+    var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
+      .filter(function (id) { return id && !(state.actionCards && id in state.actionCards); });
+    if (!ids.length) return Promise.resolve(false);
+    state.actionCards = state.actionCards || {};
+    ids.forEach(function (id) { state.actionCards[id] = null; });
+    return sbRpc("action_feed_cards", { p_post_ids: ids.slice(0, 100) }).then(function (rows) {
+      (rows || []).forEach(function (c) { state.actionCards[c.post_id] = c; });
+      return (rows || []).length > 0;
+    }).catch(function () { return false; });
+  }
+
   function bindFeedActions(root) {
+    root.querySelectorAll("[data-take-mission]").forEach(function (a) {
+      a.onclick = function (e) { e.preventDefault(); setView("missions"); openMission(a.getAttribute("data-take-mission")); };
+    });
     root.querySelectorAll("[data-action=like]").forEach(function (b) {
       b.onclick = function () { toggleLike(b.dataset.post, b); };
     });
@@ -448,7 +479,7 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = '<div class="mn__empty">The Action Network is live. There are no posts yet. Yours can be the first.</div>';
+      host.innerHTML = '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
@@ -466,6 +497,24 @@
       return html;
     }).join("");
     bindFeedActions(host);
+  }
+
+  /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
+     missions sit under the feed so a new member always has a next move. */
+  function paintFeedMissions() {
+    var host = $("mnFeedMissions");
+    if (!host) return;
+    if (state.feed.length >= 8) { host.hidden = true; return; }
+    sbRest("action_missions?status=eq.open&select=id,title,description,domain&order=created_at.desc&limit=3").then(function (rows) {
+      rows = rows || [];
+      host.hidden = !rows.length;
+      host.innerHTML = rows.length ? '<div class="mn__section-head"><div><p class="mn__eyebrow">Put it into action</p><h2>Open missions</h2></div><button class="mn__quiet" type="button" data-mn-goto="missions">All missions</button></div>' +
+        rows.map(function (m) {
+          return '<button class="mn__feedmission" type="button" data-take-mission="' + esc(m.id) + '"><span class="mn__eyebrow">' + esc(m.domain || "community") + '</span><b>' + esc(m.title) + '</b><span>' + esc(m.description || "") + '</span></button>';
+        }).join("") : "";
+      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
+      var all = host.querySelector("[data-mn-goto]"); if (all) all.onclick = function () { setView("missions"); };
+    }).catch(function () { host.hidden = true; });
   }
 
   function skeleton(n) {
@@ -489,6 +538,8 @@
       state.feed = reset ? incoming : state.feed.concat(incoming);
       state.nextBefore = data.next_before || null;
       renderFeed(false);
+      loadActionCards(incoming).then(function (any) { if (any) renderFeed(false); });
+      if (reset) paintFeedMissions();
       $("mnMore").hidden = !state.nextBefore;
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
@@ -1503,8 +1554,20 @@
   function loadActionRecord(){
     return Promise.all([
       sbRpc("action_record").catch(function(){return null;}),
-      sbRpc("action_fellowship_status").catch(function(){return null;})
-    ]).then(function(x){missions.record=x[0]||null;missions.fellowship=x[1]||null;paintActionRecord();});
+      sbRpc("action_fellowship_status").catch(function(){return null;}),
+      sbRpc("my_action_shares").catch(function(){return [];})
+    ]).then(function(x){
+      missions.record=x[0]||null;missions.fellowship=x[1]||null;
+      missions.shared={};(x[2]||[]).forEach(function(s){missions.shared[s.assignment_id]=s.post_id;});
+      paintActionRecord();
+    });
+  }
+  function shareAction(b){
+    var id=b.getAttribute("data-share-action");b.disabled=true;b.textContent="Sharing…";
+    sbRpc("share_verified_action",{p_assignment_id:id}).then(function(){
+      if(window.MCC_TRACK)window.MCC_TRACK("action_share",{});
+      return loadActionRecord().then(function(){return loadFeed(true);});
+    }).catch(function(e){b.disabled=false;b.textContent="Share to feed";setStatus($("mnMissionStatus"),e.message||"Could not share that.","error");});
   }
   /* THE FELLOWSHIP. Three verified actions open the application; the
      server counts them, so the form only appears when it will be accepted. */
@@ -1546,7 +1609,8 @@
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
     var list=(r.missions||[]).map(function(m){
       return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(STATUS_LABEL[m.status]||m.status)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
-        (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>':"")+
+        (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>'+
+          (missions.shared&&missions.shared[m.assignment_id]?'<span class="mn__record-shared">On the feed</span>':'<button class="mn__record-share" type="button" data-share-action="'+esc(m.assignment_id)+'">Share to feed</button>'):"")+
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
     host.hidden=false;
@@ -1607,6 +1671,9 @@
       if(asset)type=String(file.type||"").indexOf("video/")===0?"video":"photo";
       return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:asset?{asset_id:asset.id}:{}});
     }).then(function(){
+      var share=$("mnMissionShare");
+      return sbRpc("set_action_share_intent",{p_assignment_id:a.id,p_share:!!(share&&share.checked)}).catch(function(){});
+    }).then(function(){
       missions.assignment.status="submitted";
       if(fileInput)fileInput.value="";
       setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
@@ -1628,6 +1695,8 @@
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){
         onOpen(ev);
+        var sh=ev.target.closest&&ev.target.closest("[data-share-action]");
+        if(sh){shareAction(sh);return;}
         var o=ev.target.closest&&ev.target.closest("[data-fellow-open]");
         if(o){o.hidden=true;$("mnFellowForm").hidden=false;$("mnFellowWhy").focus();}
       });
