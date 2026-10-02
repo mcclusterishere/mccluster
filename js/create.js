@@ -19,11 +19,15 @@
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var MIN_CLIP = 1; // seconds
+  var MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+  var MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
+  var DRAFT_KEY = "mnet_create_draft_v1";
+  var DRAFT_TTL = 7 * 86400000;
   var OK_TYPES = /^(image\/(jpeg|png|webp|avif|gif)|video\/(mp4|webm|quicktime))$/;
 
   var S = {
     file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
-    upload: null, asset: null, when: "now", catalogue: [], busy: false
+    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false
   };
 
   function $(id) { return document.getElementById(id); }
@@ -45,6 +49,40 @@
     } catch (e) { return null; }
   }
   function signedIn() { var s = session(); return !!(s && s.access_token); }
+  function draftData() {
+    return {
+      saved_at: Date.now(), body: $("crCaption").value, visibility: $("crVisibility").value,
+      track: $("crTrack").value, when: S.when, date: $("crDate").value, time: $("crTime").value
+    };
+  }
+  function saveDraft() {
+    if (S.busy) return;
+    try {
+      var d = draftData(), useful = d.body.trim() || d.track || d.when === "later";
+      if (useful) localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      else localStorage.removeItem(DRAFT_KEY);
+    } catch (e) {}
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+  function restoreDraft() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) {}
+    if (!d || !d.saved_at || Date.now() - d.saved_at > DRAFT_TTL) { clearDraft(); return false; }
+    $("crCaption").value = String(d.body || "").slice(0, 5000);
+    $("crCount").textContent = $("crCaption").value.length.toLocaleString();
+    $("crVisibility").value = /^(public|network|private)$/.test(d.visibility) ? d.visibility : "public";
+    S.when = d.when === "later" ? "later" : "now";
+    $("crDate").value = d.date || ""; $("crTime").value = d.time || "";
+    S.draftRestored = true; $("crDraftNotice").hidden = false;
+    paintWhenButtons(); paintPost();
+    return true;
+  }
+  function paintWhenButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-when]"), function (x) {
+      var on = x.getAttribute("data-when") === S.when;
+      x.classList.toggle("is-on", on); x.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  }
   function api(path, init) {
     return window.MCC.api(path, init).then(function (res) {
       return res.text().then(function (t) {
@@ -93,6 +131,12 @@
     var type = String(file.type || "").toLowerCase();
     if (!OK_TYPES.test(type)) {
       alert("That file type cannot be posted yet. Use a photo (JPEG, PNG, WebP) or a video (MP4, MOV, WebM).");
+      return;
+    }
+    var video = type.indexOf("video/") === 0, limit = video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (!file.size) { alert("That file is empty. Choose another one."); return; }
+    if (file.size > limit) {
+      alert(video ? "That video is over 1 GB. Choose a smaller video." : "That image is over 25 MB. Choose a smaller image.");
       return;
     }
     S.file = file;
@@ -163,7 +207,9 @@
   }
   function startUpload() {
     var file = S.file, mine = {};
-    uploadLine("Uploading…", "", 2);
+    if (!file) return;
+    S.uploadError = null; $("crUploadRetry").hidden = true;
+    uploadLine("Preparing upload…", "", 2);
     S.upload = mine.p = api("/v1/mnet/media/upload-url", {
       method: "POST", body: { file_name: file.name || (S.kind + ".bin"), mime_type: file.type, byte_size: file.size }
     }).then(function (grant) {
@@ -182,11 +228,19 @@
       uploadLine("Uploaded. Ready to post.", "ok", 100);
       return asset;
     }, function (e) {
-      if (S.upload === mine.p) uploadLine(e.message || "Upload failed.", "error", 0);
+      if (S.upload === mine.p) {
+        S.uploadError = e;
+        uploadLine(e.message || "Upload failed.", "error", 0);
+        $("crUploadRetry").hidden = false;
+      }
       throw e;
     });
     S.upload.catch(function () {});
   }
+  $("crUploadRetry").addEventListener("click", function () {
+    if (!S.file || S.busy) return;
+    startUpload();
+  });
 
   /* ---------- the trim ---------- */
   var v = $("crVideo");
@@ -313,8 +367,10 @@
   }
   $("crDetailsBack").addEventListener("click", function () { go(S.file ? "edit" : "start"); });
   $("crCaption").addEventListener("input", function () {
-    $("crCount").textContent = this.value.length.toLocaleString();
+    $("crCount").textContent = this.value.length.toLocaleString(); saveDraft();
   });
+  $("crVisibility").addEventListener("change", saveDraft);
+  $("crTrack").addEventListener("change", saveDraft);
 
   function loadCatalogue() {
     fetch("data/albums.json", { cache: "force-cache" })
@@ -371,11 +427,11 @@
         x.setAttribute("aria-checked", on ? "true" : "false");
       });
       if (S.when === "later" && !$("crDate").value) laterDefault();
-      paintPost();
+      paintPost(); saveDraft();
     });
   });
-  $("crDate").addEventListener("input", paintPost);
-  $("crTime").addEventListener("input", paintPost);
+  $("crDate").addEventListener("input", function () { paintPost(); saveDraft(); });
+  $("crTime").addEventListener("input", function () { paintPost(); saveDraft(); });
 
   function status(text, bad) {
     var s = $("crStatus");
@@ -418,6 +474,7 @@
       $("crDoneP").textContent = at
         ? "It goes out " + whenText(new Date(out && out.scheduled && out.scheduled.publish_at || at)) + ". You can cancel it from Create until then."
         : "It is on the Action Network now.";
+      clearDraft(); $("crDraftNotice").hidden = true;
       go("done");
     }).catch(function (e) {
       status(e.message || "That did not go through. Try again.", true);
@@ -464,7 +521,7 @@
     v.removeAttribute("src"); try { v.load(); } catch (e) {}
     $("crImage").removeAttribute("src");
     S.file = null; S.kind = ""; S.url = ""; S.dur = 0; S.start = 0; S.end = 0; S.muted = false;
-    S.upload = null; S.asset = null; S.when = "now";
+    S.upload = null; S.asset = null; S.when = "now"; S.uploadError = null;
     $("crMute").setAttribute("aria-pressed", "false");
     $("crMuteL").textContent = "Sound on";
     $("crCaption").value = ""; $("crCount").textContent = "0";
@@ -475,14 +532,27 @@
       x.classList.toggle("is-on", on);
       x.setAttribute("aria-checked", on ? "true" : "false");
     });
-    uploadLine("", "", 0);
+    uploadLine("", "", 0); $("crUploadRetry").hidden = true;
+    $("crDraftNotice").hidden = true;
     status("");
   }
 
+  $("crDraftDiscard").addEventListener("click", function () {
+    clearDraft(); reset(); go("start");
+  });
+  window.addEventListener("beforeunload", saveDraft);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) saveDraft(); });
   window.addEventListener("resize", function () { if (S.kind === "video" && !$("crEdit").hidden) drawFrames(); });
   window.addEventListener("mcc:auth-state", paintGate);
   window.addEventListener("storage", function (e) { if (e.key === "mccdb_session") paintGate(); });
   loadCatalogue();
   paintGate();
+  if (signedIn() && restoreDraft()) {
+    toDetails();
+    setTimeout(function () {
+      var d = null; try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) {}
+      if (d && d.track && $("crTrack").options.length > 1) $("crTrack").value = d.track;
+    }, 300);
+  }
   track("create_open", {});
 })();
