@@ -26,3 +26,19 @@ test("members can submit proof but cannot write awards or verification state dir
  assert.doesNotMatch(sql,/grant[^;]*update[^;]*action_proofs/i);
  assert.match(sql,/if p_decision='rejected' then[\s\S]*'awarded',false/);
 });
+
+
+test("Action Network exposes a native mission participant flow",async()=>{
+ const [html,js]=await Promise.all([read("mnet.html"),read("js/mnet.js")]);
+ assert.match(html,/data-mn-view="missions"/);
+ assert.match(html,/id="mnMissionsView"/);
+ assert.match(html,/id="mnMissionDialog"/);
+ assert.match(html,/Take this mission/);
+ assert.match(html,/Submit proof/);
+ assert.match(js,/function loadMissions\(/);
+ assert.match(js,/function joinMission\(/);
+ assert.match(js,/function submitMissionProof\(/);
+ assert.match(js,/action_mission_assignments/);
+ assert.match(js,/action_proofs/);
+ assert.match(js,/if\(name==="missions"\)loadMissions\(\)/);
+});
