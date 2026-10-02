@@ -674,3 +674,12 @@ html, body { background: #0a0807; }
   .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
   .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card,.mn__camp,.mn__camp::after{transition:none!important;animation:none!important}
 }
+
+/* Organization-grade group fronts */
+.mng__org{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;padding:12px 14px;border-radius:14px;background:var(--mn-bg);box-shadow:inset 0 0 0 1px var(--mn-rule)}
+.mng__org span,.mng__campaign span{color:var(--mn-faint);font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.mng__org strong{font-size:.9rem}.mng__org b{padding:4px 7px;border-radius:999px;background:var(--mn-ink);color:var(--mn-bg);font-size:.65rem}
+.mng__campaigns{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:10px}
+.mng__campaign{display:grid;gap:4px;padding:14px;border-radius:14px;background:var(--mn-raise-2);color:var(--mn-ink);text-decoration:none;box-shadow:inset 0 0 0 1px var(--mn-rule-2)}
+.mng__campaign strong{font-size:1.05rem}.mng__campaign em{color:var(--mn-gold);font-size:.8rem;font-style:normal;font-weight:800}
+@media (min-width:700px){.mng__campaigns{grid-template-columns:repeat(2,minmax(0,1fr))}}
