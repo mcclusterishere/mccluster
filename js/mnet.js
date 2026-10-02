@@ -45,6 +45,21 @@
       return /^(https?:)$/.test(u.protocol) ? u.href : "";
     } catch (e) { return ""; }
   }
+  /* Line icons for the post actions, drawn in currentColor so the active
+     state is a colour change, not a second asset. */
+  var ICON = {
+    like: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.5-4.6-9.3-9.2C1.4 7.6 3.6 4.4 7 4.4c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.2 4.3 6.7-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>',
+    comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
+    save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>'
+  };
+  /* Every member gets a stable ring colour from their handle: abstract
+     colour that tells people apart at a glance, never a mark. */
+  function hueOf(text) {
+    var h = 0, t = String(text || "");
+    for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360;
+    return h;
+  }
   function timeAgo(iso) {
     var d = new Date(iso), ms = Date.now() - d.getTime();
     if (!Number.isFinite(ms)) return "";
@@ -97,6 +112,10 @@
     } else {
       $("mnComposerAvatar").style.backgroundImage = "";
     }
+    /* the profile wears the same colour its ring does in the feed */
+    var hue = hueOf(id.mccluster_id || name);
+    $("mnProfileAvatar").style.setProperty("--hue", hue);
+    $("mnProfileBanner").style.setProperty("--hue", hue);
     $("mnProfileName").textContent = p.display_name || name;
     $("mnProfileHandle").textContent = id.mccluster_id ? "@" + id.mccluster_id : "";
     $("mnProfileHeadline").textContent = p.headline || "";
@@ -174,6 +193,9 @@
       }
       showGate("app");
       paintSelf();
+      $("mnBell").hidden = false;
+      loadRail();
+      requestAnimationFrame(function () { moveThumb(false); });
       return loadFeed(true).then(loadNotificationsSilently);
     });
   }
@@ -304,7 +326,7 @@
     var av = avatar
       ? '<img src="' + esc(avatar) + '" alt="">'
       : esc(initials(name));
-    var inner = '<div class="mn__author-avatar">' + av + '</div>' +
+    var inner = '<div class="mn__author-avatar" style="--hue:' + hueOf(actor.mccluster_id || name) + '">' + av + '</div>' +
       '<div class="mn__author-meta"><span class="mn__author-name">' + esc(name) + '</span>' +
       '<div class="mn__author-sub">' + esc(handle) + '</div></div>';
     return actor.mccluster_id
@@ -358,11 +380,13 @@
       postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          '<button class="mn__action' + (liked ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '">' +
-            (liked ? "Liked" : "Like") + (likes ? " · " + likes : "") + '</button>' +
-          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">Comment' + (replies ? " · " + replies : "") + '</button>' +
-          '<button class="mn__action' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '">' + (saved ? "Saved" : "Save") + '</button>' +
-          (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '">Delete</button>' : '') +
+          '<button class="mn__action mn__action--like' + (liked ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + liked + '" aria-label="Like">' +
+            ICON.like + '<span class="mn__count">' + (likes || "") + '</span></button>' +
+          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '" aria-label="Comments">' +
+            ICON.comment + '<span class="mn__count">' + (replies || "") + '</span></button>' +
+          '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save">' +
+            ICON.save + '</button>' +
+          (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
     '</article>';
   }
@@ -393,14 +417,26 @@
       host.innerHTML = '<div class="mn__empty">The Action Network is live. There are no posts yet. Yours can be the first.</div>';
       return;
     }
+    var seen = state.seen || (state.seen = {}), order = 0;
     host.innerHTML = state.feed.map(function (item) {
       if (item.item_type === "activity") {
         var p = item.payload || {};
         return '<article class="mn__post-card"><div class="mn__post-head">' + authorHtml(item.actor) + '<span class="mn__author-sub">' + esc(timeAgo(item.occurred_at)) + '</span></div><p class="mn__post-body">' + esc(p.summary || p.text || "Activity on McCluster") + '</p></article>';
       }
-      return postCard(item);
+      var html = postCard(item), key = (item.post && item.post.id) || item.post_id || "";
+      /* only posts arriving for the first time rise in, a beat apart */
+      if (key && !seen[key]) {
+        seen[key] = true;
+        html = html.replace('<article class="mn__post-card', '<article style="--i:' + (order++ % 8) + '" class="mn__post-card is-new');
+      }
+      return html;
     }).join("");
     bindFeedActions(host);
+  }
+
+  function skeleton(n) {
+    var one = '<div class="mn__skel" aria-hidden="true"><i class="mn__skel-av"></i><div><i></i><i></i><i class="is-short"></i></div></div>';
+    return new Array(n + 1).join(one);
   }
 
   function loadFeed(reset) {
@@ -409,7 +445,8 @@
     if (reset) {
       state.nextBefore = null;
       state.feed = [];
-      setStatus($("mnFeedStatus"), "Loading the feed…");
+      setStatus($("mnFeedStatus"), "");
+      if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
     var path = "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20";
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
@@ -452,7 +489,7 @@
       tracks.forEach(function (t, i) {
         var o = document.createElement("option");
         o.value = String(i);
-        o.textContent = t.title + " — " + t.album;
+        o.textContent = t.title + " · " + t.album;
         sel.appendChild(o);
       });
     });
@@ -494,20 +531,30 @@
     return null;
   }
 
+  /* Likes and saves change the button they were tapped on, at once, and
+     the server catches up behind it. Re-rendering the feed for every tap
+     replayed every entrance and jumped the page; a failed call puts the
+     button back. */
+  function paintToggle(button, on, count) {
+    button.classList.toggle("is-active", on);
+    button.setAttribute("aria-pressed", on ? "true" : "false");
+    var c = button.querySelector(".mn__count");
+    if (c && count != null) c.textContent = count ? String(count) : "";
+    if (on) { button.classList.remove("is-pop"); void button.offsetWidth; button.classList.add("is-pop"); }
+  }
   function toggleLike(postId, button) {
     var item = findPost(postId), post = item && item.post;
     var liked = !!(post && post.liked_by_me);
+    var count = Math.max(0, Number(post && post.reaction_count || 0) + (liked ? -1 : 1));
+    if (post) { post.liked_by_me = !liked; post.reaction_count = count; }
+    paintToggle(button, !liked, count);
     button.disabled = true;
     api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/reactions", {
       method: liked ? "DELETE" : "POST",
       body: liked ? undefined : { reaction:"like" }
-    }).then(function () {
-      if (post) {
-        post.liked_by_me = !liked;
-        post.reaction_count = Math.max(0, Number(post.reaction_count || 0) + (liked ? -1 : 1));
-      }
-      renderFeed(false);
     }).catch(function (e) {
+      if (post) { post.liked_by_me = liked; post.reaction_count = Math.max(0, count + (liked ? 1 : -1)); }
+      paintToggle(button, liked, post ? post.reaction_count : null);
       setStatus($("mnFeedStatus"), e.message || "Could not update reaction.", "error");
     }).finally(function () { button.disabled = false; });
   }
@@ -573,6 +620,7 @@
       var unread = rows.filter(function (n) { return !n.read_at; }).length;
       $("mnNotifBadge").hidden = !unread;
       $("mnNotifBadge").textContent = unread > 99 ? "99+" : unread;
+      $("mnBellDot").hidden = !unread;
       renderNotifications(rows);
       setStatus($("mnNotificationStatus"), "");
       return rows;
@@ -582,6 +630,7 @@
   function markNotificationsRead() {
     return api("/v1/mnet/notifications/read", { method:"POST", body:{} }).then(function () {
       $("mnNotifBadge").hidden = true;
+      $("mnBellDot").hidden = true;
     }).catch(function () {});
   }
 
@@ -686,10 +735,11 @@
   }
   function toggleBookmark(postId, button) {
     var item=findPost(postId), post=item&&item.post, saved=!!(post&&post.bookmarked_by_me);
+    if(post)post.bookmarked_by_me=!saved;
+    paintToggle(button,!saved,null);
     button.disabled=true;
     api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/bookmark", {method:saved?"DELETE":"POST",body:{}})
-      .then(function () { if(post)post.bookmarked_by_me=!saved; renderFeed(false); })
-      .catch(function (e) { setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
+      .catch(function (e) { if(post)post.bookmarked_by_me=saved; paintToggle(button,saved,null); setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
       .finally(function () { button.disabled=false; });
   }
   function deletePost(postId, button) {
@@ -849,12 +899,48 @@
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
     });
+    moveThumb(true);
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
     if(name==="profile")paintSelf();
     window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  /* The tab indicator slides to the tab it belongs under, and the row
+     scrolls that tab into view on a narrow phone. */
+  function moveThumb(scroll) {
+    var thumb = $("mnTabsThumb"), tab = document.querySelector(".mn__tabs .is-active");
+    if (!thumb || !tab) return;
+    thumb.style.width = tab.offsetWidth + "px";
+    thumb.style.transform = "translateX(" + tab.offsetLeft + "px)";
+    thumb.classList.add("is-on");
+    if (scroll && tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }
+
+  /* THE CAMPAIGNS RAIL. The same public list the gateways read; a card is
+     the door into its campaign. Hidden, not empty, when nothing is live. */
+  function loadRail() {
+    var track = $("mnRailTrack");
+    if (!track) return;
+    fetch("https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/rpc/action_campaigns_live", {
+      method: "POST",
+      headers: { apikey: "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4", "content-type": "application/json" },
+      body: "{}"
+    }).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
+      list = Array.isArray(list) ? list : [];
+      if (!list.length) return;
+      track.innerHTML = list.map(function (c, i) {
+        var ch = c.chapter || {}, n = Number(c.people || 0);
+        return '<a class="mn__camp" style="--i:' + i + ';--hue:' + hueOf(c.slug) + '" href="action/?c=' + encodeURIComponent(c.slug) + '">' +
+          '<span class="mn__camp-k"><i class="mn__live"></i>' + esc([ch.region, ch.title].filter(Boolean).join(" · ") || "Live") + '</span>' +
+          '<b>' + esc(c.title) + '</b>' +
+          (ch.line ? '<small>' + esc(ch.line) + '</small>' : '') +
+          '<span class="mn__camp-n"><b>' + n.toLocaleString("en-US") + '</b> ' + (n === 1 ? "person" : "people") + ' in</span></a>';
+      }).join("");
+      $("mnRail").hidden = false;
+    }).catch(function () {});
   }
 
   function editProfile() {
@@ -1026,6 +1112,21 @@
     $("mnThreadClose").onclick = function () { $("mnThread").close(); };
     $("mnReplyForm").addEventListener("submit", createReply);
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
+    $("mnBell").onclick = function () { setView("notifications"); };
+    window.addEventListener("resize", function () { moveThumb(false); });
+    /* the header settles into a slimmer bar once the page moves */
+    var top = document.querySelector(".mn__top");
+    window.addEventListener("scroll", function () { if (top) top.classList.toggle("is-scrolled", window.scrollY > 8); }, { passive: true });
+    /* the composer is one line until it is used */
+    var composer = $("mnComposer"), body = $("mnPostBody");
+    if (composer && body) {
+      body.addEventListener("focus", function () { composer.classList.add("is-open"); });
+      composer.addEventListener("focusout", function () {
+        setTimeout(function () {
+          if (!composer.contains(document.activeElement) && !body.value.trim() && !state.mediaAssets.length && !$("mnTrackPick").value) composer.classList.remove("is-open");
+        }, 150);
+      });
+    }
 
     MCC.user().then(function (user) {
       state.user = user;

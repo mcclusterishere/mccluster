@@ -127,3 +127,25 @@ test('Edit Profile exposes secure M Account password changes without creating a 
   assert.match(auth,/body: \{ password: password \}/);
   assert.doesNotMatch(html,/name="password"/);
 });
+
+/* THE ACTION NETWORK'S DESIGN CONTRACT. The owner asked for intentional
+   design with motion, no em dashes in the copy, and the house bar left
+   alone; these keep that true. */
+test('the Action Network moves with intent and keeps the copy clean', async()=>{
+  const [html, js, css] = await Promise.all([read('mnet.html'), read('js/mnet.js'), read('css/mnet.css')]);
+  const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
+  assert.doesNotMatch(visible, /—/, 'no em dashes in the page copy');
+  const strings = js.replace(/\/\*[\s\S]*?\*\//g, '').match(/"[^"\n]*"|'[^'\n]*'/g) || [];
+  assert.ok(!strings.some((s) => s.includes('—')), 'no em dashes in strings the script shows');
+  assert.match(css, /@keyframes mn-rise/);
+  assert.match(css, /@keyframes mn-pop/);
+  assert.match(css, /\.mn__tabs-thumb \{/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
+  assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
+  /* a like changes its own button; the feed is not rebuilt per tap */
+  const like = js.slice(js.indexOf('function toggleLike('), js.indexOf('function openThread('));
+  assert.match(like, /paintToggle\(button, !liked, count\)/);
+  assert.doesNotMatch(like, /renderFeed\(/);
+  assert.match(html, /id="mnRail"/);
+});

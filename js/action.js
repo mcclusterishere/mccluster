@@ -376,7 +376,7 @@
     $("anCardFrom").textContent = fromLabel(ME.origin);
     $("anCardActions").textContent = fmt(ME.actions);
     $("anCardRecruited").textContent = fmt(ME.recruited);
-    $("anCardPhase").textContent = phaseTitle(ME.phase) || "—";
+    $("anCardPhase").textContent = phaseTitle(ME.phase) || "Mobilize";
     var brings = (ME.contributions || []).map(function (k) { return labelOf(HAVE, k).replace(/^I (have|want to) /, ""); });
     var skills = (ME.skills || []).map(function (k) { return labelOf(SKILLS, k); });
     $("anCardSkills").textContent = [brings.length ? "Brings " + brings.join(", ") : "", skills.length ? "Skills: " + skills.join(", ") : ""]
