@@ -2089,6 +2089,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file for the song test; not itself a program capability."
+    },
+    {
+      "path": "mnet.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
+    },
+    {
+      "path": "scripts/test/action-gamification.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
+    },
+    {
+      "path": "supabase/pending_migrations/action_network_gamification_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Action Network mission, proof, reward, skill and cohort schema; not a building capability."
+    },
+    {
+      "path": "supabase/pending_migrations/action_network_demographics_antiracism_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending private demographic measurement and anti-racism mission seed; not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
