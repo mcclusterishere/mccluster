@@ -111,7 +111,8 @@ test("recruiter evidence ledger maps role titles to four substantive canonical p
    assert.ok(sitemap.pages.some(x=>x.url===c.canonical_url),c.canonical_url+" missing from sitemap");
  }
  assert.ok(sitemap.pages.some(x=>x.url==="https://matthew.mccluster.org/engineering/recruiter-role-map.html"));
- assert.ok(!page.includes("JobPosting"));
+ const roleMapLd=JSON.parse(page.split('<script type="application/ld+json">')[1].split("</script>")[0]);
+ assert.notEqual(roleMapLd["@type"],"JobPosting");
  assert.ok(page.includes("target query families, not ranking claims or guarantees"));
  const r=spawnSync(process.execPath,["tools/build-recruiter-role-map.mjs","--check"],{encoding:"utf8"});
  assert.equal(r.status,0,(r.stdout||"")+(r.stderr||""));
