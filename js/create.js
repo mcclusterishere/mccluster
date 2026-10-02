@@ -226,7 +226,10 @@
         return api("/v1/mnet/media/finalize", { method: "POST", body: { asset_id: asset.id, width: m.width, height: m.height, duration_ms: m.duration_ms } });
       }).then(function (fin) { return (fin && fin.asset) || asset; });
     }).then(function (asset) {
-      if (S.upload !== mine.p) return asset; // discarded while uploading
+      if (S.upload !== mine.p || S.uploadCancelled) {
+        discardUploadAsset(asset);
+        return asset;
+      }
       S.asset = asset; S.uploadGrantAsset = null; $("crUploadCancel").hidden = true;
       uploadLine("Uploaded. Ready to post.", "ok", 100);
       return asset;
@@ -248,6 +251,7 @@
   function cancelUpload() {
     S.uploadCancelled = true;
     var reserved = S.uploadGrantAsset;
+    S.upload = null;
     if (S.xhr) try { S.xhr.abort(); } catch (e) {}
     S.uploadGrantAsset = null; S.asset = null;
     $("crUploadCancel").hidden = true; $("crUploadRetry").hidden = true;
