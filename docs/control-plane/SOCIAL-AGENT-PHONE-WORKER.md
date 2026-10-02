@@ -1,5 +1,23 @@
 # Social Agent — phone worker contract
 
+> **Status 2026-10-02: parked.** Instagram posting does not use the phone.
+> It goes through Meta's official API: the Worker's social publisher
+> (`workers/mccluster/src/social/meta.js`), driven from Control → Create →
+> Instagram. Instagram's terms forbid automated use of the app, so a phone
+> tapping through it would put @mcclusterishere at risk; the API is the
+> sanctioned route and carries 100 posts a day.
+>
+> Agents (Claude, the OVH model) never post directly. They create a
+> `social_publish_jobs` row in state `draft` (via `POST /v1/social/publish`
+> with `"draft": true`, or a service-role insert), and the owner approves it in
+> Control. The cron only claims `queued` and `processing` jobs, so a draft
+> cannot be sent by anything but the owner's Approve.
+>
+> The phone tables and the `social-agent` Edge Function stay in place, unused,
+> for work no API can do. If the phone is revived it gets its own separate
+> account, never @mcclusterishere, and needs a Mac beside it to build and sign
+> WebDriverAgent. The contract below applies then.
+
 The dedicated iPhone is an execution worker, never the source of truth.
 
 ## Rules
