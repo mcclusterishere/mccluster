@@ -123,6 +123,12 @@
     </section>
 
     <section class="mn__app" id="mnApp" hidden>
+      <!-- LIVE: broadcasts on air right now, and the Go live button for the
+           owner and fellows. Filled by js/mnet-live.js; hidden when empty. -->
+      <section class="mn__onair" id="mnLive" hidden aria-live="polite">
+        <div class="mn__live-head"><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><button class="mn__golive" id="mnGoLive" type="button" hidden>Go live</button></div>
+        <div class="mn__live-track" id="mnLiveTrack"></div>
+      </section>
       <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Advocacy</span><span>Business</span><span>Community</span><span>Ideas</span></div></section>
       <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
       <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>News context will compare sources and perspectives before connecting issues to optional initiatives. No points for ideology. No points for outrage.</small></div><a href="action/">Explore initiatives →</a></section>
@@ -182,6 +188,7 @@
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
+        <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
       </section>
 
       <section class="mn__view" id="mnMissionsView" hidden>
@@ -204,6 +211,7 @@
           <input class="mn__input" id="mnMissionProofUrl" type="url" placeholder="https://…">
           <label class="mn__label" for="mnMissionProofStatement">What did you do?</label>
           <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="5" placeholder="What you did, where, and what came of it."></textarea>
+          <label class="mn__check" for="mnMissionShare"><input id="mnMissionShare" type="checkbox"><span><b>Share it on the Action feed once it's verified</b>Your post shows the mission and your receipt, not your proof.</span></label>
           <button class="mn__primary" type="submit">Submit proof</button>
         </form>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
@@ -290,8 +298,45 @@
             <button class="mn__quiet mn__tour-again" id="mnTakeTour" type="button" data-tour-start>Take the tour</button>
           </div>
         </div>
+        <!-- Account deletion, started here. Required by the App Store and
+             Google Play; the request is real and the desk completes it. -->
+        <section class="mn__panel mn__delete" id="mnDelete">
+          <h3>Delete my account</h3>
+          <p id="mnDeleteState">This deletes your Action Network profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
+          <details class="mn__delete-go" id="mnDeleteGo"><summary>Delete my account…</summary>
+            <label class="mn__label" for="mnDeleteReason">Anything we should know? <span>optional</span></label>
+            <textarea class="mn__input mn__textarea" id="mnDeleteReason" rows="3" maxlength="2000"></textarea>
+            <label class="mn__check" for="mnDeleteSure"><input id="mnDeleteSure" type="checkbox"><span><b>I understand this can't be undone after 30 days.</b>You'll be signed out now.</span></label>
+            <button class="mn__primary mn__danger-fill" id="mnDeleteConfirm" type="button" disabled>Delete my account</button>
+          </details>
+          <button class="mn__secondary" id="mnDeleteCancel" type="button" hidden>Keep my account</button>
+          <p class="mn__status" id="mnDeleteStatus" role="status"></p>
+        </section>
       </section>
     </section>
+  <dialog class="mn__thread mn__livewatch" id="mnLiveWatch" aria-labelledby="mnLiveWatchTitle">
+    <div class="mn__thread-head"><div><p class="mn__live-k"><i aria-hidden="true"></i>Live</p><strong id="mnLiveWatchTitle">Live</strong></div><button type="button" id="mnLiveWatchClose" aria-label="Close">×</button></div>
+    <div class="mn__livevideo"><video id="mnLiveVideo" playsinline autoplay controls></video><p class="mn__livevideo-note" id="mnLiveNote">Connecting…</p></div>
+    <p class="mn__livehost" id="mnLiveHost"></p>
+    <ol class="mn__livechat" id="mnLiveChat" aria-live="polite"></ol>
+    <form class="mn__livechat-form" id="mnLiveChatForm"><label class="mn__sr" for="mnLiveChatBody">Say something</label><input class="mn__input" id="mnLiveChatBody" maxlength="500" autocomplete="off" placeholder="Say something"><button class="mn__primary" type="submit">Send</button></form>
+    <div class="mn__livewatch-foot"><button class="mn__quiet" id="mnLiveReport" type="button">Report</button><button class="mn__quiet mn__danger" id="mnLiveKill" type="button" hidden>End this broadcast</button></div>
+    <p class="mn__status" id="mnLiveWatchStatus" role="status"></p>
+  </dialog>
+
+  <dialog class="mn__thread mn__studio" id="mnStudio" aria-labelledby="mnStudioTitle">
+    <div class="mn__thread-head"><strong id="mnStudioTitle">Go live</strong><button type="button" id="mnStudioClose" aria-label="Close">×</button></div>
+    <div class="mn__livevideo"><video id="mnStudioVideo" playsinline autoplay muted></video><p class="mn__livevideo-note" id="mnStudioNote">Allow your camera and microphone to see yourself here.</p></div>
+    <form class="mn__studio-form" id="mnStudioForm">
+      <label class="mn__label" for="mnStudioTopic">What is this broadcast?</label>
+      <input class="mn__input" id="mnStudioTopic" maxlength="120" required placeholder="Cleaning the 4100 block, come through">
+      <div class="mn__studio-row"><button class="mn__quiet" id="mnStudioFlip" type="button">Flip camera</button><button class="mn__primary" id="mnStudioGo" type="submit">Go live</button></div>
+      <button class="mn__primary mn__danger-fill" id="mnStudioEnd" type="button" hidden>End broadcast</button>
+      <p class="mn__studio-rules">You're live to everyone on the Action Network. Keep it about the work. Anything that targets or labels a person gets ended by the desk.</p>
+    </form>
+    <p class="mn__status" id="mnStudioStatus" role="status"></p>
+  </dialog>
+
   </main>
 
   <dialog class="mn__thread" id="mnThread">
@@ -334,6 +379,7 @@
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
+  <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>

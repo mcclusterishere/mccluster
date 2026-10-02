@@ -103,6 +103,13 @@
     if (!out) return null;
     if (out.state === "earned") return out.operator ? { b: "PLAY", s: "owner" } : { b: "PLAY ONCE", s: "you earned it" };
     if (out.state !== "locked" || !g) return null;
+    /* Album order: the record closes its album and plays only after the
+       songs before it, in order, each heard through. */
+    if (g.mode === "sequence") {
+      var need = Number(g.need) || 0, got = Number(g.progress) || 0, titles = g.titles || [];
+      if (need && got >= need) return { b: "PLAY IN ORDER", s: "start again from " + (titles[0] || "the first song") };
+      return { b: got + "/" + need + " IN ORDER", s: "play " + (g.next_title || "the album from the top") + " next" };
+    }
     var first = Number(g.need_first) || 5, done = Number(g.distinct_songs) || 0;
     if (done < first) {
       var left = first - done;

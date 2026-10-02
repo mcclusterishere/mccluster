@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 271,
+  "candidate_count": 275,
   "capability_source_count": 97,
-  "support_only_count": 174,
-  "checks_total": 989,
-  "checks_passed": 989,
+  "support_only_count": 178,
+  "checks_total": 1005,
+  "checks_passed": 1005,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -136,6 +136,7 @@
     "js/insights.js",
     "js/lockroom.js",
     "js/masthead.js",
+    "js/mnet-live.js",
     "js/offers.js",
     "js/office.js",
     "js/onboard.js",
@@ -225,6 +226,8 @@
     "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
     "supabase/migrations/20261002061954_analytics_events_lean.sql",
     "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
+    "supabase/migrations/20261002135938_network_live_v1.sql",
+    "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -279,13 +282,14 @@
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
+    "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs"
   ],
   "checks": [
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "271 entries"
+      "detail": "275 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5224,6 +5228,86 @@
     },
     {
       "name": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/mnet-live.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/mnet-live.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/mnet-live.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/mnet-live.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002135938_network_live_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002135938_network_live_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261002135938_network_live_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261002135938_network_live_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mnet-live.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/mnet-live.test.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/test/mnet-live.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/mnet-live.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     }

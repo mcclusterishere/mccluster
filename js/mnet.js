@@ -210,6 +210,9 @@
       loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
+      /* A deep link to a mission wins over the first-run tour. */
+      if (!/[?&]mission=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
+      if (window.MCC_LIVE) window.MCC_LIVE.start();
       return loadFeed(true).then(loadNotificationsSilently);
     });
   }
@@ -408,6 +411,7 @@
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
+      actionCardHtml(id) +
       trackCardHtml(item, post) +
       postMediaHtml(post) +
       (opts.actions === false ? '' :
@@ -423,7 +427,37 @@
     '</article>';
   }
 
+  /* A VERIFIED ACTION ON THE FEED. Drawn only for posts the server vouches
+     for (action_feed_cards): post metadata is member-writable, so a post that
+     merely claims to be an action gets no card. */
+  function actionCardHtml(postId) {
+    var c = postId && state.actionCards && state.actionCards[postId];
+    if (!c) return "";
+    return '<div class="mn__actcard">' +
+      '<p class="mn__actcard-eyebrow">Verified action</p>' +
+      '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
+      '<p class="mn__actcard-foot">Action Network · Don\u2019t just watch. Act.</p>' +
+      '<div class="mn__actcard-row">' +
+        (c.mission_open ? '<a class="mn__primary" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '">Take this mission too</a>' : '') +
+        '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
+      '</div></div>';
+  }
+  function loadActionCards(items) {
+    var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
+      .filter(function (id) { return id && !(state.actionCards && id in state.actionCards); });
+    if (!ids.length) return Promise.resolve(false);
+    state.actionCards = state.actionCards || {};
+    ids.forEach(function (id) { state.actionCards[id] = null; });
+    return sbRpc("action_feed_cards", { p_post_ids: ids.slice(0, 100) }).then(function (rows) {
+      (rows || []).forEach(function (c) { state.actionCards[c.post_id] = c; });
+      return (rows || []).length > 0;
+    }).catch(function () { return false; });
+  }
+
   function bindFeedActions(root) {
+    root.querySelectorAll("[data-take-mission]").forEach(function (a) {
+      a.onclick = function (e) { e.preventDefault(); setView("missions"); openMission(a.getAttribute("data-take-mission")); };
+    });
     root.querySelectorAll("[data-action=like]").forEach(function (b) {
       b.onclick = function () { toggleLike(b.dataset.post, b); };
     });
@@ -446,7 +480,7 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = '<div class="mn__empty">The Action Network is live. There are no posts yet. Yours can be the first.</div>';
+      host.innerHTML = '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
@@ -464,6 +498,24 @@
       return html;
     }).join("");
     bindFeedActions(host);
+  }
+
+  /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
+     missions sit under the feed so a new member always has a next move. */
+  function paintFeedMissions() {
+    var host = $("mnFeedMissions");
+    if (!host) return;
+    if (state.feed.length >= 8) { host.hidden = true; return; }
+    sbRest("action_missions?status=eq.open&select=id,title,description,domain&order=created_at.desc&limit=3").then(function (rows) {
+      rows = rows || [];
+      host.hidden = !rows.length;
+      host.innerHTML = rows.length ? '<div class="mn__section-head"><div><p class="mn__eyebrow">Put it into action</p><h2>Open missions</h2></div><button class="mn__quiet" type="button" data-mn-goto="missions">All missions</button></div>' +
+        rows.map(function (m) {
+          return '<button class="mn__feedmission" type="button" data-take-mission="' + esc(m.id) + '"><span class="mn__eyebrow">' + esc(m.domain || "community") + '</span><b>' + esc(m.title) + '</b><span>' + esc(m.description || "") + '</span></button>';
+        }).join("") : "";
+      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
+      var all = host.querySelector("[data-mn-goto]"); if (all) all.onclick = function () { setView("missions"); };
+    }).catch(function () { host.hidden = true; });
   }
 
   function skeleton(n) {
@@ -487,6 +539,8 @@
       state.feed = reset ? incoming : state.feed.concat(incoming);
       state.nextBefore = data.next_before || null;
       renderFeed(false);
+      loadActionCards(incoming).then(function (any) { if (any) renderFeed(false); });
+      if (reset) paintFeedMissions();
       $("mnMore").hidden = !state.nextBefore;
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
@@ -939,7 +993,7 @@
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
-    if(name==="profile")paintSelf();
+    if(name==="profile"){paintSelf();loadDeletion();}
     window.scrollTo({top:0,behavior:"smooth"});
   }
 
@@ -1480,6 +1534,38 @@
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
   }
   function sbRpc(name,args){return sbRest("rpc/"+name,{method:"POST",body:JSON.stringify(args||{})});}
+  /* The few things the separate live module needs from this one. */
+  window.MCC_MNET = {
+    markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
+    api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
+    identity: function () { return identity(); },
+    refreshFeed: function () { return loadFeed(true); }
+  };
+  /* DELETING THE ACCOUNT. The request is recorded at once and the desk
+     completes it within 30 days; until then the member can keep the account. */
+  function paintDeletion(r){
+    var pending=r&&r.status==="pending";
+    $("mnDeleteGo").hidden=pending;$("mnDeleteCancel").hidden=!pending;
+    if(pending)$("mnDeleteState").textContent="Your account is set to be deleted on "+new Date(r.due_by).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"})+". Until then you can keep it.";
+  }
+  function loadDeletion(){if(!$("mnDelete"))return;sbRpc("my_account_deletion").then(paintDeletion).catch(function(){});}
+  (function wireDeletion(){
+    if(!$("mnDelete"))return;
+    $("mnDeleteSure").onchange=function(){$("mnDeleteConfirm").disabled=!this.checked;};
+    $("mnDeleteConfirm").onclick=function(){
+      var b=this;b.disabled=true;setStatus($("mnDeleteStatus"),"Recording your request…");
+      sbRpc("request_account_deletion",{p_reason:($("mnDeleteReason").value||"").trim()||null}).then(function(r){
+        paintDeletion(r);setStatus($("mnDeleteStatus"),"Done. Signing you out.","ok");
+        if(window.MCC_TRACK)window.MCC_TRACK("account_delete_request",{});
+        setTimeout(function(){Promise.resolve(window.MCC&&MCC.signOut&&MCC.signOut()).then(function(){location.href="mnet.html";});},1600);
+      }).catch(function(e){b.disabled=false;setStatus($("mnDeleteStatus"),e.message||"Could not record that. Email matthew@mccluster.org and it will be done by hand.","error");});
+    };
+    $("mnDeleteCancel").onclick=function(){
+      sbRpc("cancel_account_deletion").then(function(){$("mnDeleteState").textContent="Your account is staying. Nothing will be deleted.";paintDeletion({});setStatus($("mnDeleteStatus"),"Kept.","ok");})
+        .catch(function(e){setStatus($("mnDeleteStatus"),e.message||"Could not cancel.","error");});
+    };
+  })();
+
   function missionHref(id){return "mnet.html?mission="+encodeURIComponent(id);}
   function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
@@ -1500,8 +1586,20 @@
   function loadActionRecord(){
     return Promise.all([
       sbRpc("action_record").catch(function(){return null;}),
-      sbRpc("action_fellowship_status").catch(function(){return null;})
-    ]).then(function(x){missions.record=x[0]||null;missions.fellowship=x[1]||null;paintActionRecord();});
+      sbRpc("action_fellowship_status").catch(function(){return null;}),
+      sbRpc("my_action_shares").catch(function(){return [];})
+    ]).then(function(x){
+      missions.record=x[0]||null;missions.fellowship=x[1]||null;
+      missions.shared={};(x[2]||[]).forEach(function(s){missions.shared[s.assignment_id]=s.post_id;});
+      paintActionRecord();
+    });
+  }
+  function shareAction(b){
+    var id=b.getAttribute("data-share-action");b.disabled=true;b.textContent="Sharing…";
+    sbRpc("share_verified_action",{p_assignment_id:id}).then(function(){
+      if(window.MCC_TRACK)window.MCC_TRACK("action_share",{});
+      return loadActionRecord().then(function(){return loadFeed(true);});
+    }).catch(function(e){b.disabled=false;b.textContent="Share to feed";setStatus($("mnMissionStatus"),e.message||"Could not share that.","error");});
   }
   /* THE FELLOWSHIP. Three verified actions open the application; the
      server counts them, so the form only appears when it will be accepted. */
@@ -1543,7 +1641,8 @@
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
     var list=(r.missions||[]).map(function(m){
       return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(STATUS_LABEL[m.status]||m.status)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
-        (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>':"")+
+        (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>'+
+          (missions.shared&&missions.shared[m.assignment_id]?'<span class="mn__record-shared">On the feed</span>':'<button class="mn__record-share" type="button" data-share-action="'+esc(m.assignment_id)+'">Share to feed</button>'):"")+
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
     host.hidden=false;
@@ -1565,7 +1664,9 @@
       missions.current=m;missions.assignment=null;
       $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
       var open=m.status==="open";
-      $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
+      $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
+      /* the share choice is per action: never carry one mission's yes to the next */
+      if($("mnMissionShare"))$("mnMissionShare").checked=false;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
@@ -1604,9 +1705,17 @@
       if(asset)type=String(file.type||"").indexOf("video/")===0?"video":"photo";
       return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:asset?{asset_id:asset.id}:{}});
     }).then(function(){
+      /* The proof is in; now the share choice. One retry, and if it still
+         fails the member is told, because a silent failure would post (or
+         not post) against what they chose. */
+      var share=$("mnMissionShare"),body={p_assignment_id:a.id,p_share:!!(share&&share.checked)};
+      return sbRpc("set_action_share_intent",body).catch(function(){return sbRpc("set_action_share_intent",body);})
+        .then(function(){return true;},function(){return false;});
+    }).then(function(choiceSaved){
       missions.assignment.status="submitted";
       if(fileInput)fileInput.value="";
-      setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
+      if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
+      else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. Submit again to set it, or use Share to feed once it is verified.","error");
       if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
       loadActionRecord();
     }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});
@@ -1625,6 +1734,8 @@
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){
         onOpen(ev);
+        var sh=ev.target.closest&&ev.target.closest("[data-share-action]");
+        if(sh){shareAction(sh);return;}
         var o=ev.target.closest&&ev.target.closest("[data-fellow-open]");
         if(o){o.hidden=true;$("mnFellowForm").hidden=false;$("mnFellowWhy").focus();}
       });

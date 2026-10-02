@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 207,
-  "latest_version": "20261002063754",
-  "latest_name": "action_network_fellowship_v1",
-  "ledger_sha256": "0de2d7df018a0d9fc56ce2407a267abc9309b7d209b8669430faa67cadc3a14e",
+  "migration_count": 212,
+  "latest_version": "20261002141540",
+  "latest_name": "music_gate_sequence_v1",
+  "ledger_sha256": "2562acf46dc813223c98ae922b92b7f3461d8ba78e3923570b892344595e8dcd",
   "migrations": [
     {
       "version": "0001",
@@ -834,6 +834,26 @@
     {
       "version": "20261002063754",
       "name": "action_network_fellowship_v1"
+    },
+    {
+      "version": "20261002134705",
+      "name": "mnet_tour_seen"
+    },
+    {
+      "version": "20261002135458",
+      "name": "action_network_feed_shares_v1"
+    },
+    {
+      "version": "20261002135938",
+      "name": "network_live_v1"
+    },
+    {
+      "version": "20261002140857",
+      "name": "account_deletion_requests_v1"
+    },
+    {
+      "version": "20261002141540",
+      "name": "music_gate_sequence_v1"
     }
   ]
 }

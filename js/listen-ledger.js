@@ -2,8 +2,9 @@
    THE LISTEN LEDGER, BROWSER SIDE.
 
    A signed-in listener's songs are counted on the server so that a gated
-   record can be earned: five different songs heard all the way through,
-   then one play, then one more song per play after that. This file only
+   record can be earned. For CIA Mind Control the gated record is the last
+   song, and it plays only after the songs before it are heard all the way
+   through, in album order; every play needs a fresh run of the album. This file only
    says "this song started" and "this song ended". It never says how long
    a song is and never decides whether a listen counted; the API Worker
    times it against the song's measured length, so skipping to the end

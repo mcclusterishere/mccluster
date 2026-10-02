@@ -1,10 +1,13 @@
 /* THE LISTEN LEDGER, AND A RECORD YOU EARN.
 
-   The owner's rule for a gated record: an account, then five DIFFERENT
-   other songs heard all the way through, then ONE play. Every play after
-   that costs one more full song. The preview stays public; the master
-   never leaves the private bucket except as a URL this file signs for one
-   granted play.
+   The owner's rule for a gated record that closes an album: play the album
+   in order. The closer plays only for someone whose most recent finished
+   listens are the songs before it, in album order, each heard all the way
+   through, with nothing else in between, within the last three hours. Every
+   play needs a fresh run of the album. (A gate can instead use the older
+   rule, `first` different songs then `each` more per play, by leaving out
+   `sequence`.) The preview stays public; the master never leaves the
+   private bucket except as a URL this file signs for one granted play.
 
    Nothing here trusts the browser about time. A listen counts only when
    the player's beats (one every ~15 seconds while the song is actually
@@ -36,8 +39,9 @@ import { TRACKS } from './tracks.js';
 
 export const GATES = {
   'niggy-nigg': {
-    first: 5,
-    each: 1,
+    /* CIA Mind Control, in album order; this record is the last song */
+    sequence: ['pull-up', 'you-the-feds'],
+    window_minutes: 180,
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
     /* the owner's own playback: a signed storage URL, no gate */
@@ -119,12 +123,26 @@ async function isHouseOperator(env, user) {
 
 function gateArgs(userId, key) {
   const gate = GATES[key];
+  if (gate.sequence) return { p_user: userId, p_track: key, p_sequence: gate.sequence, p_window_minutes: gate.window_minutes };
   return { p_user: userId, p_track: key, p_first: gate.first, p_each: gate.each };
+}
+
+/* Where a listener stands, with the next song named so the page can say
+   "play You the Feds next" without knowing the rule. */
+async function readGate(env, userId, key, claim) {
+  const gate = GATES[key];
+  const name = gate.sequence ? (claim ? 'music_gate_claim_sequence' : 'music_gate_sequence_state') : (claim ? 'music_gate_claim' : 'music_gate_state');
+  const state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
+  if (state && gate.sequence) {
+    state.titles = gate.sequence.map((k) => TRACKS[k]?.title || k);
+    if (state.next) state.next_title = TRACKS[state.next]?.title || state.next;
+  }
+  return state;
 }
 
 async function allGates(env, userId) {
   const out = {};
-  for (const key of Object.keys(GATES)) out[key] = await rpc(env, 'music_gate_state', gateArgs(userId, key));
+  for (const key of Object.keys(GATES)) out[key] = await readGate(env, userId, key);
   return out;
 }
 
@@ -159,7 +177,7 @@ async function gateState(request, env, user, key) {
   const userId = need(user);
   if (!GATES[key]) return fail(request, env, 'Unknown gated track', 404);
   if (await isHouseOperator(env, user)) return reply(request, env, { ok: true, gate: { allowed: true, operator: true } });
-  return reply(request, env, { ok: true, gate: await rpc(env, 'music_gate_state', gateArgs(userId, key)) });
+  return reply(request, env, { ok: true, gate: await readGate(env, userId, key) });
 }
 
 async function gatePlay(request, env, user, key) {
@@ -173,9 +191,7 @@ async function gatePlay(request, env, user, key) {
   }
 
   const token = newToken();
-  const state = await rpc(env, 'music_gate_claim', {
-    ...gateArgs(userId, key), p_token: token, p_stream_seconds: gate.stream_seconds
-  });
+  const state = await readGate(env, userId, key, { p_token: token, p_stream_seconds: gate.stream_seconds });
   if (!state?.claimed) {
     return reply(request, env, { error: 'Locked', locked: true, gate: state }, 403);
   }
