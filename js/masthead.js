@@ -238,7 +238,7 @@ html { scroll-behavior: smooth; }
       { href: "portfolio.html",    label: "The full portfolio" },
     ] },
     /* Equity Uprise is put away while the site concentrates on the music
-       and on Mnet, so its group is not listed here. The rooms all still
+       and on Action Network, so its group is not listed here. The rooms all still
        exist and still answer on their own URLs; the map simply stops
        handing them to a visitor who came for a record. Restoring the
        group is restoring these lines. */

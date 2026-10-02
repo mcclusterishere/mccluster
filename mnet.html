@@ -17,8 +17,8 @@
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Action Network home">
-        <img class="mn__brand-mark" src="assets/img/m-mark.png" alt="" width="36" height="36">
-        <span><strong>Action Network</strong><small>McCluster</small></span>
+        <span class="mn__brand-plate"><img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" width="36" height="36"></span>
+        <span><strong>Action Network</strong><small>Founded by Equity Uprise</small></span>
       </a>
       <!-- the header's one live signal: your unread alerts, without opening the tab -->
       <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
@@ -32,9 +32,9 @@
     </header>
 
     <section class="mn__gate" id="mnSignedOut">
-      <p class="mn__eyebrow">One account. One network.</p>
-      <h1>Organized people, in one place.</h1>
-      <p class="mn__lede">The Action Network is where McCluster listeners, organizers and campaigns meet. Sign in with the same M Account you use everywhere else; your profile, follows and posts go with you.</p>
+      <p class="mn__eyebrow">The place for doers.</p>
+      <h1>Turn what you care about into action.</h1>
+      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. The Action Network is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
       <div class="mn__panel">
         <div class="mn__auth-tabs" role="tablist" aria-label="Action Network account">
           <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
@@ -78,6 +78,8 @@
         <label class="mn__label" for="mnDisplay">Display name</label>
         <input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required>
 
+        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who the Action Network is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
+
         <label class="mn__label" for="mnHeadline">Headline</label>
         <input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?">
 
@@ -120,10 +122,12 @@
       </form>
     </section>
 
-    <section class="mn__app" id="mnApp" hidden>
+    <section class="mn__app" id="mnApp" hidden>\n      <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Advocacy</span><span>Business</span><span>Community</span><span>Ideas</span></div></section>
+      <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
+      <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>News context will compare sources and perspectives before connecting issues to optional initiatives. No points for ideology. No points for outrage.</small></div><a href="action/">Explore initiatives →</a></section>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
-        <button type="button" data-mn-view="discover">Discover</button>
+        <button type="button" class="is-active" data-mn-view="feed">Action</button>
+        <button type="button" data-mn-view="discover">People</button>
         <button type="button" data-mn-view="groups">Groups</button>
         <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
@@ -136,13 +140,13 @@
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
         <section class="mn__rail" id="mnRail" aria-labelledby="mnRailH" hidden>
-          <div class="mn__rail-head"><h2 id="mnRailH">Campaigns</h2><a href="action/">All</a></div>
+          <div class="mn__rail-head"><div><p class="mn__rail-k">WAYS TO MOVE</p><h2 id="mnRailH">Campaigns & missions</h2></div><a href="action/">See all</a></div>
           <div class="mn__rail-track" id="mnRailTrack"></div>
         </section>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
-            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="What are you doing about it?" aria-label="Post text"></textarea>
+            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="What are you putting into action?" aria-label="Post text"></textarea>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
@@ -167,7 +171,7 @@
                 <option value="private">Only me</option>
               </select>
             </label>
-            <button class="mn__post" id="mnPost" type="button">Post</button>
+            <button class="mn__post" id="mnPost" type="button">Put it in action</button>
           </div>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
@@ -180,7 +184,7 @@
 
       <section class="mn__view" id="mnDiscoverView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Discover people</h2></div>
+          <div><p class="mn__eyebrow">Find the doers</p><h2>People taking action</h2></div>
           <button class="mn__quiet" id="mnShowBlocked" type="button">Blocked</button>
         </div>
         <div class="mn__search-row">
@@ -242,7 +246,7 @@
       </section>
 
       <section class="mn__view" id="mnProfileView" hidden>
-        <div class="mn__profile-card">
+        <div class="mn__frontpage" id="mnFrontPage" hidden>\n          <div class="mn__frontpage-head"><div><span>Front page</span><strong id="mnFrontPageTitle">Your public home</strong></div><a id="mnFrontPageOpen" target="_blank" rel="noopener">Open site ↗</a></div>\n          <div class="mn__frontpage-stage"><iframe id="mnFrontPageFrame" title="Public front page preview" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></div>\n        </div>\n        <div class="mn__profile-card">
           <div class="mn__profile-banner" id="mnProfileBanner"></div>
           <div class="mn__profile-card-body">
             <div class="mn__profile-avatar" id="mnProfileAvatar">M</div>

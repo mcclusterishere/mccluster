@@ -19,7 +19,7 @@
   if (doc.getElementById("cmdkRoot")) return;  // already mounted
 
   /* WHO GETS THIS. Some surfaces in the registry are public pages --
-     the listening room and Mnet are the product, not the back office --
+     the listening room and Action Network are the product, not the back office --
      and mounting an operator menu there would show every visitor a list
      of the owner's internal desks. Not a hole, since each page gates
      itself, but a map of the house handed to strangers.

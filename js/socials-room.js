@@ -10,7 +10,7 @@
    list channels, queue a post, dispatch the queue and report stats — and
    nothing in the product was wired to it.
 
-   WHAT IT IS NOW. Write once, choose where it goes, send. Mnet is a
+   WHAT IT IS NOW. Write once, choose where it goes, send. Action Network is a
    destination like any other, because it is the one we own and it should
    not be a separate errand.
 
@@ -69,7 +69,7 @@
   }
 
   /* ---------- destinations ----------
-     Mnet first, because it is ours and it is the one that always works. */
+     Action Network first, because it is ours and it is the one that always works. */
   function mnetDest() {
     return {
       key: "__mnet__",
@@ -139,7 +139,7 @@
                    .map(function (c) { return c.key; });
 
     var jobs = [];
-    /* Mnet goes through the same Worker route the Mnet composer uses, so a
+    /* Action Network goes through the same Worker route the Action Network composer uses, so a
        post made here is indistinguishable from one made there. */
     jobs.push(wantMnet
       ? w.MCC.api("/v1/mnet/posts?app_key=" + encodeURIComponent(MNET_APP),
@@ -256,7 +256,7 @@
   }
 
   function boot() {
-    /* Mnet readiness is a different question to the social service's, and
+    /* Action Network readiness is a different question to the social service's, and
        either can be true without the other. */
     state.mnetReady = !!(w.MCC && w.MCC.api && w.MCC_SUPA);
 

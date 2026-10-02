@@ -99,6 +99,17 @@
     if (fallback) fallback.textContent = initials(name);
   }
 
+  function paintFrontPage(p, id, name) {
+    var card = $("mnFrontPage"), frame = $("mnFrontPageFrame"), open = $("mnFrontPageOpen");
+    if (!card || !frame || !open) return;
+    var site = safeHttpUrl(p.front_page_url || p.website_url);
+    if (!site) { card.hidden = true; frame.removeAttribute("src"); return; }
+    card.hidden = false;
+    $("mnFrontPageTitle").textContent = (p.display_name || name || id.mccluster_id || "Member") + " · front page";
+    open.href = site;
+    if (frame.getAttribute("src") !== site) frame.src = site;
+  }
+
   function paintSelf() {
     var p = profile(), id = identity(), name = p.display_name || (state.user && (state.user.user_metadata && (state.user.user_metadata.name || state.user.user_metadata.full_name))) || state.user && state.user.email || "M";
     $("mnMe").hidden = false;
@@ -126,6 +137,7 @@
     $("mnProfileAvatar").style.backgroundImage = avatar ? "url(" + JSON.stringify(avatar) + ")" : "";
     if (avatar) $("mnProfileAvatar").textContent = "";
     var site = $("mnProfileWebsite"), website = safeHttpUrl(p.website_url);
+    paintFrontPage(p, id, name);
     if (website) {
       site.href = website;
       site.textContent = website.replace(/^https?:\/\//, "");
@@ -289,12 +301,21 @@
     });
   }
 
+  function saveDemographics() {
+    /* Demographic measurement ships only when its backend contract is live.
+       Profile creation/editing must never depend on an optional pending migration. */
+    var fields = Array.prototype.slice.call(document.querySelectorAll('input[name="mnRace"]'));
+    var skipNode = $("mnRaceSkip");
+    if (!fields.length && !skipNode) return Promise.resolve();
+    return Promise.resolve();
+  }
+
   function saveProfile(event) {
     event.preventDefault();
     var button = $("mnProfileSave");
     button.disabled = true;
     setStatus($("mnProfileStatus"), "Saving…");
-    api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
+    saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
       method: "PATCH",
       body: {
         mccluster_id: $("mnHandle").value.trim(),
@@ -304,7 +325,7 @@
         avatar_url: $("mnAvatarUrl").value.trim(),
         website_url: $("mnWebsite").value.trim()
       }
-    }).then(function (boot) {
+    }); }).then(function (boot) {
       state.boot = boot;
       showGate("app");
       paintSelf();
@@ -813,14 +834,16 @@
   }
   function openPerson(handle) {
     if(!handle)return;
+    try { history.replaceState(null,"","mnet.html?profile="+encodeURIComponent(handle)); } catch (_) {}
     var dlg=$("mnPersonDialog"); $("mnPersonBody").innerHTML='<div class="mn__empty">Loading profile…</div>'; dlg.showModal();
     Promise.all([
       api("/v1/mnet/people/"+encodeURIComponent(handle)),
       api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
     ]).then(function (all) {
-      var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
+      var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, presentation=data.presentation||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
-      $("mnPersonBody").innerHTML='<div class="mn__person-sheet"><div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
+      var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
+      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+

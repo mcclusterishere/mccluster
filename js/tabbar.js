@@ -102,7 +102,7 @@
      matthew-mccluster.html used to opt out, on the reasoning that a hiring
      manager opening it from a job application should not be handed a bar
      reading "Music · Equity Uprise · HERE · Shakes · Profile". The bar is
-     three columns now and the site is the music, the house and Mnet, so
+     three columns now and the site is the music, the house and Action Network, so
      that reasoning no longer holds: the page was simply a dead end with no
      way onward. It carries the bar like everything else. demo.html and
      embed.html still opt out, and should: one is a client's own site
@@ -209,7 +209,7 @@
      THIS ENFORCES IT.
 
      Equity Uprise, Whip Equipped and PRIM3 are put away while the site
-     concentrates on the music and on Mnet. Put away, not deleted: every
+     concentrates on the music and on Action Network. Put away, not deleted: every
      page and every route still exists and still answers, and restoring a
      column is adding its tab back to ORDER and its wing back to WINGS.
 
