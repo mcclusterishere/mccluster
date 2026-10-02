@@ -52,6 +52,13 @@
   .cro-statgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .cro-dests{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+/* Instagram composer: labelled fields stacked at phone width; inputs at 16px so iOS does not zoom. */
+.cro-field{display:grid;gap:5px;min-width:0;margin-top:8px;color:var(--cr-dim);font-size:11px;font-weight:700}
+.cro-field span{display:flex;justify-content:space-between;gap:8px}
+.cro-field small{color:var(--cr-faint);font-weight:600}
+.cro-field .cr-input,.cro-field .cr-textarea{margin:0;font-size:max(16px,12px);min-width:0}
+.cro-check{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--cr-dim);font-size:12px}
+.cro-check input{width:18px;height:18px}
 @media (min-width:54rem){
   .cro-grid--2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cro-grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}

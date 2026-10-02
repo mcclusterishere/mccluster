@@ -43,7 +43,7 @@ function graphVersion(env) {
   return env.META_GRAPH_API_VERSION || 'v26.0';
 }
 
-async function graphGet(env, path, token) {
+export async function graphGet(env, path, token) {
   const res = await fetch(`https://graph.facebook.com/${graphVersion(env)}/${path}`, {
     headers: { authorization: `Bearer ${token}` }
   });
@@ -71,7 +71,7 @@ async function graphPost(env, path, token, params) {
   return data;
 }
 
-async function tokenFor(env, account) {
+export async function tokenFor(env, account) {
   if (!account?.org_id || String(account.platform || '').toLowerCase() !== 'instagram') return null;
   const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
   const channel = rows?.[0] || null;
@@ -92,8 +92,26 @@ async function tokenFor(env, account) {
   return null;
 }
 
+/* A video uploaded in Control sits in the private social-outbox bucket.
+   Meta fetches it from a link signed for a day, long enough for Meta's own
+   processing and retries, and the file itself never becomes public. */
+export const OUTBOX_BUCKET = 'social-outbox';
+async function signOutboxUrl(env, storagePath) {
+  const objectPath = String(storagePath).split('/').map(encodeURIComponent).join('/');
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${OUTBOX_BUCKET}/${objectPath}`, {
+    method: 'POST',
+    headers: headers(env),
+    body: JSON.stringify({ expiresIn: 86400 })
+  });
+  const data = await res.json().catch(() => ({}));
+  const signed = data?.signedURL || data?.signedUrl;
+  if (!res.ok || !signed) throw new Error('Could not sign the uploaded video for Instagram');
+  return String(signed).startsWith('http') ? signed : `${env.SUPABASE_URL}/storage/v1${signed}`;
+}
+
 async function resolveVideoUrl(env, job) {
   if (job.payload?.video_url) return job.payload.video_url;
+  if (job.payload?.storage_path) return signOutboxUrl(env, job.payload.storage_path);
   if (!job.payload?.video_asset_id) return null;
   const rows = await db(env, `media_assets?id=eq.${encodeURIComponent(job.payload.video_asset_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&select=url&limit=1`);
   return rows?.[0]?.url || null;

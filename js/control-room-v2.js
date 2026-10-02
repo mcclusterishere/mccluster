@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "social-agent", "music", "action-network", "song-test"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -812,6 +812,7 @@
     if (v === "assets") return "library";
     if (["calendar", "published"].indexOf(v) >= 0) return "schedule";
     if (["management", "socials", "socials-room"].indexOf(v) >= 0) return "channels";
+    if (["social-agent", "ig", "reels"].indexOf(v) >= 0) return "instagram";
     if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
     if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
     return "projects";
@@ -1598,8 +1599,8 @@
     var body = state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
-      : state.createView === "social-agent"
-        ? (window.CR.socialAgent ? window.CR.socialAgent.render() : empty("Social Agent unavailable", "The native Control module did not load."))
+      : state.createView === "instagram"
+        ? (window.CR.instagram ? window.CR.instagram.render() : empty("Instagram unavailable", "The native Control module did not load."))
       : state.createView === "music"
         ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
@@ -2887,7 +2888,7 @@
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
-    if (window.CR.socialAgent) window.CR.socialAgent.bind($("crSurface"));
+    if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
@@ -3101,7 +3102,7 @@
     getState: function () { return state; }
   });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
-  if (window.CR.socialAgent) window.CR.socialAgent.init({ request: request, render: render });
+  if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
