@@ -640,6 +640,7 @@ async function handleMnet(req,env,path,url){
 
   if(path==='/v1/mnet/media/upload-url'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'upload-url',file_name:b.file_name,mime_type:b.mime_type,byte_size:b.byte_size,alt_text:b.alt_text}));}
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
+  if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
   /* THE OWNER'S TWO LEVERS. Both check mnet_is_admin() inside the function
      rather than here, so the rule lives beside the data and a future caller
      cannot route around it. */

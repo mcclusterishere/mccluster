@@ -87,7 +87,7 @@ test('Create survives common client-side failure modes', async () => {
   assert.match(html, /id="crUploadRetry"/);
   assert.match(js, /crUploadRetry/);
   assert.match(js, /MAX_IMAGE_BYTES = 25 \* 1024 \* 1024/);
-  assert.match(js, /MAX_VIDEO_BYTES = 1024 \* 1024 \* 1024/);
+  assert.match(js, /MAX_VIDEO_BYTES = 500 \* 1024 \* 1024/);
 });
 
 test('native Create describes the canonical hardened flow instead of promising missing native features', async () => {
@@ -95,4 +95,26 @@ test('native Create describes the canonical hardened flow instead of promising m
   assert.match(native, /same hardened camera and library flow as web/);
   assert.match(native, /Draft recovery and interrupted-upload retry/);
   assert.doesNotMatch(native, /Native camera capture/);
+});
+
+test('upload cancellation cleans abandoned server media and fences stale completion', async () => {
+  const [html, js, api, edge] = await Promise.all([
+    read('create.html'), read('js/create.js'), read('workers/mccluster/src/platform-api.js'), read('supabase/functions/mnet-media/index.ts')
+  ]);
+  assert.match(html, /id="crUploadCancel"/);
+  assert.match(js, /S\.xhr\.abort\(\)/);
+  assert.match(js, /\/v1\/mnet\/media\/discard/);
+  assert.match(js, /S\.upload !== mine\.p \|\| S\.uploadCancelled/);
+  assert.match(api, /path==='\/v1\/mnet\/media\/discard'/);
+  assert.match(edge, /action==="discard"/);
+  assert.match(edge, /storage\.from\(asset\.bucket_id\)\.remove/);
+  assert.match(edge, /network_media_assets"\)\.delete/);
+});
+
+test('Create exposes recoverable network lifecycle states', async () => {
+  const js = await read('js/create.js');
+  assert.match(js, /window\.addEventListener\("online"/);
+  assert.match(js, /window\.addEventListener\("offline"/);
+  assert.match(js, /Connection restored\. Ready to retry/);
+  assert.match(js, /Connection lost\. The upload can be retried/);
 });
