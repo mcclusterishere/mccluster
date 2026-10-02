@@ -1,7 +1,7 @@
 import existing from './entry.js';
 import { build } from '../.wrangler/build-provenance.mjs';
 import { handlePlatformApi } from './platform-api-metered.js';
-import { publishDueNetworkPosts, reapStaleLiveSessions } from './platform-api.js';
+import { publishDueNetworkPosts, reapStaleLiveSessions, pruneNetworkRateEvents } from './platform-api.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
@@ -59,6 +59,9 @@ export default {
     }));
     ctx.waitUntil(reapStaleLiveSessions(env, { limit: 20 }).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_live_reap_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
+      console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     if (existing.scheduled) return existing.scheduled(controller, env, ctx);
   }

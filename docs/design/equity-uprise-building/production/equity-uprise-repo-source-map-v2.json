@@ -1745,6 +1745,13 @@
       "rationale": "Applied Action Network organization, group, authenticity-check and Be Authentic campaign schema; references eu_is_admin() for administrative authority and is not a building capability."
     },
     {
+      "path": "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network spam limits (pace, daily caps, lengths, duplicates); exempts the owner desk by the same admin rule as eu_role(). Not a building capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],

@@ -5,10 +5,15 @@ const encoder = new TextEncoder();
 function serviceHeaders(env, extra={}) {
   return { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type':'application/json', ...extra };
 }
+/* The network's limits (network_rate_limits_v2) refuse with their own
+   SQLSTATEs and a sentence written for the member. Whatever route hit
+   them, the member gets that sentence with the matching status. */
+const LIMIT_STATUS={MN429:429,MN413:413,MN409:409};
+function limitStatus(data,status){return LIMIT_STATUS[data?.code]||status}
 async function service(env, path, init={}) {
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, { ...init, headers: serviceHeaders(env, init.headers||{}) });
   const text = await res.text(); let data=null; try { data=text?JSON.parse(text):null; } catch { data=text; }
-  if (!res.ok) throw Object.assign(new Error(data?.message || data?.error || 'Database request failed'), { status: res.status, detail:data });
+  if (!res.ok) throw Object.assign(new Error(data?.message || data?.error || 'Database request failed'), { status: limitStatus(data,res.status), detail:data });
   return data;
 }
 async function authUser(req, env) {
@@ -19,7 +24,7 @@ async function userRpc(req, env, name, body={}) {
   const h=req.headers.get('authorization')||'';
   const res=await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:h,'content-type':'application/json'},body:JSON.stringify(body)});
   const text=await res.text(); let data=null; try{data=text?JSON.parse(text):null}catch{data=text}
-  if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:res.status,detail:data}); return data;
+  if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:limitStatus(data,res.status),detail:data}); return data;
 }
 async function currentMuid(env,userId){const r=await service(env,`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);return r?.[0]?.m_uid||null}
 function uuidLike(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''))}
@@ -234,9 +239,11 @@ async function handleDeveloper(req,env,path,url){
    the checks it would have passed if it had been sent by hand. */
 async function prepareNetworkPost(env,muid,b,appKey){
   /* A long post is refused, never cut short: the member would lose what
-     they wrote without knowing. The table enforces the same 5,000. */
+     they wrote without knowing. The table enforces the same 2,000 for a
+     post and 1,000 for a reply. */
   const body=String(b.body||'').trim();
-  if(body.length>5000)return {error:'Posts are limited to 5,000 characters.',status:413};
+  if(b.reply_to_id&&body.length>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
+  if(body.length>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
   let assets=[];
   if(mediaIds.length){
@@ -262,17 +269,9 @@ async function prepareNetworkPost(env,muid,b,appKey){
   }
   return {assets:assets||[],draft:{body,media_asset_ids:mediaIds,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
 }
-/* The table's spam limits (network_posts_limits) answer with their own
-   SQLSTATEs; they become a 413 or 429 with the table's own sentence. */
-function postLimitError(e){
-  const code=e?.detail?.code;
-  if(code==='MN429')return Object.assign(new Error(e.detail.message||'You are posting too fast. Give it a minute.'),{status:429});
-  if(code==='MN413')return Object.assign(new Error(e.detail.message||'Posts are limited to 5,000 characters.'),{status:413});
-  return e;
-}
 async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
-  let rows;try{rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});}catch(e){throw postLimitError(e);}
+  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});
   const created=rows?.[0],ids=draft.media_asset_ids||[];
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
@@ -366,6 +365,12 @@ export async function reapStaleLiveSessions(env,{limit=20}={}){
   let ended=0;
   for(const s of rows||[]){await endLiveSession(env,s,null,'stale');ended++;}
   return {ended};
+}
+/* The limits only ever look back 24 hours, so anything older than two days
+   in their ledger is dead weight. */
+export async function pruneNetworkRateEvents(env){
+  const cutoff=new Date(Date.now()-2*24*60*60*1000).toISOString();
+  await service(env,`network_rate_events?at=lt.${cutoff}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
 }
 
 async function handleMnet(req,env,path,url){
@@ -583,10 +588,10 @@ async function handleMnet(req,env,path,url){
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid)return fail(req,env,'Post not found',404);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
-    if(b.body!==undefined){patch.body=String(b.body||'').trim();if(patch.body.length>5000)return fail(req,env,'Posts are limited to 5,000 characters.',413);}
+    if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(patch.body.length>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
-    let out;try{out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});}catch(e){throw postLimitError(e);}
+    const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});
     const hydrated=await hydratePostRows(env,out||[],muid);return reply(req,env,hydrated[0]||{post:out?.[0]});
   }
   if(postOne&&req.method==='DELETE'){

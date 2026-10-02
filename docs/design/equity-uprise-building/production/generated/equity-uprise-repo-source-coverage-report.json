@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 277,
+  "candidate_count": 278,
   "capability_source_count": 97,
-  "support_only_count": 180,
-  "checks_total": 1013,
-  "checks_passed": 1013,
+  "support_only_count": 181,
+  "checks_total": 1017,
+  "checks_passed": 1017,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -230,6 +230,7 @@
     "supabase/migrations/20261002135938_network_live_v1.sql",
     "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
     "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql",
+    "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -291,7 +292,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "275 entries"
+      "detail": "278 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4345,6 +4346,26 @@
     },
     {
       "name": "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002183244_network_rate_limits_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002183244_network_rate_limits_v2.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261002183244_network_rate_limits_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261002183244_network_rate_limits_v2.sql support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -33,7 +33,7 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
   assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"\]/);
-  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "music", "action-network", "song-test"\]/);
+  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "social-agent", "music", "action-network", "song-test"\]/);
 });
 
 test('the old admin room iframe strategy is dead',async()=>{
