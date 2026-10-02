@@ -19,10 +19,10 @@ test('gated single is one logical track: public preview, master only as an earne
      Mind Control song unlocks one earned play. */
   assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
   const router=await read('workers/mccluster/src/music/router.js');
-  const gate=router.match(/'niggy-nigg':\\s*\\{[^}]*?any_of:\\s*\\[([^\\]]*)\\]/);
+  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?any_of:\s*\[([^\]]*)\]/);
   assert.ok(gate,'the Worker must gate niggy-nigg by eligible album tracks');
   const eligible=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
-  const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\\.[^.]+$/,''));
+  const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
   assert.deepEqual(eligible,before,'only the other CIA Mind Control songs may unlock the closer');
   assert.deepEqual(track.gated.listen_gate.any_of,eligible);
   assert.equal(track.gated.listen_gate.minimum_completed,1);
