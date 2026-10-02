@@ -14,7 +14,7 @@
     .ac__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
     .ac h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92; font-size: clamp(2.4rem, 11vw, 3.6rem); margin-top: 0.4rem; }
     .ac__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; font-size: 0.98rem; }
-    .ac__card { border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); padding: 1.15rem; margin-top: 1.6rem; }
+    .ac__card { border: 1px solid var(--edge); border-radius: 20px; background: linear-gradient(160deg,rgba(28,24,22,.94),rgba(18,15,14,.96)); padding: 1.15rem; margin-top: 1.6rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 24px 70px -50px rgba(229,56,59,.6); animation:mcc-rise .5s var(--mcc-ease) both; }
     .ac__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
     .fan__row { display: flex; gap: 0.6rem; }
     .fan__row input { flex: 1; min-width: 0; }
@@ -100,9 +100,9 @@
     .ac__forgot:hover { background: rgba(255,255,255,0.11); }
     .ac__tabs { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; margin-bottom:.85rem; padding:.28rem; border:1px solid var(--edge); border-radius:13px; background:rgba(255,255,255,.025); }
     .ac__tab { border:0; border-radius:9px; padding:.7rem .6rem; cursor:pointer; background:transparent; color:var(--cream-dim); font:800 .78rem var(--ui); }
-    .ac__tab.is-on { background:rgba(255,255,255,.08); color:var(--cream); }
+    .ac__tab { transition:transform .25s var(--mcc-spring),background .25s var(--mcc-ease),color .2s; } .ac__tab.is-on { background:rgba(255,255,255,.09); color:var(--cream); box-shadow:inset 0 0 0 1px var(--mcc-rule-strong); transform:scale(1.015); }
     .ac__passnote { margin-top:.65rem; color:var(--cream-dim); font-size:.75rem; line-height:1.45; }
-    .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
+    .ac__btn { box-shadow:0 14px 30px -18px rgba(255,77,61,.85); transition:transform .22s var(--mcc-spring),filter .2s,box-shadow .25s; appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
     /* One ruby thing per card. The Save button is the action; these are
        doors beside it, so they take the same neutral edge the fields now
        wear. Two red-outlined buttons above a red Save button made all three
@@ -130,6 +130,7 @@
     .ac__show input { width: 18px; height: 18px; margin: 0; accent-color: var(--ruby-hot); }
     .ac__note.is-ok { color: #86efac; }
     .ac__note.is-err { color: #fca5a5; }
+    @media (hover:hover){.ac__card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 28px 80px -52px rgba(229,56,59,.75)}.ac__prov:hover,.ac__ghost:hover,.ac__forgot:hover{transform:translateY(-1px)}}
     [hidden] { display: none !important; }
   </style>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
