@@ -37,8 +37,8 @@ test("SEO/AEO authority surfaces stay coherent",()=>{
  assert.equal(d.person.school.major,"Computer Science");
  assert.doesNotMatch(JSON.stringify(d),/registered Connecticut public charity/i);
  assert.doesNotMatch(JSON.stringify(d),/instructing new team members/i);
- const policyLd=JSON.parse(policy.match(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/)[1]);
- const portfolioLd=JSON.parse(portfolio.match(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/)[1]);
+ const policyLd=JSON.parse(policy.split('<script type="application/ld+json">')[1].split("</script>")[0]);
+ const portfolioLd=JSON.parse(portfolio.split('<script type="application/ld+json">')[1].split("</script>")[0]);
  assert.ok(!policyLd["@graph"].some(n=>n["@type"]==="Person"&&n["@id"]===e.person["@id"]));
  assert.ok(!portfolioLd["@graph"].some(n=>n["@type"]==="Person"&&n["@id"]===e.person["@id"]));
  assert.doesNotMatch(card,/"@type": "Person"/);
