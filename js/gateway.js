@@ -281,13 +281,23 @@
 
   function load() {
     var want = String(root.location.hash || "").replace(/^#/, "").toLowerCase();
-    if (FEATURE) want = FEATURE;
+    /* a single-cause gateway reads its own campaign directly, so it keeps
+       its facts and count when the campaign is paused or closed (the live
+       list leaves those out; the campaign page still serves them) */
+    if (FEATURE) {
+      return rpc("action_campaign_public", { p_slug: FEATURE }).then(function (c) {
+        paintChapters(c ? [c] : [], FEATURE);
+        if (c) paintFeatured(c); else paintLanesWithout();
+      }).catch(function () {
+        paintChapters([], FEATURE);
+        paintLanesWithout();
+      });
+    }
     return rpc("action_campaigns_live").then(function (list) {
       list = Array.isArray(list) ? list : [];
-      if (FEATURE) list = list.filter(function (c) { return c.slug === FEATURE; });
       paintChapters(list, want);
       var pick = list.filter(function (c) { return c.slug === want; })[0] || list[0];
-      if (pick && want === pick.slug && !FEATURE) {
+      if (pick && want === pick.slug) {
         var target = $(pick.slug);
         if (target) target.scrollIntoView({ block: "start" });
       }

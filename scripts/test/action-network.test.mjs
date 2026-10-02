@@ -154,7 +154,8 @@ test('the gateways never play sound or film on their own, and score dark to ligh
 test('End Racism features its own campaign, its cover whole, and no gated track', async () => {
   const { html, cfg } = await gateway('end-racism.html');
   assert.equal(cfg.feature, 'end-racism');
-  assert.match(await read('js/gateway.js'), /if \(FEATURE\) list = list\.filter\(function \(c\) \{ return c\.slug === FEATURE; \}\);/);
+  /* read directly, so a paused or closed campaign keeps its page */
+  assert.match(await read('js/gateway.js'), /return rpc\("action_campaign_public", \{ p_slug: FEATURE \}\)/);
   /* the supplied cover art is shown whole, never cropped */
   assert.match(html, /src="assets\/img\/cia-mind-control-cover\.jpg"/);
   assert.doesNotMatch(await read('css/gateway.css'), /\.gw-cover[^{]*img \{[^}]*object-fit:\s*cover/);
