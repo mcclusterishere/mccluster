@@ -20,6 +20,11 @@
         <img class="mn__brand-mark" src="assets/img/m-mark.png" alt="" width="36" height="36">
         <span><strong>Action Network</strong><small>McCluster</small></span>
       </a>
+      <!-- the header's one live signal: your unread alerts, without opening the tab -->
+      <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <i class="mn__bell-dot" id="mnBellDot" hidden></i>
+      </button>
       <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Open your profile" hidden>
         <span id="mnAvatarFallback">M</span>
         <img id="mnAvatar" alt="" hidden>
@@ -123,13 +128,21 @@
         <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
         <button type="button" data-mn-view="profile">Me</button>
+        <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
       </nav>
 
       <section class="mn__view" id="mnFeedView">
-        <article class="mn__composer">
+        <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
+             is the door into its campaign page; the dot pulses because the
+             count under it is live. -->
+        <section class="mn__rail" id="mnRail" aria-labelledby="mnRailH" hidden>
+          <div class="mn__rail-head"><h2 id="mnRailH">Campaigns</h2><a href="action/">All</a></div>
+          <div class="mn__rail-track" id="mnRailTrack"></div>
+        </section>
+        <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
-            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="Share something with the network…" aria-label="Post text"></textarea>
+            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="What are you doing about it?" aria-label="Post text"></textarea>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
