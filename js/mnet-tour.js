@@ -32,7 +32,7 @@
     { target: ".mn__tabs", title: "Seven tabs, one map",
       body: "Action, Missions, People, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
     { view: "missions", target: "#mnMissionList", title: "Start with a mission",
-      body: "A mission is one real thing to do out in the world, like cleaning a block or helping someone check their voter registration. Join one, then go do it." },
+      body: "A mission is one real thing to do out in the world, like feeding someone who is unhoused or paying off a kid's lunch debt. Join one, then go do it." },
     { view: "missions", target: "#mnMissionList", title: "Show your proof",
       body: "When it's done, add a photo, a link or a short note. A person on the desk checks it. Once it's verified it goes on your Action Record with a receipt you can share." },
     { view: "missions", target: "#mnRecord", title: "Three verified actions",
