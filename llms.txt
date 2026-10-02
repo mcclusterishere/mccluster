@@ -11,18 +11,20 @@ Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, C
 
 ## Hiring Matthew McCluster
 
-Matthew McCluster is available for **IT support / field technician (L1–L2)**,
-**desktop support** and **infrastructure** roles, on site across
-**Connecticut and New York**, with reliable transportation. He has 7+ years
-of hands-on IT and technical support since 2018 (Robert Half, IPC Systems,
-F.R.E.E.D.O.M. Inc., McCluster Corp).
+Matthew McCluster is a **Computer Science student at Southern Connecticut State University**
+and is available for **IT support / field technician (L1–L2)**, **desktop support**,
+**infrastructure**, **technical operations**, **platform** and **telematics / fleet technology**
+roles. His hands-on technical experience since 2018 spans Robert Half, IPC Systems,
+F.R.E.E.D.O.M. Inc., Whip Equipped LLC and McCluster Corp.
 
 - Skills: Windows and macOS endpoint support; Microsoft 365 administration
   (Exchange, OneDrive, Teams, SharePoint); Active Directory users, groups
   and permissions; Google Workspace; device imaging, deployments and
-  hardware swaps; printers, VPN and email; ticketing and Level 3
-  escalation; Windows Server, RedHat, CentOS; Cisco Nexus, DHCP;
-  data-center buildout and structured cabling.
+  hardware swaps; printers, VPN and email; Windows Server, RedHat, CentOS;
+  Cisco Nexus, DHCP; data-center buildout and structured cabling; PostgreSQL,
+  row-level security, serverless REST APIs and CI; GNSS/fleet telematics,
+  vehicle electrical diagnostics, ADAS, cameras, sensors and calibration workflows.
+- Education: B.S. Computer Science, Southern Connecticut State University — enrolled; Expected graduation: May 2030.
 - Credentials: CompTIA ITF+ (2022); IT Bootcamp Certificate, CT State
   Community College (2023).
 - [IT support résumé](https://matthew.mccluster.org/resume-it-support.html)

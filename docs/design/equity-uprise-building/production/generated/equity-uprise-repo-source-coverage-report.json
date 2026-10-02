@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 286,
+  "candidate_count": 287,
   "capability_source_count": 97,
-  "support_only_count": 189,
-  "checks_total": 1049,
-  "checks_passed": 1049,
+  "support_only_count": 190,
+  "checks_total": 1053,
+  "checks_passed": 1053,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -176,6 +176,7 @@
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
+    "scripts/test/seo-authority.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "scripts/test/song-test.test.mjs",
     "services.html",
@@ -300,7 +301,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "286 entries"
+      "detail": "287 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5539,6 +5540,26 @@
     },
     {
       "name": "tools/build-hire-schema.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/seo-authority.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/seo-authority.test.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "scripts/test/seo-authority.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/seo-authority.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

@@ -35,7 +35,7 @@
       "logo": "assets/img/m-mark.png",
       "video": "assets/video/keynote.mp4",
       "poster": "assets/frames/keynote_0001.jpg",
-      "summary": "McCluster Corp is the creative and civic company behind everything on this site. A registered Connecticut public charity, it holds the Equity Uprise fellowship, runs creative services in-house, and turns media, policy, and technology into a single operating system.",
+      "summary": "McCluster Corp is the creative and civic company behind everything on this site. A Connecticut organization with a 2025 public-charity registration certificate on record, it holds the Equity Uprise fellowship, runs creative services in-house, and turns media, policy, and technology into a single operating system.",
       "facts": [
         {
           "label": "Founded",
@@ -61,7 +61,7 @@
         },
         {
           "title": "Owner-operated",
-          "body": "Every frame, chord, and line of code across the ecosystem is built in-house by Matthew McCluster."
+          "body": "Matthew McCluster directs the ecosystem’s architecture, operating rules and creative output; implementation can include coding agents and other collaborators where documented."
         }
       ],
       "links": [
