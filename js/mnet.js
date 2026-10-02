@@ -294,7 +294,7 @@
       if (prev) { prev.src = url; prev.hidden = false; }
       setStatus($("mnAvatarStatus"), "Photo ready. Save the profile to keep it.", "ok");
       return url;
-    }).then(function () { track(liked ? "mnet_reaction_removed" : "mnet_reaction_added", { post_id:postId }); }).catch(function (e) {
+    }).catch(function (e) {
       setStatus($("mnAvatarStatus"), e.message || "Upload failed.", "error");
       throw e;
     });
@@ -645,7 +645,7 @@
     api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/reactions", {
       method: liked ? "DELETE" : "POST",
       body: liked ? undefined : { reaction:"like" }
-    }).catch(function (e) {
+    }).then(function () { track(liked ? "mnet_reaction_removed" : "mnet_reaction_added", { post_id:postId }); }).catch(function (e) {
       if (post) { post.liked_by_me = liked; post.reaction_count = Math.max(0, count + (liked ? 1 : -1)); }
       paintToggle(button, liked, post ? post.reaction_count : null);
       setStatus($("mnFeedStatus"), e.message || "Could not update reaction.", "error");
