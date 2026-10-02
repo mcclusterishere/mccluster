@@ -120,10 +120,10 @@
       </form>
     </section>
 
-    <section class="mn__app" id="mnApp" hidden>
+    <section class="mn__app" id="mnApp" hidden>\n      <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Advocacy</span><span>Business</span><span>Community</span><span>Ideas</span></div></section>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
-        <button type="button" data-mn-view="discover">Discover</button>
+        <button type="button" class="is-active" data-mn-view="feed">Action</button>
+        <button type="button" data-mn-view="discover">People</button>
         <button type="button" data-mn-view="groups">Groups</button>
         <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
@@ -136,13 +136,13 @@
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
         <section class="mn__rail" id="mnRail" aria-labelledby="mnRailH" hidden>
-          <div class="mn__rail-head"><h2 id="mnRailH">Campaigns</h2><a href="action/">All</a></div>
+          <div class="mn__rail-head"><div><p class="mn__rail-k">WAYS TO MOVE</p><h2 id="mnRailH">Campaigns & missions</h2></div><a href="action/">See all</a></div>
           <div class="mn__rail-track" id="mnRailTrack"></div>
         </section>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
-            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="What are you doing about it?" aria-label="Post text"></textarea>
+            <textarea id="mnPostBody" maxlength="20000" rows="1" placeholder="What are you putting into action?" aria-label="Post text"></textarea>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
@@ -167,7 +167,7 @@
                 <option value="private">Only me</option>
               </select>
             </label>
-            <button class="mn__post" id="mnPost" type="button">Post</button>
+            <button class="mn__post" id="mnPost" type="button">Put it in action</button>
           </div>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
@@ -180,7 +180,7 @@
 
       <section class="mn__view" id="mnDiscoverView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Discover people</h2></div>
+          <div><p class="mn__eyebrow">Find the doers</p><h2>People taking action</h2></div>
           <button class="mn__quiet" id="mnShowBlocked" type="button">Blocked</button>
         </div>
         <div class="mn__search-row">
