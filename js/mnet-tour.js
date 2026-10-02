@@ -22,14 +22,14 @@
   var SEEN = "mcc_mnet_tour_seen";
 
   var STEPS = [
-    { title: "Welcome to Mnet",
+    { title: "Welcome to the Action Network",
       body: "The network behind McCluster: the music, the people around it, and a straight line to Matthew. This takes about a minute." },
     { target: ".mn__tabs", title: "Six tabs, that's the whole map",
-      body: "Feed, Discover, Groups, Messages, Alerts and Me. Everything on Mnet lives behind one of these." },
+      body: "Feed, Discover, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
     { view: "feed", target: "#mnPostBody", title: "Post something",
       body: "Say what you're listening to, share a photo, ask a question. Your posts show up in the feed for everyone who follows you." },
     { view: "discover", target: "#mnDiscoverView", title: "Find people",
-      body: "Search for anyone on Mnet by name or @handle, and follow the ones you want to hear from." },
+      body: "Search for anyone on the network by name or @handle, and follow the ones you want to hear from." },
     { view: "groups", target: "#mngCards", title: "Join a group",
       body: "Groups are where the real conversations happen. Open Explore, pick one that fits, and say hello." },
     { view: "messages", target: "#mnConversations", title: "Your messages",

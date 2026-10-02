@@ -2056,11 +2056,39 @@
       "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
     },
     {
-      "path": "supabase/pending_migrations/20260930230000_uprise_action_network.sql",
+      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (unapplied) schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes. Moves to supabase/migrations under its applied version."
+      "rationale": "Applied schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes."
+    },
+    {
+      "path": "end-racism.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
+    },
+    {
+      "path": "supabase/migrations/20261002014251_end_racism_campaign.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy."
+    },
+    {
+      "path": "supabase/migrations/20261002015418_song_test.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied song test (CIA Mind Control listening test) tables and functions; uses eu_is_admin() for the owner's read of answers. Not a building program capability."
+    },
+    {
+      "path": "scripts/test/song-test.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the song test; not itself a program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

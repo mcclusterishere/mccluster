@@ -73,10 +73,10 @@
   function mnetDest() {
     return {
       key: "__mnet__",
-      label: "Mnet",
+      label: "Action Network",
       account: "your McCluster profile",
       postable: state.mnetReady,
-      blockers: state.mnetReady ? [] : ["sign in to post to Mnet"],
+      blockers: state.mnetReady ? [] : ["sign in to post to the Action Network"],
       house: true
     };
   }
@@ -155,8 +155,8 @@
 
       if (wantMnet) {
         rows.push(out[0].status === "fulfilled"
-          ? { label: "Mnet", state: "ok", detail: "Posted to your profile." }
-          : { label: "Mnet", state: "bad",
+          ? { label: "Action Network", state: "ok", detail: "Posted to your profile." }
+          : { label: "Action Network", state: "bad",
               detail: (out[0].reason && out[0].reason.message) || "Could not post." });
       }
 

@@ -74,7 +74,7 @@
          to the member's Mnet feed once the shared session is verified. */
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
-        '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Mnet</span></a>';
+        '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Network</span></a>';
     document.body.appendChild(nav);
     return nav;
   }
@@ -158,7 +158,7 @@
     profile: {
       home: "mnet.html",
       slots: [
-        ["mnet.html", "folk", "Mnet", { title: "Mnet",
+        ["mnet.html", "folk", "Network", { title: "Action Network",
           sub: "The McCluster network: your profile, posts, comments, reactions and the activity happening across the ecosystem." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
@@ -283,7 +283,7 @@
       var svg = tab.querySelector(":scope > svg");
       var av = tab.querySelector(".appbar__auth-avatar");
       tab.href = signedIn ? ROOT + "mnet.html" : ROOT + "account.html";
-      tab.setAttribute("aria-label", signedIn ? "Open your Mnet feed" : "Sign in or create an account");
+      tab.setAttribute("aria-label", signedIn ? "Open your Action Network feed" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
       if (label) label.textContent = signedIn ? "Feed" : "Sign in";
       /* The person icon stays, signed in or not: that is the owner's call.

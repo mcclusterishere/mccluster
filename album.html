@@ -165,6 +165,8 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
     .alb__play:active { transform: translateY(1px); }
     /* Heal the 3 only: the door from the EP to the Action Network gateway */
+    .alb-test { padding: 1.6rem 0 0.4rem; }
+    .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
       border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
@@ -591,6 +593,7 @@
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage music-room music-room--album music-v2">
@@ -664,6 +667,16 @@
            Storage answers with access-control-allow-origin: *, so anonymous
            CORS satisfies both, and same-origin tracks are unaffected. -->
       <audio id="deck" preload="metadata" crossorigin="anonymous"></audio>
+    </section>
+
+    <!-- THE TEST: a record that is also a test (CIA Mind Control) asks one
+         question per song once the server has counted it heard all the way
+         through. js/song-test.js paints the cards; the rules are the
+         database's. -->
+    <section class="alb-test" id="albTest" aria-labelledby="albTestH" hidden>
+      <p class="lib__k" id="albTestH">The test</p>
+      <p class="alb-test__sub">Hear each song all the way through, then answer: was it racist, and why? Your reasons go to the artist; after you answer, you see how everyone voted.</p>
+      <div id="albTestCards"></div>
     </section>
 
     <!-- THE PLAYLISTS: app rows: tap the chip for a taste, tap the row to enter -->
@@ -892,6 +905,18 @@
         "</li>";
     }
 
+    /* THE TEST. Only records listed here carry it; the questions, and who
+       may answer them, come from the database (song_tests). */
+    var TESTED = { "cia-mind-control": true };
+    var songTest = null;
+    function mountTest() {
+      var box = document.getElementById("albTest");
+      if (!box || !TESTED[ALBUM] || songTest) { if (box && !TESTED[ALBUM]) box.hidden = true; return; }
+      /* the card script is deferred and may land after the shelf paints */
+      if (!window.MCC_SONGTEST) { if ((mountTest.tries = (mountTest.tries || 0) + 1) < 50) setTimeout(mountTest, 200); return; }
+      box.hidden = false;
+      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html" });
+    }
     function boot(data, pls, ct) {
       var head = null, queue = null;
       if (ct) {
@@ -926,7 +951,15 @@
       document.getElementById("albArtist").textContent = ARTIST;
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
-      document.getElementById("albGate").hidden = ALBUM !== "heal-the-3";
+      /* a record that opens onto a cause gets a door to its gateway */
+      var GATEWAYS = {
+        "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"],
+        "cia-mind-control": ["end-racism.html", "Enter End Racism"]
+      };
+      var gate = document.getElementById("albGate"), gw = GATEWAYS[ALBUM];
+      gate.hidden = !gw;
+      if (gw) { gate.href = gw[0]; gate.textContent = gw[1] + " \u2192"; }
+      mountTest();
       document.getElementById("nowFrom").textContent = "Playing from " + head.name;
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
@@ -1390,6 +1423,8 @@
       row.removeAttribute("data-granted");
       row.setAttribute("data-src", row.getAttribute("data-preview-src") || "");
       if (window.MCC_GATED) window.MCC_GATED.forget();
+      /* a spent play opens the earned record's question */
+      if (songTest) songTest.refresh().then(function () { songTest.focus(row.getAttribute("data-key")); });
     }
     function granted() { return cur > -1 && rows[cur].hasAttribute("data-granted"); }
     /* A song heard from the top starts a listen; a song picked up partway
@@ -1445,7 +1480,13 @@
       if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
     });
     deck.addEventListener("ended", function () {
-      if (listen && listen.row === rows[cur] && window.MCC_LISTENS) window.MCC_LISTENS.finish(listen.handle);
+      if (listen && listen.row === rows[cur] && window.MCC_LISTENS) {
+        var heardKey = rows[cur].getAttribute("data-key");
+        window.MCC_LISTENS.finish(listen.handle).then(function (d) {
+          /* the song just counted: its question is open now */
+          if (d && d.counted && songTest) songTest.refresh().then(function () { songTest.focus(heardKey); });
+        });
+      }
       listen = null;
       spend(rows[cur]);
       next(); // the record keeps spinning, wraps at the end
@@ -1882,6 +1923,7 @@
   <script defer src="js/mcc-auth.js?v=__STAMP__"></script>
   <script defer src="js/listen-ledger.js?v=__STAMP__"></script>
   <script defer src="js/gated-audio.js?v=__STAMP__"></script>
+  <script defer src="js/song-test.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

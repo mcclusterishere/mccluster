@@ -303,7 +303,7 @@ test('owner analytics exposes the promised full suite without creating a second 
     'never revive the rejected global oldest-row bridge scan');
   assert.match(suite,/Accounts|accounts/i);
   assert.match(suite,/Platform activity/);
-  assert.match(suite,/Mnet/);
+  assert.match(suite,/Action Network/);
   assert.match(suite,/Music journey/);
   assert.match(suite,/Commerce/);
   assert.match(html,/id="anOverviewTab"/);
