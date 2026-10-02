@@ -87,7 +87,7 @@ test('Create survives common client-side failure modes', async () => {
   assert.match(html, /id="crUploadRetry"/);
   assert.match(js, /crUploadRetry/);
   assert.match(js, /MAX_IMAGE_BYTES = 25 \* 1024 \* 1024/);
-  assert.match(js, /MAX_VIDEO_BYTES = 1024 \* 1024 \* 1024/);
+  assert.match(js, /MAX_VIDEO_BYTES = 500 \* 1024 \* 1024/);
 });
 
 test('native Create describes the canonical hardened flow instead of promising missing native features', async () => {
