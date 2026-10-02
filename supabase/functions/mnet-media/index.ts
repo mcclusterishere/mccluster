@@ -77,6 +77,18 @@ Deno.serve(async req=>{
       return json({ok:true,asset,upload:{path:grant.path||path,token:grant.token,signed_url:grant.signedUrl||null}});
     }
 
+    if(action==="discard"){
+      const id=String(body.asset_id||"");
+      const {data:asset}=await admin.from("network_media_assets").select("*").eq("id",id).eq("owner_m_uid",who.mUid).limit(1).maybeSingle();
+      if(!asset)return json({ok:true,discarded:false});
+      if(asset.post_id||asset.status==="attached")return json({error:"attached media cannot be discarded"},409);
+      const {error:storageError}=await admin.storage.from(asset.bucket_id).remove([asset.object_path]);
+      if(storageError && !String(storageError.message||"").toLowerCase().includes("not found")) return json({error:storageError.message},500);
+      const {error:deleteError}=await admin.from("network_media_assets").delete().eq("id",id).eq("owner_m_uid",who.mUid).is("post_id",null);
+      if(deleteError)return json({error:deleteError.message},500);
+      return json({ok:true,discarded:true});
+    }
+
     if(action==="finalize"){
       const id=String(body.asset_id||"");
       const {data:asset}=await admin.from("network_media_assets").select("*").eq("id",id).eq("owner_m_uid",who.mUid).limit(1).maybeSingle();
