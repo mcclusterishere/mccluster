@@ -2138,6 +2138,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Lean analytics copy of public.events; references the eu_is_admin desk read rule. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network fellowship application (opens at three verified actions); references the eu_is_admin desk rule. Not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 270,
+  "candidate_count": 271,
   "capability_source_count": 97,
-  "support_only_count": 173,
-  "checks_total": 985,
-  "checks_passed": 985,
+  "support_only_count": 174,
+  "checks_total": 989,
+  "checks_passed": 989,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -224,6 +224,7 @@
     "supabase/migrations/20261002015418_song_test.sql",
     "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
     "supabase/migrations/20261002061954_analytics_events_lean.sql",
+    "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -284,7 +285,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "270 entries"
+      "detail": "271 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5203,6 +5204,26 @@
     },
     {
       "name": "supabase/migrations/20261002061954_analytics_events_lean.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     }

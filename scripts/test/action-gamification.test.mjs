@@ -96,3 +96,21 @@ test("the first mission slice: Action Record, receipt and deep links",async()=>{
  assert.doesNotMatch(fn,/user_id|m_uid|proof_url|review_note|statement/,"the receipt never carries identity or proof");
  assert.match(receipt,/js\/tabbar\.js/);
 });
+
+
+test("the fellowship opens at three verified actions, server-counted, desk-reviewed",async()=>{
+ const [sql,js,ctl]=await Promise.all([read("supabase/migrations/20261002063754_action_network_fellowship_v1.sql"),read("js/mnet.js"),read("js/control-room/action-network.js")]);
+ assert.match(sql,/returns integer language sql immutable set search_path = '' as \$\$ select 3 \$\$;/);
+ assert.match(sql,/select count\(\*\) into v_verified from public\.action_mission_assignments where user_id = v_user and status = 'verified';/);
+ assert.match(sql,/create unique index action_fellowship_one_open on public\.action_fellowship_applications\(user_id\) where status = 'submitted';/);
+ assert.doesNotMatch(sql,/policy[^;]*action_fellowship_applications for (insert|update|all)/i);
+ assert.match(sql,/you cannot review your own application/);
+ assert.match(js,/sbRpc\("action_fellowship_status"\)/);
+ assert.match(js,/sbRpc\("apply_for_fellowship"/);
+ assert.match(js,/var FELLOWSHIP_MIN_VERIFIED = 3;/);
+ assert.match(ctl,/\["missions","Missions"\]/);
+ assert.match(ctl,/\["fellows","Fellowship"\]/);
+ assert.match(ctl,/rpc\/review_fellowship_application/);
+ /* a new mission is always born a draft */
+ assert.match(ctl,/capacity:isFinite\(cap\)&&cap>0\?cap:null,status:"draft"/);
+});
