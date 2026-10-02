@@ -40,7 +40,7 @@ function fakeDb({ tableMissing = false, assetsReady = true, claimWins = true, st
         if (u.includes('status=eq.publishing')) return ok(stalePublishing ? [{ id: ROW, author_m_uid: MUID, status: 'publishing', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }] : []);
         return ok(stalePublishing ? [] : [{ id: ROW, author_m_uid: MUID, status: 'scheduled', payload: { body: 'later', media_asset_ids: [ASSET], visibility: 'public', metadata: {}, app_key: 'mnet-web' } }]);
       }
-      if (method === 'PATCH' && u.includes('status=eq.scheduled')) return ok(claimWins ? [{ id: ROW }] : []);
+      if (method === 'PATCH' && (u.includes('status=eq.scheduled') || u.includes('status=eq.publishing'))) return ok(claimWins ? [{ id: ROW }] : []);
       return new Response(null, { status: 204 });
     }
     if (u.includes('/network_posts') && method === 'GET' && u.includes('scheduled_post_id=')) return ok(existingScheduledPost ? [{ id: POST }] : []);
