@@ -154,3 +154,11 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(like, /renderFeed\(/);
   assert.match(html, /id="mnRail"/);
 });
+
+
+test("Action Network profile treats the member website as the identity front page", async()=>{
+ const html=await read("mnet.html"), js=await read("js/mnet.js"), css=await read("css/mnet.css");
+ assert.match(html,/id="mnFrontPage"/); assert.match(html,/id="mnFrontPageFrame"/);
+ assert.match(js,/function paintFrontPage\(p, id, name\)/); assert.match(js,/p\.front_page_url \|\| p\.website_url/);
+ assert.match(js,/paintFrontPage\(p, id, name\)/); assert.match(css,/\.mn__frontpage-stage/);
+});
