@@ -5028,3 +5028,117 @@ html[data-theme="light"] .felband__veil {
   text-transform: uppercase; letter-spacing: .02em;
   font-size: clamp(1.05rem, 2.4vw, 1.28rem); line-height: 1.1; }
 .eulanes .eudoor small { margin-top: .55rem; }
+
+
+/* ============================================================
+   MCCLUSTER POLISH SYSTEM
+   Shared interaction language extracted from the Action Network.
+   It intentionally styles semantic controls/surfaces without flattening
+   art-directed rooms into one visual template.
+   ============================================================ */
+:root {
+  --mcc-surface: #141110;
+  --mcc-surface-2: #1c1816;
+  --mcc-rule: rgba(244,239,230,.10);
+  --mcc-rule-strong: rgba(244,239,230,.16);
+  --mcc-dim: #ada296;
+  --mcc-hot: #ff4d3d;
+  --mcc-gold: #e8c877;
+  --mcc-ease: cubic-bezier(.22,1,.36,1);
+  --mcc-spring: cubic-bezier(.34,1.56,.64,1);
+  --mcc-radius: 18px;
+  --mcc-pill: 999px;
+  --mcc-focus: 0 0 0 3px rgba(255,77,61,.20);
+}
+
+/* Inputs should feel responsive everywhere without overriding page geometry. */
+:where(input, textarea, select, button, [role="button"]) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(input, textarea, select):focus-visible {
+  outline: 2px solid var(--ruby-hot);
+  outline-offset: 2px;
+  transition: outline-color .2s var(--mcc-ease), box-shadow .25s var(--mcc-ease);
+  box-shadow: var(--mcc-focus);
+}
+:where(button, [role="button"], .button, .btn):not(:disabled) {
+  transition-property: transform, filter, background-color, color, border-color, box-shadow, opacity;
+  transition-duration: .22s;
+  transition-timing-function: var(--mcc-ease);
+}
+:where(button, [role="button"], .button, .btn):not(:disabled):active {
+  transform: scale(.97);
+}
+:where(button, input, textarea, select, a):focus-visible {
+  outline-color: var(--ruby-hot);
+}
+
+/* Dialogs and popovers enter like the network instead of snapping onscreen. */
+:where(dialog[open]) {
+  animation: mcc-dialog-in .38s var(--mcc-spring) both;
+}
+:where(dialog)::backdrop {
+  background: rgba(4,3,3,.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+:where(dialog[open])::backdrop {
+  animation: mcc-backdrop-in .28s ease both;
+}
+
+/* Opt-in primitives for new and migrated surfaces. */
+.mcc-surface {
+  background: var(--mcc-surface);
+  border-radius: var(--mcc-radius);
+  box-shadow: inset 0 0 0 1px var(--mcc-rule);
+}
+.mcc-glass {
+  background: linear-gradient(180deg,rgba(10,8,7,.94),rgba(10,8,7,.80));
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  backdrop-filter: blur(18px) saturate(1.3);
+}
+.mcc-pill { border-radius: var(--mcc-pill); }
+.mcc-lift {
+  transition: transform .25s var(--mcc-ease), box-shadow .3s var(--mcc-ease);
+}
+.mcc-pop { animation: mcc-pop .5s var(--mcc-spring); }
+.mcc-rise { animation: mcc-rise .55s var(--mcc-ease) both; }
+.mcc-badge-in { animation: mcc-badge-in .45s var(--mcc-spring) both; }
+.mcc-shimmer {
+  background: linear-gradient(90deg,#1d1816 0%,#2a2421 40%,#1d1816 80%);
+  background-size:240% 100%;
+  animation:mcc-shimmer 1.4s linear infinite;
+}
+@media (hover:hover) {
+  .mcc-lift:hover { transform:translateY(-2px); box-shadow:0 18px 44px -38px rgba(244,239,230,.35); }
+}
+
+@keyframes mcc-rise {
+  from { opacity:0; transform:translateY(12px) scale(.985); }
+  to { opacity:1; transform:none; }
+}
+@keyframes mcc-pop {
+  0%,100% { transform:scale(1); }
+  35% { transform:scale(1.28) rotate(-6deg); }
+  70% { transform:scale(.94); }
+}
+@keyframes mcc-badge-in {
+  from { opacity:0; transform:scale(.45) rotate(-12deg); }
+  to { opacity:1; transform:none; }
+}
+@keyframes mcc-dialog-in {
+  from { opacity:0; transform:translateY(18px) scale(.97); }
+  to { opacity:1; transform:none; }
+}
+@keyframes mcc-backdrop-in { from { opacity:0; } to { opacity:1; } }
+@keyframes mcc-shimmer { from { background-position:120% 0; } to { background-position:-120% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button, [role="button"], .button, .btn, input, textarea, select, dialog),
+  .mcc-lift, .mcc-pop, .mcc-rise, .mcc-badge-in, .mcc-shimmer {
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+  :where(button, [role="button"], .button, .btn):active { transform:none !important; }
+}
