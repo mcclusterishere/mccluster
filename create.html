@@ -105,7 +105,7 @@
           <span id="crMuteL">Sound on</span>
         </button>
       </div>
-      <p class="cr__upl" id="crUpload" role="status"><i id="crUploadBar"></i><span id="crUploadT">Uploading…</span></p>
+      <p class="cr__upl" id="crUpload" role="status"><i id="crUploadBar"></i><span id="crUploadT">Uploading…</span><button class="cr__retry" id="crUploadRetry" type="button" hidden>Retry upload</button></p>
     </section>
 
     <!-- STEP 2 · DETAILS: caption, track, who sees it, when -->
@@ -117,6 +117,8 @@
         <b class="cr__bar-t">New post</b>
         <span class="cr__head-gap" aria-hidden="true"></span>
       </header>
+
+      <div class="cr__draft" id="crDraftNotice" hidden role="status"><span>Draft restored from this device.</span><button type="button" id="crDraftDiscard">Discard draft</button></div>
 
       <div class="cr__form">
         <div class="cr__cap">
