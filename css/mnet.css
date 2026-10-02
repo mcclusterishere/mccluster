@@ -623,3 +623,6 @@ html, body { background: #0a0807; }
 .mn__studio-rules { margin: 12px 0 0; color: var(--mn-dim); font-size: .82rem; line-height: 1.45; }
 .mn__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (min-width: 48rem) { .mn__live-track { grid-auto-columns: minmax(0, 40%); } }
+.mn__delete h3 { margin: 0 0 6px; font-size: 1rem; }
+.mn__delete p { color: var(--mn-dim); font-size: .9rem; line-height: 1.5; }
+.mn__delete-go summary { min-height: 44px; display: flex; align-items: center; color: #ff9a91; font-weight: 800; cursor: pointer; }

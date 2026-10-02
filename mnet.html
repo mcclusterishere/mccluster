@@ -298,6 +298,20 @@
             <button class="mn__quiet mn__tour-again" id="mnTakeTour" type="button" data-tour-start>Take the tour</button>
           </div>
         </div>
+        <!-- Account deletion, started here. Required by the App Store and
+             Google Play; the request is real and the desk completes it. -->
+        <section class="mn__panel mn__delete" id="mnDelete">
+          <h3>Delete my account</h3>
+          <p id="mnDeleteState">This deletes your Action Network profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
+          <details class="mn__delete-go" id="mnDeleteGo"><summary>Delete my account…</summary>
+            <label class="mn__label" for="mnDeleteReason">Anything we should know? <span>optional</span></label>
+            <textarea class="mn__input mn__textarea" id="mnDeleteReason" rows="3" maxlength="2000"></textarea>
+            <label class="mn__check" for="mnDeleteSure"><input id="mnDeleteSure" type="checkbox"><span><b>I understand this can't be undone after 30 days.</b>You'll be signed out now.</span></label>
+            <button class="mn__primary mn__danger-fill" id="mnDeleteConfirm" type="button" disabled>Delete my account</button>
+          </details>
+          <button class="mn__secondary" id="mnDeleteCancel" type="button" hidden>Keep my account</button>
+          <p class="mn__status" id="mnDeleteStatus" role="status"></p>
+        </section>
       </section>
     </section>
   <dialog class="mn__thread mn__livewatch" id="mnLiveWatch" aria-labelledby="mnLiveWatchTitle">

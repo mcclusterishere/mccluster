@@ -993,7 +993,7 @@
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
-    if(name==="profile")paintSelf();
+    if(name==="profile"){paintSelf();loadDeletion();}
     window.scrollTo({top:0,behavior:"smooth"});
   }
 
@@ -1541,6 +1541,31 @@
     identity: function () { return identity(); },
     refreshFeed: function () { return loadFeed(true); }
   };
+  /* DELETING THE ACCOUNT. The request is recorded at once and the desk
+     completes it within 30 days; until then the member can keep the account. */
+  function paintDeletion(r){
+    var pending=r&&r.status==="pending";
+    $("mnDeleteGo").hidden=pending;$("mnDeleteCancel").hidden=!pending;
+    if(pending)$("mnDeleteState").textContent="Your account is set to be deleted on "+new Date(r.due_by).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"})+". Until then you can keep it.";
+  }
+  function loadDeletion(){if(!$("mnDelete"))return;sbRpc("my_account_deletion").then(paintDeletion).catch(function(){});}
+  (function wireDeletion(){
+    if(!$("mnDelete"))return;
+    $("mnDeleteSure").onchange=function(){$("mnDeleteConfirm").disabled=!this.checked;};
+    $("mnDeleteConfirm").onclick=function(){
+      var b=this;b.disabled=true;setStatus($("mnDeleteStatus"),"Recording your request…");
+      sbRpc("request_account_deletion",{p_reason:($("mnDeleteReason").value||"").trim()||null}).then(function(r){
+        paintDeletion(r);setStatus($("mnDeleteStatus"),"Done. Signing you out.","ok");
+        if(window.MCC_TRACK)window.MCC_TRACK("account_delete_request",{});
+        setTimeout(function(){Promise.resolve(window.MCC&&MCC.signOut&&MCC.signOut()).then(function(){location.href="mnet.html";});},1600);
+      }).catch(function(e){b.disabled=false;setStatus($("mnDeleteStatus"),e.message||"Could not record that. Email matthew@mccluster.org and it will be done by hand.","error");});
+    };
+    $("mnDeleteCancel").onclick=function(){
+      sbRpc("cancel_account_deletion").then(function(){$("mnDeleteState").textContent="Your account is staying. Nothing will be deleted.";paintDeletion({});setStatus($("mnDeleteStatus"),"Kept.","ok");})
+        .catch(function(e){setStatus($("mnDeleteStatus"),e.message||"Could not cancel.","error");});
+    };
+  })();
+
   function missionHref(id){return "mnet.html?mission="+encodeURIComponent(id);}
   function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
