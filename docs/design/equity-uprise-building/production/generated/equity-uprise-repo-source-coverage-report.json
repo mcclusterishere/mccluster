@@ -222,7 +222,7 @@
     "supabase/migrations/20260930235851_uprise_action_network.sql",
     "supabase/migrations/20261002014251_end_racism_campaign.sql",
     "supabase/migrations/20261002015418_song_test.sql",
-    "supabase/pending_migrations/action_network_gamification_v1.sql",
+    "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -5106,22 +5106,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/action_network_gamification_v1.sql capability ids known",
+      "name": "supabase/migrations/20261002061056_action_network_gamification_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/action_network_gamification_v1.sql classified",
+      "name": "supabase/migrations/20261002061056_action_network_gamification_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending_migrations/action_network_gamification_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261002061056_action_network_gamification_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending_migrations/action_network_gamification_v1.sql support rationale present",
+      "name": "supabase/migrations/20261002061056_action_network_gamification_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -2105,11 +2105,11 @@
       "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
     },
     {
-      "path": "supabase/pending_migrations/action_network_gamification_v1.sql",
+      "path": "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending Action Network mission, proof, reward, skill and cohort schema; not a building capability."
+      "rationale": "Applied Action Network mission, proof, reward, skill and cohort schema (migration 20261002061056); not a building capability."
     },
     {
       "path": "supabase/tests/supabase_api_roles.stub.sql",

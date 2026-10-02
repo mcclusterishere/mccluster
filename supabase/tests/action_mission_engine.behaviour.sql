@@ -168,4 +168,16 @@ insert into ids select 'pad', (public.submit_action_proof((select v from ids whe
 select pg_temp.must_fail($q$select public.review_action_proof((select v from ids where k='pad'),'verified',null)$q$, '%your own proof%');
 reset role;
 
+-- withdraw sets the pending proof aside; rejoining lets the member submit again
+select pg_temp.as_user('00000000-0000-4000-8000-00000000000b');
+do $$ declare a uuid := (select v from ids where k='b2'); begin
+  perform public.withdraw_action_mission(a);
+  if (select status from public.action_proofs where assignment_id=a) <> 'rejected' then raise exception 'withdrawn proof should be set aside'; end if;
+  if (select reviewed_at from public.action_proofs where assignment_id=a) is not null then raise exception 'withdrawal is not a review'; end if;
+  perform public.join_action_mission('20000000-0000-4000-8000-000000000004');
+  perform public.submit_action_proof(a,'text',null,'Back again with a clean write-up of the work.');
+  if (select status from public.action_proofs where assignment_id=a) <> 'pending' then raise exception 'resubmitted proof should be pending'; end if;
+end $$;
+reset role;
+
 select 'ALL MISSION ENGINE BEHAVIOUR CHECKS PASSED' as result;
