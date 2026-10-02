@@ -93,7 +93,7 @@ export type RoomKey = 'music' | 'uprise' | 'here' | 'closet' | 'profile';
 export const ROOMS: { key: RoomKey; label: string; route: string }[] = [
   { key: 'music', label: 'Music', route: '/music' },
   { key: 'here', label: 'HERE', route: '/here' },
-  { key: 'profile', label: 'Mnet', route: '/profile' },
+  { key: 'profile', label: 'Network', route: '/profile' },
 ];
 
 /**

@@ -154,8 +154,8 @@
           donut(u.confirmed_total,u.unconfirmed_total,"confirmed","unconfirmed",num(u.total))+'</section>'+
         '<section class="an-panel"><div class="an-ph"><h2>Platform activity</h2><span class="an-viz-tag">composition</span></div>'+
           segmented(platformRows)+'</section>'+
-        '<section class="an-panel"><div class="an-ph"><h2>Mnet</h2><span class="an-viz-tag">lollipop</span></div>'+
-          lollipop(mnetRows,"Mnet activity in the selected range")+'</section>'+
+        '<section class="an-panel"><div class="an-ph"><h2>Action Network</h2><span class="an-viz-tag">lollipop</span></div>'+
+          lollipop(mnetRows,"Action Network activity in the selected range")+'</section>'+
         '<section class="an-panel"><div class="an-ph"><h2>Music journey</h2><span class="an-viz-tag">funnel</span></div>'+
           funnel(musicRows)+'</section>'+
         '<section class="an-panel"><div class="an-ph"><h2>Music money</h2><span class="an-viz-tag">donut</span></div>'+
@@ -300,7 +300,7 @@
     if(!eligible)return;
     var mine=++state.seq, q=rangeQuery(range);
     var overview=$("overviewBody"), identity=$("identityFlow");
-    if(overview)overview.innerHTML='<div class="bd-gap" role="status"><b>Updating '+esc(range.label)+'…</b><span>Loading accounts, platform, Mnet, music and commerce.</span></div>';
+    if(overview)overview.innerHTML='<div class="bd-gap" role="status"><b>Updating '+esc(range.label)+'…</b><span>Loading accounts, platform, Action Network, music and commerce.</span></div>';
     if(identity)identity.innerHTML='<div class="bd-gap" role="status"><b>Updating attribution…</b><span>Reconstructing account journeys for this range.</span></div>';
     Promise.allSettled([
       api("/v1/analytics/business"+q),

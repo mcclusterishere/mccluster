@@ -37,8 +37,11 @@
     return (parts.slice(0, 2).map(function (p) { return p.charAt(0); }).join("") || "M").toUpperCase();
   }
   function safeHttpUrl(value) {
+    /* an empty value resolves against the origin to the site's home page,
+       which every member without a photo then wore as a broken image */
+    if (value == null || !String(value).trim()) return "";
     try {
-      var u = new URL(String(value || ""), location.origin);
+      var u = new URL(String(value), location.origin);
       return /^(https?:)$/.test(u.protocol) ? u.href : "";
     } catch (e) { return ""; }
   }
@@ -180,14 +183,14 @@
   function showSignedInLoadError(error) {
     showGate("app");
     var host = $("mnFeed");
-    host.innerHTML = '<div class="mn__empty">You are signed in. Mnet could not load the feed right now.</div>';
+    host.innerHTML = '<div class="mn__empty">You are signed in. The Action Network could not load the feed right now.</div>';
     var retry = document.createElement("button");
     retry.type = "button";
     retry.className = "mn__more";
-    retry.textContent = "Retry Mnet";
+    retry.textContent = "Try again";
     retry.onclick = function () {
       retry.disabled = true;
-      setStatus($("mnFeedStatus"), "Loading Mnet…");
+      setStatus($("mnFeedStatus"), "Loading the feed…");
       bootstrap().catch(function (e) {
         retry.disabled = false;
         showSignedInLoadError(e);
@@ -295,7 +298,7 @@
 
   function authorHtml(actor) {
     actor = actor || {};
-    var name = actor.display_name || actor.mccluster_id || "Mnet member";
+    var name = actor.display_name || actor.mccluster_id || "Member";
     var handle = actor.mccluster_id ? "@" + actor.mccluster_id : "McCluster";
     var avatar = safeHttpUrl(actor.avatar_url);
     var av = avatar
@@ -387,7 +390,7 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = '<div class="mn__empty">Mnet is live. There are no posts yet — yours can be the first.</div>';
+      host.innerHTML = '<div class="mn__empty">The Action Network is live. There are no posts yet. Yours can be the first.</div>';
       return;
     }
     host.innerHTML = state.feed.map(function (item) {
@@ -406,7 +409,7 @@
     if (reset) {
       state.nextBefore = null;
       state.feed = [];
-      setStatus($("mnFeedStatus"), "Loading Mnet…");
+      setStatus($("mnFeedStatus"), "Loading the feed…");
     }
     var path = "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20";
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
@@ -418,7 +421,7 @@
       $("mnMore").hidden = !state.nextBefore;
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
-      setStatus($("mnFeedStatus"), e.message || "Could not load Mnet.", "error");
+      setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
     }).finally(function () { state.loadingFeed = false; });
   }
 
@@ -560,7 +563,7 @@
       return;
     }
     host.innerHTML = rows.map(function (n) {
-      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Mnet notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p></article>';
+      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p></article>';
     }).join("");
   }
 
@@ -699,7 +702,7 @@
   }
 
   function personRow(p) {
-    var name=p.display_name||p.mccluster_id||"Mnet member", handle=p.mccluster_id?"@"+p.mccluster_id:"";
+    var name=p.display_name||p.mccluster_id||"Member", handle=p.mccluster_id?"@"+p.mccluster_id:"";
     var av=safeHttpUrl(p.avatar_url),avatar=av?'<img src="'+esc(av)+'" alt="">':esc(initials(name));
     return '<article class="mn__person-row"><button type="button" data-person="'+esc(p.mccluster_id||"")+'" class="mn__author-avatar">'+avatar+'</button>' +
       '<button type="button" data-person="'+esc(p.mccluster_id||"")+'" class="mn__person-copy"><span class="mn__person-name">'+esc(name)+'</span><span class="mn__person-sub">'+esc(handle+(p.headline?" · "+p.headline:""))+'</span></button>' +
@@ -718,7 +721,7 @@
     });
   }
   function blockedPersonRow(item) {
-    var p=item.profile||{}, handle=p.mccluster_id||"", name=p.display_name||handle||"Mnet member";
+    var p=item.profile||{}, handle=p.mccluster_id||"", name=p.display_name||handle||"Member";
     var av=safeHttpUrl(p.avatar_url),avatar=av?'<img src="'+esc(av)+'" alt="">':esc(initials(name));
     return '<article class="mn__person-row"><div class="mn__author-avatar">'+avatar+'</div>' +
       '<div class="mn__person-copy"><span class="mn__person-name">'+esc(name)+'</span><span class="mn__person-sub">'+esc(handle?"@"+handle:"Blocked member")+'</span></div>' +
@@ -747,7 +750,7 @@
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
       var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
-    }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search Mnet.","error"); });
+    }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search the network.","error"); });
   }
   function openPerson(handle) {
     if(!handle)return;
@@ -756,7 +759,7 @@
       api("/v1/mnet/people/"+encodeURIComponent(handle)),
       api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
     ]).then(function (all) {
-      var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, name=p.display_name||id.display_name||id.mccluster_id||"Mnet member";
+      var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
       $("mnPersonBody").innerHTML='<div class="mn__person-sheet"><div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
@@ -768,8 +771,8 @@
       $("mnPersonFollow").onclick=function(){var was=data.following;api("/v1/mnet/people/"+encodeURIComponent(handle)+"/follow",{method:was?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Mnet."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
-      $("mnPersonReport").onclick=function(){var details=prompt("What should the Mnet moderation queue know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on the Action Network."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
 
@@ -811,7 +814,7 @@
   function renderMessages(rows) {
     $("mnConversationMessages").innerHTML=rows.length?rows.map(function(m){
       var mine=m.sender_m_uid===identity().m_uid;
-      return '<article class="mn__message'+(mine?' is-mine':'')+'"><p>'+messageHtml(m.body)+'</p><small>'+esc(mine?"You":m.sender&&m.sender.display_name||m.sender&&m.sender.mccluster_id||"Mnet")+' · '+esc(timeAgo(m.created_at))+'</small></article>';
+      return '<article class="mn__message'+(mine?' is-mine':'')+'"><p>'+messageHtml(m.body)+'</p><small>'+esc(mine?"You":m.sender&&m.sender.display_name||m.sender&&m.sender.mccluster_id||"Member")+' · '+esc(timeAgo(m.created_at))+'</small></article>';
     }).join(""):'<div class="mn__empty">No messages yet.</div>';
     $("mnConversationMessages").scrollTop=$("mnConversationMessages").scrollHeight;
   }

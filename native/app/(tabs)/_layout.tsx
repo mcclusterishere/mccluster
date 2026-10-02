@@ -28,7 +28,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="music" options={{ title: 'Music' }} />
       <Tabs.Screen name="here" options={{ title: 'HERE' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Mnet' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Network' }} />
       {/* preserved rooms/screens that are reachable but not on the primary bar */}
       <Tabs.Screen name="uprise" options={{ href: null }} />
       <Tabs.Screen name="closet" options={{ href: null }} />

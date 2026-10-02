@@ -15,7 +15,7 @@
       S.stats=out[1].status==="fulfilled"?out[1].value:null;S.loading=false;S.loaded=true;if(S.rerender)S.rerender();
     });
   }
-  function dests(){return[{key:"__mnet__",label:"Mnet",account:"your McCluster profile",postable:true,blockers:[],house:true}].concat(S.channels);}
+  function dests(){return[{key:"__mnet__",label:"Action Network",account:"your McCluster profile",postable:true,blockers:[],house:true}].concat(S.channels);}
   function stats(){
     var by=S.stats&&S.stats.by_channel||{},keys=Object.keys(by);if(!keys.length)return'<div class="cro-note">No social send/receive rows in the last 30 days.</div>';
     return'<div class="cro-list">'+keys.map(function(k){var c=by[k],total=Object.keys(c).reduce(function(a,x){return a+(Number(c[x])||0);},0),bits=Object.keys(c).sort().map(function(x){return x.replace(/_/g," ")+" "+c[x];}).join(" · ");return'<div class="cro-item"><div class="cro-item__head"><strong>'+e(label(k))+'</strong><b>'+e(total)+'</b></div><div class="cro-meta">'+e(bits)+'</div></div>';}).join("")+'</div>';
@@ -35,8 +35,8 @@
     ]).then(function(out){
       var rows=[],succeeded=false;
       if(mnet){
-        if(out[0].status==="fulfilled"){rows.push({label:"Mnet",detail:"Posted to your profile."});succeeded=true;}
-        else rows.push({label:"Mnet",detail:(out[0].reason&&out[0].reason.message)||"Could not post."});
+        if(out[0].status==="fulfilled"){rows.push({label:"Action Network",detail:"Posted to your profile."});succeeded=true;}
+        else rows.push({label:"Action Network",detail:(out[0].reason&&out[0].reason.message)||"Could not post."});
       }
       if(keys.length){
         if(out[1].status!=="fulfilled")keys.forEach(function(k){rows.push({label:label(k),detail:(out[1].reason&&out[1].reason.message)||"Queue refused this."});});
