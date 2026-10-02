@@ -147,9 +147,26 @@
     /* Picked from the list below: bring the readout back into view. */
     if(fromList){var ro=box.querySelector(".cra-reach__readout"),rr=ro&&ro.getBoundingClientRect();if(rr&&rr.top<0&&ro.scrollIntoView)ro.scrollIntoView({block:"start",behavior:"smooth"});}
   }
+  /* SOURCE → SONG → ACCOUNT, as ranked paths. Each row is one route people
+     actually took: where they came from, the last song they heard before
+     signing up, and how many accounts took that route. Tapping a row filters
+     the account list below to exactly those people. */
+  var PATH_SEP=" |→| ";
+  function pathKey(src,track){return String(src||"direct")+PATH_SEP+String(track||"");}
   function flow(data){
-    var js=((data&&data.journeys)||[]).filter(function(j){return j.last_track;}).slice(0,16);if(!js.length)return'<p>No song-attributed account journeys in this range.</p>';var ss=[],ts=[];js.forEach(function(j){var s=j.source||"direct";if(ss.indexOf(s)<0&&ss.length<6)ss.push(s);if(ts.indexOf(j.last_track)<0&&ts.length<9)ts.push(j.last_track);});js=js.filter(function(j){return ss.indexOf(j.source||"direct")>=0&&ts.indexOf(j.last_track)>=0;}).slice(0,14);var W=920,H=Math.max(380,Math.max(ss.length,ts.length,js.length)*34+70),SP={},TP={},AP={};function Y(i,m){return 44+(H-88)*(m<=1?.5:i/(m-1));}ss.forEach(function(x,i){SP[x]={x:24,y:Y(i,ss.length)};});ts.forEach(function(x,i){TP[x]={x:330,y:Y(i,ts.length)};});js.forEach(function(x,i){AP[i]={x:680,y:Y(i,js.length)};});var ec={};js.forEach(function(j){var k=(j.source||"direct")+"\u0000"+j.last_track;ec[k]=(ec[k]||0)+1;});var out=['<div class="cra-flow-scroll"><svg class="cra-flow" viewBox="0 0 '+W+' '+H+'">'];Object.keys(ec).forEach(function(k){var p=k.split("\u0000"),a=SP[p[0]],b=TP[p[1]];if(a&&b)out.push('<path class="cra-flow__edge" stroke-width="'+Math.min(10,1+ec[k]*1.6)+'" d="M 196 '+a.y+' C 260 '+a.y+',270 '+b.y+',330 '+b.y+'"/>');});js.forEach(function(j,i){var a=TP[j.last_track],b=AP[i];if(a&&b)out.push('<path class="cra-flow__edge" stroke-width="1.4" d="M 548 '+a.y+' C 600 '+a.y+',625 '+b.y+',680 '+b.y+'"/>');});function node(x,y,w,l,cls,note){l=String(l||"");if(l.length>27)l=l.slice(0,26)+"…";return'<g><rect class="cra-flow__node '+(cls||"")+'" x="'+x+'" y="'+(y-13)+'" width="'+w+'" height="26" rx="7"/><text class="cra-flow__label" x="'+(x+8)+'" y="'+(y+4)+'">'+e(l)+'</text>'+(note?'<text class="cra-flow__note" x="'+(x+8)+'" y="'+(y+25)+'">'+e(note)+'</text>':"")+'</g>';}ss.forEach(function(x){out.push(node(SP[x].x,SP[x].y,172,x,"","source"));});ts.forEach(function(x){out.push(node(TP[x].x,TP[x].y,218,x,"cra-flow__node--accent","track"));});js.forEach(function(j,i){out.push(node(AP[i].x,AP[i].y,215,[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"account","cra-flow__node--outcome",j.minutes_after_last_track==null?"account":j.minutes_after_last_track+"m after play"));});out.push("</svg></div>");return out.join("");
+    var js=(data&&data.journeys)||[],m={},total=0;
+    js.forEach(function(j){if(!j.last_track)return;var k=pathKey(j.source,j.last_track),r=m[k]||(m[k]={source:j.source||"direct",track:j.last_track,n:0,mins:[]});r.n++;total++;if(j.minutes_after_last_track!=null)r.mins.push(Number(j.minutes_after_last_track));});
+    var rows=Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.n-a.n||String(a.track).localeCompare(String(b.track));});
+    if(!rows.length)return'<p>No account in this range heard a song in the 7 days before signing up.</p>';
+    var top=rows[0].n,sel=S.idFilter&&S.idFilter.path;
+    return'<div class="cra-paths">'+rows.slice(0,14).map(function(r){
+      var k=pathKey(r.source,r.track),med=r.mins.length?r.mins.slice().sort(function(a,b){return a-b;})[Math.floor(r.mins.length/2)]:null;
+      return'<button type="button" class="cra-path'+(sel===k?" is-on":"")+'" data-cra-path="'+e(k)+'"><i class="cra-path__fill" style="--pct:'+(r.n/top*100).toFixed(1)+'%"></i>'+
+        '<span class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(r.source)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span><span class="cra-chip cra-chip--song">'+e(r.track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span><span class="cra-path__acct">'+n(r.n)+(r.n===1?" account":" accounts")+'</span></span>'+
+        '<span class="cra-path__meta">'+Math.round(r.n/total*100)+'% of song-led signups'+(med!=null?' · typically '+mins(med)+' after the song':"")+'</span></button>';
+    }).join("")+'</div>';
   }
+  function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
   function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
@@ -172,10 +189,39 @@
     return'<div class="cra-grid">'+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
-    var d=S.data.identity||{},c=d.coverage||{},j=d.journeys||[],t=d.tracks||[];
-    var table=j.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Created</th><th>Account</th><th>Source</th><th>Last track</th><th class="n">Minutes</th><th>Network/location</th></tr></thead><tbody>'+j.map(function(x){return'<tr><td>'+e(x.created_at?new Date(x.created_at).toLocaleString():"—")+'</td><td><b>'+e([x.first_name,x.last_name].filter(Boolean).join(" ")||x.email||x.user_id||"Account")+'</b><br><code>'+e(x.email||x.user_id||"")+'</code></td><td>'+e(x.source||"direct")+'</td><td>'+e(x.last_track||"—")+'</td><td class="n">'+e(x.minutes_after_last_track==null?"—":x.minutes_after_last_track)+'</td><td><code>'+e(x.ip||"—")+'</code><br>'+e([x.city,x.region,x.country].filter(Boolean).join(", ")||"—")+'<br>'+e(x.network||"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No account journeys in this range.</p>';
-    return'<div class="cra-kpis">'+kpi("Accounts",n(c.accounts),"created")+kpi("Device-linked",n(c.bridged_accounts),"verified bridge")+kpi("Song-attributed",n(c.attributed_accounts),"last touch")+kpi("IP context",n(c.accounts_with_ip),"owner only")+kpi("Location",n(c.accounts_with_location),"observed")+kpi("Tracks",n(t.length),"relationships")+'</div><div class="cra-grid">'+card("Source → track → account","Relationship flow. Attribution is not causation.",flow(d),true)+card("Last-touch accounts","By track.",rank(t,"track","last_touch_accounts"))+card("Assisted accounts","Tracks present in signup journeys.",rank(t,"track","assisted_accounts"))+card("Journeys","Owner-only audit detail.",table,true)+'</div>'+err("identity");
+    var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
+    var accounts=Number(c.accounts)||js.length,linked=Number(c.bridged_accounts)||0,heard=Number(c.attributed_accounts)||0;
+    var sourced=js.filter(function(j){return j.source&&j.source!=="direct";}).length;
+    /* the sentence first: what happened, in words */
+    var paths={};js.forEach(function(j){if(j.last_track){var k=pathKey(j.source,j.last_track);paths[k]=(paths[k]||0)+1;}});
+    var best=Object.keys(paths).sort(function(a,b){return paths[b]-paths[a];})[0];
+    var lead=accounts?('<p class="cra-lead"><b>'+n(accounts)+(accounts===1?" account was":" accounts were")+' created.</b> '+
+      (heard?n(heard)+' of them ('+pct(heard,accounts)+') heard a song in the 7 days before signing up'+(best?', most often <b>'+e(best.split(PATH_SEP)[0])+' → '+e(best.split(PATH_SEP)[1])+'</b> ('+n(paths[best])+')':"")+'.':'None of them can be tied to a song yet.')+'</p>')
+      :'<p class="cra-lead">No accounts were created in this range.</p>';
+    /* the funnel: each step is a share of accounts created */
+    var steps=[["Accounts created",accounts,"Everyone who signed up in this range."],["Linked to a device",linked,"We could match the account to the browser it signed up on."],["Heard a song first",heard,"That device played a song in the 7 days before signup."],["Came from a known source",sourced,"Arrived through a tagged link, not typed in or unknown."]];
+    var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
+    /* songs, as a table you can read across */
+    var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate</th><th class="n">Typical time</th></tr></thead><tbody>'+
+      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+(x.signup_rate_pct!=null?e(x.signup_rate_pct)+"%":"—")+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
+    /* the accounts themselves, filtered by the path you tapped */
+    var f=S.idFilter&&S.idFilter.path,list=f?js.filter(function(j){return pathKey(j.source,j.last_track)===f;}):js;
+    var cards=list.length?'<div class="cra-accts">'+list.slice(0,60).map(function(j){
+      var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
+      return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
+        '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"direct")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
+        (j.last_track?'<span class="cra-chip cra-chip--song">'+e(j.last_track)+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>':'<span class="cra-chip">no song</span><span class="cra-path__arrow" aria-hidden="true">→</span>')+
+        '<span class="cra-path__acct">signed up'+(j.minutes_after_last_track!=null?' '+mins(j.minutes_after_last_track)+' later':"")+'</span></div>'+
+        (assisted.length?'<p class="cra-acct__also">Also heard: '+e(assisted.join(", "))+'</p>':"")+
+        '<details class="cra-acct__more"><summary>Owner-only details</summary><dl><dt>Email</dt><dd>'+e(j.email||"—")+'</dd><dt>Location</dt><dd>'+e([j.city,j.region,j.country].filter(Boolean).join(", ")||"—")+'</dd><dt>Network</dt><dd>'+e(j.network||"—")+'</dd><dt>IP</dt><dd><code>'+e(j.ip||"—")+'</code></dd><dt>Confirmed</dt><dd>'+e(j.confirmed_at?new Date(j.confirmed_at).toLocaleString():"not yet")+'</dd></dl></details></article>';
+    }).join("")+'</div>':'<p>No accounts match.</p>';
+    var filterNote=f?'<div class="cra-filter"><span>Showing '+e(f.split(PATH_SEP)[0])+' → '+e(f.split(PATH_SEP)[1])+'</span><button type="button" class="cra-filter__x" data-cra-path="">Show everyone</button></div>':"";
+    return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
+      card("Source → track → account","Every route someone took to an account. Tap one to see those people.",flow(d),true)+
+      card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
+      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+err("identity");
   }
+  function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
   function forensics(){
     var rows=(S.data.forensics&&S.data.forensics.events)||[],table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>IP</th><th>Location</th><th>Network</th><th>Device</th><th>Session</th></tr></thead><tbody>'+rows.map(function(x){var d=x.device||{};return'<tr><td>'+e(x.at?new Date(x.at).toLocaleString():"—")+'</td><td><b>'+e(x.name||"—")+'</b></td><td>'+e(x.path||"—")+'</td><td><code>'+e(x.ip||"—")+'</code></td><td>'+e([x.city,x.region,x.country,x.postal].filter(Boolean).join(", ")||"—")+'</td><td>'+e(x.asn_org||"—")+(x.asn?" · AS"+e(x.asn):"")+'</td><td>'+e(d.platform||"—")+(d.mobile===true?" · mobile":d.mobile===false?" · desktop":"")+'<br>'+e(d.screen||"")+'</td><td><code>'+e(x.session_id||"—")+'</code><br><code>'+e(x.device_id||"—")+'</code></td></tr>';}).join("")+'</tbody></table></div>':'<p>No raw events in this range.</p>';
     return'<div class="cra-grid">'+card("Owner-only telemetry","Recent first-party IP, approximate edge geography, ASN/network, device and session context.",table,true)+'</div>'+err("forensics");
@@ -334,6 +380,7 @@
   function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
   function bind(root){
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
+    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
