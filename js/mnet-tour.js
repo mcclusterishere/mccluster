@@ -14,35 +14,42 @@
 
    Phone first: the card is a bottom sheet that sits above the app bar,
    buttons are 44px, and the ring follows the target on scroll and rotate.
-   Colours are the site's own tokens, so light and dark both hold. Nothing
-   is sent anywhere; "seen" is a per-device convenience in localStorage. */
+   Colours are the site's own tokens, so light and dark both hold. "Seen" is
+   kept on the account (mnet_mark_tour_seen) with localStorage as a fallback,
+   and a member who has never seen it gets it once, automatically. */
 (function (w, d) {
   "use strict";
 
   var SEEN = "mcc_mnet_tour_seen";
 
+  /* The tour leads with doing: missions, proof, the receipt and the
+     fellowship come before the social tabs, because that is what the
+     Action Network is for. Wording follows the product contract: no
+     points for opinions, no likes-for-rewards, nobody gets labelled. */
   var STEPS = [
     { title: "Welcome to the Action Network",
-      body: "The network behind McCluster: the music, the people around it, and a straight line to Matthew. This takes about a minute." },
-    { target: ".mn__tabs", title: "Six tabs, that's the whole map",
-      body: "Feed, Discover, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
-    { view: "feed", target: "#mnPostBody", title: "Post something",
-      body: "Say what you're listening to, share a photo, ask a question. Your posts show up in the feed for everyone who follows you." },
-    { view: "discover", target: "#mnDiscoverView", title: "Find people",
-      body: "Search for anyone on the network by name or @handle, and follow the ones you want to hear from." },
-    { view: "groups", target: "#mngCards", title: "Join a group",
-      body: "Groups are where the real conversations happen. Open Explore, pick one that fits, and say hello." },
-    { view: "messages", target: "#mnConversations", title: "Your messages",
-      body: "Matthew's welcome is in here. Reply any time: questions, ideas, problems. It goes straight to him." },
+      body: "The place for doers. Don't just watch. Act. This takes about a minute." },
+    { target: ".mn__tabs", title: "Seven tabs, one map",
+      body: "Action, Missions, People, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
+    { view: "missions", target: "#mnMissionList", title: "Start with a mission",
+      body: "A mission is one real thing to do out in the world, like cleaning a block or helping someone check their voter registration. Join one, then go do it." },
+    { view: "missions", target: "#mnMissionList", title: "Show your proof",
+      body: "When it's done, add a photo, a link or a short note. A person on the desk checks it. Once it's verified it goes on your Action Record with a receipt you can share." },
+    { view: "missions", target: "#mnRecord", title: "Three verified actions",
+      body: "After three verified actions you can apply to be a fellow. Fellows help lead missions and can go live on the network." },
+    { view: "feed", target: "#mnPostBody", title: "The Action feed",
+      body: "Post what you did, what you're listening to, and what's next. Follow the people doing the same missions as you." },
+    { view: "messages", target: "#mnConversations", title: "A straight line to Matthew",
+      body: "Matthew's welcome is in your messages. Reply any time with questions, ideas or problems. It goes straight to him." },
     { view: "profile", target: "#mnEditProfile", title: "Make it yours",
-      body: "Add a photo, a headline and a short bio so people know who they're talking to." },
+      body: "Add a photo, a headline and a short bio so people know who they're doing this with." },
     { target: '.appbar [data-appnav="music"]', title: "The music",
       body: "This tab at the bottom takes you to the music. The middle one is home, and the last one brings you back here." },
-    { title: "That's the tour",
-      body: "You can replay it any time from Me → Take the tour.",
+    { title: "Put it into action",
+      body: "You can replay this any time from Me \u2192 Take the tour.",
       finish: [
-        { label: "Message Matthew", view: "messages" },
-        { label: "Done" }
+        { label: "Look around" },
+        { label: "Pick a mission", view: "missions" }
       ] }
   ];
 
@@ -163,7 +170,10 @@
     setTimeout(function () {
       lastTarget = step.target ? d.querySelector(step.target) : null;
       if (lastTarget && visible(lastTarget)) {
-        lastTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+        /* The sheet covers the lower half of a phone, so lift the target
+           into the clear space under the header instead of centring it. */
+        var top = lastTarget.getBoundingClientRect().top + (w.pageYOffset || 0) - 132;
+        w.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
         setTimeout(place, 320);
       }
       place();
@@ -175,6 +185,8 @@
   function end() {
     active = false;
     try { localStorage.setItem(SEEN, new Date().toISOString()); } catch (e) { /* storage blocked */ }
+    /* Remember it on the account too, so the app and the web agree. */
+    try { if (w.MCC_MNET && w.MCC_MNET.markTourSeen) w.MCC_MNET.markTourSeen(); } catch (e) { /* best effort */ }
     if (ui) {
       ui.ring.remove(); ui.card.remove();
       d.removeEventListener("keydown", onKey);
@@ -258,7 +270,17 @@
     start();
   });
 
-  w.MCC_TOUR = { start: start, stop: end, steps: STEPS.length };
+  /* A new member gets the tour once, the first time the app opens for them.
+     The account remembers it (bootstrap's onboarding context); this browser's
+     own note is only a fallback when the account cannot be written. */
+  function autoStart(boot) {
+    var ctx = boot && boot.onboarding && boot.onboarding.context || {};
+    if (ctx.tour_done_at || active) return;
+    try { if (localStorage.getItem(SEEN)) return; } catch (e) { /* storage blocked */ }
+    start();
+  }
+
+  w.MCC_TOUR = { start: start, stop: end, autoStart: autoStart, steps: STEPS.length };
 
   if (/[?&]tour=1\b/.test(location.search)) start();
 })(window, document);
