@@ -2070,11 +2070,11 @@
       "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
     },
     {
-      "path": "supabase/pending_migrations/20261002120000_end_racism_campaign.sql",
+      "path": "supabase/migrations/20261002014251_end_racism_campaign.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (unapplied) data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy. Moves to supabase/migrations under its applied version."
+      "rationale": "Applied data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

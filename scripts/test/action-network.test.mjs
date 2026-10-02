@@ -172,9 +172,9 @@ test('the albums keep working and only a record with a cause grows a door', asyn
 });
 
 test('Campaign 002 is money-off, sourced, and fits the campaign table', async () => {
-  const dir = 'supabase/migrations';
-  let file = (await readdir(join(ROOT, dir))).find((f) => f.endsWith('_end_racism_campaign.sql'));
-  const sql = await read(file ? join(dir, file) : 'supabase/pending_migrations/20261002120000_end_racism_campaign.sql');
+  const file = (await readdir(join(ROOT, 'supabase/migrations'))).find((f) => f.endsWith('_end_racism_campaign.sql'));
+  assert.ok(file, 'Campaign 002 is an applied, ledgered migration');
+  const sql = await read(join('supabase/migrations', file));
   assert.match(sql, /'end-racism-002', 'end-racism', 'live'/);
   assert.match(sql, /'mobilize', 10000, null, false,/, 'money off, no money goal');
   assert.match(sql, /on conflict \(id\) do nothing;/);

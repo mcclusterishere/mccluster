@@ -2,9 +2,9 @@
   "schema_version": "mccluster-drift-contract/v1",
   "supabase": {
     "project_ref": "zmnhbrjyhxzhkxmhkexs",
-    "migration_count": 197,
-    "latest_version": "20260930235851",
-    "latest_name": "uprise_action_network",
-    "ledger_sha256": "9977287b7e181948782a8f7c4b81e57eb6178a5cdf3c6406eb2bfe07604f39e8"
+    "migration_count": 198,
+    "latest_version": "20261002014251",
+    "latest_name": "end_racism_campaign",
+    "ledger_sha256": "5700a2ea0b75c9167f59539eba0d10c1c30f5b7c205faec492248939d47b57e5"
   }
 }

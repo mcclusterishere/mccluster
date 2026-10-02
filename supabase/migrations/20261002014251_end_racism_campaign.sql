@@ -1,10 +1,9 @@
 -- CAMPAIGN 002 · END RACISM — the chapter behind end-racism.html.
 --
--- PENDING: not applied to production. Data only: one row in
--- public.action_campaigns (the Uprise Action Network tables already
--- exist). end-racism.html features this campaign alone and says the
--- chapter is being written until the row is live; /action/?c=end-racism
--- renders it once it is.
+-- APPLIED TO PRODUCTION 2026-10-02 as migration 20261002014251_end_racism_campaign,
+-- after a rolled-back dry run. Data only: one row in public.action_campaigns
+-- (the Uprise Action Network tables already exist). end-racism.html features
+-- this campaign alone; /action/?c=end-racism renders it.
 --
 -- Every fact below is quoted or closely paraphrased from the linked
 -- primary source (checked 2026-10-02). Money is off: no page asks for
