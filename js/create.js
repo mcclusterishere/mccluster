@@ -27,7 +27,7 @@
 
   var S = {
     file: null, kind: "", url: "", dur: 0, start: 0, end: 0, muted: false,
-    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false
+    upload: null, asset: null, when: "now", catalogue: [], busy: false, uploadError: null, draftRestored: false, xhr: null, uploadGrantAsset: null, uploadCancelled: false, completed: false, uploadPhase: "idle"
   };
 
   function $(id) { return document.getElementById(id); }
@@ -56,7 +56,7 @@
     };
   }
   function saveDraft() {
-    if (S.busy) return;
+    if (S.busy || S.completed) return;
     try {
       var d = draftData(), useful = d.body.trim() || d.track || d.when === "later";
       if (useful) localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
@@ -127,7 +127,7 @@
   });
 
   function choose(file, source) {
-    reset();
+    reset({ preserveComposition: S.draftRestored });
     var type = String(file.type || "").toLowerCase();
     if (!OK_TYPES.test(type)) {
       alert("That file type cannot be posted yet. Use a photo (JPEG, PNG, WebP) or a video (MP4, MOV, WebM).");
@@ -210,7 +210,13 @@
   function startUpload() {
     var file = S.file, mine = {};
     if (!file) return;
-    S.uploadError = null; S.uploadCancelled = false; S.uploadGrantAsset = null; $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = false;
+    if (navigator.onLine === false) {
+      S.uploadError = Object.assign(new Error("Waiting for a connection."), { offline: true });
+      S.uploadPhase = "waiting";
+      uploadLine("Waiting for a connection…", "", 0); $("crUploadRetry").hidden = false; $("crUploadCancel").hidden = true;
+      return;
+    }
+    S.uploadError = null; S.uploadCancelled = false; S.uploadGrantAsset = null; S.uploadPhase = "reserving"; $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = false;
     uploadLine(navigator.onLine === false ? "Waiting for a connection…" : "Preparing upload…", "", 2);
     S.upload = mine.p = api("/v1/mnet/media/upload-url", {
       method: "POST", body: { file_name: file.name || (S.kind + ".bin"), mime_type: file.type, byte_size: file.size }
@@ -218,6 +224,12 @@
       var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset;
       if (!path || !asset) throw new Error("The upload slot was not created.");
       S.uploadGrantAsset = asset;
+      if (S.upload !== mine.p || S.uploadCancelled) {
+        S.uploadGrantAsset = null;
+        discardUploadAsset(asset);
+        throw Object.assign(new Error("Upload cancelled."), { cancelled: true, stale: true });
+      }
+      S.uploadPhase = "uploading";
       var tok = grant.upload.token, s = session();
       var url = tok
         ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) + "?token=" + encodeURIComponent(tok)
@@ -230,12 +242,12 @@
         discardUploadAsset(asset);
         return asset;
       }
-      S.asset = asset; S.uploadGrantAsset = null; $("crUploadCancel").hidden = true;
+      S.asset = asset; S.uploadGrantAsset = null; S.uploadPhase = "ready"; $("crUploadCancel").hidden = true;
       uploadLine("Uploaded. Ready to post.", "ok", 100);
       return asset;
     }, function (e) {
       if (S.upload === mine.p) {
-        S.uploadError = e;
+        S.uploadError = e; S.uploadPhase = e.cancelled ? "cancelled" : "failed";
         uploadLine(e.message || "Upload failed.", e.cancelled ? "" : "error", 0);
         $("crUploadRetry").hidden = !!e.cancelled;
         $("crUploadCancel").hidden = true;
@@ -249,7 +261,7 @@
     return api("/v1/mnet/media/discard", { method: "POST", body: { asset_id: asset.id } }).catch(function () {});
   }
   function cancelUpload() {
-    S.uploadCancelled = true;
+    S.uploadCancelled = true; S.uploadPhase = "cancelled";
     var reserved = S.uploadGrantAsset;
     S.upload = null;
     if (S.xhr) try { S.xhr.abort(); } catch (e) {}
@@ -505,6 +517,7 @@
       $("crDoneP").textContent = at
         ? "It goes out " + whenText(new Date(out && out.scheduled && out.scheduled.publish_at || at)) + ". You can cancel it from Create until then."
         : "It is on the Action Network now.";
+      S.completed = true; S.draftRestored = false; S.uploadPhase = "attached";
       clearDraft(); $("crDraftNotice").hidden = true;
       go("done");
     }).catch(function (e) {
@@ -546,28 +559,33 @@
   });
 
   /* ---------- reset ---------- */
-  function reset() {
+  function reset(opts) {
+    opts = opts || {};
     pause();
-    var abandoned = S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null);
+    var abandoned = S.completed ? null : (S.uploadGrantAsset || (S.asset && !S.busy ? S.asset : null));
     if (S.xhr) try { S.xhr.abort(); } catch (e) {}
     if (abandoned) discardUploadAsset(abandoned);
     if (S.url) try { URL.revokeObjectURL(S.url); } catch (e) {}
     v.removeAttribute("src"); try { v.load(); } catch (e) {}
     $("crImage").removeAttribute("src");
     S.file = null; S.kind = ""; S.url = ""; S.dur = 0; S.start = 0; S.end = 0; S.muted = false;
-    S.upload = null; S.asset = null; S.when = "now"; S.uploadError = null; S.xhr = null; S.uploadGrantAsset = null; S.uploadCancelled = false;
+    S.upload = null; S.asset = null; S.uploadError = null; S.xhr = null; S.uploadGrantAsset = null; S.uploadCancelled = false; S.uploadPhase = "idle"; S.completed = false;
+    if (!opts.preserveComposition) S.when = "now";
     $("crMute").setAttribute("aria-pressed", "false");
     $("crMuteL").textContent = "Sound on";
-    $("crCaption").value = ""; $("crCount").textContent = "0";
-    $("crTrack").value = ""; $("crVisibility").value = "public";
-    $("crDate").value = ""; $("crTime").value = "";
+    if (!opts.preserveComposition) {
+      $("crCaption").value = ""; $("crCount").textContent = "0";
+      $("crTrack").value = ""; $("crVisibility").value = "public";
+      $("crDate").value = ""; $("crTime").value = "";
+      S.draftRestored = false;
+    }
     Array.prototype.forEach.call(document.querySelectorAll("[data-when]"), function (x) {
-      var on = x.getAttribute("data-when") === "now";
+      var on = x.getAttribute("data-when") === S.when;
       x.classList.toggle("is-on", on);
       x.setAttribute("aria-checked", on ? "true" : "false");
     });
     uploadLine("", "", 0); $("crUploadRetry").hidden = true; $("crUploadCancel").hidden = true;
-    $("crDraftNotice").hidden = true;
+    $("crDraftNotice").hidden = !opts.preserveComposition;
     status("");
   }
 
