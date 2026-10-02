@@ -60,6 +60,14 @@ test('a post of exactly 2,000 characters goes through', async () => {
   assert.equal(res.status, 201);
 });
 
+test('emoji count as one character each, the way the database counts them', async () => {
+  fake();
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: '\u{1F525}'.repeat(1500) });
+  assert.equal(res.status, 201, '1,500 emoji is 3,000 UTF-16 units but 1,500 characters, under the 2,000 cap');
+  fake();
+  assert.equal((await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: '\u{1F525}'.repeat(2001) })).status, 413);
+});
+
 test('a reply over 1,000 characters is refused before the write', async () => {
   const calls = fake();
   const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(1001), reply_to_id: POST });

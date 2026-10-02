@@ -27,6 +27,9 @@ async function userRpc(req, env, name, body={}) {
   if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:limitStatus(data,res.status),detail:data}); return data;
 }
 async function currentMuid(env,userId){const r=await service(env,`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);return r?.[0]?.m_uid||null}
+/* Characters as the database counts them (char_length counts code points),
+   not UTF-16 units: an emoji is one character, not two. */
+function chars(value){return [...String(value||'')].length}
 function uuidLike(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''))}
 function uniq(values){return [...new Set((values||[]).filter(Boolean).map(String))]}
 async function networkActors(env,muids=[]){
@@ -242,8 +245,8 @@ async function prepareNetworkPost(env,muid,b,appKey){
      they wrote without knowing. The table enforces the same 2,000 for a
      post and 1,000 for a reply. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id&&body.length>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
-  if(body.length>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
+  if(b.reply_to_id&&chars(body)>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
+  if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
   let assets=[];
   if(mediaIds.length){
@@ -588,7 +591,7 @@ async function handleMnet(req,env,path,url){
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid)return fail(req,env,'Post not found',404);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
-    if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(patch.body.length>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
+    if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
     const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});
@@ -815,7 +818,7 @@ async function handleMnet(req,env,path,url){
    until the owner approves it. Votes earn nothing. */
 const FBI_KINDS=['legit_check','sighting','most_wanted'];
 const FBI_VOTES={legit_check:['legit','cap'],sighting:['legit','cap'],most_wanted:['guilty','acquitted']};
-function fbiText(v,max){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max)}
+function fbiText(v,max){return [...String(v==null?'':v).replace(/\s+/g,' ').trim()].slice(0,max).join('')}
 /* The streets have spoken once at least five people voted and seven in ten
    agree. Until then the case is still under investigation. */
 export function fbiVerdict(row){
