@@ -57,8 +57,8 @@ test('every tab destination has the bar it was reached from', async () => {
      no bar — tap it, and the navigation you tapped is gone. */
   const bar = await read('js/tabbar.js');
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
-    `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
+  assert.deepEqual(hrefs, ['create.html', 'listen.html', 'index.html', 'mnet.html'],
+    `expected the record button and the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/,
@@ -71,6 +71,7 @@ test('the bar always writes the three canonical tabs, unconditionally', async ()
   const block = /nav\.innerHTML\s*=([\s\S]*?);\n/.exec(bar);
   assert.ok(block, 'could not find the bar markup');
   const markup = block[1];
+  assert.match(markup, /CREATE_TAB/, 'the record button cell is missing from the bar');
   for (const nav of ['music', 'home', 'profile']) {
     assert.match(markup, new RegExp(`data-appnav="${nav}"`),
       `the ${nav} cell is missing from the bar`);
@@ -92,10 +93,25 @@ test('the native shell mirrors the same three primary destinations', async () =>
   const rooms = /export const ROOMS:[\s\S]*?= \[([\s\S]*?)\n\];/.exec(appbar);
   assert.ok(rooms, 'could not find native ROOMS');
   const keys = [...rooms[1].matchAll(/key: '([^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(keys, ['music', 'here', 'profile'],
-    'native primary navigation must stay aligned with Music · HERE · Mnet/Profile');
+  assert.deepEqual(keys, ['music', 'here', 'create', 'profile'],
+    'native primary navigation must stay aligned with Music · HERE · Create · Network');
   assert.match(layout, /name="uprise" options=\{\{ href: null \}\}/,
     'Equity Uprise stays built but off the primary native bar');
   assert.match(layout, /name="closet" options=\{\{ href: null \}\}/,
     'Prayer Closet stays built but off the primary native bar');
+});
+
+
+test('the record button keeps its own column and never opens a wing', async () => {
+  const bar = await read('js/tabbar.js');
+  assert.match(bar, /var ORDER = \["music", "home", "create", "profile"\];/);
+  assert.match(bar, /var FIXED = \{ create: true \};/);
+  assert.match(bar, /data-appnav="create"/);
+  /* pages with a hand-written bar get the same cell before the identity tab */
+  assert.match(bar, /if \(!dock\.querySelector\('\[data-appnav="create"\]'\)\)/);
+  /* every wing still has exactly two rooms, so the capsule never changes width */
+  const wings = /var WINGS = \{([\s\S]*?)\n  \};/.exec(bar)[1];
+  assert.doesNotMatch(wings, /create:/, 'the record button is a door, not a wing');
+  const create = await read('create.html');
+  assert.match(create, /js\/tabbar\.js/);
 });

@@ -1,7 +1,7 @@
 /**
- * THE APPBAR — the house's current three-room primary bar.
+ * THE APPBAR — the house's primary bar: three rooms and the record button.
  *
- * The web shell is canonical: Music · HERE · Mnet/Profile. Equity Uprise
+ * The web shell is canonical: Music · HERE · Create · Network. Equity Uprise
  * and Prayer Closet are still real rooms, but they are put away from primary
  * navigation rather than occupying permanent bar slots.
  *
@@ -61,6 +61,17 @@ function ProfileGlyph({ size = 24, tint }: { size?: number; tint: string }) {
   );
 }
 
+/** the record button: a ring in the tab's colour around a filled dot,
+    the same drawing as the web bar's appbar__tab--create */
+function RecordGlyph({ size = 24, tint, active }: { size?: number; tint: string; active: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx="12" cy="12" r="8.4" fill="none" stroke={tint} strokeWidth={1.8} />
+      <Circle cx="12" cy="12" r="4.2" fill={active ? '#fff' : '#e5383b'} />
+    </Svg>
+  );
+}
+
 /** the Music tab's two faces: a play triangle at rest, a pause bar live */
 function TransportFace({ playing, tint }: { playing: boolean; tint: string }) {
   if (playing) {
@@ -88,11 +99,12 @@ function TransportFace({ playing, tint }: { playing: boolean; tint: string }) {
   );
 }
 
-export type RoomKey = 'music' | 'uprise' | 'here' | 'closet' | 'profile';
+export type RoomKey = 'music' | 'uprise' | 'here' | 'create' | 'closet' | 'profile';
 
 export const ROOMS: { key: RoomKey; label: string; route: string }[] = [
   { key: 'music', label: 'Music', route: '/music' },
   { key: 'here', label: 'HERE', route: '/here' },
+  { key: 'create', label: 'Create', route: '/create' },
   { key: 'profile', label: 'Network', route: '/profile' },
 ];
 
@@ -121,6 +133,8 @@ export function AppBarTab({
       <EqLockup size={20} tint={tint} />
     ) : room === 'here' ? (
       <Image source={M_MARK} style={s.mMark} resizeMode="contain" />
+    ) : room === 'create' ? (
+      <RecordGlyph size={24} tint={tint} active={active} />
     ) : room === 'closet' ? (
       <Image source={HM_MARK} style={[s.mMark, s.hmGlow]} resizeMode="contain" />
     ) : (

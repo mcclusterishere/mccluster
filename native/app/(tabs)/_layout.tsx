@@ -28,6 +28,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="music" options={{ title: 'Music' }} />
       <Tabs.Screen name="here" options={{ title: 'HERE' }} />
+      <Tabs.Screen name="create" options={{ title: 'Create' }} />
       <Tabs.Screen name="profile" options={{ title: 'Network' }} />
       {/* preserved rooms/screens that are reachable but not on the primary bar */}
       <Tabs.Screen name="uprise" options={{ href: null }} />
@@ -49,6 +50,7 @@ function HouseBar({ state, navigation, insetBottom }: any) {
   const activeRoute = state.routes[state.index]?.name as string;
   const activeRoom: RoomKey | null =
     activeRoute === 'here' ? 'here'
+      : activeRoute === 'create' ? 'create'
       : activeRoute === 'profile' ? 'profile'
       : ['music', 'films', 'catalogue', 'license'].includes(activeRoute) ? 'music'
       : null;

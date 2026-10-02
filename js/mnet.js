@@ -337,11 +337,17 @@
   function postMediaHtml(post) {
     var media = Array.isArray(post.media) ? post.media : [];
     if (!media.length) return "";
+    /* a clip from the create editor: play only the stretch that was kept */
+    var clip = post.metadata && post.metadata.clip, frag = "";
+    if (clip && (clip.start_ms || clip.end_ms)) {
+      frag = "#t=" + ((Number(clip.start_ms) || 0) / 1000).toFixed(2) + (clip.end_ms ? "," + (Number(clip.end_ms) / 1000).toFixed(2) : "");
+    }
     return '<div class="mn__post-media' + (media.length > 1 ? ' is-grid' : '') + '">' +
       media.map(function (m) {
         var id = m && (m.asset_id || m.id);
         if (!id) return "";
-        return '<div class="mn__post-media-item" data-mnet-media="' + esc(id) + '" data-media-type="' + esc(m.type || m.media_type || "file") + '">' +
+        return '<div class="mn__post-media-item" data-mnet-media="' + esc(id) + '" data-media-type="' + esc(m.type || m.media_type || "file") + '"' +
+          (frag ? ' data-clip="' + esc(frag) + '"' : '') + (clip && clip.muted ? ' data-muted="1"' : '') + '>' +
           '<div class="mn__post-media-loading">Loading media…</div></div>';
       }).join("") + '</div>';
   }
@@ -727,7 +733,7 @@
         var type = data.media_type || node.dataset.mediaType || "file", url = safeHttpUrl(data.url);
         if (!url) throw new Error("Media URL unavailable");
         if (type === "image") node.innerHTML = '<img src="' + esc(url) + '" alt="' + esc(data.alt_text || "") + '" loading="lazy">';
-        else if (type === "video") node.innerHTML = '<video src="' + esc(url) + '" controls playsinline preload="metadata"></video>';
+        else if (type === "video") node.innerHTML = '<video src="' + esc(url + (node.dataset.clip || "")) + '" controls playsinline preload="metadata"' + (node.dataset.muted ? " muted" : "") + '></video>';
         else if (type === "audio") node.innerHTML = '<audio src="' + esc(url) + '" controls preload="metadata"></audio>';
         else node.innerHTML = '<a class="mn__profile-link" href="' + esc(url) + '" target="_blank" rel="noopener">Open attachment</a>';
       }).catch(function () { node.innerHTML = '<div class="mn__post-media-loading">Media unavailable.</div>'; });
