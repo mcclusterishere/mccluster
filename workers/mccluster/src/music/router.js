@@ -40,7 +40,7 @@ import { TRACKS } from './tracks.js';
 export const GATES = {
   'niggy-nigg': {
     /* CIA Mind Control, in album order; this record is the last song */
-    sequence: ['pull-up', 'you-the-feds'],
+    sequence: ['you-the-feds', 'pull-up'],
     window_minutes: 180,
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
