@@ -23,6 +23,22 @@ test('the console carries no credential and no public entry point', async () => 
 });
 
 /*
+  The owner is already signed in on matthew.mccluster.org. The console must
+  fetch that session itself rather than ask for a password or a pasted token,
+  and must not bounce forever when the browser really is signed out.
+*/
+test('the console never asks the owner to sign in a second time', async () => {
+  const html = await readFile(consolePath, 'utf8');
+  assert.doesNotMatch(html, /type="password"/, 'no password form');
+  assert.doesNotMatch(html, /grant_type=password/, 'no separate password sign-in');
+  assert.doesNotMatch(html, /Use an access token/, 'no pasted-token sign-in');
+  assert.match(html, /location\.replace\(HANDOFF_URL\)/, 'a missing session is fetched from the main site');
+  assert.match(html, /https:\/\/matthew\.mccluster\.org\/auth\/seek-first-handoff\.html/);
+  assert.match(html, /Date\.now\(\) - last > 30000/, 'one handoff attempt at a time, no redirect loop');
+  assert.match(html, /tokenExpired\(held\)/, 'an expired token is refreshed through the handoff, not shown a form');
+});
+
+/*
   The regression that produced the original stuck loading screen: a startup
   dependency that never settles, with no deadline and no way out.
 */

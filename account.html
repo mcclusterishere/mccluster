@@ -200,6 +200,7 @@
     <div class="ac__card" id="acDesk" hidden>
       <p class="ac__lab">Signed in</p>
       <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
+      <a class="ac__ghost" href="control.html#home" id="acControl" hidden>Open Control</a>
       <a class="ac__ghost" href="console.html">Client console</a>
 
       <!-- SECURITY. The current password is asked for first, so an unlocked
@@ -304,8 +305,16 @@
     var el = function (id) { return document.getElementById(id); };
     var HOUSE = "matthew@mccluster.org";
 
+    /* The account page used to send a signed-in owner straight to Control
+       and a signed-in member straight to the Action Network, which made
+       Change password unreachable from every ordinary "Account" link. Now
+       it only moves you on right after you sign in here. Arriving already
+       signed in, you get your account: password, sign out, the lot. */
+    /* Arriving from the Google/Apple callback (/auth/) counts as a fresh
+       sign-in too, so that flow still lands where it always has. */
+    var freshSignIn = /\/auth\/(?:index\.html)?(?:[?#]|$)/.test(document.referrer || "");
     function stayOnAccount() {
-      return /(?:\?|&)stay=1(?:&|$)/.test(location.search);
+      return !freshSignIn || /(?:\?|&)stay=1(?:&|$)/.test(location.search);
     }
 
     function openPlane() {
@@ -340,6 +349,7 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
+      houseOwner(u).then(function (yes) { el("acControl").hidden = !yes; });
       if (window.MCC && MCC.user) MCC.user().then(pwPaint);
       houseOwner(u).then(function (yes) {
         if (yes) { openPlane(); return; }
@@ -379,6 +389,7 @@
       btn.disabled = true; btn.textContent = "Signing in…"; el("acMsg").textContent = "";
       MCC.signInWithPassword(em, pw).then(function () {
         if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
+        freshSignIn = true;
         paint();
       }).catch(function (e) {
         el("acMsg").textContent = e.message || "That did not open.";
@@ -453,6 +464,7 @@
       MCC.signUpWithPassword(em, pw, metadata).then(function (result) {
         if (result && result.session) {
           if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
+          freshSignIn = true;
           paint();
           return;
         }

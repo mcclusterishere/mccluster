@@ -83,7 +83,7 @@
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
     halo: { title: "Hitman Halo", href: "auth/seek-first-handoff.html", subtitle: "Owner spatial intelligence workspace" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
-    spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
+    spatial: { title: "Spatial Intelligence", href: "auth/seek-first-handoff.html", subtitle: "Seek First console, signed in as you" }
   };
 
   /* Formatting and source-result primitives live in js/control-room/
