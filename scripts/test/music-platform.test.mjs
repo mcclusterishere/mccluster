@@ -16,14 +16,17 @@ test('gated single is one logical track: public preview, master only as an earne
   assert.equal(track.gated.preview_visibility,'until_earned');
   assert.equal(track.gated.full_visibility,'earned_play');
   /* the catalogue states the owner's rule; the Worker enforces it, and the
-     two must say the same numbers */
+     two must say the same thing: play CIA Mind Control in album order, and
+     the gated record is the last song, heard only after the ones before it */
+  assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
   const router=await read('workers/mccluster/src/music/router.js');
-  const gate=router.match(/'niggy-nigg':\s*\{\s*first:\s*(\d+),\s*each:\s*(\d+)/);
-  assert.ok(gate,'the Worker no longer gates niggy-nigg');
-  assert.equal(track.gated.listen_gate.first_distinct_full_listens,Number(gate[1]));
-  assert.equal(track.gated.listen_gate.full_listens_per_play,Number(gate[2]));
-  assert.equal(Number(gate[1]),5,'the owner asked for five different songs before the first play');
-  assert.equal(Number(gate[2]),1,'the owner asked for one more song per play after that');
+  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?sequence:\s*\[([^\]]*)\],\s*window_minutes:\s*(\d+)/);
+  assert.ok(gate,'the Worker no longer gates niggy-nigg by album order');
+  const sequence=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
+  const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
+  assert.deepEqual(sequence,before,'the Worker asks for exactly the songs before it, in album order');
+  assert.deepEqual(track.gated.listen_gate.in_album_order,sequence);
+  assert.equal(track.gated.listen_gate.window_minutes,Number(gate[2]));
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
@@ -41,7 +44,11 @@ test('the album only plays the master for a play the API granted, and never twic
   assert.equal(masterSets.length,1,'the master URL must come from exactly one place: a granted claim');
   /* ending or leaving spends it; rewinding is blocked */
   assert.match(album,/function spend\(row\)/);
-  assert.match(album,/spend\(rows\[cur\]\);\s*\n\s*next\(\);/);
+  const ended=album.split('deck.addEventListener("ended"')[1].slice(0,2000);
+  assert.ok(ended.indexOf('spend(rows[cur]);')>-1&&ended.indexOf('spend(rows[cur]);')<ended.indexOf('next();'),'the play is spent before the record moves on');
+  /* played straight through, the album asks for its closer only after the
+     song before it has been counted */
+  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*finished\.then\(function \(\) \{ claimThenPlay\(upNext\); \}/);
   assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
   /* no file to keep */
   assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);

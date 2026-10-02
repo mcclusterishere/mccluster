@@ -1030,9 +1030,10 @@
          full        → the one play, happening now
          unavailable → our fault, not yours
 
-       The rule is the owner's and the Worker enforces it: five DIFFERENT
-       other songs heard all the way through before the first play, then
-       one more full song for every play after that.
+       The rule is the owner's and the Worker enforces it: the gated record
+       closes its album and plays only after the songs before it are heard
+       all the way through, in album order, with nothing in between. Every
+       play needs a fresh run of the album.
        ============================================================ */
     /* The clock on a row is read off whatever that row actually points at,
        which for a gated track changes under it: locked it is the 12-second
@@ -1485,15 +1486,26 @@
       if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
     });
     deck.addEventListener("ended", function () {
+      var finished = Promise.resolve(null);
       if (listen && listen.row === rows[cur] && window.MCC_LISTENS) {
         var heardKey = rows[cur].getAttribute("data-key");
-        window.MCC_LISTENS.finish(listen.handle).then(function (d) {
+        finished = window.MCC_LISTENS.finish(listen.handle);
+        finished.then(function (d) {
           /* the song just counted: its question is open now */
           if (d && d.counted && songTest) songTest.refresh().then(function () { songTest.focus(heardKey); });
         });
       }
       listen = null;
       spend(rows[cur]);
+      /* Played straight through, the album arrives at its closer having just
+         earned it. Wait for the song that just ended to be counted, then ask
+         for the play: earned, it plays in full; not, it says where the
+         listener stands and plays the preview. */
+      var upNext = (cur + 1) % rows.length;
+      if (rows[upNext] && rows[upNext].hasAttribute("data-gated-bucket") && window.MCC_GATED && window.MCC_GATED.signedIn()) {
+        finished.then(function () { claimThenPlay(upNext); }, function () { claimThenPlay(upNext); });
+        return;
+      }
       next(); // the record keeps spinning, wraps at the end
     });
 

@@ -3,7 +3,7 @@
  * Worker refuses to trust: the browser never supplies a song's length, a
  * locked listener never gets a signed URL, and a play that could not be
  * signed is handed back. The counting itself lives in SQL
- * (music_gate_claim) and is exercised against the database.
+ * (music_gate_claim_sequence) and is exercised against the database.
  */
 
 import test from 'node:test';
@@ -58,8 +58,8 @@ function fakeSupabase({ operator = false, claim = { claimed: false }, signStatus
       return new Response('AUDIO', { status: init.headers?.range ? 206 : 200, headers: {
         'content-type': 'audio/mpeg', 'content-range': 'bytes 0-4/5', 'accept-ranges': 'bytes', 'x-secret': 'no' } });
     }
-    if (url === `${SB}/rest/v1/rpc/music_gate_state`) return json({ distinct_songs: 2, need_first: 5, allowed: false });
-    if (url === `${SB}/rest/v1/rpc/music_gate_claim`) return json(claim);
+    if (url === `${SB}/rest/v1/rpc/music_gate_sequence_state`) return json({ mode: 'sequence', progress: 1, need: 2, next: 'you-the-feds', allowed: false });
+    if (url === `${SB}/rest/v1/rpc/music_gate_claim_sequence`) return json(claim);
     if (url.startsWith(`${SB}/storage/v1/object/sign/`)) {
       return signStatus === 200 ? json({ signedURL: '/object/sign/mcc-gated-audio/niggy-nigg/niggy-nigg.mp3?token=t' }) : json({ error: 'x' }, signStatus);
     }
@@ -123,17 +123,19 @@ test('finishing a listen reports whether it counted and the gate progress', asyn
   const res = await call('/v1/music/listens/11111111-1111-4111-8111-111111111111/finish', { method: 'POST' });
   const data = await res.json();
   assert.equal(data.counted, true);
-  assert.equal(data.gates['niggy-nigg'].need_first, 5);
+  assert.equal(data.gates['niggy-nigg'].need, 2);
+  assert.equal(data.gates['niggy-nigg'].next_title, 'You the Feds', 'the page is told which song to play next');
   assert.equal((await call('/v1/music/listens/not-a-uuid/finish', { method: 'POST' })).status, 404);
 });
 
 test('a locked listener gets progress and no URL', async () => {
-  const calls = fakeSupabase({ claim: { claimed: false, allowed: false, distinct_songs: 3, need_first: 5 } });
+  const calls = fakeSupabase({ claim: { mode: 'sequence', claimed: false, allowed: false, progress: 0, need: 2, next: 'pull-up' } });
   const res = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
   assert.equal(res.status, 403);
   const data = await res.json();
   assert.equal(data.locked, true);
-  assert.equal(data.gate.distinct_songs, 3);
+  assert.equal(data.gate.progress, 0);
+  assert.equal(data.gate.next_title, 'Pull Up');
   assert.ok(!calls.some((c) => c.url.includes('/storage/v1/object/sign/')), 'a locked listener must never cause a signature');
 });
 
@@ -145,10 +147,23 @@ test('an earned play is a one-play stream token, never a storage URL', async () 
   assert.match(data.url, /^https:\/\/api\.mccluster\.org\/v1\/music\/stream\/[0-9a-f]{64}$/);
   assert.doesNotMatch(data.url, /storage/);
   assert.ok(!calls.some((c) => c.url.includes('/storage/v1/object/sign/')), 'a listener play must not mint a reusable storage URL');
-  const claim = calls.find((c) => c.url.endsWith('/rpc/music_gate_claim'));
+  const claim = calls.find((c) => c.url.endsWith('/rpc/music_gate_claim_sequence'));
   assert.equal(claim.body.p_token, data.url.split('/').pop(), 'the token handed out is the one the database holds');
   assert.equal(claim.body.p_stream_seconds, GATES['niggy-nigg'].stream_seconds);
   assert.ok(GATES['niggy-nigg'].stream_seconds <= 300, 'a play token must not outlive one sitting');
+});
+
+test('CIA Mind Control is played in album order: the gate asks for the songs before the closer', async () => {
+  const albums = JSON.parse(readFileSync(new URL('../../../data/albums.json', import.meta.url), 'utf8')).albums;
+  const album = albums.find((a) => a.slug === 'cia-mind-control');
+  const keys = album.tracks.map((t) => t.gated ? String(t.gated.object).split('/')[0] : t.src.split('/').pop().replace(/\.[^.]+$/, ''));
+  assert.equal(keys[keys.length - 1], 'niggy-nigg', 'the gated record closes the album');
+  assert.deepEqual(GATES['niggy-nigg'].sequence, keys.slice(0, -1), 'the gate sequence is the album order before it');
+  const calls = fakeSupabase({ claim: { claimed: false, allowed: false } });
+  await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
+  const claim = calls.find((c) => c.url.endsWith('/rpc/music_gate_claim_sequence'));
+  assert.deepEqual(claim.body.p_sequence, ['pull-up', 'you-the-feds']);
+  assert.equal(claim.body.p_window_minutes, 180);
 });
 
 test('the stream serves the master with ranges while the token holds, and refuses after', async () => {
@@ -189,7 +204,7 @@ test('the owner plays the record without spending anything', async () => {
   const calls = fakeSupabase({ operator: true });
   const res = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
   assert.equal(res.status, 200);
-  assert.ok(!calls.some((c) => c.url.endsWith('/rpc/music_gate_claim')));
+  assert.ok(!calls.some((c) => /\/rpc\/music_gate_claim/.test(c.url)));
 });
 
 test('music preflight is answered before the sign-in gate', async () => {

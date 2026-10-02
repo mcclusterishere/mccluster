@@ -210,6 +210,11 @@
      "poster": "assets/img/cia-mind-control-cover.jpg"
     },
     {
+     "title": "You the Feds",
+     "src": "assets/audio/you-the-feds.m4a",
+     "poster": "assets/img/cia-mind-control-cover.jpg"
+    },
+    {
      "title": "Niggy Nigg Niggr",
      "src": "assets/audio/niggy-nigg-preview.mp3",
      "poster": "assets/img/cia-mind-control-cover.jpg",
@@ -235,13 +240,15 @@
       "access_mode": "account",
       "preview_visibility": "until_earned",
       "full_visibility": "earned_play",
-      "listen_gate": { "first_distinct_full_listens": 5, "full_listens_per_play": 1 }
+      "listen_gate": {
+       "in_album_order": [
+        "pull-up",
+        "you-the-feds"
+       ],
+       "window_minutes": 180,
+       "each_play_needs_a_fresh_run": true
+      }
      }
-    },
-    {
-     "title": "You the Feds",
-     "src": "assets/audio/you-the-feds.m4a",
-     "poster": "assets/img/cia-mind-control-cover.jpg"
     }
    ]
   }

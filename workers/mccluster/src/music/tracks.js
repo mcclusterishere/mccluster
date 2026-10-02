@@ -91,14 +91,14 @@ export const TRACKS = {
     "album": "cia-mind-control",
     "seconds": 150.4
   },
-  "niggy-nigg": {
-    "title": "Niggy Nigg Niggr",
-    "album": "cia-mind-control",
-    "gated": true
-  },
   "you-the-feds": {
     "title": "You the Feds",
     "album": "cia-mind-control",
     "seconds": 232.9
+  },
+  "niggy-nigg": {
+    "title": "Niggy Nigg Niggr",
+    "album": "cia-mind-control",
+    "gated": true
   }
 };
