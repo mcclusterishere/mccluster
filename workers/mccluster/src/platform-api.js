@@ -248,9 +248,9 @@ async function prepareNetworkPost(env,muid,b,appKey){
   }
   return {assets:assets||[],draft:{body,media_asset_ids:mediaIds,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
 }
-async function insertNetworkPost(env,muid,draft,assets){
+async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
-  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id})});
+  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});
   const created=rows?.[0],ids=draft.media_asset_ids||[];
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
@@ -275,19 +275,40 @@ function scheduledView(row){
    same post twice; whichever run loses the claim simply moves on. */
 export async function publishDueNetworkPosts(env,{limit=20}={}){
   if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return {published:0,failed:0};
-  const out={published:0,failed:0};
+  const out={published:0,failed:0},now=new Date(),stale=new Date(now.getTime()-15*60000).toISOString();
   let due;
-  try{due=await service(env,`network_scheduled_posts?status=eq.scheduled&publish_at=lte.${encodeURIComponent(new Date().toISOString())}&order=publish_at.asc&limit=${limit}&select=id,author_m_uid,payload`);}
-  catch(e){if(e?.detail?.code==='PGRST205'||e?.status===404)return out;throw e;}
+  try{
+    const [scheduled,recoverable]=await Promise.all([
+      service(env,`network_scheduled_posts?status=eq.scheduled&publish_at=lte.${encodeURIComponent(now.toISOString())}&order=publish_at.asc&limit=${limit}&select=id,author_m_uid,payload,status`),
+      service(env,`network_scheduled_posts?status=eq.publishing&updated_at=lt.${encodeURIComponent(stale)}&order=updated_at.asc&limit=${limit}&select=id,author_m_uid,payload,status`)
+    ]);
+    due=[...(scheduled||[]),...(recoverable||[])].slice(0,limit);
+  }catch(e){if(e?.detail?.code==='PGRST205'||e?.status===404)return out;throw e;}
   for(const row of due||[]){
     const stamp=new Date().toISOString();
-    const claimed=await service(env,`network_scheduled_posts?id=eq.${row.id}&status=eq.scheduled`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'publishing',updated_at:stamp})});
+    /* If a previous run inserted the post and died before acknowledging the
+       schedule, converge on that post instead of creating a duplicate. */
+    const existing=await service(env,`network_posts?scheduled_post_id=eq.${row.id}&select=id&limit=1`).catch(()=>[]);
+    if(existing?.length){
+      await service(env,`network_scheduled_posts?id=eq.${row.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'published',post_id:existing[0].id,error:'',updated_at:stamp})});
+      out.published++; continue;
+    }
+    const expected=row.status||'scheduled';
+    const claimed=await service(env,`network_scheduled_posts?id=eq.${row.id}&status=eq.${expected}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'publishing',updated_at:stamp})});
     if(!claimed?.length)continue;
     try{
       const p=row.payload||{};
       const prepared=await prepareNetworkPost(env,row.author_m_uid,{...p,reply_to_id:null},p.app_key||'mnet-web');
       if(prepared.error)throw new Error(prepared.error);
-      const rows=await insertNetworkPost(env,row.author_m_uid,prepared.draft,prepared.assets);
+      let rows;
+      try{rows=await insertNetworkPost(env,row.author_m_uid,prepared.draft,prepared.assets,row.id);}
+      catch(e){
+        /* The unique scheduled_post_id constraint is the final idempotency
+           fence if two recovery attempts race. */
+        if(e?.detail?.code!=='23505')throw e;
+        rows=await service(env,`network_posts?scheduled_post_id=eq.${row.id}&select=id&limit=1`);
+        if(!rows?.length)throw e;
+      }
       await service(env,`network_scheduled_posts?id=eq.${row.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'published',post_id:rows?.[0]?.id||null,error:'',updated_at:new Date().toISOString()})});
       out.published++;
     }catch(e){
