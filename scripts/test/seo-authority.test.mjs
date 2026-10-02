@@ -8,7 +8,8 @@ test("SEO/AEO authority surfaces stay coherent",()=>{
  const d=JSON.parse(read("data/dossier.json"));
  const v=JSON.parse(read("data/seo/evidence-ledger.json"));
  const s=JSON.parse(read("data/seo/sitemap-pages.json"));
- const p=read("matthew-mccluster.html"),h=read("hire.html"),l=read("llms.txt"),w=read("tools/build-walls.mjs");\n const policy=read("policy.html"),portfolio=read("portfolio.html"),press=read("press.html"),card=read("card.html"),brands=read("data/brands.json"),roles=read("data/roles.json");
+ const p=read("matthew-mccluster.html"),h=read("hire.html"),l=read("llms.txt"),w=read("tools/build-walls.mjs");
+ const policy=read("policy.html"),portfolio=read("portfolio.html"),press=read("press.html"),card=read("card.html"),brands=read("data/brands.json"),roles=read("data/roles.json");
  assert.equal(e.schema_version,"mccluster-seo-entity/v2");
  assert.equal(e.person["@id"],"https://matthew.mccluster.org/#matthew-mccluster");
  assert.equal(e.person.worksFor["@id"],"https://matthew.mccluster.org/#mccluster-corp");
@@ -35,7 +36,15 @@ test("SEO/AEO authority surfaces stay coherent",()=>{
  assert.equal(d.person.school.status,"Enrolled undergraduate");
  assert.equal(d.person.school.major,"Computer Science");
  assert.doesNotMatch(JSON.stringify(d),/registered Connecticut public charity/i);
- assert.doesNotMatch(JSON.stringify(d),/instructing new team members/i);\n assert.doesNotMatch(policy,/"@type": "Person"[\\s\\S]{0,500}"@id": "https:\\/\\/matthew\\.mccluster\\.org\\/#matthew-mccluster"/);\n assert.doesNotMatch(portfolio,/"@type": "Person"[\\s\\S]{0,500}"@id": "https:\\/\\/matthew\\.mccluster\\.org\\/#matthew-mccluster"/);\n assert.doesNotMatch(card,/"@type": "Person"/);\n assert.doesNotMatch(portfolio,/registered Connecticut public charity/i);\n assert.doesNotMatch(press,/Street Credit Bureau|registered Connecticut public charity/i);\n assert.doesNotMatch(brands,/registered Connecticut public charity|Every frame, chord, and line of code/i);\n assert.match(roles,/Automotive Systems & Telematics Operator/);\n assert.match(h,/Founder · connected mobility/);
+ assert.doesNotMatch(JSON.stringify(d),/instructing new team members/i);
+ assert.doesNotMatch(policy,/"@type": "Person"[\\s\\S]{0,500}"@id": "https:\\/\\/matthew\\.mccluster\\.org\\/#matthew-mccluster"/);
+ assert.doesNotMatch(portfolio,/"@type": "Person"[\\s\\S]{0,500}"@id": "https:\\/\\/matthew\\.mccluster\\.org\\/#matthew-mccluster"/);
+ assert.doesNotMatch(card,/"@type": "Person"/);
+ assert.doesNotMatch(portfolio,/registered Connecticut public charity/i);
+ assert.doesNotMatch(press,/Street Credit Bureau|registered Connecticut public charity/i);
+ assert.doesNotMatch(brands,/registered Connecticut public charity|Every frame, chord, and line of code/i);
+ assert.match(roles,/Automotive Systems & Telematics Operator/);
+ assert.match(h,/Founder · connected mobility/);
  assert.match(l,/Southern Connecticut State University/);
  assert.match(l,/telematics/);
  assert.match(p,/SEO-ENTITY:START/); assert.match(p,/A\$hon Voyage/); assert.match(p,/github\.com\/mcclusterishere/);
