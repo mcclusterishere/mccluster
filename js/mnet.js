@@ -1455,6 +1455,18 @@
         '<button type="button" class="mng__join' + (g.joined ? " is-in" : "") +
           '" data-join="' + esc(g.slug) + '">' + (g.joined ? "Joined" : "Join this group") + "</button>" +
       "</div>";
+    var org=groups.organization, campaigns=groups.campaigns||[];
+    if(org){
+      $("mngHead").insertAdjacentHTML("beforeend",
+        '<div class="mng__org"><span>Organization</span><strong>'+esc(org.name)+'</strong>'+
+        (org.verification_state==="verified"?'<b>Verified</b>':'')+'</div>');
+    }
+    if(campaigns.length){
+      $("mngHead").insertAdjacentHTML("beforeend",
+        '<div class="mng__campaigns">'+campaigns.map(function(c){
+          return '<a class="mng__campaign" href="action/?c='+encodeURIComponent(c.slug)+'"><span>Campaign</span><strong>'+esc(c.title)+'</strong><em>Take action →</em></a>';
+        }).join("")+'</div>');
+    }
     $("mngComposer").hidden = !g.joined;
   }
 
@@ -1465,6 +1477,8 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
     return api("/v1/mnet/groups/" + encodeURIComponent(slug)).then(function (out) {
       groups.open = out.group;
+      groups.organization = out.organization || null;
+      groups.campaigns = out.campaigns || [];
       if (skinOf[out.group.slug] === undefined) assignSkins(groups.all.concat([out.group]));
       paintGroup();
       var items = out.items || [];
@@ -1481,6 +1495,8 @@
 
   function closeGroup() {
     groups.open = null;
+    groups.organization = null;
+    groups.campaigns = [];
     $("mnGroupsOne").hidden = true;
     $("mnGroupsList").hidden = false;
     renderGroups();
