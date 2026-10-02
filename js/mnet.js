@@ -99,6 +99,17 @@
     if (fallback) fallback.textContent = initials(name);
   }
 
+  function paintFrontPage(p, id, name) {
+    var card = $("mnFrontPage"), frame = $("mnFrontPageFrame"), open = $("mnFrontPageOpen");
+    if (!card || !frame || !open) return;
+    var site = safeHttpUrl(p.front_page_url || p.website_url);
+    if (!site) { card.hidden = true; frame.removeAttribute("src"); return; }
+    card.hidden = false;
+    $("mnFrontPageTitle").textContent = (p.display_name || name || id.mccluster_id || "Member") + " · front page";
+    open.href = site;
+    if (frame.getAttribute("src") !== site) frame.src = site;
+  }
+
   function paintSelf() {
     var p = profile(), id = identity(), name = p.display_name || (state.user && (state.user.user_metadata && (state.user.user_metadata.name || state.user.user_metadata.full_name))) || state.user && state.user.email || "M";
     $("mnMe").hidden = false;
@@ -126,6 +137,7 @@
     $("mnProfileAvatar").style.backgroundImage = avatar ? "url(" + JSON.stringify(avatar) + ")" : "";
     if (avatar) $("mnProfileAvatar").textContent = "";
     var site = $("mnProfileWebsite"), website = safeHttpUrl(p.website_url);
+    paintFrontPage(p, id, name);
     if (website) {
       site.href = website;
       site.textContent = website.replace(/^https?:\/\//, "");
