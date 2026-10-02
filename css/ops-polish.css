@@ -1,0 +1,11 @@
+/* McCluster polish wave 2: operating rooms. Shared visual behavior only. */
+:root{--ops-ease:var(--mcc-ease,cubic-bezier(.22,1,.36,1));--ops-spring:var(--mcc-spring,cubic-bezier(.34,1.56,.64,1))}
+body[data-ops-polish]{background-attachment:fixed}
+body[data-ops-polish] :is(.card,.lead,.stat,.move,.draft,.queue,.add,.sr-panel){transition:transform .26s var(--ops-ease),box-shadow .3s var(--ops-ease),border-color .2s,background .2s;animation:mcc-rise .45s var(--ops-ease) both}
+body[data-ops-polish] :is(button,.go,.sm,.lead__acts a,.lead__acts button,.lanechips button,.rooms button,.acts button,.sr-send){transition:transform .2s var(--ops-spring),filter .2s,box-shadow .25s var(--ops-ease)}
+body[data-ops-polish] :is(input,textarea,select):focus{outline:none;box-shadow:inset 0 0 0 1px var(--mcc-rule-strong,var(--ruby-hot)),0 16px 42px -34px rgba(255,77,61,.7)}
+body[data-ops-polish] :is(.pill,.heat,.sig,.sr-count){transition:transform .2s var(--ops-spring),opacity .2s}
+body[data-ops-polish] :is(.pill.live,.pill.warn,.on,.done){animation:mcc-badge-in .36s var(--ops-spring) both}
+@media(hover:hover){body[data-ops-polish] :is(.card,.lead,.stat,.move,.draft,.queue,.add,.sr-panel):hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 22px 52px -44px rgba(0,0,0,.9)}body[data-ops-polish] :is(button,.go,.sm,.lead__acts a,.lead__acts button,.lanechips button,.rooms button,.acts button,.sr-send):hover{transform:translateY(-1px);filter:brightness(1.06)}}
+body[data-ops-polish] :is(button,.go,.sm,.lead__acts a,.lead__acts button,.lanechips button,.rooms button,.acts button,.sr-send):active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){body[data-ops-polish] *,body[data-ops-polish] *::before,body[data-ops-polish] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
