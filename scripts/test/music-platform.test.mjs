@@ -224,3 +224,17 @@ test('Now Playing preserves live video artwork instead of flattening every track
   assert.match(css,/prefers-reduced-motion: reduce/);
   assert.match(albums,/"video":/);
 });
+
+
+test('Creator Studio release submission rolls back partial uploads and isolates optional license failure', async()=>{
+  const studio=await read('js/music-creator-studio.js');
+  assert.match(studio,/navigator\.onLine === false[\s\S]*Reconnect before uploading/);
+  assert.match(studio,/async function removeUpload\(bucket, path\)/);
+  assert.match(studio,/supabase\.storage\.from\(bucket\)\.remove\(\[path\]\)/);
+  assert.match(studio,/async function rollbackRelease\(trackId, uploads\)/);
+  assert.match(studio,/method: "DELETE"/);
+  assert.match(studio,/if \(!committed && \(createdTrackId \|\| uploaded\.length\)\)/);
+  assert.match(studio,/creator_release_cleanup_failed/);
+  assert.match(studio,/creator_license_offer_failed/);
+  assert.match(studio,/Release submitted, but the license offer was not saved/);
+});

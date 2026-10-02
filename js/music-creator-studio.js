@@ -78,6 +78,7 @@ function describeSize(bytes, up) {
   return (Number.isInteger(rounded) ? rounded : rounded.toFixed(1)) + "MB";
 }
 async function uploadGrant(bucket, file) {
+  if (navigator.onLine === false) throw new Error("You are offline. Reconnect before uploading this release.");
   const max = BUCKET_MAX_BYTES[bucket];
   if (max && file.size > max) {
     throw new Error(
@@ -90,6 +91,24 @@ async function uploadGrant(bucket, file) {
     .uploadToSignedUrl(grant.path, grant.token, file, { contentType: file.type || "application/octet-stream" });
   if (error) throw error;
   return grant.path;
+}
+async function removeUpload(bucket, path) {
+  if (!bucket || !path) return;
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
+}
+async function rollbackRelease(trackId, uploads) {
+  const failures = [];
+  if (trackId) {
+    try { await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), { method: "DELETE", headers: { Prefer: "return=minimal" } }); }
+    catch (err) { failures.push("release record: " + (err.message || err)); }
+  }
+  for (const item of uploads.slice().reverse()) {
+    try { await removeUpload(item.bucket, item.path); }
+    catch (err) { failures.push(item.bucket + ": " + (err.message || err)); }
+  }
+  if (failures.length && window.MCC_TRACK) window.MCC_TRACK("creator_release_cleanup_failed", { failures });
+  return failures;
 }
 function publicUrl(bucket, path) {
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
@@ -190,6 +209,9 @@ $("trackAccess").addEventListener("change", () => {
 $("trackForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const submit = $("submitTrack");
+  const uploaded = [];
+  let createdTrackId = null;
+  let committed = false;
   try {
     if (!profile) throw new Error("Save your creator profile first.");
     const master = $("trackMaster").files[0];
@@ -207,15 +229,18 @@ $("trackForm").addEventListener("submit", async (e) => {
     submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
+    uploaded.push({ bucket: "creator-masters", path: masterPath });
 
     status("trackStatus", "Uploading listener audio…");
     const previewPath = await uploadGrant("creator-previews", preview);
+    uploaded.push({ bucket: "creator-previews", path: previewPath });
     const previewUrl = publicUrl("creator-previews", previewPath);
 
     let posterUrl = "";
     if (art) {
       status("trackStatus", "Uploading artwork…");
       const artPath = await uploadGrant("creator-artwork", art);
+      uploaded.push({ bucket: "creator-artwork", path: artPath });
       posterUrl = publicUrl("creator-artwork", artPath);
     }
 
@@ -258,6 +283,7 @@ $("trackForm").addEventListener("submit", async (e) => {
     });
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
+    createdTrackId = track.id;
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -279,10 +305,12 @@ $("trackForm").addEventListener("submit", async (e) => {
       body: JSON.stringify({ status: "pending_review", rights_status: "attested", rights_declaration: rights })
     });
 
+    committed = true;
     const price = Math.round(Number($("licensePrice").value || 0) * 100);
     const licenseTerms = $("licenseTerms").value.trim();
+    let licenseWarning = "";
     if (price > 0 && licenseTerms) {
-      await rest("music_license_offers", {
+      try { await rest("music_license_offers", {
         method: "POST", headers: { Prefer: "return=minimal" },
         body: JSON.stringify({
           track_id: track.id,
@@ -296,7 +324,10 @@ $("trackForm").addEventListener("submit", async (e) => {
           active: false,
           checkout_enabled: false
         })
-      });
+      }); } catch (licenseErr) {
+        licenseWarning = " Release submitted, but the license offer was not saved: " + (licenseErr.message || "try adding it again later.");
+        if (window.MCC_TRACK) window.MCC_TRACK("creator_license_offer_failed", { track_id: track.id });
+      }
     }
 
     $("trackForm").reset();
@@ -304,11 +335,17 @@ $("trackForm").addEventListener("submit", async (e) => {
     $("derivativeField").hidden = true;
     status("trackStatus", derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review.", "good");
+      : "Uploaded. Submitted for rights and publication review." + licenseWarning, licenseWarning ? "bad" : "good");
     await loadTracks();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
-    status("trackStatus", err.message || "Upload failed.", "bad");
+    if (!committed && (createdTrackId || uploaded.length)) {
+      status("trackStatus", "That submission failed. Cleaning up the partial release…", "bad");
+      const cleanupFailures = await rollbackRelease(createdTrackId, uploaded);
+      status("trackStatus", (err.message || "Upload failed.") + (cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+    } else {
+      status("trackStatus", err.message || "Upload failed.", "bad");
+    }
   } finally {
     submit.disabled = false;
   }
