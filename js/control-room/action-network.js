@@ -18,7 +18,7 @@
   "use strict";
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
-    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:""};
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -84,6 +84,25 @@
       '<div class="cro-grid cro-grid--2" style="margin-top:10px"><section class="cro-card"><h2>Actions by kind</h2>'+bars(kinds,{},d.events.length)+'</section>'+
       '<section class="cro-card"><h2>Latest joins</h2>'+joins+'</section></div>';
   }
+  function proofMedia(p){
+    var u=e(p.proof_url||""); if(!u)return '<div class="cro-note">Text proof only.</div>';
+    if(p.proof_type==="video")return '<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>';
+    if(p.proof_type==="photo")return '<img alt="Submitted mission proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+    return '<a class="cr-btn" href="'+u+'" target="_blank" rel="noopener">Open submitted '+e(p.proof_type)+' ↗</a>';
+  }
+  function loadProofs(){
+    A.proofBusy=true;redraw();
+    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,created_at,action_mission_assignments!inner(id,m_uid,status,action_missions!inner(id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
+      .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
+      .then(function(){A.proofBusy=false;redraw();});
+  }
+  function reviews(){
+    if(!A.proofs.length&&!A.proofBusy)loadProofs();
+    if(A.proofBusy)return note("Loading proof queue…");
+    if(!A.proofs.length)return note("Review queue clear. No pending mission proof.");
+    return '<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{};return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p></div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+  }
+
   function controls(c){
     var phases=Array.isArray(c.phases)?c.phases:[];
     return'<section class="cro-card"><h2>State</h2><div class="cro-form cro-form--3">'+
@@ -144,9 +163,9 @@
     var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, the Action Network migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
-    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["reviews","Proof review"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
     var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
-      (A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
+      (A.tab==="reviews"?reviews():A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
     return'<div class="cro">'+chips+head+tabs+body+'</div>';
   }
 
@@ -171,6 +190,13 @@
     if(!root)return;
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
     root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
+    root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
+      if(!confirm((decision==="verified"?"Verify this submitted action and award it exactly once?":"Reject this proof without awarding points?")))return;
+      b.disabled=true;A.supa("rpc/review_action_proof",{method:"POST",body:{p_proof_id:id,p_decision:decision,p_review_note:reviewNote||null}})
+        .then(function(){A.msg=decision==="verified"?"Action verified. Award transaction completed.":"Proof rejected. No award issued.";return loadProofs();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
     var st=root.querySelector("[data-crn-state]");
     if(st)st.onclick=function(){var c=current();if(!c)return;var s=val(root,"crnStatus");
       if(s==="live"&&c.status!=="live"&&!confirm("Set \""+c.title+"\" live? It becomes public at /action/?c="+c.slug+" and appears in the Heal the 3rd World gateway."))return;
