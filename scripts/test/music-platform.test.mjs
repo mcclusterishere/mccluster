@@ -243,7 +243,7 @@ test("Music creator profiles converge on Action Network identity",async()=>{cons
 
 
 test('public play counts use the dedicated album-play track index', async()=>{
-  const sql=await read('supabase/pending_migrations/play_counts_hotpath_v1.sql');
+  const sql=await read('supabase/migrations/20261002055704_play_counts_hotpath_v1.sql');
   assert.match(sql,/create index if not exists events_album_play_track_idx/);
   assert.match(sql,/on public\.events \(\(props->>'track'\)\)/);
   assert.match(sql,/where name = 'album_play' and props \? 'track'/);

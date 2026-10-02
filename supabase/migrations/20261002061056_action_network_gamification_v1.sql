@@ -184,9 +184,13 @@ begin
 
  select * into v_existing from public.action_proofs where assignment_id = v_assignment.id for update;
  if found then
-   if v_existing.status <> 'pending' then raise exception 'this proof has already been reviewed'; end if;
+   -- pending, or set aside by a withdrawal (rejected, never reviewed): replaceable
+   if not (v_existing.status = 'pending' or (v_existing.status = 'rejected' and v_existing.reviewed_at is null)) then
+     raise exception 'this proof has already been reviewed';
+   end if;
    update public.action_proofs
-      set proof_type = p_proof_type, proof_url = v_url, statement = v_statement, metadata = v_meta, created_at = now()
+      set proof_type = p_proof_type, proof_url = v_url, statement = v_statement, metadata = v_meta,
+          status = 'pending', review_note = null, created_at = now()
     where id = v_existing.id;
    v_proof_id := v_existing.id;
  else
@@ -214,7 +218,11 @@ begin
  select * into v_assignment from public.action_mission_assignments where id = p_assignment_id for update;
  if not found or v_assignment.user_id <> v_user then raise exception 'assignment not found'; end if;
  if v_assignment.status not in ('joined','in_progress','submitted') then raise exception 'this mission can no longer be withdrawn'; end if;
- delete from public.action_proofs where assignment_id = v_assignment.id and status = 'pending';
+ -- a pending proof is set aside, never erased: it reads as rejected with no
+ -- reviewer and no review time, which frees its link or upload for reuse and
+ -- lets a member who rejoins submit again on the same row
+ update public.action_proofs set status = 'rejected', review_note = 'Withdrawn by the member.'
+  where assignment_id = v_assignment.id and status = 'pending';
  update public.action_mission_assignments set status = 'withdrawn' where id = v_assignment.id;
  return jsonb_build_object('assignment_id', v_assignment.id, 'status', 'withdrawn');
 end;

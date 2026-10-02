@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 201,
-  "latest_version": "20261002024701",
-  "latest_name": "mnet_scheduled_publish_idempotency",
-  "ledger_sha256": "94976eb1202464c6e55a6b1eb80961933f95584119a0c3feb30f96d26b984e4a",
+  "migration_count": 204,
+  "latest_version": "20261002061318",
+  "latest_name": "action_network_fk_indexes",
+  "ledger_sha256": "236cd4e50e2d6e2c906125f463ff44880be4e1fd4441783ceb3021fcdf2cc6db",
   "migrations": [
     {
       "version": "0001",
@@ -810,6 +810,18 @@
     {
       "version": "20261002024701",
       "name": "mnet_scheduled_publish_idempotency"
+    },
+    {
+      "version": "20261002055704",
+      "name": "play_counts_hotpath_v1"
+    },
+    {
+      "version": "20261002061056",
+      "name": "action_network_gamification_v1"
+    },
+    {
+      "version": "20261002061318",
+      "name": "action_network_fk_indexes"
     }
   ]
 }
