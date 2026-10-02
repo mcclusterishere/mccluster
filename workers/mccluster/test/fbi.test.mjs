@@ -14,7 +14,7 @@ const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
 
-function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER } } = {}) {
+function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER } } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
@@ -24,6 +24,7 @@ function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type:
     if (u.endsWith('/rpc/eu_is_admin')) return ok(admin);
     if (u.includes('/fbi_board?')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: [IMG], legit: 1, cap: 6, guilty: 0, acquitted: 0 }]);
     if (u.includes('/network_media_assets?id=in.') && u.includes('select=id,bucket_id')) return ok([{ id: IMG, bucket_id: 'mnet-media', object_path: 'u/a.jpg' }]);
+    if (u.includes('/network_media_assets?') && m === 'PATCH') return ok(JSON.parse(init.body).status === 'attached' ? (reserved ?? assets) : []);
     if (u.includes('/network_media_assets?')) return ok(assets);
     if (u.includes('/storage/v1/object/sign/mnet-media')) return ok([{ path: 'u/a.jpg', signedURL: '/object/sign/mnet-media/u/a.jpg?token=t' }]);
     if (u.includes('/fbi_cases?id=') && m === 'GET') return ok(caseRow ? [caseRow] : []);
@@ -80,6 +81,23 @@ test('no faces: a case without the attestation is refused, unless you turned you
   assert.equal((await call('/v1/fbi/cases', 'POST', { ...goodCase, no_faces_attested: false })).status, 400);
   assert.equal((await call('/v1/fbi/cases', 'POST', { ...goodCase, kind: 'sighting', self_surrender: true, no_faces_attested: false })).status, 400, 'only Most Wanted can be a surrender');
   assert.equal((await call('/v1/fbi/cases', 'POST', { kind: 'most_wanted', title: 'I wore socks with slides', media_asset_ids: [IMG], self_surrender: true })).status, 201);
+});
+
+test('evidence must be finished uploading, and is reserved before the case is written', async () => {
+  const calls = fake();
+  assert.equal((await call('/v1/fbi/cases', 'POST', goodCase)).status, 201);
+  assert.match(calls.find((c) => c.u.includes('/network_media_assets?') && c.m === 'GET').u, /status=eq\.ready/, 'a staged upload is not evidence');
+  const reserve = calls.find((c) => c.u.includes('/network_media_assets?') && c.m === 'PATCH');
+  assert.equal(reserve.body.status, 'attached');
+  assert.match(reserve.u, /post_id=is\.null/);
+  const order = calls.map((c) => (c.m === 'PATCH' && c.u.includes('network_media_assets') ? 'reserve' : c.m === 'POST' && c.u.includes('/fbi_cases') ? 'insert' : null)).filter(Boolean);
+  assert.deepEqual(order, ['reserve', 'insert'], 'reserve first, then write the case');
+});
+
+test('a photo already used by another case is refused and nothing is held', async () => {
+  const calls = fake({ reserved: [] });
+  assert.equal((await call('/v1/fbi/cases', 'POST', goodCase)).status, 409);
+  assert.ok(!calls.some((c) => c.u.includes('/fbi_cases') && c.m === 'POST'), 'no case is written');
 });
 
 test('photos must be your own images', async () => {

@@ -119,7 +119,16 @@
     var id = shared; shared = null;
     api("/v1/fbi/cases/" + id).then(function (d) {
       if (!d.case) return;
-      if (d.case.kind !== S.tab) { shared = id; setTab(d.case.kind); }
+      if (d.case.kind !== S.tab) { shared = id; setTab(d.case.kind); return; }
+      /* An older case, past the newest on this board: put it on top. */
+      if (!$("case-" + id)) {
+        S.cases.unshift(d.case);
+        var empty = $("fbiBoard").querySelector(".fbi__empty");
+        if (empty) empty.remove();
+        $("fbiBoard").insertAdjacentHTML("afterbegin", card(d.case, "board"));
+      }
+      var el = $("case-" + id);
+      if (el) { el.classList.add("is-shared"); el.scrollIntoView({ block: "center" }); }
     }).catch(function () { /* the case was removed or never public */ });
   }
 

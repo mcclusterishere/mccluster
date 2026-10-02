@@ -881,9 +881,19 @@ async function handleFbi(req,env,path,url){
     if(!surrender&&b.no_faces_attested!==true)return fail(req,env,'Photos must show the shoes or the fit, not anybody\'s face. Tick the box to confirm.',400);
     const ids=uniq(Array.isArray(b.media_asset_ids)?b.media_asset_ids:[]).filter(uuidLike).slice(0,4);
     if(!ids.length)return fail(req,env,'Add at least one photo',400);
-    const assets=await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type`);
-    if((assets||[]).length!==ids.length||assets.some(a=>a.media_type!=='image'))return fail(req,env,'Photos only, and only ones you uploaded',400);
-    const rows=await service(env,'fbi_cases',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({kind,reporter_m_uid:muid,title,details:fbiText(b.details,500),item:fbiText(b.item,80),charge:fbiText(b.charge,80),city:fbiText(b.city,40),media_asset_ids:ids,self_surrender:surrender,no_faces_attested:b.no_faces_attested===true})});
+    /* Evidence must be uploaded and finished (ready), and it is reserved
+       (attached) before the case is written, so it cannot be discarded
+       later and a desk or a voter never sees a case with its photos gone.
+       The reservation is conditional, so one photo cannot back two cases. */
+    const assets=await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&status=eq.ready&select=id,media_type`);
+    if((assets||[]).length!==ids.length||assets.some(a=>a.media_type!=='image'))return fail(req,env,'Photos only, fully uploaded, and only ones you uploaded',400);
+    const assetFilter=`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`;
+    const reserved=await service(env,`${assetFilter}&status=eq.ready&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'attached',updated_at:new Date().toISOString()})});
+    const release=()=>service(env,`${assetFilter}&status=eq.attached&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'ready',updated_at:new Date().toISOString()})}).catch(()=>{});
+    if((reserved||[]).length!==ids.length){await release();return fail(req,env,'Those photos are already in use',409);}
+    let rows;
+    try{rows=await service(env,'fbi_cases',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({kind,reporter_m_uid:muid,title,details:fbiText(b.details,500),item:fbiText(b.item,80),charge:fbiText(b.charge,80),city:fbiText(b.city,40),media_asset_ids:ids,self_surrender:surrender,no_faces_attested:b.no_faces_attested===true})});}
+    catch(e){await release();throw e;}
     return reply(req,env,{case:{id:rows?.[0]?.id,status:'pending'}},201);
   }
   const vote=path.match(/^\/v1\/fbi\/cases\/([0-9a-f-]{36})\/vote$/i);
