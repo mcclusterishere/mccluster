@@ -563,3 +563,7 @@ html, body { background: #0a0807; }
 .mn__record-receipt { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-weight: 800; font-size: 0.82rem; text-decoration: none; }
 .mn__record-empty { margin: 12px 0 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .mn__record { animation: none; } }
+.mn__record-unlock span { display: block; }
+.mn__fellow-note { margin-top: 6px; color: var(--mn-dim); font-size: 0.85rem; }
+.mn__fellow-open { margin-top: 10px; }
+.mn__fellow-form { margin-top: 12px; display: grid; gap: 6px; }

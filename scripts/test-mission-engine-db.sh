@@ -10,5 +10,7 @@ trap 'psql -q -d postgres -c "drop database if exists $DB" >/dev/null' EXIT
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/supabase_api_roles.stub.sql >/dev/null
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/20261002061056_action_network_gamification_v1.sql >/dev/null
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/action_mission_engine.behaviour.sql
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/20261002063754_action_network_fellowship_v1.sql >/dev/null
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/action_fellowship.behaviour.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/pending_migrations/action_network_demographics_antiracism_v1.sql >/dev/null
 echo "demographics migration still applies on top"

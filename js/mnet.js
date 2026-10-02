@@ -1474,7 +1474,7 @@
      you are, whether the mission is open, and what state your work is in.
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
-  var missions={all:[],current:null,assignment:null,record:null,deepLinked:false};
+  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,deepLinked:false};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -1498,7 +1498,39 @@
      Points are feedback; access is the reward. */
   var STATUS_LABEL={in_progress:"In progress",joined:"In progress",submitted:"Waiting for review",verified:"Verified",rejected:"Not verified"};
   function loadActionRecord(){
-    return sbRpc("action_record").then(function(r){missions.record=r||null;paintActionRecord();}).catch(function(){});
+    return Promise.all([
+      sbRpc("action_record").catch(function(){return null;}),
+      sbRpc("action_fellowship_status").catch(function(){return null;})
+    ]).then(function(x){missions.record=x[0]||null;missions.fellowship=x[1]||null;paintActionRecord();});
+  }
+  /* THE FELLOWSHIP. Three verified actions open the application; the
+     server counts them, so the form only appears when it will be accepted. */
+  function fellowshipBlock(verified){
+    var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=Math.max(0,need-verified);
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are an Action Network fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
+    if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
+    var declined=app&&app.status==="declined";
+    return '<div class="mn__record-unlock is-open"><b>You can apply for the fellowship.</b> Your verified record is enough to be considered.'+
+      (declined&&app.review_note?'<span class="mn__fellow-note">Last time: '+esc(app.review_note)+'</span>':"")+
+      '<button class="mn__primary mn__fellow-open" type="button" data-fellow-open>Apply for the fellowship</button>'+
+      '<form class="mn__fellow-form" id="mnFellowForm" hidden>'+
+        '<label class="mn__label" for="mnFellowWhy">Why do you want in?</label>'+
+        '<textarea class="mn__input mn__textarea" id="mnFellowWhy" rows="4" maxlength="3000" placeholder="What you have been doing, and what you want to do next."></textarea>'+
+        '<label class="mn__label" for="mnFellowProject">What would you build or lead? <span>optional</span></label>'+
+        '<textarea class="mn__input mn__textarea" id="mnFellowProject" rows="3" maxlength="3000"></textarea>'+
+        '<label class="mn__label" for="mnFellowHours">Hours a week you can give <span>optional</span></label>'+
+        '<input class="mn__input" id="mnFellowHours" type="number" min="1" max="60" inputmode="numeric">'+
+        '<button class="mn__primary" type="submit">Send my application</button>'+
+        '<p class="mn__status" id="mnFellowStatus" role="status"></p>'+
+      '</form></div>';
+  }
+  function submitFellowship(ev){
+    ev.preventDefault();var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
+    var hours=parseInt($("mnFellowHours").value,10);
+    sbRpc("apply_for_fellowship",{p_why:($("mnFellowWhy").value||"").trim(),p_project:($("mnFellowProject").value||"").trim(),p_hours_per_week:isFinite(hours)?hours:null})
+      .then(function(){if(window.MCC_TRACK)window.MCC_TRACK("fellowship_apply",{});return loadActionRecord();})
+      .catch(function(e){setStatus($("mnFellowStatus"),e.message||"Your application could not be sent.","error");b.disabled=false;});
   }
   function paintActionRecord(){
     var r=missions.record; if(!r)return;
@@ -1507,10 +1539,7 @@
     if($("mnVerifiedActions"))$("mnVerifiedActions").textContent=verified.toLocaleString();
     if($("mnCohortProgress"))$("mnCohortProgress").textContent=cohorts.length?(cohorts[0].goal_points?Math.min(100,Math.round(cohorts[0].points/cohorts[0].goal_points*100))+"%":cohorts[0].name):"-";
     var host=$("mnRecord"); if(!host)return;
-    var left=Math.max(0,FELLOWSHIP_MIN_VERIFIED-verified);
-    var fellowship=left===0
-      ?'<p class="mn__record-unlock is-open"><b>Fellowship review is open to you.</b> Your verified record is enough to be considered.</p>'
-      :'<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until fellowship review opens.</p>';
+    var fellowship=fellowshipBlock(verified);
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
     var list=(r.missions||[]).map(function(m){
       return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(STATUS_LABEL[m.status]||m.status)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
@@ -1593,7 +1622,14 @@
     var host=$("mnMissionList");if(!host)return;
     function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));}
     host.addEventListener("click",onOpen);
-    if($("mnRecord"))$("mnRecord").addEventListener("click",onOpen);
+    if($("mnRecord")){
+      $("mnRecord").addEventListener("click",function(ev){
+        onOpen(ev);
+        var o=ev.target.closest&&ev.target.closest("[data-fellow-open]");
+        if(o){o.hidden=true;$("mnFellowForm").hidden=false;$("mnFellowWhy").focus();}
+      });
+      $("mnRecord").addEventListener("submit",function(ev){if(ev.target&&ev.target.id==="mnFellowForm")submitFellowship(ev);});
+    }
     $("mnRefreshMissions").addEventListener("click",loadMissions);$("mnMissionClose").addEventListener("click",function(){$("mnMissionDialog").close();try{history.replaceState(null,"","mnet.html");}catch(_){}});
     $("mnMissionJoin").addEventListener("click",joinMission);$("mnMissionProof").addEventListener("submit",submitMissionProof);
   })();

@@ -18,7 +18,8 @@
   "use strict";
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
-    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false};
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
+    missions:null,missionBusy:false,apps:null,appBusy:false};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -158,6 +159,61 @@
       '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crn-create>Create as draft</button></div>'+
       '<p class="cro-meta">Drafts are invisible to the public. Fill in the content, facts and sources, then set it live.</p></section>';
   }
+  /* MISSIONS. The desk writes missions directly (the "admins manage
+     missions" policy); members never can. A mission is born a draft and is
+     only visible to the public once it is opened. */
+  var DOMAINS=["community","music","advocacy","business","research","education","mutual_aid","creative","other"];
+  var M_STATES=[["draft","Draft"],["open","Open"],["paused","Pause"],["closed","Close"]];
+  function loadMissions(){
+    A.missionBusy=true;redraw();
+    return A.supa("action_missions?select=id,campaign_id,title,description,domain,difficulty,base_points,skills,capacity,status,created_at&order=created_at.desc&limit=200")
+      .then(function(rows){A.missions=rows||[];}).catch(function(err){A.missions=[];A.msg="Missions could not load: "+(err.message||err);})
+      .then(function(){A.missionBusy=false;redraw();});
+  }
+  function missionDesk(c){
+    if(A.missions===null&&!A.missionBusy)loadMissions();
+    if(A.missionBusy&&A.missions===null)return note("Loading missions…");
+    var list=(A.missions||[]).map(function(m){
+      return '<article class="cro-card" style="margin-bottom:10px"><div class="cro-item__head"><div><p class="cro-meta">'+e(m.domain)+' · difficulty '+e(m.difficulty)+' · '+e(m.base_points)+' base pts'+(m.capacity?' · '+e(m.capacity)+' seats':'')+(m.campaign_id?' · '+e(m.campaign_id):'')+'</p><h2>'+e(m.title)+'</h2></div><span class="cro-pill">'+e(m.status)+'</span></div>'+
+        (m.description?'<p>'+e(m.description)+'</p>':'')+(m.skills&&m.skills.length?'<p class="cro-meta">Skills: '+e(m.skills.join(", "))+'</p>':'')+
+        '<div class="cro-actions">'+M_STATES.filter(function(x){return x[0]!==m.status;}).map(function(x){return '<button class="cr-btn" type="button" data-mission-state="'+e(m.id)+'" data-to="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div></article>';
+    }).join("");
+    return '<section class="cro-card"><h2>New mission</h2><div class="cro-form cro-form--3">'+
+      '<label>Title<input id="crmTitle" maxlength="160" placeholder="Register three neighbours to vote"></label>'+
+      '<label>Domain<select id="crmDomain">'+DOMAINS.map(function(d){return '<option value="'+d+'">'+d.replace("_"," ")+'</option>';}).join("")+'</select></label>'+
+      '<label>Difficulty (1 to 5)<input id="crmDifficulty" type="number" min="1" max="5" value="1"></label>'+
+      '<label>Base points (10 to 1000)<input id="crmPoints" type="number" min="10" max="1000" value="100"></label>'+
+      '<label>Skills (comma separated)<input id="crmSkills" placeholder="organizing, civic"></label>'+
+      '<label>Seats (blank for no limit)<input id="crmCapacity" type="number" min="1"></label></div>'+
+      '<label>What to do, and what counts as proof<textarea id="crmDescription" rows="4" placeholder="The steps, and exactly what proof the reviewer will accept."></textarea></label>'+
+      '<label class="cro-check"><input id="crmCampaign" type="checkbox"'+(c?' checked':'')+'> Part of '+e(c?c.title:"this campaign")+'</label>'+
+      '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-mission-create>Create as draft</button></div>'+
+      '<p class="cro-meta">Rewards are for completed, verifiable action. Never for a viewpoint, a candidate, a party, persuasion, outrage or attention.</p></section>'+
+      (list?'<div style="margin-top:12px">'+list+'</div>':note("No missions yet."));
+  }
+  /* FELLOWSHIP. Applications from members with three or more verified
+     actions; the decision and its note go back to the member. */
+  function loadApps(){
+    A.appBusy=true;redraw();
+    return A.supa("action_fellowship_applications?select=id,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at&order=created_at.desc&limit=100")
+      .then(function(rows){A.apps=rows||[];}).catch(function(err){A.apps=[];A.msg="Applications could not load: "+(err.message||err);})
+      .then(function(){A.appBusy=false;redraw();});
+  }
+  function fellowDesk(){
+    if(A.apps===null&&!A.appBusy)loadApps();
+    if(A.appBusy&&A.apps===null)return note("Loading applications…");
+    if(!A.apps.length)return note("No fellowship applications yet. They open to members after three verified actions.");
+    return '<div class="cro-list">'+A.apps.map(function(a){
+      var open=a.status==="submitted";
+      return '<article class="cro-card" style="margin-bottom:12px"><div class="cro-item__head"><div><p class="cro-meta">FELLOWSHIP · '+e(a.verified_actions_at_apply)+' verified actions · '+e(new Date(a.created_at).toLocaleString())+(a.hours_per_week?' · '+e(a.hours_per_week)+' h/week':'')+'</p></div><span class="cro-pill">'+e(a.status)+'</span></div>'+
+        '<blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(a.why)+'</blockquote>'+
+        (a.project?'<p><b>Would build or lead:</b> '+e(a.project)+'</p>':'')+
+        (open?'<label>Note to the member<textarea data-app-note="'+e(a.id)+'" placeholder="Welcome, or what would make a stronger application."></textarea></label>'+
+          '<div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-app-review="'+e(a.id)+'" data-decision="accepted">Accept</button><button class="cr-btn" type="button" data-app-review="'+e(a.id)+'" data-decision="declined">Decline</button></div>'
+          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':''))+
+        '</article>';
+    }).join("")+'</div>';
+  }
   function render(){
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
@@ -165,9 +221,9 @@
     var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, the Action Network migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
-    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["reviews","Proof review"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
     var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
-      (A.tab==="reviews"?reviews():A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
+      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
     return'<div class="cro">'+chips+head+tabs+body+'</div>';
   }
 
@@ -205,6 +261,37 @@
     loadUploads(root);
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
     root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
+    var mc=root.querySelector("[data-mission-create]");
+    if(mc)mc.onclick=function(){
+      var title=val(root,"crmTitle").trim(); if(!title){alert("Give the mission a title.");return;}
+      var cap=parseInt(val(root,"crmCapacity"),10), c=current(), useC=root.querySelector("#crmCampaign");
+      var body={title:title,description:val(root,"crmDescription").trim(),domain:val(root,"crmDomain"),
+        difficulty:Math.min(5,Math.max(1,parseInt(val(root,"crmDifficulty"),10)||1)),
+        base_points:Math.min(1000,Math.max(10,parseInt(val(root,"crmPoints"),10)||100)),
+        skills:val(root,"crmSkills").split(",").map(function(x){return x.trim().toLowerCase();}).filter(Boolean).slice(0,8),
+        capacity:isFinite(cap)&&cap>0?cap:null,status:"draft",campaign_id:(useC&&useC.checked&&c)?c.id:null};
+      mc.disabled=true;
+      A.supa("action_missions",{method:"POST",prefer:"return=minimal",body:body})
+        .then(function(){A.msg="Mission created as a draft. Open it when it is ready.";return loadMissions();})
+        .catch(function(err){mc.disabled=false;alert(err.message||"The mission did not save.");});
+    };
+    root.querySelectorAll("[data-mission-state]").forEach(function(b){b.onclick=function(){
+      var to=b.getAttribute("data-to"),id=b.getAttribute("data-mission-state");
+      if(to==="open"&&!confirm("Open this mission? Anyone can see and take it."))return;
+      b.disabled=true;
+      A.supa("action_missions?id=eq."+encodeURIComponent(id),{method:"PATCH",prefer:"return=minimal",body:{status:to,updated_at:new Date().toISOString()}})
+        .then(function(){A.msg="Mission is now "+to+".";return loadMissions();})
+        .catch(function(err){b.disabled=false;alert(err.message||"That did not save.");});
+    };});
+    root.querySelectorAll("[data-app-review]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-app-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-app-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
+      if(decision==="declined"&&!reviewNote){alert("Add a note so the member knows what would make a stronger application.");return;}
+      if(!confirm(decision==="accepted"?"Accept this member into the fellowship?":"Decline this application?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_fellowship_application",{method:"POST",body:{p_application_id:id,p_decision:decision,p_review_note:reviewNote||null}})
+        .then(function(){A.msg=decision==="accepted"?"Fellow accepted.":"Application declined with your note.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
       if(!confirm((decision==="verified"?"Verify this submitted action and award it exactly once?":"Reject this proof without awarding points?")))return;
