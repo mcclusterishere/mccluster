@@ -1,0 +1,20 @@
+/* Control · Create · Social Agent — dedicated-phone publishing worker. */
+(function(){"use strict";window.CR=window.CR||{};
+ var S={request:null,render:null,loaded:false,loading:false,error:null,devices:[],jobs:[],caption:"",media:""};
+ var FN="https://zmnhbrjyhxzhkxmhkexs.supabase.co/functions/v1/social-agent";
+ function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+ function token(){return window.MCC_SUPA&&MCC_SUPA.token?MCC_SUPA.token():Promise.resolve(null);} function call(body){return token().then(function(t){if(!t)throw new Error("Signed out");return fetch(FN,{method:"POST",headers:{authorization:"Bearer "+t,"content-type":"application/json"},body:JSON.stringify(body)});}).then(function(r){return r.text().then(function(raw){var j={};try{j=raw?JSON.parse(raw):{};}catch(_){}if(!r.ok)throw new Error(j.error||("Social Agent "+r.status));return j;});});}
+ function load(){if(S.loading)return;S.loading=true;S.error=null;call({action:"status"}).then(function(x){S.devices=x.devices||[];S.jobs=x.jobs||[];S.loaded=true;}).catch(function(x){S.error=x;}).finally(function(){S.loading=false;S.render();});}
+ function render(){
+  if(!S.loaded&&!S.loading)setTimeout(load,0);
+  var dev=S.devices.length?S.devices.map(function(d){return'<div class="cro-row"><div class="cro-row__top"><b>'+e(d.name)+'</b><span class="cro-pill">'+e(d.status)+'</span></div><div class="cro-meta">'+e(d.id)+' · '+e(d.last_seen_at?new Date(d.last_seen_at).toLocaleString():"never connected")+'</div></div>';}).join(""):'<div class="cro-note">No phone worker registered yet.</div>';
+  var jobs=S.jobs.length?S.jobs.map(function(j){return'<div class="cro-row"><div class="cro-row__top"><b>'+e(j.action)+'</b><span class="cro-pill">'+e(j.state)+'</span></div><div class="cro-meta">'+e((j.caption||"").slice(0,120)||j.media_url||"")+'</div></div>';}).join(""):'<div class="cro-note">No phone jobs yet.</div>';
+  return '<div class="cro-grid cro-grid--2"><section class="cro-card"><h2>Phone worker</h2><p class="cro-meta">The phone only executes approved jobs. Control remains the source of truth.</p>'+dev+'<div class="cro-actions" style="margin-top:10px"><button class="cr-btn" data-sa-register>Register iPhone</button><button class="cr-btn" data-sa-refresh>Refresh</button></div></section><section class="cro-card"><h2>Queue Instagram Reel</h2><label class="cro-field"><span>HTTPS media URL</span><input class="cr-input" id="saMedia" type="url" value="'+e(S.media)+'" placeholder="https://…/video.mp4"></label><label class="cro-field"><span>Caption</span><textarea class="cr-input" id="saCaption" rows="6" placeholder="Caption…">'+e(S.caption)+'</textarea></label><div class="cro-actions"><button class="cr-btn cr-btn--primary" data-sa-queue>Queue for phone</button></div></section></div><section class="cro-card" style="margin-top:10px"><h2>Execution ledger</h2>'+jobs+'</section>'+(S.error?'<div class="cro-note cro-note--bad">'+e(S.error.message||S.error)+'</div>':"");
+ }
+ function bind(root){if(!root)return;var m=root.querySelector("#saMedia"),c=root.querySelector("#saCaption");if(m)m.oninput=function(){S.media=m.value};if(c)c.oninput=function(){S.caption=c.value};
+  var r=root.querySelector("[data-sa-refresh]");if(r)r.onclick=load;
+  var reg=root.querySelector("[data-sa-register]");if(reg)reg.onclick=function(){reg.disabled=true;call({action:"register-device",name:"Instagram iPhone"}).then(load).catch(function(x){S.error=x;S.render();});};
+  var q=root.querySelector("[data-sa-queue]");if(q)q.onclick=function(){S.media=(m&&m.value)||S.media;S.caption=(c&&c.value)||S.caption;q.disabled=true;call({action:"enqueue",media_url:S.media,caption:S.caption,device_id:S.devices[0]?S.devices[0].id:null}).then(function(){S.caption="";S.media="";load();}).catch(function(x){S.error=x;S.render();});};
+ }
+ window.CR.socialAgent={init:function(o){S.request=o.request;S.render=o.render;},render:render,bind:bind,load:load,state:S};
+})();

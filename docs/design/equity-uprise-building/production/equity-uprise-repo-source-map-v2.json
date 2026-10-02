@@ -301,6 +301,13 @@
       "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
     },
     {
+      "path": "action/index.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
+    },
+    {
       "path": "AGENTS.md",
       "classification": "governance_support",
       "capability_ids": [],
@@ -362,6 +369,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Institutional Desk styling; presentation only."
+    },
+    {
+      "path": "css/mnet.css",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Action Network/Mnet presentation styles, including organization-grade group fronts; not a physical building capability."
     },
     {
       "path": "css/music-director-base.css",
@@ -858,6 +872,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "end-racism.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
+    },
+    {
       "path": "gallery.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -870,6 +891,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "heal-the-3rd-world.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
     },
     {
       "path": "hire.html",
@@ -988,6 +1016,13 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/mnet-live.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network live strip, watch screen and broadcast studio; calls the eu_is_admin desk check to show the kill switch. Not a building capability."
+    },
+    {
       "path": "js/offers.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1068,6 +1103,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "mnet.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
     },
     {
       "path": "native/app/(tabs)/_layout.tsx",
@@ -1205,6 +1247,13 @@
       "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
     },
     {
+      "path": "resume-it-support.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+    },
+    {
       "path": "scripts/kb-build.mjs",
       "classification": "capability_source",
       "capability_ids": [
@@ -1228,6 +1277,20 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
+      "path": "scripts/test/action-gamification.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
+    },
+    {
+      "path": "scripts/test/action-network.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
+    },
+    {
       "path": "scripts/test/appbar-consistency.test.mjs",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -1240,6 +1303,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/test/song-test.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the song test; not itself a program capability."
     },
     {
       "path": "sitemap.xml",
@@ -1612,6 +1682,76 @@
       "rationale": "Shared owner analytics/read-authority migration is discovered by the Equity Uprise repo audit because it references owner/admin authority, but it does not define an independent Equity Uprise capability."
     },
     {
+      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes."
+    },
+    {
+      "path": "supabase/migrations/20261002014251_end_racism_campaign.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy."
+    },
+    {
+      "path": "supabase/migrations/20261002015418_song_test.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied song test (CIA Mind Control listening test) tables and functions; uses eu_is_admin() for the owner's read of answers. Not a building program capability."
+    },
+    {
+      "path": "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network mission, proof, reward, skill and cohort schema (migration 20261002061056); not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002061954_analytics_events_lean.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Lean analytics copy of public.events; references the eu_is_admin desk read rule. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network fellowship application (opens at three verified actions); references the eu_is_admin desk rule. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002135938_network_live_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network live sessions (owner desk and accepted fellows broadcast); references the eu_is_admin desk rule. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "In-app account deletion requests (App Store 5.1.1(v), Google Play); the desk queue references the eu_is_admin desk rule. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network organization, group, authenticity-check and Be Authentic campaign schema; references eu_is_admin() for administrative authority and is not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network spam limits (pace, daily caps, lengths, duplicates); exempts the owner desk by the same admin rule as eu_role(). Not a building capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -1937,6 +2077,13 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
+      "path": "supabase/tests/supabase_api_roles.stub.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test-only stand-ins (API roles, auth.uid, eu_is_admin) for running the Mission Engine migration in a scratch database; never applied to a project."
+    },
+    {
       "path": "tools/eu-export-seed.sh",
       "classification": "build_support",
       "capability_ids": [],
@@ -1991,6 +2138,20 @@
       "rationale": "Routes the sanitized Equity Uprise Halo Globe projection while preserving the owner-only Seek First surface."
     },
     {
+      "path": "workers/mccluster/src/music/tracks.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated song-length table for the listen ledger; carries the equity-uprise album slug as catalogue data only, no program capability."
+    },
+    {
+      "path": "workers/mccluster/src/platform-api.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical platform API Worker routes; references the eu_is_admin owner check for the mission proof review route; not a building capability."
+    },
+    {
       "path": "workers/mccluster/src/seek-first/catalogs.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2014,151 +2175,11 @@
       "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
     },
     {
-      "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
-    },
-    {
-      "path": "resume-it-support.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
-    },
-    {
-      "path": "workers/mccluster/src/music/tracks.js",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Generated song-length table for the listen ledger; carries the equity-uprise album slug as catalogue data only, no program capability."
-    },
-    {
-      "path": "action/index.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
-    },
-    {
-      "path": "heal-the-3rd-world.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Heal the 3rd World EP gateway into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
-    },
-    {
-      "path": "scripts/test/action-network.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
-    },
-    {
-      "path": "supabase/migrations/20260930235851_uprise_action_network.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied schema for Uprise Action Network campaigns, participants, actions and ledger; uses eu_is_admin() for owner writes."
-    },
-    {
-      "path": "end-racism.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "End Racism gateway (CIA Mind Control album) into the Uprise Action Network; names Equity Uprise in its brand line only and defines no program capability."
-    },
-    {
-      "path": "supabase/migrations/20261002014251_end_racism_campaign.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy."
-    },
-    {
-      "path": "supabase/migrations/20261002015418_song_test.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied song test (CIA Mind Control listening test) tables and functions; uses eu_is_admin() for the owner's read of answers. Not a building program capability."
-    },
-    {
-      "path": "scripts/test/song-test.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test/verification file for the song test; not itself a program capability."
-    },
-    {
-      "path": "mnet.html",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
-    },
-    {
-      "path": "scripts/test/action-gamification.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
-    },
-    {
-      "path": "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied Action Network mission, proof, reward, skill and cohort schema (migration 20261002061056); not a building capability."
-    },
-    {
-      "path": "supabase/tests/supabase_api_roles.stub.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test-only stand-ins (API roles, auth.uid, eu_is_admin) for running the Mission Engine migration in a scratch database; never applied to a project."
-    },
-    {
-      "path": "workers/mccluster/src/platform-api.js",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Canonical platform API Worker routes; references the eu_is_admin owner check for the mission proof review route; not a building capability."
-    },
-    {
       "path": "workers/mccluster/test/mission-proof-media.test.mjs",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test for the owner-only mission proof media route; not a building capability."
-    },
-    {
-      "path": "supabase/migrations/20261002061954_analytics_events_lean.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Lean analytics copy of public.events; references the eu_is_admin desk read rule. Not a building capability."
-    },
-    {
-      "path": "supabase/migrations/20261002063754_action_network_fellowship_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Action Network fellowship application (opens at three verified actions); references the eu_is_admin desk rule. Not a building capability."
-    },
-    {
-      "path": "js/mnet-live.js",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Action Network live strip, watch screen and broadcast studio; calls the eu_is_admin desk check to show the kill switch. Not a building capability."
-    },
-    {
-      "path": "supabase/migrations/20261002135938_network_live_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Action Network live sessions (owner desk and accepted fellows broadcast); references the eu_is_admin desk rule. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/mnet-live.test.mjs",
@@ -2168,11 +2189,11 @@
       "rationale": "Worker test for the Action Network live routes; not a building capability."
     },
     {
-      "path": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
-      "classification": "shared_backend_support",
+      "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
+      "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "In-app account deletion requests (App Store 5.1.1(v), Google Play); the desk queue references the eu_is_admin desk rule. Not a building capability."
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

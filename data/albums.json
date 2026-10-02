@@ -205,13 +205,13 @@
    "by": "",
    "tracks": [
     {
-     "title": "Pull Up",
-     "src": "assets/audio/pull-up.mp3",
+     "title": "You the Feds",
+     "src": "assets/audio/you-the-feds.m4a",
      "poster": "assets/img/cia-mind-control-cover.jpg"
     },
     {
-     "title": "You the Feds",
-     "src": "assets/audio/you-the-feds.m4a",
+     "title": "Pull Up",
+     "src": "assets/audio/pull-up.mp3",
      "poster": "assets/img/cia-mind-control-cover.jpg"
     },
     {
@@ -241,12 +241,12 @@
       "preview_visibility": "until_earned",
       "full_visibility": "earned_play",
       "listen_gate": {
-       "in_album_order": [
-        "pull-up",
-        "you-the-feds"
+       "any_of": [
+        "you-the-feds",
+        "pull-up"
        ],
-       "window_minutes": 180,
-       "each_play_needs_a_fresh_run": true
+       "minimum_completed": 1,
+       "each_play_needs_a_fresh_listen": true
       }
      }
     }

@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music", "action-network", "song-test"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "social-agent", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -81,7 +81,7 @@
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
     whip: { title: "Whip", href: "whip.html", subtitle: "Mobility product" },
     prim3: { title: "PRIM3", href: "prim3.html", subtitle: "Learning product" },
-    halo: { title: "Hitman Halo", href: "prayer-closet.html", subtitle: "Specialized intelligence workspace" },
+    halo: { title: "Hitman Halo", href: "auth/seek-first-handoff.html", subtitle: "Owner spatial intelligence workspace" },
     manufacture: { title: "WE Manufacture", href: "we-manufacture.html", subtitle: "Manufacturing workspace" },
     spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
   };
@@ -1598,6 +1598,8 @@
     var body = state.createView === "projects" ? renderProjects()
       : state.createView === "library" ? renderLibrary()
       : state.createView === "channels" ? renderChannels()
+      : state.createView === "social-agent"
+        ? (window.CR.socialAgent ? window.CR.socialAgent.render() : empty("Social Agent unavailable", "The native Control module did not load."))
       : state.createView === "music"
         ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
@@ -2885,6 +2887,7 @@
     window.CR.media.bind($("crSurface"));
     if (window.CR.workTools) window.CR.workTools.bind($("crSurface"));
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
+    if (window.CR.socialAgent) window.CR.socialAgent.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
@@ -3098,6 +3101,7 @@
     getState: function () { return state; }
   });
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
+  if (window.CR.socialAgent) window.CR.socialAgent.init({ request: request, render: render });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });

@@ -1,8 +1,9 @@
-/* Spam limits on Action Network posts. The table refuses a post over 5,000
-   characters (MN413) and a member posting too fast (MN429); the Worker turns
-   those into a 413 and a 429 with the table's own sentence, and refuses an
-   over-long post itself before ever writing it, instead of cutting it short.
-   Driven against a fake Supabase. */
+/* Spam limits on the Action Network (network_rate_limits_v2). The tables
+   refuse a post over 2,000 characters or a reply over 1,000 (MN413), a member
+   going too fast or past a daily cap (MN429), and a repeat (MN409); the Worker
+   turns those into a 413, 429 or 409 with the table's own sentence on every
+   route, and refuses an over-long post itself before ever writing it, instead
+   of cutting it short. Driven against a fake Supabase. */
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handlePlatformApi } from '../src/platform-api.js';
@@ -14,18 +15,22 @@ const POST = '33333333-3333-4333-8333-333333333333';
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 
-function fake({ insertError = null, patchError = null } = {}) {
+const OTHER = '44444444-4444-4444-8444-444444444444';
+function fake({ insertError = null, patchError = null, followError = null, existing = { id: POST, author_m_uid: MUID, body: 'old', media: [] } } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
     calls.push({ u, m });
     const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
     if (u.endsWith('/auth/v1/user')) return ok({ id: USER });
+    if (u.includes(`/m_auth_user_links?m_uid=eq.${OTHER}`)) return ok([{ auth_user_id: 'other-user' }]);
     if (u.includes('/m_auth_user_links')) return ok([{ m_uid: MUID }]);
+    if (u.includes('/platform_profiles?user_id=eq.other-user')) return ok([{ user_id: 'other-user' }]);
+    if (u.includes('/network_follows') && m === 'POST') return followError ? ok(followError, 400) : new Response(null, { status: 201 });
     if (u.includes('/platform_apps')) return ok([{ id: 'app1' }]);
     if (u.includes('/network_posts') && m === 'POST') return insertError ? ok(insertError, 400) : ok([{ id: POST, author_m_uid: MUID, body: 'hi' }], 201);
     if (u.includes('/network_posts') && m === 'PATCH') return patchError ? ok(patchError, 400) : ok([{ id: POST, author_m_uid: MUID, body: 'x' }]);
-    if (u.includes('/network_posts') && m === 'GET') return ok([{ id: POST, author_m_uid: MUID, body: 'old', media: [] }]);
+    if (u.includes('/network_posts') && m === 'GET') return ok([existing]);
     return ok([]);
   };
   return calls;
@@ -41,36 +46,79 @@ const call = async (path, method, body) => {
 };
 const inserts = (calls) => calls.filter((c) => c.u.includes('/network_posts') && c.m === 'POST');
 
-test('a post over 5,000 characters is refused, never cut short and never written', async () => {
+test('a post over 2,000 characters is refused, never cut short and never written', async () => {
   const calls = fake();
-  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(5001) });
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(2001) });
   assert.equal(res.status, 413);
-  assert.match((await res.json()).error, /5,000 characters/);
+  assert.match((await res.json()).error, /2,000 characters/);
   assert.equal(inserts(calls).length, 0, 'nothing is written');
 });
 
-test('a post of exactly 5,000 characters goes through', async () => {
+test('a post of exactly 2,000 characters goes through', async () => {
   fake();
-  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(5000) });
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(2000) });
   assert.equal(res.status, 201);
 });
 
-test('posting too fast answers 429 with the table\'s sentence', async () => {
-  fake({ insertError: { code: 'MN429', message: 'You are posting too fast. Give it a minute.' } });
+test('a reply over 1,000 characters is refused before the write', async () => {
+  const calls = fake();
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(1001), reply_to_id: POST });
+  assert.equal(res.status, 413);
+  assert.match((await res.json()).error, /Replies are limited to 1,000 characters/);
+  assert.equal(inserts(calls).length, 0, 'nothing is written');
+});
+
+test('going too fast answers 429 with the table\'s sentence', async () => {
+  fake({ insertError: { code: 'MN429', message: 'Slow down. Give it a minute.' } });
   const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'hello' });
   assert.equal(res.status, 429);
-  assert.equal((await res.json()).error, 'You are posting too fast. Give it a minute.');
+  assert.equal((await res.json()).error, 'Slow down. Give it a minute.');
+});
+
+test('the daily cap answers 429 with the table\'s sentence', async () => {
+  fake({ insertError: { code: 'MN429', message: 'That is the limit for today: 50 posts a day.' } });
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'hello' });
+  assert.equal(res.status, 429);
+  assert.match((await res.json()).error, /50 posts a day/);
 });
 
 test('the table\'s length refusal on a direct-shaped write answers 413', async () => {
-  fake({ insertError: { code: 'MN413', message: 'Posts are limited to 5,000 characters.' } });
+  fake({ insertError: { code: 'MN413', message: 'Posts are limited to 2,000 characters.' } });
   const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'hello' });
   assert.equal(res.status, 413);
 });
 
-test('editing a post past 5,000 characters is refused before the write', async () => {
+test('posting the same thing twice answers 409', async () => {
+  fake({ insertError: { code: 'MN409', message: 'You already posted that.' } });
+  const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'hello' });
+  assert.equal(res.status, 409);
+  assert.equal((await res.json()).error, 'You already posted that.');
+});
+
+test('the follow cap answers 429 too, not a generic 400', async () => {
+  fake({ followError: { code: 'MN429', message: 'That is the limit for today: 400 follows a day.' } });
+  const res = await call(`/v1/mnet/people/${OTHER}/follow`, 'POST', {});
+  assert.equal(res.status, 429);
+  assert.match((await res.json()).error, /400 follows a day/);
+});
+
+test('an ordinary database error keeps its own status', async () => {
+  fake({ followError: { code: '23503', message: 'violates foreign key' } });
+  const res = await call(`/v1/mnet/people/${OTHER}/follow`, 'POST', {});
+  assert.equal(res.status, 400);
+});
+
+test('editing a post past 2,000 characters is refused before the write', async () => {
   const calls = fake();
-  const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { body: 'b'.repeat(6000) });
+  const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { body: 'b'.repeat(2001) });
   assert.equal(res.status, 413);
+  assert.ok(!calls.some((c) => c.m === 'PATCH'), 'nothing is written');
+});
+
+test('editing a reply past 1,000 characters is refused before the write', async () => {
+  const calls = fake({ existing: { id: POST, author_m_uid: MUID, body: 'old', media: [], reply_to_id: OTHER } });
+  const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { body: 'b'.repeat(1001) });
+  assert.equal(res.status, 413);
+  assert.match((await res.json()).error, /Replies are limited to 1,000/);
   assert.ok(!calls.some((c) => c.m === 'PATCH'), 'nothing is written');
 });

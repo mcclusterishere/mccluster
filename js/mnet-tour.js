@@ -61,6 +61,7 @@
   ];
 
   var ui = null, idx = 0, active = false, lastTarget = null, raf = 0;
+  function track(name,data){try{if(w.MCC_TRACK)w.MCC_TRACK(name,Object.assign({surface:"action_network"},data||{}));}catch(e){}}
 
   function css() {
     if (d.getElementById("mccTourStyle")) return;
@@ -189,7 +190,8 @@
     }, 60);
   }
 
-  function end() {
+  function end(reason) {
+    track("mnet_tour_end",{reason:reason||"complete",step:idx+1});
     active = false;
     try { var key = seenKey(); if (key) localStorage.setItem(key, new Date().toISOString()); } catch (e) { /* storage blocked */ }
     /* Remember it on the account too, so the app and the web agree. */
@@ -212,11 +214,11 @@
     var act = b.getAttribute("data-tour");
     if (act === "next") show(idx + 1);
     else if (act === "back") show(idx - 1);
-    else if (act === "skip") end();
+    else if (act === "skip") end("skip");
     var fin = b.getAttribute("data-tour-finish");
     if (fin != null) {
       var f = STEPS[idx].finish[Number(fin)];
-      end();
+      end("finish");
       if (f && f.view) openView(f.view);
     }
   }
@@ -265,6 +267,7 @@
     whenAppReady(function (ready) {
       if (!ready || active) return;
       active = true;
+      track("mnet_tour_start",{});
       if (!ui) build();
       show(0);
     });

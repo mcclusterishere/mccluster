@@ -86,15 +86,15 @@ export const TRACKS = {
     "album": "singles",
     "seconds": 184.2
   },
-  "pull-up": {
-    "title": "Pull Up",
-    "album": "cia-mind-control",
-    "seconds": 150.4
-  },
   "you-the-feds": {
     "title": "You the Feds",
     "album": "cia-mind-control",
     "seconds": 232.9
+  },
+  "pull-up": {
+    "title": "Pull Up",
+    "album": "cia-mind-control",
+    "seconds": 150.4
   },
   "niggy-nigg": {
     "title": "Niggy Nigg Niggr",

@@ -15,18 +15,18 @@ test('gated single is one logical track: public preview, master only as an earne
   assert.equal(track.gated.access_mode,'account');
   assert.equal(track.gated.preview_visibility,'until_earned');
   assert.equal(track.gated.full_visibility,'earned_play');
-  /* the catalogue states the owner's rule; the Worker enforces it, and the
-     two must say the same thing: play CIA Mind Control in album order, and
-     the gated record is the last song, heard only after the ones before it */
+  /* The closer stays last, but one completed listen to either earlier CIA
+     Mind Control song unlocks one earned play. */
   assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
   const router=await read('workers/mccluster/src/music/router.js');
-  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?sequence:\s*\[([^\]]*)\],\s*window_minutes:\s*(\d+)/);
-  assert.ok(gate,'the Worker no longer gates niggy-nigg by album order');
-  const sequence=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
+  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?any_of:\s*\[([^\]]*)\]/);
+  assert.ok(gate,'the Worker must gate niggy-nigg by eligible album tracks');
+  const eligible=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
   const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
-  assert.deepEqual(sequence,before,'the Worker asks for exactly the songs before it, in album order');
-  assert.deepEqual(track.gated.listen_gate.in_album_order,sequence);
-  assert.equal(track.gated.listen_gate.window_minutes,Number(gate[2]));
+  assert.deepEqual(eligible,before,'only the other CIA Mind Control songs may unlock the closer');
+  assert.deepEqual(track.gated.listen_gate.any_of,eligible);
+  assert.equal(track.gated.listen_gate.minimum_completed,1);
+  assert.equal(track.gated.listen_gate.each_play_needs_a_fresh_listen,true);
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
