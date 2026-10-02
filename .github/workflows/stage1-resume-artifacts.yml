@@ -1,0 +1,59 @@
+name: Stage 1 Resume Artifact Closure
+
+on:
+  push:
+    branches:
+      - chatgpt/stage1-resume-artifacts
+    paths:
+      - .github/workflows/stage1-resume-artifacts.yml
+      - matthew-mccluster.html
+      - tools/build-resume.mjs
+      - tools/build-resume-docx.mjs
+      - tools/resume-parse.mjs
+      - tools/resume-stamp.mjs
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: ${{ !contains(github.event.head_commit.message, '[resume-artifacts]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/stage1-resume-artifacts
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install repository dependencies
+        run: npm ci
+
+      - name: Install Playwright for this artifact build
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Regenerate résumé PDF and DOCX from canonical profile
+        run: node tools/build-resume.mjs
+
+      - name: Verify résumé artifacts match the page
+        run: node tools/verify-resume.mjs
+
+      - name: Commit regenerated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/resume/matthew-mccluster-resume.pdf \
+                  assets/resume/matthew-mccluster-resume.docx \
+                  assets/resume/matthew-mccluster-resume.pdf.stamp
+          if git diff --cached --quiet; then
+            echo "Artifacts already current."
+            exit 0
+          fi
+          git commit -m "Regenerate résumé artifacts [resume-artifacts]"
+          git push origin HEAD:chatgpt/stage1-resume-artifacts
