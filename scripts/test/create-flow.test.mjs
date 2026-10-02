@@ -77,3 +77,22 @@ test('create follows the mobile rules and the copy rules', async () => {
   assert.doesNotMatch(html, /user-scalable/);
   assert.doesNotMatch(html + js, /—/, 'no em dashes');
 });
+
+test('Create survives common client-side failure modes', async () => {
+  const [html, js] = await Promise.all([read('create.html'), read('js/create.js')]);
+  assert.match(js, /DRAFT_KEY = "mnet_create_draft_v1"/);
+  assert.match(js, /window\.addEventListener\("beforeunload", saveDraft\)/);
+  assert.match(js, /document\.addEventListener\("visibilitychange"/);
+  assert.match(js, /restoreDraft\(\)/);
+  assert.match(html, /id="crUploadRetry"/);
+  assert.match(js, /crUploadRetry/);
+  assert.match(js, /MAX_IMAGE_BYTES = 25 \* 1024 \* 1024/);
+  assert.match(js, /MAX_VIDEO_BYTES = 1024 \* 1024 \* 1024/);
+});
+
+test('native Create describes the canonical hardened flow instead of promising missing native features', async () => {
+  const native = await read('native/app/(tabs)/create.tsx');
+  assert.match(native, /same hardened camera and library flow as web/);
+  assert.match(native, /Draft recovery and interrupted-upload retry/);
+  assert.doesNotMatch(native, /Native camera capture/);
+});
