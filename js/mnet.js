@@ -932,7 +932,7 @@
       if(tab)tab.classList.toggle("is-active",view===name);
     });
     moveThumb(true);
-    if(name==="discover")loadDiscover();
+    if(name==="missions")loadMissions();\n    if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
