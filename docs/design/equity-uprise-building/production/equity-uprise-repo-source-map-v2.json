@@ -1752,6 +1752,13 @@
       "rationale": "Action Network spam limits (pace, daily caps, lengths, duplicates); exempts the owner desk by the same admin rule as eu_role(). Not a building capability."
     },
     {
+      "path": "workers/mccluster/test/fbi.test.mjs",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker tests for the Fashion Bureau of Investigation board; the desk check references the eu_is_admin desk rule. Not a building capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],

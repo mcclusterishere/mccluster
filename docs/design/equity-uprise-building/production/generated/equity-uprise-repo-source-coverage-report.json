@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 278,
+  "candidate_count": 279,
   "capability_source_count": 97,
-  "support_only_count": 181,
-  "checks_total": 1017,
-  "checks_passed": 1017,
+  "support_only_count": 182,
+  "checks_total": 1021,
+  "checks_passed": 1021,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -283,6 +283,7 @@
     "workers/mccluster/src/platform-api.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+    "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
@@ -292,7 +293,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "278 entries"
+      "detail": "279 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4366,6 +4367,26 @@
     },
     {
       "name": "supabase/migrations/20261002183244_network_rate_limits_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/fbi.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/fbi.test.mjs classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/test/fbi.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/fbi.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
