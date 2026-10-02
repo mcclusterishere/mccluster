@@ -56,3 +56,80 @@ grant select on public.action_missions,public.action_cohorts to anon,authenticat
 grant select,insert,update on public.action_mission_assignments to authenticated;
 grant select,insert on public.action_proofs to authenticated;
 grant select on public.action_points_ledger,public.action_skill_progress,public.action_cohort_members to authenticated;
+
+
+-- Mission review is one transaction: lock assignment/proof, decide, and award once.
+create or replace function public.review_action_proof(
+ p_proof_id uuid,
+ p_decision text,
+ p_review_note text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+ v_proof public.action_proofs%rowtype;
+ v_assignment public.action_mission_assignments%rowtype;
+ v_mission public.action_missions%rowtype;
+ v_reviewer uuid;
+ v_points integer;
+ v_skill text;
+ v_awarded boolean := false;
+begin
+ if (select auth.uid()) is null or not (select public.eu_is_admin()) then
+   raise exception 'not authorized';
+ end if;
+ if p_decision not in ('verified','rejected') then
+   raise exception 'decision must be verified or rejected';
+ end if;
+
+ select * into v_proof from public.action_proofs where id=p_proof_id for update;
+ if not found then raise exception 'proof not found'; end if;
+ select * into v_assignment from public.action_mission_assignments where id=v_proof.assignment_id for update;
+ select * into v_mission from public.action_missions where id=v_assignment.mission_id;
+ v_reviewer := public.current_m_uid();
+
+ if v_proof.status <> 'pending' then
+   return jsonb_build_object('proof_id',v_proof.id,'status',v_proof.status,'assignment_id',v_assignment.id,'idempotent',true);
+ end if;
+
+ update public.action_proofs
+ set status=p_decision, reviewer_uid=v_reviewer, review_note=nullif(trim(p_review_note),''),
+     reviewed_at=now()
+ where id=v_proof.id;
+
+ if p_decision='rejected' then
+   update public.action_mission_assignments set status='rejected' where id=v_assignment.id;
+   return jsonb_build_object('proof_id',v_proof.id,'status','rejected','assignment_id',v_assignment.id,'awarded',false);
+ end if;
+
+ if v_assignment.m_uid is null then raise exception 'assignment has no Action identity'; end if;
+ v_points := round(v_mission.base_points * case v_mission.difficulty when 1 then 1.0 when 2 then 1.15 when 3 then 1.35 when 4 then 1.6 else 2.0 end);
+
+ insert into public.action_points_ledger(m_uid,assignment_id,kind,points,reason,factors)
+ values(v_assignment.m_uid,v_assignment.id,'mission',v_points,'Verified mission: '||v_mission.title,
+   jsonb_build_object('base_points',v_mission.base_points,'difficulty',v_mission.difficulty,'proof_confidence',1.0))
+ on conflict (assignment_id,kind) where assignment_id is not null and kind='mission' do nothing;
+ get diagnostics v_awarded = row_count;
+
+ if v_awarded then
+   foreach v_skill in array v_mission.skills loop
+     insert into public.action_skill_progress(m_uid,skill,xp,verified_actions,updated_at)
+     values(v_assignment.m_uid,v_skill,v_points,1,now())
+     on conflict(m_uid,skill) do update
+       set xp=public.action_skill_progress.xp+excluded.xp,
+           verified_actions=public.action_skill_progress.verified_actions+1,
+           updated_at=now();
+   end loop;
+ end if;
+
+ update public.action_mission_assignments
+ set status='verified', verified_at=coalesce(verified_at,now())
+ where id=v_assignment.id;
+
+ return jsonb_build_object('proof_id',v_proof.id,'status','verified','assignment_id',v_assignment.id,'points',v_points,'awarded',v_awarded);
+end;
+$$;
+revoke all on function public.review_action_proof(uuid,text,text) from public, anon;
+grant execute on function public.review_action_proof(uuid,text,text) to authenticated;
