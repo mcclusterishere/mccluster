@@ -92,3 +92,28 @@ test("recruiter authority intent pages are indexable, evidence-linked and canoni
  assert.match(llms,/Platform, backend & technical operations/);
  assert.match(llms,/Field technology, telematics & vehicle systems/);
 });
+
+
+test("recruiter evidence ledger maps role titles to four substantive canonical pages",()=>{
+ const d=JSON.parse(read("data/seo/recruiter-evidence.json"));
+ const page=read("engineering/recruiter-role-map.html");
+ const sitemap=JSON.parse(read("data/seo/sitemap-pages.json"));
+ assert.equal(d.schema_version,"mccluster-recruiter-authority/v1");
+ assert.equal(d.person_id,"https://matthew.mccluster.org/#matthew-mccluster");
+ assert.equal(d.clusters.length,4);
+ const urls=new Set(d.clusters.map(x=>x.canonical_url));
+ assert.equal(urls.size,4);
+ for(const c of d.clusters){
+   assert.ok(c.role_titles.length>=5,c.id+" should cover multiple recruiter titles");
+   assert.ok(c.query_families.length>=5,c.id+" should cover multiple query families");
+   assert.ok(c.evidence.length>=2,c.id+" must carry evidence links");
+   assert.ok(c.caveat,c.id+" must state an evidence boundary");
+   assert.ok(sitemap.pages.some(x=>x.url===c.canonical_url),c.canonical_url+" missing from sitemap");
+ }
+ assert.ok(sitemap.pages.some(x=>x.url==="https://matthew.mccluster.org/engineering/recruiter-role-map.html"));
+ const roleMapLd=JSON.parse(page.split('<script type="application/ld+json">')[1].split("</script>")[0]);
+ assert.notEqual(roleMapLd["@type"],"JobPosting");
+ assert.ok(page.includes("target query families, not ranking claims or guarantees"));
+ const r=spawnSync(process.execPath,["tools/build-recruiter-role-map.mjs","--check"],{encoding:"utf8"});
+ assert.equal(r.status,0,(r.stdout||"")+(r.stderr||""));
+});
