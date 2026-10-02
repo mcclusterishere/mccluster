@@ -1,1 +1,16 @@
-import {readFileSync,writeFileSync} from"node:fs";const check=process.argv.includes("--check"),p="matthew-mccluster.html",S="<!-- SEO-ENTITY:START -->",E="<!-- SEO-ENTITY:END -->",d=JSON.parse(readFileSync("data/seo/entity-graph.json","utf8"));const ld={"@context":"https://schema.org","@graph":[{...d.person,"@type":["Person","ProfilePage"],mainEntityOfPage:d.canonical_url},d.music_credit,d.organization,{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://matthew.mccluster.org/"},{"@type":"ListItem","position":2,"name":"Matthew McCluster","item":d.canonical_url}]}]},b=S+"\n<script type=\"application/ld+json\">\n"+JSON.stringify(ld,null,2)+"\n</script>\n"+E,x=readFileSync(p,"utf8"),r=new RegExp(S+"[\\s\\S]*?"+E);if(!r.test(x))throw Error("markers missing");const o=x.replace(r,b);if(check){if(o!==x)process.exit(1)}else writeFileSync(p,o);
+import {readFileSync,writeFileSync} from "node:fs";
+const check=process.argv.includes("--check");
+const PAGE="matthew-mccluster.html", START="<!-- SEO-ENTITY:START -->", END="<!-- SEO-ENTITY:END -->";
+const d=JSON.parse(readFileSync("data/seo/entity-graph.json","utf8"));
+const SITE="https://matthew.mccluster.org", PERSON=SITE+"/#matthew-mccluster";
+const ld={"@context":"https://schema.org","@graph":[
+  {"@type":"ProfilePage","@id":SITE+"/matthew-mccluster.html#profile-page",url:d.canonical_url,name:"Matthew McCluster: Infrastructure Engineer, Platform Builder & Creative Director",mainEntity:{"@id":PERSON},about:{"@id":PERSON}},
+  d.person,d.music_credit,d.organization,
+  {"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":SITE+"/"},{"@type":"ListItem","position":2,"name":"Matthew McCluster","item":d.canonical_url}]}
+]};
+const block=START+"\n<script type=\"application/ld+json\">\n"+JSON.stringify(ld,null,2)+"\n</script>\n"+END;
+const page=readFileSync(PAGE,"utf8"), re=new RegExp(START+"[\\s\\S]*?"+END);
+if(!re.test(page)) throw new Error("profile entity markers missing");
+const out=page.replace(re,block);
+if(check){if(out!==page){console.error("profile entity JSON-LD drift");process.exit(1)}console.log("profile entity JSON-LD in sync")}
+else{writeFileSync(PAGE,out);console.log("updated "+PAGE)}
