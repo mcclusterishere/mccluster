@@ -53,6 +53,9 @@ body.an-body.gw { background: #f4efe6; }
 .gw-cover img { display: block; width: 100%; height: auto; }
 /* a landscape cover gets more width; still shown whole, never cropped */
 .gw-cover--wide { max-width: 34rem; }
+.gw-test-h { margin: 2.5rem 0 0; font-family: var(--an-display); font-weight: 400; font-size: clamp(2rem, 10vw, 3rem); line-height: 0.95; text-transform: uppercase; }
+.gw-lede--sm { font-size: 0.95rem; }
+.gw-test { margin-top: 1rem; }
 .gw-note { margin: 0.9rem 0 0; font-weight: 600; font-size: 0.88rem; line-height: 1.55; color: var(--an-faint); }
 .gw-tracks { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 8px; }
 .gw-track {
@@ -119,5 +122,7 @@ body.an-body.gw { background: #f4efe6; }
   .gw-in, .gw-foot .an-crumb, .gw-foot .an-foot__law { max-width: 52rem; }
   .gw-act--listen .gw-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 3rem; align-items: start; }
   .gw-act--listen .gw-n, .gw-act--listen .gw-h { grid-column: 1 / -1; }
-  .gw-act--listen .gw-cover { grid-column: 1; grid-row: 3 / span 3; margin-top: 0.5rem; }
+  .gw-act--listen .gw-cover { grid-column: 1; grid-row: 3 / span 4; margin-top: 0.5rem; }
+  .gw-act--listen .gw-testwrap { grid-column: 1 / -1; }
+  .gw-test.stq { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

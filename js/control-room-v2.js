@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music", "action-network"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -1602,6 +1602,8 @@
         ? (window.CR.musicOps ? window.CR.musicOps.render() : empty("Music operations unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
         ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Action Network unavailable", "The native Control module did not load."))
+      : state.createView === "song-test"
+        ? (window.CR.songTest ? window.CR.songTest.render() : empty("Song test unavailable", "The native Control module did not load."))
         : renderSchedule();
     return renderHeader("Create", "Projects, assets, publishing, channels, music operations and Action Network campaigns are views of one workspace.", { values: CREATE_VIEWS, selected: state.createView }) + body;
   }
@@ -2885,6 +2887,7 @@
     if (window.CR.socialCompose) window.CR.socialCompose.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
+    if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
@@ -3097,6 +3100,7 @@
   if (window.CR.socialCompose) window.CR.socialCompose.init({ request: request, render: render });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, render: render });
+  if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
 
   window.CR.media.init({
     request: request,

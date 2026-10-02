@@ -102,8 +102,26 @@
       a.loop = true;
       a.src = SONGS[key].src;
       players[key] = a;
+      count(a);
     }
     return players[key];
+  }
+  /* A song heard here all the way through counts in the listen ledger,
+     exactly as in the album player: a listen starts when a song plays from
+     the top, the server credits only time it was actually playing, and the
+     loop wrapping back to the start is the song ending. A pause keeps the
+     listen (beats simply stop); a song crossfaded away mid-way never counts,
+     because the next song's start closes it unheard on the server. */
+  function count(a) {
+    var L = root.MCC_LISTENS;
+    if (!L || !L.start) return;
+    var key = L.keyOf(a.getAttribute("src") || a.src), h = null, last = 0;
+    var playing = function () { return !a.paused; };
+    a.addEventListener("play", function () { if (!h && a.currentTime < 3) h = L.start(key, playing); });
+    a.addEventListener("timeupdate", function () {
+      if (h && a.currentTime + 2 < last) { L.finish(h); h = L.start(key, playing); }
+      last = a.currentTime;
+    });
   }
   function fade(a, to, ms, done) {
     var from = a.volume, t0 = performance.now();

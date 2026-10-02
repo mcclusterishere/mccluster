@@ -2075,6 +2075,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied data row for Action Network Campaign 002 (End Racism); names Equity Uprise in campaign copy."
+    },
+    {
+      "path": "supabase/migrations/20261002015418_song_test.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied song test (CIA Mind Control listening test) tables and functions; uses eu_is_admin() for the owner's read of answers. Not a building program capability."
+    },
+    {
+      "path": "scripts/test/song-test.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file for the song test; not itself a program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

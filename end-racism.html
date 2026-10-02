@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/action.css?v=__STAMP__">
   <link rel="stylesheet" href="css/gateway.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/song-test.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="an-body gw">
@@ -56,6 +57,14 @@
         </ol>
         <p class="gw-note">The third track is earned, not streamed: it plays only in the album player.</p>
         <a class="an-btn an-btn--ghost an-btn--block" href="album.html?album=cia-mind-control">Open the album in the player &#8594;</a>
+
+        <!-- THE TEST. One card per song; each unlocks when the server has
+             counted the whole song heard (here or in the player). -->
+        <div class="gw-testwrap">
+          <h3 class="gw-test-h" id="test">The test</h3>
+          <p class="gw-lede gw-lede--sm">Hear each song all the way through. Then answer one question: was it racist, and why? Your reasons go to the artist; after you answer, you see how everyone else voted.</p>
+          <div class="gw-test" id="gwTest"></div>
+        </div>
       </div>
     </section>
 
@@ -121,7 +130,12 @@
   </script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/listen-ledger.js?v=__STAMP__"></script>
   <script src="js/gateway.js?v=__STAMP__"></script>
+  <script src="js/song-test.js?v=__STAMP__"></script>
+  <script>
+    if (window.MCC_SONGTEST) window.MCC_SONGTEST.mount(document.getElementById("gwTest"), "cia-mind-control", { signin: "account.html" });
+  </script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
 </html>
