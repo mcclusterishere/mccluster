@@ -238,3 +238,5 @@ test('Creator Studio release submission rolls back partial uploads and isolates 
   assert.match(studio,/creator_license_offer_failed/);
   assert.match(studio,/Release submitted, but the license offer was not saved/);
 });
+
+test("Music creator profiles converge on Action Network identity",async()=>{const js=await read("js/music-creator-profile.js");assert.match(js,/Put this music into action/);assert.match(js,/mnet\.html\?profile=/);});
