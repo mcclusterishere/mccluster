@@ -475,7 +475,7 @@ async function handleMnet(req,env,path,url){
     if(external)return fail(req,env,'Groups require a McCluster user session',403);
     const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
     const [all,mine]=await Promise.all([
-      service(env,'network_groups?select=id,slug,name,purpose,visibility,member_count&order=member_count.desc,name.asc'),
+      service(env,'network_groups?select=id,slug,name,purpose,visibility,member_count,organization_id,group_type,front_page_url&order=member_count.desc,name.asc'),
       service(env,`network_group_members?m_uid=eq.${muid}&state=eq.joined&select=group_id`)
     ]);
     const joined=new Set((mine||[]).map(r=>r.group_id));
@@ -485,14 +485,20 @@ async function handleMnet(req,env,path,url){
   if(groupOne&&req.method==='GET'){
     if(external)return fail(req,env,'Groups require a McCluster user session',403);
     const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
-    const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupOne[1])}&select=id,slug,name,purpose,visibility,member_count&limit=1`);
+    const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupOne[1])}&select=id,slug,name,purpose,visibility,member_count,organization_id,group_type,front_page_url&limit=1`);
     const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
     const mine=await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
     const posts=await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`);
     /* The same hydration the feed uses, so a post reads identically in a
        group and in the open feed. */
     const items=await hydratePostRows(env,posts||[],muid);
-    return reply(req,env,{group:{...group,joined:!!mine?.length},items});
+    let organization=null,campaigns=[];
+    if(group.organization_id){
+      const orgs=await service(env,`network_organizations?id=eq.${group.organization_id}&select=id,slug,name,organization_type,description,website_url,verification_state&limit=1`);
+      organization=orgs?.[0]||null;
+      campaigns=await service(env,`action_campaigns?group_id=eq.${group.id}&status=in.(live,paused)&select=id,slug,status,title,kicker,headline,current_phase,people_goal&order=sort.asc`);
+    }
+    return reply(req,env,{group:{...group,joined:!!mine?.length},organization,campaigns,items});
   }
   const groupJoin=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})\/membership$/i);
   if(groupJoin&&['POST','DELETE'].includes(req.method)){
