@@ -1463,4 +1463,46 @@
     if (post) post.addEventListener("click", postToGroup);
   })();
 
+
+  var missions={all:[],current:null,assignment:null};
+  function sbRest(path,init){
+    var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
+    return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
+  }
+  function missionCard(m){
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
+  }
+  function loadMissions(){
+    var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
+    return sbRest("action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,starts_at,ends_at&order=created_at.desc")
+      .then(function(rows){missions.all=rows||[];host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';setStatus($("mnMissionStatus"),"");})
+      .catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+  }
+  function openMission(id){
+    var m=missions.all.find(function(x){return x.id===id;}); if(!m)return; missions.current=m;missions.assignment=null;
+    $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+    $("mnMissionJoin").hidden=false;$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),"");$("mnMissionDialog").showModal();
+    sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){if(rows&&rows[0]){missions.assignment=rows[0];$("mnMissionJoin").hidden=true;$("mnMissionProof").hidden=rows[0].status==="verified"||rows[0].status==="submitted";setStatus($("mnMissionDialogStatus"),rows[0].status==="submitted"?"Proof submitted for review.":rows[0].status==="verified"?"Verified action.":"Mission in progress.","ok");}}).catch(function(){});
+  }
+  function joinMission(){
+    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
+    sbRest("action_mission_assignments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({mission_id:m.id,user_id:state.user.id,m_uid:identity().m_uid,status:"in_progress"})})
+      .then(function(rows){missions.assignment=rows&&rows[0];b.hidden=true;$("mnMissionProof").hidden=false;setStatus($("mnMissionDialogStatus"),"Mission started. Do the work, then submit proof.","ok");})
+      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");}).then(function(){b.disabled=false;});
+  }
+  function submitMissionProof(ev){
+    ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
+    var body={assignment_id:a.id,user_id:state.user.id,proof_type:$("mnMissionProofType").value,proof_url:($("mnMissionProofUrl").value||"").trim()||null,statement:($("mnMissionProofStatement").value||"").trim()};
+    sbRest("action_proofs",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(body)})
+      .then(function(){return sbRest("action_mission_assignments?id=eq."+encodeURIComponent(a.id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({status:"submitted",submitted_at:new Date().toISOString()})});})
+      .then(function(){$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),"Proof submitted for review.","ok");})
+      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});
+  }
+  (function wireMissions(){
+    var host=$("mnMissionList");if(!host)return;
+    host.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));});
+    $("mnRefreshMissions").addEventListener("click",loadMissions);$("mnMissionClose").addEventListener("click",function(){$("mnMissionDialog").close();});
+    $("mnMissionJoin").addEventListener("click",joinMission);$("mnMissionProof").addEventListener("submit",submitMissionProof);
+  })();
+
 })();
