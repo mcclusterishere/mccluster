@@ -626,3 +626,51 @@ html, body { background: #0a0807; }
 .mn__delete h3 { margin: 0 0 6px; font-size: 1rem; }
 .mn__delete p { color: var(--mn-dim); font-size: .9rem; line-height: 1.5; }
 .mn__delete-go summary { min-height: 44px; display: flex; align-items: center; color: #ff9a91; font-weight: 800; cursor: pointer; }
+
+
+/* ---------- cinematic depth pass ----------
+   Keep the product architecture quiet and readable, but let major surfaces
+   feel like places rather than flat panels. Existing first-party campaign
+   artwork is used as atmosphere, never as content that must be read. */
+.mn__manifesto,.mn__actionboard,.mn__understand,#mnMissionsView{position:relative;isolation:isolate;overflow:hidden}
+.mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before{
+  content:"";position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;
+  opacity:.28;filter:saturate(.8) contrast(1.08);transform:scale(1.035);
+  transition:transform .9s var(--mn-ease),opacity .6s var(--mn-ease)
+}
+.mn__manifesto::after,.mn__actionboard::after,.mn__understand::after,#mnMissionsView::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(110deg,rgba(10,8,7,.97) 5%,rgba(10,8,7,.76) 54%,rgba(10,8,7,.38)),
+             linear-gradient(0deg,rgba(10,8,7,.88),transparent 65%)
+}
+.mn__manifesto::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:58%;background-repeat:no-repeat;background-position:88% 50%;opacity:.18;filter:grayscale(.15) saturate(1.15)}
+.mn__actionboard::before{background-image:url("../assets/img/heal-the-3-cover.jpg");background-position:68% 45%;opacity:.22}
+.mn__understand::before{background-image:url("../assets/img/cia-mind-control-cover.jpg");background-position:74% 50%;opacity:.24}
+#mnMissionsView::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:70%;background-repeat:no-repeat;background-position:115% 8%;opacity:.09}
+.mn__manifesto,.mn__actionboard,.mn__understand{
+  box-shadow:inset 0 0 0 1px rgba(244,239,230,.12),0 24px 70px -42px rgba(0,0,0,.95);
+  transition:transform .35s var(--mn-ease),box-shadow .35s var(--mn-ease)
+}
+.mn__actionboard-grid article{
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.018));
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .3s var(--mn-spring),border-color .3s,background .3s
+}
+.mn__actionboard-grid article:active{transform:scale(.97)}
+.mn__mission-strip a,.mn__understand>a{position:relative}
+.mn__mission-strip a::after,.mn__understand>a::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--mn-ease)}
+.mn__mission-strip a:hover::after,.mn__understand>a:hover::after{transform:scaleX(1)}
+.mn__post-card{transition:transform .28s var(--mn-ease),box-shadow .28s var(--mn-ease),border-color .28s}
+.mn__post-card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--mn-rule-2),0 22px 54px -38px rgba(0,0,0,.95)}
+.mn__camp::after{content:"";position:absolute;inset:-40% -70%;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.09) 50%,transparent 62%);transform:translateX(-45%) rotate(8deg);transition:transform .8s var(--mn-ease);pointer-events:none}
+.mn__camp:hover::after{transform:translateX(45%) rotate(8deg)}
+.mn__camp:hover{transform:translateY(-3px)}
+.mn__primary,.mn__post,.mn__follow.is-active{box-shadow:0 10px 28px -16px rgba(255,77,61,.72)}
+@media (hover:hover){
+  .mn__manifesto:hover::before,.mn__actionboard:hover::before,.mn__understand:hover::before{transform:scale(1.07);opacity:.32}
+}
+@media (prefers-reduced-motion:reduce){
+  .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
+  .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card,.mn__camp,.mn__camp::after{transition:none!important;animation:none!important}
+}
