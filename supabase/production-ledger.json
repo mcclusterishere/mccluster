@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 212,
-  "latest_version": "20261002141540",
-  "latest_name": "music_gate_sequence_v1",
-  "ledger_sha256": "2562acf46dc813223c98ae922b92b7f3461d8ba78e3923570b892344595e8dcd",
+  "migration_count": 213,
+  "latest_version": "20261002144232",
+  "latest_name": "network_posts_spam_limits_v1",
+  "ledger_sha256": "04d93406139e774ceeb91ed576e921e88b84edd2bba404f51d01a666d4c02778",
   "migrations": [
     {
       "version": "0001",
@@ -854,6 +854,10 @@
     {
       "version": "20261002141540",
       "name": "music_gate_sequence_v1"
+    },
+    {
+      "version": "20261002144232",
+      "name": "network_posts_spam_limits_v1"
     }
   ]
 }
