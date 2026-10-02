@@ -8,7 +8,7 @@
      II  LISTEN      the record itself; the full player is one tap away
      III DO SOMETHING the network's real count and the lanes,
                      scored by the record's light side
-     IV  ENTER       into the campaign, and Mnet
+     IV  ENTER       into the campaign, and Action Network
 
    What differs lives in the page, as data: <script type=
    "application/json" id="gwConfig"> names the songs, the lock-screen
