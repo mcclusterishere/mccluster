@@ -18,13 +18,26 @@ test("mission proof review is server-authoritative and idempotent",async()=>{
  assert.match(sql,/grant execute on function public\.review_action_proof\(uuid,text,text\) to authenticated/);
 });
 
-test("members can submit proof but cannot write awards or verification state directly",async()=>{
+test("members act only through server functions; they cannot write assignments, proofs, awards or verification",async()=>{
  const sql=await read("supabase/pending_migrations/action_network_gamification_v1.sql");
- assert.match(sql,/members submit own proof/);
- assert.match(sql,/grant select,insert on public\.action_proofs to authenticated/);
- assert.doesNotMatch(sql,/grant[^;]*insert[^;]*action_points_ledger/i);
- assert.doesNotMatch(sql,/grant[^;]*update[^;]*action_proofs/i);
+ /* no participant insert/update policy or grant on the work tables */
+ assert.doesNotMatch(sql,/policy[^;]*on public\.action_mission_assignments for (insert|update|all)/i);
+ assert.doesNotMatch(sql,/policy[^;]*on public\.action_proofs for (insert|update|all)/i);
+ assert.doesNotMatch(sql,/grant[^;]*(insert|update)[^;]*action_(mission_assignments|proofs|points_ledger|skill_progress)/i);
+ assert.match(sql,/revoke all on public\.action_missions, public\.action_mission_assignments, public\.action_proofs, public\.action_points_ledger, public\.action_skill_progress, public\.action_cohorts, public\.action_cohort_members from public, anon, authenticated;/);
+ for(const fn of ["join_action_mission","submit_action_proof","withdraw_action_mission","review_action_proof","action_record"]){
+  assert.match(sql,new RegExp("create or replace function public\\."+fn+"[\\s\\S]*?security definer\\s+set search_path = ''"),fn+" is a definer function with a fixed search_path");
+  assert.match(sql,new RegExp("revoke all on function public\\."+fn+"\\([^)]*\\) from public, anon;"),fn+" is closed to anon");
+ }
+ /* the row count lands in an integer, never a boolean */
+ assert.match(sql,/get diagnostics v_rows = row_count;\s*v_awarded := v_rows > 0;/);
+ assert.doesNotMatch(sql,/get diagnostics v_awarded/);
  assert.match(sql,/if p_decision='rejected' then[\s\S]*'awarded',false/);
+ assert.match(sql,/you cannot review your own proof/);
+ assert.match(sql,/action_proofs_one_use_per_url/);
+ assert.match(sql,/action_proofs_one_use_per_upload/);
+ /* a roster is private */
+ assert.doesNotMatch(sql,/on public\.action_cohort_members for select to authenticated using\(true\)/);
 });
 
 
@@ -38,8 +51,11 @@ test("Action Network exposes a native mission participant flow",async()=>{
  assert.match(js,/function loadMissions\(/);
  assert.match(js,/function joinMission\(/);
  assert.match(js,/function submitMissionProof\(/);
- assert.match(js,/action_mission_assignments/);
- assert.match(js,/action_proofs/);
+ assert.match(js,/sbRpc\("join_action_mission"/);
+ assert.match(js,/sbRpc\("submit_action_proof"/);
+ /* the page never writes the work tables itself */
+ assert.doesNotMatch(js,/sbRest\("action_(mission_assignments|proofs)",\{method:"POST"/);
+ assert.doesNotMatch(js,/sbRest\("action_mission_assignments\?id=eq\.[^)]*method:"PATCH"/);
  assert.match(js,/if\(name==="missions"\)loadMissions\(\)/);
 });
 
@@ -54,4 +70,29 @@ test("Control has a media-first Mission proof review desk",async()=>{
  assert.match(js,/rpc\/review_action_proof/);
  assert.match(js,/does not certify a member’s character, beliefs, race/);
  assert.match(js,/Self-declared satire badges remain self-declared/);
+});
+
+
+test("the first mission slice: Action Record, receipt and deep links",async()=>{
+ const [html,js,receipt,sql]=await Promise.all([read("mnet.html"),read("js/mnet.js"),read("receipt.html"),read("supabase/pending_migrations/action_network_gamification_v1.sql")]);
+ /* record */
+ assert.match(html,/id="mnRecord"/);
+ assert.match(js,/sbRpc\("action_record"\)/);
+ assert.match(js,/var FELLOWSHIP_MIN_VERIFIED = 3;/);
+ assert.match(js,/\$\("mnVerifiedActions"\)\)\$\("mnVerifiedActions"\)\.textContent/);
+ /* proof from the camera through the existing media pipeline */
+ assert.match(html,/id="mnMissionProofFile" type="file" accept="image\/\*,video\/\*"/);
+ assert.match(js,/\/v1\/mnet\/media\/upload-url/);
+ assert.match(js,/p_metadata:asset\?\{asset_id:asset\.id\}:\{\}/);
+ /* deep link: a shared mission opens that mission */
+ assert.match(js,/new URLSearchParams\(location\.search\)\.get\("mission"\)/);
+ assert.match(js,/missions\.deepLinked=true; setView\("missions"\); openMission\(id\);/);
+ /* receipt: the exact words, back to the exact mission, nothing private */
+ for(const line of ["I did something about it","Verified action","ACTION NETWORK","DON'T JUST WATCH. ACT."])assert.ok(receipt.includes(line),line);
+ assert.match(receipt,/rpc\/action_receipt/);
+ assert.match(receipt,/"mnet\.html\?mission=" \+ encodeURIComponent\(r\.mission_id\)/);
+ assert.match(sql,/where a\.id = p_assignment_id and a\.status = 'verified';/);
+ const fn=sql.slice(sql.indexOf("function public.action_receipt"),sql.indexOf("revoke all on function public.join_action_mission"));
+ assert.doesNotMatch(fn,/user_id|m_uid|proof_url|review_note|statement/,"the receipt never carries identity or proof");
+ assert.match(receipt,/js\/tabbar\.js/);
 });

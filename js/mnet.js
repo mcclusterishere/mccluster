@@ -207,7 +207,9 @@
       paintSelf();
       $("mnBell").hidden = false;
       loadRail();
+      loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
+      openDeepLinkedMission();
       return loadFeed(true).then(loadNotificationsSilently);
     });
   }
@@ -1465,44 +1467,134 @@
   })();
 
 
-  var missions={all:[],current:null,assignment:null};
+  /* ---------------- MISSIONS ----------------
+     See → Understand → Choose → Act → Prove → Verify → Progress.
+     Every write goes through a server function (join_action_mission,
+     submit_action_proof, withdraw_action_mission): the server decides who
+     you are, whether the mission is open, and what state your work is in.
+     The page only reads. */
+  var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
+  var missions={all:[],current:null,assignment:null,record:null,deepLinked:false};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
   }
+  function sbRpc(name,args){return sbRest("rpc/"+name,{method:"POST",body:JSON.stringify(args||{})});}
+  function missionHref(id){return "mnet.html?mission="+encodeURIComponent(id);}
+  function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
   }
+  var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   function loadMissions(){
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
-    return sbRest("action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,starts_at,ends_at&order=created_at.desc")
+    loadActionRecord();
+    return sbRest("action_missions?status=eq.open&select="+MISSION_FIELDS+"&order=created_at.desc")
       .then(function(rows){missions.all=rows||[];host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';setStatus($("mnMissionStatus"),"");})
       .catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
+
+  /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
+     Points are feedback; access is the reward. */
+  var STATUS_LABEL={in_progress:"In progress",joined:"In progress",submitted:"Waiting for review",verified:"Verified",rejected:"Not verified"};
+  function loadActionRecord(){
+    return sbRpc("action_record").then(function(r){missions.record=r||null;paintActionRecord();}).catch(function(){});
+  }
+  function paintActionRecord(){
+    var r=missions.record; if(!r)return;
+    var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
+    if($("mnActionScore"))$("mnActionScore").textContent=points.toLocaleString()+" pts";
+    if($("mnVerifiedActions"))$("mnVerifiedActions").textContent=verified.toLocaleString();
+    if($("mnCohortProgress"))$("mnCohortProgress").textContent=cohorts.length?(cohorts[0].goal_points?Math.min(100,Math.round(cohorts[0].points/cohorts[0].goal_points*100))+"%":cohorts[0].name):"-";
+    var host=$("mnRecord"); if(!host)return;
+    var left=Math.max(0,FELLOWSHIP_MIN_VERIFIED-verified);
+    var fellowship=left===0
+      ?'<p class="mn__record-unlock is-open"><b>Fellowship review is open to you.</b> Your verified record is enough to be considered.</p>'
+      :'<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until fellowship review opens.</p>';
+    var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
+    var list=(r.missions||[]).map(function(m){
+      return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(STATUS_LABEL[m.status]||m.status)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
+        (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>':"")+
+        (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
+    }).join("");
+    host.hidden=false;
+    host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+
+      fellowship+
+      (skills?'<ul class="mn__record-skills">'+skills+'</ul>':"")+
+      (cohorts.length?'<ul class="mn__record-cohorts">'+cohorts.map(function(c){return '<li><b>'+esc(c.name)+'</b><span>'+esc(c.members)+' members · '+esc(Number(c.points).toLocaleString())+(c.goal_points?" of "+esc(Number(c.goal_points).toLocaleString()):"")+' pts</span></li>';}).join("")+'</ul>':"")+
+      (list?'<ul class="mn__record-list">'+list+'</ul>':'<p class="mn__record-empty">Take a mission below. When your proof is verified, it lands here.</p>');
+  }
+
+  function fetchMission(id){
+    var hit=missions.all.find(function(x){return x.id===id;});
+    if(hit)return Promise.resolve(hit);
+    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
+  }
   function openMission(id){
-    var m=missions.all.find(function(x){return x.id===id;}); if(!m)return; missions.current=m;missions.assignment=null;
-    $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
-    $("mnMissionJoin").hidden=false;$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),"");$("mnMissionDialog").showModal();
-    sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){if(rows&&rows[0]){missions.assignment=rows[0];$("mnMissionJoin").hidden=true;$("mnMissionProof").hidden=rows[0].status==="verified"||rows[0].status==="submitted";setStatus($("mnMissionDialogStatus"),rows[0].status==="submitted"?"Proof submitted for review.":rows[0].status==="verified"?"Verified action.":"Mission in progress.","ok");}}).catch(function(){});
+    return fetchMission(id).then(function(m){
+      if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
+      missions.current=m;missions.assignment=null;
+      $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+      var open=m.status==="open";
+      $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
+      if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
+      try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+      return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
+        var a=rows&&rows[0]; if(!a||a.status==="withdrawn")return;
+        missions.assignment=a;$("mnMissionJoin").hidden=true;
+        $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted");
+        setStatus($("mnMissionDialogStatus"),a.status==="submitted"?"Proof submitted for review. You can replace it until it is reviewed.":a.status==="verified"?"Verified action.":a.status==="rejected"?"This proof was not verified.":"Mission in progress.","ok");
+      });
+    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
   }
   function joinMission(){
     var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
-    sbRest("action_mission_assignments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({mission_id:m.id,user_id:state.user.id,m_uid:identity().m_uid,status:"in_progress"})})
-      .then(function(rows){missions.assignment=rows&&rows[0];b.hidden=true;$("mnMissionProof").hidden=false;setStatus($("mnMissionDialogStatus"),"Mission started. Do the work, then submit proof.","ok");})
+    sbRpc("join_action_mission",{p_mission_id:m.id})
+      .then(function(r){missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;setStatus($("mnMissionDialogStatus"),"Mission started. Do the work, then submit proof.","ok");if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id});loadActionRecord();})
       .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");}).then(function(){b.disabled=false;});
+  }
+  /* PROOF FROM THE CAMERA. The same signed upload the Create page and the
+     composer use; the server checks the file is yours and records its type. */
+  function uploadProofFile(file){
+    return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"proof",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
+      .then(function(grant){
+        var path=grant&&grant.upload&&grant.upload.path, asset=grant&&grant.asset, tok=grant&&grant.upload&&grant.upload.token;
+        if(!path||!asset)throw new Error("The upload slot was not created.");
+        var url=tok?SB_URL+"/storage/v1/object/upload/sign/mnet-media/"+storagePath(path)+"?token="+encodeURIComponent(tok):SB_URL+"/storage/v1/object/mnet-media/"+storagePath(path);
+        return fetch(url,{method:tok?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+sessionToken(),"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
+          .then(function(res){if(!res.ok)throw new Error("Upload rejected ("+res.status+")");return api("/v1/mnet/media/finalize",{method:"POST",body:{asset_id:asset.id}});})
+          .then(function(fin){return (fin&&fin.asset)||asset;});
+      });
   }
   function submitMissionProof(ev){
     ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
-    var body={assignment_id:a.id,user_id:state.user.id,proof_type:$("mnMissionProofType").value,proof_url:($("mnMissionProofUrl").value||"").trim()||null,statement:($("mnMissionProofStatement").value||"").trim()};
-    sbRest("action_proofs",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(body)})
-      .then(function(){return sbRest("action_mission_assignments?id=eq."+encodeURIComponent(a.id),{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({status:"submitted",submitted_at:new Date().toISOString()})});})
-      .then(function(){$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),"Proof submitted for review.","ok");})
-      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});
+    var fileInput=$("mnMissionProofFile"), file=fileInput&&fileInput.files&&fileInput.files[0];
+    var type=$("mnMissionProofType").value, link=($("mnMissionProofUrl").value||"").trim()||null, statement=($("mnMissionProofStatement").value||"").trim();
+    setStatus($("mnMissionDialogStatus"),file?"Uploading your proof…":"Submitting…");
+    (file?uploadProofFile(file):Promise.resolve(null)).then(function(asset){
+      if(asset)type=String(file.type||"").indexOf("video/")===0?"video":"photo";
+      return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:asset?{asset_id:asset.id}:{}});
+    }).then(function(){
+      missions.assignment.status="submitted";
+      if(fileInput)fileInput.value="";
+      setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
+      if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
+      loadActionRecord();
+    }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});
+  }
+  /* A shared mission link opens that mission, not the feed. */
+  function openDeepLinkedMission(){
+    if(missions.deepLinked)return;
+    var id=null; try{id=new URLSearchParams(location.search).get("mission");}catch(_){}
+    if(!id||!/^[0-9a-f-]{36}$/i.test(id))return;
+    missions.deepLinked=true; setView("missions"); openMission(id);
   }
   (function wireMissions(){
     var host=$("mnMissionList");if(!host)return;
-    host.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));});
-    $("mnRefreshMissions").addEventListener("click",loadMissions);$("mnMissionClose").addEventListener("click",function(){$("mnMissionDialog").close();});
+    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));}
+    host.addEventListener("click",onOpen);
+    if($("mnRecord"))$("mnRecord").addEventListener("click",onOpen);
+    $("mnRefreshMissions").addEventListener("click",loadMissions);$("mnMissionClose").addEventListener("click",function(){$("mnMissionDialog").close();try{history.replaceState(null,"","mnet.html");}catch(_){}});
     $("mnMissionJoin").addEventListener("click",joinMission);$("mnMissionProof").addEventListener("submit",submitMissionProof);
   })();
 

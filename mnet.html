@@ -186,6 +186,7 @@
 
       <section class="mn__view" id="mnMissionsView" hidden>
         <div class="mn__section-head"><div><p class="mn__eyebrow">Pick your move</p><h2>Missions worth finishing</h2></div><button class="mn__quiet" id="mnRefreshMissions" type="button">Refresh</button></div>
+        <section class="mn__record" id="mnRecord" hidden aria-live="polite"></section>
         <div class="mn__missions" id="mnMissionList" aria-live="polite"></div>
         <p class="mn__status mn__status--center" id="mnMissionStatus" role="status"></p>
       </section>
@@ -197,10 +198,12 @@
         <form id="mnMissionProof" hidden>
           <label class="mn__label" for="mnMissionProofType">Proof type</label>
           <select class="mn__input" id="mnMissionProofType"><option value="video">Video</option><option value="photo">Photo</option><option value="link">Link</option><option value="text">Text</option><option value="artifact">Artifact</option></select>
-          <label class="mn__label" for="mnMissionProofUrl">Proof URL <span>optional for text proof</span></label>
+          <label class="mn__label" for="mnMissionProofFile">Photo or video <span>straight from your camera</span></label>
+          <input class="mn__input" id="mnMissionProofFile" type="file" accept="image/*,video/*">
+          <label class="mn__label" for="mnMissionProofUrl">Or a link <span>optional</span></label>
           <input class="mn__input" id="mnMissionProofUrl" type="url" placeholder="https://…">
           <label class="mn__label" for="mnMissionProofStatement">What did you do?</label>
-          <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="5" required></textarea>
+          <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="5" placeholder="What you did, where, and what came of it."></textarea>
           <button class="mn__primary" type="submit">Submit proof</button>
         </form>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
