@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 274,
+  "candidate_count": 275,
   "capability_source_count": 97,
-  "support_only_count": 177,
+  "support_only_count": 178,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2166,6 +2166,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test for the Action Network live routes; not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "In-app account deletion requests (App Store 5.1.1(v), Google Play); the desk queue references the eu_is_admin desk rule. Not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
