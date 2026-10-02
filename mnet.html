@@ -126,7 +126,7 @@
       <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
       <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>News context will compare sources and perspectives before connecting issues to optional initiatives. No points for ideology. No points for outrage.</small></div><a href="action/">Explore initiatives →</a></section>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Action</button>
+        <button type="button" class="is-active" data-mn-view="feed">Action</button>\n        <button type="button" data-mn-view="missions">Missions</button>
         <button type="button" data-mn-view="discover">People</button>
         <button type="button" data-mn-view="groups">Groups</button>
         <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
@@ -181,6 +181,28 @@
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
       </section>
+
+      <section class="mn__view" id="mnMissionsView" hidden>
+        <div class="mn__section-head"><div><p class="mn__eyebrow">Pick your move</p><h2>Missions worth finishing</h2></div><button class="mn__quiet" id="mnRefreshMissions" type="button">Refresh</button></div>
+        <div class="mn__missions" id="mnMissionList" aria-live="polite"></div>
+        <p class="mn__status mn__status--center" id="mnMissionStatus" role="status"></p>
+      </section>
+
+      <dialog class="mn__thread" id="mnMissionDialog">
+        <div class="mn__thread-head"><strong id="mnMissionTitle">Mission</strong><button type="button" id="mnMissionClose" aria-label="Close mission">×</button></div>
+        <div id="mnMissionDetail"></div>
+        <button class="mn__primary" id="mnMissionJoin" type="button">Take this mission</button>
+        <form id="mnMissionProof" hidden>
+          <label class="mn__label" for="mnMissionProofType">Proof type</label>
+          <select class="mn__input" id="mnMissionProofType"><option value="video">Video</option><option value="photo">Photo</option><option value="link">Link</option><option value="text">Text</option><option value="artifact">Artifact</option></select>
+          <label class="mn__label" for="mnMissionProofUrl">Proof URL <span>optional for text proof</span></label>
+          <input class="mn__input" id="mnMissionProofUrl" type="url" placeholder="https://…">
+          <label class="mn__label" for="mnMissionProofStatement">What did you do?</label>
+          <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="5" required></textarea>
+          <button class="mn__primary" type="submit">Submit proof</button>
+        </form>
+        <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
+      </dialog>
 
       <section class="mn__view" id="mnDiscoverView" hidden>
         <div class="mn__section-head">
