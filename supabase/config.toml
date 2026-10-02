@@ -82,6 +82,12 @@ verify_jwt = false
 verify_jwt = true
 
 # Social Agent accepts either a normal operator JWT in-function or the
+# dedicated phone-worker token. Gateway JWT verification stays off so the
+# physical worker does not carry a human session.
+[functions.social-agent]
+verify_jwt = false
+
+# Social Agent accepts either a normal operator JWT in-function or the
 # dedicated phone-worker token. Gateway JWT verification must stay off so
 # the physical worker can poll without carrying a human session.
 [functions.social-agent]
