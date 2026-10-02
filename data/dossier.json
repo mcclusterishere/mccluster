@@ -15,7 +15,7 @@
     "Anything sensitive (EIN, UEI, CAGE, SAM registration) stays OUT of this",
     "file. It ships with the public site. Those live in the private desk."
   ],
-  "updated": "2026-08-08",
+  "updated": "2026-10-02",
   "person": {
     "legalName": "Matthew Christian Perry McCluster",
     "preferredName": "Matthew McCluster",
@@ -27,32 +27,38 @@
     "citizenship": "United States",
     "school": {
       "name": "Southern Connecticut State University",
-      "status": "TODO — enrolled / expected graduation / major"
+      "status": "Enrolled undergraduate",
+      "major": "Computer Science",
+      "degree": "Bachelor of Science",
+      "expectedGraduation": "May 2030",
+      "location": "New Haven, Connecticut"
     },
     "titles": [
+      "Computer Science Student",
+      "Infrastructure Engineer",
+      "Technical Operations Specialist",
+      "Digital Systems Operator",
+      "Platform Builder",
       "Creative Director",
-      "Photographer",
-      "Web Designer",
-      "Songwriter",
-      "Founder",
-      "Chief and Minister, Apex Kingdom"
+      "Founder"
     ]
   },
   "organization": {
     "name": "McCluster Corp",
-    "type": "Connecticut public charity",
+    "type": "Connecticut nonprofit corporation",
     "charityRegistration": "CHR.0069693",
     "charityRegisteredOn": "2025-10-28",
     "programs": [
       "Equity Uprise",
       "PRIM3",
-      "M Network",
-      "Street Credit Bureau"
+      "Uprise Action Network",
+      "McCluster Platform"
     ],
     "secondEntity": {
       "name": "Whip Equipped LLC",
       "formed": "2024",
-      "state": "Georgia"
+      "state": "Georgia",
+      "currentFocus": "Connected mobility, fleet telematics, vehicle systems and in-development urban motorcycle platform"
     },
     "thirdEntity": {
       "name": "Apex Kingdom",
@@ -60,12 +66,13 @@
       "chartered": "2025-05-29",
       "charter": "assets/credentials/apex-kingdom-charter.pdf",
       "note": "Charter executed and notarized in Connecticut. Cited by the CT General Assembly 2025-10-05."
-    }
+    },
+    "charityRegistrationStatus": "Public-charity registration certificate issued 2025-10-28; inspected certificate period ended 2026-09-30; current renewal status is not asserted."
   },
   "bios": {
-    "fifty": "Matthew McCluster is a creative director, photographer, web designer and songwriter working across Connecticut and Georgia. He founded McCluster Corp, a registered Connecticut public charity, and its civic fellowship Equity Uprise, work recognized in 2025 by the State of Georgia and the City of Bridgeport.",
-    "oneHundred": "Matthew McCluster is an American creative director, photographer, web designer and songwriter working across Connecticut and Georgia. He is the founder of McCluster Corp, a registered Connecticut public charity, and of its civic fellowship Equity Uprise, work recognized in 2025 by the State of Georgia and the City of Bridgeport with official proclamations. He owns and operates Whip Equipped LLC, organized in Acworth, Georgia in 2024. His output spans digital marketing, media production, web and platform development, and the Here / PRIM3 music catalogue, and he is the architect of the Street Credit Bureau reputation platform.",
-    "twoFifty": "TODO — expand the hundred-word bio to 250 once the SCSU details are settled."
+    "fifty": "Matthew McCluster is a Southern Connecticut State University Computer Science student and infrastructure, technical-operations and platform professional. He founded McCluster Corp and operates technology, civic, educational and creative projects including Equity Uprise and PRIM3, while developing connected-mobility work through Whip Equipped LLC.",
+    "oneHundred": "Matthew McCluster is a Southern Connecticut State University Computer Science student with professional experience across IT support, enterprise infrastructure, data centers, networks, systems, platform operations and connected mobility. He founded McCluster Corp, whose projects include Equity Uprise, PRIM3 and the Uprise Action Network, and founded Whip Equipped LLC, where his work spans telematics, vehicle systems and connected-mobility development. His work also includes photography, web design, media production, songwriting, public-policy research and civic technology. Public recognition in 2025 includes a Connecticut General Assembly citation and proclamations from the State of Georgia and City of Bridgeport.",
+    "twoFifty": "TODO — expand only when a specific application requires a 250-word biography."
   },
   "statements": {
     "mission": "Turn media, policy and technology into one operating system a community can actually use — and prove it in public, with documents anyone can check.",
@@ -152,6 +159,12 @@
   ],
   "work": [
     {
+      "client": "Whip Equipped LLC",
+      "role": "Founder / Automotive Systems & Telematics Operator",
+      "period": "2024–Present",
+      "scope": "GPS and fleet telematics, vehicle electrical and embedded diagnostics, immobilizer/security systems, ADAS/cameras/sensors and connected-mobility product development"
+    },
+    {
       "client": "The Heat Chart",
       "role": "Social media pilot",
       "period": "current",
@@ -167,7 +180,7 @@
       "client": "IPC Systems (placed via PeopleSERVE)",
       "role": "Infrastructure Associate",
       "period": "2021-04 – 2023-06",
-      "scope": "Data-center transformation of a 5,000 sq ft facility: rack buildout (Ortronics 45U, APC NetShelter 42U), CAT6 and multi/single-mode fiber, Cisco Nexus 9000/4500 networking and DHCP scope configuration, Dell/Oracle/Sun server installs, Windows Server / RedHat / CentOS, PERC RAID, PDUs and environmental monitoring, IPC trading turrets (Touch, Pulse, IQMax, Edge), DoD-standard data destruction (dBAN), ISO-standard e-waste, and instructing new team members",
+      "scope": "Data-center transformation of a 5,000 sq ft facility: rack buildout (Ortronics 45U, APC NetShelter 42U), CAT6 and multi/single-mode fiber, Cisco Nexus 9000/4500 networking and DHCP scope configuration, Dell/Oracle/Sun server installs, Windows Server / RedHat / CentOS, PERC RAID, PDUs and environmental monitoring, IPC trading turrets (Touch, Pulse, IQMax, Edge), DoD-standard data destruction (dBAN), ISO-standard e-waste",
       "verification": "Engagement write-up typed by the manager",
       "doc": "assets/credentials/ipc-data-center-engagement.pdf"
     },
@@ -201,10 +214,16 @@
   ],
   "seeking": {
     "roles": [
-      "Creative director",
-      "Director of brand",
-      "Head of content",
-      "Media producer"
+      "Infrastructure Engineer",
+      "IT Support Specialist",
+      "Desktop / End User Support Technician",
+      "Data Center Infrastructure Technician",
+      "Network Support Technician",
+      "Systems / Technical Operations Specialist",
+      "Field IT / Field Service Technician",
+      "Platform / Web / Backend Developer",
+      "Telematics / Fleet Technology Specialist",
+      "Creative Director / Media Producer"
     ],
     "fellowships": [
       "Civic technology",
@@ -221,6 +240,6 @@
       "Media studies",
       "Computer science"
     ],
-    "notes": "Paid only. Remote or Connecticut / Georgia."
+    "notes": "Paid roles. Remote or Connecticut / New York / Georgia. Current undergraduate Computer Science student at Southern Connecticut State University."
   }
 }
