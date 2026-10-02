@@ -525,3 +525,11 @@ html, body { background: #0a0807; }
 .mn__rail-head>div{min-width:0}.mn__rail-k{margin-bottom:3px}
 .mn__post{padding-inline:16px}
 @media(min-width:700px){.mn__manifesto{padding:30px}.mn__manifesto h1{font-size:4.8rem}}
+
+.mn__brand-plate{display:grid;place-items:center;width:38px;height:38px;padding:4px;border-radius:10px;background:#eef3f7}.mn__brand-plate .mn__brand-mark{width:100%;height:100%;object-fit:contain}
+.mn__actionboard,.mn__understand{margin:0 0 20px;padding:20px;border:1px solid var(--mn-rule-2);border-radius:22px;background:var(--mn-panel)}
+.mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
+.mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
+.mn__mission-strip{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--mn-rule)}.mn__mission-strip h3{margin:3px 0 0;font-size:.9rem}.mn__mission-strip a,.mn__understand>a{color:var(--mn-hot);font-weight:800;text-decoration:none;white-space:nowrap}
+.mn__understand{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(135deg,rgba(4,45,82,.32),var(--mn-panel))}.mn__understand small{display:block;max-width:62ch;margin-top:7px;color:var(--mn-dim);line-height:1.45}
+@media(max-width:620px){.mn__actionboard-grid{grid-template-columns:1fr}.mn__understand{align-items:flex-start;flex-direction:column}}
