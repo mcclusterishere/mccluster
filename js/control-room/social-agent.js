@@ -1,6 +1,7 @@
 /* Control · Create · Social Agent — dedicated-phone publishing worker. */
 (function(){"use strict";window.CR=window.CR||{};
- var S={request:null,render:null,loaded:false,loading:false,error:null,devices:[],jobs:[],caption:"",media:""}; var FN="https://zmnhbrjyhxzhkxmhkexs.supabase.co/functions/v1/social-agent";
+ var S={request:null,render:null,loaded:false,loading:false,error:null,devices:[],jobs:[],caption:"",media:""};
+ var FN="https://zmnhbrjyhxzhkxmhkexs.supabase.co/functions/v1/social-agent";
  function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
  function token(){return window.MCC_SUPA&&MCC_SUPA.token?MCC_SUPA.token():Promise.resolve(null);} function call(body){return token().then(function(t){if(!t)throw new Error("Signed out");return fetch(FN,{method:"POST",headers:{authorization:"Bearer "+t,"content-type":"application/json"},body:JSON.stringify(body)});}).then(function(r){return r.text().then(function(raw){var j={};try{j=raw?JSON.parse(raw):{};}catch(_){}if(!r.ok)throw new Error(j.error||("Social Agent "+r.status));return j;});});}
  function load(){if(S.loading)return;S.loading=true;S.error=null;call({action:"status"}).then(function(x){S.devices=x.devices||[];S.jobs=x.jobs||[];S.loaded=true;}).catch(function(x){S.error=x;}).finally(function(){S.loading=false;S.render();});}
