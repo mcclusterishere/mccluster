@@ -62,3 +62,33 @@ test("SEO generators reproduce committed outputs",()=>{
    assert.equal(r.status,0,tool+"\n"+(r.stdout||"")+(r.stderr||""));
  }
 });
+
+
+test("recruiter authority intent pages are indexable, evidence-linked and canonical",()=>{
+ const sitemap=JSON.parse(read("data/seo/sitemap-pages.json"));
+ const hub=read("engineering/index.html");
+ const pages=[
+  ["engineering/it-support-systems.html","IT Support and Systems Specialist"],
+  ["engineering/data-center-networking.html","Data Center and Network Infrastructure Specialist"],
+  ["engineering/mccluster-platform.html","Platform and Backend Engineer"],
+  ["engineering/field-technology-telematics.html","Field Technology and Telematics Specialist"]
+ ];
+ const titles=new Set();
+ for(const [path,occupation] of pages){
+   const html=read(path);
+   const title=html.split("<title>")[1]?.split("</title>")[0];
+   assert.ok(title && !titles.has(title),path+" must have a unique title");
+   titles.add(title);
+   assert.ok(html.includes("https://matthew.mccluster.org/#matthew-mccluster"),path+" must reference canonical Person");
+   assert.ok(html.includes(occupation),path+" must declare the intended occupation");
+   assert.ok(!html.includes("JobPosting"),path+" must not use JobPosting schema");
+   const canonical=html.split('<link rel="canonical" href="')[1]?.split('"')[0];
+   assert.ok(canonical && sitemap.pages.some(x=>x.url===canonical),path+" canonical must be in sitemap");
+   assert.ok(hub.includes(path.split("/").at(-1)),path+" must be linked from engineering hub");
+ }
+ const llms=read("llms.txt");
+ assert.match(llms,/IT support & systems/);
+ assert.match(llms,/Data center, networking & infrastructure/);
+ assert.match(llms,/Platform, backend & technical operations/);
+ assert.match(llms,/Field technology, telematics & vehicle systems/);
+});
