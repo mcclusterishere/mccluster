@@ -181,3 +181,7 @@ The Stage 1 graph was correct enough to establish one canonical Person, but it w
 5. `sameAs` is identity-only. Credits, mentions, projects and unresolved duplicate profiles stay out.
 6. Current/planned/historical states stay explicit. A past registration or dealer licence is evidence, not a claim of current status.
 7. Search-engine value follows truthful entity relationships and supporting pages; no fictional, planned or weakly verified claim is promoted merely to enlarge the graph.
+
+### Cross-surface contradiction sweep
+
+The second pass found additional first-party surfaces that could still split the entity even with a correct canonical graph. `policy.html` and `portfolio.html` each declared a second full Person object with different titles or URLs; `card.html` created a separate Person with no canonical `@id`; the portfolio FAQ still described McCluster Corp as a currently registered charity; the press kit still centered Street Credit Bureau; and the Whip/brand data still reflected the former dealer phase and solo-code language. These surfaces now reference the canonical Person or use current source-of-truth copy instead of redefining the identity.
