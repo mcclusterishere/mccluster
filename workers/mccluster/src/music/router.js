@@ -1,12 +1,8 @@
 /* THE LISTEN LEDGER, AND A RECORD YOU EARN.
 
-   The owner's rule for a gated record that closes an album: play the album
-   in order. The closer plays only for someone whose most recent finished
-   listens are the songs before it, in album order, each heard all the way
-   through, with nothing else in between, within the last three hours. Every
-   play needs a fresh run of the album. (A gate can instead use the older
-   rule, `first` different songs then `each` more per play, by leaving out
-   `sequence`.) The preview stays public; the master never leaves the
+   A gated album closer can require one completed listen from an explicit
+   set of eligible songs on that album. The closer cannot be opened cold;
+   after each earned play, another eligible completed listen is required. The preview stays public; the master never leaves the
    private bucket except as a URL this file signs for one granted play.
 
    Nothing here trusts the browser about time. A listen counts only when
@@ -39,9 +35,8 @@ import { TRACKS } from './tracks.js';
 
 export const GATES = {
   'niggy-nigg': {
-    /* CIA Mind Control, in album order; this record is the last song */
-    sequence: ['you-the-feds', 'pull-up'],
-    window_minutes: 180,
+    /* CIA Mind Control closer: hear either other album song first. */
+    any_of: ['you-the-feds', 'pull-up'],
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
     /* the owner's own playback: a signed storage URL, no gate */
@@ -123,6 +118,7 @@ async function isHouseOperator(env, user) {
 
 function gateArgs(userId, key) {
   const gate = GATES[key];
+  if (gate.any_of) return { p_user: userId, p_track: key, p_eligible: gate.any_of };
   if (gate.sequence) return { p_user: userId, p_track: key, p_sequence: gate.sequence, p_window_minutes: gate.window_minutes };
   return { p_user: userId, p_track: key, p_first: gate.first, p_each: gate.each };
 }
@@ -131,9 +127,15 @@ function gateArgs(userId, key) {
    "play You the Feds next" without knowing the rule. */
 async function readGate(env, userId, key, claim) {
   const gate = GATES[key];
-  const name = gate.sequence ? (claim ? 'music_gate_claim_sequence' : 'music_gate_sequence_state') : (claim ? 'music_gate_claim' : 'music_gate_state');
+  const name = gate.any_of
+    ? (claim ? 'music_gate_claim_any' : 'music_gate_any_state')
+    : gate.sequence
+      ? (claim ? 'music_gate_claim_sequence' : 'music_gate_sequence_state')
+      : (claim ? 'music_gate_claim' : 'music_gate_state');
   const state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
-  if (state && gate.sequence) {
+  if (state && gate.any_of) {
+    state.titles = gate.any_of.map((k) => TRACKS[k]?.title || k);
+  } else if (state && gate.sequence) {
     state.titles = gate.sequence.map((k) => TRACKS[k]?.title || k);
     if (state.next) state.next_title = TRACKS[state.next]?.title || state.next;
   }
