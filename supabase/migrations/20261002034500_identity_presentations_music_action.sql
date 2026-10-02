@@ -26,10 +26,12 @@ from public.network_profiles np left join public.music_creator_profiles mp on mp
 on conflict (m_uid) do update set front_page_url=case when public.identity_presentations.front_page_url='' then excluded.front_page_url else public.identity_presentations.front_page_url end,
  music_enabled=public.identity_presentations.music_enabled or excluded.music_enabled,updated_at=now();
 create or replace view public.identity_public_profiles with (security_invoker=true) as
-select np.m_uid,np.mccluster_id,np.display_name,np.headline,np.bio,np.avatar_url,np.banner_url,np.website_url,
+select np.m_uid,pp.mccluster_id,np.display_name,np.headline,np.bio,np.avatar_url,np.banner_url,np.website_url,
  ip.front_page_url,ip.profile_theme,ip.music_enabled,ip.action_enabled,ip.tagline,
  mp.handle as music_handle,mp.artist_name,mp.verification_state as music_verification_state
 from public.network_profiles np
+left join public.m_auth_user_links l on l.m_uid=np.m_uid and l.is_primary=true
+left join public.platform_profiles pp on pp.user_id=l.auth_user_id
 left join public.identity_presentations ip on ip.m_uid=np.m_uid
 left join public.music_creator_profiles mp on mp.m_uid=np.m_uid and mp.status='active';
 grant select on public.identity_presentations,public.identity_public_profiles to anon,authenticated,service_role;
