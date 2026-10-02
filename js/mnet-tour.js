@@ -1,4 +1,4 @@
-/* THE WALKTHROUGH — a guided tour of Mnet for somebody who just arrived.
+/* THE WALKTHROUGH — a guided tour of Action Network for somebody who just arrived.
 
    Started three ways, all the same tour:
      - mnet.html?tour=1, the link in Matthew's welcome message;
@@ -7,7 +7,7 @@
      - window.MCC_TOUR.start() from anywhere else.
 
    Each step names one thing, rings it, and dims the rest. Steps that live
-   on another Mnet tab switch to it by pressing that tab's own button, so the
+   on another Action Network tab switch to it by pressing that tab's own button, so the
    tour uses the page exactly the way a person does and needs nothing from
    js/mnet.js. A step whose target is not on screen (a signed-out view, an
    empty list) still shows, centred, so the tour never stalls.
@@ -213,7 +213,7 @@
      link may still be on the sign-in or profile screen, so wait for the app
      to appear rather than touring a door. */
   function whenAppReady(cb) {
-    /* No time limit: signing in and finishing the Mnet profile can take
+    /* No time limit: signing in and finishing the Action Network profile can take
        minutes, and the walkthrough should still start the moment the app
        appears. Watches #mnApp's hidden attribute rather than polling. */
     var app = d.getElementById("mnApp");
