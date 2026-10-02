@@ -27,6 +27,9 @@ async function userRpc(req, env, name, body={}) {
   if(!res.ok) throw Object.assign(new Error(data?.message||data?.error||'RPC failed'),{status:limitStatus(data,res.status),detail:data}); return data;
 }
 async function currentMuid(env,userId){const r=await service(env,`m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);return r?.[0]?.m_uid||null}
+/* Characters as the database counts them (char_length counts code points),
+   not UTF-16 units: an emoji is one character, not two. */
+function chars(value){return [...String(value||'')].length}
 function uuidLike(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''))}
 function uniq(values){return [...new Set((values||[]).filter(Boolean).map(String))]}
 async function networkActors(env,muids=[]){
@@ -242,8 +245,8 @@ async function prepareNetworkPost(env,muid,b,appKey){
      they wrote without knowing. The table enforces the same 2,000 for a
      post and 1,000 for a reply. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id&&body.length>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
-  if(body.length>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
+  if(b.reply_to_id&&chars(body)>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
+  if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
   let assets=[];
   if(mediaIds.length){
@@ -588,7 +591,7 @@ async function handleMnet(req,env,path,url){
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid)return fail(req,env,'Post not found',404);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
-    if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(patch.body.length>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
+    if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
     const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});
@@ -808,6 +811,135 @@ async function handleMnet(req,env,path,url){
   return null;
 }
 
+/* THE FASHION BUREAU OF INVESTIGATION (fbi_board_v1). The fun front of Be
+   Authentic: Legit Checks, fake Sightings, and the Most Wanted board.
+   Everything is about what somebody is wearing, never who they are: no
+   faces unless you turned yourself in, a city at most, and nothing public
+   until the owner approves it. Votes earn nothing. */
+const FBI_KINDS=['legit_check','sighting','most_wanted'];
+const FBI_VOTES={legit_check:['legit','cap'],sighting:['legit','cap'],most_wanted:['guilty','acquitted']};
+function fbiText(v,max){return [...String(v==null?'':v).replace(/\s+/g,' ').trim()].slice(0,max).join('')}
+/* The streets have spoken once at least five people voted and seven in ten
+   agree. Until then the case is still under investigation. */
+export function fbiVerdict(row){
+  const [yes,no]=row.kind==='most_wanted'?[Number(row.guilty||0),Number(row.acquitted||0)]:[Number(row.cap||0),Number(row.legit||0)];
+  const total=yes+no;
+  if(total<5)return {verdict:'under_investigation',total};
+  if(yes/total>=0.7)return {verdict:row.kind==='most_wanted'?'guilty':'cap',total};
+  if(no/total>=0.7)return {verdict:row.kind==='most_wanted'?'acquitted':'legit',total};
+  return {verdict:'hung_jury',total};
+}
+async function fbiPhotos(env,ids){
+  const list=uniq(ids).filter(uuidLike);if(!list.length)return {};
+  const assets=await service(env,`network_media_assets?id=in.(${list.join(',')})&select=id,bucket_id,object_path`);
+  const out={};const byBucket={};
+  for(const a of assets||[])(byBucket[a.bucket_id]=byBucket[a.bucket_id]||[]).push(a);
+  for(const [bucket,rows] of Object.entries(byBucket)){
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(bucket)}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:3600,paths:rows.map(r=>r.object_path)})});
+    const signed=await res.json().catch(()=>[]);
+    if(!res.ok||!Array.isArray(signed))continue;
+    for(const r of rows){const hit=signed.find(x=>x.path===r.object_path&&x.signedURL);if(hit)out[r.id]=`${env.SUPABASE_URL}/storage/v1${hit.signedURL}`;}
+  }
+  return out;
+}
+async function fbiCards(env,rows,muid,{withStatus=false}={}){
+  const photos=await fbiPhotos(env,(rows||[]).flatMap(r=>r.media_asset_ids||[]));
+  let mine={};
+  if(muid&&rows?.length){const v=await service(env,`fbi_votes?m_uid=eq.${muid}&case_id=in.(${rows.map(r=>r.id).join(',')})&select=case_id,vote`);for(const x of v||[])mine[x.case_id]=x.vote;}
+  return (rows||[]).map(r=>({id:r.id,kind:r.kind,title:r.title,details:r.details,item:r.item,charge:r.charge,city:r.city,self_surrender:!!r.self_surrender,published_at:r.published_at||null,
+    photos:(r.media_asset_ids||[]).map(id=>photos[id]).filter(Boolean),
+    tally:{legit:Number(r.legit||0),cap:Number(r.cap||0),guilty:Number(r.guilty||0),acquitted:Number(r.acquitted||0)},
+    ...fbiVerdict(r),my_vote:mine[r.id]||null,
+    ...(withStatus?{status:r.status,removal_reason:r.removal_reason||null,created_at:r.created_at,reports:r.reports??undefined}:{})}));
+}
+async function handleFbi(req,env,path,url){
+  const optionalUser=async()=>{const u=await authUser(req,env);return u?{user:u,muid:await currentMuid(env,u.id)}:null};
+  const needUser=async()=>{const s=await optionalUser();if(!s||!s.muid)throw Object.assign(new Error('Sign in to do that'),{status:401});return s};
+  const isDesk=async()=>(await userRpc(req,env,'eu_is_admin',{}).catch(()=>false))===true;
+
+  if(path==='/v1/fbi/board'&&req.method==='GET'){
+    const kind=url.searchParams.get('kind');
+    if(kind&&!FBI_KINDS.includes(kind))return fail(req,env,'Unknown case type',400);
+    const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit'))||30));
+    const rows=await service(env,`fbi_board?select=*${kind?`&kind=eq.${kind}`:''}&order=published_at.desc&limit=${limit}`);
+    const s=req.headers.get('authorization')?await optionalUser().catch(()=>null):null;
+    return reply(req,env,{cases:await fbiCards(env,rows,s?.muid)});
+  }
+  const one=path.match(/^\/v1\/fbi\/cases\/([0-9a-f-]{36})$/i);
+  if(one&&req.method==='GET'){
+    const rows=await service(env,`fbi_board?id=eq.${one[1]}&select=*&limit=1`);
+    if(!rows?.length)return fail(req,env,'Case not found',404);
+    const s=req.headers.get('authorization')?await optionalUser().catch(()=>null):null;
+    return reply(req,env,{case:(await fbiCards(env,rows,s?.muid))[0]});
+  }
+  if(path==='/v1/fbi/cases'&&req.method==='POST'){
+    const {muid}=await needUser(),b=await json(req);
+    const kind=String(b.kind||'');
+    if(!FBI_KINDS.includes(kind))return fail(req,env,'Pick Legit Check, Sighting or Most Wanted',400);
+    const title=fbiText(b.title,80);if(title.length<3)return fail(req,env,'Give the case a title',400);
+    const surrender=kind==='most_wanted'&&b.self_surrender===true;
+    if(!surrender&&b.no_faces_attested!==true)return fail(req,env,'Photos must show the shoes or the fit, not anybody\'s face. Tick the box to confirm.',400);
+    const ids=uniq(Array.isArray(b.media_asset_ids)?b.media_asset_ids:[]).filter(uuidLike).slice(0,4);
+    if(!ids.length)return fail(req,env,'Add at least one photo',400);
+    /* Evidence must be uploaded and finished (ready), and it is reserved
+       (attached) before the case is written, so it cannot be discarded
+       later and a desk or a voter never sees a case with its photos gone.
+       The reservation is conditional, so one photo cannot back two cases. */
+    const assets=await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}&status=eq.ready&select=id,media_type`);
+    if((assets||[]).length!==ids.length||assets.some(a=>a.media_type!=='image'))return fail(req,env,'Photos only, fully uploaded, and only ones you uploaded',400);
+    const assetFilter=`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`;
+    const reserved=await service(env,`${assetFilter}&status=eq.ready&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'attached',updated_at:new Date().toISOString()})});
+    const release=()=>service(env,`${assetFilter}&status=eq.attached&post_id=is.null`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'ready',updated_at:new Date().toISOString()})}).catch(()=>{});
+    if((reserved||[]).length!==ids.length){await release();return fail(req,env,'Those photos are already in use',409);}
+    let rows;
+    try{rows=await service(env,'fbi_cases',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({kind,reporter_m_uid:muid,title,details:fbiText(b.details,500),item:fbiText(b.item,80),charge:fbiText(b.charge,80),city:fbiText(b.city,40),media_asset_ids:ids,self_surrender:surrender,no_faces_attested:b.no_faces_attested===true})});}
+    catch(e){await release();throw e;}
+    return reply(req,env,{case:{id:rows?.[0]?.id,status:'pending'}},201);
+  }
+  const vote=path.match(/^\/v1\/fbi\/cases\/([0-9a-f-]{36})\/vote$/i);
+  if(vote&&req.method==='POST'){
+    const {muid}=await needUser(),b=await json(req);
+    const rows=await service(env,`fbi_cases?id=eq.${vote[1]}&status=eq.public&select=id,kind,reporter_m_uid&limit=1`),c=rows?.[0];
+    if(!c)return fail(req,env,'Case not found',404);
+    if(c.reporter_m_uid===muid)return fail(req,env,'You can\'t vote on your own case',403);
+    if(!FBI_VOTES[c.kind].includes(b.vote))return fail(req,env,'That vote does not fit this case',400);
+    await service(env,'fbi_votes',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({case_id:c.id,m_uid:muid,vote:b.vote})});
+    const fresh=await service(env,`fbi_board?id=eq.${c.id}&select=*&limit=1`);
+    return reply(req,env,{case:(await fbiCards(env,fresh,muid))[0]});
+  }
+  const report=path.match(/^\/v1\/fbi\/cases\/([0-9a-f-]{36})\/report$/i);
+  if(report&&req.method==='POST'){
+    const {muid}=await needUser(),b=await json(req);
+    await service(env,'fbi_reports',{method:'POST',headers:{prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({case_id:report[1],m_uid:muid,reason:fbiText(b.reason,300)})});
+    return reply(req,env,{reported:true});
+  }
+  if(path==='/v1/fbi/mine'&&req.method==='GET'){
+    const {muid}=await needUser();
+    const rows=await service(env,`fbi_cases?reporter_m_uid=eq.${muid}&select=*&order=created_at.desc&limit=30`);
+    return reply(req,env,{cases:await fbiCards(env,rows,null,{withStatus:true})});
+  }
+  /* THE DESK: the owner approves or removes. Nothing reaches the board
+     without this. */
+  if(path==='/v1/fbi/desk'&&req.method==='GET'){
+    if(!(await isDesk()))return fail(req,env,'Not found',404);
+    const rows=await service(env,'fbi_cases?status=eq.pending&select=*&order=created_at.asc&limit=50');
+    const reports=rows?.length?await service(env,`fbi_reports?case_id=in.(${rows.map(r=>r.id).join(',')})&select=case_id,reason`):[];
+    for(const r of rows||[])r.reports=(reports||[]).filter(x=>x.case_id===r.id).map(x=>x.reason).filter(Boolean);
+    return reply(req,env,{cases:await fbiCards(env,rows,null,{withStatus:true})});
+  }
+  const review=path.match(/^\/v1\/fbi\/cases\/([0-9a-f-]{36})\/review$/i);
+  if(review&&req.method==='POST'){
+    if(!(await isDesk()))return fail(req,env,'Not found',404);
+    const b=await json(req);
+    if(!['public','removed'].includes(b.decision))return fail(req,env,'Approve or remove',400);
+    const now=new Date().toISOString();
+    const rows=await service(env,`fbi_cases?id=eq.${review[1]}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(b.decision==='public'?{status:'public',reviewed_at:now,published_at:now,removal_reason:null}:{status:'removed',reviewed_at:now,removal_reason:fbiText(b.reason,300)||null})});
+    if(!rows?.length)return fail(req,env,'Case not found',404);
+    return reply(req,env,{case:{id:rows[0].id,status:rows[0].status}});
+  }
+  return fail(req,env,'Not found',404);
+}
+
 export async function handlePlatformApi(req,env){
   if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return null;
   const url=new URL(req.url),path=url.pathname.replace(/\/+$/,'')||'/';
@@ -816,5 +948,6 @@ export async function handlePlatformApi(req,env){
   }
   if(path.startsWith('/v1/developer/')) return handleDeveloper(req,env,path,url);
   if(path==='/v1/mnet'||path.startsWith('/v1/mnet/')) return handleMnet(req,env,path,url);
+  if(path.startsWith('/v1/fbi/')) return handleFbi(req,env,path,url);
   return null;
 }

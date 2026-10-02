@@ -1,0 +1,104 @@
+/* FBI · Fashion Bureau of Investigation. Case files on a dark desk:
+   manila cards, rubber-stamp verdicts. Phone first; wider screens only add
+   columns. */
+:root {
+  --fbi-bg: #0b0a09;
+  --fbi-panel: #16130f;
+  --fbi-paper: #e9dcc0;
+  --fbi-ink: #f4efe6;
+  --fbi-dim: #b9ad9b;
+  --fbi-faint: #7f7566;
+  --fbi-line: rgba(244, 239, 230, 0.12);
+  --fbi-hot: #e5383b;
+  --fbi-legit: #2fbf71;
+  --fbi-amber: #f0b429;
+}
+body.fbi-page { margin: 0; background: var(--fbi-bg); color: var(--fbi-ink); }
+/* a class that sets display must not un-hide a field the form hid */
+.fbi [hidden], .fbi__sheet [hidden] { display: none !important; }
+.fbi { max-width: 72rem; margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); min-width: 0; }
+
+.fbi__top { padding: 8px 0 18px; border-bottom: 1px solid var(--fbi-line); }
+.fbi__back { display: inline-block; color: var(--fbi-dim); text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 18px; }
+.fbi__unit { margin: 0 0 6px; color: var(--fbi-amber); font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+.fbi__title { margin: 0; font-size: clamp(30px, 9vw, 56px); line-height: 0.98; letter-spacing: -0.02em; font-weight: 900; text-transform: uppercase; }
+.fbi__title span { color: var(--fbi-hot); }
+.fbi__lede { margin: 12px 0 18px; color: var(--fbi-dim); font-size: 16px; line-height: 1.5; max-width: 34rem; }
+.fbi__cta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+
+.fbi__btn { min-height: 48px; padding: 12px 16px; border: 1px solid var(--fbi-line); border-radius: 12px; background: var(--fbi-panel); color: var(--fbi-ink); font: inherit; font-weight: 800; font-size: 15px; cursor: pointer; }
+.fbi__btn--hot { background: var(--fbi-hot); border-color: var(--fbi-hot); color: #fff; }
+.fbi__btn--wide { width: 100%; margin-top: 6px; }
+.fbi__btn:disabled { opacity: 0.55; cursor: default; }
+
+.fbi__tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 16px -16px 0; padding: 0 16px 4px; }
+.fbi__tabs::-webkit-scrollbar { display: none; }
+.fbi__tab { flex: none; min-height: 40px; padding: 8px 14px; border: 1px solid var(--fbi-line); border-radius: 999px; background: transparent; color: var(--fbi-dim); font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
+.fbi__tab.is-on { background: var(--fbi-ink); color: var(--fbi-bg); border-color: var(--fbi-ink); }
+.fbi__blurb { margin: 14px 0 12px; color: var(--fbi-dim); font-size: 14px; }
+
+.fbi__board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.fbi__empty { color: var(--fbi-faint); padding: 28px 0; text-align: center; }
+.fbi__empty a { color: var(--fbi-ink); }
+
+.fbi__case { min-width: 0; border-radius: 14px; overflow: hidden; background: var(--fbi-paper); color: #1c1710; box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.fbi__case.is-shared { outline: 3px solid var(--fbi-amber); outline-offset: 2px; }
+.fbi__photo { position: relative; aspect-ratio: 1 / 1; background: #2a241c; }
+.fbi__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fbi__nophoto { display: grid; place-items: center; height: 100%; color: var(--fbi-faint); }
+.fbi__count { position: absolute; right: 10px; bottom: 10px; padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 800; }
+.fbi__stamp { position: absolute; left: 12px; top: 14px; padding: 4px 10px; border: 3px solid currentColor; border-radius: 6px; transform: rotate(-9deg); font-weight: 900; font-size: 20px; letter-spacing: 0.06em; background: rgba(233, 220, 192, 0.86); }
+.fbi__stamp--cap, .fbi__stamp--guilty { color: var(--fbi-hot); }
+.fbi__stamp--legit, .fbi__stamp--acquitted { color: #17834b; }
+.fbi__stamp--hung_jury, .fbi__stamp--under_investigation { color: #7a5a00; font-size: 13px; }
+.fbi__body { padding: 12px 14px 14px; }
+.fbi__wanted { margin: 0 0 4px; color: var(--fbi-hot); font-size: 11px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; }
+.fbi__body h3 { margin: 0; font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.fbi__meta { margin: 6px 0 0; color: #5d523f; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.fbi__details { margin: 8px 0 0; color: #3b3326; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.fbi__votes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.fbi__vote { min-height: 46px; border: 2px solid #1c1710; border-radius: 10px; background: transparent; color: #1c1710; font: inherit; font-weight: 900; font-size: 15px; text-transform: uppercase; cursor: pointer; }
+.fbi__vote b { margin-left: 4px; }
+.fbi__vote--cap.is-on, .fbi__vote--guilty.is-on { background: var(--fbi-hot); border-color: var(--fbi-hot); color: #fff; }
+.fbi__vote--legit.is-on, .fbi__vote--acquitted.is-on { background: #17834b; border-color: #17834b; color: #fff; }
+.fbi__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.fbi__link { min-height: 36px; padding: 6px 4px; border: 0; background: none; color: #5d523f; font: inherit; font-weight: 800; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.fbi__state { margin: 10px 0 0; font-weight: 800; font-size: 13px; }
+.fbi__state--public { color: #17834b; }
+.fbi__state--removed { color: var(--fbi-hot); }
+.fbi__state--pending { color: #7a5a00; }
+
+.fbi__rules { margin-top: 28px; padding: 16px; border: 1px solid var(--fbi-line); border-radius: 14px; background: var(--fbi-panel); }
+.fbi__rules h2 { margin: 0 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--fbi-amber); }
+.fbi__rules ol { margin: 0; padding-left: 20px; color: var(--fbi-dim); font-size: 14px; line-height: 1.55; }
+.fbi__rules b { color: var(--fbi-ink); }
+
+/* The filing sheet: full width on a phone, a centred card when there is room. */
+.fbi__sheet { width: 100%; max-width: 100%; max-height: 100dvh; margin: auto 0 0; padding: 0; border: 0; border-radius: 18px 18px 0 0; background: var(--fbi-panel); color: var(--fbi-ink); }
+.fbi__sheet::backdrop { background: rgba(0, 0, 0, 0.7); }
+.fbi__form { display: grid; gap: 10px; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
+.fbi__sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.fbi__sheet-head h2 { margin: 0; font-size: 20px; }
+.fbi__x { width: 44px; height: 44px; border: 0; background: none; color: var(--fbi-dim); font-size: 28px; cursor: pointer; }
+.fbi__kinds { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.fbi__kinds label { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--fbi-line); border-radius: 12px; cursor: pointer; }
+.fbi__kinds label:has(input:checked) { border-color: var(--fbi-hot); }
+.fbi__kinds span { display: grid; font-weight: 800; }
+.fbi__kinds small { color: var(--fbi-faint); font-weight: 600; }
+.fbi__field { display: grid; gap: 5px; min-width: 0; color: var(--fbi-dim); font-size: 13px; font-weight: 800; }
+.fbi__field small { color: var(--fbi-faint); font-weight: 600; }
+.fbi__field input, .fbi__field select, .fbi__field textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 11px 12px; border: 1px solid var(--fbi-line); border-radius: 10px; background: var(--fbi-bg); color: var(--fbi-ink); font: inherit; font-size: max(16px, 1rem); }
+.fbi__check { display: flex; gap: 10px; align-items: flex-start; color: var(--fbi-ink); font-size: 14px; line-height: 1.4; }
+.fbi__check input { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.fbi__hint { margin: 0; color: var(--fbi-faint); font-size: 12px; }
+.fbi__status { margin: 0; min-height: 1.2em; color: var(--fbi-amber); font-size: 14px; font-weight: 700; }
+
+@media (min-width: 40rem) {
+  .fbi__cta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fbi__board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fbi__kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fbi__sheet { max-width: 34rem; margin: auto; border-radius: 18px; }
+}
+@media (min-width: 64rem) {
+  .fbi__board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

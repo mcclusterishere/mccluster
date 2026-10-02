@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FBI · Fashion Bureau of Investigation · McCluster</title>
+  <meta name="description" content="The Fashion Bureau of Investigation: get your kicks legit checked, report fake sightings, and vote on the Most Wanted fashion crimes. The shoes are on trial, never the people.">
+  <meta property="og:title" content="FBI · Fashion Bureau of Investigation">
+  <meta property="og:description" content="Legit or cap? Get your kicks checked, report fake sightings, and judge the Most Wanted.">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/fbi.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="fbi-page">
+  <main class="fbi">
+    <header class="fbi__top">
+      <a class="fbi__back" href="mnet.html">← Action Network</a>
+      <p class="fbi__unit">The Heat Chart × Be Authentic</p>
+      <h1 class="fbi__title"><span>F</span>ashion <span>B</span>ureau of <span>I</span>nvestigation</h1>
+      <p class="fbi__lede">Legit or cap? The streets decide. The shoes are on trial, never the people.</p>
+      <div class="fbi__cta">
+        <button class="fbi__btn fbi__btn--hot" type="button" data-file="legit_check">Check my kicks</button>
+        <button class="fbi__btn" type="button" data-file="sighting">Report a fake sighting</button>
+        <button class="fbi__btn" type="button" data-file="most_wanted">Report a fashion crime</button>
+      </div>
+    </header>
+
+    <nav class="fbi__tabs" role="tablist" aria-label="Case files">
+      <button class="fbi__tab is-on" type="button" role="tab" data-tab="most_wanted" aria-selected="true">Most Wanted</button>
+      <button class="fbi__tab" type="button" role="tab" data-tab="sighting" aria-selected="false">Sightings</button>
+      <button class="fbi__tab" type="button" role="tab" data-tab="legit_check" aria-selected="false">Legit Checks</button>
+      <button class="fbi__tab" type="button" role="tab" data-tab="mine" aria-selected="false">My cases</button>
+      <button class="fbi__tab" type="button" role="tab" data-tab="desk" aria-selected="false" hidden id="fbiDeskTab">Desk</button>
+    </nav>
+
+    <p class="fbi__blurb" id="fbiBlurb"></p>
+    <section class="fbi__board" id="fbiBoard" aria-live="polite"></section>
+
+    <section class="fbi__rules" aria-labelledby="fbiRulesTitle">
+      <h2 id="fbiRulesTitle">Bureau rules</h2>
+      <ol>
+        <li><b>The shoes are on trial, not the person.</b> No faces, no names, no handles, unless you're turning yourself in.</li>
+        <li><b>A city at most.</b> Never an address, a school, a job, or anywhere a person could be found.</li>
+        <li><b>Every case is reviewed</b> before it goes on the board. Three reports send it back for review.</li>
+        <li><b>Votes are just for fun.</b> Nobody earns points for voting.</li>
+      </ol>
+    </section>
+  </main>
+
+  <dialog class="fbi__sheet" id="fbiSheet" aria-labelledby="fbiSheetTitle">
+    <form method="dialog" class="fbi__form" id="fbiForm" novalidate>
+      <header class="fbi__sheet-head">
+        <h2 id="fbiSheetTitle">Open a case</h2>
+        <button class="fbi__x" type="button" id="fbiClose" aria-label="Close">×</button>
+      </header>
+      <div class="fbi__kinds" role="radiogroup" aria-label="Case type">
+        <label><input type="radio" name="kind" value="legit_check"> <span>Legit check<small>My own pair</small></span></label>
+        <label><input type="radio" name="kind" value="sighting"> <span>Sighting<small>A fake in the wild</small></span></label>
+        <label><input type="radio" name="kind" value="most_wanted"> <span>Most Wanted<small>A fashion crime</small></span></label>
+      </div>
+      <label class="fbi__field"><span>Photos (1 to 4)</span><input type="file" id="fbiPhotos" accept="image/jpeg,image/png,image/webp" multiple></label>
+      <p class="fbi__hint" id="fbiPhotoNote">Show the shoes or the fit. Crop out faces.</p>
+      <label class="fbi__field"><span>Title</span><input type="text" id="fbiTitle" maxlength="80" placeholder="Fake Travis lows on the 2 train"></label>
+      <label class="fbi__field" id="fbiChargeWrap" hidden><span>The charge</span>
+        <select id="fbiCharge">
+          <option>Socks with slides</option><option>Creased to death</option><option>Fakes on feet</option>
+          <option>Laces not laced</option><option>Crocs in sport mode</option><option>Matching everything</option>
+          <option>Wearing the box tag</option><option value="">Something else…</option>
+        </select>
+      </label>
+      <label class="fbi__field" id="fbiChargeOtherWrap" hidden><span>Name the crime</span><input type="text" id="fbiChargeOther" maxlength="80"></label>
+      <label class="fbi__field"><span>The shoe <small>optional</small></span><input type="text" id="fbiItem" maxlength="80" placeholder="Jordan 1 Low x Travis Scott"></label>
+      <label class="fbi__field"><span>City <small>optional, never more than a city</small></span><input type="text" id="fbiCity" maxlength="40" placeholder="Atlanta"></label>
+      <label class="fbi__field"><span>The evidence <small>optional</small></span><textarea id="fbiDetails" maxlength="500" rows="3" placeholder="Stitching on the heel is off, the swoosh sits too low…"></textarea></label>
+      <label class="fbi__check" id="fbiSurrenderWrap" hidden><input type="checkbox" id="fbiSurrender"> <span>I'm turning myself in. It's me in the photo, and I'm fine with that.</span></label>
+      <label class="fbi__check" id="fbiNoFacesWrap"><input type="checkbox" id="fbiNoFaces"> <span>No faces, no names. The photos show only the shoes or the fit.</span></label>
+      <p class="fbi__status" id="fbiFormStatus" role="status"></p>
+      <button class="fbi__btn fbi__btn--hot fbi__btn--wide" type="submit" id="fbiSubmit">Send to the Bureau</button>
+      <p class="fbi__hint">The Bureau reviews every case before it goes on the board.</p>
+    </form>
+  </dialog>
+
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/fbi.js?v=__STAMP__"></script>
+</body>
+</html>
