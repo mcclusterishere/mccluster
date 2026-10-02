@@ -154,3 +154,16 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(like, /renderFeed\(/);
   assert.match(html, /id="mnRail"/);
 });
+
+test("Action Network profile treats the member website as the identity front page", async()=>{
+ const html=await read("mnet.html"), js=await read("js/mnet.js"), css=await read("css/mnet.css");
+ assert.match(html,/id="mnFrontPage"/); assert.match(html,/id="mnFrontPageFrame"/);
+ assert.match(js,/function paintFrontPage\(p, id, name\)/); assert.match(js,/p\.front_page_url \|\| p\.website_url/);
+ assert.match(js,/paintFrontPage\(p, id, name\)/); assert.match(css,/\.mn__frontpage-stage/);
+});
+
+
+test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
+
+
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/Put it into action/);assert.match(html,/What are you putting into action/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
