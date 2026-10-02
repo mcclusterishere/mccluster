@@ -45,6 +45,12 @@
         img.src = p.banner_url; img.alt = "";
         doc.getElementById("creatorHero").prepend(img);
       }
+      var identityLink = doc.createElement("a");
+      identityLink.className = "creator-action-network";
+      identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
+      identityLink.textContent = "Put this music into action → @" + p.handle;
+      identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on the Action Network");
+      doc.getElementById("creatorHero").querySelector(".creator-hero__copy").appendChild(identityLink);
       if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle });
 
       return Promise.all([
