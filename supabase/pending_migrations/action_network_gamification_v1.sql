@@ -17,7 +17,8 @@ create table public.action_proofs (
  id uuid primary key default gen_random_uuid(), assignment_id uuid not null references public.action_mission_assignments(id) on delete cascade,
  user_id uuid not null references auth.users(id) on delete cascade, proof_type text not null check(proof_type in ('video','photo','link','text','artifact')),
  proof_url text, statement text not null default '', metadata jsonb not null default '{}'::jsonb,
- status text not null default 'pending' check(status in ('pending','verified','rejected')), reviewer_uid uuid, review_note text, created_at timestamptz not null default now(), reviewed_at timestamptz
+ status text not null default 'pending' check(status in ('pending','verified','rejected')), reviewer_uid uuid, review_note text, created_at timestamptz not null default now(), reviewed_at timestamptz,
+ unique(assignment_id)
 );
 create table public.action_points_ledger (
  id uuid primary key default gen_random_uuid(), m_uid uuid not null references public.m_people(id) on delete cascade,
@@ -38,11 +39,20 @@ alter table public.action_missions enable row level security; alter table public
 create policy "public reads open missions" on public.action_missions for select to anon,authenticated using(status in ('open','paused','closed') or (select public.eu_is_admin()));
 create policy "admins manage missions" on public.action_missions for all to authenticated using((select public.eu_is_admin())) with check((select public.eu_is_admin()));
 create policy "members read own assignments" on public.action_mission_assignments for select to authenticated using(user_id=(select auth.uid()) or (select public.eu_is_admin()));
+create policy "members join own open missions" on public.action_mission_assignments for insert to authenticated
+ with check(user_id=(select auth.uid()) and m_uid=public.current_m_uid() and exists(select 1 from public.action_missions m where m.id=mission_id and m.status='open' and (m.starts_at is null or m.starts_at<=now()) and (m.ends_at is null or m.ends_at>now())));
+create policy "members update own active assignments" on public.action_mission_assignments for update to authenticated
+ using(user_id=(select auth.uid()) and status in ('joined','in_progress'))
+ with check(user_id=(select auth.uid()) and m_uid=public.current_m_uid() and status in ('joined','in_progress','submitted','withdrawn'));
 create policy "members read own proofs" on public.action_proofs for select to authenticated using(user_id=(select auth.uid()) or (select public.eu_is_admin()));
+create policy "members submit own proof" on public.action_proofs for insert to authenticated
+ with check(user_id=(select auth.uid()) and exists(select 1 from public.action_mission_assignments a where a.id=assignment_id and a.user_id=(select auth.uid()) and a.status in ('joined','in_progress','submitted')));
 create policy "members read own points" on public.action_points_ledger for select to authenticated using(m_uid=public.current_m_uid() or (select public.eu_is_admin()));
 create policy "members read own skills" on public.action_skill_progress for select to authenticated using(m_uid=public.current_m_uid() or (select public.eu_is_admin()));
 create policy "public reads active cohorts" on public.action_cohorts for select to anon,authenticated using(status in ('active','complete') or (select public.eu_is_admin()));
 create policy "members read cohort roster" on public.action_cohort_members for select to authenticated using(true);
 create policy "admins manage cohorts" on public.action_cohorts for all to authenticated using((select public.eu_is_admin())) with check((select public.eu_is_admin()));
 grant select on public.action_missions,public.action_cohorts to anon,authenticated;
-grant select on public.action_mission_assignments,public.action_proofs,public.action_points_ledger,public.action_skill_progress,public.action_cohort_members to authenticated;
+grant select,insert,update on public.action_mission_assignments to authenticated;
+grant select,insert on public.action_proofs to authenticated;
+grant select on public.action_points_ledger,public.action_skill_progress,public.action_cohort_members to authenticated;
