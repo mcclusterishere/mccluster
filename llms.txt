@@ -32,6 +32,7 @@ F.R.E.E.D.O.M. Inc., Whip Equipped LLC and McCluster Corp.
   · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx)
 - [Full résumé](https://matthew.mccluster.org/matthew-mccluster.html)
 - [Engineering & IT evidence](https://matthew.mccluster.org/engineering/)
+- [Recruiter role & evidence map](https://matthew.mccluster.org/engineering/recruiter-role-map.html) · [machine-readable ledger](https://matthew.mccluster.org/data/seo/recruiter-evidence.json)
 - Recruiter evidence by role:
   - [IT support & systems](https://matthew.mccluster.org/engineering/it-support-systems.html)
   - [Data center, networking & infrastructure](https://matthew.mccluster.org/engineering/data-center-networking.html)
