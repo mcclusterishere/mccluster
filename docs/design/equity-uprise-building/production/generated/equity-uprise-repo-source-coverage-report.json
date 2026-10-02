@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 269,
+  "candidate_count": 270,
   "capability_source_count": 97,
-  "support_only_count": 172,
-  "checks_total": 981,
-  "checks_passed": 981,
+  "support_only_count": 173,
+  "checks_total": 985,
+  "checks_passed": 985,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -223,6 +223,7 @@
     "supabase/migrations/20261002014251_end_racism_campaign.sql",
     "supabase/migrations/20261002015418_song_test.sql",
     "supabase/migrations/20261002061056_action_network_gamification_v1.sql",
+    "supabase/migrations/20261002061954_analytics_events_lean.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -283,7 +284,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "269 entries"
+      "detail": "270 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5182,6 +5183,26 @@
     },
     {
       "name": "workers/mccluster/test/mission-proof-media.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002061954_analytics_events_lean.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261002061954_analytics_events_lean.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261002061954_analytics_events_lean.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261002061954_analytics_events_lean.sql support rationale present",
       "passed": true,
       "detail": ""
     }

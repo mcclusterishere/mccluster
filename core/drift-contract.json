@@ -2,9 +2,9 @@
   "schema_version": "mccluster-drift-contract/v1",
   "supabase": {
     "project_ref": "zmnhbrjyhxzhkxmhkexs",
-    "migration_count": 204,
-    "latest_version": "20261002061318",
-    "latest_name": "action_network_fk_indexes",
-    "ledger_sha256": "236cd4e50e2d6e2c906125f463ff44880be4e1fd4441783ceb3021fcdf2cc6db"
+    "migration_count": 206,
+    "latest_version": "20261002063334",
+    "latest_name": "analytics_read_events_lean",
+    "ledger_sha256": "afe42f3c4d563a7163b983c996556af1aea41ca43f42d147069363b21ea209a1"
   }
 }
