@@ -32,6 +32,12 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
+  /* One telemetry seam for the whole Action Network. Product writes remain
+     authoritative in the database; these events describe the journey around
+     them so Control can answer which surfaces actually move people to act. */
+  function track(name, data) {
+    try { if (window.MCC_TRACK) window.MCC_TRACK(name, Object.assign({ surface:"action_network" }, data || {})); } catch (e) {}
+  }
   function initials(name) {
     var parts = String(name || "M").trim().split(/\s+/).filter(Boolean);
     return (parts.slice(0, 2).map(function (p) { return p.charAt(0); }).join("") || "M").toUpperCase();
@@ -288,7 +294,7 @@
       if (prev) { prev.src = url; prev.hidden = false; }
       setStatus($("mnAvatarStatus"), "Photo ready. Save the profile to keep it.", "ok");
       return url;
-    }).catch(function (e) {
+    }).then(function () { track(liked ? "mnet_reaction_removed" : "mnet_reaction_added", { post_id:postId }); }).catch(function (e) {
       setStatus($("mnAvatarStatus"), e.message || "Upload failed.", "error");
       throw e;
     });
@@ -603,6 +609,7 @@
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
       clearMediaQueue();
       setStatus($("mnPostStatus"), "Posted.", "ok");
+      track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!track, visibility:$("mnVisibility").value });
       return loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
@@ -683,6 +690,7 @@
       post.reply_count = Number(post.reply_count || 0) + 1;
       renderFeed(false);
       setStatus($("mnReplyStatus"), "Replied.", "ok");
+      track("mnet_reply_created", { post_id:post.id });
       return loadReplies(post.id);
     }).catch(function (e) {
       setStatus($("mnReplyStatus"), e.message || "Could not reply.", "error");
@@ -825,6 +833,7 @@
     paintToggle(button,!saved,null);
     button.disabled=true;
     api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/bookmark", {method:saved?"DELETE":"POST",body:{}})
+      .then(function(){ track(saved?"mnet_bookmark_removed":"mnet_bookmark_added",{post_id:postId}); })
       .catch(function (e) { if(post)post.bookmarked_by_me=saved; paintToggle(button,saved,null); setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
       .finally(function () { button.disabled=false; });
   }
@@ -850,7 +859,7 @@
       b.onclick=function () {
         var following=b.dataset.following==="1"; b.disabled=true;
         api("/v1/mnet/people/"+encodeURIComponent(b.dataset.followPerson)+"/follow",{method:following?"DELETE":"POST",body:{}})
-          .then(function () { b.dataset.following=following?"0":"1"; b.textContent=following?"Follow":"Following"; b.classList.toggle("is-active",!following); })
+          .then(function () { b.dataset.following=following?"0":"1"; b.textContent=following?"Follow":"Following"; b.classList.toggle("is-active",!following); track(following?"mnet_unfollow":"mnet_follow",{handle:b.dataset.followPerson}); })
           .catch(function (e) { setStatus($("mnDiscoverStatus"),e.message||"Could not update follow.","error"); })
           .finally(function () { b.disabled=false; });
       };
@@ -974,13 +983,14 @@
     event.preventDefault();if(!state.currentConversation)return;var body=$("mnMessageBody").value.trim();if(!body)return;
     var b=$("mnMessageForm").querySelector("button");b.disabled=true;
     api("/v1/mnet/conversations/"+encodeURIComponent(state.currentConversation)+"/messages",{method:"POST",body:{body:body}})
-      .then(function(){ $("mnMessageBody").value=""; return loadConversationMessages(state.currentConversation).then(loadConversations); })
+      .then(function(){ $("mnMessageBody").value=""; track("mnet_message_sent",{conversation_id:state.currentConversation}); return loadConversationMessages(state.currentConversation).then(loadConversations); })
       .catch(function(e){setStatus($("mnConversationStatus"),e.message||"Could not send message.","error");})
       .finally(function(){b.disabled=false;});
   }
 
   function setView(name) {
     state.currentView = name;
+    track("mnet_view", { view:name });
     ["feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
       var ids={feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
