@@ -108,3 +108,40 @@ test('an ended broadcast cannot be re-published', async () => {
   fake({ status: 'ended' });
   assert.equal((await call(`/v1/mnet/live/${SESSION}/publish`)).status, 410);
 });
+
+test('the cron ends broadcasts with no heartbeat and deletes their Stream inputs', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    const u = String(url), m = init.method || 'GET';
+    calls.push({ u, m, body: init.body ? String(init.body) : '' });
+    const ok = (d) => new Response(JSON.stringify(d), { status: 200 });
+    if (u.includes('/network_live_sessions') && m === 'GET') return ok([{ id: SESSION, cf_input_uid: 'gone1' }]);
+    if (u.startsWith('https://api.cloudflare.com/')) return ok({ success: true, result: null });
+    return ok([]);
+  };
+  const { reapStaleLiveSessions } = await import('../src/platform-api.js');
+  const out = await reapStaleLiveSessions(ENV);
+  assert.equal(out.ended, 1);
+  const q = calls.find((c) => c.u.includes('/network_live_sessions') && c.m === 'GET').u;
+  assert.match(q, /status=in\.\(starting,live\)/);
+  assert.match(q, /last_seen_at\.lt\./, 'only broadcasts whose heartbeat stopped');
+  assert.ok(cf(calls).some((c) => c.m === 'DELETE' && c.u.endsWith('/live_inputs/gone1')));
+  assert.equal(JSON.parse(calls.find((c) => c.m === 'PATCH').body).end_reason, 'stale');
+});
+
+test('a person can be looked up by m_uid, so the watch screen can name the host', async () => {
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    const u = String(url); calls.push(u);
+    const ok = (d) => new Response(JSON.stringify(d), { status: 200 });
+    if (u.endsWith('/auth/v1/user')) return ok({ id: OTHER });
+    if (u.includes('/m_auth_user_links?m_uid=eq.')) return ok([{ auth_user_id: HOST }]);
+    if (u.includes('/m_auth_user_links')) return ok([{ m_uid: '66666666-6666-4666-8666-666666666666' }]);
+    if (u.includes(`/platform_profiles?user_id=eq.${HOST}`)) return ok([{ user_id: HOST, display_name: 'Kofi', mccluster_id: 'kofi' }]);
+    if (u.includes('/network_profiles')) return ok([{ m_uid: MUID, display_name: 'Kofi', visibility: 'public' }]);
+    return ok([]);
+  };
+  const res = await call(`/v1/mnet/people/${MUID}`);
+  assert.notEqual(res.status, 404, 'an m_uid resolves');
+  assert.ok(calls.some((u) => u.includes(`/m_auth_user_links?m_uid=eq.${MUID}`)));
+});

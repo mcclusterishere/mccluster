@@ -20,7 +20,14 @@
 (function (w, d) {
   "use strict";
 
+  /* "Seen" on this browser is kept per account, so a second person signing
+     in on the same device still gets their walkthrough. */
   var SEEN = "mcc_mnet_tour_seen";
+  function seenKey() {
+    var id = null;
+    try { id = w.MCC_MNET && w.MCC_MNET.identity && w.MCC_MNET.identity().m_uid; } catch (e) { /* not booted */ }
+    return id ? SEEN + ":" + id : null;
+  }
 
   /* The tour leads with doing: missions, proof, the receipt and the
      fellowship come before the social tabs, because that is what the
@@ -184,7 +191,7 @@
 
   function end() {
     active = false;
-    try { localStorage.setItem(SEEN, new Date().toISOString()); } catch (e) { /* storage blocked */ }
+    try { var key = seenKey(); if (key) localStorage.setItem(key, new Date().toISOString()); } catch (e) { /* storage blocked */ }
     /* Remember it on the account too, so the app and the web agree. */
     try { if (w.MCC_MNET && w.MCC_MNET.markTourSeen) w.MCC_MNET.markTourSeen(); } catch (e) { /* best effort */ }
     if (ui) {
@@ -276,7 +283,7 @@
   function autoStart(boot) {
     var ctx = boot && boot.onboarding && boot.onboarding.context || {};
     if (ctx.tour_done_at || active) return;
-    try { if (localStorage.getItem(SEEN)) return; } catch (e) { /* storage blocked */ }
+    try { var key = seenKey(); if (key && localStorage.getItem(key)) return; } catch (e) { /* storage blocked */ }
     start();
   }
 

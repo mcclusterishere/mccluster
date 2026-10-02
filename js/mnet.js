@@ -1664,7 +1664,9 @@
       missions.current=m;missions.assignment=null;
       $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
       var open=m.status==="open";
-      $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
+      $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
+      /* the share choice is per action: never carry one mission's yes to the next */
+      if($("mnMissionShare"))$("mnMissionShare").checked=false;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
@@ -1703,12 +1705,17 @@
       if(asset)type=String(file.type||"").indexOf("video/")===0?"video":"photo";
       return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:asset?{asset_id:asset.id}:{}});
     }).then(function(){
-      var share=$("mnMissionShare");
-      return sbRpc("set_action_share_intent",{p_assignment_id:a.id,p_share:!!(share&&share.checked)}).catch(function(){});
-    }).then(function(){
+      /* The proof is in; now the share choice. One retry, and if it still
+         fails the member is told, because a silent failure would post (or
+         not post) against what they chose. */
+      var share=$("mnMissionShare"),body={p_assignment_id:a.id,p_share:!!(share&&share.checked)};
+      return sbRpc("set_action_share_intent",body).catch(function(){return sbRpc("set_action_share_intent",body);})
+        .then(function(){return true;},function(){return false;});
+    }).then(function(choiceSaved){
       missions.assignment.status="submitted";
       if(fileInput)fileInput.value="";
-      setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
+      if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
+      else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. Submit again to set it, or use Share to feed once it is verified.","error");
       if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
       loadActionRecord();
     }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});

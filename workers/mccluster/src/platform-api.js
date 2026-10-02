@@ -49,6 +49,16 @@ async function networkBlocked(env,a,b){
   return !!(ab?.length||ba?.length);
 }
 async function resolveMnetPerson(env,id){
+  /* A person is named by their handle, or by their m_uid (live sessions
+     and feed items carry the m_uid). */
+  if(uuidLike(id)){
+    const l=await service(env,`m_auth_user_links?m_uid=eq.${id}&order=is_primary.desc&select=auth_user_id&limit=1`);
+    if(!l?.length)return null;
+    const byUser=await service(env,`platform_profiles?user_id=eq.${l[0].auth_user_id}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
+    if(!byUser?.length)return null;
+    const np=await service(env,`network_profiles?m_uid=eq.${id}&select=*&limit=1`);
+    return {identity:byUser[0],m_uid:id,profile:np?.[0]||null};
+  }
   const p=await service(env,`platform_profiles?mccluster_id=ilike.${encodeURIComponent(id)}&select=user_id,display_name,avatar_url,mccluster_id&limit=1`);
   if(!p?.length)return null;
   const links=await service(env,`m_auth_user_links?auth_user_id=eq.${p[0].user_id}&is_primary=eq.true&select=m_uid&limit=1`);
@@ -334,6 +344,16 @@ async function cfStream(env,method,path,body){
 async function endLiveSession(env,sess,byUser,reason){
   if(sess.cf_input_uid&&liveEnabled(env))await cfStream(env,'DELETE',`/live_inputs/${sess.cf_input_uid}`).catch(e=>{if(!/not.?found/i.test(String(e?.message)))throw e;});
   await service(env,`network_live_sessions?id=eq.${sess.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'ended',ended_at:new Date().toISOString(),ended_by:byUser,end_reason:reason})});
+}
+/* A broadcaster whose tab crashed or lost signal never sends /end. The
+   five-minute cron ends anything with no heartbeat for three minutes and
+   deletes its Stream input, so a publish URL cannot outlive its broadcast. */
+export async function reapStaleLiveSessions(env,{limit=20}={}){
+  const cutoff=new Date(Date.now()-3*60*1000).toISOString();
+  const rows=await service(env,`network_live_sessions?status=in.(starting,live)&or=(last_seen_at.lt.${cutoff},and(last_seen_at.is.null,created_at.lt.${cutoff}))&select=id,cf_input_uid&limit=${limit}`);
+  let ended=0;
+  for(const s of rows||[]){await endLiveSession(env,s,null,'stale');ended++;}
+  return {ended};
 }
 
 async function handleMnet(req,env,path,url){
