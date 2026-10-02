@@ -240,3 +240,15 @@ test('Creator Studio release submission rolls back partial uploads and isolates 
 });
 
 test("Music creator profiles converge on Action Network identity",async()=>{const js=await read("js/music-creator-profile.js");assert.match(js,/Put this music into action/);assert.match(js,/mnet\.html\?profile=/);});
+
+
+test('public play counts use the dedicated album-play track index', async()=>{
+  const sql=await read('supabase/pending_migrations/play_counts_hotpath_v1.sql');
+  assert.match(sql,/create index if not exists events_album_play_track_idx/);
+  assert.match(sql,/on public\.events \(\(props->>'track'\)\)/);
+  assert.match(sql,/where name = 'album_play' and props \? 'track'/);
+  assert.match(sql,/create or replace function public\.play_counts\(\)/);
+  assert.match(sql,/set search_path = ''/);
+  assert.match(sql,/revoke all on function public\.play_counts\(\) from public/);
+  assert.match(sql,/grant execute on function public\.play_counts\(\) to anon, authenticated, service_role/);
+});
