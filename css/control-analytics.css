@@ -104,3 +104,38 @@
 .cra-filter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;padding:8px 10px;border-radius:10px;background:rgba(63,147,210,.12);font-size:12px}
 .cra-filter__x{min-height:36px;padding:0 12px;border:1px solid var(--cr-line);border-radius:999px;background:transparent;color:var(--cr-text);cursor:pointer;font:inherit;font-size:12px}
 @media (min-width:54rem){.cra-accts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Setup: progress checklist, live test, websites */
+.cra-progress{display:grid;gap:8px;margin-top:4px}.cra-progress__row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-size:14px}
+.cra-progress__bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}.cra-progress__bar i{display:block;height:100%;border-radius:999px;background:var(--cr-ok)}
+.cra-checks{display:grid;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.cra-check details{border:1px solid var(--cr-line);border-radius:10px;background:rgba(255,255,255,.015)}
+.cra-check details[open]{border-color:var(--cr-line-strong)}
+.cra-check summary{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:start;min-height:48px;padding:10px 12px;cursor:pointer;list-style:none}
+.cra-check summary::-webkit-details-marker{display:none}
+.cra-check__mark{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--cr-line-strong);color:var(--cr-dim);font-size:12px;font-weight:800}
+.cra-check--done .cra-check__mark{border-color:var(--cr-ok);background:var(--cr-ok);color:#06140c}
+.cra-check--info .cra-check__mark{font-style:italic;font-family:Georgia,serif}
+.cra-check--todo .cra-check__mark{border-color:#3f93d2;color:#8cc4ee}
+.cra-check__copy{display:grid;gap:3px;min-width:0}.cra-check__copy b{font-size:13px}.cra-check__copy>span{color:var(--cr-dim);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.cra-check__state{padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--cr-faint);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.cra-check--done .cra-check__state{color:var(--cr-ok)}.cra-check--todo .cra-check__state{color:#8cc4ee}
+.cra-check__body{padding:0 12px 12px 50px;font-size:12px}.cra-card .cra-check__body p{margin:0 0 8px;font-size:12px}
+.cra-check__body .cra-code{max-width:100%;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.cra-live{display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--cr-line)}
+.cra-live__head{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.cra-live__head span{color:var(--cr-faint);font-size:11px}
+.cra-card .cra-live__empty{margin:0;font-size:12px}
+.cra-live__list{display:grid;margin:0;padding:0;list-style:none;font-size:12px}
+.cra-live__list li{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) auto;gap:8px;align-items:baseline;min-height:34px;padding:7px 0;border-bottom:1px solid var(--cr-line)}
+.cra-live__name{font-weight:800}.cra-live__name em{margin-left:4px;color:var(--cr-faint);font-style:normal;font-weight:600}
+.cra-live__path{overflow:hidden;color:var(--cr-dim);text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,monospace;font-size:11px}
+.cra-live__list time{color:var(--cr-faint);font-size:11px;white-space:nowrap}
+ul.cra-sites{margin:0;padding:0;list-style:none}
+.cra-site__dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--cr-faint)}.cra-site__dot.is-ok{background:var(--cr-ok)}
+.cra-add{margin-top:10px;border-top:1px solid var(--cr-line);padding-top:10px}
+.cra-add summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:13px;color:#8cc4ee}
+.cra-mode{display:grid;gap:6px;margin:0;padding:0;border:0}.cra-mode legend{margin-bottom:5px;padding:0;color:var(--cr-faint);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.cra-mode label{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px;border:1px solid var(--cr-line);border-radius:10px;cursor:pointer}
+.cra-mode label:has(input:checked){border-color:#3f93d2;background:rgba(63,147,210,.08)}
+.cra-mode input{margin-top:2px;width:18px;height:18px;accent-color:#3f93d2}
+.cra-mode span{display:grid;gap:2px;color:var(--cr-dim);font-size:12px;line-height:1.4}.cra-mode b{color:var(--cr-text);font-size:13px}
+.cra-site{grid-template-columns:auto minmax(0,1fr) auto}

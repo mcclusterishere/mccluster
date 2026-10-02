@@ -233,54 +233,75 @@
   function ago(t){var sec=(Date.now()-new Date(t).getTime())/1000;if(!isFinite(sec))return"—";if(sec<90)return"just now";if(sec<5400)return Math.round(sec/60)+" min ago";if(sec<129600)return Math.round(sec/3600)+" h ago";return Math.round(sec/86400)+" days ago";}
   function loadPulse(){
     if(S.pulseLoading)return;S.pulseLoading=true;var site=S.site;
-    S.supa("events?select=at,name,path&"+(site===FIRST?"site_id=is.null":"site_id=eq."+encodeURIComponent(site))+"&order=at.desc&limit=1")
-      .then(function(x){S.pulse={site:site,row:x&&x[0]||null};},function(x){S.pulse={site:site,error:x};})
+    /* The lean copy answers this from an index; the wide events table does not. */
+    S.supa("events_lean?select=at,name,path,is_bot&"+(site===FIRST?"site_id=is.null":"site_id=eq."+encodeURIComponent(site))+"&order=at.desc&limit=8")
+      .then(function(x){S.pulse={site:site,row:x&&x[0]||null,rows:x||[],checked:Date.now()};},function(x){S.pulse={site:site,error:x,checked:Date.now()};})
       .then(function(){S.pulseLoading=false;if(S.section==="setup")paint();});
   }
   function hostname(v){v=String(v||"").trim().toLowerCase().replace(/^[a-z]+:\/\//,"").replace(/[\/?#].*$/,"").replace(/:\d+$/,"");return/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(v)&&v.indexOf(".")>0?v:"";}
   function pixel(site){return'<script async src="https://api.mccluster.org/a.js?site='+site.public_key+'&consent='+(site.consent_mode==="cookieless"?"cookieless":"required")+'"><\/script>';}
+  function pulse(){return S.pulse&&S.pulse.site===S.site?S.pulse:null;}
+  function fresh(pu){return!!(pu&&pu.row&&(Date.now()-new Date(pu.row.at).getTime())/60000<=30);}
   function status(){
-    var pu=S.pulse&&S.pulse.site===S.site?S.pulse:null;
+    var pu=pulse();
     if(!pu)return'<span class="cra-status"><i></i>Checking…</span>';
     if(pu.error)return'<span class="cra-status cra-status--bad"><i></i>Could not check</span>';
     if(!pu.row)return'<span class="cra-status cra-status--warn"><i></i>Waiting for first event</span>';
-    var age=(Date.now()-new Date(pu.row.at).getTime())/60000;
-    return age<=30?'<span class="cra-status cra-status--ok"><i></i>Receiving data</span>':'<span class="cra-status cra-status--warn"><i></i>Quiet</span>';
+    return fresh(pu)?'<span class="cra-status cra-status--ok"><i></i>Receiving data</span>':'<span class="cra-status cra-status--warn"><i></i>Quiet for '+e(ago(pu.row.at).replace(/ ago$/,""))+'</span>';
   }
   function lastEvent(){
-    var pu=S.pulse&&S.pulse.site===S.site?S.pulse:null;
+    var pu=pulse();
     if(!pu)return"Checking…";if(pu.error)return e(pu.error.message||"Could not read events");if(!pu.row)return"None yet";
     return'<b>'+e(ago(pu.row.at))+'</b> · '+e(pu.row.name||"event")+(pu.row.path?' on <code>'+e(pu.row.path)+'</code>':"");
   }
+  /* One step of the checklist. state: done | todo | info. The first step that
+     is not done opens by itself, so the page always says what to do next. */
+  function step(i,st,title,detail,body,open){
+    var mark=st==="done"?"✓":st==="info"?"i":String(i);
+    return'<li class="cra-check cra-check--'+st+'"><details'+(open?" open":"")+'><summary><span class="cra-check__mark" aria-hidden="true">'+mark+'</span><span class="cra-check__copy"><b>'+e(title)+'</b><span>'+detail+'</span></span><span class="cra-check__state">'+(st==="done"?"Done":st==="info"?"Note":"To do")+'</span></summary>'+(body?'<div class="cra-check__body">'+body+'</div>':"")+'</details></li>';
+  }
+  function checklist(steps){
+    var need=steps.filter(function(x){return x.st!=="info";}),done=need.filter(function(x){return x.st==="done";}).length,opened=false;
+    var html=steps.map(function(x,i){var o=!opened&&x.st==="todo";if(o)opened=true;return step(i+1,x.st,x.title,x.detail,x.body,o);}).join("");
+    return'<div class="cra-progress"><div class="cra-progress__row"><b>'+(done===need.length?"All set":done+" of "+need.length+" done")+'</b>'+status()+'</div><div class="cra-progress__bar"><i style="width:'+Math.round(done/Math.max(1,need.length)*100)+'%"></i></div></div><ol class="cra-checks">'+html+'</ol>';
+  }
+  function live(){
+    var pu=pulse(),rows=pu&&pu.rows||[];
+    var list=!pu?'<p class="cra-live__empty">Checking…</p>':pu.error?'<p class="cra-live__empty">'+e(pu.error.message||"Could not read events")+'</p>':!rows.length?'<p class="cra-live__empty">Nothing yet. Open the website in another tab, then press Test installation.</p>':
+      '<ul class="cra-live__list">'+rows.map(function(r){return'<li><span class="cra-live__name">'+e(r.name||"event")+(r.is_bot?' <em>bot</em>':"")+'</span><span class="cra-live__path">'+e(r.path||"")+'</span><time>'+e(ago(r.at))+'</time></li>';}).join("")+'</ul>';
+    return'<div class="cra-live"><div class="cra-live__head"><button class="cr-btn cr-btn--primary" type="button" data-cra-pulse'+(S.pulseLoading?" disabled":"")+'>'+(S.pulseLoading?"Testing…":"Test installation")+'</button><span>'+(pu&&pu.checked?"Checked "+e(ago(pu.checked)):"")+'</span></div>'+list+'</div>';
+  }
   function setup(){
-    var sites=S.sites||[],sel=S.site===FIRST?null:sites.filter(function(x){return String(x.id)===String(S.site);})[0],first=!sel,top;
-    if(first){
-      top=card("This site","",'<div class="cra-setup__head"><b class="cra-setup__name">McCluster first-party</b>'+status()+'</div>'+
-        '<p class="cra-setup__lede">Built in. Every page of this site reports to this dashboard on its own, so there is nothing to install.</p>'+
-        '<dl class="cra-facts"><div><dt>Last event</dt><dd>'+lastEvent()+'</dd></div>'+
-        '<div><dt>Privacy</dt><dd>Visitors who send Global Privacy Control or Do Not Track still count as a visit, but nothing that could identify them is kept.</dd></div>'+
-        '<div><dt>Bots</dt><dd>Crawlers are marked as bots rather than counted as your audience.</dd></div></dl>'+
-        '<button class="cr-btn" type="button" data-cra-pulse>Check again</button>',true);
+    var sites=S.sites||[],sel=S.site===FIRST?null:sites.filter(function(x){return String(x.id)===String(S.site);})[0],pu=pulse(),seen=!!(pu&&pu.row),top;
+    if(!sel){
+      top=card("McCluster first-party","Built into this site. Every page reports here on its own, so there is nothing to install.",checklist([
+        {st:"done",title:"Collector installed",detail:"Every page of this site loads it already."},
+        {st:fresh(pu)?"done":"todo",title:"Receiving data",detail:"Last event: "+lastEvent(),body:'<p>Events show up within a few seconds of a page view. If this stays quiet, open the site and press Test installation below.</p>'},
+        {st:"info",title:"Privacy signals honoured",detail:"Visitors who send Global Privacy Control or Do Not Track still count as a visit, but nothing that could identify them is kept."},
+        {st:"info",title:"Bots kept apart",detail:"Crawlers are marked as bots instead of being counted as your audience."}
+      ])+live(),true);
     }else{
-      var d=(sel.analytics_site_domains||[])[0],h=d&&d.hostname;
-      var dns=!d?'<p>No domain was added with this website, so there is nothing to verify yet.</p>':d.verified_at?'<p class="cra-ok">✓ '+e(h)+' is verified.</p>':
-        '<p>Prove you own <b>'+e(h)+'</b>: add this DNS record where the domain is managed, then press Verify.</p><dl class="cra-dns"><div><dt>Type</dt><dd><code>TXT</code></dd></div><div><dt>Name</dt><dd><code>_mccluster-analytics.'+e(h)+'</code></dd></div><div><dt>Value</dt><dd><code>'+e(d.verification_token)+'</code></dd></div></dl><button class="cr-btn" type="button" data-cra-verify="'+e(d.id)+'">Verify DNS</button>';
-      top=card("Install on "+(sel.name||"this website"),"",'<div class="cra-setup__head"><b class="cra-setup__name">'+e(h||sel.name||"Website")+'</b>'+status()+'</div>'+
-        '<ol class="cra-steps"><li><div><b>Copy this line.</b><pre class="cra-code" id="craPixel">'+e(pixel(sel))+'</pre><button class="cr-btn" type="button" data-cra-copy>Copy</button></div></li>'+
-        '<li><div><b>Paste it inside <code>&lt;head&gt;</code> on every page of '+e(h||"the website")+'.</b></div></li>'+
-        '<li><div><b>Verify the domain.</b>'+dns+'</div></li>'+
-        (sel.consent_mode==="cookieless"?'<li><div><b>Cookieless.</b> No visitor ID is kept, so no consent banner is needed.</div></li>':'<li><div><b>Ask for consent.</b> Nothing is sent until the site’s cookie banner gets a yes and calls <code>mcAnalytics.consent(true)</code>.</div></li>')+
-        '</ol><dl class="cra-facts"><div><dt>Last event</dt><dd>'+lastEvent()+'</dd></div></dl><button class="cr-btn" type="button" data-cra-pulse>Check again</button>',true);
+      var d=(sel.analytics_site_domains||[])[0],h=d&&d.hostname,ck=sel.consent_mode==="cookieless";
+      var code='<p>Paste it inside <code>&lt;head&gt;</code> on every page of '+e(h||"the website")+'. Only add it once per page.</p><pre class="cra-code" id="craPixel">'+e(pixel(sel))+'</pre><button class="cr-btn" type="button" data-cra-copy>Copy</button>';
+      var dns=!d?'<p>No domain was added with this website. Add the website again with its domain to verify it.</p>':
+        '<p>Add this DNS record where <b>'+e(h)+'</b> is managed, then press Verify. Most DNS changes show up within minutes, some take up to 48 hours.</p><dl class="cra-dns"><div><dt>Type</dt><dd><code>TXT</code></dd></div><div><dt>Name</dt><dd><code>_mccluster-analytics.'+e(h)+'</code></dd></div><div><dt>Value</dt><dd><code>'+e(d.verification_token)+'</code></dd></div></dl><button class="cr-btn" type="button" data-cra-verify="'+e(d.id)+'">Verify DNS</button>';
+      top=card(sel.name||h||"Website",h?e(h):"No domain",checklist([
+        {st:"done",title:"Website added",detail:ck?"Cookieless: no visitor ID is kept.":"Consent first: nothing is sent until the visitor says yes."},
+        {st:seen?"done":"todo",title:"Add the snippet",detail:seen?"Events have arrived from it.":"One line in the page’s &lt;head&gt;.",body:code},
+        {st:d&&d.verified_at?"done":"todo",title:"Verify the domain",detail:d&&d.verified_at?e(h)+" is verified.":"Proves the website is yours.",body:dns},
+        {st:fresh(pu)?"done":"todo",title:"Receiving data",detail:"Last event: "+lastEvent(),body:'<p>Open '+e(h||"the website")+' in another tab'+(ck?"":", accept the cookie banner")+', then press Test installation below.</p>'},
+        ck?{st:"info",title:"No consent banner needed",detail:"Cookieless mode keeps no visitor ID."}:{st:"info",title:"Consent",detail:"When the site’s cookie banner gets a yes, call <code>mcAnalytics.consent(true)</code>."}
+      ])+live(),true);
     }
-    var list='<div class="cra-sites">'+[{id:FIRST,name:"McCluster first-party"}].concat(sites).map(function(x){
-        var own=x.id===FIRST,ds=x.analytics_site_domains||[],v=ds.some(function(d){return d.verified_at&&d.enabled!==false;}),on=String(x.id)===String(S.site);
-        return'<div class="cra-site'+(on?" is-on":"")+'"><div class="cra-site__copy"><b>'+e(x.name||x.id)+'</b><span>'+e(own?"Built in":ds.map(function(d){return d.hostname;}).join(", ")||"No domain")+(own?"":v?" · verified":ds.length?" · not verified":"")+'</span></div>'+
-          (on?'<span class="cra-site__on">Showing</span>':'<button class="cr-btn" type="button" data-cra-site="'+e(x.id)+'">View</button>')+'</div>';}).join("")+'</div>';
-    var form='<form class="cra-form" data-cra-add><label>Website name<input class="cra-input" name="site_name" maxlength="160" autocomplete="off" required></label>'+
+    var list='<ul class="cra-sites">'+[{id:FIRST,name:"McCluster first-party"}].concat(sites).map(function(x){
+        var own=x.id===FIRST,ds=x.analytics_site_domains||[],v=own||ds.some(function(dd){return dd.verified_at&&dd.enabled!==false;}),on=String(x.id)===String(S.site);
+        return'<li class="cra-site'+(on?" is-on":"")+'"><i class="cra-site__dot'+(v?" is-ok":"")+'" aria-hidden="true"></i><div class="cra-site__copy"><b>'+e(x.name||x.id)+'</b><span>'+e(own?"Built in":ds.map(function(dd){return dd.hostname;}).join(", ")||"No domain")+(own?"":v?" · verified":ds.length?" · not verified":"")+'</span></div>'+
+          (on?'<span class="cra-site__on">Showing</span>':'<button class="cr-btn" type="button" data-cra-site="'+e(x.id)+'">View</button>')+'</li>';}).join("")+'</ul>';
+    var form='<details class="cra-add"'+(sites.length?"":" open")+'><summary>+ Add a website</summary><form class="cra-form" data-cra-add><label>Website name<input class="cra-input" name="site_name" maxlength="160" autocomplete="off" required></label>'+
       '<label>Domain<input class="cra-input" name="site_host" placeholder="example.com" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false"></label>'+
-      '<label>Privacy<select class="cra-input" name="site_mode"><option value="required">Ask visitors for consent first</option><option value="cookieless">Cookieless (no visitor ID)</option></select></label>'+
-      '<button class="cr-btn cr-btn--primary" type="submit">Add website</button><p class="cra-form__msg" role="status" aria-live="polite"></p></form>';
-    return'<div class="cra-grid">'+top+card("Your websites","Track another website with this same dashboard: add it here, put one line on it, then pick it from the menu at the top.",list+form,true)+'</div>'+err("sites");
+      '<fieldset class="cra-mode"><legend>Privacy</legend><label><input type="radio" name="site_mode" value="required" checked><span><b>Ask for consent first</b>Counts people across visits once they say yes. Needs a cookie banner.</span></label><label><input type="radio" name="site_mode" value="cookieless"><span><b>Cookieless</b>No visitor ID and no banner. Every visit counts on its own.</span></label></fieldset>'+
+      '<button class="cr-btn cr-btn--primary" type="submit">Add website</button><p class="cra-form__msg" role="status" aria-live="polite"></p></form></details>';
+    return'<div class="cra-grid">'+top+card("Your websites","Every website here reports to this one dashboard. Pick one to see its setup; the menu at the top switches the whole panel.",list+form,true)+'</div>'+err("sites");
   }
   function body(){return S.section==="audience"?audience():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
@@ -389,7 +410,7 @@
     var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
-    root.querySelectorAll("[data-cra-pulse]").forEach(function(b){b.onclick=function(){S.pulse=null;paint();};});
+    root.querySelectorAll("[data-cra-pulse]").forEach(function(b){b.onclick=function(){loadPulse();paint();};});
     var cp=root.querySelector("[data-cra-copy]"),px=root.querySelector("#craPixel");
     if(cp&&px)cp.onclick=function(){var t=px.textContent;function done(){cp.textContent="Copied";}
       if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,function(){selectText(px);});else selectText(px);};
@@ -401,7 +422,7 @@
       if(!name){say("Name the website.");f.site_name.focus();return;}
       if(raw&&!h){say("Enter a domain like example.com.");f.site_host.focus();return;}
       btn.disabled=true;btn.textContent="Adding\u2026";msg.textContent="";
-      S.supa("analytics_sites",{method:"POST",prefer:"return=representation",body:{name:name,consent_mode:f.site_mode.value}}).then(function(rows){
+      S.supa("analytics_sites",{method:"POST",prefer:"return=representation",body:{name:name,consent_mode:(add.querySelector("[name=site_mode]:checked")||{}).value||"required"}}).then(function(rows){
         var site=rows&&rows[0];if(!site)throw new Error("The website was not created.");
         return(h?S.supa("analytics_site_domains",{method:"POST",prefer:"return=representation",body:{site_id:site.id,hostname:h}}):Promise.resolve()).then(function(){return site;});
       }).then(function(site){S.site=site.id;S.pulse=null;return loadSites().then(load);})
