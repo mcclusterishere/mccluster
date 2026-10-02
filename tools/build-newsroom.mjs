@@ -1,0 +1,1 @@
+import {readFileSync} from"node:fs";const d=JSON.parse(readFileSync("data/seo/evidence-ledger.json","utf8"));for(const x of d.items.filter(x=>x.publish))if(x.verification_status!=="verified")throw Error("unverified public evidence: "+x.id);console.log("evidence ledger publish gate ok");
