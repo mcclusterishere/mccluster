@@ -373,7 +373,7 @@
   $("crTrack").addEventListener("change", saveDraft);
 
   function loadCatalogue() {
-    fetch("data/albums.json", { cache: "force-cache" })
+    return fetch("data/albums.json", { cache: "force-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var sel = $("crTrack");
@@ -545,14 +545,14 @@
   window.addEventListener("resize", function () { if (S.kind === "video" && !$("crEdit").hidden) drawFrames(); });
   window.addEventListener("mcc:auth-state", paintGate);
   window.addEventListener("storage", function (e) { if (e.key === "mccdb_session") paintGate(); });
-  loadCatalogue();
+  var catalogueReady = loadCatalogue();
   paintGate();
   if (signedIn() && restoreDraft()) {
     toDetails();
-    setTimeout(function () {
+    catalogueReady.then(function () {
       var d = null; try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) {}
-      if (d && d.track && $("crTrack").options.length > 1) $("crTrack").value = d.track;
-    }, 300);
+      if (d && d.track && $("crTrack").options[Number(d.track)]) $("crTrack").value = d.track;
+    });
   }
   track("create_open", {});
 })();
