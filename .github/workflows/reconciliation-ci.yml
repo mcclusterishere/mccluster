@@ -89,6 +89,7 @@ jobs:
           node --check js/gateway.js
           node --check workers/mccluster/src/platform-api.js
           node --test scripts/test/action-camera-loop.test.mjs
+          node --test scripts/test/action-mission-funnel.test.mjs
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
