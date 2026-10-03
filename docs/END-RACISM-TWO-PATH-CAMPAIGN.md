@@ -209,3 +209,33 @@ The reveal reframes the joke as criticism of humanity's own record — war, slav
 **Membership is automatic. Discrimination is prohibited. Self-criticism is encouraged.**
 
 The campaign's final action remains constructive. Participants are routed into the same End Racism Action Network campaign regardless of which joke path brought them there.
+
+
+### Field mission 004 — Freestyle Containment Protocol
+
+The first meme-format Wigger Recovery field mission is:
+
+**STOP A WHITE FRIEND FROM FREESTYLING AT THE FUNCTION**
+
+The joke is intentionally fast enough to recreate as a short-form video. The public protocol has exactly three authorized levels:
+
+1. **Talk Him Down** — intervene before the first bar. Suggested line: **"Brother. Not tonight."** Success is zero bars.
+2. **Contain the Verse** — if the freestyle starts, end it before Verse Two. Clap early, say **"give it up for him,"** and redirect the function. Success is that nobody says **"lemme get next."**
+3. **Counter-Wigger Deployment** — hijack the freestyle and rap about why nobody needed another white-boy freestyle at the function. The intervener is not trying to win; the intervener becomes the cautionary example. Campaign line: **"Sometimes you gotta be a wigger to get through to a wigger."**
+
+A fourth level exists only as forbidden lore:
+
+**LEVEL 4 — TOTAL WIGGER EVENT — NOT AUTHORIZED.**
+
+Multiple simultaneous freestyles may require fictional federal containment. **We do not discuss Level 4.**
+
+Do not expand Level 4 into a normal playable escalation. The joke works because the program refuses to authorize it.
+
+Mission proof should be staged with willing participants. Do not secretly record or humiliate a real person for campaign content.
+
+Suggested proof achievements:
+- **Preventative Care** — zero bars
+- **Function Saver** — Verse One contained
+- **Friendly Fire** — counter-freestyle deployed
+
+The canonical public field-mission page is `wigger-recovery.html#freestyle`. The End Racism gateway should tease this mission from the broader Wigger Recovery section rather than replacing the broader recovery sequence with meme missions.
