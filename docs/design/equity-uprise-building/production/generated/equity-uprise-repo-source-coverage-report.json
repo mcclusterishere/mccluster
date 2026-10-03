@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 298,
+  "candidate_count": 303,
   "capability_source_count": 98,
-  "support_only_count": 200,
-  "checks_total": 1096,
-  "checks_passed": 1096,
+  "support_only_count": 205,
+  "checks_total": 1116,
+  "checks_passed": 1116,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -77,6 +77,8 @@
     "data/offers.json",
     "data/playlists.json",
     "data/roles.json",
+    "data/seo/company-site.json",
+    "data/seo/domain-architecture.json",
     "data/seo/entity-graph.json",
     "data/seo/evidence-ledger.json",
     "data/seo/sitemap-pages.json",
@@ -87,6 +89,7 @@
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
     "docs/agent-web.md",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
+    "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
@@ -182,6 +185,7 @@
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
+    "scripts/test/domain-architecture.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/signup-authority.test.mjs",
@@ -296,6 +300,7 @@
     "vault.html",
     "walls/eu-rally.html",
     "workers/mccluster/src/ai/envelope.js",
+    "workers/mccluster/src/company-site/pages.generated.js",
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/index.js",
     "workers/mccluster/src/music/tracks.js",
@@ -312,7 +317,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "298 entries"
+      "detail": "303 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5786,6 +5791,106 @@
     },
     {
       "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/company-site.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/company-site.json classified",
+      "passed": true,
+      "detail": "classification='shared_data_support'"
+    },
+    {
+      "name": "data/seo/company-site.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/seo/company-site.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/domain-architecture.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/seo/domain-architecture.json classified",
+      "passed": true,
+      "detail": "classification='shared_data_support'"
+    },
+    {
+      "name": "data/seo/domain-architecture.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/seo/domain-architecture.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DOMAINS-AND-ENTITIES.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/DOMAINS-AND-ENTITIES.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/DOMAINS-AND-ENTITIES.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/DOMAINS-AND-ENTITIES.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/domain-architecture.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/domain-architecture.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/domain-architecture.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/domain-architecture.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/pages.generated.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/company-site/pages.generated.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/pages.generated.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/company-site/pages.generated.js support rationale present",
       "passed": true,
       "detail": ""
     }
