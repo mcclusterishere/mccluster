@@ -510,11 +510,16 @@
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
-        var content = a.getAttribute("data-content"), source = a.getAttribute("data-source");
-        if (content && /^[0-9a-f-]{36}$/i.test(content)) missions.content = content;
-        if (source && /^[a-z0-9][a-z0-9._-]{0,31}$/i.test(source)) missions.source = source.toLowerCase();
+        var content = a.getAttribute("data-content"), source = a.getAttribute("data-source"), missionId = a.getAttribute("data-take-mission");
+        if (content && /^[0-9a-f-]{36}$/i.test(content)) {
+          missions.content = content;
+          missions.attributedMission = missionId;
+          missions.source = source && /^[a-z0-9][a-z0-9._-]{0,31}$/i.test(source) ? source.toLowerCase() : "network";
+        } else {
+          missions.content = ""; missions.source = ""; missions.attributedMission = "";
+        }
         setView("missions");
-        openMission(a.getAttribute("data-take-mission"));
+        openMission(missionId);
       };
     });
     root.querySelectorAll("[data-action=like]").forEach(function (b) {
@@ -572,7 +577,7 @@
         rows.map(function (m) {
           return '<button class="mn__feedmission" type="button" data-take-mission="' + esc(m.id) + '"><span class="mn__eyebrow">' + esc(m.domain || "community") + '</span><b>' + esc(m.title) + '</b><span>' + esc(m.description || "") + '</span></button>';
         }).join("") : "";
-      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
+      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { missions.content="";missions.source="";missions.attributedMission="";setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
       var all = host.querySelector("[data-mn-goto]"); if (all) all.onclick = function () { setView("missions"); };
     }).catch(function () { host.hidden = true; });
   }
@@ -1678,7 +1683,7 @@
      you are, whether the mission is open, and what state your work is in.
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
-  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",returnHref:"",proofFile:null,proofPreview:""};
+  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",returnHref:"",proofFile:null,proofPreview:""};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -1728,9 +1733,10 @@
   function readMissionContext(){
     try{
       var q=new URLSearchParams(location.search);
-      var c=q.get("campaign")||"", content=q.get("content")||"", source=q.get("src")||"";
+      var c=q.get("campaign")||"", content=q.get("content")||"", source=q.get("src")||"", mission=q.get("mission")||"";
       if(/^[a-z0-9][a-z0-9-]{0,79}$/i.test(c))missions.campaign=c;
       if(/^[0-9a-f-]{36}$/i.test(content))missions.content=content;
+      if(missions.content&&/^[0-9a-f-]{36}$/i.test(mission))missions.attributedMission=mission;
       if(/^[a-z0-9][a-z0-9._-]{0,31}$/i.test(source))missions.source=source.toLowerCase();
       missions.returnHref=safeMissionReturn(q.get("return"));
     }catch(_){}
@@ -1741,8 +1747,8 @@
     q.set("view","missions");
     q.set("mission",id);
     if(missions.campaign)q.set("campaign",missions.campaign);
-    if(missions.content)q.set("content",missions.content);
-    if(missions.source)q.set("src",missions.source);
+    if(missions.content&&missions.attributedMission===id)q.set("content",missions.content);
+    if(missions.source&&missions.attributedMission===id)q.set("src",missions.source);
     if(missions.returnHref)q.set("return",missions.returnHref);
     return "/mnet.html?"+q.toString();
   }
@@ -1899,7 +1905,7 @@
   }
   function joinMission(){
     var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
-    var joinRequest = missions.content
+    var joinRequest = missions.content&&missions.attributedMission===m.id
       ? sbRpc("join_action_mission_attributed",{p_mission_id:m.id,p_content_id:missions.content,p_source:missions.source||"network"})
       : sbRpc("join_action_mission",{p_mission_id:m.id});
     joinRequest
@@ -1949,7 +1955,7 @@
   }
   (function wireMissions(){
     var host=$("mnMissionList");if(!host)return;
-    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));}
+    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}openMission(id);}}
     host.addEventListener("click",onOpen);
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){
