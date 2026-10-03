@@ -82,6 +82,13 @@ jobs:
           node --check js/control-room-v2.js
           node --test scripts/test/operator-control-spine.test.mjs
           node --test scripts/test/control-surface.test.mjs
+      - name: Test Action mission camera loop
+        run: |
+          node --check js/mnet.js
+          node --check js/action.js
+          node --check js/gateway.js
+          node --check workers/mccluster/src/platform-api.js
+          node --test scripts/test/action-camera-loop.test.mjs
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
