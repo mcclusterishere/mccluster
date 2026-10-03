@@ -30,35 +30,61 @@
   function kpi(label,value,sub){return'<div class="cra-kpi"><small>'+e(label)+'</small><strong>'+e(value)+'</strong>'+(sub?'<span>'+e(sub)+'</span>':"")+'</div>';}
   function card(title,sub,body,wide){return'<section class="cra-card'+(wide?" cra-card--wide":"")+'"><h2>'+e(title)+'</h2>'+(sub?'<p>'+e(sub)+'</p>':"")+body+'</section>';}
   function err(name){var x=S.errors[name];return x?'<div class="cra-error"><b>'+e(name)+'</b> did not load: '+e(x.message||x)+'</div>':"";}
-  function line(rows,a,b,la,lb){
-    rows=(rows||[]).slice().sort(function(x,y){return String(x.day).localeCompare(String(y.day));});
+  function line(rows,a,b,la,lb,opts){
+    opts=opts||{};var xKey=opts.xKey||"day",hourly=!!opts.hourly;
+    rows=(rows||[]).slice().sort(function(x,y){return String(x[xKey]||"").localeCompare(String(y[xKey]||""));});
     if(!rows.length)return'<p>No series in this range.</p>';
-    var W=720,H=260,P={l:42,r:18,t:18,b:36},mx=1;
+    var W=hourly?1200:720,H=260,P={l:42,r:18,t:18,b:hourly?46:36},mx=1;
     rows.forEach(function(r){mx=Math.max(mx,Number(r[a])||0,b?Number(r[b])||0:0);});
     function X(i){return P.l+(rows.length===1?0:i/(rows.length-1)*(W-P.l-P.r));}
     function Y(v){return H-P.b-(Number(v)||0)/mx*(H-P.t-P.b);}
     function pts(k){return rows.map(function(r,i){return X(i).toFixed(1)+","+Y(r[k]).toFixed(1);}).join(" ");}
+    function label(r){if(opts.labelFor)return String(opts.labelFor(r)||"");return String(r[xKey]||"").slice(5);}
+    function values(r){return la+" "+n(r[a])+(b?" · "+lb+" "+n(r[b]):"");}
     var p1=pts(a),p2=b?pts(b):"",area=p1+" "+X(rows.length-1)+","+(H-P.b)+" "+P.l+","+(H-P.b);
-    var s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
+    var last=rows[rows.length-1],s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
     [0,.25,.5,.75,1].forEach(function(q){var y=Y(mx*q);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+Math.round(mx*q)+'</text>');});
     s.push('<polygon class="cra-area" points="'+area+'"/><polyline class="cra-line" points="'+p1+'"/>');if(b)s.push('<polyline class="cra-line cra-line--alt" points="'+p2+'"/>');
-    var step=Math.max(1,Math.ceil(rows.length/6));rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(String(r.day||"").slice(5))+'</text>');});s.push("</svg>");
-    return'<div class="cra-legend"><div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#3f93d2"></i><span class="cra-legend__label">'+e(la)+'</span><b></b></div>'+(b?'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#e5383b"></i><span class="cra-legend__label">'+e(lb)+'</span><b></b></div>':"")+'</div>'+s.join("");
+    var step=opts.allLabels?1:(rows.length<=14?1:Math.max(1,Math.ceil(rows.length/8)));
+    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(label(r))+'</text>');});
+    rows.forEach(function(r,i){
+      var x=X(i),prev=i?X(i-1):P.l,next=i<rows.length-1?X(i+1):W-P.r,left=i?(prev+x)/2:P.l,right=i<rows.length-1?(x+next)/2:W-P.r;
+      var lab=label(r),val=values(r),on=i===rows.length-1?" is-on":"";
+      s.push('<g class="cra-point'+on+'" role="button" tabindex="0" aria-pressed="'+(i===rows.length-1?"true":"false")+'" aria-label="'+e(lab+" · "+val)+'" data-cra-chart-point data-label="'+e(lab)+'" data-values="'+e(val)+'">'+
+        '<rect class="cra-point__hit" x="'+left.toFixed(1)+'" y="'+P.t+'" width="'+Math.max(1,right-left).toFixed(1)+'" height="'+(H-P.t-P.b)+'"/>'+
+        '<line class="cra-point__guide" x1="'+x.toFixed(1)+'" y1="'+P.t+'" x2="'+x.toFixed(1)+'" y2="'+(H-P.b)+'"/>'+
+        '<circle class="cra-point__dot" cx="'+x.toFixed(1)+'" cy="'+Y(r[a]).toFixed(1)+'" r="4.5"/>'+
+        (b?'<circle class="cra-point__dot cra-point__dot--alt" cx="'+x.toFixed(1)+'" cy="'+Y(r[b]).toFixed(1)+'" r="4.5"/>':"")+
+        '<title>'+e(lab+" · "+val)+'</title></g>');
+    });
+    s.push("</svg>");
+    return'<div class="cra-legend"><div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#3f93d2"></i><span class="cra-legend__label">'+e(la)+'</span><b></b></div>'+(b?'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:#e5383b"></i><span class="cra-legend__label">'+e(lb)+'</span><b></b></div>':"")+'</div>'+
+      '<div class="cra-chart'+(hourly?" cra-chart--hourly":"")+'"><output class="cra-chart__readout" aria-live="polite"><b data-cra-chart-label>'+e(label(last))+'</b><span data-cra-chart-values>'+e(values(last))+'</span></output>'+
+      '<div class="cra-chart__scroll"><div class="cra-chart__frame">'+s.join("")+'</div></div></div>';
+  }
+  function trafficTrend(t){
+    var hourly=S.rangeId==="24h",rows=hourly?(t.byHour||[]):(t.byDay||[]);
+    return{rows:rows,opts:hourly?{
+      xKey:"hour",hourly:true,allLabels:true,
+      labelFor:function(r){return r.hour_label||new Date(r.hour).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
+    }:{
+      xKey:"day",labelFor:function(r){return String(r.day||"").slice(5);}
+    }};
   }
   function donut(rows,labelKey,valueKey){
     rows=(rows||[]).slice(0,7).map(function(r){return{label:String(r[labelKey]||r.key||"Unknown"),value:Number(r[valueKey]||r.n||r.count||0)};}).filter(function(r){return r.value>0;});
     if(!rows.length)return'<p>No breakdown in this range.</p>';
     var total=rows.reduce(function(a,r){return a+r.value;},0),C=2*Math.PI*42,off=0;
-    var circles=rows.map(function(r,i){var len=C*r.value/total,c=palette[i%palette.length],out='<circle class="cra-donut__seg" cx="60" cy="60" r="42" stroke="'+c+'" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';off+=len;return out;}).join("");
-    return'<div class="cra-donut-wrap"><svg class="cra-donut" viewBox="0 0 120 120"><circle class="cra-donut__track" cx="60" cy="60" r="42"/>'+circles+'</svg><div class="cra-legend">'+rows.map(function(r,i){return'<div class="cra-legend__row"><i class="cra-legend__swatch" style="--swatch:'+palette[i%palette.length]+'"></i><span class="cra-legend__label">'+e(r.label)+'</span><b class="cra-legend__value">'+n(r.value)+'</b></div>';}).join("")+'</div></div>';
+    var circles=rows.map(function(r,i){var len=C*r.value/total,c=palette[i%palette.length],key="donut-"+i,out='<circle class="cra-donut__seg" tabindex="0" role="button" aria-label="'+e(r.label+" "+n(r.value))+'" data-cra-info="'+key+'" cx="60" cy="60" r="42" stroke="'+c+'" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';off+=len;return out;}).join("");
+    return'<div class="cra-donut-wrap"><svg class="cra-donut" viewBox="0 0 120 120"><circle class="cra-donut__track" cx="60" cy="60" r="42"/>'+circles+'</svg><div class="cra-legend">'+rows.map(function(r,i){return'<button type="button" class="cra-legend__row cra-legend__row--button" data-cra-info="donut-'+i+'"><i class="cra-legend__swatch" style="--swatch:'+palette[i%palette.length]+'"></i><span class="cra-legend__label">'+e(r.label)+'</span><b class="cra-legend__value">'+n(r.value)+'</b></button>';}).join("")+'</div></div>';
   }
   function rank(rows,labelKey,valueKey){
     rows=(rows||[]).slice(0,12);if(!rows.length)return'<p>Nothing to rank in this range.</p>';var mx=Math.max.apply(null,rows.map(function(r){return Number(r[valueKey]||r.n||r.count||0);}).concat([1]));
-    return'<div class="cra-rank">'+rows.map(function(r){var v=Number(r[valueKey]||r.n||r.count||0),p=Math.max(1,v/mx*100);return'<div class="cra-rank__row"><i class="cra-rank__fill" style="--pct:'+p.toFixed(1)+'%"></i><span class="cra-rank__label">'+e(r[labelKey]||r.key||"Unknown")+'</span><b class="cra-rank__value">'+n(v)+'</b></div>';}).join("")+'</div>';
+    return'<div class="cra-rank">'+rows.map(function(r){var v=Number(r[valueKey]||r.n||r.count||0),p=Math.max(1,v/mx*100),lab=r[labelKey]||r.key||"Unknown";return'<button type="button" class="cra-rank__row" aria-label="'+e(lab+" "+n(v))+'"><i class="cra-rank__fill" style="--pct:'+p.toFixed(1)+'%"></i><span class="cra-rank__label">'+e(lab)+'</span><b class="cra-rank__value">'+n(v)+'</b></button>';}).join("")+'</div>';
   }
   function funnel(rows){
     if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
-    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/topv*100;return'<div class="cra-funnel__row"><span>'+e(k[1])+'</span><div class="cra-funnel__track"><i class="cra-funnel__fill" style="--pct:'+Math.max(.5,p).toFixed(1)+'%"></i></div><b>'+n(v)+' · '+p.toFixed(1)+'%</b></div>';}).join("")+'</div>';
+    return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/topv*100;return'<button type="button" class="cra-funnel__row" aria-label="'+e(k[1]+" "+n(v)+" "+p.toFixed(1)+" percent")+'"><span>'+e(k[1])+'</span><span class="cra-funnel__track"><i class="cra-funnel__fill" style="--pct:'+Math.max(.5,p).toFixed(1)+'%"></i></span><b>'+n(v)+' · '+p.toFixed(1)+'%</b></button>';}).join("")+'</div>';
   }
   /* REACH VS REPEAT. Right is how many different people started a track;
      up is how many times each of them started it (1x = once each). The
@@ -171,17 +197,18 @@
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{},rangeLabel=S.range&&S.range.label||"Selected range";
-    var core=kpi("Page views",n(tot.page_views),rangeLabel)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
+    var trend=trafficTrend(t),core=kpi("Page views",n(tot.page_views),rangeLabel)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
     var scoped=house
       ? kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),b.window?"created":"all time")+kpi("Music plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"plays")+kpi("Gross music",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"revenue")
       : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
-    return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend","Page views and visitors in the selected timestamp window.",line(t.byDay,"page_views","visitors","Page views","Visitors"),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Top pages","Highest traffic paths.",rank(t.pages,"path","count"))+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+err("daily")+err("totals");
+    return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Page views and visitors in the selected timestamp window.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Top pages","Highest traffic paths.",rank(t.pages,"path","count"))+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+(S.rangeId==="24h"?err("hourly"):err("daily"))+err("totals");
   }
   function audience(){
     var house=sid()===null;
     var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
     var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
-    return scopedGap+'<div class="cra-grid">'+card("Audience trend","Sessions and unique visitors inside the exact selected timestamp window.",line((S.data.traffic&&S.data.traffic.byDay)||[],"sessions","visitors","Sessions","Visitors"),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
+    var trend=trafficTrend(S.data.traffic||{});
+    return scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
@@ -315,7 +342,7 @@
   function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
   function blankData(){
     return {
-      traffic:{byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
+      traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
       funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
       identity:{},forensics:{},business:null
     };
@@ -324,7 +351,8 @@
     if(!x)return;
     if(!x.ok){S.errors[x.name]=x.error;return;}
     var v=x.value,t=S.data.traffic;
-    if(x.name==="daily")t.byDay=v||[];
+    if(x.name==="hourly")t.byHour=v||[];
+    else if(x.name==="daily")t.byDay=v||[];
     else if(x.name==="totals")t.totals=v&&v[0]||{};
     else if(x.name==="pages")t.pages=top(v,"path");
     else if(x.name==="sources")t.sources=top(v,"source");
@@ -373,7 +401,8 @@
        result could paint. Keep the full suite, but bound fan-out and paint
        each completed read immediately. */
     var tasks=[
-      {name:"daily",run:function(){return rpc("analytics_daily",daily);}},
+      {name:"hourly",run:function(){return r.id==="24h"?rpc("analytics_hourly",daily):Promise.resolve([]);}},
+      {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
       {name:"pages",run:function(){return rpc("analytics_top",{p_dim:"page",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
@@ -391,15 +420,40 @@
     return runLimited(tasks,3,function(x){
       if(q!==S.seq)return;
       applyResult(x);
-      S.error=S.errors.daily||S.errors.totals||null;
+      S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;
       paint();
     },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
-      S.loading=false;S.loaded=true;S.error=S.errors.daily||S.errors.totals||null;paint();
+      S.loading=false;S.loaded=true;S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;paint();
     });
   }
   function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
+  function bindChartPoints(root){
+    root.querySelectorAll(".cra-chart").forEach(function(chart){
+      var points=[].slice.call(chart.querySelectorAll("[data-cra-chart-point]")),lab=chart.querySelector("[data-cra-chart-label]"),vals=chart.querySelector("[data-cra-chart-values]");
+      function pick(p){
+        points.forEach(function(x){var on=x===p;x.classList.toggle("is-on",on);x.setAttribute("aria-pressed",on?"true":"false");});
+        if(lab)lab.textContent=p.getAttribute("data-label")||"";
+        if(vals)vals.textContent=p.getAttribute("data-values")||"";
+      }
+      points.forEach(function(p){
+        p.addEventListener("pointerenter",function(){pick(p);});
+        p.addEventListener("focus",function(){pick(p);});
+        p.addEventListener("click",function(){pick(p);});
+        p.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();pick(p);}});
+      });
+    });
+    root.querySelectorAll("[data-cra-info]").forEach(function(node){
+      function pick(){
+        var key=node.getAttribute("data-cra-info"),scope=node.closest&&node.closest(".cra-card")||root;
+        scope.querySelectorAll("[data-cra-info]").forEach(function(x){x.classList.toggle("is-on",x.getAttribute("data-cra-info")===key);});
+      }
+      node.addEventListener("pointerenter",pick);node.addEventListener("focus",pick);node.addEventListener("click",pick);
+      node.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();pick();}});
+    });
+  }
   function bind(root){
+    bindChartPoints(root);
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
