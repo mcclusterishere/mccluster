@@ -19,6 +19,8 @@ test("Control Instagram is a creator to Action Network funnel, not a detached pu
   assert.match(ui,/action_mission_id/);
   assert.match(ui,/publish_to_action_network/);
   assert.match(ui,/\/v1\/social\/action-targets/);
+  assert.match(ui,/proof submitted/);
+  assert.match(ui,/verified/);
 
   assert.match(router,/function actionMissionUrl/);
   assert.match(router,/content: contentId/);
@@ -27,6 +29,8 @@ test("Control Instagram is a creator to Action Network funnel, not a detached pu
   assert.match(router,/content_id: contentId/);
   assert.match(router,/ensureActionNetworkPost/);
   assert.match(router,/post_type: 'announcement'/);
+  assert.match(router,/action_mission_assignments\?source_content_id=in/);
+  assert.match(router,/action_stats: actionStats/);
 
   assert.match(meta,/content_id: job\.content_id \|\| null/);
   assert.match(meta,/social_content_items', job\.content_id, \{ status: 'published' \}/);
