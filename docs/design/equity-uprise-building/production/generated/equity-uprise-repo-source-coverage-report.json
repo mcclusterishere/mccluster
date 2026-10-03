@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 310,
+  "candidate_count": 312,
   "capability_source_count": 99,
-  "support_only_count": 211,
-  "checks_total": 1143,
-  "checks_passed": 1143,
+  "support_only_count": 213,
+  "checks_total": 1151,
+  "checks_passed": 1151,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -188,6 +188,7 @@
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/test/action-gamification.test.mjs",
+    "scripts/test/action-network-live-governance.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
@@ -256,6 +257,7 @@
     "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql",
     "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
     "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
+    "supabase/migrations/20261003233747_action_network_live_governance_v1.sql",
     "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
     "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
     "supabase/production-ledger.json",
@@ -324,12 +326,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "310 entries"
+      "detail": "312 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
-      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
+      "detail": "{\"missing_from_map\":[],\"stale_in_map\":[]}"
     },
     {
       "name": "_unfinished/equity-uprise/dashboard.html capability ids known",
@@ -3632,6 +3634,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/action-network-live-governance.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-network-live-governance.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/action-network-live-governance.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/action-network-live-governance.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/action-network.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -4888,6 +4910,26 @@
     },
     {
       "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
