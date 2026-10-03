@@ -2331,11 +2331,11 @@
       "rationale": "Generator for newsroom.html and feed.xml from the evidence ledger; tooling, not a capability."
     },
     {
-      "path": "supabase/pending_migrations/action_mission_completion_automation_v1.sql",
+      "path": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending Action Network mission completion automation: verified mission assignments become campaign action events and aggregate mission funnel counts are exposed for member and Control surfaces. Not a building capability."
+      "rationale": "Applied Action Network mission completion automation (migration 20261003035208): verified mission assignments become campaign action events and aggregate mission funnel counts are exposed for member and Control surfaces. Not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
