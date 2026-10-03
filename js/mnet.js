@@ -1822,7 +1822,7 @@
     var dlg=$("mnMissionDialog");if(dlg&&dlg.open)dlg.close();
     clearMissionCapture();
     if(missions.returnHref){location.assign(missions.returnHref);return;}
-    try{history.replaceState(null,"","mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
+    try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
   function openMission(id){
     return fetchMission(id).then(function(m){
@@ -1855,7 +1855,7 @@
         setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
         if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id});
-        loadActionRecord();
+        loadMissions();
       })
       .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
       .then(function(){b.disabled=false;});
@@ -1883,7 +1883,7 @@
       if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted. Once verified, this action can appear on the feed with your proof.","ok");
       else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. You can share it after verification.","error");
       if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
-      loadActionRecord();
+      loadMissions();
     }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
       .then(function(){b.disabled=false;});
   }
