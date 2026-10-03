@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 298,
-  "capability_source_count": 98,
-  "support_only_count": 200,
+  "candidate_count": 301,
+  "capability_source_count": 99,
+  "support_only_count": 202,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2336,6 +2336,29 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied Action Network mission completion automation (migration 20261003035208): verified mission assignments become campaign action events and aggregate mission funnel counts are exposed for member and Control surfaces. Not a building capability."
+    },
+    {
+      "path": "data/lyrics/money-or-the-power.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Time-coded lyric master for Money or the Power on the Docket 516R album, credited to the Equity Uprise music act; the same music-catalogue capability as data/catalogue.json and catalogue.html."
+    },
+    {
+      "path": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (not applied) Action Network function that lets the desk seat an accepted fellow in an active cohort; it names the Equity Uprise seed it ships with. Mobilization infrastructure, not a building capability, as with the seed itself."
+    },
+    {
+      "path": "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network reward and cohort documentation; names the Equity Uprise policy-writer cohort as the first cohort the desk seats. Mobilization documentation, not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

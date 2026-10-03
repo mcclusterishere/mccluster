@@ -114,3 +114,29 @@ test("the fellowship opens at three verified actions, server-counted, desk-revie
  /* a new mission is always born a draft */
  assert.match(ctl,/capacity:isFinite\(cap\)&&cap>0\?cap:null,status:"draft"/);
 });
+
+test("a cohort seat is given on purpose, only to an accepted fellow, by the desk",async()=>{
+ const [sql,seed,ctl,page]=await Promise.all([
+  read("supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql"),
+  read("supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql"),
+  read("js/control-room/action-network.js"),
+  read("docket-516.html")]);
+ assert.match(sql,/create or replace function public\.admit_fellow_to_cohort\(\s*p_application_id uuid,\s*p_cohort_id uuid\s*\)/);
+ assert.match(sql,/security definer\s+set search_path = ''/);
+ assert.match(sql,/not \(select public\.eu_is_admin\(\)\) then raise exception 'not authorized'/);
+ assert.match(sql,/v_app\.status <> 'accepted'/,"only accepted fellows get a seat");
+ assert.match(sql,/v_app\.user_id = \(select auth\.uid\(\)\) then raise exception 'you cannot admit yourself'/);
+ assert.match(sql,/v_cohort\.status <> 'active'/,"only a cohort that is still admitting");
+ assert.match(sql,/on conflict \(cohort_id, m_uid\) do nothing/,"admitting twice is a no-op");
+ assert.match(sql,/revoke all on function public\.admit_fellow_to_cohort\(uuid, uuid\) from public, anon;/);
+ assert.doesNotMatch(sql,/grant execute on function public\.admit_fellow_to_cohort\(uuid, uuid\) to [^;]*anon/);
+ /* the generic fellowship acceptance stays network-wide; it does not seat anyone */
+ assert.doesNotMatch(await read("supabase/migrations/20261002063754_action_network_fellowship_v1.sql"),/action_cohort_members/);
+ assert.match(ctl,/rpc\/admit_fellow_to_cohort/);
+ assert.match(ctl,/a\.status==="accepted"\?seatControls\(a\)/,"seat controls only on accepted applications");
+ /* the Equity Uprise group is the cohort group for aspiring policy writers (owner, 2026-10-03) */
+ assert.match(seed,/cohort group for people who want to become Equity Uprise cohort policy writers/);
+ assert.match(seed,/'Equity Uprise · policy writers, next cohort'/);
+ assert.match(page,/cohort group for people who want to become Equity Uprise cohort policy writers/);
+ assert.doesNotMatch(page,/Accepted fellows join the\s+next Equity Uprise cohort\./,"no promise without the admission path");
+});

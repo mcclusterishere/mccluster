@@ -13,16 +13,20 @@
 -- exactly: organization -> group (with its front page) -> campaign -> missions.
 --
 --   organization  Equity Uprise, the civic fellowship of McCluster Corp
---   group         equity-uprise, open, group_type 'program'; its front page is
---                 the Docket 516R record, https://matthew.mccluster.org/docket-516.html
+--   group         equity-uprise, open, group_type 'program': the cohort group
+--                 for people who want to become Equity Uprise cohort policy
+--                 writers (owner, 2026-10-03). Its front page is the Docket
+--                 516R record, https://matthew.mccluster.org/docket-516.html
 --   campaign      equity-uprise-003, rendered at /action/?c=equity-uprise
 --   missions      the loop: read the record, write a memo, co-write a reform
 --                 paper, file a public comment. Fixed ids, because
 --                 docket-516.html deep-links each one (mnet.html?mission=<id>).
---   cohort        the next Equity Uprise cohort. Membership is not self-serve:
---                 three verified missions open the existing fellowship
---                 application (action_fellowship_v1), and the desk admits
---                 accepted fellows.
+--   cohort        the next cohort of Equity Uprise policy writers. Membership
+--                 is not self-serve: three verified missions open the existing
+--                 fellowship application (action_fellowship_v1), and the desk
+--                 admits accepted fellows with admit_fellow_to_cohort()
+--                 (20261003160000_action_cohort_admission_v1). Apply that
+--                 one with this one; without it nobody can be admitted.
 --
 -- Every fact below was checked on 2026-10-03 against the linked source: the
 -- Connecticut Siting Council's Docket 516R page (status closed; remand
@@ -35,7 +39,7 @@ with org as (
   insert into public.network_organizations (slug, name, organization_type, description, website_url, verification_state)
   values (
     'equity-uprise', 'Equity Uprise', 'project',
-    'The civic fellowship of McCluster Corp. Read the public record, write policy that answers it, and earn a seat in the next cohort.',
+    'The civic program of McCluster Corp. On the Uprise Action Network it is the cohort group for people who want to become Equity Uprise cohort policy writers.',
     'https://matthew.mccluster.org/docket-516.html', 'verified')
   on conflict (lower(slug)) do update
     set description = excluded.description, website_url = excluded.website_url, updated_at = now()
@@ -49,7 +53,7 @@ oid as (
 grp as (
   insert into public.network_groups (slug, name, purpose, visibility, organization_id, group_type, front_page_url)
   select 'equity-uprise', 'Equity Uprise',
-         'Read the public record, write policy that answers it, and earn a seat in the next cohort. Front page: the Docket 516R record.',
+         'The cohort group for people who want to become Equity Uprise cohort policy writers. Read the public record, write policy that answers it, and earn a seat in the next cohort. Front page: the Docket 516R record.',
          'open', id, 'program', 'https://matthew.mccluster.org/docket-516.html'
   from oid
   on conflict (lower(slug)) do update
@@ -88,7 +92,7 @@ select
     {"key": "write", "title": "Write", "detail": "A policy memo to a named decision-maker."},
     {"key": "reform", "title": "Reform", "detail": "A costed, sourced reform paper, written as a group."},
     {"key": "file", "title": "File", "detail": "A public comment on an open proceeding."},
-    {"key": "cohort", "title": "Cohort", "detail": "Three verified actions open the fellowship application."}
+    {"key": "cohort", "title": "Cohort", "detail": "Three verified actions open the fellowship application; the desk admits accepted fellows to the next cohort of policy writers."}
   ]'::jsonb,
   'read', null, null, false,
   'No money is being collected for this campaign.',
@@ -122,7 +126,7 @@ on conflict (id) do nothing;
 insert into public.action_cohorts (id, campaign_id, name, description, status)
 values (
   'd68908b7-1665-4d83-9895-6adeb2204896', 'equity-uprise-003',
-  'Equity Uprise · next cohort',
-  'Forming now. Three verified missions open the fellowship application; accepted fellows join this cohort.',
+  'Equity Uprise · policy writers, next cohort',
+  'Forming now: the next cohort of Equity Uprise policy writers. Three verified missions open the fellowship application, and the desk admits accepted fellows to this cohort.',
   'active')
 on conflict (id) do nothing;

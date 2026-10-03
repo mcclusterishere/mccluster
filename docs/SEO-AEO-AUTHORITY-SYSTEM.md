@@ -343,7 +343,7 @@ Track monthly:
 | **CIA Mind Control credit** | Released under an alias | Decide whether its public artist credit is Matthew McCluster. Until then the graph lists the album with no artist. |
 | **Bridgeport proclamation scan** | Cropped along its right edge | Upload a complete scan. |
 | **Release and upload dates** | I AM HERE has only "2026"; the Vaunt films have no upload date | Supply them; then the album gets an exact `datePublished` and the films can carry VideoObject. |
-| **Equity Uprise group migration** | `supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql` is written and was executed against the real table definitions locally (twice, idempotent). It sits in `pending_migrations/` because the drift guard admits only migrations recorded in the production ledger | Apply it (rolled-back dry run, then run), move it to `supabase/migrations/` and record it in `supabase/production-ledger.json`. Until then the group, campaign and missions linked from `docket-516.html` do not exist. |
+| **Equity Uprise group migrations** | Two pending files: `supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql` (organization, the cohort group for people who want to become Equity Uprise cohort policy writers, campaign, four missions, the policy-writer cohort) and `20261003160000_action_cohort_admission_v1.sql` (`admit_fellow_to_cohort`, the desk's way to seat an accepted fellow). Both were run against local Postgres with the live column shapes; production has neither (checked read-only 2026-10-03) | Apply both (rolled-back dry run, then run), move them to `supabase/migrations/` and record them in `supabase/production-ledger.json`. Until then the group, campaign and mission links on `docket-516.html` lead to empty states and nobody can be seated. |
 
 ---
 
@@ -364,7 +364,7 @@ HTML; changing `index.html`'s UI for SEO; a city page.
 ## 16. Backlog
 
 **P0 · indexability and entity correctness**
-1. Apply the Equity Uprise group migration (§13).
+1. Apply the two Equity Uprise group migrations (§13).
 2. Submit both sitemaps and request indexing for the five authority pages (§10).
 3. Resolve the IPC title and the two résumé bullets (§13).
 4. Confirm the CT charity renewal (§13).
