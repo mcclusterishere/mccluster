@@ -324,6 +324,12 @@
     paintJoin();
   }
 
+  function missionHubHref(){
+    if(!C)return "mnet.html?view=missions";
+    var ret=root.location.pathname.replace(/^\//,"")+root.location.search+root.location.hash;
+    return "mnet.html?view=missions&campaign="+encodeURIComponent(C.id)+"&return="+encodeURIComponent(ret);
+  }
+
   function paintJoin() {
     $("anAcct").textContent = signedIn() ? "Account" : "Sign in";
     if (!C) return;
@@ -332,8 +338,13 @@
     $("join").hidden = inNet;
     $("anCta").hidden = !C;
     var first = $("anCta").firstElementChild;
-    if (inNet) { first.textContent = "Your participant card"; first.setAttribute("href", "#anCard"); }
+    if (inNet) { first.textContent = "Do a mission now"; first.setAttribute("href", missionHubHref()); }
+    else if (signedIn()) { first.textContent = "Join campaign & do a mission"; first.setAttribute("href", "#join"); }
     else { first.textContent = "Join the Action Network"; first.setAttribute("href", "#join"); }
+    if($("anMnet")){
+      $("anMnet").textContent=signedIn()?"Choose a mission →":"Enter the Action Network →";
+      $("anMnet").setAttribute("href",signedIn()?missionHubHref():"mnet.html");
+    }
     if (!open && !inNet) {
       $("anJoin").disabled = true;
       $("anAuth").hidden = true;
@@ -342,7 +353,7 @@
     }
     $("anJoin").disabled = busy;
     $("anAuth").hidden = signedIn();
-    $("anJoin").textContent = signedIn() ? "Join the Action Network" : (mode === "new" ? "Create account & join" : "Sign in & join");
+    $("anJoin").textContent = signedIn() ? "Join campaign & choose a mission" : (mode === "new" ? "Create account & join" : "Sign in & join");
   }
 
   function setMode(m) {
@@ -452,6 +463,11 @@
       busy = false;
       say("anMsg", "");
       paintMe();
+      if(signedIn()&&me){
+        track("action_mission_handoff",{campaign:SLUG});
+        root.location.assign(missionHubHref());
+        return;
+      }
       if (fresh && me) {
         track("action_joined", { campaign: SLUG, reel: o.reel || "", src: o.src || "", no: me.participant_no });
         var card = $("anCard");
