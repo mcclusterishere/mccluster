@@ -9,6 +9,10 @@ import { processInstagramPublishQueue } from '../src/social/meta.js';
 const ORG = '123e4567-e89b-42d3-a456-426614174000';
 const ACCOUNT = '223e4567-e89b-42d3-a456-426614174000';
 const JOB = '323e4567-e89b-42d3-a456-426614174000';
+const MUID = '423e4567-e89b-42d3-a456-426614174000';
+const MISSION = '523e4567-e89b-42d3-a456-426614174000';
+const CONTENT = '623e4567-e89b-42d3-a456-426614174000';
+const NETWORK_POST = '723e4567-e89b-42d3-a456-426614174000';
 const USER = { id: 'user-1' };
 const ENV = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'svc', META_GRAPH_API_VERSION: 'v26.0' };
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { 'content-type': 'application/json' } });
@@ -19,11 +23,18 @@ function fake({ role = 'owner', moved = [{ id: JOB, state: 'queued' }], token = 
     const u = String(url), m = init.method || 'GET';
     calls.push({ u, m, body: init.body ? JSON.parse(init.body) : null });
     if (u.includes('/org_members?')) return ok([{ org_id: ORG, role }]);
+    if (u.includes('/m_auth_user_links?')) return ok([{ m_uid: MUID }]);
+    if (u.includes('/action_missions?')) return ok([{ id: MISSION, campaign_id: 'end-racism-002', title: 'Do the work', description: 'Complete and prove the mission.', status: 'open' }]);
     if (u.includes('/social_accounts?')) return ok([{ id: ACCOUNT, org_id: ORG, platform: 'instagram', external_account_id: 'ig-1' }]);
+    if (u.includes('/social_content_items') && m === 'POST') return ok([{ ...JSON.parse(init.body), id: JSON.parse(init.body).id || CONTENT }], 201);
+    if (u.includes('/social_content_items') && m === 'PATCH') return ok([{ id: CONTENT, ...JSON.parse(init.body) }]);
+    if (u.includes('/network_posts?') && m === 'GET') return ok([]);
+    if (u.endsWith('/network_posts') && m === 'POST') return ok([{ id: NETWORK_POST, ...JSON.parse(init.body) }], 201);
     if (u.includes('/org_channels?')) return ok(token ? [{ token_env: 'SOCIAL_IG_TEST_ACCESS_TOKEN', secret_id: null, account_id: 'ig-1' }] : []);
     if (u.includes('/storage/v1/object/upload/sign/')) return ok({ url: '/object/upload/sign/social-outbox/x?token=t' });
     if (u.includes('/storage/v1/object/sign/')) return ok({ signedURL: '/object/sign/social-outbox/x?token=dl' });
     if (u.includes('/social_publish_jobs') && m === 'POST') return ok([{ id: JOB, ...JSON.parse(init.body) }], 201);
+    if (u.includes('/social_publish_jobs') && m === 'GET') return ok([{ id: JOB, content_id: null, payload: {}, state: 'draft' }]);
     if (u.includes('/social_publish_jobs') && m === 'PATCH') return ok(moved);
     if (u.includes('graph.facebook.com')) return graph ? graph(u, init) : ok({ error: { message: 'no graph' } }, 400);
     return ok([]);
@@ -48,6 +59,52 @@ test('a post without draft still goes straight to the queue', async () => {
   fake();
   const { data } = await run('/v1/social/publish', 'POST', { org_id: ORG, account_id: ACCOUNT, storage_path: `${ORG}/a.mp4`, publish_mode: 'reel' });
   assert.equal(data.publish_job.state, 'queued');
+});
+
+test('an actionable Reel creates one content identity across Instagram and Action Network', async () => {
+  const calls = fake();
+  const { data, error } = await run('/v1/social/publish', 'POST', {
+    org_id: ORG,
+    account_id: ACCOUNT,
+    storage_path: `${ORG}/action.mp4`,
+    caption: 'Do something useful.',
+    publish_mode: 'reel',
+    action_campaign_id: 'end-racism-002',
+    action_mission_id: MISSION,
+    publish_to_action_network: true
+  });
+  assert.ifError(error);
+  assert.ok(data.content?.id);
+  assert.equal(data.publish_job.content_id, data.content.id);
+  assert.equal(data.network_post.content_id, data.content.id);
+  assert.match(data.action_url, new RegExp('mission=' + MISSION));
+  assert.match(data.action_url, new RegExp('content=' + data.content.id));
+  assert.match(data.action_url, /src=instagram/);
+  const job = calls.find((x) => x.u.includes('/social_publish_jobs') && x.m === 'POST').body;
+  assert.equal(job.content_id, data.content.id);
+  assert.match(job.payload.caption, /Take action: https:\/\/matthew\.mccluster\.org\/mnet\.html\?/);
+  const network = calls.find((x) => x.u.endsWith('/network_posts') && x.m === 'POST').body;
+  assert.equal(network.author_m_uid, MUID);
+  assert.equal(network.content_id, data.content.id);
+  assert.equal(network.post_type, 'announcement');
+});
+
+test('saving an actionable Reel as a draft does not leak the Action Network post before approval', async () => {
+  const calls = fake();
+  const { data } = await run('/v1/social/publish', 'POST', {
+    org_id: ORG,
+    account_id: ACCOUNT,
+    storage_path: `${ORG}/draft.mp4`,
+    caption: 'Draft action.',
+    publish_mode: 'reel',
+    draft: true,
+    action_campaign_id: 'end-racism-002',
+    action_mission_id: MISSION,
+    publish_to_action_network: true
+  });
+  assert.equal(data.publish_job.state, 'draft');
+  assert.equal(data.network_post, null);
+  assert.ok(!calls.some((x) => x.u.endsWith('/network_posts') && x.m === 'POST'));
 });
 
 test('an upload outside this org\'s folder is refused', async () => {
