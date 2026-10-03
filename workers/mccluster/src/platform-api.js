@@ -249,7 +249,9 @@ async function prepareNetworkPost(env,muid,b,appKey){
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
   const mediaIds=uniq(rawMediaIds);
-  const rawPosterIds=Array.isArray(b.poster_asset_ids)?b.poster_asset_ids.slice(0,rawMediaIds.length):[];
+  const rawPosterIds=Array.isArray(b.poster_asset_ids)
+    ? b.poster_asset_ids.slice(0,rawMediaIds.length)
+    : rawMediaIds.map(id=>(b.poster_by_media&&typeof b.poster_by_media==='object')?b.poster_by_media[id]||null:null);
   let assets=[],posterAssets=[],posterByMedia={};
   if(mediaIds.length){
     assets=await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type,mime_type,width,height,duration_ms,alt_text`);
