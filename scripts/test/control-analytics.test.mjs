@@ -182,9 +182,9 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   const [js,css,migration]=await Promise.all([
     read('js/control-room/analytics.js'),
     read('css/control-analytics.css'),
-    read('supabase/migrations/20261003154052_analytics_hourly_v1.sql')
+    read('supabase/migrations/20261003223831_analytics_hourly_hotpath_v2.sql')
   ]);
-  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
+  assert.match(js,/r\.id==="24h"\?retryStatementTimeout\(function\(\)\{return rpc\("analytics_hourly",daily\);\}\)/);
   assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
   assert.match(js,/allLabels:true/);
   assert.match(js,/data-cra-chart-point/);
@@ -197,11 +197,21 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   assert.match(css,/\.cra-funnel__row:hover/);
   assert.match(css,/\.cra-donut__seg:hover/);
   assert.match(migration,/generate_series\(0, 23\)/i);
-  assert.match(migration,/left join public\.events_lean/i);
-  assert.match(migration,/count\(e\.at\)/i);
+  assert.match(migration,/window_events as materialized/i);
+  assert.match(migration,/extract\(epoch from \(e\.at - p\.since_at\)\)/i);
+  assert.match(migration,/left join aggregate_by_hour/i);
+  assert.doesNotMatch(migration,/left join public\.events_lean e\s+on e\.at >= b\.bucket_start/i);
   assert.match(migration,/security invoker/i);
   assert.match(migration,/revoke all on function public\.analytics_hourly.*from public, anon/i);
   assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
+});
+
+test('24h analytics retries one transient database statement timeout',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  assert.match(js,/function retryStatementTimeout\(fn\)/);
+  assert.match(js,/code!==\"57014\"/);
+  assert.match(js,/statement timeout\|canceling statement/i);
+  assert.match(js,/retryStatementTimeout\(function\(\)\{return rpc\(\"analytics_hourly\",daily\);\}\)/);
 });
 
 test('Control Analytics is mobile-first',async()=>{

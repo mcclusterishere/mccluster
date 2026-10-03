@@ -26,6 +26,13 @@
   function sid(){return S.site===FIRST?null:S.site;}
   function settled(name,p){return p.then(function(v){return{name:name,ok:true,value:v};}).catch(function(err){return{name:name,ok:false,error:err};});}
   function rpc(name,body){return S.supa("rpc/"+name,{method:"POST",body:body});}
+  function retryStatementTimeout(fn){
+    return Promise.resolve().then(fn).catch(function(error){
+      var code=String(error&&error.code||""),msg=String(error&&error.message||error||"");
+      if(code!=="57014"&&!/statement timeout|canceling statement/i.test(msg))throw error;
+      return new Promise(function(resolve){setTimeout(resolve,180);}).then(fn);
+    });
+  }
   function top(rows,key){return(rows||[]).map(function(r){var o={count:Number(r.n)||0};o[key]=r.key;return o;});}
   function kpi(label,value,sub){return'<div class="cra-kpi"><small>'+e(label)+'</small><strong>'+e(value)+'</strong>'+(sub?'<span>'+e(sub)+'</span>':"")+'</div>';}
   function card(title,sub,body,wide){return'<section class="cra-card'+(wide?" cra-card--wide":"")+'"><h2>'+e(title)+'</h2>'+(sub?'<p>'+e(sub)+'</p>':"")+body+'</section>';}
@@ -401,7 +408,7 @@
        result could paint. Keep the full suite, but bound fan-out and paint
        each completed read immediately. */
     var tasks=[
-      {name:"hourly",run:function(){return r.id==="24h"?rpc("analytics_hourly",daily):Promise.resolve([]);}},
+      {name:"hourly",run:function(){return r.id==="24h"?retryStatementTimeout(function(){return rpc("analytics_hourly",daily);}):Promise.resolve([]);}},
       {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
