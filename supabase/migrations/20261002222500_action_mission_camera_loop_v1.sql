@@ -1,7 +1,7 @@
 -- ACTION MISSION CAMERA LOOP V1
 -- Camera-first mission proof, proof-media feed sharing, and the first
--- dedicated End Racism meme mission. Staged here until production rehearsal
--- and apply assign the canonical migration version.
+-- dedicated End Racism meme mission.
+-- Canonical production migration: 20261002222500.
 --
 -- This changes no reward semantics: proof is still reviewed before points or
 -- a verified feed card exist. Poster images are presentation metadata only.
