@@ -206,6 +206,14 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
 });
 
+test('24h analytics retries one transient database statement timeout',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  assert.match(js,/function retryStatementTimeout\(fn\)/);
+  assert.match(js,/code!==\"57014\"/);
+  assert.match(js,/statement timeout\|canceling statement/i);
+  assert.match(js,/retryStatementTimeout\(function\(\)\{return rpc\(\"analytics_hourly\",daily\);\}\)/);
+});
+
 test('Control Analytics is mobile-first',async()=>{
   const css=await read('css/control-analytics.css');
   assert.match(css,/@media \(min-width:36rem\)/);
