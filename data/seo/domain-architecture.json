@@ -1,0 +1,133 @@
+{
+  "schema_version": "mccluster-domain-architecture/v1",
+  "updated_at": "2026-10-03",
+  "authority": "Owner instruction, 2026-10-03. Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Tests: scripts/test/domain-architecture.test.mjs.",
+  "rule": "Two related but distinct canonical web properties. mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house. Do not collapse them, do not make the two entities interchangeable, and do not move a working URL merely for tidiness.",
+  "properties": {
+    "company": {
+      "host": "mccluster.org",
+      "origin": "https://mccluster.org",
+      "entity": "https://matthew.mccluster.org/#mccluster-corp",
+      "answers": "What is McCluster Corp?",
+      "share_preview": "Identifies McCluster Corp and explains the company. Never the album, never Matthew's personal portfolio.",
+      "website_id": "https://mccluster.org/#website",
+      "source": "data/seo/company-site.json -> tools/build-company-site.mjs -> workers/mccluster/src/company-site/pages.generated.js",
+      "served_by": "Worker mccluster, host-routed (workers/mccluster/src/company-site/router.js) once the owner routes mccluster.org/* to it",
+      "journeys": [
+        "business or institution: understand McCluster Corp -> capabilities/products -> engage, buy, partner, contact",
+        "participant: initiative -> campaign -> Action Network -> mission -> proof -> verified action",
+        "client: service or product -> scope -> booking / relationship",
+        "researcher or media: company -> projects -> public evidence -> press / contact"
+      ]
+    },
+    "personal": {
+      "host": "matthew.mccluster.org",
+      "origin": "https://matthew.mccluster.org",
+      "entity": "https://matthew.mccluster.org/#matthew-mccluster",
+      "answers": "Who is Matthew McCluster, what has he made, and what does he do?",
+      "share_preview": "Identifies Matthew McCluster. The I AM HERE album may be the visual front door, but the root is not 'only the album'.",
+      "website_id": "https://matthew.mccluster.org/#website",
+      "source": "static HTML at the repository root, published by .github/workflows/deploy-pages.yml",
+      "served_by": "GitHub Pages (repository CNAME = matthew.mccluster.org)",
+      "front_door": "index.html: the I AM HERE experience, kept. It is a door into Matthew's house, not the semantic identity of the house.",
+      "hierarchy": ["Matthew McCluster", "music / I AM HERE", "engineering", "portfolio", "services and work", "civic projects", "companies and products he founded or operates"],
+      "journeys": [
+        "recruiter: Matthew -> role lane -> evidence -> resume -> contact",
+        "creative visitor: Matthew -> music / photography / film / portfolio",
+        "music listener: I AM HERE or another release -> catalogue / related context",
+        "potential client: Matthew's work -> the company or service that delivers that capability",
+        "civic visitor: Matthew's public work -> the relevant McCluster Corp / Equity Uprise initiative"
+      ]
+    }
+  },
+  "entities": {
+    "matthew_mccluster": {
+      "type": "Person",
+      "id": "https://matthew.mccluster.org/#matthew-mccluster",
+      "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+      "property": "personal",
+      "relation": "founder of McCluster Corp; founder and owner of Whip Equipped LLC; artist of I AM HERE"
+    },
+    "mccluster_corp": {
+      "type": "Organization",
+      "id": "https://matthew.mccluster.org/#mccluster-corp",
+      "id_note": "The @id stays on the matthew host on purpose: it is an identifier, not a link, and every page, generator and test already joins on it. Changing it would fracture the graph. Its url is the company property.",
+      "url": "https://mccluster.org/",
+      "property": "company",
+      "relation": "operating organization founded by Matthew McCluster; operates and builds the products and initiatives below"
+    },
+    "equity_uprise": {
+      "type": "Project",
+      "id": "https://matthew.mccluster.org/#equity-uprise",
+      "owner": "mccluster_corp",
+      "relation": "McCluster Corp public-interest project. On the Action Network: the cohort group for people who want to become Equity Uprise cohort policy writers. Its music act is a separate MusicGroup node.",
+      "current_url": "https://matthew.mccluster.org/docket-516.html"
+    },
+    "uprise_action_network": {
+      "type": "SoftwareApplication",
+      "id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
+      "owner": "mccluster_corp",
+      "relation": "McCluster Corp software product connected to Equity Uprise's action model",
+      "current_url": "https://matthew.mccluster.org/action/"
+    },
+    "prim3": {
+      "type": "Project",
+      "id": "https://matthew.mccluster.org/prim3.html#prim3",
+      "owner": "mccluster_corp",
+      "relation": "McCluster Corp learning project / product. Not Matthew's recording alias; its study tapes are music made for it.",
+      "current_url": "https://matthew.mccluster.org/prim3.html"
+    },
+    "mccluster_platform": {
+      "type": "SoftwareSourceCode",
+      "id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#mccluster-platform",
+      "owner": "mccluster_corp",
+      "relation": "the technical platform operated for McCluster Corp; Matthew designs and operates it, which is why its evidence page is on his property",
+      "current_url": "https://matthew.mccluster.org/engineering/mccluster-platform.html"
+    },
+    "whip_equipped": {
+      "type": "Organization",
+      "id": "https://matthew.mccluster.org/whip.html#whip-equipped",
+      "owner": "matthew_mccluster",
+      "relation": "a separate company founded and owned by Matthew McCluster. NOT a McCluster Corp sub-brand, division, project or product.",
+      "current_url": "https://matthew.mccluster.org/whip.html"
+    },
+    "i_am_here": {
+      "type": "MusicAlbum",
+      "id": "https://matthew.mccluster.org/#album",
+      "owner": "matthew_mccluster",
+      "relation": "Matthew McCluster's album and music project, published and supported through the broader ecosystem (publisher and copyright holder McCluster Corp, ISRC registrant QT6KV)",
+      "current_url": "https://matthew.mccluster.org/album.html"
+    }
+  },
+  "url_ownership": {
+    "_rule": "Ownership decides navigation, metadata and which entity a page is about. It does not by itself move a URL. Every path here keeps working where it is.",
+    "personal": [
+      "/", "/matthew-mccluster.html", "/resume-it-support.html", "/engineering/", "/engineering/it-support-systems.html",
+      "/engineering/data-center-networking.html", "/engineering/mccluster-platform.html", "/engineering/field-technology-telematics.html",
+      "/engineering/ipc-infrastructure.html", "/engineering/recruiter-role-map.html", "/portfolio.html", "/card.html", "/press.html",
+      "/gallery.html", "/walls/", "/shots.html", "/films.html", "/album.html", "/listen.html", "/catalogue.html", "/license.html",
+      "/policy.html", "/policy-memo-dna.html", "/case-designer-kicks.html", "/newsroom.html"
+    ],
+    "company_hosted_on_personal_for_compatibility": [
+      "/mccluster-corp.html", "/data/product-context.json", "/docket-516.html", "/action/", "/mnet.html", "/receipt.html", "/heal-the-3rd-world.html", "/end-racism.html", "/wigger-recovery.html",
+      "/prim3.html", "/prim3-range.html", "/hitman-facility.html", "/sites.html", "/sites-details.html", "/services.html", "/hire.html",
+      "/creator.html", "/music-creator.html", "/music-creator-terms.html", "/privacy.html"
+    ],
+    "separate_company_hosted_on_personal": ["/whip.html"],
+    "owner_decision": ["/prayer-closet.html", "/closet/", "/inner-room.html", "/fbi.html"],
+    "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving the Action Network, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
+  },
+  "edge": {
+    "now": "Cloudflare zone redirect rule: mccluster.org/*, www.mccluster.org/* and here.mccluster.org/* -> 301 https://matthew.mccluster.org/$1 (checked 2026-10-03). Sharing mccluster.org therefore shows Matthew's album preview.",
+    "target": "mccluster.org/* and www.mccluster.org/* routed to Worker mccluster. The company router serves the company pages and answers every other path with the same 301 to https://matthew.mccluster.org/$1, so every existing link, QR code and campaign funnel keeps landing where it does today. here.mccluster.org keeps its redirect rule.",
+    "activation_owner_steps": [
+      "Merge the PR; confirm https://api.mccluster.org/v1/health reports the merged SHA.",
+      "Cloudflare -> Workers Routes: add mccluster.org/* and www.mccluster.org/* -> Worker mccluster.",
+      "Cloudflare -> Rules -> Redirect Rules: narrow the redirect rule to here.mccluster.org only (redirect rules run before Workers, so the Worker sees nothing until this changes). Rollback is re-widening the rule.",
+      "Verify: curl -I https://mccluster.org/ -> 200 company page; curl -I 'https://mccluster.org/action/?c=end-racism' -> 301 to https://matthew.mccluster.org/action/?c=end-racism; curl -I https://www.mccluster.org/ -> 301 to https://mccluster.org/.",
+      "Search Console: add the mccluster.org URL-prefix property (DNS TXT verification records already exist), submit https://mccluster.org/sitemap.xml.",
+      "Supply a 1200x630 McCluster Corp share card; until then the company preview uses the supplied M mark (assets/img/m-mark.png), unaltered."
+    ],
+    "mx_note": "mccluster.org mail is Google Workspace MX. Routing HTTP to a Worker does not touch MX; do not replace the apex DNS record with a Worker custom domain without checking the MX and TXT records survive."
+  }
+}

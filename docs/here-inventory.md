@@ -16,6 +16,13 @@ it.
 
 ## Entity decision (directive item 5)
 
+> **Superseded in part on 2026-10-03.** The two `@id`s below stand. What
+> changed: there are now two properties. `matthew.mccluster.org` is Matthew
+> McCluster's house (the album is its front door, not its identity) and
+> `https://mccluster.org/` is McCluster Corp's (the Organization's `url`).
+> Authority: `docs/control-plane/DOMAINS-AND-ENTITIES.md` and
+> `data/seo/domain-architecture.json`.
+
 The permanent **Matthew** entity is `https://matthew.mccluster.org/#matthew-mccluster`
 and the permanent **McCluster Corp** entity is
 `https://matthew.mccluster.org/#mccluster-corp`. Every JSON-LD block in

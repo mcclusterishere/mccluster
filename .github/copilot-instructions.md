@@ -6,7 +6,7 @@ Canonical backend: GitHub `mcclusterishere/mccluster`, Cloudflare Worker `mcclus
 
 There is no Worker named `mccluster-core`. Do not create one.
 
-Do not scaffold a new API server, auth provider, or database. Route shared work through McCluster. Public site is `matthew.mccluster.org`. API is `https://api.mccluster.org`. Read `AGENTS.md`.
+Do not scaffold a new API server, auth provider, or database. Route shared work through McCluster. Public properties are distinct: `matthew.mccluster.org` is Matthew McCluster's personal property; `mccluster.org` is McCluster Corp's company property served by Worker `mccluster` by host once routed. Never collapse them. API is `https://api.mccluster.org`. Read `AGENTS.md`.
 
 ## Canonical AI context plane
 

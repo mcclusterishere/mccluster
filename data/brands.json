@@ -1,17 +1,23 @@
 {
-  "note": "The McCluster ecosystem as it is actually held. Three legal entities sit at the top; McCluster Corp's own divisions nest under it. Names and catalogue are works and identities, not companies. Vendors supply craft in; affiliates are independently owned. ecosystem.html renders the whole tree and opens each entry in place — no card leaves the page.",
+  "note": "The McCluster ecosystem as it is actually held. Matthew McCluster founded and owns two companies: McCluster Corp, the operating organization, whose projects and products run inside it, and Whip Equipped LLC, a separate company that is not part of McCluster Corp. Names and catalogue are works and identities, not companies. Vendors supply craft in; affiliates are independently owned. The canonical map is data/seo/domain-architecture.json; ecosystem.html renders this tree and opens each entry in place.",
   "segments": [
     {
       "key": "house",
       "title": "The House",
       "label": "Owned & Controlled",
-      "blurb": "Three entities, held outright. McCluster Corp is the parent; its own divisions run inside it."
+      "blurb": "Two companies, both founded and owned by Matthew McCluster. McCluster Corp is the operating organization; its own divisions run inside it. Whip Equipped LLC is a separate company, not a McCluster Corp brand."
+    },
+    {
+      "key": "projects",
+      "title": "McCluster Corp Projects & Products",
+      "label": "Run by McCluster Corp",
+      "blurb": "Initiatives and products McCluster Corp builds and operates. They belong to the company, not to any one person."
     },
     {
       "key": "names",
       "title": "Names & Catalogue",
       "label": "What the House Makes",
-      "blurb": "Not companies — the recording alias and the records themselves."
+      "blurb": "Not companies — the records, releases and catalogue made inside the ecosystem."
     },
     {
       "key": "vendors",
@@ -31,19 +37,19 @@
       "slug": "mccluster-corp",
       "segment": "house",
       "name": "McCluster Corp",
-      "tagline": "The parent house — creative direction and civic infrastructure under one roof.",
+      "tagline": "The operating company behind the platform, public-interest programs and creative production.",
       "logo": "assets/img/m-mark.png",
       "video": "assets/video/keynote.mp4",
       "poster": "assets/frames/keynote_0001.jpg",
-      "summary": "McCluster Corp is the creative and civic company behind everything on this site. A Connecticut organization with a 2025 public-charity registration certificate on record, it holds the Equity Uprise fellowship, runs creative services in-house, and turns media, policy, and technology into a single operating system.",
+      "summary": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3 and its commercial creative and technical work. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.",
       "facts": [
         {
           "label": "Founded",
           "value": "2025"
         },
         {
-          "label": "Status",
-          "value": "CT Public Charity · CHR.0069693"
+          "label": "Charity certificate",
+          "value": "CT public charity · CHR.0069693 · issued Oct 28, 2025"
         },
         {
           "label": "Based",
@@ -57,7 +63,7 @@
         },
         {
           "title": "On the public record",
-          "body": "Recognized by the State of Georgia and the City of Bridgeport; registered as a public charity in Connecticut."
+          "body": "Recognized by the Connecticut General Assembly, the State of Georgia and the City of Bridgeport; a 2025 Connecticut public-charity registration certificate is on record."
         },
         {
           "title": "Owner-operated",
@@ -109,84 +115,8 @@
               "cta": "brand-net-rec"
             }
           ]
-        },
-        {
-          "name": "PRIM3 Program",
-          "tagline": "Build real infrastructure — from the schematics to a working data center.",
-          "summary": "PRIM3 is the ecosystem's technology-and-education program. It teaches kids and adults to build real infrastructure — reading the schematics, standing up a working data center, and managing it on site — and it ships the lessons with a soundtrack so they stick like a hook.",
-          "facts": [
-            {
-              "label": "Focus",
-              "value": "Technology · Education"
-            },
-            {
-              "label": "Method",
-              "value": "Study to the Music"
-            },
-            {
-              "label": "Output",
-              "value": "Working data center"
-            }
-          ],
-          "links": [
-            {
-              "label": "See it in Programs",
-              "href": "index.html#work",
-              "cta": "brand-prim3-programs"
-            }
-          ]
         }
       ]
-    },
-    {
-      "slug": "equity-uprise",
-      "segment": "house",
-      "name": "Equity Uprise",
-      "tagline": "Not left, not right — forward. A civic platform where your talent is the superpower.",
-      "logo": "assets/img/equity-uprise-logo.webp",
-      "video": "assets/video/uprise.mp4",
-      "poster": "assets/frames/uprise_0001.jpg",
-      "summary": "Equity Uprise is McCluster Corp's civic-engagement fellowship — policy, music, media, and voter outreach fused into one movement. It ran the Docket 516R fight against a 7.3-mile monopole build and put the whole record on the wall for anyone to read. The Connecticut Siting Council denied the application 5–3 on October 16, 2025 and closed Docket 516R on February 5, 2026.",
-      "facts": [
-        {
-          "label": "Recognition",
-          "value": "Georgia & Bridgeport Proclamations"
-        },
-        {
-          "label": "Flagship case",
-          "value": "Docket 516R"
-        },
-        {
-          "label": "Form",
-          "value": "Fellowship · Party · Platform"
-        }
-      ],
-      "highlights": [
-        {
-          "title": "The Movement",
-          "body": "A grassroots rally on environmental injustice — sound, staging, and program engineered from the booth for hundreds of attendees."
-        },
-        {
-          "title": "The Evidence Room",
-          "body": "One power company, two cities that fought back, and a 5–3 vote that denied the plan — the whole docket archived and explained in plain English."
-        },
-        {
-          "title": "The Fellowship",
-          "body": "A civic operating system: submit an anthem, launch an outreach campaign, or apply for a verified profile."
-        }
-      ],
-      "links": [
-        {
-          "label": "Bridgeport proclamation",
-          "href": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
-          "cta": "brand-eu-proc",
-          "external": true
-        }
-      ],
-      "song": {
-        "label": "Scored to \"Environmental Injustice\"",
-        "href": "album.html"
-      }
     },
     {
       "slug": "whip-equipped",
@@ -196,7 +126,7 @@
       "logo": "assets/img/we-logo.png",
       "video": "assets/video/whip.mp4",
       "poster": "assets/frames/whip_0001.jpg",
-      "summary": "Whip Equipped LLC is a parts-licensed automotive dealership organized out of Acworth, Georgia in 2024 — and a piece of media at the same time. The lot runs day-to-day sales and compliance while doubling as the set for \"We In This Together,\" an interactive mini-series scored by \"Dealer Plates.\"",
+      "summary": "Whip Equipped LLC, founded and owned by Matthew McCluster, is a separate company from McCluster Corp. It is a parts-licensed automotive dealership organized out of Acworth, Georgia in 2024 — and a piece of media at the same time. The lot runs day-to-day sales and compliance while doubling as the set for \"We In This Together,\" an interactive mini-series scored by \"Dealer Plates.\"",
       "facts": [
         {
           "label": "Founded",
@@ -235,29 +165,86 @@
       "song": {
         "label": "Scored to \"Dealer Plates\"",
         "href": "album.html"
-      }
+      },
+      "kind": "Separate company"
+    },
+    {
+      "slug": "equity-uprise",
+      "segment": "projects",
+      "name": "Equity Uprise",
+      "tagline": "Not left, not right — forward. A civic platform where your talent is the superpower.",
+      "logo": "assets/img/equity-uprise-logo.webp",
+      "video": "assets/video/uprise.mp4",
+      "poster": "assets/frames/uprise_0001.jpg",
+      "summary": "Equity Uprise is McCluster Corp's public-interest project: policy research, civic education, community action, culture and media. Its front page is the Docket 516R record, the plain-English archive of the Connecticut Siting Council case over United Illuminating's 7.3-mile monopole line through Fairfield and Bridgeport. The Council denied the application 5–3 on October 16, 2025, rejected UI's petition for reconsideration on February 5, 2026, issued its final decision on February 9, 2026, and lists Docket 516R as closed.",
+      "facts": [
+        {
+          "label": "Recognition",
+          "value": "Georgia & Bridgeport Proclamations"
+        },
+        {
+          "label": "Front page",
+          "value": "The Docket 516R record"
+        },
+        {
+          "label": "Form",
+          "value": "Fellowship · Party · Platform"
+        }
+      ],
+      "highlights": [
+        {
+          "title": "The Movement",
+          "body": "A grassroots rally on environmental injustice — sound, staging, and program engineered from the booth for hundreds of attendees."
+        },
+        {
+          "title": "The Evidence Room",
+          "body": "One power company, two cities that fought back, and a 5–3 vote that denied the plan — the whole docket archived and explained in plain English."
+        },
+        {
+          "title": "The Fellowship",
+          "body": "A civic operating system: submit an anthem, launch an outreach campaign, or apply for a verified profile."
+        }
+      ],
+      "links": [
+        {
+          "label": "The Docket 516R record",
+          "href": "docket-516.html",
+          "cta": "brand-eu-docket"
+        },
+        {
+          "label": "Bridgeport proclamation",
+          "href": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+          "cta": "brand-eu-proc",
+          "external": true
+        }
+      ],
+      "song": {
+        "label": "Scored to \"Environmental Injustice\"",
+        "href": "album.html"
+      },
+      "kind": "Public-interest project"
     },
     {
       "slug": "prim3",
-      "segment": "names",
+      "segment": "projects",
       "name": "PRIM3",
-      "tagline": "The name Matthew records under.",
+      "tagline": "Learn technology by building it: McCluster Corp's learning project.",
       "logo": "assets/img/prim3-logo.png",
       "video": "assets/video/prim3.mp4",
       "poster": "assets/frames/prim3_0001.jpg",
-      "summary": "PRIM3 is Matthew McCluster's recording alias — a pseudonym, not a company. The PRIM3 record sits in the catalogue alongside the Here album. The technology and education program that carries the same name runs inside McCluster Corp.",
+      "summary": "PRIM3 is McCluster Corp's free technology and cybersecurity learning project, built on the PRIM Method: Principles, Rhythm, Immersion and Missions. It teaches real infrastructure from the ground up, and its study tapes are music written for the lessons.",
       "facts": [
         {
           "label": "Type",
-          "value": "Artist name · pseudonym"
+          "value": "Learning product · McCluster Corp"
         },
         {
-          "label": "Behind it",
-          "value": "Matthew McCluster"
+          "label": "Method",
+          "value": "Principles, Rhythm, Immersion, Missions"
         },
         {
-          "label": "Catalogue",
-          "value": "PRIM3 · on the album page"
+          "label": "Music",
+          "value": "The study tapes"
         }
       ],
       "highlights": [
@@ -272,8 +259,13 @@
       ],
       "links": [
         {
-          "label": "Hear the catalogue",
-          "href": "album.html",
+          "label": "Open PRIM3",
+          "href": "prim3.html",
+          "cta": "eco-prim3-open"
+        },
+        {
+          "label": "Hear the study tapes",
+          "href": "album.html?album=prim3",
           "cta": "eco-prim3-album"
         }
       ],
@@ -281,7 +273,7 @@
         "label": "Scored to \"Got WiFi\"",
         "href": "album.html"
       },
-      "kind": "Artist alias"
+      "kind": "Learning product"
     },
     {
       "slug": "here-album",

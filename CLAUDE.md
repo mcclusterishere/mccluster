@@ -12,7 +12,9 @@ You are in the McCluster ecosystem.
 8. Do not rewrite `index.html` or revive rejected visual systems.
 9. If you were about to create a new backend or a Worker named `mccluster-core`: stop. That Worker does not exist. The canonical API Worker is `mccluster`; the stateless `mccluster-mcp` transport shares its authority (see CANONICAL-ARCHITECTURE.md).
 
-Public edge: `https://matthew.mccluster.org` (apex `mccluster.org` is the same property).
+Two public properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`):
+`https://matthew.mccluster.org` is **Matthew McCluster's** property (GitHub Pages, this repo);
+`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex). They are not the same site and not the same entity.
 API Worker: `mccluster` on `https://api.mccluster.org`.
 Source: `workers/mccluster`.
 
@@ -21,6 +23,7 @@ Source: `workers/mccluster`.
 
 12. **Mobile first, responsive up.** Anything built from a Mobbin reference, or any reference, is designed at phone width first and then given room on tablet and desktop. Breakpoints only ADD; they never hide what the phone was shown. `min-width` queries only, `minmax(0,1fr)` never a bare `1fr`, form controls at `max(16px,…)`, never `user-scalable=no`. Verify by rendering at 390px and checking `scrollWidth === clientWidth`. Full rule and the reasons: `AGENTS.md` → Hard rules → 13.
 
+13. **Never collapse McCluster Corp and Matthew McCluster.** Company-first metadata on `mccluster.org`, Matthew-first on `matthew.mccluster.org` (the I AM HERE album is a front door there, not the identity). Whip Equipped LLC is Matthew's separate company, not a McCluster Corp brand; PRIM3 is McCluster Corp's learning product. Keep stable `@id`s; the Organization's `url` is `https://mccluster.org/`. Read `docs/control-plane/DOMAINS-AND-ENTITIES.md` and `data/seo/domain-architecture.json` before touching either property's metadata, structured data or navigation.
 
 ## EQUITY UPRISE BUILDING / 360 / SPATIAL AUTHORITY — MANDATORY
 
