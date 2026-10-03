@@ -158,8 +158,8 @@
    --------------------------------------------------------------- */
 
 /* The canvas grid is 12 columns and control-room.css defines spans 3-8
-   only, so a full-width panel had no class and collapsed to 1/12 of the
-   row. The generation panel is the one full-width panel in the system. */
+   only, so full-width panels need an explicit span instead of collapsing
+   to 1/12 of the row. Generate and Home's Public record use this class. */
 .cr-span-12{grid-column:span 12}
 
 .cr-modelpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
