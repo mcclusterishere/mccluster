@@ -74,6 +74,27 @@
         <ol class="an-phases" id="anPhases"></ol>
       </section>
 
+      <!-- Campaign-defined intake. A campaign may expose a small set of
+           concrete lanes without inventing a new page or a new account flow. -->
+      <section class="an-sec an-intake" id="anIntake" hidden aria-labelledby="anIntakeH">
+        <p class="an-kicker">Choose your lane</p>
+        <h2 class="an-h2" id="anIntakeH">What can you actually do?</h2>
+        <p class="an-lede an-lede--sm" id="anIntakeLaw"></p>
+        <div class="an-intake-grid" id="anIntakeChoices"></div>
+      </section>
+
+      <!-- Funded work is separate from ordinary mission points. Funding
+           reserves a fixed compensation slot; proof review still decides
+           whether the action was completed. No recipient image is a bounty. -->
+      <section class="an-sec an-bounties" id="anBounties" hidden aria-labelledby="anBountyH">
+        <p class="an-kicker">Fund it or do it</p>
+        <h2 class="an-h2" id="anBountyH">Verified action bounties</h2>
+        <p class="an-lede an-lede--sm">A bounty pays an approved participant for completing a defined action. It never buys somebody else&rsquo;s face, story, medical information, documents, or sleeping location.</p>
+        <div class="an-bounty-list" id="anBountyList"></div>
+        <p class="an-note" id="anBountyFunding"></p>
+        <p class="an-msg" id="anBountyStatus" role="status" aria-live="polite"></p>
+      </section>
+
       <!-- DON'T JUST STAND THERE. What you have, what you can do, and the
            account that makes you a participant. -->
       <section class="an-sec an-join" id="join" aria-labelledby="anJoinH">
