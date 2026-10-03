@@ -12,8 +12,8 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | GitHub org | `McCluster-Corp` |
 | Cloudflare project + Worker | `mccluster` |
 | Worker source | `workers/mccluster` |
-| Public site | `https://matthew.mccluster.org` |
-| Apex | `https://mccluster.org` → same property, not a second site |
+| Matthew McCluster's property (personal) | `https://matthew.mccluster.org` (GitHub Pages, this repo) |
+| McCluster Corp's property (company) | `https://mccluster.org`: a different site about a different entity, served by Worker `mccluster` by host once routed. See `docs/control-plane/DOMAINS-AND-ENTITIES.md` |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
@@ -47,6 +47,7 @@ The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction
     - Never `user-scalable=no` or `maximum-scale=1`. Blocking pinch zoom fails WCAG 1.4.4.
     - SVG text is sized in USER UNITS and shrinks with the viewBox, so a chart that is legible at 1440 can render 4px type on a phone. Size it for the phone and scale down at a breakpoint, not the reverse.
     - Verify by rendering at 390px and measuring `scrollWidth` against `clientWidth`. They must be equal. Eyeballing a screenshot does not catch a 25px overflow.
+15. **Two properties, two entities. Never collapse them.** `https://mccluster.org/` is **McCluster Corp's** house: it answers "what is McCluster Corp?", and its metadata, share cards, Organization data and navigation are company-first. `https://matthew.mccluster.org/` is **Matthew McCluster's** house: person, résumé, engineering, portfolio, photography, music. The I AM HERE album is a front door to Matthew's house, not its identity and never the company's homepage. Hierarchy: Matthew McCluster founded McCluster Corp; McCluster Corp operates Equity Uprise (public-interest project), the Uprise Action Network (software product), PRIM3 (learning product, not a recording alias) and the McCluster Platform; **Whip Equipped LLC is Matthew's separate company, never a McCluster Corp sub-brand**; I AM HERE is Matthew's album, published through the ecosystem. Stable `@id`s do not move: Person `https://matthew.mccluster.org/#matthew-mccluster`; Organization `https://matthew.mccluster.org/#mccluster-corp`, whose `url` is `https://mccluster.org/`. Company *apps* (Action Network, accounts, checkout, campaigns) stay on their working URLs because sessions and returns are origin-bound; ownership changes navigation and metadata, not URLs. Authority: `data/seo/domain-architecture.json` and `docs/control-plane/DOMAINS-AND-ENTITIES.md`; tests enforce it.
 
 ## THE LOGOS ARE NOT YOURS TO DRAW
 
@@ -100,7 +101,7 @@ On the control repo:
 - `AGENTS.md` (this law + local product gates)
 - `docs/PRODUCT-ARCHITECTURE-ROADMAP.md` (canonical cross-product context; authority + Action Network + Control + commercial completion order)
 - `data/product-context.json` (public machine-readable product map)
-- `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
+- `CLAUDE.md` / `CODEX.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md` / `.github/instructions/mccluster.instructions.md`
 - `docs/control-plane/ECOSYSTEM.md`
 - `docs/control-plane/registry.json`
 

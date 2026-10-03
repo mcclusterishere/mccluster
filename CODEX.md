@@ -6,7 +6,7 @@ You are in the McCluster ecosystem. The GitHub repository `mcclusterishere/mcclu
 
 Private cross-model context lives in Supabase schema `ai_context`. Do not commit raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model, or other AI transcripts into public Git. All providers are replaceable adapters to the same McCluster context plane. Do not create a shadow vector store, second conversation database, separate memory service, or competing context source.
 
-Satellites do not grow a second auth, database, social scheduler, billing, Worker, admin, CRM, or AI memory stack. Public edge is `matthew.mccluster.org` (apex `mccluster.org` aliases it). API is Worker `mccluster` on `api.mccluster.org`.
+Satellites do not grow a second auth, database, social scheduler, billing, Worker, admin, CRM, or AI memory stack. Public properties are distinct: `matthew.mccluster.org` is Matthew McCluster's personal property; `mccluster.org` is McCluster Corp's company property and rides the existing Worker `mccluster` by host once routed. Never collapse the two entities or properties. API is Worker `mccluster` on `api.mccluster.org`.
 
 There is no Worker named `mccluster-core`. Do not create one.
 

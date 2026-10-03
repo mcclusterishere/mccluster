@@ -1,19 +1,23 @@
-# Matthew McCluster / McCluster Corp
+# Matthew McCluster
 
-> A working property and product surface, not a brochure. McCluster Corp
-> ties together a public identity/evidence layer, the McCluster Platform and
-> Control operator plane, Equity Uprise, the Uprise Action Network, PRIM3,
-> and commercial creative/technical services. Each surface has a different
-> job, but the public record is designed to agree on the same canonical
-> entities, campaigns, evidence and outcomes. Everything below that is
-> described as public is readable without an account.
+> Matthew McCluster's property: who he is, what he has made and what he
+> does, across technology, infrastructure, platforms, creative direction,
+> photography and music. He founded McCluster Corp, which runs the
+> McCluster Platform and Control, Equity Uprise, the Uprise Action Network,
+> PRIM3 and commercial creative and technical services; several of those
+> product pages are hosted here. Everything below that is described as
+> public is readable without an account.
 
-Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, Connecticut. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.
+McCluster Corp, the company he founded, is a separate entity with its own property, https://mccluster.org/
+(its own llms.txt is at https://mccluster.org/llms.txt once that host is routed). Do not merge the two:
+Whip Equipped LLC is Matthew's separate company, and McCluster Corp's products (Equity Uprise, the Uprise
+Action Network, PRIM3, the McCluster Platform) are the company's, even where their pages are hosted here.
+McCluster Corp is based in Bridgeport, Connecticut; a 2025 Connecticut public-charity registration certificate is preserved in the public record, and current renewal status is not asserted here.
 Who and what this site is about, as one machine-readable graph with stable @ids:
 [data/seo/entity-graph.json](https://matthew.mccluster.org/data/seo/entity-graph.json).
 
 How the company and products fit together:
-[McCluster Corp](https://matthew.mccluster.org/mccluster-corp.html) ·
+[McCluster Corp product map](https://matthew.mccluster.org/mccluster-corp.html) ·
 [machine-readable product context](https://matthew.mccluster.org/data/product-context.json).
 
 ## Hiring Matthew McCluster

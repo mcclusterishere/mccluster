@@ -5,7 +5,8 @@
   "organization": {
     "@id": "https://matthew.mccluster.org/#mccluster-corp",
     "name": "McCluster Corp",
-    "url": "https://matthew.mccluster.org/mccluster-corp.html",
+    "url": "https://mccluster.org/",
+    "product_map": "https://matthew.mccluster.org/mccluster-corp.html",
     "founder": {
       "@id": "https://matthew.mccluster.org/#matthew-mccluster"
     },
@@ -101,6 +102,7 @@
   ],
   "boundaries": [
     "Whip Equipped LLC is a separate company connected through Matthew McCluster's ownership/founding; it is not a McCluster Corp sub-brand.",
+    "Two properties, two entities: https://mccluster.org/ is McCluster Corp's property and the Organization's url; https://matthew.mccluster.org/ is Matthew McCluster's. Company product pages hosted on Matthew's property, this product map among them, keep their URLs for compatibility (data/seo/domain-architecture.json).",
     "A public page may explain a product relationship without turning internal, unverified or private context into a public factual claim.",
     "Payments are a platform capability; the primary Action Network participation loop is missions, proof and verification."
   ],

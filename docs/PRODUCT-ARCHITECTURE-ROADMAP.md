@@ -50,7 +50,8 @@ The bridge is deliberate: a documented issue, story, release, public record or c
 ### McCluster Corp
 
 - One Organization `@id`: `https://matthew.mccluster.org/#mccluster-corp`.
-- Human-facing company/product hub: `/mccluster-corp.html`.
+- Company property and the Organization's `url`: `https://mccluster.org/`, served by the `mccluster` Worker once the owner routes the apex to it (`docs/control-plane/DOMAINS-AND-ENTITIES.md`).
+- Human-facing company/product map on Matthew's property: `/mccluster-corp.html`. It keeps its URL; the company property links to it.
 - Canonical entity record: `data/seo/entity-graph.json`.
 - Public dated evidence: `data/seo/evidence-ledger.json`.
 - McCluster Corp owns/operates shared platform capabilities and publishes the products represented in the entity graph.

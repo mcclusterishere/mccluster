@@ -127,6 +127,8 @@ Mnet, the desks, players) keeps the gate. The banner never prints.
 
 ## 3. The entity graph
 
+**Two properties, two entities** (2026-10-03): `mccluster.org` is McCluster Corp's, `matthew.mccluster.org` is Matthew's. See `docs/control-plane/DOMAINS-AND-ENTITIES.md`.
+
 One definition, in `data/seo/entity-graph.json`, emitted once on the
 profile; stable `@id`s referenced everywhere else.
 
@@ -134,8 +136,9 @@ profile; stable `@id`s referenced everywhere else.
 | --- | --- | --- | --- |
 | Matthew McCluster | `https://matthew.mccluster.org/#matthew-mccluster` | Person | `matthew-mccluster.html` |
 | The profile page | `…/matthew-mccluster.html#profile-page` | ProfilePage (the canonical one) | itself |
-| The website | `…/#website` | WebSite (name "Matthew McCluster") | home |
-| McCluster Corp | `…/#mccluster-corp` | Organization (Bridgeport, CT) | `mccluster-corp.html` is the canonical company/product hub; profile and home reference the same @id |
+| Matthew's website | `…/#website` | WebSite (name "Matthew McCluster", publisher the Person) | home |
+| The company's website | `https://mccluster.org/#website` | WebSite (name "McCluster Corp", publisher the Organization) | mccluster.org |
+| McCluster Corp | `…/#mccluster-corp` (stable) | Organization (Bridgeport, CT); `url` https://mccluster.org/ | the company property, the profile graph; `mccluster-corp.html` on Matthew's property is the company's product map and references the same @id |
 | Equity Uprise | `…/#equity-uprise` | Project of McCluster Corp; url `docket-516.html` | `docket-516.html` |
 | PRIM3 | `…/prim3.html#prim3` | Project | `prim3.html` |
 | Whip Equipped LLC | `…/whip.html#whip-equipped` | Organization, owned by the Person | `whip.html` |

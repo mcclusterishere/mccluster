@@ -7,7 +7,9 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 ## Map
 
 ```
-                    mccluster.org  —alias—►  matthew.mccluster.org
+   mccluster.org (McCluster Corp)        matthew.mccluster.org (Matthew McCluster)
+        company property, Worker host route       personal property, GitHub Pages
+        (two properties, two entities: DOMAINS-AND-ENTITIES.md)
                                                       │
                          Cloudflare project + Worker `mccluster`
                                       │               │
@@ -32,7 +34,8 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 
 | Concern | Where |
 | --- | --- |
-| Public pages | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org |
+| Matthew McCluster's pages | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org |
+| McCluster Corp's pages | Worker `mccluster`, host-routed → mccluster.org (generated from `data/seo/company-site.json`; inert until routed) |
 | Operator desk | McCluster Control |
 | API / webhooks | Cloudflare Worker `mccluster` |
 | Worker source | `workers/mccluster` |
