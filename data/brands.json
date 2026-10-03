@@ -17,7 +17,7 @@
       "key": "names",
       "title": "Names & Catalogue",
       "label": "What the House Makes",
-      "blurb": "Not companies — the recording alias and the records themselves."
+      "blurb": "Not companies — the records, releases and catalogue made inside the ecosystem."
     },
     {
       "key": "vendors",
@@ -37,11 +37,11 @@
       "slug": "mccluster-corp",
       "segment": "house",
       "name": "McCluster Corp",
-      "tagline": "The parent house — creative direction and civic infrastructure under one roof.",
+      "tagline": "The operating company behind the platform, public-interest programs and creative production.",
       "logo": "assets/img/m-mark.png",
       "video": "assets/video/keynote.mp4",
       "poster": "assets/frames/keynote_0001.jpg",
-      "summary": "McCluster Corp is the creative and civic company behind everything on this site. A Connecticut organization with a 2025 public-charity registration certificate on record, it holds the Equity Uprise fellowship, runs creative services in-house, and turns media, policy, and technology into a single operating system.",
+      "summary": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3 and its commercial creative and technical work. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.",
       "facts": [
         {
           "label": "Founded",
