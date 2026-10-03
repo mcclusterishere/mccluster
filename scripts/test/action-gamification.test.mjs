@@ -60,6 +60,31 @@ test("Action Network exposes a native mission participant flow",async()=>{
 });
 
 
+test("creator content turns a network post into a server-vouched attributed mission offer",async()=>{
+ const [js,sql,guard]=await Promise.all([
+  read("js/mnet.js"),
+  read("supabase/migrations/20261003230844_creator_action_distribution_v1.sql"),
+  read("supabase/migrations/20261003231454_creator_action_distribution_network_post_guard_v1.sql")
+ ]);
+ assert.match(sql,/create table public\.social_content_items/);
+ assert.match(sql,/add column content_id uuid references public\.social_content_items/);
+ assert.match(sql,/add column source_content_id uuid references public\.social_content_items/);
+ assert.match(sql,/function public\.join_action_mission_attributed/);
+ assert.match(sql,/v_result := public\.join_action_mission\(p_mission_id\)/);
+ assert.match(sql,/source_content_id = coalesce\(source_content_id, p_content_id\)/);
+ assert.match(sql,/function public\.action_offer_cards/);
+ assert.match(sql,/c\.publisher_m_uid = p\.author_m_uid/,"mission offer must be tied to the server-known publisher");
+ assert.match(sql,/source_content_id',new\.source_content_id/);
+ assert.match(guard,/unique index if not exists network_posts_one_creator_content/);
+ assert.match(js,/q\.get\("content"\)/);
+ assert.match(js,/q\.get\("src"\)/);
+ assert.match(js,/sbRpc\("join_action_mission_attributed"/);
+ assert.match(js,/sbRpc\("action_offer_cards"/);
+ assert.match(js,/data-content=/);
+ assert.match(js,/Take action/);
+ assert.match(js,/server-vouched relation/);
+});
+
 test("Control has a media-first Mission proof review desk",async()=>{
  const js=await read("js/control-room/action-network.js");
  assert.match(js,/Proof review/);
