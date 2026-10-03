@@ -127,7 +127,7 @@ async function hydratePostRows(env,posts=[],viewerMuid=null){
 async function hydrateFeedItems(env,items=[],viewerMuid=null){
   if(!items.length)return [];
   const postIds=uniq(items.filter(x=>x.item_type==='post'&&x.post_id).map(x=>x.post_id)).filter(uuidLike);
-  const posts=postIds.length?await service(env,`network_posts?id=in.(${postIds.join(',')})&deleted_at=is.null&select=id,author_m_uid,body,post_type,visibility,media,metadata,reply_to_id,created_at,updated_at,source_app_id,source_org_id`):[];
+  const posts=postIds.length?await service(env,`network_posts?id=in.(${postIds.join(',')})&deleted_at=is.null&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,created_at,updated_at,source_app_id,source_org_id`):[];
   const hydrated=await hydratePostRows(env,posts||[],viewerMuid);
   const postById=new Map(hydrated.map(x=>[x.post.id,x]));
   const actors=await networkActors(env,items.map(x=>x.actor_m_uid));
@@ -515,7 +515,7 @@ async function handleMnet(req,env,path,url){
     const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupOne[1])}&select=id,slug,name,purpose,visibility,member_count,organization_id,group_type,front_page_url&limit=1`);
     const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
     const mine=await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
-    const posts=await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`);
+    const posts=await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`);
     /* The same hydration the feed uses, so a post reads identically in a
        group and in the open feed. */
     const items=await hydratePostRows(env,posts||[],muid);
@@ -546,7 +546,7 @@ async function handleMnet(req,env,path,url){
   if(replies&&req.method==='GET'){
     const parentRows=await service(env,`network_posts?id=eq.${replies[1]}&deleted_at=is.null&select=*&limit=1`),parent=parentRows?.[0]; if(!parent)return fail(req,env,'Post not found',404);
     let viewer=null;if(external){if(parent.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,parent)))return fail(req,env,'Post not found',404)}
-    const rows=await service(env,`network_posts?reply_to_id=eq.${replies[1]}&deleted_at=is.null&order=created_at.asc&select=id,author_m_uid,body,post_type,visibility,media,metadata,reply_to_id,created_at,updated_at,source_app_id,source_org_id`);
+    const rows=await service(env,`network_posts?reply_to_id=eq.${replies[1]}&deleted_at=is.null&order=created_at.asc&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,created_at,updated_at,source_app_id,source_org_id`);
     const visible=external?(rows||[]).filter(x=>x.visibility==='public'):(rows||[]); const hydrated=await hydratePostRows(env,visible,viewer); if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start); return reply(req,env,{replies:hydrated});
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);

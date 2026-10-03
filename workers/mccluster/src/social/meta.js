@@ -185,6 +185,7 @@ async function finishInstagramPublish(env, job, account, token) {
     campaign_id: job.campaign_id || null,
     variant_id: job.variant_id || null,
     publish_job_id: job.id,
+    content_id: job.content_id || null,
     external_media_id: published.id,
     publish_mode: job.publish_mode,
     caption: job.payload?.caption || '',
@@ -192,7 +193,10 @@ async function finishInstagramPublish(env, job, account, token) {
     metadata: { meta_creation_id: job.external_creation_id }
   });
 
-  return { state: 'published', media_id: published.id, post_id: post?.id || null };
+  if (job.content_id) {
+    await patch(env, 'social_content_items', job.content_id, { status: 'published' }).catch(() => {});
+  }
+  return { state: 'published', media_id: published.id, post_id: post?.id || null, content_id: job.content_id || null };
 }
 
 async function processPublishJob(env, job) {
@@ -243,7 +247,10 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
         lease_owner: null,
         lease_expires_at: null
       });
-      results.push({ id: job.id, state: terminal ? 'failed' : job.state, error: error instanceof Error ? error.message : String(error) });
+      if (terminal && job.content_id) {
+        await patch(env, 'social_content_items', job.content_id, { status: 'failed' }).catch(() => {});
+      }
+      results.push({ id: job.id, state: terminal ? 'failed' : job.state, content_id: job.content_id || null, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return { checked: jobs.length, results };

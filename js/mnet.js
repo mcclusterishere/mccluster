@@ -15,7 +15,8 @@
     mediaCache: {},
     conversations: [],
     currentConversation: null,
-    pollTimer: null
+    pollTimer: null,
+    actionOffers: {}
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -426,6 +427,7 @@
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
+      actionOfferCardHtml(id) +
       actionCardHtml(id) +
       trackCardHtml(item, post) +
       postMediaHtml(post) +
@@ -440,6 +442,41 @@
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
     '</article>';
+  }
+
+  /* A CREATOR POST MAY CARRY A MISSION. Like verified-action cards, this
+     is read from a server-vouched relation, never trusted from post metadata. */
+  function actionOfferHref(c) {
+    var q = new URLSearchParams();
+    q.set("view", "missions");
+    q.set("mission", c.mission_id);
+    q.set("content", c.content_id);
+    q.set("src", "network");
+    if (c.campaign_id) q.set("campaign", c.campaign_id);
+    return "/mnet.html?" + q.toString();
+  }
+  function actionOfferCardHtml(postId) {
+    var c = postId && state.actionOffers && state.actionOffers[postId];
+    if (!c) return "";
+    return '<div class="mn__actcard mn__actcard--offer">' +
+      '<p class="mn__actcard-eyebrow">Mission attached</p>' +
+      '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
+      (c.description ? '<p class="mn__actcard-foot">' + esc(c.description) + '</p>' : '') +
+      '<div class="mn__actcard-row">' +
+        (c.mission_open ? '<a class="mn__primary" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network">Take action</a>' : '<span class="mn__hint">Mission closed</span>') +
+      '</div></div>';
+  }
+  function loadActionOfferCards(items) {
+    var ids = (items || []).map(function (it) {
+      var p = it.post;
+      return p && p.content_id ? p.id : null;
+    }).filter(function (id) { return id && !(id in state.actionOffers); });
+    if (!ids.length) return Promise.resolve(false);
+    ids.forEach(function (id) { state.actionOffers[id] = null; });
+    return sbRpc("action_offer_cards", { p_post_ids: ids.slice(0, 100) }).then(function (rows) {
+      (rows || []).forEach(function (x) { state.actionOffers[x.post_id] = x; });
+      return (rows || []).length > 0;
+    }).catch(function () { return false; });
   }
 
   /* A VERIFIED ACTION ON THE FEED. Drawn only for posts the server vouches
@@ -471,7 +508,19 @@
 
   function bindFeedActions(root) {
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
-      a.onclick = function (e) { e.preventDefault(); setView("missions"); openMission(a.getAttribute("data-take-mission")); };
+      a.onclick = function (e) {
+        e.preventDefault();
+        var content = a.getAttribute("data-content"), source = a.getAttribute("data-source"), missionId = a.getAttribute("data-take-mission");
+        if (content && /^[0-9a-f-]{36}$/i.test(content)) {
+          missions.content = content;
+          missions.attributedMission = missionId;
+          missions.source = source && /^[a-z0-9][a-z0-9._-]{0,31}$/i.test(source) ? source.toLowerCase() : "network";
+        } else {
+          missions.content = ""; missions.source = ""; missions.attributedMission = "";
+        }
+        setView("missions");
+        openMission(missionId);
+      };
     });
     root.querySelectorAll("[data-action=like]").forEach(function (b) {
       b.onclick = function () { toggleLike(b.dataset.post, b); };
@@ -528,7 +577,7 @@
         rows.map(function (m) {
           return '<button class="mn__feedmission" type="button" data-take-mission="' + esc(m.id) + '"><span class="mn__eyebrow">' + esc(m.domain || "community") + '</span><b>' + esc(m.title) + '</b><span>' + esc(m.description || "") + '</span></button>';
         }).join("") : "";
-      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
+      host.querySelectorAll("[data-take-mission]").forEach(function (b) { b.onclick = function () { missions.content="";missions.source="";missions.attributedMission="";setView("missions"); openMission(b.getAttribute("data-take-mission")); }; });
       var all = host.querySelector("[data-mn-goto]"); if (all) all.onclick = function () { setView("missions"); };
     }).catch(function () { host.hidden = true; });
   }
@@ -554,7 +603,9 @@
       state.feed = reset ? incoming : state.feed.concat(incoming);
       state.nextBefore = data.next_before || null;
       renderFeed(false);
-      loadActionCards(incoming).then(function (any) { if (any) renderFeed(false); });
+      Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming)]).then(function (flags) {
+        if (flags.some(Boolean)) renderFeed(false);
+      });
       if (reset) paintFeedMissions();
       $("mnMore").hidden = !state.nextBefore;
       setStatus($("mnFeedStatus"), "");
@@ -1632,7 +1683,7 @@
      you are, whether the mission is open, and what state your work is in.
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
-  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",returnHref:"",proofFile:null,proofPreview:""};
+  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",returnHref:"",proofFile:null,proofPreview:""};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -1682,8 +1733,11 @@
   function readMissionContext(){
     try{
       var q=new URLSearchParams(location.search);
-      var c=q.get("campaign")||"";
+      var c=q.get("campaign")||"", content=q.get("content")||"", source=q.get("src")||"", mission=q.get("mission")||"";
       if(/^[a-z0-9][a-z0-9-]{0,79}$/i.test(c))missions.campaign=c;
+      if(/^[0-9a-f-]{36}$/i.test(content))missions.content=content;
+      if(missions.content&&/^[0-9a-f-]{36}$/i.test(mission))missions.attributedMission=mission;
+      if(/^[a-z0-9][a-z0-9._-]{0,31}$/i.test(source))missions.source=source.toLowerCase();
       missions.returnHref=safeMissionReturn(q.get("return"));
     }catch(_){}
   }
@@ -1693,6 +1747,8 @@
     q.set("view","missions");
     q.set("mission",id);
     if(missions.campaign)q.set("campaign",missions.campaign);
+    if(missions.content&&missions.attributedMission===id)q.set("content",missions.content);
+    if(missions.source&&missions.attributedMission===id)q.set("src",missions.source);
     if(missions.returnHref)q.set("return",missions.returnHref);
     return "/mnet.html?"+q.toString();
   }
@@ -1849,12 +1905,15 @@
   }
   function joinMission(){
     var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
-    sbRpc("join_action_mission",{p_mission_id:m.id})
+    var joinRequest = missions.content&&missions.attributedMission===m.id
+      ? sbRpc("join_action_mission_attributed",{p_mission_id:m.id,p_content_id:missions.content,p_source:missions.source||"network"})
+      : sbRpc("join_action_mission",{p_mission_id:m.id});
+    joinRequest
       .then(function(r){
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;
         setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
         if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
-        if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id});
+        if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null});
         loadMissions();
       })
       .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
@@ -1896,7 +1955,7 @@
   }
   (function wireMissions(){
     var host=$("mnMissionList");if(!host)return;
-    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b)openMission(b.getAttribute("data-open-mission"));}
+    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}openMission(id);}}
     host.addEventListener("click",onOpen);
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){

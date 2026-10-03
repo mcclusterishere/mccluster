@@ -15,6 +15,7 @@
     loaded: false, loading: false, error: null,
     account: null, check: null, jobs: [],
     file: null, caption: "", when: "", feed: true,
+    actionTargets: { campaigns: [], missions: [] }, actionStats: {}, actionOn: false, actionCampaign: "", actionMission: "", publishToNetwork: true,
     busy: null, progress: 0, note: null
   };
   var STATE = {
@@ -25,6 +26,36 @@
   function e(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function orgId() { var o = S.org && S.org(); return o && o.id; }
   function when(iso) { if (!iso) return ""; var d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+  function selectedMission() {
+    return (S.actionTargets.missions || []).filter(function (m) { return m.id === S.actionMission; })[0] || null;
+  }
+  function seedActionSelection() {
+    var cs = S.actionTargets.campaigns || [], ms = S.actionTargets.missions || [];
+    if (S.actionCampaign && !cs.some(function (x) { return x.id === S.actionCampaign; })) S.actionCampaign = "";
+    if (!S.actionCampaign && cs.length) S.actionCampaign = cs[0].id;
+    var available = ms.filter(function (m) { return !S.actionCampaign || m.campaign_id === S.actionCampaign; });
+    if (S.actionMission && !available.some(function (x) { return x.id === S.actionMission; })) S.actionMission = "";
+    if (!S.actionMission && available.length) S.actionMission = available[0].id;
+  }
+  function actionBlock() {
+    var cs = S.actionTargets.campaigns || [], ms = (S.actionTargets.missions || []).filter(function (m) { return !S.actionCampaign || m.campaign_id === S.actionCampaign; });
+    var mission = selectedMission();
+    return '<div class="cro-card" style="margin-top:10px;padding:12px">' +
+      '<label class="cro-check"><input type="checkbox" id="igActionOn"' + (S.actionOn ? " checked" : "") + '> <b>Make this actionable</b></label>' +
+      '<p class="cro-meta">Attach this Reel to a real Action Network mission. McCluster adds a tracked Take action link and can publish the same content to the Action Network.</p>' +
+      (S.actionOn ? '<div class="cro-form cro-form--2" style="margin-top:8px">' +
+        '<label>Campaign<select class="cr-select" id="igActionCampaign">' +
+          cs.map(function (x) { return '<option value="' + e(x.id) + '"' + (x.id === S.actionCampaign ? " selected" : "") + '>' + e(x.title) + '</option>'; }).join("") +
+        '</select></label>' +
+        '<label>Mission<select class="cr-select" id="igActionMission">' +
+          ms.map(function (x) { return '<option value="' + e(x.id) + '"' + (x.id === S.actionMission ? " selected" : "") + '>' + e(x.title) + '</option>'; }).join("") +
+        '</select></label></div>' +
+        (!cs.length || !ms.length ? '<div class="cro-note cro-note--bad" style="margin-top:8px">No open campaign mission is available yet.</div>' : '') +
+        (mission ? '<div class="cro-note" style="margin-top:8px"><b>' + e(mission.title) + '</b><br>' + e(mission.description || "") + '</div>' : '') +
+        '<label class="cro-check" style="margin-top:8px"><input type="checkbox" id="igActionNetwork"' + (S.publishToNetwork ? " checked" : "") + '> Also publish this content to the Action Network</label>' +
+        '<p class="cro-meta">One content ID will connect the Reel, the network post, mission joins, submitted proof and verified completions.</p>'
+      : '') + '</div>';
+  }
 
   function load() {
     var org = orgId();
@@ -35,10 +66,16 @@
       S.account = (r.accounts || []).filter(function (a) { return a.platform === "instagram"; })[0] || null;
       return Promise.all([
         S.account ? S.request("/v1/social/accounts/" + S.account.id + "/check?org_id=" + encodeURIComponent(org)) : null,
-        S.request("/v1/social/publish?org_id=" + encodeURIComponent(org))
+        S.request("/v1/social/publish?org_id=" + encodeURIComponent(org)),
+        S.request("/v1/social/action-targets?org_id=" + encodeURIComponent(org))
       ]);
     }).then(function (out) {
-      S.check = out[0]; S.jobs = (out[1] && out[1].jobs) || []; S.loaded = true;
+      S.check = out[0];
+      S.jobs = (out[1] && out[1].jobs) || [];
+      S.actionStats = (out[1] && out[1].action_stats) || {};
+      S.actionTargets = out[2] || { campaigns: [], missions: [] };
+      seedActionSelection();
+      S.loaded = true;
     }).catch(function (x) { S.error = x; }).then(function () { S.loading = false; S.render(); });
   }
 
@@ -59,7 +96,7 @@
   }
 
   function composeCard() {
-    var busy = !!S.busy, can = S.account && S.file && !busy;
+    var busy = !!S.busy, can = S.account && S.file && !busy && (!S.actionOn || !!S.actionMission);
     var label = S.busy === "upload" ? "Uploading " + S.progress + "%…" : S.busy === "save" ? "Saving…" : null;
     return '<section class="cro-card"><h2>New Reel</h2>' +
       '<label class="cro-field"><span>Video (MP4 or MOV, up to 500 MB)</span><input class="cr-input" id="igFile" type="file" accept="video/mp4,video/quicktime"' + (busy ? " disabled" : "") + '></label>' +
@@ -67,6 +104,7 @@
       '<label class="cro-field"><span>Caption <small id="igCount">' + S.caption.length + ' / 2,200</small></span><textarea class="cr-textarea" id="igCaption" rows="5" maxlength="2200" placeholder="Caption, hashtags…">' + e(S.caption) + "</textarea></label>" +
       '<label class="cro-field"><span>Post at (optional; leave empty to post now)</span><input class="cr-input" id="igWhen" type="datetime-local" value="' + e(S.when) + '"></label>' +
       '<label class="cro-check"><input type="checkbox" id="igFeed"' + (S.feed ? " checked" : "") + "> Also show on the profile grid</label>" +
+      actionBlock() +
       '<div class="cro-actions" style="margin-top:10px">' +
         '<button class="cr-btn cr-btn--primary" type="button" data-ig-post' + (can ? "" : " disabled") + ">" + (label || (S.when ? "Schedule" : "Post")) + "</button>" +
         '<button class="cr-btn" type="button" data-ig-draft' + (can ? "" : " disabled") + ">Save as draft</button>" +
@@ -74,13 +112,16 @@
   }
 
   function jobRow(j) {
-    var p = j.payload || {}, by = p.drafted_by ? " · drafted by " + e(p.drafted_by) : "";
+    var p = j.payload || {}, by = p.drafted_by ? " · drafted by " + e(p.drafted_by) : "", action = p.action_mission_id ? " · Action mission" : "";
     var actions = j.state === "draft"
       ? '<button class="cr-btn cr-btn--primary" type="button" data-ig-approve="' + e(j.id) + '">Approve and post</button><button class="cr-btn" type="button" data-ig-cancel="' + e(j.id) + '">Discard</button>'
       : j.state === "queued" ? '<button class="cr-btn" type="button" data-ig-cancel="' + e(j.id) + '">Cancel</button>' : "";
     var err = j.last_error ? '<div class="cro-note' + (j.state === "failed" ? " cro-note--bad" : "") + '">' + (j.last_error === "credential_secret_not_configured" ? "Waiting for the Instagram connection." : e(j.last_error)) + "</div>" : "";
+    var st = j.content_id && S.actionStats[j.content_id], impact = st
+      ? '<div class="cro-meta" style="margin-top:6px"><b>' + e(st.joined || 0) + ' joined</b> · ' + e(st.submitted || 0) + ' proof submitted · <b>' + e(st.verified || 0) + ' verified</b>' + (st.rejected ? ' · ' + e(st.rejected) + ' rejected' : '') + '</div>'
+      : "";
     return '<div class="cro-row"><div class="cro-row__top"><b>' + e((p.caption || "No caption").slice(0, 90)) + '</b><span class="cro-pill">' + e(STATE[j.state] || j.state) + "</span></div>" +
-      '<div class="cro-meta">' + e(when(j.scheduled_at)) + by + "</div>" + err + (actions ? '<div class="cro-actions">' + actions + "</div>" : "") + "</div>";
+      '<div class="cro-meta">' + e(when(j.scheduled_at)) + by + action + "</div>" + impact + err + (actions ? '<div class="cro-actions">' + actions + "</div>" : "") + "</div>";
   }
 
   function render() {
@@ -115,11 +156,17 @@
     S.busy = "upload"; S.progress = 0; S.note = null; S.error = null; S.render();
     upload(S.file).then(function (path) {
       S.busy = "save"; S.render();
-      var body = { org_id: orgId(), account_id: S.account.id, storage_path: path, caption: S.caption.trim(), publish_mode: "reel", share_to_feed: S.feed, draft: draft };
+      var body = { org_id: orgId(), account_id: S.account.id, storage_path: path, caption: S.caption.trim(), publish_mode: "reel", share_to_feed: S.feed, draft: draft, publisher_key: "matthew-mccluster" };
+      if (S.actionOn) {
+        body.action_campaign_id = S.actionCampaign || null;
+        body.action_mission_id = S.actionMission || null;
+        body.publish_to_action_network = S.publishToNetwork;
+      }
       if (S.when) body.scheduled_at = new Date(S.when).toISOString();
       return S.request("/v1/social/publish", { method: "POST", body: body });
-    }).then(function () {
-      S.note = draft ? "Saved as a draft." : S.when ? "Scheduled." : "Queued. It goes out within about five minutes.";
+    }).then(function (out) {
+      var linked = out && out.action_url ? " Linked to the Action Network mission." : "";
+      S.note = (draft ? "Saved as a draft." : S.when ? "Scheduled." : "Queued. It goes out within about five minutes.") + linked;
       S.file = null; S.caption = ""; S.when = "";
       S.loaded = false; S.busy = null; load();
     }).catch(function (x) { S.busy = null; S.error = x; S.render(); });
@@ -138,6 +185,11 @@
     if (c) c.oninput = function () { S.caption = c.value; var n = root.querySelector("#igCount"); if (n) n.textContent = c.value.length + " / 2,200"; };
     if (w) w.onchange = function () { S.when = w.value; S.render(); };
     if (fd) fd.onchange = function () { S.feed = fd.checked; };
+    var ao = root.querySelector("#igActionOn"), ac = root.querySelector("#igActionCampaign"), am = root.querySelector("#igActionMission"), an = root.querySelector("#igActionNetwork");
+    if (ao) ao.onchange = function () { S.actionOn = ao.checked; seedActionSelection(); S.render(); };
+    if (ac) ac.onchange = function () { S.actionCampaign = ac.value; S.actionMission = ""; seedActionSelection(); S.render(); };
+    if (am) am.onchange = function () { S.actionMission = am.value; S.render(); };
+    if (an) an.onchange = function () { S.publishToNetwork = an.checked; };
     var p = root.querySelector("[data-ig-post]"); if (p) p.onclick = function () { submit(false); };
     var d = root.querySelector("[data-ig-draft]"); if (d) d.onclick = function () { submit(true); };
     var r = root.querySelector("[data-ig-refresh]"); if (r) r.onclick = function () { S.loaded = false; load(); };
