@@ -322,3 +322,89 @@ body.wrp { background: #0b0908; color: #f4efe6; }
   .wrp-level { padding: 1.25rem; }
   .wrp-achievements { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
+
+
+/* ---- End Racism campaign photography ---- */
+.er-recovery-photo,
+.wrp-photo {
+  margin: 1.35rem 0 0;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #050404;
+  box-shadow: 0 22px 50px -36px rgba(0,0,0,.95);
+}
+.er-recovery-photo img,
+.wrp-photo img,
+.er-field-mission__photo,
+.wrp-level__photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.er-recovery-photo figcaption,
+.wrp-photo figcaption {
+  padding: .7rem .8rem;
+  color: #bfb4a8;
+  background: #0b0908;
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.er-recovery-photo figcaption b { color: #f4efe6; }
+.er-field-mission { overflow: hidden; }
+.er-field-mission__photo {
+  margin: -1rem -1rem .9rem;
+  width: calc(100% + 2rem);
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(21,17,15,.16);
+}
+.wrp-photo--hero {
+  margin-top: 1.5rem;
+  border-radius: 22px;
+  box-shadow: 10px 10px 0 rgba(179,38,30,.7);
+}
+.wrp-level__photo {
+  overflow: hidden;
+  margin: .35rem 0 .8rem;
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+  background: #050404;
+}
+.wrp-level__photo img {
+  height: 100%;
+  object-fit: cover;
+}
+.wrp-anonymous {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2.25rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(244,239,230,.2);
+}
+.wrp-anonymous .wrp-photo { margin: 0; }
+.wrp-anonymous__copy h2 {
+  margin: .45rem 0 .65rem;
+  font-family: var(--an-display);
+  font-size: clamp(2.8rem,13vw,5.4rem);
+  font-weight: 400;
+  line-height: .84;
+  letter-spacing: -.03em;
+}
+.wrp-anonymous__copy p:not(.er-label) {
+  margin: .6rem 0 0;
+  color: #cfc5ba;
+  font-weight: 650;
+  line-height: 1.6;
+}
+.wrp-anonymous__copy strong { color: #f4efe6; }
+
+@media (min-width: 700px) {
+  .wrp-photo--hero img { width: 100%; }
+  .wrp-anonymous {
+    grid-template-columns: minmax(0,1.25fr) minmax(15rem,.75fr);
+    align-items: center;
+    gap: 1.5rem;
+  }
+}

@@ -110,3 +110,13 @@ test("Freestyle mission proof stays staged and returns to canonical Action", () 
   assert.match(recoveryPage, /href="mnet\.html\?view=missions&amp;campaign=end-racism-002&amp;mission=6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04/);
   assert.match(recoveryPage, /href="end-racism\.html#recovery"/);
 });
+
+
+test("End Racism campaign photography is assigned to the intended lore and mission surfaces", () => {
+  assert.match(html, /assets\/img\/end-racism\/wiggers-anonymous\.svg/);
+  assert.match(html, /assets\/img\/end-racism\/freestyle-containment\.svg/);
+  assert.match(recoveryPage, /assets\/img\/end-racism\/wiggers-anonymous\.svg/);
+  assert.match(recoveryPage, /assets\/img\/end-racism\/freestyle-containment\.svg/);
+  assert.match(recoveryPage, /assets\/img\/end-racism\/counter-freestyle\.svg/);
+  assert.match(recoveryPage, /WIGGERS ANONYMOUS/);
+});
