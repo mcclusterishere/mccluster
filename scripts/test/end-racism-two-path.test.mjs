@@ -30,7 +30,7 @@ test("campaign does not fork the Mission Engine", () => {
 
 
 test("Certified Racist is member-selected and reversible in current presentation", () => {
-  assert.match(spec, /RACIST FOR LIFE/);
+  assert.match(spec, /CERTIFIED RACIST/);
   assert.match(spec, /SELF-DECLARED/);
   assert.match(spec, /I CHANGED MY MIND/);
   assert.match(spec, /preserves the append-only state-transition audit history/i);
