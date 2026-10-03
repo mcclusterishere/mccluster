@@ -199,8 +199,7 @@ async function createCampaign(request, env, user) {
 
 async function actionTargets(request, env, user) {
   const url = new URL(request.url);
-  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
-  requireOrgRole(org, ['owner']);
+  await getOrg(env, user.id, url.searchParams.get('org_id'));
   const [campaigns, missions] = await Promise.all([
     db(env, 'action_campaigns?status=eq.live&select=id,slug,title,kicker,headline,current_phase&order=sort.asc,created_at.desc'),
     db(env, 'action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,skills&order=created_at.desc')
