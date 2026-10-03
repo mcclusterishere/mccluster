@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 298,
+  "candidate_count": 303,
   "capability_source_count": 98,
-  "support_only_count": 200,
+  "support_only_count": 205,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2336,6 +2336,41 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied Action Network mission completion automation (migration 20261003035208): verified mission assignments become campaign action events and aggregate mission funnel counts are exposed for member and Control surfaces. Not a building capability."
+    },
+    {
+      "path": "data/seo/company-site.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Source for McCluster Corp's company property (mccluster.org); names Equity Uprise only as one of the company's product doors, linking to its existing page. Not a building capability."
+    },
+    {
+      "path": "data/seo/domain-architecture.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine-readable two-properties/two-entities map (McCluster Corp vs Matthew McCluster); lists Equity Uprise as a McCluster Corp project. Not a building capability."
+    },
+    {
+      "path": "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Domain and entity architecture: which property and entity each product belongs to, including Equity Uprise as a McCluster Corp project. Not a building capability."
+    },
+    {
+      "path": "scripts/test/domain-architecture.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/company-site/pages.generated.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated company property pages for mccluster.org; Equity Uprise appears as a product door to its existing page. Not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

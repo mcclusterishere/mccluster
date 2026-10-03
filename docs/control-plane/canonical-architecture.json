@@ -98,5 +98,21 @@
     "human_and_machine_contracts_change_together": true,
     "new_parallel_control_plane_roots_forbidden": true
   },
-  "salvage_rule": "Historical branches are evidence, not merge targets. Rebuild useful ideas fresh from current main while preserving current privacy, idempotency, security, deployment and authority contracts."
+  "salvage_rule": "Historical branches are evidence, not merge targets. Rebuild useful ideas fresh from current main while preserving current privacy, idempotency, security, deployment and authority contracts.",
+  "public_properties": {
+    "authority": "docs/control-plane/DOMAINS-AND-ENTITIES.md and data/seo/domain-architecture.json",
+    "rule": "Two properties, two entities; never collapse them. Serving the company host is ingress and routing inside Worker mccluster, not a new Worker, store or identity.",
+    "personal": {
+      "host": "matthew.mccluster.org",
+      "entity": "https://matthew.mccluster.org/#matthew-mccluster",
+      "served_by": "github-pages"
+    },
+    "company": {
+      "host": "mccluster.org",
+      "entity": "https://matthew.mccluster.org/#mccluster-corp",
+      "served_by": "worker:mccluster",
+      "source": "workers/mccluster/src/company-site",
+      "state": "inert until the owner routes mccluster.org/* to the Worker"
+    }
+  }
 }

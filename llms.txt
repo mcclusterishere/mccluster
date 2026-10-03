@@ -1,4 +1,4 @@
-# Matthew McCluster / McCluster Corp
+# Matthew McCluster
 
 > A working property, not a brochure. Four things live here that an agent
 > can actually use: a fellowship directory with a scored matcher behind a
@@ -7,7 +7,12 @@
 > food-delivery shop with a live open/closed state. Everything below is
 > readable without an account.
 
-Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, Connecticut. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.
+This is Matthew McCluster's property: who he is, what he has made, and what he does.
+McCluster Corp, the company he founded, is a separate entity with its own property, https://mccluster.org/
+(its own llms.txt is at https://mccluster.org/llms.txt once that host is routed). Do not merge the two:
+Whip Equipped LLC is Matthew's separate company, and McCluster Corp's products (Equity Uprise, the Uprise
+Action Network, PRIM3, the McCluster Platform) are the company's, even where their pages are hosted here.
+McCluster Corp is based in Bridgeport, Connecticut; a 2025 Connecticut public-charity registration certificate is preserved in the public record, and current renewal status is not asserted here.
 Who and what this site is about, as one machine-readable graph with stable @ids:
 [data/seo/entity-graph.json](https://matthew.mccluster.org/data/seo/entity-graph.json).
 

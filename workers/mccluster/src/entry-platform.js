@@ -6,6 +6,7 @@ import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
+import { companySiteResponse } from './company-site/router.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -31,6 +32,11 @@ function healthResponse(request, env) {
 
 export default {
   async fetch(request, env, ctx) {
+    /* McCluster Corp's property (mccluster.org, www.mccluster.org). Null for
+       every other host, so the API below is untouched. Inert until the
+       owner routes the apex to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
+    const company = companySiteResponse(request);
+    if (company) return company;
     try {
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {

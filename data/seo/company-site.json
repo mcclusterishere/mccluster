@@ -1,0 +1,147 @@
+{
+  "schema_version": "mccluster-company-site/v1",
+  "updated_at": "2026-10-03",
+  "_readme": [
+    "THE COMPANY PROPERTY, mccluster.org: McCluster Corp's house.",
+    "tools/build-company-site.mjs renders this file plus data/seo/entity-graph.json into",
+    "workers/mccluster/src/company-site/pages.generated.js, which the Worker serves on the",
+    "mccluster.org host. Every claim here is already verified elsewhere in the repository",
+    "(entity graph, credential PDFs, the platform and services pages). Do not add a claim",
+    "here that the evidence ledger or a primary document does not support.",
+    "Doors link to where each product lives today. Products keep their working URLs;",
+    "this page describes and connects them (data/seo/domain-architecture.json)."
+  ],
+  "origin": "https://mccluster.org",
+  "personal_origin": "https://matthew.mccluster.org",
+  "meta": {
+    "title": "McCluster Corp · Technology, Education, Civic, Media & Creative Products and Services",
+    "description": "McCluster Corp is the operating organization behind the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3, McCluster Sites, and the studio's media, creative and music work. Founded in 2025 by Matthew McCluster; based in Bridgeport, Connecticut.",
+    "og_title": "McCluster Corp",
+    "og_description": "The operating organization behind a growing ecosystem of technology, education, civic, media and creative products and services: the McCluster Platform, Equity Uprise, the Uprise Action Network, PRIM3 and McCluster Sites.",
+    "image": "https://matthew.mccluster.org/assets/img/m-mark.png",
+    "image_width": 256,
+    "image_height": 256,
+    "image_alt": "The McCluster M mark"
+  },
+  "hero": {
+    "kicker": "McCluster Corp",
+    "headline": "The company behind the McCluster ecosystem.",
+    "lede": "McCluster Corp is an operating organization that builds and runs technology, education, civic, media and creative products and services. It was founded in 2025 by Matthew McCluster, is based in Bridgeport, Connecticut, and works across Connecticut and Georgia."
+  },
+  "doors_heading": "Products and initiatives",
+  "doors_intro": "Each one is its own door. Open it and you are in the product itself.",
+  "doors": [
+    {
+      "entity": "mccluster_platform",
+      "name": "McCluster Platform",
+      "kind": "Technology platform",
+      "line": "The platform the company runs on: PostgreSQL with row-level security, an API on Cloudflare Workers, McCluster Core on a Linux server, payments, and releases that verify the live commit and roll back on failure.",
+      "href": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "cta": "How it is built"
+    },
+    {
+      "entity": "equity_uprise",
+      "name": "Equity Uprise",
+      "kind": "Public-interest project",
+      "line": "McCluster Corp's public-interest project, combining policy research, civic education, community action, culture and media. Its front page is the Docket 516R public record.",
+      "href": "https://matthew.mccluster.org/docket-516.html",
+      "cta": "Open the Docket 516R record"
+    },
+    {
+      "entity": "action_network",
+      "name": "Uprise Action Network",
+      "kind": "Software product",
+      "line": "An action-first campaign network connected to Equity Uprise's action model: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
+      "href": "https://matthew.mccluster.org/action/",
+      "cta": "See the live campaigns"
+    },
+    {
+      "entity": "prim3",
+      "name": "PRIM3",
+      "kind": "Learning product",
+      "line": "A free technology and cybersecurity learning project built on the PRIM Method: Principles, Rhythm, Immersion and Missions.",
+      "href": "https://matthew.mccluster.org/prim3.html",
+      "cta": "Open PRIM3"
+    },
+    {
+      "entity": null,
+      "name": "McCluster Sites",
+      "kind": "Web services",
+      "line": "Websites built and kept online on the client's own domain, with hosting, SSL and backups, plus website and social media management.",
+      "href": "https://matthew.mccluster.org/sites.html",
+      "cta": "See McCluster Sites"
+    },
+    {
+      "entity": null,
+      "name": "Media and creative production",
+      "kind": "Client services",
+      "line": "Photography, video, brand films, campaign concepts and creative direction, shot and produced in house.",
+      "href": "https://matthew.mccluster.org/services.html",
+      "cta": "See the services"
+    },
+    {
+      "entity": null,
+      "name": "Music and catalogue",
+      "kind": "Catalogue infrastructure",
+      "line": "A registered catalogue under McCluster Corp's ISRC registrant code QT6KV, sync licensing, and hosting and licensing terms for independent creators.",
+      "href": "https://matthew.mccluster.org/catalogue.html",
+      "cta": "Open the catalogue"
+    }
+  ],
+  "work_heading": "Working with McCluster Corp",
+  "work": [
+    {
+      "title": "Clients",
+      "body": "Websites, management, photography, film and music are scoped on a free call and priced on one page.",
+      "href": "https://matthew.mccluster.org/hire.html",
+      "cta": "Prices and booking"
+    },
+    {
+      "title": "Participants",
+      "body": "Campaigns run on the Uprise Action Network: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
+      "href": "https://matthew.mccluster.org/action/",
+      "cta": "Join a campaign"
+    },
+    {
+      "title": "Partners and institutions",
+      "body": "Write to the company about a partnership, a program, or a pilot of a product.",
+      "href": "mailto:matthew@mccluster.org?subject=McCluster%20Corp",
+      "cta": "matthew@mccluster.org"
+    },
+    {
+      "title": "Researchers and media",
+      "body": "The public record, with the primary document behind each entry, and a press kit.",
+      "href": "https://matthew.mccluster.org/newsroom.html",
+      "cta": "Newsroom and public record"
+    }
+  ],
+  "operations": {
+    "heading": "Technology and operations",
+    "body": "One platform carries every product: durable data and identity in Supabase, a single public edge on Cloudflare (the mccluster Worker at api.mccluster.org), persistent execution in McCluster Core, and source, tests and reviewed releases in one GitHub repository. Products are workloads on that platform, not separate stacks.",
+    "href": "https://github.com/mcclusterishere/mccluster",
+    "cta": "The source"
+  },
+  "facts_heading": "Company information",
+  "facts": [
+    { "label": "Founded", "value": "2025, by Matthew McCluster", "href": "https://matthew.mccluster.org/matthew-mccluster.html" },
+    { "label": "Based", "value": "Bridgeport, Connecticut · working across Connecticut and Georgia" },
+    { "label": "ISNI", "value": "0000 0005 2872 7276", "href": "https://isni.org/isni/0000000528727276" },
+    { "label": "ISRC registrant code", "value": "QT6KV" },
+    { "label": "Connecticut public-charity registration certificate", "value": "CHR.0069693, issued October 28, 2025. Current renewal status is not asserted here.", "href": "https://matthew.mccluster.org/assets/credentials/mccluster-corp-public-charity-registration.pdf" },
+    { "label": "Connecticut General Assembly", "value": "Official Citation to McCluster Corp, October 5, 2025", "href": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" },
+    { "label": "State of Georgia", "value": "Proclamation signed October 27, 2025, citing McCluster Corp's Equity Uprise Fellowship", "href": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" }
+  ],
+  "separate_note": "Whip Equipped LLC, a connected-mobility company Matthew McCluster founded, is a separate company. It is not part of McCluster Corp.",
+  "founder": {
+    "heading": "Founder",
+    "body": "Matthew McCluster founded McCluster Corp and runs it: he sets the platform's architecture, directs its products, and leads its creative work. His own work, résumé and music live on his property.",
+    "href": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "cta": "Matthew McCluster"
+  },
+  "footer_links": [
+    { "label": "Newsroom", "href": "https://matthew.mccluster.org/newsroom.html" },
+    { "label": "Press kit", "href": "https://matthew.mccluster.org/press.html" },
+    { "label": "Privacy", "href": "https://matthew.mccluster.org/privacy.html" },
+    { "label": "matthew@mccluster.org", "href": "mailto:matthew@mccluster.org" }
+  ]
+}

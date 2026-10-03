@@ -4,8 +4,8 @@ These hosts ship from **this repo**: `mcclusterishere/mccluster`.
 
 | Host | What it is |
 | --- | --- |
-| `https://matthew.mccluster.org` | Public site |
-| `https://mccluster.org` | Same site (apex) |
+| `https://matthew.mccluster.org` | Matthew McCluster's property (GitHub Pages from this repo) |
+| `https://mccluster.org` | McCluster Corp's property: a different site and entity. Today a Cloudflare redirect rule 301s it to the personal host; once routed, Worker `mccluster` serves the company pages by host. See `DOMAINS-AND-ENTITIES.md`. |
 | `https://api.mccluster.org` | Worker `mccluster` |
 
 `mcclusterishere/Here` is the old website repo. It must not publish any of those hosts.
@@ -22,4 +22,4 @@ GitHub Pages / Cloudflare for these domains must point at **mccluster**, not Her
 1. GitHub → `mcclusterishere/mccluster` → Settings → Pages → source `gh-pages` → custom domain `matthew.mccluster.org`
 2. GitHub → `mcclusterishere/Here` → Settings → Pages → off (no custom domain)
 3. Cloudflare → project `mccluster` → Git repo `mcclusterishere/mccluster`
-4. Cloudflare DNS: `matthew` and apex `mccluster.org` stay on this property. `api` stays on Worker `mccluster`.
+4. Cloudflare DNS: `matthew` is a DNS-only CNAME to GitHub Pages. The apex `mccluster.org` is McCluster Corp's property, routed to Worker `mccluster` (activation steps in `DOMAINS-AND-ENTITIES.md`). `api` stays on Worker `mccluster`.

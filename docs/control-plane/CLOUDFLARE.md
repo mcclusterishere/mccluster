@@ -5,6 +5,7 @@ There is **one** Worker. Its name is `mccluster`.
 | Property | Cloudflare thing | Git | Domain |
 | --- | --- | --- | --- |
 | Public site | Pages / CNAME | static HTML at repo root | `matthew.mccluster.org` |
+| McCluster Corp's site | Worker **`mccluster`**, host-routed | `data/seo/company-site.json` → `workers/mccluster/src/company-site/` | `mccluster.org` (once routed; until then a redirect rule 301s it to `matthew.mccluster.org`) |
 | API | Worker **`mccluster`** | `workers/mccluster` | `api.mccluster.org` |
 
 Do not create `mccluster-core`. That name is not in the dashboard and must not appear in new docs or wrangler files.

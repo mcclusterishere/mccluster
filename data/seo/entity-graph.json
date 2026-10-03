@@ -285,7 +285,7 @@
     "@id": "https://matthew.mccluster.org/#mccluster-corp",
     "name": "McCluster Corp",
     "legalName": "McCluster Corp",
-    "url": "https://matthew.mccluster.org/",
+    "url": "https://mccluster.org/",
     "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
     "founder": {
       "@id": "https://matthew.mccluster.org/#matthew-mccluster"
@@ -505,6 +505,7 @@
       "Consolidate duplicate LinkedIn profiles before changing sameAs.",
       "Add the canonical profile URL back to ORCID, LinkedIn and other editable external profiles.",
       "Keep Matthew McCluster as the public display-name string across controlled profiles."
-    ]
+    ],
+    "property_policy": "Two properties: McCluster Corp's is https://mccluster.org/ (Organization.url); Matthew McCluster's is https://matthew.mccluster.org/ (Person.url is the profile page). The Organization @id stays on the matthew host because it is an identifier every page joins on, not a link. Whip Equipped LLC is Matthew's separate company, never a McCluster Corp sub-organization. See data/seo/domain-architecture.json."
   }
 }
