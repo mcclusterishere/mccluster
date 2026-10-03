@@ -74,14 +74,15 @@
   },
   {
    "slug": "equity-uprise",
-   "name": "Equity Uprise",
-   "tag": "The civic anthems · 4 tracks",
+   "name": "Docket 516R",
+   "artist": "Equity Uprise",
+   "tag": "The 516R Release · 4 tracks",
    "art": "assets/img/equity-uprise-logo.webp",
    "by": "The fight, on the record.",
    "tracks": [
     {
      "title": "Environmental Injustice",
-     "sub": "ft. Ocho & Evangelist Angel",
+     "sub": "McCluster ft. Angel Kastro & Ocho",
      "src": "assets/audio/environmental-injustice.mp3",
      "video": "assets/video/uprise.mp4",
      "poster": "assets/frames/uprise_0001.jpg",
@@ -90,7 +91,7 @@
     },
     {
      "title": "Environmental Injustice (Brave mix)",
-     "sub": "the GA edition",
+     "sub": "McCluster ft. Angel Kastro & Ocho · the GA edition",
      "src": "assets/audio/environmental-injustice-brave.mp3",
      "video": "assets/video/uprise.mp4",
      "poster": "assets/frames/uprise_0001.jpg",
@@ -99,7 +100,7 @@
     },
     {
      "title": "Please Set Me Free",
-     "sub": "the civic poll",
+     "sub": "Los Fidel · beat by McCluster",
      "src": "assets/audio/please-set-me-free.mp3",
      "video": "assets/video/church.mp4",
      "poster": "assets/frames/church_0001.jpg",
@@ -108,6 +109,7 @@
     },
     {
      "title": "Money or the Power",
+     "sub": "ft. Ocho, McCluster & Old Jay · prod. PAX",
      "src": "assets/audio/money-or-the-power.mp3",
      "video": "assets/video/moneyglitch.mp4",
      "poster": "assets/frames/moneyglitch_0001.jpg",

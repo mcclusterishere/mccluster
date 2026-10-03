@@ -276,8 +276,24 @@ test("the music graph credits only what the site states, and never prints a gate
   const ld = JSON.parse(ldBlocks(html)[0]);
   const recs = nodes(ld).filter((n) => types(n).includes("MusicRecording") && n["@id"]);
   assert.ok(recs.length >= 10);
+  /* Docket 516R is billed to Equity Uprise, the program's own music act
+     (owner, 2026-10-03); the performers on each record are contributors */
+  const act = nodes(ld).find((n) => n["@id"] === "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise");
+  assert.ok(act && types(act).includes("MusicGroup") && act.name === "Equity Uprise", "the Equity Uprise act is its own MusicGroup");
+  const album = nodes(ld).find((n) => n["@id"] === "https://matthew.mccluster.org/catalogue.html#album-equity-uprise");
+  assert.equal(album.name, "Docket 516R");
+  assert.equal(album.byArtist["@id"], act["@id"]);
+  const names = (r) => [].concat(r.contributor || []).map((c) => c.name || c["@id"]);
   const money = recs.find((r) => r.name === "Money or the Power");
-  assert.ok(money && money.byArtist && money.byArtist.name === "Old Jay", "Money or the Power is Old Jay's record");
+  assert.equal(money.byArtist["@id"], act["@id"]);
+  assert.deepEqual(names(money), ["Ocho", "https://matthew.mccluster.org/#matthew-mccluster", "Old Jay"]);
+  assert.equal(money.producer.name, "PAX");
+  const free = recs.find((r) => r.name === "Please Set Me Free");
+  assert.deepEqual(names(free), ["Los Fidel"]);
+  assert.equal(free.producer["@id"], "https://matthew.mccluster.org/#matthew-mccluster", "the beat is his: a producer credit, not an artist credit");
+  const env = recs.find((r) => r.name === "Environmental Injustice");
+  assert.deepEqual(names(env), ["https://matthew.mccluster.org/#matthew-mccluster", "Angel Kastro", "Ocho"]);
+  assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b/, "superseded credits are gone");
   const cat = JSON.parse(read("data/catalogue.json"));
   for (const t of cat.tracks.filter((t) => t.gated)) {
     assert.ok(!html.includes(t.title), `the gated title "${t.title}" must not be written into the page`);

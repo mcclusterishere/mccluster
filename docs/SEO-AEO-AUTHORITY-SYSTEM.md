@@ -339,7 +339,7 @@ Track monthly:
 | **CT charity registration** | The certificate's period ended September 30, 2026 | Confirm the renewal on elicense.ct.gov and replace the PDF. Until then pages state only that the certificate was issued October 28, 2025; the ledger item stays `publish: false`. |
 | **Georgia base** | Profile says Acworth; booking page says Decatur | Pick one for public pages. |
 | **Privacy banner on document pages** | Changed from a wall to a banner (§2.1); recording behaviour unchanged | Confirm, or remove the meta from any page that should keep the wall. |
-| **"Money or the Power" credit** | `data/catalogue.json` has no credit; the Docket page credits Old Jay ft. Ocho (prod. Pax) | Add the credit to the catalogue data. The graph already credits Old Jay. |
+| **Docket 516R credits** | Resolved 2026-10-03 by the owner: the album is billed to Equity Uprise (its own music act, `catalogue.html#artist-equity-uprise`); Money or the Power ft. Ocho, McCluster & Old Jay, prod. PAX; Please Set Me Free, Los Fidel, beat by McCluster; Environmental Injustice, McCluster ft. Angel Kastro & Ocho | Confirm Ocho stays on Environmental Injustice (kept from the earlier credit). |
 | **CIA Mind Control credit** | Released under an alias | Decide whether its public artist credit is Matthew McCluster. Until then the graph lists the album with no artist. |
 | **Bridgeport proclamation scan** | Cropped along its right edge | Upload a complete scan. |
 | **Release and upload dates** | I AM HERE has only "2026"; the Vaunt films have no upload date | Supply them; then the album gets an exact `datePublished` and the films can carry VideoObject. |

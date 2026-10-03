@@ -16,8 +16,15 @@
    - byArtist is Matthew McCluster only where nothing on the site credits
      anybody else ("Written & performed by Matthew McCluster unless credited
      otherwise").
-   - "Money or the Power" is credited on docket-516.html to Old Jay ft. Ocho
-     (prod. Pax), so it is Old Jay's, not his.
+   - The Docket 516R album (slug equity-uprise) is billed to Equity Uprise,
+     the program's own music act, per the owner (2026-10-03). Its tracks
+     are Equity Uprise records; the performers on each are contributors:
+       Money or the Power      ft. Ocho, McCluster & Old Jay, prod. PAX
+       Please Set Me Free      Los Fidel, beat by McCluster (a producer
+                               credit for him, not an artist credit)
+       Environmental Injustice McCluster ft. Angel Kastro & Ocho
+     The act is its own node (#artist-equity-uprise), never the Equity
+     Uprise program (#equity-uprise) or McCluster Corp.
    - "Dealer Plates" is "Prod. Zakir & McCluster": a producer credit, not an
      artist credit.
    - "Upset" names three other artists and no role for him: no artist claim.
@@ -48,8 +55,12 @@ export function isoDuration(len) {
 }
 
 /* who made it, as far as the site actually says */
+const EQUITY_UPRISE_ACT = { "@id": `${SITE}/catalogue.html#artist-equity-uprise` };
+const act = (name) => ({ "@type": "MusicGroup", name });
 const CREDIT = {
-  "money-or-the-power": { byArtist: { "@type": "MusicGroup", name: "Old Jay" } },
+  "money-or-the-power": { byArtist: EQUITY_UPRISE_ACT, contributor: [act("Ocho"), PERSON, act("Old Jay")], producer: { "@type": "Person", name: "PAX" } },
+  "please-set-me-free": { byArtist: EQUITY_UPRISE_ACT, contributor: [act("Los Fidel")], producer: PERSON },
+  "environmental-injustice": { byArtist: EQUITY_UPRISE_ACT, contributor: [PERSON, act("Angel Kastro"), act("Ocho")] },
   "dealer-plates": { producer: [PERSON, { "@type": "Person", name: "Zakir" }] },
   "dealer-plates-b": { producer: [PERSON, { "@type": "Person", name: "Zakir" }] },
   "upset": {}
@@ -108,7 +119,10 @@ export function buildGraph(cat, albums) {
       node.byArtist = [PERSON, { "@type": "MusicGroup", name: "VVS Madè" }];
       node.albumReleaseType = "https://schema.org/EPRelease";
     }
-    if (a.slug === "equity-uprise") node.subjectOf = { "@type": "WebPage", url: `${SITE}/docket-516.html` };
+    if (a.slug === "equity-uprise") {
+      node.byArtist = EQUITY_UPRISE_ACT;
+      node.subjectOf = { "@type": "WebPage", url: `${SITE}/docket-516.html` };
+    }
     if (mine.length) {
       node.numTracks = mine.length;
       node.track = { "@type": "ItemList", numberOfItems: mine.length,
@@ -130,6 +144,13 @@ export function buildGraph(cat, albums) {
         mainEntity: { "@type": "ItemList", numberOfItems: recs.length, itemListElement: recs.map((r, i) => ({ "@type": "ListItem", position: i + 1, item: { "@id": r["@id"] } })) }
       },
       { "@type": "Person", "@id": `${SITE}/#matthew-mccluster`, name: "Matthew McCluster", url: `${SITE}/matthew-mccluster.html` },
+      {
+        "@type": "MusicGroup",
+        "@id": EQUITY_UPRISE_ACT["@id"],
+        name: "Equity Uprise",
+        url: `${SITE}/album.html?album=equity-uprise`,
+        description: "The music act of Equity Uprise, McCluster Corp's civic program. Its album is Docket 516R."
+      },
       ...albumNodes,
       ...recs
     ]
