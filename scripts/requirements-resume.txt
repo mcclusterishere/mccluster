@@ -1,2 +1,0 @@
-# scripts/resume-docx.py: builds the ATS-friendly Word résumés from their pages.
-python-docx==1.2.0

@@ -1,0 +1,154 @@
+{
+  "scene_id": "equity-uprise-floor-04",
+  "version": "media-culture-hybrid-v2",
+  "mesh_count": 361,
+  "glb_bytes": 235524,
+  "sha256": "22e2cd69a33cfea972ee8802d3dace2f3b76ac0ad4830178d1e2f351121bc8c5",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 68,
+  "inventory_records_modeled": 68,
+  "inventory_records_missing": [],
+  "visual_completion_gate": "architectural-room-and-support-detail-v1",
+  "checks_total": 22,
+  "checks_passed": 22,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory summary matches records",
+      "passed": true,
+      "actual": 68,
+      "expected": 68
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 68,
+      "expected": 68
+    },
+    {
+      "name": "media wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "listening zone modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "six gallery frames",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "recording room modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "edit suite modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "floor control modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media wall architectural surround",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "recording room detailed enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "edit suite detailed enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support rooms have doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "restrooms have mirrors and sinks",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media storage visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media IT rack visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support and corridor ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "gallery and elevator-lobby ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0017_equity_uprise_platform.
--- Executable reconstruction SQL: supabase/replay_migrations/0017_equity_uprise_platform.sql
--- Intentionally no-op in production; this version is already registered live.

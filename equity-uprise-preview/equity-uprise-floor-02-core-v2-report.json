@@ -1,0 +1,99 @@
+{
+  "scene_id": "equity-uprise-floor-02",
+  "version": "public-forum-hybrid-v1",
+  "mesh_count": 272,
+  "glb_bytes": 186936,
+  "sha256": "3f811bc5b9a0f3ba942c275d1344ce90691f31a36616032928e079a7f5878c3a",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 48,
+  "inventory_records_modeled": 48,
+  "inventory_records_missing": [],
+  "checks_total": 13,
+  "checks_passed": 13,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "48 inventory records",
+      "passed": true,
+      "actual": 48,
+      "expected": 48
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 48,
+      "expected": 48
+    },
+    {
+      "name": "forum table modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "8 forum chairs modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "feature wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "listening lounge modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "member checkin modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger elevator modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair A door modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair B door modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}
