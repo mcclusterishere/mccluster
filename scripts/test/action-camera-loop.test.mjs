@@ -9,7 +9,10 @@ const action = read("js/action.js");
 const gateway = read("js/gateway.js");
 const api = read("workers/mccluster/src/platform-api.js");
 const wrp = read("wigger-recovery.html");
-const sql = read("supabase/migrations/20261002222500_action_mission_camera_loop_v1.sql");
+const migrationDir = new URL("../../supabase/migrations/", import.meta.url);
+const cameraMigrations = fs.readdirSync(migrationDir).filter(name => name.endsWith("_action_mission_camera_loop_v1.sql"));
+assert.equal(cameraMigrations.length, 1, "exactly one canonical camera-loop migration");
+const sql = fs.readFileSync(new URL(cameraMigrations[0], migrationDir), "utf8");
 
 test("signed-in campaign surfaces hand people to campaign missions", () => {
   assert.match(action, /Do a mission now/);
