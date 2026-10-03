@@ -30,7 +30,7 @@ test('the editor trims by reference and the feed plays only the kept stretch', a
   assert.match(js, /payload\.clip = \{ muted: S\.muted \};/);
   assert.match(js, /payload\.clip\.start_ms = Math\.round\(S\.start \* 1000\)/);
   assert.match(mnet, /frag = "#t=" \+/);
-  assert.match(mnet, /esc\\(url\\s*\\+\\s*\\(node\\.dataset\\.clip\\s*\\|\\|\\s*""\\)\\)/);
+  assert.match(mnet, /esc\(url\s*\+\s*\(node\.dataset\.clip\s*\|\|\s*""\)\)/);
   assert.match(api, /function postClip\(c\)/);
 });
 
