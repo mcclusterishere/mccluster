@@ -325,9 +325,9 @@
   }
 
   function missionHubHref(){
-    if(!C)return "mnet.html?view=missions";
-    var ret=root.location.pathname.replace(/^\//,"")+root.location.search+root.location.hash;
-    return "mnet.html?view=missions&campaign="+encodeURIComponent(C.id)+"&return="+encodeURIComponent(ret);
+    if(!C)return "/mnet.html?view=missions";
+    var ret=root.location.pathname+root.location.search+root.location.hash;
+    return "/mnet.html?view=missions&campaign="+encodeURIComponent(C.id)+"&return="+encodeURIComponent(ret);
   }
 
   function paintJoin() {
@@ -343,7 +343,7 @@
     else { first.textContent = "Join the Action Network"; first.setAttribute("href", "#join"); }
     if($("anMnet")){
       $("anMnet").textContent=signedIn()?"Choose a mission →":"Enter the Action Network →";
-      $("anMnet").setAttribute("href",signedIn()?missionHubHref():"mnet.html");
+      $("anMnet").setAttribute("href",signedIn()?missionHubHref():"/mnet.html");
     }
     if (!open && !inNet) {
       $("anJoin").disabled = true;

@@ -12,6 +12,13 @@
      goes straight on to /action/?c=<campaign>, keeping the Reel and
      referral tags that came with it. */
   (function () {
+    /* Recover the old relative mission handoff produced by campaign pages:
+       /action/mnet.html?... -> /mnet.html?... . Keep this permanently so
+       stale tabs, browser caches and shared broken URLs self-heal. */
+    if (/^\/action\/mnet\.html\/?$/i.test(location.pathname)) {
+      location.replace("/mnet.html" + location.search + location.hash);
+      return;
+    }
     var m = /^\/action\/([a-z0-9][a-z0-9-]{1,40})\/?$/i.exec(location.pathname);
     if (!m) return;
     var rest = location.search ? "&" + location.search.slice(1) : "";

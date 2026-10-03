@@ -19,7 +19,7 @@
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
     campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
-    missions:null,missionBusy:false,apps:null,appBusy:false};
+    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -166,15 +166,28 @@
   var M_STATES=[["draft","Draft"],["open","Open"],["paused","Pause"],["closed","Close"]];
   function loadMissions(){
     A.missionBusy=true;redraw();
-    return A.supa("action_missions?select=id,campaign_id,title,description,domain,difficulty,base_points,skills,capacity,status,created_at&order=created_at.desc&limit=200")
-      .then(function(rows){A.missions=rows||[];}).catch(function(err){A.missions=[];A.msg="Missions could not load: "+(err.message||err);})
+    return Promise.all([
+      A.supa("action_missions?select=id,campaign_id,title,description,domain,difficulty,base_points,skills,capacity,status,created_at&order=created_at.desc&limit=200"),
+      A.supa("rpc/action_mission_stats",{method:"POST",body:{p_campaign:null}})
+    ]).then(function(out){
+      A.missions=out[0]||[];A.missionStats={};
+      (out[1]||[]).forEach(function(st){if(st&&st.mission_id)A.missionStats[st.mission_id]=st;});
+    }).catch(function(err){A.missions=[];A.missionStats={};A.msg="Missions could not load: "+(err.message||err);})
       .then(function(){A.missionBusy=false;redraw();});
   }
   function missionDesk(c){
     if(A.missions===null&&!A.missionBusy)loadMissions();
     if(A.missionBusy&&A.missions===null)return note("Loading missions…");
     var list=(A.missions||[]).map(function(m){
+      var st=A.missionStats[m.id]||{};
+      var joined=Number(st.joined)||0,progress=Number(st.in_progress)||0,submitted=Number(st.submitted)||0,verified=Number(st.verified)||0,rejected=Number(st.rejected)||0;
+      var counts='<div class="cro-statgrid" style="margin:10px 0">'+
+        '<div class="cro-stat"><b>'+n(joined)+'</b><span>joined</span></div>'+
+        '<div class="cro-stat"><b>'+n(progress)+'</b><span>doing it</span></div>'+
+        '<div class="cro-stat"><b>'+n(submitted)+'</b><span>waiting review</span></div>'+
+        '<div class="cro-stat"><b>'+n(verified)+'</b><span>verified</span></div></div>';
       return '<article class="cro-card" style="margin-bottom:10px"><div class="cro-item__head"><div><p class="cro-meta">'+e(m.domain)+' · difficulty '+e(m.difficulty)+' · '+e(m.base_points)+' base pts'+(m.capacity?' · '+e(m.capacity)+' seats':'')+(m.campaign_id?' · '+e(m.campaign_id):'')+'</p><h2>'+e(m.title)+'</h2></div><span class="cro-pill">'+e(m.status)+'</span></div>'+
+        counts+(rejected?'<p class="cro-meta">'+n(rejected)+' rejected proof'+(rejected===1?'':'s')+'</p>':'')+
         (m.description?'<p>'+e(m.description)+'</p>':'')+(m.skills&&m.skills.length?'<p class="cro-meta">Skills: '+e(m.skills.join(", "))+'</p>':'')+
         '<div class="cro-actions">'+M_STATES.filter(function(x){return x[0]!==m.status;}).map(function(x){return '<button class="cr-btn" type="button" data-mission-state="'+e(m.id)+'" data-to="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div></article>';
     }).join("");
@@ -296,7 +309,10 @@
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
       if(!confirm((decision==="verified"?"Verify this submitted action and award it exactly once?":"Reject this proof without awarding points?")))return;
       b.disabled=true;A.supa("rpc/review_action_proof",{method:"POST",body:{p_proof_id:id,p_decision:decision,p_review_note:reviewNote||null}})
-        .then(function(){A.msg=decision==="verified"?"Action verified. Award transaction completed.":"Proof rejected. No award issued.";return loadProofs();})
+        .then(function(){
+          A.msg=decision==="verified"?"Action verified. Campaign completion, award, skills and feed automation reconciled.":"Proof rejected. No award issued.";
+          return Promise.all([loadProofs(),loadMissions(),A.sel?loadDetail(A.sel):Promise.resolve()]);
+        })
         .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
     };});
     var st=root.querySelector("[data-crn-state]");
