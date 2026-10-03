@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 287,
-  "capability_source_count": 97,
-  "support_only_count": 190,
+  "candidate_count": 297,
+  "capability_source_count": 98,
+  "support_only_count": 199,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -30,13 +30,13 @@
       "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
     },
     {
-      "path": "_unfinished/equity-uprise/docket-516.html",
+      "path": "docket-516.html",
       "classification": "capability_source",
       "capability_ids": [
         "evidence-room"
       ],
       "support_only": false,
-      "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
+      "rationale": "Published at the root (2026-10-03, owner request) as the front page of the Equity Uprise group on the Uprise Action Network. The evidence-room capability is already declared public; classification unchanged."
     },
     {
       "path": "_unfinished/equity-uprise/equity-uprise-basement-b1-3d.html",
@@ -2257,6 +2257,78 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "SEO/AEO identity regression tests reference Equity Uprise as an entity relationship but define no building capability."
+    },
+    {
+      "path": "catalogue.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Static registry and MusicRecording markup generated from data/catalogue.json and data/albums.json; the same music-catalogue capability listen.html and the catalogue data already carry."
+    },
+    {
+      "path": "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SEO/AEO system documentation; describes Equity Uprise only as public identity and record context."
+    },
+    {
+      "path": "docs/seo/evidence-review.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Internal review notes for the SEO/AEO evidence ledger; not deployed and adds no building capability."
+    },
+    {
+      "path": "docs/seo/query-set.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Search measurement query set; names Equity Uprise queries for measurement only."
+    },
+    {
+      "path": "engineering/mccluster-platform.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Platform/backend evidence page; mentions the deterministic Equity Uprise building build only as an example of the release pipeline, not as a program capability."
+    },
+    {
+      "path": "js/mnet.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network client; the ?group= deep link can open the Equity Uprise group. A mobilization surface, not a building capability (same rationale as mnet.html)."
+    },
+    {
+      "path": "scripts/test/seo-contract.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SEO contract tests covering the newsroom and Docket 516R page metadata; not a program capability."
+    },
+    {
+      "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (not applied) Action Network seed: Equity Uprise organization, group, campaign, four missions and a cohort row. Mobilization data on the action_* tables; mapping it into the building program is an owner decision, as with action/index.html."
+    },
+    {
+      "path": "tools/build-catalogue.mjs",
+      "classification": "shared_tooling_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generator for catalogue.html structured data and static registry; tooling, not a capability."
+    },
+    {
+      "path": "tools/build-newsroom.mjs",
+      "classification": "shared_tooling_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generator for newsroom.html and feed.xml from the evidence ledger; tooling, not a capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
