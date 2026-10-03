@@ -190,7 +190,8 @@
         b.textContent = providerLabel(key);
         b.onclick = function () {
           b.disabled = true;
-          MCC.signInWithProvider(key, location.origin + "/auth/?next=/mnet.html").catch(function (e) {
+          var next=location.pathname+location.search+location.hash;
+          MCC.signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(next)).catch(function (e) {
             b.disabled = false;
             setStatus($("mnAuthStatus"), e.message, "error");
           });
@@ -341,7 +342,13 @@
       state.boot = boot;
       showGate("app");
       paintSelf();
-      setView("profile");
+      var missionDeepLink=/[?&](mission=|view=missions(?:&|$))/.test(location.search);
+      if(missionDeepLink){
+        setView("missions");
+        openDeepLinkedMission();
+      }else{
+        setView("profile");
+      }
       return loadFeed(true).then(function () {
         var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
         if (first) { first.classList.add("is-just-posted"); setTimeout(function () { first.classList.remove("is-just-posted"); }, 1600); }
@@ -1625,7 +1632,7 @@
      you are, whether the mission is open, and what state your work is in.
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
-  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,deepLinked:false,campaign:"",returnHref:"",proofFile:null,proofPreview:""};
+  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",returnHref:"",proofFile:null,proofPreview:""};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -1669,7 +1676,7 @@
       var u=new URL(value,location.href);
       if(u.origin!==location.origin)return "";
       if(/\/mnet\.html$/i.test(u.pathname))return "";
-      return u.pathname.replace(/^\//,"")+u.search+u.hash;
+      return u.pathname+u.search+u.hash;
     }catch(_){return "";}
   }
   function readMissionContext(){
@@ -1687,20 +1694,28 @@
     q.set("mission",id);
     if(missions.campaign)q.set("campaign",missions.campaign);
     if(missions.returnHref)q.set("return",missions.returnHref);
-    return "mnet.html?"+q.toString();
+    return "/mnet.html?"+q.toString();
   }
-  function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
+  function receiptHref(assignmentId){return "/receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
+    var st=missions.stats[m.id]||{}, joined=Number(st.joined)||0, submitted=Number(st.submitted)||0, verified=Number(st.verified)||0;
+    var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   function loadMissions(){
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
     loadActionRecord();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
-    return sbRest("action_missions?status=eq.open"+campaignFilter+"&select="+MISSION_FIELDS+"&order=created_at.desc")
-      .then(function(rows){missions.all=rows||[];host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';setStatus($("mnMissionStatus"),"");})
-      .catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+    return Promise.all([
+      sbRest("action_missions?status=eq.open"+campaignFilter+"&select="+MISSION_FIELDS+"&order=created_at.desc"),
+      sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
+    ]).then(function(out){
+      missions.all=out[0]||[];missions.stats={};
+      (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
+      host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
+      setStatus($("mnMissionStatus"),"");
+    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
