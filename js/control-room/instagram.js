@@ -15,7 +15,7 @@
     loaded: false, loading: false, error: null,
     account: null, check: null, jobs: [],
     file: null, caption: "", when: "", feed: true,
-    actionTargets: { campaigns: [], missions: [] }, actionOn: false, actionCampaign: "", actionMission: "", publishToNetwork: true,
+    actionTargets: { campaigns: [], missions: [] }, actionStats: {}, actionOn: false, actionCampaign: "", actionMission: "", publishToNetwork: true,
     busy: null, progress: 0, note: null
   };
   var STATE = {
@@ -72,6 +72,7 @@
     }).then(function (out) {
       S.check = out[0];
       S.jobs = (out[1] && out[1].jobs) || [];
+      S.actionStats = (out[1] && out[1].action_stats) || {};
       S.actionTargets = out[2] || { campaigns: [], missions: [] };
       seedActionSelection();
       S.loaded = true;
@@ -116,8 +117,11 @@
       ? '<button class="cr-btn cr-btn--primary" type="button" data-ig-approve="' + e(j.id) + '">Approve and post</button><button class="cr-btn" type="button" data-ig-cancel="' + e(j.id) + '">Discard</button>'
       : j.state === "queued" ? '<button class="cr-btn" type="button" data-ig-cancel="' + e(j.id) + '">Cancel</button>' : "";
     var err = j.last_error ? '<div class="cro-note' + (j.state === "failed" ? " cro-note--bad" : "") + '">' + (j.last_error === "credential_secret_not_configured" ? "Waiting for the Instagram connection." : e(j.last_error)) + "</div>" : "";
+    var st = j.content_id && S.actionStats[j.content_id], impact = st
+      ? '<div class="cro-meta" style="margin-top:6px"><b>' + e(st.joined || 0) + ' joined</b> · ' + e(st.submitted || 0) + ' proof submitted · <b>' + e(st.verified || 0) + ' verified</b>' + (st.rejected ? ' · ' + e(st.rejected) + ' rejected' : '') + '</div>'
+      : "";
     return '<div class="cro-row"><div class="cro-row__top"><b>' + e((p.caption || "No caption").slice(0, 90)) + '</b><span class="cro-pill">' + e(STATE[j.state] || j.state) + "</span></div>" +
-      '<div class="cro-meta">' + e(when(j.scheduled_at)) + by + action + "</div>" + err + (actions ? '<div class="cro-actions">' + actions + "</div>" : "") + "</div>";
+      '<div class="cro-meta">' + e(when(j.scheduled_at)) + by + action + "</div>" + impact + err + (actions ? '<div class="cro-actions">' + actions + "</div>" : "") + "</div>";
   }
 
   function render() {
