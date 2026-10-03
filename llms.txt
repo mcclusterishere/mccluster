@@ -1,15 +1,20 @@
 # Matthew McCluster / McCluster Corp
 
-> A working property, not a brochure. Four things live here that an agent
-> can actually use: a fellowship directory with a scored matcher behind a
-> public API, three civic topic hubs with structured question sets, a
-> documented public record of a Connecticut energy docket, and a campus
-> food-delivery shop with a live open/closed state. Everything below is
-> readable without an account.
+> A working property and product surface, not a brochure. McCluster Corp
+> ties together a public identity/evidence layer, the McCluster Platform and
+> Control operator plane, Equity Uprise, the Uprise Action Network, PRIM3,
+> and commercial creative/technical services. Each surface has a different
+> job, but the public record is designed to agree on the same canonical
+> entities, campaigns, evidence and outcomes. Everything below that is
+> described as public is readable without an account.
 
 Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, Connecticut. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.
 Who and what this site is about, as one machine-readable graph with stable @ids:
 [data/seo/entity-graph.json](https://matthew.mccluster.org/data/seo/entity-graph.json).
+
+How the company and products fit together:
+[McCluster Corp](https://matthew.mccluster.org/mccluster-corp.html) ·
+[machine-readable product context](https://matthew.mccluster.org/data/product-context.json).
 
 ## Hiring Matthew McCluster
 
