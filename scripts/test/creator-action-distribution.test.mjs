@@ -61,7 +61,7 @@ test("creator/action attribution remains server authoritative",async()=>{
 
 test("creator attribution is first-touch conversion attribution, not a later-click rewrite",async()=>{
   const sql=await read("supabase/migrations/20261003232607_creator_action_conversion_semantics_v1.sql");
-  assert.match(sql,/select a\.status into v_prior_status/);
+  assert.match(sql,/select a\.status, a\.source_content_id\s+into v_prior_status, v_prior_source/);
   assert.match(sql,/v_prior_status is null or \(v_prior_status = 'withdrawn' and v_prior_source is null\)/);
   assert.match(sql,/source_content_id = p_content_id/);
   assert.match(sql,/count\(\*\) filter \(where a\.submitted_at is not null\)/);
