@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 307,
-  "capability_source_count": 98,
-  "support_only_count": 209,
-  "checks_total": 1132,
-  "checks_passed": 1132,
+  "candidate_count": 310,
+  "capability_source_count": 99,
+  "support_only_count": 211,
+  "checks_total": 1143,
+  "checks_passed": 1143,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -73,6 +73,7 @@
     "data/eu-topics.json",
     "data/fellows.json",
     "data/gallery.json",
+    "data/lyrics/money-or-the-power.json",
     "data/merch.json",
     "data/offers.json",
     "data/playlists.json",
@@ -87,6 +88,7 @@
     "demos/shiloh/data/impact.json",
     "desk.html",
     "docket-516.html",
+    "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
     "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
     "docs/agent-web.md",
@@ -255,6 +257,7 @@
     "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
     "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
     "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
+    "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -321,7 +324,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "307 entries"
+      "detail": "310 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5799,6 +5802,141 @@
       "detail": ""
     },
     {
+      "name": "data/lyrics/money-or-the-power.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/lyrics/money-or-the-power.json classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "data/lyrics/money-or-the-power.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ACTION-NETWORK-REWARD-SYSTEM.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ACTION-NETWORK-REWARD-SYSTEM.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/ACTION-NETWORK-REWARD-SYSTEM.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/ACTION-NETWORK-REWARD-SYSTEM.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/product-context.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/product-context.json classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "data/product-context.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/product-context.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-corp.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-corp.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "mccluster-corp.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "mccluster-corp.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "data/seo/company-site.json capability ids known",
       "passed": true,
       "detail": ""
@@ -5895,86 +6033,6 @@
     },
     {
       "name": "workers/mccluster/src/company-site/pages.generated.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/product-context.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/product-context.json classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "data/product-context.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "data/product-context.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md classified",
-      "passed": true,
-      "detail": "classification='documentation_support'"
-    },
-    {
-      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "mccluster-corp.html capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "mccluster-corp.html classified",
-      "passed": true,
-      "detail": "classification='shared_site_support'"
-    },
-    {
-      "name": "mccluster-corp.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "mccluster-corp.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/product-context.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/product-context.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/product-context.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/product-context.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }
