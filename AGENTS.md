@@ -101,7 +101,7 @@ On the control repo:
 - `AGENTS.md` (this law + local product gates)
 - `docs/PRODUCT-ARCHITECTURE-ROADMAP.md` (canonical cross-product context; authority + Action Network + Control + commercial completion order)
 - `data/product-context.json` (public machine-readable product map)
-- `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
+- `CLAUDE.md` / `CODEX.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md` / `.github/instructions/mccluster.instructions.md`
 - `docs/control-plane/ECOSYSTEM.md`
 - `docs/control-plane/registry.json`
 
