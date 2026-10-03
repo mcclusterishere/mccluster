@@ -34,6 +34,39 @@ async function getOrg(env, userId, requestedOrgId) {
   return rows[0];
 }
 
+async function primaryMuid(env, userId) {
+  const rows = await db(env, `m_auth_user_links?auth_user_id=eq.${encodeURIComponent(userId)}&is_primary=eq.true&select=m_uid&limit=1`);
+  return rows?.[0]?.m_uid || null;
+}
+
+function actionMissionUrl(missionId, campaignId, contentId, source = 'instagram') {
+  const q = new URLSearchParams({ view: 'missions', mission: missionId, content: contentId, src: source });
+  if (campaignId) q.set('campaign', campaignId);
+  return `https://matthew.mccluster.org/mnet.html?${q.toString()}`;
+}
+
+async function ensureActionNetworkPost(env, content) {
+  if (!content?.id || !content?.publisher_m_uid || !content?.action_mission_id) return null;
+  const existing = await db(env, `network_posts?content_id=eq.${encodeURIComponent(content.id)}&reply_to_id=is.null&deleted_at=is.null&select=id,content_id&limit=1`);
+  if (existing?.[0]) return existing[0];
+
+  const missions = await db(env, `action_missions?id=eq.${encodeURIComponent(content.action_mission_id)}&select=id,title,description,status&limit=1`);
+  const mission = missions?.[0];
+  if (!mission) throw Object.assign(new Error('Action mission no longer exists'), { status: 409 });
+
+  const master = String(content.master_caption || '').trim();
+  const fallback = [content.title, mission.title, mission.description].filter(Boolean).join('\n\n');
+  const body = master.length <= 2000 ? master : fallback.slice(0, 2000);
+  return insert(env, 'network_posts', {
+    author_m_uid: content.publisher_m_uid,
+    body: body || mission.title,
+    post_type: 'announcement',
+    visibility: 'public',
+    metadata: { creator_action: true },
+    content_id: content.id
+  });
+}
+
 async function configuredCredentialRef(env, orgId, platform, externalAccountId) {
   if (String(platform || '').toLowerCase() !== 'instagram') return null;
   const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
@@ -164,6 +197,17 @@ async function createCampaign(request, env, user) {
   }) };
 }
 
+async function actionTargets(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  requireOrgRole(org, ['owner']);
+  const [campaigns, missions] = await Promise.all([
+    db(env, 'action_campaigns?status=eq.live&select=id,slug,title,kicker,headline,current_phase&order=sort.asc,created_at.desc'),
+    db(env, 'action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,skills&order=created_at.desc')
+  ]);
+  return { campaigns: campaigns || [], missions: missions || [] };
+}
+
 async function generateVariant(request, env, user) {
   const body = await bodyJson(request);
   if (!body.campaign_id || !body.model_id) throw Object.assign(new Error('campaign_id and model_id are required'), { status: 400 });
@@ -211,7 +255,7 @@ async function queuePublish(request, env, user) {
   const org = await getOrg(env, user.id, body.org_id);
   requireOrgRole(org, ['owner']);
   if (!body.account_id) throw Object.assign(new Error('account_id is required'), { status: 400 });
-  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
+  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id,platform');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });
   if (body.variant_id) {
     const variant = await ownedRow(env, 'social_variants', body.variant_id, org.org_id, 'id,campaign_id,output_asset_id,caption');
@@ -220,26 +264,103 @@ async function queuePublish(request, env, user) {
     body.video_asset_id ||= variant.output_asset_id;
     body.caption ||= variant.caption;
   }
-  /* An uploaded video is named by its place in the outbox, and only a place
-     inside this org's own folder is accepted. */
+
   const storagePath = body.storage_path ? String(body.storage_path) : null;
-  if (storagePath && (!storagePath.startsWith(`${org.org_id}/`) || storagePath.includes('..'))) throw Object.assign(new Error('storage_path is not in this organization\'s outbox'), { status: 400 });
-  if (!body.video_url && !body.video_asset_id && !storagePath) throw Object.assign(new Error('video_url, video_asset_id, storage_path, or a ready variant is required'), { status: 400 });
-  if (String(body.caption || '').length > 2200) throw Object.assign(new Error('Instagram captions are limited to 2,200 characters'), { status: 400 });
+  if (storagePath && (!storagePath.startsWith(`${org.org_id}/`) || storagePath.includes('..'))) {
+    throw Object.assign(new Error('storage_path is not in this organization\'s outbox'), { status: 400 });
+  }
+  if (!body.video_url && !body.video_asset_id && !storagePath) {
+    throw Object.assign(new Error('video_url, video_asset_id, storage_path, or a ready variant is required'), { status: 400 });
+  }
+
   const mode = body.publish_mode || 'trial';
   if (!['trial', 'reel'].includes(mode)) throw Object.assign(new Error('publish_mode must be trial or reel'), { status: 400 });
-  return { publish_job: await insert(env, 'social_publish_jobs', {
+
+  const masterCaption = String(body.caption || '').trim();
+  if (masterCaption.length > 2200) throw Object.assign(new Error('Instagram captions are limited to 2,200 characters'), { status: 400 });
+
+  const actionMissionId = body.action_mission_id ? String(body.action_mission_id) : null;
+  let actionCampaignId = body.action_campaign_id ? String(body.action_campaign_id) : null;
+  let mission = null;
+  if (actionMissionId) {
+    const missions = await db(env, `action_missions?id=eq.${encodeURIComponent(actionMissionId)}&status=eq.open&select=id,campaign_id,title,description&limit=1`);
+    mission = missions?.[0] || null;
+    if (!mission) throw Object.assign(new Error('Choose an open Action Network mission'), { status: 409 });
+    if (actionCampaignId && mission.campaign_id !== actionCampaignId) {
+      throw Object.assign(new Error('The selected mission does not belong to that Action campaign'), { status: 409 });
+    }
+    actionCampaignId = mission.campaign_id || null;
+  } else if (actionCampaignId) {
+    throw Object.assign(new Error('Choose a mission for an actionable post'), { status: 400 });
+  }
+
+  const muid = await primaryMuid(env, user.id);
+  if (actionMissionId && !muid) throw Object.assign(new Error('Your McCluster identity is not ready for Action Network publishing'), { status: 409 });
+
+  const contentId = crypto.randomUUID();
+  const source = String(account.platform || 'instagram').toLowerCase();
+  const actionUrl = actionMissionId ? actionMissionUrl(actionMissionId, actionCampaignId, contentId, source) : null;
+  const finalCaption = actionUrl ? [masterCaption, `Take action: ${actionUrl}`].filter(Boolean).join('\n\n') : masterCaption;
+  if (finalCaption.length > 2200) {
+    throw Object.assign(new Error('The caption plus its Action Network link is over Instagram\'s 2,200-character limit'), { status: 400 });
+  }
+
+  const content = await insert(env, 'social_content_items', {
+    id: contentId,
     org_id: org.org_id,
-    account_id: body.account_id,
-    campaign_id: body.campaign_id || null,
-    variant_id: body.variant_id || null,
-    publish_mode: mode,
-    scheduled_at: body.scheduled_at || new Date().toISOString(),
-    /* A draft waits for the owner's approval; the cron never claims one. */
-    state: body.draft === true ? 'draft' : 'queued',
-    dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || storagePath || body.video_url}:${body.scheduled_at || 'now'}:${mode}`,
-    payload: { video_url: body.video_url || null, video_asset_id: body.video_asset_id || null, storage_path: storagePath, caption: body.caption || '', share_to_feed: body.share_to_feed !== false, graduation_strategy: body.graduation_strategy || 'MANUAL', drafted_by: body.drafted_by ? String(body.drafted_by).slice(0, 80) : null }
-  }) };
+    created_by: user.id,
+    publisher_m_uid: muid,
+    publisher_key: body.publisher_key || 'matthew-mccluster',
+    title: body.title ? String(body.title).slice(0, 160) : (mission?.title || null),
+    master_caption: masterCaption,
+    source_asset_id: body.video_asset_id || null,
+    action_campaign_id: actionCampaignId,
+    action_mission_id: actionMissionId,
+    status: body.draft === true ? 'draft' : 'publishing',
+    metadata: {
+      primary_channel: source,
+      publish_to_action_network: body.publish_to_action_network !== false
+    }
+  });
+
+  let networkPost = null;
+  try {
+    if (actionMissionId && body.publish_to_action_network !== false && body.draft !== true) {
+      networkPost = await ensureActionNetworkPost(env, content);
+    }
+    const publishJob = await insert(env, 'social_publish_jobs', {
+      org_id: org.org_id,
+      account_id: body.account_id,
+      campaign_id: body.campaign_id || null,
+      variant_id: body.variant_id || null,
+      content_id: contentId,
+      publish_mode: mode,
+      scheduled_at: body.scheduled_at || new Date().toISOString(),
+      state: body.draft === true ? 'draft' : 'queued',
+      dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || storagePath || body.video_url}:${body.scheduled_at || 'now'}:${mode}`,
+      payload: {
+        video_url: body.video_url || null,
+        video_asset_id: body.video_asset_id || null,
+        storage_path: storagePath,
+        caption: finalCaption,
+        master_caption: masterCaption,
+        share_to_feed: body.share_to_feed !== false,
+        graduation_strategy: body.graduation_strategy || 'MANUAL',
+        drafted_by: body.drafted_by ? String(body.drafted_by).slice(0, 80) : null,
+        action_url: actionUrl,
+        action_campaign_id: actionCampaignId,
+        action_mission_id: actionMissionId,
+        publish_to_action_network: body.publish_to_action_network !== false
+      }
+    });
+    return { publish_job: publishJob, content, action_url: actionUrl, network_post: networkPost };
+  } catch (error) {
+    await patch(env, 'social_content_items', contentId, { status: 'failed' }).catch(() => {});
+    if (networkPost?.id) {
+      await patch(env, 'network_posts', networkPost.id, { deleted_at: new Date().toISOString() }).catch(() => {});
+    }
+    throw error;
+  }
 }
 
 /* THE OUTBOX. The owner uploads a video straight to private storage on a
@@ -263,7 +384,7 @@ async function createUpload(request, env, user) {
 async function listPublishJobs(request, env, user) {
   const url = new URL(request.url);
   const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
-  const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,publish_mode,scheduled_at,state,external_media_id,attempts,last_error,payload,created_at,updated_at`);
+  const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,content_id,publish_mode,scheduled_at,state,external_media_id,attempts,last_error,payload,created_at,updated_at`);
   return { org_id: org.org_id, jobs: rows || [] };
 }
 
@@ -274,6 +395,17 @@ async function moveJob(request, env, user, jobId, to) {
   const body = await bodyJson(request);
   const org = await getOrg(env, user.id, body.org_id);
   requireOrgRole(org, ['owner']);
+
+  if (to === 'queued') {
+    const waiting = await db(env, `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.draft&select=id,content_id,payload&limit=1`);
+    const job = waiting?.[0];
+    if (!job) throw Object.assign(new Error('Only a draft can be approved'), { status: 409 });
+    if (job.content_id && job.payload?.publish_to_action_network !== false && job.payload?.action_mission_id) {
+      const items = await db(env, `social_content_items?id=eq.${encodeURIComponent(job.content_id)}&org_id=eq.${encodeURIComponent(org.org_id)}&select=*&limit=1`);
+      if (items?.[0]) await ensureActionNetworkPost(env, items[0]);
+    }
+  }
+
   const from = to === 'queued' ? 'state=eq.draft' : 'state=in.(draft,queued)&external_creation_id=is.null';
   const rows = await db(env, `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&${from}`, {
     method: 'PATCH',
@@ -281,6 +413,9 @@ async function moveJob(request, env, user, jobId, to) {
     body: JSON.stringify({ state: to, updated_at: new Date().toISOString(), ...(to === 'queued' && body.scheduled_at ? { scheduled_at: body.scheduled_at } : {}) })
   });
   if (!rows?.length) throw Object.assign(new Error(to === 'queued' ? 'Only a draft can be approved' : 'This post is already on its way to Instagram'), { status: 409 });
+  if (rows[0].content_id) {
+    await patch(env, 'social_content_items', rows[0].content_id, { status: to === 'queued' ? 'publishing' : 'archived' }).catch(() => {});
+  }
   return { publish_job: rows[0] };
 }
 
@@ -318,6 +453,7 @@ async function registerPost(request, env, user) {
     campaign_id: body.campaign_id || null,
     variant_id: body.variant_id || null,
     publish_job_id: body.publish_job_id || null,
+    content_id: body.content_id || null,
     external_media_id: body.external_media_id,
     permalink: body.permalink || null,
     publish_mode: body.publish_mode || 'reel',
@@ -434,6 +570,7 @@ export async function handleSocialRequest(request, env, user) {
   if (path === '/v1/social/accounts' && request.method === 'POST') return createAccount(request, env, user);
   if (path === '/v1/social/campaigns' && request.method === 'GET') return listCampaigns(request, env, user);
   if (path === '/v1/social/campaigns' && request.method === 'POST') return createCampaign(request, env, user);
+  if (path === '/v1/social/action-targets' && request.method === 'GET') return actionTargets(request, env, user);
   if (path === '/v1/social/variants/generate' && request.method === 'POST') return generateVariant(request, env, user);
   if (path === '/v1/social/publish' && request.method === 'POST') return queuePublish(request, env, user);
   if (path === '/v1/social/publish' && request.method === 'GET') return listPublishJobs(request, env, user);
