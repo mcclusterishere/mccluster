@@ -309,7 +309,10 @@
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
       if(!confirm((decision==="verified"?"Verify this submitted action and award it exactly once?":"Reject this proof without awarding points?")))return;
       b.disabled=true;A.supa("rpc/review_action_proof",{method:"POST",body:{p_proof_id:id,p_decision:decision,p_review_note:reviewNote||null}})
-        .then(function(){A.msg=decision==="verified"?"Action verified. Award transaction completed.":"Proof rejected. No award issued.";return loadProofs();})
+        .then(function(){
+          A.msg=decision==="verified"?"Action verified. Campaign completion, award, skills and feed automation reconciled.":"Proof rejected. No award issued.";
+          return Promise.all([loadProofs(),loadMissions(),A.sel?loadDetail(A.sel):Promise.resolve()]);
+        })
         .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
     };});
     var st=root.querySelector("[data-crn-state]");
