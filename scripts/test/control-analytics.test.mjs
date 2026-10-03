@@ -184,7 +184,7 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
     read('css/control-analytics.css'),
     read('supabase/migrations/20261003223831_analytics_hourly_hotpath_v2.sql')
   ]);
-  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
+  assert.match(js,/r\.id==="24h"\?retryStatementTimeout\(function\(\)\{return rpc\("analytics_hourly",daily\);\}\)/);
   assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
   assert.match(js,/allLabels:true/);
   assert.match(js,/data-cra-chart-point/);
