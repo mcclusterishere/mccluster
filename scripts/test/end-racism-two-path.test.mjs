@@ -4,6 +4,7 @@ import fs from "node:fs";
 
 const spec = fs.readFileSync(new URL("../../docs/END-RACISM-TWO-PATH-CAMPAIGN.md", import.meta.url), "utf8");
 const html = fs.readFileSync(new URL("../../end-racism.html", import.meta.url), "utf8");
+const recoveryPage = fs.readFileSync(new URL("../../wigger-recovery.html", import.meta.url), "utf8");
 
 test("End Racism satire is explicitly self-declared, never inferred", () => {
   assert.match(spec, /SELF-DECLARED: CERTIFIED RACIST/);
@@ -76,4 +77,36 @@ test("campaign canon defines recovery as behavior satire and keeps canonical pro
   assert.match(spec, /must use the canonical mission, assignment, proof, review, and points primitives/i);
   assert.match(spec, /one living human species/i);
   assert.match(spec, /Human racial categories are social classifications/i);
+});
+
+
+test("End Racism reveals the freestyle meme mission gradually", () => {
+  assert.match(html, /Field mission 004/);
+  assert.match(html, /STOP A WHITE FRIEND FROM FREESTYLING AT THE FUNCTION/);
+  assert.match(html, /href="wigger-recovery\.html#freestyle"/);
+  assert.match(html, /Trace the source/);
+  assert.match(html, /Bring proof/);
+});
+
+test("Freestyle Containment has exactly three authorized levels", () => {
+  const authorized = recoveryPage.match(/<article class="wrp-level(?:\s[^"]*)?"/g) || [];
+  assert.equal(authorized.length, 3);
+  assert.match(recoveryPage, /Level 1[\s\S]*TALK HIM DOWN/);
+  assert.match(recoveryPage, /Level 2[\s\S]*CONTAIN THE VERSE/);
+  assert.match(recoveryPage, /Level 3[\s\S]*COUNTER-WIGGER DEPLOYMENT/);
+  assert.match(recoveryPage, /Brother\. Not tonight\./);
+  assert.match(recoveryPage, /Sometimes you gotta be a wigger to get through to a wigger/);
+});
+
+test("Level 4 remains forbidden lore, not a playable escalation", () => {
+  assert.match(recoveryPage, /LEVEL 4[\s\S]*TOTAL WIGGER EVENT[\s\S]*NOT AUTHORIZED/);
+  assert.match(recoveryPage, /We do not discuss Level 4/);
+  assert.match(spec, /Do not expand Level 4 into a normal playable escalation/);
+});
+
+test("Freestyle mission proof stays staged and returns to canonical Action", () => {
+  assert.match(recoveryPage, /Stage it with friends who are in on the joke/);
+  assert.match(recoveryPage, /Do not secretly film or humiliate somebody/);
+  assert.match(recoveryPage, /href="action\/\?c=end-racism#join"/);
+  assert.match(recoveryPage, /href="end-racism\.html#recovery"/);
 });
