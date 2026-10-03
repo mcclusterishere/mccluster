@@ -89,10 +89,12 @@ function ldFor(ev) {
      hang off the same event. */
   let clientNode = null;
   if (ev.client) {
+    const isMcClusterCorp = ev.client === "McCluster Corp";
     clientNode = {
       "@type": "Organization",
-      "@id": `${url}#client`,
+      "@id": isMcClusterCorp ? `${SITE}/#mccluster-corp` : `${url}#client`,
       name: ev.client,
+      ...(isMcClusterCorp ? { url: "https://mccluster.org/" } : {}),
     };
     if (ev.sources && ev.sources.length) clientNode.subjectOf = ev.sources.map((u) => ({ "@type": "WebPage", url: u }));
     graph.push(clientNode);
