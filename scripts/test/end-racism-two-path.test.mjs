@@ -3,9 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const spec = fs.readFileSync(new URL("../../docs/END-RACISM-TWO-PATH-CAMPAIGN.md", import.meta.url), "utf8");
+const html = fs.readFileSync(new URL("../../end-racism.html", import.meta.url), "utf8");
 
 test("End Racism satire is explicitly self-declared, never inferred", () => {
-  assert.match(spec, /SELF-DECLARED: VERIFIED RACIST/);
+  assert.match(spec, /SELF-DECLARED: CERTIFIED RACIST/);
   assert.match(spec, /must never assign this status/i);
   assert.match(spec, /Never infer or algorithmically assign/i);
 });
@@ -28,7 +29,7 @@ test("campaign does not fork the Mission Engine", () => {
 });
 
 
-test("Racist for Life is member-selected and reversible in current presentation", () => {
+test("Certified Racist is member-selected and reversible in current presentation", () => {
   assert.match(spec, /RACIST FOR LIFE/);
   assert.match(spec, /SELF-DECLARED/);
   assert.match(spec, /I CHANGED MY MIND/);
@@ -44,6 +45,35 @@ test("members control optional front-profile badges without self-awarding verifi
 });
 
 test("admins cannot assign the racist satire badge to another member", () => {
-  assert.match(spec, /must not assign \*\*Racist for Life\*\*/i);
+  assert.match(spec, /must not assign \*\*Certified Racist\*\*/i);
   assert.match(spec, /make a private self-declaration public on a member's behalf/i);
+});
+
+
+test("public gateway carries Certified Racist, recovery, and human-race reveal", () => {
+  assert.match(html, /Certified Racist/i);
+  assert.match(html, /GET THE WIGGERS OUT OF THE STREET/);
+  assert.match(html, /Wigger Recovery Program/);
+  assert.match(html, /HOMO[\s\S]*SAPIENS/);
+  assert.match(html, /CERTIFIED RACIST[\s\S]*AGAINST THE HUMAN RACE/);
+  assert.match(html, /SELF-DECLARED/);
+});
+
+test("campaign rewrite preserves the canonical CIA Mind Control and Action routes", () => {
+  assert.match(html, /href="album\.html\?album=cia-mind-control"/);
+  assert.match(html, /href="action\/"/);
+  assert.match(html, /href="mnet\.html"/);
+  assert.match(html, /href="account\.html"/);
+  assert.match(html, /href="docket-516\.html"/);
+  assert.match(html, /"name": "end-racism"/);
+  assert.match(html, /"feature": "end-racism"/);
+  assert.match(html, /MCC_SONGTEST\.mount\([\s\S]*"cia-mind-control"/);
+});
+
+test("campaign canon defines recovery as behavior satire and keeps canonical proof mechanics", () => {
+  assert.match(spec, /wigger.*names that behavior pattern/i);
+  assert.match(spec, /not a racial classification/i);
+  assert.match(spec, /must use the canonical mission, assignment, proof, review, and points primitives/i);
+  assert.match(spec, /one living human species/i);
+  assert.match(spec, /Human racial categories are social classifications/i);
 });
