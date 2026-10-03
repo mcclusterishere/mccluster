@@ -388,11 +388,11 @@ async function listPublishJobs(request, env, user) {
   const ids = [...new Set((rows || []).map((x) => x.content_id).filter(Boolean))].slice(0, 50);
   const actionStats = {};
   if (ids.length) {
-    const assignments = await db(env, `action_mission_assignments?source_content_id=in.(${ids.join(',')})&select=source_content_id,status`);
+    const assignments = await db(env, `action_mission_assignments?source_content_id=in.(${ids.join(',')})&select=source_content_id,status,submitted_at`);
     for (const a of assignments || []) {
       const s = actionStats[a.source_content_id] ||= { joined: 0, submitted: 0, verified: 0, rejected: 0 };
-      if (a.status !== 'withdrawn') s.joined += 1;
-      if (a.status === 'submitted') s.submitted += 1;
+      s.joined += 1;
+      if (a.submitted_at) s.submitted += 1;
       if (a.status === 'verified') s.verified += 1;
       if (a.status === 'rejected') s.rejected += 1;
     }
