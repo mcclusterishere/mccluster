@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 310,
+  "candidate_count": 312,
   "capability_source_count": 99,
-  "support_only_count": 211,
+  "support_only_count": 213,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -1421,6 +1421,13 @@
       "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
     },
     {
+      "path": "scripts/test/action-network-live-governance.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests governed Action Network live rooms, host capability boundaries, first-class music discovery and live mission attribution; not a physical building capability."
+    },
+    {
       "path": "scripts/test/action-network.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1929,6 +1936,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied Action Network mission completion automation (migration 20261003035208): verified mission assignments become campaign action events and aggregate mission funnel counts are exposed for member and Control surfaces. Not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network live-governance schema for bounded host grants, persistent Home/Mission rooms, first-class music discovery, private audience measurement and live mission attribution; mobilization infrastructure, not a building capability."
     },
     {
       "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
