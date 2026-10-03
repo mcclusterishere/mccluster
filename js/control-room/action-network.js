@@ -19,7 +19,7 @@
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
     campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
-    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false};
+    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{}};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -205,12 +205,42 @@
       (list?'<div style="margin-top:12px">'+list+'</div>':note("No missions yet."));
   }
   /* FELLOWSHIP. Applications from members with three or more verified
-     actions; the decision and its note go back to the member. */
+     actions; the decision and its note go back to the member.
+     COHORT SEATS. Accepting makes someone a fellow of the network, not a
+     member of any one program's cohort. A seat is given on purpose, with
+     admit_fellow_to_cohort(), which the server limits to accepted fellows
+     and to cohorts that are still admitting. */
+  /* The 100 newest applications, plus every accepted one however old: an
+     accepted fellow waiting for a seat must never fall off the desk. */
+  var APP_COLS="id,m_uid,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at";
   function loadApps(){
     A.appBusy=true;redraw();
-    return A.supa("action_fellowship_applications?select=id,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at&order=created_at.desc&limit=100")
-      .then(function(rows){A.apps=rows||[];}).catch(function(err){A.apps=[];A.msg="Applications could not load: "+(err.message||err);})
+    return Promise.all([
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&order=created_at.desc&limit=100"),
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&status=eq.accepted&order=created_at.desc&limit=1000"),
+      A.supa("action_cohorts?select=id,name,status,campaign_id&status=eq.active&order=created_at.desc").catch(function(){return [];})
+    ]).then(function(r){
+      var seen={};
+      A.apps=(r[0]||[]).concat(r[1]||[]).filter(function(a){if(seen[a.id])return false;seen[a.id]=1;return true;});
+      A.cohorts=r[2]||[];A.seats={};
+      var fellows=A.apps.filter(function(a){return a.status==="accepted"&&a.m_uid;}).map(function(a){return a.m_uid;});
+      var chunks=[];for(var i=0;i<fellows.length;i+=100)chunks.push(fellows.slice(i,i+100));
+      return Promise.all(chunks.map(function(ids){
+        return A.supa("action_cohort_members?select=cohort_id,m_uid&m_uid=in.("+ids.map(encodeURIComponent).join(",")+")").then(function(rows){
+          (rows||[]).forEach(function(m){(A.seats[m.m_uid]=A.seats[m.m_uid]||[]).push(m.cohort_id);});
+        }).catch(function(){});
+      }));
+    }).catch(function(err){A.apps=[];A.msg="Applications could not load: "+(err.message||err);})
       .then(function(){A.appBusy=false;redraw();});
+  }
+  function cohortName(id){var c=A.cohorts.find(function(x){return x.id===id;});return c?c.name:"a closed cohort";}
+  function seatControls(a){
+    var held=A.seats[a.m_uid]||[];
+    var open=A.cohorts.filter(function(c){return held.indexOf(c.id)<0;});
+    return (held.length?'<p class="cro-meta">In cohort: '+held.map(function(id){return e(cohortName(id));}).join(" · ")+'</p>':'')+
+      (open.length?'<div class="cro-actions"><label>Admit to a cohort<select data-seat-cohort="'+e(a.id)+'">'+open.map(function(c){return'<option value="'+e(c.id)+'">'+e(c.name)+'</option>';}).join("")+'</select></label>'+
+        '<button class="cr-btn cr-btn--primary" type="button" data-seat-admit="'+e(a.id)+'">Admit</button></div>'
+      :(held.length?'':'<p class="cro-meta">No cohort is admitting. Open one before giving a seat.</p>'));
   }
   function fellowDesk(){
     if(A.apps===null&&!A.appBusy)loadApps();
@@ -223,7 +253,7 @@
         (a.project?'<p><b>Would build or lead:</b> '+e(a.project)+'</p>':'')+
         (open?'<label>Note to the member<textarea data-app-note="'+e(a.id)+'" placeholder="Welcome, or what would make a stronger application."></textarea></label>'+
           '<div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-app-review="'+e(a.id)+'" data-decision="accepted">Accept</button><button class="cr-btn" type="button" data-app-review="'+e(a.id)+'" data-decision="declined">Decline</button></div>'
-          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':''))+
+          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':'')+(a.status==="accepted"?seatControls(a):''))+
         '</article>';
     }).join("")+'</div>';
   }
@@ -304,6 +334,16 @@
       A.supa("rpc/review_fellowship_application",{method:"POST",body:{p_application_id:id,p_decision:decision,p_review_note:reviewNote||null}})
         .then(function(){A.msg=decision==="accepted"?"Fellow accepted.":"Application declined with your note.";return loadApps();})
         .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
+    };});
+    root.querySelectorAll("[data-seat-admit]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-seat-admit"),sel=root.querySelector('[data-seat-cohort="'+id+'"]'),cohort=sel&&sel.value;
+      if(!cohort)return;
+      if(!confirm("Give this fellow a seat in "+cohortName(cohort)+"?"))return;
+      b.disabled=true;
+      A.supa("rpc/admit_fellow_to_cohort",{method:"POST",body:{p_application_id:id,p_cohort_id:cohort}})
+        .then(function(r){A.msg=(r&&r.idempotent?"Already seated in ":"Seated in ")+cohortName(cohort)+".";return loadApps();})
+        .catch(function(err){b.disabled=false;var m=String(err&&err.message||err);
+          alert(/admit_fellow_to_cohort/.test(m)&&/find|exist/i.test(m)?"The cohort-admission function is not in the database yet: apply supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql.":m||"Admission failed.");});
     };});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}

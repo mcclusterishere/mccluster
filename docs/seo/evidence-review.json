@@ -132,18 +132,21 @@
       "event_date": null,
       "publish_date": null,
       "headline": null,
-      "summary": "catalogue.html now carries MusicRecording markup for 14 recordings. Matthew McCluster is credited as artist only where nothing on the site credits anybody else. 'Money or the Power' is credited to Old Jay (per docket-516.html: Old Jay ft. Ocho, prod. Pax) although data/catalogue.json has no credit for it. 'Dealer Plates' carries Matthew as co-producer only; 'Upset' carries no artist claim. CIA Mind Control is listed as an album with no artist and no track list, and its gated title is never written into the page or the markup.",
+      "summary": "Resolved by the owner on 2026-10-03. The Docket 516R album (slug equity-uprise) is billed to Equity Uprise, the program's own music act. Money or the Power: ft. Ocho, McCluster & Old Jay, produced by PAX. Please Set Me Free: Los Fidel, beat by McCluster. Environmental Injustice: McCluster ft. Angel Kastro (with a K) & Ocho. 'Evangelist Angel' and 'Old Jay ft. Ocho (prod. Pax)' are superseded. Upset, Dealer Plates and CIA Mind Control are unchanged.",
       "factual_claims": [],
       "supporting_evidence": "data/catalogue.json, data/albums.json, docket-516.html",
       "evidence_urls": [],
       "repository_evidence": [
-        "data/catalogue.json",
         "data/albums.json",
-        "tools/build-catalogue.mjs"
+        "data/catalogue.json",
+        "data/lyrics/money-or-the-power.json",
+        "data/lyrics/environmental-injustice-brave.json",
+        "tools/build-catalogue.mjs",
+        "docket-516.html"
       ],
-      "verification_status": "needs-verification",
+      "verification_status": "owner-statement",
       "publication_status": "not-for-newsroom",
-      "owner_action": "Add the 'Money or the Power' credit to data/catalogue.json; decide the public artist credit for CIA Mind Control; confirm who performs 'Upset' and 'Dealer Plates'. Then update CREDIT in tools/build-catalogue.mjs and rebuild.",
+      "owner_action": "Confirm Ocho on Environmental Injustice: the earlier site credit and the Brave lyric master both list him, and he is kept; say if he should come off. Decide whether the shelf should show album artists (it would also print the CIA Mind Control alias). Mirror the credits in the music platform's database rows if those carry artist fields.",
       "where_used": []
     }
   ],

@@ -84,7 +84,6 @@
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/authority.css?v=__STAMP__">
   <style>
     /* The release button pulses a ring (sndRing, scale 1.45) that grew past
@@ -128,14 +127,14 @@
           <span class="sound-toggle__dot"></span> <span>Play the evidence: the 516R Release</span>
         </button>
         <p class="dkt__credit">
-          <b>The 516R Release &#183; 4 tracks.</b> The record gets a record: each piece of evidence in
-          this room is scored by an artist's song, every bar time-coded to the parse. Press play and
-          the release rides the whole file. Track 01, Old Jay ft. Ocho's "Money or the Power"
-          (prod. Pax), opens the record; Track 02, McCluster ft. Ocho &amp; Angel's "Environmental
-          Injustice / Brave," carries it home. Tracks 03 and 04 claim their evidence as the
-          release rolls out.
+          <b>Docket 516R &#183; the album by Equity Uprise &#183; 4 tracks.</b> The record gets a record:
+          each piece of evidence in this room is scored by a song, every bar time-coded to the parse.
+          Press play and the release rides the whole file. Track 01, "Money or the Power" (Equity
+          Uprise ft. Ocho, McCluster &amp; Old Jay, prod. PAX), opens the record; Track 02,
+          "Environmental Injustice / Brave" (McCluster ft. Angel Kastro &amp; Ocho), carries it home.
+          Tracks 03 and 04 claim their evidence as the release rolls out.
         </p>
-        <p class="dkt__credit"><a href="album.html?album=equity-uprise" style="color:var(--ruby-hot)">Open the Equity Uprise album in the player &#8594;</a></p>
+        <p class="dkt__credit"><a href="album.html?album=equity-uprise" style="color:var(--ruby-hot)">Open Docket 516R, the Equity Uprise album, in the player &#8594;</a></p>
       </div>
     </section>
 
@@ -147,9 +146,10 @@
          reader has seen what a record can do. -->
     <section class="dkt" aria-label="Equity Uprise on the Action Network">
       <div class="bexp__panel">
-        <p><b>Equity Uprise</b> is the civic fellowship of McCluster Corp, and this record is its front page on the
-          Uprise Action Network. Read how a contested siting case actually moves, then put the same tools to work:
-          <a href="#equity-uprise">write the memo, write the paper, file the comment, and join the next cohort</a>.</p>
+        <p><b>Equity Uprise</b> is the civic program of McCluster Corp, and on the Uprise Action Network it is the
+          <b>cohort group for people who want to become Equity Uprise cohort policy writers</b>. This record is its
+          front page. Read how a contested siting case actually moves, then put the same tools to work:
+          <a href="#equity-uprise">write the memo, write the paper, file the comment, and earn a seat in the next cohort</a>.</p>
         <p style="margin-top:0.6rem"><a class="btn btn--ruby" href="mnet.html?group=equity-uprise" data-cta="d516-group-top">Join the Equity Uprise group</a></p>
       </div>
     </section>
@@ -316,16 +316,18 @@
     <!-- Each step is an Action Network mission (seeded with fixed ids by
          supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql),
          so it is joined, proved and reviewed by the server like every other
-         mission. Three verified missions open the fellowship application:
-         that is the door into the next Equity Uprise cohort. -->
+         mission. Three verified missions open the fellowship application,
+         and the desk gives accepted fellows a seat in the cohort with
+         admit_fellow_to_cohort() (supabase/pending_migrations/
+         20261003160000_action_cohort_admission_v1.sql). -->
     <section class="dkt" id="equity-uprise" aria-labelledby="euLoopH">
       <div class="rec" style="padding:0;max-width:none">
         <p class="rec__k">Equity Uprise · the loop</p>
         <h2 id="euLoopH" class="section-title" style="font-size:clamp(2rem,5vw,3.2rem)">Do something with it</h2>
         <p class="rec__lede">This record shows what happens when residents, businesses and towns answer a utility with
-          paper: interrogatories, testimony, briefs and public comment. Equity Uprise trains people to do that on purpose.
-          Every step below is a mission on the Uprise Action Network. A reviewer checks the proof, and
-          <b>three verified missions open the application for the next Equity Uprise cohort</b>.</p>
+          paper: interrogatories, testimony, briefs and public comment. Equity Uprise trains policy writers to do that on
+          purpose. Every step below is a mission on the Uprise Action Network. A reviewer checks the proof, and
+          <b>three verified missions open the application for the next cohort of Equity Uprise policy writers</b>.</p>
         <ol class="rec__log">
           <li>
             <h3>1 · Read the record</h3>
@@ -353,9 +355,10 @@
             <p class="rec__note"><a href="mnet.html?mission=7cfac26a-d757-42b9-803b-970f9d5030a8" data-cta="d516-m-comment">Take the mission</a></p>
           </li>
           <li>
-            <h3>Then · Join the next cohort</h3>
-            <p>Three verified missions open the fellowship application in your Action Record. Accepted fellows join the
-              next Equity Uprise cohort.</p>
+            <h3>Then · Earn a seat in the next cohort</h3>
+            <p>Three verified missions open the fellowship application in your Action Record. The desk reads each
+              application and gives accepted fellows a seat in the next cohort of Equity Uprise policy writers; the seat
+              shows up in your Action Record.</p>
             <p class="rec__note"><a href="mnet.html?view=missions" data-cta="d516-record">See your Action Record</a></p>
           </li>
         </ol>
@@ -578,8 +581,8 @@
       /* the 516R Release playlist; each track carries its own time-coded
          bars (masters in data/lyrics/); the parse rides the whole release */
       var TRACKS = [
-        { id: "money-or-the-power", src: "assets/audio/money-or-the-power.mp3", lyrics: "data/lyrics/money-or-the-power.json", credit: 'Old Jay ft. Ocho · "Money or the Power" (prod. Pax)', dur: 216, lines: [] },
-        { id: "environmental-injustice-brave", src: "assets/audio/environmental-injustice-brave.mp3", lyrics: "data/lyrics/environmental-injustice-brave.json", credit: 'McCluster ft. Ocho &amp; Angel · "Environmental Injustice / Brave"', dur: 254, lines: [] },
+        { id: "money-or-the-power", src: "assets/audio/money-or-the-power.mp3", lyrics: "data/lyrics/money-or-the-power.json", credit: 'Equity Uprise ft. Ocho, McCluster &amp; Old Jay · "Money or the Power" (prod. PAX)', dur: 216, lines: [] },
+        { id: "environmental-injustice-brave", src: "assets/audio/environmental-injustice-brave.mp3", lyrics: "data/lyrics/environmental-injustice-brave.json", credit: 'McCluster ft. Angel Kastro &amp; Ocho · "Environmental Injustice / Brave"', dur: 254, lines: [] },
       ];
       var curTrack = 0;
       TRACKS.forEach(function (t) {
@@ -707,7 +710,6 @@
   </nav>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>
