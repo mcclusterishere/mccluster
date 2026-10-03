@@ -415,6 +415,12 @@ async function moveJob(request, env, user, jobId, to) {
   if (!rows?.length) throw Object.assign(new Error(to === 'queued' ? 'Only a draft can be approved' : 'This post is already on its way to Instagram'), { status: 409 });
   if (rows[0].content_id) {
     await patch(env, 'social_content_items', rows[0].content_id, { status: to === 'queued' ? 'publishing' : 'archived' }).catch(() => {});
+    if (to !== 'queued') {
+      const network = await db(env, `network_posts?content_id=eq.${encodeURIComponent(rows[0].content_id)}&reply_to_id=is.null&deleted_at=is.null&select=id&limit=5`).catch(() => []);
+      for (const post of network || []) {
+        await patch(env, 'network_posts', post.id, { deleted_at: new Date().toISOString() }).catch(() => {});
+      }
+    }
   }
   return { publish_job: rows[0] };
 }
