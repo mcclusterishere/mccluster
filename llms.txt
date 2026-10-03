@@ -120,7 +120,7 @@ either into a verdict.
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
 - [Press kit](https://matthew.mccluster.org/press.html)
 - [Verified newsroom & public record](https://matthew.mccluster.org/newsroom.html): dated milestones, each linked to its primary document; [Atom feed](https://matthew.mccluster.org/feed.xml). Every entry has been checked against its evidence; nothing is backdated.
-- [Docket 516R explained](https://matthew.mccluster.org/docket-516.html): the plain-English public record of Connecticut Siting Council Dockets 516 and 516R, and the front page of the Equity Uprise group on the Uprise Action Network. Quote the Council's own docket page for dates.
+- [Docket 516R explained](https://matthew.mccluster.org/docket-516.html): the plain-English public record of Connecticut Siting Council Dockets 516 and 516R, and the front page of the Equity Uprise group on the Uprise Action Network. Its soundtrack is Docket 516R, the album by Equity Uprise (the program's own music act). Quote the Council's own docket page for dates.
 - [Services](https://matthew.mccluster.org/services.html): websites, social management, photography and video, music. Prices live on [the booking page](https://matthew.mccluster.org/hire.html), generated from one ledger.
 - Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
 
