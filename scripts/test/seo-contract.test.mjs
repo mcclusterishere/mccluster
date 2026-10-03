@@ -293,7 +293,7 @@ test("the music graph credits only what the site states, and never prints a gate
   assert.equal(free.producer["@id"], "https://matthew.mccluster.org/#matthew-mccluster", "the beat is his: a producer credit, not an artist credit");
   const env = recs.find((r) => r.name === "Environmental Injustice");
   assert.deepEqual(names(env), ["https://matthew.mccluster.org/#matthew-mccluster", "Angel Kastro", "Ocho"]);
-  assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b/, "superseded credits are gone");
+  assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html") + read("data/lyrics/environmental-injustice.json") + read("data/lyrics/environmental-injustice-brave.json"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b/, "superseded credits are gone");
   const cat = JSON.parse(read("data/catalogue.json"));
   for (const t of cat.tracks.filter((t) => t.gated)) {
     assert.ok(!html.includes(t.title), `the gated title "${t.title}" must not be written into the page`);

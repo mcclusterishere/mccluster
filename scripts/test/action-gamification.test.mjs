@@ -134,6 +134,7 @@ test("a cohort seat is given on purpose, only to an accepted fellow, by the desk
  assert.doesNotMatch(await read("supabase/migrations/20261002063754_action_network_fellowship_v1.sql"),/action_cohort_members/);
  assert.match(ctl,/rpc\/admit_fellow_to_cohort/);
  assert.match(ctl,/a\.status==="accepted"\?seatControls\(a\)/,"seat controls only on accepted applications");
+ assert.match(ctl,/action_fellowship_applications\?select="\+APP_COLS\+"&status=eq\.accepted/,"accepted fellows stay on the desk past the newest 100");
  /* the Equity Uprise group is the cohort group for aspiring policy writers (owner, 2026-10-03) */
  assert.match(seed,/cohort group for people who want to become Equity Uprise cohort policy writers/);
  assert.match(seed,/'Equity Uprise · policy writers, next cohort'/);

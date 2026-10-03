@@ -210,18 +210,26 @@
      member of any one program's cohort. A seat is given on purpose, with
      admit_fellow_to_cohort(), which the server limits to accepted fellows
      and to cohorts that are still admitting. */
+  /* The 100 newest applications, plus every accepted one however old: an
+     accepted fellow waiting for a seat must never fall off the desk. */
+  var APP_COLS="id,m_uid,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at";
   function loadApps(){
     A.appBusy=true;redraw();
     return Promise.all([
-      A.supa("action_fellowship_applications?select=id,m_uid,status,why,project,hours_per_week,verified_actions_at_apply,review_note,created_at,reviewed_at&order=created_at.desc&limit=100"),
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&order=created_at.desc&limit=100"),
+      A.supa("action_fellowship_applications?select="+APP_COLS+"&status=eq.accepted&order=created_at.desc&limit=1000"),
       A.supa("action_cohorts?select=id,name,status,campaign_id&status=eq.active&order=created_at.desc").catch(function(){return [];})
     ]).then(function(r){
-      A.apps=r[0]||[];A.cohorts=r[1]||[];A.seats={};
+      var seen={};
+      A.apps=(r[0]||[]).concat(r[1]||[]).filter(function(a){if(seen[a.id])return false;seen[a.id]=1;return true;});
+      A.cohorts=r[2]||[];A.seats={};
       var fellows=A.apps.filter(function(a){return a.status==="accepted"&&a.m_uid;}).map(function(a){return a.m_uid;});
-      if(!fellows.length)return;
-      return A.supa("action_cohort_members?select=cohort_id,m_uid&m_uid=in.("+fellows.map(encodeURIComponent).join(",")+")").then(function(rows){
-        (rows||[]).forEach(function(m){(A.seats[m.m_uid]=A.seats[m.m_uid]||[]).push(m.cohort_id);});
-      }).catch(function(){});
+      var chunks=[];for(var i=0;i<fellows.length;i+=100)chunks.push(fellows.slice(i,i+100));
+      return Promise.all(chunks.map(function(ids){
+        return A.supa("action_cohort_members?select=cohort_id,m_uid&m_uid=in.("+ids.map(encodeURIComponent).join(",")+")").then(function(rows){
+          (rows||[]).forEach(function(m){(A.seats[m.m_uid]=A.seats[m.m_uid]||[]).push(m.cohort_id);});
+        }).catch(function(){});
+      }));
     }).catch(function(err){A.apps=[];A.msg="Applications could not load: "+(err.message||err);})
       .then(function(){A.appBusy=false;redraw();});
   }
