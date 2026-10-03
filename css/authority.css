@@ -1,5 +1,13 @@
+/* THE AUTHORITY COAT. Evidence pages: the engineering lanes, the role map,
+   the newsroom, services and the Docket 516R record. Two layouts, one file:
+   auth__* cards (the first line, minified as it shipped) and the rec__*
+   long-form record below. Built on the house tokens in css/style.css. */
+.auth{max-width:72rem;margin:0 auto;padding:clamp(4.5rem,9vw,7rem) clamp(1rem,4vw,2.4rem) 7rem}.auth a{text-decoration:none}.auth__eyebrow{font:800 .72rem/1.2 var(--ui);letter-spacing:.18em;text-transform:uppercase;color:var(--ruby-hot)}.auth h1{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(2.6rem,9vw,6.6rem);line-height:.92;margin:.55rem 0 1rem}.auth__lede{max-width:48rem;color:var(--cream-dim);font-size:clamp(1rem,2vw,1.18rem);line-height:1.75}.auth__nav{display:flex;flex-wrap:wrap;gap:.55rem;margin:1.5rem 0 2rem}.auth__nav a,.auth__cta{border:1px solid var(--edge);border-radius:999px;padding:.65rem 1rem;font-weight:800;color:var(--cream)}.auth__nav a:hover,.auth__cta:hover{border-color:var(--ruby-hot);color:var(--ruby-hot)}.auth__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;margin-top:2rem}.auth__card{min-width:0;border:1px solid var(--edge);border-radius:16px;padding:1.15rem;background:var(--glass-lo)}.auth__card h2,.auth__card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;margin:0 0 .55rem}.auth__card p,.auth__card li{color:var(--cream-dim);line-height:1.65}.auth__card ul{padding-left:1.2rem;display:grid;gap:.4rem}.auth__meta{font-size:.78rem;letter-spacing:.06em;color:var(--ruby-text);font-weight:800;text-transform:uppercase}.auth__evidence{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}.auth__evidence a{font-size:.86rem;border-bottom:1px solid currentColor;color:var(--ruby-text)}.auth__foot{margin-top:3rem;color:var(--cream-dim);font-size:.85rem}@media(min-width:46rem){.auth__grid--2{grid-template-columns:repeat(2,minmax(0,1fr))}.auth__grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 /* ============================================================
-   THE RECORD COAT: long-form document pages.
+   THE RECORD COAT: long-form document pages (rec__*), in the same file as
+   the authority cards (auth__*) above so the evidence pages load one
+   stylesheet and share one look. Cards route; the record coat reads.
 
    Used by the pages a stranger reads cold and a search engine reads
    first: the engineering hub and its case studies, the services page,

@@ -1,24 +1,26 @@
 #!/usr/bin/env node
 /* THE NEWSROOM, RENDERED FROM THE EVIDENCE LEDGER.
 
-     node tools/seo/build-newsroom.mjs          # write newsroom.html + feed.xml
-     node tools/seo/build-newsroom.mjs --check  # fail if either drifted
+     node tools/build-newsroom.mjs          # write newsroom.html + feed.xml
+     node tools/build-newsroom.mjs --check  # fail if either drifted
 
-   docs/seo/evidence-ledger.json holds every dated public claim and what
-   proves it. Only entries a person has verified against the evidence, and
-   marked for publication, are rendered; the rest stay in the ledger with
-   their reason. So the newsroom cannot carry a claim the ledger does not
-   back, and the ledger says why anything is missing.
+   data/seo/evidence-ledger.json holds the dated public claims and what
+   proves each one. Only items a person has verified against the evidence
+   AND marked publish are rendered; a publish flag on an unverified item
+   stops the build. Internal review notes, unverified claims and owner
+   actions live in docs/seo/evidence-review.json, which is never deployed.
 
-   Dates are never moved. Each entry shows when the thing happened
-   (event_date) and, when that differs, when this site published it
-   (publish_date). The Atom feed dates entries by publication, because a
-   feed reader is told what is new here, not what is old somewhere else. */
+   Dates are never moved. Each entry shows when the thing happened (date)
+   and, when that differs, when this site published it (published). The
+   Article/feed dates are the publication dates, because a feed reader is
+   told what is new here, not what is old somewhere else; an entry about a
+   2025 proclamation published in 2026 is not passed off as 2025 news.
+   Every string from the ledger is HTML-escaped. */
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = "https://matthew.mccluster.org";
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
   "August", "September", "October", "November", "December"];
@@ -35,54 +37,50 @@ export function human(iso) {
 }
 
 export function published(ledger) {
-  return (ledger.entries || [])
-    .filter((e) => e.verification_status === "verified" && e.publication_status === "publish")
-    .sort((a, b) => String(b.event_date).localeCompare(String(a.event_date)) || a.story_id.localeCompare(b.story_id));
+  for (const x of ledger.items || []) {
+    if (x.publish && x.verification_status !== "verified") throw new Error(`unverified public evidence: ${x.id}`);
+    if (x.publish && !/^\d{4}-\d{2}-\d{2}$/.test(String(x.published || ""))) throw new Error(`${x.id}: a published item needs its first-publication date`);
+  }
+  return (ledger.items || [])
+    .filter((x) => x.verification_status === "verified" && x.publish === true)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.id.localeCompare(b.id));
 }
 
-function linkLabel(u) {
-  if (/\.pdf$/i.test(u)) return "Document (PDF)";
-  if (/\/walls\//.test(u)) return "Photographs";
-  if (/\/engineering\//.test(u)) return u.split("/").pop().replace(/\.html$/, "").replace(/-/g, " ").replace(/\bipc\b/, "IPC").replace(/\bmccluster\b/, "McCluster") || "Case study";
-  if (/policy-memo/.test(u)) return "The memorandum";
-  return "Source";
-}
+const href = (ev) => ev.url || ev.path;
+const abs = (ev) => ev.url || `${SITE}/${ev.path}`;
 
 function itemNode(e) {
-  const about = (e.entity || []).map((id) => ({ "@id": id }));
-  const t = e.structured_data_type;
-  if (t === "Event") {
+  const about = (e.entities || []).map((id) => ({ "@id": id }));
+  const id = `${SITE}/newsroom.html#${e.id}`;
+  if (e.schema_type === "Event") {
+    const [city, region] = String(e.place || "").split(/,\s*/);
     return {
       "@type": "Event",
-      "@id": `${SITE}/newsroom.html#${e.story_id}`,
-      name: e.headline,
+      "@id": id,
+      name: e.title,
       description: e.summary,
-      startDate: e.event_date,
+      startDate: e.date,
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-      location: { "@type": "Place", name: "Bridgeport, Connecticut", address: { "@type": "PostalAddress", addressLocality: "Bridgeport", addressRegion: "CT", addressCountry: "US" } },
+      location: e.place ? { "@type": "Place", name: e.place, address: { "@type": "PostalAddress", addressLocality: city, addressRegion: region === "Connecticut" ? "CT" : region, addressCountry: "US" } } : undefined,
       organizer: about.length ? about[0] : undefined,
-      subjectOf: e.evidence_urls.map((u) => ({ "@type": "CreativeWork", url: u }))
+      subjectOf: e.evidence.map((ev) => ({ "@type": "CreativeWork", name: ev.label, url: abs(ev) }))
     };
   }
-  if (t === "Article") {
-    return { "@type": "Article", "@id": `${SITE}/newsroom.html#${e.story_id}`, headline: e.headline, description: e.summary,
-      datePublished: e.publish_date, url: e.evidence_urls[0], author: { "@id": `${SITE}/#matthew-mccluster` }, about };
-  }
   return {
-    "@type": t === "Report" ? "Report" : "DigitalDocument",
-    "@id": `${SITE}/newsroom.html#${e.story_id}`,
-    name: e.headline,
+    "@type": e.schema_type === "Report" ? "Report" : "DigitalDocument",
+    "@id": id,
+    name: e.title,
     description: e.summary,
-    dateCreated: e.event_date,
-    url: e.evidence_urls[0],
+    dateCreated: e.date,
+    url: abs(e.evidence[0]),
     about
   };
 }
 
 export function renderPage(ledger) {
   const items = published(ledger);
-  const modified = items.map((e) => e.publish_date).sort().pop() || ledger.updated;
+  const modified = items.map((e) => e.published).sort().pop();
   const graph = {
     "@context": "https://schema.org",
     "@graph": [
@@ -101,10 +99,9 @@ export function renderPage(ledger) {
           "@type": "ItemList",
           itemListOrder: "https://schema.org/ItemListOrderDescending",
           numberOfItems: items.length,
-          itemListElement: items.map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/newsroom.html#${e.story_id}`, item: itemNode(e) }))
+          itemListElement: items.map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/newsroom.html#${e.id}`, item: itemNode(e) }))
         }
       },
-      { "@type": "Person", "@id": `${SITE}/#matthew-mccluster`, name: "Matthew McCluster", url: `${SITE}/matthew-mccluster.html` },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
@@ -117,13 +114,12 @@ export function renderPage(ledger) {
   const json = JSON.stringify(JSON.parse(JSON.stringify(graph)), null, 2).split("\n").map((l) => "  " + l).join("\n");
 
   const list = items.map((e) => {
-    const labels = e.evidence_labels || [];
-    const links = e.evidence_urls.map((u, i) => `<a href="${esc(u.replace(SITE, ""))}">${esc(labels[i] || linkLabel(u))}</a>`).join(" · ");
-    const pub = e.publish_date && e.publish_date !== e.event_date
-      ? ` · Published here <time datetime="${esc(e.publish_date)}">${esc(human(e.publish_date))}</time>` : "";
-    return `      <li id="${esc(e.story_id)}">
-        <time datetime="${esc(e.event_date)}">${esc(human(e.event_date))}</time>
-        <h3>${esc(e.headline)}</h3>
+    const links = e.evidence.map((ev) => `<a href="${esc(href(ev))}">${esc(ev.label)}</a>`).join(" · ");
+    const pub = e.published !== e.date
+      ? ` · Published here <time datetime="${esc(e.published)}">${esc(human(e.published))}</time>` : "";
+    return `      <li id="${esc(e.id)}">
+        <time datetime="${esc(e.date)}">${esc(human(e.date))}</time>
+        <h3>${esc(e.title)}</h3>
         <p>${esc(e.summary)}</p>
         <p class="rec__note">Evidence: ${links}${pub}</p>
       </li>`;
@@ -154,13 +150,13 @@ export function renderPage(ledger) {
   <meta name="twitter:description" content="Dated milestones, each linked to its primary document.">
   <meta name="twitter:image" content="${SITE}/assets/img/og-card.jpg">
   <link rel="alternate" type="application/atom+xml" title="Matthew McCluster · newsroom" href="feed.xml">
-  <!-- GENERATED by tools/seo/build-newsroom.mjs from docs/seo/evidence-ledger.json. Do not edit by hand. -->
+  <!-- GENERATED by tools/build-newsroom.mjs from data/seo/evidence-ledger.json. Do not edit by hand. -->
   <script type="application/ld+json">
 ${json}
   </script>
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/record.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/authority.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
   <meta name="mcc-privacy-notice" content="banner">
@@ -213,17 +209,17 @@ ${list}
 
 export function renderFeed(ledger) {
   const items = published(ledger);
-  const updated = (items.map((e) => e.publish_date).sort().pop() || ledger.updated) + "T00:00:00Z";
+  const updated = items.map((e) => e.published).sort().pop() + "T00:00:00Z";
   const entries = items.map((e) => `  <entry>
-    <id>${SITE}/newsroom.html#${esc(e.story_id)}</id>
-    <title>${esc(e.headline)}</title>
-    <link rel="alternate" type="text/html" href="${SITE}/newsroom.html#${esc(e.story_id)}"/>
-    <published>${esc(e.publish_date)}T00:00:00Z</published>
-    <updated>${esc(e.publish_date)}T00:00:00Z</updated>
-    <summary>${esc(human(e.event_date))}: ${esc(e.summary)}</summary>
+    <id>${SITE}/newsroom.html#${esc(e.id)}</id>
+    <title>${esc(e.title)}</title>
+    <link rel="alternate" type="text/html" href="${SITE}/newsroom.html#${esc(e.id)}"/>
+    <published>${esc(e.published)}T00:00:00Z</published>
+    <updated>${esc(e.published)}T00:00:00Z</updated>
+    <summary>${esc(human(e.date))}: ${esc(e.summary)}</summary>
   </entry>`).join("\n");
   return `<?xml version="1.0" encoding="utf-8"?>
-<!-- GENERATED by tools/seo/build-newsroom.mjs from docs/seo/evidence-ledger.json. -->
+<!-- GENERATED by tools/build-newsroom.mjs from data/seo/evidence-ledger.json. -->
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>${SITE}/newsroom.html</id>
   <title>Matthew McCluster · newsroom</title>
@@ -238,14 +234,14 @@ ${entries}
 }
 
 function main() {
-  const ledger = JSON.parse(readFileSync(join(ROOT, "docs/seo/evidence-ledger.json"), "utf8"));
+  const ledger = JSON.parse(readFileSync(join(ROOT, "data/seo/evidence-ledger.json"), "utf8"));
   const out = { "newsroom.html": renderPage(ledger), "feed.xml": renderFeed(ledger) };
   if (process.argv.includes("--check")) {
     let bad = 0;
     for (const [f, body] of Object.entries(out)) {
       let cur = "";
       try { cur = readFileSync(join(ROOT, f), "utf8"); } catch {}
-      if (cur !== body) { console.error(`${f} drifted from docs/seo/evidence-ledger.json: run node tools/seo/build-newsroom.mjs`); bad++; }
+      if (cur !== body) { console.error(`${f} drifted from data/seo/evidence-ledger.json: run node tools/build-newsroom.mjs`); bad++; }
     }
     if (bad) process.exit(1);
     console.log(`newsroom: ${published(ledger).length} published entries, current`);

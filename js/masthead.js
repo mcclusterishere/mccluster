@@ -237,10 +237,11 @@ html { scroll-behavior: smooth; }
     { group: "The work", rooms: [
       { href: "portfolio.html",    label: "The full portfolio" },
       /* The evidence pages: what the IT, infrastructure and platform work
-         actually was, and the services with the work behind each one.
-         Without a door here they are reachable only from the résumé. */
-      { href: "engineering/",      label: "IT & engineering: experience and case studies" },
-      { href: "services.html",     label: "Services: photography, web, film, music" },
+         actually was, role by role, and the services with the work behind
+         each one. Without a door here they are reachable only from the
+         résumé. */
+      { href: "engineering/",      label: "Engineering & IT evidence, role by role" },
+      { href: "services.html",     label: "Services & case work" },
       { href: "gallery.html",      label: "Photography: the gallery" },
     ] },
     /* Equity Uprise came back as a group on the Action Network, and its
@@ -261,7 +262,7 @@ html { scroll-behavior: smooth; }
       { href: "account.html",   label: "Your profile" },
       { href: "matthew-mccluster.html", label: "Who I am" },
       { href: "press.html",     label: "Press & citations" },
-      { href: "newsroom.html",  label: "Newsroom: the dated public record" },
+      { href: "newsroom.html",  label: "Verified newsroom & public record" },
       /* HITMAN used to be reachable only because js/theme.js rewrote the
          fifth tab into it after boot. That override was retired when the
          shop took the tab, so this line is now the page's only door.

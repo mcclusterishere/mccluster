@@ -43,7 +43,7 @@ jobs:
           set -euo pipefail
           # the deployed commit against its first parent: for a merged PR
           # that is everything the PR changed
-          paths="$(node tools/seo/indexnow-changed.mjs "${HEAD_SHA}~1" "${HEAD_SHA}" | tr '\n' ' ')"
+          paths="$(node tools/indexnow-changed.mjs "${HEAD_SHA}~1" "${HEAD_SHA}" | tr '\n' ' ')"
           echo "paths=${paths}" >> "$GITHUB_OUTPUT"
           echo "Changed public pages: ${paths:-none}"
       - name: Wait for GitHub Pages to serve the new build

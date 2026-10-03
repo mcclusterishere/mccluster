@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* WHICH PUBLIC PAGES CHANGED BETWEEN TWO COMMITS, as IndexNow paths.
 
-     node tools/seo/indexnow-changed.mjs <base-sha> <head-sha>
+     node tools/indexnow-changed.mjs <base-sha> <head-sha>
 
    Prints one URL path per line (engineering/, docket-516.html, ...), only
    for pages that are in the sitemap: a page we do not ask search engines to
@@ -9,17 +9,15 @@
    URLs that changed, so a deploy that touched no public page prints nothing
    and the workflow sends nothing. */
 import { execFileSync } from "node:child_process";
-import { readdirSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PAGES } from "./build-sitemaps.mjs";
+import { pages } from "./build-sitemap.mjs";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 export function indexable() {
-  const map = new Map(PAGES.map(([path, file]) => [file, path]));
-  for (const f of readdirSync(join(ROOT, "walls")).filter((x) => x.endsWith(".html"))) map.set(`walls/${f}`, `walls/${f}`);
-  return map;
+  return new Map(pages().map(([path, file]) => [file, path]));
 }
 
 export function changedPaths(files) {

@@ -9,7 +9,10 @@
    disagreed with the page, a full-screen dialog over the résumé, links
    labelled "Newsroom" that went back to the page they were on, and a
    sitemap dated by whoever last ran a script. Dependency-free on purpose,
-   so it runs anywhere node does. See docs/SEO-AEO-AUTHORITY-SYSTEM.md. */
+   so it runs anywhere node does. scripts/test/seo-authority.test.mjs holds
+   the companion checks (entity graph shape, generators, recruiter lanes);
+   this file holds the cross-site invariants. See
+   docs/SEO-AEO-AUTHORITY-SYSTEM.md. */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
@@ -22,7 +25,8 @@ const SITE = "https://matthew.mccluster.org";
 const PERSON = `${SITE}/#matthew-mccluster`;
 const PROFILE = `${SITE}/matthew-mccluster.html`;
 const read = (f) => readFileSync(join(ROOT, f), "utf8");
-const graph = JSON.parse(read("data/entity-graph.json"));
+const graph = JSON.parse(read("data/seo/entity-graph.json"));
+const PROFILE_PAGE = `${PROFILE}#profile-page`;
 
 /* the published tree: what deploy-pages.yml leaves after stripping internals */
 const STRIPPED = new Set(["docs", "packages", "apps", "scripts", "supabase", ".github", "tests", "node_modules", "redirects", "tools", "_unfinished", "workers", ".git"]);
@@ -56,16 +60,19 @@ function fileFor(url) {
   return p;
 }
 const meta = (html, re) => { const m = html.match(re); return m ? m[1] : null; };
+const ENGINEERING = ["engineering/index.html", "engineering/it-support-systems.html", "engineering/data-center-networking.html",
+  "engineering/mccluster-platform.html", "engineering/field-technology-telematics.html", "engineering/ipc-infrastructure.html",
+  "engineering/recruiter-role-map.html"];
 
-test("the generated blocks match their sources (entity graph, offers, catalogue, newsroom)", () => {
-  for (const tool of ["build-entity-jsonld", "build-offer-jsonld", "build-catalogue", "build-newsroom"]) {
-    execFileSync("node", [`tools/seo/${tool}.mjs`, "--check"], { cwd: ROOT, stdio: "pipe" });
-  }
+test("the music catalogue markup matches its data, and llms.txt says only what is true", () => {
+  /* profile, hire, newsroom and sitemap generators are checked by seo-authority.test.mjs */
+  execFileSync("node", ["tools/build-catalogue.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
+  execFileSync("python3", ["tools/verify-llms.py"], { cwd: ROOT, stdio: "pipe" });
 });
 
 test("the sitemaps are current, and every mapped page exists, is indexable and canonical to itself", () => {
-  /* structure, not dates: deploy-pages.yml re-dates the map from git history */
-  execFileSync("node", ["tools/seo/build-sitemaps.mjs", "--check-structure"], { cwd: ROOT, stdio: "pipe" });
+  /* tools/build-sitemap.mjs --check (pages, images, video; not dates, which
+     deploy-pages.yml writes from git history) runs in seo-authority.test.mjs */
   const urls = sitemapUrls();
   assert.ok(urls.length >= 30, "the map lost pages");
   assert.equal(new Set(urls).size, urls.length, "a URL is listed twice");
@@ -106,14 +113,19 @@ test("every JSON-LD block on the published site parses", () => {
 });
 
 test("one person, one node: the Person is defined on the profile and referenced everywhere else", () => {
-  let profilePages = 0;
+  let canonicalProfiles = 0;
   const canonicalSameAs = new Set(graph.person.sameAs);
   for (const f of publishedHtml()) {
     for (const b of ldBlocks(read(f))) {
       for (const n of nodes(JSON.parse(b))) {
         const t = types(n);
         assert.ok(!(t.includes("Person") && t.includes("ProfilePage")), `${f}: a node cannot be both a Person and a web page`);
-        if (t.includes("ProfilePage")) { profilePages++; assert.equal(f, "matthew-mccluster.html", `${f}: only the profile is a ProfilePage`); }
+        if (t.includes("ProfilePage")) {
+          /* the recruiter lane pages are profile views too; all of them must be about the one Person,
+             and only the profile page may claim the canonical profile @id */
+          assert.equal((n.mainEntity || {})["@id"], PERSON, `${f}: a ProfilePage about somebody other than the canonical Person`);
+          if (n["@id"] === PROFILE_PAGE) { canonicalProfiles++; assert.equal(f, "matthew-mccluster.html", `${f}: claims the canonical profile @id`); }
+        }
         if (t.includes("Person") && n.name === "Matthew McCluster") {
           assert.equal(n["@id"], PERSON, `${f}: a Matthew McCluster node without the canonical @id`);
         }
@@ -124,16 +136,16 @@ test("one person, one node: the Person is defined on the profile and referenced 
           for (const k of ["jobTitle", "knowsAbout", "alumniOf", "hasCredential", "hasOccupation", "award"]) {
             assert.ok(!(k in n), `${f}: restates the Person's ${k}; reference the @id instead`);
           }
-          for (const s of n.sameAs || []) assert.ok(canonicalSameAs.has(s), `${f}: sameAs ${s} is not in data/entity-graph.json`);
+          for (const s of n.sameAs || []) assert.ok(canonicalSameAs.has(s), `${f}: sameAs ${s} is not in data/seo/entity-graph.json`);
         }
       }
     }
   }
-  assert.equal(profilePages, 1, "exactly one ProfilePage");
+  assert.equal(canonicalProfiles, 1, "exactly one canonical ProfilePage");
 });
 
 test("organizations are not conflated with their programs or with personal accounts", () => {
-  const corpSameAs = new Set(graph.organizations.find((o) => o["@id"].endsWith("#mccluster-corp")).sameAs);
+  const corpSameAs = new Set(graph.organization.sameAs);
   for (const f of publishedHtml()) {
     for (const b of ldBlocks(read(f))) {
       for (const n of nodes(JSON.parse(b))) {
@@ -155,8 +167,9 @@ test("education is stated as it is: a current student is not an alumnus", () => 
       }
     }
   }
-  const scsu = graph.person.affiliation.find((a) => a.name === "Southern Connecticut State University");
-  assert.ok(scsu, "the entity graph records the SCSU enrollment");
+  assert.equal(graph.education.scsu.name, "Southern Connecticut State University");
+  assert.ok(graph.person.affiliation.some((a) => a["@id"] === graph.education.scsu["@id"]), "the entity graph records the SCSU enrollment as an affiliation");
+  assert.ok(![].concat(graph.person.alumniOf || []).some((a) => /Southern Connecticut/.test(JSON.stringify(a))), "SCSU is not alumniOf");
   for (const f of ["matthew-mccluster.html", "resume-it-support.html", "engineering/index.html"]) {
     assert.match(read(f), /Southern Connecticut State University/, `${f}: education section missing`);
   }
@@ -171,7 +184,7 @@ test("the profile's visible identity links and its sameAs list agree", () => {
 
 test("links on the authority pages go somewhere real, and nothing labelled elsewhere points at itself", () => {
   const pages = ["matthew-mccluster.html", "resume-it-support.html", "press.html", "services.html", "newsroom.html",
-    "docket-516.html", "engineering/index.html", "engineering/ipc-data-center.html", "engineering/mccluster-platform.html", "catalogue.html", "hire.html"];
+    "docket-516.html", "catalogue.html", "hire.html", ...ENGINEERING];
   for (const f of pages) {
     const html = read(f);
     const base = f.includes("/") ? f.slice(0, f.lastIndexOf("/") + 1) : "";
@@ -194,26 +207,32 @@ test("links on the authority pages go somewhere real, and nothing labelled elsew
 });
 
 test("the newsroom publishes only verified, evidenced entries and never backdates", () => {
-  const ledger = JSON.parse(read("docs/seo/evidence-ledger.json"));
+  const ledger = JSON.parse(read("data/seo/evidence-ledger.json"));
   const html = read("newsroom.html");
+  const feed = read("feed.xml");
   const rendered = [...html.matchAll(/<li id="([^"]+)">/g)].map((m) => m[1]);
   assert.ok(rendered.length > 0, "the newsroom is empty");
   for (const id of rendered) {
-    const e = ledger.entries.find((x) => x.story_id === id);
+    const e = ledger.items.find((x) => x.id === id);
     assert.ok(e, `${id}: rendered but not in the ledger`);
     assert.equal(e.verification_status, "verified", `${id}: rendered without verification`);
-    assert.equal(e.publication_status, "publish", `${id}: rendered without being marked for publication`);
-    assert.ok(e.evidence_urls.length > 0, `${id}: no evidence`);
-    assert.ok(e.publish_date >= String(e.event_date), `${id}: publish date before the event`);
-    for (const u of e.evidence_urls.filter((u) => u.startsWith(SITE))) {
-      assert.ok(existsSync(join(ROOT, fileFor(u))), `${id}: evidence ${u} is missing`);
+    assert.equal(e.publish, true, `${id}: rendered without being marked for publication`);
+    assert.ok(e.evidence.length > 0, `${id}: no evidence`);
+    assert.ok(e.published >= String(e.date), `${id}: published before the thing happened`);
+    for (const ev of e.evidence.filter((ev) => ev.path)) {
+      assert.ok(existsSync(join(ROOT, ev.path.endsWith("/") ? ev.path + "index.html" : ev.path)), `${id}: evidence ${ev.path} is missing`);
+    }
+    /* the feed and the markup carry the publication date, never the event date passed off as news */
+    assert.match(feed, new RegExp(`newsroom\\.html#${id}"/>\\s*<published>${e.published}T`), `${id}: feed must be dated by publication`);
+  }
+  for (const e of ledger.items) {
+    if (e.verification_status !== "verified" || e.publish !== true) {
+      assert.ok(!rendered.includes(e.id), `${e.id}: unverified or held, but rendered`);
     }
   }
-  for (const e of ledger.entries) {
-    if (e.verification_status !== "verified" || e.publication_status !== "publish") {
-      assert.ok(!rendered.includes(e.story_id), `${e.story_id}: unverified or held, but rendered`);
-    }
-  }
+  /* the internal review notes never ship */
+  assert.ok(!existsSync(join(ROOT, "data/seo/evidence-review.json")), "review notes belong under docs/, which is not deployed");
+  assert.doesNotMatch(JSON.stringify(ledger), /owner_action|Kevin/, "internal notes in the public ledger");
 });
 
 test("public document pages show the privacy notice as a banner, and recording still waits for it", () => {
@@ -222,7 +241,7 @@ test("public document pages show the privacy notice as a banner, and recording s
   assert.match(live, /@media print\{#mccPrivacyNotice\{display:none!important\}\}/, "the banner must never print onto a résumé");
   assert.match(read("js/analytics.js"), /if \(mccPrivacyAcknowledged\(\)\) \{/, "analytics still waits for acknowledgement");
   const must = ["matthew-mccluster.html", "resume-it-support.html", "press.html", "services.html", "newsroom.html",
-    "docket-516.html", "engineering/index.html", "engineering/ipc-data-center.html", "engineering/mccluster-platform.html", "hire.html", "catalogue.html"];
+    "docket-516.html", "hire.html", "catalogue.html", ...ENGINEERING];
   for (const f of must) {
     const html = read(f);
     const m = html.indexOf('<meta name="mcc-privacy-notice" content="banner">');

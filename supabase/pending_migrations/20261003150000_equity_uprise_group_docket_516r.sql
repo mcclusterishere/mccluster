@@ -1,8 +1,13 @@
 -- EQUITY UPRISE ON THE ACTION NETWORK: the group, its front page, and its loop.
 --
--- NOT YET APPLIED TO PRODUCTION. Data only, idempotent: re-running changes
--- nothing that is already there. Apply the way the End Racism and Be
--- Authentic seeds were applied (a rolled-back dry run, then the real run).
+-- NOT YET APPLIED TO PRODUCTION, which is why it lives in pending_migrations/
+-- (the control-plane drift guard only admits migrations/ files that are in
+-- supabase/production-ledger.json). Data only, idempotent: re-running changes
+-- nothing that is already there. To ship it: a rolled-back dry run, then the
+-- real run, the way the End Racism and Be Authentic seeds were applied; then
+-- move this file into supabase/migrations/ and record it in the production
+-- ledger. Until then the group, campaign and missions that docket-516.html
+-- links to do not exist on the network.
 --
 -- The shape follows 20261002173558_action_network_organizations_authenticity_v1
 -- exactly: organization -> group (with its front page) -> campaign -> missions.

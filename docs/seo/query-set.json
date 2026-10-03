@@ -9,12 +9,22 @@
     "",
     "How to use it is in docs/SEO-AEO-AUTHORITY-SYSTEM.md (Measurement). The",
     "baseline block records what a web search returned on 2026-10-02/03,",
-    "before this work shipped."
+    "before this work shipped.",
+    "",
+    "Recruiter query families per lane (IT support, data center, platform, field",
+    "technology/telematics) are maintained with their evidence in",
+    "data/seo/recruiter-evidence.json; the recruiter sets here are the ones the",
+    "2026-10-03 baseline measured."
   ],
   "updated": "2026-10-03",
   "landing_pages": {
     "entity": "https://matthew.mccluster.org/matthew-mccluster.html",
     "recruiter": "https://matthew.mccluster.org/engineering/",
+    "lane_it_support": "https://matthew.mccluster.org/engineering/it-support-systems.html",
+    "lane_data_center": "https://matthew.mccluster.org/engineering/data-center-networking.html",
+    "lane_platform": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+    "lane_field_technology": "https://matthew.mccluster.org/engineering/field-technology-telematics.html",
+    "role_map": "https://matthew.mccluster.org/engineering/recruiter-role-map.html",
     "resume_it": "https://matthew.mccluster.org/resume-it-support.html",
     "services": "https://matthew.mccluster.org/services.html",
     "music": "https://matthew.mccluster.org/catalogue.html",
@@ -52,7 +62,9 @@
       "data center technician rack and stack Cisco Nexus Connecticut",
       "infrastructure technician Windows Server Red Hat CentOS Connecticut",
       "computer science student IT support Southern Connecticut State University",
-      "CompTIA ITF+ IT support Connecticut"
+      "CompTIA ITF+ IT support Connecticut",
+      "platform engineer PostgreSQL Cloudflare Workers Connecticut",
+      "fleet telematics GPS installer Georgia"
     ],
     "services": [
       "event photographer Bridgeport CT",
@@ -100,19 +112,55 @@
     "date": "2026-10-03",
     "method": "Claude Code WebSearch tool (a general web search backend), one run per query, no personalization. Search Console was not available to this session.",
     "observations": [
-      { "query": "\"Matthew McCluster\"", "result": "No matthew.mccluster.org result. The page was filled by Dexter McCluster (NFL) coverage." },
-      { "query": "site:matthew.mccluster.org", "result": "No results returned by this backend." },
-      { "query": "matthew.mccluster.org Matthew McCluster creative director photographer", "result": "The home page (I AM HERE) was returned: the domain is indexed by at least this backend." },
-      { "query": "Matthew McCluster Equity Uprise Bridgeport", "result": "No relevant results." },
-      { "query": "\"McCluster Corp\" Connecticut", "result": "No relevant results." },
-      { "query": "\"Equity Uprise\" Bridgeport fellowship", "result": "No relevant results; other Bridgeport fellowships ranked." },
-      { "query": "\"I AM HERE\" album Matthew McCluster", "result": "No relevant results; other artists' albums of the same name ranked." },
-      { "query": "Docket 516R Connecticut Siting Council United Illuminating monopoles", "result": "CT Senate Republicans, City of Bridgeport, CT Mirror and Siting Council PDFs ranked. No plain-English explainer in the results." }
+      {
+        "query": "\"Matthew McCluster\"",
+        "result": "No matthew.mccluster.org result. The page was filled by Dexter McCluster (NFL) coverage."
+      },
+      {
+        "query": "site:matthew.mccluster.org",
+        "result": "No results returned by this backend."
+      },
+      {
+        "query": "matthew.mccluster.org Matthew McCluster creative director photographer",
+        "result": "The home page (I AM HERE) was returned: the domain is indexed by at least this backend."
+      },
+      {
+        "query": "Matthew McCluster Equity Uprise Bridgeport",
+        "result": "No relevant results."
+      },
+      {
+        "query": "\"McCluster Corp\" Connecticut",
+        "result": "No relevant results."
+      },
+      {
+        "query": "\"Equity Uprise\" Bridgeport fellowship",
+        "result": "No relevant results; other Bridgeport fellowships ranked."
+      },
+      {
+        "query": "\"I AM HERE\" album Matthew McCluster",
+        "result": "No relevant results; other artists' albums of the same name ranked."
+      },
+      {
+        "query": "Docket 516R Connecticut Siting Council United Illuminating monopoles",
+        "result": "CT Senate Republicans, City of Bridgeport, CT Mirror and Siting Council PDFs ranked. No plain-English explainer in the results."
+      }
     ],
     "external_profiles": [
-      { "profile": "ORCID 0009-0000-8988-8955", "checked": "2026-10-02 via the public API", "result": "Name correct. No biography, no website link, no employment, no keywords. One work listed (the McCluster Corp citation)." },
-      { "profile": "YouTube @McClusterishere", "checked": "2026-10-02", "result": "Channel title 'McCluster'. Description and links could not be read without a consent page." },
-      { "profile": "LinkedIn, Instagram, TikTok, Muso.AI, ISNI, GitHub", "checked": "2026-10-02", "result": "Not readable by an automated request (login walls or bot challenges). Check by hand." }
+      {
+        "profile": "ORCID 0009-0000-8988-8955",
+        "checked": "2026-10-02 via the public API",
+        "result": "Name correct. No biography, no website link, no employment, no keywords. One work listed (the McCluster Corp citation)."
+      },
+      {
+        "profile": "YouTube @McClusterishere",
+        "checked": "2026-10-02",
+        "result": "Channel title 'McCluster'. Description and links could not be read without a consent page."
+      },
+      {
+        "profile": "LinkedIn, Instagram, TikTok, Muso.AI, ISNI, GitHub",
+        "checked": "2026-10-02",
+        "result": "Not readable by an automated request (login walls or bot challenges). Check by hand."
+      }
     ]
   }
 }

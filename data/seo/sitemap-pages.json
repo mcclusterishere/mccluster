@@ -1,0 +1,135 @@
+{
+  "schema_version": "mccluster-sitemap/v2",
+  "note": "Explicit indexable-page allowlist, in reading order. tools/build-sitemap.mjs refuses any page here that is noindex, lacks a self-referencing canonical, or is missing, and refuses an indexable walls/ page that is not listed. lastmod is not stored here: it is each page's last commit date, written at deploy. Admin, account, onboarding and noindex surfaces do not belong here.",
+  "pages": [
+    {
+      "url": "https://matthew.mccluster.org/"
+    },
+    {
+      "url": "https://matthew.mccluster.org/album.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/listen.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/portfolio.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/catalogue.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/license.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/sites.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/sites-details.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/gallery.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/prayer-closet.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/closet/sent.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/inner-room.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/policy.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/policy-memo-dna.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/docket-516.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/action/"
+    },
+    {
+      "url": "https://matthew.mccluster.org/case-designer-kicks.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/matthew-mccluster.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/resume-it-support.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/heal-the-3rd-world.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/end-racism.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/whip.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/press.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/card.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/hire.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/films.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/shots.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/eu-rally.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/cover-art.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/brunch-and-beats.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/candler-crossing.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/dressed-for-success.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/walls/vaunt-runway.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/privacy.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/newsroom.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/services.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/ipc-infrastructure.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/it-support-systems.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/data-center-networking.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/field-technology-telematics.html"
+    },
+    {
+      "url": "https://matthew.mccluster.org/engineering/recruiter-role-map.html"
+    }
+  ]
+}

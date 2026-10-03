@@ -1,0 +1,510 @@
+{
+  "schema_version": "mccluster-seo-entity/v2",
+  "updated_at": "2026-10-03",
+  "canonical_url": "https://matthew.mccluster.org/matthew-mccluster.html",
+  "person": {
+    "@type": "Person",
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+    "name": "Matthew McCluster",
+    "givenName": "Matthew",
+    "additionalName": "Christian Perry",
+    "familyName": "McCluster",
+    "alternateName": [
+      "McCluster",
+      "Matthew Christian Perry McCluster"
+    ],
+    "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://matthew.mccluster.org/assets/img/og-card.jpg",
+      "width": 1200,
+      "height": 630,
+      "caption": "Matthew McCluster"
+    },
+    "jobTitle": [
+      "Founder / Digital Systems Operator",
+      "Platform Builder",
+      "Creative Director"
+    ],
+    "description": "Computer Science student at Southern Connecticut State University and infrastructure, technical-operations and platform professional working across Connecticut and Georgia, with connected-mobility and creative work.",
+    "disambiguatingDescription": "Bridgeport, Connecticut-born technology, infrastructure and creative professional; founder of McCluster Corp, creator of Equity Uprise and PRIM3, and founder of Whip Equipped LLC. Identified by ORCID 0009-0000-8988-8955 and ISNI 0000 0005 2956 3111. Not the professional athlete or comedian with a similar surname.",
+    "birthPlace": {
+      "@type": "Place",
+      "name": "Bridgeport, Connecticut, United States"
+    },
+    "workLocation": [
+      {
+        "@type": "Place",
+        "name": "Connecticut, United States"
+      },
+      {
+        "@type": "Place",
+        "name": "Georgia, United States"
+      }
+    ],
+    "worksFor": {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
+    },
+    "affiliation": [
+      {
+        "@id": "https://matthew.mccluster.org/#southern-connecticut-state-university"
+      }
+    ],
+    "alumniOf": [
+      {
+        "@type": "CollegeOrUniversity",
+        "name": "CT State Community College, Housatonic",
+        "alternateName": "Housatonic Community College"
+      },
+      {
+        "@type": "EducationalOrganization",
+        "name": "New Haven Job Corps Center"
+      },
+      {
+        "@type": "Organization",
+        "name": "Urban Leadership Fellowship"
+      }
+    ],
+    "owns": [
+      {
+        "@id": "https://matthew.mccluster.org/whip.html#whip-equipped"
+      }
+    ],
+    "skills": [
+      "Data-center buildout and structured cabling",
+      "Cisco networking and DHCP",
+      "Windows Server and Linux systems",
+      "Desktop and end-user IT support",
+      "Microsoft 365 and Active Directory",
+      "PostgreSQL and row-level security",
+      "Serverless REST APIs and CI/release operations",
+      "GNSS and fleet telematics",
+      "Automotive electrical and embedded diagnostics",
+      "ADAS, cameras and sensor calibration",
+      "HTML, CSS and JavaScript",
+      "Technical documentation and evidence organization",
+      "Creative direction, photography and media production"
+    ],
+    "knowsAbout": [
+      "Information technology infrastructure",
+      "Data centers",
+      "Network engineering",
+      "Technical operations",
+      "Platform engineering",
+      "Connected mobility",
+      "Fleet telematics",
+      "Embedded systems",
+      "Civic technology",
+      "Public policy research",
+      "Creative direction",
+      "Photography",
+      "Media production",
+      "Music production",
+      "Songwriting"
+    ],
+    "hasOccupation": [
+      {
+        "@type": "Occupation",
+        "name": "Infrastructure Engineer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1231.00",
+          "name": "Computer Network Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Rack buildout, structured cabling (CAT6, multi-mode and single-mode fiber), PDUs and environmental monitoring, Cisco Nexus 9000 and 4500-series switching, DHCP scope configuration, Dell, Oracle and Sun server installation, Windows Server, Red Hat Enterprise Linux, CentOS, PERC RAID, DoD-standard data destruction"
+      },
+      {
+        "@type": "Occupation",
+        "name": "IT Support Specialist",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1232.00",
+          "name": "Computer User Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Endpoint and desktop support, Windows and macOS, Microsoft 365, Active Directory, device imaging and deployment, hardware swaps, printers, VPN, ticketing and escalation, user training"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Technical Operations Specialist"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Digital Systems Operator"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Platform Engineer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1252.00",
+          "name": "Software Developers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "PostgreSQL schema design and row-level security, serverless REST APIs on Cloudflare Workers, Supabase Edge Functions, Linux services under systemd, GitHub Actions CI with staged deploys and rollback, JavaScript, SQL"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Automotive Telematics Integrator",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "49-2096.00",
+          "name": "Electronic Equipment Installers and Repairers, Motor Vehicles",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "GPS and fleet-telematics deployment, vehicle power and data integration, electrical and embedded-system diagnostics, ADAS, camera and sensor calibration workflows"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Creative Director",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-1011.00",
+          "name": "Art Directors",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Creative direction, brand and campaign production, video production"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Photographer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-4021.00",
+          "name": "Photographers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Event, portrait, runway and brand photography"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Songwriter",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-2041.00",
+          "name": "Music Directors and Composers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Songwriting, music production, sync licensing"
+      }
+    ],
+    "hasCredential": [
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "CompTIA IT Fundamentals+ (ITF+)",
+        "credentialCategory": "certification",
+        "dateCreated": "2022-12-01",
+        "url": "https://matthew.mccluster.org/assets/credentials/comptia-itf-plus.pdf"
+      },
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "IT Bootcamp Certificate, CT State Community College (Housatonic)",
+        "credentialCategory": "certificate",
+        "dateCreated": "2023-09-20",
+        "url": "https://matthew.mccluster.org/assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+      }
+    ],
+    "award": [
+      "Connecticut General Assembly Official Citation to Matthew Christian Perry McCluster (October 5, 2025)",
+      "State of Georgia Proclamation, signed October 27, 2025, designating Georgia Youth Innovation & Civic Leadership Week for December 12-18, 2025",
+      "City of Bridgeport Proclamation: Equity Uprise Human Rights Day (December 10, 2025)"
+    ],
+    "identifier": [
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISNI",
+        "value": "0000 0005 2956 3111",
+        "url": "https://isni.org/isni/0000000529563111"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ORCID",
+        "value": "0009-0000-8988-8955",
+        "url": "https://orcid.org/0009-0000-8988-8955"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "SSRN",
+        "value": "9761733"
+      }
+    ],
+    "sameAs": [
+      "https://github.com/mcclusterishere",
+      "https://orcid.org/0009-0000-8988-8955",
+      "https://isni.org/isni/0000000529563111",
+      "https://www.linkedin.com/in/matthew-mccluster-863048248",
+      "https://credits.muso.ai/profile/c1d1f2fa-1ba4-42d5-a430-20b2c2e77db7",
+      "https://instagram.com/McClusterishere",
+      "https://youtube.com/@McClusterishere",
+      "https://tiktok.com/@McClusterishere"
+    ],
+    "subjectOf": [
+      {
+        "@type": "CreativeWork",
+        "name": "Connecticut General Assembly Official Citation",
+        "url": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "Georgia Youth Innovation & Civic Leadership Week Proclamation",
+        "url": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "Equity Uprise Human Rights Day Proclamation",
+        "url": "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+      }
+    ],
+    "mainEntityOfPage": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "email": "mailto:matthew@mccluster.org"
+  },
+  "organization": {
+    "@type": "Organization",
+    "@id": "https://matthew.mccluster.org/#mccluster-corp",
+    "name": "McCluster Corp",
+    "legalName": "McCluster Corp",
+    "url": "https://matthew.mccluster.org/",
+    "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
+    "founder": {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    "foundingDate": "2025",
+    "description": "Technology, education, civic, media and creative operating organization founded by Matthew McCluster.",
+    "subOrganization": [
+      {
+        "@id": "https://matthew.mccluster.org/#equity-uprise"
+      },
+      {
+        "@id": "https://matthew.mccluster.org/prim3.html#prim3"
+      }
+    ],
+    "owns": [
+      {
+        "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network"
+      },
+      {
+        "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#mccluster-platform"
+      }
+    ],
+    "identifier": [
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISNI",
+        "value": "0000 0005 2872 7276"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "CT public-charity registration certificate",
+        "value": "CHR.0069693",
+        "description": "Certificate issued October 28, 2025; current renewal status is not asserted."
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISRC Prefix",
+        "value": "QT6KV"
+      }
+    ],
+    "sameAs": [
+      "https://isni.org/isni/0000000528727276"
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Bridgeport",
+      "addressRegion": "CT",
+      "addressCountry": "US"
+    }
+  },
+  "education": {
+    "scsu": {
+      "@type": "CollegeOrUniversity",
+      "@id": "https://matthew.mccluster.org/#southern-connecticut-state-university",
+      "name": "Southern Connecticut State University",
+      "url": "https://www.southernct.edu/",
+      "alternateName": "SCSU",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New Haven",
+        "addressRegion": "CT",
+        "addressCountry": "US"
+      }
+    }
+  },
+  "organizations": {
+    "whip_equipped": {
+      "@type": "Organization",
+      "@id": "https://matthew.mccluster.org/whip.html#whip-equipped",
+      "name": "Whip Equipped",
+      "legalName": "Whip Equipped LLC",
+      "alternateName": [
+        "WE"
+      ],
+      "url": "https://matthew.mccluster.org/whip.html",
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "foundingDate": "2024",
+      "description": "Connected-mobility and vehicle-development venture spanning fleet telematics, vehicle systems and an in-development urban motorcycle platform."
+    }
+  },
+  "projects": {
+    "equity_uprise": {
+      "@type": "Project",
+      "@id": "https://matthew.mccluster.org/#equity-uprise",
+      "name": "Equity Uprise",
+      "alternateName": [
+        "Equity Rise"
+      ],
+      "parentOrganization": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "description": "McCluster Corp public-interest project combining policy research, civic education, community action, culture and media.",
+      "subjectOf": [
+        {
+          "@id": "https://matthew.mccluster.org/newsroom.html#bridgeport-human-rights-day-2025"
+        },
+        {
+          "@id": "https://matthew.mccluster.org/docket-516.html#explainer"
+        }
+      ],
+      "url": "https://matthew.mccluster.org/docket-516.html"
+    },
+    "prim3": {
+      "@type": "Project",
+      "@id": "https://matthew.mccluster.org/prim3.html#prim3",
+      "name": "PRIM3",
+      "url": "https://matthew.mccluster.org/prim3.html",
+      "parentOrganization": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "description": "Free technology and cybersecurity learning project using the PRIM Method: Principles, Rhythm, Immersion and Missions."
+    },
+    "heal_the_3rd_world": {
+      "@type": "Project",
+      "@id": "https://matthew.mccluster.org/heal-the-3rd-world.html#heal-the-3rd-world",
+      "name": "Heal the 3rd World",
+      "url": "https://matthew.mccluster.org/heal-the-3rd-world.html",
+      "parentOrganization": {
+        "@id": "https://matthew.mccluster.org/#equity-uprise"
+      },
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in the Uprise Action Network."
+    }
+  },
+  "software": {
+    "action_network": {
+      "@type": "SoftwareApplication",
+      "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
+      "name": "Uprise Action Network",
+      "alternateName": [
+        "Action Network"
+      ],
+      "url": "https://matthew.mccluster.org/mnet.html",
+      "creator": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "about": {
+        "@id": "https://matthew.mccluster.org/#equity-uprise"
+      },
+      "applicationCategory": "SocialNetworkingApplication",
+      "operatingSystem": "Web",
+      "description": "Action-first social and campaign network organized around missions, proof of action, groups, messaging and campaign participation."
+    },
+    "mccluster_platform": {
+      "@type": "SoftwareSourceCode",
+      "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#mccluster-platform",
+      "name": "McCluster Platform",
+      "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "creator": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "codeRepository": "https://github.com/mcclusterishere/mccluster",
+      "programmingLanguage": [
+        "JavaScript",
+        "TypeScript",
+        "SQL",
+        "Python",
+        "HTML",
+        "CSS"
+      ],
+      "description": "Production platform behind McCluster Corp: PostgreSQL on Supabase with row-level security, an API on Cloudflare Workers, Linux services under systemd, Stripe payments, first-party analytics, and GitHub Actions releases that verify the live commit and roll back on failure. Matthew McCluster sets the architecture and operates production; coding agents contribute implementation under written rules.",
+      "maintainer": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      }
+    }
+  },
+  "creative_works": {
+    "i_am_here": {
+      "@type": "MusicAlbum",
+      "@id": "https://matthew.mccluster.org/#album",
+      "name": "I AM HERE",
+      "url": "https://matthew.mccluster.org/album.html",
+      "byArtist": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "numTracks": 6
+    },
+    "sjw": {
+      "@type": "MusicRecording",
+      "@id": "https://matthew.mccluster.org/matthew-mccluster.html#sjw",
+      "name": "SJW",
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": "A$hon Voyage"
+      },
+      "producer": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "url": "https://soundcloud.com/ashon_voyage/sjw-prod-matthew-mccluster"
+    }
+  },
+  "identity_resolution": {
+    "emit_to_schema": false,
+    "canonical_name": "Matthew McCluster",
+    "canonical_person_id": "https://matthew.mccluster.org/#matthew-mccluster",
+    "policy": "Only externally verified profile pages for this person belong in sameAs. Credits, mentions, projects and similarly named profiles must use other relationships or remain unresolved.",
+    "owner_actions": [
+      "Consolidate duplicate LinkedIn profiles before changing sameAs.",
+      "Add the canonical profile URL back to ORCID, LinkedIn and other editable external profiles.",
+      "Keep Matthew McCluster as the public display-name string across controlled profiles."
+    ]
+  }
+}

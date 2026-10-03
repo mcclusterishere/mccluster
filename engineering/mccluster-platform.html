@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>The McCluster Platform: PostgreSQL, Cloudflare Workers, Linux &amp; Release Engineering · Matthew McCluster</title>
+  <title>Platform, Backend &amp; Technical Operations: The McCluster Platform · Matthew McCluster</title>
   <meta name="description" content="Case study: the platform Matthew McCluster designed and operates for McCluster Corp since 2025. PostgreSQL with row-level security on Supabase, Cloudflare Workers, Linux services under systemd, Stripe, and deploys that verify and roll back themselves. Public source.">
   <meta name="author" content="Matthew McCluster">
   <link rel="canonical" href="https://matthew.mccluster.org/engineering/mccluster-platform.html">
@@ -27,55 +27,98 @@
   <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Article",
-        "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#article",
-        "headline": "The McCluster platform: PostgreSQL, Cloudflare Workers, Linux and release engineering",
-        "description": "How the platform behind McCluster Corp is built and run: the database and its access rules, the API on Cloudflare Workers, the Linux services, payments, and a deploy pipeline that verifies itself and rolls back on failure.",
-        "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
-        "mainEntityOfPage": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
-        "datePublished": "2026-10-02",
-        "dateModified": "2026-10-02",
-        "inLanguage": "en-US",
-        "image": { "@type": "ImageObject", "url": "https://matthew.mccluster.org/assets/img/og-card.jpg", "width": 1200, "height": 630 },
-        "author": { "@type": "Person", "@id": "https://matthew.mccluster.org/#matthew-mccluster", "name": "Matthew McCluster", "url": "https://matthew.mccluster.org/matthew-mccluster.html" },
-        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
-        "isPartOf": { "@id": "https://matthew.mccluster.org/#website" },
-        "about": [
-          { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-          { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
-          { "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#source" }
-        ],
-        "keywords": ["PostgreSQL", "row-level security", "Supabase", "Cloudflare Workers", "Durable Objects", "REST API", "Stripe", "systemd", "Linux", "GitHub Actions", "CI/CD", "rollback", "Playwright"]
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "headline": "The McCluster platform: PostgreSQL, Cloudflare Workers, Linux and release engineering",
+      "description": "How the platform behind McCluster Corp is built and run: the database and its access rules, the API on Cloudflare Workers, the Linux services, payments, and a deploy pipeline that verifies itself and rolls back on failure. Architecture and operations are Matthew McCluster's; coding agents contribute implementation.",
+      "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "mainEntityOfPage": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+      "datePublished": "2026-10-02",
+      "dateModified": "2026-10-03",
+      "inLanguage": "en-US",
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://matthew.mccluster.org/assets/img/og-card.jpg",
+        "width": 1200,
+        "height": 630
       },
-      {
-        "@type": "SoftwareSourceCode",
-        "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#source",
-        "name": "mcclusterishere/mccluster",
-        "description": "Source for the McCluster control plane: the public site, the Cloudflare Worker API, Supabase migrations and Edge Functions, the Linux Core runner, and CI.",
-        "codeRepository": "https://github.com/mcclusterishere/mccluster",
-        "programmingLanguage": ["JavaScript", "TypeScript", "SQL", "Python", "HTML", "CSS"],
-        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "maintainer": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }
+      "author": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Matthew McCluster", "item": "https://matthew.mccluster.org/matthew-mccluster.html" },
-          { "@type": "ListItem", "position": 2, "name": "IT & engineering", "item": "https://matthew.mccluster.org/engineering/" },
-          { "@type": "ListItem", "position": 3, "name": "The McCluster platform", "item": "https://matthew.mccluster.org/engineering/mccluster-platform.html" }
-        ]
-      }
-    ]
-  }
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "isPartOf": {
+        "@id": "https://matthew.mccluster.org/#website"
+      },
+      "about": [
+        {
+          "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#mccluster-platform"
+        },
+        {
+          "@type": "Occupation",
+          "name": "Platform and Backend Engineer",
+          "skills": "PostgreSQL, row-level security, serverless REST APIs, Cloudflare Workers, Linux services (systemd), CI, release validation and rollback, version-aware production operations, JavaScript, SQL"
+        }
+      ],
+      "mentions": [
+        {
+          "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+        },
+        {
+          "@id": "https://matthew.mccluster.org/#mccluster-corp"
+        }
+      ],
+      "keywords": [
+        "PostgreSQL",
+        "row-level security",
+        "Supabase",
+        "Cloudflare Workers",
+        "Durable Objects",
+        "REST API",
+        "Stripe",
+        "systemd",
+        "Linux",
+        "GitHub Actions",
+        "CI/CD",
+        "rollback",
+        "Playwright"
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Matthew McCluster",
+          "item": "https://matthew.mccluster.org/matthew-mccluster.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "IT & engineering",
+          "item": "https://matthew.mccluster.org/engineering/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "The McCluster platform",
+          "item": "https://matthew.mccluster.org/engineering/mccluster-platform.html"
+        }
+      ]
+    }
+  ]
+}
   </script>
 
   <link rel="preload" href="/assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="/css/record.css?v=__STAMP__">
+  <link rel="stylesheet" href="/css/authority.css?v=__STAMP__">
   <script src="/js/theme.js?v=__STAMP__"></script>
   <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
   <meta name="mcc-privacy-notice" content="banner">
@@ -121,7 +164,7 @@
           <tr><th scope="row">Database</th><td>PostgreSQL on Supabase: more than 200 SQL migrations and more than 100 row-level security policies</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/supabase/migrations">supabase/migrations</a></td></tr>
           <tr><th scope="row">Server-side functions</th><td>More than 50 Deno Edge Functions for the jobs that hold a secret: checkout, payouts, the analytics collector, integrations</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/supabase/functions">supabase/functions</a></td></tr>
           <tr><th scope="row">Persistent execution</th><td>A Linux server running the Core job runner, a tool broker and scheduled jobs as systemd services and timers</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/core">core</a></td></tr>
-          <tr><th scope="row">CI/CD</th><td>About twenty GitHub Actions workflows and more than 100 test files</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/.github/workflows">.github/workflows</a></td></tr>
+          <tr><th scope="row">CI/CD</th><td>More than twenty GitHub Actions workflows and more than 100 test files</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/.github/workflows">.github/workflows</a></td></tr>
         </tbody>
       </table>
     </div>
@@ -193,10 +236,17 @@
       <li><b>Working with AI agents:</b> written architecture rules and CI contracts that keep agent-written code inside them.</li>
     </ul>
 
+    <h2 id="role-fit">Role fit</h2>
+    <p>The titles this work is evidence for: <b>Platform and Backend Engineer</b>, Backend Developer, PostgreSQL
+      Developer, REST API Developer, Systems Operations Specialist and Technical Operations Specialist. These are
+      role-fit terms for search and applicant tracking, not job titles he has held. The
+      <a href="/engineering/recruiter-role-map.html">role and evidence map</a> lists every title with the evidence
+      behind it.</p>
+
     <h2 id="related">Related</h2>
     <ul class="facts">
       <li><a href="/engineering/">IT, infrastructure &amp; platform engineering</a>: roles and skills, with sources.</li>
-      <li><a href="/engineering/ipc-data-center.html">Data-center buildout at IPC Systems</a>, 2021 to 2023.</li>
+      <li><a href="/engineering/ipc-infrastructure.html">Data-center buildout at IPC Systems</a>, 2021 to 2023.</li>
       <li><a href="/services.html">Services</a>: websites and hosting built on this platform.</li>
     </ul>
 

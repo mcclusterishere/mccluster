@@ -5,9 +5,11 @@ complete, verifiable, connected, machine-readable and hard to misunderstand:
 for Google (including AI Overviews and AI Mode), Bing and Copilot, ChatGPT
 search and other retrieval systems, recruiters, clients and browser agents.
 
-Written 2026-10-03. It supersedes the sitemap and Person-entity sections of
-[`docs/seo-matthew-mccluster.md`](seo-matthew-mccluster.md), which stays as
-history and for its still-correct analysis of which name queries are winnable.
+Written 2026-10-03, after reconciling with the Stage 1/2A/2B authority work
+(#311 canonical identity v2, #312 the four recruiter lanes, #313 the
+recruiter evidence ledger and role map). It supersedes the sitemap and
+Person-entity sections of [`docs/seo-matthew-mccluster.md`](seo-matthew-mccluster.md),
+which stays as history and for its analysis of which name queries are winnable.
 
 **Nothing here promises a ranking.** It does the things that are technically
 and editorially defensible and that raise the odds of being found, cited and
@@ -20,16 +22,17 @@ the evidence does not support is a liability in every one of those systems.
 
 | You want to... | Do this |
 | --- | --- |
-| Change a fact about Matthew (title, sameAs, award, education) | Edit `data/entity-graph.json`, then `node tools/seo/build-entity-jsonld.mjs` |
-| Change a price | Edit `data/offers.json`, then `node tools/seo/build-offer-jsonld.mjs` |
-| Add or fix a track | Edit `data/catalogue.json` / `data/albums.json`, then `node tools/seo/build-catalogue.mjs` |
-| Publish a dated milestone | Add an entry to `docs/seo/evidence-ledger.json` with evidence, mark it `verified` + `publish`, then `node tools/seo/build-newsroom.mjs` |
-| Add a page to search | Add it to `PAGES` in `tools/seo/build-sitemaps.mjs`, then run it |
-| Edit the résumé page | Then `node tools/build-resume.mjs` (PDF, IT PDF and DOCX) and `python3 scripts/resume-docx.py resume-it-support.html assets/resume/matthew-mccluster-resume-it-support.docx` |
-| Check everything | `node --test scripts/test/seo-contract.test.mjs` and `python3 tools/verify-llms.py` |
+| Change a fact about Matthew (title, sameAs, award, education, a project) | Edit `data/seo/entity-graph.json`, then `node tools/build-profile-entity.mjs` |
+| Change a price | Edit `data/offers.json`, then `node tools/build-hire-schema.mjs` |
+| Add or fix a track | Edit `data/catalogue.json` / `data/albums.json`, then `node tools/build-catalogue.mjs` |
+| Publish a dated milestone | Add an item to `data/seo/evidence-ledger.json` with evidence and today's `published` date; a person verifies it; set `publish: true`; then `node tools/build-newsroom.mjs` |
+| Change a recruiter lane or role title | Edit `data/seo/recruiter-evidence.json`, then `node tools/build-recruiter-role-map.mjs` |
+| Add a page to search | Add its URL to `data/seo/sitemap-pages.json`, then `node tools/build-sitemap.mjs` |
+| Edit the résumé page | `node tools/build-resume.mjs` (PDF, DOCX, stamp); for the IT résumé `node tools/build-it-resume.mjs`; check with `tools/verify-resume.mjs` / `tools/verify-it-resume.mjs` |
+| Check everything | `node --test scripts/test/seo-authority.test.mjs scripts/test/seo-contract.test.mjs` (runs every generator's `--check` and `tools/verify-llms.py`) |
 
-CI runs both on every pull request that touches pages, data, the sitemaps or
-these tools (`.github/workflows/seo-contract.yml`).
+CI runs both on every pull request, inside the repository's existing test
+step (`node --test scripts/test/*.test.mjs` in `mcp-continuity-ci.yml`).
 
 ---
 
@@ -80,21 +83,30 @@ page does not show, backdating.
 
 ## 2. Architecture
 
+One pattern everywhere: **source data → generator → committed output → verifier → CI.**
+
 ```
-data/entity-graph.json ──► tools/seo/build-entity-jsonld.mjs ──► matthew-mccluster.html (ProfilePage + full graph)
-data/offers.json       ──► tools/seo/build-offer-jsonld.mjs  ──► hire.html (Service + Offer, approved prices only)
-data/catalogue.json  ┐
-data/albums.json     ┴──► tools/seo/build-catalogue.mjs      ──► catalogue.html (static registry + MusicAlbum/MusicRecording)
-docs/seo/evidence-ledger.json ► tools/seo/build-newsroom.mjs ──► newsroom.html + feed.xml (verified entries only)
-data/gallery.json      ──► tools/build-walls.mjs             ──► walls/*.html (photo pages)
-pages + git history    ──► tools/seo/build-sitemaps.mjs      ──► sitemap.xml (+ images) + sitemap-video.xml
-deploy (main)          ──► deploy-pages.yml re-dates the sitemap from git, then ships
-deploy succeeded       ──► indexnow.yml pings only the public pages that changed
-pull request           ──► seo-contract.yml: scripts/test/seo-contract.test.mjs + tools/verify-llms.py
+data/seo/entity-graph.json      ─► tools/build-profile-entity.mjs     ─► matthew-mccluster.html (ProfilePage + the full graph)
+data/offers.json                ─► tools/build-hire-schema.mjs        ─► hire.html (Service ×4 + Offers, approved prices only)
+data/catalogue.json + albums    ─► tools/build-catalogue.mjs          ─► catalogue.html (static registry + MusicAlbum/MusicRecording)
+data/seo/evidence-ledger.json   ─► tools/build-newsroom.mjs           ─► newsroom.html + feed.xml (verified + publish only)
+data/seo/recruiter-evidence.json─► tools/build-recruiter-role-map.mjs ─► engineering/recruiter-role-map.html
+data/gallery.json               ─► tools/build-walls.mjs              ─► walls/*.html (photo pages)
+data/seo/sitemap-pages.json     ─► tools/build-sitemap.mjs            ─► sitemap.xml (+ images) + sitemap-video.xml
+resume pages                    ─► tools/build-resume.mjs / build-it-resume.mjs ─► PDF + DOCX + visible-text stamp
+deploy (main)                   ─► deploy-pages.yml dates the sitemap from git history, then ships
+deploy succeeded                ─► indexnow.yml pings only the public pages that changed (tools/indexnow-changed.mjs)
+pull request                    ─► scripts/test/seo-authority.test.mjs + seo-contract.test.mjs (+ verify-llms)
 ```
 
-Every generator has `--check`; the contract test runs them all, so a hand
-edit inside a generated block, or a data change without a rebuild, fails CI.
+Every generator has `--check`; the tests run them all, so a hand edit inside
+a generated block, or a data change without a rebuild, fails CI.
+`data/` is published with the site, so it holds only public-safe facts.
+Internal review notes (unverified claims, owner actions, discrepancies) live
+in `docs/seo/evidence-review.json`; `docs/` is stripped from the deploy.
+
+The evidence pages share one stylesheet, `css/authority.css`: `auth__*`
+cards for routing pages and the `rec__*` long-form coat for documents.
 
 ### 2.1 The privacy notice on public document pages
 
@@ -115,72 +127,74 @@ Mnet, the desks, players) keeps the gate. The banner never prints.
 
 ## 3. The entity graph
 
-One definition, stable `@id`s, referenced everywhere else.
+One definition, in `data/seo/entity-graph.json`, emitted once on the
+profile; stable `@id`s referenced everywhere else.
 
 | Entity | @id | Type | Home |
 | --- | --- | --- | --- |
 | Matthew McCluster | `https://matthew.mccluster.org/#matthew-mccluster` | Person | `matthew-mccluster.html` |
-| The profile page | `https://matthew.mccluster.org/matthew-mccluster.html` | ProfilePage | itself |
-| The website | `https://matthew.mccluster.org/#website` | WebSite (name "Matthew McCluster") | home + profile |
-| McCluster Corp | `https://matthew.mccluster.org/#mccluster-corp` | Organization | profile, home |
-| Equity Uprise | `https://matthew.mccluster.org/#equity-uprise` | Project (sub-organization of McCluster Corp) | `docket-516.html` |
-| Whip Equipped LLC | `https://matthew.mccluster.org/#whip-equipped` | Organization | `whip.html` |
-| Uprise Action Network | `https://matthew.mccluster.org/#action-network` | WebApplication | `action/` |
-| I AM HERE | `https://matthew.mccluster.org/#album` | MusicAlbum | home, catalogue |
-| Each recording | `https://matthew.mccluster.org/catalogue.html#<slug>` | MusicRecording | catalogue |
-| Each service | `https://matthew.mccluster.org/hire.html#<offer-id>` | Service | hire |
+| The profile page | `…/matthew-mccluster.html#profile-page` | ProfilePage (the canonical one) | itself |
+| The website | `…/#website` | WebSite (name "Matthew McCluster") | home |
+| McCluster Corp | `…/#mccluster-corp` | Organization (Bridgeport, CT) | profile, home |
+| Equity Uprise | `…/#equity-uprise` | Project of McCluster Corp; url `docket-516.html` | `docket-516.html` |
+| PRIM3 | `…/prim3.html#prim3` | Project | `prim3.html` |
+| Whip Equipped LLC | `…/whip.html#whip-equipped` | Organization, owned by the Person | `whip.html` |
+| Uprise Action Network | `…/mnet.html#uprise-action-network` | SoftwareApplication | `mnet.html` |
+| McCluster Platform | `…/engineering/mccluster-platform.html#mccluster-platform` | SoftwareSourceCode | platform page |
+| Southern Connecticut State University | `…/#southern-connecticut-state-university` | CollegeOrUniversity | profile |
+| I AM HERE | `…/#album` | MusicAlbum | home, catalogue |
+| Each recording | `…/catalogue.html#<slug>` | MusicRecording | catalogue |
+| Each service | `…/hire.html#<offer-id>` | Service | hire |
 
-Relationships: Person `worksFor` McCluster Corp; `affiliation` Equity
-Uprise, Whip Equipped, **Southern Connecticut State University (current
-student, computer science)**; McCluster Corp `founder` Person and
-`subOrganization` Equity Uprise; Equity Uprise `parentOrganization` McCluster
-Corp; the Action Network `publisher` McCluster Corp; albums `byArtist`
-Person where the site says so; recordings `inAlbum` their album; services
-`provider` Person and `brand` McCluster Corp.
+Relationships: Person `worksFor` McCluster Corp, `owns` Whip Equipped,
+`affiliation` **Southern Connecticut State University (current first-year
+student, computer science; never `alumniOf`)**; McCluster Corp `founder`
+Person, `subOrganization` Equity Uprise and PRIM3, `owns` the Action Network
+and the platform. Occupations carry O*NET-SOC codes so a recruiter's system
+can match them; the names are the ones #311 set. Credentials are only the
+two with public documents (CompTIA ITF+, the CT State IT Bootcamp).
 
-**sameAs** lists only profiles of this person: ORCID, ISNI, LinkedIn,
-Muso.AI, GitHub, Instagram, YouTube, TikTok. The rendered `rel="me"` links
-on the profile must match it exactly (the contract test checks). Credits
-(the SoundCloud production credit) are modelled as `MusicRecording.producer`,
-never as sameAs. McCluster Corp's sameAs is its ISNI only; the personal
-social accounts are the Person's, not the company's.
+**sameAs** lists only profiles of this person: GitHub, ORCID, ISNI, LinkedIn
+(the one resolved profile), Muso.AI, Instagram, YouTube, TikTok. The
+rendered `rel="me"` links on the profile must match it exactly (tested).
+Credits (the A$hon Voyage production credit) are `MusicRecording.producer`,
+never sameAs. McCluster Corp's sameAs is its ISNI only.
+`identity_resolution` in the graph file records the policy and is never
+emitted.
 
 **Disambiguation:** `disambiguatingDescription` states the distinguishing
-facts (Bridgeport native, McCluster Corp, Equity Uprise, ORCID, ISNI) and
-that he is not the athlete or comedian with a similar surname.
+facts and that he is not the athlete or comedian with a similar surname.
 
-**Deliberately absent:** Apex Kingdom (separate entity and a religious
-affiliation; not presented without the owner asking); an artist credit for
-CIA Mind Control (published under an alias); a degree (none is claimed:
-SCSU is a current enrollment, so `affiliation`, never `alumniOf`).
-
----
+**Deliberately absent:** a degree (none is claimed); a current charity
+status (the certificate's period ended September 30, 2026; only the
+issued-October-2025 fact and the number are stated); Apex Kingdom in the
+graph (its citation is in the press kit as a document, not an entity claim);
+PRIM3 game lore as biography.
 
 ## 4. Schema strategy, by page type
 
 | Page | Types | Notes |
 | --- | --- | --- |
-| Profile | ProfilePage, Person, Organization ×2, Project, WebApplication, WebSite, MusicRecording (credit), BreadcrumbList | generated |
-| Home | WebSite, MusicAlbum, Person (consistent subset), Organization, VideoObject | metadata-only edits; the UI is not touched |
-| Recruiter hub | CollectionPage + ItemList of case studies | |
-| Case studies | Article (author Person @id), SoftwareSourceCode, BreadcrumbList | `citation` = the evidence |
-| Hire | WebPage, Service ×4 with Offers | generated from approved ledger lines only |
+| Profile | ProfilePage, Person, Organizations, Projects, SoftwareApplication, SoftwareSourceCode, CollegeOrUniversity, MusicAlbum/Recording, BreadcrumbList | generated |
+| Home | WebSite, MusicAlbum (tracks → catalogue @ids), Organization, VideoObject | JSON-LD only; the UI is not touched |
+| Recruiter hub | CollectionPage, hasPart the four lanes, ItemList | |
+| Lane pages (IT support, data center, field technology) | ProfilePage about the Person + Occupation | #312; never JobPosting |
+| Platform, IPC | TechArticle (author @id, Occupation, citation = the evidence) | |
+| Role map | generated from the recruiter ledger | |
+| Hire | WebPage, Service ×4 with Offers (hourly as `HUR`, "from" as `minPrice`) | generated, approved lines only |
 | Services | CollectionPage pointing at the hire.html Service @ids | no second price list |
-| Catalogue | CollectionPage, MusicAlbum, MusicRecording (isrcCode, duration) | credits only where stated |
-| Newsroom | CollectionPage + ItemList of DigitalDocument/Event/Report/Article | generated, verified only |
+| Catalogue | MusicAlbum, MusicRecording (isrcCode, duration) | credits only where stated |
+| Newsroom | CollectionPage + ItemList of DigitalDocument/Event/Report | generated, verified only |
 | Docket 516R | Article about the Council docket (sameAs the Council's pages) | |
-| Photo walls | ImageGallery, ImageObject, Event, client Organization | no `organizer` claim; films are not images |
-| Press | AboutPage about Person + Organization | |
-| Résumé (IT), policy, portfolio, card | WebPage / CollectionPage referencing the Person | the profile is the only ProfilePage |
-
----
+| Photo walls | ImageGallery, ImageObject, Event, client Organization | no `organizer` unless the data names one; films are not images |
+| Card, policy, portfolio, résumé (IT) | WebPage / CollectionPage referencing the Person | only the profile claims the canonical ProfilePage @id |
 
 ## 5. URL taxonomy
 
 Indexable (in `sitemap.xml`; each self-canonical and never `noindex`):
 
 - **Identity:** `/matthew-mccluster.html`, `/resume-it-support.html`, `/card.html`, `/press.html`, `/newsroom.html`
-- **Recruiter / IT:** `/engineering/`, `/engineering/ipc-data-center.html`, `/engineering/mccluster-platform.html`
+- **Recruiter / IT:** `/engineering/` (hub), the four lanes `/engineering/it-support-systems.html`, `/engineering/data-center-networking.html`, `/engineering/mccluster-platform.html`, `/engineering/field-technology-telematics.html`, the case study `/engineering/ipc-infrastructure.html`, and `/engineering/recruiter-role-map.html`
 - **Services:** `/services.html`, `/hire.html`, `/sites.html`, `/sites-details.html`, `/case-designer-kicks.html`
 - **Photography and film:** `/gallery.html`, `/walls/*.html`, `/shots.html`, `/films.html`, `/portfolio.html`
 - **Music:** `/`, `/album.html`, `/listen.html`, `/catalogue.html`, `/license.html`
@@ -189,8 +203,8 @@ Indexable (in `sitemap.xml`; each self-canonical and never `noindex`):
 
 Out on purpose: desks and accounts (noindex or disallowed), redirect stubs
 (`tracks/*`, `merch.html`, `walls.html`, ...), the shelved Equity Uprise rooms
-in `_unfinished/` (not published), `management.html` (it says `noindex`; it was
-in the old sitemap anyway, which this fixes).
+in `_unfinished/` (not published), `management.html` (it says `noindex`; the
+#311 allowlist still listed it, and the sitemap generator now refuses it).
 
 No city pages. The service area is two real home bases (Bridgeport, CT and
 Decatur, GA) and travel at cost, stated once on `services.html`.
@@ -199,25 +213,24 @@ Decatur, GA) and travel at cost, stated once on `services.html`.
 
 ## 6. The recruiter cluster
 
-Built only from the résumé and documents: Robert Half desktop/IT support
-(2018 to 2021), IPC Systems data center through PeopleSERVE (2021 to 2023),
-F.R.E.E.D.O.M. Inc. platform support (2021 to 2026), the McCluster platform
-(2025 to present), CompTIA ITF+, the CT State IT Bootcamp certificate, and
-current computer science study at SCSU.
+Four lanes (#312), one evidence ledger (#313), one hub:
 
-`/engineering/` answers, per role title (IT Support Specialist, Desktop
-Support, Field IT, Data Center Technician, Infrastructure Technician, Network
-Support, Systems Technician, Web/Platform Developer): what the experience
-was and where its evidence comes from, graded **Résumé**, **IPC document**,
-or **Source code**. The IPC case study shows the engagement document's scope
-beside what the résumé claims, and shows "Not listed" where they differ.
+| Lane | Page | Strongest evidence |
+| --- | --- | --- |
+| IT support & systems | `it-support-systems.html` | Résumé (Robert Half 2018–2021, F.R.E.E.D.O.M. Inc.), CompTIA ITF+, CT State IT Bootcamp |
+| Data center, networking & infrastructure | `data-center-networking.html` + the IPC case study | IPC's engagement document (primary) |
+| Platform, backend & technical operations | `mccluster-platform.html` | Public source code; architecture and operations are his, coding agents contribute implementation |
+| Field technology, telematics & vehicle systems | `field-technology-telematics.html` | Résumé (Whip Equipped LLC, 2024–present): first-party, labeled as such |
 
-Not targeted, because nothing supports it: telematics/GPS/fleet systems
-(Whip Equipped has a rental operator console, not telematics), automotive
-technology systems, any certification beyond the two, any degree.
+The hub (`/engineering/`) keeps the long-form evidence a recruiter reads:
+skills with where each was used, experience, education, certificates and
+the questions recruiters ask. The role map lists the job titles per lane and
+says plainly that a title is role fit, not a title held. The IPC case study
+shows the document's scope beside the résumé, marks "Not listed" where the
+résumé does not claim a row, quotes the document's own purpose (to help
+staff "identify the many technologies they may have assisted with"), and
+names the role by the document's cover title, Infrastructure Associate.
 `JobPosting` is never used to advertise a candidate.
-
----
 
 ## 7. Commercial services
 
@@ -245,20 +258,21 @@ approved, listed lines only.
 
 ## 9. Evidence and the newsroom
 
-`docs/seo/evidence-ledger.json` holds every dated public claim with its
-evidence, verification status (`verified`, `needs-verification`,
-`owner-statement`) and publication status (`publish`, `hold`,
-`not-for-newsroom`). Only `verified` + `publish` entries render, and the
-contract test enforces it.
+`data/seo/evidence-ledger.json` (public) holds each dated claim: `date`
+(when it happened), `published` (when this site first published it),
+title, summary, `claims`, `evidence` (label + repository path or source
+URL), the entities it is about, `verification_status` and `publish`. Only
+`verified` + `publish` items render; a publish flag on an unverified item
+stops the build. The CT charity certificate, the credentials and the IPC
+document are verified but not newsroom items (`publish: false`, as #311 set).
 
 **Press-release workflow.** Nothing is auto-published. A release describes a
-real event: add the entry with `event_date`, today's `publish_date` (never
-earlier), the factual claims and the evidence URLs; a person opens the
-evidence and sets `verified`; set `publish`; rebuild; open a PR. The newsroom
-shows the event date and, when different, the publication date. An entry
-that cannot be evidenced stays `hold` with an `owner_action`.
-
----
+real event: add the item with its `date`, today's `published` (never
+earlier), the claims and the evidence; a person opens the evidence and sets
+`verified`; set `publish`; rebuild; open a PR. The newsroom shows the event
+date and, when different, the publication date; the feed is dated by
+publication. Claims that cannot be evidenced go to
+`docs/seo/evidence-review.json` with an owner action, and never ship.
 
 ## 10. Indexing workflow
 
@@ -319,17 +333,17 @@ Track monthly:
 
 | Item | What was found | Recommendation |
 | --- | --- | --- |
-| **IPC job title** | The IPC engagement document's cover reads "Infrastructure Associate" (and `data/dossier.json` agrees); both résumé pages say "Infrastructure Engineer" | Confirm the title of record with PeopleSERVE/IPC and align the résumés. Employment checks report the title of record. The new pages avoid naming the title. |
+| **IPC job title** | The IPC engagement document's cover reads "Infrastructure Associate"; both résumé pages and the graph's occupation list say "Infrastructure Engineer" | Confirm the title of record with PeopleSERVE/IPC and align the résumés. Employment checks report the title of record. The IPC case study names the role by the document's title. |
 | **"Instructed new team members"** | The document lists that duty under "Leadership (Kevin)" | Confirm or remove from the résumé. Not repeated on the new pages. |
-| **Microsoft 365 / Active Directory at IPC** | On the IT résumé; not in IPC's document | Confirm. The new pages attribute these skills to Robert Half and F.R.E.E.D.O.M. only. |
-| **CT charity registration** | The certificate on file shows an expiration of 09/30/2026 | Confirm the renewal on elicense.ct.gov and replace the PDF. New copy says "registered in October 2025", never "is registered". |
+| **Microsoft 365 / Active Directory at IPC** | On the IT résumé; not in IPC's document | Confirm. The hub attributes these skills to Robert Half and F.R.E.E.D.O.M. only. |
+| **CT charity registration** | The certificate's period ended September 30, 2026 | Confirm the renewal on elicense.ct.gov and replace the PDF. Until then pages state only that the certificate was issued October 28, 2025; the ledger item stays `publish: false`. |
 | **Georgia base** | Profile says Acworth; booking page says Decatur | Pick one for public pages. |
 | **Privacy banner on document pages** | Changed from a wall to a banner (§2.1); recording behaviour unchanged | Confirm, or remove the meta from any page that should keep the wall. |
 | **"Money or the Power" credit** | `data/catalogue.json` has no credit; the Docket page credits Old Jay ft. Ocho (prod. Pax) | Add the credit to the catalogue data. The graph already credits Old Jay. |
 | **CIA Mind Control credit** | Released under an alias | Decide whether its public artist credit is Matthew McCluster. Until then the graph lists the album with no artist. |
 | **Bridgeport proclamation scan** | Cropped along its right edge | Upload a complete scan. |
 | **Release and upload dates** | I AM HERE has only "2026"; the Vaunt films have no upload date | Supply them; then the album gets an exact `datePublished` and the films can carry VideoObject. |
-| **Equity Uprise group migration** | `supabase/migrations/20261003150000_equity_uprise_group_docket_516r.sql` is written and was executed against the real table definitions locally (twice, idempotent) | Apply it to production the usual way (dry run, then run). Until then the group, campaign and missions linked from `docket-516.html` do not exist. |
+| **Equity Uprise group migration** | `supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql` is written and was executed against the real table definitions locally (twice, idempotent). It sits in `pending_migrations/` because the drift guard admits only migrations recorded in the production ledger | Apply it (rolled-back dry run, then run), move it to `supabase/migrations/` and record it in `supabase/production-ledger.json`. Until then the group, campaign and missions linked from `docket-516.html` do not exist. |
 
 ---
 
@@ -358,7 +372,7 @@ HTML; changing `index.html`'s UI for SEO; a city page.
 **P1 · recruiter and commercial conversion**
 5. LinkedIn and ORCID remediation (§11).
 6. GitHub profile README linking `/engineering/`.
-7. Remove `user-scalable=no` from the remaining 25 published pages where no gesture depends on it (rule 14 in AGENTS.md); they were left alone here because they are interactive UIs.
+7. Remove `user-scalable=no` from the remaining published pages where no gesture depends on it (rule 14 in AGENTS.md); they were left alone here because they are interactive UIs.
 
 **P2 · content, case studies, newsroom**
 8. A web-design case study (Shiloh Baptist Church app, Yohana Robertson's lead site) with before/after and what was built.

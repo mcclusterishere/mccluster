@@ -1,24 +1,26 @@
 #!/usr/bin/env node
 /* THE SITEMAPS, WITH DATES THAT ARE TRUE.
 
-     node tools/seo/build-sitemaps.mjs          # write sitemap.xml + sitemap-video.xml
-     node tools/seo/build-sitemaps.mjs --check  # fail if either drifted
+     node tools/build-sitemap.mjs                # write sitemap.xml + sitemap-video.xml
+     node tools/build-sitemap.mjs --check        # the right pages, images and videos (dates ignored)
+     node tools/build-sitemap.mjs --check-dates  # also every lastmod (needs full git history)
 
-   WHAT GOES IN. The list below is the set of pages meant to be found:
-   each one is checked before it is written. A page that carries
+   WHAT GOES IN. data/seo/sitemap-pages.json is the allowlist, in reading
+   order. Every page is checked before it is written: one that carries
    noindex, has no canonical, or whose canonical names a different URL is
    refused and the build fails, because a URL we tell Google to skip, or
    one that points somewhere else, does not belong in the map we hand it.
-   The photo walls are picked up from walls/ automatically (every wall
-   that is a page, not a redirect stub).
+   An indexable photo wall (walls/*.html that is not a redirect stub) that
+   the allowlist forgot also fails the build.
 
    LASTMOD IS THE FILE'S LAST COMMIT. Google uses lastmod only when it is
-   "consistently and verifiably accurate", so it is never today's date by
-   default: it is the date of the last commit that touched the page, or
-   today only when the page has uncommitted changes (it is being changed
-   today). --check in CI therefore fails when a page changes and the map
-   was not rebuilt, which is the drift worth catching. CI must check out
-   full history (fetch-depth: 0) for the dates to be readable.
+   "consistently and verifiably accurate", so it is never a hand-typed date
+   and never today's date by default: it is the date of the last commit
+   that touched the page, or today only when the page has uncommitted
+   changes (it is being changed today). The deploy workflow rewrites the
+   dates on full history before publishing; --check, which every pull
+   request runs, compares everything except the dates so it does not need
+   history and does not fail merely because a page changed.
 
    No priority, no changefreq: Google ignores both, and a number nobody
    reads is a number nobody keeps true.
@@ -33,51 +35,29 @@ import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = "https://matthew.mccluster.org";
 
-/* [url path, file] in the order a person would want them read */
-export const PAGES = [
-  ["", "index.html"],
-  ["matthew-mccluster.html", "matthew-mccluster.html"],
-  ["resume-it-support.html", "resume-it-support.html"],
-  ["engineering/", "engineering/index.html"],
-  ["engineering/ipc-data-center.html", "engineering/ipc-data-center.html"],
-  ["engineering/mccluster-platform.html", "engineering/mccluster-platform.html"],
-  ["services.html", "services.html"],
-  ["hire.html", "hire.html"],
-  ["sites.html", "sites.html"],
-  ["sites-details.html", "sites-details.html"],
-  ["case-designer-kicks.html", "case-designer-kicks.html"],
-  ["portfolio.html", "portfolio.html"],
-  ["gallery.html", "gallery.html"],
-  ["shots.html", "shots.html"],
-  ["films.html", "films.html"],
-  ["album.html", "album.html"],
-  ["listen.html", "listen.html"],
-  ["catalogue.html", "catalogue.html"],
-  ["license.html", "license.html"],
-  ["newsroom.html", "newsroom.html"],
-  ["press.html", "press.html"],
-  ["card.html", "card.html"],
-  ["docket-516.html", "docket-516.html"],
-  ["policy.html", "policy.html"],
-  ["policy-memo-dna.html", "policy-memo-dna.html"],
-  ["action/", "action/index.html"],
-  ["heal-the-3rd-world.html", "heal-the-3rd-world.html"],
-  ["end-racism.html", "end-racism.html"],
-  ["whip.html", "whip.html"],
-  ["prayer-closet.html", "prayer-closet.html"],
-  ["closet/sent.html", "closet/sent.html"],
-  ["inner-room.html", "inner-room.html"],
-  ["privacy.html", "privacy.html"]
-];
+/* [url path, file] from the allowlist: "" is index.html, "dir/" is dir/index.html */
+export function pages() {
+  const d = JSON.parse(readFileSync(join(ROOT, "data/seo/sitemap-pages.json"), "utf8"));
+  return d.pages.map(({ url }) => {
+    if (!url.startsWith(`${SITE}/`)) throw new Error(`${url}: not on ${SITE}`);
+    const path = url.slice(SITE.length + 1);
+    return [path, path === "" || path.endsWith("/") ? `${path}index.html` : path];
+  });
+}
 
 const xml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function wallPages() {
   return readdirSync(join(ROOT, "walls")).filter((f) => f.endsWith(".html")).sort().map((f) => [`walls/${f}`, `walls/${f}`])
     .filter(([, file]) => !/<meta name="robots" content="[^"]*noindex/i.test(readFileSync(join(ROOT, file), "utf8")));
+}
+
+function listedWalls(list) {
+  const listed = new Set(list.map(([p]) => p));
+  return wallPages().filter(([p]) => !listed.has(p)).map(([, f]) => `${f}: an indexable wall missing from data/seo/sitemap-pages.json`);
 }
 
 function lastmod(file) {
@@ -117,9 +97,9 @@ function imagesFor(path) {
 }
 
 export function buildSitemap({ dates = true } = {}) {
-  const pages = [...PAGES, ...wallPages()];
-  const bad = [];
-  const rows = pages.map(([path, file]) => {
+  const list = pages();
+  const bad = listedWalls(list);
+  const rows = list.map(([path, file]) => {
     if (!existsSync(join(ROOT, file))) { bad.push(`${file}: missing`); return ""; }
     const p = validate(path, file);
     if (p.length) bad.push(`${file}: ${p.join("; ")}`);
@@ -128,10 +108,9 @@ export function buildSitemap({ dates = true } = {}) {
   });
   if (bad.length) throw new Error("refusing to map these pages:\n  " + bad.join("\n  "));
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!-- GENERATED by tools/seo/build-sitemaps.mjs. Do not edit by hand: add a page
-     to PAGES in that file and re-run it. lastmod is each page's last commit.
-     The policy, and why particular pages stay out, is in
-     docs/SEO-AEO-AUTHORITY-SYSTEM.md. -->
+<!-- GENERATED by tools/build-sitemap.mjs from data/seo/sitemap-pages.json. Do not
+     edit by hand: add the page there and re-run it. lastmod is each page's last
+     commit. The policy is in docs/SEO-AEO-AUTHORITY-SYSTEM.md. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${rows.join("\n")}
 </urlset>
@@ -141,7 +120,7 @@ ${rows.join("\n")}
 export function buildVideoSitemap() {
   const g = JSON.parse(readFileSync(join(ROOT, "data/gallery.json"), "utf8"));
   const rows = [];
-  for (const [path, file] of wallPages()) {
+  for (const [path, file] of pages().filter(([p]) => p.startsWith("walls/"))) {
     const html = readFileSync(join(ROOT, file), "utf8");
     const ev = (g.events || []).find((e) => `walls/${e.id}.html` === path);
     for (const m of (ev && ev.media) || []) {
@@ -160,7 +139,7 @@ export function buildVideoSitemap() {
     }
   }
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!-- GENERATED by tools/seo/build-sitemaps.mjs from data/gallery.json: films embedded
+<!-- GENERATED by tools/build-sitemap.mjs from data/gallery.json: films embedded
      as <video> on a crawlable page. publication_date is omitted on purpose: the
      repository does not record when these films were first published, and a
      guessed date is worse than none. -->
@@ -173,34 +152,22 @@ ${rows.join("\n")}
 const undated = (s) => s.replace(/<lastmod>[^<]*<\/lastmod>/g, "<lastmod>0000-00-00</lastmod>");
 
 function main() {
-  /* --check-structure: the right pages, images and videos, ignoring dates.
-     This is what CI enforces on every pull request. The dates are made
-     true at deploy time instead: deploy-pages.yml runs this script on the
-     full history before anything else touches the files. */
-  if (process.argv.includes("--check-structure")) {
-    const want = { "sitemap.xml": buildSitemap({ dates: false }), "sitemap-video.xml": buildVideoSitemap() };
+  const dated = !process.argv.includes("--check");
+  const want = { "sitemap.xml": buildSitemap({ dates: dated || process.argv.includes("--check-dates") }), "sitemap-video.xml": buildVideoSitemap() };
+  if (process.argv.includes("--check") || process.argv.includes("--check-dates")) {
+    const strict = process.argv.includes("--check-dates");
     let bad = 0;
     for (const [f, body] of Object.entries(want)) {
-      const cur = existsSync(join(ROOT, f)) ? undated(readFileSync(join(ROOT, f), "utf8")) : "";
-      if (cur !== body) { console.error(`${f}: the mapped pages changed: run node tools/seo/build-sitemaps.mjs`); bad++; }
+      let cur = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
+      if (!strict) cur = undated(cur);
+      if (cur !== body) { console.error(`${f} is stale: run node tools/build-sitemap.mjs`); bad++; }
     }
     if (bad) process.exit(1);
-    console.log("sitemaps: structure current");
+    console.log(strict ? "sitemaps: current, dates included" : "sitemaps: pages, images and videos current");
     return;
   }
-  const out = { "sitemap.xml": buildSitemap(), "sitemap-video.xml": buildVideoSitemap() };
-  if (process.argv.includes("--check")) {
-    let bad = 0;
-    for (const [f, body] of Object.entries(out)) {
-      const cur = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
-      if (cur !== body) { console.error(`${f} is stale: run node tools/seo/build-sitemaps.mjs`); bad++; }
-    }
-    if (bad) process.exit(1);
-    console.log("sitemaps: current");
-    return;
-  }
-  for (const [f, body] of Object.entries(out)) writeFileSync(join(ROOT, f), body);
-  console.log(`sitemaps: ${(out["sitemap.xml"].match(/<loc>/g) || []).length} pages, ${(out["sitemap-video.xml"].match(/<video:video>/g) || []).length} videos`);
+  for (const [f, body] of Object.entries(want)) writeFileSync(join(ROOT, f), body);
+  console.log(`sitemaps: ${(want["sitemap.xml"].match(/<loc>/g) || []).length} pages, ${(want["sitemap-video.xml"].match(/<video:video>/g) || []).length} videos`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main();

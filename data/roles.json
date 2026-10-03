@@ -21,15 +21,14 @@
     {
       "slug": "whip-equipped",
       "dates": "2024 to Present",
-      "title": "Owner-Operator",
+      "title": "Founder / Automotive Systems & Telematics Operator",
       "org": "Whip Equipped LLC",
-      "location": "Acworth, GA",
-      "summary": "Owns and operates a parts-licensed automotive dealership organized in Acworth, Georgia, and turned the business into a story, producing a mini web series based on it.",
+      "location": "Georgia",
+      "summary": "Founded Whip Equipped LLC and now develops connected-mobility and vehicle-system work spanning GNSS/fleet telematics, electrical and embedded diagnostics, sensors and an in-development urban motorcycle platform.",
       "bullets": [
-        "Founded and organized Whip Equipped LLC as a parts-licensed automotive dealership out of Acworth, Georgia in 2024.",
-        "Runs day-to-day operations: sourcing, sales, parts licensing, and compliance.",
-        "Producing a mini web series built around the dealership, scored by the McCluster catalogue (\"Dealer Plates\").",
-        "Bridges the business and the brand: retail operations on one side, media production on the other."
+        "Deployed GPS and fleet-telematics systems, integrating connected hardware with vehicle power, data and monitoring workflows.",
+        "Diagnosed electrical and embedded-system faults and worked with immobilizer, vehicle-security, ADAS, camera and sensor-calibration systems.",
+        "Operated the parts/dealer phase through September 2026; current work centers on connected-mobility R&D and motorcycle product/manufacturing readiness."
       ],
       "credentials": []
     },
@@ -67,7 +66,10 @@
         "Built experience supporting business systems that demanded strong communication, organization, and technical follow-through."
       ],
       "credentials": [
-        { "label": "Infrastructure Associate · Cover Letter", "url": "" }
+        {
+          "label": "Infrastructure Associate · Cover Letter",
+          "url": ""
+        }
       ]
     },
     {
@@ -88,14 +90,50 @@
     }
   ],
   "certifications": [
-    { "label": "State of Georgia Proclamation · Georgia Youth Innovation & Civic Leadership Week (Gov. Brian P. Kemp)", "date": "Dec 12 to 18, 2025", "url": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" },
-    { "label": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day (Mayor Joseph P. Ganim)", "date": "Dec 10, 2025", "url": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf" },
-    { "label": "State of Connecticut Public Charity Registration · McCluster Corp (CHR.0069693)", "date": "Oct 28, 2025", "url": "assets/credentials/mccluster-corp-public-charity-registration.pdf" },
-    { "label": "IT Bootcamp · CT State Community College (Housatonic)", "date": "Sep 20, 2023", "url": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf" },
-    { "label": "CompTIA ITF+ Certification", "date": "Dec 1, 2022", "url": "assets/credentials/comptia-itf-plus.pdf" },
-    { "label": "DCI Academy · Information Technology Technical Program", "date": "2017 to 2018", "url": "" },
-    { "label": "Employee of the Month · Sovereign Home Health", "date": "Oct 25, 2014", "url": "" },
-    { "label": "Certificate of Completion · New Haven Job Corps", "date": "Oct 17, 2014", "url": "" },
-    { "label": "Certified Nursing Assistant (CNA) · New Haven Job Corps", "date": "Jun 20, 2014", "url": "" }
+    {
+      "label": "State of Georgia Proclamation · Georgia Youth Innovation & Civic Leadership Week (Gov. Brian P. Kemp)",
+      "date": "Dec 12 to 18, 2025",
+      "url": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+    },
+    {
+      "label": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day (Mayor Joseph P. Ganim)",
+      "date": "Dec 10, 2025",
+      "url": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+    },
+    {
+      "label": "State of Connecticut Public Charity Registration · McCluster Corp (CHR.0069693)",
+      "date": "Oct 28, 2025",
+      "url": "assets/credentials/mccluster-corp-public-charity-registration.pdf"
+    },
+    {
+      "label": "IT Bootcamp · CT State Community College (Housatonic)",
+      "date": "Sep 20, 2023",
+      "url": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+    },
+    {
+      "label": "CompTIA ITF+ Certification",
+      "date": "Dec 1, 2022",
+      "url": "assets/credentials/comptia-itf-plus.pdf"
+    },
+    {
+      "label": "DCI Academy · Information Technology Technical Program",
+      "date": "2017 to 2018",
+      "url": ""
+    },
+    {
+      "label": "Employee of the Month · Sovereign Home Health",
+      "date": "Oct 25, 2014",
+      "url": ""
+    },
+    {
+      "label": "Certificate of Completion · New Haven Job Corps",
+      "date": "Oct 17, 2014",
+      "url": ""
+    },
+    {
+      "label": "Certified Nursing Assistant (CNA) · New Haven Job Corps",
+      "date": "Jun 20, 2014",
+      "url": ""
+    }
   ]
 }

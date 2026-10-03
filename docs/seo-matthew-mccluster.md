@@ -161,3 +161,36 @@ be edited **together**. The Person `@id` must stay
 `https://matthew.mccluster.org/#matthew-mccluster` on every page that
 mentions him. And nothing goes in `sameAs` that is not a profile page for
 this person — credits, mentions and press go in their own properties.
+
+
+---
+
+## 2026-10-02 canonical identity v2 audit
+
+The Stage 1 graph was correct enough to establish one canonical Person, but it was too flat for the actual body of work. This pass changes the model from “one person plus one company and one music credit” into a typed relationship graph.
+
+### Findings
+
+- The Person node incorrectly carried `founder -> McCluster Corp`. In Schema.org, the organization/project points to its founder; the Person should express current work, affiliations, ownership and skills instead.
+- Current education was missing even though Southern Connecticut State University Computer Science enrollment is now documented. SCSU is modeled as a `CollegeOrUniversity` affiliation; historical schools remain `alumniOf`.
+- Whip Equipped was described only through its former dealer phase. Its current first-party page is a connected-mobility / vehicle-development program, so the graph now separates Whip Equipped LLC from McCluster Corp and relates Matthew to it through ownership/founding rather than treating it as a McCluster sub-brand.
+- Equity Uprise, PRIM3, Heal the 3rd World, Uprise Action Network and the McCluster Platform were invisible as distinct entities. They are now typed as Projects or software and connected through founder, parentOrganization, creator, publisher and about relationships.
+- The public Equity Uprise root page is currently shelved, so its canonical entity uses a stable fragment ID rather than inventing a URL that 404s.
+- The old dossier could reintroduce stale facts: it still called McCluster Corp a currently registered public charity, left SCSU as TODO, carried the disputed IPC training line, and was creative-role-heavy. Those fields were reconciled with the current public/evidence state.
+- Search surfaced multiple LinkedIn profiles for Matthew McCluster. The public `sameAs` list remains conservative until the owner consolidates or verifies the preferred profile. Suspected duplicates are not silently asserted as the same person.
+- Fictional/game PRIM3 lore is intentionally excluded from this identity graph. The node describes the real public PRIM3 learning project only.
+- Endomocracy is intentionally excluded from this graph until this repository has a canonical public entity/page or another verified first-party linkage appropriate for this site.
+
+### Canonical relationship policy
+
+1. One Person ID: `https://matthew.mccluster.org/#matthew-mccluster`.
+2. Current employment/operation uses `worksFor`; education uses `affiliation`; owned ventures use `owns`.
+3. Organizations and Projects point to the Person with `founder`; software/creative works use `creator`, `publisher`, `producer` or `byArtist` as appropriate.
+4. Historical jobs do not become current `worksFor` relationships merely for keyword coverage.
+5. `sameAs` is identity-only. Credits, mentions, projects and unresolved duplicate profiles stay out.
+6. Current/planned/historical states stay explicit. A past registration or dealer licence is evidence, not a claim of current status.
+7. Search-engine value follows truthful entity relationships and supporting pages; no fictional, planned or weakly verified claim is promoted merely to enlarge the graph.
+
+### Cross-surface contradiction sweep
+
+The second pass found additional first-party surfaces that could still split the entity even with a correct canonical graph. `policy.html` and `portfolio.html` each declared a second full Person object with different titles or URLs; `card.html` created a separate Person with no canonical `@id`; the portfolio FAQ still described McCluster Corp as a currently registered charity; the press kit still centered Street Credit Bureau; and the Whip/brand data still reflected the former dealer phase and solo-code language. These surfaces now reference the canonical Person or use current source-of-truth copy instead of redefining the identity.

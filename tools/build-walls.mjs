@@ -80,18 +80,9 @@ function ldFor(ev) {
   const stills = (ev.media || []).filter((m) => m.type !== "film" && m.type !== "video");
   const cover = ev.cover ? `${SITE}/${ev.cover}` : null;
 
-  /* A REFERENCE, not a second definition. The Person is defined once, on
-     matthew-mccluster.html, from data/entity-graph.json. A wall used to
-     restate him with its own jobTitle and a shorter sameAs list, which is
-     one human being described six slightly different ways. */
-  const me = {
-    "@type": "Person",
-    "@id": `${SITE}/#matthew-mccluster`,
-    name: ME.name,
-    url: ME.page,
-  };
+  const me = { "@id": `${SITE}/#matthew-mccluster` };
 
-  const graph = [me];
+  const graph = [];
 
   /* The client as its own entity, cited by the coverage. This is the join:
      the client is the subject, the photographer is the creator, and both
@@ -118,11 +109,8 @@ function ldFor(ev) {
   if (start) event.startDate = start;
   if (ev.about) event.description = ev.about;
   if (cover) event.image = cover;
-  /* No organizer. "client" in data/gallery.json means who the coverage was
-     shot FOR, which is not always who ran the event: the Equity Uprise
-     rally was the fellowship's own event, shot for the City of Bridgeport.
-     Claiming the client organized it would put a false fact in the graph.
-     The gallery below is about both the event and the client instead. */
+  /* A client is the subject of coverage, not automatically the event organizer. */
+  if (ev.organizer) event.organizer = { "@type": "Organization", name: ev.organizer };
   if (ev.venue || ev.city) {
     event.location = {
       "@type": "Place",
@@ -377,10 +365,4 @@ writeFileSync(join(ROOT, "walls.html"), `<!doctype html>
 `);
 console.log(`walls.html  -> gallery.html (consolidated stub)`);
 
-/* ---- sitemap: not written here any more ----
-   This step used to append the wall URLs to sitemap.xml stamped with
-   today's date on every run, which duplicated rows already in the map and
-   told Google every wall changed whenever anybody rebuilt any wall.
-   tools/seo/build-sitemaps.mjs owns sitemap.xml now and dates each URL
-   from its file's last commit. Run it after this. */
-console.log("sitemap.xml  (run node tools/seo/build-sitemaps.mjs)");
+/* Sitemap ownership moved to tools/build-sitemap.mjs. This generator writes wall pages only. */
