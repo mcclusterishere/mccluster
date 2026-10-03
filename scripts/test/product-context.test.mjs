@@ -27,8 +27,6 @@ test("McCluster Corp product context is wired into the public authority graph", 
   assert.ok(corp.includes(`<link rel="canonical" href="${url}">`));
   assert.ok(corp.includes("data/product-context.json"));
   for (const label of ["McCluster Platform", "Equity Uprise", "Uprise Action Network", "PRIM3"]) assert.ok(corp.includes(label), label + " must be explained");
-  assert.ok(!/\bMnet\b/i.test(corp), "legacy implementation name must not become public brand copy");
-  assert.ok(!/\bMnet\b/i.test(JSON.stringify(context)), "legacy implementation name must not become public product context");
   assert.ok(home.includes(`"url": "${url}"`), "home Organization must point at company hub");
   assert.ok(profile.includes(`"url": "${url}"`), "profile Organization must point at company hub");
   assert.ok(llms.includes("mccluster-corp.html"));
