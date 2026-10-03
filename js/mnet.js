@@ -383,6 +383,7 @@
         var id = m && (m.asset_id || m.id);
         if (!id) return "";
         return '<div class="mn__post-media-item" data-mnet-media="' + esc(id) + '" data-media-type="' + esc(m.type || m.media_type || "file") + '"' +
+          (m.poster_asset_id ? ' data-poster-asset="' + esc(m.poster_asset_id) + '"' : '') +
           (frag ? ' data-clip="' + esc(frag) + '"' : '') + (clip && clip.muted ? ' data-muted="1"' : '') + '>' +
           '<div class="mn__post-media-loading">Loading media…</div></div>';
       }).join("") + '</div>';
@@ -604,7 +605,8 @@
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
       body:{ body:body, visibility:$("mnVisibility").value, track:track,
-             media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }) }
+             media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
+             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }) }
     }).then(function () {
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
@@ -760,72 +762,106 @@
       };
     });
   }
-  function uploadMediaFiles(files) {
-    files = Array.prototype.slice.call(files || []).slice(0, Math.max(0, 4 - state.mediaAssets.length));
-    if (!files.length) return Promise.resolve();
-    var token = sessionToken();
-    if (!token) return Promise.reject(new Error("Sign in before uploading media."));
-    setStatus($("mnMediaStatus"), "Uploading " + files.length + (files.length === 1 ? " file…" : " files…"));
-    var chain = Promise.resolve();
-    files.forEach(function (file) {
-      chain = chain.then(function () {
-        return api("/v1/mnet/media/upload-url", { method:"POST", body:{ file_name:file.name, mime_type:file.type || "application/octet-stream", byte_size:file.size } })
-          .then(function (grant) {
-            var path = grant && grant.upload && grant.upload.path;
-            var asset = grant && grant.asset;
-            if (!path || !asset) throw new Error("The upload slot was not created.");
-            /* USE THE SIGNED SLOT WE WERE JUST HANDED.
-               supabase/functions/mnet-media mints one with
-               createSignedUploadUrl and returns grant.upload.token. This
-               code was throwing that away and POSTing to the plain object
-               endpoint on the user's own JWT instead -- which depends on
-               storage RLS lining up at upload time, on a PRIVATE bucket,
-               with x-upsert:false against a path the signing step already
-               reserved. The signed endpoint is what the token is for, it
-               does not care about RLS, and it is the documented path. */
-            var uploadToken = grant.upload && grant.upload.token;
-            var url = uploadToken
-              ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) +
-                  "?token=" + encodeURIComponent(uploadToken)
-              : SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path);
-            return fetch(url, {
-              method: uploadToken ? "PUT" : "POST",
-              headers:{ apikey:SB_KEY, authorization:"Bearer " + token, "content-type":file.type || "application/octet-stream", "x-upsert":"false" },
-              body:file
-            }).then(function (res) {
-              if (!res.ok) return res.text().then(function (t) {
-                /* Say which step failed. "Media upload failed." with no
-                   detail is why this went unnoticed for so long. */
-                throw new Error("Upload rejected (" + res.status + "): " + (t || "no detail"));
-              });
-              return api("/v1/mnet/media/finalize", { method:"POST", body:{ asset_id:asset.id } });
-            }).then(function (fin) {
-              var ready = fin && fin.asset || asset;
-              state.mediaAssets.push({ id:ready.id, media_type:ready.media_type || asset.media_type, name:file.name, preview:URL.createObjectURL(file) });
-              renderMediaQueue();
-            });
-          });
+  function uploadOneMedia(file){
+    var token=sessionToken();
+    if(!token)return Promise.reject(new Error("Sign in before uploading media."));
+    return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"upload",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
+      .then(function(grant){
+        var path=grant&&grant.upload&&grant.upload.path,asset=grant&&grant.asset,uploadToken=grant&&grant.upload&&grant.upload.token;
+        if(!path||!asset)throw new Error("The upload slot was not created.");
+        var url=uploadToken
+          ? SB_URL+"/storage/v1/object/upload/sign/mnet-media/"+storagePath(path)+"?token="+encodeURIComponent(uploadToken)
+          : SB_URL+"/storage/v1/object/mnet-media/"+storagePath(path);
+        return fetch(url,{method:uploadToken?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+token,"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
+          .then(function(res){
+            if(!res.ok)return res.text().then(function(t){throw new Error("Upload rejected ("+res.status+"): "+(t||"no detail"));});
+            return api("/v1/mnet/media/finalize",{method:"POST",body:{asset_id:asset.id}});
+          })
+          .then(function(fin){return (fin&&fin.asset)||asset;});
+      });
+  }
+  function makeVideoPoster(file){
+    if(!file||String(file.type||"").indexOf("video/")!==0)return Promise.resolve(null);
+    return new Promise(function(resolve){
+      var video=document.createElement("video"),src=URL.createObjectURL(file),done=false;
+      function finish(value){if(done)return;done=true;try{URL.revokeObjectURL(src);}catch(_){} resolve(value||null);}
+      video.muted=true;video.playsInline=true;video.preload="metadata";
+      video.onloadedmetadata=function(){
+        try{video.currentTime=Math.min(Math.max(0.12,(Number(video.duration)||1)*0.06),1.0);}catch(_){finish(null);}
+      };
+      video.onseeked=function(){
+        try{
+          var w=video.videoWidth||720,h=video.videoHeight||1280,max=720,scale=Math.min(1,max/Math.max(w,h));
+          var canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+          var ctx=canvas.getContext("2d");if(!ctx){finish(null);return;}ctx.drawImage(video,0,0,canvas.width,canvas.height);
+          canvas.toBlob(function(blob){
+            if(!blob){finish(null);return;}
+            finish(new File([blob],(file.name||"video").replace(/\.[^.]+$/,"")+"-poster.jpg",{type:"image/jpeg"}));
+          },"image/jpeg",0.82);
+        }catch(_){finish(null);}
+      };
+      video.onerror=function(){finish(null);};
+      setTimeout(function(){finish(null);},4500);
+      video.src=src;
+    });
+  }
+  function uploadMediaWithPoster(file){
+    return uploadOneMedia(file).then(function(asset){
+      if(String(file.type||"").indexOf("video/")!==0)return {asset:asset,poster:null};
+      return makeVideoPoster(file).then(function(posterFile){
+        if(!posterFile)return {asset:asset,poster:null};
+        return uploadOneMedia(posterFile).then(function(poster){return {asset:asset,poster:poster};})
+          .catch(function(){return {asset:asset,poster:null};});
       });
     });
-    return chain.then(function () { setStatus($("mnMediaStatus"), state.mediaAssets.length + " attachment" + (state.mediaAssets.length === 1 ? "" : "s") + " ready.", "ok"); })
-      .catch(function (e) { setStatus($("mnMediaStatus"), e.message || "Upload failed.", "error"); throw e; });
+  }
+  function uploadMediaFiles(files) {
+    files=Array.prototype.slice.call(files||[]).slice(0,Math.max(0,4-state.mediaAssets.length));
+    if(!files.length)return Promise.resolve();
+    if(!sessionToken())return Promise.reject(new Error("Sign in before uploading media."));
+    setStatus($("mnMediaStatus"),"Uploading "+files.length+(files.length===1?" file…":" files…"));
+    var chain=Promise.resolve();
+    files.forEach(function(file){
+      chain=chain.then(function(){
+        return uploadMediaWithPoster(file).then(function(out){
+          var ready=out.asset;
+          state.mediaAssets.push({
+            id:ready.id,
+            media_type:ready.media_type||(/video\//.test(file.type)?"video":/image\//.test(file.type)?"image":"file"),
+            poster_id:out.poster&&out.poster.id||null,
+            name:file.name,
+            preview:URL.createObjectURL(file)
+          });
+          renderMediaQueue();
+        });
+      });
+    });
+    return chain.then(function(){setStatus($("mnMediaStatus"),state.mediaAssets.length+" attachment"+(state.mediaAssets.length===1?"":"s")+" ready.","ok");})
+      .catch(function(e){setStatus($("mnMediaStatus"),e.message||"Upload failed.","error");throw e;});
   }
   function resolvePostMedia(root) {
-    if (!root) return;
-    root.querySelectorAll("[data-mnet-media]").forEach(function (node) {
-      var id = node.dataset.mnetMedia;
-      if (!id || node.dataset.loaded === "1") return;
-      node.dataset.loaded = "1";
-      var cached = state.mediaCache[id];
-      var load = cached ? Promise.resolve(cached) : api("/v1/mnet/media/" + encodeURIComponent(id) + "/url").then(function (x) { state.mediaCache[id] = x; return x; });
-      load.then(function (data) {
-        var type = data.media_type || node.dataset.mediaType || "file", url = safeHttpUrl(data.url);
-        if (!url) throw new Error("Media URL unavailable");
-        if (type === "image") node.innerHTML = '<img src="' + esc(url) + '" alt="' + esc(data.alt_text || "") + '" loading="lazy">';
-        else if (type === "video") node.innerHTML = '<video src="' + esc(url + (node.dataset.clip || "")) + '" controls playsinline preload="metadata"' + (node.dataset.muted ? " muted" : "") + '></video>';
-        else if (type === "audio") node.innerHTML = '<audio src="' + esc(url) + '" controls preload="metadata"></audio>';
-        else node.innerHTML = '<a class="mn__profile-link" href="' + esc(url) + '" target="_blank" rel="noopener">Open attachment</a>';
-      }).catch(function () { node.innerHTML = '<div class="mn__post-media-loading">Media unavailable.</div>'; });
+    if(!root)return;
+    root.querySelectorAll("[data-mnet-media]").forEach(function(node){
+      var id=node.dataset.mnetMedia;
+      if(!id||node.dataset.loaded==="1")return;
+      node.dataset.loaded="1";
+      function assetUrl(assetId){
+        var cached=state.mediaCache[assetId];
+        return cached?Promise.resolve(cached):api("/v1/mnet/media/"+encodeURIComponent(assetId)+"/url").then(function(x){state.mediaCache[assetId]=x;return x;});
+      }
+      assetUrl(id).then(function(data){
+        var type=data.media_type||node.dataset.mediaType||"file",url=safeHttpUrl(data.url);
+        if(!url)throw new Error("Media URL unavailable");
+        if(type==="image")node.innerHTML='<img src="'+esc(url)+'" alt="'+esc(data.alt_text||"")+'" loading="lazy">';
+        else if(type==="video"){
+          var posterId=node.dataset.posterAsset;
+          return (posterId?assetUrl(posterId).catch(function(){return null;}):Promise.resolve(null)).then(function(poster){
+            var posterUrl=poster&&safeHttpUrl(poster.url);
+            node.innerHTML='<video src="'+esc(url+(node.dataset.clip||""))+'"'+(posterUrl?' poster="'+esc(posterUrl)+'"':"")+' controls playsinline preload="metadata"'+(node.dataset.muted?" muted":"")+'></video>';
+          });
+        } else if(type==="audio")node.innerHTML='<audio src="'+esc(url)+'" controls preload="metadata"></audio>';
+        else node.innerHTML='<a class="mn__profile-link" href="'+esc(url)+'" target="_blank" rel="noopener">Open attachment</a>';
+      }).catch(function(){node.innerHTML='<div class="mn__post-media-loading">Media unavailable.</div>';});
     });
   }
   function toggleBookmark(postId, button) {
@@ -1584,7 +1620,7 @@
      you are, whether the mission is open, and what state your work is in.
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
-  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,deepLinked:false};
+  var missions={all:[],current:null,assignment:null,record:null,fellowship:null,deepLinked:false,campaign:"",returnHref:"",proofFile:null,proofPreview:""};
   function sbRest(path,init){
     var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -1622,7 +1658,32 @@
     };
   })();
 
-  function missionHref(id){return "mnet.html?mission="+encodeURIComponent(id);}
+  function safeMissionReturn(value){
+    if(!value)return "";
+    try{
+      var u=new URL(value,location.href);
+      if(u.origin!==location.origin)return "";
+      if(/\/mnet\.html$/i.test(u.pathname))return "";
+      return u.pathname.replace(/^\//,"")+u.search+u.hash;
+    }catch(_){return "";}
+  }
+  function readMissionContext(){
+    try{
+      var q=new URLSearchParams(location.search);
+      var c=q.get("campaign")||"";
+      if(/^[a-z0-9][a-z0-9-]{0,79}$/i.test(c))missions.campaign=c;
+      missions.returnHref=safeMissionReturn(q.get("return"));
+    }catch(_){}
+  }
+  readMissionContext();
+  function missionHref(id){
+    var q=new URLSearchParams();
+    q.set("view","missions");
+    q.set("mission",id);
+    if(missions.campaign)q.set("campaign",missions.campaign);
+    if(missions.returnHref)q.set("return",missions.returnHref);
+    return "mnet.html?"+q.toString();
+  }
   function receiptHref(assignmentId){return "receipt.html?a="+encodeURIComponent(assignmentId);}
   function missionCard(m){
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
@@ -1631,7 +1692,8 @@
   function loadMissions(){
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
     loadActionRecord();
-    return sbRest("action_missions?status=eq.open&select="+MISSION_FIELDS+"&order=created_at.desc")
+    var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
+    return sbRest("action_missions?status=eq.open"+campaignFilter+"&select="+MISSION_FIELDS+"&order=created_at.desc")
       .then(function(rows){missions.all=rows||[];host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';setStatus($("mnMissionStatus"),"");})
       .catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
@@ -1714,19 +1776,48 @@
     if(hit)return Promise.resolve(hit);
     return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
   }
+  function clearMissionCapture(){
+    if(missions.proofPreview){try{URL.revokeObjectURL(missions.proofPreview);}catch(_){} missions.proofPreview="";}
+    missions.proofFile=null;
+    var host=$("mnMissionCapturePreview");if(host){host.hidden=true;host.innerHTML="";}
+    if($("mnMissionCameraFile"))$("mnMissionCameraFile").value="";
+    if($("mnMissionProofFile"))$("mnMissionProofFile").value="";
+  }
+  function paintMissionCapture(file){
+    if(!file)return;
+    clearMissionCapture();
+    missions.proofFile=file;
+    missions.proofPreview=URL.createObjectURL(file);
+    var host=$("mnMissionCapturePreview");
+    if(host){
+      host.hidden=false;
+      host.innerHTML=String(file.type||"").indexOf("video/")===0
+        ? '<video src="'+esc(missions.proofPreview)+'" controls playsinline muted></video>'
+        : '<img src="'+esc(missions.proofPreview)+'" alt="Mission proof preview">';
+    }
+    if($("mnMissionProofType"))$("mnMissionProofType").value=String(file.type||"").indexOf("video/")===0?"video":"photo";
+    setStatus($("mnMissionDialogStatus"),"Captured. Review it, add any detail you want, then submit.","ok");
+  }
+  function closeMission(){
+    var dlg=$("mnMissionDialog");if(dlg&&dlg.open)dlg.close();
+    clearMissionCapture();
+    if(missions.returnHref){location.assign(missions.returnHref);return;}
+    try{history.replaceState(null,"","mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
+  }
   function openMission(id){
     return fetchMission(id).then(function(m){
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
-      missions.current=m;missions.assignment=null;
-      $("mnMissionTitle").textContent=m.title;$("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+      missions.current=m;missions.assignment=null;clearMissionCapture();
+      $("mnMissionTitle").textContent=m.title;
+      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
-      /* the share choice is per action: never carry one mission's yes to the next */
-      if($("mnMissionShare"))$("mnMissionShare").checked=false;setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
+      if($("mnMissionShare"))$("mnMissionShare").checked=true;
+      setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
-        var a=rows&&rows[0]; if(!a||a.status==="withdrawn")return;
+        var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
         missions.assignment=a;$("mnMissionJoin").hidden=true;
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted");
         setStatus($("mnMissionDialogStatus"),a.status==="submitted"?"Proof submitted for review. You can replace it until it is reviewed.":a.status==="verified"?"Verified action.":a.status==="rejected"?"This proof was not verified.":"Mission in progress.","ok");
@@ -1736,45 +1827,42 @@
   function joinMission(){
     var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
     sbRpc("join_action_mission",{p_mission_id:m.id})
-      .then(function(r){missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;setStatus($("mnMissionDialogStatus"),"Mission started. Do the work, then submit proof.","ok");if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id});loadActionRecord();})
-      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");}).then(function(){b.disabled=false;});
+      .then(function(r){
+        missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;
+        setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
+        if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
+        if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id});
+        loadActionRecord();
+      })
+      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
+      .then(function(){b.disabled=false;});
   }
-  /* PROOF FROM THE CAMERA. The same signed upload the Create page and the
-     composer use; the server checks the file is yours and records its type. */
   function uploadProofFile(file){
-    return api("/v1/mnet/media/upload-url",{method:"POST",body:{file_name:file.name||"proof",mime_type:file.type||"application/octet-stream",byte_size:file.size}})
-      .then(function(grant){
-        var path=grant&&grant.upload&&grant.upload.path, asset=grant&&grant.asset, tok=grant&&grant.upload&&grant.upload.token;
-        if(!path||!asset)throw new Error("The upload slot was not created.");
-        var url=tok?SB_URL+"/storage/v1/object/upload/sign/mnet-media/"+storagePath(path)+"?token="+encodeURIComponent(tok):SB_URL+"/storage/v1/object/mnet-media/"+storagePath(path);
-        return fetch(url,{method:tok?"PUT":"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+sessionToken(),"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:file})
-          .then(function(res){if(!res.ok)throw new Error("Upload rejected ("+res.status+")");return api("/v1/mnet/media/finalize",{method:"POST",body:{asset_id:asset.id}});})
-          .then(function(fin){return (fin&&fin.asset)||asset;});
-      });
+    return uploadMediaWithPoster(file);
   }
   function submitMissionProof(ev){
     ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
-    var fileInput=$("mnMissionProofFile"), file=fileInput&&fileInput.files&&fileInput.files[0];
-    var type=$("mnMissionProofType").value, link=($("mnMissionProofUrl").value||"").trim()||null, statement=($("mnMissionProofStatement").value||"").trim();
+    var picker=$("mnMissionProofFile"),file=missions.proofFile||(picker&&picker.files&&picker.files[0]);
+    var type=$("mnMissionProofType").value,link=($("mnMissionProofUrl").value||"").trim()||null,statement=($("mnMissionProofStatement").value||"").trim();
     setStatus($("mnMissionDialogStatus"),file?"Uploading your proof…":"Submitting…");
-    (file?uploadProofFile(file):Promise.resolve(null)).then(function(asset){
+    (file?uploadProofFile(file):Promise.resolve(null)).then(function(out){
+      var asset=out&&out.asset,poster=out&&out.poster;
       if(asset)type=String(file.type||"").indexOf("video/")===0?"video":"photo";
-      return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:asset?{asset_id:asset.id}:{}});
+      var meta=asset?{asset_id:asset.id}:{};
+      if(poster)meta.poster_asset_id=poster.id;
+      return sbRpc("submit_action_proof",{p_assignment_id:a.id,p_proof_type:type,p_proof_url:link,p_statement:statement,p_metadata:meta});
     }).then(function(){
-      /* The proof is in; now the share choice. One retry, and if it still
-         fails the member is told, because a silent failure would post (or
-         not post) against what they chose. */
       var share=$("mnMissionShare"),body={p_assignment_id:a.id,p_share:!!(share&&share.checked)};
       return sbRpc("set_action_share_intent",body).catch(function(){return sbRpc("set_action_share_intent",body);})
         .then(function(){return true;},function(){return false;});
     }).then(function(choiceSaved){
-      missions.assignment.status="submitted";
-      if(fileInput)fileInput.value="";
-      if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted for review. You can replace it until it is reviewed.","ok");
-      else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. Submit again to set it, or use Share to feed once it is verified.","error");
+      missions.assignment.status="submitted";clearMissionCapture();
+      if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted. Once verified, this action can appear on the feed with your proof.","ok");
+      else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. You can share it after verification.","error");
       if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
       loadActionRecord();
-    }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");}).then(function(){b.disabled=false;});
+    }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
+      .then(function(){b.disabled=false;});
   }
   /* A shared mission link opens that mission, not the feed. */
   function openDeepLinkedMission(){
@@ -1797,8 +1885,13 @@
       });
       $("mnRecord").addEventListener("submit",function(ev){if(ev.target&&ev.target.id==="mnFellowForm")submitFellowship(ev);});
     }
-    $("mnRefreshMissions").addEventListener("click",loadMissions);$("mnMissionClose").addEventListener("click",function(){$("mnMissionDialog").close();try{history.replaceState(null,"","mnet.html");}catch(_){}});
-    $("mnMissionJoin").addEventListener("click",joinMission);$("mnMissionProof").addEventListener("submit",submitMissionProof);
+    $("mnRefreshMissions").addEventListener("click",loadMissions);
+    $("mnMissionClose").addEventListener("click",closeMission);
+    $("mnMissionJoin").addEventListener("click",joinMission);
+    $("mnMissionProof").addEventListener("submit",submitMissionProof);
+    if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
+    if($("mnMissionCameraFile"))$("mnMissionCameraFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
+    if($("mnMissionProofFile"))$("mnMissionProofFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
   })();
 
 })();
