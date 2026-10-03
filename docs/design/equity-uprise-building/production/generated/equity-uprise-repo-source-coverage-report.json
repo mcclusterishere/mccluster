@@ -245,8 +245,8 @@
     "supabase/migrations/20261002140857_account_deletion_requests_v1.sql",
     "supabase/migrations/20261002173558_action_network_organizations_authenticity_v1.sql",
     "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
+    "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
     "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
-    "supabase/pending_migrations/action_mission_completion_automation_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -5770,22 +5770,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/action_mission_completion_automation_v1.sql capability ids known",
+      "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/action_mission_completion_automation_v1.sql classified",
+      "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending_migrations/action_mission_completion_automation_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending_migrations/action_mission_completion_automation_v1.sql support rationale present",
+      "name": "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     }
