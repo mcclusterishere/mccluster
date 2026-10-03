@@ -204,7 +204,8 @@ async function actionTargets(request, env, user) {
     db(env, 'action_campaigns?status=eq.live&select=id,slug,title,kicker,headline,current_phase&order=sort.asc,created_at.desc'),
     db(env, 'action_missions?status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,skills&order=created_at.desc')
   ]);
-  return { campaigns: campaigns || [], missions: missions || [] };
+  const openMissions = missions || [], actionable = new Set(openMissions.map((m) => m.campaign_id).filter(Boolean));
+  return { campaigns: (campaigns || []).filter((x) => actionable.has(x.id)), missions: openMissions };
 }
 
 async function generateVariant(request, env, user) {
