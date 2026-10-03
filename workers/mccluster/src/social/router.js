@@ -385,7 +385,19 @@ async function listPublishJobs(request, env, user) {
   const url = new URL(request.url);
   const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
   const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,content_id,publish_mode,scheduled_at,state,external_media_id,attempts,last_error,payload,created_at,updated_at`);
-  return { org_id: org.org_id, jobs: rows || [] };
+  const ids = [...new Set((rows || []).map((x) => x.content_id).filter(Boolean))].slice(0, 50);
+  const actionStats = {};
+  if (ids.length) {
+    const assignments = await db(env, `action_mission_assignments?source_content_id=in.(${ids.join(',')})&select=source_content_id,status`);
+    for (const a of assignments || []) {
+      const s = actionStats[a.source_content_id] ||= { joined: 0, submitted: 0, verified: 0, rejected: 0 };
+      if (a.status !== 'withdrawn') s.joined += 1;
+      if (a.status === 'submitted') s.submitted += 1;
+      if (a.status === 'verified') s.verified += 1;
+      if (a.status === 'rejected') s.rejected += 1;
+    }
+  }
+  return { org_id: org.org_id, jobs: rows || [], action_stats: actionStats };
 }
 
 /* Approve moves a draft into the queue; cancel stops anything that has not
