@@ -247,11 +247,29 @@ async function prepareNetworkPost(env,muid,b,appKey){
   const body=String(b.body||'').trim();
   if(b.reply_to_id&&chars(body)>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
-  const mediaIds=Array.isArray(b.media_asset_ids)?uniq(b.media_asset_ids).filter(uuidLike).slice(0,10):[];
-  let assets=[];
+  const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
+  const mediaIds=uniq(rawMediaIds);
+  const rawPosterIds=Array.isArray(b.poster_asset_ids)
+    ? b.poster_asset_ids.slice(0,rawMediaIds.length)
+    : rawMediaIds.map(id=>(b.poster_by_media&&typeof b.poster_by_media==='object')?b.poster_by_media[id]||null:null);
+  let assets=[],posterAssets=[],posterByMedia={};
   if(mediaIds.length){
     assets=await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type,mime_type,width,height,duration_ms,alt_text`);
     if((assets||[]).length!==mediaIds.length)return {error:'One or more media assets are unavailable',status:400};
+    const assetById=new Map((assets||[]).map(a=>[a.id,a]));
+    const posterIds=uniq(rawPosterIds.filter(uuidLike));
+    if(posterIds.length){
+      posterAssets=await service(env,`network_media_assets?id=in.(${posterIds.join(',')})&owner_m_uid=eq.${muid}&status=in.(ready,staged)&select=id,media_type,mime_type,width,height,duration_ms,alt_text`);
+      if((posterAssets||[]).length!==posterIds.length)return {error:'One or more video posters are unavailable',status:400};
+      const posterById=new Map((posterAssets||[]).map(a=>[a.id,a]));
+      for(let i=0;i<rawMediaIds.length;i++){
+        const mediaId=rawMediaIds[i],posterId=rawPosterIds[i];
+        if(!uuidLike(posterId))continue;
+        if(assetById.get(mediaId)?.media_type!=='video')return {error:'Only video attachments can have posters',status:400};
+        if(posterById.get(posterId)?.media_type!=='image')return {error:'Video posters must be images',status:400};
+        posterByMedia[mediaId]=posterId;
+      }
+    }
   }
   if(!body&&!assets.length)return {error:'Post body or media is required',status:400};
   let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
@@ -270,12 +288,13 @@ async function prepareNetworkPost(env,muid,b,appKey){
     if(!mine?.length)return {error:'Join the group before posting in it',status:403};
     groupId=gid;
   }
-  return {assets:assets||[],draft:{body,media_asset_ids:mediaIds,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
+  return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
 }
 async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
-  const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
+  const posters=draft.poster_by_media||{};
+  const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||'',poster_asset_id:posters[a.id]||null}));
   const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});
-  const created=rows?.[0],ids=draft.media_asset_ids||[];
+  const created=rows?.[0],ids=uniq([...(draft.media_asset_ids||[]),...Object.values(posters).filter(uuidLike)]);
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
 }

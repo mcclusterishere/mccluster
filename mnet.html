@@ -203,16 +203,29 @@
         <div id="mnMissionDetail"></div>
         <button class="mn__primary" id="mnMissionJoin" type="button">Take this mission</button>
         <form id="mnMissionProof" hidden>
-          <label class="mn__label" for="mnMissionProofType">Proof type</label>
-          <select class="mn__input" id="mnMissionProofType"><option value="video">Video</option><option value="photo">Photo</option><option value="link">Link</option><option value="text">Text</option><option value="artifact">Artifact</option></select>
-          <label class="mn__label" for="mnMissionProofFile">Photo or video <span>straight from your camera</span></label>
-          <input class="mn__input" id="mnMissionProofFile" type="file" accept="image/*,video/*">
-          <label class="mn__label" for="mnMissionProofUrl">Or a link <span>optional</span></label>
-          <input class="mn__input" id="mnMissionProofUrl" type="url" placeholder="https://…">
-          <label class="mn__label" for="mnMissionProofStatement">What did you do?</label>
-          <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="5" placeholder="What you did, where, and what came of it."></textarea>
-          <label class="mn__check" for="mnMissionShare"><input id="mnMissionShare" type="checkbox"><span><b>Share it on the Action feed once it's verified</b>Your post shows the mission and your receipt, not your proof.</span></label>
-          <button class="mn__primary" type="submit">Submit proof</button>
+          <label class="mn__label" for="mnMissionProofStatement">What are you about to do?</label>
+          <textarea class="mn__input mn__textarea" id="mnMissionProofStatement" maxlength="4000" rows="3" placeholder="Say what you're doing, then open the camera and do it."></textarea>
+
+          <div class="mn__mission-camera">
+            <p class="mn__eyebrow">Do it now</p>
+            <button class="mn__camera-go" id="mnMissionCameraGo" type="button">Open camera</button>
+            <input id="mnMissionCameraFile" type="file" accept="image/*,video/*" capture="environment" hidden>
+            <div class="mn__capture-preview" id="mnMissionCapturePreview" hidden></div>
+            <p class="mn__hint">Your camera returns here after you record. Review it, then submit the proof.</p>
+          </div>
+
+          <details class="mn__proof-more">
+            <summary>Use an existing file or another proof type</summary>
+            <label class="mn__label" for="mnMissionProofType">Proof type</label>
+            <select class="mn__input" id="mnMissionProofType"><option value="video">Video</option><option value="photo">Photo</option><option value="link">Link</option><option value="text">Text</option><option value="artifact">Artifact</option></select>
+            <label class="mn__label" for="mnMissionProofFile">Choose existing photo or video</label>
+            <input class="mn__input" id="mnMissionProofFile" type="file" accept="image/*,video/*">
+            <label class="mn__label" for="mnMissionProofUrl">Or a link <span>optional</span></label>
+            <input class="mn__input" id="mnMissionProofUrl" type="url" placeholder="https://…">
+          </details>
+
+          <label class="mn__check" for="mnMissionShare"><input id="mnMissionShare" type="checkbox" checked><span><b>Put this action on the feed once it's verified</b>The verified post can include the proof you submitted, with a real video thumbnail.</span></label>
+          <button class="mn__primary" type="submit">Submit mission proof</button>
         </form>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
       </dialog>

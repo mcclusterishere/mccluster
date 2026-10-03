@@ -107,6 +107,6 @@ test("Level 4 remains forbidden lore, not a playable escalation", () => {
 test("Freestyle mission proof stays staged and returns to canonical Action", () => {
   assert.match(recoveryPage, /Stage it with friends who are in on the joke/);
   assert.match(recoveryPage, /Do not secretly film or humiliate somebody/);
-  assert.match(recoveryPage, /href="action\/\?c=end-racism#join"/);
+  assert.match(recoveryPage, /href="mnet\.html\?view=missions&amp;campaign=end-racism-002&amp;mission=6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04/);
   assert.match(recoveryPage, /href="end-racism\.html#recovery"/);
 });

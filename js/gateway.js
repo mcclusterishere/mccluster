@@ -227,6 +227,14 @@
     });
   }
 
+  function gatewaySignedIn(){
+    try{var s=root.MCC&&root.MCC.session&&root.MCC.session();return !!(s&&s.access_token);}catch(_){return false;}
+  }
+  function gatewayMissionHref(c){
+    var ret=root.location.pathname.replace(/^\//,"")+root.location.search+root.location.hash;
+    return "mnet.html?view=missions&campaign="+encodeURIComponent(c.id)+"&return="+encodeURIComponent(ret);
+  }
+
   function paintFeatured(c) {
     var facts = $("gwFacts");
     facts.textContent = "";
@@ -265,7 +273,12 @@
       a.addEventListener("click", function () { track("gateway_lane", { gateway: CFG.name, campaign: c.slug, have: h[0] }); });
       lanes.appendChild(a);
     });
-    $("gwEnter").href = actionHref(c.slug, null, "#join");
+    if(gatewaySignedIn()){
+      $("gwEnter").href=gatewayMissionHref(c);
+      $("gwEnter").textContent="Do a mission now →";
+    }else{
+      $("gwEnter").href=actionHref(c.slug,null,"#join");
+    }
   }
 
   function paintLanesWithout() {
