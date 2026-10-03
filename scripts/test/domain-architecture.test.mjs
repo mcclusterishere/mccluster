@@ -73,7 +73,10 @@ test("no published page defines McCluster Corp at Matthew's address or names his
   for (const f of publishedHtml()) {
     for (const block of ld(read(f))) {
       for (const n of nodes(block)) {
-        if (n["@id"] === ORG && n.url) assert.equal(n.url, "https://mccluster.org/", `${f}: McCluster Corp's url`);
+        if ((n["@id"] === ORG) || (n["@type"] === "Organization" && n.name === "McCluster Corp")) {
+          assert.equal(n["@id"], ORG, `${f}: McCluster Corp must use the stable Organization @id`);
+          if (n.url) assert.equal(n.url, "https://mccluster.org/", `${f}: McCluster Corp's url`);
+        }
         if (n["@id"] === "https://matthew.mccluster.org/#website") {
           if (n.publisher) assert.equal(n.publisher["@id"], PERSON, `${f}: Matthew's site is published by Matthew`);
           assert.doesNotMatch(JSON.stringify([n.name, n.alternateName]), /McCluster Corp/, `${f}: Matthew's site is not named after the company`);
@@ -113,7 +116,22 @@ test("McCluster Corp's property is generated, current, and company-first", () =>
 });
 
 test("the agent-facing law says the same thing everywhere", () => {
-  const claude = read("CLAUDE.md"), agents = read("AGENTS.md"), canon = json("docs/control-plane/canonical-architecture.json");
+  const contractFiles = [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CODEX.md",
+    "GEMINI.md",
+    ".cursorrules",
+    ".github/copilot-instructions.md",
+    ".github/instructions/mccluster.instructions.md",
+  ];
+  const contracts = Object.fromEntries(contractFiles.map((file) => [file, read(file)]));
+  const claude = contracts["CLAUDE.md"], agents = contracts["AGENTS.md"], canon = json("docs/control-plane/canonical-architecture.json");
+  for (const [file, body] of Object.entries(contracts)) {
+    assert.match(body, /matthew\.mccluster\.org/, `${file}: must name Matthew's property`);
+    assert.match(body, /mccluster\.org/, `${file}: must name McCluster Corp's property`);
+    assert.doesNotMatch(body, /apex `?mccluster\.org`? (?:is|→|aliases) (?:the )?same property|apex `?mccluster\.org`? aliases it/i, `${file}: must not collapse the properties`);
+  }
   assert.doesNotMatch(claude, /apex `mccluster\.org` is the same property/);
   assert.doesNotMatch(agents, /→ same property, not a second site/);
   assert.match(agents, /Two properties, two entities\. Never collapse them\./);
