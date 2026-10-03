@@ -193,3 +193,33 @@ test('the publisher hands Meta a signed link to the private upload', async () =>
   const media = calls.find((c) => c.u.includes('graph.facebook.com') && c.u.includes('/media'));
   assert.equal(new URLSearchParams(media.body).get('video_url'), 'https://db.test/storage/v1/object/sign/social-outbox/a.mp4?token=dl');
 });
+
+
+test('a finished Instagram Reel preserves the canonical content id', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    const u = String(url), m = init.method || 'GET';
+    calls.push({ u, m, body: init.body || null });
+    if (u.endsWith('/rpc/claim_social_publish_jobs')) return ok([{
+      id: JOB, org_id: ORG, account_id: ACCOUNT, content_id: CONTENT,
+      publish_mode: 'reel', state: 'processing', external_creation_id: 'container-1',
+      attempts: 1, payload: { caption: 'Do something useful.' }
+    }]);
+    if (u.includes('/social_accounts?')) return ok([{ id: ACCOUNT, org_id: ORG, platform: 'instagram', external_account_id: 'ig-1' }]);
+    if (u.includes('/org_channels?')) return ok([{ token_env: 'SOCIAL_IG_TEST_ACCESS_TOKEN', secret_id: null, account_id: 'ig-1' }]);
+    if (u.includes('graph.facebook.com') && u.includes('container-1?fields=status_code')) return ok({ status_code: 'FINISHED' });
+    if (u.includes('graph.facebook.com') && u.includes('/media_publish')) return ok({ id: 'ig-media-1' });
+    if (u.includes('/social_posts?')) return ok([]);
+    if (u.endsWith('/social_posts') && m === 'POST') return ok([{ id: 'post-1', ...JSON.parse(init.body) }], 201);
+    if (u.includes('/social_publish_jobs') && m === 'PATCH') return ok([{ id: JOB, state: 'published' }]);
+    if (u.includes('/social_content_items') && m === 'PATCH') return ok([{ id: CONTENT, status: 'published' }]);
+    return ok([]);
+  };
+  const out = await processInstagramPublishQueue({ ...ENV, SOCIAL_IG_TEST_ACCESS_TOKEN: 'tok' });
+  assert.equal(out.results[0].state, 'published');
+  assert.equal(out.results[0].content_id, CONTENT);
+  const socialPost = calls.find((x) => x.u.endsWith('/social_posts') && x.m === 'POST');
+  assert.equal(JSON.parse(socialPost.body).content_id, CONTENT);
+  const contentPatch = calls.find((x) => x.u.includes('/social_content_items') && x.m === 'PATCH');
+  assert.equal(JSON.parse(contentPatch.body).status, 'published');
+});
