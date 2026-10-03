@@ -67,6 +67,7 @@
     jobFilter: "all",
     pipelineStage: "all",
     resources: null,
+    publicRecord: null,
     socialAccounts: null,
     decisions: [],
     leadTotal: null,
@@ -1066,6 +1067,48 @@
           '</footer></section></div>';
   }
 
+  function publicRecordLink(title, subtitle, href, value, external) {
+    return '<a class="cr-row" href="' + esc(href) + '"' +
+      (external ? ' target="_blank" rel="noopener noreferrer"' : "") + '>' +
+      '<span class="cr-row__main"><span class="cr-row__title"><span>' + esc(title) + '</span></span>' +
+      (subtitle ? '<span class="cr-row__sub">' + esc(subtitle) + '</span>' : "") +
+      '</span><span class="cr-row__value">' + esc(value || "Open") + '</span></a>';
+  }
+
+  function renderPublicRecord() {
+    var source = state.sources.publicRecord;
+    var record = state.publicRecord;
+    if (!record) {
+      if (source && !source.ok) return '<div class="cr-panel__body">' + sourceBanner(source, "Public record") + '</div>';
+      return '<div class="cr-panel__body cr-muted">Loading the canonical public authority sources…</div>';
+    }
+
+    var graph = record.entityGraph || {};
+    var ledger = record.evidenceLedger || {};
+    var sitemap = record.sitemapPages || {};
+    var pages = Array.isArray(sitemap.pages) ? sitemap.pages.length : 0;
+    var evidence = Array.isArray(ledger.items) ? ledger.items.filter(function (item) {
+      return item && item.verification_status === "verified" && item.publish === true;
+    }).length : 0;
+    var occupations = graph.person && Array.isArray(graph.person.hasOccupation) ? graph.person.hasOccupation.length : 0;
+
+    return '<div class="cr-panel__body">' +
+      props([
+        ["Indexable pages", pages],
+        ["Published verified evidence", evidence],
+        ["Occupation records", occupations],
+        ["Entity graph updated", graph.updated_at || "—"]
+      ]) +
+      '<p class="cr-muted">Read-only snapshot from data/seo/entity-graph.json, data/seo/evidence-ledger.json and data/seo/sitemap-pages.json — the same files that drive the public site generators.</p></div>' +
+      '<div class="cr-list">' +
+        publicRecordLink("Newsroom", "Verified public evidence", "newsroom.html", "Open", false) +
+        publicRecordLink("Recruiter role map", "Role-to-evidence routing", "engineering/recruiter-role-map.html", "Open", false) +
+        publicRecordLink("XML sitemap", "Current indexable-page inventory", "sitemap.xml", "Open", false) +
+        publicRecordLink("Google Search Console", "Indexing and search performance", "https://search.google.com/search-console", "Open", true) +
+        publicRecordLink("Bing Webmaster Tools", "Bing and Copilot search console", "https://www.bing.com/webmasters/", "Open", true) +
+      '</div>';
+  }
+
   function renderHome() {
     var c = state.status && state.status.counts || {};
     var attention = attentionItems();
@@ -1094,7 +1137,8 @@
         row("API Worker", "api.mccluster.org", state.health && state.health.ok ? "Healthy" : "Check", state.health && state.health.ok ? "ok" : "bad", "system-overview") +
         row("Database", "Canonical Supabase", state.status && state.status.database && state.status.database.reachable ? "Healthy" : "Check", state.status && state.status.database && state.status.database.reachable ? "ok" : "warn", "system-overview") +
         row("Core", "ai_context-v4", state.ai && state.ai.ok ? "Healthy" : "Inspect", state.ai && state.ai.ok ? "ai" : "warn", "system-workload") +
-      '</div>', "cr-span-5") + '</div>';
+      '</div>', "cr-span-5") +
+      panel("Public record", "canonical search authority", renderPublicRecord(), "cr-span-12") + '</div>';
   }
 
   function unifiedInbox() {
@@ -2975,6 +3019,23 @@
       };
     });
   }
+  function staticJson(path) {
+    return fetch(path, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw Object.assign(new Error(path + " returned HTTP " + r.status), { status: r.status });
+      return r.json();
+    });
+  }
+
+  function loadPublicRecord() {
+    return src(Promise.all([
+      staticJson("data/seo/entity-graph.json"),
+      staticJson("data/seo/evidence-ledger.json"),
+      staticJson("data/seo/sitemap-pages.json")
+    ]).then(function (r) {
+      return { entityGraph: r[0], evidenceLedger: r[1], sitemapPages: r[2] };
+    }));
+  }
+
   function loadCreative(org) {
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
@@ -2997,6 +3058,7 @@
       if (!r.ok) throw Object.assign(new Error("Edge health returned HTTP " + r.status), { status: r.status });
       return r.json();
     }));
+    var publicRecord = loadPublicRecord();
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
       return discoverWorkspace().then(function (ws) {
@@ -3028,7 +3090,7 @@
         });
       });
     });
-    return Promise.all([health, authed]).then(function (r) {
+    return Promise.all([health, authed, publicRecord]).then(function (r) {
       var a = r[1] || {}; var c = a.creative || {};
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
@@ -3038,10 +3100,11 @@
         aiThreads: a.aiThreads || signedOut,
         workspace: (a.workspace && a.workspace.source) || signedOut,
         audit: a.audit || signedOut,
+        publicRecord: r[2],
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
-      state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null;
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
