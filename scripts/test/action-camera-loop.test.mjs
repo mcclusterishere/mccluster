@@ -9,7 +9,7 @@ const action = read("js/action.js");
 const gateway = read("js/gateway.js");
 const api = read("workers/mccluster/src/platform-api.js");
 const wrp = read("wigger-recovery.html");
-const sql = read("supabase/pending_migrations/action_mission_camera_loop_v1.sql");
+const sql = read("supabase/migrations/20261002222500_action_mission_camera_loop_v1.sql");
 
 test("signed-in campaign surfaces hand people to campaign missions", () => {
   assert.match(action, /Do a mission now/);
