@@ -79,4 +79,6 @@ test("the external CTA keeps content and source attribution through the mission 
   assert.match(mnet,/q\.get\("src"\)/);
   assert.match(mnet,/p_content_id:missions\.content/);
   assert.match(mnet,/p_source:missions\.source\|\|"network"/);
+  assert.match(mnet,/missions\.attributedMission===m\.id/);
+  assert.match(mnet,/missions\.content="";missions\.source="";missions\.attributedMission=""/);
 });
