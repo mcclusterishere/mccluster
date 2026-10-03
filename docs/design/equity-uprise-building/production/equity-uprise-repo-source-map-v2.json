@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 301,
+  "candidate_count": 305,
   "capability_source_count": 99,
-  "support_only_count": 202,
+  "support_only_count": 206,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2359,6 +2359,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network reward and cohort documentation; names the Equity Uprise policy-writer cohort as the first cohort the desk seats. Mobilization documentation, not a building capability."
+    },
+    {
+      "path": "data/product-context.json",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical cross-product machine-readable context mentions Equity Uprise as one McCluster Corp product layer; it adds no Equity Uprise building capability."
+    },
+    {
+      "path": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-product architecture and productization canon describes Equity Uprise, Action Network and Control boundaries but does not define building program, geometry or runtime capability."
+    },
+    {
+      "path": "mccluster-corp.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "McCluster Corp company/product hub references Equity Uprise as a public-interest product layer; it adds no Equity Uprise building capability."
+    },
+    {
+      "path": "scripts/test/product-context.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression test for company/product context and entity wiring; it references Equity Uprise but defines no building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
