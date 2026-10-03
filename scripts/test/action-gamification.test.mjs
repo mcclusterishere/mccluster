@@ -72,7 +72,7 @@ test("creator content turns a network post into a server-vouched attributed miss
  assert.match(sql,/function public\.join_action_mission_attributed/);
  assert.match(sql,/v_result := public\.join_action_mission\(p_mission_id\)/);
  const firstTouch=await read("supabase/migrations/20261003232607_creator_action_conversion_semantics_v1.sql");
- assert.match(firstTouch,/select a\.status into v_prior_status/);
+ assert.match(firstTouch,/select a\.status, a\.source_content_id\s+into v_prior_status, v_prior_source/);
  assert.match(firstTouch,/v_prior_status is null or \(v_prior_status = 'withdrawn' and v_prior_source is null\)/);
  assert.match(firstTouch,/source_content_id = p_content_id/);
  assert.match(firstTouch,/count\(\*\) filter \(where a\.submitted_at is not null\)/);
