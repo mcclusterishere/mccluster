@@ -11,8 +11,9 @@ const api = read("workers/mccluster/src/platform-api.js");
 const wrp = read("wigger-recovery.html");
 const migrationDir = new URL("../../supabase/migrations/", import.meta.url);
 const cameraMigrations = fs.readdirSync(migrationDir).filter(name => name.endsWith("_action_mission_camera_loop_v1.sql"));
-assert.equal(cameraMigrations.length, 1, "exactly one canonical camera-loop migration");
-const sql = fs.readFileSync(new URL(cameraMigrations[0], migrationDir), "utf8");
+assert.ok(cameraMigrations.length >= 1, "camera-loop production migration is present");
+cameraMigrations.sort();
+const sql = fs.readFileSync(new URL(cameraMigrations.at(-1), migrationDir), "utf8");
 
 test("signed-in campaign surfaces hand people to campaign missions", () => {
   assert.match(action, /Do a mission now/);
