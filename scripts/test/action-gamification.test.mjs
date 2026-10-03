@@ -71,7 +71,11 @@ test("creator content turns a network post into a server-vouched attributed miss
  assert.match(sql,/add column source_content_id uuid references public\.social_content_items/);
  assert.match(sql,/function public\.join_action_mission_attributed/);
  assert.match(sql,/v_result := public\.join_action_mission\(p_mission_id\)/);
- assert.match(sql,/source_content_id = coalesce\(source_content_id, p_content_id\)/);
+ const firstTouch=await read("supabase/migrations/20261003232339_creator_action_first_touch_attribution_v1.sql");
+ assert.match(firstTouch,/select a\.status into v_prior_status/);
+ assert.match(firstTouch,/if v_prior_status is null or v_prior_status = 'withdrawn' then/);
+ assert.match(firstTouch,/source_content_id = p_content_id/);
+ assert.doesNotMatch(firstTouch,/source_content_id = coalesce/);
  assert.match(sql,/function public\.action_offer_cards/);
  assert.match(sql,/c\.publisher_m_uid = p\.author_m_uid/,"mission offer must be tied to the server-known publisher");
  assert.match(sql,/source_content_id',new\.source_content_id/);
