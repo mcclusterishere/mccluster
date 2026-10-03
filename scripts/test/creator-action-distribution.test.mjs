@@ -44,7 +44,7 @@ test("creator/action attribution remains server authoritative",async()=>{
     read("supabase/migrations/20261003231454_creator_action_distribution_network_post_guard_v1.sql"),
     read("js/mnet.js")
   ]);
-  assert.match(migration,/security definer[\s\S]*join_action_mission_attributed/);
+  assert.match(migration,/function public\.join_action_mission_attributed[\s\S]*?security definer/);
   assert.match(migration,/that content does not point to this mission/);
   assert.match(migration,/action_offer_cards/);
   assert.match(migration,/c\.publisher_m_uid = p\.author_m_uid/);
