@@ -387,6 +387,11 @@ async function listPublishJobs(request, env, user) {
   const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,content_id,publish_mode,scheduled_at,state,external_media_id,attempts,last_error,payload,created_at,updated_at`);
   const ids = [...new Set((rows || []).map((x) => x.content_id).filter(Boolean))].slice(0, 50);
   const actionStats = {};
+  for (const row of rows || []) {
+    if (row.content_id && row.payload?.action_mission_id) {
+      actionStats[row.content_id] ||= { joined: 0, submitted: 0, verified: 0, rejected: 0 };
+    }
+  }
   if (ids.length) {
     const assignments = await db(env, `action_mission_assignments?source_content_id=in.(${ids.join(',')})&select=source_content_id,status,submitted_at`);
     for (const a of assignments || []) {
