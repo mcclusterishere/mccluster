@@ -143,7 +143,7 @@ test('all six Analytics sections render representative successful data',async()=
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
-    'analytics_daily','analytics_totals','analytics_top','analytics_funnel',
+    'analytics_hourly','analytics_daily','analytics_totals','analytics_top','analytics_funnel',
     'analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
   ]){
     assert.ok(js.includes('rpc("'+rpc+'"'),rpc+' is not wired into Control Analytics');
@@ -176,6 +176,32 @@ test('Analytics uses distinct visual forms for distinct questions',async()=>{
   assert.match(js,/Conversion funnel/);
   assert.match(js,/Reach vs repeat/);
   assert.match(js,/Source → track → account/);
+});
+
+test('24h analytics is exactly 24 real hourly buckets with touchable value points',async()=>{
+  const [js,css,migration]=await Promise.all([
+    read('js/control-room/analytics.js'),
+    read('css/control-analytics.css'),
+    read('supabase/migrations/20261003154052_analytics_hourly_v1.sql')
+  ]);
+  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
+  assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
+  assert.match(js,/allLabels:true/);
+  assert.match(js,/data-cra-chart-point/);
+  assert.match(js,/pointerenter/);
+  assert.match(js,/aria-pressed/);
+  assert.match(js,/ev\.key==="Enter"\|\|ev\.key===" "/);
+  assert.match(css,/\.cra-chart--hourly \.cra-chart__frame\{min-width:1080px\}/);
+  assert.match(css,/\.cra-point__hit\{fill:transparent\}/);
+  assert.match(css,/\.cra-rank__row:hover/);
+  assert.match(css,/\.cra-funnel__row:hover/);
+  assert.match(css,/\.cra-donut__seg:hover/);
+  assert.match(migration,/generate_series\(0, 23\)/i);
+  assert.match(migration,/left join public\.events_lean/i);
+  assert.match(migration,/count\(e\.at\)/i);
+  assert.match(migration,/security invoker/i);
+  assert.match(migration,/revoke all on function public\.analytics_hourly.*from public, anon/i);
+  assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
 });
 
 test('Control Analytics is mobile-first',async()=>{
@@ -228,7 +254,10 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/daily=\{p_since:r\.since,p_until:r\.until,p_site:site,p_tz:tz\(\)\}/);
   assert.doesNotMatch(js,/v_engagement_daily/);
   assert.match(js,/Audience trend/);
-  assert.match(js,/S\.data\.traffic&&S\.data\.traffic\.byDay/);
+  assert.match(js,/function trafficTrend\(t\)/);
+  assert.match(js,/hourly=S\.rangeId==="24h"/);
+  assert.match(js,/t\.byHour\|\|\[\]/);
+  assert.match(js,/t\.byDay\|\|\[\]/);
   assert.match(js,/site===null\?rpc\("analytics_funnel"/);
   assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
