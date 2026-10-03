@@ -758,6 +758,11 @@
       b.onclick = function () {
         var i = Number(b.dataset.removeMedia), item = state.mediaAssets[i];
         if (item && item.preview) try { URL.revokeObjectURL(item.preview); } catch (e) {}
+        if(item){
+          [item.id,item.poster_id].filter(Boolean).forEach(function(id){
+            api("/v1/mnet/media/discard",{method:"POST",body:{asset_id:id}}).catch(function(){});
+          });
+        }
         state.mediaAssets.splice(i,1); renderMediaQueue();
       };
     });
@@ -1808,6 +1813,9 @@
     return fetchMission(id).then(function(m){
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
       missions.current=m;missions.assignment=null;clearMissionCapture();
+      if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
+      if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
+      if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
       $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
       var open=m.status==="open";
