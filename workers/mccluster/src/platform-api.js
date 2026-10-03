@@ -837,7 +837,7 @@ async function handleMnet(req,env,path,url){
         const rr=await service(env,`network_live_rooms?id=eq.${b.room_id}&status=eq.active&select=*&limit=1`);
         room=rr?.[0]||null;
         if(!room)return fail(req,env,'That live room is not available',404);
-        if(room.owner_m_uid&&room.owner_m_uid!==muid&&eligibility.basis!=='owner')return fail(req,env,'That live room is not yours',403);
+        if(room.owner_m_uid&&room.owner_m_uid!==muid)return fail(req,env,'That live room is not yours',403);
       }else{
         const roomKind=cleanKind(b.room_kind),category=cleanCategory(b.category_key);
         if(!['home','mission'].includes(roomKind))return fail(req,env,'Choose Home room or Mission room',400);
@@ -855,11 +855,10 @@ async function handleMnet(req,env,path,url){
           if(!music?.length)return fail(req,env,'That song is not in the active catalogue',409);
           musicId=b.music_object_id;
         }
-        if(eligibility.basis!=='owner'){
-          const grants=await service(env,`network_live_host_grants?m_uid=eq.${muid}&status=eq.active&select=basis,cohort_id,org_id,allowed_categories,starts_at,expires_at&limit=20`);
-          const now=Date.now(),grant=(grants||[]).find(g=>(g.allowed_categories||[]).includes(category)&&Date.parse(g.starts_at||0)<=now&&(!g.expires_at||Date.parse(g.expires_at)>now));
-          cohortId=grant?.basis==='cohort'?grant.cohort_id:null;
-        }
+        /* The grant authorizes the host/category. A room only carries a cohort
+           when a future operator flow assigns one explicitly; do not infer a
+           cohort from whichever active grant happens to be returned first. */
+        cohortId=null;
         const roomTitle=String(b.room_title||title).trim().slice(0,120);
         const seatLimit=Math.min(4,Math.max(1,Number(eligibility.max_stage_seats)||1));
         const rows=await service(env,'network_live_rooms',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({slug:roomSlug(roomTitle),owner_m_uid:muid,title:roomTitle,description:String(b.room_description||'').trim().slice(0,1000),room_kind:roomKind,category_key:category,action_mission_id:missionId,cohort_id:cohortId,music_object_id:musicId,seat_limit:seatLimit,support_enabled:false})});
