@@ -3,9 +3,9 @@
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
   "migration_count": 221,
-  "latest_version": "20261002222500",
+  "latest_version": "20261003022730",
   "latest_name": "action_mission_camera_loop_v1",
-  "ledger_sha256": "fd55d7fdb9d5ebc1e51715de2f0704ca3341efffc089a6d4c5ebae0a857deb06",
+  "ledger_sha256": "777c1caa636ffd3be47742284d5843f056c4cb93d175dfbf55f450de9251444c",
   "migrations": [
     {
       "version": "0001",
@@ -888,7 +888,7 @@
       "name": "fbi_board_v1"
     },
     {
-      "version": "20261002222500",
+      "version": "20261003022730",
       "name": "action_mission_camera_loop_v1"
     }
   ]
