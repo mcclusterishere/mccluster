@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 232,
-  "latest_version": "20261003234949",
-  "latest_name": "action_network_live_fk_indexes_v1",
-  "ledger_sha256": "48209063a6edfcd862e0bb98c2ea807a97708ce72f59b75440c127dc72bf14ed",
+  "migration_count": 233,
+  "latest_version": "20261003235507",
+  "latest_name": "homelessness_action_bounties_v1",
+  "ledger_sha256": "0d77629cdd91b6c6bd55343becac59695b3a068a8bf3b702d0da4fe9f1e3073e",
   "migrations": [
     {
       "version": "0001",
@@ -934,6 +934,10 @@
     {
       "version": "20261003234949",
       "name": "action_network_live_fk_indexes_v1"
+    },
+    {
+      "version": "20261003235507",
+      "name": "homelessness_action_bounties_v1"
     }
   ]
 }
