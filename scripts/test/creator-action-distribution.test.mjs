@@ -60,12 +60,13 @@ test("creator/action attribution remains server authoritative",async()=>{
 });
 
 test("creator attribution is first-touch conversion attribution, not a later-click rewrite",async()=>{
-  const sql=await read("supabase/migrations/20261003232339_creator_action_first_touch_attribution_v1.sql");
+  const sql=await read("supabase/migrations/20261003232607_creator_action_conversion_semantics_v1.sql");
   assert.match(sql,/select a\.status into v_prior_status/);
-  assert.match(sql,/v_prior_status is null or v_prior_status = 'withdrawn'/);
+  assert.match(sql,/v_prior_status is null or \(v_prior_status = 'withdrawn' and v_prior_source is null\)/);
   assert.match(sql,/source_content_id = p_content_id/);
+  assert.match(sql,/count\(\*\) filter \(where a\.submitted_at is not null\)/);
   assert.doesNotMatch(sql,/source_content_id = coalesce/);
-  assert.match(sql,/already-active assignment is never retroactively credited/);
+  assert.match(sql,/existing source is never overwritten/);
 });
 
 test("the external CTA keeps content and source attribution through the mission deep link",async()=>{
