@@ -7,7 +7,6 @@ on:
     branches:
       - main
       - 'reconcile/equity-uprise-core-v2-*'
-      - 'claude/seo-aeo-authority-system'
   workflow_dispatch:
     inputs:
       publish_generated:
