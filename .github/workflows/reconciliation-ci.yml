@@ -81,6 +81,7 @@ jobs:
         run: |
           node --check js/control-room-v2.js
           node --test scripts/test/operator-control-spine.test.mjs
+          node --test scripts/test/control-surface.test.mjs
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities

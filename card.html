@@ -122,10 +122,13 @@
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "ProfilePage",
-  "@id": "https://matthew.mccluster.org/card.html#profile-card",
+  "@type": "WebPage",
+  "@id": "https://matthew.mccluster.org/card.html",
   "url": "https://matthew.mccluster.org/card.html",
   "name": "Matthew McCluster · tap card",
+  "isPartOf": {
+    "@id": "https://matthew.mccluster.org/#website"
+  },
   "mainEntity": {
     "@id": "https://matthew.mccluster.org/#matthew-mccluster"
   },
@@ -135,6 +138,8 @@
 }
   </script>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body data-masthead="minimal">

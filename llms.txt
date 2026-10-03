@@ -8,10 +8,12 @@
 > readable without an account.
 
 Run by McCluster Corp, founded by Matthew McCluster. Bridgeport and New Haven, Connecticut. A 2025 Connecticut public-charity registration certificate is preserved in the public record; current renewal status is not asserted here.
+Who and what this site is about, as one machine-readable graph with stable @ids:
+[data/seo/entity-graph.json](https://matthew.mccluster.org/data/seo/entity-graph.json).
 
 ## Hiring Matthew McCluster
 
-Matthew McCluster is a **Computer Science student at Southern Connecticut State University**
+Matthew McCluster is a **first-year Computer Science student at Southern Connecticut State University**
 and is available for **IT support / field technician (L1–L2)**, **desktop support**,
 **infrastructure**, **technical operations**, **platform** and **telematics / fleet technology**
 roles. His hands-on technical experience since 2018 spans Robert Half, IPC Systems,
@@ -31,7 +33,7 @@ F.R.E.E.D.O.M. Inc., Whip Equipped LLC and McCluster Corp.
   · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.pdf)
   · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx)
 - [Full résumé](https://matthew.mccluster.org/matthew-mccluster.html)
-- [Engineering & IT evidence](https://matthew.mccluster.org/engineering/)
+- [Engineering & IT evidence](https://matthew.mccluster.org/engineering/): every claim with its source (résumé, IPC's engagement document, or public source code), plus two case studies: [the IPC Systems data center](https://matthew.mccluster.org/engineering/ipc-infrastructure.html) and [the McCluster platform](https://matthew.mccluster.org/engineering/mccluster-platform.html).
 - [Recruiter role & evidence map](https://matthew.mccluster.org/engineering/recruiter-role-map.html) · [machine-readable ledger](https://matthew.mccluster.org/data/seo/recruiter-evidence.json)
 - Recruiter evidence by role:
   - [IT support & systems](https://matthew.mccluster.org/engineering/it-support-systems.html)
@@ -108,14 +110,16 @@ either into a verdict.
 
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
 - [Press kit](https://matthew.mccluster.org/press.html)
-- [Verified newsroom & public record](https://matthew.mccluster.org/newsroom.html) · [Atom feed](https://matthew.mccluster.org/feed.xml)
+- [Verified newsroom & public record](https://matthew.mccluster.org/newsroom.html): dated milestones, each linked to its primary document; [Atom feed](https://matthew.mccluster.org/feed.xml). Every entry has been checked against its evidence; nothing is backdated.
+- [Docket 516R explained](https://matthew.mccluster.org/docket-516.html): the plain-English public record of Connecticut Siting Council Dockets 516 and 516R, and the front page of the Equity Uprise group on the Uprise Action Network. Quote the Council's own docket page for dates.
+- [Services](https://matthew.mccluster.org/services.html): websites, social management, photography and video, music. Prices live on [the booking page](https://matthew.mccluster.org/hire.html), generated from one ledger.
 - Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
 
 ## Optional
 
-- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 17 tracks in the current catalogue data
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 17 tracks with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artist the catalogue names; "Written & performed by Matthew McCluster unless credited otherwise."
 - [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 21 items
-- [Sitemap](https://matthew.mccluster.org/sitemap.xml)
+- [Sitemap](https://matthew.mccluster.org/sitemap.xml) · [video sitemap](https://matthew.mccluster.org/sitemap-video.xml)
 - [Crawl policy](https://matthew.mccluster.org/robots.txt)
 - [Source](https://github.com/mcclusterishere/mccluster)
 

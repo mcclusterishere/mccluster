@@ -2,7 +2,7 @@
 <html lang="en" data-theme-lock="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Matthew McCluster — Infrastructure, IT, Platforms, Connected Mobility &amp; Creative Work · Search the record</title>
   <meta name="description" content="Search Matthew McCluster’s verified work across IT support, infrastructure, data centers, platform engineering, connected mobility, civic technology, photography, web, media and music.">
   <meta name="keywords" content="Matthew McCluster, IT support, infrastructure engineer, data center, platform engineering, telematics, connected mobility, creative director, photographer, web designer, McCluster Corp">
@@ -30,15 +30,15 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "ProfilePage",
+      "@type": "CollectionPage",
       "@id": "https://matthew.mccluster.org/portfolio.html#panel",
       "url": "https://matthew.mccluster.org/portfolio.html",
       "name": "Matthew McCluster — search the record",
-      "mainEntity": {
-        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
-      },
       "about": {
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "isPartOf": {
+        "@id": "https://matthew.mccluster.org/#website"
       }
     },
     {
@@ -218,6 +218,8 @@
     }
   </style>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage panel" data-mh-cta="Book a call with me|hire.html#book">
@@ -381,8 +383,8 @@
       { k: "Door", t: "The production house", u: "production.html",
         d: "Films, photographs and rollouts, all directed, shot and run from one desk in Bridgeport.",
         g: "production house studio bridgeport films rollout" },
-      { k: "Record", t: "Equity Uprise — the program, the record, the fellows", u: "equity-uprise.html",
-        d: "Georgia to Connecticut, 2024 to 2026: a memorandum to Governor Kemp, the $12.6M school-meals blueprint, a Georgia proclamation, the Docket 516R denial, three General Assembly citations, Equity Uprise Human Rights Day, and the nine fellows of the 2025 cohort.",
+      { k: "Record", t: "Equity Uprise — the Docket 516R record and the next cohort", u: "docket-516.html",
+        d: "The front page of the Equity Uprise group on the Uprise Action Network: Connecticut Siting Council Dockets 516 and 516R explained in plain words, the 5–3 denial and the closed appeal, and the missions that lead into the next cohort.",
         g: "equity uprise fellowship civic nonprofit charity community program record fellows cohort proclamation citation bridgeport georgia kemp ganim docket 516r denied" },
       { k: "Door", t: "Join the Equity Uprise Policy Fellowship — free", u: "fellowship.html",
         d: "Sixteen questions in a terminal, then a person reads it. No fee and no automated screen.",

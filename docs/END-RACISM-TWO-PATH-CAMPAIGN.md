@@ -31,7 +31,7 @@ The participant may instead choose **NO. I'M RACIST.**
 
 This creates a satirical, explicitly voluntary status:
 
-**SELF-DECLARED: VERIFIED RACIST™**
+**SELF-DECLARED: CERTIFIED RACIST™**
 
 The word **SELF-DECLARED** is mandatory anywhere the status is rendered. Action must never assign this status from behavior, demographics, reports, moderation outcomes, mission failures, or an algorithm.
 
@@ -99,11 +99,11 @@ Both paths ultimately route resources or participation toward the End Racism ini
 Do not deploy the campaign tables until the core Mission Engine migration is production-ready. The campaign must reference the canonical mission/assignment/points primitives rather than inventing a parallel reward system.
 
 
-## V1 profile badge — Racist for Life™
+## V1 profile badge — Certified Racist™
 
 For the first release, replace recurring Racist Tax subscription mechanics with a single satirical self-declared profile badge:
 
-**RACIST FOR LIFE™**
+**CERTIFIED RACIST™**
 **SELF-DECLARED**
 
 The badge is never earned by an algorithm, moderation decision, administrator judgment, demographic attribute, failed mission, or third-party report. It becomes eligible only after the member personally chooses the self-declared path.
@@ -115,7 +115,7 @@ The member controls whether it appears on their public front profile.
 A member with the self-declared badge can choose **I CHANGED MY MIND** from their own profile controls.
 
 That action:
-- stops presenting Racist for Life as the member's current campaign state;
+- stops presenting Certified Racist as the member's current campaign state;
 - preserves the append-only state-transition audit history;
 - can route the member directly into the End Racism mission sequence;
 - does not fabricate mission completion or verified-action credit;
@@ -150,4 +150,62 @@ Public badge rendering must expose provenance sufficiently to prevent a self-dec
 
 Only the member may change their optional public badge visibility/order or invoke their self-declared **I Changed My Mind** transition through ordinary profile controls.
 
-Administrative tooling may moderate content or disable an abusive presentation under the platform's moderation rules, but must not assign **Racist for Life**, reverse **I Changed My Mind**, or make a private self-declaration public on a member's behalf.
+Administrative tooling may moderate content or disable an abusive presentation under the platform's moderation rules, but must not assign **Certified Racist**, reverse **I Changed My Mind**, or make a private self-declaration public on a member's behalf.
+
+
+## Campaign page v2 — the joke underneath the joke
+
+The canonical public route remains `end-racism.html`. The campaign slug remains `end-racism`. CIA Mind Control remains the record attached to the gateway, and the Action Network remains the action destination. This revision changes the campaign narrative without breaking the existing inbound or outbound funnel.
+
+### Certified Racist™
+
+The public joke is now **CERTIFIED RACIST™**, always paired with **SELF-DECLARED** in explanatory copy. The contradiction is intentional: a participant who voluntarily chooses the racist path discovers that "certification" comes with paperwork, accountability, community-service missions, and proof.
+
+The platform still does not determine that somebody is racist. No administrator, report, classifier, demographic attribute, moderation result, failed mission, or model may assign the status to another person.
+
+Suggested institutional satire:
+
+- Department of Racial Consistency
+- Form ER-001
+- probationary standing
+- continuing-education requirements
+- "Racism has paperwork."
+- "We don't discriminate against racists. Unlike racists."
+
+The joke never creates an exemption from ordinary moderation or conduct rules.
+
+### Get the Wiggers Out of the Street™ / Wigger Recovery Program
+
+The **Wigger Recovery Program** is a satirical mission track about cultural appropriation and contradiction: consuming or imitating Black culture while disrespecting Black people.
+
+Within this campaign, **wigger** names that behavior pattern. It is not a racial classification, and Action must not label a person with it based on skin color, ancestry, appearance, music taste, clothing, speech, location, or third-party reports.
+
+The campaign line is:
+
+**GET THE WIGGERS OUT OF THE STREET™**
+
+"Out of the street" is campaign satire about retiring the performance, not removing people from public space. The mission objective is not to make somebody "act white." The objective is to stop treating Blackness as a costume while still allowing people to enjoy, participate in, and learn from culture respectfully.
+
+Suggested recovery sequence:
+
+1. **Trace the source** — identify the artists, communities, scenes, inventors, or traditions behind something the participant uses or imitates.
+2. **Say the names** — publicly attribute the source accurately.
+3. **Support the source** — contribute time, money, labor, attention, access, or another concrete resource.
+4. **Retire the costume** — stop caricature or identity performance while retaining genuine cultural appreciation.
+5. **Bring proof** — submit evidence through the canonical Action mission/proof system.
+
+These are campaign-content concepts. If implemented as scored missions, they must use the canonical mission, assignment, proof, review, and points primitives. The campaign page itself does not fabricate completion.
+
+### Human-race reveal
+
+The satire resolves with a second meaning of "racist":
+
+**CERTIFIED RACIST AGAINST THE HUMAN RACE**
+
+The factual anchor is narrower and deliberate: there is one living human species, **Homo sapiens**. Human racial categories are social classifications; they do not divide people into separate human species.
+
+The reveal reframes the joke as criticism of humanity's own record — war, slavery, genocide, exploitation, pollution, tribalism, and other human-made harms — while ending in a universal membership rule:
+
+**Membership is automatic. Discrimination is prohibited. Self-criticism is encouraged.**
+
+The campaign's final action remains constructive. Participants are routed into the same End Racism Action Network campaign regardless of which joke path brought them there.

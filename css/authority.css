@@ -1,1 +1,122 @@
+/* THE AUTHORITY COAT. Evidence pages: the engineering lanes, the role map,
+   the newsroom, services and the Docket 516R record. Two layouts, one file:
+   auth__* cards (the first line, minified as it shipped) and the rec__*
+   long-form record below. Built on the house tokens in css/style.css. */
 .auth{max-width:72rem;margin:0 auto;padding:clamp(4.5rem,9vw,7rem) clamp(1rem,4vw,2.4rem) 7rem}.auth a{text-decoration:none}.auth__eyebrow{font:800 .72rem/1.2 var(--ui);letter-spacing:.18em;text-transform:uppercase;color:var(--ruby-hot)}.auth h1{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(2.6rem,9vw,6.6rem);line-height:.92;margin:.55rem 0 1rem}.auth__lede{max-width:48rem;color:var(--cream-dim);font-size:clamp(1rem,2vw,1.18rem);line-height:1.75}.auth__nav{display:flex;flex-wrap:wrap;gap:.55rem;margin:1.5rem 0 2rem}.auth__nav a,.auth__cta{border:1px solid var(--edge);border-radius:999px;padding:.65rem 1rem;font-weight:800;color:var(--cream)}.auth__nav a:hover,.auth__cta:hover{border-color:var(--ruby-hot);color:var(--ruby-hot)}.auth__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;margin-top:2rem}.auth__card{min-width:0;border:1px solid var(--edge);border-radius:16px;padding:1.15rem;background:var(--glass-lo)}.auth__card h2,.auth__card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;margin:0 0 .55rem}.auth__card p,.auth__card li{color:var(--cream-dim);line-height:1.65}.auth__card ul{padding-left:1.2rem;display:grid;gap:.4rem}.auth__meta{font-size:.78rem;letter-spacing:.06em;color:var(--ruby-text);font-weight:800;text-transform:uppercase}.auth__evidence{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}.auth__evidence a{font-size:.86rem;border-bottom:1px solid currentColor;color:var(--ruby-text)}.auth__foot{margin-top:3rem;color:var(--cream-dim);font-size:.85rem}@media(min-width:46rem){.auth__grid--2{grid-template-columns:repeat(2,minmax(0,1fr))}.auth__grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ============================================================
+   THE RECORD COAT: long-form document pages (rec__*), in the same file as
+   the authority cards (auth__*) above so the evidence pages load one
+   stylesheet and share one look. Cards route; the record coat reads.
+
+   Used by the pages a stranger reads cold and a search engine reads
+   first: the engineering hub and its case studies, the services page,
+   and the newsroom. Built on the flat house tokens in css/style.css
+   (--ink, --cream, --cream-dim, --ruby-text, --edge, --display, --body,
+   --sig), in the same tone as css/professional.css on the résumé page.
+   No new palette and no material skin.
+
+   Mobile first. Every media query is min-width and only ADDS room; grid
+   tracks are minmax(0, 1fr) so one long word (a model number, a URL)
+   cannot push a column past the screen. Wide tables scroll inside their
+   own box, never the page.
+   ============================================================ */
+
+body.record { background: var(--ink); color: var(--cream); }
+
+.rec {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(4.4rem, 9vh, 6rem) clamp(1rem, 4vw, 2rem) 6rem;
+}
+
+.rec__crumb { font-size: 0.82rem; color: var(--cream-dim); margin: 0 0 1.2rem; }
+.rec__crumb a { color: var(--cream-dim); text-decoration: none; border-bottom: 1px solid var(--edge); }
+.rec__crumb a:hover { color: var(--cream); }
+
+.rec__k {
+  font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--cream-dim); font-weight: 800; margin: 0;
+}
+.rec h1 {
+  font-family: var(--sig); text-transform: uppercase; line-height: 0.95;
+  font-size: clamp(2.2rem, 10vw, 3.9rem); margin: 0.45rem 0 0; overflow-wrap: anywhere;
+}
+.rec__role { color: var(--cream); font-size: 1.04rem; font-weight: 700; margin: 0.6rem 0 0; }
+.rec__lede { color: var(--cream-dim); line-height: 1.72; font-size: 1.04rem; margin: 1.1rem 0 0; max-width: 68ch; }
+.rec__lede b, .rec p b, .rec li b { color: var(--cream); }
+
+.rec h2 {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(1.05rem, 4.2vw, 1.3rem); letter-spacing: 0.12em; color: var(--cream);
+  margin: 2.6rem 0 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--edge);
+}
+.rec h3 { font-size: 1.02rem; color: var(--cream); margin: 1.6rem 0 0; }
+.rec p { color: var(--cream-dim); line-height: 1.7; margin: 0.9rem 0 0; max-width: 72ch; }
+.rec a { color: var(--ruby-text, #e5383b); text-decoration: none; border-bottom: 1px solid rgba(229,56,59,0.35); overflow-wrap: anywhere; }
+.rec a:hover { border-bottom-color: currentColor; }
+.rec a:focus-visible, .rec button:focus-visible { outline: 3px solid var(--ruby-text, #e5383b); outline-offset: 3px; }
+
+.rec ul.facts { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.55rem; }
+.rec ul.facts li { color: var(--cream-dim); line-height: 1.55; padding-left: 1.1rem; position: relative; max-width: 78ch; }
+.rec ul.facts li::before {
+  content: ""; position: absolute; left: 0; top: 0.5em; width: 0.42em; height: 0.54em;
+  background: #e5383b; clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+/* the summary box at the top of a case study: role, dates, where, evidence */
+.rec__card {
+  margin: 1.4rem 0 0; padding: 1rem 1.1rem; border: 1px solid var(--edge);
+  border-radius: 14px; background: var(--glass-lo, rgba(255,255,255,0.045));
+}
+.rec__card dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
+.rec__card dt { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream-dim); font-weight: 800; }
+.rec__card dd { margin: 0.1rem 0 0; color: var(--cream); line-height: 1.5; }
+
+/* tables: the box scrolls, the page never does */
+.rec__table { margin: 1.1rem 0 0; overflow-x: auto; border: 1px solid var(--edge); border-radius: 12px; }
+.rec__table table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.92rem; }
+.rec__table caption { text-align: left; padding: 0.7rem 0.8rem 0; color: var(--cream-dim); font-size: 0.82rem; }
+.rec__table th, .rec__table td { text-align: left; vertical-align: top; padding: 0.6rem 0.8rem; border-top: 1px solid var(--edge); line-height: 1.45; }
+.rec__table thead th { border-top: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-dim); }
+.rec__table td { color: var(--cream-dim); }
+.rec__table th[scope="row"] { color: var(--cream); font-weight: 700; }
+
+/* a grid of linked cards (hub pages) */
+.rec__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; margin: 1.1rem 0 0; }
+.rec__tile { display: block; padding: 1rem 1.1rem; border: 1px solid var(--edge); border-radius: 14px; background: var(--glass-lo, rgba(255,255,255,0.045)); }
+.rec__tile h3 { margin: 0; }
+.rec__tile h3 a { color: var(--cream); border-bottom: 0; }
+.rec__tile p { margin: 0.45rem 0 0; font-size: 0.95rem; }
+
+.rec__cta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; margin: 2rem 0 0; }
+.rec__cta a {
+  display: block; text-align: center; font-weight: 800; border-radius: 100px; padding: 0.9rem 1rem;
+  border: 1px solid rgba(244,239,230,0.25); color: var(--cream); border-bottom-width: 1px;
+}
+.rec__cta a.hot { background: linear-gradient(120deg, #b8862f, #e84a45); color: #17110d; border: 0; }
+html[data-theme="light"] .rec__cta a { border-color: rgba(26,20,13,0.3); }
+
+.rec__note { font-size: 0.86rem; color: var(--cream-dim); border-left: 2px solid var(--edge); padding-left: 0.8rem; }
+
+.rec__foot { margin: 3rem 0 0; color: var(--cream-dim); font-size: 0.84rem; line-height: 1.8; }
+.rec__foot a { color: var(--cream-dim); }
+
+/* the newsroom timeline */
+.rec__log { list-style: none; padding: 0; margin: 1.1rem 0 0; }
+.rec__log > li { border-left: 2px solid rgba(229,56,59,0.35); padding: 0 0 1.3rem 1rem; position: relative; }
+.rec__log > li::before { content: ""; position: absolute; left: -5px; top: 0.35rem; width: 8px; height: 8px; border-radius: 50%; background: #e5383b; }
+.rec__log time { display: block; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream-dim); font-weight: 800; }
+.rec__log h3 { margin: 0.2rem 0 0; }
+
+@media (min-width: 48rem) {
+  .rec { max-width: 56rem; }
+  .rec__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rec__cta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rec__card dl { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.4rem; }
+}
+
+@media print {
+  body.record { background: #fff; color: #000; }
+  .rec__cta, .rec__crumb { display: none; }
+}

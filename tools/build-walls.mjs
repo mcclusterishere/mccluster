@@ -75,7 +75,9 @@ function altFor(ev, m, i) {
 function ldFor(ev) {
   const url = `${SITE}/walls/${ev.id}.html`;
   const start = isoDate(ev.date);
-  const stills = (ev.media || []).filter((m) => m.type !== "film");
+  /* stills only: a "video" item is an MP4, and declaring it an ImageObject
+     told search engines a film was a photograph */
+  const stills = (ev.media || []).filter((m) => m.type !== "film" && m.type !== "video");
   const cover = ev.cover ? `${SITE}/${ev.cover}` : null;
 
   const me = { "@id": `${SITE}/#matthew-mccluster` };
@@ -141,7 +143,7 @@ function ldFor(ev) {
     "@id": `${url}#gallery`,
     name: `${ev.title}${ev.client ? " — " + ev.client : ""}`,
     url,
-    about: { "@id": `${url}#event` },
+    about: clientNode ? [{ "@id": `${url}#event` }, { "@id": `${url}#client` }] : { "@id": `${url}#event` },
     author: { "@id": `${SITE}/#matthew-mccluster` },
     copyrightHolder: { "@id": `${SITE}/#matthew-mccluster` },
     ...(ev.about ? { description: ev.about } : {}),
@@ -177,7 +179,8 @@ function pageFor(ev) {
       </figure>`;
     }
     if (m.type === "video") {
-      return `      <figure><video src="../${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="../${esc(m.poster)}"` : ""}></video></figure>`;
+      return `      <figure><video src="../${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="../${esc(m.poster)}"` : ""}${m.title ? ` title="${esc(m.title)}"` : ""}></video>${
+        m.title ? `<figcaption>${esc(m.title)}${m.about ? " &middot; " + esc(m.about) : ""}</figcaption>` : ""}</figure>`;
     }
     return `      <figure class="wrv${i === 0 ? " wl__feat" : ""}" style="--i:${i % 5}"><img src="../${esc(m.src)}" alt="${esc(altFor(ev, m, i))}" loading="lazy" width="1800" height="1200">${
       m.sell ? `<figcaption><a href="../gallery.html#shop">Own this frame &#8594;</a></figcaption>` : ""

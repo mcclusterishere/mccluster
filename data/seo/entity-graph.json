@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-seo-entity/v2",
-  "updated_at": "2026-10-02",
+  "updated_at": "2026-10-03",
   "canonical_url": "https://matthew.mccluster.org/matthew-mccluster.html",
   "person": {
     "@type": "Person",
@@ -105,11 +105,31 @@
     "hasOccupation": [
       {
         "@type": "Occupation",
-        "name": "Infrastructure Engineer"
+        "name": "Infrastructure Engineer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1231.00",
+          "name": "Computer Network Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Rack buildout, structured cabling (CAT6, multi-mode and single-mode fiber), PDUs and environmental monitoring, Cisco Nexus 9000 and 4500-series switching, DHCP scope configuration, Dell, Oracle and Sun server installation, Windows Server, Red Hat Enterprise Linux, CentOS, PERC RAID, DoD-standard data destruction"
       },
       {
         "@type": "Occupation",
-        "name": "IT Support Specialist"
+        "name": "IT Support Specialist",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1232.00",
+          "name": "Computer User Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Endpoint and desktop support, Windows and macOS, Microsoft 365, Active Directory, device imaging and deployment, hardware swaps, printers, VPN, ticketing and escalation, user training"
       },
       {
         "@type": "Occupation",
@@ -121,23 +141,73 @@
       },
       {
         "@type": "Occupation",
-        "name": "Platform Engineer"
+        "name": "Platform Engineer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1252.00",
+          "name": "Software Developers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "PostgreSQL schema design and row-level security, serverless REST APIs on Cloudflare Workers, Supabase Edge Functions, Linux services under systemd, GitHub Actions CI with staged deploys and rollback, JavaScript, SQL"
       },
       {
         "@type": "Occupation",
-        "name": "Automotive Telematics Integrator"
+        "name": "Automotive Telematics Integrator",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "49-2096.00",
+          "name": "Electronic Equipment Installers and Repairers, Motor Vehicles",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "GPS and fleet-telematics deployment, vehicle power and data integration, electrical and embedded-system diagnostics, ADAS, camera and sensor calibration workflows"
       },
       {
         "@type": "Occupation",
-        "name": "Creative Director"
+        "name": "Creative Director",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-1011.00",
+          "name": "Art Directors",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Creative direction, brand and campaign production, video production"
       },
       {
         "@type": "Occupation",
-        "name": "Photographer"
+        "name": "Photographer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-4021.00",
+          "name": "Photographers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Event, portrait, runway and brand photography"
       },
       {
         "@type": "Occupation",
-        "name": "Songwriter"
+        "name": "Songwriter",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-2041.00",
+          "name": "Music Directors and Composers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Songwriting, music production, sync licensing"
       }
     ],
     "hasCredential": [
@@ -165,12 +235,14 @@
       {
         "@type": "PropertyValue",
         "propertyID": "ISNI",
-        "value": "0000 0005 2956 3111"
+        "value": "0000 0005 2956 3111",
+        "url": "https://isni.org/isni/0000000529563111"
       },
       {
         "@type": "PropertyValue",
         "propertyID": "ORCID",
-        "value": "0009-0000-8988-8955"
+        "value": "0009-0000-8988-8955",
+        "url": "https://orcid.org/0009-0000-8988-8955"
       },
       {
         "@type": "PropertyValue",
@@ -204,7 +276,9 @@
         "name": "Equity Uprise Human Rights Day Proclamation",
         "url": "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
       }
-    ]
+    ],
+    "mainEntityOfPage": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "email": "mailto:matthew@mccluster.org"
   },
   "organization": {
     "@type": "Organization",
@@ -254,14 +328,27 @@
     ],
     "sameAs": [
       "https://isni.org/isni/0000000528727276"
-    ]
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Bridgeport",
+      "addressRegion": "CT",
+      "addressCountry": "US"
+    }
   },
   "education": {
     "scsu": {
       "@type": "CollegeOrUniversity",
       "@id": "https://matthew.mccluster.org/#southern-connecticut-state-university",
       "name": "Southern Connecticut State University",
-      "url": "https://www.southernct.edu/"
+      "url": "https://www.southernct.edu/",
+      "alternateName": "SCSU",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New Haven",
+        "addressRegion": "CT",
+        "addressCountry": "US"
+      }
     }
   },
   "organizations": {
@@ -299,8 +386,12 @@
       "subjectOf": [
         {
           "@id": "https://matthew.mccluster.org/newsroom.html#bridgeport-human-rights-day-2025"
+        },
+        {
+          "@id": "https://matthew.mccluster.org/docket-516.html#explainer"
         }
-      ]
+      ],
+      "url": "https://matthew.mccluster.org/docket-516.html"
     },
     "prim3": {
       "@type": "Project",
@@ -365,9 +456,16 @@
       "codeRepository": "https://github.com/mcclusterishere/mccluster",
       "programmingLanguage": [
         "JavaScript",
-        "SQL"
+        "TypeScript",
+        "SQL",
+        "Python",
+        "HTML",
+        "CSS"
       ],
-      "description": "Production platform spanning identity, PostgreSQL data controls, serverless APIs, release validation and public web applications."
+      "description": "Production platform behind McCluster Corp: PostgreSQL on Supabase with row-level security, an API on Cloudflare Workers, Linux services under systemd, Stripe payments, first-party analytics, and GitHub Actions releases that verify the live commit and roll back on failure. Matthew McCluster sets the architecture and operates production; coding agents contribute implementation under written rules.",
+      "maintainer": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      }
     }
   },
   "creative_works": {
@@ -375,7 +473,7 @@
       "@type": "MusicAlbum",
       "@id": "https://matthew.mccluster.org/#album",
       "name": "I AM HERE",
-      "url": "https://matthew.mccluster.org/",
+      "url": "https://matthew.mccluster.org/album.html",
       "byArtist": {
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },

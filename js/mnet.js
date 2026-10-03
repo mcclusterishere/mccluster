@@ -216,8 +216,9 @@
       loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
-      /* A deep link to a mission wins over the first-run tour. */
-      if (!/[?&]mission=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
+      openDeepLinkedGroup();
+      /* A deep link to a mission or a group wins over the first-run tour. */
+      if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
       return loadFeed(true).then(loadNotificationsSilently);
     });
@@ -1364,7 +1365,7 @@
     return n.toLocaleString() + " member" + (n === 1 ? "" : "s");
   }
 
-  var groups = { all: [], seg: "yours", open: null, busy: false };
+  var groups = { all: [], seg: "yours", open: null, busy: false, target: null };
 
   function groupCard(g) {
     return '<article class="mng__card" data-group="' + esc(g.slug) + '">' +
@@ -1394,6 +1395,35 @@
       return;
     }
     host.innerHTML = '<div class="mng__grid">' + list.map(groupCard).join("") + "</div>";
+    /* a ?group= link lands on its room: scrolled to, and marked */
+    if (groups.target) {
+      var card = host.querySelector('[data-group="' + groups.target + '"]');
+      if (card) {
+        card.classList.add("is-target");
+        try { card.scrollIntoView({ block: "center" }); } catch (_) {}
+        groups.target = null;
+      }
+    }
+  }
+
+  /* A shared group link (mnet.html?group=equity-uprise) opens Explore on
+     that room, the way ?mission= opens a mission. Unknown slugs simply
+     land on Explore. */
+  function openDeepLinkedGroup() {
+    if (/[?&]mission=/.test(location.search)) return;
+    var slug = null, view = null;
+    try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); } catch (_) {}
+    /* ?view=missions opens a tab by name (the Action Record lives there) */
+    if (!slug && view && /^(feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
+    if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) return;
+    groups.target = slug;
+    groups.seg = "explore";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mng-seg]"), function (x) {
+      var on = x.getAttribute("data-mng-seg") === "explore";
+      x.classList.toggle("is-on", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    setView("groups");
   }
 
   function loadGroups() {

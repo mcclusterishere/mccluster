@@ -22,22 +22,35 @@
   <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "AboutPage",
-    "name": "Press & Media Kit: Matthew McCluster / McCluster Corp",
-    "url": "https://matthew.mccluster.org/press.html",
-    "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "mainEntity": {
-      "@type": "Organization",
-      "@id": "https://matthew.mccluster.org/#mccluster-corp",
-      "name": "McCluster Corp",
-      "url": "https://matthew.mccluster.org/",
-      "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
-      "founder": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-      "email": "matthew@mccluster.org"
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "Press & Media Kit: Matthew McCluster / McCluster Corp",
+  "url": "https://matthew.mccluster.org/press.html",
+  "about": [
+    {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
     }
-  }
+  ],
+  "mainEntity": {
+    "@id": "https://matthew.mccluster.org/#mccluster-corp"
+  },
+  "@id": "https://matthew.mccluster.org/press.html",
+  "isPartOf": {
+    "@id": "https://matthew.mccluster.org/#website"
+  },
+  "mentions": [
+    {
+      "@id": "https://matthew.mccluster.org/#equity-uprise"
+    },
+    {
+      "@id": "https://matthew.mccluster.org/#whip-equipped"
+    }
+  ]
+}
   </script>
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -68,20 +81,13 @@
     .pr__foot { margin-top: 2.8rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; border-top: 1px solid rgba(229,56,59,0.22); padding-top: 1.2rem; }
     .pr__foot a { color:var(--ruby-text); text-decoration: none; }
   </style>
-  <!-- the media kit points at the same Person record the hire page declares,
-       so the credentials resolve to one entity instead of two half-profiles -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    "mainEntity": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "url": "https://matthew.mccluster.org/press.html",
-    "name": "Press & Media Kit: Matthew McCluster / McCluster Corp"
-  }
-  </script>
+  <!-- The media kit references the Person and McCluster Corp by @id. Both
+       are defined once, on matthew-mccluster.html, from data/seo/entity-graph.json;
+       this page used to add a second ProfilePage for the same person. -->
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
@@ -99,7 +105,7 @@
       <li><b>Name:</b> Matthew McCluster</li>
       <li><b>Current:</b> Computer Science student · infrastructure &amp; technical operations · platform builder · creative director</li>
       <li><b>Based:</b> Connecticut &amp; Georgia, USA</li>
-      <li><b>Recognized by:</b> Connecticut General Assembly, State of Georgia, and City of Bridgeport (2025 primary documents in this kit)</li>
+      <li><b>Recognized by:</b> Connecticut General Assembly (Official Citation, October 5, 2025), State of Georgia (Gov. Kemp, proclamation signed October 27, 2025) &amp; City of Bridgeport (Mayor Ganim, December 10, 2025). Primary documents are in this kit.</li>
       <li><b>Entities:</b> McCluster Corp · Equity Uprise · PRIM3 · Uprise Action Network · Whip Equipped LLC · I AM HERE</li>
       <li><b>Contact:</b> matthew@mccluster.org · matthew.mccluster.org</li>
     </ul>
@@ -122,9 +128,18 @@
          download="Matthew-McCluster-Resume.docx">(DOCX)</a> — career, credentials and verified identifiers.</p>
 
     <div class="dl">
-      <a href="assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf" download><b>CT General Assembly Citation</b><small>Matthew McCluster · PDF</small></a>
-      <a href="assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" download><b>CT General Assembly Citation</b><small>McCluster Corp · PDF</small></a>
-      <a href="assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf" download><b>CT General Assembly Citation</b><small>Apex Kingdom · PDF</small></a>
+      <a href="assets/credentials/img/ct-general-assembly-citation-matthew-mccluster.jpg" download>
+        <b>CT General Assembly Citation</b><small>Matthew McCluster · JPG</small></a>
+      <a href="assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf" download>
+        <b>CT General Assembly Citation</b><small>Matthew McCluster · PDF</small></a>
+      <a href="assets/credentials/img/ct-general-assembly-citation-mccluster-corp.jpg" download>
+        <b>CT General Assembly Citation</b><small>McCluster Corp · JPG</small></a>
+      <a href="assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" download>
+        <b>CT General Assembly Citation</b><small>McCluster Corp · PDF</small></a>
+      <a href="assets/credentials/img/ct-general-assembly-citation-apex-kingdom.jpg" download>
+        <b>CT General Assembly Citation</b><small>Apex Kingdom · JPG</small></a>
+      <a href="assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf" download>
+        <b>CT General Assembly Citation</b><small>Apex Kingdom · PDF</small></a>
       <a href="assets/credentials/img/georgia-youth-innovation-civic-leadership-week-proclamation.jpg" download>
         <b>Georgia Proclamation</b><small>Gov. Kemp · JPG</small></a>
       <a href="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" download>
@@ -148,10 +163,13 @@
     <p style="margin-top:0.9rem;font-size:0.9rem">High-resolution headshots and additional footage are available on request: <a href="mailto:matthew@mccluster.org" style="color:var(--ruby-text);text-decoration:none">matthew@mccluster.org</a>.</p>
 
     <p class="pr__foot">
+      <!-- "FAQ", "Newsroom" and "Résumé" all used to point at the biography. -->
       <a href="matthew-mccluster.html">Biography</a> ·
       <a href="portfolio.html">Portfolio / FAQ</a> ·
       <a href="newsroom.html">Newsroom</a> ·
-      <a href="assets/resume/matthew-mccluster-resume.pdf">Résumé</a> ·
+      <a href="assets/resume/matthew-mccluster-resume.pdf">Résumé (PDF)</a> ·
+      <a href="engineering/">IT &amp; engineering</a> ·
+      <a href="services.html">Services</a> ·
       <a href="index.html?stay=1">Home</a><br>
       © 2026 Matthew McCluster · McCluster Corp. Assets provided for editorial use.
     </p>

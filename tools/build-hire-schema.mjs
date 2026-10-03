@@ -1,1 +1,185 @@
-import {readFileSync,writeFileSync} from"node:fs";const check=process.argv.includes("--check"),p="hire.html",S="<!-- SEO-HIRE:START -->",E="<!-- SEO-HIRE:END -->",d=JSON.parse(readFileSync("data/offers.json","utf8"));function rows(o){const z=[],p=o.pricing||{};if(o.id==="runway"&&p.start?.approved&&Number.isFinite(p.start.total))z.push({"@type":"Offer",priceCurrency:"USD",price:String(p.start.total),itemOffered:{"@type":"Service",name:o.name+" - go live"}});if(o.id==="runway"&&p.recurring?.approved&&Number.isFinite(p.recurring.amount))z.push({"@type":"Offer",priceCurrency:"USD",price:String(p.recurring.amount),priceSpecification:{"@type":"UnitPriceSpecification",priceCurrency:"USD",price:p.recurring.amount,unitText:"MONTH"},itemOffered:{"@type":"Service",name:o.name+" - hosting"}});for(const m of["m","equity"]){const q=p[m];if(!q?.approved)continue;if(Number.isFinite(q.amount))z.push({"@type":"Offer",priceCurrency:"USD",price:String(q.amount),priceSpecification:{"@type":"UnitPriceSpecification",priceCurrency:"USD",price:q.amount,unitText:String(q.cadence||"").toUpperCase()},itemOffered:{"@type":"Service",name:o.name+(m==="equity"?" · Equity Uprise":"")}});else if(m==="equity"&&q.derived==="equity_base"&&Number.isFinite(p.m?.amount)){const a=p.m.amount*q.base_multiplier;z.push({"@type":"Offer",priceCurrency:"USD",price:String(a),priceSpecification:{"@type":"UnitPriceSpecification",priceCurrency:"USD",price:a,unitText:"MONTH"},description:"Time-limited revenue-share configuration; final terms are governed by the signed agreement.",itemOffered:{"@type":"Service",name:o.name+" · Equity Uprise"}})}for(const l of q.rate_lines||[])if(Number.isFinite(l.amount))z.push({"@type":"Offer",priceCurrency:"USD",price:String(l.amount),description:l.unit||undefined,itemOffered:{"@type":"Service",name:l.label}})}return z}const ld={"@context":"https://schema.org","@type":"ProfessionalService","@id":"https://matthew.mccluster.org/hire.html#service",name:"Matthew McCluster · Creative, Web, Media & Platform Services",url:"https://matthew.mccluster.org/hire.html",image:"https://matthew.mccluster.org/assets/img/m-mark.png",founder:{"@id":"https://matthew.mccluster.org/#matthew-mccluster"},parentOrganization:{"@id":"https://matthew.mccluster.org/#mccluster-corp"},areaServed:["Connecticut","Georgia","Remote"],email:"matthew@mccluster.org",makesOffer:d.offers.flatMap(rows)},b=S+"\n<script type=\"application/ld+json\">\n"+JSON.stringify(ld,null,2)+"\n</script>\n"+E,x=readFileSync(p,"utf8"),r=new RegExp(S+"[\\s\\S]*?"+E);if(!r.test(x))throw Error("hire markers missing");const o=x.replace(r,b);if(check){if(o!==x)process.exit(1)}else writeFileSync(p,o);
+#!/usr/bin/env node
+/* hire.html's STRUCTURED DATA, WRITTEN FROM THE PRICE LEDGER.
+
+     node tools/build-hire-schema.mjs          # rewrite the block
+     node tools/build-hire-schema.mjs --check  # fail if it drifted
+
+   The page renders every price from data/offers.json (js/offers.js and
+   js/hire-offers.js). Its JSON-LD used to be typed by hand and had drifted
+   from that ledger: it advertised a "Limited Offer" at $2,800 a month that
+   the page no longer sells, and a sync licence "from $750" beside a $875
+   price. Structured data that disagrees with the page is the one kind a
+   search engine is entitled to distrust, so it is now generated from the
+   same ledger the page reads, and only from lines the ledger marks as
+   approved and listed. An unapproved price never reaches the markup.
+
+   Each lane is its own Service with its own offers, so a per-hour rate is
+   a UnitPriceSpecification in hours and a "from" price is a minPrice, not
+   a flat price it is not. The Person is referenced, not restated:
+   matthew-mccluster.html defines him once (data/seo/entity-graph.json). */
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SITE = "https://matthew.mccluster.org";
+const PAGE = join(ROOT, "hire.html");
+const START = "<!-- SEO-HIRE:START -->";
+const END = "<!-- SEO-HIRE:END -->";
+
+const PERSON = `${SITE}/#matthew-mccluster`;
+const CORP = `${SITE}/#mccluster-corp`;
+const AREA = [
+  { "@type": "State", name: "Connecticut" },
+  { "@type": "State", name: "Georgia" }
+];
+
+/* What each lane is, in the words a buyer searches with. The names on the
+   page are brand names ("Who Did the Shoot"); serviceType carries the plain
+   category so the brand name does not have to. */
+const SERVICE_TYPE = {
+  "runway": "Website design, build and hosting",
+  "anti-social": "Website management and social media management",
+  "social": "Social media management",
+  "who-did-the-shoot": "Photography and video production",
+  "write-a-song": "Original music, custom scoring, sync licensing and creative campaigns"
+};
+
+const money = (n) => Number(n);
+
+function offerFor(id, line) {
+  const unit = String(line.unit || "");
+  const from = /^from\b/i.test(unit);
+  const o = {
+    "@type": "Offer",
+    name: line.label,
+    priceCurrency: "USD",
+    description: [line.label, unit].filter(Boolean).join(" · "),
+    url: `${SITE}/hire.html`
+  };
+  if (from) {
+    o.priceSpecification = { "@type": "PriceSpecification", minPrice: money(line.amount), priceCurrency: "USD" };
+  } else if (/per hour/i.test(unit)) {
+    o.priceSpecification = { "@type": "UnitPriceSpecification", price: money(line.amount), priceCurrency: "USD", unitCode: "HUR", unitText: "hour" };
+  } else {
+    o.price = money(line.amount);
+  }
+  return o;
+}
+
+function offersOf(o) {
+  const p = o.pricing || {};
+  const m = p.m || {};
+  const out = [];
+  if (o.id === "runway" && p.start && p.start.approved) {
+    out.push({
+      "@type": "Offer",
+      name: "Go live: domain for a year and the first month of hosting",
+      price: money(p.start.total),
+      priceCurrency: "USD",
+      description: "Website build included. Then hosting each month and the domain each year.",
+      url: `${SITE}/hire.html`
+    });
+    if (p.recurring && p.recurring.approved) {
+      out.push({
+        "@type": "Offer",
+        name: "Hosting, every month after the first",
+        priceCurrency: "USD",
+        priceSpecification: { "@type": "UnitPriceSpecification", price: money(p.recurring.amount), priceCurrency: "USD", unitCode: "MON", unitText: "month" },
+        url: `${SITE}/hire.html`
+      });
+    }
+  }
+  if (m.approved && typeof m.amount === "number" && m.cadence === "month") {
+    out.push({
+      "@type": "Offer",
+      name: `${o.full_name || o.name} · M Mode`,
+      priceCurrency: "USD",
+      description: m.revenue_share_line || undefined,
+      priceSpecification: { "@type": "UnitPriceSpecification", price: money(m.amount), priceCurrency: "USD", unitCode: "MON", unitText: "month" },
+      url: `${SITE}/hire.html`
+    });
+  }
+  const eq = p.equity || {};
+  if (m.approved && eq.approved && eq.derived === "equity_base" && typeof m.amount === "number") {
+    out.push({
+      "@type": "Offer",
+      name: `${o.full_name || o.name} · Equity Uprise mode`,
+      priceCurrency: "USD",
+      description: `Plus ${eq.share_percent}% of ${eq.share_basis} for up to ${eq.term_months} months, ending at ${eq.ends_at}. Subject to approval and a written agreement; no ownership is taken.`,
+      priceSpecification: { "@type": "UnitPriceSpecification", price: money(m.amount * eq.base_multiplier), priceCurrency: "USD", unitCode: "MON", unitText: "month" },
+      url: `${SITE}/hire.html`
+    });
+  }
+  for (const line of m.rate_lines || []) {
+    if (line.approved === false || typeof line.amount !== "number") continue;
+    out.push(offerFor(o.id, line));
+  }
+  return m.approved === false ? [] : out;
+}
+
+export function buildGraph(ledger) {
+  const services = (ledger.offers || [])
+    .filter((o) => o.listed !== false)
+    .sort((a, b) => (a.position || 0) - (b.position || 0))
+    .map((o) => {
+      const node = {
+        "@type": "Service",
+        "@id": `${SITE}/hire.html#${o.id}`,
+        name: o.full_name || o.name,
+        serviceType: SERVICE_TYPE[o.id] || undefined,
+        description: [o.one_line, o.lede].filter(Boolean).join(" "),
+        provider: { "@id": PERSON },
+        brand: { "@id": CORP },
+        areaServed: AREA,
+        url: `${SITE}/hire.html`
+      };
+      if (o.full_name && o.full_name !== o.name) node.alternateName = o.name;
+      const offers = offersOf(o);
+      if (offers.length) node.offers = offers;
+      if (Array.isArray(o.includes) && o.includes.length) {
+        node.hasOfferCatalog = {
+          "@type": "OfferCatalog",
+          name: `What ${o.name} includes`,
+          itemListElement: o.includes.map((x) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: x } }))
+        };
+      }
+      return JSON.parse(JSON.stringify(node));
+    });
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${SITE}/hire.html`,
+        url: `${SITE}/hire.html`,
+        name: "Book Matthew McCluster: websites, photography, video and music",
+        isPartOf: { "@id": `${SITE}/#website` },
+        about: { "@id": PERSON },
+        mainEntity: services.map((s) => ({ "@id": s["@id"] }))
+      },
+      ...services
+    ]
+  };
+}
+
+export function renderBlock(ledger) {
+  return `${START}\n  <!-- generated by tools/build-hire-schema.mjs from data/offers.json; do not edit by hand -->\n  <script type="application/ld+json">${JSON.stringify(buildGraph(ledger))}</script>\n  ${END}`;
+}
+
+function main() {
+  const ledger = JSON.parse(readFileSync(join(ROOT, "data/offers.json"), "utf8"));
+  const html = readFileSync(PAGE, "utf8");
+  const a = html.indexOf(START), b = html.indexOf(END);
+  if (a < 0 || b < 0) { console.error("hire.html has no SEO-HIRE markers"); process.exit(1); }
+  const next = html.slice(0, a) + renderBlock(ledger) + html.slice(b + END.length);
+  if (process.argv.includes("--check")) {
+    if (next !== html) { console.error("hire.html JSON-LD drifted from data/offers.json: run node tools/build-hire-schema.mjs"); process.exit(1); }
+    console.log("offer graph: hire.html JSON-LD is current");
+    return;
+  }
+  writeFileSync(PAGE, next);
+  console.log("offer graph: wrote hire.html JSON-LD");
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) main();

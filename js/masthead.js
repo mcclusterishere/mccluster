@@ -236,14 +236,21 @@ html { scroll-behavior: smooth; }
     ] },
     { group: "The work", rooms: [
       { href: "portfolio.html",    label: "The full portfolio" },
+      /* The evidence pages: what the IT, infrastructure and platform work
+         actually was, role by role, and the services with the work behind
+         each one. Without a door here they are reachable only from the
+         résumé. */
+      { href: "engineering/",      label: "Engineering & IT evidence, role by role" },
       { href: "services.html",     label: "Services & case work" },
-      { href: "engineering/index.html", label: "Engineering & IT evidence" },
+      { href: "gallery.html",      label: "Photography: the gallery" },
     ] },
-    /* Equity Uprise is put away while the site concentrates on the music
-       and on Action Network, so its group is not listed here. The rooms all still
-       exist and still answer on their own URLs; the map simply stops
-       handing them to a visitor who came for a record. Restoring the
-       group is restoring these lines. */
+    /* Equity Uprise came back as a group on the Action Network, and its
+       front page is the Docket 516R record. Its older rooms stay put away
+       in _unfinished/; only the record and the network are on the map. */
+    { group: "Equity Uprise", rooms: [
+      { href: "docket-516.html", label: "Docket 516R: the public record, and what to do with it" },
+      { href: "action/?c=equity-uprise", label: "The Equity Uprise campaign" },
+    ] },
     /* The Closet is put away with the other lines the site is not
        concentrating on. Its rooms are intact on disk; the map simply stops
        offering them. */

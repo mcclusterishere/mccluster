@@ -172,3 +172,27 @@ test('review regressions stay fixed in native Control tools',async()=>{
   assert.match(css,/\.cra-reach__tick\{[^}]*font-size:11px/);
   assert.doesNotMatch(css,/\.cra-scatter__/);
 });
+
+
+test('Home public record reads the canonical SEO authority files and exposes operator links',async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/function loadPublicRecord\(\)/);
+  for(const path of [
+    'data/seo/entity-graph.json',
+    'data/seo/evidence-ledger.json',
+    'data/seo/sitemap-pages.json'
+  ]){
+    assert.ok(js.includes(path),path+' is not wired into the public record source');
+  }
+  assert.match(js,/panel\("Public record", "canonical search authority", renderPublicRecord\(\), "cr-span-12"\)/);
+  assert.match(js,/verification_status === "verified" && item\.publish === true/);
+  for(const href of [
+    'newsroom.html',
+    'engineering/recruiter-role-map.html',
+    'sitemap.xml',
+    'https://search.google.com/search-console',
+    'https://www.bing.com/webmasters/'
+  ]){
+    assert.ok(js.includes(href),href+' is missing from the Public record panel');
+  }
+});

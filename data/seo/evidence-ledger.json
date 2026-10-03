@@ -1,20 +1,142 @@
 {
-  "schema_version": "mccluster-evidence-ledger/v1",
+  "schema_version": "mccluster-evidence-ledger/v2",
   "policy": {
     "publish_rule": "Only entries with verification_status=verified and publish=true may render into the public newsroom.",
-    "private_evidence": "Do not expose private records, account data, or non-public contact information."
+    "dates": "date is when the thing happened; published is when this site first published the entry. They are separate on purpose: nothing is backdated, the newsroom shows both, and the Atom feed dates entries by published.",
+    "private_evidence": "Do not expose private records, account data, or non-public contact information. Internal review notes and owner actions live in docs/seo/evidence-review.json, which is not deployed."
   },
   "items": [
     {
       "id": "cga-matthew-2025",
       "type": "recognition",
       "date": "2025-10-05",
-      "title": "Connecticut General Assembly issues an Official Citation to Matthew Christian Perry McCluster",
-      "summary": "The Connecticut General Assembly issued an Official Citation recognizing Matthew Christian Perry McCluster. The primary document is preserved on the site.",
+      "title": "Connecticut General Assembly issues Official Citations to Matthew McCluster and McCluster Corp",
+      "summary": "The Connecticut General Assembly issued two Official Citations dated October 5, 2025 at the State Capitol in Hartford: one to Matthew Christian Perry McCluster, recognizing his leadership across arts, media and community organizing as founder of McCluster Corp and creator of the fellowship then called Equity Rise, and one to McCluster Corp for its programs advancing cultural equity, environmental justice and religious freedom. Both are signed by the President Pro Tempore of the Senate, the Speaker of the House and the Secretary of the State.",
       "evidence": [
         {
-          "label": "Connecticut General Assembly citation to Matthew McCluster",
+          "label": "Citation to Matthew McCluster (PDF)",
           "path": "assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf"
+        },
+        {
+          "label": "Citation to McCluster Corp (PDF)",
+          "path": "assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "verification_status": "verified",
+      "publish": true,
+      "published": "2026-10-02",
+      "schema_type": "DigitalDocument",
+      "claims": [
+        "Two Official Citations, both dated October 5, 2025, State Capitol, Hartford",
+        "One names Matthew Christian Perry McCluster, one names McCluster Corp",
+        "Signed by the President Pro Tempore, the Speaker of the House and the Secretary of the State",
+        "The citations name the program Equity Rise, its name in October 2025"
+      ]
+    },
+    {
+      "id": "georgia-proclamation-2025",
+      "type": "recognition",
+      "date": "2025-10-27",
+      "title": "Governor Kemp proclaims Georgia Youth Innovation & Civic Leadership Week, citing McCluster Corp's Equity Uprise Fellowship",
+      "summary": "Governor Brian P. Kemp signed a proclamation on October 27, 2025 declaring December 12 to 18, 2025 Georgia Youth Innovation & Civic Leadership Week. It cites McCluster Corp, founded by Matthew McCluster, for expanding its Equity Uprise Fellowship to Georgia, and the 2025 summer cohort's environmental-justice and digital-literacy projects.",
+      "evidence": [
+        {
+          "label": "The proclamation (PDF)",
+          "path": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#mccluster-corp",
+        "https://matthew.mccluster.org/#equity-uprise",
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": true,
+      "published": "2026-10-02",
+      "schema_type": "DigitalDocument",
+      "claims": [
+        "Signed and sealed October 27, 2025 by Governor Brian P. Kemp, attested by the Chief of Staff",
+        "Proclaims December 12-18, 2025 as Georgia Youth Innovation & Civic Leadership Week",
+        "Names McCluster Corp, founded by Matthew McCluster, and its Equity Uprise Fellowship"
+      ]
+    },
+    {
+      "id": "equity-uprise-bridgeport-event-2025",
+      "type": "event",
+      "date": "2025-10-05",
+      "published": "2026-10-03",
+      "title": "Equity Uprise holds its October 5 event in Bridgeport",
+      "summary": "On October 5, 2025 the Equity Uprise fellowship held an event in Bridgeport. The City of Bridgeport's proclamation of December 10, 2025 says the event \"transformed the discussion around environmental-justice concerns in Docket 516\" through art, music and policy dialogue. Matthew McCluster photographed it.",
+      "schema_type": "Event",
+      "place": "Bridgeport, Connecticut",
+      "claims": [
+        "The event took place in Bridgeport on October 5 (2025)",
+        "The City of Bridgeport proclamation of December 10, 2025 describes it as the fellowship's October 5 Bridgeport event and connects it to Docket 516",
+        "Matthew McCluster's photographs of it are on the site"
+      ],
+      "evidence": [
+        {
+          "label": "Bridgeport proclamation (PDF)",
+          "path": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+        },
+        {
+          "label": "Photographs of the event",
+          "path": "walls/eu-rally.html"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#equity-uprise",
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "verification_status": "verified",
+      "publish": true
+    },
+    {
+      "id": "bridgeport-human-rights-day-2025",
+      "type": "recognition",
+      "date": "2025-12-10",
+      "title": "Bridgeport proclaims December 10, 2025 Equity Uprise Human Rights Day",
+      "summary": "Mayor Joseph P. Ganim proclaimed Wednesday, December 10, 2025 Equity Uprise Human Rights Day in Bridgeport, commending the participants of the Equity Uprise Fellowship, which the proclamation describes as a civic fellowship created by Bridgeport native Matthew McCluster and McCluster Corp.",
+      "evidence": [
+        {
+          "label": "The proclamation (PDF)",
+          "path": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+        }
+      ],
+      "entities": [
+        "https://matthew.mccluster.org/#equity-uprise",
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "verification_status": "verified",
+      "publish": true,
+      "published": "2026-10-02",
+      "schema_type": "DigitalDocument",
+      "claims": [
+        "Proclaimed by Mayor Joseph P. Ganim, sealed December 10, 2025",
+        "Describes Equity Uprise 2025 as a civic fellowship created by Bridgeport native Matthew McCluster and McCluster Corp"
+      ]
+    },
+    {
+      "id": "dna-policy-memo-2024",
+      "type": "publication",
+      "date": "2024-11-29",
+      "published": "2026-10-03",
+      "title": "Matthew McCluster's policy memorandum on DNA collection from misdemeanor offenders",
+      "summary": "Matthew McCluster wrote a policy memorandum, addressed to Governor Brian Kemp and dated November 29, 2024, opposing legislation to mandate DNA collection from people convicted of misdemeanors on constitutional, equity, fiscal and efficacy grounds. It was his writing sample for the Urban Leadership Fellowship and is published in full.",
+      "schema_type": "Report",
+      "claims": [
+        "Sole author; dated November 29, 2024; addressed to Governor Brian Kemp",
+        "Submitted as his Urban Leadership Fellowship writing sample"
+      ],
+      "evidence": [
+        {
+          "label": "The memorandum",
+          "path": "policy-memo-dna.html"
         }
       ],
       "entities": [
@@ -24,39 +146,39 @@
       "publish": true
     },
     {
-      "id": "georgia-proclamation-2025",
-      "type": "recognition",
-      "date": "2025-10-27",
-      "title": "Georgia proclamation designates Youth Innovation & Civic Leadership Week",
-      "summary": "A State of Georgia proclamation signed October 27, 2025 designates December 12-18, 2025 as Georgia Youth Innovation & Civic Leadership Week.",
+      "id": "docket-516r-closed-2026",
+      "type": "public_record",
+      "date": "2026-02-05",
+      "published": "2026-10-03",
+      "title": "Siting Council rejects UI's monopole appeal; Docket 516R is closed",
+      "summary": "On February 5, 2026 the Connecticut Siting Council rejected United Illuminating's petition for reconsideration of its Fairfield to Congress Railroad Transmission Line 115-kV Rebuild Project, which the Council had denied 5-3 on October 16, 2025. The final reconsideration decision is dated February 9, 2026, and the Council lists Docket 516R as closed. Equity Uprise's October 5, 2025 event in Bridgeport had focused on this docket, and the plain-English record of the case is now the front page of the Equity Uprise group.",
+      "schema_type": "DigitalDocument",
+      "claims": [
+        "Council vote to deny the application, 5-3, October 16, 2025 (CT Mirror); remand decision documents dated October 17, 2025 (CSC)",
+        "Petition for reconsideration rejected February 5, 2026 (CT Mirror); final reconsideration decision dated February 9, 2026 (CSC)",
+        "Docket 516R status: closed (CSC)",
+        "No claim that Equity Uprise or any one party caused the outcome"
+      ],
       "evidence": [
         {
-          "label": "State of Georgia proclamation",
-          "path": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+          "label": "Siting Council: Docket 516R",
+          "url": "https://portal.ct.gov/csc/1_applications-and-other-pending-matters/applications/4_docketnos500s/docket-no-516r"
+        },
+        {
+          "label": "CT Mirror, February 5, 2026",
+          "url": "https://ctmirror.org/2026/02/05/ct-siting-council-rejects-united-illuminatings-monopole-appeal/"
+        },
+        {
+          "label": "CT Mirror, October 16, 2025",
+          "url": "https://ctmirror.org/2025/10/16/monopoles-denied-ct-siting-council-united-illuminating/"
+        },
+        {
+          "label": "The Docket 516R record",
+          "path": "docket-516.html"
         }
       ],
       "entities": [
-        "https://matthew.mccluster.org/#matthew-mccluster",
-        "https://matthew.mccluster.org/#mccluster-corp"
-      ],
-      "verification_status": "verified",
-      "publish": true
-    },
-    {
-      "id": "bridgeport-human-rights-day-2025",
-      "type": "recognition",
-      "date": "2025-12-10",
-      "title": "Bridgeport proclamation recognizes Equity Uprise Human Rights Day",
-      "summary": "The City of Bridgeport issued a proclamation for Equity Uprise Human Rights Day on December 10, 2025.",
-      "evidence": [
-        {
-          "label": "City of Bridgeport proclamation",
-          "path": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
-        }
-      ],
-      "entities": [
-        "https://matthew.mccluster.org/#matthew-mccluster",
-        "https://matthew.mccluster.org/#mccluster-corp"
+        "https://matthew.mccluster.org/#equity-uprise"
       ],
       "verification_status": "verified",
       "publish": true
