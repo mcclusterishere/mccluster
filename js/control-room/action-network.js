@@ -19,7 +19,7 @@
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
     campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
-    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{}};
+    missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[]};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
   var HAVE={give:"$5",time:"Time",skills:"Skills",reach:"Reach",resources:"Resources",learn:"Wants to learn"};
@@ -218,11 +218,12 @@
     return Promise.all([
       A.supa("action_fellowship_applications?select="+APP_COLS+"&order=created_at.desc&limit=100"),
       A.supa("action_fellowship_applications?select="+APP_COLS+"&status=eq.accepted&order=created_at.desc&limit=1000"),
-      A.supa("action_cohorts?select=id,name,status,campaign_id&status=eq.active&order=created_at.desc").catch(function(){return [];})
+      A.supa("action_cohorts?select=id,name,status,campaign_id&status=eq.active&order=created_at.desc").catch(function(){return [];}),
+      A.request?A.request("/v1/mnet/live/admin/grants").then(function(x){return x.grants||[];}).catch(function(){return [];}):Promise.resolve([])
     ]).then(function(r){
       var seen={};
       A.apps=(r[0]||[]).concat(r[1]||[]).filter(function(a){if(seen[a.id])return false;seen[a.id]=1;return true;});
-      A.cohorts=r[2]||[];A.seats={};
+      A.cohorts=r[2]||[];A.liveGrants=r[3]||[];A.seats={};
       var fellows=A.apps.filter(function(a){return a.status==="accepted"&&a.m_uid;}).map(function(a){return a.m_uid;});
       var chunks=[];for(var i=0;i<fellows.length;i+=100)chunks.push(fellows.slice(i,i+100));
       return Promise.all(chunks.map(function(ids){
@@ -242,6 +243,23 @@
         '<button class="cr-btn cr-btn--primary" type="button" data-seat-admit="'+e(a.id)+'">Admit</button></div>'
       :(held.length?'':'<p class="cro-meta">No cohort is admitting. Open one before giving a seat.</p>'));
   }
+  var LIVE_CATEGORIES=[["music","Music"],["build","Build"],["learn","Learn"],["field","Field"],["forum","Forum"]];
+  function liveGrantControls(a){
+    var held=A.seats[a.m_uid]||[];
+    var grants=(A.liveGrants||[]).filter(function(g){return g.m_uid===a.m_uid&&g.status==="active";});
+    var rows=grants.length?'<div class="cro-list" style="margin-top:8px">'+grants.map(function(g){
+      var scope=g.basis==="cohort"?(cohortName(g.cohort_id)||"cohort"):g.basis;
+      return '<div class="cro-row"><div class="cro-row__top"><b>Live · '+e((g.allowed_categories||[]).join(" · "))+'</b><span class="cro-pill">'+e(scope)+'</span></div>'+
+        '<div class="cro-meta">Up to '+e(g.max_stage_seats||1)+' modeled stage seats · support '+(g.support_allowed?"allowed":"off")+'</div>'+
+        '<div class="cro-actions"><button class="cr-btn" type="button" data-live-revoke="'+e(g.id)+'">Revoke live access</button></div></div>';
+    }).join("")+'</div>':"";
+    if(!held.length)return rows+'<p class="cro-meta">Live access is not automatic with fellowship. Give this fellow an active cohort seat first.</p>';
+    return rows+
+      '<div class="cro-actions" style="margin-top:8px"><label>Live cohort<select data-live-cohort="'+e(a.id)+'">'+held.map(function(id){return'<option value="'+e(id)+'">'+e(cohortName(id))+'</option>';}).join("")+'</select></label>'+
+      '<label>Category<select data-live-category="'+e(a.id)+'">'+LIVE_CATEGORIES.map(function(x){return'<option value="'+x[0]+'">'+x[1]+'</option>';}).join("")+'</select></label>'+
+      '<button class="cr-btn cr-btn--primary" type="button" data-live-grant="'+e(a.id)+'">Allow live</button></div>'+
+      '<p class="cro-meta">This grants a capability, not a public role. One category at a time keeps the scope explicit. Support stays off.</p>';
+  }
   function fellowDesk(){
     if(A.apps===null&&!A.appBusy)loadApps();
     if(A.appBusy&&A.apps===null)return note("Loading applications…");
@@ -253,7 +271,7 @@
         (a.project?'<p><b>Would build or lead:</b> '+e(a.project)+'</p>':'')+
         (open?'<label>Note to the member<textarea data-app-note="'+e(a.id)+'" placeholder="Welcome, or what would make a stronger application."></textarea></label>'+
           '<div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-app-review="'+e(a.id)+'" data-decision="accepted">Accept</button><button class="cr-btn" type="button" data-app-review="'+e(a.id)+'" data-decision="declined">Decline</button></div>'
-          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':'')+(a.status==="accepted"?seatControls(a):''))+
+          :(a.review_note?'<p class="cro-meta">Note: '+e(a.review_note)+'</p>':'')+(a.status==="accepted"?seatControls(a)+liveGrantControls(a):''))+
         '</article>';
     }).join("")+'</div>';
   }
@@ -344,6 +362,24 @@
         .then(function(r){A.msg=(r&&r.idempotent?"Already seated in ":"Seated in ")+cohortName(cohort)+".";return loadApps();})
         .catch(function(err){b.disabled=false;var m=String(err&&err.message||err);
           alert(/admit_fellow_to_cohort/.test(m)&&/find|exist/i.test(m)?"The cohort-admission function is not in the database yet: apply supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql.":m||"Admission failed.");});
+    };});
+    root.querySelectorAll("[data-live-grant]").forEach(function(b){b.onclick=function(){
+      var appId=b.getAttribute("data-live-grant"),app=A.apps.find(function(x){return x.id===appId;}),cohortSel=root.querySelector('[data-live-cohort="'+appId+'"]'),catSel=root.querySelector('[data-live-category="'+appId+'"]');
+      if(!app||!cohortSel||!catSel)return;
+      var cohort=cohortSel.value,category=catSel.value;
+      if(!confirm("Allow this fellow to host "+category+" live rooms through "+cohortName(cohort)+"?"))return;
+      b.disabled=true;
+      A.request("/v1/mnet/live/admin/grants",{method:"POST",body:{m_uid:app.m_uid,basis:"cohort",cohort_id:cohort,category:category,max_stage_seats:4}})
+        .then(function(){A.msg="Live access granted for "+category+". Support remains off.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Live access was not granted.");});
+    };});
+    root.querySelectorAll("[data-live-revoke]").forEach(function(b){b.onclick=function(){
+      var id=b.getAttribute("data-live-revoke");
+      if(!confirm("Revoke this live-host capability? Existing live sessions can still be ended separately by the desk."))return;
+      b.disabled=true;
+      A.request("/v1/mnet/live/admin/grants/"+encodeURIComponent(id),{method:"DELETE"})
+        .then(function(){A.msg="Live access revoked.";return loadApps();})
+        .catch(function(err){b.disabled=false;alert(err.message||"Live access was not revoked.");});
     };});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}
