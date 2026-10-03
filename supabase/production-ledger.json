@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 220,
-  "latest_version": "20261002185248",
-  "latest_name": "fbi_board_v1",
-  "ledger_sha256": "8f27d4175332e647da8b8ca06c10a5d70b3fe89dce583096a522668194750ed7",
+  "migration_count": 221,
+  "latest_version": "20261002222500",
+  "latest_name": "action_mission_camera_loop_v1",
+  "ledger_sha256": "fd55d7fdb9d5ebc1e51715de2f0704ca3341efffc089a6d4c5ebae0a857deb06",
   "migrations": [
     {
       "version": "0001",
@@ -886,6 +886,10 @@
     {
       "version": "20261002185248",
       "name": "fbi_board_v1"
+    },
+    {
+      "version": "20261002222500",
+      "name": "action_mission_camera_loop_v1"
     }
   ]
 }
