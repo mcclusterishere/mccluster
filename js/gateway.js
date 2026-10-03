@@ -83,7 +83,7 @@
     if (slug) qs.set("c", slug);
     Object.keys(extra || {}).forEach(function (k) { qs.set(k, extra[k]); });
     var s = qs.toString();
-    return "action/" + (s ? "?" + s : "") + (hash || "");
+    return "/action/" + (s ? "?" + s : "") + (hash || "");
   }
 
   /* ---------- the score ---------- */
@@ -231,8 +231,8 @@
     try{var s=root.MCC&&root.MCC.session&&root.MCC.session();return !!(s&&s.access_token);}catch(_){return false;}
   }
   function gatewayMissionHref(c){
-    var ret=root.location.pathname.replace(/^\//,"")+root.location.search+root.location.hash;
-    return "mnet.html?view=missions&campaign="+encodeURIComponent(c.id)+"&return="+encodeURIComponent(ret);
+    var ret=root.location.pathname+root.location.search+root.location.hash;
+    return "/mnet.html?view=missions&campaign="+encodeURIComponent(c.id)+"&return="+encodeURIComponent(ret);
   }
 
   function paintFeatured(c) {
