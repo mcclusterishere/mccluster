@@ -47,7 +47,7 @@ test("Action Network exposes a native mission participant flow",async()=>{
  assert.match(html,/id="mnMissionsView"/);
  assert.match(html,/id="mnMissionDialog"/);
  assert.match(html,/Take this mission/);
- assert.match(html,/Submit proof/);
+ assert.match(html,/Submit(?: mission)? proof/);
  assert.match(js,/function loadMissions\(/);
  assert.match(js,/function joinMission\(/);
  assert.match(js,/function submitMissionProof\(/);
@@ -83,7 +83,7 @@ test("the first mission slice: Action Record, receipt and deep links",async()=>{
  /* proof from the camera through the existing media pipeline */
  assert.match(html,/id="mnMissionProofFile" type="file" accept="image\/\*,video\/\*"/);
  assert.match(js,/\/v1\/mnet\/media\/upload-url/);
- assert.match(js,/p_metadata:asset\?\{asset_id:asset\.id\}:\{\}/);
+ assert.match(js,/p_metadata:meta/);assert.match(js,/poster_asset_id/);
  /* deep link: a shared mission opens that mission */
  assert.match(js,/new URLSearchParams\(location\.search\)\.get\("mission"\)/);
  assert.match(js,/missions\.deepLinked=true; setView\("missions"\); openMission\(id\);/);
