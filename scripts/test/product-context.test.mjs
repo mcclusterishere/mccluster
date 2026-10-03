@@ -32,6 +32,7 @@ test("McCluster Corp product context is wired into the public authority graph", 
   assert.ok(home.includes(`"url": "${url}"`), "home Organization must point at company hub");
   assert.ok(profile.includes(`"url": "${url}"`), "profile Organization must point at company hub");
   assert.ok(llms.includes("mccluster-corp.html"));
+  assert.ok(context.principles.some((p) => p.includes("compatibility detail")), "legacy implementation naming must remain a compatibility detail");
 });
 
 test("product context keeps the action and company boundaries explicit", () => {
