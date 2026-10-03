@@ -59,6 +59,15 @@ test("creator/action attribution remains server authoritative",async()=>{
   assert.match(mnet,/join_action_mission_attributed/);
 });
 
+test("creator attribution is first-touch conversion attribution, not a later-click rewrite",async()=>{
+  const sql=await read("supabase/migrations/20261003232339_creator_action_first_touch_attribution_v1.sql");
+  assert.match(sql,/select a\.status into v_prior_status/);
+  assert.match(sql,/v_prior_status is null or v_prior_status = 'withdrawn'/);
+  assert.match(sql,/source_content_id = p_content_id/);
+  assert.doesNotMatch(sql,/source_content_id = coalesce/);
+  assert.match(sql,/already-active assignment is never retroactively credited/);
+});
+
 test("the external CTA keeps content and source attribution through the mission deep link",async()=>{
   const [router,mnet]=await Promise.all([
     read("workers/mccluster/src/social/router.js"),
