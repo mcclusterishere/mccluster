@@ -26,93 +26,28 @@
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "ProfilePage",
+  "@type": "WebPage",
   "@id": "https://matthew.mccluster.org/resume-it-support.html",
   "url": "https://matthew.mccluster.org/resume-it-support.html",
   "name": "Matthew McCluster · IT Support & Field Technician Résumé",
   "dateModified": "2026-09-30",
+  "isPartOf": {
+    "@id": "https://matthew.mccluster.org/#website"
+  },
+  "about": {
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+  },
   "mainEntity": {
     "@type": "Person",
     "@id": "https://matthew.mccluster.org/#matthew-mccluster",
     "name": "Matthew McCluster",
-    "url": "https://matthew.mccluster.org/matthew-mccluster.html",
-    "email": "mailto:matthew@mccluster.org",
-    "jobTitle": [
-      "IT Support Technician",
-      "Field Technician",
-      "Desktop Support Technician",
-      "Infrastructure Engineer"
-    ],
-    "address": {
-      "@type": "PostalAddress",
-      "addressRegion": "CT",
-      "addressCountry": "US"
-    },
-    "hasOccupation": {
-      "@type": "Occupation",
-      "name": "IT Support & Field Technician (L1/L2)",
-      "occupationLocation": [
-        {
-          "@type": "State",
-          "name": "Connecticut"
-        },
-        {
-          "@type": "State",
-          "name": "New York"
-        }
-      ],
-      "skills": "Windows and macOS endpoint support, Microsoft 365 administration (Exchange, OneDrive, Teams, SharePoint), Active Directory, Google Workspace, device imaging and deployment, hardware swaps, printers, VPN, email, ticketing systems, Level 3 escalation, Windows Server, RedHat, CentOS, Cisco Nexus, DHCP, structured cabling, data-center buildout"
-    },
-    "knowsAbout": [
-      "IT support",
-      "Help desk",
-      "Field service",
-      "Desktop support",
-      "Microsoft 365",
-      "Exchange",
-      "SharePoint",
-      "Microsoft Teams",
-      "OneDrive",
-      "Active Directory",
-      "Google Workspace",
-      "macOS",
-      "Windows",
-      "Windows Server",
-      "Device imaging",
-      "Ticketing systems",
-      "Printers",
-      "VPN",
-      "Cisco Nexus",
-      "DHCP",
-      "Data center",
-      "Structured cabling",
-      "RedHat",
-      "CentOS"
-    ],
-    "hasCredential": [
-      {
-        "@type": "EducationalOccupationalCredential",
-        "name": "CompTIA IT Fundamentals+ (ITF+)",
-        "credentialCategory": "certification",
-        "dateCreated": "2022-12-01"
-      },
-      {
-        "@type": "EducationalOccupationalCredential",
-        "name": "IT Bootcamp Certificate, CT State Community College (Housatonic)",
-        "credentialCategory": "certificate",
-        "dateCreated": "2023-09-20"
-      }
-    ],
-    "sameAs": [
-      "https://orcid.org/0009-0000-8988-8955",
-      "https://isni.org/isni/0000000529563111",
-      "https://www.linkedin.com/in/matthew-mccluster-863048248",
-      "https://credits.muso.ai/profile/c1d1f2fa-1ba4-42d5-a430-20b2c2e77db7",
-      "https://instagram.com/McClusterishere",
-      "https://youtube.com/@McClusterishere",
-      "https://tiktok.com/@McClusterishere"
-    ]
-  }
+    "url": "https://matthew.mccluster.org/matthew-mccluster.html"
+  },
+  "significantLink": [
+    "https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.pdf",
+    "https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx",
+    "https://matthew.mccluster.org/engineering/"
+  ]
 }
   </script>
 
@@ -177,6 +112,8 @@
   <!-- last, so its @media print block overrides the coat -->
   <link rel="stylesheet" href="css/professional.css?v=__STAMP__">
   <link rel="stylesheet" href="css/resume-print.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <!--: this page is a résumé landing. The house bar reads
@@ -297,6 +234,11 @@
       </li>
     </ul>
 
+    <h2>Education</h2>
+    <ul class="bio__facts">
+      <li><b>Southern Connecticut State University</b>, New Haven, Connecticut: computer science major, first-year undergraduate (in progress).</li>
+    </ul>
+
     <h2>Credentials</h2>
     <ul class="bio__facts">
       <li><b>CompTIA ITF+ Certification:</b> December 1, 2022.</li>
@@ -311,6 +253,7 @@
 
     <p class="bio__foot">
       <a href="matthew-mccluster.html">Full résumé</a> ·
+      <a href="engineering/">The evidence: IT &amp; engineering case studies</a> ·
       <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
       © 2026 Matthew McCluster · McCluster Corp. All rights reserved.
     </p>

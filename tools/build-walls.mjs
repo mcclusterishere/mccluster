@@ -75,18 +75,20 @@ function altFor(ev, m, i) {
 function ldFor(ev) {
   const url = `${SITE}/walls/${ev.id}.html`;
   const start = isoDate(ev.date);
-  const stills = (ev.media || []).filter((m) => m.type !== "film");
+  /* stills only: a "video" item is an MP4, and declaring it an ImageObject
+     told search engines a film was a photograph */
+  const stills = (ev.media || []).filter((m) => m.type !== "film" && m.type !== "video");
   const cover = ev.cover ? `${SITE}/${ev.cover}` : null;
 
+  /* A REFERENCE, not a second definition. The Person is defined once, on
+     matthew-mccluster.html, from data/entity-graph.json. A wall used to
+     restate him with its own jobTitle and a shorter sameAs list, which is
+     one human being described six slightly different ways. */
   const me = {
     "@type": "Person",
     "@id": `${SITE}/#matthew-mccluster`,
     name: ME.name,
     url: ME.page,
-    email: ME.email,
-    jobTitle: "Photographer and Creative Director",
-    worksFor: { "@type": "Organization", "@id": `${SITE}/#mccluster-corp`, name: ME.org },
-    sameAs: ME.sameAs,
   };
 
   const graph = [me];
@@ -116,7 +118,11 @@ function ldFor(ev) {
   if (start) event.startDate = start;
   if (ev.about) event.description = ev.about;
   if (cover) event.image = cover;
-  if (clientNode) event.organizer = { "@id": `${url}#client` };
+  /* No organizer. "client" in data/gallery.json means who the coverage was
+     shot FOR, which is not always who ran the event: the Equity Uprise
+     rally was the fellowship's own event, shot for the City of Bridgeport.
+     Claiming the client organized it would put a false fact in the graph.
+     The gallery below is about both the event and the client instead. */
   if (ev.venue || ev.city) {
     event.location = {
       "@type": "Place",
@@ -149,7 +155,7 @@ function ldFor(ev) {
     "@id": `${url}#gallery`,
     name: `${ev.title}${ev.client ? " — " + ev.client : ""}`,
     url,
-    about: { "@id": `${url}#event` },
+    about: clientNode ? [{ "@id": `${url}#event` }, { "@id": `${url}#client` }] : { "@id": `${url}#event` },
     author: { "@id": `${SITE}/#matthew-mccluster` },
     copyrightHolder: { "@id": `${SITE}/#matthew-mccluster` },
     ...(ev.about ? { description: ev.about } : {}),
@@ -185,7 +191,8 @@ function pageFor(ev) {
       </figure>`;
     }
     if (m.type === "video") {
-      return `      <figure><video src="${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="${esc(m.poster)}"` : ""}></video></figure>`;
+      return `      <figure><video src="../${esc(m.src)}" controls playsinline preload="none"${m.poster ? ` poster="../${esc(m.poster)}"` : ""}${m.title ? ` title="${esc(m.title)}"` : ""}></video>${
+        m.title ? `<figcaption>${esc(m.title)}${m.about ? " &middot; " + esc(m.about) : ""}</figcaption>` : ""}</figure>`;
     }
     return `      <figure class="wrv${i === 0 ? " wl__feat" : ""}" style="--i:${i % 5}"><img src="../${esc(m.src)}" alt="${esc(altFor(ev, m, i))}" loading="lazy" width="1800" height="1200">${
       m.sell ? `<figcaption><a href="../gallery.html#shop">Own this frame &#8594;</a></figcaption>` : ""
@@ -370,13 +377,10 @@ writeFileSync(join(ROOT, "walls.html"), `<!doctype html>
 `);
 console.log(`walls.html  -> gallery.html (consolidated stub)`);
 
-/* ---- sitemap: the wall pages, with a real lastmod ---- */
-const smPath = join(ROOT, "sitemap.xml");
-let sm = readFileSync(smPath, "utf8");
-sm = sm.replace(/\s*<url><loc>https:\/\/here\.mccluster\.org\/walls[^<]*<\/loc>[\s\S]*?<\/url>/g, "");
-const today = new Date().toISOString().slice(0, 10);
-const rows =
-  live.map((ev) => `  <url><loc>${SITE}/walls/${ev.id}.html</loc><lastmod>${today}</lastmod><priority>0.8</priority></url>`).join("\n") + "\n";
-sm = sm.replace("</urlset>", rows + "</urlset>");
-writeFileSync(smPath, sm);
-console.log(`sitemap.xml  +${live.length + 1} urls`);
+/* ---- sitemap: not written here any more ----
+   This step used to append the wall URLs to sitemap.xml stamped with
+   today's date on every run, which duplicated rows already in the map and
+   told Google every wall changed whenever anybody rebuilt any wall.
+   tools/seo/build-sitemaps.mjs owns sitemap.xml now and dates each URL
+   from its file's last commit. Run it after this. */
+console.log("sitemap.xml  (run node tools/seo/build-sitemaps.mjs)");

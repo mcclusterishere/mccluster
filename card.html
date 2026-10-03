@@ -2,7 +2,7 @@
 <html lang="en" data-theme-lock="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Matthew McCluster · tap card</title>
   <meta name="description" content="Matthew McCluster, Creative Director and founder of McCluster Corp. Save the contact, see the work, book the job.">
   <link rel="canonical" href="https://matthew.mccluster.org/card.html">
@@ -120,22 +120,30 @@
     .tc__foot a { color: var(--cream); }
   </style>
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": "https://matthew.mccluster.org/card.html",
+  "url": "https://matthew.mccluster.org/card.html",
+  "name": "Matthew McCluster · tap card",
+  "isPartOf": {
+    "@id": "https://matthew.mccluster.org/#website"
+  },
+  "about": {
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+  },
+  "mainEntity": {
     "@type": "Person",
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster",
     "name": "Matthew McCluster",
-    "jobTitle": "Creative Director & Founder",
-    "email": "matthew@mccluster.org",
-    "url": "https://matthew.mccluster.org/card.html",
-    "worksFor": { "@type": "Organization", "name": "McCluster Corp" },
-    "sameAs": [
-      "https://instagram.com/McClusterishere",
-      "https://youtube.com/@McClusterishere",
-      "https://tiktok.com/@McClusterishere"
-    ]
+    "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "email": "mailto:matthew@mccluster.org"
   }
+}
   </script>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body data-masthead="minimal">

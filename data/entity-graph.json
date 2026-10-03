@@ -1,0 +1,528 @@
+{
+  "_readme": [
+    "THE CANONICAL ENTITY GRAPH: who and what this site is about, defined once.",
+    "",
+    "Every page that describes Matthew McCluster, McCluster Corp or one of their",
+    "projects points at an @id defined here. matthew-mccluster.html carries the",
+    "full Person definition and is GENERATED from this file:",
+    "",
+    "    node tools/seo/build-entity-jsonld.mjs",
+    "",
+    "Other pages reference the same @ids and never redefine them. The SEO",
+    "contract test (scripts/test/seo-contract.test.mjs) fails if a page gives",
+    "the Person a different url, a second Person node, or a property this file",
+    "does not hold.",
+    "",
+    "RULE: nothing goes in here that is not backed by a document in the repo",
+    "or a page on the site. Each claim names its evidence in docs/seo/evidence-ledger.json.",
+    "Do not add a sameAs that is not a profile of THIS person; credits and",
+    "A current enrollment is an affiliation, not alumniOf: Southern Connecticut State University is listed under affiliation because he is a current student (owner statement, 2026-10-03), not a graduate."
+  ],
+  "updated": "2026-10-03",
+  "profileDateModified": "2026-10-03",
+  "base": "https://matthew.mccluster.org/",
+  "ids": {
+    "website": "https://matthew.mccluster.org/#website",
+    "person": "https://matthew.mccluster.org/#matthew-mccluster",
+    "profilePage": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "mcclusterCorp": "https://matthew.mccluster.org/#mccluster-corp",
+    "equityUprise": "https://matthew.mccluster.org/#equity-uprise",
+    "whipEquipped": "https://matthew.mccluster.org/#whip-equipped",
+    "actionNetwork": "https://matthew.mccluster.org/#action-network",
+    "album": "https://matthew.mccluster.org/#album"
+  },
+  "person": {
+    "@type": "Person",
+    "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+    "name": "Matthew McCluster",
+    "givenName": "Matthew",
+    "familyName": "McCluster",
+    "alternateName": [
+      "Matthew Christian Perry McCluster",
+      "McCluster"
+    ],
+    "url": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "mainEntityOfPage": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "email": "mailto:matthew@mccluster.org",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://matthew.mccluster.org/assets/img/og-card.jpg",
+      "width": 1200,
+      "height": 630,
+      "caption": "Matthew McCluster, founder of McCluster Corp"
+    },
+    "jobTitle": [
+      "Infrastructure Engineer",
+      "Platform Builder",
+      "Creative Director & Founder"
+    ],
+    "description": "Matthew McCluster is an IT and data-center infrastructure professional, platform builder, creative director, photographer, web designer and songwriter working across Connecticut and Georgia. He worked in desktop and IT support through Robert Half (2018 to 2021) and on a data-center transformation at IPC Systems (2021 to 2023), and since 2025 has designed and operated the platform behind McCluster Corp, which he founded and registered as a Connecticut public charity in 2025, and its Equity Uprise civic fellowship.",
+    "disambiguatingDescription": "Bridgeport, Connecticut native, founder of McCluster Corp and the Equity Uprise civic fellowship, working across Connecticut and Georgia in IT and infrastructure, web and platform development, photography, media production, music and public-policy research. Identified by ORCID 0009-0000-8988-8955 and ISNI 0000 0005 2956 3111. Not the professional athlete or the comedian who share a similar surname.",
+    "gender": "Male",
+    "nationality": {
+      "@type": "Country",
+      "name": "United States"
+    },
+    "birthPlace": {
+      "@type": "Place",
+      "name": "Bridgeport, Connecticut, United States"
+    },
+    "homeLocation": [
+      {
+        "@type": "Place",
+        "name": "Connecticut, United States",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "CT",
+          "addressCountry": "US"
+        }
+      },
+      {
+        "@type": "Place",
+        "name": "Georgia, United States",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "GA",
+          "addressCountry": "US"
+        }
+      }
+    ],
+    "worksFor": {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
+    },
+    "affiliation": [
+      {
+        "@id": "https://matthew.mccluster.org/#equity-uprise"
+      },
+      {
+        "@id": "https://matthew.mccluster.org/#whip-equipped"
+      },
+      {
+        "@type": "CollegeOrUniversity",
+        "name": "Southern Connecticut State University",
+        "alternateName": "SCSU",
+        "url": "https://www.southernct.edu/",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "New Haven",
+          "addressRegion": "CT",
+          "addressCountry": "US"
+        },
+        "description": "Current undergraduate student (first year), computer science major."
+      }
+    ],
+    "alumniOf": [
+      {
+        "@type": "EducationalOrganization",
+        "name": "CT State Community College, Housatonic",
+        "alternateName": "Housatonic Community College",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Bridgeport",
+          "addressRegion": "CT",
+          "addressCountry": "US"
+        }
+      },
+      {
+        "@type": "EducationalOrganization",
+        "name": "New Haven Job Corps Center",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "New Haven",
+          "addressRegion": "CT",
+          "addressCountry": "US"
+        }
+      },
+      {
+        "@type": "Organization",
+        "name": "Urban Leadership Fellowship",
+        "description": "Policy reform cohort, Atlanta, Georgia, 2025."
+      }
+    ],
+    "hasOccupation": [
+      {
+        "@type": "Occupation",
+        "name": "IT Support / Desktop Support Technician",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1232.00",
+          "name": "Computer User Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Endpoint and desktop support, Windows and macOS, Microsoft 365, Active Directory, device imaging and deployment, hardware swaps, printers, VPN, ticketing and escalation, user training"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Data Center and Network Infrastructure Technician",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1231.00",
+          "name": "Computer Network Support Specialists",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Rack buildout, structured cabling (CAT6, multi-mode and single-mode fiber), PDUs and environmental monitoring, Cisco Nexus 9000 and Catalyst 4500 switching, DHCP scope configuration, Dell, Oracle and Sun server installation, Windows Server, Red Hat Enterprise Linux, CentOS, PERC RAID, iDRAC and KVM out-of-band access, DoD-standard data destruction"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Web and Platform Developer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "15-1254.00",
+          "name": "Web Developers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "HTML, CSS, JavaScript, PostgreSQL schema design and row-level security, Supabase, Cloudflare Workers, REST APIs, Stripe payments, GitHub Actions CI, structured data, web performance and accessibility"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Creative Director",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-1011.00",
+          "name": "Art Directors",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Creative direction, brand and campaign production, social media management, video production"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Photographer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-4021.00",
+          "name": "Photographers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Event, portrait, runway and brand photography"
+      },
+      {
+        "@type": "Occupation",
+        "name": "Songwriter and Producer",
+        "occupationalCategory": {
+          "@type": "CategoryCode",
+          "codeValue": "27-2041.00",
+          "name": "Music Directors and Composers",
+          "inCodeSet": {
+            "@type": "CategoryCodeSet",
+            "name": "O*NET-SOC 2019"
+          }
+        },
+        "skills": "Songwriting, music production, sync licensing"
+      }
+    ],
+    "knowsAbout": [
+      "Information technology support",
+      "Desktop support",
+      "Microsoft 365",
+      "Active Directory",
+      "Data center infrastructure",
+      "Structured cabling",
+      "Cisco Nexus",
+      "DHCP",
+      "Windows Server",
+      "Red Hat Enterprise Linux",
+      "CentOS",
+      "Server hardware installation",
+      "PostgreSQL",
+      "Row-level security",
+      "Supabase",
+      "Cloudflare Workers",
+      "REST APIs",
+      "JavaScript",
+      "Computer science",
+      "Continuous integration",
+      "Structured data",
+      "Web design",
+      "Web development",
+      "Creative direction",
+      "Photography",
+      "Video production",
+      "Social media management",
+      "Songwriting",
+      "Music production",
+      "Public-policy research",
+      "Community organizing"
+    ],
+    "award": [
+      "Connecticut General Assembly Official Citation, October 5, 2025",
+      "State of Georgia Governor's Proclamation, Georgia Youth Innovation & Civic Leadership Week (December 12-18, 2025), signed October 27, 2025 by Gov. Brian P. Kemp",
+      "City of Bridgeport Proclamation, Equity Uprise Human Rights Day, December 10, 2025, issued by Mayor Joseph P. Ganim"
+    ],
+    "hasCredential": [
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "CompTIA IT Fundamentals+ (ITF+)",
+        "credentialCategory": "certification",
+        "dateCreated": "2022-12-01",
+        "recognizedBy": {
+          "@type": "Organization",
+          "name": "CompTIA"
+        }
+      },
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "IT Bootcamp Certificate of Completion",
+        "credentialCategory": "certificate",
+        "dateCreated": "2023-09-20",
+        "recognizedBy": {
+          "@type": "EducationalOrganization",
+          "name": "CT State Community College, Housatonic"
+        }
+      },
+      {
+        "@type": "EducationalOccupationalCredential",
+        "name": "Certified Nursing Assistant (CNA)",
+        "credentialCategory": "certification",
+        "dateCreated": "2014-06-20",
+        "recognizedBy": {
+          "@type": "EducationalOrganization",
+          "name": "New Haven Job Corps Center"
+        }
+      }
+    ],
+    "identifier": [
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ORCID",
+        "value": "0009-0000-8988-8955",
+        "url": "https://orcid.org/0009-0000-8988-8955"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "ISNI",
+        "value": "0000 0005 2956 3111",
+        "url": "https://isni.org/isni/0000000529563111"
+      },
+      {
+        "@type": "PropertyValue",
+        "propertyID": "SSRN author ID",
+        "value": "9761733"
+      }
+    ],
+    "subjectOf": [
+      {
+        "@type": "DigitalDocument",
+        "name": "Connecticut General Assembly Official Citation: Matthew Christian Perry McCluster (October 5, 2025)",
+        "url": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf",
+        "encodingFormat": "application/pdf"
+      },
+      {
+        "@type": "DigitalDocument",
+        "name": "City of Bridgeport Proclamation: Equity Uprise Human Rights Day (December 10, 2025)",
+        "url": "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+        "encodingFormat": "application/pdf"
+      },
+      {
+        "@type": "DigitalDocument",
+        "name": "State of Georgia Proclamation: Georgia Youth Innovation & Civic Leadership Week (signed October 27, 2025)",
+        "url": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf",
+        "encodingFormat": "application/pdf"
+      }
+    ],
+    "sameAs": [
+      "https://orcid.org/0009-0000-8988-8955",
+      "https://isni.org/isni/0000000529563111",
+      "https://www.linkedin.com/in/matthew-mccluster-863048248",
+      "https://credits.muso.ai/profile/c1d1f2fa-1ba4-42d5-a430-20b2c2e77db7",
+      "https://github.com/mcclusterishere",
+      "https://instagram.com/McClusterishere",
+      "https://youtube.com/@McClusterishere",
+      "https://tiktok.com/@McClusterishere"
+    ]
+  },
+  "organizations": [
+    {
+      "@type": "Organization",
+      "@id": "https://matthew.mccluster.org/#mccluster-corp",
+      "name": "McCluster Corp",
+      "url": "https://matthew.mccluster.org/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://matthew.mccluster.org/assets/img/m-mark.png"
+      },
+      "email": "matthew@mccluster.org",
+      "description": "McCluster Corp, founded by Matthew McCluster, was registered as a Connecticut public charity on October 28, 2025 (registration CHR.0069693). It runs the Equity Uprise civic fellowship, the Uprise Action Network, the McCluster music catalogue (ISRC prefix QT6KV) and the technology platform behind them.",
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "foundingDate": "2025",
+      "areaServed": [
+        {
+          "@type": "State",
+          "name": "Connecticut"
+        },
+        {
+          "@type": "State",
+          "name": "Georgia"
+        }
+      ],
+      "taxID": "39-4466255",
+      "identifier": [
+        {
+          "@type": "PropertyValue",
+          "propertyID": "EIN",
+          "value": "39-4466255"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "CT Public Charity Registration",
+          "value": "CHR.0069693"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "ISNI",
+          "value": "0000 0005 2872 7276",
+          "url": "https://isni.org/isni/0000000528727276"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "SAM.gov UEID",
+          "value": "VE2PH2KVFGQ8"
+        },
+        {
+          "@type": "PropertyValue",
+          "propertyID": "ISRC registrant prefix",
+          "value": "QT6KV"
+        }
+      ],
+      "subOrganization": [
+        {
+          "@id": "https://matthew.mccluster.org/#equity-uprise"
+        }
+      ],
+      "subjectOf": [
+        {
+          "@type": "DigitalDocument",
+          "name": "Connecticut General Assembly Official Citation: McCluster Corp (October 5, 2025)",
+          "url": "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf",
+          "encodingFormat": "application/pdf"
+        },
+        {
+          "@type": "DigitalDocument",
+          "name": "Connecticut Public Charity Registration CHR.0069693",
+          "url": "https://matthew.mccluster.org/assets/credentials/mccluster-corp-public-charity-registration.pdf",
+          "encodingFormat": "application/pdf"
+        }
+      ],
+      "sameAs": [
+        "https://isni.org/isni/0000000528727276"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bridgeport",
+        "addressRegion": "CT",
+        "addressCountry": "US"
+      }
+    },
+    {
+      "@type": "Project",
+      "@id": "https://matthew.mccluster.org/#equity-uprise",
+      "name": "Equity Uprise",
+      "alternateName": "Equity Rise",
+      "url": "https://matthew.mccluster.org/docket-516.html",
+      "description": "Equity Uprise is the civic fellowship program of McCluster Corp, founded by Matthew McCluster in 2025. It convenes artists, educators, technologists and youth leaders in Connecticut and Georgia around policy analysis, media production and community projects, and runs as a group on the Uprise Action Network whose front page is the public record of Connecticut Siting Council Docket 516R. It operated as Equity Rise in October 2025.",
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "parentOrganization": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "foundingDate": "2025",
+      "areaServed": [
+        {
+          "@type": "State",
+          "name": "Connecticut"
+        },
+        {
+          "@type": "State",
+          "name": "Georgia"
+        }
+      ],
+      "subjectOf": [
+        {
+          "@type": "DigitalDocument",
+          "name": "City of Bridgeport Proclamation: Equity Uprise Human Rights Day (December 10, 2025)",
+          "url": "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+          "encodingFormat": "application/pdf"
+        },
+        {
+          "@type": "DigitalDocument",
+          "name": "State of Georgia Proclamation: Georgia Youth Innovation & Civic Leadership Week (signed October 27, 2025)",
+          "url": "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf",
+          "encodingFormat": "application/pdf"
+        }
+      ]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://matthew.mccluster.org/#whip-equipped",
+      "name": "Whip Equipped LLC",
+      "alternateName": "WE",
+      "url": "https://matthew.mccluster.org/whip.html",
+      "description": "Whip Equipped LLC is an automotive and mobility company organized in Acworth, Georgia in 2024 by Matthew McCluster, its owner-operator.",
+      "founder": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      },
+      "foundingDate": "2024",
+      "foundingLocation": {
+        "@type": "Place",
+        "name": "Acworth, Georgia, United States",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Acworth",
+          "addressRegion": "GA",
+          "addressCountry": "US"
+        }
+      }
+    }
+  ],
+  "platforms": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://matthew.mccluster.org/#action-network",
+      "name": "Uprise Action Network",
+      "url": "https://matthew.mccluster.org/action/",
+      "applicationCategory": "SocialNetworkingApplication",
+      "operatingSystem": "Web",
+      "description": "The Uprise Action Network is McCluster Corp's web platform for organizing people around campaigns: participants join with one McCluster account, pick what they can bring, and complete verified actions.",
+      "publisher": {
+        "@id": "https://matthew.mccluster.org/#mccluster-corp"
+      },
+      "creator": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+      }
+    }
+  ],
+  "website": {
+    "@type": "WebSite",
+    "@id": "https://matthew.mccluster.org/#website",
+    "url": "https://matthew.mccluster.org/",
+    "name": "Matthew McCluster",
+    "alternateName": [
+      "McCluster",
+      "matthew.mccluster.org"
+    ],
+    "inLanguage": "en-US",
+    "about": {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    "publisher": {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
+    }
+  }
+}

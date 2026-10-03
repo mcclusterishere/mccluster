@@ -39,6 +39,78 @@
   /* The policy itself must remain readable before acknowledgement. */
   if (page === "privacy.html" || readAck()) return;
 
+  /* PUBLIC DOCUMENT PAGES: THE NOTICE AS A BANNER, NOT A WALL.
+
+     A page that carries <meta name="mcc-privacy-notice" content="banner">
+     in its head (before this script) is a document meant to be read cold:
+     the résumé a hiring manager opens from an application, the press kit,
+     the engineering record, the music catalogue, the newsroom. On those
+     the notice is a bar along the bottom of the screen instead of a
+     full-screen dialog that hides the page.
+
+     Nothing about what is recorded changes. js/analytics.js still records
+     nothing, sets no device or session id and registers no service worker
+     until the notice is acknowledged; this branch only decides whether the
+     words on the page can be read first. Acknowledging here does not
+     reload the page, so recording begins on the next page view.
+
+     Why: Google's guidance on interstitials says a dialog covering the
+     content "make[s] it hard for Google and other search engines to
+     understand your content" and recommends a banner instead; browser
+     agents acting for a person hit the same wall; and a recruiter who has
+     to accept a policy before seeing a résumé often does not. Pages that
+     are the house itself (accounts, the network, the desks) keep the gate.
+     Opt a page in by adding the meta; there is no list to keep here. */
+  var noticeMeta = d.querySelector('meta[name="mcc-privacy-notice"]');
+  if (noticeMeta && noticeMeta.getAttribute("content") === "banner") {
+    var bannerStyle = d.createElement("style");
+    bannerStyle.id = "mccPrivacyNoticeStyle";
+    bannerStyle.textContent =
+      '#mccPrivacyNotice{position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483646;' +
+      'padding:10px 12px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#15110f;' +
+      'color:#f5efe6;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)}' +
+      '#mccPrivacyNotice p{margin:0 0 8px;color:#d8cfc3}' +
+      '#mccPrivacyNotice .mccpn__actions{display:flex;flex-wrap:wrap;gap:6px}' +
+      '#mccPrivacyNotice a,#mccPrivacyNotice button{min-height:40px;border-radius:9px;padding:8px 12px;' +
+      'font:inherit;font-weight:700;text-align:center;cursor:pointer}' +
+      '#mccPrivacyNotice a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
+      '#mccPrivacyNotice .mccpn__agree{border:0;background:#f5efe6;color:#0b0908}' +
+      '#mccPrivacyNotice .mccpn__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
+      '@media (min-width:720px){#mccPrivacyNotice{left:auto;right:20px;bottom:20px;max-width:520px}}' +
+      /* a fixed bar prints on every page: never on paper (the résumé PDF
+         is printed from these pages by tools/build-resume.mjs) */
+      '@media print{#mccPrivacyNotice{display:none!important}}';
+    (d.head || d.documentElement).appendChild(bannerStyle);
+    var mountBanner = function () {
+      if (d.getElementById("mccPrivacyNotice")) return;
+      var bar = d.createElement("div");
+      bar.id = "mccPrivacyNotice";
+      bar.setAttribute("role", "region");
+      bar.setAttribute("aria-label", "Privacy notice");
+      bar.innerHTML =
+        /* Short on purpose: Google's guidance is a banner that takes "a small
+           fraction of the screen". The full notice is one tap away. */
+        '<p>Nothing from this visit is recorded until you agree to the Privacy Policy. ' +
+        'It is notice, not blanket consent: location and device permissions keep their own controls.</p>' +
+        '<div class="mccpn__actions">' +
+        '<button type="button" class="mccpn__agree" id="mccPrivacyNoticeAgree">I agree &amp; continue</button>' +
+        '<a href="/privacy.html">Privacy Policy</a>' +
+        '<button type="button" class="mccpn__later" id="mccPrivacyNoticeLater">Not now</button>' +
+        '</div>';
+      d.body.appendChild(bar);
+      d.getElementById("mccPrivacyNoticeAgree").addEventListener("click", function () {
+        writeAck();
+        bar.remove();
+      });
+      d.getElementById("mccPrivacyNoticeLater").addEventListener("click", function () {
+        bar.hidden = true;
+      });
+    };
+    if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountBanner, { once: true });
+    else mountBanner();
+    return;
+  }
+
   d.documentElement.setAttribute("data-privacy-gate", "pending");
   var style = d.createElement("style");
   style.id = "mccPrivacyGateStyle";

@@ -2,7 +2,7 @@
 <html lang="en" data-theme-lock="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Matthew McCluster — Creative Director, Photographer, Web Designer &amp; Songwriter · Search the record</title>
   <meta name="description" content="Search everything Matthew McCluster does: creative direction, photography, video, web design, social media management, and original music. Bridgeport CT &amp; Atlanta GA. Five government citations. One search bar, every answer on the record.">
   <meta name="keywords" content="Matthew McCluster, creative director Connecticut, photographer Bridgeport CT, web designer Connecticut, videographer, social media manager, songwriter, hire McCluster, McCluster Corp, license music">
@@ -26,67 +26,79 @@
        site's own @id gaining a SearchAction: this page IS the site search,
        and the search-term URL is real (?q= prefill below). -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "ProfilePage",
-        "@id": "https://matthew.mccluster.org/portfolio.html#panel",
-        "url": "https://matthew.mccluster.org/portfolio.html",
-        "name": "Matthew McCluster — search the record",
-        "mainEntity": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-        "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "https://matthew.mccluster.org/portfolio.html#panel",
+      "url": "https://matthew.mccluster.org/portfolio.html",
+      "name": "Matthew McCluster — search the record",
+      "about": {
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      {
-        "@type": "WebSite",
-        "@id": "https://matthew.mccluster.org/#website",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://matthew.mccluster.org/portfolio.html?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      },
-      {
-        "@type": "Person",
-        "@id": "https://matthew.mccluster.org/#matthew-mccluster",
-        "name": "Matthew McCluster",
-        "jobTitle": ["Creative Director", "Photographer", "Web Designer", "Songwriter"],
-        "knowsAbout": ["Creative direction", "Photography", "Videography", "Web design",
-          "Social media management", "Music production", "Civic technology"],
-        "address": { "@type": "PostalAddress", "addressRegion": "CT", "addressCountry": "US" },
-        "mainEntityOfPage": "https://matthew.mccluster.org/portfolio.html"
-      },
-      {
-        "@type": "FAQPage",
-        "@id": "https://matthew.mccluster.org/portfolio.html#asked",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Who is Matthew McCluster?",
-            "acceptedAnswer": { "@type": "Answer", "text": "A creative director, photographer, web designer and songwriter working across Connecticut and Georgia. Founder of McCluster Corp, a registered Connecticut public charity, with five government citations and proclamations on the record — three from the Connecticut General Assembly, one from the State of Georgia, one from the City of Bridgeport." }
-          },
-          {
-            "@type": "Question",
-            "name": "What does a consultation with McCluster cost?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Every consultation is free — project, partnership, or role. The Teardown is a separate $585 product: a 45-minute live teardown of your site and socials where you keep the recording and the written punch list, credited in full against the project if you hire him." }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I license McCluster's music?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. The I AM HERE catalogue is original, published, and licensable for sync — film, ad, broadcast and web. The licensing desk opens right on the album page and quotes by territory, term and use." }
-          },
-          {
-            "@type": "Question",
-            "name": "Is McCluster open to full-time roles?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — creative director, head of content, and media production roles, plus paid fellowships. Recruiters get the shortest path on the site: two questions, then his calendar. No fee." }
-          }
-        ]
+      "isPartOf": {
+        "@id": "https://matthew.mccluster.org/#website"
       }
-    ]
-  }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://matthew.mccluster.org/#website",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://matthew.mccluster.org/portfolio.html?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+      "name": "Matthew McCluster",
+      "url": "https://matthew.mccluster.org/matthew-mccluster.html"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://matthew.mccluster.org/portfolio.html#asked",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Who is Matthew McCluster?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A creative director, photographer, web designer and songwriter working across Connecticut and Georgia. Founder of McCluster Corp, a registered Connecticut public charity, with five government citations and proclamations on the record — three from the Connecticut General Assembly, one from the State of Georgia, one from the City of Bridgeport."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does a consultation with McCluster cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Every consultation is free — project, partnership, or role. The Teardown is a separate $585 product: a 45-minute live teardown of your site and socials where you keep the recording and the written punch list, credited in full against the project if you hire him."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I license McCluster's music?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The I AM HERE catalogue is original, published, and licensable for sync — film, ad, broadcast and web. The licensing desk opens right on the album page and quotes by territory, term and use."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is McCluster open to full-time roles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes — creative director, head of content, and media production roles, plus paid fellowships. Recruiters get the shortest path on the site: two questions, then his calendar. No fee."
+          }
+        }
+      ]
+    }
+  ]
+}
   </script>
 
   <style>
@@ -212,6 +224,8 @@
     }
   </style>
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage panel" data-mh-cta="Book a call with me|hire.html#book">

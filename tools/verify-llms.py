@@ -37,7 +37,9 @@ for url in sorted(set(re.findall(r'\((' + re.escape(SITE) + r'[^)\s]*)\)', text)
     path = url[len(SITE):].split("?")[0].split("#")[0]
     if not path:
         continue
-    check(f"{path} exists", os.path.isfile(os.path.join(ROOT, path)),
+    # a directory URL (engineering/) is served as its index.html
+    target = path + "index.html" if path.endswith("/") else path
+    check(f"{path} exists", os.path.isfile(os.path.join(ROOT, target)),
           "llms.txt links it but the repo has no such file")
 
 # ---- 2. every count it states is the real count ---------------------

@@ -1,0 +1,54 @@
+name: IndexNow ping after deploy
+
+# After the live site deploys from main, tell IndexNow engines (Bing and
+# the engines that share its index, which also feeds Copilot and ChatGPT
+# search) which public pages changed, so they are recrawled in hours
+# rather than whenever a crawler next comes by.
+#
+# Only pages that changed in the deployed commit, and only pages that are
+# in the sitemap: IndexNow asks that unchanged URLs not be resubmitted. A
+# deploy that touched no public page sends nothing. This job reads; it
+# never pushes, and a failure here cannot affect the deploy it follows.
+
+on:
+  workflow_run:
+    workflows: ["Deploy live site from McCluster"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Work out which public pages changed
+        id: changed
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          # the deployed commit against its first parent: for a merged PR
+          # that is everything the PR changed
+          paths="$(node tools/seo/indexnow-changed.mjs "${HEAD_SHA}~1" "${HEAD_SHA}" | tr '\n' ' ')"
+          echo "paths=${paths}" >> "$GITHUB_OUTPUT"
+          echo "Changed public pages: ${paths:-none}"
+      - name: Wait for GitHub Pages to serve the new build
+        if: ${{ steps.changed.outputs.paths != '' }}
+        run: sleep 120
+      - name: Ping IndexNow
+        if: ${{ steps.changed.outputs.paths != '' }}
+        run: node scripts/indexnow-ping.mjs ${{ steps.changed.outputs.paths }}

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The McCluster Platform: PostgreSQL, Cloudflare Workers, Linux &amp; Release Engineering · Matthew McCluster</title>
+  <meta name="description" content="Case study: the platform Matthew McCluster designed and operates for McCluster Corp since 2025. PostgreSQL with row-level security on Supabase, Cloudflare Workers, Linux services under systemd, Stripe, and deploys that verify and roll back themselves. Public source.">
+  <meta name="author" content="Matthew McCluster">
+  <link rel="canonical" href="https://matthew.mccluster.org/engineering/mccluster-platform.html">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="icon" type="image/png" href="/assets/img/m-mark.png">
+  <meta name="theme-color" content="#0a0807">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Matthew McCluster">
+  <meta property="og:title" content="The McCluster Platform · Matthew McCluster">
+  <meta property="og:description" content="PostgreSQL with row-level security, Cloudflare Workers, Linux services and self-verifying deploys, designed and operated by Matthew McCluster. Public source.">
+  <meta property="og:url" content="https://matthew.mccluster.org/engineering/mccluster-platform.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="article:published_time" content="2026-10-02">
+  <meta property="article:author" content="https://matthew.mccluster.org/matthew-mccluster.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The McCluster Platform · Matthew McCluster">
+  <meta name="twitter:description" content="PostgreSQL with row-level security, Cloudflare Workers, Linux services and self-verifying deploys.">
+  <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#article",
+        "headline": "The McCluster platform: PostgreSQL, Cloudflare Workers, Linux and release engineering",
+        "description": "How the platform behind McCluster Corp is built and run: the database and its access rules, the API on Cloudflare Workers, the Linux services, payments, and a deploy pipeline that verifies itself and rolls back on failure.",
+        "url": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+        "mainEntityOfPage": "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+        "datePublished": "2026-10-02",
+        "dateModified": "2026-10-02",
+        "inLanguage": "en-US",
+        "image": { "@type": "ImageObject", "url": "https://matthew.mccluster.org/assets/img/og-card.jpg", "width": 1200, "height": 630 },
+        "author": { "@type": "Person", "@id": "https://matthew.mccluster.org/#matthew-mccluster", "name": "Matthew McCluster", "url": "https://matthew.mccluster.org/matthew-mccluster.html" },
+        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
+        "isPartOf": { "@id": "https://matthew.mccluster.org/#website" },
+        "about": [
+          { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
+          { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
+          { "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#source" }
+        ],
+        "keywords": ["PostgreSQL", "row-level security", "Supabase", "Cloudflare Workers", "Durable Objects", "REST API", "Stripe", "systemd", "Linux", "GitHub Actions", "CI/CD", "rollback", "Playwright"]
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://matthew.mccluster.org/engineering/mccluster-platform.html#source",
+        "name": "mcclusterishere/mccluster",
+        "description": "Source for the McCluster control plane: the public site, the Cloudflare Worker API, Supabase migrations and Edge Functions, the Linux Core runner, and CI.",
+        "codeRepository": "https://github.com/mcclusterishere/mccluster",
+        "programmingLanguage": ["JavaScript", "TypeScript", "SQL", "Python", "HTML", "CSS"],
+        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
+        "maintainer": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Matthew McCluster", "item": "https://matthew.mccluster.org/matthew-mccluster.html" },
+          { "@type": "ListItem", "position": 2, "name": "IT & engineering", "item": "https://matthew.mccluster.org/engineering/" },
+          { "@type": "ListItem", "position": 3, "name": "The McCluster platform", "item": "https://matthew.mccluster.org/engineering/mccluster-platform.html" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="/assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="/css/record.css?v=__STAMP__">
+  <script src="/js/theme.js?v=__STAMP__"></script>
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
+  <script src="/js/live-content.js?v=__STAMP__"></script>
+</head>
+<!-- Every mechanism on this page links the file that implements it, in the
+     public repository. Counts are stated "as of" a date and rounded down,
+     so they stay true as the repository grows. Nothing here names a host,
+     a key, an IP address or a credential: the description is of how the
+     system is built, not of how to reach it. -->
+<body class="record">
+  <main class="rec" id="main">
+    <nav class="rec__crumb" aria-label="Breadcrumb"><a href="/matthew-mccluster.html">Matthew McCluster</a> / <a href="/engineering/">IT &amp; engineering</a> / The McCluster platform</nav>
+    <p class="rec__k">Case study · platform engineering</p>
+    <h1>The platform behind McCluster Corp</h1>
+    <p class="rec__role">2025 to present · designed and operated by Matthew McCluster · public source</p>
+
+    <p class="rec__lede">Since 2025 <b>Matthew McCluster</b> has designed and operated the platform that runs
+      <b>McCluster Corp</b>: this website, accounts, payments, the music catalogue, first-party analytics, the
+      Uprise Action Network and the sites the studio builds for clients. It is a <b>PostgreSQL</b> database on
+      <b>Supabase</b> with row-level security, an API on <b>Cloudflare Workers</b>, <b>Linux</b> services on a
+      dedicated server, <b>Stripe</b> for payments, and a <b>GitHub Actions</b> pipeline that ships each piece,
+      checks that the right version is live, and restores the previous one when a check fails. The source is public
+      at <a href="https://github.com/mcclusterishere/mccluster">github.com/mcclusterishere/mccluster</a>.</p>
+
+    <div class="rec__card">
+      <dl>
+        <div><dt>Role</dt><dd>Founder; sets the architecture and operates production</dd></div>
+        <div><dt>When</dt><dd>2025 to present</dd></div>
+        <div><dt>Stack</dt><dd>PostgreSQL (Supabase), Deno Edge Functions, Cloudflare Workers and Durable Objects, GitHub Pages, GitHub Actions, Linux (systemd), Stripe</dd></div>
+        <div><dt>Evidence</dt><dd><a href="https://github.com/mcclusterishere/mccluster">Public repository</a> · <a href="https://api.mccluster.org/v1/health">live health endpoint</a>, which reports the commit it is running</dd></div>
+      </dl>
+    </div>
+
+    <h2 id="architecture">How it is put together</h2>
+    <div class="rec__table" role="region" aria-label="Platform layers" tabindex="0">
+      <table>
+        <caption>Each layer has one job. As of October 2026.</caption>
+        <thead><tr><th scope="col">Layer</th><th scope="col">What it does</th><th scope="col">Source</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Public site</th><td>Static HTML, CSS and JavaScript on GitHub Pages at matthew.mccluster.org</td><td><a href="https://github.com/mcclusterishere/mccluster/blob/main/.github/workflows/deploy-pages.yml">deploy-pages.yml</a></td></tr>
+          <tr><th scope="row">API</th><td>A Cloudflare Worker at api.mccluster.org with Durable Objects and a five-minute cron</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/workers/mccluster">workers/mccluster</a></td></tr>
+          <tr><th scope="row">Database</th><td>PostgreSQL on Supabase: more than 200 SQL migrations and more than 100 row-level security policies</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/supabase/migrations">supabase/migrations</a></td></tr>
+          <tr><th scope="row">Server-side functions</th><td>More than 50 Deno Edge Functions for the jobs that hold a secret: checkout, payouts, the analytics collector, integrations</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/supabase/functions">supabase/functions</a></td></tr>
+          <tr><th scope="row">Persistent execution</th><td>A Linux server running the Core job runner, a tool broker and scheduled jobs as systemd services and timers</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/core">core</a></td></tr>
+          <tr><th scope="row">CI/CD</th><td>About twenty GitHub Actions workflows and more than 100 test files</td><td><a href="https://github.com/mcclusterishere/mccluster/tree/main/.github/workflows">.github/workflows</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="data">Data and access control</h2>
+    <p>The database is the API for most reads, so the access rules live in the database rather than in application
+      code: <b>row-level security</b> policies decide what each signed-in user, and the anonymous public, can read
+      or write, on every query. Schema changes are numbered SQL migrations, and the money and rate-limit paths have
+      SQL regression tests that CI runs against a throwaway PostgreSQL instance on pull requests
+      (<a href="https://github.com/mcclusterishere/mccluster/tree/main/supabase/tests">supabase/tests</a>).</p>
+
+    <h2 id="releases">Releases that check themselves</h2>
+    <p>The API deploy (<a href="https://github.com/mcclusterishere/mccluster/blob/main/.github/workflows/deploy-mccluster-worker.yml">deploy-mccluster-worker.yml</a>) runs in stages:</p>
+    <ul class="facts">
+      <li><b>Record</b> the traffic allocation currently serving, so it can be put back exactly.</li>
+      <li><b>Upload</b> the new version without giving it traffic, tagged with the commit it was built from, using a version-pinned toolchain.</li>
+      <li><b>Refuse</b> to continue if somebody else deployed in the meantime.</li>
+      <li><b>Promote</b> the new version, then <b>verify</b> that the public health endpoint reports that exact commit, and run the post-deploy contract checks.</li>
+      <li><b>Restore</b> the recorded allocation automatically if any check fails. The rollback step runs last, after every verification, so a failure in the final check is still caught.</li>
+    </ul>
+    <p>The static site has its own guard: before publishing, the Pages workflow strips internal folders out of the
+      published tree and fails the publish if a supplier's name or a cost figure appears in a public file. A
+      Playwright smoke suite walks the key pages at phone and desktop widths (390 and 1280 pixels) and fails on any
+      page error (<a href="https://github.com/mcclusterishere/mccluster/blob/main/scripts/smoke.mjs">scripts/smoke.mjs</a>).</p>
+
+    <h2 id="linux">Linux operations</h2>
+    <p>The Core server runs its work as <b>systemd</b> services and timers
+      (<a href="https://github.com/mcclusterishere/mccluster/tree/main/core/systemd">core/systemd</a>). Its jobs come
+      from a queue in the database; the runner claims only job types it knows how to execute, heartbeats while
+      working, retries with backoff, and writes results back to the same row. Privilege is split between Unix
+      identities: the service that edits code in disposable working copies holds no production credentials, is
+      limited to loopback networking, and sees the repository read-only, while a separate identity inspects the
+      diff and can only open a <b>draft</b> pull request. Nothing on that path merges or deploys
+      (<a href="https://github.com/mcclusterishere/mccluster/blob/main/core/README.md">core/README.md</a>).</p>
+
+    <h2 id="analytics">Analytics without a third party</h2>
+    <p>The site's analytics are its own: an Edge Function collector that writes to the platform's own table in
+      place of Google Analytics. It honours <b>Global Privacy Control</b> and <b>Do Not Track</b> by dropping
+      anything that could identify the visitor before the row is built, marks crawlers rather than counting them as
+      people, and records nothing at all until a visitor has acknowledged the privacy notice
+      (<a href="https://github.com/mcclusterishere/mccluster/blob/main/supabase/functions/collect/index.ts">collect/index.ts</a>).</p>
+
+    <h2 id="payments">Payments and client accounts</h2>
+    <p>Payments run through <b>Stripe</b> Checkout and Stripe Connect from server-side functions, so card handling
+      and secret keys never touch the browser. The same platform carries a multi-tenant vehicle-rental operator
+      console for Whip Equipped: operators sign in, add vehicles to their inventory and connect their own Stripe
+      account (<a href="https://github.com/mcclusterishere/mccluster/tree/main/workers/mccluster/src/whip">workers/mccluster/src/whip</a>).</p>
+
+    <h2 id="pipeline">A deterministic 3D build</h2>
+    <p>The Equity Uprise building model is generated, not hand-drawn: Python build scripts produce the glTF models
+      and a machine-checked report for each level, and the Pages workflow refuses to publish if the verification
+      contract does not pass. The model is schematic and not for construction.</p>
+
+    <h2 id="how">How it is built</h2>
+    <p>Much of the code is written with AI coding agents (Claude, Codex and others) working under rules Matthew
+      wrote for them, in <a href="https://github.com/mcclusterishere/mccluster/blob/main/AGENTS.md">AGENTS.md</a>, and
+      checked by the CI contracts above. He sets the architecture, decides what ships, and runs production. The rules
+      are specific: one canonical API, one database, no second backend in a product repository, named
+      infrastructure only, and continuous integration that never pushes onto an open pull request.</p>
+
+    <h2 id="skills">Skills this demonstrates</h2>
+    <ul class="facts">
+      <li><b>Databases:</b> PostgreSQL schema design, row-level security, SQL migrations and regression tests.</li>
+      <li><b>APIs and serverless:</b> Cloudflare Workers and Durable Objects, Supabase Edge Functions, REST.</li>
+      <li><b>Linux:</b> systemd services and timers, least-privilege service identities, loopback-only services.</li>
+      <li><b>Release engineering:</b> GitHub Actions, staged deploys with commit verification and automatic rollback, version-pinned tooling, Playwright smoke tests.</li>
+      <li><b>Payments:</b> Stripe Checkout and Connect.</li>
+      <li><b>Privacy engineering:</b> first-party analytics that honour GPC and Do Not Track.</li>
+      <li><b>Working with AI agents:</b> written architecture rules and CI contracts that keep agent-written code inside them.</li>
+    </ul>
+
+    <h2 id="related">Related</h2>
+    <ul class="facts">
+      <li><a href="/engineering/">IT, infrastructure &amp; platform engineering</a>: roles and skills, with sources.</li>
+      <li><a href="/engineering/ipc-data-center.html">Data-center buildout at IPC Systems</a>, 2021 to 2023.</li>
+      <li><a href="/services.html">Services</a>: websites and hosting built on this platform.</li>
+    </ul>
+
+    <div class="rec__cta">
+      <a class="hot" href="mailto:matthew@mccluster.org?subject=Platform%20%2F%20engineering%20role" data-cta="platform-email">Email about a role &#8594;</a>
+      <a href="https://github.com/mcclusterishere/mccluster" data-cta="platform-source">Read the source &#8594;</a>
+    </div>
+
+    <p class="rec__foot">
+      Published October 2, 2026 by <a href="/matthew-mccluster.html">Matthew McCluster</a> ·
+      <a href="/engineering/">IT &amp; engineering</a> ·
+      <a href="/newsroom.html">Newsroom</a><br>
+      © 2026 Matthew McCluster · McCluster Corp.
+    </p>
+  </main>
+
+  <script src="/js/masthead.js?v=__STAMP__"></script>
+  <script src="/js/analytics.js?v=__STAMP__"></script>
+  <script src="/js/tabbar.js?v=__STAMP__"></script>
+  <script>if (window.MCC_TRACK) window.MCC_TRACK("record_view", { page: "engineering/mccluster-platform" });</script>
+</body>
+</html>

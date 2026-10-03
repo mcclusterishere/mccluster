@@ -1,0 +1,541 @@
+{
+  "_readme": [
+    "THE EVIDENCE LEDGER: every dated public claim, and what proves it.",
+    "",
+    "tools/seo/build-newsroom.mjs renders newsroom.html and feed.xml from this file.",
+    "An entry reaches the public site ONLY when both are true:",
+    "  verification_status == \"verified\"   (a person opened the evidence and it says what the entry says)",
+    "  publication_status  == \"publish\"",
+    "Anything else stays here, with the reason, and is never rendered.",
+    "",
+    "event_date is when the thing happened. publish_date is when this site first",
+    "published the entry. They are different fields on purpose: an entry is never",
+    "backdated, and the newsroom shows both dates when they differ.",
+    "",
+    "This file lives under docs/, which the Pages deploy strips from the published",
+    "tree. It is internal; the newsroom is its public rendering.",
+    "",
+    "Statuses:",
+    "  verification_status: verified | needs-verification | owner-statement",
+    "  publication_status:  publish | hold | not-for-newsroom"
+  ],
+  "updated": "2026-10-02",
+  "entries": [
+    {
+      "story_id": "ct-general-assembly-citations-2025-10-05",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "event": "Connecticut General Assembly Official Citations for Matthew McCluster and McCluster Corp",
+      "event_date": "2025-10-05",
+      "publish_date": "2026-10-02",
+      "headline": "Connecticut General Assembly issues official citations to Matthew McCluster and McCluster Corp",
+      "summary": "The Connecticut General Assembly issued two Official Citations dated October 5, 2025 at the State Capitol in Hartford: one to Matthew Christian Perry McCluster, recognizing his leadership across arts, media and community organizing as founder of McCluster Corp and creator of the fellowship then called Equity Rise, and one to McCluster Corp for its programs advancing cultural equity, environmental justice and religious freedom. Both are signed by the President Pro Tempore of the Senate, the Speaker of the House and the Secretary of the State.",
+      "factual_claims": [
+        "Two Official Citations, both dated October 5, 2025, State Capitol, Hartford",
+        "One names Matthew Christian Perry McCluster, one names McCluster Corp",
+        "Signed by the President Pro Tempore, the Speaker of the House and the Secretary of the State",
+        "The citations name the program Equity Rise, its name in October 2025"
+      ],
+      "supporting_evidence": "Scans of both signed citations, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf",
+        "https://matthew.mccluster.org/assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf",
+        "assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf",
+        "data/dossier.json"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Matthew McCluster Connecticut General Assembly",
+        "McCluster Corp citation"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#equity-uprise"
+      ],
+      "structured_data_type": "DigitalDocument",
+      "evidence_labels": [
+        "Citation to Matthew McCluster (PDF)",
+        "Citation to McCluster Corp (PDF)"
+      ]
+    },
+    {
+      "story_id": "georgia-proclamation-2025-10-27",
+      "entity": [
+        "https://matthew.mccluster.org/#mccluster-corp",
+        "https://matthew.mccluster.org/#equity-uprise"
+      ],
+      "event": "State of Georgia Governor's Proclamation: Georgia Youth Innovation & Civic Leadership Week",
+      "event_date": "2025-10-27",
+      "publish_date": "2026-10-02",
+      "headline": "Governor Kemp proclaims Georgia Youth Innovation & Civic Leadership Week, citing McCluster Corp's Equity Uprise Fellowship",
+      "summary": "Governor Brian P. Kemp signed a proclamation on October 27, 2025 declaring December 12 to 18, 2025 Georgia Youth Innovation & Civic Leadership Week. It cites McCluster Corp, founded by Matthew McCluster, for expanding its Equity Uprise Fellowship to Georgia, and the 2025 summer cohort's environmental-justice and digital-literacy projects.",
+      "factual_claims": [
+        "Signed and sealed October 27, 2025 by Governor Brian P. Kemp, attested by the Chief of Staff",
+        "Proclaims December 12-18, 2025 as Georgia Youth Innovation & Civic Leadership Week",
+        "Names McCluster Corp, founded by Matthew McCluster, and its Equity Uprise Fellowship"
+      ],
+      "supporting_evidence": "Scan of the signed proclamation, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf",
+        "data/dossier.json"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Georgia Youth Innovation and Civic Leadership Week",
+        "Equity Uprise Georgia"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "structured_data_type": "DigitalDocument",
+      "note": "Earlier copy on the site dated this 'December 2025'. December 12-18 is the week it proclaims; the document was signed October 27, 2025.",
+      "evidence_labels": [
+        "The proclamation (PDF)"
+      ]
+    },
+    {
+      "story_id": "ct-public-charity-registration-2025-10-28",
+      "entity": [
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "event": "McCluster Corp registered as a Connecticut public charity",
+      "event_date": "2025-10-28",
+      "publish_date": "2026-10-02",
+      "headline": "McCluster Corp registered as a Connecticut public charity",
+      "summary": "The Connecticut Department of Consumer Protection certified McCluster Corp, of Bridgeport, as a registered public charity, registration CHR.0069693, effective October 28, 2025.",
+      "factual_claims": [
+        "Registration CHR.0069693, effective October 28, 2025",
+        "Issued by the Connecticut Department of Consumer Protection",
+        "The certificate shows an expiration date of September 30, 2026"
+      ],
+      "supporting_evidence": "Scan of the registration certificate, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/mccluster-corp-public-charity-registration.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/mccluster-corp-public-charity-registration.pdf"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "McCluster Corp",
+        "McCluster Corp Connecticut charity"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "structured_data_type": "DigitalDocument",
+      "owner_action": "The certificate on file expired September 30, 2026. Confirm the renewal on elicense.ct.gov and replace the PDF with the renewed certificate; until then, describe the registration in the past tense (registered on October 28, 2025), never as a current status.",
+      "evidence_labels": [
+        "Registration certificate (PDF)"
+      ]
+    },
+    {
+      "story_id": "equity-uprise-bridgeport-event-2025-10-05",
+      "entity": [
+        "https://matthew.mccluster.org/#equity-uprise"
+      ],
+      "event": "Equity Uprise event in Bridgeport on Docket 516 and environmental justice",
+      "event_date": "2025-10-05",
+      "publish_date": "2026-10-02",
+      "headline": "Equity Uprise holds its October 5 event in Bridgeport",
+      "summary": "On October 5, 2025 the Equity Uprise fellowship held an event in Bridgeport. The City of Bridgeport's proclamation of December 10, 2025 says the event \"transformed the discussion around environmental-justice concerns in Docket 516\" through art, music and policy dialogue. Matthew McCluster photographed it.",
+      "factual_claims": [
+        "The event took place in Bridgeport on October 5 (2025)",
+        "The City of Bridgeport proclamation of December 10, 2025 describes it as the fellowship's October 5 Bridgeport event and connects it to Docket 516",
+        "Matthew McCluster's photographs of it are on the site"
+      ],
+      "supporting_evidence": "City of Bridgeport proclamation text; photo wall",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+        "https://matthew.mccluster.org/walls/eu-rally.html"
+      ],
+      "repository_evidence": [
+        "assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+        "data/gallery.json"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Equity Uprise Bridgeport",
+        "Docket 516 Bridgeport"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#matthew-mccluster",
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "structured_data_type": "Event",
+      "note": "The venue is not stated: data/gallery.json says Shiloh Baptist Church and data/portfolio.json titles a frame 'Zion Baptist · the room'. Resolve before naming a venue.",
+      "evidence_labels": [
+        "Bridgeport proclamation (PDF)",
+        "Photographs of the event"
+      ]
+    },
+    {
+      "story_id": "bridgeport-human-rights-day-2025-12-10",
+      "entity": [
+        "https://matthew.mccluster.org/#equity-uprise",
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "City of Bridgeport proclaims Equity Uprise Human Rights Day",
+      "event_date": "2025-12-10",
+      "publish_date": "2026-10-02",
+      "headline": "Bridgeport proclaims December 10, 2025 Equity Uprise Human Rights Day",
+      "summary": "Mayor Joseph P. Ganim proclaimed Wednesday, December 10, 2025 Equity Uprise Human Rights Day in Bridgeport, commending the participants of the Equity Uprise Fellowship, which the proclamation describes as a civic fellowship created by Bridgeport native Matthew McCluster and McCluster Corp.",
+      "factual_claims": [
+        "Proclaimed by Mayor Joseph P. Ganim, sealed December 10, 2025",
+        "Describes Equity Uprise 2025 as a civic fellowship created by Bridgeport native Matthew McCluster and McCluster Corp"
+      ],
+      "supporting_evidence": "Scan of the signed proclamation, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+        "data/dossier.json"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Equity Uprise Human Rights Day",
+        "Equity Uprise Bridgeport proclamation"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "structured_data_type": "DigitalDocument",
+      "owner_action": "The scan on file is cropped along its right edge, cutting the ends of several lines. Replace it with a complete scan.",
+      "evidence_labels": [
+        "The proclamation (PDF)"
+      ]
+    },
+    {
+      "story_id": "dna-policy-memo-2024-11-29",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "Policy memorandum on mandatory DNA collection from misdemeanor offenders",
+      "event_date": "2024-11-29",
+      "publish_date": "2026-10-02",
+      "headline": "Matthew McCluster's policy memorandum on DNA collection from misdemeanor offenders",
+      "summary": "Matthew McCluster wrote a policy memorandum, addressed to Governor Brian Kemp and dated November 29, 2024, opposing legislation to mandate DNA collection from people convicted of misdemeanors on constitutional, equity, fiscal and efficacy grounds. It was his writing sample for the Urban Leadership Fellowship and is published in full.",
+      "factual_claims": [
+        "Sole author; dated November 29, 2024; addressed to Governor Brian Kemp",
+        "Submitted as his Urban Leadership Fellowship writing sample"
+      ],
+      "supporting_evidence": "The memorandum itself, published on the site",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/policy-memo-dna.html"
+      ],
+      "repository_evidence": [
+        "policy-memo-dna.html"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "DNA collection misdemeanor Georgia policy memo"
+      ],
+      "related_entities": [],
+      "structured_data_type": "Report",
+      "note": "The document is the author's own; the entry claims only that it was written and published, not that the Governor's office received it.",
+      "evidence_labels": [
+        "The memorandum"
+      ]
+    },
+    {
+      "story_id": "comptia-itf-2022-12-01",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "CompTIA IT Fundamentals+ certification",
+      "event_date": "2022-12-01",
+      "publish_date": "2026-10-02",
+      "headline": "Matthew McCluster earns CompTIA ITF+ certification",
+      "summary": "CompTIA certified Matthew Christian Perry McCluster in IT Fundamentals+ (ITF+) on December 1, 2022.",
+      "factual_claims": [
+        "CompTIA ITF+ certification date December 1, 2022"
+      ],
+      "supporting_evidence": "Scan of the certificate, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/comptia-itf-plus.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/comptia-itf-plus.pdf"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Matthew McCluster CompTIA"
+      ],
+      "related_entities": [],
+      "structured_data_type": "DigitalDocument",
+      "evidence_labels": [
+        "Certificate (PDF)"
+      ]
+    },
+    {
+      "story_id": "it-bootcamp-2023-09-20",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "IT Bootcamp certificate, CT State Community College Housatonic",
+      "event_date": "2023-09-20",
+      "publish_date": "2026-10-02",
+      "headline": "Matthew McCluster completes the CT State Housatonic IT Bootcamp",
+      "summary": "CT State Community College, Housatonic awarded Matthew McCluster a Certificate of Completion for its IT Bootcamp, 24 hours of coursework through Workforce Development & Continuing Education, on September 20, 2023.",
+      "factual_claims": [
+        "Certificate of Completion, IT Bootcamp, 24 hours of coursework, September 20, 2023"
+      ],
+      "supporting_evidence": "Scan of the certificate, inspected 2026-10-02",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+      ],
+      "repository_evidence": [
+        "assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+      ],
+      "verification_status": "verified",
+      "verified_by": "document inspection, 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Matthew McCluster IT bootcamp"
+      ],
+      "related_entities": [],
+      "structured_data_type": "DigitalDocument",
+      "evidence_labels": [
+        "Certificate (PDF)"
+      ]
+    },
+    {
+      "story_id": "engineering-record-published-2026-10-02",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "Engineering case studies published",
+      "event_date": "2026-10-02",
+      "publish_date": "2026-10-02",
+      "headline": "Case studies: the IPC Systems data center and the McCluster platform",
+      "summary": "Two case studies document Matthew McCluster's infrastructure and platform work: the 2021 to 2023 data-center buildout at IPC Systems, set against IPC's engagement document, and the McCluster platform he has designed and operated since 2025, with its public source.",
+      "factual_claims": [
+        "The two case-study pages exist and link their evidence"
+      ],
+      "supporting_evidence": "The pages themselves",
+      "evidence_urls": [
+        "https://matthew.mccluster.org/engineering/ipc-data-center.html",
+        "https://matthew.mccluster.org/engineering/mccluster-platform.html"
+      ],
+      "repository_evidence": [
+        "engineering/ipc-data-center.html",
+        "engineering/mccluster-platform.html"
+      ],
+      "verification_status": "verified",
+      "verified_by": "authored 2026-10-02",
+      "publication_status": "publish",
+      "target_queries": [
+        "Matthew McCluster data center",
+        "Matthew McCluster IT"
+      ],
+      "related_entities": [],
+      "structured_data_type": "Article",
+      "evidence_labels": [
+        "IPC Systems data-center case study",
+        "McCluster platform case study"
+      ]
+    },
+    {
+      "story_id": "ipc-engagement-title-and-instruction-claim",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "Résumé claims checked against the IPC engagement document",
+      "event_date": null,
+      "publish_date": null,
+      "headline": null,
+      "summary": "The IPC engagement document's cover page is titled 'Infrastructure Associate'; both résumé pages give the IPC role as 'Infrastructure Engineer'. The document also lists 'Provide instruction to new team members' under the heading 'Leadership (Kevin)', while the résumé claims 'instructed new team members'. The IT résumé additionally lists Active Directory, Microsoft 365, imaging and ticketing at IPC, which the document does not mention.",
+      "factual_claims": [],
+      "supporting_evidence": "assets/credentials/ipc-data-center-engagement.pdf, inspected 2026-10-02",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "assets/credentials/ipc-data-center-engagement.pdf",
+        "matthew-mccluster.html",
+        "resume-it-support.html",
+        "data/dossier.json"
+      ],
+      "verification_status": "needs-verification",
+      "publication_status": "not-for-newsroom",
+      "owner_action": "Confirm the job title of record with PeopleSERVE/IPC and align both résumé pages (an employment check reports the title of record), and confirm or remove the instruction and IPC-specific Microsoft 365/Active Directory bullets. The new engineering pages avoid all three claims until this is settled."
+    },
+    {
+      "story_id": "docket-516r-closed-2026-02-05",
+      "entity": [
+        "https://matthew.mccluster.org/#equity-uprise"
+      ],
+      "event": "Connecticut Siting Council denies UI's reconsideration petition; Docket 516R closed",
+      "event_date": "2026-02-05",
+      "publish_date": "2026-10-03",
+      "headline": "Siting Council rejects UI's monopole appeal; Docket 516R is closed",
+      "summary": "On February 5, 2026 the Connecticut Siting Council rejected United Illuminating's petition for reconsideration of its Fairfield to Congress Railroad Transmission Line 115-kV Rebuild Project, which the Council had denied 5-3 on October 16, 2025. The final reconsideration decision is dated February 9, 2026, and the Council lists Docket 516R as closed. Equity Uprise's October 5, 2025 event in Bridgeport had focused on this docket, and the plain-English record of the case is now the front page of the Equity Uprise group.",
+      "factual_claims": [
+        "Council vote to deny the application, 5-3, October 16, 2025 (CT Mirror); remand decision documents dated October 17, 2025 (CSC)",
+        "Petition for reconsideration rejected February 5, 2026 (CT Mirror); final reconsideration decision dated February 9, 2026 (CSC)",
+        "Docket 516R status: closed (CSC)",
+        "No claim that Equity Uprise or any one party caused the outcome"
+      ],
+      "supporting_evidence": "Connecticut Siting Council Docket 516R page and CT Mirror reporting, checked 2026-10-03",
+      "evidence_urls": [
+        "https://portal.ct.gov/csc/1_applications-and-other-pending-matters/applications/4_docketnos500s/docket-no-516r",
+        "https://ctmirror.org/2026/02/05/ct-siting-council-rejects-united-illuminatings-monopole-appeal/",
+        "https://ctmirror.org/2025/10/16/monopoles-denied-ct-siting-council-united-illuminating/",
+        "https://matthew.mccluster.org/docket-516.html"
+      ],
+      "repository_evidence": [
+        "docket-516.html",
+        "data/docket-516-files.json"
+      ],
+      "verification_status": "verified",
+      "publication_status": "publish",
+      "evidence_labels": [
+        "Connecticut Siting Council, Docket 516R",
+        "CT Mirror, February 5, 2026",
+        "CT Mirror, October 16, 2025",
+        "Docket 516R explained"
+      ],
+      "verified_by": "source check, 2026-10-03",
+      "target_queries": [
+        "Docket 516R",
+        "UI monopoles Fairfield Bridgeport",
+        "Connecticut Siting Council Docket 516"
+      ],
+      "related_entities": [
+        "https://matthew.mccluster.org/#mccluster-corp"
+      ],
+      "structured_data_type": "DigitalDocument"
+    },
+    {
+      "story_id": "i-am-here-release",
+      "entity": [
+        "https://matthew.mccluster.org/#album"
+      ],
+      "event": "I AM HERE album release",
+      "event_date": null,
+      "publish_date": null,
+      "headline": null,
+      "summary": "The album's structured data says datePublished 2026 with no day. The ISRCs (QT6KV26000xx) were assigned in 2026.",
+      "factual_claims": [],
+      "supporting_evidence": "data/catalogue.json ISRCs; index.html datePublished",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "data/catalogue.json",
+        "index.html"
+      ],
+      "verification_status": "needs-verification",
+      "publication_status": "hold",
+      "owner_action": "Supply the release date (and the distributor's release record, if any) so the album and its tracks can carry an exact datePublished and a dated newsroom entry."
+    },
+    {
+      "story_id": "apex-kingdom-citation-2025-10-05",
+      "entity": [],
+      "event": "Connecticut General Assembly citation to Apex Kingdom",
+      "event_date": "2025-10-05",
+      "publish_date": null,
+      "headline": null,
+      "summary": "A third citation of the same date names Apex Kingdom, a separate entity listed in data/dossier.json.",
+      "factual_claims": [],
+      "supporting_evidence": "assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf"
+      ],
+      "verification_status": "owner-statement",
+      "publication_status": "not-for-newsroom",
+      "owner_action": "Apex Kingdom is a separate entity and a religious affiliation; it is not presented in the newsroom or the entity graph unless the owner asks for it."
+    },
+    {
+      "story_id": "whip-equipped-formation-2024",
+      "entity": [
+        "https://matthew.mccluster.org/#whip-equipped"
+      ],
+      "event": "Whip Equipped LLC organized in Georgia",
+      "event_date": "2024",
+      "publish_date": null,
+      "headline": null,
+      "summary": "The résumé says Whip Equipped LLC was organized in Acworth, Georgia in 2024 and operated as a parts-licensed dealership through September 2026.",
+      "factual_claims": [],
+      "supporting_evidence": "Résumé only; no formation document in the repository.",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "matthew-mccluster.html"
+      ],
+      "verification_status": "owner-statement",
+      "publication_status": "hold",
+      "owner_action": "Add the Georgia Secretary of State record (or its public URL) to verify the formation date. Also confirm the Georgia base used on public pages: the profile says Acworth, the booking page says Decatur."
+    },
+    {
+      "story_id": "scsu-enrollment",
+      "entity": [
+        "https://matthew.mccluster.org/#matthew-mccluster"
+      ],
+      "event": "Enrolled at Southern Connecticut State University, computer science major",
+      "event_date": null,
+      "publish_date": null,
+      "headline": null,
+      "summary": "Matthew McCluster is a current first-year undergraduate (freshman) at Southern Connecticut State University, majoring in computer science, still earning credits.",
+      "factual_claims": [
+        "Current student, first year",
+        "Computer science major",
+        "Not a graduate: no degree is claimed"
+      ],
+      "supporting_evidence": "Owner statement in the working session, 2026-10-03. No enrollment document in the repository.",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "data/dossier.json"
+      ],
+      "verification_status": "owner-statement",
+      "publication_status": "not-for-newsroom",
+      "where_used": [
+        "matthew-mccluster.html (Education, At a glance)",
+        "resume-it-support.html (Education)",
+        "engineering/index.html",
+        "data/entity-graph.json (affiliation, not alumniOf)"
+      ],
+      "owner_action": "Optional: an enrollment verification letter or the SCSU student-directory listing would let this be marked verified. Add the expected graduation date to data/dossier.json when known."
+    },
+    {
+      "story_id": "music-credits-review",
+      "entity": [
+        "https://matthew.mccluster.org/#album"
+      ],
+      "event": "Credits in the music graph",
+      "event_date": null,
+      "publish_date": null,
+      "headline": null,
+      "summary": "catalogue.html now carries MusicRecording markup for 14 recordings. Matthew McCluster is credited as artist only where nothing on the site credits anybody else. 'Money or the Power' is credited to Old Jay (per docket-516.html: Old Jay ft. Ocho, prod. Pax) although data/catalogue.json has no credit for it. 'Dealer Plates' carries Matthew as co-producer only; 'Upset' carries no artist claim. CIA Mind Control is listed as an album with no artist and no track list, and its gated title is never written into the page or the markup.",
+      "factual_claims": [],
+      "supporting_evidence": "data/catalogue.json, data/albums.json, docket-516.html",
+      "evidence_urls": [],
+      "repository_evidence": [
+        "data/catalogue.json",
+        "data/albums.json",
+        "tools/seo/build-catalogue.mjs"
+      ],
+      "verification_status": "needs-verification",
+      "publication_status": "not-for-newsroom",
+      "owner_action": "Add the 'Money or the Power' credit to data/catalogue.json; decide the public artist credit for CIA Mind Control; confirm who performs 'Upset' and 'Dealer Plates'. Then update CREDIT in tools/seo/build-catalogue.mjs and rebuild."
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+name: SEO contract
+
+# Keeps the site findable and true: generated structured data matches its
+# sources, the sitemap only maps indexable self-canonical pages with real
+# lastmod dates, one Person node, verified-only newsroom, llms.txt counts.
+# See docs/SEO-AEO-AUTHORITY-SYSTEM.md. Read-only; never pushes.
+
+on:
+  pull_request:
+    paths:
+      - '**.html'
+      - 'sitemap.xml'
+      - 'sitemap-video.xml'
+      - 'robots.txt'
+      - 'llms.txt'
+      - 'feed.xml'
+      - 'data/**'
+      - 'docs/seo/**'
+      - 'tools/seo/**'
+      - 'tools/build-walls.mjs'
+      - 'tools/verify-llms.py'
+      - 'js/live-content.js'
+      - 'js/analytics.js'
+      - 'scripts/test/seo-contract.test.mjs'
+      - '.github/workflows/seo-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - '**.html'
+      - 'sitemap.xml'
+      - 'data/**'
+      - 'docs/seo/**'
+      - 'tools/seo/**'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # lastmod is each page's last commit; the dates need history
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: SEO contract tests
+        run: node --test scripts/test/seo-contract.test.mjs
+      - name: llms.txt says only what is true
+        run: python3 tools/verify-llms.py

@@ -77,6 +77,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       preferCSSPageSize: true,
       displayHeaderFooter: false,
     });
+
+    /* THE IT SUPPORT CUT, IN THE SAME RUN. resume-it-support.html is the
+       same person reordered for support roles, and its PDF had no build
+       step at all: it was printed by hand once and would have gone stale
+       on the first edit. Same browser, same print sheet, same options.
+       Its Word file is built by scripts/resume-docx.py. */
+    const it = await browser.newPage();
+    const itErrs = [];
+    it.on("pageerror", (e) => itErrs.push(String(e).slice(0, 120)));
+    await it.goto(B + "resume-it-support.html", { waitUntil: "networkidle", timeout: 30000 });
+    await it.waitForTimeout(900);
+    if (itErrs.length) throw new Error("the IT résumé errored, refusing to print it: " + itErrs.join(" | "));
+    await it.emulateMedia({ media: "print" });
+    await it.pdf({
+      path: path.join(OUT_DIR, "matthew-mccluster-resume-it-support.pdf"),
+      format: "Letter",
+      printBackground: false,
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
+    });
+    console.log("wrote assets/resume/matthew-mccluster-resume-it-support.pdf");
     await browser.close();
 
     const html = readFileSync(path.join(ROOT, PAGE), "utf8");

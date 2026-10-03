@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Press &amp; Media Kit: Matthew McCluster / McCluster Corp</title>
   <meta name="description" content="Press and media kit for Matthew McCluster and McCluster Corp: fast facts, ready-to-use bios, boilerplate, and downloadable proclamations, credentials, and brand assets. Media contact: matthew@mccluster.org.">
   <meta name="keywords" content="Matthew McCluster press kit, McCluster Corp media, Equity Uprise proclamation, press assets, media contact">
@@ -22,22 +22,35 @@
   <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "AboutPage",
-    "name": "Press & Media Kit: Matthew McCluster / McCluster Corp",
-    "url": "https://matthew.mccluster.org/press.html",
-    "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "mainEntity": {
-      "@type": "Organization",
-      "@id": "https://matthew.mccluster.org/#mccluster-corp",
-      "name": "McCluster Corp",
-      "url": "https://matthew.mccluster.org/",
-      "logo": "https://matthew.mccluster.org/assets/img/m-mark.png",
-      "founder": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-      "email": "matthew@mccluster.org"
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "Press & Media Kit: Matthew McCluster / McCluster Corp",
+  "url": "https://matthew.mccluster.org/press.html",
+  "about": [
+    {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    {
+      "@id": "https://matthew.mccluster.org/#mccluster-corp"
     }
-  }
+  ],
+  "mainEntity": {
+    "@id": "https://matthew.mccluster.org/#mccluster-corp"
+  },
+  "@id": "https://matthew.mccluster.org/press.html",
+  "isPartOf": {
+    "@id": "https://matthew.mccluster.org/#website"
+  },
+  "mentions": [
+    {
+      "@id": "https://matthew.mccluster.org/#equity-uprise"
+    },
+    {
+      "@id": "https://matthew.mccluster.org/#whip-equipped"
+    }
+  ]
+}
   </script>
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -68,20 +81,13 @@
     .pr__foot { margin-top: 2.8rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; border-top: 1px solid rgba(229,56,59,0.22); padding-top: 1.2rem; }
     .pr__foot a { color:var(--ruby-text); text-decoration: none; }
   </style>
-  <!-- the media kit points at the same Person record the hire page declares,
-       so the credentials resolve to one entity instead of two half-profiles -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    "mainEntity": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
-    "url": "https://matthew.mccluster.org/press.html",
-    "name": "Press & Media Kit: Matthew McCluster / McCluster Corp"
-  }
-  </script>
+  <!-- The media kit references the Person and McCluster Corp by @id. Both
+       are defined once, on matthew-mccluster.html, from data/entity-graph.json;
+       this page used to add a second ProfilePage for the same person. -->
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+  <!-- public document page: the privacy notice shows as a banner, not a wall (see js/live-content.js) -->
+  <meta name="mcc-privacy-notice" content="banner">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
@@ -91,14 +97,15 @@
     <h1>Media Kit</h1>
     <p class="pr__lede">Everything a reporter needs to cover <a href="matthew-mccluster.html" style="color:var(--ruby-text);text-decoration:none">Matthew McCluster</a>
       and McCluster Corp: fast facts, ready-to-run bios, the proclamations, and brand assets. Interviews and
-      high-resolution files: <a href="mailto:matthew@mccluster.org" style="color:var(--ruby-text);text-decoration:none">matthew@mccluster.org</a>.</p>
+      high-resolution files: <a href="mailto:matthew@mccluster.org" style="color:var(--ruby-text);text-decoration:none">matthew@mccluster.org</a>.
+      The dated record, with the document behind every milestone, is in <a href="newsroom.html" style="color:var(--ruby-text);text-decoration:none">the newsroom</a>.</p>
 
     <h2>Fast facts</h2>
     <ul class="facts">
       <li><b>Name:</b> Matthew McCluster</li>
       <li><b>Title:</b> Creative Director &amp; Founder, McCluster Corp / Equity Uprise</li>
       <li><b>Based:</b> Connecticut &amp; Georgia, USA</li>
-      <li><b>Recognized by:</b> State of Georgia (Gov. Kemp) &amp; City of Bridgeport (Mayor Ganim), 2025</li>
+      <li><b>Recognized by:</b> Connecticut General Assembly (Official Citation, October 5, 2025), State of Georgia (Gov. Kemp, proclamation signed October 27, 2025) &amp; City of Bridgeport (Mayor Ganim, December 10, 2025)</li>
       <li><b>Ventures:</b> McCluster Corp · Equity Uprise · Whip Equipped LLC · the Street Credit Bureau · Here / PRIM3</li>
       <li><b>Contact:</b> matthew@mccluster.org · matthew.mccluster.org</li>
     </ul>
@@ -109,7 +116,7 @@
     <div class="blurb"><span class="lab">Short (~55 words)</span>
       <p>Matthew McCluster is a creative director, photographer, web designer, and songwriter based in Connecticut and Georgia. He founded McCluster Corp and the Equity Uprise civic fellowship, recognized in 2025 by the State of Georgia and the City of Bridgeport, and is the architect of the Street Credit Bureau reputation platform.</p></div>
     <div class="blurb"><span class="lab">Boilerplate: "About McCluster Corp"</span>
-      <p>McCluster Corp is a creative and civic company founded by Matthew McCluster, based in Connecticut and Georgia. A registered Connecticut public charity, it operates the Equity Uprise civic fellowship and the Here / PRIM3 music catalogue. More at matthew.mccluster.org.</p></div>
+      <p>McCluster Corp is a creative and civic company founded by Matthew McCluster, based in Connecticut and Georgia. Registered as a Connecticut public charity in October 2025, it operates the Equity Uprise civic fellowship and the Here / PRIM3 music catalogue. More at matthew.mccluster.org.</p></div>
 
     <h2>Downloads: proclamations &amp; credentials</h2>
       <!-- the résumé rides with the credentials: a newsroom asking for the
@@ -122,6 +129,14 @@
          download="Matthew-McCluster-Resume.docx">(DOCX)</a> — career, credentials and verified identifiers.</p>
 
     <div class="dl">
+      <a href="assets/credentials/img/ct-general-assembly-citation-matthew-mccluster.jpg" download>
+        <b>CT General Assembly Citation</b><small>Matthew McCluster · JPG</small></a>
+      <a href="assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf" download>
+        <b>CT General Assembly Citation</b><small>Matthew McCluster · PDF</small></a>
+      <a href="assets/credentials/img/ct-general-assembly-citation-mccluster-corp.jpg" download>
+        <b>CT General Assembly Citation</b><small>McCluster Corp · JPG</small></a>
+      <a href="assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" download>
+        <b>CT General Assembly Citation</b><small>McCluster Corp · PDF</small></a>
       <a href="assets/credentials/img/georgia-youth-innovation-civic-leadership-week-proclamation.jpg" download>
         <b>Georgia Proclamation</b><small>Gov. Kemp · JPG</small></a>
       <a href="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" download>
@@ -146,10 +161,12 @@
     <p style="margin-top:0.9rem;font-size:0.9rem">High-resolution headshots and additional footage are available on request: <a href="mailto:matthew@mccluster.org" style="color:var(--ruby-text);text-decoration:none">matthew@mccluster.org</a>.</p>
 
     <p class="pr__foot">
+      <!-- "FAQ", "Newsroom" and "Résumé" all used to point at the biography. -->
       <a href="matthew-mccluster.html">Biography</a> ·
-      <a href="matthew-mccluster.html">FAQ</a> ·
-      <a href="matthew-mccluster.html">Newsroom</a> ·
-      <a href="matthew-mccluster.html">Résumé</a> ·
+      <a href="newsroom.html">Newsroom</a> ·
+      <a href="matthew-mccluster.html#career">Résumé</a> ·
+      <a href="engineering/">IT &amp; engineering</a> ·
+      <a href="services.html">Services</a> ·
       <a href="index.html?stay=1">Home</a><br>
       © 2026 Matthew McCluster · McCluster Corp. Assets provided for editorial use.
     </p>
