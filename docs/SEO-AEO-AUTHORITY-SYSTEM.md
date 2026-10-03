@@ -138,7 +138,7 @@ profile; stable `@id`s referenced everywhere else.
 | The profile page | `…/matthew-mccluster.html#profile-page` | ProfilePage (the canonical one) | itself |
 | Matthew's website | `…/#website` | WebSite (name "Matthew McCluster", publisher the Person) | home |
 | The company's website | `https://mccluster.org/#website` | WebSite (name "McCluster Corp", publisher the Organization) | mccluster.org |
-| McCluster Corp | `…/#mccluster-corp` (stable) | Organization (Bridgeport, CT); `url` https://mccluster.org/ | the company property, the profile graph |
+| McCluster Corp | `…/#mccluster-corp` (stable) | Organization (Bridgeport, CT); `url` https://mccluster.org/ | the company property, the profile graph; `mccluster-corp.html` on Matthew's property is the company's product map and references the same @id |
 | Equity Uprise | `…/#equity-uprise` | Project of McCluster Corp; url `docket-516.html` | `docket-516.html` |
 | PRIM3 | `…/prim3.html#prim3` | Project | `prim3.html` |
 | Whip Equipped LLC | `…/whip.html#whip-equipped` | Organization, owned by the Person | `whip.html` |

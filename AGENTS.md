@@ -99,6 +99,8 @@ anywhere: it is the drawn one. Delete it, do not reference it.
 On the control repo:
 
 - `AGENTS.md` (this law + local product gates)
+- `docs/PRODUCT-ARCHITECTURE-ROADMAP.md` (canonical cross-product context; authority + Action Network + Control + commercial completion order)
+- `data/product-context.json` (public machine-readable product map)
 - `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
 - `docs/control-plane/ECOSYSTEM.md`
 - `docs/control-plane/registry.json`

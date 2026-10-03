@@ -1,0 +1,115 @@
+{
+  "schema_version": "mccluster-product-context/v1",
+  "updated_at": "2026-10-03",
+  "visibility": "public",
+  "organization": {
+    "@id": "https://matthew.mccluster.org/#mccluster-corp",
+    "name": "McCluster Corp",
+    "url": "https://mccluster.org/",
+    "product_map": "https://matthew.mccluster.org/mccluster-corp.html",
+    "founder": {
+      "@id": "https://matthew.mccluster.org/#matthew-mccluster"
+    },
+    "positioning": "Technology, education, civic, media and creative operating organization."
+  },
+  "product_model": {
+    "statement": "McCluster Corp is one operating organization with several distinct public, member and operator surfaces. The surfaces have different jobs but should agree on canonical entities, campaigns, evidence and outcomes.",
+    "layers": [
+      {
+        "id": "authority",
+        "name": "Identity, evidence and public record",
+        "role": "Explain who and what the organization is, expose verifiable claims, and give search engines, recruiters, media and software agents stable canonical entities.",
+        "surfaces": [
+          "https://matthew.mccluster.org/matthew-mccluster.html",
+          "https://matthew.mccluster.org/newsroom.html",
+          "https://matthew.mccluster.org/press.html",
+          "https://matthew.mccluster.org/data/seo/entity-graph.json",
+          "https://matthew.mccluster.org/data/seo/evidence-ledger.json"
+        ]
+      },
+      {
+        "id": "platform",
+        "name": "McCluster Platform and Control",
+        "role": "Shared technical and operator layer for accounts, data, APIs, analytics, releases, campaigns and internal operations.",
+        "surfaces": [
+          "https://matthew.mccluster.org/engineering/mccluster-platform.html"
+        ]
+      },
+      {
+        "id": "mission",
+        "name": "Equity Uprise",
+        "role": "Public-interest program layer for research, civic education, campaigns, culture and community action.",
+        "surfaces": [
+          "https://matthew.mccluster.org/docket-516.html",
+          "https://matthew.mccluster.org/heal-the-3rd-world.html",
+          "https://matthew.mccluster.org/end-racism.html"
+        ]
+      },
+      {
+        "id": "participation",
+        "name": "Uprise Action Network",
+        "role": "Action-first member product where campaigns become missions and members can join, act, submit proof, be reviewed and build a verified action record.",
+        "surfaces": [
+          "https://matthew.mccluster.org/action/",
+          "https://matthew.mccluster.org/mnet.html"
+        ]
+      },
+      {
+        "id": "learning",
+        "name": "PRIM3",
+        "role": "Technology and cybersecurity learning product using the PRIM Method: Principles, Rhythm, Immersion and Missions.",
+        "surfaces": [
+          "https://matthew.mccluster.org/prim3.html"
+        ]
+      },
+      {
+        "id": "commercial",
+        "name": "Studio, services and media",
+        "role": "Commercial web, social, photography, video, music, licensing and creative-direction work that funds and demonstrates the same production capabilities.",
+        "surfaces": [
+          "https://matthew.mccluster.org/services.html",
+          "https://matthew.mccluster.org/hire.html",
+          "https://matthew.mccluster.org/catalogue.html",
+          "https://matthew.mccluster.org/license.html"
+        ]
+      }
+    ]
+  },
+  "loops": [
+    {
+      "id": "authority-loop",
+      "name": "Claim → evidence → canonical entity → public page → machine-readable record",
+      "purpose": "Keep public claims attributable, consistent and verifiable."
+    },
+    {
+      "id": "action-loop",
+      "name": "Understand → Choose → Act → Prove → Verify → Progress → Collaborate",
+      "purpose": "Turn attention into completed, reviewable action instead of likes or passive engagement."
+    },
+    {
+      "id": "operator-loop",
+      "name": "Create → publish → receive participation → review proof → verify outcome → measure",
+      "purpose": "Keep campaign and member operations inside one operator plane rather than manual side channels."
+    }
+  ],
+  "principles": [
+    "One canonical public identity graph for Matthew McCluster, McCluster Corp and the products it actually operates.",
+    "Evidence before claims: public-record pages and answer-engine data should point back to a document, primary source, public source code or clearly labeled first-party source.",
+    "The Action Network rewards useful, completed, verifiable action rather than likes, views, outrage or political viewpoint.",
+    "Action Network is the user-facing social-product identity; older implementation naming is a compatibility detail, not a public brand.",
+    "Control is the operator plane. Public/member surfaces should not require the owner to manually reconcile counts, proofs or campaign state outside the product.",
+    "Music and media are not detached side projects: they can be discovery, storytelling and campaign entry points, while retaining their own catalogue and rights records."
+  ],
+  "boundaries": [
+    "Whip Equipped LLC is a separate company connected through Matthew McCluster's ownership/founding; it is not a McCluster Corp sub-brand.",
+    "Two properties, two entities: https://mccluster.org/ is McCluster Corp's property and the Organization's url; https://matthew.mccluster.org/ is Matthew McCluster's. Company product pages hosted on Matthew's property, this product map among them, keep their URLs for compatibility (data/seo/domain-architecture.json).",
+    "A public page may explain a product relationship without turning internal, unverified or private context into a public factual claim.",
+    "Payments are a platform capability; the primary Action Network participation loop is missions, proof and verification."
+  ],
+  "canonical_sources": [
+    "https://matthew.mccluster.org/data/seo/entity-graph.json",
+    "https://matthew.mccluster.org/data/seo/evidence-ledger.json",
+    "https://matthew.mccluster.org/engineering/mccluster-platform.html",
+    "https://matthew.mccluster.org/newsroom.html"
+  ]
+}

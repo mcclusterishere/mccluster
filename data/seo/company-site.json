@@ -30,6 +30,11 @@
   },
   "doors_heading": "Products and initiatives",
   "doors_intro": "Each one is its own door. Open it and you are in the product itself.",
+  "product_map": {
+    "href": "https://matthew.mccluster.org/mccluster-corp.html",
+    "cta": "How the products fit together",
+    "line": "The product map: how the public record, the platform and Control, Equity Uprise, the Action Network, PRIM3 and the studio connect, and the member loop from a campaign to verified action."
+  },
   "doors": [
     {
       "entity": "mccluster_platform",

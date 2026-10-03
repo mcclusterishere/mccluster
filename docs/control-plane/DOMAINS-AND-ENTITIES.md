@@ -65,7 +65,9 @@ Rules that follow from it:
   evidence, portfolio, gallery and walls, films, music, catalogue, licensing,
   policy writing, case studies, press kit, newsroom.
 - **McCluster Corp products hosted on Matthew's property for compatibility:**
-  the Docket 516R record (Equity Uprise's front page), the Action Network
+  the company's product map (`mccluster-corp.html`, with
+  `data/product-context.json`; it explains how the products connect, the
+  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), the Action Network
   (`/action/`, `mnet.html`, receipts), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the music-creator platform, the privacy policy.
 - **Whip Equipped LLC** (separate company) at `whip.html`.

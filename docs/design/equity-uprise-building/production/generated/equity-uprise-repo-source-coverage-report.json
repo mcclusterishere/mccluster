@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 303,
+  "candidate_count": 307,
   "capability_source_count": 98,
-  "support_only_count": 205,
-  "checks_total": 1116,
-  "checks_passed": 1116,
+  "support_only_count": 209,
+  "checks_total": 1132,
+  "checks_passed": 1132,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -76,6 +76,7 @@
     "data/merch.json",
     "data/offers.json",
     "data/playlists.json",
+    "data/product-context.json",
     "data/roles.json",
     "data/seo/company-site.json",
     "data/seo/domain-architecture.json",
@@ -86,6 +87,7 @@
     "demos/shiloh/data/impact.json",
     "desk.html",
     "docket-516.html",
+    "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
     "docs/agent-web.md",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
@@ -160,6 +162,7 @@
     "listen.html",
     "llms.txt",
     "matthew-mccluster.html",
+    "mccluster-corp.html",
     "mnet.html",
     "native/app/(tabs)/_layout.tsx",
     "native/app/(tabs)/desk.tsx",
@@ -186,6 +189,7 @@
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
+    "scripts/test/product-context.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/signup-authority.test.mjs",
@@ -317,7 +321,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "303 entries"
+      "detail": "307 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5891,6 +5895,86 @@
     },
     {
       "name": "workers/mccluster/src/company-site/pages.generated.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/product-context.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/product-context.json classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "data/product-context.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/product-context.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-corp.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "mccluster-corp.html classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "mccluster-corp.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "mccluster-corp.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/product-context.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

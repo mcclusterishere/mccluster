@@ -140,7 +140,7 @@ export function renderHome(site, graph) {
       <p class="lede">${esc(site.hero.lede)}</p>
 
       <h2 id="products">${esc(site.doors_heading)}</h2>
-      <p class="note">${esc(site.doors_intro)}</p>
+      <p class="note">${esc(site.doors_intro)}${site.product_map ? ` <a href="${esc(site.product_map.href)}">${esc(site.product_map.cta)} &#8594;</a>` : ""}</p>
       <div class="grid three">
 ${site.doors.map(door).join("\n")}
       </div>
@@ -201,6 +201,7 @@ export function renderLlms(site) {
     "",
     "## Products and initiatives",
     ...site.doors.map((d) => `- [${d.name}](${d.href}): ${d.kind}. ${d.line}`),
+    ...(site.product_map ? [`- [${site.product_map.cta}](${site.product_map.href}): ${site.product_map.line}`] : []),
     "",
     "## Company",
     ...site.facts.map((f) => `- ${f.label}: ${f.value}${f.href ? ` (${f.href})` : ""}`),
