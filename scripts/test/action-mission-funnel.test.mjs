@@ -45,7 +45,7 @@ test("mission deep links survive OAuth and first-profile onboarding", () => {
 
 test("mission cards and Control use server-counted assignment progress", () => {
   assert.match(mnet, /sbRpc\("action_mission_stats",\{p_campaign:missions\.campaign\|\|null\}\)/);
-  assert.match(mnet, /joined="\+joined/);
+  assert.match(mnet, /joined\+" joined/);
   assert.match(mnet, /awaiting review/);
   assert.match(control, /rpc\/action_mission_stats/);
   assert.match(control, /<span>joined<\/span>/);
