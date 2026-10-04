@@ -244,8 +244,8 @@ async function handleDeveloper(req,env,path,url){
    the checks it would have passed if it had been sent by hand. */
 async function prepareNetworkPost(env,muid,b,appKey){
   /* A long post is refused, never cut short: the member would lose what
-     they wrote without knowing. The table enforces the same 2,000 for a
-     post and 1,000 for a reply. */
+     they wrote without knowing. Comments are retired; every new row here is
+     a top-level post, ideally carrying or reporting an action. */
   const body=String(b.body||'').trim();
   if(b.reply_to_id)return {error:'Comments are retired on the Action Network. Take the mission or share proof instead.',status:410};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
@@ -274,13 +274,11 @@ async function prepareNetworkPost(env,muid,b,appKey){
     }
   }
   if(!body&&!assets.length)return {error:'Post body or media is required',status:400};
-  let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
-  if(replyTo){if(!uuidLike(replyTo))return {error:'Invalid parent post',status:400};const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return {error:'Parent post not found',status:404};visibility=parent.visibility}
+  const replyTo=null;
+  let visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
   const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
-  /* A post can belong to a group. The membership is checked here rather
-     than trusted from the body: the client sends a group id, the server
-     decides whether this member is in it. A reply stays with its parent's
-     group, because a thread that changes rooms halfway is not a thread. */
+  /* A post can belong to a group. Membership is server-authoritative and
+     group content is always network-scoped even if the client asks public. */
   let groupId=null;
   if(b.group_id){
     const gid=String(b.group_id);
@@ -508,7 +506,8 @@ async function handleMnet(req,env,path,url){
       service(env,`network_group_members?m_uid=eq.${muid}&state=eq.joined&select=group_id`)
     ]);
     const joined=new Set((mine||[]).map(r=>r.group_id));
-    return reply(req,env,{groups:(all||[]).map(g=>({...g,joined:joined.has(g.id)}))});
+    const visible=(all||[]).filter(g=>g.visibility!=='invite'||joined.has(g.id));
+    return reply(req,env,{groups:visible.map(g=>({...g,joined:joined.has(g.id)}))});
   }
   const groupOne=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})$/i);
   if(groupOne&&req.method==='GET'){
@@ -518,6 +517,7 @@ async function handleMnet(req,env,path,url){
     const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
     const mine=await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
     const joined=!!mine?.length;
+    if(group.visibility==='invite'&&!joined)return fail(req,env,'Group not found',404);
     const posts=joined
       ? await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`)
       : [];
@@ -585,7 +585,7 @@ async function handleMnet(req,env,path,url){
     const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20))),before=url.searchParams.get('before');
     const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
     const visible=[];
-    for(const post of rows||[]){if(external?(post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
+    for(const post of rows||[]){if(external?(!post.group_id&&post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
     const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer);
     let next=null;
     if(visible.length>limit)next=page[page.length-1]?.created_at||null;
@@ -597,13 +597,13 @@ async function handleMnet(req,env,path,url){
   const postOne=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/i);
   if(postOne&&req.method==='GET'){
     const rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];if(!post)return fail(req,env,'Post not found',404);
-    let viewer=null;if(external){if(post.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,post)))return fail(req,env,'Post not found',404)}
+    let viewer=null;if(external){if(post.group_id||post.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,post)))return fail(req,env,'Post not found',404)}
     const hydrated=await hydratePostRows(env,[post],viewer);return reply(req,env,hydrated[0]||{post});
   }
   if(postOne&&req.method==='PATCH'){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
-    if(!post||post.author_m_uid!==muid)return fail(req,env,'Post not found',404);
+    if(!post||post.author_m_uid!==muid||post.reply_to_id||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
