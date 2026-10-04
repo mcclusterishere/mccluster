@@ -99,28 +99,9 @@ for delete
 to authenticated
 using (false);
 
--- Production had these legacy triggers when this migration first ran.
--- Fresh/replay databases may not, so keep the retirement step idempotent.
-do $
-begin
-  begin
-    alter table public.network_posts disable trigger mnet_post_outbox_trg;
-  exception when undefined_object then
-    null;
-  end;
-  begin
-    alter table public.network_reactions disable trigger mnet_reaction_outbox_trg;
-  exception when undefined_object then
-    null;
-  end;
-  begin
-    alter table public.network_follows disable trigger mnet_follow_outbox_trg;
-  exception when undefined_object then
-    null;
-  end;
-end;
-$;
-
+-- Trigger/outbox producer removal is canonicalized in the immediately
+-- following cleanup migration (20261004023603), which uses IF EXISTS.
+-- Keep this already-applied migration replay-portable on fresh databases.
 update public.network_outbox
 set status = 'dead',
     last_error = 'Retired by action_network_hardening_v1: canonical feed and notifications write directly; no outbox consumer exists.'
