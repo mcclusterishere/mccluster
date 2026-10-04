@@ -15,10 +15,12 @@ assert.ok(cameraMigrations.length >= 1, "camera-loop production migration is pre
 cameraMigrations.sort();
 const sql = fs.readFileSync(new URL(cameraMigrations.at(-1), migrationDir), "utf8");
 
-test("signed-in campaign surfaces hand people to campaign missions", () => {
-  assert.match(action, /Do a mission now/);
-  assert.match(action, /missionHubHref/);
-  assert.match(action, /campaign=.*encodeURIComponent\(C\.id\)/);
+test("campaign surfaces hand people straight to concrete missions", () => {
+  assert.match(action, /Pick an action\./);
+  assert.match(action, /actionable_selected/);
+  assert.match(action, /join_action_mission/);
+  assert.match(action, /missionHref/);
+  assert.match(action, /root\.location\.assign\(missionHref\(SELECTED_ACTION\.mission_id\)\)/);
   assert.match(gateway, /gatewaySignedIn/);
   assert.match(gateway, /Do a mission now/);
   assert.match(gateway, /view=missions&campaign=/);

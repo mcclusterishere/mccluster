@@ -31,7 +31,7 @@
   <main class="an" id="an" aria-busy="true">
     <!-- THE HOOK. Filled from the campaign row; this copy is what shows
          while it loads, and what a reader without JavaScript gets. -->
-    <section class="an-hero">
+    <section class="an-hero" id="anHero" hidden>
       <p class="an-kicker" id="anKicker">Uprise Action Network</p>
       <p class="an-from" id="anFrom" hidden></p>
       <h1 class="an-h1" id="anHeadline">You saw it.<br>Now do something.</h1>
@@ -52,54 +52,30 @@
     </section>
 
     <div id="anCampaign" hidden>
-      <!-- PEOPLE FIRST. A real count against the phase goal, never a
-           rounded-up or seeded number. -->
-      <section class="an-sec an-meter" aria-labelledby="anPeopleLabel">
-        <p class="an-meter__n"><b id="anPeople">0</b> <span id="anPeopleLabel">people in the network</span></p>
-        <div class="an-bar" role="progressbar" id="anPeopleBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
-        <p class="an-meter__goal" id="anPeopleGoal"></p>
-      </section>
-
-      <!-- MONEY: rendered only when the owner has switched this
-           campaign's money on. Off, it is not on the page at all. -->
-      <section class="an-sec an-meter an-meter--money" id="anMoney" hidden aria-labelledby="anMoneyLabel">
-        <p class="an-meter__n"><b id="anRaised">$0</b> <span id="anMoneyLabel">received</span></p>
-        <div class="an-bar an-bar--gold" role="progressbar" id="anMoneyBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
-        <p class="an-meter__goal" id="anMoneyGoal"></p>
-        <a class="an-btn an-btn--gold an-btn--block" id="anGive" href="/give.html">Give $5 &#8594;</a>
-      </section>
-
-      <section class="an-sec" aria-labelledby="anMissionH">
-        <h2 class="an-h2" id="anMissionH">The mission</h2>
-        <ol class="an-phases" id="anPhases"></ol>
+      <section class="an-action-head" aria-labelledby="anActionHead">
+        <p class="an-kicker" id="anActionCampaign">Uprise Action Network</p>
+        <h1 class="an-h2 an-action-head__title" id="anActionHead">Pick an action.</h1>
+        <p class="an-action-head__sub" id="anActionSub">Tap one thing you can do right now.</p>
       </section>
 
       <!-- Campaign-defined intake. A campaign may expose a small set of
            concrete lanes without inventing a new page or a new account flow. -->
-      <section class="an-sec an-intake" id="anIntake" hidden aria-labelledby="anIntakeH">
-        <p class="an-kicker">Choose your lane</p>
-        <h2 class="an-h2" id="anIntakeH">What can you actually do?</h2>
-        <p class="an-lede an-lede--sm" id="anIntakeLaw"></p>
+      <section class="an-intake" id="anIntake" hidden aria-labelledby="anActionHead">
         <div class="an-intake-grid" id="anIntakeChoices"></div>
-      </section>
-
-      <!-- Funded work is separate from ordinary mission points. Funding
-           reserves a fixed compensation slot; proof review still decides
-           whether the action was completed. No recipient image is a bounty. -->
-      <section class="an-sec an-bounties" id="anBounties" hidden aria-labelledby="anBountyH">
-        <p class="an-kicker">Fund it or do it</p>
-        <h2 class="an-h2" id="anBountyH">Verified action bounties</h2>
-        <p class="an-lede an-lede--sm">A bounty pays an approved participant for completing a defined action. It never buys somebody else&rsquo;s face, story, medical information, documents, or sleeping location.</p>
-        <div class="an-bounty-list" id="anBountyList"></div>
-        <p class="an-note" id="anBountyFunding"></p>
-        <p class="an-msg" id="anBountyStatus" role="status" aria-live="polite"></p>
+        <p class="an-msg an-action-status" id="anActionStatus" role="status" aria-live="polite"></p>
+        <p class="an-note an-intake__law" id="anIntakeLaw"></p>
       </section>
 
       <!-- DON'T JUST STAND THERE. What you have, what you can do, and the
            account that makes you a participant. -->
-      <section class="an-sec an-join" id="join" aria-labelledby="anJoinH">
-        <h2 class="an-h2" id="anJoinH">Don&rsquo;t just stand there.</h2>
-        <p class="an-lede an-lede--sm" id="anJoinSub">What do you have? Tap everything that&rsquo;s true.</p>
+      <section class="an-sec an-join" id="join" hidden aria-labelledby="anJoinH">
+        <div class="an-selected-action" id="anSelectedAction" hidden>
+          <span>Selected action</span>
+          <b id="anSelectedTitle"></b>
+          <p id="anSelectedNote"></p>
+        </div>
+        <h2 class="an-h2" id="anJoinH">Take this action.</h2>
+        <p class="an-lede an-lede--sm" id="anJoinSub">Sign in once. Then go straight to the mission.</p>
         <div class="an-chips" id="anHave" role="group" aria-label="What you have"></div>
 
         <p class="an-q">What can you do?</p>
@@ -125,6 +101,40 @@
 
         <button type="button" class="an-btn an-btn--hot an-btn--block" id="anJoin">Join the Action Network</button>
         <p class="an-msg" id="anMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- Funded work is separate from ordinary mission points. Funding
+           reserves a fixed compensation slot; proof review still decides
+           whether the action was completed. No recipient image is a bounty. -->
+      <section class="an-sec an-bounties" id="anBounties" hidden aria-labelledby="anBountyH">
+        <p class="an-kicker">Fund it or do it</p>
+        <h2 class="an-h2" id="anBountyH">Verified action bounties</h2>
+        <p class="an-lede an-lede--sm">A bounty pays an approved participant for completing a defined action. It never buys somebody else&rsquo;s face, story, medical information, documents, or sleeping location.</p>
+        <div class="an-bounty-list" id="anBountyList"></div>
+        <p class="an-note" id="anBountyFunding"></p>
+        <p class="an-msg" id="anBountyStatus" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- PEOPLE FIRST. A real count against the phase goal, never a
+           rounded-up or seeded number. -->
+      <section class="an-sec an-meter" aria-labelledby="anPeopleLabel">
+        <p class="an-meter__n"><b id="anPeople">0</b> <span id="anPeopleLabel">people in the network</span></p>
+        <div class="an-bar" role="progressbar" id="anPeopleBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anPeopleGoal"></p>
+      </section>
+
+      <!-- MONEY: rendered only when the owner has switched this
+           campaign's money on. Off, it is not on the page at all. -->
+      <section class="an-sec an-meter an-meter--money" id="anMoney" hidden aria-labelledby="anMoneyLabel">
+        <p class="an-meter__n"><b id="anRaised">$0</b> <span id="anMoneyLabel">received</span></p>
+        <div class="an-bar an-bar--gold" role="progressbar" id="anMoneyBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anMoneyGoal"></p>
+        <a class="an-btn an-btn--gold an-btn--block" id="anGive" href="/give.html">Give $5 &#8594;</a>
+      </section>
+
+      <section class="an-sec" aria-labelledby="anMissionH">
+        <h2 class="an-h2" id="anMissionH">The mission</h2>
+        <ol class="an-phases" id="anPhases"></ol>
       </section>
 
       <!-- YOU. Everything on the card is the participant's own row. -->
