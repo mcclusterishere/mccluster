@@ -38,6 +38,9 @@ test("rejected proof is retryable without erasing the review trail",async()=>{
  assert.match(indexes,/action_proof_review_history_reviewer_idx/);
  assert.match(js,/a\.status==="rejected"\)/);
  assert.match(js,/Proof was not verified\. Fix the proof and submit it again\./);
+ assert.match(js,/n\.type==="action_proof_review"/);
+ assert.match(js,/meta\.decision==="rejected"\?"Fix proof →":"View action →"/);
+ assert.match(js,/mnet\.html\?mission=/);
 });
 
 test("members act only through server functions; they cannot write assignments, proofs, awards or verification",async()=>{
