@@ -101,10 +101,16 @@ async function callMnetMedia(req,env,body){
 }
 async function canReadNetworkPost(env,muid,post){
   if(!post||post.deleted_at)return false;
+  if(post.group_id){
+    if(!muid)return false;
+    const membership=await service(env,`network_group_members?group_id=eq.${post.group_id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
+    if(!membership?.length)return false;
+  }
   if(muid&&post.author_m_uid!==muid&&await networkBlocked(env,muid,post.author_m_uid))return false;
   if(post.visibility==='public'||post.author_m_uid===muid)return true;
   if(post.visibility==='private'||!muid)return false;
   if(post.visibility==='network'){
+    if(post.group_id)return true;
     const f=await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${post.author_m_uid}&status=eq.following&select=follower_m_uid&limit=1`);
     return !!f?.length;
   }
@@ -113,22 +119,18 @@ async function canReadNetworkPost(env,muid,post){
 async function hydratePostRows(env,posts=[],viewerMuid=null){
   if(!posts.length)return [];
   const ids=uniq(posts.map(p=>p.id)).filter(uuidLike);
-  const [actors,reactions,replies,bookmarks]=await Promise.all([
+  const [actors,bookmarks]=await Promise.all([
     networkActors(env,posts.map(p=>p.author_m_uid)),
-    ids.length?service(env,`network_reactions?post_id=in.(${ids.join(',')})&select=post_id,actor_m_uid,reaction`):[],
-    ids.length?service(env,`network_posts?reply_to_id=in.(${ids.join(',')})&deleted_at=is.null&select=id,reply_to_id`):[],
     viewerMuid&&ids.length?service(env,`network_bookmarks?m_uid=eq.${viewerMuid}&post_id=in.(${ids.join(',')})&select=post_id`):[]
   ]);
-  const rc=new Map(), replyc=new Map(), liked=new Set(), saved=new Set((bookmarks||[]).map(x=>x.post_id));
-  for(const r of reactions||[]){rc.set(r.post_id,(rc.get(r.post_id)||0)+1);if(viewerMuid&&r.actor_m_uid===viewerMuid&&r.reaction==='like')liked.add(r.post_id)}
-  for(const r of replies||[])replyc.set(r.reply_to_id,(replyc.get(r.reply_to_id)||0)+1);
-  return posts.map(p=>({post:{...p,reaction_count:rc.get(p.id)||0,reply_count:replyc.get(p.id)||0,liked_by_me:liked.has(p.id),bookmarked_by_me:saved.has(p.id)},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
+  const saved=new Set((bookmarks||[]).map(x=>x.post_id));
+  return posts.map(p=>({post:{...p,bookmarked_by_me:saved.has(p.id)},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
 }
 async function hydrateFeedItems(env,items=[],viewerMuid=null){
   if(!items.length)return [];
   const postIds=uniq(items.filter(x=>x.item_type==='post'&&x.post_id).map(x=>x.post_id)).filter(uuidLike);
-  const posts=postIds.length?await service(env,`network_posts?id=in.(${postIds.join(',')})&deleted_at=is.null&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,created_at,updated_at,source_app_id,source_org_id`):[];
-  const hydrated=await hydratePostRows(env,posts||[],viewerMuid);
+  const posts=postIds.length?await service(env,`network_posts?id=in.(${postIds.join(',')})&deleted_at=is.null&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`):[];
+  const hydrated=await hydratePostRows(env,(posts||[]).filter(p=>!p.group_id),viewerMuid);
   const postById=new Map(hydrated.map(x=>[x.post.id,x]));
   const actors=await networkActors(env,items.map(x=>x.actor_m_uid));
   return items.map(item=>{
@@ -242,10 +244,10 @@ async function handleDeveloper(req,env,path,url){
    the checks it would have passed if it had been sent by hand. */
 async function prepareNetworkPost(env,muid,b,appKey){
   /* A long post is refused, never cut short: the member would lose what
-     they wrote without knowing. The table enforces the same 2,000 for a
-     post and 1,000 for a reply. */
+     they wrote without knowing. Comments are retired; every new row here is
+     a top-level post, ideally carrying or reporting an action. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id&&chars(body)>1000)return {error:'Replies are limited to 1,000 characters.',status:413};
+  if(b.reply_to_id)return {error:'Comments are retired on the Action Network. Take the mission or share proof instead.',status:410};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
   const mediaIds=uniq(rawMediaIds);
@@ -272,21 +274,19 @@ async function prepareNetworkPost(env,muid,b,appKey){
     }
   }
   if(!body&&!assets.length)return {error:'Post body or media is required',status:400};
-  let parent=null,replyTo=b.reply_to_id?String(b.reply_to_id):null,visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
-  if(replyTo){if(!uuidLike(replyTo))return {error:'Invalid parent post',status:400};const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return {error:'Parent post not found',status:404};visibility=parent.visibility}
+  const replyTo=null;
+  let visibility=['public','network','private'].includes(b.visibility)?b.visibility:'public';
   const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
-  /* A post can belong to a group. The membership is checked here rather
-     than trusted from the body: the client sends a group id, the server
-     decides whether this member is in it. A reply stays with its parent's
-     group, because a thread that changes rooms halfway is not a thread. */
+  /* A post can belong to a group. Membership is server-authoritative and
+     group content is always network-scoped even if the client asks public. */
   let groupId=null;
-  if(replyTo){groupId=parent?.group_id||null;}
-  else if(b.group_id){
+  if(b.group_id){
     const gid=String(b.group_id);
     if(!uuidLike(gid))return {error:'Invalid group',status:400};
     const mine=await service(env,`network_group_members?group_id=eq.${gid}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
     if(!mine?.length)return {error:'Join the group before posting in it',status:403};
     groupId=gid;
+    visibility='network';
   }
   return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
 }
@@ -506,7 +506,8 @@ async function handleMnet(req,env,path,url){
       service(env,`network_group_members?m_uid=eq.${muid}&state=eq.joined&select=group_id`)
     ]);
     const joined=new Set((mine||[]).map(r=>r.group_id));
-    return reply(req,env,{groups:(all||[]).map(g=>({...g,joined:joined.has(g.id)}))});
+    const visible=(all||[]).filter(g=>g.visibility!=='invite'||joined.has(g.id));
+    return reply(req,env,{groups:visible.map(g=>({...g,joined:joined.has(g.id)}))});
   }
   const groupOne=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})$/i);
   if(groupOne&&req.method==='GET'){
@@ -515,9 +516,12 @@ async function handleMnet(req,env,path,url){
     const rows=await service(env,`network_groups?slug=eq.${encodeURIComponent(groupOne[1])}&select=id,slug,name,purpose,visibility,member_count,organization_id,group_type,front_page_url&limit=1`);
     const group=rows?.[0]; if(!group)return fail(req,env,'Group not found',404);
     const mine=await service(env,`network_group_members?group_id=eq.${group.id}&m_uid=eq.${muid}&state=eq.joined&select=group_id&limit=1`);
-    const posts=await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`);
-    /* The same hydration the feed uses, so a post reads identically in a
-       group and in the open feed. */
+    const joined=!!mine?.length;
+    if(group.visibility==='invite'&&!joined)return fail(req,env,'Group not found',404);
+    const posts=joined
+      ? await service(env,`network_posts?group_id=eq.${group.id}&deleted_at=is.null&reply_to_id=is.null&order=created_at.desc&limit=40&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,group_id,created_at,updated_at,source_app_id,source_org_id`)
+      : [];
+    /* Group content is a membership surface, not a public tag. */
     const items=await hydratePostRows(env,posts||[],muid);
     let organization=null,campaigns=[];
     if(group.organization_id){
@@ -525,7 +529,7 @@ async function handleMnet(req,env,path,url){
       organization=orgs?.[0]||null;
       campaigns=await service(env,`action_campaigns?group_id=eq.${group.id}&status=in.(live,paused)&select=id,slug,status,title,kicker,headline,current_phase,people_goal&order=sort.asc`);
     }
-    return reply(req,env,{group:{...group,joined:!!mine?.length},organization,campaigns,items});
+    return reply(req,env,{group:{...group,joined},organization,campaigns,items});
   }
   const groupJoin=path.match(/^\/v1\/mnet\/groups\/([a-z0-9-]{1,64})\/membership$/i);
   if(groupJoin&&['POST','DELETE'].includes(req.method)){
@@ -544,20 +548,11 @@ async function handleMnet(req,env,path,url){
   }
   const replies=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/replies$/i);
   if(replies&&req.method==='GET'){
-    const parentRows=await service(env,`network_posts?id=eq.${replies[1]}&deleted_at=is.null&select=*&limit=1`),parent=parentRows?.[0]; if(!parent)return fail(req,env,'Post not found',404);
-    let viewer=null;if(external){if(parent.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,parent)))return fail(req,env,'Post not found',404)}
-    const rows=await service(env,`network_posts?reply_to_id=eq.${replies[1]}&deleted_at=is.null&order=created_at.asc&select=id,author_m_uid,body,post_type,visibility,media,metadata,content_id,reply_to_id,created_at,updated_at,source_app_id,source_org_id`);
-    const visible=external?(rows||[]).filter(x=>x.visibility==='public'):(rows||[]); const hydrated=await hydratePostRows(env,visible,viewer); if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start); return reply(req,env,{replies:hydrated});
+    return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    if(external)return fail(req,env,'Reaction mutation requires a McCluster user session',403);
-    const b=await json(req),muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
-    const posts=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`),post=posts?.[0];
-    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
-    const reaction=String(b.reaction||'like').slice(0,40);
-    if(req.method==='DELETE'){await service(env,`network_reactions?post_id=eq.${react[1]}&actor_m_uid=eq.${muid}&reaction=eq.${encodeURIComponent(reaction)}`,{method:'DELETE',headers:{prefer:'return=minimal'}});return reply(req,env,{reaction:null})}
-    const rows=await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({post_id:react[1],actor_m_uid:muid,reaction})}); return reply(req,env,{reaction:rows?.[0]},201);
+    return fail(req,env,'Reactions are retired on the Action Network. Take the mission or share proof instead.',410);
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){
@@ -590,7 +585,7 @@ async function handleMnet(req,env,path,url){
     const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20))),before=url.searchParams.get('before');
     const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
     const visible=[];
-    for(const post of rows||[]){if(external?(post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
+    for(const post of rows||[]){if(external?(!post.group_id&&post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
     const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer);
     let next=null;
     if(visible.length>limit)next=page[page.length-1]?.created_at||null;
@@ -602,13 +597,14 @@ async function handleMnet(req,env,path,url){
   const postOne=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})$/i);
   if(postOne&&req.method==='GET'){
     const rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];if(!post)return fail(req,env,'Post not found',404);
-    let viewer=null;if(external){if(post.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,post)))return fail(req,env,'Post not found',404)}
+    let viewer=null;if(external){if(post.group_id||post.visibility!=='public')return fail(req,env,'Post not found',404)}else{viewer=await currentMuid(env,user.id);if(!(await canReadNetworkPost(env,viewer,post)))return fail(req,env,'Post not found',404)}
     const hydrated=await hydratePostRows(env,[post],viewer);return reply(req,env,hydrated[0]||{post});
   }
   if(postOne&&req.method==='PATCH'){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
-    if(!post||post.author_m_uid!==muid)return fail(req,env,'Post not found',404);
+    if(!post||post.author_m_uid!==muid||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(post.reply_to_id)return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;

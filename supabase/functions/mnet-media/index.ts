@@ -40,8 +40,15 @@ async function blocked(a:string,b:string){
 }
 async function canReadPost(viewer:string,post:any){
   if(!post||post.deleted_at)return false;
+  if(post.group_id){
+    const {count}=await admin.from("network_group_members").select("*",{count:"exact",head:true})
+      .eq("group_id",post.group_id).eq("m_uid",viewer).eq("state","joined");
+    if(Number(count||0)<1)return false;
+  }
   if(await blocked(viewer,post.author_m_uid))return false;
-  if(post.author_m_uid===viewer||post.visibility==="public")return true;
+  if(post.author_m_uid===viewer)return true;
+  if(post.group_id)return post.visibility==="network"||post.visibility==="public";
+  if(post.visibility==="public")return true;
   if(post.visibility==="network"){
     const {count}=await admin.from("network_follows").select("*",{count:"exact",head:true})
       .eq("follower_m_uid",viewer).eq("followed_m_uid",post.author_m_uid).eq("status","following");
@@ -113,7 +120,7 @@ Deno.serve(async req=>{
       if(!asset)return json({error:"asset not found"},404);
       let visible=asset.owner_m_uid===who.mUid;
       if(!visible&&asset.post_id){
-        const {data:post}=await admin.from("network_posts").select("id,author_m_uid,visibility,deleted_at").eq("id",asset.post_id).limit(1).maybeSingle();
+        const {data:post}=await admin.from("network_posts").select("id,author_m_uid,visibility,group_id,deleted_at").eq("id",asset.post_id).limit(1).maybeSingle();
         visible=await canReadPost(who.mUid,post);
       }
       if(!visible)return json({error:"asset not found"},404);

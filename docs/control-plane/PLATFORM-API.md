@@ -102,16 +102,16 @@ Current endpoints:
 - `GET /v1/mnet/feed?app_key=...&limit=...&before=...` — user-scoped feed; API keys with `mnet:read` receive public feed data.
 - `GET /v1/mnet/people/:mcclusterId` — canonical McCluster/Mnet public identity.
 - `PATCH /v1/mnet/profile?app_key=...` — universal profile update, including the canonical McCluster ID when supplied; McCluster-user session only.
-- `POST /v1/mnet/posts?app_key=...` — native post creation, or a persistent comment when `reply_to_id` is supplied; McCluster-user session only.
-- `GET /v1/mnet/posts/:postId/replies` — visible first-level comments with author/profile hydration.
-- `POST /v1/mnet/posts/:postId/reactions` — add a reaction.
-- `DELETE /v1/mnet/posts/:postId/reactions` — remove the current user's reaction.
+- `POST /v1/mnet/posts?app_key=...` — native post creation; McCluster-user session only. Conventional comments are retired, so `reply_to_id` is rejected.
+- `GET /v1/mnet/posts/:postId/replies` — retired compatibility route; returns `410 Gone`.
+- `POST /v1/mnet/posts/:postId/reactions` — retired compatibility route; returns `410 Gone`.
+- `DELETE /v1/mnet/posts/:postId/reactions` — retired compatibility route; returns `410 Gone`.
 - `POST /v1/mnet/people/:mcclusterId/follow` — follow.
 - `DELETE /v1/mnet/people/:mcclusterId/follow` — unfollow.
 - `GET /v1/mnet/notifications` — current person's notifications.
 - `POST /v1/mnet/notifications/read` — mark the current person's unread notifications read.
 
-Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
+Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus bookmark state. Group posts stay inside joined group rooms instead of leaking into the general feed. Missions, proof, verified actions and receipts are the response primitives; legacy comments and reactions are retained only as historical data.
 
 External API keys start read-oriented. Write access should be deliberately granted with scopes rather than letting an integration impersonate a human by default.
 
