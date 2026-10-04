@@ -252,9 +252,6 @@ begin
       'expires_at',v_existing.expires_at,'idempotent',true
     );
   end if;
-  if found and v_existing.status='rejected' then
-    raise exception 'this bounty proof was rejected; choose another open action';
-  end if;
 
   select greatest(0,coalesce(sum(delta_cents),0))::bigint into v_funded
   from public.action_bounty_funding_ledger
