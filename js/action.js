@@ -433,17 +433,25 @@
     return ATTRIBUTION_CONTENT_ID && ATTRIBUTION_MISSION_ID === id ? ATTRIBUTION_CONTENT_ID : "";
   }
 
+  function durableActionable(x) {
+    var v = String(x && (x.key || x.kind) || "action").toLowerCase()
+      .replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 96);
+    return /^[a-z0-9]/.test(v) ? v : "action";
+  }
+
   function joinSelectedMission(id) {
     var o = origin();
     var contentId = attributedContentForMission(id);
-    if (contentId || o.src) {
-      return rpc("join_action_mission_attributed", {
-        p_mission_id: id,
-        p_content_id: contentId || null,
-        p_source: o.src || null
-      }, true);
-    }
-    return rpc("join_action_mission", { p_mission_id: id }, true);
+    var source = String(o.src || "").slice(0, 32);
+    var reel = String(o.reel || "").slice(0, 40);
+    var actionable = durableActionable(SELECTED_ACTION);
+    return rpc("join_action_mission_origin", {
+      p_mission_id: id,
+      p_content_id: contentId || null,
+      p_source: source || null,
+      p_reel: reel || null,
+      p_actionable: actionable || null
+    }, true);
   }
 
   function rememberSelection(x) {

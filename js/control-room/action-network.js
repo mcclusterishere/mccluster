@@ -45,12 +45,13 @@
     var q=encodeURIComponent(id);
     return Promise.allSettled([
       A.supa("rpc/action_funnel",{method:"POST",body:{p_campaign:id}}),
+      A.supa("rpc/action_origin_stats",{method:"POST",body:{p_campaign:id}}),
       A.supa("action_participants?campaign_id=eq."+q+"&select=participant_no,joined_at,origin,contributions,skills,referral_code,referred_by&order=participant_no.desc&limit=1000"),
       A.supa("action_events?campaign_id=eq."+q+"&select=kind,at&order=at.desc&limit=5000"),
       A.supa("action_ledger?campaign_id=eq."+q+"&select=*&order=occurred_on.desc,created_at.desc")
     ]).then(function(out){
-      var d={funnel:[],people:[],events:[],ledger:[],errors:[]};
-      ["funnel","people","events","ledger"].forEach(function(k,i){
+      var d={funnel:[],origins:[],people:[],events:[],ledger:[],errors:[]};
+      ["funnel","origins","people","events","ledger"].forEach(function(k,i){
         if(out[i].status==="fulfilled")d[k]=out[i].value||[];else d.errors.push(k+": "+((out[i].reason&&out[i].reason.message)||"failed"));
       });
       A.detail[id]=d;
@@ -76,10 +77,14 @@
     var funnel=d.funnel.length?'<div class="cro-tablewrap"><table class="cro-table"><thead><tr><th>Reel</th><th>Source</th><th class="n">Views</th><th class="n">Visitors</th><th class="n">Joins</th><th class="n">Join rate</th><th class="n">Acted</th><th class="n">Referred</th></tr></thead><tbody>'+
       d.funnel.map(function(r){return'<tr><td>'+e(r.reel)+'</td><td>'+e(r.src)+'</td><td class="n">'+n(r.views)+'</td><td class="n">'+n(r.visitors)+'</td><td class="n">'+n(r.joins)+'</td><td class="n">'+pct(Number(r.joins),Number(r.visitors))+'</td><td class="n">'+n(r.acted)+'</td><td class="n">'+n(r.referred)+'</td></tr>';}).join("")+
       '</tbody></table></div><p class="cro-meta">Views and visitors come from the site\'s own events and only count people who accepted the privacy notice; joins come from participants. Tag each Reel\'s link: /action/?c='+e(c.slug)+'&amp;src=ig&amp;reel=0047.</p>':note("No visits or joins yet. Tag each Reel's link: /action/?c="+c.slug+"&src=ig&reel=0047");
+    var origins=d.origins&&d.origins.length?'<div class="cro-tablewrap"><table class="cro-table"><thead><tr><th>Source</th><th>Reel</th><th>Action</th><th class="n">Joined</th><th class="n">Submitted</th><th class="n">Verified</th><th class="n">Rejected</th><th class="n">Verify rate</th></tr></thead><tbody>'+
+      d.origins.map(function(r){var src=r.source_channel||"direct",reel=r.source_reel?"Reel "+r.source_reel:"—",action=r.source_actionable||"mission",submitted=Number(r.submitted)||0,verified=Number(r.verified)||0;return'<tr><td>'+e(src)+'</td><td>'+e(reel)+'</td><td>'+e(action)+'</td><td class="n">'+n(r.joined)+'</td><td class="n">'+n(submitted)+'</td><td class="n">'+n(verified)+'</td><td class="n">'+n(r.rejected)+'</td><td class="n">'+pct(verified,submitted)+'</td></tr>';}).join("")+
+      '</tbody></table></div><p class="cro-meta">This table comes from durable mission assignments. Reel and action choice survive proof review and verified completion.</p>':note("No attributed mission joins yet.");
     var recent=d.people.slice(0,25);
     var joins=recent.length?'<div class="cro-list">'+recent.map(function(p){var o=p.origin||{};return'<div class="cro-row"><div class="cro-row__top"><b>#'+n(p.participant_no)+'</b><span class="cro-meta">'+e(new Date(p.joined_at).toLocaleString())+'</span></div><div class="cro-meta">'+e([o.reel?"Reel "+o.reel:"",o.src||"",p.referred_by?"via "+p.referred_by:""].filter(Boolean).join(" · ")||"direct")+(p.skills&&p.skills.length?" · "+e(p.skills.map(function(k){return SKILLS[k]||k;}).join(", ")):"")+'</div></div>';}).join("")+'</div>':note("No participants yet.");
     return stats+
       '<section class="cro-card" style="margin-top:10px"><h2>Funnel by Reel</h2>'+funnel+'</section>'+
+      '<section class="cro-card" style="margin-top:10px"><h2>Mission conversion by origin</h2>'+origins+'</section>'+
       '<div class="cro-grid cro-grid--2" style="margin-top:10px"><section class="cro-card"><h2>What people bring</h2>'+bars(tally(d.people,"contributions"),HAVE,people)+'</section>'+
       '<section class="cro-card"><h2>Skills</h2>'+bars(tally(d.people,"skills"),SKILLS,people)+'</section></div>'+
       '<div class="cro-grid cro-grid--2" style="margin-top:10px"><section class="cro-card"><h2>Actions by kind</h2>'+bars(kinds,{},d.events.length)+'</section>'+
@@ -95,7 +100,7 @@
   }
   function loadProofs(){
     A.proofBusy=true;redraw();
-    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,metadata,created_at,action_mission_assignments!inner(id,m_uid,status,action_missions!inner(id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
+    return A.supa("action_proofs?status=eq.pending&select=id,assignment_id,user_id,proof_type,proof_url,statement,metadata,created_at,action_mission_assignments!inner(id,m_uid,status,source_content_id,source_channel,source_reel,source_actionable,action_missions!inner(id,campaign_id,title,domain,difficulty,base_points,skills))&order=created_at.asc")
       .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
       .then(function(){A.proofBusy=false;redraw();});
   }
@@ -103,7 +108,7 @@
     if(!A.proofs.length&&!A.proofBusy)loadProofs();
     if(A.proofBusy)return note("Loading proof queue…");
     if(!A.proofs.length)return note("Review queue clear. No pending mission proof.");
-    return '<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{};return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p></div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+    return '<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
   }
 
   function controls(c){
