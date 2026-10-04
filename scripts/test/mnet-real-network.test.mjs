@@ -92,7 +92,7 @@ test('Action Network database hardening makes group boundaries restrictive and r
 });
 
 test('Action Network cleanup canonicalizes policies and removes dead outbox producers', async()=>{
-  const migration=await read('supabase/migrations/20261004024500_action_network_hardening_cleanup_v1.sql');
+  const migration=await read('supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql');
   assert.match(migration,/action_network_open_group_self_join/);
   assert.match(migration,/action_network_own_group_membership_read/);
   assert.match(migration,/action_network_posts_read/);
