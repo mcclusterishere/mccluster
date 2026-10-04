@@ -46,7 +46,11 @@ test("action selection is tracked and becomes a one-tap mission enrollment", asy
   assert.match(js, /track\("actionable_started"/);
   assert.match(js, /u\.searchParams\.set\("action"/);
   assert.match(js, /u\.searchParams\.set\("mission"/);
-  assert.match(js, /rpc\("join_action_mission", \{ p_mission_id: SELECTED_ACTION\.mission_id \}, true\)/);
+  assert.match(js, /joinSelectedMission\(SELECTED_ACTION\.mission_id\)/);
+  assert.match(js, /rpc\("join_action_mission_attributed"/);
+  assert.match(js, /p_content_id: contentId \|\| null/);
+  assert.match(js, /p_source: o\.src \|\| null/);
+  assert.match(js, /rpc\("join_action_mission", \{ p_mission_id: id \}, true\)/);
   assert.match(js, /root\.location\.assign\(missionHref\(SELECTED_ACTION\.mission_id\)\)/);
   assert.match(js, /say\("anActionStatus", "Opening mission…"/);
   assert.match(js, /Could not open that mission/);
@@ -58,6 +62,20 @@ test("selected mission survives account creation and auth round trips", async ()
   assert.match(js, /p\.action && p\.action\.mission_id/);
   assert.match(js, /root\.location\.pathname \+ root\.location\.search/);
   assert.match(js, /return takeSelectedMission\(\)/);
+});
+
+test("publisher content attribution survives the action-first conversion path", async () => {
+  const js = await read("js/action.js");
+  assert.match(js, /q\.get\("content"\)/);
+  assert.match(js, /ATTRIBUTION_CONTENT_ID/);
+  assert.match(js, /ATTRIBUTION_MISSION_ID/);
+  assert.match(js, /function attributedContentForMission\(id\)/);
+  assert.match(js, /ATTRIBUTION_MISSION_ID === id/);
+  assert.match(js, /content_id: SELECTED_ACTION && SELECTED_ACTION\.mission_id \? attributedContentForMission/);
+  assert.match(js, /attribution_mission_id: ATTRIBUTION_MISSION_ID/);
+  assert.match(js, /content: contentId \|\| ""/);
+  assert.match(js, /src: o\.src \|\| ""/);
+  assert.match(js, /reel: o\.reel \|\| ""/);
 });
 
 test("paused missions cannot become accidental quick actions", async () => {
