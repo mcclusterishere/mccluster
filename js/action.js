@@ -68,6 +68,9 @@
   var C = null;        /* the campaign, as action_campaign_public returns it */
   var ME = null;       /* this person's participant row, or null */
   var BOUNTIES = null; /* public bounty board; never contains recipient or claimant identity */
+  var MISSIONS = [];   /* real public missions for this campaign */
+  var SELECTED_ACTION = null;
+  var missionBusy = false;
   var picked = { have: {}, skills: {} };
   /* ?have=time,reach arrives from the Heal the 3rd World gateway, where
      the visitor already said what they have */
@@ -159,6 +162,17 @@
     });
   }
 
+  function rest(path) {
+    return fetch(SB + "/rest/v1/" + path, { headers: { apikey: KEY } }).then(function (r) {
+      return r.text().then(function (t) {
+        var d = null;
+        try { d = t ? JSON.parse(t) : null; } catch (e) { d = null; }
+        if (!r.ok) throw Object.assign(new Error((d && d.message) || "The network did not answer."), { status: r.status });
+        return d;
+      });
+    });
+  }
+
   /* ---------- messages ---------- */
   function say(id, text, bad) {
     var n = $(id);
@@ -209,6 +223,10 @@
     $("anTitle").textContent = C.title || "";
     $("anBody").textContent = C.body || "";
     $("anCrumb").textContent = C.title || "Campaign";
+    doc.body.classList.add("an-action-first");
+    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Uprise Action Network";
+    if ($("anActionHead")) $("anActionHead").textContent = "Pick an action.";
+    if ($("anActionSub")) $("anActionSub").textContent = "Tap one. The system takes you straight to the mission.";
     if (URL_ORIGIN.reel || URL_ORIGIN.src) {
       $("anFrom").textContent = "You came from " + fromLabel(URL_ORIGIN);
       $("anFrom").hidden = false;
@@ -345,39 +363,177 @@
     if (n) n.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function missionRow(id) {
+    return MISSIONS.filter(function (m) { return m && m.id === id; })[0] || null;
+  }
+
+  function loadMissions() {
+    if (!C) return Promise.resolve([]);
+    var path = "action_missions?campaign_id=eq." + encodeURIComponent(C.id) +
+      "&status=in.(open,paused)&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,status,skills&order=created_at.asc&limit=50";
+    return rest(path).then(function (rows) {
+      MISSIONS = Array.isArray(rows) ? rows : [];
+      var requested = String(q.get("mission") || "");
+      if (!SELECTED_ACTION && /^[0-9a-f-]{36}$/i.test(requested)) {
+        var m = missionRow(requested);
+        if (m) SELECTED_ACTION = {
+          key: "mission-" + m.id, kind: "mission", mission_id: m.id,
+          label: m.title, note: m.description, status: m.status
+        };
+      }
+      paintIntake();
+      paintJoin();
+      return MISSIONS;
+    }).catch(function () {
+      MISSIONS = [];
+      paintIntake();
+      paintJoin();
+      return [];
+    });
+  }
+
+  function intakeChoices() {
+    if (!C) return [];
+    var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
+    var custom = Array.isArray(chapter.intake_choices) ? chapter.intake_choices.filter(function (x) { return x && x.label; }) : [];
+    if (custom.length) {
+      return custom.map(function (x, i) {
+        var out = Object.assign({}, x);
+        out.key = out.key || (out.kind || "action") + "-" + i;
+        if (out.mission_id) {
+          var m = missionRow(out.mission_id);
+          if (m) {
+            out.status = m.status;
+            if (!out.note) out.note = m.description;
+          }
+        }
+        return out;
+      });
+    }
+    return MISSIONS.map(function (m) {
+      return {
+        key: "mission-" + m.id,
+        kind: "mission",
+        mission_id: m.id,
+        label: m.title,
+        note: m.description,
+        status: m.status,
+        domain: m.domain
+      };
+    });
+  }
+
+  function rememberSelection(x) {
+    SELECTED_ACTION = x || null;
+    if (!x) return;
+    var u = new URL(root.location.href);
+    u.searchParams.set("action", x.key || x.kind || "action");
+    if (x.mission_id) u.searchParams.set("mission", x.mission_id);
+    try { root.history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+    track("actionable_selected", {
+      campaign: SLUG,
+      actionable: x.key || "",
+      kind: x.kind || "",
+      mission: x.mission_id || "",
+      src: (origin().src || ""),
+      reel: (origin().reel || "")
+    });
+  }
+
+  function takeSelectedMission() {
+    if (!SELECTED_ACTION || SELECTED_ACTION.kind !== "mission" || !SELECTED_ACTION.mission_id || missionBusy) return Promise.resolve();
+    var m = missionRow(SELECTED_ACTION.mission_id);
+    if (m && m.status !== "open") {
+      say("anMsg", "That mission is not open right now.", true);
+      return Promise.resolve();
+    }
+    missionBusy = true;
+    say("anMsg", "Opening mission…");
+    return rpc("join_action_mission", { p_mission_id: SELECTED_ACTION.mission_id }, true).then(function (r) {
+      track("actionable_started", {
+        campaign: SLUG,
+        actionable: SELECTED_ACTION.key || "",
+        mission: SELECTED_ACTION.mission_id,
+        assignment: r && r.assignment_id || ""
+      });
+      root.location.assign(missionHref(SELECTED_ACTION.mission_id));
+    }).catch(function (e) {
+      missionBusy = false;
+      say("anMsg", e.message || "Could not open that mission. Try again.", true);
+      paintJoin();
+    });
+  }
+
+  function selectAction(x) {
+    if (!x) return;
+    rememberSelection(x);
+    paintIntake();
+
+    if (x.kind === "live") {
+      root.location.assign("/mnet.html?view=live&campaign=" + encodeURIComponent(C && C.id || ""));
+      return;
+    }
+    if (x.kind === "fund" || x.kind === "bounty") {
+      jump("anBounties");
+      return;
+    }
+    if (x.kind !== "mission" || !x.mission_id) return;
+
+    var m = missionRow(x.mission_id);
+    if (m && m.status !== "open") {
+      paintJoin();
+      say("anMsg", "That action is not open right now.", true);
+      return;
+    }
+
+    if (!signedIn()) {
+      paintJoin();
+      jump("join");
+      root.setTimeout(function () {
+        var email = $("anEmail");
+        if (email) email.focus({ preventScroll: true });
+      }, 350);
+      return;
+    }
+
+    if (ME) {
+      takeSelectedMission();
+      return;
+    }
+
+    rpc("action_me", { p_campaign: C.id }, true).then(function (me) {
+      ME = me || null;
+      if (ME) return takeSelectedMission();
+      return doJoin({ contributions: [], skills: [] });
+    }).catch(function () {
+      return doJoin({ contributions: [], skills: [] });
+    });
+  }
+
   function paintIntake() {
     var sec = $("anIntake"), box = $("anIntakeChoices");
     if (!sec || !box || !C) return;
     var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
-    var choices = Array.isArray(chapter.intake_choices) ? chapter.intake_choices : [];
+    var choices = intakeChoices();
     sec.hidden = !choices.length;
-    if (!choices.length) return;
-    $("anIntakeH").textContent = chapter.line || "What can you actually do?";
-    $("anIntakeLaw").textContent = chapter.proof_law || "Pick one concrete action and finish it.";
+    if ($("anIntakeLaw")) $("anIntakeLaw").textContent = chapter.proof_law || "";
     box.textContent = "";
+
     choices.forEach(function (x) {
-      if (!x || !x.label) return;
-      var a;
-      if (x.kind === "mission") {
-        a = el("a", "an-intake-choice");
-        a.href = missionHref(x.mission_id);
-      } else {
-        a = el("button", "an-intake-choice");
-        a.type = "button";
-        a.addEventListener("click", function () {
-          if (x.kind === "live") {
-            root.location.assign("/mnet.html?view=live&category=field");
-            return;
-          }
-          if (x.kind === "fund" || x.kind === "bounty") {
-            jump("anBounties");
-          }
-        });
-      }
-      a.appendChild(el("b", null, x.label));
-      if (x.note) a.appendChild(el("small", null, x.note));
-      a.appendChild(el("i", null, "→"));
-      box.appendChild(a);
+      var b = el("button", "an-intake-choice");
+      b.type = "button";
+      var selected = SELECTED_ACTION && (SELECTED_ACTION.key === x.key || (x.mission_id && SELECTED_ACTION.mission_id === x.mission_id));
+      if (selected) b.classList.add("is-selected");
+
+      var disabled = x.kind === "mission" && x.status && x.status !== "open";
+      b.disabled = !!disabled;
+      var copy = el("span");
+      copy.appendChild(el("b", null, x.label));
+      if (x.note) copy.appendChild(el("small", null, x.note));
+      b.appendChild(copy);
+      b.appendChild(el("i", null, disabled ? "Not open" : selected ? "✓" : "→"));
+      b.addEventListener("click", function () { selectAction(x); });
+      box.appendChild(b);
     });
   }
 
@@ -480,27 +636,51 @@
   function paintJoin() {
     $("anAcct").textContent = signedIn() ? "Account" : "Sign in";
     if (!C) return;
+
     var open = C.status === "live";
     var inNet = !!ME;
-    $("join").hidden = inNet;
-    $("anCta").hidden = !C;
-    var first = $("anCta").firstElementChild;
-    if (inNet) { first.textContent = "Do a mission now"; first.setAttribute("href", missionHubHref()); }
-    else if (signedIn()) { first.textContent = "Join campaign & do a mission"; first.setAttribute("href", "#join"); }
-    else { first.textContent = "Join the Action Network"; first.setAttribute("href", "#join"); }
-    if($("anMnet")){
-      $("anMnet").textContent=signedIn()?"Choose a mission →":"Enter the Action Network →";
-      $("anMnet").setAttribute("href",signedIn()?missionHubHref():"/mnet.html");
+    var choices = intakeChoices();
+    var quick = !!(SELECTED_ACTION && SELECTED_ACTION.kind === "mission" && SELECTED_ACTION.mission_id);
+    var join = $("join");
+
+    join.classList.toggle("is-quick", quick);
+    join.hidden = inNet || (!!choices.length && !quick);
+
+    var selected = $("anSelectedAction");
+    if (selected) {
+      selected.hidden = !quick;
+      if (quick) {
+        $("anSelectedTitle").textContent = SELECTED_ACTION.label || "Selected mission";
+        $("anSelectedNote").textContent = SELECTED_ACTION.note || "";
+      }
     }
+
+    $("anCta").hidden = true;
+    if ($("anMnet")) {
+      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter the Action Network →";
+      $("anMnet").setAttribute("href", signedIn() ? missionHubHref() : "/mnet.html");
+    }
+
     if (!open && !inNet) {
       $("anJoin").disabled = true;
       $("anAuth").hidden = true;
-      say("anMsg", C && C.status === "paused" ? "This campaign is paused. Joining reopens when it does." : "This campaign is closed to new participants.");
+      say("anMsg", C.status === "paused" ? "This campaign is paused." : "This campaign is closed.");
       return;
     }
-    $("anJoin").disabled = busy;
+
+    $("anJoin").disabled = busy || missionBusy;
     $("anAuth").hidden = signedIn();
-    $("anJoin").textContent = signedIn() ? "Join campaign & choose a mission" : (mode === "new" ? "Create account & join" : "Sign in & join");
+    if (quick) {
+      $("anJoinH").textContent = "Take this action.";
+      $("anJoinSub").textContent = signedIn() ? "Opening your mission." : "Sign in once. Then go straight to the mission.";
+      $("anJoin").textContent = signedIn()
+        ? "Take action"
+        : (mode === "new" ? "Create account & take action" : "Sign in & take action");
+    } else {
+      $("anJoinH").textContent = "Join the Action Network.";
+      $("anJoinSub").textContent = "Choose an action above first.";
+      $("anJoin").textContent = signedIn() ? "Join campaign" : (mode === "new" ? "Create account & join" : "Sign in & join");
+    }
   }
 
   function setMode(m) {
@@ -591,7 +771,20 @@
       skills: Object.keys(picked.skills)
     };
   }
-  function savePending(want) { write(PENDING, { slug: SLUG, want: want, at: Date.now() }); }
+  function savePending(want) {
+    write(PENDING, {
+      slug: SLUG,
+      want: want,
+      action: SELECTED_ACTION ? {
+        key: SELECTED_ACTION.key || "",
+        kind: SELECTED_ACTION.kind || "",
+        mission_id: SELECTED_ACTION.mission_id || "",
+        label: SELECTED_ACTION.label || "",
+        note: SELECTED_ACTION.note || ""
+      } : null,
+      at: Date.now()
+    });
+  }
 
   function doJoin(want) {
     if (busy) return Promise.resolve();
@@ -609,25 +802,22 @@
       ME = me;
       busy = false;
       say("anMsg", "");
-      paintMe();
-      if(signedIn()&&me){
-        track("action_mission_handoff",{campaign:SLUG});
-        root.location.assign(missionHubHref());
-        return;
-      }
       if (fresh && me) {
         track("action_joined", { campaign: SLUG, reel: o.reel || "", src: o.src || "", no: me.participant_no });
-        var card = $("anCard");
-        if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
-        /* the meter is re-read, not bumped: it only ever shows the count */
-        rpc("action_campaign_public", { p_slug: SLUG }, false).then(function (c) {
-          if (c) { C = c; paintCampaign(); paintMe(); }
-        }).catch(function () {});
+      }
+      paintMe();
+      if (signedIn() && me && SELECTED_ACTION && SELECTED_ACTION.kind === "mission") {
+        track("action_mission_handoff", { campaign: SLUG, mission: SELECTED_ACTION.mission_id });
+        return takeSelectedMission();
+      }
+      if (signedIn() && me) {
+        root.location.assign(missionHubHref());
+        return;
       }
     }).catch(function (e) {
       busy = false;
       paintJoin();
-      say("anMsg", e.status === 401 ? "Sign in to join." : (e.message || "Could not join. Try again."), true);
+      say("anMsg", e.status === 401 ? "Sign in to continue." : (e.message || "Could not join. Try again."), true);
     });
   }
 
@@ -684,7 +874,7 @@
   function googleClick() {
     if (!root.MCC) return;
     savePending(wanted());
-    var next = "/action/?c=" + encodeURIComponent(SLUG);
+    var next = root.location.pathname + root.location.search;
     root.MCC.signInWithProvider("google", root.location.origin + "/auth/?next=" + encodeURIComponent(next))
       .catch(function (e) { say("anMsg", e.message || "Could not start Google sign-in.", true); });
   }
@@ -700,8 +890,14 @@
   function restorePicks(p) {
     (p.want && p.want.contributions || []).forEach(function (k) { picked.have[k] = true; });
     (p.want && p.want.skills || []).forEach(function (k) { picked.skills[k] = true; });
+    if (p.action && p.action.mission_id) {
+      var hit = intakeChoices().filter(function (x) { return x.mission_id === p.action.mission_id; })[0];
+      SELECTED_ACTION = hit || p.action;
+    }
     chips($("anHave"), haveList(), picked.have);
     chips($("anSkills"), SKILLS, picked.skills);
+    paintIntake();
+    paintJoin();
   }
   function resumePending() {
     var p = pending();
@@ -882,9 +1078,13 @@
       if (!c) return paintIndex("That campaign is not open. These are.").catch(unreachable);
       C = c;
       paintCampaign();
-      loadBounties();
-      if (!signedIn()) { resumePending(); return null; }
-      return rpc("action_me", { p_campaign: C.id }, true).then(function (me) {
+      var ready = Promise.all([loadMissions(), loadBounties()]);
+      if (!signedIn()) {
+        return ready.then(function () { resumePending(); return null; });
+      }
+      return ready.then(function () {
+        return rpc("action_me", { p_campaign: C.id }, true);
+      }).then(function (me) {
         ME = me || null;
         paintMe();
         resumePending();
