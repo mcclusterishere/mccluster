@@ -31,7 +31,7 @@
   <main class="an" id="an" aria-busy="true">
     <!-- THE HOOK. Filled from the campaign row; this copy is what shows
          while it loads, and what a reader without JavaScript gets. -->
-    <section class="an-hero">
+    <section class="an-hero" id="anHero" hidden>
       <p class="an-kicker" id="anKicker">Uprise Action Network</p>
       <p class="an-from" id="anFrom" hidden></p>
       <h1 class="an-h1" id="anHeadline">You saw it.<br>Now do something.</h1>
@@ -62,6 +62,7 @@
            concrete lanes without inventing a new page or a new account flow. -->
       <section class="an-intake" id="anIntake" hidden aria-labelledby="anActionHead">
         <div class="an-intake-grid" id="anIntakeChoices"></div>
+        <p class="an-msg an-action-status" id="anActionStatus" role="status" aria-live="polite"></p>
         <p class="an-note an-intake__law" id="anIntakeLaw"></p>
       </section>
 
