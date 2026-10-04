@@ -133,10 +133,10 @@ pages as (
     count(distinct e.session_id) filter(where e.name='page_view')::bigint sessions,
     count(*) filter(where e.name='page_leave')::bigint measured_exits,
     round(avg(least(greatest(e.visible_s,0),1800)) filter(where e.name='page_leave' and e.visible_s is not null),1) avg_visible_s,
-    round(percentile_cont(.5) within group(order by least(greatest(e.visible_s,0),1800))
-      filter(where e.name='page_leave' and e.visible_s is not null)::numeric,1) median_visible_s,
-    round(percentile_cont(.75) within group(order by least(greatest(e.visible_s,0),1800))
-      filter(where e.name='page_leave' and e.visible_s is not null)::numeric,1) p75_visible_s,
+    round((percentile_cont(.5) within group(order by least(greatest(e.visible_s,0),1800))
+      filter(where e.name='page_leave' and e.visible_s is not null))::numeric,1) median_visible_s,
+    round((percentile_cont(.75) within group(order by least(greatest(e.visible_s,0),1800))
+      filter(where e.name='page_leave' and e.visible_s is not null))::numeric,1) p75_visible_s,
     round(avg(e.depth) filter(where e.name='page_leave' and e.depth is not null),1) avg_depth,
     count(*) filter(where e.name='page_leave' and e.visible_s>=30)::numeric as engaged_30,
     count(*) filter(where e.name='page_leave' and e.visible_s>=20 and e.depth>=50)::numeric as deep_read,
@@ -187,10 +187,10 @@ select
   s.avg_visible_s,s.median_visible_s,s.p75_visible_s,s.avg_depth,
   round(s.engaged_30_pct,1),round(s.deep_read_pct,1),round(s.short_exit_pct,1),round(s.return_pct,1),
   s.action_events,round(s.action_rate_pct,1),
-  round(s.reach_score,1),round(s.attention_score,1),round(s.depth_score,1),round(s.action_score,1),
-  round(s.return_score,1),round(s.friction_score,1),round(s.confidence,3),
-  round(s.quality_score,1),
-  round((s.confidence*(.75*s.quality_score+.25*s.reach_score)+(1-s.confidence)*45),1) overall_score
+  round(s.reach_score::numeric,1),round(s.attention_score::numeric,1),round(s.depth_score::numeric,1),round(s.action_score::numeric,1),
+  round(s.return_score::numeric,1),round(s.friction_score::numeric,1),round(s.confidence::numeric,3),
+  round(s.quality_score::numeric,1),
+  round((s.confidence*(.75*s.quality_score+.25*s.reach_score)+(1-s.confidence)*45)::numeric,1) overall_score
 from scored s
 order by overall_score desc, s.views desc, s.path
 limit greatest(1,least(p_limit,100));
