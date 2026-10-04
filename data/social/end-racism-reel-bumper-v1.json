@@ -1,0 +1,86 @@
+{
+  "schema_version": "mccluster-social-bumper/v1",
+  "id": "end-racism-action-bumper-v1",
+  "campaign_id": "end-racism-002",
+  "campaign_slug": "end-racism",
+  "mission_id": "6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04",
+  "mission_title": "Freestyle Containment Protocol",
+  "objective": "Convert attention from a commentary/source Reel into an attributed Action Network account and mission join.",
+  "source_usage": {
+    "mode": "reference_only",
+    "operator_review_required": true,
+    "note": "Record the source Reel URL for attribution and editorial review. Do not automatically download or republish third-party footage."
+  },
+  "voiceover": [
+    {
+      "start_s": 0,
+      "end_s": 2,
+      "text": "Tired of racism?"
+    },
+    {
+      "start_s": 2,
+      "end_s": 5,
+      "text": "Stop arguing in the comments."
+    },
+    {
+      "start_s": 5,
+      "end_s": 8,
+      "text": "Take the streets back from racism."
+    },
+    {
+      "start_s": 8,
+      "end_s": 12,
+      "text": "Join the social network built around action, not likes."
+    },
+    {
+      "start_s": 12,
+      "end_s": 15,
+      "text": "Don't just watch it. Do something."
+    }
+  ],
+  "onboarding_demo": [
+    {
+      "start_s": 5,
+      "end_s": 7,
+      "screen": "Instagram profile",
+      "action": "Open the bio."
+    },
+    {
+      "start_s": 7,
+      "end_s": 9,
+      "screen": "Instagram bio",
+      "action": "Tap the McCluster link."
+    },
+    {
+      "start_s": 9,
+      "end_s": 11,
+      "screen": "Account",
+      "action": "Create or sign into the account."
+    },
+    {
+      "start_s": 11,
+      "end_s": 13,
+      "screen": "End Racism Action page",
+      "action": "Pick an action."
+    },
+    {
+      "start_s": 13,
+      "end_s": 15,
+      "screen": "Mission",
+      "action": "Join the mission."
+    }
+  ],
+  "overlays": [
+    "TIRED OF RACISM?",
+    "STOP ARGUING IN THE COMMENTS.",
+    "ACTION, NOT LIKES.",
+    "BIO → LINK → ACCOUNT → ACTION → MISSION",
+    "DON'T JUST WATCH IT. DO SOMETHING."
+  ],
+  "caption": "Tired of racism? Stop arguing in the comments. Take the streets back from racism. Join the Action Network: pick an action, join a mission, and show what you did. Don't just watch it. Do something.",
+  "attribution": {
+    "source": "instagram",
+    "source_reel_required": true,
+    "source_actionable": "end-racism-bumper"
+  }
+}
