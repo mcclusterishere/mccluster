@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { processInstagramPublishQueue, syncInstagramInsights } from '../src/social/meta.js';
+import { checkInstagramConnectionHealth, processInstagramPublishQueue, syncInstagramInsights } from '../src/social/meta.js';
 import { createGeneration, getGeneration } from '../src/media/router.js';
 
 function jsonResponse(value, status = 200) {
@@ -110,6 +110,71 @@ test('insight runtime obtains work from the fair-claim RPC instead of newest-pos
 
   assert.equal(calls.length, 1);
   assert.match(calls[0].href, /rpc\/claim_social_insight_posts$/);
+});
+
+
+test('Instagram connection health checks stale accounts and records success without publishing', async () => {
+  const calls = [];
+  const env = {
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role',
+    SOCIAL_IG_CLIENT_A_ACCESS_TOKEN: 'safe-instagram-token',
+    META_GRAPH_API_VERSION: 'v26.0'
+  };
+
+  await withFetchMock(async (url, options = {}) => {
+    const href = String(url), method = options.method || 'GET';
+    const body = options.body ? JSON.parse(options.body) : null;
+    calls.push({ href, method, body });
+
+    if (href.includes('/rest/v1/org_channels?') && method === 'GET' && href.includes('select=org_id,account_id,last_ok_at')) {
+      return jsonResponse([{ org_id: ORG_ID, account_id: 'ig-123', last_ok_at: null }]);
+    }
+    if (href.includes('/rest/v1/social_accounts?') && method === 'GET') {
+      return jsonResponse([{ id: 'account-1', org_id: ORG_ID, platform: 'instagram', external_account_id: 'ig-123' }]);
+    }
+    if (href.includes('/rest/v1/org_channels?') && method === 'GET') {
+      return jsonResponse([{ token_env: 'SOCIAL_IG_CLIENT_A_ACCESS_TOKEN', secret_id: null, account_id: 'ig-123' }]);
+    }
+    if (href === 'https://graph.facebook.com/v26.0/ig-123?fields=username,followers_count,media_count') {
+      assert.equal(options.headers?.authorization, 'Bearer safe-instagram-token');
+      return jsonResponse({ username: 'mcclusterishere', followers_count: 5000, media_count: 120 });
+    }
+    if (href.includes('/rest/v1/org_channels?') && method === 'PATCH') return jsonResponse([]);
+    if (href.includes('/rest/v1/social_accounts?') && method === 'PATCH') return jsonResponse([{ id: 'account-1' }]);
+    throw new Error(`Unexpected fetch: ${method} ${href}`);
+  }, async () => {
+    const result = await checkInstagramConnectionHealth(env, { limit: 10, maxAgeMinutes: 55 });
+    assert.equal(result.checked, 1);
+    assert.equal(result.results[0].connected, true);
+    assert.equal(result.results[0].username, 'mcclusterishere');
+  });
+
+  assert.equal(calls.filter((call) => call.href.includes('graph.facebook.com')).length, 1);
+  const channelPatch = calls.find((call) => call.method === 'PATCH' && call.href.includes('/org_channels?'));
+  assert.ok(channelPatch.body.last_ok_at);
+  assert.equal(channelPatch.body.last_error, null);
+  const accountPatch = calls.find((call) => call.method === 'PATCH' && call.href.includes('/social_accounts?'));
+  assert.ok(accountPatch.body.last_synced_at);
+  assert.equal(calls.some((call) => call.href.endsWith('/media') && call.method === 'POST'), false);
+});
+
+test('Instagram connection health skips accounts checked within the freshness window', async () => {
+  const calls = [];
+  const env = { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'service-role' };
+  await withFetchMock(async (url, options = {}) => {
+    const href = String(url);
+    calls.push({ href, method: options.method || 'GET' });
+    if (href.includes('/rest/v1/org_channels?')) {
+      return jsonResponse([{ org_id: ORG_ID, account_id: 'ig-123', last_ok_at: new Date().toISOString() }]);
+    }
+    throw new Error(`Unexpected fetch: ${options.method || 'GET'} ${href}`);
+  }, async () => {
+    const result = await checkInstagramConnectionHealth(env, { maxAgeMinutes: 55 });
+    assert.deepEqual(result, { checked: 0, results: [] });
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls.some((call) => call.href.includes('graph.facebook.com')), false);
 });
 
 test('media generation without org_id fails closed before any network access', async () => {
