@@ -18,6 +18,28 @@ test("mission proof review is server-authoritative and idempotent",async()=>{
  assert.match(sql,/grant execute on function public\.review_action_proof\(uuid,text,text\) to authenticated/);
 });
 
+test("rejected proof is retryable without erasing the review trail",async()=>{
+ const [sql,indexes,js]=await Promise.all([
+  read("supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql"),
+  read("supabase/migrations/20261004015541_action_proof_review_history_fk_indexes_v1.sql"),
+  read("js/mnet.js")
+ ]);
+ assert.match(sql,/create table public\.action_proof_review_history/);
+ assert.match(sql,/enable row level security/);
+ assert.match(sql,/members read own proof review history/);
+ assert.match(sql,/create trigger action_proof_review_archive/);
+ assert.match(sql,/insert into public\.network_notifications/);
+ assert.match(sql,/'action_proof_review'/);
+ assert.match(sql,/v_assignment\.status not in \('joined','in_progress','submitted','rejected'\)/);
+ assert.match(sql,/v_existing\.status not in \('pending','rejected'\)/);
+ assert.match(sql,/reviewer_uid=null,[\s\S]*review_note=null,[\s\S]*reviewed_at=null/);
+ assert.match(sql,/'retry',v_assignment\.status='rejected'/);
+ assert.match(indexes,/action_proof_review_history_proof_idx/);
+ assert.match(indexes,/action_proof_review_history_reviewer_idx/);
+ assert.match(js,/a\.status==="rejected"\)/);
+ assert.match(js,/Proof was not verified\. Fix the proof and submit it again\./);
+});
+
 test("members act only through server functions; they cannot write assignments, proofs, awards or verification",async()=>{
  const sql=await read("supabase/migrations/20261002061056_action_network_gamification_v1.sql");
  /* no participant insert/update policy or grant on the work tables */
