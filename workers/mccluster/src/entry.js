@@ -9,7 +9,7 @@ import { handleMediaMcp } from './media/mcp.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
 import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
-import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
+import { checkInstagramConnectionHealth, processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
@@ -451,6 +451,9 @@ export default {
       }),
       attachCompletedVariantAssets(env).catch((error) => {
         console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      checkInstagramConnectionHealth(env, { limit: 10, maxAgeMinutes: 55 }).catch((error) => {
+        console.error(JSON.stringify({ event: 'social_instagram_connection_health_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_publish_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
