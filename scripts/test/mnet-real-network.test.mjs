@@ -87,9 +87,7 @@ test('Action Network database hardening makes group boundaries restrictive and r
   assert.match(migration,/g\.visibility = 'open'/);
   assert.match(migration,/action_network_reactions_insert_retired/);
   assert.match(migration,/with check \(false\)/);
-  assert.match(migration,/disable trigger mnet_post_outbox_trg/);
-  assert.match(migration,/disable trigger mnet_reaction_outbox_trg/);
-  assert.match(migration,/disable trigger mnet_follow_outbox_trg/);
+  assert.match(migration,/following cleanup migration \(20261004023603\)/);
   assert.match(migration,/set status = 'dead'/);
 });
 
