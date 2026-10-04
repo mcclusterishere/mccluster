@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 312,
+  "candidate_count": 316,
   "capability_source_count": 99,
-  "support_only_count": 213,
+  "support_only_count": 217,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -1449,6 +1449,13 @@
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
     },
     {
+      "path": "scripts/test/homelessness-action.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression tests for the Action Network Homelessness Action intake, recipient-privacy rules, bounty funding/claim lifecycle and persistent Field room; not a physical building capability."
+    },
+    {
       "path": "scripts/test/product-context.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1943,6 +1950,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied Action Network live-governance schema for bounded host grants, persistent Home/Mission rooms, first-class music discovery, private audience measurement and live mission attribution; mobilization infrastructure, not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network Homelessness Action campaign, missions, cohort, bounty ledgers and privacy policy metadata. It is mobilization/program workflow infrastructure, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network bounty-state hardening that prevents rejected proof from reopening the same paid reservation; runtime integrity support, not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network bounty lifecycle hardening: campaign-live claim gate and fail-closed expiry semantics for paid reservations; runtime integrity support, not a building capability."
     },
     {
       "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",

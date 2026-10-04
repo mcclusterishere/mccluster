@@ -67,6 +67,7 @@
 
   var C = null;        /* the campaign, as action_campaign_public returns it */
   var ME = null;       /* this person's participant row, or null */
+  var BOUNTIES = null; /* public bounty board; never contains recipient or claimant identity */
   var picked = { have: {}, skills: {} };
   /* ?have=time,reach arrives from the Heal the 3rd World gateway, where
      the visitor already said what they have */
@@ -320,6 +321,7 @@
 
     chips($("anHave"), haveList(), picked.have);
     chips($("anSkills"), SKILLS, picked.skills);
+    paintIntake();
     $("anCampaign").hidden = false;
     paintJoin();
   }
@@ -328,6 +330,151 @@
     if(!C)return "/mnet.html?view=missions";
     var ret=root.location.pathname+root.location.search+root.location.hash;
     return "/mnet.html?view=missions&campaign="+encodeURIComponent(C.id)+"&return="+encodeURIComponent(ret);
+  }
+
+  function missionHref(id) {
+    if (!id) return missionHubHref();
+    var ret = root.location.pathname + root.location.search + root.location.hash;
+    return "/mnet.html?view=missions&mission=" + encodeURIComponent(id) +
+      "&campaign=" + encodeURIComponent(C && C.id || "") +
+      "&return=" + encodeURIComponent(ret);
+  }
+
+  function jump(id) {
+    var n = $(id);
+    if (n) n.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function paintIntake() {
+    var sec = $("anIntake"), box = $("anIntakeChoices");
+    if (!sec || !box || !C) return;
+    var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
+    var choices = Array.isArray(chapter.intake_choices) ? chapter.intake_choices : [];
+    sec.hidden = !choices.length;
+    if (!choices.length) return;
+    $("anIntakeH").textContent = chapter.line || "What can you actually do?";
+    $("anIntakeLaw").textContent = chapter.proof_law || "Pick one concrete action and finish it.";
+    box.textContent = "";
+    choices.forEach(function (x) {
+      if (!x || !x.label) return;
+      var a;
+      if (x.kind === "mission") {
+        a = el("a", "an-intake-choice");
+        a.href = missionHref(x.mission_id);
+      } else {
+        a = el("button", "an-intake-choice");
+        a.type = "button";
+        a.addEventListener("click", function () {
+          if (x.kind === "live") {
+            root.location.assign("/mnet.html?view=live&category=field");
+            return;
+          }
+          if (x.kind === "fund" || x.kind === "bounty") {
+            jump("anBounties");
+          }
+        });
+      }
+      a.appendChild(el("b", null, x.label));
+      if (x.note) a.appendChild(el("small", null, x.note));
+      a.appendChild(el("i", null, "→"));
+      box.appendChild(a);
+    });
+  }
+
+  function paintBounties(data) {
+    BOUNTIES = data || { bounties: [] };
+    var sec = $("anBounties"), box = $("anBountyList");
+    if (!sec || !box) return;
+    var rows = Array.isArray(BOUNTIES.bounties) ? BOUNTIES.bounties : [];
+    sec.hidden = !rows.length;
+    if (!rows.length) return;
+    box.textContent = "";
+    rows.forEach(function (b) {
+      var card = el("article", "an-bounty");
+      var top = el("div", "an-bounty__top");
+      var copy = el("div");
+      copy.appendChild(el("small", "an-bounty__cat", (b.category || "action").replace(/_/g, " ") + " · risk " + (b.risk_tier || 1)));
+      copy.appendChild(el("b", null, b.title || b.mission_title || "Action bounty"));
+      if (b.description) copy.appendChild(el("p", null, b.description));
+      top.appendChild(copy);
+      top.appendChild(el("strong", "an-bounty__reward", money(b.reward_cents)));
+      card.appendChild(top);
+
+      var stats = el("div", "an-bounty__stats");
+      stats.appendChild(el("span", null, fmt(b.funded_slots) + " funded"));
+      stats.appendChild(el("span", null, fmt(b.committed_awards) + " claimed"));
+      stats.appendChild(el("span", null, fmt(b.available_slots) + " available"));
+      card.appendChild(stats);
+
+      if (b.public_proof_guidance) {
+        var proof = el("p", "an-bounty__proof", b.public_proof_guidance);
+        card.appendChild(proof);
+      }
+
+      var actions = el("div", "an-bounty__actions");
+      var mission = el("a", "an-btn");
+      mission.href = missionHref(b.mission_id);
+      mission.textContent = "See mission";
+      actions.appendChild(mission);
+
+      var take = el("button", "an-btn an-btn--hot");
+      take.type = "button";
+      take.textContent = Number(b.available_slots) > 0 ? "Take " + money(b.reward_cents) + " bounty" : "Waiting for funding";
+      take.disabled = Number(b.available_slots) < 1 || b.status !== "open";
+      take.addEventListener("click", function () { claimBounty(b, take); });
+      actions.appendChild(take);
+
+      var fund = el("button", "an-btn an-btn--gold");
+      fund.type = "button";
+      fund.textContent = "Fund " + money(b.reward_cents);
+      fund.disabled = !BOUNTIES.support_open;
+      fund.addEventListener("click", function () {
+        if (!BOUNTIES.support_open) return;
+        /* The support rail remains campaign-controlled. Never turn a bounty
+           button into an ungoverned payment endpoint. */
+        root.location.assign("/give.html");
+      });
+      actions.appendChild(fund);
+      card.appendChild(actions);
+      box.appendChild(card);
+    });
+    $("anBountyFunding").textContent = BOUNTIES.support_open
+      ? "Funding is open only through the campaign’s governed support rail. The bounty board counts verified allocations, not clicks."
+      : (BOUNTIES.support_note || "Funding is not open right now. You can still join and do an unfunded mission.");
+  }
+
+  function loadBounties() {
+    if (!C) return Promise.resolve(null);
+    return rpc("action_bounty_public", { p_campaign: C.id }, false)
+      .then(function (data) { paintBounties(data); return data; })
+      .catch(function () {
+        var sec = $("anBounties");
+        if (sec) sec.hidden = true;
+        return null;
+      });
+  }
+
+  function claimBounty(bounty, btn) {
+    say("anBountyStatus", "");
+    if (!signedIn()) {
+      say("anBountyStatus", "Join or sign in first. Paid field work is attached to your Action identity.", true);
+      jump("join");
+      return;
+    }
+    if (btn) btn.disabled = true;
+    rpc("claim_action_bounty", { p_bounty_id: bounty.id }, true).then(function (r) {
+      track("action_bounty_claim", { campaign: SLUG, bounty: bounty.id, mission: bounty.mission_id, reward_cents: bounty.reward_cents });
+      say("anBountyStatus", "Bounty reserved. Finish the mission and submit proof before the reservation expires.");
+      root.setTimeout(function () { root.location.assign(missionHref(r && r.mission_id || bounty.mission_id)); }, 450);
+    }).catch(function (e) {
+      var msg = e && e.message || "Could not reserve that bounty.";
+      if (/approved program participants/i.test(msg)) {
+        msg = "Paid bounties are for the approved field team. Join this campaign first; the desk assigns the field-team cohort seat before paid work.";
+      }
+      say("anBountyStatus", msg, true);
+      if (btn) btn.disabled = false;
+      loadBounties();
+    });
   }
 
   function paintJoin() {
@@ -735,6 +882,7 @@
       if (!c) return paintIndex("That campaign is not open. These are.").catch(unreachable);
       C = c;
       paintCampaign();
+      loadBounties();
       if (!signedIn()) { resumePending(); return null; }
       return rpc("action_me", { p_campaign: C.id }, true).then(function (me) {
         ME = me || null;
