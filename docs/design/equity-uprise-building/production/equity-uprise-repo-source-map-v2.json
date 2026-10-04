@@ -1435,6 +1435,13 @@
       "rationale": "Test/verification file for the Uprise Action Network pages and schema; not itself a program capability."
     },
     {
+      "path": "scripts/test/action-origin-attribution.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression tests for Action Network origin attribution, Control aggregate reads, proof-review context, and bounty retry fail-closed behavior; validates mobilization/runtime behavior but is not a physical building capability."
+    },
+    {
       "path": "scripts/test/appbar-consistency.test.mjs",
       "classification": "runtime_support",
       "capability_ids": [],
