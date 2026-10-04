@@ -444,11 +444,11 @@
     if (!SELECTED_ACTION || SELECTED_ACTION.kind !== "mission" || !SELECTED_ACTION.mission_id || missionBusy) return Promise.resolve();
     var m = missionRow(SELECTED_ACTION.mission_id);
     if (m && m.status !== "open") {
-      say("anMsg", "That mission is not open right now.", true);
+      say("anActionStatus", "That mission is not open right now.", true);
       return Promise.resolve();
     }
     missionBusy = true;
-    say("anMsg", "Opening mission…");
+    say("anActionStatus", "Opening mission…");
     return rpc("join_action_mission", { p_mission_id: SELECTED_ACTION.mission_id }, true).then(function (r) {
       track("actionable_started", {
         campaign: SLUG,
@@ -459,13 +459,14 @@
       root.location.assign(missionHref(SELECTED_ACTION.mission_id));
     }).catch(function (e) {
       missionBusy = false;
-      say("anMsg", e.message || "Could not open that mission. Try again.", true);
+      say("anActionStatus", e.message || "Could not open that mission. Try again.", true);
       paintJoin();
     });
   }
 
   function selectAction(x) {
     if (!x) return;
+    say("anActionStatus", "");
     rememberSelection(x);
     paintIntake();
 
@@ -482,7 +483,7 @@
     var m = missionRow(x.mission_id);
     if (m && m.status !== "open") {
       paintJoin();
-      say("anMsg", "That action is not open right now.", true);
+      say("anActionStatus", "That action is not open right now.", true);
       return;
     }
 
@@ -1021,6 +1022,8 @@
 
   /* ---------- no campaign named: the open ones ---------- */
   function paintIndex(note) {
+    if ($("anHero")) $("anHero").hidden = false;
+    doc.body.classList.remove("an-action-first");
     $("anIndex").hidden = false;
     $("anIndexNote").textContent = note || "";
     var keep = new URLSearchParams();
