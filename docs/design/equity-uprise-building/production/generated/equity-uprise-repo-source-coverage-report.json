@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 319,
+  "candidate_count": 321,
   "capability_source_count": 99,
-  "support_only_count": 220,
-  "checks_total": 1179,
-  "checks_passed": 1179,
+  "support_only_count": 222,
+  "checks_total": 1187,
+  "checks_passed": 1187,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -265,6 +265,8 @@
     "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql",
     "supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql",
     "supabase/migrations/20261004021226_action_origin_attribution_v2.sql",
+    "supabase/migrations/20261004023007_action_network_hardening_v1.sql",
+    "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql",
     "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
     "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
     "supabase/production-ledger.json",
@@ -333,7 +335,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "319 entries"
+      "detail": "321 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5077,6 +5079,46 @@
     },
     {
       "name": "supabase/migrations/20261004021226_action_origin_attribution_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004023007_action_network_hardening_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004023007_action_network_hardening_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261004023007_action_network_hardening_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261004023007_action_network_hardening_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
