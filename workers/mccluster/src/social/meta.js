@@ -269,11 +269,13 @@ export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMi
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
   const maxAgeMs = Math.max(5, Number(maxAgeMinutes) || 55) * 60 * 1000;
   const staleBefore = Date.now() - maxAgeMs;
-  const channels = await db(env, `org_channels?channel=eq.instagram&enabled=eq.true&select=org_id,account_id,last_ok_at&limit=${safeLimit * 4}`);
+  const channels = await db(env, `org_channels?channel=eq.instagram&enabled=eq.true&select=org_id,account_id,last_ok_at,last_error_at&limit=${safeLimit * 4}`);
   const due = (channels || []).filter((channel) => {
-    if (!channel.last_ok_at) return true;
-    const checked = Date.parse(channel.last_ok_at);
-    return !Number.isFinite(checked) || checked < staleBefore;
+    const lastAttempt = [channel.last_ok_at, channel.last_error_at]
+      .map((value) => Date.parse(value || ''))
+      .filter(Number.isFinite)
+      .sort((a, b) => b - a)[0];
+    return !Number.isFinite(lastAttempt) || lastAttempt < staleBefore;
   }).slice(0, safeLimit);
   const results = [];
 
