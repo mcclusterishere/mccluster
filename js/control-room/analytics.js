@@ -89,6 +89,26 @@
     rows=(rows||[]).slice(0,12);if(!rows.length)return'<p>Nothing to rank in this range.</p>';var mx=Math.max.apply(null,rows.map(function(r){return Number(r[valueKey]||r.n||r.count||0);}).concat([1]));
     return'<div class="cra-rank">'+rows.map(function(r){var v=Number(r[valueKey]||r.n||r.count||0),p=Math.max(1,v/mx*100),lab=r[labelKey]||r.key||"Unknown";return'<button type="button" class="cra-rank__row" aria-label="'+e(lab+" "+n(v))+'"><i class="cra-rank__fill" style="--pct:'+p.toFixed(1)+'%"></i><span class="cra-rank__label">'+e(lab)+'</span><b class="cra-rank__value">'+n(v)+'</b></button>';}).join("")+'</div>';
   }
+  function seconds(v){v=Number(v);if(!isFinite(v))return"—";if(v<60)return Math.round(v)+"s";var m=Math.floor(v/60),s=Math.round(v%60);return m+"m"+(s?" "+s+"s":"");}
+  function signedPct(v){v=Number(v);if(!isFinite(v))return"—";return(v>0?"+":"")+v.toFixed(1)+"%";}
+  function pagePerformance(rows){
+    rows=(rows||[]).slice(0,25);
+    if(!rows.length)return'<p>No page performance in this range.</p>';
+    return'<div class="cra-scroll"><table class="cra-table"><thead><tr>'+
+      '<th>Page</th><th class="n">Score</th><th class="n">Views</th><th class="n">Trend</th><th class="n">Visitors</th>'+
+      '<th class="n">Median visible</th><th class="n">P75 visible</th><th class="n">Depth</th><th class="n">30s+</th>'+
+      '<th class="n">Actions</th><th class="n">Return</th><th class="n">Short exits</th>'+
+      '</tr></thead><tbody>'+rows.map(function(r){return'<tr>'+
+      '<td><b>'+e(r.path||"—")+'</b><small style="display:block;opacity:.65">quality '+e(r.quality_score==null?"—":r.quality_score)+' · confidence '+e(r.confidence==null?"—":Math.round(Number(r.confidence)*100)+"%")+'</small></td>'+
+      '<td class="n"><b>'+e(r.overall_score==null?"—":r.overall_score)+'</b></td>'+
+      '<td class="n">'+n(r.views)+'</td><td class="n">'+e(signedPct(r.view_change_pct))+'</td><td class="n">'+n(r.visitors)+'</td>'+
+      '<td class="n">'+e(seconds(r.median_visible_s))+'</td><td class="n">'+e(seconds(r.p75_visible_s))+'</td>'+
+      '<td class="n">'+e(r.avg_depth==null?"—":Number(r.avg_depth).toFixed(1)+"%")+'</td>'+
+      '<td class="n">'+e(r.engaged_30_pct==null?"—":Number(r.engaged_30_pct).toFixed(1)+"%")+'</td>'+
+      '<td class="n">'+n(r.action_events)+'</td><td class="n">'+e(r.return_pct==null?"—":Number(r.return_pct).toFixed(1)+"%")+'</td>'+
+      '<td class="n">'+e(r.short_exit_pct==null?"—":Number(r.short_exit_pct).toFixed(1)+"%")+'</td></tr>';}).join("")+
+      '</tbody></table></div>';
+  }
   function funnel(rows){
     if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
     return'<div class="cra-funnel">'+keys.map(function(k){var v=tot[k[0]]||0,p=v/topv*100;return'<button type="button" class="cra-funnel__row" aria-label="'+e(k[1]+" "+n(v)+" "+p.toFixed(1)+" percent")+'"><span>'+e(k[1])+'</span><span class="cra-funnel__track"><i class="cra-funnel__fill" style="--pct:'+Math.max(.5,p).toFixed(1)+'%"></i></span><b>'+n(v)+' · '+p.toFixed(1)+'%</b></button>';}).join("")+'</div>';
@@ -208,7 +228,7 @@
     var scoped=house
       ? kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),b.window?"created":"all time")+kpi("Music plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"plays")+kpi("Gross music",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"revenue")
       : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
-    return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Page views and visitors in the selected timestamp window.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Top pages","Highest traffic paths.",rank(t.pages,"path","count"))+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+(S.rangeId==="24h"?err("hourly"):err("daily"))+err("totals");
+    return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Page views and visitors in the selected timestamp window.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Page performance","Ranked by confidence-weighted attention, depth, action, return behavior and friction — not raw views alone.",pagePerformance(t.pages),true)+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+(S.rangeId==="24h"?err("hourly"):err("daily"))+err("totals");
   }
   function audience(){
     var house=sid()===null;
@@ -361,7 +381,7 @@
     if(x.name==="hourly")t.byHour=v||[];
     else if(x.name==="daily")t.byDay=v||[];
     else if(x.name==="totals")t.totals=v&&v[0]||{};
-    else if(x.name==="pages")t.pages=top(v,"path");
+    else if(x.name==="pages")t.pages=v||[];
     else if(x.name==="sources")t.sources=top(v,"source");
     else if(x.name==="countries")t.countries=top(v,"country");
     else if(x.name==="networks")t.networks=top(v,"network");
@@ -412,7 +432,7 @@
       {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
-      {name:"pages",run:function(){return rpc("analytics_top",{p_dim:"page",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
+      {name:"pages",run:function(){return rpc("analytics_page_performance",{p_since:r.since,p_until:r.until,p_site:site,p_limit:25});}},
       {name:"sources",run:function(){return rpc("analytics_top",{p_dim:"source",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"countries",run:function(){return rpc("analytics_top",{p_dim:"country",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},
       {name:"networks",run:function(){return rpc("analytics_top",{p_dim:"network",p_since:r.since,p_until:r.until,p_site:site,p_limit:12});}},

@@ -124,13 +124,43 @@ export function scoreMetrics(metrics = {}) {
   const follows = num(metrics.follows);
   const dms = num(metrics.dms);
   const leads = num(metrics.leads);
+  const ctaClicks = num(metrics.cta_clicks);
+  const accountCreations = num(metrics.account_creations);
+  const missionJoins = num(metrics.mission_joins);
+  const proofSubmissions = num(metrics.proof_submissions);
+  const verifiedActions = num(metrics.verified_actions);
   const retention = metrics.retention_3s == null ? 0 : clamp(num(metrics.retention_3s), 0, 1);
-  const viewScore = clamp(Math.log10(views + 1) * 20, 0, 100);
-  const engagementScore = clamp(((likes + comments * 2 + shares * 4 + saves * 4) / Math.max(views, 1)) * 1000, 0, 100);
-  const conversionScore = clamp(((follows * 4 + dms * 8 + leads * 15) / Math.max(reach, 1)) * 1000, 0, 100);
-  const retentionScore = retention * 100;
-  const score = Number((viewScore * 0.20 + engagementScore * 0.35 + conversionScore * 0.25 + retentionScore * 0.20).toFixed(3));
-  return { score, components: { views: Number(viewScore.toFixed(3)), engagement: Number(engagementScore.toFixed(3)), conversion: Number(conversionScore.toFixed(3)), retention: Number(retentionScore.toFixed(3)) } };
+  const completion = metrics.completion_rate == null ? 0 : clamp(num(metrics.completion_rate), 0, 1);
+
+  /* Reach earns distribution, not quality. Likes/comments are deliberately
+     weak; shares/saves are stronger intent, and real-world Action Network
+     outcomes dominate when they are available. */
+  const reachScore = clamp(Math.log10(views + 1) * 20, 0, 100);
+  const attentionScore = clamp(retention * 60 + completion * 40, 0, 100);
+  const engagementScore = clamp(
+    ((likes * 0.1 + comments * 0.5 + shares * 4 + saves * 3) / Math.max(views, 1)) * 500,
+    0, 100
+  );
+  const actionScore = clamp(
+    ((follows + dms * 2 + leads * 5 + ctaClicks * 2 + accountCreations * 6 +
+      missionJoins * 8 + proofSubmissions * 12 + verifiedActions * 25) /
+      Math.max(reach, 1)) * 1000,
+    0, 100
+  );
+  const confidence = views > 0 ? 1 - Math.exp(-views / 100) : 0;
+  const raw = reachScore * 0.10 + attentionScore * 0.20 + engagementScore * 0.15 + actionScore * 0.55;
+  const score = Number((raw * confidence).toFixed(3));
+  return {
+    score,
+    components: {
+      views: Number(reachScore.toFixed(3)),
+      engagement: Number(engagementScore.toFixed(3)),
+      conversion: Number(actionScore.toFixed(3)),
+      retention: Number(attentionScore.toFixed(3)),
+      action: Number(actionScore.toFixed(3)),
+      confidence: Number(confidence.toFixed(3))
+    }
+  };
 }
 
 function generationRequest(request, payload) {

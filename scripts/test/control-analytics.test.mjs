@@ -116,7 +116,7 @@ test('all six Analytics sections render representative successful data',async()=
   A.state.range={label:'7 days',since:'2026-09-20T00:00:00Z',until:'2026-09-27T00:00:00Z'};
   A.state.loaded=true;
   A.state.data={
-    traffic:{byDay:[{day:'2026-09-27',page_views:10,visitors:4,sessions:5}],totals:{page_views:10,visitors:4,sessions:5,plays:3,events:20},pages:[{path:'index.html',count:10}],sources:[{source:'direct',count:5}],countries:[{country:'US',count:4}],networks:[{network:'wifi',count:4}]},
+    traffic:{byDay:[{day:'2026-09-27',page_views:10,visitors:4,sessions:5}],totals:{page_views:10,visitors:4,sessions:5,plays:3,events:20},pages:[{path:'index.html',views:10,prior_views:8,view_change_pct:25,visitors:4,sessions:5,median_visible_s:22,p75_visible_s:48,avg_depth:61,engaged_30_pct:40,action_events:2,return_pct:20,short_exit_pct:10,quality_score:67.2,confidence:.28,overall_score:55.4}],sources:[{source:'direct',count:5}],countries:[{country:'US',count:4}],networks:[{network:'wifi',count:4}]},
     funnel:[{arrived:10,heard_something:8,engaged:6,searched:3,asked_for_something:2,made_an_account:1,confirmed_the_email:1,reached_checkout:1,paid:0}],
     acquisition:[{source:'direct',people:4}],paths:[{from_page:'index.html',to_page:'listen.html',moves:3}],
     content:[{track:'pull up',album:'cia-mind-control',starts:3,listeners:2,repeat_listeners:1,plays_per_listener:1.5,full_plays:1,completions:1,shares:1}],
@@ -126,7 +126,7 @@ test('all six Analytics sections render representative successful data',async()=
     business:{snapshot:{users:{total:1,created_in_window:1},window:true,music:{plays:{in_window:3,total:3},revenue:{gross_cents_in_window:100,gross_cents:100}}}}
   };
   const expected={
-    overview:/Traffic trend/,
+    overview:/Page performance/,
     audience:/Conversion funnel/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
@@ -143,7 +143,7 @@ test('all six Analytics sections render representative successful data',async()=
 test('Control Analytics uses the canonical analytics data plane',async()=>{
   const js=await read('js/control-room/analytics.js');
   for(const rpc of [
-    'analytics_hourly','analytics_daily','analytics_totals','analytics_top','analytics_funnel',
+    'analytics_hourly','analytics_daily','analytics_totals','analytics_top','analytics_page_performance','analytics_funnel',
     'analytics_acquisition','analytics_paths','analytics_content','analytics_content_events'
   ]){
     assert.ok(js.includes('rpc("'+rpc+'"'),rpc+' is not wired into Control Analytics');

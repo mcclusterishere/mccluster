@@ -120,6 +120,21 @@ test('non-numeric metrics score as zero instead of NaN', () => {
   }
 });
 
+
+test('verified actions outrank vanity engagement in social scoring', () => {
+  const vanity = scoreMetrics({ views: 1000, reach: 1000, likes: 300, comments: 40, shares: 5, saves: 5, retention_3s: .6 });
+  const action = scoreMetrics({ views: 1000, reach: 1000, likes: 5, comments: 1, mission_joins: 10, proof_submissions: 5, verified_actions: 3, retention_3s: .4 });
+  assert.ok(action.score > vanity.score, `action score ${action.score} should beat vanity score ${vanity.score}`);
+  assert.ok(action.components.action > vanity.components.action);
+});
+
+test('tiny samples are confidence weighted instead of winning on one lucky action', () => {
+  const tiny = scoreMetrics({ views: 1, reach: 1, verified_actions: 1, retention_3s: 1 });
+  const established = scoreMetrics({ views: 500, reach: 500, mission_joins: 20, verified_actions: 8, retention_3s: .5 });
+  assert.ok(tiny.components.confidence < .02);
+  assert.ok(established.score > tiny.score);
+});
+
 test('negative metrics floor at zero', () => {
   const scored = scoreMetrics({ views: -500, likes: -10 });
   assert.equal(scored.score, 0);
