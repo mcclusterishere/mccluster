@@ -75,6 +75,22 @@ test('Action Network retires conventional reactions/comments and enforces group 
   assert.match(api,/media_asset_ids/);
 });
 
+test('Action Network social hardening locks group RLS and retires the dead outbox', async()=>{
+  const migration=await read('supabase/migrations/20261004023000_action_network_social_hardening_v1.sql');
+  assert.match(migration,/a member joins open groups for themselves/);
+  assert.match(migration,/g\.visibility = 'open'/);
+  assert.match(migration,/reply_to_id is null/);
+  assert.match(migration,/network_group_members gm/);
+  assert.match(migration,/drop policy if exists network_reactions_self_write/);
+  assert.match(migration,/revoke select, insert, update, delete on public\.network_reactions/);
+  assert.match(migration,/drop trigger if exists mnet_post_outbox_trg/);
+  assert.match(migration,/drop trigger if exists mnet_reaction_outbox_trg/);
+  assert.match(migration,/drop trigger if exists mnet_follow_outbox_trg/);
+  assert.match(migration,/set status = 'dead'/);
+  assert.match(migration,/drop function if exists public\.mnet_claim_outbox/);
+  assert.match(migration,/drop function if exists public\.mnet_enqueue_outbox/);
+});
+
 test('feed semantics exclude blocked and muted actors', async()=>{
   const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   assert.match(migration,/not public\.mnet_is_blocked_pair\(me\.m_uid,f\.actor_m_uid\)/);
