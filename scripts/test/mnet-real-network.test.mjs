@@ -92,6 +92,21 @@ test('Action Network social hardening locks group RLS and retires the dead outbo
   assert.match(migration,/drop function if exists public\.mnet_enqueue_outbox/);
 });
 
+test('Action Network database hardening makes group boundaries restrictive and retires the dead outbox', async()=>{
+  const migration=await read('supabase/migrations/20261004023007_action_network_hardening_v1.sql');
+  assert.match(migration,/action_network_group_read_boundary/);
+  assert.match(migration,/action_network_post_insert_boundary/);
+  assert.match(migration,/reply_to_id is null/);
+  assert.match(migration,/action_network_open_group_join_boundary/);
+  assert.match(migration,/g\.visibility = 'open'/);
+  assert.match(migration,/action_network_reactions_insert_retired/);
+  assert.match(migration,/with check \(false\)/);
+  assert.match(migration,/disable trigger mnet_post_outbox_trg/);
+  assert.match(migration,/disable trigger mnet_reaction_outbox_trg/);
+  assert.match(migration,/disable trigger mnet_follow_outbox_trg/);
+  assert.match(migration,/set status = 'dead'/);
+});
+
 test('feed semantics exclude blocked and muted actors', async()=>{
   const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   assert.match(migration,/not public\.mnet_is_blocked_pair\(me\.m_uid,f\.actor_m_uid\)/);
