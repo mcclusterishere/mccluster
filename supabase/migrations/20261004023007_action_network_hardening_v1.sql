@@ -99,9 +99,27 @@ for delete
 to authenticated
 using (false);
 
-alter table public.network_posts disable trigger mnet_post_outbox_trg;
-alter table public.network_reactions disable trigger mnet_reaction_outbox_trg;
-alter table public.network_follows disable trigger mnet_follow_outbox_trg;
+-- Production had these legacy triggers when this migration first ran.
+-- Fresh/replay databases may not, so keep the retirement step idempotent.
+do $
+begin
+  begin
+    alter table public.network_posts disable trigger mnet_post_outbox_trg;
+  exception when undefined_object then
+    null;
+  end;
+  begin
+    alter table public.network_reactions disable trigger mnet_reaction_outbox_trg;
+  exception when undefined_object then
+    null;
+  end;
+  begin
+    alter table public.network_follows disable trigger mnet_follow_outbox_trg;
+  exception when undefined_object then
+    null;
+  end;
+end;
+$;
 
 update public.network_outbox
 set status = 'dead',
