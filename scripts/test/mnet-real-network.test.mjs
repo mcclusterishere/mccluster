@@ -61,9 +61,14 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
   assert.match(api,/bookmarked_by_me/);
 });
 
-test('reaction, post, profile, and media access fail closed through visibility checks', async()=>{
+test('Action Network retires conventional reactions/comments and enforces group membership', async()=>{
   const api=await read('workers/mccluster/src/platform-api.js');
-  assert.match(api,/if\(!post\|\|!\(await canReadNetworkPost\(env,muid,post\)\)\)return fail\(req,env,'Post not found',404\)/);
+  assert.match(api,/Comments are retired on the Action Network/);
+  assert.match(api,/Reactions are retired on the Action Network/);
+  assert.match(api,/if\(post\.group_id\)/);
+  assert.match(api,/network_group_members\?group_id=eq\.\$\{post\.group_id\}.*state=eq\.joined/);
+  assert.match(api,/const posts=joined/);
+  assert.match(api,/visibility='network'/);
   assert.match(api,/if\(!\(await canReadNetworkProfile\(env,me,resolved\)\)\)return fail\(req,env,'Person not found',404\)/);
   assert.match(api,/network_media_assets\?id=in\./);
   assert.match(api,/owner_m_uid=eq\.\$\{muid\}/);
@@ -148,10 +153,14 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
-  /* a like changes its own button; the feed is not rebuilt per tap */
-  const like = js.slice(js.indexOf('function toggleLike('), js.indexOf('function openThread('));
-  assert.match(like, /paintToggle\(button, !liked, count\)/);
-  assert.doesNotMatch(like, /renderFeed\(/);
+  /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
+  assert.doesNotMatch(js, /function toggleLike\(/);
+  assert.doesNotMatch(js, /data-action="like"/);
+  assert.doesNotMatch(js, /data-action="comments"/);
+  assert.doesNotMatch(html, /id="mnThread"/);
+  assert.doesNotMatch(html, /Write a comment/);
+  assert.match(js, /data-take-mission/);
+  assert.match(js, /Verified action/);
   assert.match(html, /id="mnRail"/);
 });
 
