@@ -515,9 +515,21 @@
     if (!sec || !box || !C) return;
     var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
     var choices = intakeChoices();
-    sec.hidden = !choices.length;
+    sec.hidden = false;
     if ($("anIntakeLaw")) $("anIntakeLaw").textContent = chapter.proof_law || "";
     box.textContent = "";
+    if (!choices.length) {
+      var empty = el("button", "an-intake-choice");
+      empty.type = "button";
+      empty.disabled = true;
+      var emptyCopy = el("span");
+      emptyCopy.appendChild(el("b", null, "No action is open right now."));
+      emptyCopy.appendChild(el("small", null, "This campaign stays visible, but joining waits until there is something concrete to do."));
+      empty.appendChild(emptyCopy);
+      empty.appendChild(el("i", null, "Closed"));
+      box.appendChild(empty);
+      return;
+    }
 
     choices.forEach(function (x) {
       var b = el("button", "an-intake-choice");
@@ -644,7 +656,7 @@
     var join = $("join");
 
     join.classList.toggle("is-quick", quick);
-    join.hidden = inNet || (!!choices.length && !quick);
+    join.hidden = inNet || !quick;
 
     var selected = $("anSelectedAction");
     if (selected) {
