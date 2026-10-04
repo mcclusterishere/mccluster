@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 312,
+  "candidate_count": 316,
   "capability_source_count": 99,
-  "support_only_count": 213,
-  "checks_total": 1151,
-  "checks_passed": 1151,
+  "support_only_count": 217,
+  "checks_total": 1167,
+  "checks_passed": 1167,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -192,6 +192,7 @@
     "scripts/test/action-network.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
+    "scripts/test/homelessness-action.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
@@ -258,6 +259,9 @@
     "supabase/migrations/20261002183244_network_rate_limits_v2.sql",
     "supabase/migrations/20261003035208_action_mission_completion_automation_v1.sql",
     "supabase/migrations/20261003233747_action_network_live_governance_v1.sql",
+    "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql",
+    "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql",
+    "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql",
     "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
     "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
     "supabase/production-ledger.json",
@@ -326,7 +330,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "312 entries"
+      "detail": "316 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3714,6 +3718,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/homelessness-action.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/homelessness-action.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/homelessness-action.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/homelessness-action.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/product-context.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -4930,6 +4954,66 @@
     },
     {
       "name": "supabase/migrations/20261003233747_action_network_live_governance_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql support rationale present",
       "passed": true,
       "detail": ""
     },
