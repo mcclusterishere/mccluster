@@ -418,8 +418,7 @@
   function postCard(item, opts) {
     opts = opts || {};
     var post = item.post || item, actor = item.actor || post.actor || {};
-    var likes = Number(post.reaction_count || 0), replies = Number(post.reply_count || 0);
-    var liked = !!post.liked_by_me, saved = !!post.bookmarked_by_me;
+    var saved = !!post.bookmarked_by_me;
     var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
     var pinned = !!(item && item.payload && item.payload.pinned);
     return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + '" data-post-id="' + esc(id || "") + '">' +
@@ -433,11 +432,7 @@
       postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          '<button class="mn__action mn__action--like' + (liked ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + liked + '" aria-label="Like">' +
-            ICON.like + '<span class="mn__count">' + (likes || "") + '</span></button>' +
-          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '" aria-label="Comments">' +
-            ICON.comment + '<span class="mn__count">' + (replies || "") + '</span></button>' +
-          '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save">' +
+          '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
