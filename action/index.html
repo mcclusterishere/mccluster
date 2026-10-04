@@ -52,26 +52,10 @@
     </section>
 
     <div id="anCampaign" hidden>
-      <!-- PEOPLE FIRST. A real count against the phase goal, never a
-           rounded-up or seeded number. -->
-      <section class="an-sec an-meter" aria-labelledby="anPeopleLabel">
-        <p class="an-meter__n"><b id="anPeople">0</b> <span id="anPeopleLabel">people in the network</span></p>
-        <div class="an-bar" role="progressbar" id="anPeopleBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
-        <p class="an-meter__goal" id="anPeopleGoal"></p>
-      </section>
-
-      <!-- MONEY: rendered only when the owner has switched this
-           campaign's money on. Off, it is not on the page at all. -->
-      <section class="an-sec an-meter an-meter--money" id="anMoney" hidden aria-labelledby="anMoneyLabel">
-        <p class="an-meter__n"><b id="anRaised">$0</b> <span id="anMoneyLabel">received</span></p>
-        <div class="an-bar an-bar--gold" role="progressbar" id="anMoneyBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
-        <p class="an-meter__goal" id="anMoneyGoal"></p>
-        <a class="an-btn an-btn--gold an-btn--block" id="anGive" href="/give.html">Give $5 &#8594;</a>
-      </section>
-
-      <section class="an-sec" aria-labelledby="anMissionH">
-        <h2 class="an-h2" id="anMissionH">The mission</h2>
-        <ol class="an-phases" id="anPhases"></ol>
+      <section class="an-action-head" aria-labelledby="anActionHead">
+        <p class="an-kicker" id="anActionCampaign">Uprise Action Network</p>
+        <h1 class="an-h2 an-action-head__title" id="anActionHead">Pick an action.</h1>
+        <p class="an-action-head__sub" id="anActionSub">Tap one thing you can do right now.</p>
       </section>
 
       <!-- Campaign-defined intake. A campaign may expose a small set of
@@ -125,6 +109,28 @@
 
         <button type="button" class="an-btn an-btn--hot an-btn--block" id="anJoin">Join the Action Network</button>
         <p class="an-msg" id="anMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <!-- PEOPLE FIRST. A real count against the phase goal, never a
+           rounded-up or seeded number. -->
+      <section class="an-sec an-meter" aria-labelledby="anPeopleLabel">
+        <p class="an-meter__n"><b id="anPeople">0</b> <span id="anPeopleLabel">people in the network</span></p>
+        <div class="an-bar" role="progressbar" id="anPeopleBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anPeopleGoal"></p>
+      </section>
+
+      <!-- MONEY: rendered only when the owner has switched this
+           campaign's money on. Off, it is not on the page at all. -->
+      <section class="an-sec an-meter an-meter--money" id="anMoney" hidden aria-labelledby="anMoneyLabel">
+        <p class="an-meter__n"><b id="anRaised">$0</b> <span id="anMoneyLabel">received</span></p>
+        <div class="an-bar an-bar--gold" role="progressbar" id="anMoneyBar" aria-valuemin="0" aria-valuenow="0"><i></i></div>
+        <p class="an-meter__goal" id="anMoneyGoal"></p>
+        <a class="an-btn an-btn--gold an-btn--block" id="anGive" href="/give.html">Give $5 &#8594;</a>
+      </section>
+
+      <section class="an-sec" aria-labelledby="anMissionH">
+        <h2 class="an-h2" id="anMissionH">The mission</h2>
+        <ol class="an-phases" id="anPhases"></ol>
       </section>
 
       <!-- YOU. Everything on the card is the participant's own row. -->
