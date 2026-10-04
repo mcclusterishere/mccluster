@@ -121,7 +121,8 @@ test("The campaign page exposes Do, Fund, Bounty and Live lanes from campaign da
   assert.match(js, /rpc\("action_bounty_public"/);
   assert.match(js, /rpc\("claim_action_bounty"/);
   assert.match(js, /BOUNTIES\.support_open/);
-  assert.match(js, /root\.location\.assign\("\/mnet\.html\?view=live&category=field"\)/);
+  assert.match(js, /SLUG === "homelessness" \? "field" : ""/);
+  assert.match(js, /root\.location\.assign\("\/mnet\.html\?view=live" \+ \(liveCategory \? "&category=" \+ encodeURIComponent\(liveCategory\) : ""\)\)/);
   assert.match(js, /Waiting for funding/);
 
   assert.match(css, /\.an-intake-grid/);
