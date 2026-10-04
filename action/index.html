@@ -60,11 +60,9 @@
 
       <!-- Campaign-defined intake. A campaign may expose a small set of
            concrete lanes without inventing a new page or a new account flow. -->
-      <section class="an-sec an-intake" id="anIntake" hidden aria-labelledby="anIntakeH">
-        <p class="an-kicker">Choose your lane</p>
-        <h2 class="an-h2" id="anIntakeH">What can you actually do?</h2>
-        <p class="an-lede an-lede--sm" id="anIntakeLaw"></p>
+      <section class="an-intake" id="anIntake" hidden aria-labelledby="anActionHead">
         <div class="an-intake-grid" id="anIntakeChoices"></div>
+        <p class="an-note an-intake__law" id="anIntakeLaw"></p>
       </section>
 
       <!-- Funded work is separate from ordinary mission points. Funding
@@ -81,9 +79,14 @@
 
       <!-- DON'T JUST STAND THERE. What you have, what you can do, and the
            account that makes you a participant. -->
-      <section class="an-sec an-join" id="join" aria-labelledby="anJoinH">
-        <h2 class="an-h2" id="anJoinH">Don&rsquo;t just stand there.</h2>
-        <p class="an-lede an-lede--sm" id="anJoinSub">What do you have? Tap everything that&rsquo;s true.</p>
+      <section class="an-sec an-join" id="join" hidden aria-labelledby="anJoinH">
+        <div class="an-selected-action" id="anSelectedAction" hidden>
+          <span>Selected action</span>
+          <b id="anSelectedTitle"></b>
+          <p id="anSelectedNote"></p>
+        </div>
+        <h2 class="an-h2" id="anJoinH">Take this action.</h2>
+        <p class="an-lede an-lede--sm" id="anJoinSub">Sign in once. Then go straight to the mission.</p>
         <div class="an-chips" id="anHave" role="group" aria-label="What you have"></div>
 
         <p class="an-q">What can you do?</p>
