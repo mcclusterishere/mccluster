@@ -436,14 +436,14 @@
   function joinSelectedMission(id) {
     var o = origin();
     var contentId = attributedContentForMission(id);
-    if (contentId || o.src) {
-      return rpc("join_action_mission_attributed", {
-        p_mission_id: id,
-        p_content_id: contentId || null,
-        p_source: o.src || null
-      }, true);
-    }
-    return rpc("join_action_mission", { p_mission_id: id }, true);
+    var actionable = SELECTED_ACTION && (SELECTED_ACTION.key || SELECTED_ACTION.kind) || "";
+    return rpc("join_action_mission_origin", {
+      p_mission_id: id,
+      p_content_id: contentId || null,
+      p_source: o.src || null,
+      p_reel: o.reel || null,
+      p_actionable: actionable || null
+    }, true);
   }
 
   function rememberSelection(x) {
