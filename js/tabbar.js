@@ -179,7 +179,7 @@
       home: "mnet.html",
       slots: [
         ["mnet.html", "folk", "Network", { title: "Action Network",
-          sub: "The McCluster network: your profile, posts, comments, reactions and the activity happening across the ecosystem." }],
+          sub: "The McCluster Action Network: missions, proof, groups, messages and verified action across the ecosystem." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
