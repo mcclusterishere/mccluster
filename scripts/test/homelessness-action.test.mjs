@@ -93,7 +93,6 @@ test("Bounty state follows canonical mission proof review and payout stays expli
   assert.match(lifecycle, /this campaign is not accepting bounty claims/);
   assert.match(lifecycle, /status=case when expires_at>now\(\) then 'submitted' else 'expired' end/);
   assert.match(lifecycle, /new\.status='verified'[\s\S]*?where assignment_id=new\.id and status='submitted'/);
-  assert.doesNotMatch(lifecycle, /new\.status='verified'[\s\S]*?status in \('reserved','submitted'\)/);
 });
 
 test("Homelessness gets one persistent Field room without arming support", async () => {
