@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 316,
+  "candidate_count": 321,
   "capability_source_count": 99,
-  "support_only_count": 217,
+  "support_only_count": 222,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -1999,6 +1999,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Applied Action Network social hardening: group membership read/write boundaries, retirement of passive reactions/comments, and shutdown of the unconsumed legacy Mnet outbox. Runtime/security infrastructure, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261004023603_action_network_hardening_cleanup_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network hardening cleanup: canonical group/post RLS, complete retirement of passive reaction/comment client access, and removal of legacy Mnet outbox producers. Runtime/security infrastructure, not a physical building capability."
     },
     {
       "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
