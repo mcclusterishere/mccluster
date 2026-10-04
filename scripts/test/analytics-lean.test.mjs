@@ -35,7 +35,7 @@ test('the copy trigger can never stop an event being recorded', async () => {
 
 
 test('page performance scoring uses the lean projection and confidence weighting', async () => {
-  const sql = await read('supabase/migrations/20261004230500_analytics_page_scoring_v1.sql');
+  const sql = await read('supabase/migrations/20261004230939_analytics_page_scoring_v1.sql');
   assert.match(sql, /add column if not exists visible_s numeric/);
   assert.match(sql, /add column if not exists depth numeric/);
   assert.match(sql, /function public\.analytics_page_performance\(/);
