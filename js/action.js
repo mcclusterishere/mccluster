@@ -471,7 +471,8 @@
     paintIntake();
 
     if (x.kind === "live") {
-      root.location.assign("/mnet.html?view=live&campaign=" + encodeURIComponent(C && C.id || ""));
+      var liveCategory = String(x.category || (SLUG === "homelessness" ? "field" : "")).replace(/[^a-z0-9_-]/g, "");
+      root.location.assign("/mnet.html?view=live" + (liveCategory ? "&category=" + encodeURIComponent(liveCategory) : ""));
       return;
     }
     if (x.kind === "fund" || x.kind === "bounty") {
