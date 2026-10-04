@@ -723,40 +723,182 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/media/upload-url'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'upload-url',file_name:b.file_name,mime_type:b.mime_type,byte_size:b.byte_size,alt_text:b.alt_text}));}
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
   if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
-  /* GOING LIVE. The owner desk and accepted fellows broadcast from a phone or
-     browser over WebRTC to Cloudflare Stream; anyone can watch. Each broadcast
-     gets its own Stream live input, created here and deleted when it ends, so
-     a publish (WHIP) URL is never reused. That URL is a credential: it is
-     returned only to the host who asked, and never written to the database.
-     Viewers get the playback (WHEP) URL from network_live_sessions, whose RLS
-     shows only broadcasts with a heartbeat in the last two minutes. */
+  /* GOVERNED LIVE.
+     Live is an Action Network program surface, not a follower entitlement.
+     The database returns the caller's bounded host capability; the Worker
+     validates that capability against a persistent Home/Mission room before
+     it creates a one-use Cloudflare Stream input. Audience presence is
+     private and only aggregate outcome/retention counts leave the Worker. */
   if(path.startsWith('/v1/mnet/live')){
     if(external)return fail(req,env,'Live requires a McCluster user session',403);
-    if(path==='/v1/mnet/live/eligibility'&&req.method==='GET')
-      return reply(req,env,{can_host:(await userRpc(req,env,'live_can_host',{}))===true,enabled:liveEnabled(env)});
+    const hostContext=async()=>await userRpc(req,env,'live_host_context',{});
+    const liveAdmin=async()=>(await userRpc(req,env,'eu_is_admin',{}))===true;
+    const cleanCategory=(v)=>String(v||'').toLowerCase().trim();
+    const cleanKind=(v)=>String(v||'').toLowerCase().trim();
+    const roomSlug=(title)=>{const root=String(title||'room').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,62)||'room';return `${root}-${crypto.randomUUID().slice(0,6)}`};
+
+    if(path==='/v1/mnet/live/eligibility'&&req.method==='GET'){
+      const eligibility=await hostContext();
+      return reply(req,env,{...eligibility,enabled:liveEnabled(env),stage_transport:'single_host_stream'});
+    }
+
+    if(path==='/v1/mnet/live/options'&&req.method==='GET'){
+      const muid=await currentMuid(env,user.id);if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
+      const eligibility=await hostContext();
+      const [categories,rooms,missions,music]=await Promise.all([
+        service(env,'network_live_categories?enabled=eq.true&select=key,label,description,sort&order=sort.asc'),
+        service(env,`network_live_rooms?owner_m_uid=eq.${muid}&status=eq.active&select=id,slug,title,description,room_kind,category_key,action_mission_id,cohort_id,music_object_id,seat_limit,support_enabled&order=updated_at.desc&limit=50`),
+        service(env,'action_missions?status=eq.open&select=id,campaign_id,title,description,domain,starts_at,ends_at&order=created_at.desc&limit=100'),
+        service(env,'music_catalog_objects?status=eq.active&select=id,catalog_key,album_slug,album_title,track_title,artist_name,credit_line,artwork_path,canonical_url&order=album_title.asc,track_title.asc&limit=250')
+      ]);
+      return reply(req,env,{
+        eligibility:{...eligibility,enabled:liveEnabled(env)},
+        categories:categories||[],rooms:rooms||[],missions:missions||[],music:music||[],
+        room_kinds:[{key:'home',label:'Home room'},{key:'mission',label:'Mission room'}],
+        stage:{roles:['cohost','guest'],transport:'single_host_stream',multi_seat_ready:false}
+      });
+    }
+
+    if(path==='/v1/mnet/live/directory'&&req.method==='GET'){
+      const kind=cleanKind(url.searchParams.get('kind')),category=cleanCategory(url.searchParams.get('category'));
+      if(kind&&!['home','mission'].includes(kind))return fail(req,env,'Unknown live room type',400);
+      const categories=await service(env,'network_live_categories?enabled=eq.true&select=key');
+      const categorySet=new Set((categories||[]).map(x=>x.key));
+      if(category&&!categorySet.has(category))return fail(req,env,'Unknown live category',400);
+      const cutoff=new Date(Date.now()-2*60*1000).toISOString();
+      const filters=[`status=eq.live`,`last_seen_at=gt.${encodeURIComponent(cutoff)}`];
+      if(kind)filters.push(`room_kind=eq.${encodeURIComponent(kind)}`);
+      if(category)filters.push(`category_key=eq.${encodeURIComponent(category)}`);
+      const rows=await service(env,`network_live_sessions?${filters.join('&')}&select=id,host_m_uid,title,status,whep_url,post_id,started_at,last_seen_at,room_id,room_kind,category_key,action_mission_id,music_object_id,cohort_id,seat_limit,support_enabled&order=started_at.desc&limit=50`);
+      const ids=(rows||[]).map(x=>x.id).filter(uuidLike);
+      if(!ids.length)return reply(req,env,{sessions:[],kind:kind||'all',category:category||'all'});
+      const missionIds=uniq(rows.map(x=>x.action_mission_id)).filter(uuidLike),musicIds=uniq(rows.map(x=>x.music_object_id)).filter(uuidLike),roomIds=uniq(rows.map(x=>x.room_id)).filter(uuidLike);
+      const [metrics,actors,missions,music,rooms]=await Promise.all([
+        service(env,'rpc/network_live_session_metrics',{method:'POST',body:JSON.stringify({p_session_ids:ids})}),
+        networkActors(env,rows.map(x=>x.host_m_uid)),
+        missionIds.length?service(env,`action_missions?id=in.(${missionIds.join(',')})&select=id,campaign_id,title,description,domain,status`):[],
+        musicIds.length?service(env,`music_catalog_objects?id=in.(${musicIds.join(',')})&select=id,catalog_key,album_slug,album_title,track_title,artist_name,credit_line,artwork_path,canonical_url`):[],
+        roomIds.length?service(env,`network_live_rooms?id=in.(${roomIds.join(',')})&select=id,slug,title,description`):[]
+      ]);
+      const mm=new Map((metrics||[]).map(x=>[x.session_id,x])),mi=new Map((missions||[]).map(x=>[x.id,x])),mu=new Map((music||[]).map(x=>[x.id,x])),rm=new Map((rooms||[]).map(x=>[x.id,x]));
+      const sessions=(rows||[]).map(s=>({...s,host:actors[s.host_m_uid]||{m_uid:s.host_m_uid},room:rm.get(s.room_id)||null,mission:mi.get(s.action_mission_id)||null,music:mu.get(s.music_object_id)||null,metrics:mm.get(s.id)||{unique_viewers:0,engaged_viewers:0,joined:0,submitted:0,verified:0,score:0,score_basis:s.room_kind==='mission'?'verified_actions_per_viewer':'engaged_viewers_60s'}}));
+      if(kind)sessions.sort((a,b)=>Number(b.metrics?.score||0)-Number(a.metrics?.score||0)||new Date(b.started_at||0)-new Date(a.started_at||0));
+      else sessions.sort((a,b)=>new Date(b.started_at||0)-new Date(a.started_at||0));
+      return reply(req,env,{sessions,kind:kind||'all',category:category||'all'});
+    }
+
+    if(path==='/v1/mnet/live/admin/grants'&&req.method==='GET'){
+      if(!(await liveAdmin()))return fail(req,env,'Not found',404);
+      const rows=await service(env,'network_live_host_grants?select=id,m_uid,basis,cohort_id,org_id,allowed_categories,max_stage_seats,support_allowed,status,starts_at,expires_at,note,created_at&order=created_at.desc&limit=200');
+      return reply(req,env,{grants:rows||[]});
+    }
+    if(path==='/v1/mnet/live/admin/grants'&&req.method==='POST'){
+      if(!(await liveAdmin()))return fail(req,env,'Not found',404);
+      const b=await json(req),muid=String(b.m_uid||'');
+      if(!uuidLike(muid))return fail(req,env,'A valid Action identity is required',400);
+      const basis=String(b.basis||'cohort'),category=cleanCategory(b.category);
+      if(!['cohort','client_project','staff'].includes(basis))return fail(req,env,'Unknown live grant basis',400);
+      const categories=await service(env,`network_live_categories?key=eq.${encodeURIComponent(category)}&enabled=eq.true&select=key&limit=1`);
+      if(!categories?.length)return fail(req,env,'Choose an enabled live category',400);
+      const cohortId=basis==='cohort'&&uuidLike(b.cohort_id)?b.cohort_id:null,orgId=basis==='client_project'&&uuidLike(b.org_id)?b.org_id:null;
+      if(basis==='cohort'&&!cohortId)return fail(req,env,'Choose the cohort that authorizes this host',400);
+      if(basis==='client_project'&&!orgId)return fail(req,env,'Choose the client organization that authorizes this host',400);
+      const scope=`m_uid=eq.${muid}&basis=eq.${basis}&status=eq.active&cohort_id=${cohortId?'eq.'+cohortId:'is.null'}&org_id=${orgId?'eq.'+orgId:'is.null'}`;
+      const existing=await service(env,`network_live_host_grants?${scope}&select=*&limit=1`);
+      let grant;
+      if(existing?.[0]){
+        const cats=uniq([...(existing[0].allowed_categories||[]),category]).slice(0,5);
+        const out=await service(env,`network_live_host_grants?id=eq.${existing[0].id}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({allowed_categories:cats,note:String(b.note||existing[0].note||'').slice(0,500),updated_at:new Date().toISOString()})});
+        grant=out?.[0]||null;
+      }else{
+        const out=await service(env,'network_live_host_grants',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({m_uid:muid,basis,cohort_id:cohortId,org_id:orgId,allowed_categories:[category],max_stage_seats:Math.min(4,Math.max(1,Number(b.max_stage_seats)||4)),support_allowed:false,note:String(b.note||'').slice(0,500),created_by:user.id})});
+        grant=out?.[0]||null;
+      }
+      return reply(req,env,{grant},201);
+    }
+    const revokeGrant=path.match(/^\/v1\/mnet\/live\/admin\/grants\/([0-9a-f-]{36})$/i);
+    if(revokeGrant&&req.method==='DELETE'){
+      if(!(await liveAdmin()))return fail(req,env,'Not found',404);
+      const rows=await service(env,`network_live_host_grants?id=eq.${revokeGrant[1]}&status=eq.active`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify({status:'revoked',updated_at:new Date().toISOString()})});
+      if(!rows?.length)return fail(req,env,'Live grant not found',404);
+      return reply(req,env,{revoked:true,id:revokeGrant[1]});
+    }
+
     if(path==='/v1/mnet/live'&&req.method==='POST'){
-      if((await userRpc(req,env,'live_can_host',{}))!==true)return fail(req,env,'Going live is open to fellows. Three verified actions, then apply.',403);
+      const eligibility=await hostContext();
+      if(!eligibility?.can_host)return fail(req,env,'Going live requires an active cohort, client-project or staff grant.',403);
       if(!liveEnabled(env))return fail(req,env,'Live video is not switched on yet.',503);
       const b=await json(req),title=String(b.title||'').trim().slice(0,120);
-      if(!title)return fail(req,env,'Give the broadcast a title.',400);
-      const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
-      /* One broadcast per host: anything they left running is ended first. */
+      if(!title)return fail(req,env,'Give this broadcast a title.',400);
+      const muid=await currentMuid(env,user.id);if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
+      const allowed=new Set(Array.isArray(eligibility.allowed_categories)?eligibility.allowed_categories:[]);
+      let room=null;
+      if(uuidLike(b.room_id)){
+        const rr=await service(env,`network_live_rooms?id=eq.${b.room_id}&status=eq.active&select=*&limit=1`);
+        room=rr?.[0]||null;
+        if(!room)return fail(req,env,'That live room is not available',404);
+        if(room.owner_m_uid&&room.owner_m_uid!==muid)return fail(req,env,'That live room is not yours',403);
+      }else{
+        const roomKind=cleanKind(b.room_kind),category=cleanCategory(b.category_key);
+        if(!['home','mission'].includes(roomKind))return fail(req,env,'Choose Home room or Mission room',400);
+        if(!allowed.has(category))return fail(req,env,'That live category is not in your host grant',403);
+        let missionId=null,cohortId=null,musicId=null;
+        if(roomKind==='mission'){
+          missionId=uuidLike(b.action_mission_id)?b.action_mission_id:null;
+          if(!missionId)return fail(req,env,'A Mission room must attach an open mission',400);
+          const missions=await service(env,`action_missions?id=eq.${missionId}&status=eq.open&select=id,starts_at,ends_at&limit=1`);
+          const mission=missions?.[0];
+          if(!mission||mission.starts_at&&Date.parse(mission.starts_at)>Date.now()||mission.ends_at&&Date.parse(mission.ends_at)<=Date.now())return fail(req,env,'That mission is not open right now',409);
+        }
+        if(uuidLike(b.music_object_id)){
+          const music=await service(env,`music_catalog_objects?id=eq.${b.music_object_id}&status=eq.active&select=id&limit=1`);
+          if(!music?.length)return fail(req,env,'That song is not in the active catalogue',409);
+          musicId=b.music_object_id;
+        }
+        /* The grant authorizes the host/category. A room only carries a cohort
+           when a future operator flow assigns one explicitly; do not infer a
+           cohort from whichever active grant happens to be returned first. */
+        cohortId=null;
+        const roomTitle=String(b.room_title||title).trim().slice(0,120);
+        const seatLimit=Math.min(4,Math.max(1,Number(eligibility.max_stage_seats)||1));
+        const rows=await service(env,'network_live_rooms',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({slug:roomSlug(roomTitle),owner_m_uid:muid,title:roomTitle,description:String(b.room_description||'').trim().slice(0,1000),room_kind:roomKind,category_key:category,action_mission_id:missionId,cohort_id:cohortId,music_object_id:musicId,seat_limit:seatLimit,support_enabled:false})});
+        room=rows?.[0]||null;
+      }
+      if(!room)return fail(req,env,'Could not resolve the live room',409);
+      if(!allowed.has(room.category_key))return fail(req,env,'That room category is not in your host grant',403);
+      if(room.room_kind==='mission'){
+        const missions=await service(env,`action_missions?id=eq.${room.action_mission_id}&status=eq.open&select=id,starts_at,ends_at&limit=1`);
+        const mission=missions?.[0];
+        if(!mission||mission.starts_at&&Date.parse(mission.starts_at)>Date.now()||mission.ends_at&&Date.parse(mission.ends_at)<=Date.now())return fail(req,env,'The mission attached to this room is not open right now',409);
+      }
       const open=await service(env,`network_live_sessions?host_user_id=eq.${user.id}&status=in.(starting,live)&select=id,cf_input_uid`);
       for(const o of open||[])await endLiveSession(env,o,user.id,'replaced');
-      const input=await cfStream(env,'POST','/live_inputs',{meta:{name:`action-network-live ${muid}`},recording:{mode:'off'}});
+      const input=await cfStream(env,'POST','/live_inputs',{meta:{name:`action-network-live ${room.slug} ${muid}`},recording:{mode:'off'}});
       const whip=input?.webRTC?.url,whep=input?.webRTCPlayback?.url;
       if(!input?.uid||!whip||!whep){if(input?.uid)await cfStream(env,'DELETE',`/live_inputs/${input.uid}`).catch(()=>{});return fail(req,env,'Cloudflare did not return a live input.',502);}
-      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep})});
+      const rows=await service(env,'network_live_sessions',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({host_m_uid:muid,host_user_id:user.id,title,status:'starting',cf_input_uid:input.uid,whep_url:whep,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,cohort_id:room.cohort_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit,support_enabled:false})});
       const sess=rows?.[0];
-      return reply(req,env,{session:{id:sess.id,title:sess.title,whep_url:whep,status:sess.status},whip_url:whip},201);
+      return reply(req,env,{session:{id:sess.id,title:sess.title,whep_url:whep,status:sess.status,room_id:room.id,room_kind:room.room_kind,category_key:room.category_key,action_mission_id:room.action_mission_id,music_object_id:room.music_object_id,seat_limit:room.seat_limit},room,whip_url:whip,stage:{transport:'single_host_stream',multi_seat_ready:false}},201);
     }
+
+    const watch=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/watch$/i);
+    if(watch&&req.method==='POST'){
+      const muid=await currentMuid(env,user.id);if(!muid)return fail(req,env,'Your Action identity is not ready yet',409);
+      const rows=await service(env,`network_live_sessions?id=eq.${watch[1]}&status=eq.live&select=id,host_m_uid,last_seen_at&limit=1`),sess=rows?.[0];
+      if(!sess||!sess.last_seen_at||Date.parse(sess.last_seen_at)<Date.now()-2*60*1000)return fail(req,env,'That broadcast is no longer live',410);
+      if(sess.host_m_uid!==muid){
+        await service(env,'network_live_audience',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({session_id:sess.id,viewer_m_uid:muid,last_seen_at:new Date().toISOString()})});
+      }
+      return reply(req,env,{id:sess.id,ok:true});
+    }
+
     const one=path.match(/^\/v1\/mnet\/live\/([0-9a-f-]{36})\/(on-air|heartbeat|end|publish)$/i);
     if(one){
       const rows=await service(env,`network_live_sessions?id=eq.${one[1]}&select=*&limit=1`),sess=rows?.[0];
       if(!sess)return fail(req,env,'Broadcast not found',404);
       const host=sess.host_user_id===user.id,act=one[2].toLowerCase();
       if(act==='end'&&req.method==='POST'){
-        const desk=!host&&(await userRpc(req,env,'eu_is_admin',{}))===true;
+        const desk=!host&&await liveAdmin();
         if(!host&&!desk)return fail(req,env,'Broadcast not found',404);
         if(sess.status!=='ended')await endLiveSession(env,sess,user.id,desk?'desk':'host');
         return reply(req,env,{id:sess.id,status:'ended'});
@@ -768,7 +910,7 @@ async function handleMnet(req,env,path,url){
         let postId=sess.post_id;
         if(!postId){
           const apps=await service(env,`platform_apps?app_key=eq.mccluster-web&enabled=eq.true&select=id&limit=1`);
-          const posts=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:sess.host_m_uid,body:`Live now: ${sess.title}`,post_type:'update',visibility:'public',metadata:{live:{session_id:sess.id}},source_app_id:apps?.[0]?.id||null})});
+          const posts=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:sess.host_m_uid,body:`Live now: ${sess.title}`,post_type:'update',visibility:'public',metadata:{live:{session_id:sess.id,room_id:sess.room_id,room_kind:sess.room_kind,category_key:sess.category_key,mission_id:sess.action_mission_id,music_object_id:sess.music_object_id}},source_app_id:apps?.[0]?.id||null})});
           postId=posts?.[0]?.id||null;
         }
         await service(env,`network_live_sessions?id=eq.${sess.id}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({status:'live',started_at:sess.started_at||now,last_seen_at:now,post_id:postId})});

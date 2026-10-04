@@ -625,6 +625,59 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__studio-rules { margin: 12px 0 0; color: var(--mn-dim); font-size: .82rem; line-height: 1.45; }
 .mn__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (min-width: 48rem) { .mn__live-track { grid-auto-columns: minmax(0, 40%); } }
+
+/* Governed live directory: Live is a browse surface, not a decorative rail. */
+.mn__onair--directory { padding: 16px; }
+.mn__live-title { margin: 5px 0 0; max-width: 18ch; font-size: clamp(1.35rem, 5vw, 2rem); line-height: 1.02; letter-spacing: -.03em; }
+.mn__live-filters { display: grid; gap: 8px; margin-top: 14px; }
+.mn__live-filterrow { display: flex; gap: 7px; overflow-x: auto; padding: 1px 1px 3px; scrollbar-width: none; }
+.mn__live-filterrow::-webkit-scrollbar { display: none; }
+.mn__live-filterrow button {
+  flex: 0 0 auto; min-height: 38px; padding: 0 13px; border: 0; border-radius: 999px;
+  background: var(--mn-bg); box-shadow: inset 0 0 0 1px var(--mn-rule);
+  color: var(--mn-dim); font: 800 .78rem/1 var(--mn-ui); cursor: pointer;
+}
+.mn__live-filterrow button.is-on { background: var(--mn-ink); color: var(--mn-bg); box-shadow: none; }
+.mn__onair--directory .mn__live-track {
+  display: grid; grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0,1fr);
+  overflow: visible; scroll-snap-type: none; gap: 10px;
+}
+.mn__onair--directory .mn__livecard { min-height: 154px; gap: 7px; align-content: start; }
+.mn__livecard-top { display: flex; align-items: center; gap: 7px; }
+.mn__livebadge { padding: 4px 7px; border-radius: 999px; background: rgba(255,77,61,.16); color: var(--mn-hot); font-size: .63rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.mn__livebadge.is-soft { background: var(--mn-bg); color: var(--mn-dim); }
+.mn__livecard strong { color: var(--mn-dim); font-size: .88rem; font-weight: 700; line-height: 1.35; }
+.mn__livecard-host,.mn__livecard-metrics { color: var(--mn-dim); font-size: .78rem; }
+.mn__livecard-object { display: grid; gap: 2px; margin-top: 2px; padding: 8px 10px; border-radius: 10px; background: rgba(244,239,230,.055); font-size: .82rem; line-height: 1.3; }
+.mn__livecard-object em { color: var(--mn-faint); font-size: .62rem; font-style: normal; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.mn__live-empty { display: grid; gap: 4px; padding: 18px 4px 4px; }
+.mn__live-empty b { color: var(--mn-ink); }
+.mn__live-empty span { color: var(--mn-dim); font-size: .86rem; line-height: 1.45; }
+
+.mn__live-context { display: grid; gap: 8px; padding: 10px 16px 0; }
+.mn__live-object { display: grid; gap: 5px; padding: 12px; border-radius: 14px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); color: var(--mn-ink); text-decoration: none; }
+.mn__live-object > span { color: var(--mn-hot); font-size: .66rem; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+.mn__live-object b { font-size: 1rem; }
+.mn__live-object p { margin: 0; color: var(--mn-dim); font-size: .83rem; line-height: 1.4; }
+.mn__live-object em { color: var(--mn-gold); font-size: .8rem; font-style: normal; font-weight: 800; }
+.mn__live-object .mn__primary { margin: 5px 0 0; }
+.mn__live-roomline { margin: 0; color: var(--mn-faint); font-size: .75rem; font-weight: 700; }
+
+.mn__studio-access,.mn__studio-stage-note { margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; background: var(--mn-bg); box-shadow: inset 0 0 0 1px var(--mn-rule); color: var(--mn-dim); font-size: .82rem; line-height: 1.45; }
+.mn__studio-access b { color: var(--mn-ink); }
+.mn__studio-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; }
+.mn__studio-form > .mn__label,.mn__studio-grid .mn__label { margin-top: 10px; }
+.mn__studio-form select.mn__input { min-height: 46px; appearance: auto; }
+.mn__studio-stage-note { margin-top: 12px; margin-bottom: 0; }
+
+@media (min-width: 44rem) {
+  .mn__onair--directory .mn__live-track { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .mn__studio-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (min-width: 70rem) {
+  .mn__onair--directory .mn__live-track { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+
 .mn__delete h3 { margin: 0 0 6px; font-size: 1rem; }
 .mn__delete p { color: var(--mn-dim); font-size: .9rem; line-height: 1.5; }
 .mn__delete-go summary { min-height: 44px; display: flex; align-items: center; color: #ff9a91; font-weight: 800; cursor: pointer; }

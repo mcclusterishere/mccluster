@@ -123,17 +123,9 @@
     </section>
 
     <section class="mn__app" id="mnApp" hidden>
-      <!-- LIVE: broadcasts on air right now, and the Go live button for the
-           owner and fellows. Filled by js/mnet-live.js; hidden when empty. -->
-      <section class="mn__onair" id="mnLive" hidden aria-live="polite">
-        <div class="mn__live-head"><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><button class="mn__golive" id="mnGoLive" type="button" hidden>Go live</button></div>
-        <div class="mn__live-track" id="mnLiveTrack"></div>
-      </section>
-      <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Advocacy</span><span>Business</span><span>Community</span><span>Ideas</span></div></section>
-      <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
-      <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>News context will compare sources and perspectives before connecting issues to optional initiatives. No points for ideology. No points for outrage.</small></div><a href="action/">Explore initiatives →</a></section>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Action</button>
+        <button type="button" class="is-active" data-mn-view="live">Live</button>
+        <button type="button" data-mn-view="feed">Action</button>
         <button type="button" data-mn-view="missions">Missions</button>
         <button type="button" data-mn-view="discover">People</button>
         <button type="button" data-mn-view="groups">Groups</button>
@@ -143,7 +135,36 @@
         <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
       </nav>
 
-      <section class="mn__view" id="mnFeedView">
+      <section class="mn__view" id="mnLiveView">
+        <section class="mn__onair mn__onair--directory" id="mnLive" aria-live="polite">
+          <div class="mn__live-head">
+            <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h1 class="mn__live-title">See the work while it happens.</h1></div>
+            <button class="mn__golive" id="mnGoLive" type="button" hidden>Go live</button>
+          </div>
+          <div class="mn__live-filters" id="mnLiveFilters" aria-label="Live room filters">
+            <div class="mn__live-filterrow" role="group" aria-label="Room type">
+              <button type="button" class="is-on" data-live-kind="">All rooms</button>
+              <button type="button" data-live-kind="mission">Mission rooms</button>
+              <button type="button" data-live-kind="home">Home rooms</button>
+            </div>
+            <div class="mn__live-filterrow" role="group" aria-label="Category">
+              <button type="button" class="is-on" data-live-category="">All topics</button>
+              <button type="button" data-live-category="music">Music</button>
+              <button type="button" data-live-category="build">Build</button>
+              <button type="button" data-live-category="learn">Learn</button>
+              <button type="button" data-live-category="field">Field</button>
+              <button type="button" data-live-category="forum">Forum</button>
+            </div>
+          </div>
+          <div class="mn__live-track" id="mnLiveTrack"></div>
+          <p class="mn__status" id="mnLiveDirectoryStatus" role="status"></p>
+        </section>
+        <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Build</span><span>Learn</span><span>Field</span><span>Forum</span></div></section>
+        <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
+        <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>Live rooms and missions connect attention to measurable work. No points for ideology. No points for outrage. Support does not buy discovery rank.</small></div><a href="action/">Explore initiatives →</a></section>
+      </section>
+
+      <section class="mn__view" id="mnFeedView" hidden>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -337,6 +358,7 @@
     <div class="mn__thread-head"><div><p class="mn__live-k"><i aria-hidden="true"></i>Live</p><strong id="mnLiveWatchTitle">Live</strong></div><button type="button" id="mnLiveWatchClose" aria-label="Close">×</button></div>
     <div class="mn__livevideo"><video id="mnLiveVideo" playsinline autoplay controls></video><p class="mn__livevideo-note" id="mnLiveNote">Connecting…</p></div>
     <p class="mn__livehost" id="mnLiveHost"></p>
+    <div class="mn__live-context" id="mnLiveContext"></div>
     <ol class="mn__livechat" id="mnLiveChat" aria-live="polite"></ol>
     <form class="mn__livechat-form" id="mnLiveChatForm"><label class="mn__sr" for="mnLiveChatBody">Say something</label><input class="mn__input" id="mnLiveChatBody" maxlength="500" autocomplete="off" placeholder="Say something"><button class="mn__primary" type="submit">Send</button></form>
     <div class="mn__livewatch-foot"><button class="mn__quiet" id="mnLiveReport" type="button">Report</button><button class="mn__quiet mn__danger" id="mnLiveKill" type="button" hidden>End this broadcast</button></div>
@@ -347,11 +369,27 @@
     <div class="mn__thread-head"><strong id="mnStudioTitle">Go live</strong><button type="button" id="mnStudioClose" aria-label="Close">×</button></div>
     <div class="mn__livevideo"><video id="mnStudioVideo" playsinline autoplay muted></video><p class="mn__livevideo-note" id="mnStudioNote">Allow your camera and microphone to see yourself here.</p></div>
     <form class="mn__studio-form" id="mnStudioForm">
-      <label class="mn__label" for="mnStudioTopic">What is this broadcast?</label>
-      <input class="mn__input" id="mnStudioTopic" maxlength="120" required placeholder="Cleaning the 4100 block, come through">
+      <div class="mn__studio-access" id="mnStudioAccess">Checking your live access…</div>
+      <label class="mn__label" for="mnStudioRoom">Room</label>
+      <select class="mn__input" id="mnStudioRoom"><option value="">New room…</option></select>
+      <div id="mnStudioNewRoom">
+        <label class="mn__label" for="mnStudioRoomTitle">Room name</label>
+        <input class="mn__input" id="mnStudioRoomTitle" maxlength="120" placeholder="Equity Uprise Situation Room">
+        <div class="mn__studio-grid">
+          <label><span class="mn__label">Room type</span><select class="mn__input" id="mnStudioKind"><option value="home">Home room</option><option value="mission">Mission room</option></select></label>
+          <label><span class="mn__label">Category</span><select class="mn__input" id="mnStudioCategory"></select></label>
+        </div>
+        <label class="mn__label" for="mnStudioMission" id="mnStudioMissionLabel" hidden>Mission</label>
+        <select class="mn__input" id="mnStudioMission" hidden></select>
+        <label class="mn__label" for="mnStudioMusic">Song <span>optional</span></label>
+        <select class="mn__input" id="mnStudioMusic"><option value="">No song attached</option></select>
+      </div>
+      <label class="mn__label" for="mnStudioTopic">What is happening live?</label>
+      <input class="mn__input" id="mnStudioTopic" maxlength="120" required placeholder="Writing the hook live — come build with us">
+      <div class="mn__studio-stage-note" id="mnStudioStageNote">Stage roles are host, cohost and guest. Multi-seat video is not switched on yet; this broadcast is host video only.</div>
       <div class="mn__studio-row"><button class="mn__quiet" id="mnStudioFlip" type="button">Flip camera</button><button class="mn__primary" id="mnStudioGo" type="submit">Go live</button></div>
       <button class="mn__primary mn__danger-fill" id="mnStudioEnd" type="button" hidden>End broadcast</button>
-      <p class="mn__studio-rules">You're live to everyone on the Action Network. Keep it about the work. Anything that targets or labels a person gets ended by the desk.</p>
+      <p class="mn__studio-rules">Live access is a program capability, not a status badge. Stay inside the room's declared work. Support is separate from charitable/program funds and does not affect discovery rank.</p>
     </form>
     <p class="mn__status" id="mnStudioStatus" role="status"></p>
   </dialog>
