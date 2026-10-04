@@ -47,9 +47,11 @@ test("owner conversion aggregate exposes counts without participant identity", a
 test("Action page passes selected action and Reel into the durable origin command", async () => {
   const js = await read("js/action.js");
   assert.match(js, /rpc\("join_action_mission_origin"/);
-  assert.match(js, /p_reel: reel \\|\\| null/);
-  assert.match(js, /p_actionable: actionable \\|\\| null/);
-  assert.match(js, /SELECTED_ACTION && \(SELECTED_ACTION\.key \|\| SELECTED_ACTION\.kind\)/);
+  assert.match(js, /p_reel: reel \|\| null/);
+  assert.match(js, /p_actionable: actionable \|\| null/);
+  assert.match(js, /function durableActionable\(x\)/);
+  assert.match(js, /replace\(\/\[\^a-z0-9\._:-\]\+\/g, "-"\)/);
+  assert.match(js, /durableActionable\(SELECTED_ACTION\)/);
 });
 
 test("Control shows durable origin funnel and source context during proof review", async () => {
