@@ -68,11 +68,11 @@ test('emoji count as one character each, the way the database counts them', asyn
   assert.equal((await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: '\u{1F525}'.repeat(2001) })).status, 413);
 });
 
-test('a reply over 1,000 characters is refused before the write', async () => {
+test('comments are retired before any reply write', async () => {
   const calls = fake();
   const res = await call('/v1/mnet/posts?app_key=mccluster-web', 'POST', { body: 'a'.repeat(1001), reply_to_id: POST });
-  assert.equal(res.status, 413);
-  assert.match((await res.json()).error, /Replies are limited to 1,000 characters/);
+  assert.equal(res.status, 410);
+  assert.match((await res.json()).error, /Comments are retired on the Action Network/);
   assert.equal(inserts(calls).length, 0, 'nothing is written');
 });
 
@@ -123,10 +123,10 @@ test('editing a post past 2,000 characters is refused before the write', async (
   assert.ok(!calls.some((c) => c.m === 'PATCH'), 'nothing is written');
 });
 
-test('editing a reply past 1,000 characters is refused before the write', async () => {
+test('editing a historical reply is retired before the write', async () => {
   const calls = fake({ existing: { id: POST, author_m_uid: MUID, body: 'old', media: [], reply_to_id: OTHER } });
   const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { body: 'b'.repeat(1001) });
-  assert.equal(res.status, 413);
-  assert.match((await res.json()).error, /Replies are limited to 1,000/);
+  assert.equal(res.status, 410);
+  assert.match((await res.json()).error, /Comments are retired on the Action Network/);
   assert.ok(!calls.some((c) => c.m === 'PATCH'), 'nothing is written');
 });
