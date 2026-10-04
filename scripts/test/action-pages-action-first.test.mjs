@@ -18,6 +18,8 @@ test("campaign pages put action choices before campaign context", async () => {
   assert.ok(html.indexOf('id="join"') > action);
   assert.ok(html.indexOf('id="join"') < people);
   assert.match(html, /Pick an action\./);
+  assert.match(html, /class="an-hero" id="anHero" hidden/);
+  assert.match(html, /id="anActionStatus"/);
 });
 
 test("named campaign pages hide the old prelude and keep the page mobile action-first", async () => {
@@ -46,6 +48,8 @@ test("action selection is tracked and becomes a one-tap mission enrollment", asy
   assert.match(js, /u\.searchParams\.set\("mission"/);
   assert.match(js, /rpc\("join_action_mission", \{ p_mission_id: SELECTED_ACTION\.mission_id \}, true\)/);
   assert.match(js, /root\.location\.assign\(missionHref\(SELECTED_ACTION\.mission_id\)\)/);
+  assert.match(js, /say\("anActionStatus", "Opening mission…"/);
+  assert.match(js, /Could not open that mission/);
 });
 
 test("selected mission survives account creation and auth round trips", async () => {
