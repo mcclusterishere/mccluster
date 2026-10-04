@@ -134,11 +134,11 @@ begin
   if (r->>'awarded')::boolean then raise exception 'rejection must not award'; end if;
   if (select count(*) from public.action_points_ledger where assignment_id=(select v from ids where k='b1')) <> 0 then raise exception 'rejected proof awarded points'; end if;
   if (select status from public.action_mission_assignments where id=(select v from ids where k='b1')) <> 'rejected' then raise exception 'assignment should be rejected'; end if;
-end $;
+end $$;
 reset role;
 
 -- Every review is immutable history and produces exactly one member notification.
-do $
+do $$
 begin
   if (select count(*) from public.action_proof_review_history where proof_id=(select v from ids where k='p1') and decision='verified') <> 1 then
     raise exception 'verified review should be archived exactly once';
@@ -152,20 +152,20 @@ begin
   if (select count(*) from public.network_notifications where recipient_m_uid='10000000-0000-4000-8000-00000000000b' and type='action_proof_review' and metadata->>'decision'='rejected') <> 1 then
     raise exception 'rejected member should receive one review notification';
   end if;
-end $;
+end $$;
 
 -- A reads the Action Record; B can correct rejected proof without losing review history
 select pg_temp.as_user('00000000-0000-4000-8000-00000000000a');
-do $
+do $$
 declare r jsonb := public.action_record();
 begin
   if (r->>'verified_actions')::int <> 1 or (r->>'points')::int <> 115 then raise exception 'record wrong: %', r; end if;
   if jsonb_array_length(r->'skills') <> 2 then raise exception 'record should list 2 skills: %', r; end if;
   if (select count(*) from public.action_proof_review_history) <> 1 then raise exception 'A should only see A review history'; end if;
-end $;
+end $$;
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-00000000000b');
-do $
+do $$
 declare r jsonb;
 begin
   if (select count(*) from public.action_proof_review_history) <> 1 then raise exception 'B should only see B review history'; end if;
@@ -183,7 +183,7 @@ begin
   if exists(select 1 from public.action_proofs where id=(select v from ids where k='p2') and (reviewer_uid is not null or review_note is not null or reviewed_at is not null)) then raise exception 'active retry proof must clear the previous review state'; end if;
   if (select count(*) from public.action_proof_review_history) <> 1 then raise exception 'retry must not erase or duplicate review history'; end if;
   if (select review_note from public.action_proof_review_history order by reviewed_at desc limit 1) <> 'No evidence attached' then raise exception 'retry must preserve the reviewer note in immutable history'; end if;
-end $;
+end $$;
 reset role;
 
 -- the receipt: verified only, no identity
