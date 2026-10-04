@@ -256,6 +256,77 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
   return { checked: jobs.length, results };
 }
 
+
+async function patchInstagramChannel(env, orgId, values) {
+  await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.instagram&enabled=eq.true`, {
+    method: 'PATCH',
+    headers: { prefer: 'return=minimal' },
+    body: JSON.stringify({ ...values, updated_at: new Date().toISOString() })
+  });
+}
+
+export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMinutes = 55 } = {}) {
+  const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
+  const maxAgeMs = Math.max(5, Number(maxAgeMinutes) || 55) * 60 * 1000;
+  const staleBefore = Date.now() - maxAgeMs;
+  const channels = await db(env, `org_channels?channel=eq.instagram&enabled=eq.true&select=org_id,account_id,last_ok_at,last_error_at&limit=${safeLimit * 4}`);
+  const due = (channels || []).filter((channel) => {
+    const lastAttempt = [channel.last_ok_at, channel.last_error_at]
+      .map((value) => Date.parse(value || ''))
+      .filter(Number.isFinite)
+      .sort((a, b) => b - a)[0];
+    return !Number.isFinite(lastAttempt) || lastAttempt < staleBefore;
+  }).slice(0, safeLimit);
+  const results = [];
+
+  for (const channel of due) {
+    const orgId = channel.org_id;
+    const accountFilter = channel.account_id
+      ? `&external_account_id=eq.${encodeURIComponent(channel.account_id)}`
+      : '';
+    const accounts = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(orgId)}&platform=eq.instagram&status=eq.connected${accountFilter}&select=id,org_id,platform,external_account_id&limit=1`);
+    const account = accounts?.[0] || null;
+    const checkedAt = new Date().toISOString();
+
+    if (!account) {
+      const message = 'connected_instagram_account_missing';
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, connected: false, reason: message });
+      continue;
+    }
+
+    const token = await tokenFor(env, account);
+    if (!token) {
+      const message = 'credential_secret_not_configured';
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: message });
+      continue;
+    }
+
+    try {
+      const me = await graphGet(env, `${encodeURIComponent(account.external_account_id)}?fields=username,followers_count,media_count`, token);
+      await Promise.all([
+        patchInstagramChannel(env, orgId, { last_ok_at: checkedAt, last_error: null, last_error_at: null }),
+        patch(env, 'social_accounts', account.id, { last_synced_at: checkedAt })
+      ]);
+      results.push({
+        org_id: orgId,
+        account_id: account.id,
+        connected: true,
+        username: me?.username || null,
+        followers: me?.followers_count ?? null,
+        media_count: me?.media_count ?? null
+      });
+    } catch (error) {
+      const message = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+      await patchInstagramChannel(env, orgId, { last_error: message, last_error_at: checkedAt });
+      results.push({ org_id: orgId, account_id: account.id, connected: false, reason: 'meta_refused', error: message });
+    }
+  }
+
+  return { checked: due.length, results };
+}
+
 function metricValue(payload) {
   const value = payload?.data?.[0]?.values?.[0]?.value;
   return typeof value === 'number' ? value : Number(value || 0);
