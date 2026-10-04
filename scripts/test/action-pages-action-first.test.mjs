@@ -47,10 +47,11 @@ test("action selection is tracked and becomes a one-tap mission enrollment", asy
   assert.match(js, /u\.searchParams\.set\("action"/);
   assert.match(js, /u\.searchParams\.set\("mission"/);
   assert.match(js, /joinSelectedMission\(SELECTED_ACTION\.mission_id\)/);
-  assert.match(js, /rpc\("join_action_mission_attributed"/);
+  assert.match(js, /rpc\("join_action_mission_origin"/);
   assert.match(js, /p_content_id: contentId \|\| null/);
   assert.match(js, /p_source: o\.src \|\| null/);
-  assert.match(js, /rpc\("join_action_mission", \{ p_mission_id: id \}, true\)/);
+  assert.match(js, /p_reel: o\.reel \|\| null/);
+  assert.match(js, /p_actionable: actionable \|\| null/);
   assert.match(js, /root\.location\.assign\(missionHref\(SELECTED_ACTION\.mission_id\)\)/);
   assert.match(js, /say\("anActionStatus", "Opening mission…"/);
   assert.match(js, /Could not open that mission/);
