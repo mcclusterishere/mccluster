@@ -765,7 +765,12 @@
       return;
     }
     host.innerHTML = rows.map(function (n) {
-      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p></article>';
+      var action="", meta=n&&n.metadata||{}, mission=String(meta.mission_id||"");
+      if(n.type==="action_proof_review"&&/^[0-9a-f-]{36}$/i.test(mission)){
+        action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(mission)+'">'+
+          (meta.decision==="rejected"?"Fix proof →":"View action →")+'</a>';
+      }
+      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
     }).join("");
   }
 
