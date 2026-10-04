@@ -40,6 +40,8 @@ test('Mnet media is private and only exposed through authenticated authorization
   assert.match(media,/createSignedUploadUrl/);
   assert.match(media,/createSignedUrl/);
   assert.match(media,/canReadPost/);
+  assert.match(media,/network_group_members/);
+  assert.match(media,/post\.group_id/);
   assert.match(media,/blocked\(viewer,post\.author_m_uid\)/);
 });
 
