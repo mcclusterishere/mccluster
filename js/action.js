@@ -339,7 +339,7 @@
 
     chips($("anHave"), haveList(), picked.have);
     chips($("anSkills"), SKILLS, picked.skills);
-    paintIntake();
+    $("anIntake").hidden = true;
     $("anCampaign").hidden = false;
     paintJoin();
   }
