@@ -19,9 +19,11 @@
    Attribution: src/med/reel/cmp (or utm_source/utm_medium/
    utm_content/utm_campaign) from the link, remembered per campaign so
    a sign-up round trip does not lose it; ?ref=CODE is the recruiter.
-   Joining passes both to action_join, which keeps only short plain
-   values. Every visit fires MCC_TRACK('action_view'), which is what
-   Control's funnel counts per Reel.
+   Publisher-generated Action links also carry content=<UUID> plus the
+   exact mission=<UUID>. That pair is preserved through auth and passed
+   to join_action_mission_attributed so verified work can be traced back
+   to the content item that caused it. Every visit also fires
+   MCC_TRACK('action_view'), which is what Control's funnel counts per Reel.
    ============================================================ */
 (function (root, doc) {
   "use strict";
@@ -32,6 +34,9 @@
   var PENDING_DAYS = 7;
   var q = new URLSearchParams(root.location.search);
   var SLUG = (q.get("c") || q.get("campaign") || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 41);
+  var UUID_RE = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+  var ATTRIBUTION_CONTENT_ID = UUID_RE.test(String(q.get("content") || "")) ? String(q.get("content")).toLowerCase() : "";
+  var ATTRIBUTION_MISSION_ID = UUID_RE.test(String(q.get("mission") || "")) ? String(q.get("mission")).toLowerCase() : "";
 
   var HAVE = [
     ["give", "I have $5"],
@@ -423,6 +428,24 @@
     });
   }
 
+  function attributedContentForMission(id) {
+    id = String(id || "").toLowerCase();
+    return ATTRIBUTION_CONTENT_ID && ATTRIBUTION_MISSION_ID === id ? ATTRIBUTION_CONTENT_ID : "";
+  }
+
+  function joinSelectedMission(id) {
+    var o = origin();
+    var contentId = attributedContentForMission(id);
+    if (contentId || o.src) {
+      return rpc("join_action_mission_attributed", {
+        p_mission_id: id,
+        p_content_id: contentId || null,
+        p_source: o.src || null
+      }, true);
+    }
+    return rpc("join_action_mission", { p_mission_id: id }, true);
+  }
+
   function rememberSelection(x) {
     SELECTED_ACTION = x || null;
     if (!x) return;
@@ -449,12 +472,17 @@
     }
     missionBusy = true;
     say("anActionStatus", "Opening mission…");
-    return rpc("join_action_mission", { p_mission_id: SELECTED_ACTION.mission_id }, true).then(function (r) {
+    var o = origin();
+    var contentId = attributedContentForMission(SELECTED_ACTION.mission_id);
+    return joinSelectedMission(SELECTED_ACTION.mission_id).then(function (r) {
       track("actionable_started", {
         campaign: SLUG,
         actionable: SELECTED_ACTION.key || "",
         mission: SELECTED_ACTION.mission_id,
-        assignment: r && r.assignment_id || ""
+        assignment: r && r.assignment_id || "",
+        content: contentId || "",
+        src: o.src || "",
+        reel: o.reel || ""
       });
       root.location.assign(missionHref(SELECTED_ACTION.mission_id));
     }).catch(function (e) {
@@ -796,6 +824,8 @@
         label: SELECTED_ACTION.label || "",
         note: SELECTED_ACTION.note || ""
       } : null,
+      content_id: SELECTED_ACTION && SELECTED_ACTION.mission_id ? attributedContentForMission(SELECTED_ACTION.mission_id) : "",
+      attribution_mission_id: ATTRIBUTION_MISSION_ID,
       at: Date.now()
     });
   }
@@ -907,6 +937,11 @@
     if (p.action && p.action.mission_id) {
       var hit = intakeChoices().filter(function (x) { return x.mission_id === p.action.mission_id; })[0];
       SELECTED_ACTION = hit || p.action;
+      if (!ATTRIBUTION_CONTENT_ID && UUID_RE.test(String(p.content_id || "")) &&
+          String(p.attribution_mission_id || "").toLowerCase() === String(p.action.mission_id).toLowerCase()) {
+        ATTRIBUTION_CONTENT_ID = String(p.content_id).toLowerCase();
+        ATTRIBUTION_MISSION_ID = String(p.attribution_mission_id).toLowerCase();
+      }
     }
     chips($("anHave"), haveList(), picked.have);
     chips($("anSkills"), SKILLS, picked.skills);
