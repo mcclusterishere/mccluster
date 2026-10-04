@@ -1973,6 +1973,13 @@
       "rationale": "Applied Action Network bounty lifecycle hardening: campaign-live claim gate and fail-closed expiry semantics for paid reservations; runtime integrity support, not a building capability."
     },
     {
+      "path": "supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network proof-review lifecycle: immutable review history, member notifications, and corrected-proof retry after rejection; references eu_is_admin() for review-history desk access. Mobilization/runtime workflow infrastructure, not a physical building capability."
+    },
+    {
       "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
