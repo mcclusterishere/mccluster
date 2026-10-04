@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 318,
+  "candidate_count": 319,
   "capability_source_count": 99,
-  "support_only_count": 219,
-  "checks_total": 1175,
-  "checks_passed": 1175,
+  "support_only_count": 220,
+  "checks_total": 1179,
+  "checks_passed": 1179,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -190,6 +190,7 @@
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-network-live-governance.test.mjs",
     "scripts/test/action-network.test.mjs",
+    "scripts/test/action-origin-attribution.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
@@ -332,7 +333,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "318 entries"
+      "detail": "319 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3676,6 +3677,26 @@
     },
     {
       "name": "scripts/test/action-network.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-origin-attribution.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-origin-attribution.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/action-origin-attribution.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/action-origin-attribution.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
