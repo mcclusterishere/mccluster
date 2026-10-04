@@ -1908,8 +1908,15 @@
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
         missions.assignment=a;$("mnMissionJoin").hidden=true;
-        $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted");
-        setStatus($("mnMissionDialogStatus"),a.status==="submitted"?"Proof submitted for review. You can replace it until it is reviewed.":a.status==="verified"?"Verified action.":a.status==="rejected"?"This proof was not verified.":"Mission in progress.","ok");
+        $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
+        var assignmentMessage=a.status==="submitted"
+          ?"Proof submitted for review. You can replace it until it is reviewed."
+          :a.status==="verified"
+            ?"Verified action."
+            :a.status==="rejected"
+              ?"Proof was not verified. Fix the proof and submit it again. The reviewer note is in Your Action Record."
+              :"Mission in progress.";
+        setStatus($("mnMissionDialogStatus"),assignmentMessage,a.status==="rejected"?"error":"ok");
       });
     }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
   }
