@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { handlePlatformApi } from '../../workers/mccluster/src/platform-api.js';
 
 const read=(p)=>readFile(p,'utf8');
 
@@ -192,3 +193,90 @@ test("unified identity presentation carries public front page through people pro
 
 
 test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/Put it into action/);assert.match(html,/What are you putting into action/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
+
+
+test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{
+  const realFetch=globalThis.fetch;
+  const MUID='11111111-1111-4111-8111-111111111111';
+  const GROUP='22222222-2222-4222-8222-222222222222';
+  const INVITE='33333333-3333-4333-8333-333333333333';
+  const POST='44444444-4444-4444-8444-444444444444';
+  const ENV={SUPABASE_URL:'https://db.test',SUPABASE_SERVICE_ROLE_KEY:'svc'};
+  let joined=false;
+  const calls=[];
+  const ok=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
+  globalThis.fetch=async(url,init={})=>{
+    const u=String(url),method=init.method||'GET',body=init.body?JSON.parse(init.body):null;
+    calls.push({u,method,body});
+    if(u.endsWith('/auth/v1/user'))return ok({id:'user-1'});
+    if(u.includes('/m_auth_user_links?auth_user_id='))return ok([{m_uid:MUID}]);
+    if(u.includes('/m_auth_user_links?m_uid=in.'))return ok([{m_uid:MUID,auth_user_id:'user-1'}]);
+    if(u.includes('/platform_profiles?user_id=in.'))return ok([{user_id:'user-1',mccluster_id:'doer'}]);
+    if(u.includes('/platform_apps?app_key='))return ok([{id:'55555555-5555-4555-8555-555555555555'}]);
+    if(u.includes('/network_groups?select='))return ok([
+      {id:GROUP,slug:'open-room',name:'Open room',purpose:'Act together',visibility:'open',member_count:1,organization_id:null,group_type:'community',front_page_url:null},
+      {id:INVITE,slug:'invite-room',name:'Invite room',purpose:'Private work',visibility:'invite',member_count:1,organization_id:null,group_type:'community',front_page_url:null}
+    ]);
+    if(u.includes('/network_groups?slug=eq.open-room'))return ok([{id:GROUP,slug:'open-room',name:'Open room',purpose:'Act together',visibility:'open',member_count:1,organization_id:null,group_type:'community',front_page_url:null}]);
+    if(u.includes('/network_groups?slug=eq.invite-room'))return ok([{id:INVITE,slug:'invite-room',name:'Invite room',purpose:'Private work',visibility:'invite',member_count:1,organization_id:null,group_type:'community',front_page_url:null}]);
+    if(u.includes('/network_group_members?')){
+      return ok(joined?[{group_id:u.includes(INVITE)?INVITE:GROUP}]:[]);
+    }
+    if(u.includes('/network_posts?group_id=eq.')&&method==='GET')return ok([{
+      id:POST,author_m_uid:MUID,body:'Proof-oriented room update',post_type:'post',visibility:'network',
+      media:[],metadata:{},content_id:null,reply_to_id:null,group_id:GROUP,created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString(),source_app_id:null,source_org_id:null
+    }]);
+    if(u.includes('/network_profiles?m_uid=in.'))return ok([{m_uid:MUID,display_name:'Doer',avatar_url:'',verification_state:'unverified'}]);
+    if(u.includes('/network_bookmarks?'))return ok([]);
+    if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
+    return ok([]);
+  };
+  const req=(path,init={})=>handlePlatformApi(new Request('https://api.test'+path,{
+    method:init.method||'GET',
+    headers:{authorization:'Bearer user-token','content-type':'application/json'},
+    body:init.body===undefined?undefined:JSON.stringify(init.body)
+  }),ENV);
+  try{
+    let res=await req('/v1/mnet/groups');
+    assert.equal(res.status,200);
+    let data=await res.json();
+    assert.deepEqual(data.groups.map(x=>x.slug),['open-room'],'invite-only rooms are not discoverable to nonmembers');
+
+    res=await req('/v1/mnet/groups/invite-room');
+    assert.equal(res.status,404,'knowing an invite slug does not reveal the room');
+
+    const before=calls.length;
+    res=await req('/v1/mnet/groups/open-room');
+    assert.equal(res.status,200);
+    data=await res.json();
+    assert.equal(data.group.joined,false);
+    assert.deepEqual(data.items,[]);
+    assert.equal(calls.slice(before).some(x=>x.u.includes('/network_posts?group_id=')),false,'nonmember read never fetches room posts');
+
+    res=await req('/v1/mnet/posts?app_key=mnet-web',{method:'POST',body:{body:'try room',group_id:GROUP,visibility:'public'}});
+    assert.equal(res.status,403,'nonmembers cannot post into a room');
+
+    joined=true;
+    res=await req('/v1/mnet/groups/open-room');
+    assert.equal(res.status,200);
+    data=await res.json();
+    assert.equal(data.group.joined,true);
+    assert.equal(data.items.length,1);
+
+    res=await req('/v1/mnet/posts?app_key=mnet-web',{method:'POST',body:{body:'room action',group_id:GROUP,visibility:'public'}});
+    assert.equal(res.status,201);
+    const inserted=[...calls].reverse().find(x=>x.u.endsWith('/network_posts')&&x.method==='POST');
+    assert.equal(inserted.body.group_id,GROUP);
+    assert.equal(inserted.body.visibility,'network','group posts cannot be promoted into the public feed');
+
+    res=await req('/v1/mnet/posts?app_key=mnet-web',{method:'POST',body:{body:'old comment',reply_to_id:POST}});
+    assert.equal(res.status,410);
+    res=await req('/v1/mnet/posts/'+POST+'/replies');
+    assert.equal(res.status,410);
+    res=await req('/v1/mnet/posts/'+POST+'/reactions',{method:'POST',body:{reaction:'like'}});
+    assert.equal(res.status,410);
+  } finally {
+    globalThis.fetch=realFetch;
+  }
+});
