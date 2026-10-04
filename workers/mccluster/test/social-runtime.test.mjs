@@ -159,14 +159,14 @@ test('Instagram connection health checks stale accounts and records success with
   assert.equal(calls.some((call) => call.href.endsWith('/media') && call.method === 'POST'), false);
 });
 
-test('Instagram connection health skips accounts checked within the freshness window', async () => {
+test('Instagram connection health throttles recent success or failure attempts', async () => {
   const calls = [];
   const env = { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'service-role' };
   await withFetchMock(async (url, options = {}) => {
     const href = String(url);
     calls.push({ href, method: options.method || 'GET' });
     if (href.includes('/rest/v1/org_channels?')) {
-      return jsonResponse([{ org_id: ORG_ID, account_id: 'ig-123', last_ok_at: new Date().toISOString() }]);
+      return jsonResponse([{ org_id: ORG_ID, account_id: 'ig-123', last_ok_at: null, last_error_at: new Date().toISOString() }]);
     }
     throw new Error(`Unexpected fetch: ${options.method || 'GET'} ${href}`);
   }, async () => {
