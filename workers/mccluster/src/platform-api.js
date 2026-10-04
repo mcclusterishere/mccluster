@@ -603,7 +603,8 @@ async function handleMnet(req,env,path,url){
   if(postOne&&req.method==='PATCH'){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
-    if(!post||post.author_m_uid!==muid||post.reply_to_id||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(!post||post.author_m_uid!==muid||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(post.reply_to_id)return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
