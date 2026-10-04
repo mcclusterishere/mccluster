@@ -517,12 +517,6 @@
         openMission(missionId);
       };
     });
-    root.querySelectorAll("[data-action=like]").forEach(function (b) {
-      b.onclick = function () { toggleLike(b.dataset.post, b); };
-    });
-    root.querySelectorAll("[data-action=comments]").forEach(function (b) {
-      b.onclick = function () { openThread(b.dataset.post); };
-    });
     root.querySelectorAll("[data-action=save]").forEach(function (b) {
       b.onclick = function () { toggleBookmark(b.dataset.post, b); };
     });
@@ -691,68 +685,6 @@
     if (c && count != null) c.textContent = count ? String(count) : "";
     if (on) { button.classList.remove("is-pop"); void button.offsetWidth; button.classList.add("is-pop"); }
   }
-  function toggleLike(postId, button) {
-    var item = findPost(postId), post = item && item.post;
-    var liked = !!(post && post.liked_by_me);
-    var count = Math.max(0, Number(post && post.reaction_count || 0) + (liked ? -1 : 1));
-    if (post) { post.liked_by_me = !liked; post.reaction_count = count; }
-    paintToggle(button, !liked, count);
-    button.disabled = true;
-    api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/reactions", {
-      method: liked ? "DELETE" : "POST",
-      body: liked ? undefined : { reaction:"like" }
-    }).then(function () { track(liked ? "mnet_reaction_removed" : "mnet_reaction_added", { post_id:postId }); }).catch(function (e) {
-      if (post) { post.liked_by_me = liked; post.reaction_count = Math.max(0, count + (liked ? 1 : -1)); }
-      paintToggle(button, liked, post ? post.reaction_count : null);
-      setStatus($("mnFeedStatus"), e.message || "Could not update reaction.", "error");
-    }).finally(function () { button.disabled = false; });
-  }
-
-  function openThread(postId) {
-    var item = findPost(postId);
-    state.threadPost = item;
-    $("mnThreadRoot").innerHTML = item ? postCard(item, { actions:false }) : "";
-    $("mnReplies").innerHTML = '<div class="mn__empty">Loading comments…</div>';
-    $("mnReplyBody").value = "";
-    setStatus($("mnReplyStatus"), "");
-    $("mnThread").showModal();
-    loadReplies(postId);
-  }
-
-  function loadReplies(postId) {
-    return api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/replies").then(function (data) {
-      var rows = data.replies || [];
-      $("mnReplies").innerHTML = rows.length ? rows.map(function (r) { return postCard(r, { actions:false }); }).join("") : '<div class="mn__empty">No comments yet.</div>';
-    }).catch(function (e) {
-      $("mnReplies").innerHTML = "";
-      setStatus($("mnReplyStatus"), e.message || "Could not load comments.", "error");
-    });
-  }
-
-  function createReply(event) {
-    event.preventDefault();
-    var item = state.threadPost, post = item && item.post;
-    if (!post) return;
-    var body = $("mnReplyBody").value.trim();
-    if (!body) return;
-    var button = $("mnReplyForm").querySelector("button");
-    button.disabled = true;
-    setStatus($("mnReplyStatus"), "Replying…");
-    api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
-      method:"POST",
-      body:{ body:body, reply_to_id:post.id }
-    }).then(function () {
-      $("mnReplyBody").value = "";
-      post.reply_count = Number(post.reply_count || 0) + 1;
-      renderFeed(false);
-      setStatus($("mnReplyStatus"), "Replied.", "ok");
-      track("mnet_reply_created", { post_id:post.id });
-      return loadReplies(post.id);
-    }).catch(function (e) {
-      setStatus($("mnReplyStatus"), e.message || "Could not reply.", "error");
-    }).finally(function () { button.disabled = false; });
-  }
-
   function renderNotifications(rows) {
     var host = $("mnNotifications");
     if (!rows.length) {
@@ -1309,8 +1241,6 @@
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
     $("mnMe").onclick = function () { showGate("app"); setView("profile"); };
     $("mnEditProfile").onclick = editProfile;
-    $("mnThreadClose").onclick = function () { $("mnThread").close(); };
-    $("mnReplyForm").addEventListener("submit", createReply);
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     $("mnBell").onclick = function () { setView("notifications"); };
     window.addEventListener("resize", function () { moveThumb(false); });
