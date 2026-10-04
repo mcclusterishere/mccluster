@@ -1980,6 +1980,13 @@
       "rationale": "Applied Action Network proof-review lifecycle: immutable review history, member notifications, and corrected-proof retry after rejection; references eu_is_admin() for review-history desk access. Mobilization/runtime workflow infrastructure, not a physical building capability."
     },
     {
+      "path": "supabase/migrations/20261004021226_action_origin_attribution_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network first-touch mission attribution for content, channel, Reel and selected actionable plus owner-only aggregate conversion reads; references eu_is_admin() for the Control read boundary. Mobilization/analytics infrastructure, not a physical building capability."
+    },
+    {
       "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
