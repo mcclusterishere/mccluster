@@ -79,6 +79,7 @@ test("Paid bounties are fixed compensation slots for approved field participants
 test("Bounty state follows canonical mission proof review and payout stays explicit", async () => {
   const sql = await read("supabase/migrations/20261003235507_homelessness_action_bounties_v1.sql");
   const guard = await read("supabase/migrations/20261004000122_action_bounty_rejected_reclaim_guard_v1.sql");
+  const lifecycle = await read("supabase/migrations/20261004000628_action_bounty_lifecycle_guard_v2.sql");
 
   assert.match(sql, /after update of status on public\.action_mission_assignments/);
   assert.match(sql, /new\.status='submitted'[\s\S]*?status='submitted'/);
@@ -89,6 +90,10 @@ test("Bounty state follows canonical mission proof review and payout stays expli
   assert.match(sql, /payout_ref text/);
   assert.doesNotMatch(sql, /stripe\.transfers|transfers\.create|payouts\.create/i);
   assert.match(guard, /this bounty proof was rejected; choose another open action/);
+  assert.match(lifecycle, /this campaign is not accepting bounty claims/);
+  assert.match(lifecycle, /status=case when expires_at>now\(\) then 'submitted' else 'expired' end/);
+  assert.match(lifecycle, /new\.status='verified'[\s\S]*?where assignment_id=new\.id and status='submitted'/);
+  assert.doesNotMatch(lifecycle, /new\.status='verified'[\s\S]*?status in \('reserved','submitted'\)/);
 });
 
 test("Homelessness gets one persistent Field room without arming support", async () => {
