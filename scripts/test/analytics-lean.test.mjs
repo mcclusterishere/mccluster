@@ -32,3 +32,23 @@ test('the copy trigger can never stop an event being recorded', async () => {
   assert.match(sql, /set local lock_timeout = '5s';/);
   assert.match(sql, /revoke all on table public\.events_lean from public, anon, authenticated;/);
 });
+
+
+test('page performance scoring uses the lean projection and confidence weighting', async () => {
+  const sql = await read('supabase/migrations/20261004230500_analytics_page_scoring_v1.sql');
+  assert.match(sql, /add column if not exists visible_s numeric/);
+  assert.match(sql, /add column if not exists depth numeric/);
+  assert.match(sql, /function public\.analytics_page_performance\(/);
+  const fn = sql.slice(sql.indexOf('function public.analytics_page_performance('));
+  assert.match(fn, /public\.events_lean/);
+  assert.doesNotMatch(fn, /from public\.events\b/);
+  assert.match(fn, /median_visible_s/);
+  assert.match(fn, /view_change_pct/);
+  assert.match(fn, /action_events/);
+  assert.match(fn, /confidence/);
+  assert.match(fn, /quality_score/);
+  assert.match(fn, /overall_score/);
+  assert.match(fn, /1-exp\(-b\.views\/30\.0\)/);
+  assert.match(fn, /revoke all on function public\.analytics_page_performance.*from public, anon/);
+  assert.match(fn, /grant execute on function public\.analytics_page_performance.*to authenticated, service_role/);
+});
