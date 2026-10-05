@@ -2440,7 +2440,29 @@
   }
   function inspectVariant(id) { var v = findById(state.variants, id); if (!v) return; openInspector({ title: v.variant_key || "Variant", subtitle: "Create · Project", description: v.hypothesis || v.hook || "Creative variant", props: [["Status", v.status], ["Score", v.score], ["Media job", v.media_job_id], ["Created", formatDate(v.created_at)]], raw: v, tabs: ["overview", "related", "raw", "ai"] }); }
   function inspectPost(id) { var p = findById(state.posts, id); if (!p) return; openInspector({ title: "Published post", subtitle: "Create · Schedule", description: p.caption || "Published content", props: [["Mode", p.publish_mode], ["Published", formatDate(p.published_at)], ["Permalink", p.permalink || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
-  function inspectPublish(id) { var p = findById(state.publishJobs, id); if (!p) return; openInspector({ title: "Publishing job", subtitle: "Create · Schedule", description: p.payload && p.payload.caption || "Scheduled distribution", props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
+  function inspectPublish(id) {
+    var p = findById(state.publishJobs, id); if (!p) return;
+    var busy = state.pending["publishMove:" + p.id];
+    var failure = state.pending["publishMoveError:" + p.id];
+    var canCancel = ["draft", "queued"].indexOf(p.state) >= 0 && !p.external_creation_id;
+    var canRetry = p.state === "failed" && !p.external_media_id;
+    var actions = "";
+    if (canRetry) actions += '<button class="cr-btn cr-btn--primary" type="button" data-action="retry-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Retrying…" : "Retry") + '</button>';
+    if (canCancel) actions += '<button class="cr-btn" type="button" data-action="cancel-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>Cancel</button>';
+    openInspector({
+      title: "Publishing job",
+      subtitle: "Create · Schedule",
+      description: p.payload && p.payload.caption || "Scheduled distribution",
+      props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"],
+        ["Attempts", p.attempts], ["Meta container", p.external_creation_id || "—"], ["Published media", p.external_media_id || "—"]],
+      custom: (p.last_error ? inspectorSection("Last failure", '<p class="cr-fail">' + esc(p.last_error) + '</p>') : "") +
+        (failure ? inspectorSection("Action failed", sourceBanner(failure, "Publish recovery")) : "") +
+        (p.state === "processing" ? inspectorSection("In flight", '<p class="cr-muted">Meta already has a creation container. Control will not offer cancellation once publishing has crossed that boundary.</p>') : ""),
+      actions: actions,
+      raw: p,
+      tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
 
   function openBridge(key) {
@@ -2746,6 +2768,35 @@
     else if (action === "inspect-variant") inspectVariant(el.getAttribute("data-id"));
     else if (action === "inspect-post") inspectPost(el.getAttribute("data-id"));
     else if (action === "inspect-publish") inspectPublish(el.getAttribute("data-id"));
+    else if (action === "retry-publish" || action === "cancel-publish") {
+      var publishJobId = el.getAttribute("data-id");
+      var publishAction = action === "retry-publish" ? "retry" : "cancel";
+      if (!state.org || !state.org.id) {
+        state.pending["publishMoveError:" + publishJobId] = badResult("failed", "Workspace identity is unavailable.", 400);
+        inspectPublish(publishJobId);
+        return;
+      }
+      state.pending["publishMove:" + publishJobId] = true;
+      delete state.pending["publishMoveError:" + publishJobId];
+      inspectPublish(publishJobId);
+      src(request("/v1/social/publish/" + encodeURIComponent(publishJobId) + "/" + publishAction, {
+        method: "POST",
+        body: { org_id: state.org.id }
+      })).then(function (result) {
+        delete state.pending["publishMove:" + publishJobId];
+        if (!result.ok) {
+          state.pending["publishMoveError:" + publishJobId] = result;
+          inspectPublish(publishJobId);
+          return;
+        }
+        delete state.pending["publishMoveError:" + publishJobId];
+        var moved = result.data && result.data.publish_job;
+        var current = findById(state.publishJobs, publishJobId);
+        if (moved && current) Object.assign(current, moved);
+        inspectPublish(publishJobId);
+        render();
+      });
+    }
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
