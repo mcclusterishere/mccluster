@@ -20,7 +20,7 @@ import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
 import { handleWorkRequest } from './work.js';
 import { recentAudit } from './lib/audit.js';
-import { listObservabilityEvents, observeControlRequest } from './lib/observability.js';
+import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -494,9 +494,14 @@ export default {
     return observeControlRequest(request, env, ctx, (tracedRequest) => dispatchRequest(tracedRequest, env, ctx));
   },
 
-  async scheduled(_controller, env, ctx) {
+  async scheduled(controller, env, ctx) {
+    /* Retention needs to run hourly, not on every five-minute tick. */
+    const pruneDue = new Date(controller?.scheduledTime || Date.now()).getUTCMinutes() < 5;
     ctx.waitUntil(Promise.all([
-      reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
+      (pruneDue ? pruneObservabilityEvents(env) : Promise.resolve(null)).catch((error) => {
+        console.error(JSON.stringify({ event: 'observability_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      observeScheduled(env, ctx, 'media.cost_reconciliation', () => reconcilePendingFalCosts(env, { limit: 50 })).catch((error) => {
         console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
@@ -505,7 +510,7 @@ export default {
       checkInstagramConnectionHealth(env, { limit: 10, maxAgeMinutes: 55 }).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_connection_health_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
-      processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
+      observeScheduled(env, ctx, 'social.publish_queue', () => processInstagramPublishQueue(env, { limit: 10 })).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_publish_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {

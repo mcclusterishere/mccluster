@@ -26,6 +26,8 @@
    failure — not change this helper's contract underneath everything
    already relying on it. */
 
+import { currentTrace, recordEvent } from './observability.js';
+
 function headers(env) {
   return {
     apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -58,6 +60,10 @@ export async function recordAudit(env, entry = {}) {
     return { recorded: false, reason: 'supabase_not_configured' };
   }
 
+  /* The ledger row carries the trace it was written under, so an audited
+     change opens straight into its request in System · Observability. */
+  const trace = currentTrace();
+  const detail = boundDetail(entry.detail);
   const row = {
     org_id: trim(entry.orgId, 64),
     actor_user_id: trim(entry.actorUserId, 64),
@@ -66,8 +72,20 @@ export async function recordAudit(env, entry = {}) {
     capability: trim(entry.capability, 64),
     resource_type: trim(entry.resourceType, 64),
     resource_id: trim(entry.resourceId, 200),
-    detail: boundDetail(entry.detail)
+    detail: trace && detail && typeof detail === 'object' && !Array.isArray(detail) ? { ...detail, trace } : detail
   };
+  const observe = (recorded) => recordEvent({
+    orgId: row.org_id,
+    name: event,
+    kind: 'domain',
+    level: recorded ? 'info' : 'warn',
+    outcome: 'ok',
+    actorUserId: row.actor_user_id,
+    resourceType: row.resource_type,
+    resourceId: row.resource_id,
+    message: [event, row.resource_type, row.resource_id].filter(Boolean).join(' · '),
+    detail: { capability: row.capability, audit_recorded: recorded }
+  });
 
   try {
     const res = await fetch(`${env.SUPABASE_URL}/rest/v1/control_audit`, {
@@ -77,12 +95,15 @@ export async function recordAudit(env, entry = {}) {
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
+      observe(false);
       return { recorded: false, reason: 'ledger_rejected', status: res.status, detail: text.slice(0, 500) };
     }
     const body = await res.json().catch(() => null);
     const written = Array.isArray(body) ? body[0] : body;
+    observe(true);
     return { recorded: true, id: written?.id ?? null, at: written?.at ?? null };
   } catch (error) {
+    observe(false);
     return {
       recorded: false,
       reason: 'ledger_unreachable',

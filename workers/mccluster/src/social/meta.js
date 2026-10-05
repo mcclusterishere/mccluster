@@ -1,4 +1,5 @@
 import { scoreMetrics } from './router.js';
+import { recordEvent } from '../lib/observability.js';
 import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
 
 function headers(env) {
@@ -235,11 +236,26 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
   const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
   for (const job of jobs) {
+    const started = Date.now();
     try {
-      results.push({ id: job.id, ...(await processPublishJob(env, job)) });
+      const outcome = await processPublishJob(env, job);
+      results.push({ id: job.id, ...outcome });
+      recordEvent({
+        orgId: job.org_id, name: `social.publish.${outcome?.state || 'processed'}`, kind: 'job',
+        resourceType: 'social_publish_job', resourceId: job.id, durationMs: Date.now() - started,
+        message: `Instagram publish job → ${outcome?.state || 'processed'}`,
+        detail: { content_id: job.content_id || null, attempts: Number(job.attempts || 0) }
+      });
     } catch (error) {
       const attempts = Number(job.attempts || 0) + 1;
       const terminal = attempts >= 5;
+      recordEvent({
+        orgId: job.org_id, name: terminal ? 'social.publish.failed' : 'social.publish.retry', kind: 'job',
+        level: terminal ? 'error' : 'warn', outcome: terminal ? 'error' : 'retry',
+        resourceType: 'social_publish_job', resourceId: job.id, durationMs: Date.now() - started,
+        message: `Instagram publish ${terminal ? 'failed permanently' : 'will retry'}: ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`,
+        detail: { content_id: job.content_id || null, attempts }
+      });
       await patch(env, 'social_publish_jobs', job.id, {
         state: terminal ? 'failed' : job.state,
         attempts,

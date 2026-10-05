@@ -1,6 +1,7 @@
 import { rest } from '../supabase.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { callCoreCapability, unwrapCapabilityResult } from '../game-studio/capability-client.mjs';
+import { emitCoreEvent, jobTraceId } from '../observability.mjs';
 
 function clean(value, max = 12000) {
   return String(value ?? '').trim().slice(0, max);
@@ -233,7 +234,22 @@ export async function residentAiTurn(job) {
   const objective = needsCurrentResearch(userMessage.content)
     ? researchObjective(userMessage.content, previousUser?.content)
     : '';
+  const traceId = jobTraceId(job);
+  const researchStarted = Date.now();
   const research = objective ? await fetchCurrentResearch(objective) : null;
+  if (research) {
+    const found = research.ok && research.result_count > 0;
+    await emitCoreEvent({
+      orgId, traceId, requestId: job.id, kind: 'dependency', name: 'ai.research.lookup',
+      route: 'core:capability:research.web',
+      level: found ? 'info' : 'warn', outcome: found ? 'ok' : (research.ok ? 'refused' : 'error'),
+      resourceType: 'ops_ai_thread', resourceId: threadId, durationMs: Date.now() - researchStarted,
+      message: found
+        ? `research.web returned ${research.result_count} source${research.result_count === 1 ? '' : 's'} via ${research.provider || 'unknown'}`
+        : `research.web ${research.ok ? 'returned no results' : `failed: ${String(research.error || '').slice(0, 200)}`}`,
+      detail: { provider: research.provider, result_count: research.result_count, fetched_at: research.fetched_at },
+    });
+  }
 
   // The evidence rides in the one leading system message: chat templates keep
   // it when a long history is truncated, and none of them drop it.
@@ -245,6 +261,7 @@ export async function residentAiTurn(job) {
   history.unshift({ role: 'system', content: system.join('\n\n') });
 
   let response;
+  const inferenceStarted = Date.now();
   try {
     response = await localAiChat({
       messages: history,
@@ -258,6 +275,12 @@ export async function residentAiTurn(job) {
       },
     });
   } catch (error) {
+    await emitCoreEvent({
+      orgId, traceId, requestId: job.id, kind: 'dependency', name: 'ai.inference.failed',
+      route: 'core:capability:ai.chat', level: 'warn', outcome: 'retry',
+      resourceType: 'ops_ai_thread', resourceId: threadId, durationMs: Date.now() - inferenceStarted,
+      message: String(error?.message || error).slice(0, 500),
+    });
     await updateUserState({
       orgId,
       userMessage,
@@ -266,6 +289,13 @@ export async function residentAiTurn(job) {
     }).catch(() => null);
     throw error;
   }
+  await emitCoreEvent({
+    orgId, traceId, requestId: job.id, kind: 'dependency', name: 'ai.inference.completed',
+    route: 'core:capability:ai.chat',
+    resourceType: 'ops_ai_thread', resourceId: threadId, durationMs: Date.now() - inferenceStarted,
+    message: `Resident inference on ${response?.model || 'local model'}`,
+    detail: { model: response?.model || null, implementation: response?.implementation || null, queue_wait_ms: response?.queue_wait_ms ?? null },
+  });
 
   const answer = clean(response?.message?.content || response?.content || response?.text || response?.answer, 30000);
   if (!answer) throw new Error('McCluster completed the resident AI turn without response content');

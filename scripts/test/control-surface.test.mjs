@@ -296,7 +296,8 @@ test('System Observability reads retained org-scoped request traces', async()=>{
     read('supabase/migrations/20261005071308_control_observability_events_v1.sql'),
     read('workers/mccluster/src/lib/http.js')
   ]);
-  assert.match(control,/\/v1\/observability\/events\?org_id=/);
+  assert.match(control,/"\/v1\/observability\/events\?" \+ q/);
+  assert.match(control,/var q = "org_id=" \+ encodeURIComponent\(state\.org\.id\)/);
   assert.match(control,/x-mccluster-org-id/);
   assert.match(control,/x-mccluster-trace-id/);
   assert.match(control,/data-action="load-observability"/);
@@ -312,6 +313,35 @@ test('System Observability reads retained org-scoped request traces', async()=>{
   assert.match(migration,/revoke all on table public\.control_observability_events from authenticated/);
   assert.match(http,/x-mccluster-org-id/);
   assert.match(http,/access-control-expose-headers.*x-mccluster-trace-id/);
+});
+
+test('System Observability drills into traces and records, and failures link into them', async()=>{
+  const [control,css]=await Promise.all([read('js/control-room-v2.js'),read('css/control-room-v2.css')]);
+  /* trace and record drilldown share one owner-gated read */
+  assert.match(control,/function openTrace\(target, title\)/);
+  assert.match(control,/\{ trace_id: target\.trace_id \} : \{ resource_type: target\.resource_type, resource_id: target\.resource_id \}/);
+  assert.match(control,/action === "observe-trace"\) openTrace\(\{ trace_id:/);
+  assert.match(control,/action === "observe-resource"\) openTrace\(\{ resource_type:/);
+  /* every failure source in the ledger opens its events */
+  assert.match(control,/traceButton\(\{ trace_id: \(j\.input && j\.input\.trace_id\) \|\| j\.id \}, "Open job trace"\)/);
+  assert.match(control,/traceButton\(\{ resource_type: "media_job", resource_id: j\.id \}\)/);
+  assert.match(control,/traceButton\(\{ resource_type: "social_publish_job", resource_id: p\.id \}\)/);
+  /* ledger rows were clickable and did nothing; they now open an inspector with their trace */
+  assert.match(control,/action === "inspect-audit"\) inspectAudit\(/);
+  assert.match(control,/a\.detail && a\.detail\.trace && a\.detail\.trace\.trace_id/);
+  /* the tail pages with the server cursor instead of a fixed window */
+  assert.match(control,/data\.next_cursor/);
+  assert.match(control,/data-action="observability-older"/);
+  /* filters are mobile-first and inputs never trigger iOS zoom */
+  assert.match(css,/\.cr-observe-filters\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.cr-observe-filters \.cr-input\{grid-column:1\/-1;font-size:max\(16px,1em\)\}/);
+  assert.doesNotMatch(css,/\.cr-observe-filters\{[^}]*\b1fr\b(?!\))/);
+  /* rows render every event kind: requests by route, everything else by name */
+  const fn=control.match(/function obsLabel\(e\) \{[\s\S]*?\n  \}\n/);
+  const obsLabel=new Function(fn[0]+'return obsLabel;')();
+  assert.equal(obsLabel({event_kind:'request',method:'POST',route:'/v1/work/tasks'}),'POST /v1/work/tasks');
+  assert.equal(obsLabel({event_kind:'domain',event_name:'work.task.create',route:'/v1/work/tasks'}),'work.task.create');
+  assert.equal(obsLabel({event_kind:'job',event_name:'core.job.resident_ai_turn.completed',route:'core:job:resident_ai_turn'}),'core.job.resident_ai_turn.completed');
 });
 
 

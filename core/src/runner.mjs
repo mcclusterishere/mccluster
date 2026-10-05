@@ -21,6 +21,7 @@ import { leadRescore } from './executors/lead-rescore.mjs';
 import { meetingDelegateDispatch } from './executors/meeting-delegate-dispatch.mjs';
 import { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs';
 import { residentAiTurn } from './executors/resident-ai-turn.mjs';
+import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -80,6 +81,14 @@ async function execute(job) {
       completedAt: new Date().toISOString(),
     });
     await completeJob(job, output);
+    await emitCoreEvent({
+      orgId: job.org_id, traceId: jobTraceId(job), requestId: job.id, kind: 'job',
+      name: `core.job.${job.job_type}.completed`, route: `core:job:${job.job_type}`,
+      resourceType: 'ops_agent_job', resourceId: job.id,
+      durationMs: Date.now() - Date.parse(startedAt),
+      message: output?.summary || `${job.job_type} completed`,
+      detail: { attempt: job.attempts ?? null, executor: output?.executor || null },
+    });
     log('job_completed', {
       job_id: job.id,
       job_type: job.job_type,
@@ -91,6 +100,16 @@ async function execute(job) {
   } catch (error) {
     const updated = await failJob(job, error).catch((writeError) => { log('job_failure_write_failed', { job_id: job.id, message: writeError.message }); return null; });
     const status = updated?.status || 'unknown';
+    const terminal = status === 'failed';
+    await emitCoreEvent({
+      orgId: job.org_id, traceId: jobTraceId(job), requestId: job.id, kind: 'job',
+      name: `core.job.${job.job_type}.${terminal ? 'failed' : 'retry'}`, route: `core:job:${job.job_type}`,
+      level: terminal ? 'error' : 'warn', outcome: terminal ? 'error' : 'retry',
+      resourceType: 'ops_agent_job', resourceId: job.id,
+      durationMs: Date.now() - Date.parse(startedAt),
+      message: String(error?.message || error).slice(0, 500),
+      detail: { attempt: job.attempts ?? null, status },
+    });
     log('job_failed', { job_id: job.id, job_type: job.job_type, status, attempt: job.attempts, message: error.message });
     await safeNotify('owner_sms_alert', () => notifyJobFailure(job, error, status));
   } finally { clearInterval(timer); }

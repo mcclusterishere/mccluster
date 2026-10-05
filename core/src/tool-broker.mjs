@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createCapabilityRegistry } from './capabilities/registry.mjs';
 import { createToolRegistry } from './tools/registry.mjs';
 import { createEdgeVerifier, DEFAULT_EDGE_CLOCK_SKEW_MS } from './broker-edge-auth.mjs';
+import { emitCoreEvent } from './observability.mjs';
 
 const HOST = process.env.CORE_BROKER_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_BROKER_PORT || 4777);
@@ -40,6 +41,35 @@ function deployedRevision() {
   } catch {
     return null;
   }
+}
+
+/* Capability dispatch is an event in the house org's observability tail.
+   The broker serves one house, so the org is MCCLUSTER_ORG_ID; without it
+   there is no tenant to pin the event to and nothing is written. Arguments
+   and results are not recorded, only which implementation answered. */
+function observeCapability(req, capability, started, { result = null, error = null } = {}) {
+  const orgId = String(process.env.MCCLUSTER_ORG_ID || '').trim();
+  if (!orgId) return;
+  const status = Number(error?.status) || 0;
+  const refused = error && status >= 400 && status < 500;
+  void emitCoreEvent({
+    orgId,
+    traceId: String(req.headers['x-mccluster-trace-id'] || ''),
+    kind: 'capability',
+    name: `core.capability.${capability}`,
+    route: `core:capability:${capability}`,
+    level: error ? (refused ? 'warn' : 'error') : 'info',
+    outcome: error ? (refused ? 'refused' : 'error') : 'ok',
+    durationMs: Date.now() - started,
+    message: error ? String(error.message || error).slice(0, 300) : `${capability} answered by ${result?.provider || 'core'}`,
+    detail: {
+      capability,
+      provider: result?.provider || null,
+      binding: result?.binding || null,
+      tool: result?.tool || null,
+      code: error?.code || null,
+    },
+  });
 }
 
 function secretEqual(received, expected) {
@@ -256,11 +286,19 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/v1/capabilities/call' && req.method === 'POST') {
       const body = parseJson(bodyBytes);
       if (!body.capability) return json(res, 400, { error: 'capability is required' });
-      return json(res, 200, await capabilities.call(
-        body.capability,
-        body.arguments || {},
-        { requirements: body.requirements || {} }
-      ));
+      const started = Date.now();
+      try {
+        const result = await capabilities.call(
+          body.capability,
+          body.arguments || {},
+          { requirements: body.requirements || {} }
+        );
+        observeCapability(req, body.capability, started, { result });
+        return json(res, 200, result);
+      } catch (error) {
+        observeCapability(req, body.capability, started, { error });
+        throw error;
+      }
     }
 
     if (url.pathname === '/v1/tools' && req.method === 'GET') {

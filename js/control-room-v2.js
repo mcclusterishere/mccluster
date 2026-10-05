@@ -68,6 +68,8 @@
     pipelineStage: "all",
     resources: null,
     observability: null,
+    observabilityTrace: null,
+    observabilityFilters: { level: "all", kind: "all", window: 24, q: "" },
     publicRecord: null,
     socialAccounts: null,
     decisions: [],
@@ -1894,28 +1896,136 @@
     });
     return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
-  function loadObservability(force) {
+  /* RETAINED OBSERVABILITY. One canonical, owner-gated event contract
+     (GET /v1/observability/events) carries Worker requests, domain events
+     (audited mutations, paid media, AI decisions, publishing) and Core job,
+     capability and resident-AI events. A trace or a record opens as a
+     timeline; the canonical failure and audit ledger below stays as context
+     and links into the same traces. */
+  function observabilityQuery(extra) {
+    var q = "org_id=" + encodeURIComponent(state.org.id);
+    Object.keys(extra || {}).forEach(function (k) {
+      if (extra[k] !== undefined && extra[k] !== null && extra[k] !== "") q += "&" + k + "=" + encodeURIComponent(extra[k]);
+    });
+    return "/v1/observability/events?" + q;
+  }
+  function loadObservability(force, older) {
     if (state.pending.observability) return Promise.resolve();
-    if (state.observability && !force) return Promise.resolve();
+    if (state.observability && !force && !older) return Promise.resolve();
     if (!state.org || !state.org.id) return Promise.resolve();
+    var f = state.observabilityFilters;
+    var cursor = older && state.observability && state.observability.ok && state.observability.data ? state.observability.data.next_cursor : null;
+    if (older && !cursor) return Promise.resolve();
     state.pending.observability = true;
     render();
-    var since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    return src(request("/v1/observability/events?org_id=" + encodeURIComponent(state.org.id) + "&limit=100&since=" + encodeURIComponent(since)))
-      .then(function (result) {
-        state.observability = result;
-        delete state.pending.observability;
-        render();
-      });
+    return src(request(observabilityQuery({
+      limit: 100,
+      since: new Date(Date.now() - f.window * 60 * 60 * 1000).toISOString(),
+      level: f.level === "all" ? "" : f.level,
+      event_kind: f.kind === "all" ? "" : f.kind,
+      cursor: cursor
+    }))).then(function (result) {
+      if (older && result.ok && state.observability && state.observability.ok) {
+        var merged = pickRows(state.observability, "events").concat(pickRows(result, "events"));
+        result.data = Object.assign({}, result.data, { events: merged });
+      }
+      state.observability = result;
+      delete state.pending.observability;
+      render();
+    });
   }
   function retainedObservabilityEvents() {
     return state.observability && state.observability.ok ? pickRows(state.observability, "events") : [];
   }
+  function obsLabel(e) {
+    if (e.event_kind === "request" || (!e.event_name && e.method)) return [e.method, e.route].filter(Boolean).join(" ");
+    return e.event_name || e.route || "event";
+  }
+  function obsOutcome(e) {
+    if (e.status_code !== null && e.status_code !== undefined) return String(e.status_code) + (e.outcome && e.outcome !== "ok" ? " · " + e.outcome : "");
+    return e.outcome || "—";
+  }
+  function obsKind(e) { return e.level === "error" ? "bad" : (e.level === "warn" ? "warn" : "info"); }
+  function obsRows(events) {
+    return events.map(function (e) {
+      return {
+        id: e.id, action: "inspect-observation", time: e.occurred_at || e.created_at,
+        level: String(e.level || "info").toUpperCase(), kind: obsKind(e), label: obsLabel(e),
+        source: [e.source || "worker", e.event_kind].filter(Boolean).join(" · "),
+        outcome: obsOutcome(e), duration: e.duration_ms == null ? "—" : e.duration_ms + " ms",
+        resource: e.resource_type ? e.resource_type + (e.resource_id ? " " + String(e.resource_id).slice(0, 8) : "") : "—",
+        trace: e.trace_id ? String(e.trace_id).slice(0, 8) : "—"
+      };
+    });
+  }
+  var OBS_COLUMNS = [
+    { label: "Time", html: function (r) { return esc(ago(r.time)); } },
+    { label: "Level", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.level) + '</span>'; } },
+    { label: "Event", key: "label" },
+    { label: "Source", key: "source" },
+    { label: "Outcome", key: "outcome" },
+    { label: "Duration", key: "duration" },
+    { label: "Record", key: "resource" },
+    { label: "Trace", key: "trace" }
+  ];
+  /* A trace button: by trace id, or by the record the events are about. */
+  function traceButton(target, label) {
+    if (!target) return "";
+    if (target.trace_id) return '<button class="cr-btn cr-btn--ghost" type="button" data-action="observe-trace" data-trace="' + esc(target.trace_id) + '">' + esc(label || "Open trace") + '</button>';
+    if (target.resource_type && target.resource_id) return '<button class="cr-btn cr-btn--ghost" type="button" data-action="observe-resource" data-resource-type="' + esc(target.resource_type) + '" data-resource-id="' + esc(target.resource_id) + '">' + esc(label || "Events for this record") + '</button>';
+    return "";
+  }
+  function openTrace(target, title) {
+    if (!state.org || !state.org.id || !target) return Promise.resolve();
+    var query = target.trace_id ? { trace_id: target.trace_id } : { resource_type: target.resource_type, resource_id: target.resource_id };
+    state.observabilityTrace = { target: target, title: title || (target.trace_id ? "Trace " + String(target.trace_id).slice(0, 8) : target.resource_type + " " + String(target.resource_id).slice(0, 8)), loading: true, result: null };
+    closeInspector();
+    setSurface("system", "observability");
+    return src(request(observabilityQuery(Object.assign({ limit: 200 }, query)))).then(function (result) {
+      if (!state.observabilityTrace || state.observabilityTrace.target !== target) return;
+      state.observabilityTrace.loading = false;
+      state.observabilityTrace.result = result;
+      render();
+    });
+  }
+  function renderTracePanel() {
+    var t = state.observabilityTrace; if (!t) return "";
+    var head = '<div class="cr-observe-head"><div><strong>' + esc(t.title) + '</strong><span class="cr-live-dot">' +
+      (t.target.trace_id ? "every event sharing this trace" : "every event about this record") + '</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="close-trace">Close</button></div>';
+    if (t.loading) return head + '<div class="cr-canvas">' + empty("Reading trace", "Loading retained events for this trace.") + '</div>';
+    if (!t.result || !t.result.ok) return head + sourceBanner(t.result, "Trace");
+    var events = pickRows(t.result, "events").slice().sort(function (a, b) {
+      return new Date(a.occurred_at || a.created_at) - new Date(b.occurred_at || b.created_at) || Number(a.id) - Number(b.id);
+    });
+    if (!events.length) return head + '<div class="cr-canvas">' + empty("No retained events", "Nothing in the retention window carries this " + (t.target.trace_id ? "trace" : "record") + ". Info events are kept 14 days, warnings and errors 90.") + '</div>';
+    var first = new Date(events[0].occurred_at || events[0].created_at).getTime();
+    var timeline = '<div class="cr-trace cr-trace--obs">' + events.map(function (e) {
+      var offset = Math.max(0, new Date(e.occurred_at || e.created_at).getTime() - first);
+      var cls = e.level === "error" ? "is-bad" : (e.level === "warn" ? "is-live" : "is-done");
+      return '<div class="' + cls + '" data-action="inspect-trace-event" data-id="' + esc(e.id) + '" tabindex="0">' +
+        '<b>' + esc(obsLabel(e)) + '</b><span>+' + esc(String(offset)) + ' ms · ' + esc([e.source || "worker", obsOutcome(e), e.duration_ms == null ? "" : e.duration_ms + " ms"].filter(Boolean).join(" · ")) + '</span>' +
+        (e.message && e.event_kind !== "request" ? '<span>' + esc(String(e.message).slice(0, 160)) + '</span>' : "") + '</div>';
+    }).join("") + '</div>';
+    return head + timeline;
+  }
   function renderObservability() {
+    var f = state.observabilityFilters;
     var retained = retainedObservabilityEvents();
+    var q = f.q.trim().toLowerCase();
+    if (q) retained = retained.filter(function (e) {
+      return [e.event_name, e.route, e.message, e.trace_id, e.request_id, e.resource_type, e.resource_id, e.source].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
     var fallback = observedEvents();
-    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">retained request traces · last 24h</span></div>' +
+    var data = state.observability && state.observability.ok ? state.observability.data || {} : {};
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">retained · last ' + esc(f.window >= 24 ? (f.window / 24) + "d" : f.window + "h") + '</span></div>' +
       '<button class="cr-btn cr-btn--ghost" type="button" data-action="load-observability"' + (state.pending.observability ? " disabled" : "") + '>' + (state.pending.observability ? "Reading…" : "Re-read") + '</button></div>';
+    var controls = '<div class="cr-gen cr-observe-filters">' +
+      '<select class="cr-select" id="crObsLevel" aria-label="Level">' + [["all", "All levels"], ["info", "Info"], ["warn", "Warn"], ["error", "Error"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.level === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<select class="cr-select" id="crObsKind" aria-label="Kind">' + [["all", "All kinds"], ["request", "Requests"], ["domain", "Changes"], ["job", "Jobs"], ["dependency", "Providers"], ["capability", "Capabilities"], ["scheduled", "Scheduled"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.kind === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<select class="cr-select" id="crObsWindow" aria-label="Window">' + [[1, "1 hour"], [24, "24 hours"], [168, "7 days"], [720, "30 days"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.window === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<input class="cr-input" id="crObsSearch" type="search" placeholder="Event, route, trace or record" value="' + esc(f.q) + '">' +
+      '</div>';
 
     var retainedBody;
     if (state.pending.observability && !state.observability) {
@@ -1923,29 +2033,10 @@
     } else if (state.observability && !state.observability.ok) {
       retainedBody = sourceBanner(state.observability, "Observability events");
     } else if (!retained.length) {
-      retainedBody = '<div class="cr-canvas">' + empty("No retained Control requests", "No verified Control request trace was recorded in this workspace during the selected 24-hour window.") + '</div>';
+      retainedBody = '<div class="cr-canvas">' + empty("No retained events", "Nothing matches in this window. Fast successful reads are not retained; mutations, failures, slow reads, provider calls and Core work are.") + '</div>';
     } else {
-      var traceRows = retained.map(function (event) {
-        return {
-          id: event.id,
-          action: "inspect-observation",
-          time: event.created_at,
-          level: String(event.level || "info").toUpperCase(),
-          kind: event.level === "error" ? "bad" : (event.level === "warn" ? "warn" : "info"),
-          request: [event.method, event.route].filter(Boolean).join(" "),
-          status: event.status_code == null ? "—" : String(event.status_code),
-          duration: event.duration_ms == null ? "—" : String(event.duration_ms) + " ms",
-          trace: event.trace_id ? String(event.trace_id).slice(0, 8) : "—"
-        };
-      });
-      retainedBody = renderTable([
-        { label: "Time", html: function (r) { return esc(ago(r.time)); } },
-        { label: "Level", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.level) + '</span>'; } },
-        { label: "Request", key: "request" },
-        { label: "Status", key: "status" },
-        { label: "Duration", key: "duration" },
-        { label: "Trace", key: "trace" }
-      ], traceRows, "No retained events");
+      retainedBody = renderTable(OBS_COLUMNS, obsRows(retained), "No retained events") +
+        (data.has_more ? '<div class="cr-panel__body"><button class="cr-btn cr-btn--ghost" type="button" data-action="observability-older"' + (state.pending.observability ? " disabled" : "") + '>Load older</button></div>' : "");
     }
 
     var fallbackBody = fallback.length
@@ -1957,10 +2048,10 @@
         ], fallback, "No canonical context events")
       : '<p class="cr-panel__body cr-muted">No failed canonical jobs and no recent privileged audit entries in the loaded snapshot.</p>';
 
-    return head +
-      '<p class="cr-derived">These request events are retained by the Worker after verifying the signed-in operator belongs to this workspace. Trace and request IDs are returned on API responses for correlation; request bodies and credentials are not retained.</p>' +
+    return renderTracePanel() + head + controls +
+      '<p class="cr-derived">Retained events are org-scoped and owner-only. Worker requests are kept after the operator is verified as a member of this workspace; request bodies, prompts and credentials are never stored. Info events are kept 14 days, warnings and errors 90. Open any failure, job, media job, publish job or ledger entry to see its trace.</p>' +
       retainedBody +
-      '<h3 class="cr-subhead">Canonical failure & audit context</h3>' + fallbackBody;
+      '<h3 class="cr-subhead">Canonical failure &amp; audit ledger</h3>' + fallbackBody;
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
@@ -2427,7 +2518,8 @@
         ["Attempts", count(j.attempts) + "/" + count(j.max_attempts)],
         ["Run time", durationBetween(j.started_at || j.created_at, j.finished_at || j.updated_at)],
         ["Created", formatDate(j.created_at)], ["Updated", formatDate(j.updated_at)]],
-      custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"]
+      custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"],
+      actions: traceButton({ trace_id: (j.input && j.input.trace_id) || j.id }, "Open job trace")
     });
   }
   /* Media jobs can come from the loaded snapshot or from a generation that
@@ -2490,6 +2582,7 @@
       related: assets.length
         ? '<div class="cr-list">' + assets.map(function (a) { return row(assetName(a), "Produced asset", titleCase(a.media_type || a.type || "asset"), "ok", "inspect-asset", { id: a.id, badge: "Asset" }); }).join("") + '</div>'
         : '<p class="cr-muted">No asset rows reference this job.</p>',
+      actions: (j.routing && j.routing.trace_id ? traceButton({ trace_id: j.routing.trace_id }) : "") + traceButton({ resource_type: "media_job", resource_id: j.id }),
       raw: j, tabs: ["overview", "related", "raw", "ai"]
     });
   }
@@ -2531,6 +2624,7 @@
     var actions = "";
     if (canRetry) actions += '<button class="cr-btn cr-btn--primary" type="button" data-action="retry-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Retrying…" : "Retry") + '</button>';
     if (canCancel) actions += '<button class="cr-btn" type="button" data-action="cancel-publish" data-id="' + esc(p.id) + '"' + (busy ? " disabled" : "") + '>Cancel</button>';
+    actions += traceButton({ resource_type: "social_publish_job", resource_id: p.id });
     openInspector({
       title: "Publishing job",
       subtitle: "Create · Schedule",
@@ -2546,19 +2640,43 @@
     });
   }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
+  function observationById(id) {
+    var pool = retainedObservabilityEvents();
+    if (state.observabilityTrace && state.observabilityTrace.result && state.observabilityTrace.result.ok) pool = pool.concat(pickRows(state.observabilityTrace.result, "events"));
+    return pool.find(function (row) { return String(row.id) === String(id); });
+  }
   function inspectObservation(id) {
-    var e = retainedObservabilityEvents().find(function (row) { return String(row.id) === String(id); });
+    var e = observationById(id);
     if (!e) return;
+    var actions = traceButton({ trace_id: e.trace_id }) +
+      (e.resource_type && e.resource_id ? traceButton({ resource_type: e.resource_type, resource_id: e.resource_id }) : "");
     openInspector({
-      title: (e.method || "REQUEST") + " " + (e.route || "/"),
-      subtitle: "System · Observability",
-      description: e.message || "Retained Worker request event.",
+      title: obsLabel(e),
+      subtitle: "System · Observability · " + titleCase(e.event_kind || "event"),
+      description: e.message || "Retained observability event.",
       props: [
-        ["Level", e.level], ["Status", e.status_code], ["Duration", e.duration_ms == null ? "—" : e.duration_ms + " ms"],
-        ["Trace", e.trace_id], ["Request", e.request_id], ["Service", e.service],
-        ["Actor", e.actor_user_id], ["Created", formatDate(e.created_at)]
+        ["Level", e.level], ["Outcome", e.outcome], ["Status", e.status_code], ["Duration", e.duration_ms == null ? "—" : e.duration_ms + " ms"],
+        ["Source", e.source], ["Service", e.service], ["Route", e.route],
+        ["Record", e.resource_type ? e.resource_type + " " + text(e.resource_id, "") : "—"],
+        ["Trace", e.trace_id], ["Request", e.request_id], ["Span", e.span_id], ["Parent span", e.parent_span_id],
+        ["Actor", e.actor_user_id], ["Occurred", formatDate(e.occurred_at || e.created_at)], ["Stored", formatDate(e.created_at)]
       ],
+      actions: actions,
       raw: e,
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
+  function inspectAudit(id) {
+    var a = (state.audit || []).find(function (row) { return String(row.id) === String(id); });
+    if (!a) return;
+    var trace = a.detail && a.detail.trace && a.detail.trace.trace_id;
+    openInspector({
+      title: a.event,
+      subtitle: "System · Ledger",
+      description: "Privileged change recorded in control_audit.",
+      props: [["Actor", a.actor_user_id || a.actor_kind], ["Capability", a.capability], ["Record", a.resource_type ? a.resource_type + " " + text(a.resource_id, "") : "—"], ["At", formatDate(a.at)], ["Trace", trace || "not recorded (before tracing)"]],
+      actions: trace ? traceButton({ trace_id: trace }) : (a.resource_type && a.resource_id ? traceButton({ resource_type: a.resource_type, resource_id: a.resource_id }) : ""),
+      raw: a,
       tabs: ["overview", "raw", "ai"]
     });
   }
@@ -2898,6 +3016,12 @@
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
     else if (action === "inspect-observation") inspectObservation(el.getAttribute("data-id"));
     else if (action === "load-observability") loadObservability(true);
+    else if (action === "observability-older") loadObservability(false, true);
+    else if (action === "observe-trace") openTrace({ trace_id: el.getAttribute("data-trace") });
+    else if (action === "observe-resource") openTrace({ resource_type: el.getAttribute("data-resource-type"), resource_id: el.getAttribute("data-resource-id") });
+    else if (action === "close-trace") { state.observabilityTrace = null; render(); }
+    else if (action === "inspect-trace-event") inspectObservation(el.getAttribute("data-id"));
+    else if (action === "inspect-audit") inspectAudit(el.getAttribute("data-id"));
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
     else if (action === "filters") {
@@ -3214,6 +3338,26 @@
       });
     }
     var hero = $("crHeroInput"); if (hero) hero.addEventListener("keydown", function (e) { if (e.key === "Enter") handleCommand(hero.value); });
+
+    /* Observability filters: level, kind and window are server queries; the
+       text box narrows what is already loaded without a round trip. */
+    [["crObsLevel", "level"], ["crObsKind", "kind"], ["crObsWindow", "window"]].forEach(function (pair) {
+      var el = $(pair[0]);
+      if (el) el.addEventListener("change", function () {
+        state.observabilityFilters[pair[1]] = pair[1] === "window" ? Number(el.value) || 24 : el.value;
+        loadObservability(true);
+      });
+    });
+    var obsSearch = $("crObsSearch");
+    if (obsSearch) obsSearch.addEventListener("input", function () {
+      state.observabilityFilters.q = obsSearch.value;
+      clearTimeout(state.pending.obsSearchTimer);
+      state.pending.obsSearchTimer = setTimeout(function () {
+        render();
+        var again = $("crObsSearch");
+        if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+      }, 200);
+    });
 
     /* These chips were rendered before but never bound, so the workload
        filters looked live and did nothing. They filter state now. */
