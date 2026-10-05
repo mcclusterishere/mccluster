@@ -112,6 +112,23 @@ test("every JSON-LD block on the published site parses", () => {
   }
 });
 
+
+test("VideoObject markup ships only with a verified timezone-aware first-publication timestamp", () => {
+  // A VideoObject uploadDate is a factual first-publication timestamp, not a page
+  // publish date or a guessed midnight. Add a VideoObject only when that timestamp
+  // is supported by the authority record in docs/SEO-AEO-AUTHORITY-SYSTEM.md.
+  const zonedDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+  for (const f of publishedHtml()) {
+    for (const b of ldBlocks(read(f))) {
+      for (const n of nodes(JSON.parse(b))) {
+        if (!types(n).includes("VideoObject")) continue;
+        assert.equal(typeof n.uploadDate, "string", `${f}: VideoObject must have uploadDate`);
+        assert.match(n.uploadDate, zonedDateTime, `${f}: VideoObject.uploadDate must be a full ISO-8601 timestamp with timezone`);
+      }
+    }
+  }
+});
+
 test("one person, one node: the Person is defined on the profile and referenced everywhere else", () => {
   let canonicalProfiles = 0;
   const canonicalSameAs = new Set(graph.person.sameAs);

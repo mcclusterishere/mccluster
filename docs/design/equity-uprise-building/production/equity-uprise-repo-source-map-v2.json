@@ -681,6 +681,13 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/control-plane/REPOSITORY-GOVERNANCE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Repository governance and branch-lifecycle documentation mentions Equity Uprise only when describing shared contract checks and historical branch handling; it does not define a building capability."
+    },
+    {
       "path": "docs/control-plane/SPATIAL-INTELLIGENCE.md",
       "classification": "capability_source",
       "capability_ids": [
