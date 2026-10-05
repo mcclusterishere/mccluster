@@ -2502,6 +2502,13 @@
       state.pending.observability = true;
       loadObservability(false).finally(function () { delete state.pending.observability; });
     }
+    if (state.surface === "work" && FUTURE_WORK[state.workView] && !state.futureWork[state.workView] && !state.pending["futureWorkLoad:" + state.workView]) {
+      var futureLoadView = state.workView;
+      state.pending["futureWorkLoad:" + futureLoadView] = true;
+      loadFutureWork(futureLoadView, false).finally(function () {
+        delete state.pending["futureWorkLoad:" + futureLoadView];
+      });
+    }
     if (state.surface === "work" && state.workView === "inbox" && state.selectedThreadId && !state.transcripts[state.selectedThreadId] && !state.pending["transcript:" + state.selectedThreadId]) {
       state.pending["transcript:" + state.selectedThreadId] = true;
       var pendingId = state.selectedThreadId;
@@ -2900,6 +2907,7 @@
   function runAction(action, el) {
     if (!action) return;
     if (action.indexOf("open-bridge:") === 0) { openBridge(action.split(":")[1]); return; }
+    if (action.indexOf("inspect-future-work:") === 0) { inspectFutureWork(action.split(":")[1], el.getAttribute("data-id")); return; }
     /* Generation owns its own actions; everything else falls through. */
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
@@ -3151,11 +3159,67 @@
       runLeadQuery(false); closeInspector();
     }
     else if (action === "new-work") {
-      /* Records are created through the Worker's /v1/work routes
-         (js/control-room/work-records.js); the legacy CRM creator is no
-         longer the way in. */
-      if (window.CR.work) window.CR.work.openForm(state.workView);
+      /* Existing canonical records use work-records.js. Future post-sale
+         objects use the same Control interaction contract now, even while
+         their Worker routes are still capability-gated. */
+      if (FUTURE_WORK[state.workView]) openFutureWorkForm(state.workView);
+      else if (window.CR.work) window.CR.work.openForm(state.workView);
       else openInspector({ title: "Create a record", description: "The Work records module did not load, so nothing can be created from here right now.", tabs: ["overview"] });
+    }
+    else if (action === "future-work-edit") {
+      openFutureWorkForm(el.getAttribute("data-view"), el.getAttribute("data-id"));
+    }
+    else if (action === "future-work-save") {
+      var futureView = el.getAttribute("data-view");
+      var futureId = el.getAttribute("data-id");
+      var futureContract = FUTURE_WORK[futureView];
+      if (!futureContract || !state.org || !state.org.id) return;
+      var futureBody = { org_id: state.org.id };
+      var futureInvalid = null;
+      futureContract.fields.forEach(function (field) {
+        var input = $("crFuture_" + field.key);
+        var raw = input ? String(input.value || "").trim() : "";
+        if (!raw) {
+          if (field.required) futureInvalid = field.label + " is required.";
+          return;
+        }
+        if (field.scale === 100) {
+          var numeric = Number(raw);
+          if (!Number.isFinite(numeric) || numeric < 0) { futureInvalid = field.label + " must be a non-negative number."; return; }
+          futureBody[field.key] = Math.round(numeric * 100);
+          return;
+        }
+        if (field.instant) {
+          var instant = new Date(raw);
+          if (Number.isNaN(instant.getTime())) { futureInvalid = field.label + " must be a valid date and time."; return; }
+          futureBody[field.key] = instant.toISOString();
+          return;
+        }
+        futureBody[field.key] = raw;
+      });
+      if (futureInvalid) {
+        state.pending["futureWorkError:" + futureView] = badResult("failed", futureInvalid, 0);
+        openFutureWorkForm(futureView, futureId);
+        return;
+      }
+      state.pending["futureWorkSave:" + futureView] = true;
+      delete state.pending["futureWorkError:" + futureView];
+      openFutureWorkForm(futureView, futureId);
+      src(request(futureContract.endpoint + (futureId ? "/" + encodeURIComponent(futureId) : ""), {
+        method: futureId ? "PATCH" : "POST",
+        body: futureBody
+      })).then(function (result) {
+        delete state.pending["futureWorkSave:" + futureView];
+        if (!result.ok) {
+          state.pending["futureWorkError:" + futureView] = result;
+          openFutureWorkForm(futureView, futureId);
+          return;
+        }
+        delete state.pending["futureWorkError:" + futureView];
+        closeInspector();
+        state.futureWork[futureView] = null;
+        return loadFutureWork(futureView, true);
+      });
     }
     else if (action === "select-thread") {
       state.selectedThreadId = el.getAttribute("data-id");
