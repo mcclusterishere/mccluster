@@ -2407,7 +2407,30 @@
   }
   function inspectVariant(id) { var v = findById(state.variants, id); if (!v) return; openInspector({ title: v.variant_key || "Variant", subtitle: "Create · Project", description: v.hypothesis || v.hook || "Creative variant", props: [["Status", v.status], ["Score", v.score], ["Media job", v.media_job_id], ["Created", formatDate(v.created_at)]], raw: v, tabs: ["overview", "related", "raw", "ai"] }); }
   function inspectPost(id) { var p = findById(state.posts, id); if (!p) return; openInspector({ title: "Published post", subtitle: "Create · Schedule", description: p.caption || "Published content", props: [["Mode", p.publish_mode], ["Published", formatDate(p.published_at)], ["Permalink", p.permalink || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
-  function inspectPublish(id) { var p = findById(state.publishJobs, id); if (!p) return; openInspector({ title: "Publishing job", subtitle: "Create · Schedule", description: p.payload && p.payload.caption || "Scheduled distribution", props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
+  function inspectPublish(id) {
+    var p = findById(state.publishJobs, id); if (!p) return;
+    var busy = state.pending["publishJob:" + p.id];
+    var failure = state.pending["publishJobError:" + p.id];
+    var actions = "";
+    if (p.state === "failed") {
+      actions = '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="retry"' + (busy ? " disabled" : "") + '>' + (busy ? "Retrying…" : "Retry") + '</button>';
+    } else if (p.state === "draft") {
+      actions = '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="approve"' + (busy ? " disabled" : "") + '>Approve & queue</button>' +
+        '<button class="cr-btn" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="cancel"' + (busy ? " disabled" : "") + '>Cancel</button>';
+    } else if (p.state === "queued") {
+      actions = '<button class="cr-btn" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="cancel"' + (busy ? " disabled" : "") + '>' + (busy ? "Cancelling…" : "Cancel") + '</button>';
+    }
+    openInspector({
+      title: "Publishing job", subtitle: "Create · Schedule",
+      description: p.payload && p.payload.caption || "Scheduled distribution",
+      props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"],
+        ["Attempts", p.attempts == null ? "—" : p.attempts], ["External media", p.external_media_id || "—"]],
+      custom: (p.last_error ? inspectorSection("Last failure", '<p class="cr-fail">' + esc(p.last_error) + '</p>') : "") +
+        (failure ? inspectorSection("Action failed", sourceBanner(failure, "Publishing")) : ""),
+      actions: actions,
+      raw: p, tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
 
   function openBridge(key) {
