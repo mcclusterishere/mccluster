@@ -247,3 +247,24 @@ test('Control can approve or reject proposed AI decisions', async()=>{
   assert.match(edge,/approved_at = now\(\)/);
   assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
 });
+
+
+test('AI replies show what the resident turn checked on the web', async()=>{
+  const js=await read('js/control-room-v2.js');
+  const src=js.match(/function aiResearchHtml\(message\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(src,'aiResearchHtml is missing');
+  const esc=(v)=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const render=new Function('esc','ago',src[0]+'return aiResearchHtml;')(esc,()=>'2 min ago');
+  assert.equal(render({metadata:{}}),'');
+  assert.equal(render({metadata:{current_research:{attempted:false}}}),'');
+  const grounded=render({metadata:{current_research:{attempted:true,ok:true,fetched_at:'2026-10-05T14:02:00Z',sources:[
+    {title:'Budget <vote>',url:'https://ctmirror.example/budget'},
+    {title:'bad',url:'javascript:alert(1)'}
+  ]}}});
+  assert.match(grounded,/Checked the web · 1 source · 2 min ago/);
+  assert.match(grounded,/href="https:\/\/ctmirror\.example\/budget" target="_blank" rel="noopener noreferrer">Budget &lt;vote&gt;</);
+  assert.doesNotMatch(grounded,/javascript:/);
+  assert.match(render({metadata:{current_research:{attempted:true,ok:false,sources:[]}}}),/Web check failed · answer may be out of date/);
+  assert.match(render({metadata:{current_research:{attempted:true,ok:true,sources:[]}}}),/no results · answer may be out of date/);
+  assert.match(js,/\(mine \? "" : aiResearchHtml\(message\)\)/,'assistant messages render their research line');
+});
