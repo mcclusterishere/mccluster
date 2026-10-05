@@ -70,6 +70,7 @@
     observability: null,
     observabilityTrace: null,
     workspaces: [],
+    recentErrors: null,
     observabilityFilters: { level: "all", kind: "all", window: 24, q: "" },
     publicRecord: null,
     socialAccounts: null,
@@ -964,6 +965,12 @@
     var routine = pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) < 0; });
     if (routine.length) items.push({ title: routine.length + " decision" + (routine.length === 1 ? "" : "s") + " awaiting you", sub: "Proposed in the AI context plane, not yet approved or rejected.", kind: "warn", action: "inspect-decision", id: routine[0].id });
 
+    /* Retained errors from the owner-gated event stream (System ·
+       Observability). Absent for a non-owner, whose read is refused. */
+    if (state.recentErrors && state.recentErrors.count) {
+      var latestError = state.recentErrors.latest || {};
+      items.push({ title: state.recentErrors.count + (state.recentErrors.more ? "+" : "") + " error" + (state.recentErrors.count === 1 ? "" : "s") + " in the last 24 hours", sub: "Latest: " + text(latestError.event_name || latestError.route, "event") + " · " + ago(latestError.occurred_at || latestError.created_at), kind: "bad", action: "observe-errors" });
+    }
     var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
     if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
     /* A source that could not be read is itself something that needs the
@@ -1952,6 +1959,16 @@
       }
       state.observability = result;
       delete state.pending.observability;
+      render();
+    });
+  }
+  function loadRecentErrors() {
+    state.recentErrors = null;
+    if (!state.org || !state.org.id) return Promise.resolve();
+    return src(request(observabilityQuery({ level: "error", limit: 50, since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }))).then(function (result) {
+      if (!result.ok) return;
+      var events = pickRows(result, "events");
+      state.recentErrors = { count: events.length, more: Boolean(result.data && result.data.has_more), latest: events[0] || null };
       render();
     });
   }
@@ -3039,6 +3056,7 @@
     else if (action === "inspect-observation") inspectObservation(el.getAttribute("data-id"));
     else if (action === "load-observability") loadObservability(true);
     else if (action === "observability-older") loadObservability(false, true);
+    else if (action === "observe-errors") { state.observabilityFilters.level = "error"; state.observability = null; setSurface("system", "observability"); }
     else if (action === "observe-trace") openTrace({ trace_id: el.getAttribute("data-trace") });
     else if (action === "observe-resource") openTrace({ resource_type: el.getAttribute("data-resource-type"), resource_id: el.getAttribute("data-resource-id") });
     else if (action === "close-trace") { state.observabilityTrace = null; render(); }
@@ -3572,7 +3590,7 @@
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
-      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher();
+      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);

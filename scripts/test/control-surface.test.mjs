@@ -426,3 +426,12 @@ test('Control operates one chosen workspace and pins its reads and writes to it'
   assert.match(build(C,'sam'),/and=\(org_id\.eq\.c1,or\(name\.ilike\.\*sam\*,email\.ilike\.\*sam\*\)\)/);
   assert.doesNotMatch(build(C,'sam'),/&or=/,'search no longer escapes the org filter as a top-level or');
 });
+
+test('Home surfaces retained errors from the owner-gated event stream', async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/observabilityQuery\(\{ level: "error", limit: 50, since:/);
+  assert.match(js,/if \(state\.recentErrors && state\.recentErrors\.count\)/);
+  assert.match(js,/action === "observe-errors"\) \{ state\.observabilityFilters\.level = "error";/);
+  /* a refused read (non-owner) shows nothing rather than a false alarm */
+  assert.match(js,/if \(!result\.ok\) return;\s*var events = pickRows\(result, "events"\);/);
+});
