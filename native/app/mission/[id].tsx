@@ -21,6 +21,7 @@ import {
 } from '../../src/actionNetwork';
 import {
   chooseMissionProof,
+  recoverPendingMissionProof,
   takeMissionProof,
   useProofMedia,
 } from '../../src/proofMedia';
@@ -87,6 +88,18 @@ export default function MissionScreen() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    let live = true;
+    recoverPendingMissionProof()
+      .then((asset) => {
+        if (live && asset) setProof(asset);
+      })
+      .catch(() => null);
+    return () => {
+      live = false;
+    };
+  }, []);
+
   async function join() {
     if (!mission || working) return;
     setWorking(true);
@@ -122,8 +135,8 @@ export default function MissionScreen() {
 
   async function submit() {
     if (!assignment || working) return;
-    if (!statement.trim() && !proof && !link.trim()) {
-      setStatus('Describe what you did, attach proof, or add a proof link.');
+    if (!proof && !link.trim() && statement.trim().length < 20) {
+      setStatus('Add an upload or a link, or describe what you did in at least 20 characters.');
       return;
     }
 
