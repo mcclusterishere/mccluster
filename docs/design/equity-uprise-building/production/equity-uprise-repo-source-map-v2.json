@@ -2522,6 +2522,13 @@
       "rationale": "Regression coverage for shared security boundaries and Equity Uprise function hardening; test support, not a physical building capability."
     },
     {
+      "path": "scripts/test/supabase-functions-deploy.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Edge Function deploy-pipeline regression coverage; it names Equity Uprise functions only as deploy targets that import shared code. Test support, not a physical building capability."
+    },
+    {
       "path": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
       "classification": "runtime_security_support",
       "capability_ids": [],

@@ -1,0 +1,113 @@
+name: Supabase Edge Functions deploy
+
+# A change under supabase/functions or to supabase/config.toml deploys on its
+# own, with or without a migration in the same push. The Supabase GitHub
+# integration still runs, but it has skipped or failed function-only pushes
+# on main (see scripts/supabase-functions-deploy.mjs), so this workflow waits
+# for its verdict, then deploys the changed functions itself and proves them
+# live. Until the SUPABASE_ACCESS_TOKEN secret exists, it cannot deploy: it
+# passes only when the integration succeeded and otherwise fails, naming
+# every function production is still serving old code for.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+  workflow_dispatch:
+    inputs:
+      functions:
+        description: 'Space-separated function names, or "all" for every function declared in supabase/config.toml'
+        required: true
+        default: all
+
+permissions:
+  contents: read
+  checks: read
+
+# Production deploys must be ordered. If push B arrives while push A is
+# deploying, B waits for A instead of allowing A to finish after B and
+# overwrite production with older code.
+concurrency:
+  group: supabase-edge-functions-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy changed Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_PROJECT_REF: zmnhbrjyhxzhkxmhkexs
+      HAS_DEPLOY_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+    steps:
+      # Deploy what main holds now, not what this push held: a run that
+      # starts late can never put older code back over a newer deploy.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Work out which functions changed
+        id: plan
+        env:
+          BEFORE: ${{ github.event.before }}
+          REQUESTED: ${{ inputs.functions }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            node scripts/supabase-functions-deploy.mjs plan --functions "$REQUESTED"
+          else
+            node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD
+          fi
+
+      - name: Wait for the Supabase integration on this commit
+        if: steps.plan.outputs.count != '0' && github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/supabase-functions-deploy.mjs wait --sha "$GITHUB_SHA" --timeout 600 --out "$RUNNER_TEMP/integration.json"
+
+      - name: Decide whether production is current
+        if: steps.plan.outputs.count != '0'
+        env:
+          FUNCTIONS: ${{ steps.plan.outputs.functions }}
+        run: |
+          manual=false; [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && manual=true
+          node scripts/supabase-functions-deploy.mjs gate --functions "$FUNCTIONS" --verdict "$RUNNER_TEMP/integration.json" --has-token "$HAS_DEPLOY_TOKEN" --manual "$manual"
+
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
+        with:
+          version: 2.117.0
+
+      - name: Deploy with the Supabase CLI
+        id: deploy
+        if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          FUNCTIONS: ${{ steps.plan.outputs.functions }}
+        run: |
+          echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "Deploying main@$(git rev-parse --short HEAD): $FUNCTIONS"
+          # One name per CLI invocation: the CLI accepts either no name
+          # (deploy all) or one function name, not a selected list. Each
+          # function's verify_jwt comes from its [functions.<name>] stanza,
+          # and nothing is pruned.
+          for function in $FUNCTIONS; do
+            echo "::group::Deploy $function"
+            supabase functions deploy "$function" --project-ref "$SUPABASE_PROJECT_REF" --use-api
+            echo "::endgroup::"
+          done
+
+      - name: Prove each function is live
+        if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          FUNCTIONS: ${{ steps.plan.outputs.functions }}
+          STARTED_AT: ${{ steps.deploy.outputs.started_at }}
+        run: |
+          supabase functions list --project-ref "$SUPABASE_PROJECT_REF" -o json > "$RUNNER_TEMP/functions.json"
+          node scripts/supabase-functions-deploy.mjs verify --functions "$FUNCTIONS" --list "$RUNNER_TEMP/functions.json" --started-at "$STARTED_AT"
