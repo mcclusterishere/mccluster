@@ -12,6 +12,24 @@ would unblock a view already present in the locked navigation.
 Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
+
+> **Items 1, 2, 3 and 6 — RESOLVED in code, pending one migration (2026-10-05).**
+> `workers/mccluster/src/work.js` adds the canonical Work routes
+> (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
+> `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
+> `PATCH /v1/work/leads/{id}` to link a company). Each is membership-checked
+> (staff may run tasks; leads, companies, orders and bookings are owner work),
+> pinned to the caller's `org_id`, and written to `control_audit`. The tables
+> come from `supabase/pending_migrations/20261005150000_control_work_records_v1.sql`
+> (`work_companies`, `leads.company_id`, `work_tasks`, `work_orders`,
+> `work_bookings`; RLS on, no browser grants). Control's "+ New" opens the
+> native form in `js/control-room/work-records.js`; the legacy CRM creator is
+> no longer the way in. Until the owner applies the migration, the routes
+> answer `503 work_not_provisioned` and Control says so.
+> Product fulfilment tables (`print_orders`, `shake_orders`, `music_orders`,
+> `l3_orders`, `rental_bookings`) stay authoritative for their products; a
+> Work order may point at one via `source_table`/`source_id`.
+
 ---
 
 ## 1. Companies — no domain model

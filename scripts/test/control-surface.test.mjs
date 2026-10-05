@@ -143,6 +143,7 @@ test('native modules are loaded before the Control shell starts',async()=>{
   const shellAt=html.indexOf('js/control-room-v2.js');
   for(const path of [
     'js/control-room/work-tools.js',
+    'js/control-room/work-records.js',
     'js/control-room/social-compose.js',
     'js/control-room/music-ops.js',
     'js/control-room/analytics.js'
@@ -195,4 +196,30 @@ test('Home public record reads the canonical SEO authority files and exposes ope
   ]){
     assert.ok(js.includes(href),href+' is missing from the Public record panel');
   }
+});
+
+test('Work records are created through the Worker, not the legacy CRM', async()=>{
+  const [shell,mod,worker,entry,sql]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('js/control-room/work-records.js'),
+    read('workers/mccluster/src/work.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('supabase/pending_migrations/20261005150000_control_work_records_v1.sql')
+  ]);
+  /* + New opens the native form; nothing points at crm.html to create. */
+  assert.match(shell,/action === "new-work"\) \{[\s\S]*window\.CR\.work\.openForm\(state\.workView\)/);
+  assert.doesNotMatch(shell,/Open the legacy CRM creator/);
+  assert.doesNotMatch(shell,/There is no canonical write route for creating a lead/);
+  for (const kind of ['companies','tasks','orders','bookings']) assert.match(shell,new RegExp('window\\.CR\\.work\\.section\\((?:"'+kind+'"|view === "orders")'), kind);
+  /* the module writes only through /v1/work and never through PostgREST */
+  assert.match(mod,/"\/v1\/work\/"\+kind/);
+  assert.match(mod,/"\/v1\/work\/leads"/);
+  assert.doesNotMatch(mod,/rest\/v1|supa\(/);
+  assert.match(mod,/work_not_provisioned/);
+  /* the Worker wires the prefix and the tables refuse the browser */
+  assert.match(entry,/path\.startsWith\('\/v1\/work\/'\)/);
+  assert.match(worker,/requireMembership/);
+  assert.match(worker,/recordAudit/);
+  assert.match(sql,/revoke all on public\.%I from anon, authenticated/);
+  assert.match(sql,/enable row level security/);
 });

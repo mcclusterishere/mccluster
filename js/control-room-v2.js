@@ -1472,10 +1472,11 @@
       companyMap[k].people += 1;
     });
     var companies = Object.keys(companyMap).map(function (k) { return companyMap[k]; });
-    /* Backend gap, stated rather than papered over with invented rows. */
-    var gap = companies.length ? "" : '<div class="cr-gap"><b>No company model exists yet.</b><span>Companies are grouped from a company field on leads. No lead currently carries one, and there is no companies table or endpoint in the canonical backend — so this view is truthfully empty rather than filled with manufactured organizations.</span></div>';
-    return sourceBanner(state.sources.leads, "Leads") + gap +
-      (companies.length ? derivedNote("Grouped from the company field on canonical leads.") : "") +
+    /* Companies are real records now (work_companies via /v1/work/companies);
+       a lead joins one through company_id. The free-text grouping below only
+       shows legacy leads that carried a company string. */
+    return sourceBanner(state.sources.leads, "Leads") + (window.CR.work ? window.CR.work.section("companies") : "") +
+      (companies.length ? derivedNote("Legacy: grouped from a free-text company field on older leads. Create the company above to make it a record.") : "") +
       (companies.length ? renderTable([{ label: "Company", key: "name" }, { label: "People", key: "people" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], companies, "No company records yet") : "");
   }
 
@@ -1501,7 +1502,8 @@
       tasks.push({ id: j.id, action: "inspect-job", task: "Resolve failed " + titleCase(j.job_type), related: text(j.target_id, j.target_type), due: j.updated_at || j.created_at });
     });
     return sourceStates([["Leads", state.sources.leads], ["Workload", state.sources.jobs]]) +
-      '<div class="cr-gap"><b>Tasks are derived, not stored.</b><span>There is no canonical tasks table, so nothing here can be created, assigned, or checked off. These are the open next actions implied by leads that have not closed and by failed Core jobs.</span></div>' +
+      (window.CR.work ? window.CR.work.section("tasks") : "") +
+      derivedNote("Suggested next actions, implied by leads that have not closed and by failed Core jobs. They are not stored; create a task above to track one.") +
       renderTable([{ label: "Next action", key: "task" }, { label: "Related", key: "related" }, { label: "Since", html: function (r) { return esc(ago(r.due)); } }], tasks, "No open next actions");
   }
 
@@ -1509,7 +1511,8 @@
     var lane = view === "orders" ? "orders" : "bookings";
     var rows = state.leads.filter(function (l) { return leadLane(l) === lane; }).map(function (l) { return { id: l.id, action: "inspect-lead", name: l.name || l.email, item: l.want || l.note || l.campaign || titleCase(lane), status: l.status || "new", last: l.at || l.created_at }; });
     return sourceBanner(state.sources.leads, "Leads") +
-      '<div class="cr-gap"><b>' + esc(titleCase(view)) + ' are lead lanes, not their own records.</b><span>The canonical schema has no ' + esc(view) + ' table. These rows are leads routed to the ' + esc(lane) + ' lane by campaign, so there is no fulfilment state, amount, or line item to show and none is invented here.</span></div>' +
+      (window.CR.work ? window.CR.work.section(view === "orders" ? "orders" : "bookings") : "") +
+      derivedNote("Incoming: leads routed to the " + lane + " lane by campaign. Turn one into a real " + (view === "orders" ? "order" : "booking") + " record above when it is agreed.") +
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
@@ -1527,7 +1530,7 @@
   }
   function renderWork() {
     return renderHeader("Work", "One business graph. Inbox, pipeline, people, clients, tasks, orders, and bookings are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
-      '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + renderWorkView(state.workView);
+      '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
   }
 
   function projectById(id) { return state.campaigns.find(function (c) { return String(c.id) === String(id); }); }
@@ -2739,15 +2742,13 @@
       var box = $("crWorkSearch"); if (box) box.value = "";
       runLeadQuery(false); closeInspector();
     }
-    else if (action === "new-work") openInspector({
-      title: "Create a record", subtitle: "Work · " + titleCase(state.workView),
-      /* Stated plainly rather than offering a create form that would have
-         nowhere canonical to write. */
-      description: "There is no canonical write route for creating a lead, task, order, or booking from the Control Room. Records arrive from the site's own capture forms and the communications relay. Nothing is created in the browser.",
-      custom: inspectorSection("What you can do here", '<p class="cr-muted">Stage changes on an existing lead persist through Work · Pipeline. Conversations can be taken over and replied to in Work · Inbox.</p>'),
-      actions: '<button class="cr-btn" data-open-href="crm.html">Open the legacy CRM creator</button>',
-      tabs: ["overview", "ai"]
-    });
+    else if (action === "new-work") {
+      /* Records are created through the Worker's /v1/work routes
+         (js/control-room/work-records.js); the legacy CRM creator is no
+         longer the way in. */
+      if (window.CR.work) window.CR.work.openForm(state.workView);
+      else openInspector({ title: "Create a record", description: "The Work records module did not load, so nothing can be created from here right now.", tabs: ["overview"] });
+    }
     else if (action === "select-thread") {
       state.selectedThreadId = el.getAttribute("data-id");
       delete state.pending["error:" + state.selectedThreadId];
@@ -3168,6 +3169,12 @@
   if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
+  if (window.CR.work) window.CR.work.init({
+    request: request, render: render,
+    orgId: function () { return state.org && state.org.id; },
+    leads: function () { return state.leads || []; },
+    refreshLeads: function () { runLeadQuery(false); }
+  });
   if (window.CR.songTest) window.CR.songTest.init({ supa: supa, render: render });
 
   window.CR.media.init({
