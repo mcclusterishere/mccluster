@@ -2764,6 +2764,54 @@
     else if (action === "system-observability") setSurface("system", "observability");
     else if (action === "system-resources") setSurface("system", "resources");
     else if (action === "reload-observability") { state.observability = null; loadObservability(true); }
+    else if (action === "save-media-budget") {
+      if (!state.org || !state.org.id) return;
+      var budgetEnabled = Boolean($("crMediaBudgetEnabled") && $("crMediaBudgetEnabled").checked);
+      var capRaw = $("crMediaMonthlyCap") && $("crMediaMonthlyCap").value.trim();
+      var warnRaw = $("crMediaWarnAt") && $("crMediaWarnAt").value.trim();
+      var capCents = null;
+      if (capRaw !== "") {
+        var capDollars = Number(capRaw);
+        if (!Number.isFinite(capDollars) || capDollars < 0) {
+          state.pending.mediaBudgetError = badResult("failed", "Monthly cap must be a non-negative dollar amount.", 0);
+          render(); return;
+        }
+        capCents = Math.round(capDollars * 100);
+      }
+      var warnAt = Number(warnRaw || 80);
+      if (!Number.isInteger(warnAt) || warnAt < 1 || warnAt > 100) {
+        state.pending.mediaBudgetError = badResult("failed", "Warning threshold must be an integer from 1 through 100.", 0);
+        render(); return;
+      }
+      if (budgetEnabled && capCents === null) {
+        state.pending.mediaBudgetError = badResult("failed", "Enter a monthly cap before turning enforcement on.", 0);
+        render(); return;
+      }
+
+      state.pending.mediaBudget = true;
+      delete state.pending.mediaBudgetError;
+      delete state.pending.mediaBudgetOk;
+      render();
+      src(request("/v1/media/budget", {
+        method: "PUT",
+        body: {
+          org_id: state.org.id,
+          enabled: budgetEnabled,
+          monthly_limit_cents: capCents,
+          warn_at_percent: warnAt
+        }
+      })).then(function (result) {
+        delete state.pending.mediaBudget;
+        if (!result.ok) {
+          state.pending.mediaBudgetError = result;
+          render();
+          return;
+        }
+        state.pending.mediaBudgetOk = true;
+        delete state.pending.mediaBudgetError;
+        return loadResources(true);
+      });
+    }
     else if (action === "apps") setSurface("apps");
     else if (action === "goto-failed") { state.jobFilter = "failed"; setSurface("system", "workload"); }
     else if (action === "goto-waiting") {
