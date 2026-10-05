@@ -49,7 +49,11 @@ function backend({ owner = true, fn = null, fnStatus = 200 } = {}) {
     calls,
     handler: async (url, options = {}) => {
       const href = String(url);
-      calls.push({ href, method: options.method || 'GET', headers: options.headers || {} });
+      let body = null;
+      if (options.body) {
+        try { body = JSON.parse(String(options.body)); } catch { body = String(options.body); }
+      }
+      calls.push({ href, method: options.method || 'GET', headers: options.headers || {}, body });
       /* The house org is resolved by slug, not from configuration. */
       if (href.includes('/rest/v1/orgs')) return jsonResponse([{ id: ORG_ID }]);
       if (href.includes('/rest/v1/org_members')) {
@@ -198,4 +202,52 @@ test('POST still records a decision on the same route', async () => {
   });
   const call = be.calls.find((c) => c.href.includes('/functions/v1/context-decision'));
   assert.equal(call.method, 'POST', 'the write path must be unchanged');
+});
+
+
+test('an owner can approve a proposed decision through the status route', async () => {
+  const approved = { ...DECISION, status: 'approved', approved_by: OWNER.id, approved_at: '2026-10-05T06:20:00Z' };
+  const be = backend({ fn: { decision: approved } });
+  await withFetchMock(be.handler, async () => {
+    const response = await handleAiRequest(
+      new Request('https://api.mccluster.org/v1/ai/decisions/123e4567-e89b-42d3-a456-426614174999/status', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${USER_TOKEN}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'approved', note: 'Ship it' })
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.decision.status, 'approved');
+  });
+  const call = be.calls.find((c) => c.href.includes('/functions/v1/context-decision'));
+  assert.ok(call);
+  assert.equal(call.method, 'PATCH');
+  assert.equal(call.headers.authorization, `Bearer ${USER_TOKEN}`);
+  assert.equal(call.body.org_id, ORG_ID);
+  assert.equal(call.body.decision_id, '123e4567-e89b-42d3-a456-426614174999');
+  assert.equal(call.body.status, 'approved');
+  assert.equal(call.body.note, 'Ship it');
+});
+
+test('decision transitions only accept approved or rejected', async () => {
+  const be = backend({});
+  await withFetchMock(be.handler, async () => {
+    const response = await handleAiRequest(
+      new Request('https://api.mccluster.org/v1/ai/decisions/123e4567-e89b-42d3-a456-426614174999/status', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${USER_TOKEN}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'executed' })
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(response.status, 400);
+  });
+  assert.ok(
+    !be.calls.some((c) => c.href.includes('/functions/v1/context-decision')),
+    'invalid transitions must be rejected before the private context function'
+  );
 });
