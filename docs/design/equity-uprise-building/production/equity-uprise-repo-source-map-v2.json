@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 319,
+  "candidate_count": 326,
   "capability_source_count": 99,
-  "support_only_count": 220,
+  "support_only_count": 227,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2506,6 +2506,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Program status ledger for the 19-item McCluster program; it names the playable Equity Uprise building only as a status row and defines no building geometry, program or capability."
+    },
+    {
+      "path": "docs/control-plane/SECURITY-POSTURE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security posture ledger references Equity Uprise Edge Functions and policies only to document authorization and operational hardening; it defines no building capability."
+    },
+    {
+      "path": "scripts/test/security-reaudit.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression coverage for shared security boundaries and Equity Uprise function hardening; test support, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security re-audit migration tightens execution grants and shared authorization helpers used by Equity Uprise and Mnet; runtime security support, not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security re-audit migration hardens eu_log and private-profile fellowship matching; runtime security support, not a physical building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
