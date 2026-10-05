@@ -227,6 +227,12 @@
 .cr-ai-message__body{white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:13px;border:1px solid var(--cr-line);border-radius:14px;padding:11px 13px;background:var(--cr-panel-2)}
 .cr-ai-message--user .cr-ai-message__body{background:rgba(199,34,43,.13);border-color:rgba(199,34,43,.3)}
 .cr-ai-message--pending .cr-ai-message__body{color:var(--cr-dim)}
+.cr-ai-research{color:var(--cr-faint);font-size:10px;line-height:1.5;min-width:0}
+.cr-ai-research summary{cursor:pointer;width:max-content;max-width:100%}
+.cr-ai-research ol{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;min-width:0}
+.cr-ai-research li{min-width:0}
+.cr-ai-research a{color:var(--cr-dim);overflow-wrap:anywhere;word-break:break-word}
+.cr-ai-research--none{color:var(--cr-warn)}
 .cr-ai-chat__empty{margin:auto;max-width:460px;text-align:center;padding:40px 22px;color:var(--cr-dim)}
 .cr-ai-chat__empty strong{display:block;color:var(--cr-text);font-size:18px;margin-bottom:8px}
 .cr-ai-chat__composer{padding:12px 14px;border-top:1px solid var(--cr-line);background:var(--cr-panel-2)}
