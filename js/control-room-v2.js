@@ -2014,13 +2014,16 @@
     if (state.resources && !force) return Promise.resolve();
     state.resources = { loading: true };
     render();
+    var orgQuery = state.org && state.org.id ? "&org_id=" + encodeURIComponent(state.org.id) : "";
+    var budgetQuery = state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : "";
     return Promise.all([
       src(request("/v1/compute/balance")),
       src(request("/v1/platform/catalog")),
       src(request("/v1/developer/consumers")),
-      src(request("/v1/media/usage?group_by=capability"))
+      src(request("/v1/media/usage?group_by=capability" + orgQuery)),
+      src(request("/v1/media/budget" + budgetQuery))
     ]).then(function (r) {
-      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3], budget: r[4] };
       render();
     });
   }
@@ -2076,7 +2079,44 @@
             : '<p class="cr-muted">No media jobs in this window.</p>');
       }
 
-      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
+      var budgetBody = "";
+      var budgetResult = res.budget;
+      if (!budgetResult) {
+        budgetBody = "";
+      } else if (!budgetResult.ok) {
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' + sourceBanner(budgetResult, "Media allowance");
+      } else {
+        var budgetData = budgetResult.data || {};
+        var mediaBudget = budgetData.budget || {};
+        var monthly = budgetData.usage || {};
+        var limit = mediaBudget.monthly_limit_cents;
+        var committed = count(monthly.committed_cents);
+        var percent = limit === null || limit === undefined || Number(limit) <= 0
+          ? null : Math.round((committed / Number(limit)) * 100);
+        var budgetState = mediaBudget.enabled
+          ? moneyCents(limit) + " / month"
+          : "Off";
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' +
+          props([
+            ["Enforcement", mediaBudget.enabled ? "On" : "Off"],
+            ["Current month committed", moneyCents(committed)],
+            ["Allowance", budgetState],
+            ["Warn at", String(count(mediaBudget.warn_at_percent) || 80) + "%"],
+            ["Used", percent === null ? "—" : String(percent) + "%"]
+          ]) +
+          '<div class="cr-gen">' +
+            '<label class="cr-muted"><input id="crMediaBudgetEnabled" type="checkbox"' + (mediaBudget.enabled ? " checked" : "") + '> Enforce monthly cap</label>' +
+            '<input class="cr-input" id="crMediaMonthlyCap" inputmode="decimal" type="number" min="0" step="0.01" placeholder="Monthly USD cap" value="' +
+              (limit === null || limit === undefined ? "" : esc((Number(limit) / 100).toFixed(2))) + '">' +
+            '<input class="cr-input" id="crMediaWarnAt" type="number" min="1" max="100" step="1" aria-label="Warn at percent" value="' + esc(String(count(mediaBudget.warn_at_percent) || 80)) + '">' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="save-media-budget"' + (state.pending.mediaBudget ? " disabled" : "") + '>' +
+              (state.pending.mediaBudget ? "Saving…" : "Save allowance") + '</button>' +
+          '</div>' +
+          (state.pending.mediaBudgetError ? sourceBanner(state.pending.mediaBudgetError, "Media allowance") : "") +
+          (state.pending.mediaBudgetOk ? '<p class="cr-muted">Monthly media allowance saved and enforced at the database boundary.</p>' : "");
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody + budgetBody +
         '<h3 class="cr-subhead">API consumers</h3>' +
         (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
           : (consumerRows.length
