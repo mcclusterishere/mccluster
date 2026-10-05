@@ -69,6 +69,8 @@
     resources: null,
     observability: null,
     observabilityTrace: null,
+    workspaces: [],
+    recentErrors: null,
     observabilityFilters: { level: "all", kind: "all", window: 24, q: "" },
     publicRecord: null,
     socialAccounts: null,
@@ -963,6 +965,12 @@
     var routine = pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) < 0; });
     if (routine.length) items.push({ title: routine.length + " decision" + (routine.length === 1 ? "" : "s") + " awaiting you", sub: "Proposed in the AI context plane, not yet approved or rejected.", kind: "warn", action: "inspect-decision", id: routine[0].id });
 
+    /* Retained errors from the owner-gated event stream (System ·
+       Observability). Absent for a non-owner, whose read is refused. */
+    if (state.recentErrors && state.recentErrors.count) {
+      var latestError = state.recentErrors.latest || {};
+      items.push({ title: state.recentErrors.count + (state.recentErrors.more ? "+" : "") + " error" + (state.recentErrors.count === 1 ? "" : "s") + " in the last 24 hours", sub: "Latest: " + text(latestError.event_name || latestError.route, "event") + " · " + ago(latestError.occurred_at || latestError.created_at), kind: "bad", action: "observe-errors" });
+    }
     var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
     if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
     /* A source that could not be read is itself something that needs the
@@ -1364,16 +1372,24 @@
     var q = String(state.search || "").trim();
     var parts = ["select=*", "order=at.desc", "limit=" + limit, "offset=" + (offset || 0)];
     if (state.pipelineStage !== "all") parts.push("status=eq." + encodeURIComponent(state.pipelineStage));
+    /* Leads belong to the active workspace. Leads with no org predate
+       tenancy and are the house pipeline (workers/mccluster/src/leads.js),
+       so only the house workspace includes them. */
+    var orgId = state.org && state.org.id ? encodeURIComponent(state.org.id) : null;
+    var orgClause = orgId ? (isHouseWorkspace(state.org) ? "or(org_id.eq." + orgId + ",org_id.is.null)" : "org_id.eq." + orgId) : null;
+    var search = null;
     if (q) {
       /* PostgREST `or` with ilike. Commas and parens would break out of the
          filter group, so they are stripped rather than escaped. */
       var safe = q.replace(/[(),*]/g, " ").trim();
       if (safe) {
-        parts.push("or=(" + LEAD_SEARCH_COLUMNS.map(function (c) {
+        search = "or(" + LEAD_SEARCH_COLUMNS.map(function (c) {
           return c + ".ilike.*" + encodeURIComponent(safe) + "*";
-        }).join(",") + ")");
+        }).join(",") + ")";
       }
     }
+    var clauses = [orgClause, search].filter(Boolean);
+    if (clauses.length) parts.push("and=(" + clauses.join(",") + ")");
     return "leads?" + parts.join("&");
   }
 
@@ -1946,6 +1962,16 @@
       render();
     });
   }
+  function loadRecentErrors() {
+    state.recentErrors = null;
+    if (!state.org || !state.org.id) return Promise.resolve();
+    return src(request(observabilityQuery({ level: "error", limit: 50, since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }))).then(function (result) {
+      if (!result.ok) return;
+      var events = pickRows(result, "events");
+      state.recentErrors = { count: events.length, more: Boolean(result.data && result.data.has_more), latest: events[0] || null };
+      render();
+    });
+  }
   function retainedObservabilityEvents() {
     return state.observability && state.observability.ok ? pickRows(state.observability, "events") : [];
   }
@@ -2073,7 +2099,8 @@
   function loadSocialAccounts(force) {
     if (state.socialAccounts && !force) return Promise.resolve();
     state.socialAccounts = null;
-    return src(request("/v1/social/accounts")).then(function (result) {
+    if (!state.org || !state.org.id) { state.socialAccounts = badResult("failed", "No workspace is selected, so there are no social accounts to read."); render(); return Promise.resolve(); }
+    return src(request("/v1/social/accounts?org_id=" + encodeURIComponent(state.org.id))).then(function (result) {
       state.socialAccounts = result;
       render();
     });
@@ -3029,6 +3056,7 @@
     else if (action === "inspect-observation") inspectObservation(el.getAttribute("data-id"));
     else if (action === "load-observability") loadObservability(true);
     else if (action === "observability-older") loadObservability(false, true);
+    else if (action === "observe-errors") { state.observabilityFilters.level = "error"; state.observability = null; setSurface("system", "observability"); }
     else if (action === "observe-trace") openTrace({ trace_id: el.getAttribute("data-trace") });
     else if (action === "observe-resource") openTrace({ resource_type: el.getAttribute("data-resource-type"), resource_id: el.getAttribute("data-resource-id") });
     else if (action === "close-trace") { state.observabilityTrace = null; render(); }
@@ -3245,7 +3273,7 @@
       state.pending["decision:" + decisionId] = true;
       delete state.pending["decisionError:" + decisionId];
       inspectDecision(decisionId);
-      src(request("/v1/ai/decisions/" + encodeURIComponent(decisionId) + "/status", {
+      src(request("/v1/ai/decisions/" + encodeURIComponent(decisionId) + "/status" + (state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : ""), {
         method: "POST",
         body: { status: decisionStatus, note: decisionNote || "" }
       })).then(function (result) {
@@ -3420,23 +3448,62 @@
      a hardcoded slug, so Control Room could only ever open the house.
      A second tenant's operator got a console with no org, every scoped
      read silently empty, and nothing on screen saying why. */
+  /* WORKSPACE. The owner may hold several (the house plus client
+     workspaces). The chosen one rides in ?org= so a reload or a shared link
+     keeps it, with localStorage as a per-viewer fallback; it is only honoured
+     when it is one of the caller's own enabled memberships. Every scoped read
+     and write below uses state.org.id. */
+  var ORG_KEY = "mcc.control.org";
+  function preferredOrgId() {
+    var fromUrl = null;
+    try { fromUrl = new URLSearchParams(location.search).get("org"); } catch (e) { fromUrl = null; }
+    if (fromUrl) return fromUrl;
+    try { return window.localStorage.getItem(ORG_KEY); } catch (e) { return null; }
+  }
+  function isHouseWorkspace(org) { return Boolean(org) && org.slug === "mccluster" && org.kind === "studio"; }
   function discoverWorkspace() {
     return src(request("/v1/workspaces/me")).then(function (result) {
       var data = dataOf(result);
       var list = (data && data.workspaces) || [];
+      var wanted = preferredOrgId();
       var chosen = null;
       for (var i = 0; i < list.length; i++) {
-        if (list[i].org_id === data.default_org_id) { chosen = list[i]; break; }
+        if (wanted && list[i].org_id === wanted && list[i].enabled) { chosen = list[i]; break; }
+      }
+      for (var j = 0; !chosen && j < list.length; j++) {
+        if (list[j].org_id === data.default_org_id) chosen = list[j];
       }
       if (!chosen) {
         chosen = list.filter(function (w) { return w.enabled; })[0] || null;
       }
+      state.workspaces = list;
       return {
         source: result,
         membership: chosen,
-        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name } : null
+        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name, kind: chosen.kind, role: chosen.role } : null
       };
     });
+  }
+  /* Switching reloads Control on the new workspace, so no module can carry
+     another tenant's cached rows across. */
+  function switchWorkspace(orgId) {
+    var known = (state.workspaces || []).some(function (w) { return w.org_id === orgId && w.enabled; });
+    if (!known || (state.org && state.org.id === orgId)) return;
+    try { window.localStorage.setItem(ORG_KEY, orgId); } catch (e) { /* storage blocked: ?org= still carries it */ }
+    var url = new URL(location.href);
+    url.searchParams.set("org", orgId);
+    location.assign(url.toString());
+  }
+  function renderWorkspaceSwitcher() {
+    var wrap = $("crOrgWrap"), select = $("crOrgSelect");
+    if (!wrap || !select) return;
+    var list = (state.workspaces || []).filter(function (w) { return w.enabled || (state.org && w.org_id === state.org.id); });
+    if (list.length < 2) { wrap.hidden = true; return; }
+    select.innerHTML = list.map(function (w) {
+      return '<option value="' + esc(w.org_id) + '"' + (state.org && w.org_id === state.org.id ? " selected" : "") + '>' +
+        esc((w.name || w.slug || "Workspace") + " · " + (w.role || "member")) + '</option>';
+    }).join("");
+    wrap.hidden = false;
   }
   function staticJson(path) {
     return fetch(path, { cache: "no-store" }).then(function (r) {
@@ -3459,8 +3526,8 @@
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
     return Promise.all([
-      src(supa("media_assets?select=*&order=created_at.desc&limit=150")),
-      src(supa("media_jobs?select=*&order=created_at.desc&limit=120")),
+      src(supa("media_assets?select=*&order=created_at.desc&limit=150" + scope)),
+      src(supa("media_jobs?select=*&order=created_at.desc&limit=120" + scope)),
       src(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + scope)),
       src(supa("social_variants?select=*&order=created_at.desc&limit=200" + scope)),
       src(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + scope)),
@@ -3491,10 +3558,10 @@
           src(coreMcp("tools/list")),
           src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 })),
           src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
-          src(request("/v1/ai/decisions?limit=25")),
+          src(request("/v1/ai/decisions?limit=25&org_id=" + encodeURIComponent(org.id))),
           src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
-          src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")),
+          src(supa("ops_agent_jobs?select=*&org_id=eq." + encodeURIComponent(org.id) + "&order=created_at.desc&limit=200")),
           src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
           loadCreative(org),
           src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
@@ -3523,7 +3590,7 @@
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
-      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null;
+      state.health = dataOf(state.sources.health); state.publicRecord = dataOf(state.sources.publicRecord); state.org = a.org || null; renderWorkspaceSwitcher(); loadRecentErrors();
       state.workspace = (a.workspace && a.workspace.membership) || null;
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
@@ -3566,6 +3633,8 @@
     $("crInspectorTabs").addEventListener("click", function (e) { var b = e.target.closest("[data-inspector-tab]"); if (!b || !state.inspector) return; state.inspector.tab = b.getAttribute("data-inspector-tab"); renderInspector(); });
     $("crPalette").addEventListener("click", function (e) { if (e.target === $("crPalette")) closePalette(); });
     $("crPaletteInput").addEventListener("input", function () { renderPalette($("crPaletteInput").value); });
+    var orgSelect = $("crOrgSelect");
+    if (orgSelect) orgSelect.addEventListener("change", function () { switchWorkspace(orgSelect.value); });
     $("crPaletteInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { var first = $("crPaletteResults").querySelector(".cr-palette__item"); if (first) first.click(); else handleCommand($("crPaletteInput").value); } });
     $("crAccount").addEventListener("click", function () { $("crAccountMenu").classList.toggle("is-open"); });
     $("crRefresh").addEventListener("click", function () { $("crAccountMenu").classList.remove("is-open"); load(true); });

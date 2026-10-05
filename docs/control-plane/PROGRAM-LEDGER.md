@@ -9,7 +9,7 @@ Last updated 2026-10-05 against `main` after the Control post-sale slice.
 
 | # | Item | Status | Landed in | Production verification | Next action |
 |---|---|---|---|---|---|
-| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, post-sale slice | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked) | Per-view completeness audit (390 px, org scoping, no browser service-role authority); client-facing approval and payment-provider reconciliation stay staged |
+| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, #367 (post-sale graph), workspace-scoping slice | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked) | Remaining: Home attention from retained errors, per-view inventory of staged capabilities; client-facing approval and payment-provider reconciliation stay staged |
 | 2 | Resident-AI web grounding | COMPLETE | #363 | Signed broker calls, bounded queries, DDG fallback | — |
 | 3 | FAL / paid-media input safety | COMPLETE | #362 | Whole-bakeoff preflight, strict input contract | Re-audit the FAL catalog (#269) on top of this contract |
 | 4 | Create lifecycle races | COMPLETE | #349 | — | — |

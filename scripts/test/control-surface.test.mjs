@@ -394,3 +394,44 @@ test('Work carries the post-sale graph as stored records, with honest payment ve
   /* a refused inline change is rolled back and said out loud */
   assert.match(mod,/row\[field\]=prev;W\.msg=LABEL\[kind\]\+" not changed: "/);
 });
+
+test('Control operates one chosen workspace and pins its reads and writes to it', async()=>{
+  const [js,html,css]=await Promise.all([read('js/control-room-v2.js'),read('control.html'),read('css/control-room-v2.css')]);
+  /* the switcher exists, hides with one workspace, and never triggers iOS zoom */
+  assert.match(html,/<label class="cr-org" id="crOrgWrap" hidden>[\s\S]*<select class="cr-org__select" id="crOrgSelect" aria-label="Workspace">/);
+  assert.match(css,/\.cr-org__select\{[^}]*font-size:max\(16px,1em\)/);
+  assert.match(js,/if \(list\.length < 2\) \{ wrap\.hidden = true; return; \}/);
+  /* a remembered choice is honoured only when it is one of the caller's enabled memberships */
+  assert.match(js,/if \(wanted && list\[i\]\.org_id === wanted && list\[i\]\.enabled\) \{ chosen = list\[i\]; break; \}/);
+  assert.match(js,/var known = \(state\.workspaces \|\| \[\]\)\.some\(function \(w\) \{ return w\.org_id === orgId && w\.enabled; \}\);/);
+  /* switching reloads so no module carries another tenant's cached rows */
+  assert.match(js,/url\.searchParams\.set\("org", orgId\);\s*location\.assign\(url\.toString\(\)\);/);
+  /* reads that used to ignore the workspace now name it */
+  assert.match(js,/request\("\/v1\/social\/accounts\?org_id=" \+ encodeURIComponent\(state\.org\.id\)\)/);
+  assert.match(js,/request\("\/v1\/ai\/decisions\?limit=25&org_id=" \+ encodeURIComponent\(org\.id\)\)/);
+  assert.match(js,/"\/v1\/ai\/decisions\/" \+ encodeURIComponent\(decisionId\) \+ "\/status" \+ \(state\.org && state\.org\.id \? "\?org_id="/);
+  assert.match(js,/supa\("media_assets\?select=\*&order=created_at\.desc&limit=150" \+ scope\)/);
+  assert.match(js,/supa\("media_jobs\?select=\*&order=created_at\.desc&limit=120" \+ scope\)/);
+  assert.match(js,/supa\("ops_agent_jobs\?select=\*&org_id=eq\." \+ encodeURIComponent\(org\.id\)/);
+
+  /* leads: the house sees its pre-tenancy null-org leads, a client workspace only its own */
+  const fn=js.match(/function leadQueryPath\(limit, offset\) \{[\s\S]*?\n  \}\n/)[0];
+  const house=js.match(/function isHouseWorkspace\(org\) \{[^\n]*\}/)[0];
+  const build=(org,search)=>new Function('state','LEAD_SEARCH_COLUMNS',house+fn+'return leadQueryPath(200,0);')(
+    {org,search,pipelineStage:'all'},['name','email']);
+  const H={id:'h1',slug:'mccluster',kind:'studio'}, C={id:'c1',slug:'esmer',kind:'client'};
+  assert.match(build(H,''),/and=\(or\(org_id\.eq\.h1,org_id\.is\.null\)\)/);
+  assert.match(build(C,''),/and=\(org_id\.eq\.c1\)/);
+  assert.doesNotMatch(build(C,''),/is\.null/);
+  assert.match(build(C,'sam'),/and=\(org_id\.eq\.c1,or\(name\.ilike\.\*sam\*,email\.ilike\.\*sam\*\)\)/);
+  assert.doesNotMatch(build(C,'sam'),/&or=/,'search no longer escapes the org filter as a top-level or');
+});
+
+test('Home surfaces retained errors from the owner-gated event stream', async()=>{
+  const js=await read('js/control-room-v2.js');
+  assert.match(js,/observabilityQuery\(\{ level: "error", limit: 50, since:/);
+  assert.match(js,/if \(state\.recentErrors && state\.recentErrors\.count\)/);
+  assert.match(js,/action === "observe-errors"\) \{ state\.observabilityFilters\.level = "error";/);
+  /* a refused read (non-owner) shows nothing rather than a false alarm */
+  assert.match(js,/if \(!result\.ok\) return;\s*var events = pickRows\(result, "events"\);/);
+});
