@@ -1,4 +1,4 @@
-// CONTEXT-DECISION — record and read owner/admin decisions in the private AI
+// CONTEXT-DECISION — record, read, and resolve owner/admin decisions in the private AI
 // context plane. The function verifies the human with Supabase Auth, checks org
 // membership, and reads/writes the canonical ai_context.decisions table directly.
 // It does not create a second memory or job store and never treats the service
@@ -106,8 +106,45 @@ async function listDecisions(url: URL, userId: string) {
   }
 }
 
+async function resolveDecision(body: any, userId: string) {
+  const orgId = String(body?.org_id ?? '').trim()
+  const decisionId = String(body?.decision_id ?? '').trim()
+  const status = String(body?.status ?? '').trim().toLowerCase()
+  const note = String(body?.note ?? '').trim().slice(0, 2000)
+
+  if (!orgId || !decisionId) throw Object.assign(new Error('org_id and decision_id are required'), { status: 400 })
+  if (!['approved', 'rejected'].includes(status)) {
+    throw Object.assign(new Error('status must be approved or rejected'), { status: 400 })
+  }
+
+  await requireOwnerAdmin(orgId, userId)
+
+  const resolutionMeta = {
+    resolution_source: 'context-decision',
+    resolution_note: note || null,
+  }
+  const rows = await sql`
+    update ai_context.decisions
+    set status = ${status},
+        approved_by = ${userId}::uuid,
+        approved_at = now(),
+        updated_at = now(),
+        metadata = coalesce(metadata, '{}'::jsonb) || ${sql.json(resolutionMeta)}
+    where id = ${decisionId}::uuid
+      and org_id = ${orgId}::uuid
+      and status = 'proposed'
+    returning id, org_id, title, decision, rationale_summary, risk_class, status,
+              proposed_by, approved_by, approved_at, source_conversation_id,
+              supersedes_id, metadata, created_at, updated_at
+  `
+  if (!rows.length) {
+    throw Object.assign(new Error('decision is no longer proposed or does not belong to this organization'), { status: 409 })
+  }
+  return { decision: rows[0] }
+}
+
 Deno.serve(async (req) => {
-  if (req.method !== 'POST' && req.method !== 'GET') return json({ error: 'GET or POST required' }, 405)
+  if (!['POST', 'GET', 'PATCH'].includes(req.method)) return json({ error: 'GET, POST, or PATCH required' }, 405)
   if (!SB || !SRV || !DB) return json({ error: 'not configured' }, 503)
 
   let user
@@ -126,6 +163,17 @@ Deno.serve(async (req) => {
 
   const body: any = await req.json().catch(() => null)
   const orgId = String(body?.org_id ?? '').trim()
+
+  if (req.method === 'PATCH') {
+    try {
+      return json(await resolveDecision(body, String(user.id)))
+    } catch (error) {
+      const status = Number((error as any)?.status) || 500
+      if (status === 500) console.error(error)
+      return json({ error: error instanceof Error ? error.message : 'decision transition failed' }, status)
+    }
+  }
+
   const title = String(body?.title ?? '').trim()
   const decision = String(body?.decision ?? body?.rationale ?? '').trim()
   const riskClass = String(body?.risk_class ?? 'low').trim().toLowerCase()
