@@ -1876,16 +1876,72 @@
     });
     return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
+  function loadObservability(force) {
+    if (state.observability && !force) return Promise.resolve();
+    state.observability = { loading: true, result: null };
+    return src(request("/v1/observability/events?limit=150")).then(function (result) {
+      state.observability = { loading: false, result: result };
+      render();
+    });
+  }
+  function observabilityRows() {
+    var result = state.observability && state.observability.result;
+    if (!result || !result.ok) return observedEvents();
+    var data = result.data || {};
+    var records = Array.isArray(data) ? data : (Array.isArray(data.events) ? data.events : []);
+    return records.map(function (e, i) {
+      var severity = String(e.severity || e.level || "INFO").toUpperCase();
+      return {
+        id: e.id || e.event_id || ("event-" + i),
+        severity: severity,
+        source: e.source || e.service || e.component || "System",
+        message: e.message || e.event || e.name || "Recorded event",
+        time: e.at || e.time || e.created_at || e.timestamp,
+        trace_id: e.trace_id || e.correlation_id || e.request_id || "",
+        request_id: e.request_id || "",
+        span_id: e.span_id || "",
+        kind: severity === "ERROR" || severity === "FATAL" ? "bad" : (severity === "WARN" || severity === "WARNING" ? "warn" : "info"),
+        raw: e
+      };
+    });
+  }
   function renderObservability() {
-    var events = observedEvents();
-    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
-      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Re-read</button></div>';
-    if (!events.length) {
-      return head + '<div class="cr-canvas">' + empty("No recorded failures", "Every canonical source read cleanly and no job, media, or publish record is in a failed state. This is a real result, not an empty log view.") + '</div>';
+    var canonical = state.observability && state.observability.result;
+    var events = observabilityRows();
+    var sources = ["all"].concat(Array.from(new Set(events.map(function (e) { return e.source; }).filter(Boolean))).sort());
+    var severity = state.observabilitySeverity;
+    var source = state.observabilitySource;
+    var q = state.observabilitySearch.trim().toLowerCase();
+    events = events.filter(function (e) {
+      if (severity !== "all" && String(e.severity).toUpperCase() !== severity.toUpperCase()) return false;
+      if (source !== "all" && e.source !== source) return false;
+      if (q && [e.source, e.message, e.trace_id, e.request_id, e.span_id].join(" ").toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var contractState = canonical && canonical.ok ? "Canonical event stream" : "Fallback ledger";
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">' + esc(contractState) + ' · snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="reload-observability">Re-read</button></div>';
+    var controls = '<div class="cr-gen">' +
+      '<select class="cr-select" id="crObsSeverity" aria-label="Severity"><option value="all">All severities</option><option value="INFO">Info</option><option value="WARN">Warn</option><option value="ERROR">Error</option></select>' +
+      '<select class="cr-select" id="crObsSource" aria-label="Source">' + sources.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v === "all" ? "All sources" : v) + '</option>'; }).join("") + '</select>' +
+      '<input class="cr-input" id="crObsSearch" type="search" placeholder="Trace, request, source or message" value="' + esc(state.observabilitySearch) + '">' +
+      '</div>';
+    var sourceState = "";
+    if (!state.observability || state.observability.loading) {
+      sourceState = '<div class="cr-gap"><b>Reading canonical event contract</b><span>GET /v1/observability/events?limit=150</span></div>';
+    } else if (canonical && !canonical.ok) {
+      sourceState = sourceBanner(canonical, "Observability events") +
+        '<div class="cr-gap"><b>UI contract is ready.</b><span>Until the retained event/trace pipeline exists, this view falls back to job failures, social/media failures, health state and control_audit. The eventual event contract already has UI space for trace_id, request_id and span_id.</span></div>';
     }
-    return head +
-      '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
-      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
+    if (!events.length) {
+      return head + controls + sourceState + '<div class="cr-canvas">' + empty("No events in this filter", canonical && canonical.ok ? "The canonical event stream returned no matching records." : "No fallback ledger records match the current filter.") + '</div>';
+    }
+    return head + controls + sourceState +
+      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } },
+        { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } },
+        { label: "Source", key: "source" },
+        { label: "Trace", html: function (r) { return r.trace_id ? '<span class="cr-mono">' + esc(String(r.trace_id).slice(0, 18)) + '</span>' : "—"; } },
+        { label: "Message", key: "message" }], events, "No events");
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
