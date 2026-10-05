@@ -13,7 +13,7 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
 
-> **Items 1, 2, 3, 5, 6, 7 and 8 — RESOLVED in code and/or production (2026-10-05).**
+> **Items 1, 2, 3, 5, 6, 7, 8 and 9 — RESOLVED in code and/or production (2026-10-05).**
 > `workers/mccluster/src/work.js` adds the canonical Work routes
 > (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
 > `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
@@ -36,7 +36,7 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 
 ---
 
-> Sections 1, 2, 3, 5, 6, 7 and 8 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
+> Sections 1, 2, 3, 5, 6, 7, 8 and 9 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
 
 > **Decision resolution (items 7–8):** PR #353 added owner-only approve/reject transitions through `POST /v1/ai/decisions/{id}/status`, with the private `context-decision` function re-checking membership and fencing transitions to `proposed`. Production migration `20261005063813_canonical_ai_context_decisions_v1` captures the live private decision schema, including `approved_by`, `approved_at`, and `updated_at`.
 >
@@ -216,21 +216,21 @@ table grants).
 
 ---
 
-## 9. Publish jobs cannot be retried or cancelled
+## 9. Publish recovery — RESOLVED
 
-**Blocked view:** Create · Schedule
+**Status:** resolved. Create · Schedule exposes owner-safe recovery over the
+canonical `social_publish_jobs` state machine.
 
-**Current behaviour:** queuing a publish is real — `POST /v1/social/publish`
-is wired from a ready variant and creates a `social_publish_jobs` row. A job
-that has since failed can be read but not retried or cancelled.
-
-**What is missing:** `social_publish_jobs` has no owner-facing transition
-route. The runtime claims and advances jobs itself.
-
-**Smallest contract that would unblock it**
-
-- `POST /v1/social/publish/{id}/retry` (re-queue a failed job)
-- `POST /v1/social/publish/{id}/cancel` (only from `queued`)
+- `POST /v1/social/publish/{id}/retry` only accepts failed, unpublished jobs.
+- A usable existing Meta creation container resumes in `processing`; an
+  explicitly expired/errored container is cleared and restarted from `queued`.
+- Retry resets the attempt budget, clears stale lease/error state, restores the
+  linked content item to `publishing`, and writes `social_publish.retried`
+  to `control_audit`.
+- Existing `POST /v1/social/publish/{id}/cancel` stays fenced to
+  draft/queued jobs before Meta has a creation container.
+- Control only renders Retry/Cancel when those transitions are actually safe,
+  and surfaces failed transition responses instead of pretending they worked.
 
 ---
 
