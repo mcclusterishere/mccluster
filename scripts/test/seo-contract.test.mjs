@@ -117,16 +117,31 @@ test("VideoObject markup ships only with a verified timezone-aware first-publica
   // A VideoObject uploadDate is a factual first-publication timestamp, not a page
   // publish date or a guessed midnight. Add a VideoObject only when that timestamp
   // is supported by the authority record in docs/SEO-AEO-AUTHORITY-SYSTEM.md.
-  const zonedDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
   for (const f of publishedHtml()) {
     for (const b of ldBlocks(read(f))) {
       for (const n of nodes(JSON.parse(b))) {
         if (!types(n).includes("VideoObject")) continue;
         assert.equal(typeof n.uploadDate, "string", `${f}: VideoObject must have uploadDate`);
-        assert.match(n.uploadDate, zonedDateTime, `${f}: VideoObject.uploadDate must be a full ISO-8601 timestamp with timezone`);
+        assert.ok(isZonedDateTime(n.uploadDate), `${f}: VideoObject.uploadDate ${n.uploadDate} must be a real ISO-8601 DateTime with Z or an offset`);
       }
     }
   }
+});
+
+/* The shape alone is not enough: Date.parse quietly rolls 2026-02-30 into
+   March, so the calendar day, the clock and the offset are each checked. */
+function isZonedDateTime(value) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|([+-])(\d{2}):(\d{2}))$/.exec(String(value));
+  if (!m) return false;
+  const [, y, mo, d, h, mi, s = "0", , oh = "0", om = "0"] = m;
+  const daysInMonth = new Date(Date.UTC(+y, +mo, 0)).getUTCDate();
+  return +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= daysInMonth &&
+    +h <= 23 && +mi <= 59 && +s <= 59 && +oh <= 14 && +om <= 59;
+}
+
+test("the VideoObject date check refuses impossible calendar and clock values", () => {
+  for (const ok of ["2026-07-05T15:17:30Z", "2024-02-29T12:00:00Z", "2026-07-05T11:17:30-04:00", "2026-07-05T15:17Z", "2026-12-31T23:59:59.5+00:00"]) assert.ok(isZonedDateTime(ok), ok);
+  for (const bad of ["2026-07-05", "2026-07-05T15:17:30", "2026-02-29T00:00:00Z", "2026-04-31T00:00:00Z", "2026-13-01T00:00:00Z", "2026-07-05T24:00:00Z", "2026-07-05T15:60:00Z", "2026-07-05T15:17:30+15:00"]) assert.ok(!isZonedDateTime(bad), bad);
 });
 
 test("one person, one node: the Person is defined on the profile and referenced everywhere else", () => {
