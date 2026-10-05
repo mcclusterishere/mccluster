@@ -294,7 +294,11 @@ export async function createGeneration(request, env, user) {
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
   if (model.provider !== 'fal') throw Object.assign(new Error('Provider adapter not installed'), { status: 501 });
 
-  const hadStructuredInput = Boolean(body.input && typeof body.input === 'object' && Object.keys(body.input).length);
+  const hadStructuredInput = Boolean(
+    body.input &&
+    typeof body.input === 'object' &&
+    Object.keys(body.input).some((key) => key !== 'prompt')
+  );
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
