@@ -2,6 +2,7 @@ import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
+import { validateModelInput } from './input-contract.js';
 
 function headers(env) {
   return {
@@ -37,7 +38,7 @@ async function getOrg(env, userId, requestedOrgId) {
   return rows[0];
 }
 
-async function modelById(env, id) {
+export async function modelById(env, id) {
   const rows = await db(env, `media_models?id=eq.${encodeURIComponent(id)}&enabled=eq.true&select=*`);
   return rows?.[0] || null;
 }
@@ -85,41 +86,6 @@ async function saveAssets(env, orgId, jobId, result) {
     headers: { prefer: 'return=representation' },
     body: JSON.stringify(body)
   });
-}
-
-function validateModelInput(model, input, hadStructuredInput) {
-  const capability = String(model?.capability || '').toLowerCase();
-  const schema = model?.parameter_schema && typeof model.parameter_schema === 'object'
-    ? model.parameter_schema
-    : {};
-  const required = Array.isArray(schema.required) ? schema.required : [];
-  const missing = required.filter((field) => {
-    const value = input?.[field];
-    return value === undefined || value === null || value === '';
-  });
-  if (missing.length) {
-    throw Object.assign(new Error('Media model input is missing required fields'), {
-      status: 422,
-      detail: { model_id: model.id, capability: model.capability, missing_fields: missing }
-    });
-  }
-
-  /* Empty legacy parameter schemas cannot tell us the provider's exact field
-     names. Do not let a prompt-only caller accidentally submit an edit/I2V/
-     lipsync/upscale model anyway. A structured input object proves the caller
-     deliberately supplied provider/media controls; provider validation can
-     then handle the exact schema until the catalog row is normalized. */
-  if (!capability.startsWith('text-to-') && !hadStructuredInput) {
-    throw Object.assign(new Error('This media model requires structured media input, not a prompt-only request'), {
-      status: 422,
-      detail: {
-        model_id: model.id,
-        capability: model.capability,
-        provider_model_id: model.provider_model_id,
-        required_action: 'supply model input/reference media or choose a text-to-* model'
-      }
-    });
-  }
 }
 
 function budgetCents(value) {
@@ -294,15 +260,10 @@ export async function createGeneration(request, env, user) {
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
   if (model.provider !== 'fal') throw Object.assign(new Error('Provider adapter not installed'), { status: 501 });
 
-  const hadStructuredInput = Boolean(
-    body.input &&
-    typeof body.input === 'object' &&
-    Object.keys(body.input).some((key) => key !== 'prompt')
-  );
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
-  validateModelInput(model, input, hadStructuredInput);
+  validateModelInput(model, input);
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;
