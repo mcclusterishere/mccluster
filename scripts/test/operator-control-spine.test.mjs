@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../../js/control-room-v2.js', import.meta.url), 'utf8');
 const voice = await readFile(new URL('../../js/control-room/voice.js', import.meta.url), 'utf8');
+const media = await readFile(new URL('../../js/control-room/media.js', import.meta.url), 'utf8');
 const controlHtml = await readFile(new URL('../../control.html', import.meta.url), 'utf8');
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
@@ -110,6 +111,17 @@ test('resident AI voice stays on the canonical durable chat path', () => {
 });
 
 
+
+test('Control media generation only exposes prompt-compatible models', () => {
+  assert.match(media,/PROMPT_ONLY_CAPABILITIES/);
+  for (const capability of ['text-to-image','text-to-video','text-to-3d','text-to-audio']) {
+    assert.ok(media.includes('"'+capability+'": true'),capability+' prompt route missing');
+  }
+  assert.match(media,/specialized model/);
+  assert.match(media,/does not yet collect the required reference media/);
+  assert.match(media,/Bakeoff models must share one capability/);
+  assert.match(media,/That model requires reference\/media inputs/);
+});
 
 test('resident AI history is owner-only durable state', () => {
   assert.match(chatMigration, /create table if not exists public\.ops_ai_threads/);
