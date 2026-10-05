@@ -26,6 +26,14 @@ test('mission writes stay behind server-authoritative RPCs', async () => {
   assert.match(client, /rpc<.*>\('join_action_mission'/s);
   assert.match(client, /rpc\('submit_action_proof'/);
   assert.match(client, /rpc\('set_action_share_intent'/);
+  const shareIntent = client.indexOf("rpc('set_action_share_intent'");
+  const proofSubmit = client.indexOf("rpc('submit_action_proof'");
+  assert.ok(shareIntent >= 0 && proofSubmit > shareIntent, 'share preference must be saved before proof submission');
+  assert.doesNotMatch(
+    client.slice(shareIntent, proofSubmit),
+    /catch\(\(\) => null\)/,
+    'share preference failure must block proof submission',
+  );
   assert.match(client, /rpc<any>\('action_record'/);
   assert.doesNotMatch(client, /action_mission_assignments[^\n]+method:\s*['"](?:POST|PATCH|DELETE)/);
   assert.doesNotMatch(client, /action_proofs[^\n]+method:\s*['"](?:POST|PATCH|DELETE)/);
@@ -40,6 +48,12 @@ test('native proof capture uses private signed media flow without microphone per
   assert.match(media, /expo-image-picker/);
   assert.match(media, /\/v1\/mnet\/media\/upload-url/);
   assert.match(media, /\/v1\/mnet\/media\/finalize/);
+  assert.match(media, /ImageManipulator\.manipulateAsync/);
+  assert.match(media, /image\/jpeg/);
+  assert.ok(
+    media.indexOf('ImageManipulator.manipulateAsync') < media.indexOf("/v1/mnet/media/upload-url"),
+    'HEIC conversion must happen before the upload slot is requested',
+  );
   assert.match(media, /mnet-media/);
   const appJson = JSON.parse(app);
   const picker = appJson.expo.plugins.find((entry) => Array.isArray(entry) && entry[0] === 'expo-image-picker');
@@ -47,6 +61,7 @@ test('native proof capture uses private signed media flow without microphone per
   assert.equal(picker[1].microphonePermission, false);
   const packageJson = JSON.parse(pkg);
   assert.match(packageJson.dependencies['expo-image-picker'], /^~57\./);
+  assert.match(packageJson.dependencies['expo-image-manipulator'], /^~57\./);
   assert.match(packageJson.dependencies['expo-secure-store'], /^~57\./);
 });
 
@@ -63,6 +78,10 @@ test('mission and group routes are deep-linkable native work surfaces', async ()
   assert.match(mission, /submitProof/);
   assert.match(group, /setGroupMembership/);
   assert.match(group, /createPost/);
+  assert.ok(
+    group.indexOf('if (!session)') < group.lastIndexOf('if (busy)'),
+    'signed-out group routes must show sign-in before the loading gate',
+  );
   assert.equal(JSON.parse(app).expo.scheme, 'here');
 });
 
