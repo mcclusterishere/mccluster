@@ -9,6 +9,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -37,6 +38,43 @@ const VIEWS: { key: ViewKey; label: string }[] = [
   { key: 'groups', label: 'Groups' },
   { key: 'record', label: 'Record' },
   { key: 'account', label: 'Account' },
+];
+
+const TOUR_STEPS: { title: string; body: string; view?: ViewKey }[] = [
+  {
+    title: 'Welcome to the Action Network',
+    body: "The place for doers. Don't just watch. Act. This takes about a minute.",
+  },
+  {
+    title: 'Start with a mission',
+    body: 'Pick one real thing to do out in the world. Join it, then go do it.',
+    view: 'missions',
+  },
+  {
+    title: 'Show your proof',
+    body: 'Open the mission, record or choose proof, and submit it. A person on the desk checks it before the action is verified.',
+    view: 'missions',
+  },
+  {
+    title: 'Build your Action Record',
+    body: 'Verified work earns its place here with your skills and progress. Three verified actions unlock the fellowship path.',
+    view: 'record',
+  },
+  {
+    title: 'The Action feed',
+    body: 'The feed shows what people are doing and the missions attached to that work. The response is action, not likes.',
+    view: 'feed',
+  },
+  {
+    title: 'Organize in groups',
+    body: 'Join rooms around the work, see their campaigns, and coordinate with the people already moving.',
+    view: 'groups',
+  },
+  {
+    title: 'Your M Account',
+    body: 'Your profile, sign-out and account deletion live here. You can replay this tour from this screen any time.',
+    view: 'account',
+  },
 ];
 
 function errorText(error: unknown) {
@@ -174,6 +212,8 @@ function SignedInNetwork() {
   const [view, setView] = useState<ViewKey>('feed');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourAutoChecked, setTourAutoChecked] = useState(false);
 
   const refreshBootstrap = useCallback(async () => {
     setLoading(true);
@@ -190,6 +230,13 @@ function SignedInNetwork() {
   useEffect(() => {
     refreshBootstrap();
   }, [refreshBootstrap]);
+
+  useEffect(() => {
+    if (!boot || tourAutoChecked || boot.next_step === 'profile') return;
+    setTourAutoChecked(true);
+    const context = boot.onboarding?.context || {};
+    if (!context.tour_done_at) setTourOpen(true);
+  }, [boot, tourAutoChecked]);
 
   if (loading && !boot) return <Centered label="Loading your Action Network…" />;
   if (boot?.next_step === 'profile') {
@@ -239,8 +286,37 @@ function SignedInNetwork() {
         {view === 'missions' ? <MissionsView /> : null}
         {view === 'groups' ? <GroupsView /> : null}
         {view === 'record' ? <RecordView /> : null}
-        {view === 'account' ? <AccountView boot={boot} refreshBootstrap={refreshBootstrap} /> : null}
+        {view === 'account' ? (
+          <AccountView
+            boot={boot}
+            refreshBootstrap={refreshBootstrap}
+            onTour={() => setTourOpen(true)}
+          />
+        ) : null}
       </ScrollView>
+
+      <NativeTour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onView={setView}
+        onSeen={async () => {
+          await net.markTourSeen();
+          setBoot((current) =>
+            current
+              ? {
+                  ...current,
+                  onboarding: {
+                    ...(current.onboarding || {}),
+                    context: {
+                      ...((current.onboarding?.context as Record<string, any>) || {}),
+                      tour_done_at: new Date().toISOString(),
+                    },
+                  },
+                }
+              : current,
+          );
+        }}
+      />
     </View>
   );
 }
@@ -602,9 +678,11 @@ function RecordView() {
 function AccountView({
   boot,
   refreshBootstrap,
+  onTour,
 }: {
   boot: NetworkBootstrap | null;
   refreshBootstrap: () => Promise<void>;
+  onTour: () => void;
 }) {
   const net = useActionNetworkApi();
   const { user, signOut } = useMcc();
@@ -654,6 +732,7 @@ function AccountView({
         <Text style={s.muted}>{String(user?.email || '')}</Text>
         {boot?.profile?.headline ? <Text style={s.body}>{String(boot.profile.headline)}</Text> : null}
         <QuietButton label="Refresh profile" onPress={refreshBootstrap} />
+        <QuietButton label="Take the tour" onPress={onTour} />
         <QuietButton label="Sign out" onPress={() => signOut()} />
       </Article>
 
@@ -694,6 +773,98 @@ function AccountView({
         {message ? <Text style={s.status}>{message}</Text> : null}
       </Article>
     </Section>
+  );
+}
+
+function NativeTour({
+  open,
+  onClose,
+  onView,
+  onSeen,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onView: (view: ViewKey) => void;
+  onSeen: () => Promise<void>;
+}) {
+  const [step, setStep] = useState(0);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setStep(0);
+    const first = TOUR_STEPS[0];
+    if (first.view) onView(first.view);
+  }, [open, onView]);
+
+  useEffect(() => {
+    if (!open) return;
+    const target = TOUR_STEPS[step]?.view;
+    if (target) onView(target);
+  }, [open, step, onView]);
+
+  async function finish() {
+    if (closing) return;
+    setClosing(true);
+    try {
+      await onSeen();
+    } catch {
+      // The tour may still close if the account write is temporarily offline;
+      // it will auto-offer again later rather than lying that the server saw it.
+    } finally {
+      setClosing(false);
+      onClose();
+    }
+  }
+
+  const item = TOUR_STEPS[step];
+  return (
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={finish}
+      statusBarTranslucent
+    >
+      <View style={s.tourScrim}>
+        <View
+          accessibilityRole="summary"
+          accessibilityLabel={`Action Network walkthrough, step ${step + 1} of ${TOUR_STEPS.length}`}
+          style={s.tourCard}
+        >
+          <Text style={s.kicker}>{step + 1} of {TOUR_STEPS.length}</Text>
+          <Text style={s.tourTitle}>{item.title}</Text>
+          <Text style={s.muted}>{item.body}</Text>
+          <View style={s.tourDots}>
+            {TOUR_STEPS.map((_, index) => (
+              <View key={index} style={[s.tourDot, index === step && s.tourDotOn]} />
+            ))}
+          </View>
+          <View style={s.tourButtons}>
+            <Pressable disabled={closing} onPress={finish} style={s.tourSkip}>
+              <Text style={s.tourSkipText}>Skip tour</Text>
+            </Pressable>
+            {step > 0 ? (
+              <Pressable disabled={closing} onPress={() => setStep((value) => value - 1)} style={s.tourQuiet}>
+                <Text style={s.tourQuietText}>Back</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              disabled={closing}
+              onPress={() => {
+                if (step === TOUR_STEPS.length - 1) finish();
+                else setStep((value) => value + 1);
+              }}
+              style={[s.tourNext, closing && s.disabled]}
+            >
+              <Text style={s.primaryText}>
+                {closing ? 'Saving…' : step === TOUR_STEPS.length - 1 ? 'Look around' : step === 0 ? 'Show me' : 'Next'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -937,6 +1108,46 @@ const s = StyleSheet.create({
     backgroundColor: color.field,
   },
   boxOn: { backgroundColor: color.ruby, borderColor: color.ruby },
+  tourScrim: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,.66)',
+    paddingHorizontal: space.md,
+    paddingBottom: space.xl,
+  },
+  tourCard: {
+    gap: space.sm,
+    padding: space.lg,
+    backgroundColor: color.stageRaised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.rule,
+    borderRadius: 18,
+  },
+  tourTitle: { ...type.title, color: color.paper },
+  tourDots: { flexDirection: 'row', gap: 6, paddingTop: space.xs },
+  tourDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.rule },
+  tourDotOn: { backgroundColor: color.ruby },
+  tourButtons: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm },
+  tourSkip: { minHeight: MIN_TOUCH, justifyContent: 'center', paddingRight: space.xs },
+  tourSkipText: { ...type.sub, color: color.quiet, textDecorationLine: 'underline' },
+  tourQuiet: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    paddingHorizontal: space.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.rule,
+    borderRadius: 8,
+  },
+  tourQuietText: { ...type.row, color: color.paper },
+  tourNext: {
+    minHeight: MIN_TOUCH,
+    marginLeft: 'auto',
+    justifyContent: 'center',
+    paddingHorizontal: space.lg,
+    backgroundColor: color.ruby,
+    borderRadius: 8,
+  },
+
   danger: {
     minHeight: 48,
     borderWidth: 1,
