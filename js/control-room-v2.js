@@ -2889,6 +2889,51 @@
         render();
       });
     }
+    else if (action === "decision-transition") {
+      var decisionId = el.getAttribute("data-id");
+      var decisionStatus = el.getAttribute("data-status");
+      var decisionNote = $("crDecisionNote") && $("crDecisionNote").value.trim();
+      state.pending["decision:" + decisionId] = true;
+      delete state.pending["decisionError:" + decisionId];
+      inspectDecision(decisionId);
+      src(request("/v1/ai/decisions/" + encodeURIComponent(decisionId) + "/status", {
+        method: "POST", body: { status: decisionStatus, note: decisionNote || null }
+      })).then(function (result) {
+        delete state.pending["decision:" + decisionId];
+        if (!result.ok) {
+          state.pending["decisionError:" + decisionId] = result;
+          inspectDecision(decisionId);
+          return;
+        }
+        var updatedDecision = result.data && result.data.decision;
+        if (updatedDecision) state.decisions = state.decisions.map(function (row) { return String(row.id) === String(updatedDecision.id) ? updatedDecision : row; });
+        delete state.pending["decisionError:" + decisionId];
+        render();
+        inspectDecision(decisionId);
+      });
+    }
+    else if (action === "publish-job-transition") {
+      var publishId = el.getAttribute("data-id");
+      var publishVerb = el.getAttribute("data-verb");
+      state.pending["publishJob:" + publishId] = true;
+      delete state.pending["publishJobError:" + publishId];
+      inspectPublish(publishId);
+      src(request("/v1/social/publish/" + encodeURIComponent(publishId) + "/" + encodeURIComponent(publishVerb), {
+        method: "POST", body: state.org && state.org.id ? { org_id: state.org.id } : {}
+      })).then(function (result) {
+        delete state.pending["publishJob:" + publishId];
+        if (!result.ok) {
+          state.pending["publishJobError:" + publishId] = result;
+          inspectPublish(publishId);
+          return;
+        }
+        var updatedPublish = result.data && result.data.publish_job;
+        if (updatedPublish) state.publishJobs = state.publishJobs.map(function (row) { return String(row.id) === String(updatedPublish.id) ? updatedPublish : row; });
+        delete state.pending["publishJobError:" + publishId];
+        render();
+        inspectPublish(publishId);
+      });
+    }
     else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
     else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
     else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
