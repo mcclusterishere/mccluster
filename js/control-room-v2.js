@@ -993,6 +993,26 @@
   }
 
 
+  // Shows what the resident turn checked on the web (core/src/executors/
+  // resident-ai-turn.mjs), so a grounded reply's sources stay visible even
+  // when the model does not cite them inline.
+  function aiResearchHtml(message) {
+    var research = message.metadata && message.metadata.current_research;
+    if (!research || !research.attempted) return "";
+    var sources = (Array.isArray(research.sources) ? research.sources : []).filter(function (source) {
+      return source && /^https?:\/\//i.test(String(source.url || ""));
+    });
+    if (!research.ok || !sources.length) {
+      return '<div class="cr-ai-research cr-ai-research--none">' +
+        esc(research.ok ? "Checked the web · no results · answer may be out of date" : "Web check failed · answer may be out of date") + '</div>';
+    }
+    var when = research.fetched_at ? " · " + ago(research.fetched_at) : "";
+    return '<details class="cr-ai-research"><summary>Checked the web · ' + sources.length + " source" + (sources.length === 1 ? "" : "s") + esc(when) + '</summary><ol>' +
+      sources.map(function (source) {
+        return '<li><a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.title || source.url) + '</a></li>';
+      }).join("") + '</ol></details>';
+  }
+
   function renderAi() {
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
     var selected = aiThreadById(state.selectedAiThreadId);
@@ -1026,7 +1046,7 @@
           : "";
         return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
           '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + speakControl + '</div>' +
-          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
+          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div>' + (mine ? "" : aiResearchHtml(message)) + '</div>';
       }).join("");
     }
     if (state.aiChatPending) {

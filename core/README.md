@@ -45,6 +45,8 @@ The browser is a terminal, not the owner of a McCluster conversation. Resident C
 
 Canonical conversation/memory truth remains in Supabase (`ops_ai_threads`, `ops_ai_messages`, and private `ai_context`). The VPS persistent directories above are McCluster's machine workspace, checkpoints, repositories, and artifacts; they are deliberately not a second conversation database or shadow memory service.
 
+A turn whose question depends on the present ("latest", "current", "today", "search the web", and similar) calls the `research.web` capability through the broker before inference. The results go into the turn's system prompt as dated search-result evidence with source URLs, and the assistant message's `metadata.current_research` records whether the lookup ran, its provider and fetch time, and the source titles and URLs, which Control shows under the reply. A failed or empty lookup does not fail the turn: the model is told it has no current evidence and must say so. The runner signs its broker calls with `CORE_EDGE_SIGNING_KEY` when that key is set in `core.env`, because the broker then refuses unsigned requests, loopback callers included.
+
 ## Local model
 
 The default is `qwen3:8b` through Ollama. Keep Ollama loopback-only. `core/systemd/ollama-mccluster.conf` caps the host at one loaded model and one parallel request, with a 16k default context and a 10 GB service memory ceiling.
