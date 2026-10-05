@@ -204,7 +204,7 @@ test('Work records are created through the Worker, not the legacy CRM', async()=
     read('js/control-room/work-records.js'),
     read('workers/mccluster/src/work.js'),
     read('workers/mccluster/src/entry.js'),
-    read('supabase/pending_migrations/20261005150000_control_work_records_v1.sql')
+    read('supabase/migrations/20261005044012_control_work_records_v1.sql')
   ]);
   /* + New opens the native form; nothing points at crm.html to create. */
   assert.match(shell,/action === "new-work"\) \{[\s\S]*window\.CR\.work\.openForm\(state\.workView\)/);
