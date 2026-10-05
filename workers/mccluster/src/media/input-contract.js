@@ -145,7 +145,7 @@ export function validateModelInput(model, input) {
   if (VISUAL_CAPABILITIES.has(capability)) {
     const visual = refs.filter((ref) => refKind(ref.key) === 'visual');
     if (!visual.length) {
-      throw invalid('This media model needs visual reference media, not an arbitrary structured object', {
+      throw invalid('This media model requires structured media input with real visual reference media, not an arbitrary object', {
         ...base,
         reference_media_supplied: refs.map((ref) => ref.key),
         required_action: 'supply an image/video/reference *_url field or choose a text-to-* model'
@@ -155,7 +155,7 @@ export function validateModelInput(model, input) {
   }
 
   if (!refs.length) {
-    throw invalid('This media model needs real reference media, not an arbitrary structured object', {
+    throw invalid('This media model requires structured media input with real reference media, not an arbitrary object', {
       ...base,
       required_action: 'supply provider reference media in *_url/*_urls fields or choose a text-to-* model'
     });
