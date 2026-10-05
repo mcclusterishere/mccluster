@@ -1,6 +1,7 @@
 import { createGeneration } from '../media/router.js';
 import { credentialRefForConfiguredChannel, requireOrgId, requireOrgRole } from './security.js';
 import { graphGet, tokenFor, OUTBOX_BUCKET } from './meta.js';
+import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
   return {
@@ -414,7 +415,7 @@ async function createUpload(request, env, user) {
 async function listPublishJobs(request, env, user) {
   const url = new URL(request.url);
   const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
-  const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,content_id,publish_mode,scheduled_at,state,external_media_id,attempts,last_error,payload,created_at,updated_at`);
+  const rows = await db(env, `social_publish_jobs?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&limit=50&select=id,account_id,campaign_id,variant_id,content_id,publish_mode,scheduled_at,state,external_creation_id,external_media_id,attempts,last_error,payload,created_at,updated_at`);
   const ids = [...new Set((rows || []).map((x) => x.content_id).filter(Boolean))].slice(0, 50);
   const actionStats = {};
   for (const row of rows || []) {
@@ -469,7 +470,82 @@ async function moveJob(request, env, user, jobId, to) {
       }
     }
   }
-  return { publish_job: rows[0] };
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: to === 'queued' ? 'social_publish.approved' : 'social_publish.cancelled',
+    capability: 'social.publish.manage',
+    resourceType: 'social_publish_job',
+    resourceId: rows[0].id,
+    detail: { from: to === 'queued' ? 'draft' : 'draft_or_queued', to }
+  });
+  return { publish_job: rows[0], audit };
+}
+
+async function retryPublishJob(request, env, user, jobId) {
+  const body = await bodyJson(request);
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
+
+  const jobs = await db(env,
+    `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.failed&select=id,org_id,content_id,state,external_creation_id,external_media_id,attempts,last_error,payload&limit=1`
+  );
+  const job = jobs?.[0];
+  if (!job) throw Object.assign(new Error('Only a failed publish job can be retried'), { status: 409 });
+  if (job.external_media_id) {
+    throw Object.assign(new Error('A publish job with external media cannot be retried'), { status: 409 });
+  }
+
+  const previousError = String(job.last_error || '').toLowerCase();
+  const deadContainer = Boolean(job.external_creation_id) &&
+    /creation container (error|expired)/.test(previousError);
+  const resumeContainer = Boolean(job.external_creation_id) && !deadContainer;
+  const nextState = resumeContainer ? 'processing' : 'queued';
+  const patchBody = {
+    state: nextState,
+    attempts: 0,
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null,
+    scheduled_at: body.scheduled_at || new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  if (deadContainer) patchBody.external_creation_id = null;
+
+  const rows = await db(env,
+    `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.failed&external_media_id=is.null`,
+    {
+      method: 'PATCH',
+      headers: { prefer: 'return=representation' },
+      body: JSON.stringify(patchBody)
+    }
+  );
+  if (!rows?.length) {
+    throw Object.assign(new Error('Publish job changed while retry was being prepared'), { status: 409 });
+  }
+
+  if (rows[0].content_id) {
+    await patch(env, 'social_content_items', rows[0].content_id, { status: 'publishing' }).catch(() => {});
+  }
+
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: 'social_publish.retried',
+    capability: 'social.publish.manage',
+    resourceType: 'social_publish_job',
+    resourceId: rows[0].id,
+    detail: {
+      previous_attempts: job.attempts,
+      previous_error: job.last_error || null,
+      resumed_existing_container: resumeContainer,
+      restarted_dead_container: deadContainer,
+      to: nextState
+    }
+  });
+  return { publish_job: rows[0], audit, retry_mode: resumeContainer ? 'resume_container' : 'restart' };
 }
 
 /* Is Instagram actually connected? Asks Meta with the stored key, and
@@ -630,6 +706,8 @@ export async function handleSocialRequest(request, env, user) {
   if (path === '/v1/social/uploads' && request.method === 'POST') return createUpload(request, env, user);
   const moveMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/(approve|cancel)$/i);
   if (moveMatch && request.method === 'POST') return moveJob(request, env, user, moveMatch[1], moveMatch[2] === 'approve' ? 'queued' : 'cancelled');
+  const retryMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/retry$/i);
+  if (retryMatch && request.method === 'POST') return retryPublishJob(request, env, user, retryMatch[1]);
   const checkMatch = path.match(/^\/v1\/social\/accounts\/([0-9a-f-]{36})\/check$/i);
   if (checkMatch && request.method === 'GET') return checkAccount(request, env, user, checkMatch[1]);
   if (path === '/v1/social/posts' && request.method === 'POST') return registerPost(request, env, user);
