@@ -11,10 +11,11 @@
   window.CR=window.CR||{};
   var KINDS=["companies","tasks","orders","bookings"];
   var LABEL={lead:"Lead",companies:"Company",tasks:"Task",orders:"Order",bookings:"Booking"};
+  var COMPANY_KINDS=["nonprofit","brand","agency","government","media","other"];
   var STATES={tasks:["open","doing","done"],orders:["open","paid","in_production","fulfilled","cancelled"],bookings:["proposed","confirmed","completed","cancelled"]};
   var W={request:null,render:null,orgId:null,leads:null,refreshLeads:null,
     rows:{companies:[],tasks:[],orders:[],bookings:[]},loaded:{},loading:{},error:{},
-    unprovisioned:false,form:null,busy:false,msg:null,bad:false};
+    unprov:{},form:null,busy:false,msg:null,bad:false};
 
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function ago(v){if(!v)return"—";var d=new Date(v);return isNaN(d)?"—":d.toLocaleDateString(undefined,{month:"short",day:"numeric"});}
@@ -29,9 +30,9 @@
     var o=org();if(!o||W.loading[kind]||(W.loaded[kind]&&!force))return Promise.resolve();
     W.loading[kind]=true;delete W.error[kind];
     return W.request("/v1/work/"+kind+"?org_id="+encodeURIComponent(o)+"&limit=200").then(function(d){
-      W.rows[kind]=(d&&d[kind])||[];W.unprovisioned=false;
+      W.rows[kind]=(d&&d[kind])||[];W.unprov[kind]=false;
     }).catch(function(err){
-      if(isUnprovisioned(err))W.unprovisioned=true;else W.error[kind]=err;
+      if(isUnprovisioned(err))W.unprov[kind]=true;else W.error[kind]=err;
     }).then(function(){W.loading[kind]=false;W.loaded[kind]=true;redraw();});
   }
   function ensure(kinds){kinds.forEach(function(k){if(!W.loaded[k]&&!W.loading[k])load(k);});}
@@ -41,15 +42,18 @@
   function companyOptions(sel){return'<option value="">None</option>'+W.rows.companies.map(function(c){return'<option value="'+e(c.id)+'"'+(c.id===sel?" selected":"")+'>'+e(c.name)+'</option>';}).join("");}
   function leadOptions(){return'<option value="">None</option>'+(W.leads?W.leads():[]).slice(0,200).map(function(l){return'<option value="'+e(l.id)+'">'+e(l.name||l.email||l.id)+'</option>';}).join("");}
 
+  /* Companies live in the existing out_companies table and work today.
+     Tasks, orders, bookings and lead-to-company links need the pending
+     migration; until it is applied they say so instead of pretending. */
   function unprovisionedNote(){
-    return'<div class="cr-gap"><b>Work records are not set up yet.</b><span>The routes exist, but the tables they write to arrive with supabase/pending_migrations/20261005150000_control_work_records_v1.sql, which the owner has not applied. Until then nothing can be stored here, and nothing is pretended.</span></div>';
+    return'<div class="cr-gap"><b>Not set up yet.</b><span>The routes exist, but the tables they write to arrive with supabase/pending_migrations/20261005150000_control_work_records_v1.sql, which the owner has not applied. Until then nothing of this kind can be stored here, and nothing is pretended.</span></div>';
   }
 
   /* The create form for one kind. Fields mirror what the Worker accepts;
      anything else would be dropped server-side anyway. */
   function fields(kind){
     if(kind==="lead")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Email<input id="wkEmail" type="email" maxlength="320"></label><label>What they want<input id="wkWant" maxlength="200" placeholder="Website, shoot, print…"></label><label>Campaign<input id="wkCampaign" maxlength="120"></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label><label class="cro-span-2">Note<textarea id="wkNote" rows="3" maxlength="4000"></textarea></label>';
-    if(kind==="companies")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Domain<input id="wkDomain" maxlength="253" placeholder="example.com"></label><label class="cro-span-2">Note<textarea id="wkNote" rows="3" maxlength="4000"></textarea></label>';
+    if(kind==="companies")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Domain<input id="wkDomain" maxlength="253" placeholder="example.com"></label><label>Kind<select id="wkKind"><option value="">—</option>'+COMPANY_KINDS.map(function(k){return'<option value="'+k+'">'+k+'</option>';}).join("")+'</select></label><label>City<input id="wkCity" maxlength="120"></label><label class="cro-span-2">Notes<textarea id="wkNotes" rows="3" maxlength="4000"></textarea></label>';
     if(kind==="tasks")return'<label>Task<input id="wkTitle" maxlength="300" required></label><label>Due<input id="wkDue" type="datetime-local"></label><label>About a lead<select id="wkLead">'+leadOptions()+'</select></label><label class="cro-span-2">Detail<textarea id="wkDetail" rows="3" maxlength="4000"></textarea></label>';
     if(kind==="orders")return'<label>Order<input id="wkTitle" maxlength="300" required></label><label>Amount (USD)<input id="wkAmount" type="number" min="0" step="0.01" inputmode="decimal"></label><label>Lead<select id="wkLead">'+leadOptions()+'</select></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label>';
     return'<label>Booking<input id="wkTitle" maxlength="300" required></label><label>Location<input id="wkLocation" maxlength="300"></label><label>Starts<input id="wkStarts" type="datetime-local"></label><label>Ends<input id="wkEnds" type="datetime-local"></label><label>Lead<select id="wkLead">'+leadOptions()+'</select></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label><label class="cro-span-2">Note<textarea id="wkNote" rows="3" maxlength="4000"></textarea></label>';
@@ -58,7 +62,7 @@
   function payload(kind){
     var o={org_id:org()};
     if(kind==="lead"){o.name=val("wkName");o.email=val("wkEmail")||null;o.want=val("wkWant")||null;o.campaign=val("wkCampaign")||null;o.company_id=val("wkCompany")||null;o.note=val("wkNote")||null;}
-    else if(kind==="companies"){o.name=val("wkName");o.domain=val("wkDomain")||null;o.note=val("wkNote")||null;}
+    else if(kind==="companies"){o.name=val("wkName");o.domain=val("wkDomain")||null;o.kind=val("wkKind")||null;o.city=val("wkCity")||null;o.notes=val("wkNotes")||null;}
     else if(kind==="tasks"){o.title=val("wkTitle");o.due_at=iso(val("wkDue"));o.detail=val("wkDetail")||null;var l=val("wkLead");if(l){o.related_type="lead";o.related_id=l;}}
     else if(kind==="orders"){o.title=val("wkTitle");var a=val("wkAmount");o.amount_cents=a===""?null:Math.round(Number(a)*100);o.lead_id=val("wkLead")||null;o.company_id=val("wkCompany")||null;}
     else{o.title=val("wkTitle");o.location=val("wkLocation")||null;o.starts_at=iso(val("wkStarts"));o.ends_at=iso(val("wkEnds"));o.lead_id=val("wkLead")||null;o.company_id=val("wkCompany")||null;o.note=val("wkNote")||null;}
@@ -68,7 +72,7 @@
   function renderForm(){
     if(!W.form)return"";
     var kind=W.form,chips=["lead"].concat(KINDS).map(function(k){return'<button type="button" class="cro-chip'+(k===kind?" is-on":"")+'" data-wk-form="'+k+'">'+e(LABEL[k])+'</button>';}).join("");
-    var body=W.unprovisioned&&kind!=="lead"?unprovisionedNote():'<div class="cro-form cro-form--2">'+fields(kind)+'</div>'+
+    var body=W.unprov[kind]?unprovisionedNote():'<div class="cro-form cro-form--2">'+fields(kind)+'</div>'+
       '<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-wk-create="'+kind+'"'+(W.busy?" disabled":"")+'>'+(W.busy?"Saving…":"Create "+e(LABEL[kind].toLowerCase()))+'</button><button class="cr-btn" type="button" data-wk-cancel>Cancel</button></div>';
     return'<section class="cro-card cro" aria-label="Create a Work record"><h2>Create a record</h2><div class="cro-chips">'+chips+'</div>'+(W.msg?note(W.msg,W.bad):"")+body+
       '<p class="cro-meta">Written through api.mccluster.org, checked against your role in this workspace, and recorded in the audit ledger.</p></section>';
@@ -87,13 +91,13 @@
      derives from leads. */
   function section(kind){
     ensure(kind==="companies"?["companies"]:["companies",kind]);
-    if(W.unprovisioned)return unprovisionedNote();
+    if(W.unprov[kind])return unprovisionedNote();
     if(W.loading[kind]&&!W.loaded[kind])return note("Reading "+kind+"…");
     if(W.error[kind])return note(LABEL[kind]+" records did not load: "+(W.error[kind].message||W.error[kind]),true);
     var rows=W.rows[kind],cols;
     if(kind==="companies"){
       var counts={};(W.leads?W.leads():[]).forEach(function(l){if(l.company_id)counts[l.company_id]=(counts[l.company_id]||0)+1;});
-      cols=[["Company",function(r){return e(r.name);}],["Domain",function(r){return e(r.domain||"—");}],["Leads",function(r){return e(counts[r.id]||0);}],["Added",function(r){return e(ago(r.created_at));}]];
+      cols=[["Company",function(r){return e(r.name)+(r.domain?'<div class="cro-meta">'+e(r.domain)+'</div>':"");}],["Kind",function(r){return e(r.kind||"—");}],["Outreach",function(r){return e(r.status||"—");}],["Leads",function(r){return e(counts[r.id]||0);}],["Added",function(r){return e(ago(r.created_at));}]];
     }else if(kind==="tasks"){
       cols=[["Task",function(r){return e(r.title)+(r.detail?'<div class="cro-meta">'+e(r.detail)+'</div>':"");}],["About",function(r){return e(r.related_type==="lead"?leadName(r.related_id)||"Lead":(r.related_type||"—"));}],["Due",function(r){return e(ago(r.due_at));}],["State",function(r){return stateSelect(kind,r);}]];
     }else if(kind==="orders"){
@@ -120,8 +124,8 @@
       W.form=null;W.msg=null;
       if(kind==="lead"){if(W.refreshLeads)W.refreshLeads();}else load(kind,true);
     }).catch(function(err){
-      if(isUnprovisioned(err))W.unprovisioned=true;
-      W.msg="Not saved: "+(err.message||err);W.bad=true;
+      if(isUnprovisioned(err)&&kind!=="lead")W.unprov[kind]=true;
+      W.msg="Not saved: "+(isUnprovisioned(err)&&kind==="lead"?"linking a lead to a company needs the pending Work migration; leave Company empty for now":(err.message||err));W.bad=true;
     }).then(function(){W.busy=false;redraw();});
   }
 
@@ -152,7 +156,7 @@
       W.request=ctx.request;W.render=ctx.render;W.orgId=ctx.orgId;W.leads=ctx.leads;W.refreshLeads=ctx.refreshLeads;
       document.addEventListener("click",onClick);document.addEventListener("change",onChange);
     },
-    reset:function(){W.loaded={};W.rows={companies:[],tasks:[],orders:[],bookings:[]};W.unprovisioned=false;},
+    reset:function(){W.loaded={};W.rows={companies:[],tasks:[],orders:[],bookings:[]};W.unprov={};},
     renderForm:renderForm,section:section,openForm:openForm,
     state:W
   };

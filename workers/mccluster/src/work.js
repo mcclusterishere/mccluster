@@ -6,6 +6,8 @@
    place those records are written (docs/control-plane/CONTROL-ROOM-BACKEND-GAPS.md
    items 1, 2, 3 and 6), against the tables in
    supabase/pending_migrations/20261005150000_control_work_records_v1.sql.
+   Companies are the existing public.out_companies, so they work before that
+   migration; tasks, orders, bookings and lead-to-company links need it.
 
    Rules every route here keeps:
    - The caller's role comes from org membership (requireMembership), never
@@ -88,12 +90,25 @@ function bad(message) {
    `create` lists the fields required on create; `states` drives the state
    field and the done-at bookkeeping for tasks. */
 export const KINDS = {
+  /* Companies are public.out_companies — the one company table the intake
+     and outreach functions already write. Its own vocabulary is kept: kind,
+     status and source are its check constraints, and it has no created_by
+     column, so a hand-made company is stamped source 'manual' instead. */
   companies: {
-    table: 'work_companies',
+    table: 'out_companies',
     resource: 'company',
     writers: OWNER,
-    fields: { name: text(200), domain, note: text(4000) },
+    fields: {
+      name: text(200),
+      domain,
+      kind: oneOf(['nonprofit', 'brand', 'agency', 'government', 'media', 'other']),
+      status: oneOf(['new', 'contacted', 'replied', 'partner', 'declined']),
+      city: text(120),
+      region: text(120),
+      notes: text(4000)
+    },
     create: ['name'],
+    stamp: () => ({ source: 'manual' }),
     order: 'name.asc'
   },
   tasks: {
@@ -164,7 +179,7 @@ function headers(env) {
 /* A missing table is the migration not yet applied, not a server bug. */
 function notProvisioned(status, data) {
   const code = data && typeof data === 'object' ? data.code : '';
-  return code === 'PGRST205' || code === '42P01';
+  return code === 'PGRST205' || code === '42P01' || code === 'PGRST204' || code === '42703';
 }
 
 async function db(env, path, options = {}) {
@@ -229,11 +244,11 @@ async function gate(env, user, orgId, writers) {
    another tenant's company. */
 async function assertSameOrg(env, orgId, fields) {
   const links = [
-    ['company_id', 'work_companies'],
+    ['company_id', 'out_companies'],
     ['lead_id', 'leads']
   ];
   if (fields.related_type && fields.related_id) {
-    const table = { lead: 'leads', company: 'work_companies', order: 'work_orders', booking: 'work_bookings' }[fields.related_type];
+    const table = { lead: 'leads', company: 'out_companies', order: 'work_orders', booking: 'work_bookings' }[fields.related_type];
     links.push(['related_id', table]);
   }
   for (const [field, table] of links) {
@@ -285,7 +300,7 @@ export async function createWork(request, env, user, kindName) {
   const row = (await db(env, kind.table, {
     method: 'POST',
     headers: { prefer: 'return=representation' },
-    body: JSON.stringify({ ...fields, org_id: membership.org_id, created_by: user?.id || null })
+    body: JSON.stringify({ ...fields, org_id: membership.org_id, ...(kind.stamp ? kind.stamp(user) : { created_by: user?.id || null }) })
   }))?.[0];
   const ledger = await audit(env, membership, user, `${kind.resource}.created`, kind.resource, row?.id, { fields });
   return { [kind.resource]: row, audit: ledger };

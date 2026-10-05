@@ -21,8 +21,11 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 > (staff may run tasks; leads, companies, orders and bookings are owner work),
 > pinned to the caller's `org_id`, and written to `control_audit`. The tables
 > come from `supabase/pending_migrations/20261005150000_control_work_records_v1.sql`
-> (`work_companies`, `leads.company_id`, `work_tasks`, `work_orders`,
-> `work_bookings`; RLS on, no browser grants). Control's "+ New" opens the
+> (`leads.company_id`, `work_tasks`, `work_orders`, `work_bookings`; RLS on,
+> no browser grants). **Companies are the existing `out_companies`** — the
+> table the intake and outreach functions already write — so there is one
+> company universe; leads, orders and bookings link to it, and Control's
+> company records work before the migration is applied. Control's "+ New" opens the
 > native form in `js/control-room/work-records.js`; the legacy CRM creator is
 > no longer the way in. Until the owner applies the migration, the routes
 > answer `503 work_not_provisioned` and Control says so.

@@ -96,16 +96,32 @@ test('staff run tasks; orders, bookings, companies and leads are owner work', as
 test('a request cannot set org_id, created_by or undeclared fields', async () => {
   const b = backend();
   await withFetch(b.handler, async () => {
-    const c = call('POST', '/v1/work/companies', { org_id: HOUSE, name: ' Acme ', domain: 'https://Acme.com/about', created_by: 'someone', id: 'forged', secret: 1 });
+    const outside = call('POST', '/v1/work/tasks', { org_id: OTHER, title: 'x' });
+    await assert.rejects(handleWorkRequest(outside.request, env, USER, outside.url), { status: 403 }, 'not a member of that org');
+    const c = call('POST', '/v1/work/tasks', { org_id: HOUSE, title: ' Call Sam ', created_by: 'someone', id: 'forged', completed_at: '2020-01-01', secret: 1 });
     await handleWorkRequest(c.request, env, USER, c.url);
-    const insert = b.calls.find((x) => x.method === 'POST' && x.href.includes('work_companies'));
-    assert.deepEqual(insert.body, { name: 'Acme', domain: 'acme.com', org_id: HOUSE, created_by: USER.id });
+    const inserts = b.calls.filter((x) => x.method === 'POST' && x.href.includes('work_tasks'));
+    assert.equal(inserts.length, 1, 'only the member write reached the table');
+    assert.deepEqual(inserts[0].body, { title: 'Call Sam', org_id: HOUSE, created_by: USER.id });
     assert.ok(b.calls.some((x) => x.href.includes('control_audit')), 'the write reaches the ledger');
   });
 });
 
+test('companies are the one out_companies table, in its own vocabulary', async () => {
+  const b = backend();
+  await withFetch(b.handler, async () => {
+    const c = call('POST', '/v1/work/companies', { org_id: HOUSE, name: ' Acme ', domain: 'https://Acme.com/about', kind: 'brand', created_by: 'someone', source: 'import' });
+    await handleWorkRequest(c.request, env, USER, c.url);
+    const insert = b.calls.find((x) => x.method === 'POST' && x.href.includes('/rest/v1/out_companies'));
+    assert.deepEqual(insert.body, { name: 'Acme', domain: 'acme.com', kind: 'brand', org_id: HOUSE, source: 'manual' });
+    assert.ok(!b.calls.some((x) => x.href.includes('work_companies')), 'no second company table');
+    const wrongKind = call('POST', '/v1/work/companies', { org_id: HOUSE, name: 'Acme', kind: 'startup' });
+    await assert.rejects(handleWorkRequest(wrongKind.request, env, USER, wrongKind.url), { status: 400 });
+  });
+});
+
 test('a company from another org cannot be linked', async () => {
-  const b = backend({ rows: { work_companies: [{ id: COMPANY, org_id: OTHER }] } });
+  const b = backend({ rows: { out_companies: [{ id: COMPANY, org_id: OTHER }] } });
   await withFetch(b.handler, async () => {
     const c = call('POST', '/v1/work/orders', { org_id: HOUSE, title: 'Print run', company_id: COMPANY });
     await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), /does not belong to this organization/);
@@ -169,7 +185,7 @@ test('invalid input is refused before the database', async () => {
 test('before the migration is applied the routes say so', async () => {
   const b = backend({ missingTables: true });
   await withFetch(b.handler, async () => {
-    const c = call('GET', `/v1/work/companies?org_id=${HOUSE}`);
+    const c = call('GET', `/v1/work/tasks?org_id=${HOUSE}`);
     await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), (error) => {
       assert.equal(error.status, 503);
       assert.equal(error.detail.code, 'work_not_provisioned');

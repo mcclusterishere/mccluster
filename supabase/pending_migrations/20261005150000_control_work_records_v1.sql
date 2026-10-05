@@ -4,6 +4,12 @@
 -- companies, tasks, orders and bookings become real, org-scoped records
 -- instead of strings on a lead, implied next actions, or lead lanes.
 --
+-- ONE COMPANY UNIVERSE. Companies are public.out_companies, the table the
+-- intake and outreach edge functions already write and read (org-scoped,
+-- RLS by org membership, unique domain per org). This migration does not
+-- create a second company table; it links leads, orders and bookings to
+-- out_companies.
+--
 -- Pending: the owner applies it, then moves it to supabase/migrations/ and
 -- records it in supabase/production-ledger.json. Until it is applied the
 -- /v1/work/* routes answer 503 "not provisioned" and Control says so.
@@ -19,21 +25,8 @@
 -- the owner is running from Control, linked to the lead it came from, and
 -- may point at a product record through source_table / source_id.
 
-create table if not exists public.work_companies (
-  id          uuid primary key default gen_random_uuid(),
-  org_id      uuid not null references public.orgs(id) on delete cascade,
-  name        text not null check (length(btrim(name)) between 1 and 200),
-  domain      text check (domain is null or domain ~ '^[a-z0-9.-]+\.[a-z]{2,}$'),
-  note        text check (note is null or length(note) <= 4000),
-  created_by  uuid,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
-);
-create unique index if not exists work_companies_org_name_key
-  on public.work_companies (org_id, lower(btrim(name)));
-
 alter table public.leads
-  add column if not exists company_id uuid references public.work_companies(id) on delete set null;
+  add column if not exists company_id uuid references public.out_companies(id) on delete set null;
 create index if not exists leads_company_id_idx on public.leads (company_id) where company_id is not null;
 
 create table if not exists public.work_tasks (
@@ -59,7 +52,7 @@ create table if not exists public.work_orders (
   id            uuid primary key default gen_random_uuid(),
   org_id        uuid not null references public.orgs(id) on delete cascade,
   lead_id       uuid references public.leads(id) on delete set null,
-  company_id    uuid references public.work_companies(id) on delete set null,
+  company_id    uuid references public.out_companies(id) on delete set null,
   title         text not null check (length(btrim(title)) between 1 and 300),
   state         text not null default 'open'
                 check (state in ('open', 'paid', 'in_production', 'fulfilled', 'cancelled')),
@@ -79,7 +72,7 @@ create table if not exists public.work_bookings (
   id          uuid primary key default gen_random_uuid(),
   org_id      uuid not null references public.orgs(id) on delete cascade,
   lead_id     uuid references public.leads(id) on delete set null,
-  company_id  uuid references public.work_companies(id) on delete set null,
+  company_id  uuid references public.out_companies(id) on delete set null,
   title       text not null check (length(btrim(title)) between 1 and 300),
   state       text not null default 'proposed'
               check (state in ('proposed', 'confirmed', 'completed', 'cancelled')),
@@ -108,7 +101,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['work_companies', 'work_tasks', 'work_orders', 'work_bookings'] loop
+  foreach t in array array['work_tasks', 'work_orders', 'work_bookings'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_touch', t);
     execute format('create trigger %I before update on public.%I for each row execute function public.work_touch_updated_at()', t || '_touch', t);
     execute format('alter table public.%I enable row level security', t);
@@ -118,7 +111,6 @@ begin
 end;
 $$;
 
-comment on table public.work_companies is 'Control · Work companies. Written only by Worker mccluster /v1/work/companies (membership-checked, audited).';
 comment on table public.work_tasks     is 'Control · Work human task list. Not ops_agent_jobs (the autonomous queue). Written only via /v1/work/tasks.';
 comment on table public.work_orders    is 'Control · Work operator order record, linked to a lead; product fulfilment tables stay authoritative for their products.';
 comment on table public.work_bookings  is 'Control · Work booking record with a scheduled slot, linked to a lead. Written only via /v1/work/bookings.';
