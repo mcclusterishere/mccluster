@@ -1954,13 +1954,21 @@
     if (state.resources && !force) return Promise.resolve();
     state.resources = { loading: true };
     render();
+    var orgId = state.org && state.org.id;
+    var mediaUsage = orgId
+      ? src(request("/v1/media/usage?org_id=" + encodeURIComponent(orgId) + "&group_by=capability"))
+      : Promise.resolve(badResult("failed", "Workspace identity is unavailable.", 400));
+    var mediaBudget = orgId
+      ? src(request("/v1/media/budget?org_id=" + encodeURIComponent(orgId)))
+      : Promise.resolve(badResult("failed", "Workspace identity is unavailable.", 400));
     return Promise.all([
       src(request("/v1/compute/balance")),
       src(request("/v1/platform/catalog")),
       src(request("/v1/developer/consumers")),
-      src(request("/v1/media/usage?group_by=capability"))
+      mediaUsage,
+      mediaBudget
     ]).then(function (r) {
-      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3], budget: r[4] };
       render();
     });
   }
@@ -2016,7 +2024,29 @@
             : '<p class="cr-muted">No media jobs in this window.</p>');
       }
 
-      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
+      var budgetBody = "";
+      var budgetResult = res.budget;
+      if (budgetResult && !budgetResult.ok) {
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' + sourceBanner(budgetResult, "Media allowance");
+      } else if (budgetResult && budgetResult.ok) {
+        var budget = budgetResult.data && budgetResult.data.budget || {};
+        var dollars = budget.monthly_limit_cents === null || budget.monthly_limit_cents === undefined
+          ? ""
+          : (Number(budget.monthly_limit_cents) / 100).toFixed(2);
+        var saveBusy = state.pending.mediaBudgetSave;
+        var saveError = state.pending.mediaBudgetError;
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' +
+          '<div class="cr-gen">' +
+            '<label class="cr-muted"><input id="crMediaBudgetEnabled" type="checkbox"' + (budget.enabled ? " checked" : "") + '> Enforce monthly cap</label>' +
+            '<input class="cr-input" id="crMediaBudgetUsd" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Monthly limit (USD)" value="' + esc(dollars) + '">' +
+            '<input class="cr-input" id="crMediaBudgetWarn" type="number" min="1" max="100" step="1" inputmode="numeric" aria-label="Warning threshold percent" value="' + esc(budget.warn_at_percent == null ? 80 : budget.warn_at_percent) + '">' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="save-media-budget"' + (saveBusy ? " disabled" : "") + '>' + (saveBusy ? "Saving…" : "Save allowance") + '</button>' +
+          '</div>' +
+          '<p class="cr-muted">The database refuses a new paid FAL job when this organization would exceed the enabled monthly cap. Warning threshold is reserved for operator alerts.</p>' +
+          (saveError ? sourceBanner(saveError, "Media allowance update") : "");
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody + budgetBody +
         '<h3 class="cr-subhead">API consumers</h3>' +
         (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
           : (consumerRows.length
@@ -2845,6 +2875,55 @@
         props: [["Resource", rkey]], tabs: ["overview", "ai"]
       });
     } else if (action === "load-resources") { loadResources(true); }
+    else if (action === "save-media-budget") {
+      var budgetOrgId = state.org && state.org.id;
+      var enabledBox = $("crMediaBudgetEnabled");
+      var amountBox = $("crMediaBudgetUsd");
+      var warnBox = $("crMediaBudgetWarn");
+      var amountText = amountBox ? amountBox.value.trim() : "";
+      var amountUsd = amountText === "" ? null : Number(amountText);
+      var warnPercent = warnBox ? Number(warnBox.value) : 80;
+      if (!budgetOrgId) {
+        state.pending.mediaBudgetError = badResult("failed", "Workspace identity is unavailable.", 400);
+        render();
+        return;
+      }
+      if (amountUsd !== null && (!Number.isFinite(amountUsd) || amountUsd < 0)) {
+        state.pending.mediaBudgetError = badResult("failed", "Monthly limit must be a non-negative dollar amount.", 400);
+        render();
+        return;
+      }
+      if (!Number.isInteger(warnPercent) || warnPercent < 1 || warnPercent > 100) {
+        state.pending.mediaBudgetError = badResult("failed", "Warning threshold must be from 1 to 100.", 400);
+        render();
+        return;
+      }
+      var enabledBudget = Boolean(enabledBox && enabledBox.checked);
+      if (enabledBudget && amountUsd === null) {
+        state.pending.mediaBudgetError = badResult("failed", "Enter a monthly limit before enabling the cap.", 400);
+        render();
+        return;
+      }
+      state.pending.mediaBudgetSave = true;
+      delete state.pending.mediaBudgetError;
+      render();
+      src(request("/v1/media/budget?org_id=" + encodeURIComponent(budgetOrgId), {
+        method: "PATCH",
+        body: {
+          enabled: enabledBudget,
+          monthly_limit_cents: amountUsd === null ? null : Math.round(amountUsd * 100),
+          warn_at_percent: warnPercent
+        }
+      })).then(function (result) {
+        delete state.pending.mediaBudgetSave;
+        if (!result.ok) state.pending.mediaBudgetError = result;
+        else {
+          delete state.pending.mediaBudgetError;
+          if (state.resources) state.resources.budget = result;
+        }
+        render();
+      });
+    }
     else if (action === "inspect-consumer") {
       var consumers = state.resources ? pickRows(state.resources.consumers, "consumers") : [];
       var consumer = findById(consumers, el.getAttribute("data-id"));
