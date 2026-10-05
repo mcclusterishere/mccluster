@@ -6,8 +6,10 @@ claim that every Supabase advisor row is a vulnerability.
 
 ## Production changes already applied
 
-Two production migrations are canonical and are mirrored in
-`supabase/migrations/` by this slice:
+Two production migrations are canonical and are represented in
+`supabase/migrations/` by this slice. The grant migration uses existence guards
+for two historical production-only helpers so clean source-controlled resets
+can replay it without inventing those retired objects:
 
 - `20261005082148_security_reaudit_execute_grants_v1`
   - removes browser execution from the unscoped `kb_search` overload;
