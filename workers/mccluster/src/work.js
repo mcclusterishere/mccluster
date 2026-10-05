@@ -242,7 +242,8 @@ async function gate(env, user, orgId, writers) {
 
 /* Linked ids must belong to the same org; a foreign key alone would accept
    another tenant's company. */
-async function assertSameOrg(env, orgId, fields) {
+async function assertSameOrg(env, membership, fields) {
+  const orgId = membership.org_id;
   const links = [
     ['company_id', 'out_companies'],
     ['lead_id', 'leads']
@@ -255,10 +256,21 @@ async function assertSameOrg(env, orgId, fields) {
     const id = fields[field];
     if (!id) continue;
     const row = (await db(env, `${table}?id=eq.${id}&select=id,org_id`))?.[0];
-    /* Legacy house leads predate tenancy and carry no org_id (src/leads.js). */
-    const legacyLead = table === 'leads' && row && row.org_id === null;
-    if (!row || (row.org_id !== orgId && !legacyLead)) {
+    /* Legacy null-org leads were created before tenancy existed. They belong
+       to the house desk only; never turn NULL into a wildcard across tenants. */
+    const legacyHouseLead = table === 'leads' && row && row.org_id === null && membership.slug === 'mccluster';
+    if (!row || (row.org_id !== orgId && !legacyHouseLead)) {
       throw Object.assign(new Error(`${field} does not belong to this organization`), { status: 400 });
+    }
+  }
+
+  if (fields.assignee) {
+    const member = (await db(
+      env,
+      `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(fields.assignee)}&select=profile_id`
+    ))?.[0];
+    if (!member) {
+      throw Object.assign(new Error('assignee does not belong to this organization'), { status: 400 });
     }
   }
 }
@@ -296,7 +308,7 @@ export async function createWork(request, env, user, kindName) {
     if ((fields.related_type == null) !== (fields.related_id == null)) throw bad('related_type and related_id go together');
     if (fields.state === 'done') fields.completed_at = new Date().toISOString();
   }
-  await assertSameOrg(env, membership.org_id, fields);
+  await assertSameOrg(env, membership, fields);
   const row = (await db(env, kind.table, {
     method: 'POST',
     headers: { prefer: 'return=representation' },
@@ -329,7 +341,7 @@ export async function updateWork(request, env, user, kindName, id) {
   for (const name of kind.create) {
     if (name in fields && fields[name] === null) throw bad(`${name} cannot be empty`);
   }
-  await assertSameOrg(env, membership.org_id, fields);
+  await assertSameOrg(env, membership, fields);
 
   const changed = Object.keys(fields).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(fields[k]));
   if (!changed.length) return { [kind.resource]: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
@@ -352,8 +364,8 @@ export async function createLead(request, env, user) {
   const body = await request.json().catch(() => ({}));
   const membership = await gate(env, user, body?.org_id, OWNER);
   const name = required(text(200))(body?.name);
-  const email = text(320)(body?.email);
-  if (email && !EMAIL.test(email)) throw bad('email must be an email address');
+  const email = required(text(320))(body?.email);
+  if (!EMAIL.test(email)) throw bad('email must be an email address');
   const fields = {
     name,
     email: email ? email.toLowerCase() : null,
@@ -362,8 +374,7 @@ export async function createLead(request, env, user) {
     campaign: text(120)(body?.campaign),
     company_id: uuid(body?.company_id)
   };
-  if (!fields.email && !fields.note) throw bad('Give an email or a note so the lead can be followed up');
-  await assertSameOrg(env, membership.org_id, fields);
+  await assertSameOrg(env, membership, fields);
   const row = (await db(env, 'leads', {
     method: 'POST',
     headers: { prefer: 'return=representation' },
@@ -389,18 +400,27 @@ export async function linkLeadCompany(request, env, user, leadId) {
   if (!Object.prototype.hasOwnProperty.call(body || {}, 'company_id')) throw bad('company_id is required (null to unlink)');
   const companyId = uuid(body.company_id);
   const before = (await db(env, `leads?id=eq.${leadId}&select=id,org_id,company_id,email`))?.[0];
-  if (!before || (before.org_id !== null && before.org_id !== membership.org_id)) {
+  const legacyHouseLead = before && before.org_id === null && membership.slug === 'mccluster';
+  if (!before || (before.org_id !== membership.org_id && !legacyHouseLead)) {
     throw Object.assign(new Error('No such lead'), { status: 404 });
   }
-  await assertSameOrg(env, membership.org_id, { company_id: companyId });
-  if (before.company_id === companyId) return { lead: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
+  await assertSameOrg(env, membership, { company_id: companyId });
+  const patch = {
+    company_id: companyId,
+    ...(legacyHouseLead ? { org_id: membership.org_id } : {})
+  };
+  if (before.company_id === companyId && !legacyHouseLead) return { lead: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
   const row = (await db(env, `leads?id=eq.${leadId}`, {
     method: 'PATCH',
     headers: { prefer: 'return=representation' },
-    body: JSON.stringify({ company_id: companyId })
+    body: JSON.stringify(patch)
   }))?.[0];
-  const ledger = await audit(env, membership, user, 'lead.company_linked', 'lead', leadId, { from: before.company_id, to: companyId });
-  return { lead: row || { ...before, company_id: companyId }, changed: true, audit: ledger };
+  const ledger = await audit(env, membership, user, 'lead.company_linked', 'lead', leadId, {
+    from: before.company_id,
+    to: companyId,
+    legacy_org_adopted: legacyHouseLead
+  });
+  return { lead: row || { ...before, ...patch }, changed: true, audit: ledger };
 }
 
 /* One dispatcher so entry.js wires a single prefix. Returns null when the
