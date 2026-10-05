@@ -57,11 +57,25 @@ test('mission and group routes are deep-linkable native work surfaces', async ()
     read('native/app.json'),
   ]);
   assert.match(mission, /takeMissionProof/);
+  assert.match(mission, /recoverPendingMissionProof/);
+  assert.match(mission, /at least 20 characters/);
   assert.match(mission, /joinMission/);
   assert.match(mission, /submitProof/);
   assert.match(group, /setGroupMembership/);
   assert.match(group, /createPost/);
   assert.equal(JSON.parse(app).expo.scheme, 'here');
+});
+
+test('first-run walkthrough is shared with the web account state', async () => {
+  const [screen, client] = await Promise.all([
+    read('native/src/ActionNetworkScreen.tsx'),
+    read('native/src/actionNetwork.ts'),
+  ]);
+  assert.match(screen, /tour_done_at/);
+  assert.match(screen, /Take the tour/);
+  assert.match(screen, /Welcome to the Action Network/);
+  assert.match(client, /mnet_mark_tour_seen/);
+  assert.match(client, /p_app_key: ACTION_APP_KEY/);
 });
 
 test('account deletion can be started and cancelled inside the native app', async () => {
