@@ -472,6 +472,36 @@ async function moveJob(request, env, user, jobId, to) {
   return { publish_job: rows[0] };
 }
 
+/* Retry is intentionally a fresh provider attempt. A terminal failure may
+   carry a dead/expired Meta creation container, so the retry clears provider
+   ids and attempt state before returning the job to the queue. */
+async function retryJob(request, env, user, jobId) {
+  const body = await bodyJson(request);
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
+
+  const rows = await db(env, `social_publish_jobs?id=eq.${encodeURIComponent(jobId)}&org_id=eq.${encodeURIComponent(org.org_id)}&state=eq.failed&external_media_id=is.null`, {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify({
+      state: 'queued',
+      attempts: 0,
+      last_error: null,
+      external_creation_id: null,
+      external_media_id: null,
+      lease_owner: null,
+      lease_expires_at: null,
+      scheduled_at: body.scheduled_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+  });
+  if (!rows?.length) throw Object.assign(new Error('Only a failed unpublished post can be retried'), { status: 409 });
+  if (rows[0].content_id) {
+    await patch(env, 'social_content_items', rows[0].content_id, { status: 'publishing' }).catch(() => {});
+  }
+  return { publish_job: rows[0] };
+}
+
 /* Is Instagram actually connected? Asks Meta with the stored key, and
    reports how much of the day's 100-post allowance is used. */
 async function checkAccount(request, env, user, accountId) {
@@ -628,8 +658,11 @@ export async function handleSocialRequest(request, env, user) {
   if (path === '/v1/social/publish' && request.method === 'POST') return queuePublish(request, env, user);
   if (path === '/v1/social/publish' && request.method === 'GET') return listPublishJobs(request, env, user);
   if (path === '/v1/social/uploads' && request.method === 'POST') return createUpload(request, env, user);
-  const moveMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/(approve|cancel)$/i);
-  if (moveMatch && request.method === 'POST') return moveJob(request, env, user, moveMatch[1], moveMatch[2] === 'approve' ? 'queued' : 'cancelled');
+  const moveMatch = path.match(/^\/v1\/social\/publish\/([0-9a-f-]{36})\/(approve|cancel|retry)$/i);
+  if (moveMatch && request.method === 'POST') {
+    if (moveMatch[2].toLowerCase() === 'retry') return retryJob(request, env, user, moveMatch[1]);
+    return moveJob(request, env, user, moveMatch[1], moveMatch[2].toLowerCase() === 'approve' ? 'queued' : 'cancelled');
+  }
   const checkMatch = path.match(/^\/v1\/social\/accounts\/([0-9a-f-]{36})\/check$/i);
   if (checkMatch && request.method === 'GET') return checkAccount(request, env, user, checkMatch[1]);
   if (path === '/v1/social/posts' && request.method === 'POST') return registerPost(request, env, user);
