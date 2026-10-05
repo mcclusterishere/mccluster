@@ -67,6 +67,7 @@
     jobFilter: "all",
     pipelineStage: "all",
     resources: null,
+    observability: null,
     publicRecord: null,
     socialAccounts: null,
     decisions: [],
@@ -108,6 +109,8 @@
     return token().then(function (t) {
       if (!t) throw new Error("signed out");
       var headers = { authorization: "Bearer " + t };
+      if (state.org && state.org.id) headers["x-mccluster-org-id"] = state.org.id;
+      if (window.crypto && typeof window.crypto.randomUUID === "function") headers["x-mccluster-trace-id"] = window.crypto.randomUUID();
       if (opts.body !== undefined) headers["content-type"] = "application/json";
       return fetch(API + path, {
         method: opts.method || "GET",
@@ -1872,16 +1875,73 @@
     });
     return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
+  function loadObservability(force) {
+    if (state.pending.observability) return Promise.resolve();
+    if (state.observability && !force) return Promise.resolve();
+    if (!state.org || !state.org.id) return Promise.resolve();
+    state.pending.observability = true;
+    render();
+    var since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    return src(request("/v1/observability/events?org_id=" + encodeURIComponent(state.org.id) + "&limit=100&since=" + encodeURIComponent(since)))
+      .then(function (result) {
+        state.observability = result;
+        delete state.pending.observability;
+        render();
+      });
+  }
+  function retainedObservabilityEvents() {
+    return state.observability && state.observability.ok ? pickRows(state.observability, "events") : [];
+  }
   function renderObservability() {
-    var events = observedEvents();
-    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
-      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Re-read</button></div>';
-    if (!events.length) {
-      return head + '<div class="cr-canvas">' + empty("No recorded failures", "Every canonical source read cleanly and no job, media, or publish record is in a failed state. This is a real result, not an empty log view.") + '</div>';
+    var retained = retainedObservabilityEvents();
+    var fallback = observedEvents();
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">retained request traces · last 24h</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="load-observability"' + (state.pending.observability ? " disabled" : "") + '>' + (state.pending.observability ? "Reading…" : "Re-read") + '</button></div>';
+
+    var retainedBody;
+    if (state.pending.observability && !state.observability) {
+      retainedBody = '<div class="cr-canvas">' + empty("Reading retained events", "Loading the owner-gated observability tail.") + '</div>';
+    } else if (state.observability && !state.observability.ok) {
+      retainedBody = sourceBanner(state.observability, "Observability events");
+    } else if (!retained.length) {
+      retainedBody = '<div class="cr-canvas">' + empty("No retained Control requests", "No verified Control request trace was recorded in this workspace during the selected 24-hour window.") + '</div>';
+    } else {
+      var traceRows = retained.map(function (event) {
+        return {
+          id: event.id,
+          action: "inspect-observation",
+          time: event.created_at,
+          level: String(event.level || "info").toUpperCase(),
+          kind: event.level === "error" ? "bad" : (event.level === "warn" ? "warn" : "info"),
+          request: [event.method, event.route].filter(Boolean).join(" "),
+          status: event.status_code == null ? "—" : String(event.status_code),
+          duration: event.duration_ms == null ? "—" : String(event.duration_ms) + " ms",
+          trace: event.trace_id ? String(event.trace_id).slice(0, 8) : "—"
+        };
+      });
+      retainedBody = renderTable([
+        { label: "Time", html: function (r) { return esc(ago(r.time)); } },
+        { label: "Level", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.level) + '</span>'; } },
+        { label: "Request", key: "request" },
+        { label: "Status", key: "status" },
+        { label: "Duration", key: "duration" },
+        { label: "Trace", key: "trace" }
+      ], traceRows, "No retained events");
     }
+
+    var fallbackBody = fallback.length
+      ? renderTable([
+          { label: "Time", html: function (r) { return esc(ago(r.time)); } },
+          { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } },
+          { label: "Source", key: "source" },
+          { label: "Message", key: "message" }
+        ], fallback, "No canonical context events")
+      : '<p class="cr-panel__body cr-muted">No failed canonical jobs and no recent privileged audit entries in the loaded snapshot.</p>';
+
     return head +
-      '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
-      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
+      '<p class="cr-derived">These request events are retained by the Worker after verifying the signed-in operator belongs to this workspace. Trace and request IDs are returned on API responses for correlation; request bodies and credentials are not retained.</p>' +
+      retainedBody +
+      '<h3 class="cr-subhead">Canonical failure & audit context</h3>' + fallbackBody;
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
@@ -2205,6 +2265,9 @@
       var pendingId = state.selectedThreadId;
       loadTranscript(pendingId).then(function () { delete state.pending["transcript:" + pendingId]; });
     }
+    if (state.surface === "system" && state.systemView === "observability" && !state.observability && !state.pending.observability) {
+      loadObservability(false);
+    }
   }
 
   function inspectorSection(title, html) { return '<section class="cr-inspector__section"><h3>' + esc(title) + '</h3>' + html + '</section>'; }
@@ -2464,6 +2527,22 @@
     });
   }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
+  function inspectObservation(id) {
+    var e = retainedObservabilityEvents().find(function (row) { return String(row.id) === String(id); });
+    if (!e) return;
+    openInspector({
+      title: (e.method || "REQUEST") + " " + (e.route || "/"),
+      subtitle: "System · Observability",
+      description: e.message || "Retained Worker request event.",
+      props: [
+        ["Level", e.level], ["Status", e.status_code], ["Duration", e.duration_ms == null ? "—" : e.duration_ms + " ms"],
+        ["Trace", e.trace_id], ["Request", e.request_id], ["Service", e.service],
+        ["Actor", e.actor_user_id], ["Created", formatDate(e.created_at)]
+      ],
+      raw: e,
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
 
   function openBridge(key) {
     var b = bridge[key]; if (!b) return;
@@ -2798,6 +2877,8 @@
       });
     }
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
+    else if (action === "inspect-observation") inspectObservation(el.getAttribute("data-id"));
+    else if (action === "load-observability") loadObservability(true);
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
     else if (action === "filters") {
