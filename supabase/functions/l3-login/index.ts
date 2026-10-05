@@ -11,8 +11,9 @@ Deno.serve(async req=>{if(req.method==='OPTIONS')return new Response('ok',{heade
  const validMcclusterId=/^[a-z0-9][a-z0-9._-]{2,31}$/.test(mcclusterId)&&!/[._-]$/.test(mcclusterId)&&!/[._-]{2}/.test(mcclusterId);if(!validMcclusterId)return j(req,{error:'invalid_credentials'},401);
  const profiles=await q(`platform_profiles?mccluster_id=eq.${encodeURIComponent(mcclusterId)}&select=user_id,primary_email&limit=1`);const p=Array.isArray(profiles)?profiles[0]:null;
  if(!p){await q('l3_auth_attempts',{method:'POST',body:JSON.stringify({ip_hash:ipHash,mccluster_id:mcclusterId,success:false})});return j(req,{error:'invalid_credentials'},401)}
- const app=await q(`platform_apps?app_key=eq.level-3-media-web&select=id&limit=1`);const appId=app?.[0]?.id;const access=await q(`platform_user_apps?user_id=eq.${p.user_id}&app_id=eq.${appId}&select=role&limit=1`);if(!access?.[0])return j(req,{error:'not_authorized'},403);
  const r=await fetch(`${SB}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SRV,'Content-Type':'application/json'},body:JSON.stringify({email:p.primary_email,password})});const session=await r.json().catch(()=>({}));
  await q('l3_auth_attempts',{method:'POST',body:JSON.stringify({ip_hash:ipHash,mccluster_id:mcclusterId,success:r.ok})});if(!r.ok)return j(req,{error:'invalid_credentials'},401);
+ // App access is checked only after the password succeeds: answering 403 first told a stranger which usernames exist.
+ const app=await q(`platform_apps?app_key=eq.level-3-media-web&select=id&limit=1`);const appId=app?.[0]?.id;const access=await q(`platform_user_apps?user_id=eq.${p.user_id}&app_id=eq.${appId}&select=role&limit=1`);if(!access?.[0])return j(req,{error:'not_authorized'},403);
  return j(req,{access_token:session.access_token,refresh_token:session.refresh_token,expires_in:session.expires_in,user:session.user,token_type:session.token_type});
 });

@@ -34,6 +34,10 @@ test('Level 3 login validates and exact-matches McCluster IDs', async () => {
   assert.match(src, /\^\[a-z0-9\]\[a-z0-9\._-\]\{2,31\}\$/);
   assert.match(src, /mccluster_id=eq\.\$\{encodeURIComponent\(mcclusterId\)\}/);
   assert.doesNotMatch(src, /mccluster_id=ilike/);
+  const password = src.indexOf('grant_type=password');
+  const access = src.indexOf("error:'not_authorized'");
+  assert.ok(password > 0 && access > password,
+    'app access is checked after the password, so a 403 cannot confirm that an account exists');
 });
 
 test('the two live security re-audit migrations are canonical files', async () => {
@@ -50,13 +54,15 @@ test('the two live security re-audit migrations are canonical files', async () =
   assert.match(bodies, /visibility = 'public' and v\.status = 'active'/i);
 });
 
-test('production ledger and Core drift contract agree at migration 263', async () => {
+test('production ledger and Core drift contract agree, and carry the re-audit migrations', async () => {
+  /* Not pinned to a count or hash: the next migration must be able to land
+     without editing this file. drift-contract-check recomputes the hash. */
   const ledger = JSON.parse(await read('supabase/production-ledger.json'));
   const drift = JSON.parse(await read('core/drift-contract.json'));
-  assert.equal(ledger.migration_count, 263);
-  assert.equal(ledger.latest_version, '20261005082220');
-  assert.equal(ledger.latest_name, 'security_reaudit_function_bodies_v1');
-  assert.equal(ledger.ledger_sha256, 'de94f2ba5ad18e4be2c43dbc78a41411271de2e23341c5d9114d9a746a998f64');
+  const names = ledger.migrations.map((m) => `${m.version}_${m.name}`);
+  assert.ok(names.includes('20261005082148_security_reaudit_execute_grants_v1'));
+  assert.ok(names.includes('20261005082220_security_reaudit_function_bodies_v1'));
+  assert.equal(ledger.migration_count, ledger.migrations.length);
   assert.deepEqual(drift.supabase, {
     project_ref: ledger.project_ref,
     migration_count: ledger.migration_count,
@@ -64,4 +70,58 @@ test('production ledger and Core drift contract agree at migration 263', async (
     latest_name: ledger.latest_name,
     ledger_sha256: ledger.ledger_sha256,
   });
+});
+
+/* Run the helper rather than only grepping for it. secret-match.ts is plain
+   WebCrypto once its type annotations are dropped, so the body is lifted out
+   and executed under Node. */
+async function loadSecretMatches() {
+  const src = await read('supabase/functions/_shared/secret-match.ts');
+  const start = src.indexOf('export async function secretMatches(');
+  assert.ok(start >= 0, 'the shared constant-time helper exists');
+  const open = src.indexOf('{', src.indexOf('): Promise<boolean>', start));
+  const close = src.lastIndexOf('\n}');
+  const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+  return new AsyncFunction('provided', 'expected', src.slice(open + 1, close));
+}
+
+test('secretMatches accepts only the exact secret and refuses an unset one', async () => {
+  const secretMatches = await loadSecretMatches();
+  assert.equal(await secretMatches('s3cret-value', 's3cret-value'), true);
+  assert.equal(await secretMatches('s3cret-valuf', 's3cret-value'), false);
+  assert.equal(await secretMatches('s3cret', 's3cret-value'), false);
+  assert.equal(await secretMatches('', ''), false, 'an unset secret must not match an empty header');
+  assert.equal(await secretMatches(null, 'x'), false);
+  assert.equal(await secretMatches('x', undefined), false);
+  assert.equal(await secretMatches('x'.repeat(5000), 'x'.repeat(5000)), false, 'oversized input is refused before hashing');
+});
+
+test('every verify_jwt=false function has a recorded compensating control', async () => {
+  const config = await read('supabase/config.toml');
+  /* Parse each [functions.x] stanza whole, so a comment or another option
+     between the header and verify_jwt cannot hide a public function. */
+  const headers = [...config.matchAll(/^\[functions\.([a-z0-9-]+)\][ \t]*$/gm)];
+  const open = headers.filter((h, i) => {
+    const body = config.slice(h.index + h[0].length, headers[i + 1]?.index ?? config.length).split(/^\[/m)[0];
+    return /^[ \t]*verify_jwt[ \t]*=[ \t]*false\b/m.test(body);
+  }).map((h) => h[1]);
+  assert.ok(open.length >= 27, `expected the full public/webhook set, saw ${open.length}`);
+  const posture = await read('docs/control-plane/SECURITY-POSTURE.md');
+  const start = posture.indexOf('## Compensating controls, function by function');
+  assert.ok(start >= 0, 'the posture doc keeps a per-function table');
+  const table = posture.slice(start, posture.indexOf('\n## ', start + 4));
+  for (const fn of open) {
+    assert.match(table, new RegExp('`' + fn + '`'),
+      `${fn} runs without a gateway JWT; record its control in SECURITY-POSTURE.md`);
+  }
+});
+
+test('pay-now refuses every request before Stripe is touched', async () => {
+  const src = await read('supabase/functions/pay-now/index.ts');
+  assert.match(src, /const RETIRED = true;/);
+  const serve = src.indexOf('Deno.serve(');
+  const refuse = src.indexOf('if (RETIRED) return json({ error: "gone", use: "checkout" }, 410);');
+  assert.ok(serve > 0 && refuse > serve, 'the refusal is inside the handler');
+  assert.ok(refuse < src.indexOf('req.json()', serve), 'it runs before the body is read');
+  assert.ok(refuse < src.indexOf('stripe.checkout.sessions.create', serve), 'and before any Checkout session');
 });
