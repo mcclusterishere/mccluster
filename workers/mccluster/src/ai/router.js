@@ -65,10 +65,10 @@ async function readContextFunction(request, env, name, params) {
   return { status: res.status, data };
 }
 
-async function callContextFunction(request, env, name, body) {
+async function callContextFunction(request, env, name, body, method = 'POST') {
   const authorization = request.headers.get('authorization') || '';
   const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
+    method,
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
       authorization,
@@ -392,6 +392,25 @@ export async function handleAiRequest(request, env, user) {
       return reply(request, env, { approval }, 200);
     } catch (error) {
       return fail(request, env, error.message || 'approval decision failed', error.status || 500, error.detail);
+    }
+  }
+
+  const decisionStatusMatch = path.match(/^\/v1\/ai\/decisions\/([0-9a-f-]{36})\/status$/i);
+  if (decisionStatusMatch && request.method === 'POST') {
+    const body = await readJson(request);
+    const status = String(body.status || '').trim().toLowerCase();
+    if (!['approved', 'rejected'].includes(status)) return fail(request, env, 'status must be approved or rejected', 400);
+    const payload = {
+      org_id: orgId,
+      decision_id: decisionStatusMatch[1],
+      status,
+      note: String(body.note || '').trim().slice(0, 2000)
+    };
+    try {
+      const { status: responseStatus, data } = await callContextFunction(request, env, 'context-decision', payload, 'PATCH');
+      return reply(request, env, data, responseStatus);
+    } catch (error) {
+      return fail(request, env, error.message || 'decision transition failed', error.status || 502, error.detail);
     }
   }
 
