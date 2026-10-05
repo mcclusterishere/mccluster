@@ -42,14 +42,14 @@ function backend({ role = 'owner', rows = {}, missingTables = false } = {}) {
     const method = options.method || 'GET';
     const body = options.body ? JSON.parse(options.body) : null;
     calls.push({ href, method, body });
-    if (href.includes('/rest/v1/org_members')) {
-      return json([{ role, added_at: '2026-01-01T00:00:00Z', orgs: { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } }]);
-    }
-    if (href.includes('/rest/v1/control_audit')) return json([{ id: 1, at: '2026-10-05T00:00:00Z' }]);
     if (href.includes('/rest/v1/org_members?') && href.includes('profile_id=eq.')) {
       const assignee = (href.match(/profile_id=eq\.([0-9a-f-]{36})/) || [])[1];
       return json(assignee === USER.id ? [{ profile_id: USER.id }] : []);
     }
+    if (href.includes('/rest/v1/org_members')) {
+      return json([{ role, added_at: '2026-01-01T00:00:00Z', orgs: { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } }]);
+    }
+    if (href.includes('/rest/v1/control_audit')) return json([{ id: 1, at: '2026-10-05T00:00:00Z' }]);
     const table = href.split('/rest/v1/')[1].split('?')[0];
     if (missingTables && table.startsWith('work_')) {
       return json({ code: 'PGRST205', message: `Could not find the table 'public.${table}'` }, 404);
