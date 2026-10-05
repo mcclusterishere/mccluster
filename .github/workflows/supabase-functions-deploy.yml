@@ -25,6 +25,13 @@ permissions:
   contents: read
   checks: read
 
+# Production deploys must be ordered. If push B arrives while push A is
+# deploying, B waits for A instead of allowing A to finish after B and
+# overwrite production with older code.
+concurrency:
+  group: supabase-edge-functions-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy changed Edge Functions
@@ -85,10 +92,15 @@ jobs:
         run: |
           echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           echo "Deploying main@$(git rev-parse --short HEAD): $FUNCTIONS"
-          # Names only, never a bare deploy: each one's verify_jwt comes from
-          # its [functions.<name>] stanza, and nothing is pruned.
-          # shellcheck disable=SC2086
-          supabase functions deploy $FUNCTIONS --project-ref "$SUPABASE_PROJECT_REF" --use-api --jobs 4
+          # One name per CLI invocation: the CLI accepts either no name
+          # (deploy all) or one function name, not a selected list. Each
+          # function's verify_jwt comes from its [functions.<name>] stanza,
+          # and nothing is pruned.
+          for function in $FUNCTIONS; do
+            echo "::group::Deploy $function"
+            supabase functions deploy "$function" --project-ref "$SUPABASE_PROJECT_REF" --use-api
+            echo "::endgroup::"
+          done
 
       - name: Prove each function is live
         if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
