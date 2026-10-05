@@ -247,3 +247,22 @@ test('Control can approve or reject proposed AI decisions', async()=>{
   assert.match(edge,/approved_at = now\(\)/);
   assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
 });
+
+
+test('System Resources owns the aggregate media allowance', async()=>{
+  const [ui,entry,router,migration]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('workers/mccluster/src/media/router.js'),
+    read('supabase/migrations/20261005063836_control_media_monthly_budget_v1.sql')
+  ]);
+  assert.match(ui,/\/v1\/media\/usage\?org_id=/);
+  assert.match(ui,/\/v1\/media\/budget\?org_id=/);
+  assert.match(ui,/data-action="save-media-budget"/);
+  assert.match(ui,/Enforce monthly cap/);
+  assert.match(entry,/path === '\/v1\/media\/budget'/);
+  assert.match(router,/Organization owner access is required to manage the media allowance/);
+  assert.match(router,/media_budget\.updated/);
+  assert.match(migration,/create table if not exists public\.org_media_budgets/);
+  assert.match(migration,/Organization monthly media allowance exceeded/);
+});
