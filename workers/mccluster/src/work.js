@@ -5,9 +5,9 @@
    free-text guess, and "+ New" pointed at the legacy CRM. This is the one
    place those records are written (docs/control-plane/CONTROL-ROOM-BACKEND-GAPS.md
    items 1, 2, 3 and 6), against the tables in
-   supabase/pending_migrations/20261005150000_control_work_records_v1.sql.
-   Companies are the existing public.out_companies, so they work before that
-   migration; tasks, orders, bookings and lead-to-company links need it.
+   supabase/migrations/20261005044012_control_work_records_v1.sql.
+   Companies are the existing public.out_companies. The Work migration is
+   applied in production; a missing table now means deployment/schema drift.
 
    Rules every route here keeps:
    - The caller's role comes from org membership (requireMembership), never
@@ -16,8 +16,8 @@
    - Each kind declares its own fields. Anything not declared is ignored, so
      a request cannot set org_id, created_by or timestamps.
    - Every write lands in control_audit with what it was before.
-   - Until the migration is applied the routes answer 503 work_not_provisioned,
-     so the console can say "not set up yet" instead of failing vaguely.
+   - If the applied schema is missing, the routes answer 503 work_not_provisioned
+     so Control reports deployment drift instead of failing vaguely.
 
    Routes:
      GET   /v1/work/{kind}?org_id&state&limit          list
@@ -201,7 +201,7 @@ async function db(env, path, options = {}) {
     if (notProvisioned(res.status, data)) {
       throw Object.assign(new Error('Work records are not set up yet'), {
         status: 503,
-        detail: { code: 'work_not_provisioned', migration: 'supabase/pending_migrations/20261005150000_control_work_records_v1.sql' }
+        detail: { code: 'work_not_provisioned', migration: 'supabase/migrations/20261005044012_control_work_records_v1.sql' }
       });
     }
     /* A check or foreign-key violation is the caller's input, not a 500. */
