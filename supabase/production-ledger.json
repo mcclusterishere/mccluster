@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 246,
-  "latest_version": "20261005044112",
-  "latest_name": "control_work_fk_indexes_v1",
-  "ledger_sha256": "61759df624936a10d2669c39045a43865ca296bcbd4e0f8f493ebf9f294ebf05",
+  "migration_count": 252,
+  "latest_version": "20261005054044",
+  "latest_name": "identity_presentations_music_action_v1",
+  "ledger_sha256": "41c61c590abadbec6d3f3570a694b8972555a3682da984f6bcf9453a35e3fa88",
   "migrations": [
     {
       "version": "0001",
@@ -990,6 +990,30 @@
     {
       "version": "20261005044112",
       "name": "control_work_fk_indexes_v1"
+    },
+    {
+      "version": "20261005054031",
+      "name": "native_telemetry_lockdown_v1"
+    },
+    {
+      "version": "20261005054034",
+      "name": "owned_meeting_delegate"
+    },
+    {
+      "version": "20261005054036",
+      "name": "equity_uprise_group_docket_516r"
+    },
+    {
+      "version": "20261005054040",
+      "name": "action_cohort_admission_v1"
+    },
+    {
+      "version": "20261005054042",
+      "name": "action_network_demographics_antiracism_v1"
+    },
+    {
+      "version": "20261005054044",
+      "name": "identity_presentations_music_action_v1"
     }
   ]
 }

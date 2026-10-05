@@ -2008,18 +2008,18 @@
       "rationale": "Analytics exact-window migration references the shared Equity Uprise admin-role helper only as an authorization gate; it does not define or modify an Equity Uprise building capability."
     },
     {
-      "path": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
+      "path": "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (not applied) Action Network seed: Equity Uprise organization, group, campaign, four missions and a cohort row. Mobilization data on the action_* tables; mapping it into the building program is an owner decision, as with action/index.html."
+      "rationale": "Applied Action Network seed: Equity Uprise organization, group, campaign, four missions and a cohort row. Mobilization data on the action_* tables; mapping it into the building program is an owner decision, as with action/index.html."
     },
     {
-      "path": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
+      "path": "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending (not applied) Action Network function that lets the desk seat an accepted fellow in an active cohort; it names the Equity Uprise seed it ships with. Mobilization infrastructure, not a building capability, as with the seed itself."
+      "rationale": "Applied Action Network function that lets the desk seat an accepted fellow in an active cohort; it names the Equity Uprise seed it ships with. Mobilization infrastructure, not a building capability, as with the seed itself."
     },
     {
       "path": "supabase/production-ledger.json",

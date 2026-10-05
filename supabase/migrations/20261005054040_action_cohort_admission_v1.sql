@@ -1,8 +1,7 @@
 -- ACTION COHORT ADMISSION v1: the desk admits an accepted fellow to a cohort.
 --
--- NOT YET APPLIED TO PRODUCTION (pending_migrations/). Apply it with
--- 20261003150000_equity_uprise_group_docket_516r.sql, then move both into
--- supabase/migrations/ and record them in the production ledger.
+-- Applied to production on 2026-10-05 alongside the Equity Uprise Docket 516R
+-- cohort seed. This is the canonical desk-only cohort admission mechanism.
 --
 -- Acceptance (review_fellowship_application) makes a member a fellow of the
 -- whole network; it does not, and should not, put them in any one program's
