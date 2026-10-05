@@ -247,3 +247,23 @@ test('Control can approve or reject proposed AI decisions', async()=>{
   assert.match(edge,/approved_at = now\(\)/);
   assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
 });
+
+
+test('Create Schedule exposes real publish retry and safe cancellation', async()=>{
+  const [control,social]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/social/router.js')
+  ]);
+  assert.match(control,/data-action="retry-publish"/);
+  assert.match(control,/data-action="cancel-publish"/);
+  assert.match(control,/\/v1\/social\/publish\/.*\/retry/);
+  assert.match(control,/\/v1\/social\/publish\/.*\/cancel/);
+  assert.match(control,/canCancel = \["draft", "queued"\]/);
+  assert.match(control,/canRetry = p\.state === "failed"/);
+  assert.match(social,/retryPublishJob/);
+  assert.match(social,/state=eq\.failed/);
+  assert.match(social,/external_media_id=is\.null/);
+  assert.match(social,/creation container \(error\|expired\)/);
+  assert.match(social,/event: 'social_publish\.retried'/);
+  assert.match(social,/event: to === 'queued' \? 'social_publish\.approved' : 'social_publish\.cancelled'/);
+});
