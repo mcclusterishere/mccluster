@@ -4,6 +4,7 @@
  * optional feed sharing remain separate server-side decisions.
  */
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import {
   SUPABASE_PUBLISHABLE_KEY,
   SUPABASE_URL,
@@ -66,20 +67,42 @@ export function useProofMedia() {
   const { api, accessToken } = useMcc();
 
   async function upload(asset: ImagePicker.ImagePickerAsset) {
-    const mime =
+    let mime =
       asset.mimeType ||
       (asset.type === 'video' ? 'video/mp4' : 'image/jpeg');
-    const blob = await fetch(asset.uri).then((r) => {
+    let uri = asset.uri;
+    let width = asset.width || null;
+    let height = asset.height || null;
+    let fileName = guessedName(asset, mime);
+
+    const looksHeic =
+      asset.type === 'image' &&
+      (/^image\/hei[cf]$/i.test(mime) || /\.(hei[cf])$/i.test(asset.fileName || ''));
+    if (looksHeic) {
+      const converted = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [],
+        { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
+      );
+      uri = converted.uri;
+      width = converted.width || width;
+      height = converted.height || height;
+      mime = 'image/jpeg';
+      fileName = (asset.fileName || `mission-proof-${Date.now()}`)
+        .replace(/\.(hei[cf])$/i, '') + '.jpg';
+    }
+
+    const blob = await fetch(uri).then((r) => {
       if (!r.ok) throw new Error('The selected proof file could not be opened.');
       return r.blob();
     });
-    const byteSize = Number(asset.fileSize || blob.size || 0);
+    const byteSize = Number(looksHeic ? blob.size : asset.fileSize || blob.size || 0);
     if (!byteSize) throw new Error('The selected proof file has no readable size.');
 
     const grant: any = await api('/v1/mnet/media/upload-url', {
       method: 'POST',
       body: {
-        file_name: guessedName(asset, mime),
+        file_name: fileName,
         mime_type: mime,
         byte_size: byteSize,
       },
@@ -120,8 +143,8 @@ export function useProofMedia() {
         method: 'POST',
         body: {
           asset_id: reserved.id,
-          width: asset.width || null,
-          height: asset.height || null,
+          width,
+          height,
           duration_ms: asset.duration || null,
         },
       });
