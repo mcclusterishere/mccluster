@@ -44,6 +44,12 @@ export async function takeMissionProof(): Promise<ImagePicker.ImagePickerAsset |
   return result.canceled ? null : result.assets?.[0] || null;
 }
 
+export async function recoverPendingMissionProof(): Promise<ImagePicker.ImagePickerAsset | null> {
+  const pending = await ImagePicker.getPendingResultAsync();
+  if (!pending || !('canceled' in pending) || pending.canceled) return null;
+  return pending.assets?.[0] || null;
+}
+
 export async function chooseMissionProof(): Promise<ImagePicker.ImagePickerAsset | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) throw new Error('Photo library permission is required to choose proof.');
