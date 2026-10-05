@@ -75,6 +75,12 @@ test('image-to-video requires a real visual URL, not any *_url field', () => {
   assert.doesNotThrow(() => validateModelInput(MODELS.i2v, { image_url: 'https://cdn.example/frame.png' }));
 });
 
+test('array-form reference media is accepted when it is genuinely visual', () => {
+  assert.doesNotThrow(() => validateModelInput(MODELS.i2v, {
+    image_urls: ['https://cdn.example/a.png', 'https://cdn.example/b.png']
+  }));
+});
+
 test('lip-sync requires one visual reference and one audio reference', () => {
   assert.throws(
     () => validateModelInput(MODELS.lipsync, {
