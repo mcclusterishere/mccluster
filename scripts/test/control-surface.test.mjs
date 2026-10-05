@@ -222,4 +222,7 @@ test('Work records are created through the Worker, not the legacy CRM', async()=
   assert.match(worker,/recordAudit/);
   assert.match(sql,/revoke all on public\.%I from anon, authenticated/);
   assert.match(sql,/enable row level security/);
+  assert.match(sql,/revoke insert, update, delete, truncate, references, trigger[\s\S]*public\.out_companies from anon, authenticated/);
+  assert.match(sql,/revoke update on table public\.leads from authenticated/);
+  assert.match(sql,/grant update \(status\) on table public\.leads to authenticated/);
 });
