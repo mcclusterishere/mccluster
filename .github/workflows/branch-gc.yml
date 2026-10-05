@@ -1,0 +1,121 @@
+name: Branch lifecycle cleanup
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: "17 7 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Report deletable stale branches without deleting them
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: branch-lifecycle-cleanup
+  cancel-in-progress: false
+
+jobs:
+  delete-merged-head:
+    name: Delete merged working branch
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Delete the merged PR branch unless it is retained evidence
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          case "$BRANCH" in
+            main|gh-pages|deploy/*|archive/*|backup/*|checkpoint/*)
+              echo "Preserving reserved branch: $BRANCH"
+              exit 0
+              ;;
+          esac
+          if jq -e --arg b "$BRANCH" '.superseded_branches // [] | index($b) != null' docs/control-plane/canonical-architecture.json >/dev/null; then
+            echo "Preserving architecture-evidence branch: $BRANCH"
+            exit 0
+          fi
+          if ! git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null 2>&1; then
+            echo "Branch already absent: $BRANCH"
+            exit 0
+          fi
+          git push origin --delete "$BRANCH"
+
+  sweep-contained:
+    name: Sweep safely absorbed branches
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Fetch branch and PR state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          gh pr list --state open --limit 1000 --json headRefName > /tmp/open-prs.json
+          gh pr list --state merged --limit 1000 --json headRefName,headRefOid > /tmp/merged-prs.json
+      - name: Delete only branches proven absorbed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          dry_run=false
+          if [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_DRY_RUN" != "false" ]]; then
+            dry_run=true
+          fi
+
+          deleted=0
+          candidates=0
+          while IFS= read -r ref; do
+            branch="${ref#refs/remotes/origin/}"
+            [[ "$branch" == "HEAD" ]] && continue
+            case "$branch" in
+              main|gh-pages|deploy/*|archive/*|backup/*|checkpoint/*) continue ;;
+            esac
+            if jq -e --arg b "$branch" '.superseded_branches // [] | index($b) != null' docs/control-plane/canonical-architecture.json >/dev/null; then
+              continue
+            fi
+            if jq -e --arg b "$branch" 'map(.headRefName) | index($b) != null' /tmp/open-prs.json >/dev/null; then
+              continue
+            fi
+
+            sha="$(git rev-parse "$ref")"
+            absorbed=false
+            if git merge-base --is-ancestor "$sha" origin/main; then
+              absorbed=true
+            elif jq -e --arg b "$branch" --arg s "$sha" 'any(.[]; .headRefName == $b and .headRefOid == $s)' /tmp/merged-prs.json >/dev/null; then
+              absorbed=true
+            fi
+            [[ "$absorbed" == "true" ]] || continue
+
+            candidates=$((candidates + 1))
+            if [[ "$dry_run" == "true" ]]; then
+              echo "DRY RUN: would delete $branch @ $sha"
+            else
+              echo "Deleting absorbed branch $branch @ $sha"
+              git push origin --delete "$branch"
+              deleted=$((deleted + 1))
+            fi
+          done < <(git for-each-ref --format='%(refname)' refs/remotes/origin/)
+
+          echo "candidates=$candidates deleted=$deleted dry_run=$dry_run" >> "$GITHUB_STEP_SUMMARY"
