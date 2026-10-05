@@ -275,6 +275,16 @@ async function assertSameOrg(env, membership, fields) {
       throw Object.assign(new Error(`${field} does not belong to this organization`), { status: 400 });
     }
   }
+
+  if (fields.assignee) {
+    const member = (await db(
+      env,
+      `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(fields.assignee)}&select=profile_id`
+    ))?.[0];
+    if (!member) {
+      throw Object.assign(new Error('assignee does not belong to this organization'), { status: 400 });
+    }
+  }
 }
 
 function audit(env, membership, user, event, resourceType, resourceId, detail) {
@@ -404,18 +414,29 @@ export async function linkLeadCompany(request, env, user, leadId) {
   if (!Object.prototype.hasOwnProperty.call(body || {}, 'company_id')) throw bad('company_id is required (null to unlink)');
   const companyId = uuid(body.company_id);
   const before = (await db(env, `leads?id=eq.${leadId}&select=id,org_id,company_id,email`))?.[0];
+  const legacyHouseLead = Boolean(before) && before.org_id === null && isHouse(membership);
   if (!leadVisible(before, membership)) {
     throw Object.assign(new Error('No such lead'), { status: 404 });
   }
   await assertSameOrg(env, membership, { company_id: companyId });
-  if (before.company_id === companyId) return { lead: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
+  /* Touching a legacy house lead also adopts it into the house org, so the
+     row stops depending on the NULL exception. */
+  const patch = {
+    company_id: companyId,
+    ...(legacyHouseLead ? { org_id: membership.org_id } : {})
+  };
+  if (before.company_id === companyId && !legacyHouseLead) return { lead: before, changed: false, audit: { recorded: false, reason: 'no_change' } };
   const row = (await db(env, `leads?id=eq.${leadId}`, {
     method: 'PATCH',
     headers: { prefer: 'return=representation' },
-    body: JSON.stringify({ company_id: companyId })
+    body: JSON.stringify(patch)
   }))?.[0];
-  const ledger = await audit(env, membership, user, 'lead.company_linked', 'lead', leadId, { from: before.company_id, to: companyId });
-  return { lead: row || { ...before, company_id: companyId }, changed: true, audit: ledger };
+  const ledger = await audit(env, membership, user, 'lead.company_linked', 'lead', leadId, {
+    from: before.company_id,
+    to: companyId,
+    legacy_org_adopted: legacyHouseLead
+  });
+  return { lead: row || { ...before, ...patch }, changed: true, audit: ledger };
 }
 
 /* One dispatcher so entry.js wires a single prefix. Returns null when the
