@@ -219,6 +219,60 @@ test('freshness-triggering resident turns ground Qwen with timestamped web disco
   }
 });
 
+test('empty current-web discovery also fails closed instead of laundering stale memory', async () => {
+  const originalFetch = globalThis.fetch;
+  let assistantLookup = 0;
+
+  globalThis.fetch = async (input, init = {}) => {
+    const url = String(input);
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('id=eq.' + ASSISTANT)) {
+      assistantLookup += 1;
+      return json(assistantLookup === 1 ? [] : [{
+        id: ASSISTANT, thread_id: THREAD, org_id: ORG, role: 'assistant',
+        content: 'No current evidence was available.', model: 'qwen3:8b',
+        implementation: 'core-local', metadata: {}, created_at: '2026-10-05T05:20:00Z'
+      }]);
+    }
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('id=eq.' + USER) && (init.method || 'GET') === 'GET') {
+      return json([{ id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest update today?', metadata: { agent_job_id: JOB }, created_at: '2026-10-05T05:19:00Z' }]);
+    }
+    if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('thread_id=eq.' + THREAD) && (init.method || 'GET') === 'GET') {
+      return json([{ id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest update today?', metadata: { agent_job_id: JOB }, created_at: '2026-10-05T05:19:00Z' }]);
+    }
+    if (url.includes('/rest/v1/ops_ai_messages?') && (init.method || 'GET') === 'PATCH') {
+      return json([{ id: USER, thread_id: THREAD, org_id: ORG, role: 'user',
+        content: 'What is the latest update today?', metadata: { agent_job_id: JOB }, created_at: '2026-10-05T05:19:00Z' }]);
+    }
+    if (url === 'http://127.0.0.1:4777/v1/capabilities/call') {
+      return json({ capability: 'research.web', result: { fetched_at: '2026-10-05T05:19:30Z', provider: 'brave', result_count: 0, results: [] } });
+    }
+    if (url === 'http://127.0.0.1:4790/execute') {
+      const request = JSON.parse(String(init.body));
+      assert.ok(request.input.messages.some((message) => /CURRENT-WEB-LOOKUP STATUS: FAILED/.test(message.content)));
+      assert.ok(request.input.messages.some((message) => /no usable results/.test(message.content)));
+      return json({ model: 'qwen3:8b', implementation: 'core-local', content: 'No current evidence was available.', queue_wait_ms: 1 });
+    }
+    if (url.includes('/rest/v1/ops_ai_messages?on_conflict=id') && (init.method || 'GET') === 'POST') {
+      const body = JSON.parse(String(init.body));
+      assert.equal(body.metadata.current_research.attempted, true);
+      assert.equal(body.metadata.current_research.ok, false);
+      assert.match(body.metadata.current_research.error, /no usable results/);
+      return json([{ ...body, created_at: '2026-10-05T05:20:00Z' }]);
+    }
+    throw new Error('unexpected fetch: ' + (init.method || 'GET') + ' ' + url);
+  };
+
+  try {
+    const output = await residentAiTurn(job());
+    assert.equal(output.current_research.attempted, true);
+    assert.equal(output.current_research.ok, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('failed freshness lookup is disclosed to Qwen instead of silently answering stale', async () => {
   assert.equal(needsCurrentResearch('What is happening right now?'), true);
   const originalFetch = globalThis.fetch;
