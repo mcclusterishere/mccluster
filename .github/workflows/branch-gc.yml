@@ -115,6 +115,13 @@ jobs:
             if [[ "$dry_run" == "true" ]]; then
               echo "DRY RUN: would delete $branch @ $sha"
             else
+              # The parallel merged-head job may already have removed this ref.
+              # Re-check the remote immediately before deletion so that benign
+              # double-delete races do not abort the rest of the safe sweep.
+              if ! git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+                echo "Already absent: $branch"
+                continue
+              fi
               echo "Deleting absorbed branch $branch @ $sha"
               git push origin --delete "$branch"
               deleted=$((deleted + 1))
