@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 319,
+  "candidate_count": 320,
   "capability_source_count": 99,
-  "support_only_count": 220,
-  "checks_total": 1179,
-  "checks_passed": 1179,
+  "support_only_count": 221,
+  "checks_total": 1183,
+  "checks_passed": 1183,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -95,6 +95,7 @@
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/GMAIL-CONNECT.md",
+    "docs/control-plane/REPOSITORY-GOVERNANCE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/registry.json",
@@ -333,7 +334,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "319 entries"
+      "detail": "320 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1842,6 +1843,26 @@
     },
     {
       "name": "docs/control-plane/registry.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/REPOSITORY-GOVERNANCE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/REPOSITORY-GOVERNANCE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/REPOSITORY-GOVERNANCE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/REPOSITORY-GOVERNANCE.md support rationale present",
       "passed": true,
       "detail": ""
     },
