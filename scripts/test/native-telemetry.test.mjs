@@ -174,16 +174,20 @@ test('the telemetry table is under migration control and the browser cannot writ
 test('the live analytics and applied lockdown migrations close browser writes', async () => {
   const live = await read(ANALYTICS_PLATFORM);
   assert.match(live, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
-    'the production migration must withdraw the legacy open insert policy');
+    'the production analytics migration must withdraw the legacy open insert policy');
   assert.match(live, /revoke insert on public\.events from anon, authenticated;/,
-    'the production migration must revoke direct browser writes');
-  const pending = await read(LOCKDOWN);
-  assert.match(pending, /REMAINDER ONLY/,
-    'the old lockdown file must no longer pretend browser-write closure is pending');
-  assert.match(pending, /alter table public\.events force row level security;/,
-    'force RLS remains an explicit owner hardening decision');
-  assert.doesNotMatch(sqlCode(pending), /drop policy if exists "anyone writes the exhaust"|revoke insert on (?:table )?public\.events/,
-    'already-applied write closure must not be duplicated in the pending remainder');
+    'the production analytics migration must revoke direct browser inserts');
+  const lockdown = await read(LOCKDOWN);
+  assert.match(lockdown, /hardening applied to production on 2026-10-05/i,
+    'the lockdown migration must be recorded as applied, not pending');
+  assert.match(lockdown, /alter table public\.events force row level security;/,
+    'the applied lockdown must force RLS');
+  assert.match(sqlCode(lockdown), /revoke all on table public\.events from anon/,
+    'anonymous direct table access must be removed');
+  assert.match(sqlCode(lockdown), /revoke insert, update, delete, truncate, references, trigger\s+on table public\.events from authenticated/,
+    'authenticated browser roles must not retain mutation grants');
+  assert.match(sqlCode(lockdown), /grant select on table public\.events to authenticated/,
+    'authenticated analytics readers retain RLS-scoped select');
   const cols = await read(MIGRATION);
   assert.doesNotMatch(sqlCode(cols), /revoke insert|force row level security/,
     'the original additive telemetry migration remains additive');
