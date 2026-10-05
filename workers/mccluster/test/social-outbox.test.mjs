@@ -17,7 +17,7 @@ const USER = { id: 'user-1' };
 const ENV = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'svc', META_GRAPH_API_VERSION: 'v26.0' };
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { 'content-type': 'application/json' } });
 
-function fake({ role = 'owner', moved = [{ id: JOB, state: 'queued' }], token = null, graph = null } = {}) {
+function fake({ role = 'owner', moved = [{ id: JOB, state: 'queued' }], readJobs = [{ id: JOB, content_id: null, payload: {}, state: 'draft' }], token = null, graph = null } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
@@ -34,7 +34,7 @@ function fake({ role = 'owner', moved = [{ id: JOB, state: 'queued' }], token = 
     if (u.includes('/storage/v1/object/upload/sign/')) return ok({ url: '/object/upload/sign/social-outbox/x?token=t' });
     if (u.includes('/storage/v1/object/sign/')) return ok({ signedURL: '/object/sign/social-outbox/x?token=dl' });
     if (u.includes('/social_publish_jobs') && m === 'POST') return ok([{ id: JOB, ...JSON.parse(init.body) }], 201);
-    if (u.includes('/social_publish_jobs') && m === 'GET') return ok([{ id: JOB, content_id: null, payload: {}, state: 'draft' }]);
+    if (u.includes('/social_publish_jobs') && m === 'GET') return ok(readJobs);
     if (u.includes('/social_publish_jobs') && m === 'PATCH') return ok(moved);
     if (u.includes('graph.facebook.com')) return graph ? graph(u, init) : ok({ error: { message: 'no graph' } }, 400);
     return ok([]);
@@ -136,6 +136,7 @@ test('only the owner uploads, approves or cancels', async () => {
   assert.equal((await run('/v1/social/uploads', 'POST', { org_id: ORG, mime_type: 'video/mp4', byte_size: 1 })).error?.status, 403);
   assert.equal((await run(`/v1/social/publish/${JOB}/approve`, 'POST', { org_id: ORG })).error?.status, 403);
   assert.equal((await run(`/v1/social/publish/${JOB}/cancel`, 'POST', { org_id: ORG })).error?.status, 403);
+  assert.equal((await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG })).error?.status, 403);
 });
 
 test('approve only moves a draft, and says so when it is not one', async () => {
@@ -153,6 +154,54 @@ test('cancel cannot pull back a post Meta already has', async () => {
   const calls = fake({ moved: [{ id: JOB, state: 'cancelled' }] });
   await run(`/v1/social/publish/${JOB}/cancel`, 'POST', { org_id: ORG });
   assert.match(calls.find((c) => c.m === 'PATCH').u, /state=in\.\(draft,queued\)&external_creation_id=is\.null/);
+});
+
+
+test('retry restarts a failed job that never got a Meta container', async () => {
+  const failed = [{ id: JOB, org_id: ORG, content_id: CONTENT, state: 'failed', external_creation_id: null, external_media_id: null, attempts: 5, last_error: 'network refused', payload: {} }];
+  const moved = [{ ...failed[0], state: 'queued', attempts: 0, last_error: null }];
+  const calls = fake({ readJobs: failed, moved });
+  const { data, error } = await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG });
+  assert.ifError(error);
+  assert.equal(data.publish_job.state, 'queued');
+  assert.equal(data.retry_mode, 'restart');
+  const write = calls.find((c) => c.u.includes('/social_publish_jobs') && c.m === 'PATCH');
+  assert.match(write.u, /state=eq\.failed/);
+  assert.equal(write.body.state, 'queued');
+  assert.equal(write.body.attempts, 0);
+  assert.equal(write.body.last_error, null);
+});
+
+test('retry resumes a failed job when Meta already has a usable container', async () => {
+  const failed = [{ id: JOB, org_id: ORG, content_id: CONTENT, state: 'failed', external_creation_id: 'container-1', external_media_id: null, attempts: 5, last_error: 'temporary Meta request failure', payload: {} }];
+  const moved = [{ ...failed[0], state: 'processing', attempts: 0, last_error: null }];
+  const calls = fake({ readJobs: failed, moved });
+  const { data, error } = await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG });
+  assert.ifError(error);
+  assert.equal(data.retry_mode, 'resume_container');
+  const write = calls.find((c) => c.u.includes('/social_publish_jobs') && c.m === 'PATCH');
+  assert.equal(write.body.state, 'processing');
+  assert.equal(Object.prototype.hasOwnProperty.call(write.body, 'external_creation_id'), false);
+});
+
+test('retry discards a Meta container explicitly reported expired or errored', async () => {
+  const failed = [{ id: JOB, org_id: ORG, content_id: CONTENT, state: 'failed', external_creation_id: 'dead-container', external_media_id: null, attempts: 5, last_error: 'Instagram creation container expired', payload: {} }];
+  const moved = [{ ...failed[0], state: 'queued', external_creation_id: null, attempts: 0, last_error: null }];
+  const calls = fake({ readJobs: failed, moved });
+  const { data, error } = await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG });
+  assert.ifError(error);
+  assert.equal(data.retry_mode, 'restart');
+  const write = calls.find((c) => c.u.includes('/social_publish_jobs') && c.m === 'PATCH');
+  assert.equal(write.body.state, 'queued');
+  assert.equal(write.body.external_creation_id, null);
+});
+
+test('retry refuses a non-failed job or one already carrying published media', async () => {
+  fake({ readJobs: [] });
+  assert.equal((await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG })).error?.status, 409);
+
+  fake({ readJobs: [{ id: JOB, org_id: ORG, state: 'failed', external_creation_id: 'c', external_media_id: 'media-1', attempts: 5, last_error: 'unknown', payload: {} }] });
+  assert.equal((await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG })).error?.status, 409);
 });
 
 test('the connection check reports a missing key without calling Meta', async () => {
