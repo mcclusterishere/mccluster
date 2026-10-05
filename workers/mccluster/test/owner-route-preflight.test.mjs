@@ -50,7 +50,10 @@ for (const path of [
   '/v1/analytics/forensics',
   '/v1/social/accounts',
   '/v1/comms/threads',
-  '/v1/ai/chat'
+  '/v1/ai/chat',
+  '/v1/work/tasks',
+  '/v1/work/leads',
+  '/v1/work/tasks/623e4567-e89b-42d3-a456-426614174666'
 ]) {
   test(`preflight for ${path} is answered before the sign-in gate`, async () => {
     const response = await call(path, 'OPTIONS', {
