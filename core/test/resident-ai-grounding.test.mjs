@@ -240,8 +240,9 @@ test('an empty result set is reported as no evidence, not as grounding', async (
   const system = calls.adapter[0].input.messages[0].content;
   assert.match(system, /returned no results/);
   assert.doesNotMatch(system, /CURRENT-WEB EVIDENCE/);
-  assert.equal(calls.persisted.metadata.current_research.ok, true);
+  assert.equal(calls.persisted.metadata.current_research.ok, false);
   assert.equal(calls.persisted.metadata.current_research.result_count, 0);
+  assert.match(calls.persisted.metadata.current_research.error, /no usable results/i);
 });
 
 test('a timeless question makes no lookup and records that none was attempted', async () => {
