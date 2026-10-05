@@ -66,6 +66,7 @@ type MccContextValue = {
   signUp(email: string, password: string, data?: Record<string, unknown>): Promise<SignUpResult>;
   signOut(): Promise<void>;
   refresh(): Promise<MccSession | null>;
+  accessToken(): Promise<string>;
   api<T = any>(path: string, init?: JsonInit): Promise<T>;
   rest<T = any>(path: string, init?: JsonInit): Promise<T>;
   rpc<T = any>(name: string, body?: Record<string, unknown>): Promise<T>;
@@ -283,6 +284,8 @@ export function MccProvider({ children }: { children: ReactNode }) {
     }
   }, [commitSession]);
 
+  const accessToken = useCallback(async () => (await freshSession()).access_token, [freshSession]);
+
   const api = useCallback(
     async <T,>(path: string, init: JsonInit = {}): Promise<T> => {
       const current = await freshSession();
@@ -327,8 +330,8 @@ export function MccProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<MccContextValue>(
-    () => ({ ready, session, user, signIn, signUp, signOut, refresh, api, rest, rpc }),
-    [ready, session, user, signIn, signUp, signOut, refresh, api, rest, rpc],
+    () => ({ ready, session, user, signIn, signUp, signOut, refresh, accessToken, api, rest, rpc }),
+    [ready, session, user, signIn, signUp, signOut, refresh, accessToken, api, rest, rpc],
   );
 
   return <MccContext.Provider value={value}>{children}</MccContext.Provider>;
