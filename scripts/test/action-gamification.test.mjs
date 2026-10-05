@@ -2,7 +2,7 @@ import test from "node:test";import assert from "node:assert/strict";import fs f
 const read=p=>fs.readFile(new URL("../../"+p,import.meta.url),"utf8");
 test("gamification rewards verified action, not engagement",async()=>{const sql=await read("supabase/migrations/20261002061056_action_network_gamification_v1.sql"),doc=await read("docs/ACTION-NETWORK-REWARD-SYSTEM.md");for(const t of ["action_missions","action_mission_assignments","action_proofs","action_points_ledger","action_skill_progress","action_cohorts"])assert.match(sql,new RegExp("create table public\\."+t));assert.match(doc,/No points for signups/);assert.match(doc,/No points for political viewpoint/);assert.match(doc,/No points for likes, impressions, comments, watch time, or outrage/);assert.match(doc,/one \`mission\` ledger entry per assignment/);});
 test("Action Network carries canonical Equity Uprise mark and progression UI",async()=>{const html=await read("mnet.html");assert.match(html,/assets\/img\/equity-uprise-logo\.webp/);assert.match(html,/Founded by Equity Uprise/);assert.match(html,/id="mnActionScore"/);assert.match(html,/UNDERSTAND → ACT/);assert.match(html,/No points for ideology/);});
-test("anti-racism demographics stay private and never gate missions",async()=>{const sql=await read("supabase/pending_migrations/action_network_demographics_antiracism_v1.sql"),html=await read("mnet.html"),js=await read("js/mnet.js");assert.match(sql,/action_member_demographics/);assert.match(sql,/members read own demographics/);assert.doesNotMatch(sql,/race_ethnicity.*action_missions|action_missions.*race_ethnicity/);assert.match(html,/Prefer not to say/);assert.match(html,/does not decide which missions you can join/);assert.match(js,/saveDemographics/);assert.match(sql,/Do not photograph people without permission/);assert.match(sql,/Never record strangers without consent/);});
+test("anti-racism demographics stay private and never gate missions",async()=>{const sql=await read("supabase/migrations/20261005054042_action_network_demographics_antiracism_v1.sql"),html=await read("mnet.html"),js=await read("js/mnet.js");assert.match(sql,/action_member_demographics/);assert.match(sql,/members read own demographics/);assert.doesNotMatch(sql,/race_ethnicity.*action_missions|action_missions.*race_ethnicity/);assert.match(html,/Prefer not to say/);assert.match(html,/does not decide which missions you can join/);assert.match(js,/saveDemographics/);assert.match(sql,/Do not photograph people without permission/);assert.match(sql,/Never record strangers without consent/);});
 
 
 test("mission proof review is server-authoritative and idempotent",async()=>{
@@ -172,8 +172,8 @@ test("the fellowship opens at three verified actions, server-counted, desk-revie
 
 test("a cohort seat is given on purpose, only to an accepted fellow, by the desk",async()=>{
  const [sql,seed,ctl,page]=await Promise.all([
-  read("supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql"),
-  read("supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql"),
+  read("supabase/migrations/20261005054040_action_cohort_admission_v1.sql"),
+  read("supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql"),
   read("js/control-room/action-network.js"),
   read("docket-516.html")]);
  assert.match(sql,/create or replace function public\.admit_fellow_to_cohort\(\s*p_application_id uuid,\s*p_cohort_id uuid\s*\)/);
