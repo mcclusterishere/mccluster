@@ -18,6 +18,7 @@ import { handleAnalyticsRequest } from './analytics/router.js';
 import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
+import { handleWorkRequest } from './work.js';
 import { recentAudit } from './lib/audit.js';
 
 async function authUser(req, env) {
@@ -32,7 +33,7 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -342,6 +343,21 @@ export default {
         return reply(request, env, await setLeadStatus(request, env, user));
       } catch (error) {
         return fail(request, env, error.message || 'Lead update failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* Control · Work: companies, tasks, orders, bookings and hand-made
+       leads — the canonical write routes the console was missing. See
+       src/work.js. */
+    if (path.startsWith('/v1/work/')) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const result = await handleWorkRequest(request, env, user, url);
+        if (result) return reply(request, env, result, request.method === 'POST' ? 201 : 200);
+        return fail(request, env, 'Unknown Work route', 404);
+      } catch (error) {
+        return fail(request, env, error.message || 'Work request failed', error.status || 500, error.detail);
       }
     }
 
