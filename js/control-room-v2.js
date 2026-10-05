@@ -1472,7 +1472,7 @@
       companyMap[k].people += 1;
     });
     var companies = Object.keys(companyMap).map(function (k) { return companyMap[k]; });
-    /* Companies are real records now (work_companies via /v1/work/companies);
+    /* Companies are real records now (out_companies via /v1/work/companies);
        a lead joins one through company_id. The free-text grouping below only
        shows legacy leads that carried a company string. */
     return sourceBanner(state.sources.leads, "Leads") + (window.CR.work ? window.CR.work.section("companies") : "") +

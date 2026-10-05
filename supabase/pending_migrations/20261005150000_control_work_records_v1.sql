@@ -8,7 +8,8 @@
 -- intake and outreach edge functions already write and read (org-scoped,
 -- RLS by org membership, unique domain per org). This migration does not
 -- create a second company table; it links leads, orders and bookings to
--- out_companies.
+-- out_companies. Intake/outreach use the service role, so browser mutation
+-- grants are removed below; the Worker becomes the owner-facing write path.
 --
 -- Pending: the owner applies it, then moves it to supabase/migrations/ and
 -- records it in supabase/production-ledger.json. Until it is applied the
@@ -24,6 +25,12 @@
 -- products. work_orders / work_bookings are the operator's record of a deal
 -- the owner is running from Control, linked to the lead it came from, and
 -- may point at a product record through source_table / source_id.
+
+-- The existing table historically granted browser INSERT/UPDATE/DELETE to
+-- authenticated org members. That would bypass /v1/work's owner-only write
+-- gate, so retain readable RLS behavior but remove browser mutation authority.
+revoke insert, update, delete, truncate, references, trigger
+  on table public.out_companies from anon, authenticated;
 
 alter table public.leads
   add column if not exists company_id uuid references public.out_companies(id) on delete set null;
