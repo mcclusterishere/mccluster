@@ -226,6 +226,10 @@ export function useActionNetworkApi() {
       return { record, fellowship, shares: shares || [] };
     }
 
+    async function markTourSeen() {
+      return rpc<any>('mnet_mark_tour_seen', { p_app_key: ACTION_APP_KEY });
+    }
+
     async function deletion() {
       return rpc<any>('my_account_deletion').catch(() => ({}));
     }
@@ -282,6 +286,7 @@ export function useActionNetworkApi() {
       joinMission,
       submitProof,
       actionRecord,
+      markTourSeen,
       deletion,
       requestDeletion,
       cancelDeletion,
