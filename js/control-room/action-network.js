@@ -366,7 +366,7 @@
       A.supa("rpc/admit_fellow_to_cohort",{method:"POST",body:{p_application_id:id,p_cohort_id:cohort}})
         .then(function(r){A.msg=(r&&r.idempotent?"Already seated in ":"Seated in ")+cohortName(cohort)+".";return loadApps();})
         .catch(function(err){b.disabled=false;var m=String(err&&err.message||err);
-          alert(/admit_fellow_to_cohort/.test(m)&&/find|exist/i.test(m)?"The cohort-admission function is not in the database yet: apply supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql.":m||"Admission failed.");});
+          alert(/admit_fellow_to_cohort/.test(m)&&/find|exist/i.test(m)?"The cohort-admission function is missing from production even though migration 20261005054040_action_cohort_admission_v1 is recorded as applied. Treat this as database drift.":m||"Admission failed.");});
     };});
     root.querySelectorAll("[data-live-grant]").forEach(function(b){b.onclick=function(){
       var appId=b.getAttribute("data-live-grant"),app=A.apps.find(function(x){return x.id===appId;}),cohortSel=root.querySelector('[data-live-cohort="'+appId+'"]'),catSel=root.querySelector('[data-live-category="'+appId+'"]');
