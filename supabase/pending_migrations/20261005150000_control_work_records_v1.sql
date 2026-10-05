@@ -29,6 +29,24 @@ alter table public.leads
   add column if not exists company_id uuid references public.out_companies(id) on delete set null;
 create index if not exists leads_company_id_idx on public.leads (company_id) where company_id is not null;
 
+-- Public intake (leads_in, granted to anon and authenticated) must not be
+-- able to set company_id: a lead joins a company only through the owner's
+-- /v1/work/leads/{id} route. The existing check is kept verbatim and
+-- extended, so the intake rules it already enforces are unchanged.
+do $$
+declare chk text;
+begin
+  select pg_get_expr(polwithcheck, polrelid) into chk
+  from pg_policy where polrelid = 'public.leads'::regclass and polname = 'leads_in';
+  if chk is null then
+    raise exception 'leads_in policy not found; refusing to add company_id without guarding public intake';
+  end if;
+  if position('company_id' in chk) = 0 then
+    execute format('alter policy leads_in on public.leads with check ((%s) and company_id is null)', chk);
+  end if;
+end;
+$$;
+
 create table if not exists public.work_tasks (
   id            uuid primary key default gen_random_uuid(),
   org_id        uuid not null references public.orgs(id) on delete cascade,

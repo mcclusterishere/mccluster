@@ -33,7 +33,7 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 

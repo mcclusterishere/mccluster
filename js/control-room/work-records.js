@@ -52,7 +52,7 @@
   /* The create form for one kind. Fields mirror what the Worker accepts;
      anything else would be dropped server-side anyway. */
   function fields(kind){
-    if(kind==="lead")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Email<input id="wkEmail" type="email" maxlength="320"></label><label>What they want<input id="wkWant" maxlength="200" placeholder="Website, shoot, print…"></label><label>Campaign<input id="wkCampaign" maxlength="120"></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label><label class="cro-span-2">Note<textarea id="wkNote" rows="3" maxlength="4000"></textarea></label>';
+    if(kind==="lead")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Email<input id="wkEmail" type="email" maxlength="320" required></label><label>What they want<input id="wkWant" maxlength="200" placeholder="Website, shoot, print…"></label><label>Campaign<input id="wkCampaign" maxlength="120"></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label><label class="cro-span-2">Note<textarea id="wkNote" rows="3" maxlength="4000"></textarea></label>';
     if(kind==="companies")return'<label>Name<input id="wkName" maxlength="200" required></label><label>Domain<input id="wkDomain" maxlength="253" placeholder="example.com"></label><label>Kind<select id="wkKind"><option value="">—</option>'+COMPANY_KINDS.map(function(k){return'<option value="'+k+'">'+k+'</option>';}).join("")+'</select></label><label>City<input id="wkCity" maxlength="120"></label><label class="cro-span-2">Notes<textarea id="wkNotes" rows="3" maxlength="4000"></textarea></label>';
     if(kind==="tasks")return'<label>Task<input id="wkTitle" maxlength="300" required></label><label>Due<input id="wkDue" type="datetime-local"></label><label>About a lead<select id="wkLead">'+leadOptions()+'</select></label><label class="cro-span-2">Detail<textarea id="wkDetail" rows="3" maxlength="4000"></textarea></label>';
     if(kind==="orders")return'<label>Order<input id="wkTitle" maxlength="300" required></label><label>Amount (USD)<input id="wkAmount" type="number" min="0" step="0.01" inputmode="decimal"></label><label>Lead<select id="wkLead">'+leadOptions()+'</select></label><label>Company<select id="wkCompany">'+companyOptions()+'</select></label>';
@@ -118,6 +118,8 @@
     if(!org()){W.msg="Pick a workspace first.";W.bad=true;redraw();return;}
     var body=payload(kind);
     if(!(body.name||body.title)){W.msg=(kind==="lead"||kind==="companies"?"A name":"A title")+" is required.";W.bad=true;redraw();return;}
+    /* leads.email is NOT NULL: every lead surface keys on it. */
+    if(kind==="lead"&&!body.email){W.msg="An email is required for a lead.";W.bad=true;redraw();return;}
     W.busy=true;W.msg=null;redraw();
     var path=kind==="lead"?"/v1/work/leads":"/v1/work/"+kind;
     W.request(path,{method:"POST",body:body}).then(function(){

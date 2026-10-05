@@ -35,7 +35,7 @@ function call(method, path, body) {
   return { request: new Request(url, init), url };
 }
 
-function backend({ role = 'owner', rows = {}, missingTables = false } = {}) {
+function backend({ role = 'owner', rows = {}, missingTables = false, org = { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } } = {}) {
   const calls = [];
   const handler = async (href, options = {}) => {
     href = String(href);
@@ -43,7 +43,7 @@ function backend({ role = 'owner', rows = {}, missingTables = false } = {}) {
     const body = options.body ? JSON.parse(options.body) : null;
     calls.push({ href, method, body });
     if (href.includes('/rest/v1/org_members')) {
-      return json([{ role, added_at: '2026-01-01T00:00:00Z', orgs: { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } }]);
+      return json([{ role, added_at: '2026-01-01T00:00:00Z', orgs: org }]);
     }
     if (href.includes('/rest/v1/control_audit')) return json([{ id: 1, at: '2026-10-05T00:00:00Z' }]);
     const table = href.split('/rest/v1/')[1].split('?')[0];
@@ -159,6 +159,49 @@ test('a hand-made lead is attributed to Control, never to a campaign conversion'
     assert.equal(insert.body.status, 'new');
     assert.equal(insert.body.email, 'sam@example.com');
     assert.equal(insert.body.org_id, HOUSE);
+    assert.ok(!('company_id' in insert.body), 'an empty company is left out, so the call works before the migration');
+    assert.ok(!('note' in insert.body), 'an empty note is left out so the column default applies');
+  });
+});
+
+test('a hand-made lead needs an email: leads.email is NOT NULL', async () => {
+  const b = backend();
+  await withFetch(b.handler, async () => {
+    const c = call('POST', '/v1/work/leads', { org_id: HOUSE, name: 'Sam', note: 'met at the shoot' });
+    await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), (error) => {
+      assert.equal(error.status, 400);
+      assert.match(error.message, /email is required/);
+      return true;
+    });
+  });
+});
+
+test('a blank company kind is left out so out_companies.kind keeps its default', async () => {
+  const b = backend();
+  await withFetch(b.handler, async () => {
+    const c = call('POST', '/v1/work/companies', { org_id: HOUSE, name: 'Acme', kind: '', domain: '' });
+    await handleWorkRequest(c.request, env, USER, c.url);
+    const insert = b.calls.find((x) => x.method === 'POST' && x.href.includes('/rest/v1/out_companies'));
+    assert.deepEqual(insert.body, { name: 'Acme', org_id: HOUSE, source: 'manual' });
+  });
+});
+
+test('legacy house leads (no org_id) belong to the house workspace only', async () => {
+  const TENANT = '323e4567-e89b-42d3-a456-426614174000';
+  const rows = { leads: [{ id: LEAD, org_id: null, company_id: null }] };
+  const tenant = backend({ rows, org: { id: TENANT, slug: 'jnh-elevate', name: 'JNH', kind: 'business', enabled: true } });
+  await withFetch(tenant.handler, async () => {
+    const c = call('PATCH', `/v1/work/leads/${LEAD}`, { org_id: TENANT, company_id: null });
+    await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), { status: 404 }, 'another tenant cannot touch a house lead');
+    const order = call('POST', '/v1/work/orders', { org_id: TENANT, title: 'x', lead_id: LEAD });
+    await assert.rejects(handleWorkRequest(order.request, env, USER, order.url), /does not belong to this organization/);
+    assert.ok(!tenant.calls.some((x) => x.method === 'PATCH' || (x.method === 'POST' && x.href.includes('work_orders'))));
+  });
+  const house = backend({ rows: { leads: [{ id: LEAD, org_id: null, company_id: COMPANY }] } });
+  await withFetch(house.handler, async () => {
+    const c = call('PATCH', `/v1/work/leads/${LEAD}`, { org_id: HOUSE, company_id: null });
+    const out = await handleWorkRequest(c.request, env, USER, c.url);
+    assert.equal(out.changed, true, 'the house can unlink its own legacy lead');
   });
 });
 
