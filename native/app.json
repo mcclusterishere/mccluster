@@ -16,6 +16,9 @@
         "UIBackgroundModes": [
           "audio"
         ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,6 +33,15 @@
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow HERE to choose photos and videos as mission proof.",
+          "cameraPermission": "Allow HERE to use the camera to record mission proof.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-audio",
         {
