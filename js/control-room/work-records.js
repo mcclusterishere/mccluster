@@ -42,11 +42,11 @@
   function companyOptions(sel){return'<option value="">None</option>'+W.rows.companies.map(function(c){return'<option value="'+e(c.id)+'"'+(c.id===sel?" selected":"")+'>'+e(c.name)+'</option>';}).join("");}
   function leadOptions(){return'<option value="">None</option>'+(W.leads?W.leads():[]).slice(0,200).map(function(l){return'<option value="'+e(l.id)+'">'+e(l.name||l.email||l.id)+'</option>';}).join("");}
 
-  /* Companies live in the existing out_companies table and work today.
-     Tasks, orders, bookings and lead-to-company links need the pending
-     migration; until it is applied they say so instead of pretending. */
+  /* Companies live in the existing out_companies table. The Work schema is
+     applied in production; this message is now a drift/failure state, not a
+     normal setup step. */
   function unprovisionedNote(){
-    return'<div class="cr-gap"><b>Not set up yet.</b><span>The routes exist, but the tables they write to arrive with supabase/pending_migrations/20261005150000_control_work_records_v1.sql, which the owner has not applied. Until then nothing of this kind can be stored here, and nothing is pretended.</span></div>';
+    return'<div class="cr-gap"><b>Work schema unavailable.</b><span>Production should include supabase/migrations/20261005044012_control_work_records_v1.sql. This response means the runtime and database are out of sync; nothing is invented locally.</span></div>';
   }
 
   /* The create form for one kind. Fields mirror what the Worker accepts;
