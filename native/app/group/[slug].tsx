@@ -101,7 +101,7 @@ export default function GroupScreen() {
     }
   }
 
-  if (!ready || busy) {
+  if (!ready) {
     return (
       <View style={s.loading}>
         <Room pulse={color.ruby} />
@@ -120,6 +120,16 @@ export default function GroupScreen() {
           <Text style={s.kicker}>Action Network</Text>
           <Text style={s.title}>SIGN IN TO OPEN THIS GROUP.</Text>
         </View>
+      </View>
+    );
+  }
+
+  if (busy) {
+    return (
+      <View style={s.loading}>
+        <Room pulse={color.ruby} />
+        <ActivityIndicator color={color.ruby} />
+        <Text style={s.muted}>Opening group…</Text>
       </View>
     );
   }
