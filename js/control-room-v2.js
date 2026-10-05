@@ -2230,6 +2230,10 @@
       state.pending.mediaModels = true;
       window.CR.media.loadCatalog().then(function () { delete state.pending.mediaModels; });
     }
+    if (state.surface === "system" && state.systemView === "observability" && !state.observability && !state.pending.observability) {
+      state.pending.observability = true;
+      loadObservability(false).finally(function () { delete state.pending.observability; });
+    }
     if (state.surface === "work" && state.workView === "inbox" && state.selectedThreadId && !state.transcripts[state.selectedThreadId] && !state.pending["transcript:" + state.selectedThreadId]) {
       state.pending["transcript:" + state.selectedThreadId] = true;
       var pendingId = state.selectedThreadId;
@@ -3124,6 +3128,24 @@
           var send = document.querySelector('[data-action="ai-send"]');
           if (send && !send.disabled) send.click();
         }
+      });
+    }
+    var obsSeverity = $("crObsSeverity");
+    if (obsSeverity) {
+      obsSeverity.value = state.observabilitySeverity;
+      obsSeverity.addEventListener("change", function () { state.observabilitySeverity = obsSeverity.value; render(); });
+    }
+    var obsSource = $("crObsSource");
+    if (obsSource) {
+      obsSource.value = state.observabilitySource;
+      obsSource.addEventListener("change", function () { state.observabilitySource = obsSource.value; render(); });
+    }
+    var obsSearch = $("crObsSearch");
+    if (obsSearch) {
+      obsSearch.addEventListener("input", function () {
+        state.observabilitySearch = obsSearch.value;
+        clearTimeout(state.pending.observabilitySearchTimer);
+        state.pending.observabilitySearchTimer = setTimeout(render, 120);
       });
     }
     if (state.search) filterCurrentView(state.search);
