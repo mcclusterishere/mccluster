@@ -1592,6 +1592,161 @@
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
+  function futureWorkSlot(view) {
+    return state.futureWork[view] || null;
+  }
+
+  function loadFutureWork(view, force) {
+    var contract = FUTURE_WORK[view];
+    if (!contract) return Promise.resolve();
+    if (state.futureWork[view] && !force) return Promise.resolve();
+    state.futureWork[view] = { loading: true, result: null };
+    render();
+    var query = state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : "";
+    return src(request(contract.endpoint + query)).then(function (result) {
+      state.futureWork[view] = { loading: false, result: result };
+      render();
+    });
+  }
+
+  function futureWorkRows(view) {
+    var contract = FUTURE_WORK[view], slot = futureWorkSlot(view);
+    var result = slot && slot.result;
+    if (!contract || !result || !result.ok) return [];
+    var data = result.data || {};
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data[contract.collection])) return data[contract.collection];
+    if (Array.isArray(data.items)) return data.items;
+    return [];
+  }
+
+  function futureWorkName(view, record) {
+    record = record || {};
+    if (view === "relationships") return record.label || record.relationship_type || "Relationship";
+    if (view === "payments") return record.memo || record.description || (record.amount_cents != null ? moneyCents(record.amount_cents) : "Payment");
+    return record.title || record.name || titleCase((FUTURE_WORK[view] && FUTURE_WORK[view].singular) || view);
+  }
+
+  function futureWorkRelated(record) {
+    return record.company_name || record.client_name || record.person_name ||
+      record.company_id || record.client_id || record.person_id || record.project_id || record.order_id || "—";
+  }
+
+  function futureFieldDisplay(field, value) {
+    if (value === null || value === undefined || value === "") return "—";
+    if (field.scale === 100) return moneyCents(value);
+    if (field.instant) return formatDate(value);
+    return text(value);
+  }
+
+  function futureInputValue(field, value) {
+    if (value === null || value === undefined) return "";
+    if (field.scale === 100) return (Number(value) / 100).toFixed(2);
+    if (field.instant) {
+      var d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+    return String(value);
+  }
+
+  function futureFormHtml(view, record) {
+    var contract = FUTURE_WORK[view];
+    return '<div class="cr-gen">' + contract.fields.map(function (field) {
+      var value = futureInputValue(field, record && record[field.key]);
+      var id = "crFuture_" + field.key;
+      if (field.textarea) {
+        return '<textarea class="cr-textarea" id="' + esc(id) + '" rows="3" placeholder="' + esc(field.placeholder || field.label) + '"' +
+          (field.required ? " required" : "") + '>' + esc(value) + '</textarea>';
+      }
+      return '<input class="cr-input" id="' + esc(id) + '" type="' + esc(field.type || "text") + '"' +
+        (field.min !== undefined ? ' min="' + esc(field.min) + '"' : "") +
+        (field.max !== undefined ? ' max="' + esc(field.max) + '"' : "") +
+        (field.step !== undefined ? ' step="' + esc(field.step) + '"' : "") +
+        (field.required ? " required" : "") +
+        ' aria-label="' + esc(field.label) + '" placeholder="' + esc(field.placeholder || field.label) + '" value="' + esc(value) + '">';
+    }).join("") + '</div>';
+  }
+
+  function openFutureWorkForm(view, id) {
+    var contract = FUTURE_WORK[view];
+    if (!contract) return;
+    var record = id ? futureWorkRows(view).find(function (row) { return String(row.id) === String(id); }) : null;
+    var slot = futureWorkSlot(view), result = slot && slot.result;
+    var supported = Boolean(result && result.ok);
+    var failure = state.pending["futureWorkError:" + view];
+    openInspector({
+      title: (record ? "Edit " : "New ") + titleCase(contract.singular),
+      subtitle: "Work · " + contract.title,
+      description: contract.summary,
+      custom: futureFormHtml(view, record) +
+        (!supported ? inspectorSection("Backend boundary",
+          '<div class="cr-gap"><b>The Control UI contract is complete.</b><span>' +
+          esc(contract.endpoint) + ' is not provisioned on the canonical Worker yet. These fields and record semantics are the interface the backend will satisfy.</span></div>') : "") +
+        (failure ? inspectorSection("Not saved", sourceBanner(failure, contract.title)) : ""),
+      actions: '<button class="cr-btn cr-btn--primary" type="button" data-action="future-work-save" data-view="' + esc(view) + '"' +
+        (record ? ' data-id="' + esc(record.id) + '"' : "") + (supported || state.pending["futureWorkSave:" + view] ? "" : " disabled") +
+        (state.pending["futureWorkSave:" + view] ? " disabled" : "") + '>' +
+        (state.pending["futureWorkSave:" + view] ? "Saving…" : (record ? "Save changes" : "Create " + esc(contract.singular))) + '</button>',
+      raw: record || { contract: contract.endpoint, fields: contract.fields },
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
+
+  function inspectFutureWork(view, id) {
+    var contract = FUTURE_WORK[view];
+    var record = futureWorkRows(view).find(function (row) { return String(row.id) === String(id); });
+    if (!contract || !record) return;
+    openInspector({
+      title: futureWorkName(view, record),
+      subtitle: "Work · " + contract.title,
+      description: contract.summary,
+      props: contract.fields.map(function (field) { return [field.label, futureFieldDisplay(field, record[field.key])]; }),
+      actions: '<button class="cr-btn cr-btn--primary" type="button" data-action="future-work-edit" data-view="' + esc(view) + '" data-id="' + esc(record.id) + '">Edit</button>',
+      raw: record,
+      tabs: ["overview", "activity", "related", "raw", "ai"]
+    });
+  }
+
+  function renderFutureWork(view) {
+    var contract = FUTURE_WORK[view], slot = futureWorkSlot(view);
+    if (!contract) return "";
+    if (!slot || slot.loading) {
+      return '<div class="cr-grid">' +
+        panel(contract.title, "canonical contract", '<div class="cr-panel__body"><p class="cr-muted">Checking ' + esc(contract.endpoint) + '…</p></div>', "cr-span-12") +
+      '</div>';
+    }
+    var result = slot.result;
+    var records = futureWorkRows(view);
+    var banner = result && !result.ok ? sourceBanner(result, contract.title) : "";
+    var contractNote = result && result.ok
+      ? '<p class="cr-derived">Backed by ' + esc(contract.endpoint) + '. Records in this view are canonical, not derived.</p>'
+      : '<div class="cr-gap"><b>Future-ready Control surface</b><span>The record model, create/edit form, inspector, route, empty/loading/error states and navigation are finished. The Worker route is the remaining plumbing.</span></div>';
+    var rows = records.map(function (record) {
+      return {
+        id: record.id,
+        action: "inspect-future-work:" + view,
+        name: futureWorkName(view, record),
+        related: futureWorkRelated(record),
+        status: record.status || record.approval_status || "active",
+        updated: record.updated_at || record.created_at || record.due_at || record.renews_at
+      };
+    });
+    return banner + contractNote +
+      '<div class="cr-kpis">' +
+        kpi("Records", String(records.length), contract.singular + " objects") +
+        kpi("Backend", result && result.ok ? "LIVE" : "PENDING", contract.endpoint) +
+        kpi("Create", result && result.ok ? "READY" : "UI READY", "canonical mutation") +
+        kpi("Inspect / edit", "READY", "same object surface") +
+      '</div>' +
+      renderTable([
+        { label: contract.title.slice(0, -1), key: "name" },
+        { label: "Related", key: "related" },
+        { label: "State", key: "status" },
+        { label: "Updated", html: function (r) { return r.updated ? esc(ago(r.updated)) : "—"; } }
+      ], rows, "No " + contract.title.toLowerCase() + " yet");
+  }
+
   function renderWorkView(view) {
     if (view === "outreach" || view === "operations") {
       return window.CR.workTools ? window.CR.workTools.render(view) : empty("Work tool unavailable", "The native Control module did not load.");
@@ -1602,10 +1757,11 @@
     if (view === "companies") return renderCompanies();
     if (view === "clients") return renderClients();
     if (view === "tasks") return renderTasks();
+    if (FUTURE_WORK[view]) return renderFutureWork(view);
     return renderOrdersBookings(view);
   }
   function renderWork() {
-    return renderHeader("Work", "One business graph. Inbox, pipeline, people, clients, tasks, orders, and bookings are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
+    return renderHeader("Work", "One business graph from relationship through delivery and renewal. Views stay in Control even before every backing object is provisioned.", { values: WORK_VIEWS, selected: state.workView }) +
       '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
   }
 
