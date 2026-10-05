@@ -69,6 +69,17 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 >   `social_accounts` / `org_channels` and show in Create · Channels for the
 >   active workspace.
 
+> **Workspace scoping — RESOLVED (2026-10-05).** Control used to open only
+> the default (house) workspace and several reads ignored the workspace. It
+> now has a workspace switcher (topbar, hidden with one workspace; choice in
+> `?org=` with a per-viewer localStorage fallback, honoured only for the
+> caller's own enabled memberships; switching reloads so no module carries
+> another tenant's cached rows). Leads, media assets and jobs, Core jobs,
+> AI decisions (list and approve/reject) and social accounts are read in the
+> active workspace; the house workspace also includes pre-tenancy null-org
+> leads. Create · Channels previously called `/v1/social/accounts` without
+> `org_id`, which the route refuses, so its account list never loaded.
+
 > **Aggregate media allowance (item 5):** production migration `20261005063836_control_media_monthly_budget_v1` added `org_media_budgets` and extended the existing table-boundary media spend guard. Control System → Resources now reads and updates the owner-only allowance through `/v1/media/budget`; enabling a cap requires a concrete monthly limit and mutations are written to `control_audit`.
 
 ## 1. Companies — no domain model
