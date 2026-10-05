@@ -2,6 +2,7 @@ import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
+import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
   return {
@@ -269,6 +270,93 @@ export async function getUsage(request, env, user) {
   /* PostgREST returns a scalar function result directly or wrapped in a
      single-element array depending on the call shape. */
   return Array.isArray(rollup) ? rollup[0] : rollup;
+}
+
+export async function getMediaBudget(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  if (org.role !== 'owner') {
+    throw Object.assign(new Error('Organization owner access is required to manage the media allowance'), { status: 403 });
+  }
+  const rows = await db(
+    env,
+    `org_media_budgets?org_id=eq.${encodeURIComponent(org.org_id)}&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at&limit=1`
+  );
+  const budget = rows?.[0] || {
+    org_id: org.org_id,
+    enabled: false,
+    monthly_limit_cents: null,
+    warn_at_percent: 80,
+    updated_by: null,
+    created_at: null,
+    updated_at: null
+  };
+  return { budget };
+}
+
+export async function updateMediaBudget(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  if (org.role !== 'owner') {
+    throw Object.assign(new Error('Organization owner access is required to manage the media allowance'), { status: 403 });
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+
+  if (typeof body.enabled !== 'boolean') {
+    throw Object.assign(new Error('enabled must be true or false'), { status: 400 });
+  }
+
+  let monthlyLimit = body.monthly_limit_cents;
+  if (monthlyLimit === '' || monthlyLimit === undefined) monthlyLimit = null;
+  if (monthlyLimit !== null) {
+    monthlyLimit = Number(monthlyLimit);
+    if (!Number.isSafeInteger(monthlyLimit) || monthlyLimit < 0) {
+      throw Object.assign(new Error('monthly_limit_cents must be a non-negative integer or null'), { status: 400 });
+    }
+  }
+  if (body.enabled && monthlyLimit === null) {
+    throw Object.assign(new Error('A monthly limit is required when the media allowance is enabled'), { status: 400 });
+  }
+
+  const warnAt = body.warn_at_percent === undefined ? 80 : Number(body.warn_at_percent);
+  if (!Number.isInteger(warnAt) || warnAt < 1 || warnAt > 100) {
+    throw Object.assign(new Error('warn_at_percent must be an integer from 1 to 100'), { status: 400 });
+  }
+
+  const rows = await db(env, 'org_media_budgets?on_conflict=org_id&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at', {
+    method: 'POST',
+    headers: { prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({
+      org_id: org.org_id,
+      enabled: body.enabled,
+      monthly_limit_cents: monthlyLimit,
+      warn_at_percent: warnAt,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    })
+  });
+  const budget = rows?.[0];
+  if (!budget) throw Object.assign(new Error('Media allowance update did not return a record'), { status: 502 });
+
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    actorKind: 'user',
+    event: 'media_budget.updated',
+    capability: 'media.budget.manage',
+    resourceType: 'org_media_budget',
+    resourceId: org.org_id,
+    detail: {
+      enabled: budget.enabled,
+      monthly_limit_cents: budget.monthly_limit_cents,
+      warn_at_percent: budget.warn_at_percent
+    }
+  });
+
+  return { budget, audit };
 }
 
 export async function listModels(request, env) {
