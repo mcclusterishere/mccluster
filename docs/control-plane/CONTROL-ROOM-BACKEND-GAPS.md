@@ -40,6 +40,35 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 
 > **Decision resolution (items 7–8):** PR #353 added owner-only approve/reject transitions through `POST /v1/ai/decisions/{id}/status`, with the private `context-decision` function re-checking membership and fencing transitions to `proposed`. Production migration `20261005063813_canonical_ai_context_decisions_v1` captures the live private decision schema, including `approved_by`, `approved_at`, and `updated_at`.
 >
+> **Post-sale business graph — RESOLVED in code and production (2026-10-05).**
+> Production migrations `20261005075808_control_post_sale_work_v1` (+ `_rls_v1`,
+> `_grants_v1`, `_indexes_v1`, and `20261005075956_control_work_task_related_types_v2`)
+> add `work_relationships`, `work_projects`, `work_deliverables`,
+> `work_renewals` and `work_payments`: forced RLS, no browser grants,
+> service-role only. They are written through the same audited
+> `/v1/work/{kind}` routes and link to the canonical records instead of
+> copying them: companies are `out_companies`, people are `leads` and
+> `out_contacts` (read-only via `GET /v1/work/contacts`), orders are
+> `work_orders`. `GET /v1/work/history?company_id|relationship_id|lead_id|project_id`
+> assembles one client's linked records and audit trail as a timeline with
+> billed / paid / provider-verified totals. Control · Work has Relationships,
+> Projects, Deliverables, Payments and Renewals views with create, inline
+> state, deliverable approval (stamped with who and when) and History.
+>
+> Still staged, and labelled so in Control:
+> - **Payment verification.** `work_payments.verification` is
+>   `owner_recorded` unless a Stripe/Square reconciler sets
+>   `provider_verified`; no request can set it. The reconciler is not built.
+>   `public.payments` is Whip's tenant ledger and is not used.
+> - **Client-facing approval.** Deliverable approval is the owner's; a client
+>   portal that lets the client approve is not built.
+> - **Entitlement linkage.** `music_entitlements` / `l3_entitlements` stay
+>   product-scoped; renewals can point at `site_accounts`,
+>   `api_subscriptions` or `offerings` via `source_table` / `source_id`.
+> - **Client-owned social connections** already live per tenant org in
+>   `social_accounts` / `org_channels` and show in Create · Channels for the
+>   active workspace.
+
 > **Aggregate media allowance (item 5):** production migration `20261005063836_control_media_monthly_budget_v1` added `org_media_budgets` and extended the existing table-boundary media spend guard. Control System → Resources now reads and updates the owner-only allowance through `/v1/media/budget`; enabling a cap requires a concrete monthly limit and mutations are written to `control_audit`.
 
 ## 1. Companies — no domain model

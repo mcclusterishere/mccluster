@@ -90,6 +90,7 @@ test('a Control mutation returns correlation headers and persists a request row 
     assert.equal(response.status, 201);
     assert.match(response.headers.get('x-mccluster-trace-id') || '', /^[0-9a-f-]{36}$/i);
     assert.match(response.headers.get('x-mccluster-request-id') || '', /^[0-9a-f-]{36}$/i);
+    assert.equal(response.headers.get('access-control-expose-headers'), 'x-mccluster-trace-id,x-mccluster-request-id');
     await Promise.all(pending);
     const [write] = backend.writes();
     assert.ok(write, 'expected a retained event write');
@@ -267,6 +268,19 @@ test('scheduled work writes its domain events under its own trace', async () => 
     assert.equal(row.level, 'error');
     assert.equal(row.outcome, 'error');
     assert.equal(row.event_kind, 'job');
+  } finally {
+    backend.restore();
+  }
+});
+
+test('trace headers are exposed once even when CORS already lists them', async () => {
+  const backend = mockBackend();
+  const { ctx } = waitCtx();
+  try {
+    const response = await observeControlRequest(controlRequest(), env(), ctx, async () => new Response('{}', {
+      headers: { 'access-control-expose-headers': 'x-mccluster-trace-id,x-mccluster-request-id,etag' }
+    }));
+    assert.equal(response.headers.get('access-control-expose-headers'), 'x-mccluster-trace-id,x-mccluster-request-id,etag');
   } finally {
     backend.restore();
   }

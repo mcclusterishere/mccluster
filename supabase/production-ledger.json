@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 256,
-  "latest_version": "20261005074135",
-  "latest_name": "control_observability_events_v2",
-  "ledger_sha256": "b43d534a4fa55149da97fe16fac05976f5f336d76a8f3c7aea36f831a709455a",
+  "migration_count": 261,
+  "latest_version": "20261005075956",
+  "latest_name": "control_work_task_related_types_v2",
+  "ledger_sha256": "245de902d84cf971909b8611ae18c75892e2e5e7fa8fa96d4158c517a5f43abe",
   "migrations": [
     {
       "version": "0001",
@@ -1030,6 +1030,26 @@
     {
       "version": "20261005074135",
       "name": "control_observability_events_v2"
+    },
+    {
+      "version": "20261005075808",
+      "name": "control_post_sale_work_v1"
+    },
+    {
+      "version": "20261005075923",
+      "name": "control_post_sale_work_rls_v1"
+    },
+    {
+      "version": "20261005075938",
+      "name": "control_post_sale_work_grants_v1"
+    },
+    {
+      "version": "20261005075951",
+      "name": "control_post_sale_work_indexes_v1"
+    },
+    {
+      "version": "20261005075956",
+      "name": "control_work_task_related_types_v2"
     }
   ]
 }
