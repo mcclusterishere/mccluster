@@ -13,27 +13,30 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
 
-> **Items 1, 2, 3 and 6 — RESOLVED in code, pending one migration (2026-10-05).**
+> **Items 1, 2, 3 and 6 — RESOLVED in code and production (2026-10-05).**
 > `workers/mccluster/src/work.js` adds the canonical Work routes
 > (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
 > `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
 > `PATCH /v1/work/leads/{id}` to link a company). Each is membership-checked
 > (staff may run tasks; leads, companies, orders and bookings are owner work),
 > pinned to the caller's `org_id`, and written to `control_audit`. The tables
-> come from `supabase/pending_migrations/20261005150000_control_work_records_v1.sql`
+> come from `supabase/migrations/20261005044012_control_work_records_v1.sql`
 > (`leads.company_id`, `work_tasks`, `work_orders`, `work_bookings`; RLS on,
 > no browser mutation grants for the Work stores). **Companies are the existing `out_companies`** — the
 > table the intake and outreach functions already write with service-role authority — so there is one
 > company universe; the migration removes direct browser company mutations so the owner-only Worker gate is authoritative; leads, orders and bookings link to it, and Control's
-> company records work before the migration is applied. Control's "+ New" opens the
+> company records share the same canonical universe. Control's "+ New" opens the
 > native form in `js/control-room/work-records.js`; the legacy CRM creator is
-> no longer the way in. Until the owner applies the migration, the routes
-> answer `503 work_not_provisioned` and Control says so.
+> no longer the way in. Production also has
+> `20261005044112_control_work_fk_indexes_v1` covering order/booking foreign keys.
+> A `503 work_not_provisioned` response now indicates deployment/schema drift, not an expected pending state.
 > Product fulfilment tables (`print_orders`, `shake_orders`, `music_orders`,
 > `l3_orders`, `rental_bookings`) stay authoritative for their products; a
 > Work order may point at one via `source_table`/`source_id`.
 
 ---
+
+> Sections 1, 2, 3 and 6 below are retained as the historical gap definition that this implementation closed. The status block above is authoritative.
 
 ## 1. Companies — no domain model
 
