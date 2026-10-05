@@ -2323,14 +2323,13 @@
   function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
   function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
 
-  /* Decisions are read-only here. The write path (POST /v1/ai/decisions)
-     records a new decision; there is no approve/reject transition route, so
-     this shows the record and says what is missing rather than offering a
-     button that cannot persist. */
+  /* Proposed decisions are owner actions, not read-only records. */
   function inspectDecision(id) {
     var d = findById(state.decisions, id) || state.decisions[0];
     if (!d) return;
     var risky = ["high", "critical"].indexOf(d.risk_class) >= 0;
+    var busy = state.pending["decision:" + d.id];
+    var failure = state.pending["decisionError:" + d.id];
     openInspector({
       title: d.title || "Decision",
       subtitle: "Decision · " + titleCase(d.status || "proposed"),
@@ -2338,13 +2337,18 @@
       props: [["Status", d.status], ["Risk", d.risk_class], ["Proposed", formatDate(d.created_at)],
         ["Proposed by", d.proposed_by], ["Supersedes", d.supersedes_id]],
       custom: (d.status === "proposed"
-        ? inspectorSection("Waiting on you", '<div class="cr-gap"><b>No approve or reject route exists.</b>' +
-            '<span>ai_context.decisions records a status, but the backend exposes no transition endpoint, so this decision cannot be approved or rejected from here. Recording a superseding decision is the only supported write.</span></div>')
+        ? inspectorSection("Decision", '<p class="cr-muted">Approve or reject this proposal without rewriting its original text.</p>' +
+            '<textarea class="cr-textarea" id="crDecisionNote" rows="3" placeholder="Optional decision note"></textarea>')
         : "") +
+        (failure ? inspectorSection("Transition failed", sourceBanner(failure, "Decision")) : "") +
         (risky ? inspectorSection("Risk", '<p class="cr-fail">' + esc(titleCase(d.risk_class)) + ' risk. This was flagged at record time.</p>') : ""),
       related: d.source_conversation_id
         ? '<p class="cr-muted">Source conversation: <span class="cr-mono">' + esc(d.source_conversation_id) + '</span></p>'
         : '<p class="cr-muted">No source conversation is recorded on this decision.</p>',
+      actions: d.status === "proposed"
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="decision-transition" data-id="' + esc(d.id) + '" data-status="approved"' + (busy ? " disabled" : "") + '>' + (busy ? "Saving…" : "Approve") + '</button>' +
+          '<button class="cr-btn" type="button" data-action="decision-transition" data-id="' + esc(d.id) + '" data-status="rejected"' + (busy ? " disabled" : "") + '>Reject</button>'
+        : "",
       raw: d, tabs: ["overview", "related", "raw", "ai"]
     });
   }
