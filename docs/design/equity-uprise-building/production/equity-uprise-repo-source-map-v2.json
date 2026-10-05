@@ -2499,6 +2499,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "docs/control-plane/PROGRAM-LEDGER.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Program status ledger for the 19-item McCluster program; it names the playable Equity Uprise building only as a status row and defines no building geometry, program or capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
