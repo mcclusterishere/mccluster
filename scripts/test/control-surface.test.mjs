@@ -288,6 +288,33 @@ test('Create Schedule exposes real publish retry and safe cancellation', async()
 });
 
 
+test('System Observability reads retained org-scoped request traces', async()=>{
+  const [control,entry,obs,migration,http]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('workers/mccluster/src/entry.js'),
+    read('workers/mccluster/src/lib/observability.js'),
+    read('supabase/migrations/20261005071308_control_observability_events_v1.sql'),
+    read('workers/mccluster/src/lib/http.js')
+  ]);
+  assert.match(control,/\/v1\/observability\/events\?org_id=/);
+  assert.match(control,/x-mccluster-org-id/);
+  assert.match(control,/x-mccluster-trace-id/);
+  assert.match(control,/data-action="load-observability"/);
+  assert.match(control,/inspect-observation/);
+  assert.doesNotMatch(control,/McCluster has no log or trace pipeline/);
+  assert.match(entry,/observeControlRequest/);
+  assert.match(entry,/path === '\/v1\/observability\/events'/);
+  assert.match(entry,/membership\.role !== 'owner'/);
+  assert.match(obs,/verifiedActor/);
+  assert.match(obs,/membership_unverified/);
+  assert.doesNotMatch(obs,/request\.text\(|request\.json\(/);
+  assert.match(migration,/force row level security/);
+  assert.match(migration,/revoke all on table public\.control_observability_events from authenticated/);
+  assert.match(http,/x-mccluster-org-id/);
+  assert.match(http,/access-control-expose-headers.*x-mccluster-trace-id/);
+});
+
+
 test('AI replies show what the resident turn checked on the web', async()=>{
   const js=await read('js/control-room-v2.js');
   const src=js.match(/function aiResearchHtml\(message\) \{[\s\S]*?\n  \}\n/);
