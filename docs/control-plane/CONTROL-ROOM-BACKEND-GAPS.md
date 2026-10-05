@@ -13,7 +13,7 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
 
-> **Items 1, 2, 3, 5, 6, 7, 8 and 9 — RESOLVED in code and/or production (2026-10-05).**
+> **Items 1–9 — RESOLVED in code and/or production (2026-10-05).**
 > `workers/mccluster/src/work.js` adds the canonical Work routes
 > (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
 > `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
@@ -36,7 +36,7 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 
 ---
 
-> Sections 1, 2, 3, 5, 6, 7, 8 and 9 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
+> Sections 1–9 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
 
 > **Decision resolution (items 7–8):** PR #353 added owner-only approve/reject transitions through `POST /v1/ai/decisions/{id}/status`, with the private `context-decision` function re-checking membership and fencing transitions to `proposed`. Production migration `20261005063813_canonical_ai_context_decisions_v1` captures the live private decision schema, including `approved_by`, `approved_at`, and `updated_at`.
 >
@@ -105,27 +105,26 @@ amount to a lead as an order record.
 
 ---
 
-## 4. Logs and traces — no pipeline
+## 4. Logs and traces — RESOLVED
 
-**Blocked view:** System · Observability
+**Status:** resolved by the retained Control observability pipeline.
 
-**Current behaviour:** the view shows the failure ledger the canonical tables
-already hold — failed `ops_agent_jobs` (with `last_error`, input, result and
-run time), failed `media_jobs`, failed `social_publish_jobs` — plus any source
-this console could not read. It states plainly that McCluster has no log or
-trace pipeline.
-
-**What is missing:** no log store, no trace ids, no request/span correlation.
-Cloudflare Workers Logs and Logpush are not wired to anything the Worker
-exposes, so the browser has nothing to read.
-
-**Smallest contract that would unblock it**
-
-- A bounded, owner-gated tail: `GET /v1/observability/events?since&limit`
-  over a retained events table, returning `{ events, has_more }`.
-
-This is deliberately *not* "expose raw Cloudflare logs to the browser": the
-narrow contract is a retained, org-scoped event list.
+- Production migration `20261005071308_control_observability_events_v1`
+  provides the durable org-scoped event store with trace/request IDs, route,
+  method, status, duration, actor and bounded detail.
+- Browser roles have no direct access; the table has forced RLS and is mediated
+  by the Worker.
+- Control sends its current workspace as `x-mccluster-org-id`, but the trace
+  writer independently resolves the bearer token and verifies membership
+  before retaining an event. A spoofed workspace header cannot write into
+  another organization's stream.
+- API responses expose `x-mccluster-trace-id` and
+  `x-mccluster-request-id` for correlation.
+- `GET /v1/observability/events?org_id&since&limit&trace_id&level` is
+  owner-gated and bounded to 200 rows plus a lookahead row.
+- System · Observability auto-loads the retained 24-hour tail and keeps the
+  canonical failure/audit ledger underneath as supporting context.
+- Request bodies, authorization material and raw credentials are not retained.
 
 ---
 
