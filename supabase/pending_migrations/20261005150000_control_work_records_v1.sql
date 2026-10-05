@@ -29,6 +29,20 @@ alter table public.leads
   add column if not exists company_id uuid references public.out_companies(id) on delete set null;
 create index if not exists leads_company_id_idx on public.leads (company_id) where company_id is not null;
 
+-- Before tenancy, the public McCluster lead form created house leads without
+-- org_id. Adopt only those historical unscoped rows into the canonical house
+-- org so NULL never has to mean "belongs to every workspace".
+do $
+declare house_org uuid;
+begin
+  select id into house_org from public.orgs where slug = 'mccluster' limit 1;
+  if house_org is null then
+    raise exception 'canonical mccluster org is required before Control Work migration';
+  end if;
+  update public.leads set org_id = house_org where org_id is null;
+end;
+$;
+
 create table if not exists public.work_tasks (
   id            uuid primary key default gen_random_uuid(),
   org_id        uuid not null references public.orgs(id) on delete cascade,
