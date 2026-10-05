@@ -199,3 +199,43 @@ test('POST still records a decision on the same route', async () => {
   const call = be.calls.find((c) => c.href.includes('/functions/v1/context-decision'));
   assert.equal(call.method, 'POST', 'the write path must be unchanged');
 });
+
+
+test('an owner can approve or reject a proposed decision through the narrow status route', async () => {
+  const approved = { ...DECISION, status: 'approved' };
+  const be = backend({ fn: { decision: approved } });
+  await withFetchMock(be.handler, async () => {
+    const response = await handleAiRequest(
+      new Request('https://api.mccluster.org/v1/ai/decisions/123e4567-e89b-42d3-a456-426614174999/status', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${USER_TOKEN}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'approved', note: 'Reviewed in Control' })
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.decision.status, 'approved');
+  });
+  const call = be.calls.find((c) => c.href.includes('/functions/v1/context-decision'));
+  assert.equal(call.method, 'PATCH');
+  assert.equal(call.headers.authorization, `Bearer ${USER_TOKEN}`);
+});
+
+test('decision status route refuses arbitrary state transitions', async () => {
+  const be = backend({});
+  await withFetchMock(be.handler, async () => {
+    const response = await handleAiRequest(
+      new Request('https://api.mccluster.org/v1/ai/decisions/123e4567-e89b-42d3-a456-426614174999/status', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${USER_TOKEN}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'executed' })
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(response.status, 400);
+  });
+  assert.ok(!be.calls.some((c) => c.href.includes('/functions/v1/context-decision')));
+});
