@@ -8,7 +8,7 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "payments", "deliverables", "renewals", "outreach", "operations"];
   var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
@@ -66,6 +66,7 @@
     threadFilter: "all",
     jobFilter: "all",
     pipelineStage: "all",
+    futureWork: {},
     observability: null,
     observabilitySeverity: "all",
     observabilitySource: "all",
@@ -78,6 +79,77 @@
     pending: {},
     drafts: {},
     search: ""
+  };
+
+  var FUTURE_WORK = {
+    relationships: {
+      endpoint: "/v1/work/relationships", collection: "relationships", title: "Relationships",
+      singular: "relationship", summary: "The durable link between a person and a company, with owner, role, strength, state and history.",
+      fields: [
+        { key: "person_id", label: "Person ID", placeholder: "Canonical person UUID" },
+        { key: "company_id", label: "Company ID", placeholder: "Canonical company UUID" },
+        { key: "relationship_type", label: "Relationship type", placeholder: "client, partner, sponsor, vendor…" },
+        { key: "status", label: "Status", placeholder: "active" },
+        { key: "owner_id", label: "Owner ID", placeholder: "Operator UUID" },
+        { key: "notes", label: "Notes", textarea: true, placeholder: "Relationship context" }
+      ]
+    },
+    projects: {
+      endpoint: "/v1/work/projects", collection: "projects", title: "Service Projects",
+      singular: "project", summary: "Post-sale client work: scope, ownership, dates, budget, fulfillment and links back to orders.",
+      fields: [
+        { key: "name", label: "Project name", required: true, placeholder: "Client project" },
+        { key: "client_id", label: "Client / person ID", placeholder: "Canonical person UUID" },
+        { key: "company_id", label: "Company ID", placeholder: "Canonical company UUID" },
+        { key: "order_id", label: "Order ID", placeholder: "Originating order UUID" },
+        { key: "status", label: "Status", placeholder: "planned" },
+        { key: "starts_at", label: "Starts", type: "datetime-local", instant: true },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true },
+        { key: "budget_cents", label: "Budget (USD)", type: "number", scale: 100, min: "0", step: "0.01" }
+      ]
+    },
+    payments: {
+      endpoint: "/v1/work/payments", collection: "payments", title: "Payments",
+      singular: "payment", summary: "Payment state tied to clients, orders and projects without turning provider dashboards into the system of record.",
+      fields: [
+        { key: "client_id", label: "Client / person ID", placeholder: "Canonical person UUID" },
+        { key: "order_id", label: "Order ID", placeholder: "Canonical order UUID" },
+        { key: "project_id", label: "Project ID", placeholder: "Canonical project UUID" },
+        { key: "amount_cents", label: "Amount (USD)", type: "number", scale: 100, required: true, min: "0", step: "0.01" },
+        { key: "currency", label: "Currency", placeholder: "usd" },
+        { key: "provider", label: "Provider", placeholder: "stripe / square" },
+        { key: "status", label: "Status", placeholder: "pending" },
+        { key: "external_id", label: "Provider reference", placeholder: "Provider payment/session ID" },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true },
+        { key: "paid_at", label: "Paid", type: "datetime-local", instant: true }
+      ]
+    },
+    deliverables: {
+      endpoint: "/v1/work/deliverables", collection: "deliverables", title: "Deliverables",
+      singular: "deliverable", summary: "What the client is owed, where the artifact lives, and whether it has been reviewed and accepted.",
+      fields: [
+        { key: "project_id", label: "Project ID", required: true, placeholder: "Canonical project UUID" },
+        { key: "title", label: "Deliverable", required: true, placeholder: "Final edit, site handoff, campaign report…" },
+        { key: "kind", label: "Type", placeholder: "file, site, report, campaign…" },
+        { key: "status", label: "Status", placeholder: "planned" },
+        { key: "asset_id", label: "Asset ID", placeholder: "Media/library asset UUID" },
+        { key: "approval_status", label: "Approval", placeholder: "pending" },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true }
+      ]
+    },
+    renewals: {
+      endpoint: "/v1/work/renewals", collection: "renewals", title: "Renewals",
+      singular: "renewal", summary: "Recurring client obligations and the next commercial decision after delivery.",
+      fields: [
+        { key: "relationship_id", label: "Relationship ID", placeholder: "Canonical relationship UUID" },
+        { key: "project_id", label: "Project ID", placeholder: "Canonical project UUID" },
+        { key: "title", label: "Renewal", required: true, placeholder: "Monthly management, annual hosting…" },
+        { key: "status", label: "Status", placeholder: "upcoming" },
+        { key: "renews_at", label: "Renews", type: "datetime-local", instant: true },
+        { key: "amount_cents", label: "Amount (USD)", type: "number", scale: 100, min: "0", step: "0.01" },
+        { key: "interval", label: "Interval", placeholder: "month / year" }
+      ]
+    }
   };
 
   var bridge = {
