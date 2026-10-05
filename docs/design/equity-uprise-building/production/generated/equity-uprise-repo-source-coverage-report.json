@@ -267,8 +267,8 @@
     "supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql",
     "supabase/migrations/20261004021226_action_origin_attribution_v2.sql",
     "supabase/migrations/20261005040806_analytics_funnel_exact_window_v1.sql",
-    "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql",
-    "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql",
+    "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql",
+    "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -5123,42 +5123,42 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql capability ids known",
+      "name": "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql classified",
+      "name": "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending_migrations/20261003150000_equity_uprise_group_docket_516r.sql support rationale present",
+      "name": "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql support rationale present",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql capability ids known",
+      "name": "supabase/migrations/20261005054040_action_cohort_admission_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql classified",
+      "name": "supabase/migrations/20261005054040_action_cohort_admission_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261005054040_action_cohort_admission_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending_migrations/20261003160000_action_cohort_admission_v1.sql support rationale present",
+      "name": "supabase/migrations/20261005054040_action_cohort_admission_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
