@@ -13,7 +13,7 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 `workers/mccluster/src`.
 
 
-> **Items 1, 2, 3 and 6 — RESOLVED in code and production (2026-10-05).**
+> **Items 1, 2, 3, 5, 6, 7 and 8 — RESOLVED in code and/or production (2026-10-05).**
 > `workers/mccluster/src/work.js` adds the canonical Work routes
 > (`GET|POST /v1/work/{companies|tasks|orders|bookings}`,
 > `PATCH /v1/work/{kind}/{id}`, `POST /v1/work/leads`,
@@ -36,7 +36,11 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 
 ---
 
-> Sections 1, 2, 3 and 6 below are retained as the historical gap definition that this implementation closed. The status block above is authoritative.
+> Sections 1, 2, 3, 5, 6, 7 and 8 below are retained as the historical gap definition that the current implementation closed. The status blocks are authoritative.
+
+> **Decision resolution (items 7–8):** PR #353 added owner-only approve/reject transitions through `POST /v1/ai/decisions/{id}/status`, with the private `context-decision` function re-checking membership and fencing transitions to `proposed`. Production migration `20261005063813_canonical_ai_context_decisions_v1` captures the live private decision schema, including `approved_by`, `approved_at`, and `updated_at`.
+>
+> **Aggregate media allowance (item 5):** production migration `20261005063836_control_media_monthly_budget_v1` added `org_media_budgets` and extended the existing table-boundary media spend guard. Control System → Resources now reads and updates the owner-only allowance through `/v1/media/budget`; enabling a cap requires a concrete monthly limit and mutations are written to `control_audit`.
 
 ## 1. Companies — no domain model
 
@@ -142,14 +146,11 @@ figure (settled actuals plus unreleased reservations) — the number that answer
 computes no figure of its own. System · Resources shows it, labelled settled
 versus in flight.
 
-**Still missing:** a *cap*. This is visibility, not enforcement — there is no
-org-level or monthly media budget that refuses the next job. Spend is now
-observable but still not bounded in aggregate.
-
-**Smallest contract that would add enforcement**
-
-- An org media allowance checked inside `enforce_media_job_spend_guard()`
-  against the rollup, refusing at the table boundary like the per-job rules do.
+**Status:** resolved. `public.org_media_budgets` stores the owner-configured
+monthly allowance, and `enforce_media_job_spend_guard()` now locks the budget
+row and refuses a paid FAL job whose estimated cost would push current-month
+committed spend over the enabled cap. Browser roles have no direct table
+access; Control uses the owner-gated Worker route `GET|PATCH /v1/media/budget`.
 
 ---
 
@@ -183,18 +184,11 @@ them, proposed ones surface on Home (high and critical risk called out
 individually), and the inspector shows the record. A proposed decision cannot
 be approved or rejected from the console, and the inspector says so.
 
-**What is missing:** `ai_context.decisions` stores a `status`, but the only
-write path is `POST /v1/ai/decisions`, which records a *new* decision. There is
-no transition route, so the only supported way to change a position is to
-record a superseding decision via `supersedes_id`.
-
-**Smallest contract that would unblock it**
-
-- `POST /v1/ai/decisions/{id}/status` `{ status, note }`, restricted to the
-  same house-owner gate, writing `status`, `approved_by` and `approved_at`.
-
-Deliberately a status transition rather than a general update: the decision
-text itself is a record of what was proposed and should not be editable.
+**Status:** resolved by PR #353. `POST /v1/ai/decisions/{id}/status`
+accepts only `approved` or `rejected`, is house-owner gated at the Worker,
+is re-authorized by the private context function, and only transitions rows
+still in `proposed`. It records the actor/time and preserves decision text as
+immutable history.
 
 ---
 
@@ -213,9 +207,12 @@ The only `ai_context` migration that exists in git is on the branch
 `approved_at`, `executed_at` and `provenance`, and its status CHECK does not
 allow `superseded`. It would not create the table the platform actually uses.
 
-**What is needed:** capture the live `ai_context` schema from the database and
-commit it, rather than applying the draft. This is the same class of drift
-already recorded for the `ops_*` tables.
+**Status:** resolved. Production migration
+`20261005063813_canonical_ai_context_decisions_v1` is the exact recorded
+production statement set and is reconciled into the canonical migration
+directory and production ledger. It defines the live columns and preserves the
+private access posture (RLS enabled; no direct anon/authenticated/service-role
+table grants).
 
 ---
 
