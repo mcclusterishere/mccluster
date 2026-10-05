@@ -203,18 +203,20 @@ export function useActionNetworkApi() {
       metadata?: Record<string, any>;
       share?: boolean;
     }) {
-      const proof = await rpc('submit_action_proof', {
+      // Privacy preference is a precondition, not best effort. A stale
+      // share=true intent from an earlier submission must never survive when
+      // the member now chooses private proof.
+      await rpc('set_action_share_intent', {
+        p_assignment_id: input.assignmentId,
+        p_share: input.share !== false,
+      });
+      return rpc('submit_action_proof', {
         p_assignment_id: input.assignmentId,
         p_proof_type: input.proofType,
         p_proof_url: input.proofUrl || null,
         p_statement: input.statement,
         p_metadata: input.metadata || {},
       });
-      await rpc('set_action_share_intent', {
-        p_assignment_id: input.assignmentId,
-        p_share: input.share !== false,
-      }).catch(() => null);
-      return proof;
     }
 
     async function actionRecord() {
