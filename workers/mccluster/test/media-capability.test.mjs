@@ -154,6 +154,43 @@ test('prompt-only generation refuses models that require structured media input 
   }
 });
 
+test('prompt nested inside input does not count as structured media input', async () => {
+  const seen = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    seen.push(href);
+    if (href.includes('/rest/v1/org_members?')) return jsonResponse([{ org_id: ORG_ID, role: 'owner' }]);
+    if (href.includes('/rest/v1/control_role_capabilities?')) return jsonResponse(MATRIX);
+    if (href.includes('/rest/v1/media_models?')) {
+      return jsonResponse([{
+        id: 'model-1',
+        provider: 'fal',
+        provider_model_id: 'fal-ai/example/image-to-video',
+        display_name: 'I2V',
+        capability: 'image-to-video',
+        parameter_schema: {},
+        cost_hint: {},
+        enabled: true
+      }]);
+    }
+    throw new Error('Unexpected fetch: ' + href);
+  };
+  __resetCapabilityCache();
+
+  try {
+    const req = generationRequest({ input: { prompt: 'still only a prompt' }, prompt: null });
+    await assert.rejects(
+      () => createGeneration(req, env, { id: 'user-1' }),
+      (error) => error.status === 422 && /structured media input/.test(error.message)
+    );
+    assert.equal(seen.some((href) => href.includes('/rest/v1/rpc/media_create_budgeted_job')), false);
+  } finally {
+    globalThis.fetch = original;
+    __resetCapabilityCache();
+  }
+});
+
 test('catalog-declared required media fields fail before reservation or provider spend', async () => {
   const seen = [];
   const original = globalThis.fetch;
