@@ -66,10 +66,11 @@ test('native proof capture uses private signed media flow without microphone per
 });
 
 test('mission and group routes are deep-linkable native work surfaces', async () => {
-  const [mission, group, app] = await Promise.all([
+  const [mission, group, app, intent] = await Promise.all([
     read('native/app/mission/[id].tsx'),
     read('native/app/group/[slug].tsx'),
     read('native/app.json'),
+    read('native/app/+native-intent.tsx'),
   ]);
   assert.match(mission, /takeMissionProof/);
   assert.match(mission, /recoverPendingMissionProof/);
@@ -82,7 +83,26 @@ test('mission and group routes are deep-linkable native work surfaces', async ()
     group.indexOf('if (!session)') < group.lastIndexOf('if (busy)'),
     'signed-out group routes must show sign-in before the loading gate',
   );
-  assert.equal(JSON.parse(app).expo.scheme, 'here');
+  const config = JSON.parse(app).expo;
+  assert.equal(config.scheme, 'here');
+  assert.ok(config.ios.associatedDomains.includes('applinks:matthew.mccluster.org'));
+  assert.ok(
+    config.android.intentFilters.some(
+      (filter) =>
+        filter.action === 'VIEW' &&
+        filter.autoVerify === true &&
+        filter.data?.some(
+          (data) =>
+            data.scheme === 'https' &&
+            data.host === 'matthew.mccluster.org' &&
+            data.pathPrefix === '/mnet.html',
+        ),
+    ),
+    'Android app link declaration must cover shared Action Network mission URLs',
+  );
+  assert.match(intent, /matthew\.mccluster\.org/);
+  assert.match(intent, /searchParams\.get\('mission'\)/);
+  assert.match(intent, /return `\/mission\/\$\{mission\}`/);
 });
 
 test('first-run walkthrough is shared with the web account state', async () => {
