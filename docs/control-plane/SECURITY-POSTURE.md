@@ -154,8 +154,63 @@ The 2026-10-05 security advisor still reports:
   still have a real ownership/membership policy rather than relying on this
   pattern by default.
 
+## Edge Function deploys
+
+A merged security fix to an Edge Function is not live until it is deployed. On
+2026-10-05 it was not: #370 (`l3-login`, `pay-now`) merged at 21:38 UTC and
+production kept the old code until 21:46, when an unrelated migration merge
+ran a successful deploy.
+
+The Supabase GitHub integration was the only deployer, and on function-only
+pushes to `main` it has never been seen to succeed:
+
+| Merge | Functions | Integration on the merge commit |
+|---|---|---|
+| #370 `7f7ef68d` | `l3-login`, `pay-now` | failure: "Remote migration versions not found in local migrations directory" (production held five migrations main did not have yet) |
+| #353 `690bf7ad` | `context-decision` | skipped: "This git branch is not associated with any Supabase Branch" |
+| `eb11fb73` | `social-agent` config | still pending since 2026-10-02: "Waiting for branch action run to complete" |
+
+Each of those is a check on a merge commit nobody reads, so the gap was
+silent. Applying a migration to production before its file reaches `main`,
+which is this repo's normal provenance order, reliably creates the first
+case for every merge in between.
+
+`.github/workflows/supabase-functions-deploy.yml` closes it. It runs on any
+push to `main` that changes `supabase/functions/**` or `supabase/config.toml`,
+with or without a migration:
+
+1. `scripts/supabase-functions-deploy.mjs plan` works out what changed. That
+   covers a function's own files, every importer of a changed `_shared` file
+   (including shared files that import each other), and every function when
+   `config.toml` changes. A changed function without a `[functions.<name>]`
+   stanza is refused, because the CLI would deploy it with `verify_jwt = true`
+   by default. Nothing is ever pruned.
+2. It waits for the integration's verdict on that commit, so its own deploy
+   is the last write for that commit.
+3. With the `SUPABASE_ACCESS_TOKEN` repository secret, it deploys exactly
+   those functions from `main` as it is at that moment, so a late run never
+   restores older code. It then proves each one live with
+   `supabase functions list`: present, `ACTIVE`, updated after the deploy
+   began, and `verify_jwt` equal to `config.toml`.
+4. Without the secret it cannot deploy. It passes only if the integration
+   succeeded, and says that result is unverified. A failed, skipped or missing
+   integration turns the run red, naming every function production is still
+   serving old code for.
+
+Replayed against history, this marks #370 and #353 red with their exact
+function lists, and passes #369.
+
+Recovery: add the secret and re-run the workflow, or use **Run workflow** with
+the function names (or `all`). An agent with Supabase access can also deploy
+the named functions directly. Owner action: create a Supabase access token
+and save it as the `SUPABASE_ACCESS_TOKEN` repository secret. Until then,
+function deploys are detected and reported but not repaired.
+
 ## Remaining Item 8 work
 
+- owner: add the `SUPABASE_ACCESS_TOKEN` repository secret so Edge Function
+  deploys are performed and proven by `supabase-functions-deploy.yml`, not only
+  detected (see "Edge Function deploys");
 - enable leaked-password protection in Auth;
   ([Supabase guide](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection));
 - owner decision: delete the `pay-now` deployment. Its code now refuses every

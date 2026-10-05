@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 326,
+  "candidate_count": 327,
   "capability_source_count": 99,
-  "support_only_count": 227,
-  "checks_total": 1207,
-  "checks_passed": 1207,
+  "support_only_count": 228,
+  "checks_total": 1211,
+  "checks_passed": 1211,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -203,6 +203,7 @@
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "scripts/test/song-test.test.mjs",
+    "scripts/test/supabase-functions-deploy.test.mjs",
     "services.html",
     "sitemap.xml",
     "sites-details.html",
@@ -340,7 +341,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "326 entries"
+      "detail": "327 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6329,6 +6330,26 @@
     },
     {
       "name": "scripts/test/security-reaudit.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/supabase-functions-deploy.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/supabase-functions-deploy.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/supabase-functions-deploy.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/supabase-functions-deploy.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
