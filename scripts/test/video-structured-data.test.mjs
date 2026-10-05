@@ -1,19 +1,25 @@
 /* Which VideoObjects ship, and the evidence behind each uploadDate (#48).
 
-   scripts/test/seo-contract.test.mjs already refuses any VideoObject whose
-   uploadDate is not a full DateTime with a timezone. This file pins the
-   evidence: a VideoObject ships only when its first publication is known
-   from a primary record, never from a guessed time.
+   scripts/test/seo-contract.test.mjs refuses any VideoObject whose
+   uploadDate is not a real DateTime with a timezone. This file holds the
+   line on evidence: a VideoObject ships only when a primary deployment or
+   publication record establishes the moment the video first became public.
+   A commit time is when the file was committed, not proof of when the
+   public could see it, so it is never used as the clock time.
 
-   - assets/video/hero.mp4 (the I AM HERE studio film, Matthew's own work):
-     first published by mcclusterishere/street-credit-bureau commit f5263b5
-     at 2026-07-05T15:17:30Z, pushed to main, which that repo's
-     deploy-pages.yml mirrored to gh-pages on push.
-   - assets/video/ulf-school-meals-policy.mp4: first published on this
-     property by mcclusterishere/here commit 9f5ac14 at 2026-08-08T03:54:50Z,
-     but that commit remuxed an existing file of a 2025 cohort presentation,
-     so an earlier publication elsewhere is possible. It stays without a
-     VideoObject until its first publication anywhere is confirmed. */
+   What the record shows (docs/SEO-AEO-AUTHORITY-SYSTEM.md):
+   - assets/video/hero.mp4: first committed in
+     mcclusterishere/street-credit-bureau f5263b5 at 2026-07-05T15:17:30Z and
+     carried as the calendar date 2026-07-05 into Here's JSON-LD on July 15.
+     No retained deployment run covers July 5 (that repo's first retained
+     deploy-pages run is 2026-07-14) and gh-pages was later force-rewritten,
+     so the first-publication second is unproven. Withheld.
+   - assets/video/ulf-school-meals-policy.mp4: reached this property in
+     mcclusterishere/here 9f5ac14 at 2026-08-08T03:54:50Z, remuxed from an
+     existing file of a 2025 presentation, so an earlier publication
+     elsewhere is possible. Withheld.
+   Either comes back only with a primary record of first public
+   availability. */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -32,12 +38,13 @@ const videos = (file) => [...read(file).matchAll(/<script type="application\/ld\
   .flatMap((m) => nodes(JSON.parse(m[1])))
   .filter((n) => [].concat(n["@type"]).includes("VideoObject"));
 
-test("the studio film ships with the moment it was first published", () => {
-  const film = videos("index.html").find((v) => v.contentUrl === "https://matthew.mccluster.org/assets/video/hero.mp4");
-  assert.ok(film, "index.html describes the studio film");
-  assert.equal(film.uploadDate, "2026-07-05T15:17:30Z", "street-credit-bureau f5263b5, deployed on push");
+test("videos without a primary first-publication record carry no VideoObject", () => {
+  assert.ok(!videos("index.html").some((v) => String(v.contentUrl).includes("assets/video/hero.mp4")), "studio film: commit time is not a publication record");
+  assert.ok(!videos("policy.html").some((v) => String(v.contentUrl).includes("ulf-school-meals-policy")), "school-meals deck: earlier publication elsewhere is possible");
 });
 
-test("the school-meals deck carries no VideoObject until its first publication anywhere is confirmed", () => {
-  assert.ok(!videos("policy.html").some((v) => String(v.contentUrl).includes("ulf-school-meals-policy")));
+test("the authority record keeps the evidence-backed calendar date and names what is missing", () => {
+  const doc = read("docs/SEO-AEO-AUTHORITY-SYSTEM.md");
+  assert.match(doc, /f5263b5[\s\S]*2026-07-05/, "the studio film's first commit and calendar date are recorded");
+  assert.match(doc, /no retained deployment run/i, "the missing proof of the publication second is stated");
 });
