@@ -2323,25 +2323,32 @@
   function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
   function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
 
-  /* Decisions are read-only here. The write path (POST /v1/ai/decisions)
-     records a new decision; there is no approve/reject transition route, so
-     this shows the record and says what is missing rather than offering a
-     button that cannot persist. */
+  /* Proposed decisions are owner actions, not read-only records. The transition
+     route changes status only; decision text remains immutable history. */
   function inspectDecision(id) {
     var d = findById(state.decisions, id) || state.decisions[0];
     if (!d) return;
     var risky = ["high", "critical"].indexOf(d.risk_class) >= 0;
+    var busy = state.pending["decision:" + d.id];
+    var failure = state.pending["decisionError:" + d.id];
+    var waiting = d.status === "proposed"
+      ? inspectorSection("Waiting on you",
+          '<textarea class="cr-textarea" id="crDecisionNote" rows="3" placeholder="Optional resolution note"></textarea>' +
+          (failure ? sourceBanner(failure, "Decision transition") : "") +
+          '<p class="cr-muted">Approve or reject changes status only. The recorded decision text stays immutable.</p>')
+      : "";
     openInspector({
       title: d.title || "Decision",
       subtitle: "Decision · " + titleCase(d.status || "proposed"),
       description: d.decision || d.rationale_summary || "Recorded in the private AI context plane.",
       props: [["Status", d.status], ["Risk", d.risk_class], ["Proposed", formatDate(d.created_at)],
-        ["Proposed by", d.proposed_by], ["Supersedes", d.supersedes_id]],
-      custom: (d.status === "proposed"
-        ? inspectorSection("Waiting on you", '<div class="cr-gap"><b>No approve or reject route exists.</b>' +
-            '<span>ai_context.decisions records a status, but the backend exposes no transition endpoint, so this decision cannot be approved or rejected from here. Recording a superseding decision is the only supported write.</span></div>')
-        : "") +
+        ["Proposed by", d.proposed_by], ["Resolved", formatDate(d.approved_at)], ["Resolved by", d.approved_by], ["Supersedes", d.supersedes_id]],
+      custom: waiting +
         (risky ? inspectorSection("Risk", '<p class="cr-fail">' + esc(titleCase(d.risk_class)) + ' risk. This was flagged at record time.</p>') : ""),
+      actions: d.status === "proposed"
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="decision-status" data-id="' + esc(d.id) + '" data-status="approved"' + (busy ? " disabled" : "") + '>' + (busy ? "Saving…" : "Approve") + '</button>' +
+          '<button class="cr-btn" type="button" data-action="decision-status" data-id="' + esc(d.id) + '" data-status="rejected"' + (busy ? " disabled" : "") + '>Reject</button>'
+        : "",
       related: d.source_conversation_id
         ? '<p class="cr-muted">Source conversation: <span class="cr-mono">' + esc(d.source_conversation_id) + '</span></p>'
         : '<p class="cr-muted">No source conversation is recorded on this decision.</p>',
@@ -2865,6 +2872,31 @@
     else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
     else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
     else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
+    else if (action === "decision-status") {
+      var decisionId = el.getAttribute("data-id");
+      var decisionStatus = el.getAttribute("data-status");
+      var decisionNote = $("crDecisionNote") && $("crDecisionNote").value.trim();
+      state.pending["decision:" + decisionId] = true;
+      delete state.pending["decisionError:" + decisionId];
+      inspectDecision(decisionId);
+      src(request("/v1/ai/decisions/" + encodeURIComponent(decisionId) + "/status", {
+        method: "POST",
+        body: { status: decisionStatus, note: decisionNote || "" }
+      })).then(function (result) {
+        delete state.pending["decision:" + decisionId];
+        if (!result.ok) {
+          state.pending["decisionError:" + decisionId] = result;
+          inspectDecision(decisionId);
+          return;
+        }
+        var resolved = result.data && result.data.decision;
+        var current = findById(state.decisions, decisionId);
+        if (resolved && current) Object.assign(current, resolved);
+        delete state.pending["decisionError:" + decisionId];
+        inspectDecision(decisionId);
+        render();
+      });
+    }
     else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
     else if (action === "more-leads") { runLeadQuery(true); }
     else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
