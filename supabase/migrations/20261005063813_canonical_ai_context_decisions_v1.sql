@@ -14,7 +14,7 @@ create table if not exists ai_context.decisions (
   proposed_by text,
   approved_by uuid,
   approved_at timestamptz,
-  source_conversation_id uuid references ai_context.conversations(id) on delete set null,
+  source_conversation_id uuid,
   source_message_ids uuid[] not null default '{}',
   supersedes_id uuid references ai_context.decisions(id) on delete set null,
   metadata jsonb not null default '{}',
@@ -29,6 +29,28 @@ alter table ai_context.decisions
   add column if not exists source_message_ids uuid[] not null default '{}',
   add column if not exists metadata jsonb not null default '{}',
   add column if not exists updated_at timestamptz not null default now();
+
+do $
+begin
+  -- The live Here database has this FK, but legacy ai_context.conversations is
+  -- itself live-only state today. Keep clean migration replay possible without
+  -- inventing that missing table; add the exact FK whenever its dependency is
+  -- present.
+  if to_regclass('ai_context.conversations') is not null
+     and not exists (
+       select 1
+       from pg_constraint
+       where conrelid = 'ai_context.decisions'::regclass
+         and conname = 'decisions_source_conversation_id_fkey'
+     ) then
+    alter table ai_context.decisions
+      add constraint decisions_source_conversation_id_fkey
+      foreign key (source_conversation_id)
+      references ai_context.conversations(id)
+      on delete set null;
+  end if;
+end
+$;
 
 alter table ai_context.decisions enable row level security;
 
