@@ -49,6 +49,7 @@
 @media (min-width:36rem){
   .cro-form--2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cro-form--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cro-form--2 .cro-span-2{grid-column:1 / -1}
   .cro-statgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .cro-dests{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
