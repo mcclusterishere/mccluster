@@ -135,6 +135,10 @@
 
 /* Generation lives inside Create, not in a second Studio shell. */
 .cr-gen{display:grid;gap:9px}
+/* Observability: filters two-up on a phone, one row with room for search on wider screens; trace rows stack. */
+.cr-observe-filters{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}.cr-observe-filters .cr-input{grid-column:1/-1;font-size:max(16px,1em)}.cr-observe-filters .cr-select{font-size:max(16px,1em)}
+@media (min-width:760px){.cr-observe-filters{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,2fr)}.cr-observe-filters .cr-input{grid-column:auto}}
+.cr-trace--obs{margin-bottom:16px}.cr-trace--obs>div{display:block;cursor:pointer;overflow-wrap:anywhere}.cr-trace--obs>div span{display:block;text-align:left;margin-top:2px}.cr-trace--obs>div b{font-weight:600;color:var(--cr-text)}
 .cr-gen__row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .cr-gen__ok{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--cr-dim)}
 

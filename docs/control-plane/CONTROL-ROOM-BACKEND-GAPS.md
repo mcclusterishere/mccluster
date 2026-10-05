@@ -125,6 +125,25 @@ amount to a lead as an order record.
 - System · Observability auto-loads the retained 24-hour tail and keeps the
   canonical failure/audit ledger underneath as supporting context.
 - Request bodies, authorization material and raw credentials are not retained.
+- Production migration `20261005074135_control_observability_events_v2` makes
+  the store the one canonical event contract: event names, span ids,
+  `occurred_at`, outcome and provenance (`source`), bounded detail, request /
+  resource / name / retention indexes, and uniqueness for request rows only so
+  domain and Core events can share a request's trace.
+- Domain events (`recordEvent`) run under the request trace: every audited
+  mutation (which also stamps its trace into `control_audit.detail.trace`),
+  paid media reservation / submission / provider webhook (rejoined through
+  `media_jobs.routing.trace_id`), AI decision and approval transitions, and the
+  scheduled publish queue.
+- Core writes the same contract (`core/src/observability.mjs`): job outcomes,
+  resident-AI research lookups and inference, broker capability dispatch.
+- The read route adds cursor pagination and `request_id`, `resource_type` +
+  `resource_id`, `event_kind`, `source`, `event_name` filters. Retention is
+  14 days (info) / 90 days (warn, error), pruned hourly by the Worker cron.
+- Control lists every event kind, opens any trace or record as a timeline, and
+  links failed jobs, media jobs, publish jobs and ledger entries into it.
+- Full contract, including the OTel / Logpush mapping:
+  `docs/control-plane/OBSERVABILITY.md`.
 
 ---
 
