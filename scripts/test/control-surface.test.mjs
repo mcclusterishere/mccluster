@@ -226,3 +226,24 @@ test('Work records are created through the Worker, not the legacy CRM', async()=
   assert.match(sql,/revoke update on table public\.leads from authenticated/);
   assert.match(sql,/grant update \(status\) on table public\.leads to authenticated/);
 });
+
+
+test('Control can approve or reject proposed AI decisions', async()=>{
+  const [control,edge,worker]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('supabase/functions/context-decision/index.ts'),
+    read('workers/mccluster/src/ai/router.js')
+  ]);
+  assert.match(control,/data-action="decision-status"/);
+  assert.match(control,/data-status="approved"/);
+  assert.match(control,/data-status="rejected"/);
+  assert.match(control,/\/v1\/ai\/decisions\/.*\/status/);
+  assert.doesNotMatch(control,/No approve or reject route exists/);
+  assert.match(worker,/decisionStatusMatch/);
+  assert.match(worker,/callContextFunction\(request, env, 'context-decision', payload, 'PATCH'\)/);
+  assert.match(edge,/\['POST', 'GET', 'PATCH'\]/);
+  assert.match(edge,/where id = \$\{decisionId\}::uuid[\s\S]*and status = 'proposed'/);
+  assert.match(edge,/approved_by = \$\{userId\}::uuid/);
+  assert.match(edge,/approved_at = now\(\)/);
+  assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
+});
