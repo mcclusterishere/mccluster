@@ -41,10 +41,16 @@
   function isTerminal(status) { return TERMINAL.indexOf(String(status || "").toLowerCase()) >= 0; }
 
   function models() { return SRC.pickRows(state.catalog, "models"); }
+  /* This form collects a prompt and a budget, nothing else. A model that
+     needs reference media (image-to-video, edit, upscale, lip-sync) cannot be
+     fed from it, so it is not offered here; the Worker refuses such a
+     request anyway (workers/mccluster/src/media/input-contract.js). */
+  function isPromptModel(m) { return /^text-to-/i.test(String((m && m.capability) || "")); }
+  function promptModels() { return models().filter(isPromptModel); }
   function modelById(id) {
-    return models().find(function (m) { return String(m.id) === String(id); }) || null;
+    return promptModels().find(function (m) { return String(m.id) === String(id); }) || null;
   }
-  function modelLabel(m) { return (m && (m.label || m.provider_model_id || m.id)) || "model"; }
+  function modelLabel(m) { return (m && (m.display_name || m.label || m.provider_model_id || m.id)) || "model"; }
 
   function selectedBakeoffIds() {
     return Object.keys(state.bakeoff).filter(function (id) { return state.bakeoff[id]; });
@@ -56,8 +62,8 @@
       state.catalog = result;
       /* Default the single selection to the first enabled model so the
          control is never submitted with nothing chosen. */
-      var list = SRC.pickRows(result, "models");
-      if (!state.modelId && list.length) state.modelId = list[0].id;
+      var list = promptModels();
+      if (!state.modelId || !modelById(state.modelId)) state.modelId = list.length ? list[0].id : null;
       ctx.render();
       return result;
     });
@@ -169,12 +175,23 @@
         state.submitError = SRC.badResult("failed", "A bakeoff runs at most " + BAKEOFF_MAX + " models.", 0);
         ctx.render(); return;
       }
+      var picked = ids.map(modelById);
+      if (picked.some(function (m) { return !m; })) {
+        state.submitError = SRC.badResult("failed", "A selected model needs reference media this form does not collect. Choose prompt-ready models only.", 0);
+        ctx.render(); return;
+      }
+      var caps = {};
+      picked.forEach(function (m) { caps[String(m.capability || "").toLowerCase()] = true; });
+      if (Object.keys(caps).length !== 1) {
+        state.submitError = SRC.badResult("failed", "Bakeoff models must share one capability so the comparison is meaningful.", 0);
+        ctx.render(); return;
+      }
       payload.model_ids = ids;
       path = "/v1/media/bakeoff";
-      labels = ids.map(function (id) { return modelLabel(modelById(id)); });
+      labels = picked.map(modelLabel);
     } else {
-      if (!state.modelId) {
-        state.submitError = SRC.badResult("failed", "Select a model.", 0);
+      if (!state.modelId || !modelById(state.modelId)) {
+        state.submitError = SRC.badResult("failed", "Select a prompt-ready model.", 0);
         ctx.render(); return;
       }
       payload.model_id = state.modelId;
@@ -273,16 +290,19 @@
 
   function renderPanel() {
     var body;
-    var list = models();
+    var all = models(), list = promptModels(), hidden = all.length - list.length;
 
     if (!state.catalog) {
       body = '<div class="cr-panel__body"><p class="cr-muted">The model catalog has not been read yet.</p>' +
         '<button class="cr-btn cr-btn--primary" type="button" data-action="load-models">Load models</button></div>';
     } else if (!state.catalog.ok) {
       body = '<div class="cr-panel__body">' + SRC.sourceBanner(state.catalog, "Media models") + '</div>';
-    } else if (!list.length) {
+    } else if (!all.length) {
       body = '<div class="cr-panel__body"><div class="cr-canvas__empty"><div><strong>No models enabled</strong>' +
         '<div>The catalog read succeeded but returned no enabled media models, so there is nothing to generate with.</div></div></div></div>';
+    } else if (!list.length) {
+      body = '<div class="cr-panel__body"><div class="cr-canvas__empty"><div><strong>No prompt-ready models</strong>' +
+        '<div>Every enabled model needs reference media (an image, video or audio) that this form does not collect. Control will not submit an incomplete paid request.</div></div></div></div>';
     } else {
       var chosen = selectedBakeoffIds();
       var picker = state.mode === "bakeoff"
@@ -304,6 +324,7 @@
           '<button class="cr-chip' + (state.mode === "bakeoff" ? " is-on" : "") + '" type="button" data-gen-mode="bakeoff">Bakeoff</button>' +
         '</div>' +
         picker +
+        (hidden > 0 ? '<p class="cr-muted">' + hidden + ' model' + (hidden === 1 ? '' : 's') + ' that need reference media (image-to-video, edit, upscale, lip-sync) ' + (hidden === 1 ? 'is' : 'are') + ' not offered here: this form only collects a prompt.</p>' : '') +
         '<textarea class="cr-textarea" id="crGenPrompt" rows="3" placeholder="Describe what to generate…"></textarea>' +
         '<div class="cr-gen__row">' +
           '<input class="cr-input cr-input--sm" id="crGenBudget" type="number" min="1" placeholder="Budget (cents, optional)">' +

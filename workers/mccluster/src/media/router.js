@@ -1,3 +1,4 @@
+import { validateModelInput } from './input-contract.js';
 import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
@@ -37,7 +38,7 @@ async function getOrg(env, userId, requestedOrgId) {
   return rows[0];
 }
 
-async function modelById(env, id) {
+export async function modelById(env, id) {
   const rows = await db(env, `media_models?id=eq.${encodeURIComponent(id)}&enabled=eq.true&select=*`);
   return rows?.[0] || null;
 }
@@ -262,6 +263,9 @@ export async function createGeneration(request, env, user) {
   const input = { ...(body.input || {}) };
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
+  /* Refuse a request that cannot be valid for this model before estimating,
+     reserving budget or submitting to the provider (src/media/input-contract.js). */
+  validateModelInput(model, input);
 
   const budget = budgetCents(body.budget_cents);
   const budgetUsdMicros = budget === null ? null : budget * 10_000;

@@ -1,4 +1,5 @@
-import { createGeneration } from './router.js';
+import { createGeneration, modelById } from './router.js';
+import { validateBakeoff } from './input-contract.js';
 
 export async function createBakeoff(request, env, user) {
   let body;
@@ -7,6 +8,16 @@ export async function createBakeoff(request, env, user) {
   if (modelIds.length < 2) throw Object.assign(new Error('model_ids must contain at least two models'), { status: 400 });
   if (modelIds.length > 5) throw Object.assign(new Error('Bakeoffs are limited to five models per run'), { status: 400 });
   if (!body.input && !body.prompt) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
+
+  /* Preflight the whole set before anything is submitted: every model must
+     exist, share one capability, and accept this input. Otherwise a mixed
+     set would spend on the valid half and fail the rest. */
+  const models = await Promise.all(modelIds.map((id) => modelById(env, id)));
+  const unknown = modelIds.filter((id, index) => !models[index]);
+  if (unknown.length) throw Object.assign(new Error('Unknown or disabled media model in bakeoff; nothing was submitted'), { status: 404, detail: { model_ids: unknown } });
+  const input = { ...(body.input || {}) };
+  if (body.prompt && !input.prompt) input.prompt = body.prompt;
+  validateBakeoff(models, input);
 
   const settled = await Promise.allSettled(modelIds.map((modelId) => {
     const synthetic = new Request(request.url, {
