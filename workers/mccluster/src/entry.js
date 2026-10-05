@@ -20,6 +20,7 @@ import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
 import { handleWorkRequest } from './work.js';
 import { recentAudit } from './lib/audit.js';
+import { listObservabilityEvents, observeControlRequest } from './lib/observability.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -33,12 +34,11 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
-export default {
-  async fetch(request, env, ctx) {
+async function dispatchRequest(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
@@ -318,6 +318,22 @@ export default {
       }
     }
 
+    /* Retained operational events for Control. The outer request wrapper
+       writes these only after independently verifying the claimed workspace;
+       the read is owner-gated again here. */
+    if (path === '/v1/observability/events' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const orgId = url.searchParams.get('org_id');
+        const membership = await requireMembership(env, user, orgId);
+        if (membership.role !== 'owner') return fail(request, env, 'Organization owner access required', 403);
+        return reply(request, env, await listObservabilityEvents(env, orgId, url));
+      } catch (error) {
+        return fail(request, env, error.message || 'Observability read failed', error.status || 500, error.detail);
+      }
+    }
+
     /* The ledger, read back. Scoped to one org and membership-checked, so
        a tenant never reads another tenant's history. */
     if (path === '/v1/audit/recent' && request.method === 'GET') {
@@ -471,6 +487,11 @@ export default {
     }
 
     return core.fetch(request, env, ctx);
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    return observeControlRequest(request, env, ctx, (tracedRequest) => dispatchRequest(tracedRequest, env, ctx));
   },
 
   async scheduled(_controller, env, ctx) {
