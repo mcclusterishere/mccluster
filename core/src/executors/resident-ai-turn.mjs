@@ -59,12 +59,26 @@ async function fetchCurrentResearch(objective) {
       }))
       .filter((item) => /^https?:\/\//i.test(item.url))
       .slice(0, RESEARCH_LIMIT);
+    const provider = clean(value?.provider || raw?.provider, 80) || null;
+    const fetchedAt = clean(value?.fetched_at, 40) || null;
+    if (!results.length) {
+      return {
+        attempted: true,
+        ok: false,
+        objective,
+        provider,
+        fetched_at: fetchedAt,
+        result_count: 0,
+        results: [],
+        error: 'current web research returned no usable results',
+      };
+    }
     return {
       attempted: true,
       ok: true,
       objective,
-      provider: clean(value?.provider || raw?.provider, 80) || null,
-      fetched_at: clean(value?.fetched_at, 40) || null,
+      provider,
+      fetched_at: fetchedAt,
       result_count: results.length,
       results,
       error: null,
@@ -86,7 +100,7 @@ async function fetchCurrentResearch(objective) {
 function researchPrompt(research) {
   if (!research.ok || !research.results.length) {
     return [
-      `CURRENT-WEB-LOOKUP STATUS: FAILED. CURRENT-WEB LOOKUP: the automatic web lookup for this question ${research.ok ? 'returned no usable results' : 'failed'}.`,
+      `CURRENT-WEB-LOOKUP STATUS: FAILED. CURRENT-WEB LOOKUP: the automatic web lookup for this question ${research.error && /no usable results/i.test(research.error) ? 'returned no results (no usable results)' : 'failed'}.`,
       'Do not answer from training memory as though it is current. You have no current evidence for this turn. If the answer depends on the present, say plainly that you could not check current sources, and mark anything you answer from memory as possibly out of date.',
     ].join('\n');
   }
