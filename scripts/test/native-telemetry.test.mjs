@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
-const LOCKDOWN  = 'supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql';
+const LOCKDOWN  = 'supabase/migrations/20261005054031_native_telemetry_lockdown_v1.sql';
 const ANALYTICS_PLATFORM = 'supabase/migrations/20260919133905_analytics_platform_multitenant_v1.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
@@ -171,7 +171,7 @@ test('the telemetry table is under migration control and the browser cannot writ
   }
 });
 
-test('the live analytics migration closes browser writes and the pending file is remainder-only', async () => {
+test('the live analytics and applied lockdown migrations close browser writes', async () => {
   const live = await read(ANALYTICS_PLATFORM);
   assert.match(live, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
     'the production migration must withdraw the legacy open insert policy');
