@@ -263,9 +263,11 @@ function traceHeaders(response, traceId, requestId) {
   const headers = new Headers(response.headers);
   headers.set('x-mccluster-trace-id', traceId);
   headers.set('x-mccluster-request-id', requestId);
-  const exposed = headers.get('access-control-expose-headers');
-  const names = 'x-mccluster-trace-id,x-mccluster-request-id';
-  headers.set('access-control-expose-headers', exposed ? `${exposed},${names}` : names);
+  const exposed = String(headers.get('access-control-expose-headers') || '').split(',').map((v) => v.trim()).filter(Boolean);
+  for (const name of ['x-mccluster-trace-id', 'x-mccluster-request-id']) {
+    if (!exposed.some((v) => v.toLowerCase() === name)) exposed.push(name);
+  }
+  headers.set('access-control-expose-headers', exposed.join(','));
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 

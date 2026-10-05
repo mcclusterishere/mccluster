@@ -32,7 +32,7 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
     assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
-  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"\]/);
+  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
   assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"\]/);
 });
 
@@ -363,4 +363,34 @@ test('AI replies show what the resident turn checked on the web', async()=>{
   assert.match(render({metadata:{current_research:{attempted:true,ok:false,sources:[]}}}),/Web check failed · answer may be out of date/);
   assert.match(render({metadata:{current_research:{attempted:true,ok:true,sources:[]}}}),/no results · answer may be out of date/);
   assert.match(js,/\(mine \? "" : aiResearchHtml\(message\)\)/,'assistant messages render their research line');
+});
+
+test('Work carries the post-sale graph as stored records, with honest payment verification', async()=>{
+  const [shell,mod,registry,css]=await Promise.all([
+    read('js/control-room-v2.js'),
+    read('js/control-room/work-records.js'),
+    read('js/control-registry.js'),
+    read('css/control-admin.css')
+  ]);
+  for (const kind of ['relationships','projects','deliverables','payments','renewals']) {
+    assert.match(shell,new RegExp('    '+kind+': "'),kind+' has a view note');
+    assert.match(registry,new RegExp('control\\.html#work:'+kind),kind+' is in the command palette');
+    assert.match(mod,new RegExp('"'+kind+'"'),kind+' is a Work kind');
+  }
+  /* each post-sale view is a stored-record section, not a derived lead lane */
+  assert.match(shell,/if \(POST_SALE_NOTES\[view\]\) \{[\s\S]*window\.CR\.work\.section\(view\)/);
+  /* the browser never claims a provider verified a payment */
+  assert.doesNotMatch(mod,/o\.verification|verification:/);
+  assert.match(mod,/owner recorded/);
+  assert.match(mod,/provider verified/);
+  /* history is read through the Worker, scoped to the workspace */
+  assert.match(mod,/"\/v1\/work\/history\?org_id="\+encodeURIComponent\(o\)/);
+  /* contacts come from the read-only out_contacts route, never PostgREST */
+  assert.match(mod,/contacts:\[\]/);
+  assert.doesNotMatch(mod,/rest\/v1|supa\(/);
+  /* inline selects in Work tables never trigger iOS zoom; KPIs are mobile-first */
+  assert.match(css,/\.cr-data-table select\{max-width:100%;font-size:max\(16px,1em\)\}/);
+  assert.match(css,/\.cro-kpis\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  /* a refused inline change is rolled back and said out loud */
+  assert.match(mod,/row\[field\]=prev;W\.msg=LABEL\[kind\]\+" not changed: "/);
 });

@@ -8,7 +8,7 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
   var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
@@ -1550,10 +1550,22 @@
     if (view === "companies") return renderCompanies();
     if (view === "clients") return renderClients();
     if (view === "tasks") return renderTasks();
+    if (POST_SALE_NOTES[view]) {
+      return derivedNote(POST_SALE_NOTES[view]) + (window.CR.work ? window.CR.work.section(view) : empty("Work records unavailable", "The native Control module did not load."));
+    }
     return renderOrdersBookings(view);
   }
+  /* The post-sale graph (workers/mccluster/src/work.js). Each is a stored,
+     org-scoped record linked to the canonical company / person / order. */
+  var POST_SALE_NOTES = {
+    relationships: "A relationship links this workspace to a company, contact or lead (client, partner, sponsor, vendor…). It points at the canonical records; nothing is copied. History opens everything linked to it.",
+    projects: "Post-sale service projects, linked to the company, relationship and the order they came from. History opens deliverables, payments, renewals, tasks and the audit trail.",
+    deliverables: "What each project owes the client, where the artifact lives, and its approval. Approval is stamped with who and when. A client-facing approval portal is not built yet: approval here is the owner's.",
+    payments: "McCluster's service-payment ledger. You record what was billed and received; every entry is labelled owner-recorded until a Stripe or Square reconciler verifies it. Product checkouts (prints, music, merch) keep their own payment truth in their order tables.",
+    renewals: "Recurring obligations and the next commercial decision: hosting, management, retainers. A renewal can point at the site account, API subscription or offering it renews."
+  };
   function renderWork() {
-    return renderHeader("Work", "One business graph. Inbox, pipeline, people, clients, tasks, orders, and bookings are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
+    return renderHeader("Work", "One business graph: inbox, pipeline, people, companies, relationships, clients, tasks, bookings, orders, projects, deliverables, payments and renewals are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
       '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
   }
 

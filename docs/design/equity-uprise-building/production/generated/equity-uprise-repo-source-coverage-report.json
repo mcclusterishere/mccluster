@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 321,
+  "candidate_count": 322,
   "capability_source_count": 99,
-  "support_only_count": 222,
-  "checks_total": 1187,
-  "checks_passed": 1187,
+  "support_only_count": 223,
+  "checks_total": 1191,
+  "checks_passed": 1191,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -95,6 +95,7 @@
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/GMAIL-CONNECT.md",
+    "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
@@ -335,7 +336,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "321 entries"
+      "detail": "322 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6264,6 +6265,26 @@
     },
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PROGRAM-LEDGER.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/PROGRAM-LEDGER.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/PROGRAM-LEDGER.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/PROGRAM-LEDGER.md support rationale present",
       "passed": true,
       "detail": ""
     }

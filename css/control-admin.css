@@ -65,3 +65,17 @@
   .cro-grid--3{grid-template-columns:repeat(3,minmax(0,1fr))}
   .cro-dests{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+/* Work · client history: KPIs two-up on a phone, one row on wider screens; timeline stacks. */
+.cro-history{margin-bottom:12px}
+.cro-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.cro-kpis>div{min-width:0;padding:9px;border:1px solid var(--cr-line);border-radius:10px;background:rgba(255,255,255,.02)}
+.cro-kpis small{display:block;color:var(--cr-faint);font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+.cro-kpis b{display:block;margin-top:3px;font-size:15px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cro-timeline{list-style:none;margin:8px 0 0;padding:0;display:grid}
+.cro-timeline li{display:grid;gap:2px;min-width:0;padding:8px 0;border-bottom:1px solid var(--cr-line);font-size:11px;overflow-wrap:anywhere}
+.cro-timeline b{font-weight:600;color:var(--cr-text)}
+/* Inline state/approval selects in Work tables never trigger iOS zoom. */
+.cr-data-table select{max-width:100%;font-size:max(16px,1em)}
+@media (min-width:36rem){
+  .cro-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
