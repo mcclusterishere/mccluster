@@ -36,6 +36,12 @@ alter table public.leads
   add column if not exists company_id uuid references public.out_companies(id) on delete set null;
 create index if not exists leads_company_id_idx on public.leads (company_id) where company_id is not null;
 
+-- The legacy Control shell still changes lead *status* through PostgREST.
+-- Preserve that narrow operation, but remove table-wide browser UPDATE so
+-- company_id cannot bypass the audited /v1/work/leads/{id} route.
+revoke update on table public.leads from authenticated;
+grant update (status) on table public.leads to authenticated;
+
 -- Before tenancy, the public McCluster lead form created house leads without
 -- org_id. Adopt only those historical unscoped rows into the canonical house
 -- org so NULL never has to mean "belongs to every workspace".
