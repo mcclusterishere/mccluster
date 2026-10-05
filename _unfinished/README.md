@@ -58,15 +58,26 @@ Configure a delivery stop and set `STRIPE_SK` before announcing it.
 
 ## uprise-world/
 
-An interactive world for Equity Uprise. Unfinished and not working, so
-the owner pulled it off the site on 2026-08-18 rather than leave a
-broken room where a visitor could walk into it.
+**Legacy R&D artifact — intentionally frozen, not an active product backlog.**
 
-Moved intact: the two pages, the seven scripts and the data file. To put
-it back, move the files to the repo root (`js/` and `data/` for the
-script and data files), restore the card in `equity-uprise.html`, and add
-the URL back to `sitemap.xml`.
+Uprise World was an interactive Equity Uprise world experiment. The owner
+pulled it off the site on 2026-08-18 rather than leave a broken room where
+a visitor could walk into it, and on 2026-10-05 reclassified it as a legacy
+experiment worth preserving for the cost and product lessons.
 
-Do NOT simply un-strip the directory to bring it back — pages here have
-no cache-busting stamp applied and no smoke coverage, because the release
-gate does not walk them either.
+The source stays intact because the experiment contains reusable evidence:
+the spherical locomotion prototype, landmark/check-in model, mobile/WebGL
+constraints, visual-reference work, and the documented path that led the
+team toward a world before the core user loop had been validated.
+
+**Do not resume implementation from the historical roadmap.** Before any
+revival, read `docs/uprise-world/LEGACY-EXPERIMENT-RETROSPECTIVE.md` and
+produce a new product brief that proves the user job, the smallest repeatable
+loop, retention/progression need, and why richer spatial representation is
+actually required. A revival must start from current product needs, not from
+the sunk cost or old phase numbering.
+
+Moved intact: the two pages, the seven scripts and the data file. They are
+preservation material, not a release candidate. Do NOT simply un-strip the
+directory — pages here have no cache-busting stamp applied and no smoke
+coverage, because the release gate does not walk them either.
