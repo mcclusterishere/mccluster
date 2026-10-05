@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 322,
+  "candidate_count": 326,
   "capability_source_count": 99,
-  "support_only_count": 223,
-  "checks_total": 1191,
-  "checks_passed": 1191,
+  "support_only_count": 227,
+  "checks_total": 1207,
+  "checks_passed": 1207,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -97,6 +97,7 @@
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
+    "docs/control-plane/SECURITY-POSTURE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/registry.json",
@@ -197,6 +198,7 @@
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/product-context.test.mjs",
+    "scripts/test/security-reaudit.test.mjs",
     "scripts/test/seo-authority.test.mjs",
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/signup-authority.test.mjs",
@@ -270,6 +272,8 @@
     "supabase/migrations/20261005040806_analytics_funnel_exact_window_v1.sql",
     "supabase/migrations/20261005054036_equity_uprise_group_docket_516r.sql",
     "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
+    "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
+    "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -336,12 +340,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "322 entries"
+      "detail": "326 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
-      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
+      "detail": "{\"missing_from_map\":[],\"stale_in_map\":[]}"
     },
     {
       "name": "_unfinished/equity-uprise/dashboard.html capability ids known",
@@ -6285,6 +6289,86 @@
     },
     {
       "name": "docs/control-plane/PROGRAM-LEDGER.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SECURITY-POSTURE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SECURITY-POSTURE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/SECURITY-POSTURE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/SECURITY-POSTURE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/security-reaudit.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/security-reaudit.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/security-reaudit.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/security-reaudit.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     }
