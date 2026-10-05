@@ -10,7 +10,7 @@
 --    org's enabled knowledge base and was executable by anon through PUBLIC.
 --    The inbox calls the org-scoped overload (service role only); nothing
 --    calls this one.
-do $
+do $security$
 begin
   -- This pre-tenancy overload exists in production but is intentionally absent
   -- from clean source-controlled resets; harden it when present.
@@ -19,7 +19,7 @@ begin
     execute 'grant execute on function public.kb_search(text, vector, integer, integer) to service_role';
   end if;
 end
-$;
+$security$;
 
 -- 2. Forgery. mnet_follow_admins(p_m_uid) inserts follows on behalf of any
 --    member id it is handed. Its only callers are the network_profiles
@@ -44,14 +44,14 @@ revoke execute on function public.music_license_guard() from public, anon, authe
 revoke execute on function public.music_track_guard() from public, anon, authenticated;
 revoke execute on function public.network_group_recount() from public, anon, authenticated;
 revoke execute on function public.site_content_audit() from public, anon, authenticated;
-do $
+do $security$
 begin
   -- site_requests_touch() is another pre-reconciliation production helper.
   if to_regprocedure('public.site_requests_touch()') is not null then
     execute 'revoke execute on function public.site_requests_touch() from public, anon, authenticated';
   end if;
 end
-$;
+$security$;
 
 -- 5. Admin-only RPCs. A visitor can never pass mnet_is_admin(); the Worker
 --    calls these with the signed-in member's own token.
