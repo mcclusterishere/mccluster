@@ -26,7 +26,12 @@ async function fetchCurrentResearch(messages, fallback) {
   if (!needsCurrentResearch(objective)) return { attempted: false, evidence: null, error: null };
   try {
     const called = await callCoreCapability('research.web', { objective, limit: 6 });
-    const evidence = unwrapCapabilityResult(called) || {};
+    const rawEvidence = unwrapCapabilityResult(called) || {};
+    const results = Array.isArray(rawEvidence.results) ? rawEvidence.results.filter((row) => row && row.url) : [];
+    if (!results.length) {
+      return { attempted: true, evidence: null, error: 'current web research returned no usable results' };
+    }
+    const evidence = { ...rawEvidence, results, result_count: results.length };
     return { attempted: true, evidence, error: null };
   } catch (error) {
     return {
