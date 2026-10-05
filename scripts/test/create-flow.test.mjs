@@ -118,3 +118,15 @@ test('Create exposes recoverable network lifecycle states', async () => {
   assert.match(js, /Connection restored\. Ready to retry/);
   assert.match(js, /Connection lost\. The upload can be retried/);
 });
+
+
+test("Create lifecycle fences cancellation, offline reservation, drafts, and attached media", async () => {
+  const js = await read("js/create.js");
+  assert.match(js, /if \(S\.busy \|\| S\.completed\) return/);
+  assert.match(js, /reset\(\{ preserveComposition: S\.draftRestored \}\)/);
+  assert.match(js, /if \(navigator\.onLine === false\)[\s\S]*S\.upload = null; S\.uploadPhase = "waiting"/);
+  assert.match(js, /S\.upload !== mine\.p \|\| S\.uploadCancelled/);
+  assert.match(js, /The media upload is waiting for a connection/);
+  assert.match(js, /S\.completed = true; S\.draftRestored = false; S\.uploadPhase = "attached"/);
+  assert.match(js, /var abandoned = S\.completed \? null/);
+});
