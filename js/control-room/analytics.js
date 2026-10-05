@@ -276,9 +276,13 @@
       card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+err("identity");
   }
   function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
+  /* FORENSICS is its own module (js/control-room/forensics.js): sessions you
+     open and visitors you follow, not a wall of raw rows. This tab only gives
+     it a host and the selected range; it keeps its own state across repaints. */
   function forensics(){
-    var rows=(S.data.forensics&&S.data.forensics.events)||[],table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Time</th><th>Event</th><th>Path</th><th>IP</th><th>Location</th><th>Network</th><th>Device</th><th>Session</th></tr></thead><tbody>'+rows.map(function(x){var d=x.device||{};return'<tr><td>'+e(x.at?new Date(x.at).toLocaleString():"—")+'</td><td><b>'+e(x.name||"—")+'</b></td><td>'+e(x.path||"—")+'</td><td><code>'+e(x.ip||"—")+'</code></td><td>'+e([x.city,x.region,x.country,x.postal].filter(Boolean).join(", ")||"—")+'</td><td>'+e(x.asn_org||"—")+(x.asn?" · AS"+e(x.asn):"")+'</td><td>'+e(d.platform||"—")+(d.mobile===true?" · mobile":d.mobile===false?" · desktop":"")+'<br>'+e(d.screen||"")+'</td><td><code>'+e(x.session_id||"—")+'</code><br><code>'+e(x.device_id||"—")+'</code></td></tr>';}).join("")+'</tbody></table></div>':'<p>No raw events in this range.</p>';
-    return'<div class="cra-grid">'+card("Owner-only telemetry","Recent first-party IP, approximate edge geography, ASN/network, device and session context.",table,true)+'</div>'+err("forensics");
+    if(sid()!==null)return'<div class="cra-grid">'+card("Session forensics","Sessions, journeys and visitors cover McCluster first-party traffic. Pick McCluster first-party in the property menu to open them.","",true)+'</div>';
+    if(!window.CR.forensics)return'<div class="cra-error"><b>forensics</b> did not load: the session module is missing from this page.</div>';
+    return'<div class="cra-forensics" data-crf-host></div>';
   }
   /* SETUP. It used to be a one-item property list and a code box reading
      "Built into matthew.mccluster.org.", which answered nothing. It now
@@ -364,6 +368,7 @@
   }
   function paint(){
     if(!S.host)return;S.host.innerHTML=render();bind(S.host);drawReach();
+    if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
   }
   function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
@@ -371,7 +376,7 @@
     return {
       traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
       funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
-      identity:{},forensics:{},business:null
+      identity:{},business:null
     };
   }
   function applyResult(x){
@@ -391,7 +396,6 @@
     else if(x.name==="content")S.data.content=v||[];
     else if(x.name==="contentEvents")S.data.contentEvents=v||[];
     else if(x.name==="identity")S.data.identity=v||{};
-    else if(x.name==="forensics")S.data.forensics=v||{};
     else if(x.name==="business")S.data.business=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
@@ -441,8 +445,7 @@
       {name:"acquisition",run:function(){return rpc("analytics_acquisition",args);}},
       {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
       {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
-      {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
-      {name:"forensics",run:function(){return site===null?S.request("/v1/analytics/forensics?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=150"):Promise.resolve({events:[]});}}
+      {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}}
     ];
     return runLimited(tasks,3,function(x){
       if(q!==S.seq)return;

@@ -1,4 +1,5 @@
 import { requireCapability } from '../lib/capabilities.js';
+import { createForensicRoutes } from './forensics.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -816,6 +817,11 @@ async function handleBusinessQuestion(request, env, user) {
   return json({ ok: true, question, ...result, generated_at: snapshot.generated_at });
 }
 
+/* Session forensics lives in its own module: owner-only routes that return
+   per-person rows (IP, place, signed-in email), kept apart from the business
+   analytics above, which must stay aggregate. */
+const forensics = createForensicRoutes({ json, sbJson, sbRows, finiteDate, publicDeviceSummary, requireHouseOwner });
+
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
@@ -832,6 +838,8 @@ export async function handleAnalyticsRequest(request, env, user) {
   if (path === '/v1/analytics/forensics') {
     return handleForensics(request, env, user, url);
   }
+  const forensicResponse = await forensics.route(request, env, user, url, path);
+  if (forensicResponse) return forensicResponse;
 
   const match = path.match(/^\/v1\/analytics\/domains\/([0-9a-f-]{36})\/verify$/i);
   if (!match) return null;
