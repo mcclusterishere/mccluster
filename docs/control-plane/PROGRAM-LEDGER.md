@@ -5,7 +5,7 @@ in the same PR that changes an item's state, so a new session reads the
 current position instead of rediscovering closed gaps. "Production" names
 what was verified live, not what was merely merged.
 
-Last updated 2026-10-05 against `main` after the Control post-sale slice.
+Last updated 2026-10-05 against `main` after the Control workspace and security re-audit slices.
 
 | # | Item | Status | Landed in | Production verification | Next action |
 |---|---|---|---|---|---|
@@ -16,7 +16,7 @@ Last updated 2026-10-05 against `main` after the Control post-sale slice.
 | 5 | Analytics exact-window correctness | COMPLETE | #264 closed | 52/47 after fix | — |
 | 6 | Pending production migrations | COMPLETE | #352 | Ledger matches production | Keep every new migration in the ledger + drift contract in its own PR |
 | 7 | Owned meeting engine | PARTIAL — #154 open | code architecture in repo | Not yet live-proven | calendar → Core → OVH bot → Meet → local transcript → Qwen debrief → durable session, notes mode first |
-| 8 | Security hardening | PARTIAL | various | — | Re-audit current SECURITY DEFINER surface, verify_jwt=false compensating controls, internal signing/nonces, download tokens, leaked-password protection, credential rotation |
+| 8 | Security hardening | PARTIAL — current DB/Edge re-audit closed | security re-audit slice | `20261005082148` + `20261005082220` live; anon-callable definer findings 31→20, authenticated 100→88, mutable search-path findings 2→0; all 27 `verify_jwt=false` functions match `config.toml` | Remaining: enable leaked-password protection; plan `vector` / `pg_trgm` relocation; keep the two aggregate ranking views SELECT-only or replace them with invoker-safe projections; rotate long-lived credentials on a controlled schedule |
 | 9 | ai_context.decisions canonicalization + transitions | COMPLETE | #353, #355 | Owner approve/reject live | — |
 | 10 | Real observability events / traces | COMPLETE for Worker + Control; Core pending promotion | #365, #366 | `20261005071308` + `20261005074135` live; Worker `6e6eb95d` returns trace/request ids; owner-gated route answers 401 unauthenticated | Promote `deploy/ovh-production` so Core job / resident-AI / capability events start; later: OTel/Logpush ingestion into the same contract (`OBSERVABILITY.md`) |
 | 11 | Aggregate media budget | COMPLETE | #355 | DB-boundary monthly cap | — |
