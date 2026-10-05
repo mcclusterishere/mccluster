@@ -46,6 +46,10 @@ function backend({ role = 'owner', rows = {}, missingTables = false } = {}) {
       return json([{ role, added_at: '2026-01-01T00:00:00Z', orgs: { id: HOUSE, slug: 'mccluster', name: 'McCluster', kind: 'studio', enabled: true } }]);
     }
     if (href.includes('/rest/v1/control_audit')) return json([{ id: 1, at: '2026-10-05T00:00:00Z' }]);
+    if (href.includes('/rest/v1/org_members?') && href.includes('profile_id=eq.')) {
+      const assignee = (href.match(/profile_id=eq\.([0-9a-f-]{36})/) || [])[1];
+      return json(assignee === USER.id ? [{ profile_id: USER.id }] : []);
+    }
     const table = href.split('/rest/v1/')[1].split('?')[0];
     if (missingTables && table.startsWith('work_')) {
       return json({ code: 'PGRST205', message: `Could not find the table 'public.${table}'` }, 404);
@@ -129,6 +133,45 @@ test('a company from another org cannot be linked', async () => {
   });
 });
 
+
+test('a task assignee must be a member of the selected organization', async () => {
+  const b = backend();
+  await withFetch(b.handler, async () => {
+    const ok = call('POST', '/v1/work/tasks', { org_id: HOUSE, title: 'Owner task', assignee: USER.id });
+    const created = await handleWorkRequest(ok.request, env, USER, ok.url);
+    assert.equal(created.task.assignee, USER.id);
+
+    const outsider = '823e4567-e89b-42d3-a456-426614174888';
+    const bad = call('POST', '/v1/work/tasks', { org_id: HOUSE, title: 'Wrong tenant', assignee: outsider });
+    await assert.rejects(handleWorkRequest(bad.request, env, USER, bad.url), /assignee does not belong to this organization/);
+  });
+});
+
+test('legacy null-org leads are house-only, never a cross-tenant wildcard', async () => {
+  const legacy = { id: LEAD, org_id: null, company_id: null };
+  const house = backend({ role: 'owner', rows: { leads: [legacy] } });
+  await withFetch(house.handler, async () => {
+    const c = call('PATCH', `/v1/work/leads/${LEAD}`, { org_id: HOUSE, company_id: null });
+    const out = await handleWorkRequest(c.request, env, USER, c.url);
+    assert.equal(out.changed, true, 'house adoption normalizes the old lead even when company stays null');
+    const patch = house.calls.find((x) => x.method === 'PATCH' && x.href.includes('/rest/v1/leads?'));
+    assert.deepEqual(patch.body, { company_id: null, org_id: HOUSE });
+  });
+
+  const other = backend({ role: 'owner', rows: { leads: [legacy] } });
+  const otherHandler = async (href, options = {}) => {
+    if (String(href).includes('/rest/v1/org_members')) {
+      return json([{ role: 'owner', added_at: '2026-01-01T00:00:00Z', orgs: { id: OTHER, slug: 'client-org', name: 'Client', kind: 'business', enabled: true } }]);
+    }
+    return other.handler(href, options);
+  };
+  await withFetch(otherHandler, async () => {
+    const c = call('PATCH', `/v1/work/leads/${LEAD}`, { org_id: OTHER, company_id: null });
+    await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), { status: 404 });
+  });
+});
+
+
 test('closing a task stamps completed_at; reopening clears it', async () => {
   const b = backend({ rows: { work_tasks: [{ id: TASK, org_id: HOUSE, title: 'Call Sam', state: 'open', completed_at: null, related_type: null, related_id: null }] } });
   await withFetch(b.handler, async () => {
@@ -174,8 +217,8 @@ test('invalid input is refused before the database', async () => {
       const c = call('POST', '/v1/work/tasks', { org_id: HOUSE, ...body });
       await assert.rejects(handleWorkRequest(c.request, env, USER, c.url), { status: 400 }, JSON.stringify(body));
     }
-    const lead = call('POST', '/v1/work/leads', { org_id: HOUSE, name: 'Sam' });
-    await assert.rejects(handleWorkRequest(lead.request, env, USER, lead.url), { status: 400 });
+    const lead = call('POST', '/v1/work/leads', { org_id: HOUSE, name: 'Sam', note: 'No email supplied' });
+    await assert.rejects(handleWorkRequest(lead.request, env, USER, lead.url), { status: 400 }, 'live leads.email is NOT NULL');
     const order = call('POST', '/v1/work/orders', { org_id: HOUSE, title: 'x', amount_cents: 12.5 });
     await assert.rejects(handleWorkRequest(order.request, env, USER, order.url), { status: 400 });
     assert.ok(!b.calls.some((x) => x.method === 'POST' && !x.href.includes('control_audit')));
