@@ -9,9 +9,10 @@ Nothing in this document is a proposal to build a second backend, a parallel
 record store, or a new control plane. Each item is the smallest contract that
 would unblock a view already present in the locked navigation.
 
-Last reconciled against `origin/main` at `b3e21de`, Worker source
-`workers/mccluster/src`.
+Last reconciled 2026-10-05 against `main` at `690bf7a`, the live Here database,
+and the Control-100 operator-contract branch.
 
+> **Current finish-line status.** Items **1, 2, 3, 5, 6, 7, 8 and 9 are resolved** by current main plus this Control-100 change set. Item **4 is UI-complete but backend-incomplete**: System · Observability now implements the retained-event contract, filters, trace/request identifiers, loading/error/empty states and the existing failure-ledger fallback, while `/v1/observability/events` remains to be provisioned. The post-sale objects in section 10 are also UI-complete/capability-gated while their canonical tables and Worker routes are future plumbing.
 
 > **Items 1, 2, 3 and 6 — RESOLVED in code and production (2026-10-05).**
 > `workers/mccluster/src/work.js` adds the canonical Work routes
@@ -125,7 +126,7 @@ narrow contract is a retained, org-scoped event list.
 
 ---
 
-## 5. Aggregate spend — RESOLVED for media
+## 5. Aggregate spend — RESOLVED with enforcement
 
 **Status:** closed by `GET /v1/media/usage`.
 
@@ -142,14 +143,15 @@ figure (settled actuals plus unreleased reservations) — the number that answer
 computes no figure of its own. System · Resources shows it, labelled settled
 versus in flight.
 
-**Still missing:** a *cap*. This is visibility, not enforcement — there is no
-org-level or monthly media budget that refuses the next job. Spend is now
-observable but still not bounded in aggregate.
-
-**Smallest contract that would add enforcement**
-
-- An org media allowance checked inside `enforce_media_job_spend_guard()`
-  against the rollup, refusing at the table boundary like the per-job rules do.
+The aggregate cap is now real. Production migration
+`20261005063836_control_media_monthly_budget_v1` adds
+`org_media_budgets`. Control reads and writes it through owner-gated
+`GET|PUT /v1/media/budget`. When enabled, the existing
+`enforce_media_job_spend_guard()` serializes paid FAL admission per
+organization, sums current-month committed jobs, and refuses the next job when
+its estimate would cross the configured monthly limit. No cap is enabled by
+default; policy becomes active only when the owner saves one in
+System · Resources. Changes are recorded in `control_audit`.
 
 ---
 
@@ -174,9 +176,13 @@ platform does not know how to attribute.
 
 ---
 
-## 7. Decisions cannot be approved or rejected
+## 7. AI decision approve / reject — RESOLVED
 
-**Blocked view:** Home · Needs you → decision inspector
+**Status:** current main PR #353 adds the narrow status transition and Control
+buttons. The transition is owner-gated, only accepts `approved|rejected`,
+keeps decision text immutable, and records the actor/time on approval.
+
+**Historical blocked view:** Home · Needs you → decision inspector
 
 **Current behaviour:** decisions are now readable. `GET /v1/ai/decisions` lists
 them, proposed ones surface on Home (high and critical risk called out
@@ -198,9 +204,15 @@ text itself is a record of what was proposed and should not be editable.
 
 ---
 
-## 8. `ai_context.decisions` has no accurate migration
+## 8. Canonical `ai_context.decisions` migration — RESOLVED
 
-**Affects:** everything above that touches decisions.
+**Status:** production migration
+`20261005063813_canonical_ai_context_decisions_v1` was captured from the live
+schema and added to the canonical ledger. It records the actual private table
+shape, including `approved_by`, `approved_at`, `source_message_ids`,
+`metadata`, and `updated_at`, with direct browser-role table access revoked.
+
+**Historical impact:** everything above that touches decisions.
 
 The live table — the one `context-decision` writes and now reads — has columns
 `title`, `decision`, `rationale_summary`, `risk_class`, `status`,
@@ -219,9 +231,14 @@ already recorded for the `ops_*` tables.
 
 ---
 
-## 9. Publish jobs cannot be retried or cancelled
+## 9. Publish retry / cancellation — RESOLVED
 
-**Blocked view:** Create · Schedule
+**Status:** cancellation was already live; this Control-100 change set adds
+owner-only retry for a failed unpublished job. Retry clears stale provider
+container/error/lease state and requeues a fresh attempt. Create · Schedule
+now exposes Approve, Cancel or Retry according to the job's actual state.
+
+**Historical blocked view:** Create · Schedule
 
 **Current behaviour:** queuing a publish is real — `POST /v1/social/publish`
 is wired from a ready variant and creates a `social_publish_jobs` row. A job
@@ -234,6 +251,27 @@ route. The runtime claims and advances jobs itself.
 
 - `POST /v1/social/publish/{id}/retry` (re-queue a failed job)
 - `POST /v1/social/publish/{id}/cancel` (only from `queued`)
+
+---
+
+## 10. Post-sale operating graph — UI COMPLETE, plumbing staged
+
+**Views:** Work · Relationships, Service Projects, Payments, Deliverables,
+Renewals.
+
+Control now treats these as first-class future objects rather than sending the
+owner to another admin room. Each view has a stable Worker contract
+(`/v1/work/{relationships|projects|payments|deliverables|renewals}`), full
+navigation, loading/error/empty states, record table, inspector, create/edit
+form, validation and POST/PATCH semantics. Until a route exists, Control says
+`UI READY / backend pending` and disables mutation instead of inventing data.
+
+The intended graph is now represented in one Control experience:
+
+`Person ↔ Company ↔ Relationship ↔ Lead ↔ Task ↔ Booking/Order ↔ Project ↔ Payment/Deliverable ↔ Renewal`.
+
+The remaining work is backend ontology and persistence for those five staged
+objects; completing it should not require another Control redesign.
 
 ---
 
