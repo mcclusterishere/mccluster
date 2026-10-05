@@ -2719,6 +2719,7 @@
     else if (action === "system-workload") setSurface("system", "workload");
     else if (action === "system-observability") setSurface("system", "observability");
     else if (action === "system-resources") setSurface("system", "resources");
+    else if (action === "reload-observability") { state.observability = null; loadObservability(true); }
     else if (action === "apps") setSurface("apps");
     else if (action === "goto-failed") { state.jobFilter = "failed"; setSurface("system", "workload"); }
     else if (action === "goto-waiting") {
