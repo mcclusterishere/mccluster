@@ -5,11 +5,11 @@ in the same PR that changes an item's state, so a new session reads the
 current position instead of rediscovering closed gaps. "Production" names
 what was verified live, not what was merely merged.
 
-Last updated 2026-10-05 against `main` after the Control workspace and security re-audit slices.
+Last updated 2026-10-05 against `main` after the Control workspace, security re-audit and Analytics Forensics slices.
 
 | # | Item | Status | Landed in | Production verification | Next action |
 |---|---|---|---|---|---|
-| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, #367 (post-sale graph), #368 (workspace scoping, Home errors) | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked) | Remaining: per-view inventory of staged capabilities; client-facing approval and payment-provider reconciliation stay staged |
+| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, #367 (post-sale graph), #368 (workspace scoping, Home errors), Analytics → Forensics (sessions, journeys, visitors) | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked); forensics `20261005211205`…`20261005212323` live, owner-only, list 0.3–0.5 s warm | Remaining: per-view inventory of staged capabilities; client-facing approval and payment-provider reconciliation stay staged |
 | 2 | Resident-AI web grounding | COMPLETE | #363 | Signed broker calls, bounded queries, DDG fallback | — |
 | 3 | FAL / paid-media input safety | COMPLETE | #362 | Whole-bakeoff preflight, strict input contract | Re-audit the FAL catalog (#269) on top of this contract |
 | 4 | Create lifecycle races | COMPLETE | #349 | — | — |

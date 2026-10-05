@@ -110,6 +110,7 @@ test('all six Analytics sections render representative successful data',async()=
   const js=await read('js/control-room/analytics.js');
   const context={window:{CR:{}},console};
   vm.createContext(context);
+  vm.runInContext(await read('js/control-room/forensics.js'),context);
   vm.runInContext(js,context);
   const A=context.window.CR.analytics;
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
@@ -122,7 +123,6 @@ test('all six Analytics sections render representative successful data',async()=
     content:[{track:'pull up',album:'cia-mind-control',starts:3,listeners:2,repeat_listeners:1,plays_per_listener:1.5,full_plays:1,completions:1,shares:1}],
     contentEvents:[{event_name:'album_play',events:3}],
     identity:{coverage:{accounts:1,bridged_accounts:1,attributed_accounts:1,accounts_with_ip:1,accounts_with_location:1},tracks:[{track:'pull up',last_touch_accounts:1,assisted_accounts:1}],journeys:[{created_at:'2026-09-27T00:00:00Z',first_name:'Test',source:'direct',last_track:'pull up',minutes_after_last_track:5}]},
-    forensics:{events:[{at:'2026-09-27T00:00:00Z',name:'page_view',path:'index.html',country:'US',device:{platform:'test'}}]},
     business:{snapshot:{users:{total:1,created_in_window:1},window:true,music:{plays:{in_window:3,total:3},revenue:{gross_cents_in_window:100,gross_cents:100}}}}
   };
   const expected={
@@ -130,7 +130,7 @@ test('all six Analytics sections render representative successful data',async()=
     audience:/Conversion funnel/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
-    forensics:/Owner-only telemetry/,
+    forensics:/data-crf-host/,
     setup:/Your websites/
   };
   for(const [section,marker] of Object.entries(expected)){
@@ -150,7 +150,11 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   }
   assert.match(js,/\/v1\/analytics\/business\?since=/);
   assert.match(js,/\/v1\/analytics\/identity\?since=/);
-  assert.match(js,/\/v1\/analytics\/forensics\?since=/);
+  /* Forensics is its own module, mounted into the tab with the same range. */
+  assert.match(js,/window\.CR\.forensics\.mount\(fh,\{request:S\.request,range:S\.range\}\)/);
+  const forensics=await read('js/control-room/forensics.js');
+  assert.match(forensics,/"\/v1\/analytics\/" \+ \(F\.mode === "visitors" \? "visitors" : "sessions"\)/);
+  assert.match(forensics,/"\/v1\/analytics\/sessions\/" \+ encodeURIComponent\(t\.id\)/);
   assert.doesNotMatch(js,/<iframe|analytics\.html\?control_embed/);
 });
 

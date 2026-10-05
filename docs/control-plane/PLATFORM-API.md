@@ -92,6 +92,38 @@ The route maps natural-language business questions onto the fixed metric catalog
 
 An optional explicit `window` field may override the window parsed from the question.
 
+## Session forensics (Control Analytics → Forensics)
+
+These routes back the Forensics tab: a list of sessions you can open, each opened as a journey, and visitors you can follow across sessions. They are **house-owner only**, a stricter gate than `ops.use`, because the rows carry IPs, approximate places and signed-in emails. They read first-party telemetry only (`site_id is null`). The aggregation runs in Postgres (`analytics_session_list`, `analytics_visitor_list`), which only `service_role` can execute.
+
+`GET /v1/analytics/sessions?since=&until=&limit=40&offset=0&filter=all&sort=recent&q=`
+
+One page of sessions, plus counts per filter for the range.
+
+- `filter`: `all`, `identified`, `music`, `signup`, `converted`, `friction`, `returning`, `engaged` or `bots`.
+- `sort`: `recent`, `engaged`, `events`, `friction` or `oldest`.
+- Any other filter or sort value falls back to `all` / `recent`.
+- `limit` is clamped to 1–100 and `offset` to 0–20000.
+- `q` (at most 120 characters) matches page, song, email, place, IP, network or source.
+- `unsessioned_events` counts events from visitors who declined identifiers. They are counted, never stitched into sessions.
+
+`GET /v1/analytics/sessions/{session_id}`
+
+The session's summary and its events in order, capped at 2000. It also returns the visitor and their sessions over the last 180 days. For a signed-in person that means every device they used; otherwise it is this device only. Bot sessions can still be opened. Profile fields are limited to display name, email, handle, avatar and account creation date.
+
+`GET /v1/analytics/visitors?since=&until=&limit=&offset=&filter=&sort=&q=`
+
+One page of visitors. The visitor key is `u:<uid>` for a signed-in person and `d:<device_id>` otherwise.
+
+- `filter`: `all`, `identified`, `returning`, `music`, `signup`, `friction`, `engaged` or `bots`.
+- `sort`: `recent`, `sessions`, `engaged` or `first_seen`.
+
+`GET /v1/analytics/visitors/{u:uid | d:device_id}`
+
+A visitor's profile and sessions over 180 days.
+
+Malformed ids get `400` before any query runs. A session or device with nothing recorded gets `404`. Device blobs are always reduced to a fixed summary (platform, screen, viewport, language and similar), never passed through raw. The older raw-row route `GET /v1/analytics/forensics` remains; `js/analytics-suite.js` still reads it.
+
 ## Mnet API
 
 Mnet uses the same API host.
