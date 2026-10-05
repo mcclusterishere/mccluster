@@ -131,11 +131,12 @@ test('an upload link is signed into the org\'s own private folder, for videos on
   assert.equal((await run('/v1/social/uploads', 'POST', { org_id: ORG, mime_type: 'video/mp4', byte_size: 524288001 })).error?.status, 413);
 });
 
-test('only the owner uploads, approves or cancels', async () => {
+test('only the owner uploads, approves, cancels or retries', async () => {
   fake({ role: 'staff' });
   assert.equal((await run('/v1/social/uploads', 'POST', { org_id: ORG, mime_type: 'video/mp4', byte_size: 1 })).error?.status, 403);
   assert.equal((await run(`/v1/social/publish/${JOB}/approve`, 'POST', { org_id: ORG })).error?.status, 403);
   assert.equal((await run(`/v1/social/publish/${JOB}/cancel`, 'POST', { org_id: ORG })).error?.status, 403);
+  assert.equal((await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG })).error?.status, 403);
 });
 
 test('approve only moves a draft, and says so when it is not one', async () => {
@@ -153,6 +154,25 @@ test('cancel cannot pull back a post Meta already has', async () => {
   const calls = fake({ moved: [{ id: JOB, state: 'cancelled' }] });
   await run(`/v1/social/publish/${JOB}/cancel`, 'POST', { org_id: ORG });
   assert.match(calls.find((c) => c.m === 'PATCH').u, /state=in\.\(draft,queued\)&external_creation_id=is\.null/);
+});
+
+test('retry turns only a failed unpublished job into a fresh queued attempt', async () => {
+  const calls = fake({ moved: [{ id: JOB, content_id: CONTENT, state: 'queued' }] });
+  const { data, error } = await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG });
+  assert.ifError(error);
+  assert.equal(data.publish_job.state, 'queued');
+  const publishPatch = calls.find((c) => c.u.includes('/social_publish_jobs') && c.m === 'PATCH');
+  assert.match(publishPatch.u, /state=eq\.failed/);
+  assert.match(publishPatch.u, /external_media_id=is\.null/);
+  assert.equal(publishPatch.body.attempts, 0);
+  assert.equal(publishPatch.body.last_error, null);
+  assert.equal(publishPatch.body.external_creation_id, null);
+  assert.equal(publishPatch.body.external_media_id, null);
+  const contentPatch = calls.find((c) => c.u.includes('/social_content_items') && c.m === 'PATCH');
+  assert.equal(contentPatch.body.status, 'publishing');
+
+  fake({ moved: [] });
+  assert.equal((await run(`/v1/social/publish/${JOB}/retry`, 'POST', { org_id: ORG })).error?.status, 409);
 });
 
 test('the connection check reports a missing key without calling Meta', async () => {
