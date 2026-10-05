@@ -101,7 +101,7 @@ fails when `config.toml` gains one that is missing here.
 |---|---|---|
 | `checkout` | anonymous buyers | server-priced offering rows; no browser-chosen price, seller or account |
 | `shake-order` | anonymous buyers | server recomputes every cent; open window and capacity enforced; payment re-confirmed with Stripe |
-| `pay-now` | legacy, superseded by `checkout` | still live with zero providers and zero completed payments; see the owner decision below |
+| `pay-now` | legacy, superseded by `checkout` | **retired in code**: every request gets `410` before Stripe is touched. Its `mccluster` / `equity-uprise` branch skipped the provider lookup and minted Checkout sessions on the platform account for any amount and title. Nothing calls it. |
 | `stripe-webhook` | provider callback | Stripe signature (`STRIPE_WEBHOOK_SECRET`) |
 | `outreach-webhook` | provider callback | Svix signature (`RESEND_WEBHOOK_SECRET`) |
 | `inbox` | Meta / Slack callbacks and site chat | HMAC signatures compared in constant time; Meta verify token |
@@ -158,10 +158,9 @@ The 2026-10-05 security advisor still reports:
 
 - enable leaked-password protection in Auth;
   ([Supabase guide](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection));
-- owner decision: retire `pay-now`. It is superseded by `checkout`, still
-  public, and has never completed a payment. Deleting a deployed function is
-  outward and hard to reverse, so it waits for the owner; the source stays in
-  the repo either way;
+- owner decision: delete the `pay-now` deployment. Its code now refuses every
+  request with `410` (the `RETIRED` constant), so this is housekeeping, not
+  exposure; the source stays in the repo either way;
 - owner decision: reconcile `music-publish-internal`. It is deployed (gateway
   JWT required) but has no source in this repository; commit its source or
   delete it;

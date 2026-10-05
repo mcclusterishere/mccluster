@@ -98,7 +98,13 @@ test('secretMatches accepts only the exact secret and refuses an unset one', asy
 
 test('every verify_jwt=false function has a recorded compensating control', async () => {
   const config = await read('supabase/config.toml');
-  const open = [...config.matchAll(/\[functions\.([a-z0-9-]+)\]\s*\nverify_jwt = false/g)].map((m) => m[1]);
+  /* Parse each [functions.x] stanza whole, so a comment or another option
+     between the header and verify_jwt cannot hide a public function. */
+  const headers = [...config.matchAll(/^\[functions\.([a-z0-9-]+)\][ \t]*$/gm)];
+  const open = headers.filter((h, i) => {
+    const body = config.slice(h.index + h[0].length, headers[i + 1]?.index ?? config.length).split(/^\[/m)[0];
+    return /^[ \t]*verify_jwt[ \t]*=[ \t]*false\b/m.test(body);
+  }).map((h) => h[1]);
   assert.ok(open.length >= 27, `expected the full public/webhook set, saw ${open.length}`);
   const posture = await read('docs/control-plane/SECURITY-POSTURE.md');
   const start = posture.indexOf('## Compensating controls, function by function');
@@ -108,4 +114,14 @@ test('every verify_jwt=false function has a recorded compensating control', asyn
     assert.match(table, new RegExp('`' + fn + '`'),
       `${fn} runs without a gateway JWT; record its control in SECURITY-POSTURE.md`);
   }
+});
+
+test('pay-now refuses every request before Stripe is touched', async () => {
+  const src = await read('supabase/functions/pay-now/index.ts');
+  assert.match(src, /const RETIRED = true;/);
+  const serve = src.indexOf('Deno.serve(');
+  const refuse = src.indexOf('if (RETIRED) return json({ error: "gone", use: "checkout" }, 410);');
+  assert.ok(serve > 0 && refuse > serve, 'the refusal is inside the handler');
+  assert.ok(refuse < src.indexOf('req.json()', serve), 'it runs before the body is read');
+  assert.ok(refuse < src.indexOf('stripe.checkout.sessions.create', serve), 'and before any Checkout session');
 });
