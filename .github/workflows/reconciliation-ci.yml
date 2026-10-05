@@ -200,6 +200,10 @@ jobs:
         run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
         run: bash scripts/supabase-local-reset-with-replay.sh
+      - name: Verify analytics funnel exact-window boundaries
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_funnel_exact_window.behaviour.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
