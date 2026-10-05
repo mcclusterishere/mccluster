@@ -174,10 +174,12 @@ test('the workflow deploys on function or config changes alone, least-privilege,
   assert.match(on, /push:\n\s+branches: \[main\]\n\s+paths:\n\s+- 'supabase\/functions\/\*\*'\n\s+- 'supabase\/config\.toml'/);
   assert.doesNotMatch(on, /supabase\/migrations/, 'a migration must not be needed to trigger a deploy');
   assert.match(on, /workflow_dispatch:/);
-  assert.match(yml, /\npermissions:\n\s+contents: read\n\s+checks: read\n\njobs:/);
+  assert.match(yml, /\npermissions:\n\s+contents: read\n\s+checks: read\n/);
+  assert.match(yml, /\nconcurrency:\n\s+group: supabase-edge-functions-production\n\s+cancel-in-progress: false\n/, 'production deploy runs are serialized so an older push cannot finish after a newer one');
   assert.doesNotMatch(yml, /git push|contents: write|pull_request:/, 'deploys from main only and never writes to a branch');
   for (const uses of yml.match(/uses: \S+/g)) assert.match(uses, /@[0-9a-f]{40}$/, `${uses} must be pinned to a commit`);
-  assert.match(yml, /supabase functions deploy \$FUNCTIONS --project-ref "\$SUPABASE_PROJECT_REF" --use-api/);
+  assert.match(yml, /for function in \$FUNCTIONS; do/);
+  assert.match(yml, /supabase functions deploy "\$function" --project-ref "\$SUPABASE_PROJECT_REF" --use-api/, 'the CLI is invoked once per planned function, never with a selected list');
   assert.doesNotMatch(yml, /--prune|--no-verify-jwt/);
   const lines = yml.split('\n');
   let scripts = 0;
