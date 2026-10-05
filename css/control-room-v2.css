@@ -274,3 +274,10 @@
 
 /* Remaining specialist back-office implementations are mounted inside the
    canonical Control shell while they are converted to native subviews. */
+
+/* Workspace switcher: compact on a phone (no label, capped width), labelled on wider screens. 16px so iOS does not zoom. */
+.cr-org{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.cr-org[hidden]{display:none}
+.cr-org__label{display:none;color:var(--cr-faint);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.cr-org__select{max-width:38vw;min-height:34px;padding:4px 8px;border:1px solid var(--cr-line);border-radius:8px;background:var(--cr-panel-2);color:var(--cr-text);font:inherit;font-size:max(16px,1em);text-overflow:ellipsis}
+@media (min-width:760px){.cr-org__label{display:inline}.cr-org__select{max-width:260px;font-size:max(16px,12px)}}
