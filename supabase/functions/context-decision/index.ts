@@ -129,13 +129,16 @@ async function transitionDecision(req: Request, userId: string) {
   const rows = await sql`
     update ai_context.decisions
        set status = ${status},
+           approved_by = case when ${status} = 'approved' then ${userId}::uuid else null end,
+           approved_at = case when ${status} = 'approved' then now() else null end,
+           updated_at = now(),
            metadata = coalesce(metadata, '{}'::jsonb) ||
              jsonb_build_object('last_transition', ${sql.json(transition)})
      where id = ${decisionId}::uuid
        and org_id = ${orgId}::uuid
        and status = 'proposed'
      returning id, org_id, title, decision, rationale_summary, risk_class, status,
-               proposed_by, source_conversation_id, supersedes_id, metadata, created_at
+               proposed_by, approved_by, approved_at, source_conversation_id, supersedes_id, metadata, created_at, updated_at
   `
   if (!rows.length) {
     throw Object.assign(new Error('decision is no longer proposed or does not belong to this organization'), { status: 409 })
