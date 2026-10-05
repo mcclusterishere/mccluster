@@ -256,8 +256,8 @@ test('Create Schedule exposes real publish retry and safe cancellation', async()
   ]);
   assert.match(control,/data-action="retry-publish"/);
   assert.match(control,/data-action="cancel-publish"/);
-  assert.match(control,/\/v1\/social\/publish\/.*\/retry/);
-  assert.match(control,/\/v1\/social\/publish\/.*\/cancel/);
+  assert.match(control,/"\/v1\/social\/publish\/" \+ encodeURIComponent\(publishJobId\) \+ "\/" \+ publishAction/);
+  assert.match(control,/publishAction = action === "retry-publish" \? "retry" : "cancel"/);
   assert.match(control,/canCancel = \["draft", "queued"\]/);
   assert.match(control,/canRetry = p\.state === "failed"/);
   assert.match(social,/retryPublishJob/);
