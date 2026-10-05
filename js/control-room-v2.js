@@ -8,7 +8,7 @@
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
-  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"];
+  var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "payments", "deliverables", "renewals", "outreach", "operations"];
   var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
@@ -66,6 +66,11 @@
     threadFilter: "all",
     jobFilter: "all",
     pipelineStage: "all",
+    futureWork: {},
+    observability: null,
+    observabilitySeverity: "all",
+    observabilitySource: "all",
+    observabilitySearch: "",
     resources: null,
     publicRecord: null,
     socialAccounts: null,
@@ -74,6 +79,77 @@
     pending: {},
     drafts: {},
     search: ""
+  };
+
+  var FUTURE_WORK = {
+    relationships: {
+      endpoint: "/v1/work/relationships", collection: "relationships", title: "Relationships",
+      singular: "relationship", summary: "The durable link between a person and a company, with owner, role, strength, state and history.",
+      fields: [
+        { key: "person_id", label: "Person ID", placeholder: "Canonical person UUID" },
+        { key: "company_id", label: "Company ID", placeholder: "Canonical company UUID" },
+        { key: "relationship_type", label: "Relationship type", placeholder: "client, partner, sponsor, vendor…" },
+        { key: "status", label: "Status", placeholder: "active" },
+        { key: "owner_id", label: "Owner ID", placeholder: "Operator UUID" },
+        { key: "notes", label: "Notes", textarea: true, placeholder: "Relationship context" }
+      ]
+    },
+    projects: {
+      endpoint: "/v1/work/projects", collection: "projects", title: "Service Projects",
+      singular: "project", summary: "Post-sale client work: scope, ownership, dates, budget, fulfillment and links back to orders.",
+      fields: [
+        { key: "name", label: "Project name", required: true, placeholder: "Client project" },
+        { key: "client_id", label: "Client / person ID", placeholder: "Canonical person UUID" },
+        { key: "company_id", label: "Company ID", placeholder: "Canonical company UUID" },
+        { key: "order_id", label: "Order ID", placeholder: "Originating order UUID" },
+        { key: "status", label: "Status", placeholder: "planned" },
+        { key: "starts_at", label: "Starts", type: "datetime-local", instant: true },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true },
+        { key: "budget_cents", label: "Budget (USD)", type: "number", scale: 100, min: "0", step: "0.01" }
+      ]
+    },
+    payments: {
+      endpoint: "/v1/work/payments", collection: "payments", title: "Payments",
+      singular: "payment", summary: "Payment state tied to clients, orders and projects without turning provider dashboards into the system of record.",
+      fields: [
+        { key: "client_id", label: "Client / person ID", placeholder: "Canonical person UUID" },
+        { key: "order_id", label: "Order ID", placeholder: "Canonical order UUID" },
+        { key: "project_id", label: "Project ID", placeholder: "Canonical project UUID" },
+        { key: "amount_cents", label: "Amount (USD)", type: "number", scale: 100, required: true, min: "0", step: "0.01" },
+        { key: "currency", label: "Currency", placeholder: "usd" },
+        { key: "provider", label: "Provider", placeholder: "stripe / square" },
+        { key: "status", label: "Status", placeholder: "pending" },
+        { key: "external_id", label: "Provider reference", placeholder: "Provider payment/session ID" },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true },
+        { key: "paid_at", label: "Paid", type: "datetime-local", instant: true }
+      ]
+    },
+    deliverables: {
+      endpoint: "/v1/work/deliverables", collection: "deliverables", title: "Deliverables",
+      singular: "deliverable", summary: "What the client is owed, where the artifact lives, and whether it has been reviewed and accepted.",
+      fields: [
+        { key: "project_id", label: "Project ID", required: true, placeholder: "Canonical project UUID" },
+        { key: "title", label: "Deliverable", required: true, placeholder: "Final edit, site handoff, campaign report…" },
+        { key: "kind", label: "Type", placeholder: "file, site, report, campaign…" },
+        { key: "status", label: "Status", placeholder: "planned" },
+        { key: "asset_id", label: "Asset ID", placeholder: "Media/library asset UUID" },
+        { key: "approval_status", label: "Approval", placeholder: "pending" },
+        { key: "due_at", label: "Due", type: "datetime-local", instant: true }
+      ]
+    },
+    renewals: {
+      endpoint: "/v1/work/renewals", collection: "renewals", title: "Renewals",
+      singular: "renewal", summary: "Recurring client obligations and the next commercial decision after delivery.",
+      fields: [
+        { key: "relationship_id", label: "Relationship ID", placeholder: "Canonical relationship UUID" },
+        { key: "project_id", label: "Project ID", placeholder: "Canonical project UUID" },
+        { key: "title", label: "Renewal", required: true, placeholder: "Monthly management, annual hosting…" },
+        { key: "status", label: "Status", placeholder: "upcoming" },
+        { key: "renews_at", label: "Renews", type: "datetime-local", instant: true },
+        { key: "amount_cents", label: "Amount (USD)", type: "number", scale: 100, min: "0", step: "0.01" },
+        { key: "interval", label: "Interval", placeholder: "month / year" }
+      ]
+    }
   };
 
   var bridge = {
@@ -1516,6 +1592,161 @@
       renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
+  function futureWorkSlot(view) {
+    return state.futureWork[view] || null;
+  }
+
+  function loadFutureWork(view, force) {
+    var contract = FUTURE_WORK[view];
+    if (!contract) return Promise.resolve();
+    if (state.futureWork[view] && !force) return Promise.resolve();
+    state.futureWork[view] = { loading: true, result: null };
+    render();
+    var query = state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : "";
+    return src(request(contract.endpoint + query)).then(function (result) {
+      state.futureWork[view] = { loading: false, result: result };
+      render();
+    });
+  }
+
+  function futureWorkRows(view) {
+    var contract = FUTURE_WORK[view], slot = futureWorkSlot(view);
+    var result = slot && slot.result;
+    if (!contract || !result || !result.ok) return [];
+    var data = result.data || {};
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data[contract.collection])) return data[contract.collection];
+    if (Array.isArray(data.items)) return data.items;
+    return [];
+  }
+
+  function futureWorkName(view, record) {
+    record = record || {};
+    if (view === "relationships") return record.label || record.relationship_type || "Relationship";
+    if (view === "payments") return record.memo || record.description || (record.amount_cents != null ? moneyCents(record.amount_cents) : "Payment");
+    return record.title || record.name || titleCase((FUTURE_WORK[view] && FUTURE_WORK[view].singular) || view);
+  }
+
+  function futureWorkRelated(record) {
+    return record.company_name || record.client_name || record.person_name ||
+      record.company_id || record.client_id || record.person_id || record.project_id || record.order_id || "—";
+  }
+
+  function futureFieldDisplay(field, value) {
+    if (value === null || value === undefined || value === "") return "—";
+    if (field.scale === 100) return moneyCents(value);
+    if (field.instant) return formatDate(value);
+    return text(value);
+  }
+
+  function futureInputValue(field, value) {
+    if (value === null || value === undefined) return "";
+    if (field.scale === 100) return (Number(value) / 100).toFixed(2);
+    if (field.instant) {
+      var d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+    return String(value);
+  }
+
+  function futureFormHtml(view, record) {
+    var contract = FUTURE_WORK[view];
+    return '<div class="cr-gen">' + contract.fields.map(function (field) {
+      var value = futureInputValue(field, record && record[field.key]);
+      var id = "crFuture_" + field.key;
+      if (field.textarea) {
+        return '<textarea class="cr-textarea" id="' + esc(id) + '" rows="3" placeholder="' + esc(field.placeholder || field.label) + '"' +
+          (field.required ? " required" : "") + '>' + esc(value) + '</textarea>';
+      }
+      return '<input class="cr-input" id="' + esc(id) + '" type="' + esc(field.type || "text") + '"' +
+        (field.min !== undefined ? ' min="' + esc(field.min) + '"' : "") +
+        (field.max !== undefined ? ' max="' + esc(field.max) + '"' : "") +
+        (field.step !== undefined ? ' step="' + esc(field.step) + '"' : "") +
+        (field.required ? " required" : "") +
+        ' aria-label="' + esc(field.label) + '" placeholder="' + esc(field.placeholder || field.label) + '" value="' + esc(value) + '">';
+    }).join("") + '</div>';
+  }
+
+  function openFutureWorkForm(view, id) {
+    var contract = FUTURE_WORK[view];
+    if (!contract) return;
+    var record = id ? futureWorkRows(view).find(function (row) { return String(row.id) === String(id); }) : null;
+    var slot = futureWorkSlot(view), result = slot && slot.result;
+    var supported = Boolean(result && result.ok);
+    var failure = state.pending["futureWorkError:" + view];
+    openInspector({
+      title: (record ? "Edit " : "New ") + titleCase(contract.singular),
+      subtitle: "Work · " + contract.title,
+      description: contract.summary,
+      custom: futureFormHtml(view, record) +
+        (!supported ? inspectorSection("Backend boundary",
+          '<div class="cr-gap"><b>The Control UI contract is complete.</b><span>' +
+          esc(contract.endpoint) + ' is not provisioned on the canonical Worker yet. These fields and record semantics are the interface the backend will satisfy.</span></div>') : "") +
+        (failure ? inspectorSection("Not saved", sourceBanner(failure, contract.title)) : ""),
+      actions: '<button class="cr-btn cr-btn--primary" type="button" data-action="future-work-save" data-view="' + esc(view) + '"' +
+        (record ? ' data-id="' + esc(record.id) + '"' : "") + (supported || state.pending["futureWorkSave:" + view] ? "" : " disabled") +
+        (state.pending["futureWorkSave:" + view] ? " disabled" : "") + '>' +
+        (state.pending["futureWorkSave:" + view] ? "Saving…" : (record ? "Save changes" : "Create " + esc(contract.singular))) + '</button>',
+      raw: record || { contract: contract.endpoint, fields: contract.fields },
+      tabs: ["overview", "raw", "ai"]
+    });
+  }
+
+  function inspectFutureWork(view, id) {
+    var contract = FUTURE_WORK[view];
+    var record = futureWorkRows(view).find(function (row) { return String(row.id) === String(id); });
+    if (!contract || !record) return;
+    openInspector({
+      title: futureWorkName(view, record),
+      subtitle: "Work · " + contract.title,
+      description: contract.summary,
+      props: contract.fields.map(function (field) { return [field.label, futureFieldDisplay(field, record[field.key])]; }),
+      actions: '<button class="cr-btn cr-btn--primary" type="button" data-action="future-work-edit" data-view="' + esc(view) + '" data-id="' + esc(record.id) + '">Edit</button>',
+      raw: record,
+      tabs: ["overview", "activity", "related", "raw", "ai"]
+    });
+  }
+
+  function renderFutureWork(view) {
+    var contract = FUTURE_WORK[view], slot = futureWorkSlot(view);
+    if (!contract) return "";
+    if (!slot || slot.loading) {
+      return '<div class="cr-grid">' +
+        panel(contract.title, "canonical contract", '<div class="cr-panel__body"><p class="cr-muted">Checking ' + esc(contract.endpoint) + '…</p></div>', "cr-span-12") +
+      '</div>';
+    }
+    var result = slot.result;
+    var records = futureWorkRows(view);
+    var banner = result && !result.ok ? sourceBanner(result, contract.title) : "";
+    var contractNote = result && result.ok
+      ? '<p class="cr-derived">Backed by ' + esc(contract.endpoint) + '. Records in this view are canonical, not derived.</p>'
+      : '<div class="cr-gap"><b>Future-ready Control surface</b><span>The record model, create/edit form, inspector, route, empty/loading/error states and navigation are finished. The Worker route is the remaining plumbing.</span></div>';
+    var rows = records.map(function (record) {
+      return {
+        id: record.id,
+        action: "inspect-future-work:" + view,
+        name: futureWorkName(view, record),
+        related: futureWorkRelated(record),
+        status: record.status || record.approval_status || "active",
+        updated: record.updated_at || record.created_at || record.due_at || record.renews_at
+      };
+    });
+    return banner + contractNote +
+      '<div class="cr-kpis">' +
+        kpi("Records", String(records.length), contract.singular + " objects") +
+        kpi("Backend", result && result.ok ? "LIVE" : "PENDING", contract.endpoint) +
+        kpi("Create", result && result.ok ? "READY" : "UI READY", "canonical mutation") +
+        kpi("Inspect / edit", "READY", "same object surface") +
+      '</div>' +
+      renderTable([
+        { label: contract.title.slice(0, -1), key: "name" },
+        { label: "Related", key: "related" },
+        { label: "State", key: "status" },
+        { label: "Updated", html: function (r) { return r.updated ? esc(ago(r.updated)) : "—"; } }
+      ], rows, "No " + contract.title.toLowerCase() + " yet");
+  }
+
   function renderWorkView(view) {
     if (view === "outreach" || view === "operations") {
       return window.CR.workTools ? window.CR.workTools.render(view) : empty("Work tool unavailable", "The native Control module did not load.");
@@ -1526,10 +1757,11 @@
     if (view === "companies") return renderCompanies();
     if (view === "clients") return renderClients();
     if (view === "tasks") return renderTasks();
+    if (FUTURE_WORK[view]) return renderFutureWork(view);
     return renderOrdersBookings(view);
   }
   function renderWork() {
-    return renderHeader("Work", "One business graph. Inbox, pipeline, people, clients, tasks, orders, and bookings are views—not rooms.", { values: WORK_VIEWS, selected: state.workView }) +
+    return renderHeader("Work", "One business graph from relationship through delivery and renewal. Views stay in Control even before every backing object is provisioned.", { values: WORK_VIEWS, selected: state.workView }) +
       '<div class="cr-workbar"><input class="cr-workbar__search" id="crWorkSearch" type="search" placeholder="Filter this view…" aria-label="Filter Work"><button class="cr-btn" data-action="filters">Filters</button><button class="cr-btn cr-btn--primary" data-action="new-work">+ New</button></div>' + (window.CR.work ? window.CR.work.renderForm() : "") + renderWorkView(state.workView);
   }
 
@@ -1872,16 +2104,72 @@
     });
     return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
+  function loadObservability(force) {
+    if (state.observability && !force) return Promise.resolve();
+    state.observability = { loading: true, result: null };
+    return src(request("/v1/observability/events?limit=150")).then(function (result) {
+      state.observability = { loading: false, result: result };
+      render();
+    });
+  }
+  function observabilityRows() {
+    var result = state.observability && state.observability.result;
+    if (!result || !result.ok) return observedEvents();
+    var data = result.data || {};
+    var records = Array.isArray(data) ? data : (Array.isArray(data.events) ? data.events : []);
+    return records.map(function (e, i) {
+      var severity = String(e.severity || e.level || "INFO").toUpperCase();
+      return {
+        id: e.id || e.event_id || ("event-" + i),
+        severity: severity,
+        source: e.source || e.service || e.component || "System",
+        message: e.message || e.event || e.name || "Recorded event",
+        time: e.at || e.time || e.created_at || e.timestamp,
+        trace_id: e.trace_id || e.correlation_id || e.request_id || "",
+        request_id: e.request_id || "",
+        span_id: e.span_id || "",
+        kind: severity === "ERROR" || severity === "FATAL" ? "bad" : (severity === "WARN" || severity === "WARNING" ? "warn" : "info"),
+        raw: e
+      };
+    });
+  }
   function renderObservability() {
-    var events = observedEvents();
-    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
-      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Re-read</button></div>';
-    if (!events.length) {
-      return head + '<div class="cr-canvas">' + empty("No recorded failures", "Every canonical source read cleanly and no job, media, or publish record is in a failed state. This is a real result, not an empty log view.") + '</div>';
+    var canonical = state.observability && state.observability.result;
+    var events = observabilityRows();
+    var sources = ["all"].concat(Array.from(new Set(events.map(function (e) { return e.source; }).filter(Boolean))).sort());
+    var severity = state.observabilitySeverity;
+    var source = state.observabilitySource;
+    var q = state.observabilitySearch.trim().toLowerCase();
+    events = events.filter(function (e) {
+      if (severity !== "all" && String(e.severity).toUpperCase() !== severity.toUpperCase()) return false;
+      if (source !== "all" && e.source !== source) return false;
+      if (q && [e.source, e.message, e.trace_id, e.request_id, e.span_id].join(" ").toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var contractState = canonical && canonical.ok ? "Canonical event stream" : "Fallback ledger";
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">' + esc(contractState) + ' · snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="reload-observability">Re-read</button></div>';
+    var controls = '<div class="cr-gen">' +
+      '<select class="cr-select" id="crObsSeverity" aria-label="Severity"><option value="all">All severities</option><option value="INFO">Info</option><option value="WARN">Warn</option><option value="ERROR">Error</option></select>' +
+      '<select class="cr-select" id="crObsSource" aria-label="Source">' + sources.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v === "all" ? "All sources" : v) + '</option>'; }).join("") + '</select>' +
+      '<input class="cr-input" id="crObsSearch" type="search" placeholder="Trace, request, source or message" value="' + esc(state.observabilitySearch) + '">' +
+      '</div>';
+    var sourceState = "";
+    if (!state.observability || state.observability.loading) {
+      sourceState = '<div class="cr-gap"><b>Reading canonical event contract</b><span>GET /v1/observability/events?limit=150</span></div>';
+    } else if (canonical && !canonical.ok) {
+      sourceState = sourceBanner(canonical, "Observability events") +
+        '<div class="cr-gap"><b>UI contract is ready.</b><span>Until the retained event/trace pipeline exists, this view falls back to job failures, social/media failures, health state and control_audit. The eventual event contract already has UI space for trace_id, request_id and span_id.</span></div>';
     }
-    return head +
-      '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
-      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
+    if (!events.length) {
+      return head + controls + sourceState + '<div class="cr-canvas">' + empty("No events in this filter", canonical && canonical.ok ? "The canonical event stream returned no matching records." : "No fallback ledger records match the current filter.") + '</div>';
+    }
+    return head + controls + sourceState +
+      renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } },
+        { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } },
+        { label: "Source", key: "source" },
+        { label: "Trace", html: function (r) { return r.trace_id ? '<span class="cr-mono">' + esc(String(r.trace_id).slice(0, 18)) + '</span>' : "—"; } },
+        { label: "Message", key: "message" }], events, "No events");
   }
   /* SOCIAL ACCOUNTS + PUBLISHING.
 
@@ -1954,13 +2242,16 @@
     if (state.resources && !force) return Promise.resolve();
     state.resources = { loading: true };
     render();
+    var orgQuery = state.org && state.org.id ? "&org_id=" + encodeURIComponent(state.org.id) : "";
+    var budgetQuery = state.org && state.org.id ? "?org_id=" + encodeURIComponent(state.org.id) : "";
     return Promise.all([
       src(request("/v1/compute/balance")),
       src(request("/v1/platform/catalog")),
       src(request("/v1/developer/consumers")),
-      src(request("/v1/media/usage?group_by=capability"))
+      src(request("/v1/media/usage?group_by=capability" + orgQuery)),
+      src(request("/v1/media/budget" + budgetQuery))
     ]).then(function (r) {
-      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3], budget: r[4] };
       render();
     });
   }
@@ -2016,7 +2307,44 @@
             : '<p class="cr-muted">No media jobs in this window.</p>');
       }
 
-      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
+      var budgetBody = "";
+      var budgetResult = res.budget;
+      if (!budgetResult) {
+        budgetBody = "";
+      } else if (!budgetResult.ok) {
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' + sourceBanner(budgetResult, "Media allowance");
+      } else {
+        var budgetData = budgetResult.data || {};
+        var mediaBudget = budgetData.budget || {};
+        var monthly = budgetData.usage || {};
+        var limit = mediaBudget.monthly_limit_cents;
+        var committed = count(monthly.committed_cents);
+        var percent = limit === null || limit === undefined || Number(limit) <= 0
+          ? null : Math.round((committed / Number(limit)) * 100);
+        var budgetState = mediaBudget.enabled
+          ? moneyCents(limit) + " / month"
+          : "Off";
+        budgetBody = '<h3 class="cr-subhead">Monthly media allowance</h3>' +
+          props([
+            ["Enforcement", mediaBudget.enabled ? "On" : "Off"],
+            ["Current month committed", moneyCents(committed)],
+            ["Allowance", budgetState],
+            ["Warn at", String(count(mediaBudget.warn_at_percent) || 80) + "%"],
+            ["Used", percent === null ? "—" : String(percent) + "%"]
+          ]) +
+          '<div class="cr-gen">' +
+            '<label class="cr-muted"><input id="crMediaBudgetEnabled" type="checkbox"' + (mediaBudget.enabled ? " checked" : "") + '> Enforce monthly cap</label>' +
+            '<input class="cr-input" id="crMediaMonthlyCap" inputmode="decimal" type="number" min="0" step="0.01" placeholder="Monthly USD cap" value="' +
+              (limit === null || limit === undefined ? "" : esc((Number(limit) / 100).toFixed(2))) + '">' +
+            '<input class="cr-input" id="crMediaWarnAt" type="number" min="1" max="100" step="1" aria-label="Warn at percent" value="' + esc(String(count(mediaBudget.warn_at_percent) || 80)) + '">' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="save-media-budget"' + (state.pending.mediaBudget ? " disabled" : "") + '>' +
+              (state.pending.mediaBudget ? "Saving…" : "Save allowance") + '</button>' +
+          '</div>' +
+          (state.pending.mediaBudgetError ? sourceBanner(state.pending.mediaBudgetError, "Media allowance") : "") +
+          (state.pending.mediaBudgetOk ? '<p class="cr-muted">Monthly media allowance saved and enforced at the database boundary.</p>' : "");
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody + budgetBody +
         '<h3 class="cr-subhead">API consumers</h3>' +
         (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
           : (consumerRows.length
@@ -2169,6 +2497,17 @@
     if (state.surface === "create" && state.createView === "projects" && !state.pending.mediaModels && !window.CR.media.state.catalog) {
       state.pending.mediaModels = true;
       window.CR.media.loadCatalog().then(function () { delete state.pending.mediaModels; });
+    }
+    if (state.surface === "system" && state.systemView === "observability" && !state.observability && !state.pending.observability) {
+      state.pending.observability = true;
+      loadObservability(false).finally(function () { delete state.pending.observability; });
+    }
+    if (state.surface === "work" && FUTURE_WORK[state.workView] && !state.futureWork[state.workView] && !state.pending["futureWorkLoad:" + state.workView]) {
+      var futureLoadView = state.workView;
+      state.pending["futureWorkLoad:" + futureLoadView] = true;
+      loadFutureWork(futureLoadView, false).finally(function () {
+        delete state.pending["futureWorkLoad:" + futureLoadView];
+      });
     }
     if (state.surface === "work" && state.workView === "inbox" && state.selectedThreadId && !state.transcripts[state.selectedThreadId] && !state.pending["transcript:" + state.selectedThreadId]) {
       state.pending["transcript:" + state.selectedThreadId] = true;
@@ -2410,7 +2749,30 @@
   }
   function inspectVariant(id) { var v = findById(state.variants, id); if (!v) return; openInspector({ title: v.variant_key || "Variant", subtitle: "Create · Project", description: v.hypothesis || v.hook || "Creative variant", props: [["Status", v.status], ["Score", v.score], ["Media job", v.media_job_id], ["Created", formatDate(v.created_at)]], raw: v, tabs: ["overview", "related", "raw", "ai"] }); }
   function inspectPost(id) { var p = findById(state.posts, id); if (!p) return; openInspector({ title: "Published post", subtitle: "Create · Schedule", description: p.caption || "Published content", props: [["Mode", p.publish_mode], ["Published", formatDate(p.published_at)], ["Permalink", p.permalink || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
-  function inspectPublish(id) { var p = findById(state.publishJobs, id); if (!p) return; openInspector({ title: "Publishing job", subtitle: "Create · Schedule", description: p.payload && p.payload.caption || "Scheduled distribution", props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
+  function inspectPublish(id) {
+    var p = findById(state.publishJobs, id); if (!p) return;
+    var busy = state.pending["publishJob:" + p.id];
+    var failure = state.pending["publishJobError:" + p.id];
+    var actions = "";
+    if (p.state === "failed") {
+      actions = '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="retry"' + (busy ? " disabled" : "") + '>' + (busy ? "Retrying…" : "Retry") + '</button>';
+    } else if (p.state === "draft") {
+      actions = '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="approve"' + (busy ? " disabled" : "") + '>Approve & queue</button>' +
+        '<button class="cr-btn" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="cancel"' + (busy ? " disabled" : "") + '>Cancel</button>';
+    } else if (p.state === "queued") {
+      actions = '<button class="cr-btn" type="button" data-action="publish-job-transition" data-id="' + esc(p.id) + '" data-verb="cancel"' + (busy ? " disabled" : "") + '>' + (busy ? "Cancelling…" : "Cancel") + '</button>';
+    }
+    openInspector({
+      title: "Publishing job", subtitle: "Create · Schedule",
+      description: p.payload && p.payload.caption || "Scheduled distribution",
+      props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"],
+        ["Attempts", p.attempts == null ? "—" : p.attempts], ["External media", p.external_media_id || "—"]],
+      custom: (p.last_error ? inspectorSection("Last failure", '<p class="cr-fail">' + esc(p.last_error) + '</p>') : "") +
+        (failure ? inspectorSection("Action failed", sourceBanner(failure, "Publishing")) : ""),
+      actions: actions,
+      raw: p, tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
   function inspectRequest(id) { var r = findById(state.siteRequests, id); if (!r) return; openInspector({ title: r.title || r.request_type || "Site request", subtitle: "Work · Request", description: r.note || r.description || "Client/site request", props: [["Status", r.status], ["Created", formatDate(r.created_at || r.at)]], raw: r }); }
 
   function openBridge(key) {
@@ -2548,6 +2910,7 @@
   function runAction(action, el) {
     if (!action) return;
     if (action.indexOf("open-bridge:") === 0) { openBridge(action.split(":")[1]); return; }
+    if (action.indexOf("inspect-future-work:") === 0) { inspectFutureWork(action.split(":")[1], el.getAttribute("data-id")); return; }
     /* Generation owns its own actions; everything else falls through. */
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
@@ -2639,6 +3002,55 @@
     else if (action === "system-workload") setSurface("system", "workload");
     else if (action === "system-observability") setSurface("system", "observability");
     else if (action === "system-resources") setSurface("system", "resources");
+    else if (action === "reload-observability") { state.observability = null; loadObservability(true); }
+    else if (action === "save-media-budget") {
+      if (!state.org || !state.org.id) return;
+      var budgetEnabled = Boolean($("crMediaBudgetEnabled") && $("crMediaBudgetEnabled").checked);
+      var capRaw = $("crMediaMonthlyCap") && $("crMediaMonthlyCap").value.trim();
+      var warnRaw = $("crMediaWarnAt") && $("crMediaWarnAt").value.trim();
+      var capCents = null;
+      if (capRaw !== "") {
+        var capDollars = Number(capRaw);
+        if (!Number.isFinite(capDollars) || capDollars < 0) {
+          state.pending.mediaBudgetError = badResult("failed", "Monthly cap must be a non-negative dollar amount.", 0);
+          render(); return;
+        }
+        capCents = Math.round(capDollars * 100);
+      }
+      var warnAt = Number(warnRaw || 80);
+      if (!Number.isInteger(warnAt) || warnAt < 1 || warnAt > 100) {
+        state.pending.mediaBudgetError = badResult("failed", "Warning threshold must be an integer from 1 through 100.", 0);
+        render(); return;
+      }
+      if (budgetEnabled && capCents === null) {
+        state.pending.mediaBudgetError = badResult("failed", "Enter a monthly cap before turning enforcement on.", 0);
+        render(); return;
+      }
+
+      state.pending.mediaBudget = true;
+      delete state.pending.mediaBudgetError;
+      delete state.pending.mediaBudgetOk;
+      render();
+      src(request("/v1/media/budget", {
+        method: "PUT",
+        body: {
+          org_id: state.org.id,
+          enabled: budgetEnabled,
+          monthly_limit_cents: capCents,
+          warn_at_percent: warnAt
+        }
+      })).then(function (result) {
+        delete state.pending.mediaBudget;
+        if (!result.ok) {
+          state.pending.mediaBudgetError = result;
+          render();
+          return;
+        }
+        state.pending.mediaBudgetOk = true;
+        delete state.pending.mediaBudgetError;
+        return loadResources(true);
+      });
+    }
     else if (action === "apps") setSurface("apps");
     else if (action === "goto-failed") { state.jobFilter = "failed"; setSurface("system", "workload"); }
     else if (action === "goto-waiting") {
@@ -2750,11 +3162,67 @@
       runLeadQuery(false); closeInspector();
     }
     else if (action === "new-work") {
-      /* Records are created through the Worker's /v1/work routes
-         (js/control-room/work-records.js); the legacy CRM creator is no
-         longer the way in. */
-      if (window.CR.work) window.CR.work.openForm(state.workView);
+      /* Existing canonical records use work-records.js. Future post-sale
+         objects use the same Control interaction contract now, even while
+         their Worker routes are still capability-gated. */
+      if (FUTURE_WORK[state.workView]) openFutureWorkForm(state.workView);
+      else if (window.CR.work) window.CR.work.openForm(state.workView);
       else openInspector({ title: "Create a record", description: "The Work records module did not load, so nothing can be created from here right now.", tabs: ["overview"] });
+    }
+    else if (action === "future-work-edit") {
+      openFutureWorkForm(el.getAttribute("data-view"), el.getAttribute("data-id"));
+    }
+    else if (action === "future-work-save") {
+      var futureView = el.getAttribute("data-view");
+      var futureId = el.getAttribute("data-id");
+      var futureContract = FUTURE_WORK[futureView];
+      if (!futureContract || !state.org || !state.org.id) return;
+      var futureBody = { org_id: state.org.id };
+      var futureInvalid = null;
+      futureContract.fields.forEach(function (field) {
+        var input = $("crFuture_" + field.key);
+        var raw = input ? String(input.value || "").trim() : "";
+        if (!raw) {
+          if (field.required) futureInvalid = field.label + " is required.";
+          return;
+        }
+        if (field.scale === 100) {
+          var numeric = Number(raw);
+          if (!Number.isFinite(numeric) || numeric < 0) { futureInvalid = field.label + " must be a non-negative number."; return; }
+          futureBody[field.key] = Math.round(numeric * 100);
+          return;
+        }
+        if (field.instant) {
+          var instant = new Date(raw);
+          if (Number.isNaN(instant.getTime())) { futureInvalid = field.label + " must be a valid date and time."; return; }
+          futureBody[field.key] = instant.toISOString();
+          return;
+        }
+        futureBody[field.key] = raw;
+      });
+      if (futureInvalid) {
+        state.pending["futureWorkError:" + futureView] = badResult("failed", futureInvalid, 0);
+        openFutureWorkForm(futureView, futureId);
+        return;
+      }
+      state.pending["futureWorkSave:" + futureView] = true;
+      delete state.pending["futureWorkError:" + futureView];
+      openFutureWorkForm(futureView, futureId);
+      src(request(futureContract.endpoint + (futureId ? "/" + encodeURIComponent(futureId) : ""), {
+        method: futureId ? "PATCH" : "POST",
+        body: futureBody
+      })).then(function (result) {
+        delete state.pending["futureWorkSave:" + futureView];
+        if (!result.ok) {
+          state.pending["futureWorkError:" + futureView] = result;
+          openFutureWorkForm(futureView, futureId);
+          return;
+        }
+        delete state.pending["futureWorkError:" + futureView];
+        closeInspector();
+        state.futureWork[futureView] = null;
+        return loadFutureWork(futureView, true);
+      });
     }
     else if (action === "select-thread") {
       state.selectedThreadId = el.getAttribute("data-id");
@@ -2869,9 +3337,6 @@
         render();
       });
     }
-    else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
-    else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
-    else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
     else if (action === "decision-status") {
       var decisionId = el.getAttribute("data-id");
       var decisionStatus = el.getAttribute("data-status");
@@ -2897,6 +3362,31 @@
         render();
       });
     }
+    else if (action === "publish-job-transition") {
+      var publishId = el.getAttribute("data-id");
+      var publishVerb = el.getAttribute("data-verb");
+      state.pending["publishJob:" + publishId] = true;
+      delete state.pending["publishJobError:" + publishId];
+      inspectPublish(publishId);
+      src(request("/v1/social/publish/" + encodeURIComponent(publishId) + "/" + encodeURIComponent(publishVerb), {
+        method: "POST", body: state.org && state.org.id ? { org_id: state.org.id } : {}
+      })).then(function (result) {
+        delete state.pending["publishJob:" + publishId];
+        if (!result.ok) {
+          state.pending["publishJobError:" + publishId] = result;
+          inspectPublish(publishId);
+          return;
+        }
+        var updatedPublish = result.data && result.data.publish_job;
+        if (updatedPublish) state.publishJobs = state.publishJobs.map(function (row) { return String(row.id) === String(updatedPublish.id) ? updatedPublish : row; });
+        delete state.pending["publishJobError:" + publishId];
+        render();
+        inspectPublish(publishId);
+      });
+    }
+    else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
+    else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
+    else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
     else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
     else if (action === "more-leads") { runLeadQuery(true); }
     else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
@@ -3023,6 +3513,24 @@
           var send = document.querySelector('[data-action="ai-send"]');
           if (send && !send.disabled) send.click();
         }
+      });
+    }
+    var obsSeverity = $("crObsSeverity");
+    if (obsSeverity) {
+      obsSeverity.value = state.observabilitySeverity;
+      obsSeverity.addEventListener("change", function () { state.observabilitySeverity = obsSeverity.value; render(); });
+    }
+    var obsSource = $("crObsSource");
+    if (obsSource) {
+      obsSource.value = state.observabilitySource;
+      obsSource.addEventListener("change", function () { state.observabilitySource = obsSource.value; render(); });
+    }
+    var obsSearch = $("crObsSearch");
+    if (obsSearch) {
+      obsSearch.addEventListener("input", function () {
+        state.observabilitySearch = obsSearch.value;
+        clearTimeout(state.pending.observabilitySearchTimer);
+        state.pending.observabilitySearchTimer = setTimeout(render, 120);
       });
     }
     if (state.search) filterCurrentView(state.search);

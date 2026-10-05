@@ -32,7 +32,7 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
     assert.ok(html.includes('data-surface="'+key+'"'),key+' is missing from the desktop Control rail');
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
-  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings", "outreach", "operations"\]/);
+  assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "payments", "deliverables", "renewals", "outreach", "operations"\]/);
   assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "instagram", "music", "action-network", "song-test"\]/);
 });
 
@@ -246,4 +246,28 @@ test('Control can approve or reject proposed AI decisions', async()=>{
   assert.match(edge,/approved_by = \$\{userId\}::uuid/);
   assert.match(edge,/approved_at = now\(\)/);
   assert.match(edge,/decision is no longer proposed or does not belong to this organization/);
+});
+
+
+test('Control exposes the complete post-sale operating graph before every backend object exists', async()=>{
+  const shell=await read('js/control-room-v2.js');
+  for (const kind of ['relationships','projects','payments','deliverables','renewals']) {
+    assert.match(shell,new RegExp(kind+': \\{[\\s\\S]*endpoint: "\\/v1\\/work\\/'+kind+'"'),kind+' future Work contract missing');
+  }
+  assert.match(shell,/function renderFutureWork\(view\)/);
+  assert.match(shell,/function openFutureWorkForm\(view, id\)/);
+  assert.match(shell,/Future-ready Control surface/);
+  assert.match(shell,/The Worker route is the remaining plumbing/);
+  assert.match(shell,/action === "future-work-save"/);
+  assert.match(shell,/method: futureId \? "PATCH" : "POST"/);
+});
+
+test('System Resources owns aggregate media allowance UI and Observability owns a future trace contract', async()=>{
+  const shell=await read('js/control-room-v2.js');
+  assert.match(shell,/\/v1\/media\/budget/);
+  assert.match(shell,/save-media-budget/);
+  assert.match(shell,/Enforce monthly cap/);
+  assert.match(shell,/\/v1\/observability\/events\?limit=150/);
+  assert.match(shell,/Trace, request, source or message/);
+  assert.match(shell,/Fallback ledger/);
 });

@@ -2,6 +2,7 @@ import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
 import { requireCapability } from '../lib/capabilities.js';
+import { recordAudit } from '../lib/audit.js';
 
 function headers(env) {
   return {
@@ -269,6 +270,108 @@ export async function getUsage(request, env, user) {
   /* PostgREST returns a scalar function result directly or wrapped in a
      single-element array depending on the call shape. */
   return Array.isArray(rollup) ? rollup[0] : rollup;
+}
+
+
+export async function getMediaBudget(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const rows = await db(
+    env,
+    `org_media_budgets?org_id=eq.${encodeURIComponent(org.org_id)}&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at&limit=1`
+  );
+  const stored = rows?.[0] || null;
+
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const rollup = await rpc(env, 'media_usage_rollup', {
+    p_org_id: org.org_id,
+    p_from: monthStart,
+    p_to: null,
+    p_group_by: 'day'
+  });
+  const usage = Array.isArray(rollup) ? rollup[0] : rollup;
+  const budget = stored || {
+    org_id: org.org_id,
+    enabled: false,
+    monthly_limit_cents: null,
+    warn_at_percent: 80,
+    updated_by: null,
+    created_at: null,
+    updated_at: null
+  };
+
+  return {
+    budget,
+    configured: Boolean(stored),
+    period: { from: monthStart, to: null },
+    usage: usage?.totals || {
+      jobs: 0,
+      actual_cents: 0,
+      committed_cents: 0,
+      in_flight_jobs: 0,
+      unsettled_cents: 0
+    }
+  };
+}
+
+export async function putMediaBudget(request, env, user) {
+  let body;
+  try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+  const org = await getOrg(env, user.id, body?.org_id);
+  if (org.role !== 'owner') {
+    throw Object.assign(new Error('Organization owner access is required to change the media allowance'), { status: 403 });
+  }
+
+  const enabled = body.enabled === true;
+  const rawLimit = body.monthly_limit_cents;
+  let monthlyLimit = null;
+  if (rawLimit !== null && rawLimit !== undefined && rawLimit !== '') {
+    const parsed = Number(rawLimit);
+    if (!Number.isSafeInteger(parsed) || parsed < 0) {
+      throw Object.assign(new Error('monthly_limit_cents must be a non-negative integer or null'), { status: 400 });
+    }
+    monthlyLimit = parsed;
+  }
+  if (enabled && monthlyLimit === null) {
+    throw Object.assign(new Error('monthly_limit_cents is required when the monthly allowance is enabled'), { status: 400 });
+  }
+
+  const rawWarn = body.warn_at_percent === undefined ? 80 : Number(body.warn_at_percent);
+  if (!Number.isInteger(rawWarn) || rawWarn < 1 || rawWarn > 100) {
+    throw Object.assign(new Error('warn_at_percent must be an integer from 1 through 100'), { status: 400 });
+  }
+
+  const rows = await db(env, 'org_media_budgets?on_conflict=org_id', {
+    method: 'POST',
+    headers: { prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({
+      org_id: org.org_id,
+      enabled,
+      monthly_limit_cents: monthlyLimit,
+      warn_at_percent: rawWarn,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    })
+  });
+  const budget = rows?.[0];
+  if (!budget) throw Object.assign(new Error('Media allowance write returned no row'), { status: 500 });
+
+  const audit = await recordAudit(env, {
+    orgId: org.org_id,
+    actorUserId: user.id,
+    event: 'media.budget.updated',
+    capability: 'media.generate',
+    resourceType: 'org_media_budget',
+    resourceId: org.org_id,
+    detail: {
+      enabled: budget.enabled,
+      monthly_limit_cents: budget.monthly_limit_cents,
+      warn_at_percent: budget.warn_at_percent
+    }
+  });
+
+  return { budget, audit };
 }
 
 export async function listModels(request, env) {

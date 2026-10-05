@@ -2,7 +2,7 @@ import core from './index.js';
 import { applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
-import { getUsage, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { getUsage, getMediaBudget, putMediaBudget, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
@@ -358,6 +358,19 @@ export default {
         return fail(request, env, 'Unknown Work route', 404);
       } catch (error) {
         return fail(request, env, error.message || 'Work request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/budget' && (request.method === 'GET' || request.method === 'PUT')) {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const data = request.method === 'GET'
+          ? await getMediaBudget(request, env, user)
+          : await putMediaBudget(request, env, user);
+        return reply(request, env, data);
+      } catch (error) {
+        return fail(request, env, error.message || 'Media allowance request failed', error.status || 500, error.detail);
       }
     }
 
