@@ -1,5 +1,6 @@
 import { requireCapability } from '../lib/capabilities.js';
 import { createForensicRoutes } from './forensics.js';
+import { createAudienceScienceRoutes } from './audience-science.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -826,6 +827,7 @@ async function handleBusinessQuestion(request, env, user) {
    per-person rows (IP, place, signed-in email), kept apart from the business
    analytics above, which must stay aggregate. */
 const forensics = createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finiteDate, publicDeviceSummary, requireHouseOwner });
+const audienceScience = createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, requireHouseOwner });
 
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
@@ -843,6 +845,9 @@ export async function handleAnalyticsRequest(request, env, user) {
   if (path === '/v1/analytics/forensics') {
     return handleForensics(request, env, user, url);
   }
+  const audienceScienceResponse = await audienceScience.route(request, env, user, url, path);
+  if (audienceScienceResponse) return audienceScienceResponse;
+
   const forensicResponse = await forensics.route(request, env, user, url, path);
   if (forensicResponse) return forensicResponse;
 
