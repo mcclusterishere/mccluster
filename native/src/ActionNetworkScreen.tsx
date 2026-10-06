@@ -9,6 +9,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
   Modal,
   Pressable,
   RefreshControl,
@@ -243,6 +244,31 @@ function SignedInNetwork() {
   }, [boot, tourAutoChecked]);
 
   if (loading && !boot) return <Centered label="Loading your Action Network…" />;
+  if (boot?.next_step === 'contact') {
+    return (
+      <View style={s.screen}>
+        <Room pulse={color.ruby} />
+        <View style={s.section}>
+          <Text style={s.kicker}>Account setup</Text>
+          <Text style={s.title}>Finish your private contact details.</Text>
+          <Text style={s.lede}>
+            Your legal name and mailing address are required before entering the Action Network.
+            They stay in your private account record and are not shown on your public profile.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            style={s.primary}
+            onPress={() => Linking.openURL('https://mccluster.org/account.html?complete=contact')}
+          >
+            <Text style={s.primaryText}>Complete account</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" style={s.secondary} onPress={refreshBootstrap}>
+            <Text style={s.secondaryText}>I finished — check again</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
   if (boot?.next_step === 'profile') {
     return <ProfileSetup boot={boot} onDone={refreshBootstrap} />;
   }
