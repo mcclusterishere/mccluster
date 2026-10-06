@@ -408,3 +408,46 @@ body.wrp { background: #0b0908; color: #f4efe6; }
     gap: 1.5rem;
   }
 }
+
+
+/* END RACISM DIRECT GATEWAY — choose, buy, act. */
+.er--direct{background:#080707;color:#f4efe6}
+.er-direct{width:min(760px,calc(100% - 28px));margin:0 auto;padding:clamp(4.8rem,10vw,7rem) 0 6rem}
+.er-direct__hero,.er-sale,.er-act{padding:clamp(1.3rem,4vw,2rem) 0}
+.er-direct__k{margin:0 0 .65rem;font:900 .72rem/1.2 var(--an-ui);letter-spacing:.2em;text-transform:uppercase;color:#ff5149}
+.er-direct__hero h1,.er-sale h2,.er-act h2{margin:0;font-family:var(--an-display);font-weight:400;letter-spacing:-.035em;line-height:.92}
+.er-direct__hero h1{font-size:clamp(3.4rem,14vw,7.2rem);max-width:8ch}
+.er-direct__lede{margin:.8rem 0 0;color:#c8beb5;font:750 clamp(1.05rem,4vw,1.3rem)/1.4 var(--an-ui)}
+.er-choice-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:1.5rem}
+.er-choice{display:grid;align-content:space-between;gap:.8rem;min-height:150px;padding:1.2rem;border-radius:20px;text-decoration:none;border:1px solid transparent;box-shadow:0 18px 44px -34px #000;transition:transform .18s ease,box-shadow .18s ease}
+.er-choice:hover{transform:translateY(-2px);box-shadow:0 24px 56px -34px #000}
+.er-choice:focus-visible{outline:3px solid #ffd9d5;outline-offset:4px}
+.er-choice b{font-family:var(--an-display);font-size:clamp(2.2rem,9vw,4rem);font-weight:400;line-height:.9;letter-spacing:-.02em}
+.er-choice span{font:800 .95rem/1.35 var(--an-ui)}
+.er-choice--not{background:#f7f4ef;color:#111}
+.er-choice--not span{color:#49423e}
+.er-choice--racist{background:#c51b1f;color:#fff}
+.er-choice--racist span{color:#ffe7e4}
+.er-direct__note{margin:.8rem 0 0;color:#918880;font:650 .76rem/1.5 var(--an-ui)}
+.er-sale{display:grid;gap:1rem;margin-top:1.5rem;border-top:1px solid rgba(244,239,230,.14)}
+.er-sale__art{display:block;width:100%;height:auto;border-radius:20px;background:#15110f}
+.er-sale__body{min-width:0}
+.er-sale h2,.er-act h2{font-size:clamp(2.7rem,10vw,5.2rem)}
+.er-sale__price{margin:.3rem 0 0;font:900 clamp(2.5rem,10vw,4.4rem)/1 var(--an-ui);letter-spacing:-.06em;color:#fff}
+.er-sale__copy,.er-act p{max-width:39rem;color:#c8beb5;font:650 1rem/1.55 var(--an-ui)}
+.er-sale audio{display:block;width:100%;margin:1rem 0}
+.er-buy,.er-download{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;padding:.9rem 1.1rem;border:0;border-radius:16px;background:#f7f4ef;color:#111;text-decoration:none;font:900 1rem/1 var(--an-ui);cursor:pointer}
+.er-buy:disabled{opacity:.58;cursor:wait}
+.er-download{margin-top:.65rem;background:#c51b1f;color:#fff}
+.er-download[hidden]{display:none}
+.er-track-status{min-height:1.4em;margin:.65rem 0 0!important;color:#dcd4cc!important;font-size:.85rem!important}
+.er-track-status.is-bad{color:#ff8c84!important}
+.er-sale__fine{margin:.55rem 0 0!important;color:#827a73!important;font-size:.74rem!important}
+.er-act{margin-top:1.5rem;border-top:1px solid rgba(244,239,230,.14)}
+.er-act__secondary{margin-top:.65rem;background:#171311;color:#f4efe6;border:1px solid rgba(244,239,230,.16)}
+.er-direct__foot{max-width:760px;margin:0 auto}
+@media(min-width:720px){
+  .er-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .er-choice{min-height:200px;padding:1.5rem}
+  .er-sale{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;gap:1.6rem}
+}
