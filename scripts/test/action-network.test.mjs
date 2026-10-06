@@ -132,36 +132,28 @@ async function gateway(page) {
   return { html, cfg };
 }
 
-test('the gateways never play sound or film on their own, and score dark to light', async () => {
+test('the Heal gateway never autoplays and still scores dark to light', async () => {
   const js = await read('js/gateway.js');
   assert.match(js, /var soundOn = false;/);
   assert.match(js, /if \(v && !quiet && !saveData\)/);
-  assert.match(js, /var sec = \$\(act\), key = sec && sec\.getAttribute\("data-score"\);/);
-  const scores = { 'heal-the-3rd-world.html': ['deep', 'heal'], 'end-racism.html': ['feds', 'pullup'] };
-  for (const [page, [dark, light]] of Object.entries(scores)) {
-    const { html, cfg } = await gateway(page);
-    assert.doesNotMatch(html, /\bautoplay\b/, page);
-    assert.match(html, new RegExp(`id="look" data-score="${dark}"`), page);
-    assert.match(html, new RegExp(`id="do" data-score="${light}"`), page);
-    assert.match(html, new RegExp(`id="enter" data-score="${light}"`), page);
-    /* every song an act or a button names exists, and plays from this site */
-    const named = [...html.matchAll(/data-(?:score|play)="([a-z]+)"/g)].map((m) => m[1]).filter((k) => k !== 'listen');
-    for (const k of named) assert.match(cfg.songs[k]?.src || '', /^assets\/audio\//, `${page}: ${k}`);
-    assert.ok(cfg.songs[cfg.listen], `${page}: listen default`);
-  }
+  const { html, cfg } = await gateway('heal-the-3rd-world.html');
+  assert.doesNotMatch(html, /\bautoplay\b/);
+  assert.match(html, /id="look" data-score="deep"/);
+  assert.match(html, /id="do" data-score="heal"/);
+  assert.match(html, /id="enter" data-score="heal"/);
+  const named = [...html.matchAll(/data-(?:score|play)="([a-z]+)"/g)].map((m) => m[1]).filter((k) => k !== 'listen');
+  for (const k of named) assert.match(cfg.songs[k]?.src || '', /^assets\/audio\//, k);
+  assert.ok(cfg.songs[cfg.listen]);
 });
 
-test('End Racism features its own campaign, its cover whole, and no gated track', async () => {
-  const { html, cfg } = await gateway('end-racism.html');
-  assert.equal(cfg.feature, 'end-racism');
-  /* read directly, so a paused or closed campaign keeps its page */
-  assert.match(await read('js/gateway.js'), /return rpc\("action_campaign_public", \{ p_slug: FEATURE \}\)/);
-  /* the supplied cover art is shown whole, never cropped */
+test('End Racism is a direct campaign funnel with a public preview and private paid master', async () => {
+  const html = await read('end-racism.html');
+  assert.match(html, /href="action\/\?c=end-racism"/);
   assert.match(html, /src="assets\/img\/cia-mind-control-cover\.jpg"/);
-  assert.doesNotMatch(await read('css/gateway.css'), /\.gw-cover[^{]*img \{[^}]*object-fit:\s*cover/);
-  /* the earned record never plays here: only the album player can spend a play */
-  assert.doesNotMatch(html, /niggy|mcc-gated-audio/i);
+  assert.match(html, /assets\/audio\/niggy-nigg-preview\.mp3/);
   assert.match(html, /href="album\.html\?album=cia-mind-control"/);
+  assert.doesNotMatch(html, /mcc-gated-audio|niggy-nigg\/niggy-nigg\.mp3/);
+  assert.doesNotMatch(html, /js\/gateway\.js/);
 });
 
 test('the albums keep working and only a record with a cause grows a door', async () => {
