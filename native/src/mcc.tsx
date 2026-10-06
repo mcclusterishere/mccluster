@@ -16,7 +16,7 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { isDefinitiveAuthFailure, isFresh, persistableSession, singleFlight } from './sessionPolicy';
+import { isDefinitiveAuthFailure, isFresh, persistableSession, sessionChangedError, singleFlight } from './sessionPolicy';
 
 export const SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
@@ -188,13 +188,14 @@ export function MccProvider({ children }: { children: ReactNode }) {
               body: { refresh_token: current.refresh_token },
             }),
           );
-          /* signed out (or signed in again) while this was in flight */
-          if (sessionRef.current !== current) return sessionRef.current;
+          /* signed out, or signed in as someone else, while this was in
+             flight: the waiting requests belong to the old session */
+          if (sessionRef.current !== current) throw sessionChangedError();
           await commitSession(next);
           if (next?.user) setUser(next.user);
           return next;
         } catch (error) {
-          if (sessionRef.current !== current) return sessionRef.current;
+          if (sessionRef.current !== current) throw (error as any)?.code === 'session_changed' ? error : sessionChangedError();
           if (!isDefinitiveAuthFailure(error)) throw error;
           await commitSession(null);
           setUser(null);

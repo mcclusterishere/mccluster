@@ -38,15 +38,50 @@ export function persistableSession(session: any): StoredSession | null {
 }
 
 /**
- * Whether a failed refresh or user read means the session is dead. Only an
- * answer from the auth server saying so counts: 400 (invalid or reused
- * refresh token), 401/403 (rejected token) or 404 (the user no longer
- * exists). Being offline, a timeout, a 5xx or a 429 says nothing about the
- * session, so the member stays signed in and the next request tries again.
+ * Auth error codes that mean the session itself is gone. Supabase Auth names
+ * the condition in `error_code` (older servers: `error`), and its spec warns
+ * that the HTTP status for one condition can vary (400 and 422 are used
+ * interchangeably), so the code is checked first.
+ */
+const DEAD_SESSION_CODES = new Set([
+  'refresh_token_not_found',
+  'refresh_token_already_used',
+  'session_not_found',
+  'session_expired',
+  'user_not_found',
+  'user_banned',
+  'bad_jwt',
+  'no_authorization',
+  'invalid_grant',
+]);
+
+/**
+ * Whether a failed refresh or user read means the session is dead: a dead
+ * session error code, or failing that an answer of 400, 401, 403, 404 or 422
+ * from the auth server. Being offline, a timeout, a 5xx or a 429 says nothing
+ * about the session, so the member stays signed in and the next request
+ * tries again.
  */
 export function isDefinitiveAuthFailure(error: any): boolean {
+  const data = error && typeof error.data === 'object' ? error.data : null;
+  const code = String(
+    (data && (data.error_code || (typeof data.code === 'string' ? data.code : '') || data.error)) || '',
+  ).toLowerCase();
+  if (DEAD_SESSION_CODES.has(code)) return true;
   const status = Number(error && error.status);
-  return status === 400 || status === 401 || status === 403 || status === 404;
+  return status === 400 || status === 401 || status === 403 || status === 404 || status === 422;
+}
+
+/**
+ * Thrown to a request whose session was replaced while it waited (signed out,
+ * or signed in as someone else). An action started under one account must
+ * never continue under another. It carries no HTTP status: nothing reached
+ * the server.
+ */
+export function sessionChangedError(): Error {
+  return Object.assign(new Error('Your account changed while this was loading. Try again.'), {
+    code: 'session_changed',
+  });
 }
 
 /** A session that will still be valid for at least another minute. */

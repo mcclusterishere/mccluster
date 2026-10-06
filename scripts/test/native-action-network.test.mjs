@@ -174,11 +174,23 @@ test('the keychain holds only tokens, expiry and the member’s id and email', a
 });
 
 test('only a definitive auth answer ends the session; offline and server errors keep it', async () => {
-  const { isDefinitiveAuthFailure, isFresh } = await import('../../native/src/sessionPolicy.ts');
-  for (const status of [400, 401, 403, 404]) assert.equal(isDefinitiveAuthFailure({ status }), true, String(status));
+  const { isDefinitiveAuthFailure, isFresh, sessionChangedError } = await import('../../native/src/sessionPolicy.ts');
+  for (const status of [400, 401, 403, 404, 422]) assert.equal(isDefinitiveAuthFailure({ status }), true, String(status));
   for (const error of [new TypeError('Network request failed'), { status: 500 }, { status: 503 }, { status: 429 }, {}, null]) {
     assert.equal(isDefinitiveAuthFailure(error), false, JSON.stringify(error));
   }
+  /* Supabase Auth names the condition; its status for one condition varies */
+  for (const code of ['refresh_token_not_found', 'refresh_token_already_used', 'session_not_found', 'session_expired', 'user_not_found', 'bad_jwt']) {
+    assert.equal(isDefinitiveAuthFailure({ status: 409, data: { code: 409, error_code: code, msg: 'x' } }), true, code);
+  }
+  assert.equal(isDefinitiveAuthFailure({ status: 418, data: { error: 'invalid_grant' } }), true, 'older servers put the code in `error`');
+  assert.equal(isDefinitiveAuthFailure({ status: 429, data: { code: 429, error_code: 'over_request_rate_limit' } }), false, 'rate limited is not dead');
+  assert.equal(isDefinitiveAuthFailure({ status: 504, data: { error_code: 'request_timeout' } }), false);
+  /* a request cancelled because the account changed never reached the server */
+  const changed = sessionChangedError();
+  assert.equal(changed.code, 'session_changed');
+  assert.equal(changed.status, undefined, 'no status, so it never triggers a sign-out or a proof-upload discard');
+  assert.equal(isDefinitiveAuthFailure(changed), false);
   const now = 1_800_000_000;
   assert.equal(isFresh({ expires_at: now + 61 }, now), true);
   assert.equal(isFresh({ expires_at: now + 60 }, now), false, 'within a minute of expiry counts as expired');
@@ -207,6 +219,8 @@ test('the M Account provider applies those rules', async () => {
   assert.match(auth, /const refresh = useMemo\(\s*\(\) =>\s*singleFlight\(/, 'refresh is single-flight');
   const refresh = auth.slice(auth.indexOf('const refresh = useMemo('), auth.indexOf('const freshSession'));
   assert.match(refresh, /if \(!isDefinitiveAuthFailure\(error\)\) throw error;/, 'a transient refresh failure is reported, not turned into a sign-out');
+  assert.doesNotMatch(refresh, /return sessionRef\.current/, 'a request waiting on a refresh never continues under a session it did not start with');
+  assert.match(refresh, /if \(sessionRef\.current !== current\) throw sessionChangedError\(\);/);
   const boot = auth.slice(auth.indexOf('let restored = await storedSession();'), auth.indexOf('if (alive) setReady(true);'));
   assert.match(boot, /if \(restored\) \{\s*setSession\(restored\);/, 'a stored session signs the member in immediately, offline included');
   assert.match(boot, /if \(alive && isDefinitiveAuthFailure\(error\)\) \{\s*await commitSession\(null\);/, 'launch only ends the session on a definitive answer');
