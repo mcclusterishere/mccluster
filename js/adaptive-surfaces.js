@@ -45,7 +45,10 @@
     }catch(_){}
     var map=byId(local);
     var selected=decision&&decision.ok&&Array.isArray(decision.candidates)
-      ? decision.candidates.map(function(c){return map[String(c.id)];}).filter(Boolean)
+      ? decision.candidates.map(function(c){
+          var localCandidate=map[String(c.id)];
+          return localCandidate ? Object.assign({},localCandidate,{position:Number.isFinite(Number(c.position))?Number(c.position):localCandidate.position}) : null;
+        }).filter(Boolean)
       : local.slice(0,maxItems);
     if(!selected.length)selected=local.slice(0,maxItems);
     return {decision:decision&&decision.ok?decision:null,candidates:selected,fallback:!(decision&&decision.ok)};
@@ -103,16 +106,16 @@
   }
   function globalCandidates(){
     return [
-      {id:"music",kind:"destination",eyebrow:"Listen",label:"Music",sub:"Play the catalog, watch the music videos, keep your rotation.",href:"listen.html",meta:{domain:"music"}},
-      {id:"action",kind:"destination",eyebrow:"Do something",label:"Action Network",sub:"Pick an action and turn attention into a mission.",href:"action/",meta:{domain:"civic"}},
-      {id:"client",kind:"destination",eyebrow:"Build something",label:"Work with McCluster",sub:"Web, media, music and operating systems for your project.",href:"hire.html",meta:{domain:"client"}}
+      {id:"music",kind:"destination",eyebrow:"Listen",label:"Music",sub:"Play the catalog, watch the music videos, keep your rotation.",href:"listen.html",meta:{domain:"music",topic:"music discovery"}},
+      {id:"action",kind:"destination",eyebrow:"Do something",label:"Action Network",sub:"Pick an action and turn attention into a mission.",href:"action/",meta:{domain:"action",topic:"missions"}},
+      {id:"client",kind:"destination",eyebrow:"Build something",label:"Work with McCluster",sub:"Web, media, music and operating systems for your project.",href:"hire.html",meta:{domain:"client",topic:"services"}}
     ];
   }
   function musicCandidates(){
     return [
-      {id:"here-album",kind:"music",eyebrow:"Keep listening",label:"I AM HERE",sub:"Six tracks in the album player.",href:"album.html?album=here",meta:{domain:"music"}},
-      {id:"here-videos",kind:"music",eyebrow:"Watch",label:"Music Videos",sub:"The records as full-screen music videos with live lyrics.",href:"music-videos.html?album=here",meta:{domain:"music"}},
-      {id:"creator-studio",kind:"creator",eyebrow:"Make your own",label:"Creator Studio",sub:"Release music into the same network people listen in.",href:"creator.html",meta:{domain:"artist"}}
+      {id:"here-album",kind:"music",eyebrow:"Keep listening",label:"I AM HERE",sub:"Six tracks in the album player.",href:"album.html?album=here",meta:{domain:"music",topic:"album"}},
+      {id:"here-videos",kind:"music",eyebrow:"Watch",label:"Music Videos",sub:"The records as full-screen music videos with live lyrics.",href:"music-videos.html?album=here",meta:{domain:"music",topic:"music video"}},
+      {id:"creator-studio",kind:"creator",eyebrow:"Make your own",label:"Creator Studio",sub:"Release music into the same network people listen in.",href:"creator.html",meta:{domain:"artist",topic:"creator tools"}}
     ];
   }
   async function rank(surface,items,toCandidate,opts){
