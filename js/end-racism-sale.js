@@ -12,6 +12,10 @@
     if(!r.ok)throw new Error(out&&out.error||"Request failed");
     return out;
   }
+  var actionGo=doc.getElementById("erActionGo");
+  if(actionGo)actionGo.addEventListener("click",function(){
+    if(root.MCC_TRACK)root.MCC_TRACK("end_racism_action_open",{campaign:"end-racism"});
+  });
   if(preview)preview.addEventListener("play",function(){
     if(root.MCC_TRACK)root.MCC_TRACK("end_racism_track_preview",{offer:OFFER});
   },{once:true});
