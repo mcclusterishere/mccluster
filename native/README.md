@@ -27,8 +27,12 @@ are wired:
 three minutes in the background, which is why it is called on every load
 rather than only when the lock screen is visible.
 
-The app asks for **no microphone permission** — `recordAudioAndroid: false`
-on the expo-audio plugin, because HERE plays audio and never records it.
+The music player never records: `recordAudioAndroid: false` on the
+expo-audio plugin. The one microphone declaration belongs to mission proof.
+iOS will not let the camera record video without `NSMicrophoneUsageDescription`,
+so expo-image-picker's `microphonePermission` carries a purpose string, and its
+plugin adds `RECORD_AUDIO` to the Android manifest as a side effect. Nothing
+records sound except a video the member chooses to capture as proof.
 
 ## Shape
 

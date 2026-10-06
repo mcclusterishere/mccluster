@@ -31,7 +31,7 @@ to the website; those are later shipping slices, not Action Network Phase 1.
 | Privacy policy URL | 5.1.1 | Required | **Met.** `privacy.html`. |
 | Privacy labels / Data safety form | App Store Connect | Play Console | **To fill.** The answers follow `privacy.html`: account, email, posts, photos/video you upload, approximate location from IP, no sale, no ads. |
 | Sign in with Apple | 4.8 | — | **Required if** the app offers Google, Facebook or X sign-in. The web shows whichever providers Supabase has switched on; the app must add Apple whenever it adds any of them. |
-| Camera and microphone purpose strings | 5.1.1 | Runtime permissions | **Camera/photos configured.** Native proof capture has explicit camera/photo purpose strings. ImagePicker keeps `microphonePermission: false`; microphone/record-audio permissions wait for live video. |
+| Camera and microphone purpose strings | 5.1.1 | Runtime permissions | **Configured for proof.** Camera, photo and microphone purpose strings are declared through expo-image-picker. The microphone is declared because iOS needs `NSMicrophoneUsageDescription` to record video proof, and the plugin then adds `RECORD_AUDIO` on Android. Live video (phase 3) will add its own camera and microphone use. |
 | Payments for digital goods | 3.1.1 | Play billing | **Watch.** Music sales and paid tiers inside the iOS app must use in-app purchase, or be left out of the app. Physical merch can keep Stripe. No recurring billing is planned. |
 | Live video | 1.2 | UGC | **Met in the design.** Only the owner and accepted fellows broadcast, the desk can end any broadcast, viewers can report. |
 
