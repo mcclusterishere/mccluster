@@ -119,6 +119,9 @@ export default function GroupScreen() {
           <Back onPress={() => router.back()} />
           <Text style={s.kicker}>Action Network</Text>
           <Text style={s.title}>SIGN IN TO OPEN THIS GROUP.</Text>
+          <Pressable onPress={() => router.replace({ pathname: '/profile', params: { returnTo: `/group/${slug}` } } as any)} style={s.primary}>
+            <Text style={s.primaryText}>Sign in to continue</Text>
+          </Pressable>
         </View>
       </View>
     );
