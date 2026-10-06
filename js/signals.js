@@ -18,8 +18,6 @@
    ============================================================ */
 (function () {
   "use strict";
-  var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
-  var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var VID = "mcc_vid", SEEN = "mcc_seen_days";
 
   function vid() {
@@ -36,19 +34,22 @@
   /* Anything that would be a wasted round trip gets dropped here rather
      than on the server: the same signal twice in one session tells the
      desk nothing it did not already know. */
+  /* WHERE A SIGNAL GOES. These used to be posted to a crm_signals table that
+     does not exist in the database: every page that loads this file sent a
+     request that came back 404, and no signal was ever kept. They now ride
+     the site's own first-party event stream (js/analytics.js, MCC_TRACK),
+     the same place every other visitor action is recorded, as a
+     "desk_signal" event. No second store, no separate CRM table: the desk
+     and Forensics read them from the events everyone else already reads.
+     Pages without the analytics script simply drop them. */
   var sent = {};
   function log(kind, detail, weight) {
     var k = kind + "|" + (detail || "");
     if (sent[k]) return;
     sent[k] = 1;
     try {
-      fetch(SB + "/rest/v1/crm_signals", {
-        method: "POST", keepalive: true,
-        headers: { "Content-Type": "application/json", apikey: KEY,
-                   Authorization: "Bearer " + KEY, Prefer: "return=minimal" },
-        body: JSON.stringify({ visitor: vid(), kind: kind,
-                               detail: (detail || "").slice(0, 180), weight: weight || 1 }),
-      }).catch(function () {});
+      if (typeof window.MCC_TRACK !== "function") return;
+      window.MCC_TRACK("desk_signal", { kind: kind, detail: (detail || "").slice(0, 180), weight: weight || 1, visitor: vid() });
     } catch (e) {}
   }
 

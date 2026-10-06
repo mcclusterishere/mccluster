@@ -29,8 +29,22 @@
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && !stored()) apply();
   });
+  /* A locked page cannot change coat, so it must not offer to. The music
+     rooms are locked dark and still showed a "Light or dark" button that
+     flip() could never move (apply() always prefers the lock): people tapped
+     it again and again. dual is false under a lock, and the button is put
+     away wherever it appears. */
+  if (LOCK) {
+    var hideFlip = function () {
+      var b = document.getElementById("themeFlip");
+      if (b) b.hidden = true;
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hideFlip);
+    else hideFlip();
+  }
   window.MCC_THEME = {
-    dual: true,
+    dual: !LOCK,
+    locked: LOCK || null,
     get: function () { return document.documentElement.getAttribute("data-theme") || "dark"; },
     set: function (t) {
       try { t ? localStorage.setItem(KEY, t) : localStorage.removeItem(KEY); } catch (e) {}

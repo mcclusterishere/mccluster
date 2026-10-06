@@ -110,8 +110,21 @@
     return Boolean(window.MCC_SUPA && window.MCC_SUPA.url && window.MCC_SUPA.key && window.MCC_SUPA.token);
   }
 
+  /* NOT PROVISIONED IS AN ANSWER, NOT A RETRY. When the listener_state table
+     is not there (PostgREST answers 404 / PGRST205), every signed-in page
+     was sending a read and a write per song that could only fail. One 404
+     parks the sync on this device for a day; once the table exists the next
+     day's first call finds it and the mirror resumes on its own. */
+  var PARK = "mcc_pocket_remote_parked";
+  function parked() {
+    try { return Number(localStorage.getItem(PARK) || 0) > Date.now(); } catch (e) { return false; }
+  }
+  function park() {
+    try { localStorage.setItem(PARK, String(Date.now() + 24 * 3600 * 1000)); } catch (e) {}
+  }
+
   function remote(method, body, keepalive) {
-    if (!signedIn()) return Promise.resolve(null);
+    if (!signedIn() || parked()) return Promise.resolve(null);
     return window.MCC_SUPA.token().then(function (tok) {
       if (!tok) return null;
       var uid = window.MCC_SUPA.uid && window.MCC_SUPA.uid();
@@ -131,6 +144,7 @@
         opts.body = JSON.stringify({ profile_id: uid, state: body });
       }
       return fetch(url, opts).then(function (r) {
+        if (r.status === 404) { park(); return null; }
         if (!r.ok) return null;
         return r.status === 204 ? null : r.json().catch(function () { return null; });
       });

@@ -69,7 +69,16 @@
       .then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); })
       .then(function (buf) {
         if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-        return new Promise(function (res, rej) { actx.decodeAudioData(buf, res, rej); });
+        /* Modern browsers ALSO return a promise from decodeAudioData, and
+           reject it when the bytes are not audio, on top of calling the
+           error callback. That returned promise was dropped on the floor,
+           so a file the browser cannot decode surfaced as an unhandled
+           "Unable to decode audio data" rejection although this chain
+           already handles it. Catch the returned one too. */
+        return new Promise(function (res, rej) {
+          var p = actx.decodeAudioData(buf, res, rej);
+          if (p && typeof p.catch === "function") p.catch(rej);
+        });
       })
       .then(function (ab) {
         var ch = ab.getChannelData(0), per = Math.floor(ch.length / BARS);

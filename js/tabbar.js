@@ -256,6 +256,18 @@
   };
   var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[location.pathname.split("/").pop()] || "") + '"]');
   if (hereTab) hereTab.classList.add("is-here");
+  /* The tab you are already on: a tap used to reload the same page (slow in
+     the in-app browsers, and it lost the place), so people tapped it again.
+     It does what every phone app's current tab does: back to the top. */
+  dock.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var to;
+    try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
+    if (to.origin !== location.origin || to.pathname !== location.pathname) return;
+    e.preventDefault();
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
+  });
   var HOME_BAR = dock.innerHTML;
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };

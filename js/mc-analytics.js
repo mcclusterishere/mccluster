@@ -200,10 +200,30 @@
     if (!f || f.tagName !== "FORM") return;
     track("form_submit", { id: (f.id || "").slice(0, 80), method: (f.method || "get").toLowerCase() });
   }, true);
+  /* The message is what makes an error actionable; without it every error
+     on a tenant site looked the same in Forensics. Origin says whether it is
+     the site's own code or something injected into the page (in-app
+     browsers, extensions) or an opaque cross-origin "Script error.". */
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb/i;
+  function errorOrigin(file, msg) {
+    file = String(file || ""); msg = String(msg || "");
+    if (/^script error\.?$/i.test(msg) && !file) return "opaque";
+    if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url):/i.test(file) || INJECTED.test(msg)) return "injected";
+    try { if (file && new URL(file, location.href).origin !== location.origin) return "third_party"; } catch (_) {}
+    return "site";
+  }
   addEventListener("error", function (e) {
-    track("js_error", { file: String(e.filename || "").slice(-160), line: e.lineno || null, col: e.colno || null });
+    track("js_error", {
+      msg: String((e && e.message) || "").slice(0, 200),
+      file: String(e.filename || "").slice(-160), line: e.lineno || null, col: e.colno || null,
+      origin: errorOrigin(e.filename, e.message)
+    });
   });
-  addEventListener("unhandledrejection", function () { track("js_rejection", {}); });
+  addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    var msg = String((r && (r.message || r)) || "").slice(0, 200);
+    track("js_rejection", { msg: msg, origin: INJECTED.test(msg) ? "injected" : "site" });
+  });
   addEventListener("pagehide", function () { track("page_leave", {}); flush(true); });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") flush(true);

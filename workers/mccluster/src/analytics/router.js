@@ -500,25 +500,30 @@ export async function businessSnapshot(env, windowSpec = null) {
     since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null),
     since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null),
 
-    sbCountFiltered(env, 'events', 'id', {}, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', {}, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.page_view' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null),
+    /* Event counts read events_lean, the narrow copy kept in step by a
+       trigger (same id, name and at). Twenty exact counts in parallel over
+       the full events rows (props, device and edge blobs, ~1.4 KB each)
+       hit the 8 s statement limit, answered this route with a 502 and
+       loaded the database for every visitor while they ran. */
+    sbCountFiltered(env, 'events_lean', 'id', {}, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', {}, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null),
 
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.music_full_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events', 'id', { name: 'eq.music_complete' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null),
+    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, null, 'at'),
+    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null),
 
     sbCount(env, 'music_creator_profiles', 'm_uid'),
     since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null),
