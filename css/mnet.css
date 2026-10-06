@@ -768,3 +768,19 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 @media(min-width:700px){
   .mn__capture-preview{aspect-ratio:16/10}
 }
+
+/* Clips: paid music clipping (js/mnet-clips.js). Phone first; wider screens only add room. */
+.mn__clipstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin: .5rem 0; }
+.mn__clipstats div { display: grid; gap: .1rem; padding: .6rem; border-radius: .6rem; background: rgba(127, 127, 127, .12); min-width: 0; }
+.mn__clipstats b { font-size: clamp(.9rem, 3.6vw, 1.1rem); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.mn__clipstats small { opacity: .75; }
+.mn__cliplist { margin: .5rem 0; padding-left: 1.1rem; display: grid; gap: .35rem; overflow-wrap: anywhere; }
+.mn__cliplist code { font-size: .95em; }
+.mn__cliprow { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; margin-top: .5rem; }
+.mn__cliprow .mn__input, .mn__clipclaimed .mn__input { width: 100%; min-width: 0; font-size: max(16px, 1rem); }
+.mn__clipsong { font-weight: 600; margin: .1rem 0 .4rem; }
+.mn__clipclaimed { border-top: 1px solid rgba(127, 127, 127, .25); margin-top: .75rem; padding-top: .75rem; display: grid; gap: .4rem; min-width: 0; }
+@media (min-width: 40rem) {
+  .mn__cliprow { grid-template-columns: minmax(0, 10rem) minmax(0, 1fr) auto; align-items: center; }
+  .mn__cliprow:has(select + input + select) { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) minmax(0, 11rem) auto; }
+}

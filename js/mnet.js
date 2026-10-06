@@ -1023,14 +1023,15 @@
   function setView(name) {
     state.currentView = name;
     track("mnet_view", { view:name });
-    ["live","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
-      var ids={live:"mnLiveView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+    ["live","clips","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
     });
     moveThumb(true);
     if(name==="live"&&window.MCC_LIVE&&window.MCC_LIVE.refresh)window.MCC_LIVE.refresh();
+    if(name==="clips"&&window.MCC_CLIPS)window.MCC_CLIPS.load();
     if(name==="missions")loadMissions();
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
@@ -1444,7 +1445,7 @@
     var slug = null, view = null;
     try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); } catch (_) {}
     /* ?view=missions opens a tab by name (the Action Record lives there) */
-    if (!slug && view && /^(live|feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
+    if (!slug && view && /^(live|clips|feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
     if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) return;
     groups.target = slug;
     groups.seg = "explore";
@@ -1704,10 +1705,12 @@
     loadActionRecord();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
     return Promise.all([
-      sbRest("action_missions?status=eq.open"+campaignFilter+"&select="+MISSION_FIELDS+"&order=created_at.desc"),
+      /* select=* carries kind, so clip campaigns can be left to the Clips tab */
+      sbRest("action_missions?status=eq.open"+campaignFilter+"&select=*&order=created_at.desc"),
       sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
     ]).then(function(out){
-      missions.all=out[0]||[];missions.stats={};
+      /* clip campaigns are paid work and live in the Clips tab */
+      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
       setStatus($("mnMissionStatus"),"");
