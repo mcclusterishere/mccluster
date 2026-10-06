@@ -1,0 +1,365 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-10-06",
+  "purpose": "Canonical bibliography for McCluster Research Lab architecture, Audience Science, adaptive experience research, publication governance, and commercialization.",
+  "sources": [
+    {
+      "key": "brusilovsky-1996-adaptive-hypermedia",
+      "title": "Methods and Techniques of Adaptive Hypermedia",
+      "year": 1996,
+      "type": "paper",
+      "canonical_url": "https://www.researchgate.net/publication/227223782_Methods_and_Techniques_of_Adaptive_Hypermedia",
+      "topics": [
+        "adaptive-hypermedia",
+        "user-modeling"
+      ]
+    },
+    {
+      "key": "amazon-2003-item-to-item",
+      "title": "Amazon.com Recommendations: Item-to-Item Collaborative Filtering",
+      "year": 2003,
+      "type": "paper",
+      "canonical_url": "https://www.cs.umd.edu/~samir/498/Amazon-Recommendations.pdf",
+      "topics": [
+        "collaborative-filtering",
+        "recommendation"
+      ]
+    },
+    {
+      "key": "netzer-2008-hmm",
+      "title": "A Hidden Markov Model of Customer Relationship Dynamics",
+      "year": 2008,
+      "type": "paper",
+      "canonical_url": "https://pubsonline.informs.org/doi/10.1287/mksc.1070.0294",
+      "topics": [
+        "hidden-markov-model",
+        "relationship-state"
+      ]
+    },
+    {
+      "key": "koren-2009-matrix-factorization",
+      "title": "Matrix Factorization Techniques for Recommender Systems",
+      "year": 2009,
+      "type": "paper",
+      "canonical_url": "https://datajobs.com/data-science-repo/Recommender-Systems-%5BNetflix%5D.pdf",
+      "topics": [
+        "matrix-factorization",
+        "implicit-feedback"
+      ]
+    },
+    {
+      "key": "li-2010-linucb",
+      "title": "A Contextual-Bandit Approach to Personalized News Article Recommendation",
+      "year": 2010,
+      "type": "paper",
+      "canonical_url": "https://www.schapire.net/papers/www10.pdf",
+      "topics": [
+        "contextual-bandit",
+        "exploration-exploitation"
+      ]
+    },
+    {
+      "key": "covington-2016-youtube",
+      "title": "Deep Neural Networks for YouTube Recommendations",
+      "year": 2016,
+      "type": "paper",
+      "canonical_url": "https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/",
+      "topics": [
+        "candidate-generation",
+        "ranking",
+        "deep-learning"
+      ]
+    },
+    {
+      "key": "joachims-2016-unbiased-ltr",
+      "title": "Unbiased Learning-to-Rank with Biased Feedback",
+      "year": 2016,
+      "type": "paper",
+      "canonical_url": "https://arxiv.org/abs/1608.04468",
+      "topics": [
+        "counterfactual-learning",
+        "propensity",
+        "exposure-bias"
+      ]
+    },
+    {
+      "key": "kang-2018-sasrec",
+      "title": "Self-Attentive Sequential Recommendation",
+      "year": 2018,
+      "type": "paper",
+      "canonical_url": "https://arxiv.org/abs/1808.09781",
+      "topics": [
+        "sequential-recommendation",
+        "self-attention"
+      ]
+    },
+    {
+      "key": "google-2019-slateq",
+      "title": "SlateQ: A Tractable Decomposition for Reinforcement Learning with Recommendation Sets",
+      "year": 2019,
+      "type": "paper",
+      "canonical_url": "https://research.google/pubs/slateq-a-tractable-decomposition-for-reinforcement-learning-with-recommendation-sets/",
+      "topics": [
+        "reinforcement-learning",
+        "slate-optimization",
+        "long-term-value"
+      ]
+    },
+    {
+      "key": "google-2019-recsim",
+      "title": "RecSim: A Configurable Simulation Platform for Recommender Systems",
+      "year": 2019,
+      "type": "project",
+      "canonical_url": "https://research.google/blog/recsim-a-configurable-simulation-platform-for-recommender-systems/",
+      "topics": [
+        "simulation",
+        "recommender-systems"
+      ]
+    },
+    {
+      "key": "poulain-2020-music-diversity",
+      "title": "Measuring diversity of musical tastes",
+      "year": 2020,
+      "type": "paper",
+      "canonical_url": "https://www.sciencedirect.com/science/article/pii/S0306457319306296",
+      "topics": [
+        "music-diversity",
+        "herfindahl",
+        "exposure-effects"
+      ]
+    },
+    {
+      "key": "relisten-actr-2021",
+      "title": "Predicting Music Relistening Using a Cognitive Model",
+      "year": 2021,
+      "type": "paper",
+      "canonical_url": "https://arxiv.org/abs/2108.02138",
+      "topics": [
+        "relisten",
+        "act-r",
+        "music-behavior"
+      ]
+    },
+    {
+      "key": "smartphone-personality-meta-2023",
+      "title": "Associations between smartphone sensing and Big Five personality traits: meta-analysis",
+      "year": 2023,
+      "type": "paper",
+      "canonical_url": "https://pubmed.ncbi.nlm.nih.gov/36738137/",
+      "topics": [
+        "digital-traces",
+        "personality",
+        "inference-limits"
+      ]
+    },
+    {
+      "key": "hstu-2024",
+      "title": "Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations",
+      "year": 2024,
+      "type": "paper",
+      "canonical_url": "https://arxiv.org/abs/2402.17152",
+      "topics": [
+        "generative-recommendation",
+        "sequential-modeling",
+        "hstu"
+      ]
+    },
+    {
+      "key": "recsys-2026-semantic-ids",
+      "title": "ACM RecSys 2026 Session 1 — Semantic IDs & Generative Interfaces",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-1/",
+      "topics": [
+        "semantic-ids",
+        "generative-interfaces"
+      ]
+    },
+    {
+      "key": "recsys-2026-epistemic",
+      "title": "ACM RecSys 2026 Session 2 — Long-Horizon Sequential Recommendation and Epistemic Recommendation",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-2/",
+      "topics": [
+        "epistemic-recommendation",
+        "information-gain",
+        "sequential-recommendation"
+      ]
+    },
+    {
+      "key": "recsys-2026-user-agency",
+      "title": "ACM RecSys 2026 Session 3 — User Agency, Preference Memory and Inverse Theory of Mind",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-3/",
+      "topics": [
+        "user-agency",
+        "preference-memory",
+        "inverse-theory-of-mind"
+      ]
+    },
+    {
+      "key": "recsys-2026-conalign-agents",
+      "title": "ACM RecSys 2026 Session 4 — ConAlign, Self-Evolving Recommendation and Agentic Systems",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-4/",
+      "topics": [
+        "debiasing",
+        "unbiased-traffic",
+        "self-evolving-systems",
+        "agents"
+      ]
+    },
+    {
+      "key": "recsys-2026-network-experiments",
+      "title": "ACM RecSys 2026 Session 7 — Network-Interference-Aware Experimentation",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-7/",
+      "topics": [
+        "network-interference",
+        "experimentation",
+        "cluster-randomization"
+      ]
+    },
+    {
+      "key": "recsys-2026-genpage-unipinrec",
+      "title": "ACM RecSys 2026 Session 8 — Netflix GenPage and Pinterest UniPinRec",
+      "year": 2026,
+      "type": "conference-session",
+      "canonical_url": "https://recsys.acm.org/recsys26/session-8/",
+      "topics": [
+        "whole-page-generation",
+        "unified-retrieval-ranking",
+        "genpage"
+      ]
+    },
+    {
+      "key": "peng-2026-generative-ui",
+      "title": "Efficient Personalization of Generative User Interfaces",
+      "year": 2026,
+      "type": "paper",
+      "canonical_url": "https://arxiv.org/abs/2604.09876",
+      "topics": [
+        "generative-ui",
+        "pairwise-preference",
+        "interface-personalization"
+      ]
+    },
+    {
+      "key": "hhs-human-subjects",
+      "title": "Lesson 2: What is Human Subjects Research?",
+      "year": 2021,
+      "type": "regulatory-guidance",
+      "canonical_url": "https://www.hhs.gov/ohrp/education-and-outreach/online-education/human-research-protection-training/lesson-2-what-is-human-subjects-research/index.html",
+      "topics": [
+        "human-subjects",
+        "common-rule",
+        "research-governance"
+      ]
+    },
+    {
+      "key": "hhs-coded-information",
+      "title": "Coded Private Information or Biospecimens Used in Research, Guidance",
+      "year": 2018,
+      "type": "regulatory-guidance",
+      "canonical_url": "https://www.hhs.gov/ohrp/coded-private-information-or-biospecimens-used-research.html",
+      "topics": [
+        "coded-data",
+        "human-subjects",
+        "identifiability"
+      ]
+    },
+    {
+      "key": "orcid-add-works",
+      "title": "Add works to your ORCID record",
+      "year": 2026,
+      "type": "documentation",
+      "canonical_url": "https://support.orcid.org/hc/en-us/articles/360006973133-Add-works-to-your-ORCID-record",
+      "topics": [
+        "orcid",
+        "research-identity",
+        "publication"
+      ]
+    },
+    {
+      "key": "zenodo-github",
+      "title": "GitHub and Software",
+      "year": 2026,
+      "type": "documentation",
+      "canonical_url": "https://help.zenodo.org/docs/github/",
+      "topics": [
+        "zenodo",
+        "doi",
+        "software-archiving"
+      ]
+    },
+    {
+      "key": "zenodo-describe-software",
+      "title": "Describe software",
+      "year": 2026,
+      "type": "documentation",
+      "canonical_url": "https://help.zenodo.org/docs/github/describe-software/",
+      "topics": [
+        "zenodo",
+        "citation-cff",
+        "software-metadata"
+      ]
+    },
+    {
+      "key": "zenodo-json",
+      "title": "Zenodo JSON file",
+      "year": 2026,
+      "type": "documentation",
+      "canonical_url": "https://help.zenodo.org/docs/github/describe-software/zenodo-json/",
+      "topics": [
+        "zenodo",
+        "metadata",
+        "grants",
+        "related-identifiers"
+      ]
+    },
+    {
+      "key": "nsf-26-510",
+      "title": "NSF 26-510: SBIR/STTR Phase I, Phase II, Fast-Track Programs",
+      "year": 2026,
+      "type": "funding-opportunity",
+      "canonical_url": "https://www.nsf.gov/funding/opportunities/small-business-innovation-research-small-business-technology/nsf26-510/solicitation",
+      "topics": [
+        "nsf",
+        "sbir",
+        "sttr",
+        "commercialization",
+        "funding"
+      ]
+    },
+    {
+      "key": "nsf-hcc",
+      "title": "Human-Centered Computing (HCC)",
+      "year": 2026,
+      "type": "funding-program",
+      "canonical_url": "https://www.nsf.gov/funding/opportunities/hcc-human-centered-computing",
+      "topics": [
+        "nsf",
+        "hci",
+        "human-centered-computing",
+        "funding"
+      ]
+    },
+    {
+      "key": "nsf-scientific-instrumentation-2026",
+      "title": "NSF deploys $250 million to restart SBIR/STTR, including scientific instrumentation pilot",
+      "year": 2026,
+      "type": "funding-news",
+      "canonical_url": "https://www.nsf.gov/news/nsf-deploys-250-million-restart-small-business-innovation",
+      "topics": [
+        "nsf",
+        "experimental-platforms",
+        "instrumentation",
+        "funding"
+      ]
+    }
+  ]
+}
