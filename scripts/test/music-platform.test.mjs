@@ -6,7 +6,7 @@ const read=(p)=>readFile(p,'utf8');
 const json=async(p)=>JSON.parse(await read(p));
 
 test('I AM HERE has one canonical sequence across web, native and structured metadata', async()=>{
-  const expected=['Antisocial','Write a Song','Who Did The Shoot','Runway Walk','Lightroom','Here'];
+  const expected=['Antisocial','Write a Song','Runway Walk','Who Did The Shoot','Lightroom','Here'];
   const albums=await json('data/albums.json');
   const here=albums.albums.find(a=>a.slug==='here');
   assert.deepEqual(here.tracks.map(t=>t.title),expected);
@@ -59,7 +59,7 @@ test('gated single is one logical track: public preview, master only as an earne
   assert.ok(track,'gated track must remain in the canonical album catalog');
   assert.equal(track.gated.bucket,'mcc-gated-audio');
   assert.equal(track.gated.object,'niggy-nigg/niggy-nigg.mp3');
-  assert.equal(track.gated.access_mode,'account');
+  assert.equal(track.gated.access_mode,'purchase');
   assert.equal(track.gated.preview_visibility,'until_earned');
   assert.equal(track.gated.full_visibility,'earned_play');
   /* The closer stays last, but one completed listen to either earlier CIA
@@ -71,9 +71,8 @@ test('gated single is one logical track: public preview, master only as an earne
   const eligible=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
   const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
   assert.deepEqual(eligible,before,'only the other CIA Mind Control songs may unlock the closer');
-  assert.deepEqual(track.gated.listen_gate.any_of,eligible);
-  assert.equal(track.gated.listen_gate.minimum_completed,1);
-  assert.equal(track.gated.listen_gate.each_play_needs_a_fresh_listen,true);
+  assert.equal(track.gated.purchase_offer,'end-racism-niggy-nigg-full');
+  assert.equal(track.gated.listen_gate,undefined);
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
