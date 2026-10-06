@@ -44,6 +44,7 @@
           <span class="chip">Lead researcher · Matthew McCluster</span>
           <a class="chip" href="https://orcid.org/0009-0000-8988-8955" rel="me">ORCID · 0009-0000-8988-8955</a>
           <a class="chip" href="https://github.com/mcclusterishere/mccluster">GitHub · source + history</a>
+          <a class="chip" href="docs/research/ADAPTIVE-EXPERIENCE-RESEARCH-LOG-2026-10-06.md">Research log · 2026-10-06</a>
           <span class="chip">Zenodo-ready · CITATION.cff</span>
         </div>
       </div>
@@ -158,8 +159,8 @@
       fetch("data/research/references.json").then(function(r){if(!r.ok)throw new Error("source registry unavailable");return r.json();}).then(function(data){
         var rows=(data.sources||[]);
         host.innerHTML=rows.map(function(s){
-          var meta=[s.year,s.type].concat(s.topics||[]).filter(Boolean).join(" · ");
-          return '<article class="source"><b><a href="'+String(s.canonical_url||"#").replace(/"/g,"&quot;")+'" rel="noopener">'+String(s.title||s.key||"Source")+'</a></b><small>'+meta+'</small><p>'+String(s.relevance||"")+'</p></article>';
+          var meta=[s.year,s.category].filter(Boolean).join(" · ");
+          return '<article class="source"><b><a href="'+String(s.url||"#").replace(/"/g,"&quot;")+'" rel="noopener">'+String(s.title||s.citation_key||"Source")+'</a></b><small>'+meta+'</small><p>'+String(s.relevance||"")+'</p></article>';
         }).join("")||'<div class="source">No sources registered.</div>';
       }).catch(function(){host.innerHTML='<div class="source">Canonical source registry is temporarily unavailable.</div>';});
     }());
