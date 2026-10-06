@@ -89,8 +89,12 @@ function dateText(value?: string | null) {
     : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function ActionNetworkScreen() {
+export default function ActionNetworkScreen({ returnTo }: { returnTo?: string }) {
   const { ready, session } = useMcc();
+  const router = useRouter();
+  useEffect(() => {
+    if (ready && session && returnTo?.startsWith('/')) router.replace(returnTo as any);
+  }, [ready, session, returnTo, router]);
   if (!ready) return <Centered label="Opening the network…" />;
   if (!session) return <AuthGate />;
   return <SignedInNetwork />;
