@@ -56,6 +56,7 @@ create table if not exists public.research_projects (
 create table if not exists public.experience_experiments (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
+  surface_id uuid not null references public.experience_surfaces(id) on delete restrict,
   research_project_id uuid references public.research_projects(id) on delete set null,
   hypothesis text not null,
   primary_metric text not null,
@@ -82,6 +83,9 @@ create table if not exists public.experience_experiments (
   check (intent <> 'research' or research_review in ('pending','exempt','approved','denied')),
   check (status not in ('canary','running') or intent <> 'research' or research_review in ('exempt','approved'))
 );
+
+create index if not exists experience_experiments_surface_status
+  on public.experience_experiments (surface_id, status, started_at, ended_at);
 
 create table if not exists public.experience_experiment_arms (
   experiment_id uuid not null references public.experience_experiments(id) on delete cascade,
