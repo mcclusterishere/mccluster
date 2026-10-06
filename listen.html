@@ -67,6 +67,7 @@
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/adaptive-surfaces.css?v=__STAMP__">
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
@@ -107,6 +108,11 @@
       <button type="button" data-chip="tracks">Tracks</button>
       <button type="button" data-chip="saved">Saved</button>
     </div>
+
+    <section class="adaptive-wrap" aria-labelledby="musicNextK">
+      <p class="adaptive-wrap__k" id="musicNextK">Next in music</p>
+      <div class="adaptive-grid" id="musicNextStep" data-adaptive-auto="music" hidden></div>
+    </section>
 
     <section class="music-launch" aria-label="Creator Studio">
       <div>
@@ -192,6 +198,8 @@
 
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/experience.js?v=__STAMP__"></script>
+  <script src="js/adaptive-surfaces.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/listen-ledger.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>

@@ -1074,22 +1074,50 @@
     ["src", "med", "reel", "cmp", "ref", "utm_source", "utm_medium", "utm_content", "utm_campaign"].forEach(function (k) {
       if (q.get(k)) keep.set(k, q.get(k));
     });
-    return rpc("action_campaigns_live", {}, false).then(function (list) {
+    function candidateForCampaign(row, i) {
+      return {
+        id: "campaign:" + row.slug,
+        kind: "action_campaign",
+        position: i,
+        meta: {
+          slug: row.slug,
+          chapter: row.chapter && row.chapter.region || "",
+          people: Number(row.people || 0)
+        }
+      };
+    }
+    function renderCampaigns(entries, decision) {
       var ul = $("anIndexList");
       ul.textContent = "";
-      (list || []).forEach(function (c) {
+      entries.forEach(function (entry, i) {
+        var row = entry && entry.item ? entry.item : entry;
+        if (!row) return;
+        var candidate = entry && entry.candidate ? entry.candidate : candidateForCampaign(row, i);
         var li = el("li"), a = el("a");
         var qs = new URLSearchParams(keep);
-        qs.set("c", c.slug);
+        qs.set("c", row.slug);
         a.href = "/action/?" + qs.toString();
-        a.appendChild(el("small", null, c.kicker || (c.chapter && c.chapter.region) || "Campaign"));
-        a.appendChild(el("b", null, c.title));
-        a.appendChild(el("span", null, fmt(c.people) + (Number(c.people) === 1 ? " person" : " people") +
-          (c.chapter && c.chapter.line ? " · " + c.chapter.line : "")));
+        a.appendChild(el("small", null, row.kicker || (row.chapter && row.chapter.region) || "Campaign"));
+        a.appendChild(el("b", null, row.title));
+        a.appendChild(el("span", null, fmt(row.people) + (Number(row.people) === 1 ? " person" : " people") +
+          (row.chapter && row.chapter.line ? " · " + row.chapter.line : "")));
         li.appendChild(a);
         ul.appendChild(li);
+        if (root.MCC_ADAPTIVE && root.MCC_ADAPTIVE.instrument) {
+          root.MCC_ADAPTIVE.instrument(a, decision, candidate, "action.next_step");
+        }
       });
-      if (!(list || []).length) $("anIndexNote").textContent = "No campaign is open right now.";
+      if (!entries.length) $("anIndexNote").textContent = "No campaign is open right now.";
+    }
+    return rpc("action_campaigns_live", {}, false).then(function (list) {
+      list = list || [];
+      if (!list.length) { renderCampaigns([], null); return; }
+      if (!root.MCC_ADAPTIVE || typeof root.MCC_ADAPTIVE.rank !== "function") {
+        renderCampaigns(list, null); return;
+      }
+      return root.MCC_ADAPTIVE.rank("action.next_step", list, candidateForCampaign, { maxItems:list.length })
+        .then(function (out) { renderCampaigns(out.items, out.decision); })
+        .catch(function () { renderCampaigns(list, null); });
     });
   }
 

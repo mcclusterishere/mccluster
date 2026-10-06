@@ -67,6 +67,14 @@
 
   async function decide(surface, candidates, opts) {
     opts = opts || {};
+    var localCandidates = (candidates || []).map(cleanCandidate).filter(Boolean);
+    if (!root.MCC_ANALYTICS_CONTEXT || typeof root.MCC_ANALYTICS_CONTEXT.experienceContext !== "function") {
+      return {
+        ok: false, fallback: true,
+        candidates: localCandidates.slice(0, Math.max(1, Number(opts.maxItems) || localCandidates.length)),
+        error: "privacy gate not acknowledged"
+      };
+    }
     var ctx = context();
     var body = {
       surface: String(surface || ""),
@@ -78,7 +86,7 @@
         source: ctx.source || "direct",
         viewport: root.innerWidth + "x" + root.innerHeight
       },
-      candidates: (candidates || []).map(cleanCandidate).filter(Boolean)
+      candidates: localCandidates
     };
     if (!body.surface || !body.candidates.length) {
       return { ok: false, fallback: true, candidates: body.candidates, error: "surface and candidates required" };
