@@ -40,12 +40,12 @@
           "@type": "ItemList",
           "numberOfItems": 6,
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
-            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } }
+            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/music-videos.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } }
           ]
         }
       }
@@ -66,8 +66,19 @@
       src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
     @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
       src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
-    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
-    html, body { background: #0a0807; }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif;
+      --player-bg:#0a0807; --player-fg:#f4efe6; --player-surface:#17110f; }
+    html, body { background: var(--player-bg); color:var(--player-fg); }
+    .now { background: color-mix(in srgb, var(--player-bg) 94%, #000); color:var(--player-fg); }
+    .now__art { background:var(--player-surface); }
+    .now__service { display:inline-flex; align-items:center; justify-content:center; margin:.7rem auto 0; padding:.72rem 1rem;
+      border-radius:999px; background:var(--pulse); color:#fff; font:800 .78rem/1 var(--ui); letter-spacing:.04em;
+      text-decoration:none; box-shadow:0 12px 34px -16px color-mix(in srgb,var(--pulse) 80%,transparent); }
+    .now__service[hidden]{display:none}
+    .lyric-service-cta { color:#fff; text-decoration-color:var(--pulse); text-decoration-thickness:3px;
+      text-underline-offset:.16em; background:linear-gradient(180deg,transparent 62%,color-mix(in srgb,var(--pulse) 58%,transparent) 62%);
+      border-radius:.15em; padding:0 .04em; position:relative; z-index:8; pointer-events:auto; }
+    .lyric-service-cta:focus-visible { outline:2px solid #fff; outline-offset:3px; }
     /* the wash: a warm pulse-tinted gradient behind the shelf, so the page
        has depth even before a record fills the room */
     body.songpage { background:
@@ -93,7 +104,7 @@
        left the last line 13px under the deck. */
     [data-comments] { margin-bottom: 6rem; }
 
-    /* THE ROOM: the record's film behind everything */
+    /* THE ROOM: the record's music video behind everything */
     .room { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity 1.2s ease; }
     .room.is-on { opacity: 1; }
     .room video { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover;
@@ -104,7 +115,7 @@
 
        The scrim was ink at up to 0.96 and the film was dimmed to 0.6
        brightness to sit under it — correct on the dark coat, where pressing
-       play takes the house lights down and the record's film glows behind
+       play takes the house lights down and the record's music video glows behind
        the page. On bone that same wash dropped near-opaque ink over the
        whole page, so the moment a track started, light mode turned into
        dark mode: "I AM HERE" went near-black on near-black and the page
@@ -372,7 +383,7 @@
       color: var(--cream); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
     .now__down svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
     .now__from { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cream-dim); font-weight: 800; }
-    /* the art window: the record's film with the words inside its frame */
+    /* the art window: the record's music video with the words inside its frame */
     .now__art { position: relative; width: min(88vw, 24rem); flex: 1; min-height: 0; max-height: 52vh;
       margin: 0.9rem auto 0; border-radius: 24px; overflow: hidden; background: #14100c;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 26px 74px -20px rgba(0,0,0,0.95),
@@ -692,7 +703,7 @@
 
     <footer class="hr__foot">
       Every track written &amp; performed by Matthew McCluster · QT6KV catalogue.<br>
-      <a href="index.html">The film</a> ·
+      <a href="music-videos.html">Music videos</a> ·
       <a href="hire.html">Hire the agency</a> ·
       <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
       © 2026 Matthew McCluster · McCluster Corp.
@@ -715,6 +726,7 @@
     <div class="now__meta">
       <div class="now__title" id="nowTitle">·</div>
       <p class="now__by" id="nowBy">Matthew McCluster</p>
+      <a class="now__service" id="nowService" href="hire.html" hidden>Take the next step</a>
     </div>
     <div class="now__deck">
       <button class="now__seek" id="nowSeek" type="button" aria-label="Seek"><i><b id="nowSeekFill"></b></i></button>
@@ -775,6 +787,7 @@
   <script src="js/payments.js?v=__STAMP__"></script>
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/lyric-commerce.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
      THE I AM HERE PLAYER: the album's own Spotify.
@@ -855,7 +868,9 @@
           by: "The songs you hearted.", art: "assets/img/m-mark.png", queue: q2 } : null;
       }
       var pl = null;
-      (pls && pls.playlists || []).forEach(function (p) { if (p.slug === slug) pl = p; });
+      (pls && pls.playlists || []).forEach(function (p) {
+        if (p.slug === slug || (Array.isArray(p.legacy_slugs) && p.legacy_slugs.indexOf(slug) >= 0)) pl = p;
+      });
       if (!pl) return null;
       var q3 = (pl.tracks || []).map(function (r) { return findTrack(data, r); }).filter(Boolean);
       return q3.length ? { slug: pl.slug, name: pl.name, tag: pl.tag || (q3.length + " tracks"), by: pl.by || "", art: pl.art, queue: q3 } : null;
@@ -884,7 +899,8 @@
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
-        (t.video ? ' data-video="' + t.video + '"' : "") +
+        ((t.music_video || t.video) ? ' data-music-video="' + escAttr(t.music_video || t.video) + '"' : "") +
+        (t.experience ? ' data-experience="' + escAttr(JSON.stringify(t.experience)) + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
         (t.lyrics ? ' data-lyrics="' + t.lyrics + '"' : "") +
         (t.reel ? ' data-reel="' + t.reel + '"' : "") +
@@ -904,7 +920,7 @@
         /* The row used to carry an arrow out to a per-track page. Those
            pages are gone: their one real job was a licensing link that
            license.html already served, and the film they showed is the
-           lyric reel on films.html. The row plays the record, which is what
+           music-video surface on music-videos.html. The row plays the record, which is what
            a shelf is for. */
         "</li>";
     }
@@ -929,8 +945,9 @@
         head = { name: ct.title, tag: "A creator cut · the cutting room", by: ct.artist || "",
           art: ct.poster_url || "assets/img/m-mark.png" };
         queue = [{ title: ct.title, sub: ct.artist || "", src: ct.audio_url,
-          poster: ct.poster_url || "", lyrics: ct.lyrics ? "@inline" : "", reel: ct.reel ? "@inline" : "",
-          albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
+          poster: ct.poster_url || "", music_video: ct.music_video_url || ct.video_url || "",
+          lyrics: ct.lyrics ? "@inline" : (ct.lyrics_url || ""), reel: ct.reel ? "@inline" : "",
+          experience: ct.experience || {}, albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
       }
       if (!queue && PL) {
         var got = resolvePlaylist(data, pls, PL);
@@ -943,7 +960,12 @@
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
         head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
-        queue = alb.tracks.map(function (t) { return Object.assign({}, t, { albSlug: alb.slug, albName: "", art: alb.art }); });
+        queue = alb.tracks.map(function (t) {
+          return Object.assign({}, t, {
+            albSlug: alb.slug, albName: "", art: alb.art,
+            experience: Object.assign({}, alb.experience || {}, t.experience || {})
+          });
+        });
       }
       document.getElementById("albArt").src = head.art;
       if (window.MCC_ENV && !PL) window.MCC_ENV.mount(document.getElementById("albArt"), ALBUM);
@@ -1322,7 +1344,7 @@
     }
 
     /* THE POCKET HANDOFF. Everything the corner player on every other page
-       needs to rebuild this exact moment: the file, the film, the lyric
+       needs to rebuild this exact moment: the file, the music video, the lyric
        sheet, the title, the second, and whether it was still running when
        they walked. js/pip.js reads it; the album never shows the pocket
        itself, because the real player is right here. */
@@ -1338,7 +1360,8 @@
          when the listener comes back to it. */
       window.MCC_POCKET.save({
         src: row.getAttribute("data-preview-src") || row.getAttribute("data-src") || "",
-        video: row.getAttribute("data-video") || "",
+        music_video: row.getAttribute("data-music-video") || "",
+        video: row.getAttribute("data-music-video") || "", /* legacy pocket reader */
         poster: row.getAttribute("data-poster") || "",
         lyrics: row.getAttribute("data-lyrics") || "",
         title: row.getAttribute("data-title") || "",
@@ -1380,8 +1403,22 @@
       cur = to;
       deck.src = rows[cur].getAttribute("data-src");
       /* the track's own grade: chamber silk, glows and filament all follow */
-      document.documentElement.style.setProperty("--pulse",
-        rows[cur].getAttribute("data-pulse") || "#e5383b");
+      var exp = {};
+      try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {}
+      var theme = exp && exp.theme && typeof exp.theme === "object" ? exp.theme : {};
+      document.documentElement.style.setProperty("--pulse", theme.accent || rows[cur].getAttribute("data-pulse") || "#e5383b");
+      document.documentElement.style.setProperty("--player-bg", theme.background || "#0a0807");
+      document.documentElement.style.setProperty("--player-fg", theme.foreground || "#f4efe6");
+      document.documentElement.style.setProperty("--player-surface", theme.surface || "#17110f");
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.background || "#0a0807");
+      if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.bindPrimary(
+        document.getElementById("nowService"), exp,
+        { track: rows[cur].getAttribute("data-title"), album: ALBUM, surface: "album" }
+      );
+      if (window.MCC_TRACK) window.MCC_TRACK("player_theme_applied", {
+        track: rows[cur].getAttribute("data-title"), album: ALBUM,
+        accent: theme.accent || rows[cur].getAttribute("data-pulse") || "#e5383b"
+      });
       /* the license desk takes this record's name — one door, right here */
       var licEl = document.getElementById("ecoLic");
       if (licEl) {
@@ -1395,10 +1432,10 @@
       if (at) deck.currentTime = at;
       var art = rows[cur].getAttribute("data-art");
       if (art) document.querySelector(".deckbar__art").src = art;
-      /* the room takes the record: film, scenes, and words load with
+      /* the room takes the record: music video, scenes, and words load with
          the track; the whole page becomes the song's world */
       loadReel(rows[cur].getAttribute("data-reel") || "");
-      setRoom(rows[cur].getAttribute("data-video") || "", rows[cur].getAttribute("data-poster") || "");
+      setRoom(rows[cur].getAttribute("data-music-video") || "", rows[cur].getAttribute("data-poster") || "");
       loadLyrics(rows[cur].getAttribute("data-lyrics") || "");
       media(); paintRows(); paintDeck();
     }
@@ -1718,7 +1755,7 @@
       veil.classList.add("is-fading");
     }
 
-    /* ---------- THE ROOM: the page inside the record's film ---------- */
+    /* ---------- THE ROOM: the page inside the record's music video ---------- */
     var room = document.querySelector(".room"), roomFilm = el("roomFilm"), roomSrc = "";
     function setRoom(src, poster) {
       if (!roomFilm) return;
@@ -1939,14 +1976,25 @@
       if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
         timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || l.line || "" }; });
       }
+      var exp = {};
+      if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
+      var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album" };
+      nowLyr.textContent = "";
+      function addLine(text) {
+        var p = document.createElement("p");
+        if (window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context);
+        else p.textContent = text;
+        nowLyr.appendChild(p);
+      }
       if (timed) {
         lyrTimed = timed;
-        nowLyr.innerHTML = timed.map(function (l) { return "<p>" + l.content + "</p>"; }).join("");
+        timed.forEach(function (l) { addLine(l.content || ""); });
       } else if (j && j.plain) {
         lyrPlain = true;
-        nowLyr.innerHTML = j.plain.split("\n").map(function (l) { return "<p>" + l + "</p>"; }).join("");
+        j.plain.split("\n").forEach(addLine);
       } else {
-        nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
+        var none = document.createElement("p"); none.className = "now__none";
+        none.textContent = "The words land here soon."; nowLyr.appendChild(none);
       }
       lyrLines = Array.prototype.slice.call(nowLyr.querySelectorAll("p"));
       nowLyr.scrollTop = 0;
