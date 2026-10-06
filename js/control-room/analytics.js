@@ -230,12 +230,54 @@
       : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
     return'<div class="cra-kpis">'+core+scoped+'</div><div class="cra-grid">'+card("Traffic trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Page views and visitors in the selected timestamp window.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Page performance","Ranked by confidence-weighted attention, depth, action, return behavior and friction — not raw views alone.",pagePerformance(t.pages),true)+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+(S.rangeId==="24h"?err("hourly"):err("daily"))+err("totals");
   }
+  function scienceSignalLabel(v){
+    return String(v||"").split("_").map(function(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}).join(" ");
+  }
+  function audienceScience(){
+    if(sid()!==null)return"";
+    var d=S.data.audienceScience||{},t=d.totals||{},profiles=d.profiles||[],tracks=d.track_affinity||[],signals=d.signals||[],m=d.methodology||{};
+    if(S.errors.audienceScience)return err("audienceScience");
+    if(!d.version)return card("Audience science","Observed-behavior measurement is loading.","<p>Computing listener distributions and return behavior…</p>",true);
+    var summary='<div class="cra-kpis">'+
+      kpi("Profiled visitors",n(t.profiled_visitors||0))+
+      kpi("Music listeners",n(t.music_listeners||0))+
+      kpi("5+ start evidence",n(t.distribution_eligible||0))+
+      kpi("Returning listeners",n(t.returning_listeners||0))+
+      kpi("Action-engaged listeners",n(t.action_engaged_listeners||0))+
+      '</div>';
+    var signalRows=signals.map(function(x){return{label:scienceSignalLabel(x.signal),count:x.visitors};});
+    var affinity=tracks.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th class="n">Listeners</th><th class="n">Starts</th><th class="n">Avg attention share</th><th class="n">80%+ concentration</th></tr></thead><tbody>'+
+      tracks.slice(0,25).map(function(x){return'<tr><td><b>'+e(x.track||"—")+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.starts)+'</td><td class="n">'+e((Number(x.avg_listener_share||0)*100).toFixed(1)+"%")+'</td><td class="n">'+n(x.concentrated_listeners)+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No music attention distribution in this range.</p>';
+    var ledger=profiles.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Visitor</th><th class="n">Starts</th><th class="n">Tracks</th><th>Dominant track</th><th class="n">Dominance</th><th class="n">HHI</th><th class="n">Entropy</th><th class="n">Effective catalog</th><th class="n">Repeat</th><th class="n">Sessions</th><th class="n">Actions</th><th>Observed signals</th></tr></thead><tbody>'+
+      profiles.slice(0,60).map(function(x){var id=x.uid?"member "+String(x.uid).slice(0,8):"visitor "+String(x.visitor_key||"").replace(/^d:/,"").slice(0,10);return'<tr>'+
+        '<td><b>'+e(id)+'</b><small style="display:block;opacity:.65">'+e(x.source||"direct")+' · '+n(x.active_days)+' active day'+(Number(x.active_days)===1?"":"s")+'</small></td>'+
+        '<td class="n">'+n(x.music_starts)+'</td><td class="n">'+n(x.distinct_tracks)+'</td><td>'+e(x.dominant_track||"—")+'</td>'+
+        '<td class="n">'+e((Number(x.dominant_share||0)*100).toFixed(1)+"%")+'</td><td class="n">'+e(Number(x.hhi||0).toFixed(3))+'</td>'+
+        '<td class="n">'+e(Number(x.normalized_entropy||0).toFixed(3))+'</td><td class="n">'+e(Number(x.effective_catalog_size||0).toFixed(2))+'</td>'+
+        '<td class="n">'+e((Number(x.repeat_ratio||0)*100).toFixed(1)+"%")+'</td><td class="n">'+n(x.sessions)+'</td><td class="n">'+n(x.action_events)+'</td>'+
+        '<td>'+((x.behavior_signals||[]).length?(x.behavior_signals||[]).map(function(s){return'<span class="cra-chip">'+e(scienceSignalLabel(s))+'</span>';}).join(" "):'<span style="opacity:.6">Not enough evidence</span>')+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No visitor-level evidence in this range.</p>';
+    var formulas=m.formulas||{},method='<p><b>Measurement, not mind-reading.</b> '+e(m.note||"")+'</p>'+
+      '<p>'+e(m.exposure_warning||"")+'</p>'+
+      '<dl class="cra-dns"><div><dt>Dominance</dt><dd><code>'+e(formulas.dominant_share||"")+'</code></dd></div>'+
+      '<div><dt>HHI</dt><dd><code>'+e(formulas.hhi||"")+'</code></dd></div>'+
+      '<div><dt>Shannon entropy</dt><dd><code>'+e(formulas.shannon_entropy||"")+'</code></dd></div>'+
+      '<div><dt>Effective catalog</dt><dd><code>'+e(formulas.effective_catalog_size||"")+'</code></dd></div>'+
+      '<div><dt>Repeat</dt><dd><code>'+e(formulas.repeat_ratio||"")+'</code></dd></div></dl>'+
+      (d.model_readiness?'<p><b>Model stage:</b> '+e(d.model_readiness.stage||"measurement")+'. '+e(d.model_readiness.reason||"")+'</p>':"");
+    return card("Audience science","Transparent behavioral features for first-party visitors. No ideological or personality labels.",summary,true)+
+      card("Observed behavior signals","Signals can overlap. They describe what happened, not why.",rank(signalRows,"label","count"))+
+      card("Track affinity","Which songs dominate each listener’s observed attention.",affinity,true)+
+      card("Listener feature ledger","Distribution and return features behind every signal.",ledger,true)+
+      card("Method","The formulas and inference limits stay visible next to the result.",method,true);
+  }
   function audience(){
     var house=sid()===null;
     var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
     var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
     var trend=trafficTrend(S.data.traffic||{});
-    return scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
+    return (house?'<div class="cra-grid">'+audienceScience()+'</div>':"")+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
@@ -376,7 +418,7 @@
     return {
       traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
       funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
-      identity:{},business:null
+      identity:{},audienceScience:null,business:null
     };
   }
   function applyResult(x){
@@ -396,6 +438,7 @@
     else if(x.name==="content")S.data.content=v||[];
     else if(x.name==="contentEvents")S.data.contentEvents=v||[];
     else if(x.name==="identity")S.data.identity=v||{};
+    else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="business")S.data.business=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
@@ -445,7 +488,8 @@
       {name:"acquisition",run:function(){return rpc("analytics_acquisition",args);}},
       {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
       {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
-      {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}}
+      {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
+      {name:"audienceScience",run:function(){return site===null?S.request("/v1/analytics/audience-science?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}}
     ];
     return runLimited(tasks,3,function(x){
       if(q!==S.seq)return;
