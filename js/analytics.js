@@ -599,6 +599,28 @@ window.MCC_MODEL = (function () {
     reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} } };
 })();
 
+/* EXPERIENCE PLANE BOOTSTRAP.
+   Loaded after MCC_MODEL exists so its compatibility adapter can preserve the
+   synchronous API. Scripts load serially: decision client -> adapter -> first
+   three evidence-only surfaces. Failure leaves the legacy model untouched. */
+(function(){
+  if (!document || document.querySelector('script[data-mcc-experience-bootstrap]')) return;
+  var current = document.currentScript && document.currentScript.src || "";
+  var q = current.indexOf("?") >= 0 ? current.slice(current.indexOf("?")) : "";
+  var files = ["js/experience.js","js/mcc-model-adapter.js","js/adaptive-surfaces.js"];
+  function next(i) {
+    if (i >= files.length) return;
+    var s = document.createElement("script");
+    s.src = files[i] + q;
+    s.async = false;
+    s.setAttribute("data-mcc-experience-bootstrap", files[i]);
+    s.onload = function(){ next(i + 1); };
+    s.onerror = function(){ /* legacy MCC_MODEL remains authoritative */ };
+    document.head.appendChild(s);
+  }
+  next(0);
+})();
+
 /* ============================================================
    THE DEVICE'S OWN HISTORY, AND WHY IT IS KEPT HERE.
 
