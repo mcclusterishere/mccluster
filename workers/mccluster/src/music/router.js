@@ -84,6 +84,76 @@ async function rpc(env, name, body) {
   return data;
 }
 
+async function serviceRows(env, path) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`
+    }
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+  if (!res.ok) throw Object.assign(new Error('music data lookup failed'), { status: 502, detail: text.slice(0, 200) });
+  return Array.isArray(data) ? data : [];
+}
+
+async function musicCredits(request, env) {
+  const url = new URL(request.url);
+  const key = String(url.searchParams.get('key') || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]+:[a-z0-9-]+$/.test(key)) return fail(request, env, 'Invalid music key', 400);
+  const objects = await serviceRows(env,
+    `music_catalog_objects?catalog_key=eq.${encodeURIComponent(key)}&status=eq.active&select=id,catalog_key,track_title,artist_name&limit=1`
+  );
+  const object = objects[0];
+  if (!object) return reply(request, env, { ok: true, key, destinations: [] });
+
+  const links = await serviceRows(env,
+    `music_credit_destinations?music_object_id=eq.${encodeURIComponent(object.id)}&active=eq.true` +
+    '&select=id,organization_id,relationship_type,label,destination_url,material_connection,disclosure_text,starts_at,ends_at,metadata&order=created_at.asc'
+  );
+  const now = Date.now();
+  const active = links.filter((link) => {
+    const start = link.starts_at ? Date.parse(link.starts_at) : null;
+    const end = link.ends_at ? Date.parse(link.ends_at) : null;
+    return (!Number.isFinite(start) || start <= now) && (!Number.isFinite(end) || end > now);
+  });
+
+  const ids = [...new Set(active.map((x) => x.organization_id).filter(Boolean))];
+  let organizations = [], groups = [];
+  if (ids.length) {
+    const encoded = ids.map((id) => `"${String(id).replace(/"/g, '')}"`).join(',');
+    [organizations, groups] = await Promise.all([
+      serviceRows(env, `network_organizations?id=in.(${encodeURIComponent(encoded)})&select=id,slug,name,website_url,verification_state`),
+      serviceRows(env, `network_groups?organization_id=in.(${encodeURIComponent(encoded)})&visibility=neq.invite&select=organization_id,slug,name,front_page_url`)
+    ]);
+  }
+  const orgById = new Map(organizations.map((x) => [x.id, x]));
+  const groupByOrg = new Map(groups.map((x) => [x.organization_id, x]));
+
+  return reply(request, env, {
+    ok: true,
+    key,
+    track: { title: object.track_title, artist: object.artist_name },
+    destinations: active.map((link) => {
+      const org = orgById.get(link.organization_id) || null;
+      const group = groupByOrg.get(link.organization_id) || null;
+      const networkUrl = group ? `https://matthew.mccluster.org/mnet.html?group=${encodeURIComponent(group.slug)}` : null;
+      return {
+        id: link.id,
+        relationship: link.relationship_type,
+        label: link.label,
+        material_connection: link.material_connection === true,
+        disclosure: link.disclosure_text || '',
+        href: networkUrl || link.destination_url,
+        product_url: link.destination_url,
+        organization: org ? { slug: org.slug, name: org.name, verified: org.verification_state === 'verified' } : null,
+        group: group ? { slug: group.slug, name: group.name } : null
+      };
+    })
+  });
+}
+
 async function signObject(env, bucket, object, seconds) {
   const path = `${bucket}/${String(object).split('/').map(encodeURIComponent).join('/')}`;
   const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${path}`, {
@@ -248,7 +318,9 @@ export async function handleMusicRequest(request, env, user) {
   const path = url.pathname.replace(/\/+$/, '');
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return fail(request, env, 'McCluster is not configured', 503);
 
-  if (path === '/v1/music/listens' && request.method === 'POST') return startListen(request, env, user);
+  if (path === '/v1/music/credits' && request.method === 'GET') return musicCredits(request, env);
+
+    if (path === '/v1/music/listens' && request.method === 'POST') return startListen(request, env, user);
 
   const finish = path.match(/^\/v1\/music\/listens\/([^/]+)\/finish$/);
   if (finish && request.method === 'POST') return finishListen(request, env, user, finish[1]);
