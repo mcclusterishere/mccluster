@@ -108,6 +108,27 @@ function withoutNulls(fields) {
   return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null && v !== undefined));
 }
 
+/* Fields a payment provider confirmed cannot be retyped in Control: a row
+   that says Stripe verified it must still match what Stripe recorded. Links,
+   titles, notes and an order's fulfillment state stay editable. */
+function lockProviderFields(fields, before, names, why) {
+  const touched = names.filter((name) => name in fields && !sameValue(name, fields[name], before?.[name]));
+  if (touched.length) throw bad(`${why} (${touched.join(', ')})`);
+}
+
+/* Resending a row unchanged is not an edit: timestamps compare as instants
+   (PostgREST answers +00:00, the Worker writes Z) and JSON by content, not
+   key order (jsonb reorders keys). */
+function sameValue(name, a, b) {
+  if (name.endsWith('_at') && a != null && b != null) return Date.parse(a) === Date.parse(b);
+  return stable(a) === stable(b);
+}
+function stable(v) {
+  if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
+  if (v && typeof v === 'object') return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stable(v[k])}`).join(',')}}`;
+  return JSON.stringify(v ?? null);
+}
+
 function bad(message) {
   return Object.assign(new Error(message), { status: 400 });
 }
@@ -171,6 +192,12 @@ export const KINDS = {
       placed_at: when
     },
     create: ['title'],
+    prepare(fields, before) {
+      if (before?.source_table === 'stripe_checkout') {
+        lockProviderFields(fields, before, ['amount_cents', 'currency', 'items', 'placed_at'],
+          'This order came from a Stripe checkout; its amount and lines come from Stripe');
+      }
+    },
     order: 'placed_at.desc'
   },
   bookings: {
@@ -324,6 +351,10 @@ export const KINDS = {
     },
     create: ['title', 'amount_cents'],
     prepare(fields, before) {
+      if (before?.verification === 'provider_verified') {
+        lockProviderFields(fields, before, ['amount_cents', 'currency', 'provider', 'provider_reference', 'state', 'paid_at'],
+          'A provider-verified payment changes only through its provider; edit its title, note or links instead');
+      }
       if (fields.state === 'paid' && !fields.paid_at && !before?.paid_at) fields.paid_at = new Date().toISOString();
     },
     order: 'due_at.asc.nullslast,created_at.desc'
@@ -709,11 +740,14 @@ export async function workHistory(env, user, params) {
     ? await read(`control_audit?org_id=eq.${org}&resource_id=${inList(ids.slice(0, 200))}&select=id,event,resource_type,resource_id,actor_user_id,detail,at&order=at.desc&limit=${cap}`)
     : [];
 
-  const paid = payments.filter((p) => p.state === 'paid');
+  /* Stripe test-mode payments (livemode false) are shown but never counted as money. */
+  const livePayments = payments.filter((p) => p.livemode !== false);
+  const paid = livePayments.filter((p) => p.state === 'paid');
   const totals = {
-    billed_cents: payments.filter((p) => !['cancelled'].includes(p.state)).reduce((sum, p) => sum + (p.amount_cents || 0), 0),
+    billed_cents: livePayments.filter((p) => !['cancelled'].includes(p.state)).reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     paid_cents: paid.reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     provider_verified_cents: paid.filter((p) => p.verification === 'provider_verified').reduce((sum, p) => sum + (p.amount_cents || 0), 0),
+    test_mode_cents: payments.filter((p) => p.livemode === false && p.state === 'paid').reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     open_deliverables: deliverables.filter((d) => !['accepted', 'rejected'].includes(d.state)).length,
     next_renewal_at: renewals.filter((r) => r.state === 'upcoming' && r.renews_at).map((r) => r.renews_at).sort()[0] || null
   };

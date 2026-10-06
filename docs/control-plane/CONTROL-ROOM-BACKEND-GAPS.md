@@ -57,8 +57,11 @@ Last reconciled against `origin/main` at `b3e21de`, Worker source
 >
 > Still staged, and labelled so in Control:
 > - **Payment verification.** `work_payments.verification` is
->   `owner_recorded` unless a Stripe/Square reconciler sets
->   `provider_verified`; no request can set it. The reconciler is not built.
+>   `owner_recorded` unless a provider reconciler sets
+>   `provider_verified`; no request can set it. **Stripe is reconciled**
+>   (2026-10-06, `COMMERCE-RECONCILER.md`): a paid checkout writes the lead,
+>   order, verified payment and follow-up task, and Control cannot retype
+>   what Stripe recorded. **Square is still staged**: no Square webhook.
 >   `public.payments` is Whip's tenant ledger and is not used.
 > - **Client-facing approval.** Deliverable approval is the owner's; a client
 >   portal that lets the client approve is not built.

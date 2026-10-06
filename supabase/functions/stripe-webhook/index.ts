@@ -1,5 +1,13 @@
 // STRIPE-WEBHOOK — one Stripe event ledger for McCluster + connected orgs.
+//
+// Every paid checkout (offerings and music) also becomes the canonical
+// commercial record: the buyer as a lead, a paid order, a provider-verified
+// payment and its follow-up, through the commerce_record_stripe_* database
+// functions (supabase/migrations/*_commerce_stripe_reconciler_v1.sql).
+// Refunds, renewal invoices and ended subscriptions update the same records.
+// A failure answers 500, so Stripe retries; every write is idempotent.
 import Stripe from "npm:stripe@14";
+import { checkoutRecord, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const WH = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
@@ -16,6 +24,31 @@ async function db(path: string, init: RequestInit = {}) {
 
 const patchBy = (table: string, col: string, val: string, body: unknown) =>
   db(`${table}?${col}=eq.${encodeURIComponent(val)}`, { method: "PATCH", body: JSON.stringify(body) });
+
+const rpc = (name: string, p: unknown) => db(`rpc/${name}`, { method: "POST", body: JSON.stringify({ p }) });
+
+/* A subscription checkout is paid by its first invoice. Its payment intent is
+   what a later refund names, and the subscription's period end is when the
+   renewal falls due, so both are read from Stripe before recording. */
+async function withSubscriptionDetails(record: Record<string, any>, event: Stripe.Event) {
+  if (!record.subscription) return record;
+  const opts = typeof event.account === "string" ? { stripeAccount: event.account } : undefined;
+  if (record.invoice && !record.payment_intent) {
+    const invoice = await stripe.invoices.retrieve(record.invoice, opts);
+    const pi = (invoice as any).payment_intent;
+    record.payment_intent = typeof pi === "string" ? pi : pi?.id ?? null;
+  }
+  const sub = await stripe.subscriptions.retrieve(record.subscription, opts);
+  const end = (sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end;
+  record.current_period_end = typeof end === "number" ? new Date(end * 1000).toISOString() : null;
+  return record;
+}
+
+async function recordCheckout(session: Stripe.Checkout.Session, event: Stripe.Event) {
+  const record = checkoutRecord(session as any, event as any);
+  if (!record) return;
+  await rpc("commerce_record_stripe_checkout", await withSubscriptionDetails(record, event));
+}
 
 function stateFor(a: Stripe.Account) {
   const ready = a.charges_enabled === true && a.payouts_enabled === true && a.details_submitted === true;
@@ -115,6 +148,14 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       await grantMusicOrder(s);
+      await recordCheckout(s, event);
+    }
+
+    /* card payments complete at once; bank debits and similar arrive here */
+    if (event.type === "checkout.session.async_payment_succeeded") {
+      const s = event.data.object as Stripe.Checkout.Session;
+      await grantMusicOrder(s);
+      await recordCheckout(s, event);
     }
 
     if (event.type === "checkout.session.expired") {
@@ -140,11 +181,20 @@ Deno.serve(async (req) => {
     if (event.type === "charge.refunded") {
       const c = event.data.object as Stripe.Charge;
       await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      const refund = refundRecord(c as any, event as any);
+      if (refund) await rpc("commerce_record_stripe_refund", refund);
+    }
+
+    if (event.type === "invoice.paid") {
+      const invoice = invoiceRecord(event.data.object as any, event as any);
+      if (invoice) await rpc("commerce_record_stripe_invoice", invoice);
     }
 
     if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
       if (sub.metadata?.uid) await patchBy("providers", "uid", sub.metadata.uid, { plan: "free" });
+      const ended = subscriptionEndedRecord(sub as any, event as any);
+      if (ended) await rpc("commerce_record_stripe_subscription_ended", ended);
     }
 
     await db("stripe_events", {

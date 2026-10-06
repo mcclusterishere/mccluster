@@ -5,11 +5,11 @@ in the same PR that changes an item's state, so a new session reads the
 current position instead of rediscovering closed gaps. "Production" names
 what was verified live, not what was merely merged.
 
-Last updated 2026-10-05 with the Edge Function deploy guard and Native Action Network Phase 1 slices.
+Last updated 2026-10-06 with the Stripe commerce reconciler (#14 slice 1).
 
 | # | Item | Status | Landed in | Production verification | Next action |
 |---|---|---|---|---|---|
-| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, #367 (post-sale graph), #368 (workspace scoping, Home errors), Analytics → Forensics (sessions, journeys, visitors) | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked); forensics `20261005211205`…`20261005212323` live, owner-only, list 0.3–0.5 s warm | Remaining: per-view inventory of staged capabilities; client-facing approval and payment-provider reconciliation stay staged |
+| 1 | Control plane | PARTIAL — top priority | #353, #355, #360, #365, #366, #367 (post-sale graph), #368 (workspace scoping, Home errors), Analytics → Forensics (sessions, journeys, visitors) | Worker deployed and route-smoked per slice; migrations verified (RLS forced, browser roles revoked); forensics `20261005211205`…`20261005212323` live, owner-only, list 0.3–0.5 s warm | Remaining: per-view inventory of staged capabilities; client-facing approval and Square reconciliation stay staged (Stripe reconciles since #14 slice 1) |
 | 2 | Resident-AI web grounding | COMPLETE | #363 | Signed broker calls, bounded queries, DDG fallback | — |
 | 3 | FAL / paid-media input safety | COMPLETE | #362 | Whole-bakeoff preflight, strict input contract | Re-audit the FAL catalog (#269) on top of this contract |
 | 4 | Create lifecycle races | COMPLETE | #349 | — | — |
@@ -22,7 +22,7 @@ Last updated 2026-10-05 with the Edge Function deploy guard and Native Action Ne
 | 11 | Aggregate media budget | COMPLETE | #355 | DB-boundary monthly cap | — |
 | 12 | Publish retry / cancel | COMPLETE | #360 | — | — |
 | 13 | Native Action Network | COMPLETE — Phase 1 | #373 | Repo acceptance: SDK 57 dependency install, native contract suite and TypeScript gate; source is not yet an App Store / Play Store release | Phase 2/3 stay in `native/STORE-READINESS.md`: receipt/fellowship UI, live video and push. Universal-link OS verification still needs the owner’s Apple Team ID / Play signing SHA |
-| 14 | Commercial / post-sale lifecycle | PARTIAL | post-sale slice | `20261005075808`…`20261005075956` live: work_relationships, work_projects, work_deliverables, work_renewals, work_payments (forced RLS, no browser grants) | Stripe/Square payment reconciler (sets `provider_verified`), client-facing deliverable approval, entitlement linkage, lead→relationship→booking→order→project automation |
+| 14 | Commercial / post-sale lifecycle | PARTIAL — Stripe reconciler built | post-sale slice; Stripe reconciler (`COMMERCE-RECONCILER.md`) | `20261005075808`…`20261005075956` live: work_relationships, work_projects, work_deliverables, work_renewals, work_payments (forced RLS, no browser grants). `20261006021431` live: `commerce_record_stripe_*` (service-role only; full regression dry-run against production in a rolled-back transaction before applying). No live sale has been recorded yet: `stripe_events` has never held a row | Owner: confirm the Stripe webhook endpoint and its events (`COMMERCE-RECONCILER.md` → Owner actions). Next slices: Square reconciler (needs a Square webhook signature key), client-facing deliverable approval, entitlement linkage, lead→relationship→project automation |
 | 15 | Operational intelligence | Gate 0 COMPLETE; Gate 1 IN PROGRESS | `OPERATIONAL-INTELLIGENCE-FINISH-LINE.md` | — | Continue Gates 1–9 without replacing source systems |
 | 16 | Playable Equity Uprise building | PARTIAL | ~1,883 assets, ~1,330 connections, 40 labs | — | Stateful devices, room-visible traces, tactical visibility, LOD/streaming, deterministic multiplayer |
 | 17 | Uprise World / Site 0 | LATER | `_unfinished/` | — | Deliberately lower priority; keep the Site 0 geometry/program mismatch for later resolution |
