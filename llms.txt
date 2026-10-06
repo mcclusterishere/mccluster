@@ -115,6 +115,13 @@ The framing is a schema requirement here, not a style note. If you
 summarize a topic, use its own `description` and `context`; do not extend
 either into a verdict.
 
+## Research Lab
+
+- [McCluster Research Lab](https://matthew.mccluster.org/research.html): the public research program for adaptive digital experiences, music/creator discovery, Audience Science, online experimentation and the commercial model around the live McCluster product.
+- [Canonical research bibliography](https://matthew.mccluster.org/data/research/references.json): version-controlled methods and governance sources used by the lab.
+- Research software identity: Matthew McCluster, ORCID `0009-0000-8988-8955`; repository metadata is in `CITATION.cff`.
+- Production personalization and research policies are separate. A product-analytics event is not represented as publication-grade human-subject research merely because it exists in the telemetry store.
+
 ## The public record
 
 - [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
