@@ -24,6 +24,7 @@ on:
 permissions:
   contents: read
   checks: read
+  actions: read
 
 # Production deploys must be ordered. If push B arrives while push A is
 # deploying, B waits for A instead of allowing A to finish after B and
@@ -52,16 +53,19 @@ jobs:
         with:
           node-version: '22'
 
+      # Planned from the last successful push run, not just this push: a
+      # cancelled or failed run's functions roll into the next run.
       - name: Work out which functions changed
         id: plan
         env:
           BEFORE: ${{ github.event.before }}
           REQUESTED: ${{ inputs.functions }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             node scripts/supabase-functions-deploy.mjs plan --functions "$REQUESTED"
           else
-            node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD
+            node scripts/supabase-functions-deploy.mjs plan --before "$BEFORE" --after HEAD --base-from-last-success true
           fi
 
       - name: Wait for the Supabase integration on this commit

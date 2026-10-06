@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  parseDeclaredFunctions, planDeploy, affectedShared, integrationVerdict, gate, verifyDeployed
+  parseDeclaredFunctions, planDeploy, affectedShared, integrationVerdict, gate, verifyDeployed, chooseBase
 } from '../supabase-functions-deploy.mjs';
 
 const read = (p) => readFile(p, 'utf8');
@@ -119,6 +119,24 @@ test('the real repo: every function is declared, and #369’s shared change reac
   }
 });
 
+test('a push plans from the last successful run, so a cancelled or failed push is not skipped', () => {
+  /* A deploys; B waits; C arrives and GitHub cancels B. C must cover B's
+     functions too, so it plans from A (the last success), not from B. */
+  const A = 'a'.repeat(40), B = 'b'.repeat(40);
+  const ancestors = new Set([A, B]);
+  const isAncestor = (sha) => ancestors.has(sha);
+  assert.deepEqual(chooseBase({ eventBefore: B, lastSuccess: A, isAncestor }), { base: A, from: 'last successful deploy run' });
+  const merged = planDeploy({
+    changedPaths: ['supabase/functions/l3-login/index.ts', 'supabase/functions/pay-now/index.ts'],
+    ...repo({ toml: TOML, files: FILES })
+  });
+  assert.deepEqual(merged.functions, ['l3-login', 'pay-now'], 'B’s l3-login and C’s pay-now both deploy in C’s run');
+  const rewritten = chooseBase({ eventBefore: B, lastSuccess: 'c'.repeat(40), isAncestor });
+  assert.equal(rewritten.base, B, 'a last success that is no longer in main’s history falls back to this push');
+  assert.equal(chooseBase({ eventBefore: B, lastSuccess: '', isAncestor }).base, B, 'the first run plans from its own push');
+  assert.equal(chooseBase({ eventBefore: '', lastSuccess: '', isAncestor }).base, '', 'no base at all deploys every declared function');
+});
+
 test('the integration verdict reads the Supabase app’s check, newest first', () => {
   assert.equal(integrationVerdict([]).state, 'missing');
   const runs = [
@@ -175,6 +193,8 @@ test('the workflow deploys on function or config changes alone, least-privilege,
   assert.doesNotMatch(on, /supabase\/migrations/, 'a migration must not be needed to trigger a deploy');
   assert.match(on, /workflow_dispatch:/);
   assert.match(yml, /\npermissions:\n\s+contents: read\n\s+checks: read\n/);
+  assert.match(yml, /\n\s+actions: read\n/, 'reads its own run history to find the last successful deploy');
+  assert.match(yml, /plan --before "\$BEFORE" --after HEAD --base-from-last-success true/, 'push runs plan from the last successful run');
   assert.match(yml, /\nconcurrency:\n\s+group: supabase-edge-functions-production\n\s+cancel-in-progress: false\n/, 'production deploy runs are serialized so an older push cannot finish after a newer one');
   assert.doesNotMatch(yml, /git push|contents: write|pull_request:/, 'deploys from main only and never writes to a branch');
   for (const uses of yml.match(/uses: \S+/g)) assert.match(uses, /@[0-9a-f]{40}$/, `${uses} must be pinned to a commit`);

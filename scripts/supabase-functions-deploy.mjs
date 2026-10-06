@@ -126,6 +126,17 @@ export function planDeploy({ changedPaths, declared, existing, sources }) {
   };
 }
 
+/* Where a push's plan starts. Runs are serialized, and GitHub keeps only
+   one pending run per concurrency group: a third push cancels the waiting
+   one. Diffing from this push's own `before` would then skip whatever the
+   cancelled (or failed) push changed, so the plan starts at the commit of
+   the last successful push run instead, whenever that commit is still an
+   ancestor of HEAD. */
+export function chooseBase({ eventBefore, lastSuccess, isAncestor }) {
+  if (lastSuccess && isAncestor(lastSuccess)) return { base: lastSuccess, from: 'last successful deploy run' };
+  return { base: eventBefore || '', from: lastSuccess ? 'this push (last successful run is not an ancestor of main)' : 'this push (no earlier successful run)' };
+}
+
 /* The integration's verdict on one commit, from its check runs. */
 export function integrationVerdict(checkRuns) {
   const runs = (checkRuns || []).filter((r) => r && r.app && r.app.slug === 'supabase');
@@ -238,7 +249,15 @@ async function cmdPlan() {
     if (bad.length) { annotate('error', `Not a declared function in this checkout: ${bad.join(', ')}`); process.exit(1); }
     plan = { functions: [...new Set(names)].sort(), deleted: [], undeclared: [], reasons: Object.fromEntries(names.map((n) => [n, ['requested']])) };
   } else {
-    const diff = changedSince(arg('before'), arg('after', 'HEAD'));
+    const after = arg('after', 'HEAD');
+    const lastSuccess = arg('base-from-last-success') === 'true' ? await lastSuccessfulPushSha() : '';
+    const { base, from } = chooseBase({
+      eventBefore: arg('before'),
+      lastSuccess,
+      isAncestor: (sha) => { try { git(['merge-base', '--is-ancestor', sha, after]); return true; } catch { return false; } }
+    });
+    console.log(`Planning from ${base ? base.slice(0, 8) : '(none)'}: ${from}.`);
+    const diff = changedSince(base, after);
     plan = diff.all
       ? { functions: [...state.declared.keys()].filter((n) => state.existing.has(n)).sort(), deleted: [], undeclared: [], reasons: { '*': ['no usable base commit; every declared function'] } }
       : planDeploy({ changedPaths: diff.paths, ...state });
@@ -252,6 +271,22 @@ async function cmdPlan() {
   await output('functions', plan.functions.join(' '));
   await output('count', String(plan.functions.length));
   await summary(`### Edge Functions in this push\n\n${plan.functions.length ? plan.functions.map((n) => `- \`${n}\` (${(plan.reasons[n] || plan.reasons['*'] || []).join('; ')})`).join('\n') : 'None.'}\n`);
+}
+
+/* The commit of the newest successful push run of this workflow on main.
+   Empty when there is none or the API cannot be read, which falls back to
+   the push's own `before`. */
+async function lastSuccessfulPushSha() {
+  const repo = process.env.GITHUB_REPOSITORY, token = process.env.GITHUB_TOKEN, file = process.env.WORKFLOW_FILE || 'supabase-functions-deploy.yml';
+  if (!repo) return '';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${encodeURIComponent(file)}/runs?branch=main&event=push&status=success&per_page=1`, {
+      headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', ...(token ? { authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!res.ok) return '';
+    const sha = (((await res.json()).workflow_runs || [])[0] || {}).head_sha || '';
+    return /^[0-9a-f]{40}$/.test(sha) ? sha : '';
+  } catch { return ''; }
 }
 
 async function cmdWait() {
