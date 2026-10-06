@@ -206,6 +206,13 @@
   function bootstrap() {
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
+      if (boot.next_step === "contact") {
+        /* Private contact completion is a prerequisite for entering the
+           Action Network. The mailing address lives in fan_profiles, never
+           network_profiles, so it is not exposed on the social profile. */
+        location.replace("account.html?complete=contact");
+        return;
+      }
       if (boot.next_step === "profile") {
         fillProfileForm(false);
         showGate("profile");
