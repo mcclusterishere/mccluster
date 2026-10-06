@@ -147,7 +147,7 @@
 
   <footer class="wrap footer">
     <p>McCluster Research Lab · Matthew McCluster · ORCID 0009-0000-8988-8955</p>
-    <p>Research software metadata: <code>CITATION.cff</code> · Canonical bibliography: <code>data/research/sources.json</code>.</p>
+    <p>Research software metadata: <code>CITATION.cff</code> · Canonical bibliography: <code>data/research/references.json</code>.</p>
   </footer>
 
   <script src="js/analytics.js?v=__STAMP__"></script>
@@ -155,7 +155,7 @@
   <script>
     (function(){
       var host=document.getElementById("researchSources");
-      fetch("data/research/sources.json").then(function(r){if(!r.ok)throw new Error("source registry unavailable");return r.json();}).then(function(data){
+      fetch("data/research/references.json").then(function(r){if(!r.ok)throw new Error("source registry unavailable");return r.json();}).then(function(data){
         var rows=(data.sources||[]);
         host.innerHTML=rows.map(function(s){
           var meta=[s.year,s.type].concat(s.topics||[]).filter(Boolean).join(" · ");
