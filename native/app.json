@@ -59,7 +59,7 @@
         {
           "photosPermission": "Allow HERE to choose photos and videos as mission proof.",
           "cameraPermission": "Allow HERE to use the camera to record mission proof.",
-          "microphonePermission": false
+          "microphonePermission": "Allow HERE to use the microphone when recording video mission proof."
         }
       ],
       [
