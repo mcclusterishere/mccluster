@@ -112,6 +112,13 @@ test('the database functions are server-only, definer-safe and idempotent by con
   assert.match(sql, /on conflict \(org_id, provider, provider_reference\) where provider_reference is not null do nothing/, 'one payment per provider reference');
   assert.match(sql, /pg_advisory_xact_lock\(hashtext\('commerce:stripe_checkout:' \|\| v_session\)\)/, 'concurrent deliveries of one session are serialised');
   assert.match(sql, /add column if not exists livemode boolean not null default true/, 'test mode is recorded, not guessed');
+  const v2name = (await readdir(dir)).find((f) => /_commerce_stripe_reconciler_v2\.sql$/.test(f));
+  assert.ok(v2name, 'the out-of-order fix is recorded under its production version');
+  const v2 = await read(`${dir}/${v2name}`);
+  assert.match(v2, /revoke all on public\.commerce_stripe_pending from public, anon, authenticated;/, 'deferred events are server-only');
+  assert.match(v2, /perform public\.commerce_defer_stripe_event\(v_org, 'refund', v_ref, p\)/, 'a refund that beats its checkout is kept, not acknowledged and lost');
+  assert.match(v2, /if v_created and v_live then/, 'a test checkout sets nothing in motion');
+  assert.match(v2, /if v_live and v_email is not null then/, 'a test buyer is not made a lead');
   const ci = await read('.github/workflows/api-economic-core-ci.yml');
   assert.match(ci, /-f supabase\/tests\/commerce_stripe_reconciler_regression\.sql/, 'the SQL regression runs in CI against a fresh database');
 });

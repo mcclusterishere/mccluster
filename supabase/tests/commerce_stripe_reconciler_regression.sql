@@ -120,6 +120,13 @@ begin
   assert not (select livemode from public.work_orders where id = (r->>'order_id')::uuid), 'test order flagged';
   assert not (select livemode from public.work_payments where id = (r->>'payment_id')::uuid), 'test payment flagged';
   assert (select title from public.work_orders where id = (r->>'order_id')::uuid) like 'TEST · %', 'test order titled as test';
+  assert not (r ? 'task_id') and not (r ? 'booking_id') and not (r ? 'lead_id'), 'a test sets nothing in motion and contacts nobody';
+  assert not exists (select 1 from public.leads where lower(email) = 'tester@example.com'), 'a test buyer is not a lead';
+  r := public.commerce_record_stripe_checkout(jsonb_build_object(
+    'session_id', 'cs_test_regressTESTDEP1', 'payment_intent', 'pi_regressTESTDEP1', 'offering', 'regress-deposit',
+    'email', 'tester2@example.com', 'amount_cents', 15000, 'livemode', false));
+  assert not (r ? 'booking_id') and not exists (select 1 from public.work_bookings where order_id = (r->>'order_id')::uuid),
+         'a test deposit opens no booking';
 
   -- 9. Bad input is refused before anything is written.
   begin
@@ -142,6 +149,36 @@ begin
   assert not has_function_privilege('authenticated', 'public.commerce_record_stripe_checkout(jsonb)', 'execute'), 'members cannot record sales';
   assert not has_function_privilege('authenticated', 'public.commerce_record_stripe_refund(jsonb)', 'execute'), 'members cannot record refunds';
   assert has_function_privilege('service_role', 'public.commerce_record_stripe_checkout(jsonb)', 'execute'), 'the webhook can';
+
+  -- 11. Stripe does not promise order: a refund, renewal or cancellation that
+  --     arrives before its checkout waits for it instead of being lost.
+  again := public.commerce_record_stripe_refund(jsonb_build_object('payment_intent', 'pi_regressEARLYREF1', 'amount_cents', 4000, 'amount_refunded', 4000, 'livemode', true));
+  assert not (again->>'matched')::boolean and (again->>'deferred')::boolean, 'early refund deferred';
+  r := public.commerce_record_stripe_checkout(jsonb_build_object(
+    'session_id', 'cs_live_regressEARLYREF1', 'payment_intent', 'pi_regressEARLYREF1', 'offering', 'regress-print',
+    'email', 'early@example.com', 'amount_cents', 4000, 'livemode', true));
+  assert r->'applied_pending' ? 'refund', 'the checkout applies the refund that came first';
+  assert (select state from public.work_payments where id = (r->>'payment_id')::uuid) = 'refunded', 'refunded money is not left as paid';
+  assert (select state from public.work_orders where id = (r->>'order_id')::uuid) = 'cancelled', 'its order is cancelled';
+  assert (select applied_at is not null from public.commerce_stripe_pending where kind = 'refund' and reference = 'pi_regressEARLYREF1'), 'applied once';
+
+  again := public.commerce_record_stripe_invoice(jsonb_build_object('invoice_id', 'in_regressEARLYINV1', 'payment_intent', 'pi_regressEARLYINV1',
+    'subscription', 'sub_regressEARLYSUB1', 'billing_reason', 'subscription_cycle', 'amount_cents', 87500,
+    'paid_at', '2026-11-06T12:00:00Z', 'period_end', '2026-12-06T12:00:00Z', 'livemode', true));
+  assert (again->>'deferred')::boolean, 'early renewal deferred';
+  again := public.commerce_record_stripe_subscription_ended(jsonb_build_object('subscription', 'sub_regressEARLYSUB1', 'livemode', true));
+  assert (again->>'deferred')::boolean, 'early cancellation deferred';
+  r := public.commerce_record_stripe_checkout(jsonb_build_object(
+    'session_id', 'cs_live_regressEARLYSUB1', 'payment_intent', 'pi_regressEARLYSUB0', 'subscription', 'sub_regressEARLYSUB1',
+    'current_period_end', '2026-11-06T12:00:00Z', 'offering', 'regress-monthly', 'email', 'early-sub@example.com',
+    'amount_cents', 87500, 'livemode', true, 'paid_at', '2026-10-06T12:00:00Z'));
+  assert (select count(*) from public.work_payments where renewal_id = (r->>'renewal_id')::uuid) = 1, 'the early renewal payment is recorded';
+  assert (select state from public.work_renewals where id = (r->>'renewal_id')::uuid) = 'cancelled', 'the early cancellation is applied after it';
+  assert (select renews_at from public.work_renewals where id = (r->>'renewal_id')::uuid) = '2026-12-06T12:00:00Z', 'renewal dates advanced by the early invoice';
+  again := public.commerce_record_stripe_refund(jsonb_build_object('payment_intent', 'pi_regressTESTONLY1', 'amount_cents', 1, 'amount_refunded', 1, 'livemode', false));
+  assert not (again ? 'deferred') and not exists (select 1 from public.commerce_stripe_pending where reference = 'pi_regressTESTONLY1'),
+         'test-mode noise is not kept';
+  assert not has_table_privilege('authenticated', 'public.commerce_stripe_pending', 'select'), 'pending events are server-only';
 
   raise notice 'commerce reconciler regression: all assertions passed';
 end $$;

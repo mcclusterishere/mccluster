@@ -14,7 +14,7 @@ recorded it anywhere McCluster could see. `stripe_events` held no rows, every
 | Event → record mapping (pure, Node-tested) | `supabase/functions/stripe-webhook/commerce.ts` |
 | Signature check, routing, Stripe look-ups | `supabase/functions/stripe-webhook/index.ts` |
 | Sale metadata carried on the payment | `supabase/functions/checkout/index.ts` (`payment_intent_data` / `subscription_data`) |
-| Database functions + provenance columns | `supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql` (live) |
+| Database functions + provenance columns | `supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql`, `20261006023453_commerce_stripe_reconciler_v2.sql` (both live) |
 | Database regression (runs in API Economic Core CI) | `supabase/tests/commerce_stripe_reconciler_regression.sql` |
 | Mapping/routing/boundary contract | `scripts/test/stripe-commerce-reconciler.test.mjs` |
 | Control locks and test-mode totals | `workers/mccluster/src/work.js`, `workers/mccluster/test/work-provider-verified.test.mjs` |
@@ -45,13 +45,21 @@ commerce. The premium plan (`metadata.uid`) keeps its own entitlement path.
   `search_path`, revoked from `public`, `anon` and `authenticated`, granted to
   `service_role`, and every write is in `control_audit`
   (`commerce.stripe.*`).
+- **Out-of-order delivery.** Stripe does not promise event order. A live
+  refund, renewal invoice or cancellation that arrives before its checkout
+  is kept in `commerce_stripe_pending` (service-role only, audited as
+  `commerce.stripe.deferred`) and applied by the checkout that creates its
+  payment or renewal: renewals first, then refunds, then endings. It is
+  never acknowledged and lost.
 - **Tenancy.** A platform event belongs to the house org. An event from a
   connected account is recorded only when the sale named its
   `mccluster_org_id`; otherwise it is skipped, never booked as McCluster
   revenue. Refunds and renewals find that org on the payment and the
   subscription because `checkout` now copies the sale metadata onto them.
-- **Test mode is not revenue.** Every row carries `livemode`. Test orders are
-  titled `TEST · …`; `/v1/work/history` excludes them from billed, paid and
+- **Test mode is not revenue and sets nothing in motion.** Every row carries
+  `livemode`. A test checkout records only its order (titled `TEST · …`) and
+  payment: no lead, booking, renewal or task, so nobody is contacted and
+  nothing ships because of a test; `/v1/work/history` excludes them from billed, paid and
   verified totals and reports them as `test_mode_cents`; Control labels them
   "test mode, not revenue".
 - **Provider facts are not retyped.** Control can annotate a provider-verified
