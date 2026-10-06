@@ -6,8 +6,8 @@
      2. a reason is required
      3. listeners see the split only after answering; the reasons are the
         owner's alone, and nobody writes an answer around the function
-     4. the cards live in the album player and on end-racism.html, and the
-        gateway's own play buttons count toward a full listen
+     4. the cards live in the album player; the compact End Racism gateway
+        no longer blocks its action/sale funnel on a questionnaire
    ============================================================ */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,17 +53,14 @@ test('the earned record is named by a label, never its title, on public cards', 
   assert.match(js, /head\.appendChild\(el\("b", null, r\.label\)\);/);
 });
 
-test('the cards are in the album player and on End Racism, and gateway plays count', async () => {
-  const [album, er, gw] = await Promise.all([read('album.html'), read('end-racism.html'), read('js/gateway.js')]);
+test('the song test stays in the album while End Racism stays action-first', async () => {
+  const [album, er] = await Promise.all([read('album.html'), read('end-racism.html')]);
   assert.match(album, /var TESTED = \{ "cia-mind-control": true \};/);
-  /* the mount has to live where boot() can see it */
   assert.ok(album.indexOf('function mountTest()') < album.indexOf('function boot(data, pls, ct)'), 'mountTest is defined beside boot');
-  assert.match(album, /if \(d && d\.counted && songTest\) songTest\.refresh\(\)/);
   assert.match(album, /js\/song-test\.js/);
-  assert.match(er, /MCC_SONGTEST\.mount\(document\.getElementById\("gwTest"\), "cia-mind-control"/);
-  assert.match(er, /js\/listen-ledger\.js[\s\S]*js\/gateway\.js/);
-  assert.match(gw, /if \(!h && a\.currentTime < 3\) h = L\.start\(key, playing\);/);
-  assert.match(gw, /if \(h && a\.currentTime \+ 2 < last\) \{ L\.finish\(h\); h = L\.start\(key, playing\); \}/);
+  assert.doesNotMatch(er, /MCC_SONGTEST|js\/song-test\.js|js\/listen-ledger\.js|js\/gateway\.js/);
+  assert.match(er, /GET FULL MP3[\s\S]*\$1/);
+  assert.match(er, /Pick an End Racism action/);
 });
 
 test('the song test follows the mobile rules', async () => {
