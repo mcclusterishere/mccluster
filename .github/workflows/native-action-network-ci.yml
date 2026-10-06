@@ -1,0 +1,34 @@
+name: Native Action Network CI
+
+on:
+  pull_request:
+    paths:
+      - 'native/**'
+      - 'scripts/test/native-action-network.test.mjs'
+      - '.github/workflows/native-action-network-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/**'
+      - 'scripts/test/native-action-network.test.mjs'
+      - '.github/workflows/native-action-network-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-action-network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Run native Action Network contracts
+        run: node --test scripts/test/native-action-network.test.mjs
+      - name: Install native dependencies
+        working-directory: native
+        run: npm install --no-audit --no-fund
+      - name: Type-check native app
+        working-directory: native
+        run: npm run typecheck
