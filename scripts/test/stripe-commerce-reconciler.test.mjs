@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import {
-  checkoutRecord, refundRecord, invoiceRecord, subscriptionEndedRecord, orgFor
+  checkoutRecord, refundRecord, invoiceRecord, invoicePaymentIntent, subscriptionEndedRecord, orgFor
 } from '../../supabase/functions/stripe-webhook/commerce.ts';
 
 const read = (p) => readFile(p, 'utf8');
@@ -79,6 +79,29 @@ test('subscriptions, renewals, refunds and cancellations map to their records', 
   assert.deepEqual(subscriptionEndedRecord({ id: 'sub_1Abc', metadata: {} }, EVENT), { subscription: 'sub_1Abc', livemode: true, org_id: null });
 });
 
+test('a renewal is recorded under the PaymentIntent a refund will name, on old and new invoice shapes', () => {
+  assert.equal(invoicePaymentIntent({ payment_intent: 'pi_old123' }), 'pi_old123');
+  assert.equal(invoicePaymentIntent({ payment_intent: { id: 'pi_expanded1' } }), 'pi_expanded1');
+  assert.equal(invoicePaymentIntent({ payments: { data: [
+    { status: 'canceled', payment: { payment_intent: 'pi_failed01' } },
+    { status: 'paid', payment: { payment_intent: 'pi_newShape1' } }
+  ] } }), 'pi_newShape1', 'newer API versions list it under invoice.payments');
+  assert.equal(invoicePaymentIntent({}), null);
+  const modern = invoiceRecord({ id: 'in_5Modern', subscription: 'sub_1Abc', amount_paid: 100,
+    payments: { data: [{ status: 'paid', payment: { payment_intent: 'pi_modern01' } }] } }, EVENT);
+  assert.equal(modern.payment_intent, 'pi_modern01');
+});
+
+test('a refund that beats its music checkout still revokes the music', async () => {
+  const hook = await read('supabase/functions/stripe-webhook/index.ts');
+  assert.match(hook, /stripe\.paymentIntents\.retrieve\(paymentIntent, \{ expand: \["latest_charge"\] \}, opts\)/, 'Stripe decides whether it was refunded');
+  assert.match(hook, /if \(paymentIntent && await refundedAtStripe\(paymentIntent, event\)\) await revokeMusicByPaymentIntent\(paymentIntent\);/,
+    'a grant is revoked at once when the payment was already refunded');
+  assert.match(hook, /await grantMusicOrder\(s, event\);/);
+  assert.match(hook, /rpc\("commerce_record_stripe_invoice", await withInvoicePayment\(invoice, event\)\)/,
+    'a renewal without its PaymentIntent in the payload reads it from Stripe');
+});
+
 test('the webhook verifies the signature first, then routes each commerce event to its database function', async () => {
   const hook = await read('supabase/functions/stripe-webhook/index.ts');
   const verify = hook.indexOf('constructEventAsync');
@@ -89,7 +112,7 @@ test('the webhook verifies the signature first, then routes each commerce event 
   assert.match(hook, /event\.type === "checkout\.session\.completed"[\s\S]*?await recordCheckout\(s, event\);/);
   assert.match(hook, /event\.type === "checkout\.session\.async_payment_succeeded"[\s\S]*?await recordCheckout\(s, event\);/);
   assert.match(hook, /event\.type === "charge\.refunded"[\s\S]*?rpc\("commerce_record_stripe_refund", refund\)/);
-  assert.match(hook, /event\.type === "invoice\.paid"[\s\S]*?rpc\("commerce_record_stripe_invoice", invoice\)/);
+  assert.match(hook, /event\.type === "invoice\.paid"[\s\S]*?rpc\("commerce_record_stripe_invoice", await withInvoicePayment\(invoice, event\)\)/);
   assert.match(hook, /event\.type === "customer\.subscription\.deleted"[\s\S]*?rpc\("commerce_record_stripe_subscription_ended", ended\)/);
   assert.match(hook, /stripe\.invoices\.retrieve\(record\.invoice, opts\)/, 'a subscription’s first payment is recorded under the payment intent a refund will name');
   assert.match(hook, /return new Response\("retry", \{ status: 500 \}\)/, 'a failed write makes Stripe retry');

@@ -81,6 +81,18 @@ export function refundRecord(charge: Obj, event: Obj): Obj | null {
   };
 }
 
+/**
+ * The PaymentIntent that paid an invoice: invoice.payment_intent on older API
+ * versions, the first paid entry of invoice.payments on newer ones.
+ */
+export function invoicePaymentIntent(invoice: Obj): string | null {
+  const direct = idOf(invoice?.payment_intent);
+  if (direct) return direct;
+  const payments = Array.isArray(invoice?.payments?.data) ? invoice.payments.data : [];
+  const paid = payments.find((p: Obj) => p?.status === "paid") || payments[0];
+  return idOf(paid?.payment?.payment_intent);
+}
+
 /** invoice.paid for a subscription: one renewal payment. */
 export function invoiceRecord(invoice: Obj, event: Obj): Obj | null {
   const subscription = idOf(invoice.subscription) || idOf(invoice.parent?.subscription_details?.subscription);
@@ -91,7 +103,7 @@ export function invoiceRecord(invoice: Obj, event: Obj): Obj | null {
   const line = Array.isArray(invoice.lines?.data) ? invoice.lines.data[0] : null;
   return {
     invoice_id: str(invoice.id),
-    payment_intent: idOf(invoice.payment_intent),
+    payment_intent: invoicePaymentIntent(invoice),
     subscription,
     billing_reason: str(invoice.billing_reason),
     amount_cents: typeof invoice.amount_paid === "number" ? invoice.amount_paid : null,

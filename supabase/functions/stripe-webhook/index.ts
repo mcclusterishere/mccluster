@@ -7,7 +7,7 @@
 // Refunds, renewal invoices and ended subscriptions update the same records.
 // A failure answers 500, so Stripe retries; every write is idempotent.
 import Stripe from "npm:stripe@14";
-import { checkoutRecord, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
+import { checkoutRecord, invoicePaymentIntent, invoiceRecord, refundRecord, subscriptionEndedRecord } from "./commerce.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const WH = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
@@ -34,13 +34,22 @@ async function withSubscriptionDetails(record: Record<string, any>, event: Strip
   if (!record.subscription) return record;
   const opts = typeof event.account === "string" ? { stripeAccount: event.account } : undefined;
   if (record.invoice && !record.payment_intent) {
-    const invoice = await stripe.invoices.retrieve(record.invoice, opts);
-    const pi = (invoice as any).payment_intent;
-    record.payment_intent = typeof pi === "string" ? pi : pi?.id ?? null;
+    record.payment_intent = invoicePaymentIntent(await stripe.invoices.retrieve(record.invoice, opts) as any);
   }
   const sub = await stripe.subscriptions.retrieve(record.subscription, opts);
   const end = (sub as any).current_period_end ?? (sub as any).items?.data?.[0]?.current_period_end;
   record.current_period_end = typeof end === "number" ? new Date(end * 1000).toISOString() : null;
+  return record;
+}
+
+/* A renewal is recorded under the PaymentIntent a refund will name. Newer
+   Stripe API versions move it from invoice.payment_intent into the invoice's
+   payments, which a webhook payload may not include; the SDK's pinned API
+   version still returns it, so read it from Stripe when it is missing. */
+async function withInvoicePayment(record: Record<string, any>, event: Stripe.Event) {
+  if (record.payment_intent || !record.invoice_id) return record;
+  const opts = typeof event.account === "string" ? { stripeAccount: event.account } : undefined;
+  record.payment_intent = invoicePaymentIntent(await stripe.invoices.retrieve(record.invoice_id, opts) as any);
   return record;
 }
 
@@ -70,7 +79,17 @@ function stateFor(a: Stripe.Account) {
   };
 }
 
-async function grantMusicOrder(session: Stripe.Checkout.Session) {
+/* Stripe does not promise event order: a refund can arrive before the
+   checkout that grants the music. Stripe's own record decides, so a grant is
+   followed by a look at the payment and revoked if it was already refunded. */
+async function refundedAtStripe(paymentIntent: string, event: Stripe.Event) {
+  const opts = typeof event.account === "string" ? { stripeAccount: event.account } : undefined;
+  const pi = await stripe.paymentIntents.retrieve(paymentIntent, { expand: ["latest_charge"] }, opts);
+  const charge = (pi as any).latest_charge;
+  return !!charge && typeof charge === "object" && Number(charge.amount_refunded || 0) > 0;
+}
+
+async function grantMusicOrder(session: Stripe.Checkout.Session, event: Stripe.Event) {
   const orderId = session.metadata?.music_order_id || "";
   if (!orderId || session.metadata?.kind !== "music_license_sale" || session.payment_status !== "paid") return;
   const rows = await db(`music_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_id,track_id,customer_user_id,customer_email,status&limit=1`);
@@ -101,6 +120,8 @@ async function grantMusicOrder(session: Stripe.Checkout.Session) {
       }),
     });
   }
+  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : "";
+  if (paymentIntent && await refundedAtStripe(paymentIntent, event)) await revokeMusicByPaymentIntent(paymentIntent);
 }
 
 async function revokeMusicByPaymentIntent(paymentIntent: string) {
@@ -147,14 +168,14 @@ Deno.serve(async (req) => {
       if (s.mode === "subscription" && s.metadata?.uid) {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
-      await grantMusicOrder(s);
+      await grantMusicOrder(s, event);
       await recordCheckout(s, event);
     }
 
     /* card payments complete at once; bank debits and similar arrive here */
     if (event.type === "checkout.session.async_payment_succeeded") {
       const s = event.data.object as Stripe.Checkout.Session;
-      await grantMusicOrder(s);
+      await grantMusicOrder(s, event);
       await recordCheckout(s, event);
     }
 
@@ -187,7 +208,7 @@ Deno.serve(async (req) => {
 
     if (event.type === "invoice.paid") {
       const invoice = invoiceRecord(event.data.object as any, event as any);
-      if (invoice) await rpc("commerce_record_stripe_invoice", invoice);
+      if (invoice) await rpc("commerce_record_stripe_invoice", await withInvoicePayment(invoice, event));
     }
 
     if (event.type === "customer.subscription.deleted") {
