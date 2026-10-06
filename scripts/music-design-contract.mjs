@@ -46,7 +46,7 @@ for (const path of trackStubs) {
      because the meta refresh is what carries a visitor with scripting off */
   must(path + " forwards to the music video without scripting", /http-equiv="refresh"[^>]*music-videos\.html/.test(html));
   must(path + " forwards to the music video with scripting", html.includes("music-videos.html"));
-  must(path + " stays out of the index", html.includes('name="robots" content="noindex"'));
+  must(path + " stays out of the index", /name="robots" content="noindex(?:,follow)?"/.test(html));
 }
 
 const album = await readFile("album.html", "utf8");
