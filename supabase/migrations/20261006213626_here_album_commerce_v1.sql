@@ -43,7 +43,10 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 insert into public.event_taxonomy(event_name,stage,note) values
+  ('music_videos_view','view','The canonical Music Videos catalog surface was opened.'),
+  ('music_videos_armed','engage','A visitor explicitly enabled audio on the Music Videos surface.'),
   ('music_video_view','view','A canonical music-video surface was opened for a track.'),
+  ('music_video_share','engage','A visitor shared a canonical music-video track state.'),
   ('lyric_service_cta_view','view','A service-linked lyric phrase became visible.'),
   ('lyric_service_cta_click','engage','A visitor followed a service link embedded in a lyric phrase.'),
   ('track_service_cta_click','engage','A visitor followed the track-level primary service call to action.'),
