@@ -145,10 +145,12 @@ export default function MissionScreen() {
     try {
       let proofType = link.trim() ? 'link' : 'text';
       let metadata: Record<string, any> = {};
+      let uploadedAssetId: string | null = null;
       if (proof) {
         const uploaded = await media.upload(proof);
         proofType = uploaded.proofType;
-        metadata = { asset_id: uploaded.asset.id };
+        uploadedAssetId = uploaded.asset.id;
+        metadata = { asset_id: uploadedAssetId };
       }
       await net.submitProof({
         assignmentId: assignment.id,
@@ -166,6 +168,7 @@ export default function MissionScreen() {
           : 'Proof submitted for review.',
       );
     } catch (error) {
+      if (uploadedAssetId) await media.discard(uploadedAssetId).catch(() => null);
       setStatus(messageOf(error));
     } finally {
       setWorking(false);
@@ -178,7 +181,10 @@ export default function MissionScreen() {
       <Shell top={insets.top} onBack={() => router.back()}>
         <Text style={s.kicker}>Action Network</Text>
         <Text style={s.title}>SIGN IN TO TAKE THIS MISSION.</Text>
-        <Text style={s.body}>Open Network from the bottom bar and sign in with your M Account.</Text>
+        <Text style={s.body}>Sign in with your M Account, then you’ll return to this mission.</Text>
+        <Pressable onPress={() => router.replace({ pathname: '/profile', params: { returnTo: `/mission/${id}` } } as any)} style={s.primary}>
+          <Text style={s.primaryText}>Sign in to continue</Text>
+        </Pressable>
       </Shell>
     );
   }
