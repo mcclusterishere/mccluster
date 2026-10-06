@@ -89,6 +89,27 @@
      }
     },
     {
+     "title": "Runway Walk",
+     "src": "assets/audio/runway-walk.mp3",
+     "poster": "assets/frames/vauntlive_0001.jpg",
+     "pulse": "#ff5a5c",
+     "music_video": "assets/video/vauntlive.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "runway",
+       "label": "Get your website live",
+       "href": "onboard.html?offer=runway"
+      },
+      "theme": {
+       "accent": "#ff5a5c",
+       "background": "#0b0809",
+       "foreground": "#fff4ef",
+       "surface": "#1b0f12"
+      },
+      "lyric_ctas": []
+     }
+    },
+    {
      "title": "Who Did The Shoot",
      "src": "assets/audio/who-did-the-shoot.mp3",
      "poster": "assets/frames/hero_0001.jpg",
@@ -139,27 +160,6 @@
         "offer_id": "who-did-the-shoot"
        }
       ]
-     }
-    },
-    {
-     "title": "Runway Walk",
-     "src": "assets/audio/runway-walk.mp3",
-     "poster": "assets/frames/vauntlive_0001.jpg",
-     "pulse": "#ff5a5c",
-     "music_video": "assets/video/vauntlive.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "runway",
-       "label": "Get your website live",
-       "href": "onboard.html?offer=runway"
-      },
-      "theme": {
-       "accent": "#ff5a5c",
-       "background": "#0b0809",
-       "foreground": "#fff4ef",
-       "surface": "#1b0f12"
-      },
-      "lyric_ctas": []
      }
     },
     {
@@ -401,17 +401,10 @@
         "object": "niggy-nigg/niggy-nigg.m4r"
        }
       ],
-      "access_mode": "account",
+      "access_mode": "purchase",
       "preview_visibility": "until_earned",
       "full_visibility": "earned_play",
-      "listen_gate": {
-       "any_of": [
-        "you-the-feds",
-        "pull-up"
-       ],
-       "minimum_completed": 1,
-       "each_play_needs_a_fresh_listen": true
-      }
+      "purchase_offer": "end-racism-niggy-nigg-full"
      }
     }
    ]
