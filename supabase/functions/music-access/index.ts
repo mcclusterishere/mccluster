@@ -152,12 +152,12 @@ Deno.serve(async (req) => {
     if (action === "operator-dashboard") {
       if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
       const { data: tracks, error: trackError } = await admin.from("creator_tracks")
-        .select("id,m_uid,title,artist,status,rights_status,access_mode,genre,created_at,published_at,moderation_note")
+        .select("id,m_uid,title,artist,status,rights_status,access_mode,genre,music_video_url,lyrics_url,experience,created_at,published_at,moderation_note")
         .in("status", ["pending_review", "approved", "published", "rejected"])
         .order("created_at", { ascending: false }).limit(100);
       if (trackError) throw trackError;
       const { data: creators } = await admin.from("music_creator_profiles")
-        .select("m_uid,handle,artist_name,verification_state,payout_state,status");
+        .select("m_uid,handle,artist_name,verification_state,payout_state,status,settings");
       const { data: offers } = await admin.from("music_license_offers")
         .select("id,track_id,title,license_type,price_cents,currency,active,checkout_enabled,platform_fee_bps")
         .order("created_at", { ascending: false }).limit(200);
