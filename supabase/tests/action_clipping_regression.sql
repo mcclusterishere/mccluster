@@ -99,6 +99,8 @@ begin
 
   assert pg_temp.raises(format('select public.clip_campaign_set_status(%L, ''live'')', mission), '%fund the campaign%'),
          'nothing goes live unfunded';
+  assert pg_temp.raises(format('select public.clip_campaign_fund(%L, 6000, ''contribution'', ''stripe'', ''pi_typed_in'', '''')', mission),
+         '%card funding is not connected%'), 'a creator cannot type in a provider-verified payment';
   r := public.clip_campaign_fund(mission, 6000, 'program_allocation', 'internal', null, 'first allocation');
   assert (r->'money'->>'funded_cents')::bigint = 6000 and (r->'money'->>'available_cents')::bigint = 6000, 'funded';
   r := public.clip_campaign_set_status(mission, 'live');

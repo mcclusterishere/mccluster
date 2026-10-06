@@ -726,7 +726,13 @@ begin
   select * into v from public.action_clip_campaigns where mission_id = p_mission for update;
   if p_kind not in ('program_allocation', 'contribution', 'refund') then raise exception 'unknown funding kind'; end if;
   if p_amount_cents is null or p_amount_cents <= 0 or p_amount_cents > 100000000 then raise exception 'invalid amount'; end if;
-  if p_provider not in ('internal', 'stripe', 'square', 'manual') then raise exception 'unknown provider'; end if;
+  -- what a creator records is owner-attested: their own allocation, or a payment they made outside the
+  -- system with its reference. Card funding is written by the payment provider's verified webhook, which
+  -- is not connected for clip campaigns yet, so it cannot be typed in here.
+  if p_provider in ('stripe', 'square') then
+    raise exception 'card funding is not connected yet; record an allocation or an owner-recorded payment';
+  end if;
+  if p_provider not in ('internal', 'manual') then raise exception 'unknown provider'; end if;
   if p_provider <> 'internal' and nullif(btrim(coalesce(p_provider_ref, '')), '') is null then
     raise exception 'a payment needs its provider reference';
   end if;

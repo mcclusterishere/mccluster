@@ -135,10 +135,10 @@
       (camp.status==="live"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-status="paused">Pause</button>':"")+
       (camp.status!=="ended"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-status="ended">End campaign</button>':"")+'</div>';
     var fund='<div class="cro-form"><label>Add funding (USD)<input id="clFundAmt" type="number" min="1" step="1" inputmode="decimal"></label>'+
-      '<label>Source<select id="clFundProvider"><option value="internal">Allocated from my budget</option><option value="stripe">Stripe payment</option><option value="manual">Other payment</option></select></label>'+
-      '<label>Payment reference<input id="clFundRef" maxlength="200" placeholder="pi_… when paid"></label>'+
+      '<label>Source<select id="clFundProvider"><option value="internal">Allocated from my budget</option><option value="manual">Payment I made (recorded by me)</option><option value="stripe" disabled>Card payment (not connected yet)</option></select></label>'+
+      '<label>Payment reference<input id="clFundRef" maxlength="200" placeholder="Transfer or receipt reference"></label>'+
       '<div><button class="cr-btn" type="button" data-clip-fund>Record funding</button></div></div>'+
-      '<p class="cro-meta">Funding is what clips can earn against; nothing accrues past it or past the budget. Collecting it by card is not wired yet, so record an allocation or a payment you received.</p>';
+      '<p class="cro-meta">Funding is what clips can earn against; nothing accrues past it or past the budget. Card funding is not connected yet, so record an allocation, or a payment you made with its reference; both are recorded as yours, not as provider-verified.</p>';
     return'<section class="cro-card"><div class="cro-row__top"><h2>'+e(camp.title||c.title)+'</h2><span class="cr-state">'+status+'</span></div>'+
       (camp.song?'<p class="cro-meta">Song: '+e(camp.song.title)+' · pays '+usd(camp.base_cpm_cents)+' per 1,000 verified views after '+n(camp.min_views)+' views'+
         (camp.per_clip_cap_cents?' · up to '+usd(camp.per_clip_cap_cents)+' a clip':'')+(camp.per_clipper_cap_cents?' · up to '+usd(camp.per_clipper_cap_cents)+' a clipper':'')+'</p>':"")+

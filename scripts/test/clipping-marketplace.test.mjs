@@ -65,6 +65,13 @@ test('every clipping table is server-only and the payout ledger guards itself', 
   assert.match(guard, /never edited/);
 });
 
+test('funding a creator records is owner-attested; card funding is staged, not typed in', async () => {
+  const [sql, control] = await Promise.all([read(MIGRATION), read('js/control-room/clipping.js')]);
+  const fund = fnBody(sql, 'public.clip_campaign_fund');
+  assert.match(fund, /if p_provider in \('stripe', 'square'\) then\s+raise exception 'card funding is not connected yet/);
+  assert.match(control, /<option value="stripe" disabled>Card payment \(not connected yet\)<\/option>/);
+});
+
 test('settlement is budget-safe: it locks the campaign and never commits past funded budget', async () => {
   const sql = await read(MIGRATION);
   const settle = fnBody(sql, 'public.clip_settle_submission');
