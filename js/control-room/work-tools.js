@@ -18,11 +18,15 @@
     return{subject:sub(t&&t.subject),body:sub(t&&t.body),id:t&&t.id,stage_to:t&&t.stage_to,wait:(t&&t.wait_days)||4};
   }
   function loadOutreach(){
-    var x=O.outreach;if(x.loading)return Promise.resolve();x.loading=true;x.error=null;rerender();
+    var x=O.outreach;if(x.loading)return Promise.resolve();x.loading=true;x.error=null;x.unavailable=false;rerender();
     var path="crm_next_move?select=*"+(x.stage?"&stage=eq."+encodeURIComponent(x.stage):"");
     return Promise.all([O.supa("crm_templates?select=*&order=id"),O.supa(path),O.supa("crm_pipeline?select=*")])
-      .then(function(r){x.templates=r[0]||[];x.moves=r[1]||[];x.pipeline=r[2]||[];var ids=x.moves.map(function(m){return m.id;}).slice(0,12);if(!ids.length){x.signals={};return null;}return O.supa("crm_signals?select=contact_id,kind,detail&contact_id=in.("+ids.join(",")+")&order=at.desc&limit=80").then(function(rows){x.signals={};(rows||[]).forEach(function(s){(x.signals[s.contact_id]=x.signals[s.contact_id]||[]).push(s);});});})
-      .catch(function(err){x.error=err;}).then(function(){x.loading=false;x.loaded=true;rerender();});
+      .then(function(r){x.templates=r[0]||[];x.moves=r[1]||[];x.pipeline=r[2]||[];var ids=x.moves.map(function(m){return m.id;}).slice(0,12);if(!ids.length){x.signals={};return null;}return O.supa("crm_signals?select=contact_id,kind,detail&contact_id=in.("+ids.join(",")+")&order=at.desc&limit=80").then(function(rows){x.signals={};(rows||[]).forEach(function(s){(x.signals[s.contact_id]=x.signals[s.contact_id]||[]).push(s);});},function(){x.signals={};});})
+      /* The desk's crm_* tables are provisioned by docs/the-desk.sql, which has
+         not been applied to this database: PostgREST answers 404 (PGRST205).
+         That is a staged capability, not a failure, so it says so instead of
+         printing the gateway's error. Signals are optional context. */
+      .catch(function(err){if(err&&(err.status===404||(err.detail&&err.detail.code==="PGRST205")))x.unavailable=true;else x.error=err;}).then(function(){x.loading=false;x.loaded=true;rerender();});
   }
   function stageStrip(){
     var x=O.outreach,order=["new","contacted","replied","meeting","proposal","nurture","won"],by={};x.pipeline.forEach(function(p){by[p.stage]=p;});
@@ -31,6 +35,7 @@
   function outreach(){
     var x=O.outreach;if(!x.loaded&&!x.loading)loadOutreach();
     if(x.loading&&!x.loaded)return note("Reading outreach queue…");
+    if(x.unavailable)return note("Outreach is staged: its desk tables (docs/the-desk.sql) are not in this database yet, so there is no queue to work and nothing here can send.");
     if(x.error)return note("Outreach did not load: "+(x.error.message||x.error),true);
     var c=x.moves[x.index];
     var add='<details class="cro-details"><summary>+ Add contact</summary><div class="cro-details__body"><div class="cro-form cro-form--2"><label>Name<input id="croAddName"></label><label>Email<input id="croAddEmail" type="email"></label><label>Role<input id="croAddRole"></label><label>Organization<input id="croAddOrg"></label><label>Event ID<input id="croAddEvent"></label><label>Kind<select id="croAddKind"><option>press</option><option>county</option><option>nonprofit</option><option>brand</option><option>venue</option><option>agency</option></select></label></div><div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-cro-add>Add and queue</button></div></div></details>';

@@ -146,21 +146,37 @@
   <script>
   (function () {
     "use strict";
-    fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (d) {
+    var albumsP = fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); });
+    albumsP.then(function (d) {
       document.getElementById("shelf").innerHTML = (d.albums || []).map(function (a) {
         return '<a href="album.html?album=' + a.slug + '" data-cta="shelf-' + a.slug + '">' +
           '<img class="cov" src="' + a.art + '" alt="" loading="lazy">' +
           "<b>" + a.name + "</b><small>" + a.tracks.length + (a.tracks.length === 1 ? " track" : " tracks") + "</small></a>";
       }).join("");
     }).catch(function () {});
-    fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (c) {
+    /* EVERY REGISTERED SONG OPENS ITS RECORD. Only the I AM HERE titles were
+       links; people tapped the other titles (the gated single most of all)
+       and nothing happened. Each title now opens its album at that song.
+       The album comes from the album shelf by track title, because the
+       registry's albumSlug is missing on some rows and its display names
+       differ from the shelf's ("Vaunt · EP"). */
+    var catP = fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); });
+    Promise.all([catP, albumsP.catch(function () { return { albums: [] }; })]).then(function (both) {
+      var c = both[0], d = both[1];
+      var slugOf = {};
+      (d.albums || []).forEach(function (a) {
+        (a.tracks || []).forEach(function (tr) { if (tr && tr.title && !slugOf[tr.title]) slugOf[tr.title] = a.slug; });
+      });
       var rows = (c.tracks || []).map(function (t) {
         /* link on the album's SLUG, never its display name: the album got
            renamed once (HERE → I AM HERE) and a name comparison silently
            broke every one of these deep links */
-        var here = (t.albumSlug || "") === "here";
+        var slug = t.albumSlug || slugOf[t.title] || "";
+        var title = slug
+          ? "<a href='album.html?album=" + encodeURIComponent(slug) + "&t=" + encodeURIComponent(t.title) + "' data-cta='registry-track'>" + t.title + "</a>"
+          : t.title;
         return "<li id='" + t.slug + "'><span class='no'>" + (c.isrc_prefix || "QT6KV") + "·" + String(t.no || t.order || "00").padStart(2, "0") + "</span>" +
-          "<span class='t'>" + (here ? "<a href='album.html'>" + t.title + "</a>" : t.title) +
+          "<span class='t'>" + title +
           (t.credit ? "<small>" + t.credit + "</small>" : "") + "</span>" +
           "<span class='al'>" + (t.album || "") + "</span></li>";
       });

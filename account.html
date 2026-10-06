@@ -130,6 +130,11 @@
     .ac__show input { width: 18px; height: 18px; margin: 0; accent-color: var(--ruby-hot); }
     .ac__note.is-ok { color: #86efac; }
     .ac__note.is-err { color: #fca5a5; }
+    /* a refusal repeated is still a refusal: it pulses so a second tap visibly answers */
+    .ac__note--again { color: #fca5a5; animation: acNoteAgain 0.6s ease-out; }
+    @keyframes acNoteAgain { from { background: rgba(252, 165, 165, 0.18); } to { background: transparent; } }
+    @media (prefers-reduced-motion: reduce) { .ac__note--again { animation: none; } }
+    input[aria-invalid="true"] { outline: 2px solid #fca5a5; outline-offset: 1px; }
     @media (hover:hover){.ac__card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 28px 80px -52px rgba(229,56,59,.75)}.ac__prov:hover,.ac__ghost:hover,.ac__forgot:hover{transform:translateY(-1px)}}
     [hidden] { display: none !important; }
   </style>
@@ -425,26 +430,57 @@
 
     var pendingVerificationEmail = "";
 
+    /* A REFUSAL HAS TO BE SEEN. The message sits under the button, which on
+       a phone with the keyboard up is off screen, and a second tap wrote the
+       same words again, so nothing visibly happened: people pressed "Create
+       account" over and over. Each refusal now takes them to the field that
+       needs them, announces itself, and is counted (the reason only, never
+       what was typed) so the stall shows up in Forensics. */
+    function createFail(msg, fieldId, reason) {
+      var m = el("acCreateMsg");
+      m.textContent = msg;
+      m.setAttribute("role", "alert");
+      m.classList.remove("ac__note--again"); void m.offsetWidth; m.classList.add("ac__note--again");
+      var f = fieldId ? el(fieldId) : null;
+      if (f) {
+        f.setAttribute("aria-invalid", "true");
+        try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); }
+        f.scrollIntoView({ block: "center", behavior: "smooth" });
+      } else {
+        m.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+      if (window.MCC_TRACK) window.MCC_TRACK("signup_blocked", { reason: reason });
+    }
+    ["acCreateFirst","acCreateLast","acCreateEmail","acCreatePass","acCreatePass2","acCreateAddr1","acCreateCity",
+     "acCreateRegion","acCreatePostal","acCreateCountry","acCreatePrivacy"].forEach(function (id) {
+      var f = el(id);
+      if (f) f.addEventListener("input", function () { f.removeAttribute("aria-invalid"); });
+      if (f) f.addEventListener("change", function () { f.removeAttribute("aria-invalid"); });
+    });
+
     el("acCreateGo").onclick = function () {
       var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
       var em = el("acCreateEmail").value.trim();
       var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
-      var required = ["acCreateAddr1","acCreateCity","acCreateRegion","acCreatePostal","acCreateCountry"];
-      if (!first || !last || !em || !pw || required.some(function (id) { return !el(id).value.trim(); })) {
-        el("acCreateMsg").textContent = "Legal first and last name, email, and a complete mailing address are required.";
+      var required = ["acCreateFirst","acCreateLast","acCreateEmail","acCreatePass",
+                      "acCreateAddr1","acCreateCity","acCreateRegion","acCreatePostal","acCreateCountry"];
+      var missing = required.filter(function (id) { return !el(id).value.trim(); })[0];
+      if (missing) {
+        createFail("Legal first and last name, email, and a complete mailing address are required.", missing,
+          "missing_" + missing.replace(/^acCreate/, "").toLowerCase());
         return;
       }
       var nameCheck = window.MCC_NAME_INTEGRITY && MCC_NAME_INTEGRITY.validate(first, last);
       if (!nameCheck || !nameCheck.ok) {
-        el("acCreateMsg").textContent = (nameCheck && nameCheck.reason) || "Enter a plausible legal first and last name.";
+        createFail((nameCheck && nameCheck.reason) || "Enter a plausible legal first and last name.", "acCreateFirst", "name_check");
         return;
       }
       if (!el("acCreatePrivacy").checked) {
-        el("acCreateMsg").textContent = "Read and agree to the Privacy Policy before creating the account.";
+        createFail("Read and agree to the Privacy Policy before creating the account.", "acCreatePrivacy", "privacy_unchecked");
         return;
       }
-      if (pw.length < 8) { el("acCreateMsg").textContent = "Use at least 8 characters."; return; }
-      if (pw !== pw2) { el("acCreateMsg").textContent = "Those passwords do not match."; return; }
+      if (pw.length < 8) { createFail("Use at least 8 characters.", "acCreatePass", "password_short"); return; }
+      if (pw !== pw2) { createFail("Those passwords do not match.", "acCreatePass2", "password_mismatch"); return; }
       btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = ""; el("acResend").hidden = true;
       var display = nameCheck.legal_name;
       var metadata = {
@@ -478,7 +514,8 @@
         el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
         el("acResend").hidden = false;
       }).catch(function (e) {
-        el("acCreateMsg").textContent = e.message || "Could not create that account.";
+        createFail(e.message || "Could not create that account.", null,
+          "server_" + String((e && (e.code || e.status)) || "error").slice(0, 40));
       }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
     };
     el("acCreatePass2").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acCreateGo").click(); });

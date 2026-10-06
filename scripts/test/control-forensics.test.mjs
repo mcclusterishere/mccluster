@@ -146,6 +146,12 @@ test('an opened session is a journey: KPIs, cards, page visits, background noise
   assert.doesNotMatch(html, /<img src=x/, 'recorded text is escaped');
   assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(html, /class="crf-raw"/, 'raw JSON stays closed until a step is tapped');
+  assert.match(html, /<h3>Where it went wrong <small>1<\/small>/);
+  assert.match(html, /Rage-tapped “Save”/);
+  assert.match(html, /Then: created an account after hearing “Docket 516R” \(25s later\)/, 'what the visitor did next is told');
+  assert.match(html, /<h3>Page by page/);
+  assert.match(html, /1\. album<\/b><small>55s on screen · read 75% · 0 taps · 1 play<\/small>/);
+  assert.match(html, /2\. account<\/b><small>[^<]*1 converted · 1 went wrong<\/small>/);
   F.state.showSystem = true;
   F.state.raw = { 3: true };
   const open = F.render();
@@ -170,6 +176,71 @@ test('a visitor profile shows every session and their activity over time', async
   assert.match(html, /class="crf-heat"/);
   assert.equal((html.match(/data-crf-session="sess-v/g) || []).length, 3);
   assert.match(html, /<h3>Every session/);
+});
+
+function deferred() { let resolve; const promise = new Promise((r) => { resolve = r; }); return { promise, resolve }; }
+const RANGE_A = { since: '2026-09-28T00:00:00.000Z', until: '2026-10-05T23:59:59.999Z' };
+const RANGE_B = { since: '2026-10-01T00:00:00.000Z', until: '2026-10-05T23:59:59.999Z' };
+
+test('flows: asks for the selected range, reads as landings, next steps, paths and exits, and drops a stale answer', async () => {
+  const F = await load();
+  F.state.mode = 'flows';
+  const asked = [], waits = [];
+  const request = (path) => { asked.push(path); const d = deferred(); waits.push(d); return d.promise; };
+  const h = host();
+  F.mount(h, { request, range: RANGE_A });
+  assert.equal(asked[0], '/v1/analytics/flows?since=2026-09-28T00%3A00%3A00.000Z&until=2026-10-05T23%3A59%3A59.999Z');
+  assert.match(h.innerHTML, /aria-busy="true"/);
+  F.mount(h, { request, range: RANGE_B });
+  assert.equal(asked.length, 2, 'a new range asks again');
+  const flows = (sessions) => ({ ok: true, range: { clamped: false }, flows: {
+    sessions, bounced: 1, bounce_rate: 50, pages_per_session: { 1: 1, 2: 1, 3: 0, 4: 0, '5+': 0 },
+    entries: [{ path: 'album.html', sessions: 2, bounce_rate: 50, played_pct: 50, signup_pct: 0 }],
+    exits: [{ path: 'account.html', sessions: 1, exit_rate: 100 }],
+    transitions: [{ from: 'album.html', to: 'account.html', sessions: 1, sample_sessions: ['sess-1'] }],
+    paths: [{ path: 'album.html → account.html', sessions: 1 }],
+    pages: [{ path: 'album.html', views: 2, sessions: 2, median_visible_s: 40, avg_depth: 55, next: [{ path: 'account.html', count: 1, pct: 50 }, { path: '(left)', count: 1, pct: 50 }] }]
+  } });
+  waits[1].resolve(flows(2));
+  await tick();
+  waits[0].resolve(flows(999));
+  await tick();
+  assert.doesNotMatch(h.innerHTML, /999 sessions/, 'the answer for the replaced range is dropped');
+  assert.match(h.innerHTML, /2 sessions moved through the site\.<\/b> 1 \(50%\) left after one page/);
+  for (const title of ['Pages per session', 'Where they land', 'Where they go next', 'Most common paths', 'Busiest steps', 'Where they leave']) assert.match(h.innerHTML, new RegExp('<h3>' + title));
+  assert.match(h.innerHTML, /left the site<\/span>/);
+  assert.match(h.innerHTML, /data-crf-session="sess-1"/, 'a step links to a real journey');
+  assert.doesNotMatch(h.innerHTML, /data-crf-q/, 'no session search on an aggregate view');
+});
+
+test('errors: this site’s own errors lead, injected ones wait behind a toggle, refusals read in words', async () => {
+  const F = await load();
+  F.state.mode = 'errors';
+  const h = host();
+  const group = (extra) => ({ count: 3, sessions: 2, devices: 2, first_at: '2026-10-05T12:00:00Z', last_at: '2026-10-05T13:00:00Z', pages: [{ path: 'album.html', count: 3 }], browsers: [{ browser: 'iOS · instagram', count: 3 }], sample_sessions: ['sess-e1'], ...extra });
+  F.mount(h, { range: RANGE_A, request: () => Promise.resolve({ ok: true, range: {},
+    totals: { errors: 6, site_errors: 3, injected_errors: 3, friction: 3, journey: 3, sessions_affected: 4 },
+    errors: [group({ kind: 'js_rejection', origin: 'site', message: 'EncodingError: <b>bad</b>', source: 'https://matthew.mccluster.org/js/filament.js', line: 12, stack: 'decode@filament.js:12' }),
+      group({ kind: 'js_error', origin: 'injected', message: 'window.webkit.messageHandlers' })],
+    friction: [group({ kind: 'dead_click', target: 'button#playAll', text: 'Play' })],
+    journey: [group({ kind: 'signup_blocked', detail: 'missing_first' }), group({ kind: 'signup_blocked', detail: 'server_422' })] }) });
+  await tick();
+  const html = h.innerHTML;
+  assert.match(html, /4 sessions hit an error or friction\./);
+  assert.ok(html.indexOf('EncodingError') < html.indexOf('Blocked steps'), 'site errors come first');
+  assert.match(html, /EncodingError: &lt;b&gt;bad&lt;\/b&gt;/, 'recorded messages are escaped');
+  assert.match(html, /filament\.js:12<\/code>/);
+  assert.doesNotMatch(html, /window\.webkit\.messageHandlers/, 'injected errors stay folded away');
+  assert.match(html, /data-crf-injected>Show 1 injected error \(not this site’s code\)/);
+  assert.match(html, /<b>missing first name<\/b>/);
+  assert.match(html, /<b>the server refused it \(422\)<\/b>/);
+  assert.match(html, /“Play” · button#playAll/);
+  assert.match(html, /3 times · 2 sessions · 2 devices/);
+  assert.match(html, /album ×3 · iOS · instagram ×3/);
+  F.state.showInjected = true;
+  assert.match(F.render(), /window\.webkit\.messageHandlers/);
+  assert.equal(F.describe({ name: 'signup_blocked', props: { reason: 'password_mismatch' } }).text, 'Sign-up refused: passwords did not match');
+  assert.match(F.describe({ name: 'js_error', props: { msg: 'x', origin: 'injected' } }).text, /^In-app browser error \(not this site\)/);
 });
 
 test('the forensics stylesheet keeps the mobile-first rules', async () => {
