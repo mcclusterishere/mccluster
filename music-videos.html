@@ -254,6 +254,9 @@
       deck.currentTime = 0;
       if (armed) deck.play().catch(function () {});
       loadLyrics(t.lyrics || "", i);
+      try {
+        history.replaceState(null, "", "music-videos.html?album="+encodeURIComponent(t.albSlug)+"&t="+encodeURIComponent(t.title));
+      } catch (_) {}
       if (window.MCC_TRACK) window.MCC_TRACK("music_video_view", { track: t.title, album:t.albSlug });
     }
 
@@ -384,7 +387,8 @@
           want = L.p[Math.min(L.p.length - 1, Math.floor(time / deck.duration * L.p.length))] || "";
         }
         var p = card(cur).querySelector(".fc__lyr p");
-        if (p.textContent !== want || (p.querySelector && p.querySelector(".lyric-service-cta"))) {
+        if (p.dataset.line !== want) {
+          p.dataset.line = want;
           var exp = TRACKS[cur] && TRACKS[cur].experience || {};
           if(window.MCC_LYRIC_COMMERCE) window.MCC_LYRIC_COMMERCE.renderLine(
             p, want, exp, {track:TRACKS[cur].title,album:TRACKS[cur].albSlug,surface:"music-video"}
@@ -434,7 +438,7 @@
       var sh = e.target.closest ? e.target.closest("[data-share]") : null;
       if (sh) {
         var t2 = TRACKS[+sh.closest(".fc").getAttribute("data-i")];
-        var url = "https://matthew.mccluster.org/music-videos.html";
+        var url = "https://matthew.mccluster.org/music-videos.html?album=" + encodeURIComponent(t2.albSlug) + "&t=" + encodeURIComponent(t2.title);
         if (navigator.share) navigator.share({ title: t2.title + " · McCluster", text: t2.title + " · the music video", url: url }).catch(function () {});
         else { try { navigator.clipboard.writeText(url); } catch (e2) {} }
         if (window.MCC_TRACK) window.MCC_TRACK("music_video_share", { track: t2.title });
