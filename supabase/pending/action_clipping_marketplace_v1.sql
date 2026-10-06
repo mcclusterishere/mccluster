@@ -1500,7 +1500,9 @@ begin
        where claim_id = v_claim.id and status in ('tracking', 'held', 'closed');
       select count(*) into v_paid from public.action_clip_conversions
        where claim_id = v_claim.id and kind = r.kind and qualified and earning_id is not null;
-      if v_paid + 1 > greatest(1, v_views / 200) then v_ok := false; v_why := 'above a plausible conversion rate for verified views'; end if;
+      -- bonuses ride on verified reach: none before a verified clip, then at most one per 200 verified views
+      if v_views = 0 then v_ok := false; v_why := 'no verified clip yet';
+      elsif v_paid + 1 > v_views / 200 then v_ok := false; v_why := 'above a plausible conversion rate for verified views'; end if;
     end if;
 
     insert into public.action_clip_conversions (mission_id, claim_id, submission_id, kind, converted_user_id, occurred_at, qualified, disqualified_reason)

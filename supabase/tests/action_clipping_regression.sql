@@ -305,7 +305,7 @@ end $$;
 do $$
 declare
   mission uuid := (select v::uuid from t where k = 'mission');
-  r jsonb; sub4 uuid; d jsonb; w jsonb;
+  r jsonb; sub4 uuid; d jsonb; w jsonb; u_fan3 uuid := gen_random_uuid();
 begin
   update public.action_clip_campaigns set keep_live_days = 7 where mission_id = mission;  -- a stricter campaign
   perform pg_temp.sign_in((select v::uuid from t where k = 'u_clipper'), 'clipper@example.com');
@@ -345,6 +345,20 @@ begin
   w := public.clip_my_work();
   assert (w->'totals'->>'paid_cents')::bigint = 8250 and jsonb_array_length(w->'claims') = 1, 'the clipper sees their own work and pay';
   assert jsonb_array_length(w->'claims'->0->'submissions') = 4, 'every clip, including rejected and removed, with reasons';
+
+  -- a clipper with no verified clip earns no conversion bonus, however many sign-ups their link brings
+  perform pg_temp.sign_in((select v::uuid from t where k = 'u_other'), 'other@example.com');
+  r := public.clip_campaign_claim(mission);
+  perform pg_temp.sign_in(null);
+  insert into auth.users (id, email, email_confirmed_at, created_at)
+  values (u_fan3, 'fan3@example.com', now() + interval '2 hours', now() + interval '2 hours');
+  insert into public.events (name, at, props, uid, device_id)
+  values ('account_created', now(), jsonb_build_object('acq', 'clip/instagram/' || (r->>'ref_code'), 'campaign', r->>'ref_code'), u_fan3, 'dev-fan3');
+  perform public.clip_attribute_conversions(now() - interval '1 hour');
+  assert (select disqualified_reason from public.action_clip_conversions where converted_user_id = u_fan3 and kind = 'account')
+         = 'no verified clip yet', 'no bonus before a verified clip';
+  assert not exists (select 1 from public.action_clip_earnings e join public.action_clip_claims k on k.id = e.claim_id
+                      where k.ref_code = r->>'ref_code'), 'and nothing is earned';
 
   -- only the server settles; browsers read nothing directly
   assert not has_function_privilege('authenticated', 'public.clip_settle_submission(uuid)', 'execute'), 'members cannot settle';
