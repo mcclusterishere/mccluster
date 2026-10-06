@@ -27,6 +27,8 @@ export function redirectSystemPath({
       return `/mission/${mission}`;
     }
 
+    if (isActionNetworkWeb) return '/profile';
+
     return path;
   } catch {
     // Never crash app startup because an external application supplied a
