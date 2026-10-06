@@ -54,7 +54,8 @@ jobs:
           node-version: '22'
 
       # Planned from the last successful push run, not just this push: a
-      # cancelled or failed run's functions roll into the next run.
+      # cancelled or failed run's functions roll into the next run. With no
+      # usable successful run, every declared function is planned.
       - name: Work out which functions changed
         id: plan
         env:
@@ -78,9 +79,10 @@ jobs:
         if: steps.plan.outputs.count != '0'
         env:
           FUNCTIONS: ${{ steps.plan.outputs.functions }}
+          BASELINE: ${{ steps.plan.outputs.baseline }}
         run: |
           manual=false; [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && manual=true
-          node scripts/supabase-functions-deploy.mjs gate --functions "$FUNCTIONS" --verdict "$RUNNER_TEMP/integration.json" --has-token "$HAS_DEPLOY_TOKEN" --manual "$manual"
+          node scripts/supabase-functions-deploy.mjs gate --functions "$FUNCTIONS" --verdict "$RUNNER_TEMP/integration.json" --has-token "$HAS_DEPLOY_TOKEN" --manual "$manual" --baseline "$BASELINE"
 
       - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
         if: steps.plan.outputs.count != '0' && env.HAS_DEPLOY_TOKEN == 'true'
