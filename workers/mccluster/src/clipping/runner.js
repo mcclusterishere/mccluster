@@ -1,6 +1,6 @@
 /* The clipping cron: every due clip is read from its platform and recorded
    through the service-only database functions, which decide everything that
-   touches money (supabase/pending/action_clipping_marketplace_v1.sql). This
+   touches money (supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql). This
    file only carries platform facts to them. */
 import { readClip } from './platforms.js';
 

@@ -3,7 +3,8 @@
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and
 `docs/control-plane/DRIFT-CONTRACT.md`). A migration that is written, reviewed
-and tested but not yet applied in production waits here.
+and tested but not yet applied in production waits here, and says in its own
+header what it fixes.
 
 To promote one:
 1. Apply it with the Supabase MCP `apply_migration` under the same name.
@@ -12,8 +13,7 @@ To promote one:
    file matches the stored statement byte for byte.
 4. Add it to `supabase/production-ledger.json` and `core/drift-contract.json`
    and run `node scripts/control-plane-drift-contract-check.mjs`.
-5. Drop the CI step that applies it from this folder.
+5. Drop any CI step that applies it from this folder.
 
-| File | Status |
-|---|---|
-| `action_clipping_marketplace_v1.sql` | Written and regression-tested; waiting for production apply (the Supabase connector's `apply_migration` was timing out). |
+Promoted: `action_clipping_marketplace_v1.sql` is
+`20261006170955_action_clipping_marketplace_v1.sql`.

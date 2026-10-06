@@ -6,7 +6,7 @@
    campaign's organization. Nothing on this page computes money: spend,
    committed budget, verified and payable views, conversions and payouts are
    what clip_campaign_dashboard() reports, and they move only when the
-   Worker records a platform read (supabase/pending/action_clipping_marketplace_v1.sql).
+   Worker records a platform read (supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql).
 
    Only Instagram can be verified server-side today, so the launch form
    offers YouTube and TikTok as unavailable rather than pretending. */
@@ -191,7 +191,7 @@
     var chips='<div class="cro-chips">'+C.campaigns.map(function(x){return'<button class="cro-chip'+(x.mission_id===C.sel&&C.tab!=="new"?" is-on":"")+'" type="button" data-clip-pick="'+e(x.mission_id)+'">'+e(x.title)+' · '+e(x.status)+(x.pending_review?" · "+x.pending_review+" to review":"")+'</button>';}).join("")+
       '<button class="cro-chip'+(C.tab==="new"?" is-on":"")+'" type="button" data-clip-tab="new">+ New campaign</button></div>';
     var head=(C.loading&&!C.loaded?note("Loading campaigns…"):"")+
-      (C.error?note(MISSING.test(C.error.message||"")?"Clipping is not provisioned in this database yet: the clipping migration is waiting to be applied (supabase/pending/).":"Campaigns could not be read: "+(C.error.message||C.error),true):"")+
+      (C.error?note(MISSING.test(C.error.message||"")?"Clipping is not provisioned in this database yet: migration 20261006170955_action_clipping_marketplace_v1 has not been applied here.":"Campaigns could not be read: "+(C.error.message||C.error),true):"")+
       (C.msg?note(C.msg,C.bad):"");
     if(C.tab==="new"||(!C.campaigns.length&&C.loaded&&!C.error))return'<div class="cro">'+chips+head+launchForm()+'</div>';
     var c=current();if(!c)return'<div class="cro">'+chips+head+'</div>';

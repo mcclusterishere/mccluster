@@ -275,7 +275,7 @@
     "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
     "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
     "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
-    "supabase/pending/action_clipping_marketplace_v1.sql",
+    "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -5835,22 +5835,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/action_clipping_marketplace_v1.sql capability ids known",
+      "name": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/pending/action_clipping_marketplace_v1.sql classified",
+      "name": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/pending/action_clipping_marketplace_v1.sql support-only semantics coherent",
+      "name": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/pending/action_clipping_marketplace_v1.sql support rationale present",
+      "name": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

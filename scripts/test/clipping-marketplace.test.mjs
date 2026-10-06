@@ -8,7 +8,7 @@ import fs from 'node:fs/promises';
 import test from 'node:test';
 
 const read = (path) => fs.readFile(new URL('../../' + path, import.meta.url), 'utf8');
-const MIGRATION = 'supabase/pending/action_clipping_marketplace_v1.sql';
+const MIGRATION = 'supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql';
 
 function fnBody(sql, name) {
   const start = sql.indexOf(`create or replace function ${name}(`);
@@ -17,11 +17,11 @@ function fnBody(sql, name) {
   return sql.slice(start, end);
 }
 
-test('the clipping migration waits in pending/ until it is applied in production', async () => {
-  const [readme, ledger] = await Promise.all([read('supabase/pending/README.md'), read('supabase/production-ledger.json')]);
-  assert.match(readme, /action_clipping_marketplace_v1\.sql/);
-  assert.doesNotMatch(ledger, /clipping/, 'not claimed as applied before it is');
-  await assert.rejects(fs.access(new URL('../../supabase/migrations/action_clipping_marketplace_v1.sql', import.meta.url)));
+test('the clipping migration is committed under the version production recorded for it', async () => {
+  const ledger = JSON.parse(await read('supabase/production-ledger.json'));
+  assert.ok(ledger.migrations.some((m) => m.version === '20261006170955' && m.name === 'action_clipping_marketplace_v1'));
+  await fs.access(new URL('../../' + MIGRATION, import.meta.url));
+  await assert.rejects(fs.access(new URL('../../supabase/pending/action_clipping_marketplace_v1.sql', import.meta.url)), 'no second copy waits in pending/');
 });
 
 test('only Instagram is verifiable; YouTube and TikTok are off in the database and the Worker', async () => {
@@ -129,10 +129,10 @@ test('the surfaces are wired: Worker cron and routes, Control, web and native Cl
   assert.doesNotMatch(screen + (await read('js/mnet-clips.js')), /service_role/i);
 });
 
-test('CI rebuilds the database, applies the pending migration and runs the end-to-end regression', async () => {
+test('CI rebuilds the database from the migration chain and runs the end-to-end regression', async () => {
   const ci = await read('.github/workflows/api-economic-core-ci.yml');
-  const apply = ci.indexOf('psql \'postgresql://postgres:postgres@127.0.0.1:54322/postgres\' -v ON_ERROR_STOP=1 -f supabase/pending/action_clipping_marketplace_v1.sql');
+  const rebuild = ci.indexOf('bash scripts/supabase-local-reset-with-replay.sh');
   const regress = ci.indexOf('-f supabase/tests/action_clipping_regression.sql');
-  assert.ok(apply > 0 && regress > apply, 'migration applied before its regression runs');
-  assert.match(ci, /'supabase\/pending\/\*\*'/);
+  assert.ok(rebuild > 0 && regress > rebuild, 'the rebuilt chain, clipping included, is what the regression runs against');
+  assert.doesNotMatch(ci, /-f supabase\/pending\/action_clipping_marketplace_v1\.sql/, 'no separate pending apply once it is in the chain');
 });

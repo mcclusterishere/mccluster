@@ -8,7 +8,7 @@ any artist org on the plane can run campaigns the same way.
 
 | Layer | Where |
 |---|---|
-| Schema, authorization, settlement | `supabase/pending/action_clipping_marketplace_v1.sql` (pending production apply, see [Status](#status)) |
+| Schema, authorization, settlement | `supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql` (applied in production, see [Status](#status)) |
 | End-to-end proof | `supabase/tests/action_clipping_regression.sql` (CI: `api-economic-core-ci.yml`) |
 | Platform reads, cron, member routes | `workers/mccluster/src/clipping/` (tests: `workers/mccluster/test/clipping.test.mjs`) |
 | Creator dashboard | Control → Create → Clipping (`js/control-room/clipping.js`) |
@@ -198,18 +198,13 @@ Reads go through the functions above.
 
 ## Status
 
-- **Not yet applied in production.** The migration is in `supabase/pending/`
-  because the drift contract rejects an unledgered file in `migrations/`.
-  Applying it needs the Supabase connector working: `apply_migration` timed
-  out at every size, and staging the SQL another way was not done. To promote
-  it, follow `supabase/pending/README.md`:
-  1. apply it;
-  2. move it under its recorded version;
-  3. update the ledger and the drift contract;
-  4. drop the CI pending step.
-- **Until then the Worker stands down.** `clip_work_due` answers PGRST202, so
-  the cron returns `{ skipped: 'not provisioned' }`. The Clips tabs say
-  "Clipping is not open yet."
+- **Applied in production** as `20261006170955_action_clipping_marketplace_v1`
+  (2026-10-06, 17:09 UTC). The committed file is the stored statement byte for
+  byte (109,041 bytes, md5 `e3936caf…`), and it is in the production ledger
+  and the drift contract.
+- **A database without it** makes the Worker stand down: `clip_work_due`
+  answers PGRST202, so the cron returns `{ skipped: 'not provisioned' }`, and
+  the Clips tabs say "Clipping is not open yet."
 - **Proven.** The CI regression rebuilds the full migration chain, applies this
   migration and drives creator → clipper → platform metrics → earnings →
   conversions → release → payout through the real functions, signed in as each
