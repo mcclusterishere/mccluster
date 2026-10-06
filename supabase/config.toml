@@ -195,3 +195,13 @@ verify_jwt = true
 # an order can be created and the function repeats authorization in-process.
 [functions.music-checkout]
 verify_jwt = true
+
+# Public fixed-price direct-track checkout. Pricing and product are loaded
+# server-side; the browser may choose only a registered offer key.
+[functions.music-direct-checkout]
+verify_jwt = false
+
+# Public paid-download fulfillment. A paid Stripe Checkout session ID is the
+# bearer credential; the function re-verifies it with Stripe before signing.
+[functions.music-direct-access]
+verify_jwt = false
