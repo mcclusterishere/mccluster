@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 
 test('experience evidence migration separates product and research policy planes',async()=>{
-  const sql=await read('supabase/migrations/20261006210000_experience_evidence_plane_v1.sql');
+  const sql=await read('supabase/migrations/20261006211536_experience_evidence_plane_v1.sql');
   for(const table of [
     'experience_surfaces','experience_policies','experience_experiments',
     'experience_experiment_arms','experience_assignments','experience_feature_snapshots',
@@ -22,7 +22,7 @@ test('experience evidence migration separates product and research policy planes
 });
 
 test('evidence plane records opportunity, selection, propensities and downstream decision context',async()=>{
-  const sql=await read('supabase/migrations/20261006210000_experience_evidence_plane_v1.sql');
+  const sql=await read('supabase/migrations/20261006211536_experience_evidence_plane_v1.sql');
   for(const column of ['eligible_candidates','selected_candidates','propensities','reason_codes','objective_weights']){
     assert.match(sql,new RegExp('\\b'+column+'\\b'),column+' missing');
   }
