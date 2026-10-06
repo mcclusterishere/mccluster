@@ -15,6 +15,7 @@ import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
+import { handleExperienceRequest } from './experience/router.js';
 import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
@@ -36,7 +37,7 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -229,6 +230,16 @@ async function dispatchRequest(request, env, ctx) {
         if (musicResponse) return musicResponse;
       } catch (error) {
         return fail(request, env, error.message || 'Music request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/experience' || path.startsWith('/v1/experience/')) {
+      try {
+        const user = await authUser(request, env);
+        const experienceResponse = await handleExperienceRequest(request, env, user);
+        if (experienceResponse) return applyCors(request, env, experienceResponse);
+      } catch (error) {
+        return fail(request, env, error.message || 'Experience request failed', error.status || 500, error.detail);
       }
     }
 

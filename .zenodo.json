@@ -1,0 +1,30 @@
+{
+  "title": "McCluster Adaptive Experience Research Platform",
+  "upload_type": "software",
+  "description": "Versioned software for adaptive digital experiences, audience science, recommender-system experimentation, music discovery, and commercial outcome measurement.",
+  "creators": [
+    {
+      "name": "McCluster, Matthew",
+      "orcid": "0009-0000-8988-8955"
+    }
+  ],
+  "access_right": "open",
+  "keywords": [
+    "adaptive user interfaces",
+    "recommender systems",
+    "human-computer interaction",
+    "online experimentation",
+    "music recommendation",
+    "audience analytics"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://matthew.mccluster.org/research.html",
+      "relation": "isSupplementedBy"
+    },
+    {
+      "identifier": "https://github.com/mcclusterishere/mccluster",
+      "relation": "isSupplementTo"
+    }
+  ]
+}

@@ -220,7 +220,7 @@
     }).join("")+'</div>';
   }
   function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{},rangeLabel=S.range&&S.range.label||"Selected range";
@@ -403,10 +403,38 @@
       '<button class="cr-btn cr-btn--primary" type="submit">Add website</button><p class="cra-form__msg" role="status" aria-live="polite"></p></form></details>';
     return'<div class="cra-grid">'+top+card("Your websites","Every website here reports to this one dashboard. Pick one to see its setup; the menu at the top switches the whole panel.",list+form,true)+'</div>'+err("sites");
   }
-  function body(){return S.section==="audience"?audience():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function adaptive(){
+    if(sid()!==null)return'<div class="cra-grid">'+card("Adaptive Experience","The research and decision ledger is first-party only.","<p>Select McCluster first-party to inspect production policies, experiments and decision evidence.</p>",true)+'</div>';
+    if(S.errors.experience)return err("experience");
+    var d=S.data.experience||{},t=d.totals||{},reg=d.registry||{},experiments=reg.experiments||[],policies=reg.policies||[],projects=reg.research_projects||[],recent=d.recent||[];
+    var k='<div class="cra-kpis">'+
+      kpi("Decisions",n(t.decisions||0))+
+      kpi("Impressions",n(t.impressions||0),(Number(t.impression_rate_pct||0)).toFixed(1)+"% of decisions")+
+      kpi("Visible",n(t.visible||0))+
+      kpi("Interactions",n(t.interactions||0),(Number(t.interaction_rate_pct||0)).toFixed(1)+"%")+
+      kpi("Outcomes",n(t.outcomes||0),(Number(t.outcome_rate_pct||0)).toFixed(1)+"% of impressions")+
+      '</div>';
+    var ex=experiments.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Experiment</th><th>Status</th><th>Intent</th><th>Review</th><th class="n">Traffic</th><th>Primary metric</th><th>Publishable</th></tr></thead><tbody>'+
+      experiments.map(function(x){return'<tr><td><b>'+e(x.key)+'</b><small style="display:block;opacity:.65">'+e(x.hypothesis||"")+'</small></td><td>'+e(x.status||"—")+'</td><td>'+e(x.intent||"—")+'</td><td>'+e(x.research_review||"—")+'</td><td class="n">'+e((Number(x.allocation||0)*100).toFixed(1)+"%")+'</td><td>'+e(x.primary_metric||"—")+'</td><td>'+e(x.publication_eligible?"yes":"no")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No experiments registered. The evidence plane can collect control decisions without changing behavior.</p>';
+    var pol=policies.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Policy</th><th>Plane</th><th>Mode</th><th>Algorithm</th><th>Enabled</th></tr></thead><tbody>'+
+      policies.map(function(x){return'<tr><td><b>'+e(x.key+"@"+x.version)+'</b></td><td>'+e(x.plane)+'</td><td>'+e(x.mode)+'</td><td>'+e(x.algorithm)+'</td><td>'+e(x.enabled?"yes":"no")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No policies registered.</p>';
+    var proj=projects.length?projects.map(function(x){return'<div class="source"><b>'+e(x.title)+'</b><small style="display:block;opacity:.7">'+e(x.key)+' · '+e(x.status)+' · human subjects: '+e(x.human_subjects_status)+'</small>'+(x.canonical_url?'<p><a href="'+e(x.canonical_url)+'" target="_blank" rel="noopener">Public research page ↗</a></p>':"")+'</div>';}).join(""):'<p>No research projects registered.</p>';
+    var dec=recent.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Decision</th><th>Surface</th><th>Policy</th><th>Experiment</th><th class="n">Eligible</th><th>Selected</th><th>Evidence</th></tr></thead><tbody>'+
+      recent.slice(0,50).map(function(x){return'<tr><td><b>'+e(String(x.id||"").slice(0,8))+'</b><small style="display:block;opacity:.65">'+e(x.created_at||"")+'</small></td><td>'+e(x.surface||"—")+'</td><td>'+e(x.policy||"—")+'</td><td>'+e(x.experiment?(x.experiment+" · "+(x.arm||"")):"control")+'</td><td class="n">'+n(x.eligible_count)+'</td><td>'+e((x.selected||[]).map(function(y){return y.id;}).join(", ")||"—")+'</td><td>'+e((x.events||[]).map(function(y){return y.name.replace("experience_","");}).join(" → ")||"decision only")+'</td></tr>';}).join("")+
+      '</tbody></table></div>':'<p>No experience decisions in the selected range yet.</p>';
+    return k+'<div class="cra-grid">'+
+      card("Production + research policies","Only promoted production policies are supposed to control the default experience. Research policies must earn promotion.",pol,true)+
+      card("Experiment registry","Hypothesis, assignment, research review and publication state stay attached to the experiment.",ex,true)+
+      card("Research program","Citable projects and governance state.",proj,true)+
+      card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
+      '</div>';
+  }
+  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
     var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
-    return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
+    return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, adaptive experience, experiments, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
   }
   function paint(){
     if(!S.host)return;S.host.innerHTML=render();bind(S.host);drawReach();
@@ -418,7 +446,7 @@
     return {
       traffic:{byHour:[],byDay:[],totals:{},pages:[],sources:[],countries:[],networks:[]},
       funnel:[],acquisition:[],paths:[],content:[],contentEvents:[],
-      identity:{},audienceScience:null,business:null
+      identity:{},audienceScience:null,experience:null,business:null
     };
   }
   function applyResult(x){
@@ -439,6 +467,7 @@
     else if(x.name==="contentEvents")S.data.contentEvents=v||[];
     else if(x.name==="identity")S.data.identity=v||{};
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
+    else if(x.name==="experience")S.data.experience=v||null;
     else if(x.name==="business")S.data.business=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
@@ -489,7 +518,8 @@
       {name:"paths",run:function(){return rpc("analytics_paths",Object.assign({p_limit:40},args));}},
       {name:"funnel",run:function(){return site===null?rpc("analytics_funnel",{p_since:r.since,p_until:r.until}):Promise.resolve([]);}},
       {name:"identity",run:function(){return site===null?S.request("/v1/analytics/identity?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve({coverage:{},tracks:[],journeys:[]});}},
-      {name:"audienceScience",run:function(){return site===null?S.request("/v1/analytics/audience-science?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}}
+      {name:"audienceScience",run:function(){return site===null?S.request("/v1/analytics/audience-science?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"experience",run:function(){return site===null?S.request("/v1/analytics/experience?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}}
     ];
     return runLimited(tasks,3,function(x){
       if(q!==S.seq)return;
