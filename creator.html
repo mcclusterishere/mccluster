@@ -46,6 +46,11 @@
           <div class="creator-field"><label for="creatorName">Artist / creator name</label><input id="creatorName" name="artist_name" required maxlength="160"></div>
           <div class="creator-field"><label for="creatorBio">Bio</label><textarea id="creatorBio" name="bio" maxlength="2000"></textarea></div>
           <div class="creator-field"><label for="creatorWebsite">Website</label><input id="creatorWebsite" name="website_url" type="url" placeholder="https://"></div>
+          <div class="creator-field"><label for="creatorAccent">Player accent</label><input id="creatorAccent" type="color" value="#e5383b"></div>
+          <div class="creator-field"><label for="creatorBackground">Player background</label><input id="creatorBackground" type="color" value="#090706"></div>
+          <div class="creator-field"><label for="creatorForeground">Player text</label><input id="creatorForeground" type="color" value="#f4efe6"></div>
+          <div class="creator-field"><label for="creatorSurface">Player surface</label><input id="creatorSurface" type="color" value="#17110f"></div>
+          <div class="creator-field wide"><small style="color:var(--mc-dim)">These are your artist-wide player defaults. A release can override them.</small></div>
           <label class="creator-check"><input id="creatorTerms" type="checkbox" required><span>I accept the <a href="music-creator-terms.html" target="_blank">Creator Hosting & Licensing Terms</a>.</span></label>
           <div class="creator-actions"><button class="creator-btn primary" type="submit">Save creator profile</button><a class="creator-btn quiet" id="publicProfile" href="#" hidden>View public profile</a></div>
           <div class="creator-status" id="profileStatus"></div>
@@ -76,6 +81,15 @@
           <div class="creator-field"><label for="trackMaster">Master audio</label><input id="trackMaster" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/flac" required></div>
           <div class="creator-field"><label for="trackPreview">Preview audio</label><input id="trackPreview" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav"><small id="previewHelp" style="color:var(--mc-dim)">Required for account-only and licensable tracks.</small></div>
           <div class="creator-field wide"><label for="trackArt">Artwork</label><input id="trackArt" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></div>
+          <div class="creator-field"><label for="trackMusicVideo">Music video URL</label><input id="trackMusicVideo" type="url" placeholder="https:// or your hosted music-video URL"></div>
+          <div class="creator-field"><label for="trackLyricsUrl">Lyrics JSON URL</label><input id="trackLyricsUrl" type="url" placeholder="https:// or public lyrics JSON URL"></div>
+          <div class="creator-field"><label for="trackAccent">Track accent</label><input id="trackAccent" type="color" value="#e5383b"></div>
+          <div class="creator-field"><label for="trackBackground">Track background</label><input id="trackBackground" type="color" value="#090706"></div>
+          <div class="creator-field"><label for="trackForeground">Track text</label><input id="trackForeground" type="color" value="#f4efe6"></div>
+          <div class="creator-field"><label for="trackSurface">Track surface</label><input id="trackSurface" type="color" value="#17110f"></div>
+          <div class="creator-field"><label for="trackServiceLabel">Primary service CTA</label><input id="trackServiceLabel" maxlength="100" placeholder="Book a shoot"></div>
+          <div class="creator-field"><label for="trackServiceUrl">Primary service URL</label><input id="trackServiceUrl" type="url" placeholder="https://"></div>
+          <div class="creator-field wide"><label for="trackLyricCtas">Lyric service links</label><textarea id="trackLyricCtas" placeholder="Exact lyric phrase | CTA label | https://destination.example&#10;Another exact phrase | Book now | https://destination.example"></textarea><small style="color:var(--mc-dim)">One rule per line. The exact phrase must appear in your lyric master; the player never rewrites your lyrics.</small></div>
 
           <div class="creator-field wide">
             <span class="creator-label">Rights declaration</span>

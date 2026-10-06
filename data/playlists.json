@@ -1,8 +1,8 @@
 {
  "playlists": [
   {
-   "slug": "the-films",
-   "name": "The Films",
+   "slug": "music-videos",
+   "name": "Music Videos",
    "tag": "Every song with its own music video",
    "art": "assets/frames/redjet_0001.jpg",
    "by": "Scene-cut on the bars. Watch the words land.",
@@ -39,6 +39,9 @@
      "album": "heal-the-3",
      "title": "Deep End"
     }
+   ],
+   "legacy_slugs": [
+    "the-films"
    ]
   },
   {

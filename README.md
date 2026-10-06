@@ -23,7 +23,7 @@ Identity of record: [ORCID 0009-0000-8988-8955](https://orcid.org/0009-0000-8988
 
 | | What it is | Where it lives |
 |---|---|---|
-| **Music** | *I AM HERE*, a six-song album, plus the lyric films and the catalogue | `index.html`, `album.html`, `films.html`, `catalogue.html` |
+| **Music** | *I AM HERE*, a six-song album, plus the music videos and the catalogue | `index.html`, `album.html`, `music-videos.html`, `catalogue.html` |
 | **Media & photography** | Commercial photography, the shot wall, the print shop, the production house | `shots.html`, `gallery.html`, `production.html`, `portfolio.html` |
 | **Civic work** | Equity Uprise: the public record, Docket 516, the policy archive, and the fellowship platform | `equity-uprise.html`, `docket-516.html`, `policy.html`, `topics.html`, `fellowships.html` |
 | **Studio & IT** | Booking, client sites, the console, and the platform that runs them | `hire.html`, `sites.html`, `console.html`, `supabase/` |

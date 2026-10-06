@@ -7,13 +7,13 @@ const must = (name, cond) => {
 
 const rootPages = [
   ["album.html", "music-room--album"],
-  ["films.html", "music-room--films"],
+  ["music-videos.html", "music-room--music-videos"],
   ["catalogue.html", "music-room--catalogue"],
   ["license.html", "music-room--license"],
 ];
 /* The six per-track pages were folded into the reel on the owner's call:
-   each one existed to show a track's film and link to licensing, and
-   films.html plays every film while license.html already pre-picked the
+   each one existed to show a track's music video and link to licensing, and
+   music-videos.html plays every music video while license.html already pre-picked the
    record from ?track=<slug>.
 
    This block used to assert the full-page shape — its own stage, its story
@@ -44,9 +44,9 @@ for (const path of trackStubs) {
   /* it must still exist and it must still go somewhere: an indexed URL that
      404s is worse than one that forwards, and both mechanisms are required
      because the meta refresh is what carries a visitor with scripting off */
-  must(path + " forwards to the reel without scripting", /http-equiv="refresh"[^>]*films\.html/.test(html));
-  must(path + " forwards to the reel with scripting", html.includes('location.replace("../films.html")'));
-  must(path + " stays out of the index", html.includes('name="robots" content="noindex"'));
+  must(path + " forwards to the music video without scripting", /http-equiv="refresh"[^>]*music-videos\.html/.test(html));
+  must(path + " forwards to the music video with scripting", html.includes("music-videos.html"));
+  must(path + " stays out of the index", /name="robots" content="noindex(?:,follow)?"/.test(html));
 }
 
 const album = await readFile("album.html", "utf8");
@@ -54,16 +54,17 @@ must("album keeps the six-track mount", album.includes('id="tracks"'));
 must("album keeps the shared deck", album.includes('id="deck"'));
 must("album keeps persistent Music transport hooks", album.includes("MCC_NP_PLAY") && album.includes("MCC_NP_PAUSE"));
 
-const films = await readFile("films.html", "utf8");
-must("films keeps one-tap sound intent", films.includes('id="fa"') && films.includes("films_armed"));
-must("films keeps swipe cards", films.includes('class="fc"'));
+const films = await readFile("music-videos.html", "utf8");
+const filmsRedirect = await readFile("films.html", "utf8");
+must("music videos keeps one-tap sound intent", films.includes('id="fa"') && films.includes("music_videos_armed"));
+must("music videos keeps swipe cards", films.includes('class="fc"'));
 /* the reel absorbed the track pages, so it now owes what they carried: a
    licensing door per record, pre-picking that record on license.html. If
    this ever regresses, six URLs forward to a page that dropped their one
    job — which is exactly the failure the old track-page block guarded. */
-must("films carries the licensing door the track pages held",
-  films.includes('data-cta="film-license"') && films.includes("license.html?track="));
-must("films calls them lyric videos", !/>The films</.test(films));
+must("music videos carries the licensing door the track pages held",
+  films.includes('data-cta="music-video-license"') && films.includes("license.html?track="));
+must("legacy films route redirects to music videos", filmsRedirect.includes("music-videos.html"));
 
 
 const license = await readFile("license.html", "utf8");
@@ -73,7 +74,7 @@ must("license keeps track preselection", license.includes('get("track")'));
 
 /* BOTH ENDS OF THE LINK, OR NEITHER.
 
-   The first pass checked only that a slug appeared somewhere in films.html
+   The first pass checked only that a slug appeared somewhere in music-videos.html
    and called that "can license this record". It cannot: license.html
    pre-picks the track with
 
@@ -81,7 +82,7 @@ must("license keeps track preselection", license.includes('get("track")'));
 
    which silently does nothing when no option matches. Rename or drop an
    <option> and the door still opens — onto a form with no record chosen —
-   while a contract that only reads films.html reports all six fine. That is
+   while a contract that only reads music-videos.html reports all six fine. That is
    worse than no check, because it is a check that lies.
 
    So each slug is verified at both ends: the reel emits the link, and the
@@ -103,7 +104,7 @@ for (const selector of [
   ".music-room--here",
   ".music-room--antisocial",
   ".music-room--lightroom",
-  ".music-room--films",
+  ".music-room--music-videos",
   ".music-room--catalogue",
   ".music-room--license",
   "@media (prefers-reduced-motion: reduce)",

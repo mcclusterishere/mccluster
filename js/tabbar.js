@@ -162,8 +162,8 @@
       slots: [
         ["album.html", "note", "The album", { title: "I AM HERE, the album",
           sub: "Six tracks in the site's own player: the deck, lock-screen controls, and a memory. It picks up where you left off." }],
-        ["films.html", "film", "Lyric Videos", { title: "Lyric videos, one swipe",
-          sub: "The whole catalog as lyric videos. Swipe, and every record plays its own scene-cut film with the words live on the picture." }],
+        ["music-videos.html", "film", "Music Videos", { title: "Music videos, one swipe",
+          sub: "The whole catalog as lyric videos. Swipe, and every record plays its own music video with the words live on the picture." }],
       ],
     },
     home: {
@@ -230,7 +230,7 @@
   /* the coin: the wing this page lives in wears the filled gold circle */
   var PAGE_WING = {
     "listen.html": "music",
-    "album.html": "music", "films.html": "music", "catalogue.html": "music",
+    "album.html": "music", "music-videos.html": "music", "catalogue.html": "music",
     "license.html": "music",
     /* The civic rooms had their own column; it is put away, so they claim
        no coin rather than lighting one that is not on the bar. The pages
