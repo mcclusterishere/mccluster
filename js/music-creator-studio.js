@@ -128,13 +128,21 @@ function durationMs(file) {
 }
 async function loadProfile() {
   const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=m_uid,handle,artist_name,bio,website_url,status,verification_state,payout_state&limit=1");
+    "&select=m_uid,handle,artist_name,bio,website_url,status,verification_state,payout_state,settings&limit=1");
   profile = rows?.[0] || null;
   if (!profile) return;
   $("creatorHandle").value = profile.handle || "";
   $("creatorName").value = profile.artist_name || "";
   $("creatorBio").value = profile.bio || "";
   $("creatorWebsite").value = profile.website_url || "";
+  var artistTheme = profile.settings && profile.settings.experience_theme || {};
+  $("creatorAccent").value = artistTheme.accent || "#e5383b";
+  $("creatorBackground").value = artistTheme.background || "#090706";
+  $("creatorForeground").value = artistTheme.foreground || "#f4efe6";
+  $("creatorSurface").value = artistTheme.surface || "#17110f";
+  ["Accent","Background","Foreground","Surface"].forEach(function(k){
+    var el=$("track"+k); if(el) el.value=$("creator"+k).value;
+  });
   $("creatorTerms").checked = true;
   const pub = $("publicProfile");
   pub.href = "music-creator.html?handle=" + encodeURIComponent(profile.handle);
@@ -147,7 +155,7 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
   const list = $("creatorTracks");
   if (!rows?.length) {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
@@ -167,6 +175,27 @@ function escapeHtml(value) {
   return d.innerHTML;
 }
 
+function parseLyricCtas(raw) {
+  return String(raw || "").split(/\r?\n/).map(function(line) {
+    var parts=line.split("|").map(function(x){return x.trim();});
+    if(parts.length<3 || !parts[0] || !parts[2]) return null;
+    return { match: parts[0].slice(0,240), label:(parts[1]||"Open service").slice(0,100), href:parts.slice(2).join("|").trim().slice(0,2000) };
+  }).filter(Boolean).slice(0,24);
+}
+function experienceFromForm() {
+  var serviceUrl=$("trackServiceUrl").value.trim();
+  return {
+    theme:{
+      accent:$("trackAccent").value,
+      background:$("trackBackground").value,
+      foreground:$("trackForeground").value,
+      surface:$("trackSurface").value
+    },
+    commerce:serviceUrl ? { label:$("trackServiceLabel").value.trim() || "Take the next step", href:serviceUrl } : {},
+    lyric_ctas:parseLyricCtas($("trackLyricCtas").value)
+  };
+}
+
 $("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
@@ -177,6 +206,14 @@ $("profileForm").addEventListener("submit", async (e) => {
       artist_name: $("creatorName").value.trim(),
       bio: $("creatorBio").value.trim(),
       website_url: $("creatorWebsite").value.trim(),
+      settings: Object.assign({}, profile && profile.settings || {}, {
+        experience_theme: {
+          accent: $("creatorAccent").value,
+          background: $("creatorBackground").value,
+          foreground: $("creatorForeground").value,
+          surface: $("creatorSurface").value
+        }
+      }),
       terms_version: "music-creator-v1",
       terms_accepted_at: new Date().toISOString()
     };
@@ -277,6 +314,9 @@ $("trackForm").addEventListener("submit", async (e) => {
         master_path: masterPath,
         duration_ms: dur,
         genre: $("trackGenre").value.trim(),
+        music_video_url: $("trackMusicVideo").value.trim(),
+        lyrics_url: $("trackLyricsUrl").value.trim(),
+        experience: experienceFromForm(),
         rights_status: "incomplete",
         rights_declaration: rights
       })
@@ -332,6 +372,13 @@ $("trackForm").addEventListener("submit", async (e) => {
 
     $("trackForm").reset();
     $("trackAccess").value = "account";
+    if (profile) {
+      var baseTheme = profile.settings && profile.settings.experience_theme || {};
+      $("trackAccent").value = baseTheme.accent || "#e5383b";
+      $("trackBackground").value = baseTheme.background || "#090706";
+      $("trackForeground").value = baseTheme.foreground || "#f4efe6";
+      $("trackSurface").value = baseTheme.surface || "#17110f";
+    }
     $("derivativeField").hidden = true;
     status("trackStatus", derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
