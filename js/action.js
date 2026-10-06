@@ -1082,7 +1082,9 @@
         meta: {
           slug: row.slug,
           chapter: row.chapter && row.chapter.region || "",
-          people: Number(row.people || 0)
+          people: Number(row.people || 0),
+          domain: "action",
+          topic: row.slug
         }
       };
     }
