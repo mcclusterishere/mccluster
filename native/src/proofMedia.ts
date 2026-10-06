@@ -161,5 +161,10 @@ export function useProofMedia() {
     }
   }
 
-  return { upload };
+  async function discard(assetId: string) {
+    if (!assetId) return;
+    await api('/v1/mnet/media/discard', { method: 'POST', body: { asset_id: assetId } });
+  }
+
+  return { upload, discard };
 }
