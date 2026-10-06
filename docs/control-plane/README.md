@@ -8,3 +8,4 @@ Canonical control-plane decisions and contracts live here.
 - `CAPABILITY-REGISTRY.md` — stable provider-independent capabilities and implementation bindings.
 - `GENERATIVE-MEDIA-HARNESS.md` — multi-provider creative generation, routing, workflows, and asset lineage.
 - `ECOSYSTEM.md` / `SATELLITE.md` — relationship between the canonical backend and product satellites.
+- `CLIPPING-MARKETPLACE.md` — paid clipping as a commercial Action Network mission kind: tenancy, server-authoritative settlement, payout ledger, civic isolation, and what is still staged.

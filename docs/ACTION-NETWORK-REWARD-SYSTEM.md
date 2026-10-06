@@ -46,3 +46,10 @@ Understand → Choose → Act → Prove → Verify → Progress → Collaborate.
 
 Music uses the same loop:
 Listen → creator/initiative → mission → proof → verified impact.
+
+## Paid clipping is separate
+Paid clipping campaigns (`action_missions.kind = 'clip'`) pay money on verified platform views. That is commercial work under its own terms and its own ledger (`docs/control-plane/CLIPPING-MARKETPLACE.md`). It never enters this system:
+- no civic proof is accepted on a clip mission;
+- no points are awarded for one;
+- the Action Record counts civic missions only.
+None of the rules above change. Points are still never awarded for views.
