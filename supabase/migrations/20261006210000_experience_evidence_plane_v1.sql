@@ -284,7 +284,7 @@ returns public.events_lean
 language sql
 immutable
 set search_path = ''
-as $$
+as $lean_row$
   select row(
     e.id, e.at, e.site_id, e.name, e.path, e.device_id, e.session_id,
     coalesce(e.is_bot, false), e.country, e.referrer,
@@ -308,13 +308,13 @@ as $$
     nullif(e.props->>'experience_experiment', ''),
     nullif(e.props->>'experience_arm', '')
   )::public.events_lean
-$;
+$lean_row$;
 
 create or replace function private.events_lean_sync()
 returns trigger
 language plpgsql security definer
 set search_path = ''
-as $
+as $lean_sync$
 begin
   insert into public.events_lean
   select (private.events_lean_row(new)).*
@@ -336,7 +336,7 @@ exception when others then
   raise warning 'events_lean_sync skipped %: %', new.id, sqlerrm;
   return null;
 end;
-$;
+$lean_sync$;
 
 revoke all on function private.events_lean_row(public.events) from public, anon, authenticated;
 revoke all on function private.events_lean_sync() from public, anon, authenticated;
