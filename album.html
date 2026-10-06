@@ -221,8 +221,13 @@
       0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse) 72%, transparent); filter: none; }
       50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--pulse) 0%, transparent); filter: brightness(1.22); }
     }
+    .alb__by .alb__artist { color: inherit; text-decoration: underline; text-underline-offset: 0.18em; }
+    /* a preview just ended: the way to the rest of the song says so once */
+    .tr .reclock .unlock.unlock--nudge { animation: unlockNudge 0.45s ease-in-out 3; }
+    @keyframes unlockNudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
     @media (prefers-reduced-motion: reduce) {
       .tr .reclock .unlock { animation: none; }
+      .tr .reclock .unlock.unlock--nudge { animation: none; }
     }
     .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
       color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
@@ -727,7 +732,6 @@
         <div class="now__doors">
           <a href="license.html" id="ecoLic" data-license="who-did-the-shoot">License this track</a>
           <a href="catalogue.html" id="ecoReg">On the record</a>
-          <a href="pay.html" id="ecoOwn">Tip the artist</a>
           <a href="hire.html" id="ecoHire">Book the studio</a>
         </div>
       </div>
@@ -948,7 +952,19 @@
       document.getElementById("albBy").textContent = head.by || "";
       /* an album may be billed to someone other than the house */
       ARTIST = head.artist || HOUSE;
+      /* the artist's name was plain bold text and got tapped like a link;
+         the house artist now opens his own page, other billings stay text */
       document.getElementById("albArtist").textContent = ARTIST;
+      if (ARTIST === HOUSE) {
+        var artistEl = document.getElementById("albArtist");
+        var artistLink = document.createElement("a");
+        artistLink.href = "matthew-mccluster.html";
+        artistLink.className = "alb__artist";
+        artistLink.setAttribute("data-cta", "album-artist");
+        artistLink.textContent = ARTIST;
+        artistEl.textContent = "";
+        artistEl.appendChild(artistLink);
+      }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
       /* a record that opens onto a cause gets a door to its gateway */
@@ -1178,9 +1194,13 @@
     function fmtPlays(n) { return (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "K" : n) + (n === 1 ? " play" : " plays"); }
     function paintPlays(list) {
       var byTitle = {};
-      list.forEach(function (r) { if (r.track) byTitle[r.track.toLowerCase()] = r.plays; });
+      /* play_counts keys are normalized the way events_lean stores them
+         (lower case, dashes and underscores as spaces); match on the same
+         normal form so either spelling of a title finds its count */
+      var norm = function (s) { return String(s || "").toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim(); };
+      list.forEach(function (r) { if (r.track) byTitle[norm(r.track)] = (byTitle[norm(r.track)] || 0) + Number(r.plays || 0); });
       rows.forEach(function (row) {
-        var n = byTitle[(row.getAttribute("data-title") || "").toLowerCase()];
+        var n = byTitle[norm(row.getAttribute("data-title"))];
         var s = row.querySelector("[data-plays]");
         if (s && n != null) s.textContent = (row.querySelector("small").textContent ? " · " : "") + fmtPlays(+n);
       });
@@ -1382,22 +1402,83 @@
       loadLyrics(rows[cur].getAttribute("data-lyrics") || "");
       media(); paintRows(); paintDeck();
     }
+    /* A PLAY THAT DOES NOT START MUST SAY SO. deck.play() rejections were
+       swallowed, so a track that could not load, or a browser that refused
+       to start the sound, left the button on "Play" with nothing else
+       happening, and people pressed it again and again. A newer load
+       aborting an older one (AbortError) is not a failure. */
+    function playFailed(err, row) {
+      var name = (err && err.name) || "Error";
+      if (name === "AbortError") return;
+      var msg = name === "NotAllowedError" ? "Tap play once more to start the sound."
+        : name === "NotSupportedError" ? "This track could not load here. Try again, or open the page in Safari or Chrome."
+        : "This track would not start. Tap play to try again.";
+      if (window.MCC_TOAST) window.MCC_TOAST(msg);
+      if (window.MCC_TRACK) window.MCC_TRACK("play_failed", {
+        track: row ? row.getAttribute("data-title") : null, album: ALBUM, error: name,
+        gated: !!(row && row.hasAttribute("data-gated-bucket")), gate: row ? row.getAttribute("data-gate") : null
+      });
+    }
+    function startDeck(row) {
+      var p = deck.play();
+      if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
+    }
+    /* THE TAP HAS TO OUTLIVE THE ROUND TRIP. An earned play asks the API for
+       the master and only then starts the deck; on iPhones and in the
+       Instagram browser a play() that late is no longer "from the tap" and
+       is refused. Starting the element (muted) inside the tap itself keeps
+       its permission for the real play that follows. */
+    var priming = false;
+    function primeDeck() {
+      if (!deck.paused) return;
+      try {
+        priming = true;
+        var wasMuted = deck.muted;
+        deck.muted = true;
+        var p = deck.play();
+        var done = function () { try { deck.pause(); } catch (e) {} deck.muted = wasMuted; priming = false; };
+        if (p && typeof p.then === "function") p.then(done, done); else done();
+      } catch (e) { priming = false; }
+    }
     function play(i, at) {
       var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
       var row = rows[target];
       /* An earned record is spent the moment it is played, not before:
          ask the API for this one play, then load what it signs. */
       if (row && row.getAttribute("data-gate") === "earned" && !row.hasAttribute("data-granted") && window.MCC_GATED) {
+        primeDeck();
         claimThenPlay(target);
         return;
       }
+      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) previewNotice(row, false);
       playNow(i, at);
     }
     function playNow(i, at) {
       if (i !== undefined && i !== cur) load(i, at);
       else if (cur < 0) load(0, at);
-      deck.play().catch(function () {});
+      startDeck(rows[cur]);
       if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: rows[cur].getAttribute("data-title"), album: ALBUM });
+    }
+    /* A GATED SONG'S PREVIEW IS SECONDS LONG, AND SAID SO NOWHERE. Listeners
+       who came for that song heard a few seconds, then the deck moved on (or
+       stopped), and they pressed play over and over. The first preview play
+       says what it is; the end of it says how to hear the rest, and the deck
+       waits there instead of jumping to another song. */
+    var previewTold = {};
+    function previewNotice(row, ended) {
+      var key = row.getAttribute("data-key") || row.getAttribute("data-title");
+      if (!ended && previewTold[key]) return;
+      previewTold[key] = true;
+      var gate = row.getAttribute("data-gate") || "preview";
+      var head = ended ? "That was the preview." : "Playing the preview.";
+      var rest = gate === "earned" ? " Tap the song to play it in full, once."
+        : gate === "locked" ? " Finish more songs to unlock the full track."
+        : gate === "gone" || gate === "unavailable" ? " The full track cannot be reached right now."
+        : " The full song is free with an account: tap FULL SONG.";
+      if (window.MCC_TOAST) window.MCC_TOAST(head + rest);
+      var chip = row.querySelector(".unlock");
+      if (chip && ended) { chip.classList.remove("unlock--nudge"); void chip.offsetWidth; chip.classList.add("unlock--nudge"); }
+      if (ended && window.MCC_TRACK) window.MCC_TRACK("gated_preview_end", { track: row.getAttribute("data-title"), album: ALBUM, gate: gate });
     }
     function claimThenPlay(target) {
       var row = rows[target];
@@ -1418,7 +1499,7 @@
         if (cur === target) cur = -1;   /* force a fresh load of the master */
         load(target, 0);
         probeDuration(row);
-        deck.play().catch(function () {});
+        startDeck(row);
         if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
       });
     }
@@ -1472,9 +1553,9 @@
 
     var ICO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
     var ICO_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
-    deck.addEventListener("play", function () { countStart(); paintRows(); paintDeck(); announce(true); save();
+    deck.addEventListener("play", function () { if (priming) return; countStart(); paintRows(); paintDeck(); announce(true); save();
       el("playAll").innerHTML = ICO_PAUSE + "Pause"; roomPlay(true); });
-    deck.addEventListener("pause", function () { paintRows(); paintDeck(); announce(false); save();
+    deck.addEventListener("pause", function () { if (priming) return; paintRows(); paintDeck(); announce(false); save();
       el("playAll").innerHTML = ICO_PLAY + "Play"; roomPlay(false); });
     var tick = 0;
     deck.addEventListener("timeupdate", function () {
@@ -1496,7 +1577,10 @@
         });
       }
       listen = null;
+      /* read before spend(), which takes data-granted off a full play */
+      var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
       spend(rows[cur]);
+      if (wasPreview) { previewNotice(rows[cur], true); return; }
       /* Played straight through, the album arrives at its closer having just
          earned it. Wait for the song that just ended to be counted, then ask
          for the play: earned, it plays in full; not, it says where the

@@ -230,11 +230,11 @@ export default {
           sb(env, 'inbox_channels?select=key,enabled').catch(() => null)
         ]);
 
-        const harness = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ai_harness_status`, {
-          method: 'POST',
-          headers: sbHeaders(env),
-          body: JSON.stringify({ p_org: (await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1'))?.[0]?.id })
-        }).then(async (res) => res.ok ? res.json() : null).catch(() => null);
+        /* The legacy ai_harness_status RPC is retired (see the AI harness
+           contract test): every status check called it and got a 404. The
+           context plane reports its own health through /v1/ai, so this route
+           says where to look instead of asking a function that is gone. */
+        const harness = { ok: null, schema: 'ai_context', health: '/v1/ai' };
 
         return reply(request, env, {
           ok: true,
@@ -255,7 +255,7 @@ export default {
             conversations: convos
           },
           channels: Array.isArray(channels) ? channels : [],
-          harness: harness || { ok: false, schema: 'ai_context' }
+          harness
         });
       }
 

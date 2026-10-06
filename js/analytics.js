@@ -900,10 +900,47 @@ window.MCC_MODEL = (function () {
     m.observe(doc.documentElement, { childList: true, subtree: true, attributes: true });
     return m;
   });
+  /* A tap can answer without touching the DOM: the audio starts or stops,
+     a print dialog or share sheet takes the window, the page starts leaving.
+     Each of those is the page responding, so each counts as "something
+     happened" for the dead-click test below. Media events do not bubble,
+     hence the capture listeners on the document. */
+  function answered() { mutated = true; }
+  ["play", "pause", "seeked", "volumechange"].forEach(function (n) {
+    doc.addEventListener(n, answered, true);
+  });
+  root.addEventListener("beforeprint", answered);
+  root.addEventListener("blur", answered);
+  root.addEventListener("beforeunload", answered);
+  root.addEventListener("pagehide", answered);
+
+  /* Which taps can be dead at all. A field takes focus on press, before the
+     click event fires, and a checkbox or select changes a property rather
+     than an attribute, so none of them can show the test anything: they
+     were being counted as dead every time somebody typed into a form. A
+     link to another document is already navigating; slow in-app browsers
+     take longer than the test waits to unload, which was counted as dead
+     too. What is left are the controls that must visibly answer. */
+  function deadEligible(el, d) {
+    if (!el || !d) return false;
+    if (d.tag === "input" || d.tag === "textarea" || d.tag === "select" || d.tag === "label") return false;
+    if (el.isContentEditable) return false;
+    if (d.tag === "a") {
+      var href = el.getAttribute("href") || "";
+      if (!href || href.charAt(0) === "#") return true;
+      if (el.target && el.target !== "_self") return false;
+      if (el.hasAttribute("download") || /^(mailto|tel|sms|javascript):/i.test(href)) return false;
+      var u = safe(function () { return new URL(href, location.href); });
+      if (!u) return true;
+      return u.origin === location.origin && u.pathname === location.pathname && u.search === location.search;
+    }
+    return d.tag === "button" || el.getAttribute("role") === "button" || !!d.cta;
+  }
 
   doc.addEventListener("click", function (e) {
     var el = e.target;
-    var d = describe(el && el.closest ? (el.closest("a,button,[role=button],[data-cta],input,label") || el) : el);
+    var hit = el && el.closest ? (el.closest("a,button,[role=button],[data-cta],input,select,textarea,label") || el) : el;
+    var d = describe(hit);
     if (!d) return;
 
     var t = now();
@@ -933,10 +970,9 @@ window.MCC_MODEL = (function () {
        nothing at all happened, the tap went nowhere. */
     mutated = false;
     var url0 = location.href, active0 = doc.activeElement;
-    var interactive = d.tag === "a" || d.tag === "button" || d.tag === "input" ||
-      d.tag === "select" || d.tag === "textarea" || d.tag === "label" || !!d.cta;
+    var eligible = deadEligible(hit, d);
     setTimeout(function () {
-      if (!interactive) return;
+      if (!eligible) return;
       if (mutated || location.href !== url0 || doc.activeElement !== active0) return;
       T("dead_click", payload);
     }, 450);
@@ -1122,17 +1158,62 @@ window.MCC_MODEL = (function () {
   /* =========================================================
      10. ERRORS — the bugs that only ever happen to visitors
      ========================================================= */
+  /* WHOSE ERROR IT IS. Most of what used to land here was not this site's
+     code: the Instagram and Facebook in-app browsers inject their own
+     scripts into every page they open ("window.webkit.messageHandlers",
+     "Java object is gone", "_AutofillCallbackHandler", iabjs:// sources),
+     extensions run from their own schemes, and a cross-origin script error
+     arrives as a bare "Script error." with nothing to act on. Each event now
+     says which it is, so Forensics can show the site's own errors apart from
+     the noise without hiding either. */
+  var IAB = (function () {
+    var ua = navigator.userAgent || "";
+    if (/Instagram/i.test(ua)) return "instagram";
+    if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "facebook";
+    if (/TikTok|musical_ly|BytedanceWebview/i.test(ua)) return "tiktok";
+    if (/Snapchat/i.test(ua)) return "snapchat";
+    if (/LinkedInApp/i.test(ua)) return "linkedin";
+    if (/\bLine\//i.test(ua)) return "line";
+    if (/Twitter/i.test(ua)) return "twitter";
+    return null;
+  })();
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
+  function errorOrigin(file, msg) {
+    file = String(file || ""); msg = String(msg || "");
+    if (/^script error\.?$/i.test(msg) && !file) return "opaque";
+    if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):/i.test(file)) return "injected";
+    if (INJECTED.test(msg)) return "injected";
+    if (file) {
+      var u = safe(function () { return new URL(file, location.href); });
+      if (u && u.origin !== location.origin) return "third_party";
+    }
+    return "site";
+  }
+  function stackTop(err) {
+    var s = err && err.stack ? String(err.stack) : "";
+    return s ? s.split("\n").slice(0, 4).join(" | ").slice(0, 400) : null;
+  }
   root.addEventListener("error", function (e) {
     if (!e || !e.message) return;
     T("js_error", {
       msg: String(e.message).slice(0, 200),
       src: String(e.filename || "").slice(0, 160),
       line: e.lineno || null, col: e.colno || null,
+      origin: errorOrigin(e.filename, e.message),
+      iab: IAB,
+      stack: stackTop(e.error),
     });
   });
   root.addEventListener("unhandledrejection", function (e) {
     var r = e && e.reason;
-    T("js_rejection", { msg: String((r && (r.message || r)) || "").slice(0, 200) });
+    var msg = String((r && (r.message || r)) || "").slice(0, 200);
+    T("js_rejection", {
+      msg: msg,
+      name: r && r.name ? String(r.name).slice(0, 60) : null,
+      origin: INJECTED.test(msg) ? "injected" : "site",
+      iab: IAB,
+      stack: stackTop(r),
+    });
   });
 
   /* =========================================================
