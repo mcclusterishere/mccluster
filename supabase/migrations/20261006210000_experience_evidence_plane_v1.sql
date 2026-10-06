@@ -300,7 +300,38 @@ as $$
     nullif(e.props->>'experience_experiment', ''),
     nullif(e.props->>'experience_arm', '')
   )::public.events_lean
-$$;
+$;
+
+create or replace function private.events_lean_sync()
+returns trigger
+language plpgsql security definer
+set search_path = ''
+as $
+begin
+  insert into public.events_lean
+  select (private.events_lean_row(new)).*
+  on conflict (id) do update set
+    at = excluded.at, site_id = excluded.site_id, name = excluded.name, path = excluded.path,
+    device_id = excluded.device_id, session_id = excluded.session_id, is_bot = excluded.is_bot,
+    country = excluded.country, referrer = excluded.referrer, network = excluded.network,
+    src = excluded.src, source = excluded.source, track = excluded.track, album = excluded.album,
+    listened_seconds = excluded.listened_seconds, dwell_s = excluded.dwell_s,
+    visible_s = excluded.visible_s, hidden_s = excluded.hidden_s, depth = excluded.depth,
+    exit_intent = excluded.exit_intent,
+    decision_id = excluded.decision_id,
+    experience_surface = excluded.experience_surface,
+    experience_policy = excluded.experience_policy,
+    experience_experiment = excluded.experience_experiment,
+    experience_arm = excluded.experience_arm;
+  return null;
+exception when others then
+  raise warning 'events_lean_sync skipped %: %', new.id, sqlerrm;
+  return null;
+end;
+$;
+
+revoke all on function private.events_lean_row(public.events) from public, anon, authenticated;
+revoke all on function private.events_lean_sync() from public, anon, authenticated;
 
 comment on table public.experience_decisions is
   'Canonical opportunity/exposure ledger. Records what was eligible and selected before downstream events occur.';
