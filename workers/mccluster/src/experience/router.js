@@ -104,15 +104,19 @@ async function activeExperiment(env, surfaceId, subjectKeyHash) {
   const exps = await rows(env,
     'experience_experiments?' +
     `surface_id=eq.${encodeURIComponent(surfaceId)}&status=in.(canary,running)` +
-    `&allocation=gt.0&or=(started_at.is.null,started_at.lte.${encodeURIComponent(now)})` +
-    `&or=(ended_at.is.null,ended_at.gt.${encodeURIComponent(now)})` +
-    '&select=id,key,allocation,intent,research_review,consent_mode,status,started_at,created_at' +
-    '&order=started_at.asc.nullsfirst,created_at.asc&limit=5'
+    '&allocation=gt.0' +
+    '&select=id,key,allocation,intent,research_review,consent_mode,status,started_at,ended_at,created_at' +
+    '&order=started_at.asc.nullsfirst,created_at.asc&limit=20'
   );
   if (!exps.length) return null;
 
+  const nowMs = Date.parse(now);
   const secret = env.EXPERIENCE_ASSIGNMENT_SECRET || env.SUPABASE_SERVICE_ROLE_KEY || '';
   for (const exp of exps) {
+    const startMs = exp.started_at ? Date.parse(exp.started_at) : null;
+    const endMs = exp.ended_at ? Date.parse(exp.ended_at) : null;
+    if (Number.isFinite(startMs) && startMs > nowMs) continue;
+    if (Number.isFinite(endMs) && endMs <= nowMs) continue;
     if (exp.intent === 'research' && !['exempt', 'approved'].includes(exp.research_review)) continue;
     const gate = unitInterval(await hmacHex(secret, `mccluster:experience:gate:v1:${exp.id}:${subjectKeyHash}`));
     if (gate < Number(exp.allocation || 0)) return exp;
