@@ -142,10 +142,10 @@ export default function MissionScreen() {
 
     setWorking(true);
     setStatus(proof ? 'Uploading proof…' : 'Submitting proof…');
+    let uploadedAssetId: string | null = null;
     try {
       let proofType = link.trim() ? 'link' : 'text';
       let metadata: Record<string, any> = {};
-      let uploadedAssetId: string | null = null;
       if (proof) {
         const uploaded = await media.upload(proof);
         proofType = uploaded.proofType;
@@ -160,6 +160,8 @@ export default function MissionScreen() {
         metadata,
         share,
       });
+      /* the proof now references this upload; it must never be discarded */
+      uploadedAssetId = null;
       setAssignment({ ...assignment, status: 'submitted' });
       setProof(null);
       setStatus(
@@ -168,7 +170,12 @@ export default function MissionScreen() {
           : 'Proof submitted for review.',
       );
     } catch (error) {
-      if (uploadedAssetId) await media.discard(uploadedAssetId).catch(() => null);
+      /* Discard only when the server answered with a failure: the RPC rolled
+         back, so nothing references the upload. A dropped connection (no
+         status) may have committed the proof, so the file is kept. */
+      if (uploadedAssetId && typeof (error as any)?.status === 'number') {
+        await media.discard(uploadedAssetId).catch(() => null);
+      }
       setStatus(messageOf(error));
     } finally {
       setWorking(false);

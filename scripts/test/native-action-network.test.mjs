@@ -134,3 +134,15 @@ test('root owns one auth provider across all routes', async () => {
   assert.match(root, /name="mission\/\[id\]"/);
   assert.match(root, /name="group\/\[slug\]"/);
 });
+
+test('a failed proof submission discards only an upload nothing references', async () => {
+  const mission = await read('native/app/mission/[id].tsx');
+  const submit = mission.slice(mission.indexOf('async function submit()'), mission.indexOf('if (!ready) return'));
+  const declared = submit.indexOf('let uploadedAssetId');
+  assert.ok(declared > -1 && declared < submit.indexOf('try {'), 'the upload id is declared outside try so catch can read it');
+  const submitted = submit.indexOf('await net.submitProof(');
+  const cleared = submit.indexOf('uploadedAssetId = null;', submitted);
+  assert.ok(submitted > -1 && cleared > submitted, 'once the proof is submitted it references the upload, which must never be discarded');
+  assert.match(submit, /if \(uploadedAssetId && typeof \(error as any\)\?\.status === 'number'\) \{\s*await media\.discard\(uploadedAssetId\)/,
+    'discard only when the server answered with a failure; a dropped connection may have committed the proof');
+});
