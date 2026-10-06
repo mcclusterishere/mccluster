@@ -35,20 +35,28 @@ test('evidence plane records opportunity, selection, propensities and downstream
 });
 
 test('public Research Lab is citable and bibliography is versioned',async()=>{
-  const [page,cff,refs,governance]=await Promise.all([
+  const [page,cff,refs,governance,log]=await Promise.all([
     read('research.html'),read('CITATION.cff'),read('data/research/references.json'),
-    read('docs/research/RESEARCH-LAB-GOVERNANCE-AND-FUNDING.md')
+    read('docs/research/RESEARCH-LAB-GOVERNANCE-AND-FUNDING.md'),
+    read('docs/research/ADAPTIVE-EXPERIENCE-RESEARCH-LOG-2026-10-06.md')
   ]);
   assert.match(page,/McCluster Research Lab/);
   assert.match(page,/CIA Mind Control/);
   assert.match(page,/0009-0000-8988-8955/);
   assert.match(cff,/orcid:\s*"https:\/\/orcid\.org\/0009-0000-8988-8955"/);
   const data=JSON.parse(refs);
-  assert.ok(data.sources.length>=20,'canonical bibliography should retain the research base');
-  for(const key of ['recsys_2026_genpage','recsys_2026_egrec','recsys_2026_conalign','hhs_common_rule','scsu_irb','nsf_26_510_sbir_sttr']){
+  assert.ok(data.sources.length>=35,'canonical bibliography should retain the expanded research base');
+  for(const key of ['recsys_2026_genpage','recsys_2026_egrec','recsys_2026_conalign','hhs_common_rule','scsu_irb','nsf_26_510_sbir_sttr','minisforum_ai_x1_pro_470_official','access_allocations_no_cost','jetstream2_gpu_faq']){
     assert.ok(data.sources.some((x)=>x.citation_key===key),key+' missing');
   }
   assert.match(governance,/November 4, 2026/);
   assert.match(governance,/up to \*\*\$305,000\*\*/);
   assert.match(governance,/up to \*\*\$1,250,000\*\*/);
+  assert.match(page,/ADAPTIVE-EXPERIENCE-RESEARCH-LOG-2026-10-06\.md/);
+  assert.match(page,/s\.url\|\|"#"/);
+  assert.match(page,/s\.citation_key/);
+  assert.match(page,/s\.category/);
+  assert.match(log,/## 1\. Adaptive-interface foundations reviewed/);
+  assert.match(log,/## 9\. Local\/remote AI compute research/);
+  assert.match(log,/Things we have explicitly NOT proven/);
 });
