@@ -255,4 +255,4 @@ Publication is not itself permission to deploy a policy, and a successful commer
 - docs/control-plane/ADAPTIVE-EXPERIENCE-RESEARCH.md
 - docs/research/RESEARCH-LAB-GOVERNANCE-AND-FUNDING.md
 - research.html
-- supabase/migrations/20261006210000_experience_evidence_plane_v1.sql
+- supabase/migrations/20261006211536_experience_evidence_plane_v1.sql
