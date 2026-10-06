@@ -320,6 +320,28 @@ Guardrails:
 - no forced path;
 - no arbitrary generated CTA.
 
+### H5 — Song distribution / hit detection
+Different songs will be exposed across adaptive and social-distribution surfaces to learn which records create durable attention and direct economic response.
+
+The unit of evidence is not raw play count. Every comparison should retain:
+- eligible songs / opportunity set;
+- which song was actually shown;
+- position and source;
+- preview start;
+- meaningful listen / completion;
+- repeat listen and later catalog breadth;
+- direct return;
+- paid conversion where an offer exists;
+- downstream Action or creator participation where relevant.
+
+For the End Racism single, the initial commercial outcome is the fixed **$1 full-MP3 purchase**. The purchase supports the End Racism campaign but is not represented as a tax-deductible charitable contribution.
+
+Evaluation rule:
+- preserve an unbiased/random exploration bucket where practical;
+- compare rates conditional on exposure, not totals alone;
+- report uncertainty and minimum support;
+- do not infer a visitor's race, racist/non-racist identity, ideology, or psychology from which song they play or buy.
+
 ## 7. Things we have explicitly NOT proven
 
 Do not write these as conclusions yet:
