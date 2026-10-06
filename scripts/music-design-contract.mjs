@@ -7,13 +7,13 @@ const must = (name, cond) => {
 
 const rootPages = [
   ["album.html", "music-room--album"],
-  ["films.html", "music-room--films"],
+  ["music-videos.html", "music-room--music-videos"],
   ["catalogue.html", "music-room--catalogue"],
   ["license.html", "music-room--license"],
 ];
 /* The six per-track pages were folded into the reel on the owner's call:
-   each one existed to show a track's film and link to licensing, and
-   films.html plays every film while license.html already pre-picked the
+   each one existed to show a track's music video and link to licensing, and
+   music-videos.html plays every music video while license.html already pre-picked the
    record from ?track=<slug>.
 
    This block used to assert the full-page shape — its own stage, its story
@@ -54,16 +54,16 @@ must("album keeps the six-track mount", album.includes('id="tracks"'));
 must("album keeps the shared deck", album.includes('id="deck"'));
 must("album keeps persistent Music transport hooks", album.includes("MCC_NP_PLAY") && album.includes("MCC_NP_PAUSE"));
 
-const films = await readFile("films.html", "utf8");
-must("films keeps one-tap sound intent", films.includes('id="fa"') && films.includes("films_armed"));
-must("films keeps swipe cards", films.includes('class="fc"'));
+const films = await readFile("music-videos.html", "utf8");\nconst filmsRedirect = await readFile("films.html", "utf8");
+must("music videos keeps one-tap sound intent", films.includes('id="fa"') && films.includes("music_videos_armed"));
+must("music videos keeps swipe cards", films.includes('class="fc"'));
 /* the reel absorbed the track pages, so it now owes what they carried: a
    licensing door per record, pre-picking that record on license.html. If
    this ever regresses, six URLs forward to a page that dropped their one
    job — which is exactly the failure the old track-page block guarded. */
-must("films carries the licensing door the track pages held",
-  films.includes('data-cta="film-license"') && films.includes("license.html?track="));
-must("films calls them lyric videos", !/>The films</.test(films));
+must("music videos carries the licensing door the track pages held",
+  films.includes('data-cta="music-video-license"') && films.includes("license.html?track="));
+must("legacy films route redirects to music videos", filmsRedirect.includes("music-videos.html"));
 
 
 const license = await readFile("license.html", "utf8");
@@ -103,7 +103,7 @@ for (const selector of [
   ".music-room--here",
   ".music-room--antisocial",
   ".music-room--lightroom",
-  ".music-room--films",
+  ".music-room--music-videos",
   ".music-room--catalogue",
   ".music-room--license",
   "@media (prefers-reduced-motion: reduce)",
