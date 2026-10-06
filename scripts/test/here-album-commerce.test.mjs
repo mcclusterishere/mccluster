@@ -48,7 +48,7 @@ test('lyric commerce only highlights phrases that exist in canonical lyrics',asy
 
 test('music video is the canonical public and database vocabulary',async()=>{
   const [migration,page,legacy,playlists]=await Promise.all([
-    read('supabase/migrations/20261006213626_here_album_commerce_v1.sql'),
+    read('supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql'),
     read('music-videos.html'),read('films.html'),json('data/playlists.json')
   ]);
   assert.match(migration,/music_video_url/);
@@ -77,7 +77,7 @@ test('album player changes theme and commerce with the active track',async()=>{
 
 test('creator backend authors the same theme, music-video and lyric-commerce contract',async()=>{
   const [migration,page,studio,access]=await Promise.all([
-    read('supabase/migrations/20261006213626_here_album_commerce_v1.sql'),
+    read('supabase/migrations/20261006233518_here_album_commerce_v1_reconcile.sql'),
     read('creator.html'),read('js/music-creator-studio.js'),
     read('supabase/functions/music-access/index.ts')
   ]);
