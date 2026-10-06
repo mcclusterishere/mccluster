@@ -262,8 +262,8 @@ function SignedInNetwork() {
           >
             <Text style={s.primaryText}>Complete account</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" style={s.secondary} onPress={refreshBootstrap}>
-            <Text style={s.secondaryText}>I finished — check again</Text>
+          <Pressable accessibilityRole="button" style={s.quietButton} onPress={refreshBootstrap}>
+            <Text style={s.quietButtonText}>I finished — check again</Text>
           </Pressable>
         </View>
       </View>
