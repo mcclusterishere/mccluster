@@ -221,7 +221,7 @@ html { scroll-behavior: smooth; }
       /* the six track pages are gone; the reel is where a record's film
          and its licensing door both live now, so the drawer names that
          instead of six doors into the same two things */
-      { href: "films.html",     label: "Lyric videos: every record, with the words" },
+      { href: "music-videos.html",     label: "Music videos: every record, with the words" },
     ] },
     { group: "The music", rooms: [
       /* The listening room, first: it is what the Music tab opens and the
@@ -230,7 +230,7 @@ html { scroll-behavior: smooth; }
          errand from wanting something to play. */
       { href: "listen.html",    label: "Listen: every record, one room" },
       { href: "catalogue.html", label: "The whole catalogue" },
-      { href: "films.html",     label: "Lyric videos" },
+      { href: "music-videos.html",     label: "Music videos" },
       { href: "license.html",   label: "License the music" },
       { href: "sponsor.html",   label: "Sponsor the work" },
     ] },
