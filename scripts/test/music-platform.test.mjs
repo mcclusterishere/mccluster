@@ -5,6 +5,53 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 const json=async(p)=>JSON.parse(await read(p));
 
+test('I AM HERE has one canonical sequence across web, native and structured metadata', async()=>{
+  const expected=['Antisocial','Write a Song','Who Did The Shoot','Runway Walk','Lightroom','Here'];
+  const albums=await json('data/albums.json');
+  const here=albums.albums.find(a=>a.slug==='here');
+  assert.deepEqual(here.tracks.map(t=>t.title),expected);
+
+  const native=await read('native/src/content.ts');
+  let last=-1;
+  for(const title of expected){
+    const at=native.indexOf("title: '"+title+"'");
+    assert.ok(at>last,'native order drifted at '+title);
+    last=at;
+  }
+
+  function scripts(html){
+    return [...html.matchAll(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/g)]
+      .map(m=>{try{return JSON.parse(m[1])}catch{return null}})
+      .filter(Boolean);
+  }
+  function albumsIn(value,out=[]){
+    if(!value||typeof value!=='object')return out;
+    if(Array.isArray(value)){value.forEach(v=>albumsIn(v,out));return out;}
+    if(value['@type']==='MusicAlbum'&&value.name==='I AM HERE')out.push(value);
+    Object.values(value).forEach(v=>albumsIn(v,out));
+    return out;
+  }
+  function names(a){
+    return (a.track&&a.track.itemListElement||[]).map(x=>{
+      const item=x.item||{};
+      if(item.name)return item.name;
+      const id=String(item['@id']||'');
+      const slug=id.split('#').pop();
+      return ({
+        'antisocial':'Antisocial','write-a-song':'Write a Song','who-did-the-shoot':'Who Did The Shoot',
+        'runway-walk':'Runway Walk','lightroom':'Lightroom','here':'Here'
+      })[slug];
+    });
+  }
+  for(const path of ['album.html','index.html','catalogue.html']){
+    const html=await read(path);
+    const found=scripts(html).flatMap(x=>albumsIn(x));
+    assert.ok(found.length,path+' must publish I AM HERE structured data');
+    assert.deepEqual(names(found[0]),expected,path+' structured album order drifted');
+  }
+  assert.match(await read('album.html'),/Antisocial, Write a Song, Who Did The Shoot, Runway Walk, Lightroom, Here/);
+});
+
 test('gated single is one logical track: public preview, master only as an earned play', async()=>{
   const albums=await json('data/albums.json');
   const album=albums.albums.find(a=>a.slug==='cia-mind-control');
