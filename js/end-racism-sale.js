@@ -3,7 +3,7 @@
   var SB="https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY="sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var OFFER="end-racism-niggy-nigg-full";
-  var buy=doc.getElementById("erBuyTrack"), status=doc.getElementById("erTrackStatus"), dl=doc.getElementById("erDownloadTrack");
+  var buy=doc.getElementById("erBuyTrack"), status=doc.getElementById("erTrackStatus"), dl=doc.getElementById("erDownloadTrack"), preview=doc.getElementById("erTrackPreview");
 
   function tell(msg,bad){if(!status)return;status.textContent=msg||"";status.classList.toggle("is-bad",!!bad);}
   async function post(fn,body){
@@ -12,6 +12,9 @@
     if(!r.ok)throw new Error(out&&out.error||"Request failed");
     return out;
   }
+  if(preview)preview.addEventListener("play",function(){
+    if(root.MCC_TRACK)root.MCC_TRACK("end_racism_track_preview",{offer:OFFER});
+  },{once:true});
   if(buy)buy.addEventListener("click",async function(){
     buy.disabled=true;tell("Opening secure checkout…");
     if(root.MCC_TRACK)root.MCC_TRACK("end_racism_track_checkout_open",{offer:OFFER});
