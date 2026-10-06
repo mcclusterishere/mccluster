@@ -49,55 +49,61 @@ test('I AM HERE has one canonical sequence across web, native and structured met
     assert.ok(found.length,path+' must publish I AM HERE structured data');
     assert.deepEqual(names(found[0]),expected,path+' structured album order drifted');
   }
-  assert.match(await read('album.html'),/Antisocial, Write a Song, Who Did The Shoot, Runway Walk, Lightroom, Here/);
+  assert.match(await read('album.html'),/Antisocial, Write a Song, Runway Walk, Who Did The Shoot, Lightroom, Here/);
 });
 
-test('gated single is one logical track: public preview, master only as an earned play', async()=>{
+test('the campaign single is one logical track: public preview and a $1 private master', async()=>{
   const albums=await json('data/albums.json');
   const album=albums.albums.find(a=>a.slug==='cia-mind-control');
   const track=album.tracks.find(t=>t.title==='Niggy Nigg Niggr');
-  assert.ok(track,'gated track must remain in the canonical album catalog');
+  assert.ok(track,'paid track must remain in the canonical album catalog');
+  assert.equal(album.tracks[album.tracks.length-1],track);
   assert.equal(track.gated.bucket,'mcc-gated-audio');
   assert.equal(track.gated.object,'niggy-nigg/niggy-nigg.mp3');
   assert.equal(track.gated.access_mode,'purchase');
-  assert.equal(track.gated.preview_visibility,'until_earned');
-  assert.equal(track.gated.full_visibility,'earned_play');
-  /* The closer stays last, but one completed listen to either earlier CIA
-     Mind Control song unlocks one earned play. */
-  assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
-  const router=await read('workers/mccluster/src/music/router.js');
-  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?any_of:\s*\[([^\]]*)\]/);
-  assert.ok(gate,'the Worker must gate niggy-nigg by eligible album tracks');
-  const eligible=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
-  const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
-  assert.deepEqual(eligible,before,'only the other CIA Mind Control songs may unlock the closer');
   assert.equal(track.gated.purchase_offer,'end-racism-niggy-nigg-full');
   assert.equal(track.gated.listen_gate,undefined);
-  assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
-  assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
+
+  const migration=await read('supabase/migrations/20261006232625_music_direct_track_sales_v1.sql');
+  assert.match(migration,/'end-racism-niggy-nigg-full'[\s\S]*100,'usd'/);
+  assert.match(migration,/'mcc-gated-audio','niggy-nigg\/niggy-nigg\.mp3'/);
+
+  const router=await read('workers/mccluster/src/music/router.js');
+  assert.match(router,/purchase_offer:\s*'end-racism-niggy-nigg-full'/);
+  assert.match(router,/Purchase required/);
+  assert.doesNotMatch(router,/'niggy-nigg'[\s\S]{0,300}any_of:/);
 });
 
-test('the album only plays the master for a play the API granted, and never twice', async()=>{
+test('album playback exposes only the preview and sends the paid master to checkout', async()=>{
   const album=await read('album.html');
-  assert.match(album,/function hasStoredSession\(\)/);
-  assert.match(album,/function paintGateOpening\(row\)/);
-  assert.match(album,/if \(signed\) paintGateOpening\(row\);\s*\n\s*else paintGate\(row, \{ state: "preview" \}\);/);
-  /* pressing play on an earned row spends it through the API first */
-  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target\)/);
-  assert.match(album,/window\.MCC_GATED\.claim\(gateSpec\(row\)\)/);
-  /* the master URL is only ever set from a granted claim */
-  const masterSets=album.match(/setAttribute\("data-src", out\.url\)/g)||[];
-  assert.equal(masterSets.length,1,'the master URL must come from exactly one place: a granted claim');
-  /* ending or leaving spends it; rewinding is blocked */
-  assert.match(album,/function spend\(row\)/);
-  const ended=album.split('deck.addEventListener("ended"')[1].slice(0,2000);
-  assert.ok(ended.indexOf('spend(rows[cur]);')>-1&&ended.indexOf('spend(rows[cur]);')<ended.indexOf('next();'),'the play is spent before the record moves on');
-  /* played straight through, the album asks for its closer only after the
-     song before it has been counted */
-  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*finished\.then\(function \(\) \{ claimThenPlay\(upNext\); \}/);
-  assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
-  /* no file to keep */
-  assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);
+  assert.match(album,/data-purchase-offer/);
+  assert.match(album,/function paintPurchaseGate\(row\)/);
+  assert.match(album,/FULL MP3 · \$1/);
+  assert.match(album,/href="end-racism\.html#track"/);
+  assert.match(album,/gate === "purchase"[\s\S]*full MP3 is \$1/i);
+  assert.match(album,/!purchaseOffer\(rows\[upNext\]\)[\s\S]*claimThenPlay\(upNext\)/);
+  const data=await read('data/albums.json');
+  assert.doesNotMatch(data,/"access_mode":\s*"account"[\s\S]{0,300}"niggy/i);
+});
+
+test('the $1 checkout is server-priced, paid-verification-backed and refund-aware', async()=>{
+  const [checkout,access,webhook,config]=await Promise.all([
+    read('supabase/functions/music-direct-checkout/index.ts'),
+    read('supabase/functions/music-direct-access/index.ts'),
+    read('supabase/functions/stripe-webhook/index.ts'),
+    read('supabase/config.toml')
+  ]);
+  assert.match(checkout,/music_direct_offers/);
+  assert.match(checkout,/unit_amount:offer\.price_cents/);
+  assert.doesNotMatch(checkout,/body\.(?:price|amount)/);
+  assert.match(access,/stripe\.checkout\.sessions\.retrieve\(sessionId\)/);
+  assert.match(access,/payment_status!=="paid"/);
+  assert.match(access,/createSignedUrl\(offer\.asset_path,900/);
+  assert.match(webhook,/grantDirectMusicOrder/);
+  assert.match(webhook,/revokeDirectMusicByPaymentIntent/);
+  assert.match(webhook,/music_direct_entitlements/);
+  assert.match(config,/\[functions\.music-direct-checkout\][\s\S]*verify_jwt = false/);
+  assert.match(config,/\[functions\.music-direct-access\][\s\S]*verify_jwt = false/);
 });
 
 test('every player reports full listens from the top, and the gated record never counts', async()=>{
