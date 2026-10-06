@@ -37,6 +37,35 @@ function stateFor(a: Stripe.Account) {
   };
 }
 
+
+async function grantDirectMusicOrder(session: Stripe.Checkout.Session) {
+  const orderId = session.metadata?.music_direct_order_id || "";
+  const offerKey = session.metadata?.music_direct_offer_key || "";
+  if (!orderId || !offerKey || session.metadata?.kind !== "music_direct_sale" || session.payment_status !== "paid") return;
+  const rows = await db(`music_direct_orders?id=eq.${encodeURIComponent(orderId)}&offer_key=eq.${encodeURIComponent(offerKey)}&select=id,offer_key,customer_email,status&limit=1`);
+  const order = rows?.[0];
+  if (!order) throw new Error(`music direct order ${orderId} not found`);
+  const email = String(session.customer_details?.email || session.customer_email || order.customer_email || "").toLowerCase();
+  await db(`music_direct_orders?id=eq.${encodeURIComponent(orderId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: "paid",
+      stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      customer_email: email,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  const existing = await db(`music_direct_entitlements?order_id=eq.${encodeURIComponent(orderId)}&select=id&limit=1`);
+  if (!existing?.length) {
+    await db("music_direct_entitlements", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ order_id: orderId, offer_key: offerKey, customer_email: email }),
+    });
+  }
+}
+
 async function grantMusicOrder(session: Stripe.Checkout.Session) {
   const orderId = session.metadata?.music_order_id || "";
   if (!orderId || session.metadata?.kind !== "music_license_sale" || session.payment_status !== "paid") return;
@@ -68,6 +97,22 @@ async function grantMusicOrder(session: Stripe.Checkout.Session) {
       }),
     });
   }
+}
+
+async function revokeDirectMusicByPaymentIntent(paymentIntent: string) {
+  if (!paymentIntent) return;
+  const rows = await db(`music_direct_orders?stripe_payment_intent_id=eq.${encodeURIComponent(paymentIntent)}&select=id&limit=1`);
+  const order = rows?.[0];
+  if (!order) return;
+  const at = new Date().toISOString();
+  await db(`music_direct_orders?id=eq.${encodeURIComponent(order.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "refunded", refunded_at: at, updated_at: at }),
+  });
+  await db(`music_direct_entitlements?order_id=eq.${encodeURIComponent(order.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ revoked_at: at }),
+  });
 }
 
 async function revokeMusicByPaymentIntent(paymentIntent: string) {
@@ -115,12 +160,19 @@ Deno.serve(async (req) => {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
       await grantMusicOrder(s);
+      await grantDirectMusicOrder(s);
     }
 
     if (event.type === "checkout.session.expired") {
       const s = event.data.object as Stripe.Checkout.Session;
       if (s.metadata?.kind === "music_license_sale" && s.metadata.music_order_id) {
         await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&status=eq.pending`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
+        });
+      }
+      if (s.metadata?.kind === "music_direct_sale" && s.metadata.music_direct_order_id) {
+        await db(`music_direct_orders?id=eq.${encodeURIComponent(s.metadata.music_direct_order_id)}&status=eq.pending`, {
           method: "PATCH",
           body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
         });
@@ -135,11 +187,19 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ status: "failed", stripe_payment_intent_id: p.id, updated_at: new Date().toISOString() }),
         });
       }
+      if (p.metadata?.kind === "music_direct_sale" && p.metadata.music_direct_order_id) {
+        await db(`music_direct_orders?id=eq.${encodeURIComponent(p.metadata.music_direct_order_id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "failed", stripe_payment_intent_id: p.id, updated_at: new Date().toISOString() }),
+        });
+      }
     }
 
     if (event.type === "charge.refunded") {
       const c = event.data.object as Stripe.Charge;
-      await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
+      const paymentIntent = typeof c.payment_intent === "string" ? c.payment_intent : "";
+      await revokeMusicByPaymentIntent(paymentIntent);
+      await revokeDirectMusicByPaymentIntent(paymentIntent);
     }
 
     if (event.type === "customer.subscription.deleted") {
