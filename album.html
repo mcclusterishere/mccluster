@@ -1978,7 +1978,7 @@
       }
       var exp = {};
       if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
-      var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album" };
+      var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
       nowLyr.textContent = "";
       function addLine(text) {
         var p = document.createElement("p");
@@ -2014,6 +2014,14 @@
         lyrLines.forEach(function (p, i2) { p.classList.toggle("is-live", i2 === live); });
         if (live > -1) {
           var target = lyrLines[live];
+          var cta = target && target.querySelector && target.querySelector(".lyric-service-cta");
+          if (cta && !target.dataset.ctaViewed) {
+            target.dataset.ctaViewed = "1";
+            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
+              track: rows[cur].getAttribute("data-title"), album:ALBUM,
+              offer:cta.dataset.offer||null, phrase:cta.dataset.phrase||null, surface:"album"
+            });
+          }
           nowLyr.scrollTo({ top: target.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
         }
       } else if (lyrPlain && deck.duration && lyrLines.length) {
@@ -2021,7 +2029,17 @@
         var live2 = Math.min(lyrLines.length - 1, Math.floor(prog * lyrLines.length));
         lyrLines.forEach(function (p, i3) { p.classList.toggle("is-live", i3 === live2); });
         var target2 = lyrLines[live2];
-        if (target2) nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+        if (target2) {
+          var cta2 = target2.querySelector && target2.querySelector(".lyric-service-cta");
+          if (cta2 && !target2.dataset.ctaViewed) {
+            target2.dataset.ctaViewed = "1";
+            if (window.MCC_TRACK) window.MCC_TRACK("lyric_service_cta_view", {
+              track:rows[cur].getAttribute("data-title"),album:ALBUM,
+              offer:cta2.dataset.offer||null,phrase:cta2.dataset.phrase||null,surface:"album"
+            });
+          }
+          nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+        }
       }
     }
     /* tap the PLAYING row again: instead of pausing, the record opens up
