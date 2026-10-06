@@ -37,6 +37,7 @@ export const GATES = {
   'niggy-nigg': {
     /* CIA Mind Control closer: hear either other album song first. */
     any_of: ['you-the-feds', 'pull-up'],
+    purchase_offer: 'end-racism-niggy-nigg-full',
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
     /* the owner's own playback: a signed storage URL, no gate */
@@ -179,6 +180,10 @@ async function gateState(request, env, user, key) {
   const userId = need(user);
   if (!GATES[key]) return fail(request, env, 'Unknown gated track', 404);
   if (await isHouseOperator(env, user)) return reply(request, env, { ok: true, gate: { allowed: true, operator: true } });
+  const gate = GATES[key];
+  if (gate.purchase_offer) {
+    return reply(request, env, { ok: true, gate: { allowed: false, purchase_required: true, purchase_offer: gate.purchase_offer } });
+  }
   return reply(request, env, { ok: true, gate: await readGate(env, userId, key) });
 }
 
@@ -190,6 +195,9 @@ async function gatePlay(request, env, user, key) {
   if (await isHouseOperator(env, user)) {
     const url = await signObject(env, gate.bucket, gate.object, gate.url_seconds);
     return reply(request, env, { ok: true, url, expires_in: gate.url_seconds, gate: { allowed: true, operator: true } });
+  }
+  if (gate.purchase_offer) {
+    return reply(request, env, { error: 'Purchase required', purchase_required: true, purchase_offer: gate.purchase_offer }, 402);
   }
 
   const token = newToken();
