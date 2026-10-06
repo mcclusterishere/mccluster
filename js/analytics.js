@@ -241,6 +241,14 @@ window.MCC_TRACK = (function () {
     };
   }
   window.MCC_ANALYTICS_CONTEXT = {
+    experienceContext: function () {
+      return {
+        device_id: deviceId || null,
+        session_id: sessionId() || null,
+        source: ACQ && ACQ.src || "direct",
+        path: location.pathname + location.search
+      };
+    },
     signupAttribution: signupAttributionSnapshot,
     prepareSignupAttribution: function () {
       var snapshot = signupAttributionSnapshot();
