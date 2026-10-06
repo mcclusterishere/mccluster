@@ -1135,6 +1135,8 @@ begin
       'submission_id', l.id, 'status', l.status, 'platform', l.platform, 'external_media_id', l.external_media_id,
       'posted_at', l.posted_at, 'm_uid', l.m_uid,
       'platform_media_id', (select sp.metadata->>'platform_media_id' from public.social_posts sp where sp.id = l.social_post_id),
+      'post_account', (select a.external_account_id from public.social_posts sp join public.social_accounts a on a.id = sp.account_id
+                        where sp.id = l.social_post_id),
       'accounts', (select coalesce(jsonb_agg(jsonb_build_object('id', a.id, 'external_account_id', a.external_account_id,
                                                                   'handle', a.handle, 'credential_ref', a.credential_ref)), '[]'::jsonb)
                      from public.social_accounts a
