@@ -513,7 +513,10 @@
       ],
       "external": "https://theheatchart.com",
       "externalLabel": "Open theheatchart.com",
-      "externalNote": "The live channel"
+      "externalNote": "The live channel",
+      "network_group": "heat-chart",
+      "network_url": "https://matthew.mccluster.org/mnet.html?group=heat-chart",
+      "product_url": "https://theheatchart.com"
     }
   ]
 }
