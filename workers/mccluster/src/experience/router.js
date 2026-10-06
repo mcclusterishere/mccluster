@@ -546,7 +546,7 @@ export async function handleExperienceRequest(request, env, user) {
     }
   }
 
-  if (!experiment) {
+  if (!experiment && policy.algorithm === 'deterministic_score_mmr') {
     const reused = await reusableDecision(env, surface.id, subjectKeyHash, policy.id, candidates, maxItems);
     if (reused) {
       return json({
@@ -595,6 +595,7 @@ export async function handleExperienceRequest(request, env, user) {
       policy_id: policy.id,
       experiment_id: experiment?.id || null,
       arm_key: armKey,
+      feature_snapshot_id: featureSnapshotId,
       eligible_candidates: candidates,
       selected_candidates: result.selected,
       propensities: result.propensities,
