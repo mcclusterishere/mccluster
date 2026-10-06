@@ -393,17 +393,11 @@
         "label": "MP3",
         "note": "plays anywhere",
         "object": "niggy-nigg/niggy-nigg.mp3"
-       },
-       {
-        "ext": "m4r",
-        "label": "Ringtone",
-        "note": "iPhone",
-        "object": "niggy-nigg/niggy-nigg.m4r"
        }
       ],
       "access_mode": "purchase",
-      "preview_visibility": "until_earned",
-      "full_visibility": "earned_play",
+      "preview_visibility": "public",
+      "full_visibility": "purchase",
       "purchase_offer": "end-racism-niggy-nigg-full"
      }
     }
