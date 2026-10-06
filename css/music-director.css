@@ -430,7 +430,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 }
 
 /* FILMS: the first film remains visible while the visitor arms sound. */
-.music-room--films .fa {
+.music-room--music-videos .fa {
   inset: auto clamp(1rem, 4vw, 3rem)
     calc(var(--appbar-h, 4.6rem) + 2.1rem + env(safe-area-inset-bottom));
   display: block;
@@ -441,21 +441,21 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-.music-room--films .fa div { text-align: left; }
-.music-room--films .fa b { font-size: clamp(1.8rem, 5vw, 3.8rem); }
-.music-room--films .fa small { display: block; margin-top: 0.25rem; color: var(--music-paper); }
-.music-room--films .fc video { opacity: 0.98; }
-.music-room--films .fc__scrim {
+.music-room--music-videos .fa div { text-align: left; }
+.music-room--music-videos .fa b { font-size: clamp(1.8rem, 5vw, 3.8rem); }
+.music-room--music-videos .fa small { display: block; margin-top: 0.25rem; color: var(--music-paper); }
+.music-room--music-videos .fc video { opacity: 0.98; }
+.music-room--music-videos .fc__scrim {
   background: linear-gradient(180deg, rgba(5,4,3,0.46), transparent 36%, rgba(5,4,3,0.92));
 }
-.music-room--films .fc__meta b {
+.music-room--music-videos .fc__meta b {
   max-width: 12ch;
   font-size: clamp(3rem, 9vw, 7rem);
   line-height: 0.82;
 }
-.music-room--films .fc__meta small { display: block; margin-top: 0.65rem; }
-.music-room--films .fc__rail button,
-.music-room--films .fc__rail a { border-radius: 2px; }
+.music-room--music-videos .fc__meta small { display: block; margin-top: 0.65rem; }
+.music-room--music-videos .fc__rail button,
+.music-room--music-videos .fc__rail a { border-radius: 2px; }
 
 /* CATALOGUE: cover and registration data are one ledger. */
 .music-room--catalogue .cg {
