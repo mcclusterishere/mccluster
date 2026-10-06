@@ -20,7 +20,7 @@ test('I AM HERE has one canonical sequence across web, native and structured met
   }
 
   function scripts(html){
-    return [...html.matchAll(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/g)]
+    return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
       .map(m=>{try{return JSON.parse(m[1])}catch{return null}})
       .filter(Boolean);
   }
