@@ -49,6 +49,8 @@ export type ActionMission = {
   status?: string;
   starts_at?: string | null;
   ends_at?: string | null;
+  /** 'clip' marks a paid clipping campaign; those live in the Clips tab. */
+  kind?: 'civic' | 'clip' | string | null;
 };
 
 export type MissionAssignment = {
@@ -73,8 +75,71 @@ export type NetworkGroup = {
   requested?: boolean;
 };
 
-const MISSION_FIELDS =
-  'id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at';
+export type ClipPlatform = { platform: string; label: string; enabled: boolean; reason?: string };
+
+export type ClipCampaign = {
+  mission_id: string;
+  title: string;
+  status?: string;
+  platforms?: string[];
+  rules?: string | null;
+  required_tags?: string[];
+  base_cpm_cents?: number;
+  min_views?: number;
+  per_clip_cap_cents?: number | null;
+  per_clipper_cap_cents?: number | null;
+  keep_live_days?: number;
+  hold_days?: number;
+  bonus_account_cents?: number;
+  bonus_listen_cents?: number;
+  approval_mode?: 'auto' | 'creator' | string;
+  ends_at?: string | null;
+  budget_left_cents?: number;
+  clippers?: number;
+  song?: { title?: string; artist?: string; url?: string } | null;
+  track?: { title?: string } | null;
+  creator?: { artist_name?: string } | null;
+  moments?: { id: string; label: string; start_ms?: number; end_ms?: number }[];
+};
+
+export type ClipSubmission = {
+  submission_id: string;
+  platform: string;
+  url: string;
+  status: string;
+  review_state?: string;
+  verified_views?: number;
+  earned_view_cents?: number;
+  rejection_reason?: string | null;
+  waiting_reason?: string | null;
+  hold_reason?: string | null;
+};
+
+export type ClipMoney = { held_cents?: number; payable_cents?: number; paid_cents?: number };
+
+export type ClipWork = {
+  totals?: ClipMoney;
+  payouts?: { amount_cents: number; recorded_at: string }[];
+  accounts?: { account_id: string; platform: string; handle: string; verified: boolean; code?: string }[];
+  claims?: {
+    claim_id: string;
+    mission_id: string;
+    title: string;
+    ref_code: string;
+    link?: string | null;
+    earnings?: ClipMoney;
+    submissions?: ClipSubmission[];
+  }[];
+};
+
+export type ClipAsset = {
+  id: string;
+  kind: string;
+  label: string;
+  url?: string;
+  start_ms?: number | null;
+  end_ms?: number | null;
+};
 
 export function useActionNetworkApi() {
   const { api, rest, rpc, user } = useMcc();
@@ -145,14 +210,16 @@ export function useActionNetworkApi() {
 
     async function missions(campaign?: string | null): Promise<ActionMission[]> {
       const campaignFilter = campaign ? `&campaign_id=eq.${encodeURIComponent(campaign)}` : '';
-      return rest<ActionMission[]>(
-        `action_missions?status=eq.open${campaignFilter}&select=${MISSION_FIELDS}&order=created_at.desc`,
+      // select=* carries kind (once it exists), so clip campaigns are left to the Clips tab
+      const rows = await rest<ActionMission[]>(
+        `action_missions?status=eq.open${campaignFilter}&select=*&order=created_at.desc`,
       );
+      return (rows || []).filter((row) => row.kind !== 'clip');
     }
 
     async function mission(id: string): Promise<ActionMission | null> {
       const rows = await rest<ActionMission[]>(
-        `action_missions?id=eq.${encodeURIComponent(id)}&select=${MISSION_FIELDS}&limit=1`,
+        `action_missions?id=eq.${encodeURIComponent(id)}&select=*&limit=1`,
       );
       return rows?.[0] || null;
     }
@@ -275,6 +342,56 @@ export function useActionNetworkApi() {
       );
     }
 
+    // Paid clipping. Every write is a clip_* database function that checks the
+    // caller; views and pay are read from the platform and settled server-side.
+    async function clipCampaigns(song?: string | null): Promise<ClipCampaign[]> {
+      return (await rpc<ClipCampaign[]>('clip_campaigns_open', { p_song: song || null })) || [];
+    }
+
+    async function clipWork(): Promise<ClipWork | null> {
+      return rpc<ClipWork>('clip_my_work');
+    }
+
+    async function clipPlatforms(): Promise<ClipPlatform[]> {
+      const out = await api<{ platforms?: ClipPlatform[] }>('/v1/clips/platforms');
+      return out.platforms || [];
+    }
+
+    async function claimClip(missionId: string) {
+      return rpc<{ claim_id: string; ref_code: string; status: string }>('clip_campaign_claim', {
+        p_mission: missionId,
+      });
+    }
+
+    async function clipAssets(missionId: string) {
+      return api<{ assets: ClipAsset[]; expires_in: number }>(
+        `/v1/clips/campaigns/${encodeURIComponent(missionId)}/assets`,
+      );
+    }
+
+    async function submitClip(input: { missionId: string; platform: string; url: string; moment?: string | null }) {
+      return rpc<any>('clip_submit', {
+        p_mission: input.missionId,
+        p_platform: input.platform,
+        p_url: input.url.trim(),
+        p_moment: input.moment || null,
+      });
+    }
+
+    async function registerClipAccount(platform: string, handle: string) {
+      return rpc<{ account_id: string; code?: string }>('clip_account_register', {
+        p_platform: platform,
+        p_handle: handle.trim(),
+      });
+    }
+
+    async function verifyClipAccount(accountId: string) {
+      return api<{ verified: boolean; reason?: string }>(
+        `/v1/clips/accounts/${encodeURIComponent(accountId)}/verify`,
+        { method: 'POST', body: {} },
+      );
+    }
+
     return {
       bootstrap,
       feed,
@@ -296,6 +413,14 @@ export function useActionNetworkApi() {
       notifications,
       markNotificationsRead,
       createPost,
+      clipCampaigns,
+      clipWork,
+      clipPlatforms,
+      claimClip,
+      clipAssets,
+      submitClip,
+      registerClipAccount,
+      verifyClipAccount,
     };
   }, [api, rest, rpc, user?.id]);
 }

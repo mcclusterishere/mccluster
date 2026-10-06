@@ -9,10 +9,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
   Modal,
   Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -24,6 +26,10 @@ import Room from './Room';
 import { useMcc } from './mcc';
 import {
   type ActionMission,
+  type ClipAsset,
+  type ClipCampaign,
+  type ClipPlatform,
+  type ClipWork,
   type FeedItem,
   type NetworkBootstrap,
   type NetworkGroup,
@@ -31,10 +37,11 @@ import {
 } from './actionNetwork';
 import { color, family, MIN_TOUCH, space, type } from './theme';
 
-type ViewKey = 'feed' | 'missions' | 'groups' | 'record' | 'account';
+type ViewKey = 'feed' | 'missions' | 'clips' | 'groups' | 'record' | 'account';
 const VIEWS: { key: ViewKey; label: string }[] = [
   { key: 'feed', label: 'Feed' },
   { key: 'missions', label: 'Missions' },
+  { key: 'clips', label: 'Clips' },
   { key: 'groups', label: 'Groups' },
   { key: 'record', label: 'Record' },
   { key: 'account', label: 'Account' },
@@ -288,6 +295,7 @@ function SignedInNetwork() {
         {error ? <Text style={[s.status, s.section]}>{error}</Text> : null}
         {view === 'feed' ? <FeedView /> : null}
         {view === 'missions' ? <MissionsView /> : null}
+        {view === 'clips' ? <ClipsView /> : null}
         {view === 'groups' ? <GroupsView /> : null}
         {view === 'record' ? <RecordView /> : null}
         {view === 'account' ? (
@@ -547,6 +555,447 @@ function MissionsView() {
       })}
       {message ? <Text style={s.status}>{message}</Text> : null}
     </Section>
+  );
+}
+
+const CLIP_STATUS: Record<string, string> = {
+  submitted: 'Checking on the platform',
+  tracking: 'Verified · counting views',
+  held: 'Under review',
+  rejected: 'Not accepted',
+  removed: 'Taken down',
+  closed: 'Finished',
+};
+
+function usd(cents?: number | null) {
+  return (
+    '$' +
+    (Number(cents || 0) / 100).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+}
+
+function count(value?: number | null) {
+  return Number(value || 0).toLocaleString('en-US');
+}
+
+function trackingLink(url?: string | null, code?: string | null, platform?: string | null) {
+  if (!url || !code) return '';
+  return (
+    url +
+    (url.includes('?') ? '&' : '?') +
+    'utm_source=clip&utm_medium=' +
+    encodeURIComponent(platform || 'instagram') +
+    '&utm_campaign=' +
+    encodeURIComponent(code)
+  );
+}
+
+function openHttps(url?: string | null) {
+  if (url && /^https:\/\//i.test(url)) Linking.openURL(url).catch(() => null);
+}
+
+/**
+ * Paid clipping: claim a song campaign, post a Reel, paste its link. Views are
+ * read from the platform by the Worker and every cent is settled by the
+ * database (clip_* functions); nothing the phone reports is ever paid on.
+ */
+function ClipsView() {
+  const net = useActionNetworkApi();
+  const [campaigns, setCampaigns] = useState<ClipCampaign[]>([]);
+  const [work, setWork] = useState<ClipWork | null>(null);
+  const [platforms, setPlatforms] = useState<ClipPlatform[]>([]);
+  const [assets, setAssets] = useState<Record<string, ClipAsset[]>>({});
+  const [busy, setBusy] = useState(true);
+  const [acting, setActing] = useState(false);
+  const [message, setMessage] = useState('');
+  const [closed, setClosed] = useState(false);
+  const [accountPlatform, setAccountPlatform] = useState('instagram');
+  const [handle, setHandle] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const [rows, mine, plats] = await Promise.all([
+        net.clipCampaigns(),
+        net.clipWork().catch(() => null),
+        net.clipPlatforms().catch(() => [] as ClipPlatform[]),
+      ]);
+      setCampaigns(rows);
+      setWork(mine);
+      setPlatforms(plats);
+      setClosed(false);
+    } catch (e) {
+      const text = errorText(e);
+      if (/clip_campaigns_open|PGRST202|Could not find the function/.test(text)) setClosed(true);
+      else setMessage(text);
+    } finally {
+      setBusy(false);
+    }
+  }, [net]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function act<T>(fn: () => Promise<T>, done: (out: T) => string) {
+    if (acting) return;
+    setActing(true);
+    setMessage('');
+    try {
+      setMessage(done(await fn()));
+      await load();
+    } catch (e) {
+      setMessage(errorText(e));
+    } finally {
+      setActing(false);
+    }
+  }
+
+  const enabled = (platform: string) => platforms.some((p) => p.platform === platform && p.enabled);
+  const label = (platform: string) => platforms.find((p) => p.platform === platform)?.label || platform;
+  const claimOf = (missionId: string) => (work?.claims || []).find((c) => c.mission_id === missionId) || null;
+  const totals = work?.totals;
+  const lastPayout = (work?.payouts || [])[0];
+
+  return (
+    <Section title="Clip songs. Get paid on real views." eyebrow="Music · paid clipping">
+      <Text style={s.muted}>
+        Claim a campaign, post a Reel with the song, paste its link. We read the views from
+        Instagram itself, so screenshots never count.
+      </Text>
+      {busy ? <ActivityIndicator color={color.ruby} /> : null}
+      {message ? (
+        <Text accessibilityRole="alert" style={s.status}>
+          {message}
+        </Text>
+      ) : null}
+      {closed ? <Empty text="Clipping is not open yet." /> : null}
+
+      {totals ? (
+        <View style={s.subsection}>
+          <Text style={s.kicker}>Your clipping pay</Text>
+          <View style={s.statGrid}>
+            <Stat label="held" value={usd(totals.held_cents)} />
+            <Stat label="payable" value={usd(totals.payable_cents)} />
+            <Stat label="paid" value={usd(totals.paid_cents)} />
+          </View>
+          {lastPayout ? (
+            <Text style={s.meta}>
+              Last payout {usd(lastPayout.amount_cents)} on {dateText(lastPayout.recorded_at)}.
+            </Text>
+          ) : null}
+          <Text style={s.meta}>
+            Held pay becomes payable once the clip has stayed up, the hold period has passed and
+            the artist has approved it.
+          </Text>
+        </View>
+      ) : null}
+
+      {!busy && !closed && !campaigns.length ? (
+        <Empty text="No clipping campaigns are open right now." />
+      ) : null}
+      {campaigns.map((campaign) => (
+        <ClipCampaignCard
+          key={campaign.mission_id}
+          campaign={campaign}
+          claim={claimOf(campaign.mission_id)}
+          files={assets[campaign.mission_id]}
+          acting={acting}
+          enabled={enabled}
+          label={label}
+          onClaim={() =>
+            act(() => net.claimClip(campaign.mission_id), () => 'Claimed. Grab the files and your link below.')
+          }
+          onFiles={() =>
+            act(
+              async () => {
+                const out = await net.clipAssets(campaign.mission_id);
+                setAssets((current) => ({ ...current, [campaign.mission_id]: out.assets || [] }));
+              },
+              () => '',
+            )
+          }
+          onSubmit={(platform, url, moment) =>
+            act(
+              () => net.submitClip({ missionId: campaign.mission_id, platform, url, moment }),
+              () => 'Submitted. We check it on the platform before any views count.',
+            )
+          }
+        />
+      ))}
+
+      {(work?.claims || []).length ? (
+        <View style={s.subsection}>
+          <Text style={s.kicker}>Your clips</Text>
+          {(work?.claims || []).map((claim) => (
+            <View key={claim.claim_id} style={s.compactRow}>
+              <Text style={s.rowTitle}>{claim.title}</Text>
+              <Text style={s.meta}>
+                {usd(claim.earnings?.held_cents)} held · {usd(claim.earnings?.payable_cents)} payable ·{' '}
+                {usd(claim.earnings?.paid_cents)} paid
+              </Text>
+              {!(claim.submissions || []).length ? <Text style={s.meta}>No clips submitted yet.</Text> : null}
+              {(claim.submissions || []).map((sub) => {
+                const why = sub.rejection_reason || sub.waiting_reason || sub.hold_reason || '';
+                const counted = ['tracking', 'closed', 'held'].includes(sub.status);
+                return (
+                  <Pressable
+                    key={sub.submission_id}
+                    accessibilityRole="link"
+                    onPress={() => openHttps(sub.url)}
+                    style={s.clipSub}
+                  >
+                    <Text style={s.body}>
+                      {label(sub.platform)} clip · {CLIP_STATUS[sub.status] || sub.status}
+                      {counted ? ` · ${count(sub.verified_views)} views · ${usd(sub.earned_view_cents)}` : ''}
+                      {sub.review_state === 'pending' && sub.status === 'tracking' ? ' · waiting for the artist' : ''}
+                    </Text>
+                    {why ? <Text style={s.meta}>{why}</Text> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {!closed ? (
+        <View style={s.subsection}>
+          <Text style={s.kicker}>Accounts you clip from</Text>
+          {(work?.accounts || []).length ? (
+            (work?.accounts || []).map((account) => (
+              <View key={account.account_id} style={s.compactRow}>
+                <Text style={s.rowTitle}>
+                  {label(account.platform)} @{account.handle}
+                </Text>
+                {account.verified ? (
+                  <Text style={s.joined}>Verified</Text>
+                ) : (
+                  <>
+                    <Text style={s.meta}>
+                      Not verified yet. Put {account.code} in your bio, then check.
+                    </Text>
+                    <QuietButton
+                      label="Check now"
+                      disabled={acting}
+                      onPress={() =>
+                        act(
+                          () => net.verifyClipAccount(account.account_id),
+                          (out) => (out?.verified ? 'Verified.' : out?.reason || 'Not verified yet.'),
+                        )
+                      }
+                    />
+                  </>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={s.meta}>
+              Add the account you post from. Pay only counts posts on accounts you have verified.
+            </Text>
+          )}
+          <Chips
+            options={platforms.map((p) => ({ value: p.platform, label: p.enabled ? p.label : `${p.label} (not yet)`, disabled: !p.enabled }))}
+            value={accountPlatform}
+            onChange={setAccountPlatform}
+          />
+          <Field
+            label="Handle"
+            value={handle}
+            onChangeText={setHandle}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="@yourhandle"
+          />
+          <Pressable
+            disabled={acting || !handle.trim() || !enabled(accountPlatform)}
+            onPress={() =>
+              act(
+                async () => {
+                  const out = await net.registerClipAccount(accountPlatform, handle);
+                  setHandle('');
+                  return out;
+                },
+                (out) => (out?.code ? `Put ${out.code} in your bio, then tap Check now.` : 'Added.'),
+              )
+            }
+            style={[s.primary, (acting || !handle.trim() || !enabled(accountPlatform)) && s.disabled]}
+          >
+            <Text style={s.primaryText}>Add account</Text>
+          </Pressable>
+          <Text style={s.meta}>
+            YouTube and TikTok are not connected yet, so clips there cannot be verified or paid.
+          </Text>
+        </View>
+      ) : null}
+    </Section>
+  );
+}
+
+function ClipCampaignCard({
+  campaign: c,
+  claim,
+  files,
+  acting,
+  enabled,
+  label,
+  onClaim,
+  onFiles,
+  onSubmit,
+}: {
+  campaign: ClipCampaign;
+  claim: NonNullable<ClipWork['claims']>[number] | null;
+  files?: ClipAsset[];
+  acting: boolean;
+  enabled: (platform: string) => boolean;
+  label: (platform: string) => string;
+  onClaim: () => void;
+  onFiles: () => void;
+  onSubmit: (platform: string, url: string, moment: string | null) => void;
+}) {
+  const open = (c.platforms || []).filter(enabled);
+  const [platform, setPlatform] = useState(open[0] || '');
+  const [url, setUrl] = useState('');
+  const [moment, setMoment] = useState<string | null>(null);
+  const song = c.song ? `${c.song.title || ''} · ${c.song.artist || ''}` : c.track?.title || '';
+  const terms =
+    `${usd(c.base_cpm_cents)} per 1,000 verified views after ${count(c.min_views)} views` +
+    (c.per_clip_cap_cents ? ` · up to ${usd(c.per_clip_cap_cents)} a clip` : '') +
+    (c.per_clipper_cap_cents ? ` · up to ${usd(c.per_clipper_cap_cents)} a clipper` : '') +
+    (c.bonus_account_cents ? ` · ${usd(c.bonus_account_cents)} per new fan account` : '') +
+    (c.bonus_listen_cents ? ` · ${usd(c.bonus_listen_cents)} per full listen` : '');
+  const link = claim ? trackingLink(claim.link || c.song?.url, claim.ref_code, (c.platforms || [])[0]) : '';
+  const canSubmit = !acting && !!platform && /^https:\/\//i.test(url.trim());
+
+  return (
+    <Article>
+      <Text style={s.kicker}>
+        Clip & get paid{c.creator?.artist_name ? ` · ${c.creator.artist_name}` : ''}
+      </Text>
+      <Text style={s.subhead}>{c.title}</Text>
+      {song ? <Text style={s.muted}>{song}</Text> : null}
+      <Text style={s.rowTitle}>{terms}</Text>
+      <Text style={s.meta}>
+        {(c.platforms || []).map(label).join(', ')} · {usd(c.budget_left_cents)} left · {count(c.clippers)} clippers
+        {c.ends_at ? ` · post by ${dateText(c.ends_at)}` : ''}
+      </Text>
+      {c.rules ? <Text style={s.body}>{c.rules}</Text> : null}
+      {(c.required_tags || []).length ? (
+        <Text style={s.meta}>Your caption must include: {(c.required_tags || []).join(' ')}</Text>
+      ) : null}
+      <Text style={s.meta}>
+        Clips must stay up {count(c.keep_live_days)} days. Pay holds {count(c.hold_days)} days
+        {c.approval_mode === 'creator' ? ' and the artist approves each clip' : ''}.
+      </Text>
+      {!claim ? (
+        <Pressable disabled={acting} onPress={onClaim} style={[s.primary, acting && s.disabled]}>
+          <Text style={s.primaryText}>Claim this campaign</Text>
+        </Pressable>
+      ) : (
+        <View style={s.actionCard}>
+          <Text style={s.body}>Your link, for your bio or comments, so fans you bring are counted:</Text>
+          <TextInput
+            value={link}
+            editable={false}
+            selectTextOnFocus
+            accessibilityLabel="Your tracking link"
+            style={s.field}
+          />
+          <QuietButton label="Share link" disabled={!link} onPress={() => Share.share({ message: link }).catch(() => null)} />
+          {files ? (
+            <>
+              {!files.length ? <Text style={s.meta}>No files for this campaign.</Text> : null}
+              {files.map((file) =>
+                file.url ? (
+                  <Pressable key={file.id} accessibilityRole="link" onPress={() => openHttps(file.url)}>
+                    <Text style={s.actionLink}>{file.label}</Text>
+                  </Pressable>
+                ) : (
+                  <Text key={file.id} style={s.body}>
+                    {file.label}
+                    {file.start_ms != null
+                      ? ` · ${Math.round(file.start_ms / 1000)}–${Math.round(Number(file.end_ms || 0) / 1000)}s`
+                      : ''}
+                  </Text>
+                ),
+              )}
+              <Text style={s.meta}>These links expire in 15 minutes.</Text>
+            </>
+          ) : (
+            <QuietButton label="Get the approved files" disabled={acting} onPress={onFiles} />
+          )}
+          {open.length ? (
+            <>
+              <Chips
+                options={open.map((p) => ({ value: p, label: label(p) }))}
+                value={platform}
+                onChange={setPlatform}
+              />
+              <Field
+                label="Link to your posted clip"
+                value={url}
+                onChangeText={setUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                placeholder="https://www.instagram.com/reel/…"
+              />
+              {(c.moments || []).length ? (
+                <Chips
+                  options={(c.moments || []).map((m) => ({ value: m.id, label: m.label }))}
+                  value={moment || ''}
+                  onChange={(value) => setMoment(value === moment ? null : value)}
+                />
+              ) : null}
+              <Pressable
+                disabled={!canSubmit}
+                onPress={() => {
+                  onSubmit(platform, url, moment);
+                  setUrl('');
+                }}
+                style={[s.primary, !canSubmit && s.disabled]}
+              >
+                <Text style={s.primaryText}>Submit clip</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={s.meta}>None of this campaign's platforms can be verified yet.</Text>
+          )}
+        </View>
+      )}
+    </Article>
+  );
+}
+
+function Chips({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string; disabled?: boolean }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <View style={s.chipRow}>
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on, disabled: !!option.disabled }}
+            disabled={option.disabled}
+            onPress={() => onChange(option.value)}
+            style={[s.chip, on && s.chipOn, option.disabled && s.disabled]}
+          >
+            <Text style={[s.chipText, on && s.chipTextOn]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -1102,6 +1551,20 @@ const s = StyleSheet.create({
     borderTopColor: color.ruby,
   },
   statValue: { ...type.title, color: color.paper },
+
+  clipSub: { minHeight: MIN_TOUCH, justifyContent: 'center', gap: 2, paddingVertical: space.xs },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  chip: {
+    minHeight: MIN_TOUCH,
+    justifyContent: 'center',
+    paddingHorizontal: space.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.rule,
+    borderRadius: 999,
+  },
+  chipOn: { borderColor: color.ruby, backgroundColor: color.field },
+  chipText: { ...type.sub, color: color.quiet },
+  chipTextOn: { color: color.paper, fontFamily: family(700) },
 
   confirmRow: { minHeight: MIN_TOUCH, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   box: {
