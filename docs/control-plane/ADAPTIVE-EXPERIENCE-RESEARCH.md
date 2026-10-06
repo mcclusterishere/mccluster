@@ -612,8 +612,12 @@ No personalization behavior change.
 - tests.
 
 ### PR B — Compatibility adapter
-- `MCC_MODEL.suggest/shown/profile` backed by the new service;
-- preserve fallback;
+Status: implemented on `mcc-model-adapter-surfaces-v1`.
+
+- `MCC_MODEL.suggest/shown/profile` preserve the synchronous compatibility API while a recorded ExperienceDecision is prefetched;
+- local on-device behavior remains the fail-open fallback;
+- `global.for_you`, `music.next_step` and `action.next_step` are now instrumented against real existing interactive elements;
+- production `identity_order` keeps this pass behavior-neutral: opportunity, impression, visibility and interaction are logged without DOM reordering;
 - no generative UI.
 
 ### PR C — Production policy v1
