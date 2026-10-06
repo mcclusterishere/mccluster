@@ -19,6 +19,19 @@ exception when others then
   return true;
 end $$;
 
+-- the M person behind a sign-in: the m_auth_user_after_insert trigger on auth.users makes it on a real
+-- rebuild; anything without that trigger gets one made here
+create function pg_temp.m_for(p_user uuid) returns uuid language plpgsql as $$
+declare v uuid;
+begin
+  select m_uid into v from public.m_auth_user_links where auth_user_id = p_user;
+  if v is null then
+    insert into public.m_people default values returning id into v;
+    insert into public.m_auth_user_links (auth_user_id, m_uid) values (p_user, v);
+  end if;
+  return v;
+end $$;
+
 create temp table t (k text primary key, v text);
 grant all on t to public;
 
@@ -39,13 +52,11 @@ begin
     (u_other, 'other@example.com', now(), now() - interval '1 month'),
     (u_fan1, 'fan1@example.com', now() + interval '1 hour', now() + interval '1 hour'),
     (u_fan2, 'fan2@example.com', null, now() + interval '1 hour');
-  insert into public.m_people default values returning id into m_creator;
-  insert into public.m_people default values returning id into m_clipper;
-  insert into public.m_people default values returning id into m_other;
-  insert into public.m_people default values returning id into m_fan1;
-  insert into public.m_people default values returning id into m_fan2;
-  insert into public.m_auth_user_links (auth_user_id, m_uid) values
-    (u_creator, m_creator), (u_clipper, m_clipper), (u_other, m_other), (u_fan1, m_fan1), (u_fan2, m_fan2);
+  m_creator := pg_temp.m_for(u_creator);
+  m_clipper := pg_temp.m_for(u_clipper);
+  m_other := pg_temp.m_for(u_other);
+  m_fan1 := pg_temp.m_for(u_fan1);
+  m_fan2 := pg_temp.m_for(u_fan2);
   insert into public.org_members (org_id, profile_id, role) values (house, u_creator, 'owner'), (other, u_other, 'owner');
   insert into public.music_catalog_objects (catalog_key, album_slug, album_title, track_title, artist_name, canonical_url)
   values ('regress-album:regress-pull-up', 'regress-album', 'Regress Album', 'Regress Pull Up', 'Matthew McCluster',
