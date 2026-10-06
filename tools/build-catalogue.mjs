@@ -100,7 +100,9 @@ export function buildGraph(cat, albums) {
   const recs = recordings(cat);
   const albumNodes = (albums.albums || []).filter((a) => a.slug !== "singles").map((a) => {
     const id = a.slug === "here" ? `${SITE}/#album` : `${SITE}/catalogue.html#album-${a.slug}`;
-    const mine = recs.filter((r) => r.inAlbum && r.inAlbum["@id"] === id);
+    const albumTrackOrder = new Map((a.tracks || []).map((t, i) => [String(t.title || ""), i]));
+    const mine = recs.filter((r) => r.inAlbum && r.inAlbum["@id"] === id)
+      .sort((x, y) => (albumTrackOrder.get(x.name) ?? Number.MAX_SAFE_INTEGER) - (albumTrackOrder.get(y.name) ?? Number.MAX_SAFE_INTEGER));
     const node = {
       "@type": "MusicAlbum",
       "@id": id,
