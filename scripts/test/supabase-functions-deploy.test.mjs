@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  parseDeclaredFunctions, planDeploy, affectedShared, integrationVerdict, gate, verifyDeployed
+  parseDeclaredFunctions, planDeploy, affectedShared, integrationVerdict, gate, verifyDeployed, chooseBase
 } from '../supabase-functions-deploy.mjs';
 
 const read = (p) => readFile(p, 'utf8');
@@ -119,6 +119,37 @@ test('the real repo: every function is declared, and #369’s shared change reac
   }
 });
 
+test('a push plans from the last successful run, so a cancelled or failed push is not skipped', () => {
+  /* A deploys; B waits; C arrives and GitHub cancels B. C must cover B's
+     functions too, so it plans from A (the last success), not from B. */
+  const A = 'a'.repeat(40), B = 'b'.repeat(40);
+  const isAncestor = (sha) => sha === A || sha === B;
+  assert.deepEqual(chooseBase({ lastSuccess: A, isAncestor }), { base: A, from: 'last successful deploy run' });
+  const merged = planDeploy({
+    changedPaths: ['supabase/functions/l3-login/index.ts', 'supabase/functions/pay-now/index.ts'],
+    ...repo({ toml: TOML, files: FILES })
+  });
+  assert.deepEqual(merged.functions, ['l3-login', 'pay-now'], 'B’s l3-login and C’s pay-now both deploy in C’s run');
+});
+
+test('with no usable successful run, every declared function is planned (fail closed)', () => {
+  /* First run failed or was cancelled, the run history could not be read,
+     or history was rewritten: nothing proves an earlier push reached
+     production, so the previous push's `before` is not trusted. */
+  const isAncestor = (sha) => sha === 'a'.repeat(40);
+  for (const lastSuccess of ['', 'c'.repeat(40)]) {
+    const choice = chooseBase({ lastSuccess, isAncestor });
+    assert.equal(choice.base, '', `lastSuccess=${lastSuccess || '(none)'} must not fall back to this push`);
+    assert.match(choice.from, /^no usable baseline/);
+  }
+  const unknown = gate({ functions: ['l3-login', 'pay-now', 'eu-worker'], verdict: { state: 'failure', summary: 'Remote migration versions not found in local migrations directory.' }, hasToken: false, baseline: 'unknown' });
+  assert.equal(unknown.ok, false);
+  assert.match(unknown.message, /^UNVERIFIED: no earlier successful run proves/);
+  assert.match(unknown.message, /Any of these 3 declared functions may be serving old code/);
+  assert.equal(gate({ functions: ['l3-login'], verdict: { state: 'success' }, hasToken: false, baseline: 'unknown' }).ok, true, 'an integration success still establishes a baseline');
+  assert.equal(gate({ functions: ['l3-login'], verdict: { state: 'failure' }, hasToken: true, baseline: 'unknown' }).ok, true, 'with a token every declared function is deployed and proven');
+});
+
 test('the integration verdict reads the Supabase app’s check, newest first', () => {
   assert.equal(integrationVerdict([]).state, 'missing');
   const runs = [
@@ -175,6 +206,9 @@ test('the workflow deploys on function or config changes alone, least-privilege,
   assert.doesNotMatch(on, /supabase\/migrations/, 'a migration must not be needed to trigger a deploy');
   assert.match(on, /workflow_dispatch:/);
   assert.match(yml, /\npermissions:\n\s+contents: read\n\s+checks: read\n/);
+  assert.match(yml, /\n\s+actions: read\n/, 'reads its own run history to find the last successful deploy');
+  assert.match(yml, /plan --before "\$BEFORE" --after HEAD --base-from-last-success true/, 'push runs plan from the last successful run');
+  assert.match(yml, /--baseline "\$BASELINE"/, 'the gate knows when no baseline exists');
   assert.match(yml, /\nconcurrency:\n\s+group: supabase-edge-functions-production\n\s+cancel-in-progress: false\n/, 'production deploy runs are serialized so an older push cannot finish after a newer one');
   assert.doesNotMatch(yml, /git push|contents: write|pull_request:/, 'deploys from main only and never writes to a branch');
   for (const uses of yml.match(/uses: \S+/g)) assert.match(uses, /@[0-9a-f]{40}$/, `${uses} must be pinned to a commit`);

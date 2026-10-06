@@ -185,6 +185,14 @@ with or without a migration:
    `config.toml` changes. A changed function without a `[functions.<name>]`
    stanza is refused, because the CLI would deploy it with `verify_jwt = true`
    by default. Nothing is ever pruned.
+   The plan starts at the commit of the last successful push run, not just
+   this push's parent. Runs are serialized (one concurrency group, never
+   cancelled in progress), and GitHub keeps only one pending run, so a third
+   push cancels the waiting one; planning from the last success means a
+   cancelled or failed push's functions roll into the next run. With no
+   usable successful run (none yet, history unreadable, or rewritten) it
+   fails closed: every declared function is planned, and without the secret
+   the run reports them as unverified rather than assuming they are current.
 2. It waits for the integration's verdict on that commit, so its own deploy
    is the last write for that commit.
 3. With the `SUPABASE_ACCESS_TOKEN` repository secret, it deploys exactly
