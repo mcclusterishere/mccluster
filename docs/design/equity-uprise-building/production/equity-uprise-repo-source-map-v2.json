@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 326,
+  "candidate_count": 327,
   "capability_source_count": 99,
-  "support_only_count": 227,
+  "support_only_count": 228,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2331,6 +2331,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/pending/action_clipping_marketplace_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 327,
+  "candidate_count": 328,
   "capability_source_count": 99,
-  "support_only_count": 228,
-  "checks_total": 1211,
-  "checks_passed": 1211,
+  "support_only_count": 229,
+  "checks_total": 1215,
+  "checks_passed": 1215,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -275,6 +275,7 @@
     "supabase/migrations/20261005054040_action_cohort_admission_v1.sql",
     "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
     "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
+    "supabase/pending/action_clipping_marketplace_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -341,7 +342,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "327 entries"
+      "detail": "328 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5830,6 +5831,26 @@
     },
     {
       "name": "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_clipping_marketplace_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_clipping_marketplace_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/action_clipping_marketplace_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/action_clipping_marketplace_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
