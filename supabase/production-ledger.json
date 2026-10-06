@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 272,
-  "latest_version": "20261006213626",
-  "latest_name": "here_album_commerce_v1",
-  "ledger_sha256": "18a3141c2eeb42d885037b0498eabd05815c10c9025cec1e9846150b4fae60a4",
+  "migration_count": 274,
+  "latest_version": "20261006233518",
+  "latest_name": "here_album_commerce_v1_reconcile",
+  "ledger_sha256": "da88b3dcc1f028cb8fcd8df53e17373ac2366050d241cfb511b7bad7d0f2a840",
   "migrations": [
     {
       "version": "0001",
@@ -1094,6 +1094,14 @@
     {
       "version": "20261006213626",
       "name": "here_album_commerce_v1"
+    },
+    {
+      "version": "20261006232625",
+      "name": "music_direct_track_sales_v1"
+    },
+    {
+      "version": "20261006233518",
+      "name": "here_album_commerce_v1_reconcile"
     }
   ]
 }
