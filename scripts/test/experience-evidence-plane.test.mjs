@@ -14,7 +14,10 @@ test('experience evidence migration separates product and research policy planes
   assert.match(sql,/plane in \('production','research'\)/i);
   assert.match(sql,/intent in \('product','research'\)/i);
   assert.match(sql,/status not in \('canary','running'\).*research_review in \('exempt','approved'\)/is);
-  assert.match(sql,/revoke all on table public\.%I from anon, authenticated/i);
+  for(const table of ['experience_surfaces','experience_policies','research_projects','experience_experiments','experience_experiment_arms','experience_assignments','experience_feature_snapshots','experience_decisions','research_sources','research_artifacts']) {
+    assert.match(sql,new RegExp('alter table public\\.'+table+' enable row level security','i'),table+' RLS missing');
+    assert.match(sql,new RegExp('revoke all on table public\\.'+table+' from anon, authenticated','i'),table+' client revoke missing');
+  }
   assert.doesNotMatch(sql,/grant\s+(select|insert|update|delete)\s+on\s+public\.experience_/i);
 });
 
