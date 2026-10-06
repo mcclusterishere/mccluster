@@ -4,10 +4,19 @@
    No generated/invented lyric copy lives here. */
 (function(){
   "use strict";
+  function safeHref(value){
+    var raw=String(value||"").trim();
+    if(!raw)return null;
+    try{
+      var u=new URL(raw,location.href);
+      if(u.protocol!=="http:"&&u.protocol!=="https:")return null;
+      return raw;
+    }catch(_){return null;}
+  }
   function safeRules(experience){
     var x=experience&&typeof experience==="object"?experience:{};
     return Array.isArray(x.lyric_ctas)?x.lyric_ctas.filter(function(r){
-      return r&&typeof r==="object"&&String(r.match||"").trim()&&String(r.href||"").trim();
+      return r&&typeof r==="object"&&String(r.match||"").trim()&&safeHref(r.href);
     }):[];
   }
   function find(line,experience){
@@ -30,7 +39,7 @@
     if(hit.start)container.appendChild(document.createTextNode(text.slice(0,hit.start)));
     var a=document.createElement("a");
     a.className="lyric-service-cta";
-    a.href=String(hit.rule.href);
+    a.href=safeHref(hit.rule.href) || "#";
     a.textContent=text.slice(hit.start,hit.end);
     a.dataset.offer=String(hit.rule.offer_id||"");
     a.dataset.label=String(hit.rule.label||"");
@@ -58,9 +67,10 @@
   function bindPrimary(anchor,experience,context){
     if(!anchor)return;
     var c=experience&&experience.commerce&&typeof experience.commerce==="object"?experience.commerce:null;
-    anchor.hidden=!c||!c.href;
-    if(!c||!c.href){anchor.removeAttribute("href");return;}
-    anchor.href=String(c.href);
+    var href=c&&safeHref(c.href);
+    anchor.hidden=!c||!href;
+    if(!c||!href){anchor.removeAttribute("href");return;}
+    anchor.href=href;
     anchor.textContent=String(c.label||"Take the next step");
     anchor.dataset.offer=String(c.offer_id||"");
     anchor.onclick=function(){
@@ -72,5 +82,5 @@
       });
     };
   }
-  window.MCC_LYRIC_COMMERCE={find:find,renderLine:renderLine,bindPrimary:bindPrimary};
+  window.MCC_LYRIC_COMMERCE={find:find,renderLine:renderLine,bindPrimary:bindPrimary,safeHref:safeHref};
 }());
