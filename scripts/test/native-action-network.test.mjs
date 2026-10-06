@@ -146,3 +146,83 @@ test('a failed proof submission discards only an upload nothing references', asy
   assert.match(submit, /if \(uploadedAssetId && typeof \(error as any\)\?\.status === 'number'\) \{\s*await media\.discard\(uploadedAssetId\)/,
     'discard only when the server answered with a failure; a dropped connection may have committed the proof');
 });
+
+test('the keychain holds only tokens, expiry and the member’s id and email', async () => {
+  const { persistableSession } = await import('../../native/src/sessionPolicy.ts');
+  const token = 'h.' + 'x'.repeat(1150) + '.s';
+  const gotrue = {
+    access_token: token, refresh_token: 'r8x2kq', expires_in: 3600, token_type: 'bearer',
+    user: {
+      id: '723e4567-e89b-42d3-a456-426614174777', email: 'jane@example.com',
+      user_metadata: { name: 'Jane Doe', full_name: 'Jane Doe', avatar_url: 'https://example.com/' + 'a'.repeat(200) },
+      app_metadata: { provider: 'email', providers: ['email', 'google'] },
+      identities: Array.from({ length: 2 }, (_, i) => ({
+        identity_id: 'x'.repeat(36), id: 'y'.repeat(36), user_id: '723e4567-e89b-42d3-a456-426614174777', provider: i ? 'google' : 'email',
+        identity_data: { email: 'jane@example.com', email_verified: true, phone_verified: false, sub: 'z'.repeat(36), name: 'Jane Doe', picture: 'https://example.com/' + 'p'.repeat(120) },
+        last_sign_in_at: '2026-10-06T00:00:00Z', created_at: '2026-09-01T00:00:00Z', updated_at: '2026-10-06T00:00:00Z'
+      }))
+    }
+  };
+  assert.ok(JSON.stringify(gotrue).length > 2048, 'a real session with its user is over the old iOS keychain limit');
+  const stored = persistableSession(gotrue);
+  assert.deepEqual(Object.keys(stored).sort(), ['access_token', 'expires_at', 'refresh_token', 'token_type', 'user']);
+  assert.deepEqual(stored.user, { id: '723e4567-e89b-42d3-a456-426614174777', email: 'jane@example.com' });
+  assert.ok(JSON.stringify(stored).length < 2048, 'what is stored stays under it');
+  assert.ok(stored.expires_at > Date.now() / 1000 + 3500, 'expiry is derived from expires_in');
+  assert.equal(persistableSession({ access_token: token }), null, 'no refresh token, nothing worth keeping');
+  assert.equal(persistableSession(null), null);
+});
+
+test('only a definitive auth answer ends the session; offline and server errors keep it', async () => {
+  const { isDefinitiveAuthFailure, isFresh, sessionChangedError } = await import('../../native/src/sessionPolicy.ts');
+  for (const status of [400, 401, 403, 404, 422]) assert.equal(isDefinitiveAuthFailure({ status }), true, String(status));
+  for (const error of [new TypeError('Network request failed'), { status: 500 }, { status: 503 }, { status: 429 }, {}, null]) {
+    assert.equal(isDefinitiveAuthFailure(error), false, JSON.stringify(error));
+  }
+  /* Supabase Auth names the condition; its status for one condition varies */
+  for (const code of ['refresh_token_not_found', 'refresh_token_already_used', 'session_not_found', 'session_expired', 'user_not_found', 'bad_jwt']) {
+    assert.equal(isDefinitiveAuthFailure({ status: 409, data: { code: 409, error_code: code, msg: 'x' } }), true, code);
+  }
+  assert.equal(isDefinitiveAuthFailure({ status: 418, data: { error: 'invalid_grant' } }), true, 'older servers put the code in `error`');
+  assert.equal(isDefinitiveAuthFailure({ status: 429, data: { code: 429, error_code: 'over_request_rate_limit' } }), false, 'rate limited is not dead');
+  assert.equal(isDefinitiveAuthFailure({ status: 504, data: { error_code: 'request_timeout' } }), false);
+  /* a request cancelled because the account changed never reached the server */
+  const changed = sessionChangedError();
+  assert.equal(changed.code, 'session_changed');
+  assert.equal(changed.status, undefined, 'no status, so it never triggers a sign-out or a proof-upload discard');
+  assert.equal(isDefinitiveAuthFailure(changed), false);
+  const now = 1_800_000_000;
+  assert.equal(isFresh({ expires_at: now + 61 }, now), true);
+  assert.equal(isFresh({ expires_at: now + 60 }, now), false, 'within a minute of expiry counts as expired');
+  assert.equal(isFresh(null, now), false);
+});
+
+test('concurrent refreshes share one call, so a single-use refresh token is spent once', async () => {
+  const { singleFlight } = await import('../../native/src/sessionPolicy.ts');
+  let calls = 0, release;
+  const refresh = singleFlight(() => { calls++; return new Promise((resolve) => { release = resolve; }); });
+  const a = refresh(), b = refresh(), c = refresh();
+  release('session-2');
+  assert.deepEqual(await Promise.all([a, b, c]), ['session-2', 'session-2', 'session-2']);
+  assert.equal(calls, 1);
+  const failing = singleFlight(() => { calls++; return Promise.reject(Object.assign(new Error('offline'), {})); });
+  await assert.rejects(Promise.all([failing(), failing()]), /offline/);
+  assert.equal(calls, 2, 'a failure is shared too');
+  await assert.rejects(failing(), /offline/);
+  assert.equal(calls, 3, 'once settled, the next call refreshes again');
+});
+
+test('the M Account provider applies those rules', async () => {
+  const auth = await read('native/src/mcc.tsx');
+  assert.match(auth, /from '\.\/sessionPolicy'/);
+  assert.match(auth, /const stored = persistableSession\(session\);\s*if \(stored\) \{\s*await SecureStore\.setItemAsync\(SESSION_KEY, JSON\.stringify\(stored\)/, 'the keychain gets the slim session');
+  assert.match(auth, /const refresh = useMemo\(\s*\(\) =>\s*singleFlight\(/, 'refresh is single-flight');
+  const refresh = auth.slice(auth.indexOf('const refresh = useMemo('), auth.indexOf('const freshSession'));
+  assert.match(refresh, /if \(!isDefinitiveAuthFailure\(error\)\) throw error;/, 'a transient refresh failure is reported, not turned into a sign-out');
+  assert.doesNotMatch(refresh, /return sessionRef\.current/, 'a request waiting on a refresh never continues under a session it did not start with');
+  assert.match(refresh, /if \(sessionRef\.current !== current\) throw sessionChangedError\(\);/);
+  const boot = auth.slice(auth.indexOf('let restored = await storedSession();'), auth.indexOf('if (alive) setReady(true);'));
+  assert.match(boot, /if \(restored\) \{\s*setSession\(restored\);/, 'a stored session signs the member in immediately, offline included');
+  assert.match(boot, /if \(alive && isDefinitiveAuthFailure\(error\)\) \{\s*await commitSession\(null\);/, 'launch only ends the session on a definitive answer');
+  assert.doesNotMatch(boot, /\} catch \{\s*if \(alive\) \{\s*await commitSession\(null\)/, 'no blanket sign-out on launch');
+});

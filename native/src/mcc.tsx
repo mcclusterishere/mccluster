@@ -16,6 +16,7 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { isDefinitiveAuthFailure, isFresh, persistableSession, sessionChangedError, singleFlight } from './sessionPolicy';
 
 export const SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
@@ -100,12 +101,14 @@ async function persistSession(session: MccSession | null): Promise<void> {
   if (Platform.OS === 'web') {
     const store = (globalThis as any).localStorage;
     if (!store) return;
-    if (session) store.setItem(SESSION_KEY, JSON.stringify(session));
+    const stored = persistableSession(session);
+    if (stored) store.setItem(SESSION_KEY, JSON.stringify(stored));
     else store.removeItem(SESSION_KEY);
     return;
   }
-  if (session) {
-    await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session), {
+  const stored = persistableSession(session);
+  if (stored) {
+    await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(stored), {
       keychainAccessible: SecureStore.WHEN_UNLOCKED,
     });
   } else {
@@ -166,34 +169,46 @@ export function MccProvider({ children }: { children: ReactNode }) {
     return normalized;
   }, []);
 
-  const refresh = useCallback(async (): Promise<MccSession | null> => {
-    const current = sessionRef.current;
-    if (!current?.refresh_token) {
-      await commitSession(null);
-      setUser(null);
-      return null;
-    }
-    try {
-      const next = normalizeSession(
-        await authRequest<MccSession>('token?grant_type=refresh_token', {
-          method: 'POST',
-          body: { refresh_token: current.refresh_token },
-        }),
-      );
-      await commitSession(next);
-      if (next?.user) setUser(next.user);
-      return next;
-    } catch {
-      await commitSession(null);
-      setUser(null);
-      return null;
-    }
-  }, [commitSession]);
+  /* One refresh at a time (refresh tokens are single-use). Only a definitive
+     answer from the auth server ends the session; offline, a timeout or a
+     5xx keeps it, and the failure reaches the caller instead. */
+  const refresh = useMemo(
+    () =>
+      singleFlight(async (): Promise<MccSession | null> => {
+        const current = sessionRef.current;
+        if (!current?.refresh_token) {
+          await commitSession(null);
+          setUser(null);
+          return null;
+        }
+        try {
+          const next = normalizeSession(
+            await authRequest<MccSession>('token?grant_type=refresh_token', {
+              method: 'POST',
+              body: { refresh_token: current.refresh_token },
+            }),
+          );
+          /* signed out, or signed in as someone else, while this was in
+             flight: the waiting requests belong to the old session */
+          if (sessionRef.current !== current) throw sessionChangedError();
+          await commitSession(next);
+          if (next?.user) setUser(next.user);
+          return next;
+        } catch (error) {
+          if (sessionRef.current !== current) throw (error as any)?.code === 'session_changed' ? error : sessionChangedError();
+          if (!isDefinitiveAuthFailure(error)) throw error;
+          await commitSession(null);
+          setUser(null);
+          return null;
+        }
+      }),
+    [commitSession],
+  );
 
   const freshSession = useCallback(async (): Promise<MccSession> => {
     let current = sessionRef.current;
     if (!current) throw Object.assign(new Error('Sign in first.'), { status: 401 });
-    if (!current.expires_at || current.expires_at <= Date.now() / 1000 + 60) {
+    if (!isFresh(current)) {
       current = await refresh();
     }
     if (!current?.access_token) throw Object.assign(new Error('Sign in first.'), { status: 401 });
@@ -203,19 +218,27 @@ export function MccProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
+      /* The stored session signs the member in at once, offline included;
+         the server is asked afterwards and only a definitive answer ends it. */
       let restored = await storedSession();
       sessionRef.current = restored;
-      if (restored && (!restored.expires_at || restored.expires_at <= Date.now() / 1000 + 60)) {
-        restored = await refresh();
-      } else if (restored) {
+      if (restored) {
         setSession(restored);
+        if (restored.user?.id) setUser(restored.user);
       }
-      if (restored?.access_token) {
+      if (restored && !isFresh(restored)) {
+        try {
+          restored = await refresh();
+        } catch {
+          /* offline: keep the stored session; the next request refreshes */
+        }
+      }
+      if (restored && isFresh(restored)) {
         try {
           const who = await authRequest<MccUser>('user', { token: restored.access_token });
           if (alive) setUser(who);
-        } catch {
-          if (alive) {
+        } catch (error) {
+          if (alive && isDefinitiveAuthFailure(error)) {
             await commitSession(null);
             setUser(null);
           }
