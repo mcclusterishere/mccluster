@@ -283,7 +283,7 @@
     box.querySelector(".pocket__sub").textContent = albumName(st.album);
 
     if (st.poster) film.poster = abs(st.poster);
-    if (st.video) { film.src = abs(st.video); film.load(); }
+    var musicVideo = st.music_video || st.video || "";\n    if (musicVideo) { film.src = abs(musicVideo); film.load(); }
 
     /* the masthead pill lives in this exact corner at this exact height, so
        the page is told the pocket is here and the pill steps up above it */
