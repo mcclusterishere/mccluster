@@ -416,11 +416,14 @@ begin
   assert (select ends_at from public.action_missions where id = mission) = now() + interval '20 days', 'later is fine';
 
   -- the desk attaches only a credential reference the Worker can read, never a pasted token
-  perform pg_temp.sign_in(gen_random_uuid(), 'matthew@mccluster.org');
+  -- the desk: a real auth user (audit rows reference it) whose token carries the owner email
   declare
+    u_desk uuid := gen_random_uuid();
     v_acct uuid := (select id from public.social_accounts where owner_m_uid = (select v::uuid from t where k = 'm_clipper') limit 1);
     v_before text := (select credential_ref from public.social_accounts where id = v_acct);
   begin
+    insert into auth.users (id, email, email_confirmed_at, created_at) values (u_desk, 'desk@example.com', now(), now());
+    perform pg_temp.sign_in(u_desk, 'matthew@mccluster.org');
     assert pg_temp.raises(format('select public.clip_account_attach_credential(%L, ''EAAGabc123rawtoken'')', v_acct), '%never a token%'),
            'a raw token is refused';
     assert pg_temp.raises(format('select public.clip_account_attach_credential(%L, ''vault:not-a-uuid'')', v_acct), '%never a token%'),
