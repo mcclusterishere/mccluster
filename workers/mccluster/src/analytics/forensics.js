@@ -1,8 +1,11 @@
-// Control Analytics > Forensics: sessions and visitors, owner-only.
+// Control Analytics > Forensics: sessions, visitors, flows and errors,
+// owner-only.
 //
 // The router hands in its own helpers so this module shares the exact same
 // database client, owner gate and device summarizer instead of a copy.
-export function createForensicRoutes({ json, sbJson, sbRows, finiteDate, publicDeviceSummary, requireHouseOwner }) {
+import { summarizeFlows, summarizeErrors, FLOW_EVENT_NAMES, ERROR_EVENT_NAMES } from './forensic-insights.js';
+
+export function createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finiteDate, publicDeviceSummary, requireHouseOwner }) {
   /* SESSION FORENSICS. Forensics used to be the latest raw events in one
      table. These routes return sessions you can open and the visitors they
      belong to, aggregated in Postgres (analytics_session_list /
@@ -154,7 +157,57 @@ export function createForensicRoutes({ json, sbJson, sbRows, finiteDate, publicD
   }
 
 
+  /* FLOWS AND ERRORS. Across every session in the range rather than one at a
+     time: how people move between pages, where they enter, leave and stall,
+     and every error and friction point grouped with the journeys that hit
+     it. Bounded to 31 days and a fixed row budget so the read stays cheap;
+     flows read events_lean (narrow), errors read only the handful of event
+     names that carry an error or friction signal. */
+  const INSIGHT_MAX_DAYS = 31;
+  const FLOW_ROW_BUDGET = 60000;
+  const ERROR_ROW_BUDGET = 20000;
+
+  function insightWindow(url) {
+    const { since, until } = forensicWindow(url);
+    const floor = new Date(until.getTime() - INSIGHT_MAX_DAYS * 86400000);
+    return { since: since < floor ? floor : since, until, clamped: since < floor };
+  }
+
+  async function handleFlows(request, env, user, url) {
+    await requireHouseOwner(env, user);
+    if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
+    const { since, until, clamped } = insightWindow(url);
+    const q = new URLSearchParams({
+      site_id: 'is.null', is_bot: 'is.false', session_id: 'not.is.null',
+      name: `in.(${FLOW_EVENT_NAMES.join(',')})`,
+      select: 'session_id,device_id,at,name,path,visible_s,depth', order: 'at.asc'
+    });
+    q.append('at', `gte.${since.toISOString()}`);
+    q.append('at', `lt.${until.toISOString()}`);
+    const rows = await sbRowsPaged(env, `events_lean?${q.toString()}`, FLOW_ROW_BUDGET);
+    return json({ ok: true, range: { since: since.toISOString(), until: until.toISOString(), clamped },
+      rows_read: rows.length, truncated: rows.length >= FLOW_ROW_BUDGET, flows: summarizeFlows(rows) });
+  }
+
+  async function handleErrors(request, env, user, url) {
+    await requireHouseOwner(env, user);
+    if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
+    const { since, until, clamped } = insightWindow(url);
+    const q = new URLSearchParams({
+      site_id: 'is.null', is_bot: 'not.is.true',
+      name: `in.(${ERROR_EVENT_NAMES.join(',')})`,
+      select: 'at,name,path,props,session_id,device_id,user_agent', order: 'at.desc'
+    });
+    q.append('at', `gte.${since.toISOString()}`);
+    q.append('at', `lt.${until.toISOString()}`);
+    const rows = await sbRowsPaged(env, `events?${q.toString()}`, ERROR_ROW_BUDGET);
+    return json({ ok: true, range: { since: since.toISOString(), until: until.toISOString(), clamped },
+      rows_read: rows.length, truncated: rows.length >= ERROR_ROW_BUDGET, ...summarizeErrors(rows) });
+  }
+
   async function route(request, env, user, url, path) {
+    if (path === '/v1/analytics/flows') return handleFlows(request, env, user, url);
+    if (path === '/v1/analytics/errors') return handleErrors(request, env, user, url);
     if (path === '/v1/analytics/sessions') return handleSessionList(request, env, user, url);
     if (path === '/v1/analytics/visitors') return handleVisitorList(request, env, user, url);
     if (!/^\/v1\/analytics\/(sessions|visitors)\//.test(path)) return null;

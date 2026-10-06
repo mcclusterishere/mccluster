@@ -14,8 +14,12 @@
     mode: "sessions", filter: "all", sort: "recent", q: "",
     list: null, items: [], listError: null, loadingList: false, loadingMore: false, seq: 0,
     stack: [], detail: null, detailError: null, loadingDetail: false, dseq: 0,
-    showSystem: false, raw: {}, timer: null
+    showSystem: false, raw: {}, timer: null,
+    insight: { flows: null, errors: null }, insightError: { flows: null, errors: null }, insightLoading: { flows: false, errors: false },
+    iseq: 0, iseqOf: { flows: 0, errors: 0 }, showInjected: false
   };
+  var MODES = [["sessions", "Sessions"], ["visitors", "Visitors"], ["flows", "Flows"], ["errors", "Errors"]];
+  function isInsight(m) { return m === "flows" || m === "errors"; }
 
   var SESSION_FILTERS = [["all", "All"], ["identified", "Signed in"], ["music", "Played music"], ["signup", "Signed up"],
     ["converted", "Converted"], ["friction", "Hit friction"], ["returning", "Returning"], ["engaged", "Engaged 1m+"], ["bots", "Bots"]];
@@ -104,7 +108,7 @@
       "song_stop", "track_share", "rotation_add", "rotation_drop", "now_sheet_open", "shelf_preview", "masters_keep", "float_pause", "bar_transport", "music_seek", "listen_chip", "listen_search"],
     convert: ["account_created", "profile_created", "profile_signin", "form_submit", "checkout_view", "checkout_go", "offer_buy_click",
       "site_request", "mission_join", "action_act", "comment_post", "lockroom_sent", "create_posted"],
-    friction: ["rage_click", "dead_click", "js_error", "js_rejection"],
+    friction: ["rage_click", "dead_click", "js_error", "js_rejection", "play_failed", "signup_blocked"],
     arrive: ["acquired", "ad_visit"],
     system: ["bar_boot", "device_power", "network_change", "location_permission", "precise_location", "volume_call", "volume_call_end",
       "volume_call_take", "sound_beacon", "sound_beacon_tap", "sound_gentle", "sound_toggle", "dwell", "sites_layout", "work_scene", "vr_gyro_on"]
@@ -116,6 +120,18 @@
   function human(nm) { nm = String(nm || "event").replace(/_/g, " "); return nm.charAt(0).toUpperCase() + nm.slice(1); }
   function pct(v) { v = Number(v); return Number.isFinite(v) ? Math.round(v) + "%" : ""; }
 
+  /* account.html names why it refused a sign-up; these are its reasons. */
+  var SIGNUP_FIELDS = { first: "first name", last: "last name", email: "email", pass: "password", addr1: "street address", city: "city",
+    region: "state or region", postal: "postal code", country: "country" };
+  var SIGNUP_REASONS = { name_check: "the name did not look like a legal name", privacy_unchecked: "privacy policy not agreed",
+    password_short: "password under 8 characters", password_mismatch: "passwords did not match" };
+  function signupReason(r) {
+    r = String(r || "unknown");
+    if (SIGNUP_REASONS[r]) return SIGNUP_REASONS[r];
+    var m = /^missing_(\w+)$/.exec(r); if (m) return "missing " + (SIGNUP_FIELDS[m[1]] || m[1]);
+    m = /^server_(.+)$/.exec(r); if (m) return "the server refused it (" + m[1].replace(/_/g, " ") + ")";
+    return r.replace(/_/g, " ");
+  }
   function describe(x) {
     var p = x.props && typeof x.props === "object" ? x.props : {}, nm = x.name || "event", cat = category(nm), t, d = "";
     switch (nm) {
@@ -126,7 +142,13 @@
       case "click": case "cta_click": t = "Tapped " + q(p.text || p.label || p.el || "something"); d = p.href ? "→ " + trim(p.href, 60) : trim(p.el || "", 60); break;
       case "dead_click": t = "Tapped " + q(p.text || p.el || "something") + " and nothing happened"; d = trim(p.el || "", 60); break;
       case "rage_click": t = "Rage-tapped " + q(p.text || p.el || "something"); d = trim(p.el || "", 60); break;
-      case "js_error": case "js_rejection": t = "Page error: " + trim(p.msg || p.message || "unknown", 110); d = p.src ? trim(p.src, 70) + (p.line ? ":" + p.line : "") : ""; break;
+      case "js_error": case "js_rejection":
+        t = (p.origin === "injected" ? "In-app browser error (not this site): " : p.origin === "opaque" ? "Cross-origin script error: " : "Page error: ") + trim(p.msg || p.message || "unknown", 110);
+        d = [p.src ? trim(p.src, 70) + (p.line ? ":" + p.line : "") : "", p.iab ? "inside " + p.iab : ""].filter(Boolean).join(" · "); break;
+      case "play_failed": t = "Could not start " + q(p.track || "the track"); d = [p.error, p.gated ? "gated" + (p.gate ? " · " + p.gate : "") : ""].filter(Boolean).join(" · "); break;
+      case "signup_blocked": t = "Sign-up refused: " + signupReason(p.reason); break;
+      case "gated_preview_end": t = "Preview of " + q(p.track || "the song") + " ended"; d = p.gate ? "gate: " + p.gate : ""; break;
+      case "desk_signal": t = "Signal: " + String(p.kind || "").replace(/_/g, " ") + (p.detail ? " · " + trim(p.detail, 60) : ""); break;
       case "album_play": case "music_play": case "song_start": case "music_full_play": case "music_preview_play":
         t = (nm === "music_preview_play" ? "Previewed " : "Played ") + q(p.track || p.song || "a track"); d = [p.album, p.source].filter(Boolean).join(" · "); break;
       case "music_complete": case "music_preview_complete": t = "Finished " + q(p.track || p.song || "the track"); break;
@@ -198,6 +220,19 @@
       if (seq !== F.seq) return;
       F.loadingList = false; F.loadingMore = false; paint();
     });
+  }
+  function loadInsight(kind) {
+    if (!F.request) return;
+    /* One request per kind at a time; an answer for a range that has since
+       been replaced is dropped rather than painted over the new one. */
+    var seq = ++F.iseq, key = F.rangeKey;
+    F.iseqOf[kind] = seq;
+    F.insightLoading[kind] = true; F.insightError[kind] = null; paint();
+    var path = "/v1/analytics/" + kind + "?" + qs({ since: F.range && F.range.since, until: F.range && F.range.until });
+    var mine = function () { return F.iseqOf[kind] === seq && F.rangeKey === key; };
+    F.request(path).then(function (out) { if (mine()) F.insight[kind] = out; },
+      function (err) { if (mine()) F.insightError[kind] = err; })
+      .then(function () { if (mine()) { F.insightLoading[kind] = false; paint(); } });
   }
   function top() { return F.stack[F.stack.length - 1] || null; }
   function open(entry, replace) {
@@ -273,10 +308,11 @@
   }
   function toolbar() {
     var filters = F.mode === "visitors" ? VISITOR_FILTERS : SESSION_FILTERS, sorts = F.mode === "visitors" ? VISITOR_SORTS : SESSION_SORTS, c = (F.list && F.list.counts) || {};
-    return '<div class="crf-bar">' +
-      '<div class="crf-seg" role="tablist" aria-label="Group by">' + [["sessions", "Sessions"], ["visitors", "Visitors"]].map(function (m) {
+    var seg = '<div class="crf-seg crf-seg--four" role="tablist" aria-label="View">' + MODES.map(function (m) {
         return '<button type="button" role="tab" aria-selected="' + (F.mode === m[0]) + '" class="crf-seg__b' + (F.mode === m[0] ? " is-on" : "") + '" data-crf-mode="' + m[0] + '">' + m[1] + "</button>";
-      }).join("") + "</div>" +
+      }).join("") + "</div>";
+    if (isInsight(F.mode)) return '<div class="crf-bar">' + seg + "</div>";
+    return '<div class="crf-bar">' + seg +
       '<label class="crf-search"><span class="crf-sr">Search</span><input type="search" data-crf-q value="' + e(F.q) + '" placeholder="' +
       (F.mode === "visitors" ? "Email, city, IP, network, device…" : "Page, song, email, city, IP, source…") + '" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>' +
       '<label class="crf-sort"><span class="crf-sr">Sort</span><select data-crf-sort>' + sorts.map(function (s) { return '<option value="' + s[0] + '"' + (F.sort === s[0] ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></label>" +
@@ -286,6 +322,8 @@
       }).join("") + "</div></div>";
   }
   function listPane() {
+    if (F.mode === "flows") return '<section class="crf-list" aria-label="Flows">' + toolbar() + flowsPane() + "</section>";
+    if (F.mode === "errors") return '<section class="crf-list" aria-label="Errors">' + toolbar() + errorsPane() + "</section>";
     var body;
     if (F.loadingList && !F.items.length) body = skeleton();
     else if (F.listError) body = '<div class="crf-empty crf-empty--bad"><b>Could not load ' + e(F.mode) + ".</b><span>" + e(F.listError.message || F.listError) + '</span><button type="button" class="crf-btn" data-crf-retry>Try again</button></div>';
@@ -301,6 +339,95 @@
     return '<section class="crf-list" aria-label="' + e(F.mode) + '">' + toolbar() + summary() + body + "</section>";
   }
   function skeleton() { var s = ""; for (var i = 0; i < 6; i++) s += '<div class="crf-item crf-item--ghost"><span class="crf-ava"></span><span class="crf-item__main"><i></i><i></i><i></i></span></div>'; return '<div class="crf-items" aria-busy="true">' + s + "</div>"; }
+
+  /* ---------- flows: how people move, across every session ---------- */
+  function sampleButtons(ids) {
+    return (ids || []).length ? '<span class="crf-samples">' + ids.map(function (id, i) {
+      return '<button type="button" class="crf-sample" data-crf-session="' + e(id) + '" title="Open this session">Journey ' + (i + 1) + "</button>";
+    }).join("") + "</span>" : "";
+  }
+  function meter(pct, kind) {
+    pct = Math.max(0, Math.min(100, Number(pct) || 0));
+    return '<span class="crf-meter' + (kind ? " crf-meter--" + kind : "") + '" aria-hidden="true"><i style="--pct:' + pct + '%"></i></span>';
+  }
+  function insightState(kind) {
+    if (F.insightLoading[kind] && !F.insight[kind]) return skeleton();
+    if (F.insightError[kind]) return '<div class="crf-empty crf-empty--bad"><b>Could not load ' + kind + ".</b><span>" + e(F.insightError[kind].message || F.insightError[kind]) + '</span><button type="button" class="crf-btn" data-crf-insight-retry>Try again</button></div>';
+    return null;
+  }
+  function rangeNote(out) {
+    var notes = [];
+    if (out.range && out.range.clamped) notes.push("Flows and errors cover the latest 31 days of the selected range.");
+    if (out.truncated) notes.push("Read the first " + n(out.rows_read) + " rows; narrow the range for the rest.");
+    return notes.length ? '<p class="crf-lead__note">' + e(notes.join(" ")) + "</p>" : "";
+  }
+  function flowsPane() {
+    var busy = insightState("flows"); if (busy) return busy;
+    var out = F.insight.flows; if (!out) return "";
+    var f = out.flows || {}, pps = f.pages_per_session || {}, total = Number(f.sessions) || 0;
+    if (!total) return '<div class="crf-empty"><b>No page views in this range.</b><span>Pick a wider range.</span></div>';
+    var lead = '<p class="crf-lead"><b>' + n(total) + " sessions moved through the site.</b> " + n(f.bounced) + " (" + n(f.bounce_rate) + "%) left after one page.</p>" + rangeNote(out);
+    var depth = '<section class="crf-sec"><h3>Pages per session</h3><ul class="crf-bars">' + ["1", "2", "3", "4", "5+"].map(function (k) {
+      var v = Number(pps[k]) || 0;
+      return '<li><span class="crf-bars__k">' + k + (k === "1" ? " page" : " pages") + "</span>" + meter(v / total * 100) + "<b>" + n(v) + "</b></li>";
+    }).join("") + "</ul></section>";
+    var entries = '<section class="crf-sec"><h3>Where they land</h3><ul class="crf-rows">' + (f.entries || []).map(function (p) {
+      return '<li class="crf-row"><span class="crf-row__main"><b>' + e(page(p.path)) + "</b><small>" + n(p.sessions) + " sessions · " +
+        n(p.bounce_rate) + "% left right away · " + n(p.played_pct) + "% played music · " + n(p.signup_pct) + "% signed up</small></span>" + meter(100 - p.bounce_rate, "win") + "</li>";
+    }).join("") + "</ul></section>";
+    var next = '<section class="crf-sec"><h3>Where they go next</h3><div class="crf-cards">' + (f.pages || []).slice(0, 8).map(function (p) {
+      return '<section class="crf-card"><h3>' + e(page(p.path)) + " <small>" + n(p.sessions) + " sessions" + (p.median_visible_s != null ? " · " + dur(p.median_visible_s) + " typical" : "") +
+        (p.avg_depth != null ? " · read " + pct(p.avg_depth) : "") + "</small></h3><ul class=\"crf-bars\">" + (p.next || []).map(function (x) {
+          return '<li><span class="crf-bars__k">' + (x.path === "(left)" ? "left the site" : e(page(x.path))) + "</span>" + meter(x.pct, x.path === "(left)" ? "bad" : "") + "<b>" + n(x.pct) + "%</b></li>";
+        }).join("") + "</ul></section>";
+    }).join("") + "</div></section>";
+    var paths = '<section class="crf-sec"><h3>Most common paths</h3><ol class="crf-rows">' + (f.paths || []).map(function (p) {
+      return '<li class="crf-row crf-row--count"><span class="crf-row__main"><span class="crf-strip">' + p.path.split(" → ").map(function (x) { return "<i>" + e(x === "…" ? "…" : page(x)) + "</i>"; }).join('<b aria-hidden="true">→</b>') +
+        "</span></span><b title=\"sessions\">" + n(p.sessions) + "</b></li>";
+    }).join("") + "</ol></section>";
+    var steps = '<section class="crf-sec"><h3>Busiest steps</h3><ul class="crf-rows">' + (f.transitions || []).slice(0, 12).map(function (x) {
+      return '<li class="crf-row"><span class="crf-row__main"><b>' + e(page(x.from)) + " → " + e(page(x.to)) + "</b><small>" + n(x.sessions) + " sessions</small>" + sampleButtons(x.sample_sessions) + "</span></li>";
+    }).join("") + "</ul></section>";
+    var exits = '<section class="crf-sec"><h3>Where they leave</h3><ul class="crf-rows">' + (f.exits || []).map(function (p) {
+      return '<li class="crf-row"><span class="crf-row__main"><b>' + e(page(p.path)) + "</b><small>" + n(p.sessions) + " sessions ended here · " + n(p.exit_rate) + "% of its visitors</small></span>" + meter(p.exit_rate, "bad") + "</li>";
+    }).join("") + "</ul></section>";
+    return lead + depth + entries + next + paths + steps + exits;
+  }
+
+  /* ---------- errors: every error and friction point, grouped ---------- */
+  var ORIGIN_WORDS = { site: ["This site", "bad"], third_party: ["Third-party script", "info"], opaque: ["Cross-origin (no detail)", "muted"], injected: ["Injected by an in-app browser or extension", "muted"] };
+  var KIND_WORDS = { js_error: "Error", js_rejection: "Unhandled promise", dead_click: "Tap that did nothing", rage_click: "Rage taps",
+    play_failed: "Play could not start", signup_blocked: "Sign-up refused", gated_preview_end: "Gated preview ended", checkout_retired_link: "Retired payment link" };
+  function groupMeta(g) {
+    return '<small class="crf-row__meta">' + n(g.count) + (g.count === 1 ? " time" : " times") + " · " + n(g.sessions) + (g.sessions === 1 ? " session" : " sessions") +
+      " · " + n(g.devices) + (g.devices === 1 ? " device" : " devices") + " · first " + e(when(g.first_at)) + " · last " + e(when(g.last_at)) + "</small>" +
+      '<small class="crf-row__meta">' + (g.pages || []).map(function (p) { return e(page(p.path)) + " ×" + n(p.count); }).join(", ") +
+      ((g.browsers || []).length ? " · " + g.browsers.map(function (b) { return e(b.browser) + " ×" + n(b.count); }).join(", ") : "") + "</small>";
+  }
+  function errorRow(g) {
+    var o = ORIGIN_WORDS[g.origin] || ["Unknown", "muted"];
+    return '<li class="crf-err crf-err--' + e(g.origin || "unknown") + '"><div class="crf-badges">' + badge(KIND_WORDS[g.kind] || g.kind, g.origin === "site" ? "bad" : "muted") + badge(o[0], o[1]) + "</div>" +
+      "<b>" + e(trim(g.message, 200)) + "</b>" + (g.source ? '<code class="crf-err__src">' + e(trim(g.source, 120)) + (g.line ? ":" + e(g.line) : "") + "</code>" : "") +
+      groupMeta(g) + (g.stack ? '<details class="crf-ua"><summary>Stack</summary><code>' + e(g.stack) + "</code></details>" : "") + sampleButtons(g.sample_sessions) + "</li>";
+  }
+  function frictionRow(g) {
+    return '<li class="crf-err"><div class="crf-badges">' + badge(KIND_WORDS[g.kind] || g.kind, "bad") + "</div><b>" +
+      e(g.kind === "dead_click" || g.kind === "rage_click" ? (g.text ? q(g.text) + " · " : "") + g.target : g.kind === "signup_blocked" ? signupReason(g.detail) : g.detail) + "</b>" + groupMeta(g) + sampleButtons(g.sample_sessions) + "</li>";
+  }
+  function errorsPane() {
+    var busy = insightState("errors"); if (busy) return busy;
+    var out = F.insight.errors; if (!out) return "";
+    var tt = out.totals || {}, errs = out.errors || [];
+    var own = errs.filter(function (g) { return g.origin !== "injected"; }), injected = errs.filter(function (g) { return g.origin === "injected"; });
+    var lead = '<p class="crf-lead"><b>' + n(tt.sessions_affected) + " sessions hit an error or friction.</b> " + n(tt.errors) + " page errors (" + n(tt.site_errors) + " from this site’s code, " +
+      n(tt.injected_errors) + " injected by in-app browsers or extensions), " + n(tt.friction) + " dead or rage taps, " + n(tt.journey) + " blocked steps.</p>" + rangeNote(out);
+    var siteSec = '<section class="crf-sec"><h3>Errors</h3>' + (own.length ? '<ul class="crf-errs">' + own.map(errorRow).join("") + "</ul>" : '<p class="crf-muted">No errors from this site’s own code in this range.</p>') +
+      (injected.length ? '<button type="button" class="crf-btn crf-btn--ghost" data-crf-injected>' + (F.showInjected ? "Hide" : "Show") + " " + n(injected.length) + " injected error" + (injected.length === 1 ? "" : "s") + " (not this site’s code)</button>" +
+        (F.showInjected ? '<ul class="crf-errs">' + injected.map(errorRow).join("") + "</ul>" : "") : "") + "</section>";
+    var fr = '<section class="crf-sec"><h3>Taps that went nowhere</h3>' + ((out.friction || []).length ? '<ul class="crf-errs">' + out.friction.map(frictionRow).join("") + "</ul>" : '<p class="crf-muted">None in this range.</p>') + "</section>";
+    var jr = '<section class="crf-sec"><h3>Blocked steps</h3>' + ((out.journey || []).length ? '<ul class="crf-errs">' + out.journey.map(frictionRow).join("") + "</ul>" : '<p class="crf-muted">None in this range.</p>') + "</section>";
+    return lead + siteSec + jr + fr;
+  }
 
   /* ---------- session detail ---------- */
   function facts(rows) {
@@ -360,6 +487,70 @@
       (Number(v.total) > list.length ? '<p class="crf-count">Showing the latest ' + n(list.length) + " of " + n(v.total) + "</p>" :
         '<p class="crf-origin">Their journey begins ' + e(when(oldest.started_at)) + " on " + e(page(oldest.entry_path)) + ".</p>");
   }
+  /* Every moment the session went wrong, with what the visitor had just
+     tapped and what they did next: the two questions a raw error row never
+     answers. Injected in-app-browser errors are listed but say so. */
+  var TROUBLE = CATS.friction.concat(["gated_preview_end", "checkout_retired_link"]);
+  var TAPS = ["click", "cta_click", "dead_click", "rage_click"];
+  var PLAYS = ["album_play", "music_play", "song_start", "music_full_play", "music_preview_play"];
+  function isTrouble(nm) { return TROUBLE.indexOf(nm) !== -1; }
+  function troubleMoments(groups, start) {
+    var out = [];
+    groups.forEach(function (g, gi) {
+      g.events.forEach(function (it, k) {
+        var x = it.ev; if (!isTrouble(x.name)) return;
+        var before = null, after = null;
+        for (var b = k - 1; b >= 0; b--) {
+          var pb = g.events[b].ev;
+          if (ms(pb.at, x.at) > 30000) break;
+          if (TAPS.indexOf(pb.name) !== -1 || PLAYS.indexOf(pb.name) !== -1) { before = pb; break; }
+        }
+        for (var a = k + 1; a < g.events.length; a++) {
+          var pa = g.events[a].ev;
+          if (category(pa.name) !== "system" && !isTrouble(pa.name)) { after = pa; break; }
+        }
+        if (!after && groups[gi + 1]) after = { name: "page_view", at: groups[gi + 1].start, path: groups[gi + 1].path, props: {} };
+        out.push({ ev: x, gi: gi, before: before, after: after, off: Math.max(0, Math.round(ms(start, x.at) / 1000)) });
+      });
+    });
+    return out;
+  }
+  function troubleSection(groups, start) {
+    var list = troubleMoments(groups, start);
+    if (!list.length) return '<section class="crf-sec"><h3>Where it went wrong</h3><p class="crf-muted">No errors, dead taps or blocked steps in this session.</p></section>';
+    return '<section class="crf-sec"><h3>Where it went wrong <small>' + n(list.length) + "</small></h3><ol class=\"crf-errs\">" + list.map(function (m) {
+      var x = m.ev, d = describe(x), p = x.props || {}, own = !(x.name === "js_error" || x.name === "js_rejection") || !p.origin || p.origin === "site";
+      var lines = [];
+      if (m.before) lines.push("Just before: " + describe(m.before).text.charAt(0).toLowerCase() + describe(m.before).text.slice(1) + " (" + dur(Math.max(0, ms(m.before.at, x.at) / 1000)) + " earlier)");
+      lines.push(m.after ? "Then: " + (m.after.name === "page_view" && m.after.path !== x.path ? "went to " + page(m.after.path) : describe(m.after).text.charAt(0).toLowerCase() + describe(m.after).text.slice(1)) +
+        " (" + dur(Math.max(0, ms(x.at, m.after.at) / 1000)) + " later)" : "Then: nothing more was recorded in this session");
+      return '<li class="crf-err' + (own ? "" : " crf-err--injected") + '"><div class="crf-badges">' + badge(KIND_WORDS[x.name] || human(x.name), own ? "bad" : "muted") +
+        badge("Page " + (m.gi + 1) + " · " + page(groups[m.gi].path), "info") + badge("+" + dur(m.off), "muted") + "</div><b>" + e(d.text) + "</b>" +
+        (d.detail ? '<small class="crf-row__meta">' + e(d.detail) + "</small>" : "") +
+        lines.map(function (l) { return '<small class="crf-row__meta">' + e(l) + "</small>"; }).join("") +
+        '<a class="crf-jumpl" href="#crf-visit-' + m.gi + '" data-crf-jump="' + m.gi + '">See it in the journey ↓</a></li>';
+    }).join("") + "</ol></section>";
+  }
+  /* The session one page at a time: how long each held them, how far they
+     read, and what they did there. */
+  function pagesSection(groups) {
+    if (!groups.length) return "";
+    var total = groups.reduce(function (t, g) { return t + visitTime(g); }, 0) || 1;
+    return '<section class="crf-sec"><h3>Page by page</h3><ol class="crf-rows crf-pages">' + groups.map(function (g, gi) {
+      var c = { taps: 0, plays: 0, trouble: 0, won: 0 };
+      g.events.forEach(function (it) {
+        var nm = it.ev.name;
+        if (TAPS.indexOf(nm) !== -1) c.taps++;
+        if (PLAYS.indexOf(nm) !== -1) c.plays++;
+        if (isTrouble(nm)) c.trouble++;
+        if (category(nm) === "convert") c.won++;
+      });
+      var t = visitTime(g), meta = [dur(t) + " on screen", g.depth != null ? "read " + pct(g.depth) : "", n(c.taps) + (c.taps === 1 ? " tap" : " taps"),
+        c.plays ? n(c.plays) + (c.plays === 1 ? " play" : " plays") : "", c.won ? n(c.won) + " converted" : "", c.trouble ? n(c.trouble) + " went wrong" : ""].filter(Boolean).join(" · ");
+      return '<li class="crf-row' + (c.trouble ? " crf-row--bad" : "") + '"><a class="crf-row__main" href="#crf-visit-' + gi + '" data-crf-jump="' + gi + '"><b>' + (gi + 1) + ". " + e(page(g.path)) + "</b><small>" + e(meta) + "</small></a>" +
+        meter(t / total * 100, c.trouble ? "bad" : "") + "</li>";
+    }).join("") + "</ol></section>";
+  }
   function sessionDetail(d) {
     var s = d.session || {}, ev = d.events || [], v = d.visitor || {}, w = who(Object.assign({}, s, { profile: v.profile })), arr = arrival(ev, s), dev = s.device || {}, u = uaInfo(s.user_agent);
     var groups = pageVisits(ev), maxDepth = s.max_depth != null ? s.max_depth : groups.reduce(function (m, g) { return Math.max(m, g.depth || 0); }, 0);
@@ -380,11 +571,12 @@
       card("Device", facts([["Device", [u.os || dev.platform, dev.mobile === true ? "mobile" : dev.mobile === false ? "desktop" : ""].filter(Boolean).join(" · ")], ["App / browser", u.app || u.browser],
         ["Screen", dev.screen ? dev.screen + (dev.dpr ? " @" + dev.dpr + "x" : "") : ""], ["Viewport", dev.viewport], ["Language", dev.language], ["Connection", dev.network && (dev.network.effective || dev.network.type)],
         ["User agent", s.user_agent ? '<details class="crf-ua"><summary>Show</summary><code>' + e(s.user_agent) + "</code></details>" : "", true]])) + "</div>";
+    var wrong = troubleSection(groups, s.started_at || (ev[0] && ev[0].at)), pagesSec = pagesSection(groups);
     var journey = '<section class="crf-sec"><h3>Journey</h3><p class="crf-muted">' + n(groups.length) + (groups.length === 1 ? " page visit" : " page visits") + ", " + n(ev.length) + " events. Tap any step to see exactly what was recorded." + (d.truncated ? " Showing the first " + n(ev.length) + " events." : "") + "</p>" +
       journeyPath(groups) + '<div class="crf-timeline">' + timeline(ev) + "</div></section>";
     var tracks = (s.tracks || []).length ? '<section class="crf-sec"><h3>Music heard</h3><div class="crf-badges">' + s.tracks.map(function (t) { return badge("▶ " + t, "music"); }).join("") + "</div></section>" : "";
     var hist = v.key ? '<section class="crf-sec"><h3>' + (w.known ? e(w.name) + "’s sessions" : "This visitor’s sessions") + "</h3>" + historyList(v, s.session_id) + "</section>" : "";
-    return head + kpis + cards + journey + tracks + hist;
+    return head + kpis + wrong + cards + pagesSec + journey + tracks + hist;
   }
   function card(title, body) { return '<section class="crf-card"><h3>' + e(title) + "</h3>" + body + "</section>"; }
 
@@ -420,7 +612,7 @@
 
   function detailPane() {
     var t = top(); if (!t) return "";
-    var label = F.stack.length > 1 ? (F.stack[F.stack.length - 2].type === "visitor" ? "Back to visitor" : "Back to session") : "All " + F.mode;
+    var label = F.stack.length > 1 ? (F.stack[F.stack.length - 2].type === "visitor" ? "Back to visitor" : "Back to session") : (isInsight(F.mode) ? "Back to " : "All ") + F.mode;
     var body;
     if (F.loadingDetail) body = '<div class="crf-empty" aria-busy="true"><b>Opening ' + (t.type === "session" ? "session" : "visitor") + "…</b></div>";
     else if (F.detailError) body = '<div class="crf-empty crf-empty--bad"><b>Could not open it.</b><span>' + e(F.detailError.message || F.detailError) + "</span></div>";
@@ -442,8 +634,12 @@
     var h = F.host;
     h.querySelectorAll("[data-crf-mode]").forEach(function (b) { b.onclick = function () {
       var m = b.getAttribute("data-crf-mode"); if (m === F.mode) return;
-      F.mode = m; F.filter = "all"; F.sort = "recent"; F.items = []; F.list = null; F.stack = []; loadList(false);
+      F.mode = m; F.stack = []; F.detail = null;
+      if (isInsight(m)) { if (!F.insight[m] && !F.insightLoading[m]) loadInsight(m); else paint(); return; }
+      F.filter = "all"; F.sort = "recent"; F.items = []; F.list = null; loadList(false);
     }; });
+    h.querySelectorAll("[data-crf-insight-retry]").forEach(function (b) { b.onclick = function () { loadInsight(F.mode); }; });
+    h.querySelectorAll("[data-crf-injected]").forEach(function (b) { b.onclick = function () { F.showInjected = !F.showInjected; paint(); }; });
     h.querySelectorAll("[data-crf-filter]").forEach(function (b) { b.onclick = function () { F.filter = b.getAttribute("data-crf-filter"); loadList(false); }; });
     var sort = h.querySelector("[data-crf-sort]"); if (sort) sort.onchange = function () { F.sort = sort.value; loadList(false); };
     var input = h.querySelector("[data-crf-q]");
@@ -480,7 +676,11 @@
       F.host = hostEl; ctx = ctx || {};
       if (ctx.request) F.request = ctx.request;
       var key = ctx.range ? ctx.range.since + "|" + ctx.range.until : "";
-      if (key !== F.rangeKey) { F.rangeKey = key; F.range = ctx.range || null; F.items = []; F.list = null; F.stack = []; F.detail = null; loadList(false); }
+      if (key !== F.rangeKey) {
+        F.rangeKey = key; F.range = ctx.range || null; F.items = []; F.list = null; F.stack = []; F.detail = null;
+        F.insight = { flows: null, errors: null }; F.insightError = { flows: null, errors: null }; F.insightLoading = { flows: false, errors: false };
+        if (isInsight(F.mode)) loadInsight(F.mode); else loadList(false);
+      }
       else paint();
     },
     state: F,

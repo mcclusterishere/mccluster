@@ -226,7 +226,8 @@
     .tr .reclock .unlock.unlock--nudge { animation: unlockNudge 0.45s ease-in-out 3; }
     @keyframes unlockNudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
     @media (prefers-reduced-motion: reduce) {
-      .tr .reclock .unlock, .tr .reclock .unlock.unlock--nudge { animation: none; }
+      .tr .reclock .unlock { animation: none; }
+      .tr .reclock .unlock.unlock--nudge { animation: none; }
     }
     .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
       color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
@@ -953,17 +954,16 @@
       ARTIST = head.artist || HOUSE;
       /* the artist's name was plain bold text and got tapped like a link;
          the house artist now opens his own page, other billings stay text */
-      var artistEl = document.getElementById("albArtist");
-      artistEl.textContent = "";
+      document.getElementById("albArtist").textContent = ARTIST;
       if (ARTIST === HOUSE) {
+        var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
         artistLink.href = "matthew-mccluster.html";
         artistLink.className = "alb__artist";
         artistLink.setAttribute("data-cta", "album-artist");
         artistLink.textContent = ARTIST;
+        artistEl.textContent = "";
         artistEl.appendChild(artistLink);
-      } else {
-        artistEl.textContent = ARTIST;
       }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
@@ -1577,10 +1577,10 @@
         });
       }
       listen = null;
-      var endedRow = rows[cur];
-      var wasPreview = !!(endedRow && endedRow.hasAttribute("data-gated-bucket") && !endedRow.hasAttribute("data-granted"));
-      spend(endedRow);
-      if (wasPreview) { previewNotice(endedRow, true); return; }
+      /* read before spend(), which takes data-granted off a full play */
+      var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
+      spend(rows[cur]);
+      if (wasPreview) { previewNotice(rows[cur], true); return; }
       /* Played straight through, the album arrives at its closer having just
          earned it. Wait for the song that just ended to be counted, then ask
          for the play: earned, it plays in full; not, it says where the

@@ -825,7 +825,7 @@ async function handleBusinessQuestion(request, env, user) {
 /* Session forensics lives in its own module: owner-only routes that return
    per-person rows (IP, place, signed-in email), kept apart from the business
    analytics above, which must stay aggregate. */
-const forensics = createForensicRoutes({ json, sbJson, sbRows, finiteDate, publicDeviceSummary, requireHouseOwner });
+const forensics = createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finiteDate, publicDeviceSummary, requireHouseOwner });
 
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);

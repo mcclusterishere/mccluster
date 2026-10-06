@@ -124,6 +124,32 @@ A visitor's profile and sessions over 180 days.
 
 Malformed ids get `400` before any query runs. A session or device with nothing recorded gets `404`. Device blobs are always reduced to a fixed summary (platform, screen, viewport, language and similar), never passed through raw. The older raw-row route `GET /v1/analytics/forensics` remains; `js/analytics-suite.js` still reads it.
 
+`GET /v1/analytics/flows?since=&until=`
+
+How people move through the site, across every session in the range (the Forensics **Flows** view). It reads only `session_id, device_id, at, name, path, visible_s, depth` from `events_lean`, for non-bot first-party events with a session. Only navigation, music, conversion and friction event names are read. The window is clamped to the latest 31 days of the range (`range.clamped`). At most 60,000 rows are read, oldest first; when the cap is reached, `truncated` is true.
+
+It returns:
+
+- `sessions`, `bounced` and `bounce_rate`;
+- `pages_per_session`, bucketed 1–4 and 5+;
+- `entries`: each landing page with its bounce, played-music and signed-up shares;
+- `exits`;
+- `transitions`: the busiest page-to-page steps, each with up to three sample session ids to open;
+- `paths`: the most common full paths;
+- `pages`: per page, views, sessions, entries, exits, the median time on screen, the average read depth, outcome shares and where visitors went next, with leaving the site counted as a next step.
+
+`GET /v1/analytics/errors?since=&until=`
+
+Every error and friction point in the range, grouped (the Forensics **Errors** view). It reads `at, name, path, props, session_id, device_id, user_agent` from `events`, for the names `js_error`, `js_rejection`, `dead_click`, `rage_click`, `play_failed`, `signup_blocked`, `gated_preview_end` and `checkout_retired_link`. The 31-day clamp applies, and at most 20,000 rows are read, newest first.
+
+- **Errors** are grouped by a fingerprint: the message with URLs, quoted values and numbers masked, plus the script's file name.
+- Each error says whose it is: `site`, `third_party`, `opaque` (the bare cross-origin "Script error.") or `injected` (in-app-browser and extension scripts). The site's own errors come first.
+- **Dead and rage taps** are grouped by page and target. **Blocked steps** are grouped by reason.
+- Each group carries its count, sessions, devices, pages, browsers (OS and in-app browser), first and last time seen, and up to five sample session ids.
+- Error sources are reported without their query string or hash, because the page URL carries click and campaign ids.
+
+Both routes are house-owner only and are refused before any telemetry is read. The error inventory they were built to answer, with the fix for each error, is `docs/control-plane/JOURNEY-ERRORS.md`.
+
 ## Mnet API
 
 Mnet uses the same API host.
