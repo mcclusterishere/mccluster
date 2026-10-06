@@ -116,7 +116,7 @@ set
     "commerce":{"offer_id":"anti-social","label":"Get your presence managed","href":"onboard.html?offer=anti-social"},
     "lyric_ctas":[
       {"match":"I can help you get more conversions than the Pope did","label":"Get conversion help","href":"onboard.html?offer=anti-social","offer_id":"anti-social"},
-      {"match":"That's why I offer coaching to get you back focused","label":"Get focused","href":"onboard.html?offer=anti-social","offer_id":"anti-social"},
+      {"match":"That''s why I offer coaching to get you back focused","label":"Get focused","href":"onboard.html?offer=anti-social","offer_id":"anti-social"},
       {"match":"write a note below this","label":"Start the conversation","href":"onboard.html?offer=anti-social","offer_id":"anti-social"},
       {"match":"After a consultation","label":"Book the consultation","href":"onboard.html?offer=anti-social","offer_id":"anti-social"},
       {"match":"Profile optimization","label":"Optimize your presence","href":"onboard.html?offer=social","offer_id":"social"},
