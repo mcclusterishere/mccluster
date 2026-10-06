@@ -39,7 +39,7 @@ test('mission writes stay behind server-authoritative RPCs', async () => {
   assert.doesNotMatch(client, /action_proofs[^\n]+method:\s*['"](?:POST|PATCH|DELETE)/);
 });
 
-test('native proof capture uses private signed media flow without microphone permission', async () => {
+test('native proof capture uses private signed media flow with iOS video permission', async () => {
   const [media, app, pkg] = await Promise.all([
     read('native/src/proofMedia.ts'),
     read('native/app.json'),
@@ -58,7 +58,7 @@ test('native proof capture uses private signed media flow without microphone per
   const appJson = JSON.parse(app);
   const picker = appJson.expo.plugins.find((entry) => Array.isArray(entry) && entry[0] === 'expo-image-picker');
   assert.ok(picker, 'expo-image-picker config plugin must be present');
-  assert.equal(picker[1].microphonePermission, false);
+  assert.match(picker[1].microphonePermission, /microphone.*video mission proof/i);
   const packageJson = JSON.parse(pkg);
   assert.match(packageJson.dependencies['expo-image-picker'], /^~57\./);
   assert.match(packageJson.dependencies['expo-image-manipulator'], /^~57\./);
