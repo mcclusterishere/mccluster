@@ -23,7 +23,7 @@
     .lyric-service-cta { color:#fff; text-decoration-color:var(--mv-accent); text-decoration-thickness:3px;
       text-underline-offset:.14em; background:linear-gradient(180deg,transparent 62%,color-mix(in srgb,var(--mv-accent) 58%,transparent) 62%);
       position:relative; z-index:9; pointer-events:auto; }
-    /* the reel: one film per screen, the thumb drives */
+    /* the reel: one music video per screen, the thumb drives */
     .fs { height: 100svh; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .fs::-webkit-scrollbar { display: none; }
     .fc { position: relative; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; background: #0a0807; }
@@ -434,14 +434,14 @@
       var sh = e.target.closest ? e.target.closest("[data-share]") : null;
       if (sh) {
         var t2 = TRACKS[+sh.closest(".fc").getAttribute("data-i")];
-        var url = "https://matthew.mccluster.org/films.html";
+        var url = "https://matthew.mccluster.org/music-videos.html";
         if (navigator.share) navigator.share({ title: t2.title + " · McCluster", text: t2.title + " · the music video", url: url }).catch(function () {});
         else { try { navigator.clipboard.writeText(url); } catch (e2) {} }
-        if (window.MCC_TRACK) window.MCC_TRACK("film_share", { track: t2.title });
+        if (window.MCC_TRACK) window.MCC_TRACK("music_video_share", { track: t2.title });
       }
     });
 
-    if (window.MCC_TRACK) window.MCC_TRACK("films_view", {});
+    if (window.MCC_TRACK) window.MCC_TRACK("music_videos_view", {});
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
