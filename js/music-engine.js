@@ -205,7 +205,7 @@
     var film = doc.getElementById("musicNowFilm");
     var wrap = doc.getElementById("musicNowArtwrap");
     if (!film || !wrap || !current) return;
-    var video = current.video || current.video_url || "";
+    var video = current.music_video || current.music_video_url || current.video || current.video_url || "";
     var poster = current.poster || current.poster_url || art || "";
     if (poster) film.poster = poster;
 
@@ -444,7 +444,7 @@
       artist: t.artist || t.artist_name || "Independent creator",
       art: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
       poster: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
-      video: t.video_url || t.video || "",
+      music_video: t.music_video_url || t.video_url || t.music_video || t.video || "",
       title: t.title || "Untitled"
     });
     var item = CREATOR_TRACKS[String(t.id)];
