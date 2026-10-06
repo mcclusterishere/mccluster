@@ -1433,13 +1433,16 @@
       return;
     }
     host.innerHTML = '<div class="mng__grid">' + list.map(groupCard).join("") + "</div>";
-    /* a ?group= link lands on its room: scrolled to, and marked */
+    /* A canonical group deep link opens the room, not merely the Groups tab.
+       Satellite products use this as their return path into the m_uid network. */
     if (groups.target) {
-      var card = host.querySelector('[data-group="' + groups.target + '"]');
+      var targetSlug = groups.target;
+      groups.target = null;
+      var card = host.querySelector('[data-group="' + targetSlug + '"]');
       if (card) {
         card.classList.add("is-target");
-        try { card.scrollIntoView({ block: "center" }); } catch (_) {}
-        groups.target = null;
+        openGroup(targetSlug);
+        return;
       }
     }
   }
@@ -1525,9 +1528,14 @@
       "</div>";
     var org=groups.organization, campaigns=groups.campaigns||[];
     if(org){
+      var front=safeHttpUrl(g.front_page_url||org.website_url);
       $("mngHead").insertAdjacentHTML("beforeend",
         '<div class="mng__org"><span>Organization</span><strong>'+esc(org.name)+'</strong>'+
-        (org.verification_state==="verified"?'<b>Verified</b>':'')+'</div>');
+        (org.verification_state==="verified"?'<b>Verified</b>':'')+
+        (front?'<a href="'+esc(front)+'" target="_blank" rel="noopener" data-ecosystem-exit="'+esc(g.slug)+'">Open '+esc(org.name)+' ↗</a>':'')+
+        '</div>');
+      var exit=$("mngHead").querySelector('[data-ecosystem-exit="'+g.slug+'"]');
+      if(exit) exit.addEventListener("click",function(){track("ecosystem_bridge_open",{group:g.slug,direction:"out",destination:front});});
     }
     if(campaigns.length){
       $("mngHead").insertAdjacentHTML("beforeend",
