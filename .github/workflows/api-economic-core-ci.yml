@@ -10,6 +10,8 @@ on:
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
+      - 'supabase/pending/**'
+      - 'supabase/tests/action_clipping_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -24,6 +26,8 @@ on:
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
+      - 'supabase/pending/**'
+      - 'supabase/tests/action_clipping_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -81,6 +85,16 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/compute_cogs_regression.sql
+      # Until the clipping migration is applied in production it lives in
+      # supabase/pending/ (see its README); apply it to this rebuild last.
+      - name: Apply pending clipping migration
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/pending/action_clipping_marketplace_v1.sql
+      - name: Run clipping marketplace regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_clipping_regression.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
