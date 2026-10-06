@@ -19,6 +19,8 @@ import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
 import { handleWorkRequest } from './work.js';
+import { handleClippingRequest } from './clipping/router.js';
+import { runClipping } from './clipping/runner.js';
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
@@ -34,7 +36,7 @@ async function authUser(req, env) {
 }
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -362,6 +364,20 @@ async function dispatchRequest(request, env, ctx) {
       }
     }
 
+    /* Clipping: the routes that need the Worker (platform reads, signed
+       source files). Claims, submissions, dashboards and payouts are
+       database functions called with the member's own session. */
+    if (path === '/v1/clips' || path.startsWith('/v1/clips/')) {
+      try {
+        const user = path === '/v1/clips/platforms' ? null : await authUser(request, env);
+        const result = await handleClippingRequest(request, env, user, url);
+        if (result) return reply(request, env, result);
+        return fail(request, env, 'Unknown clipping route', 404);
+      } catch (error) {
+        return fail(request, env, error.message || 'Clipping request failed', error.status || 500, error.detail);
+      }
+    }
+
     /* Control · Work: companies, tasks, orders, bookings and hand-made
        leads — the canonical write routes the console was missing. See
        src/work.js. */
@@ -515,6 +531,9 @@ export default {
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      observeScheduled(env, ctx, 'clipping.settlement', () => runClipping(env, { limit: 25 })).catch((error) => {
+        console.error(JSON.stringify({ event: 'clipping_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

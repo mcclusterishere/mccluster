@@ -125,6 +125,7 @@
     <section class="mn__app" id="mnApp" hidden>
       <nav class="mn__tabs" aria-label="Action Network">
         <button type="button" class="is-active" data-mn-view="live">Live</button>
+        <button type="button" data-mn-view="clips">Clips</button>
         <button type="button" data-mn-view="feed">Action</button>
         <button type="button" data-mn-view="missions">Missions</button>
         <button type="button" data-mn-view="discover">People</button>
@@ -210,6 +211,10 @@
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
         <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
+      </section>
+
+      <section class="mn__view" id="mnClipsView" hidden aria-labelledby="mnClipsTitle">
+        <div id="mnClipsRoot"><p class="mn__hint">Loading clipping campaigns…</p></div>
       </section>
 
       <section class="mn__view" id="mnMissionsView" hidden>
@@ -423,6 +428,7 @@
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>
+  <script src="js/mnet-clips.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>

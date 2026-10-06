@@ -207,6 +207,20 @@ export default function MissionScreen() {
     );
   }
 
+  if (mission.kind === 'clip') {
+    // a paid clipping campaign: no civic proof or points; it is claimed and paid in Clips
+    return (
+      <Shell top={insets.top} onBack={() => router.back()}>
+        <Text style={s.kicker}>Action Network · Clips</Text>
+        <Text style={s.title}>{mission.title}</Text>
+        <Text style={s.body}>
+          This is a paid clipping campaign. Claim it, post your clip and track your pay in the
+          Clips tab of the Action Network.
+        </Text>
+      </Shell>
+    );
+  }
+
   const canProve =
     assignment &&
     ['joined', 'in_progress', 'submitted', 'rejected'].includes(assignment.status);

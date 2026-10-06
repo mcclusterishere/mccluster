@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 326,
+  "candidate_count": 327,
   "capability_source_count": 99,
-  "support_only_count": 227,
+  "support_only_count": 228,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2331,6 +2331,55 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "js/mnet-clips.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "js/control-room/clipping.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": ".github/workflows/api-economic-core-ci.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",
