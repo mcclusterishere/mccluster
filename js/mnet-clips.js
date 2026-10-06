@@ -1,6 +1,6 @@
-/* Action Network · Clips: paid music clipping for members.
+/* Action Network · Clips: paid Equity Uprise distribution campaigns for members.
 
-   Discover a song's campaign → claim it → take the approved files and your
+   Discover a campaign → claim it → take approved music/action footage and your
    tracking link → post a Reel → paste its link → the server reads the post
    from Instagram, checks it is yours and follows the rules, and pays on the
    views Instagram reports, never on a screenshot or a number you type.
@@ -65,26 +65,28 @@
       '<div class="mn__cliprow"><select class="mn__input" id="mnClipPlatform" aria-label="Platform">' + opts + '</select>' +
       '<input class="mn__input" id="mnClipHandle" placeholder="@yourhandle" autocomplete="off" aria-label="Handle">' +
       '<button class="mn__primary" type="button" data-clip-add-account>Add</button></div>' +
-      '<p class="mn__hint">YouTube and TikTok are not connected yet, so clips there cannot be verified or paid.</p></div>';
+      '<p class="mn__hint">Your verified accounts travel with you across Equity Uprise campaigns. YouTube and TikTok are not connected yet, so clips there cannot be verified or paid.</p></div>';
   }
 
   function campaignCard(c) {
     var claim = claimOf(c.mission_id);
-    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : "");
+    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Action Network source'));
     var terms = usd(c.base_cpm_cents) + ' per 1,000 verified views after ' + n(c.min_views) + ' views' +
       (c.per_clip_cap_cents ? ' · up to ' + usd(c.per_clip_cap_cents) + ' a clip' : "") +
       (c.per_clipper_cap_cents ? ' · up to ' + usd(c.per_clipper_cap_cents) + ' a clipper' : "") +
       (c.bonus_account_cents ? ' · ' + usd(c.bonus_account_cents) + ' per new fan account' : "") +
       (c.bonus_listen_cents ? ' · ' + usd(c.bonus_listen_cents) + ' per full listen' : "");
     var plats = (c.platforms || []).map(label).join(", ");
-    var body = '<article class="mn__panel mn__clipcard"><p class="mn__eyebrow">Clip &amp; get paid' + (c.creator ? ' · ' + esc(c.creator.artist_name) : "") + '</p>' +
+    var body = '<article class="mn__panel mn__clipcard"><p class="mn__eyebrow">' + esc(c.operator_brand || 'Equity Uprise') + ' · Clip &amp; get paid' + (c.creator ? ' · ' + esc(c.creator.artist_name) : "") + '</p>' +
       '<h3>' + esc(c.title) + '</h3><p class="mn__clipsong">' + song + '</p><p><b>' + terms + '</b></p>' +
       '<p class="mn__hint">' + esc(plats) + ' · ' + usd(c.budget_left_cents) + ' left · ' + n(c.clippers) + ' clippers' + (c.ends_at ? ' · post by ' + esc(day(c.ends_at)) : "") + '</p>' +
       (c.rules ? '<p>' + esc(c.rules) + '</p>' : "") +
-      ((c.required_tags || []).length ? '<p class="mn__hint">Your caption must include: ' + esc(c.required_tags.join(" ")) + '</p>' : "") +
+      ((c.required_tags || []).length ? '<p class="mn__hint">Caption must include: ' + esc(c.required_tags.join(" ")) + '</p>' : "") +
+      ((c.attribution_handles || []).length ? '<p class="mn__hint"><b>Credit:</b> ' + esc(c.attribution_handles.join(" ")) + '</p>' : "") +
+      ((c.collaborator_handles || []).length ? '<p class="mn__hint"><b>Collab:</b> invite ' + esc(c.collaborator_handles.join(" ")) + (c.collaboration_mode === 'required_review' ? ' · acceptance is checked in review' : '') + '</p>' : "") +
       '<p class="mn__hint">Clips must stay up ' + n(c.keep_live_days) + ' days. Pay holds ' + n(c.hold_days) + ' days' + (c.approval_mode === "creator" ? " and the artist approves each clip" : "") + '.</p>';
     if (!claim) return body + '<button class="mn__primary" type="button" data-clip-claim="' + esc(c.mission_id) + '">Claim this campaign</button></article>';
-    var link = trackingLink(claim.link || (c.song && c.song.url), claim.ref_code, (c.platforms || [])[0]);
+    var link = trackingLink(c.destination_url || claim.link || (c.song && c.song.url) || (c.track && c.track.url), claim.ref_code, (c.platforms || [])[0]);
     var assets = K.assets[c.mission_id];
     var files = assets ? (assets.assets || []).map(function (a) {
       return a.url ? '<li><a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer" download>' + esc(a.label) + '</a></li>' :
