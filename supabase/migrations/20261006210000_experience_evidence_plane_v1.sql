@@ -191,18 +191,26 @@ create table if not exists public.research_artifacts (
   updated_at timestamptz not null default now()
 );
 
-do $$
-declare t text;
-begin
-  foreach t in array array[
-    'experience_surfaces','experience_policies','research_projects',
-    'experience_experiments','experience_experiment_arms','experience_assignments',
-    'experience_feature_snapshots','experience_decisions','research_sources','research_artifacts'
-  ] loop
-    execute format('alter table public.%I enable row level security', t);
-    execute format('revoke all on table public.%I from anon, authenticated', t);
-  end loop;
-end $$;
+alter table public.experience_surfaces enable row level security;
+revoke all on table public.experience_surfaces from anon, authenticated;
+alter table public.experience_policies enable row level security;
+revoke all on table public.experience_policies from anon, authenticated;
+alter table public.research_projects enable row level security;
+revoke all on table public.research_projects from anon, authenticated;
+alter table public.experience_experiments enable row level security;
+revoke all on table public.experience_experiments from anon, authenticated;
+alter table public.experience_experiment_arms enable row level security;
+revoke all on table public.experience_experiment_arms from anon, authenticated;
+alter table public.experience_assignments enable row level security;
+revoke all on table public.experience_assignments from anon, authenticated;
+alter table public.experience_feature_snapshots enable row level security;
+revoke all on table public.experience_feature_snapshots from anon, authenticated;
+alter table public.experience_decisions enable row level security;
+revoke all on table public.experience_decisions from anon, authenticated;
+alter table public.research_sources enable row level security;
+revoke all on table public.research_sources from anon, authenticated;
+alter table public.research_artifacts enable row level security;
+revoke all on table public.research_artifacts from anon, authenticated;
 
 insert into public.experience_surfaces (key, description, risk_tier, allowed_mutations)
 values
