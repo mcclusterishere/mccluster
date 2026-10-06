@@ -85,6 +85,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/compute_cogs_regression.sql
+      - name: Apply pending clipping source expansion in the isolated database
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/pending/equity_uprise_clipping_sources.sql
       - name: Run clipping marketplace regression suite
         env:
           PGPASSWORD: postgres

@@ -18,7 +18,7 @@ The v1 settlement engine remains canonical.
 
 Music is a first-class source, not the boundary of clipping. A campaign source
 may be music, an approved Action Network post/action, or campaign media.
-`20261006194100_equity_uprise_clipping_sources.sql` adds `source_kind`,
+`supabase/pending/equity_uprise_clipping_sources.sql` (not yet applied in production) adds `source_kind`,
 `source_content_id`, `destination_url`, operator branding and attribution /
 collaboration fields without replacing the proven claims, metrics, earnings or
 payout ledgers.

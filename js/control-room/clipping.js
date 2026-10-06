@@ -47,10 +47,12 @@
     if(C.songs&&C.files&&C.sources)return Promise.resolve();
     return Promise.allSettled([
       C.supa("music_catalog_objects?status=eq.active&select=id,catalog_key,track_title,album_title,artist_name&order=album_title.asc,track_title.asc"),
-      C.supa("network_media_assets?status=eq.ready&post_id=is.null&select=id,media_type,mime_type,object_path,created_at&order=created_at.desc&limit=50"),\n      C.supa("social_content_items?org_id=eq."+encodeURIComponent(org())+"&status=in.(ready,published)&select=id,title,master_caption,status,action_mission_id,created_at&order=created_at.desc&limit=50")
+      C.supa("network_media_assets?status=eq.ready&post_id=is.null&select=id,media_type,mime_type,object_path,created_at&order=created_at.desc&limit=50"),
+      C.supa("social_content_items?org_id=eq."+encodeURIComponent(org())+"&status=in.(ready,published)&select=id,title,master_caption,status,action_mission_id,created_at&order=created_at.desc&limit=50")
     ]).then(function(out){
       C.songs=out[0].status==="fulfilled"?out[0].value||[]:[];
-      C.files=out[1].status==="fulfilled"?out[1].value||[]:[];\n      C.sources=out[2].status==="fulfilled"?out[2].value||[]:[];
+      C.files=out[1].status==="fulfilled"?out[1].value||[]:[];
+      C.sources=out[2].status==="fulfilled"?out[2].value||[]:[];
       redraw();
     });
   }
@@ -131,3 +133,126 @@
       bonus_listen_cents:cents("clBonusListen")||0,approval_mode:val("clApproval")||"creator",assets:assets};
   }
 
+  /* ---------- dashboard ---------- */
+  function kpis(list){return'<div class="cro-kpis">'+list.map(function(k){return'<div><small>'+e(k[0])+'</small><b>'+e(k[1])+'</b></div>';}).join("")+'</div>';}
+  function table(head,rows,empty){
+    return rows.length?'<div class="cro-tablewrap"><table class="cro-table"><thead><tr>'+head.map(function(h){return'<th'+(h[1]?' class="n"':"")+'>'+e(h[0])+'</th>';}).join("")+'</tr></thead><tbody>'+rows.join("")+'</tbody></table></div>':note(empty);
+  }
+  function overview(c,d){
+    var m=d.money||{},t=d.totals||{},camp=d.campaign||{};
+    var viewCents=Number(t.view_earnings_cents||0),payable=Number(t.payable_views||0),verified=Number(t.verified_views||0);
+    var head=kpis([["Budget",usd(m.budget_cents)],["Funded",usd(m.funded_cents)],["Committed",usd(m.committed_cents)],["Available",usd(m.available_cents)],
+      ["Held",usd(m.held_cents)],["Payable",usd(m.payable_cents)],["Paid",usd(m.paid_cents)]]);
+    var reach=kpis([["Clips",n(t.clips)],["Clippers",n(t.clippers)],["Verified views",n(verified)],["Payable views",n(payable)],
+      ["Effective CPM",cpm(viewCents,payable)],["All-in per 1k verified views",cpm(Number(m.committed_cents||0),verified)]]);
+    var funnel=kpis([["Site visits",n(t.visits)],["Song plays",n(t.plays)],["Sign-ups",n(t.signups)],["Verified fan accounts",n(t.verified_accounts)],
+      ["Verified full listens",n(t.verified_listens)],["Downstream actions",n(t.actions)],["Bonuses",usd(t.bonus_cents)]]);
+    var status=e(camp.status||c.status)+(camp.status_reason?" · "+e(camp.status_reason):"");
+    var controls='<div class="cro-row__top">'+
+      (camp.status==="draft"||camp.status==="paused"?'<button class="cr-btn" type="button" data-clip-status="live">Go live</button>':"")+
+      (camp.status==="live"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-status="paused">Pause</button>':"")+
+      (camp.status!=="ended"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-status="ended">End campaign</button>':"")+'</div>';
+    var fund='<div class="cro-form"><label>Add funding (USD)<input id="clFundAmt" type="number" min="1" step="1" inputmode="decimal"></label>'+
+      '<label>Source<select id="clFundProvider"><option value="internal">Allocated from my budget</option><option value="manual">Payment I made (recorded by me)</option><option value="stripe" disabled>Card payment (not connected yet)</option></select></label>'+
+      '<label>Payment reference<input id="clFundRef" maxlength="200" placeholder="Transfer or receipt reference"></label>'+
+      '<div><button class="cr-btn" type="button" data-clip-fund>Record funding</button></div></div>'+
+      '<p class="cro-meta">Funding is what clips can earn against; nothing accrues past it or past the budget. Card funding is not connected yet, so record an allocation, or a payment you made with its reference; both are recorded as yours, not as provider-verified.</p>';
+    return'<section class="cro-card"><div class="cro-row__top"><h2>'+e(camp.title||c.title)+'</h2><span class="cr-state">'+status+'</span></div>'+
+      (camp.song?'<p class="cro-meta">Song: '+e(camp.song.title)+' · pays '+usd(camp.base_cpm_cents)+' per 1,000 verified views after '+n(camp.min_views)+' views'+
+        (camp.per_clip_cap_cents?' · up to '+usd(camp.per_clip_cap_cents)+' a clip':'')+(camp.per_clipper_cap_cents?' · up to '+usd(camp.per_clipper_cap_cents)+' a clipper':'')+'</p>':"")+
+      controls+'<h3>Money</h3>'+head+fund+'<h3>Reach</h3>'+reach+'<h3>Funnel</h3>'+funnel+
+      '<p class="cro-meta">Visits, plays and sign-ups come from this site\'s own events for each clip\'s tracking code. Verified accounts and listens are the ones that passed the server\'s checks and can earn bonuses.</p></section>';
+  }
+  function clips(d){
+    var rows=(d.clips||[]).map(function(s){
+      var flags=(s.fraud_flags||[]).length?'<div class="cro-meta">flags: '+e(s.fraud_flags.join(", "))+'</div>':"";
+      var why=s.rejection_reason||s.hold_reason||s.waiting_reason;
+      var act=s.status==="rejected"||s.status==="removed"?"":
+        (s.review_state==="pending"&&s.status!=="submitted"?'<button class="cr-btn" type="button" data-clip-review="approve" data-id="'+e(s.submission_id)+'">Approve</button>':"")+
+        (s.status==="held"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-review="release" data-id="'+e(s.submission_id)+'">Clear hold</button>':
+          (s.status!=="submitted"?'<button class="cr-btn cr-btn--ghost" type="button" data-clip-review="hold" data-id="'+e(s.submission_id)+'">Hold</button>':""))+
+        '<button class="cr-btn cr-btn--ghost" type="button" data-clip-review="reject" data-id="'+e(s.submission_id)+'">Reject</button>';
+      return'<tr><td><a href="'+e(s.url)+'" target="_blank" rel="noopener noreferrer">'+e(s.platform)+' clip</a>'+(s.moment?'<div class="cro-meta">'+e(s.moment)+'</div>':"")+flags+(why?'<div class="cro-meta">'+e(why)+'</div>':"")+'</td>'+
+        '<td>'+e(s.status)+'<div class="cro-meta">review: '+e(s.review_state)+'</div></td><td class="n">'+n(s.verified_views)+'</td><td class="n">'+n(s.payable_views)+'</td>'+
+        '<td class="n">'+usd(s.earned_view_cents)+'</td><td class="n">'+n(s.visits)+' / '+n(s.plays)+' / '+n(s.signups)+'</td><td>'+act+'</td></tr>';
+    });
+    return'<section class="cro-card"><h2>Clips</h2>'+table([["Clip"],["State"],["Verified views",1],["Payable views",1],["Earned",1],["Visits / plays / sign-ups",1],[""]],rows,"No clips yet.")+
+      '<p class="cro-meta">Held clips have a fraud signal or your hold on them; their earnings cannot become payable until you clear or reject them. Rejecting voids what a clip had accrued.</p></section>';
+  }
+  function clippers(d,c){
+    var byReach=(d.clippers||[]).slice();
+    var byQuality=byReach.slice().sort(function(a,b){return Number(b.quality||0)-Number(a.quality||0);});
+    var qRank={};byQuality.forEach(function(x,i){qRank[x.claim_id]=i+1;});
+    var rows=byReach.map(function(x,i){
+      var pay=Number(x.payable_cents||0)>0?'<button class="cr-btn" type="button" data-clip-payout="'+e(x.m_uid)+'" data-amount="'+e(x.payable_cents)+'">Record payout</button>':"";
+      return'<tr><td>'+e(x.name)+'<div class="cro-meta">'+e(x.status)+' · '+n(x.clips)+' clips</div></td><td class="n">#'+(i+1)+' · '+n(x.verified_views)+'</td>'+
+        '<td class="n">#'+qRank[x.claim_id]+' · '+(Number(x.quality||0)*100).toFixed(1)+'%</td><td class="n">'+n(x.visits)+' / '+n(x.plays)+' / '+n(x.verified_accounts)+'</td>'+
+        '<td class="n">'+usd(x.earned_cents)+'</td><td class="n">'+usd(x.payable_cents)+'</td><td class="n">'+usd(x.paid_cents)+'</td><td>'+pay+'</td></tr>';
+    });
+    return'<section class="cro-card"><h2>Clippers</h2>'+table([["Clipper"],["Reach rank · verified views",1],["Quality rank · score",1],["Visits / plays / accounts",1],["Earned",1],["Payable",1],["Paid",1],[""]],rows,"Nobody has claimed this campaign yet.")+
+      '<p class="cro-meta">Quality is the 95% lower bound of visitors who played the song or made an account, so a few lucky visits do not outrank steady conversion. A payout pays everything payable to that clipper in this workspace, once per payment reference.</p></section>';
+  }
+  function moneyTables(d){
+    var moments=(d.moments||[]).map(function(x){return'<tr><td>'+e(x.label)+'</td><td class="n">'+(x.start_ms!=null?Math.round(x.start_ms/1000)+"–"+Math.round(x.end_ms/1000)+"s":"—")+'</td><td class="n">'+n(x.clips)+'</td><td class="n">'+n(x.verified_views)+'</td></tr>';});
+    var funding=(d.funding||[]).map(function(f){return'<tr><td>'+e(new Date(f.at).toLocaleDateString())+'</td><td>'+e(f.kind)+' · '+e(f.provider)+(f.provider_ref?' · '+e(f.provider_ref):"")+'</td><td class="n">'+usd(f.delta_cents)+'</td></tr>';});
+    var payouts=(d.payouts||[]).map(function(p){return'<tr><td>'+e(new Date(p.recorded_at).toLocaleDateString())+'</td><td>'+e(p.provider)+' · '+e(p.provider_ref)+'</td><td class="n">'+usd(p.amount_cents)+'</td></tr>';});
+    return'<section class="cro-card"><h2>Song moments</h2>'+table([["Moment"],["Range",1],["Clips",1],["Verified views",1]],moments,"No moments set.")+'</section>'+
+      '<section class="cro-card"><h2>Funding</h2>'+table([["Date"],["Kind"],["Amount",1]],funding,"No funding recorded.")+'</section>'+
+      '<section class="cro-card"><h2>Payouts</h2>'+table([["Date"],["Reference"],["Amount",1]],payouts,"No payouts yet.")+
+      '<p class="cro-meta">Payouts are recorded with the reference of a payment you made. Paying clippers through Stripe Connect is not wired yet.</p></section>';
+  }
+
+  function render(){
+    /* a different workspace is a different creator's campaigns */
+    if(C.loaded&&!C.loading&&C.loadedOrg!==org()){C.loaded=false;C.campaigns=[];C.dash={};C.dashErr={};C.sel=null;C.files=null;C.sources=null;}
+    if(!C.loaded&&!C.loading)load();
+    var chips='<div class="cro-chips">'+C.campaigns.map(function(x){return'<button class="cro-chip'+(x.mission_id===C.sel&&C.tab!=="new"?" is-on":"")+'" type="button" data-clip-pick="'+e(x.mission_id)+'">'+e(x.title)+' · '+e(x.status)+(x.pending_review?" · "+x.pending_review+" to review":"")+'</button>';}).join("")+
+      '<button class="cro-chip'+(C.tab==="new"?" is-on":"")+'" type="button" data-clip-tab="new">+ New campaign</button></div>';
+    var head=(C.loading&&!C.loaded?note("Loading campaigns…"):"")+
+      (C.error?note(MISSING.test(C.error.message||"")?"Clipping is not provisioned in this database yet: migration 20261006170955_action_clipping_marketplace_v1 has not been applied here.":"Campaigns could not be read: "+(C.error.message||C.error),true):"")+
+      (C.msg?note(C.msg,C.bad):"");
+    if(C.tab==="new"||(!C.campaigns.length&&C.loaded&&!C.error))return'<div class="cro">'+chips+head+launchForm()+'</div>';
+    var c=current();if(!c)return'<div class="cro">'+chips+head+'</div>';
+    var d=C.dash[c.mission_id];
+    if(!d)return'<div class="cro">'+chips+head+(C.dashErr[c.mission_id]?note(C.dashErr[c.mission_id],true):note("Loading the campaign…"))+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["clips","Clips"],["clippers","Clippers"],["money","Moments, funding & payouts"]].map(function(t){return'<button class="cro-tab'+(C.tab===t[0]?" is-on":"")+'" type="button" data-clip-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var body=C.tab==="clips"?clips(d):C.tab==="clippers"?clippers(d,c):C.tab==="money"?moneyTables(d):overview(c,d);
+    return'<div class="cro">'+chips+head+tabs+body+'</div>';
+  }
+
+  function bind(root){
+    if(!root)return;
+    root.querySelectorAll("[data-clip-pick]").forEach(function(b){b.onclick=function(){C.sel=b.getAttribute("data-clip-pick");if(C.tab==="new")C.tab="overview";C.msg="";if(!C.dash[C.sel])loadDash(C.sel).then(redraw);redraw();};});
+    root.querySelectorAll("[data-clip-tab]").forEach(function(b){b.onclick=function(){C.tab=b.getAttribute("data-clip-tab");C.msg="";if(C.tab==="new")loadForm();redraw();};});
+    root.querySelectorAll("[data-clip-source]").forEach(function(b){b.onclick=function(){C.sourceType=b.getAttribute("data-clip-source");redraw();};});
+    var create=root.querySelector("[data-clip-create]");
+    if(create)create.onclick=function(){var p=createPayload();
+      var action=p.source_kind==="action";
+      if(!p.title||(action?!p.source_content_id:!p.music_object_id)){C.msg=action?"A campaign needs a title and approved source content.":"A campaign needs a title and a song.";C.bad=true;redraw();return;}
+      if(action&&!/^https:\/\//i.test(p.destination_url||"")){C.msg="Enter an https destination for the action.";C.bad=true;redraw();return;}
+      run(create,function(){return rpc(action?"clip_campaign_create_from_action":"clip_campaign_create",{p:p}).then(function(r){
+        C.sel=r&&r.mission_id;C.tab="overview";
+        if(action)return;
+        return rpc("clip_campaign_set_distribution",{p_mission:C.sel,p:{attribution_handles:p.attribution_handles,
+          collaborator_handles:p.collaborator_handles,collaboration_mode:p.collaboration_mode,operator_brand:p.operator_brand}})
+          .catch(function(){return load().then(function(){throw new Error("Draft saved, but its credit/collaboration brief could not be saved. The source expansion must be applied before using this brief. Keep this draft paused and do not create a duplicate.");});});
+      });},"Draft created. Add funding, then go live.");};
+    root.querySelectorAll("[data-clip-status]").forEach(function(b){b.onclick=function(){var s=b.getAttribute("data-clip-status");
+      if(s==="ended"&&!confirm("End this campaign? Clippers stop submitting; clips already tracked keep settling."))return;
+      run(b,function(){return rpc("clip_campaign_set_status",{p_mission:C.sel,p_status:s});},s==="live"?"Live on the Action Network.":"Campaign "+s+".");};});
+    var fund=root.querySelector("[data-clip-fund]");
+    if(fund)fund.onclick=function(){var amt=cents("clFundAmt"),prov=val("clFundProvider")||"internal",ref=val("clFundRef")||null;
+      if(!amt||amt<=0){C.msg="Enter an amount.";C.bad=true;redraw();return;}
+      run(fund,function(){return rpc("clip_campaign_fund",{p_mission:C.sel,p_amount_cents:amt,p_kind:prov==="internal"?"program_allocation":"contribution",p_provider:prov,p_provider_ref:ref,p_note:""});},"Funding recorded.");};
+    root.querySelectorAll("[data-clip-review]").forEach(function(b){b.onclick=function(){var dec=b.getAttribute("data-clip-review");
+      var why=dec==="reject"||dec==="hold"?prompt(dec==="reject"?"Why is this clip rejected? The clipper sees this.":"Why hold it?",""):null;
+      if((dec==="reject"||dec==="hold")&&why===null)return;
+      run(b,function(){return rpc("clip_review_submission",{p_submission:b.getAttribute("data-id"),p_decision:dec,p_note:why||null});},"Clip "+{approve:"approved",reject:"rejected",hold:"held",release:"cleared"}[dec]+".");};});
+    root.querySelectorAll("[data-clip-payout]").forEach(function(b){b.onclick=function(){
+      var ref=prompt("Payment reference for "+usd(b.getAttribute("data-amount"))+" (e.g. the transfer or Zelle confirmation):","");
+      if(!ref)return;
+      run(b,function(){return rpc("clip_record_payout",{p_org:org(),p_m_uid:b.getAttribute("data-clip-payout"),p_provider:"manual",p_provider_ref:ref,p_note:null});},"Payout recorded.");};});
+  }
+
+  window.CR.clipping={init:function(opts){C.supa=opts.supa;C.rerender=opts.render;C.org=opts.org;},render:render,bind:bind,load:load,state:C};
+})();

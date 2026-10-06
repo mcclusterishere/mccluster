@@ -136,3 +136,63 @@ test('CI rebuilds the database from the migration chain and runs the end-to-end 
   assert.ok(rebuild > 0 && regress > rebuild, 'the rebuilt chain, clipping included, is what the regression runs against');
   assert.doesNotMatch(ci, /-f supabase\/pending\/action_clipping_marketplace_v1\.sql/, 'no separate pending apply once it is in the chain');
 });
+
+// Execute the actual browser module: a parse-only test misses a truncated
+// registration or a create form whose buttons have no handlers.
+async function clippingUI(action = false, failBrief = false) {
+  const { runInNewContext } = await import('node:vm');
+  const fields = Object.fromEntries(Object.entries({
+    clTitle: 'Campaign', clSong: 'song-1', clSource: 'content-1',
+    clDestination: 'https://example.com/action', clBudget: '100', clCpm: '3',
+    clAttribution: '@artist', clCollaborators: '@partner', clCollabMode: 'request'
+  }).map(([k, value]) => [k, { value }]));
+  fields.clIg = { checked: true };
+  const calls = [], window = {};
+  runInNewContext(await read('js/control-room/clipping.js'), {
+    window, document: { getElementById: id => fields[id], querySelectorAll: () => [] },
+    confirm: () => true, prompt: () => 'receipt-1'
+  });
+  const ui = window.CR.clipping;
+  assert.ok(ui?.init && ui?.render && ui?.bind, 'module registers every entry point');
+  ui.init({ org: () => ({ id: 'org-1' }), render() {}, supa: async (path, opts) => {
+    calls.push({ path, body: opts?.body });
+    if (path === 'rpc/clip_campaign_create' || path === 'rpc/clip_campaign_create_from_action') return { mission_id: 'campaign-1' };
+    if (path === 'rpc/clip_campaign_set_distribution' && failBrief) throw new Error('missing function');
+    if (path === 'rpc/clip_campaigns_for_org') return [{ mission_id: 'campaign-1', title: 'Campaign', status: 'draft' }];
+    if (path === 'rpc/clip_campaign_dashboard') return { campaign: { status: 'draft' }, money: {}, totals: {} };
+    return [];
+  }});
+  ui.state.sourceType = action ? 'action' : 'music';
+  const button = {};
+  ui.bind({ querySelectorAll: () => [], querySelector: q => q === '[data-clip-create]' ? button : null });
+  button.onclick();
+  for (let i = 0; i < 30; i++) await Promise.resolve();
+  return { ui, calls };
+}
+
+test('new source forms create the right draft and preserve the management dashboard', async () => {
+  for (const action of [false, true]) {
+    const { ui, calls } = await clippingUI(action);
+    const create = calls.find(x => x.path === (action ? 'rpc/clip_campaign_create_from_action' : 'rpc/clip_campaign_create'));
+    assert.ok(create, 'the source type selects its canonical RPC');
+    assert.equal(create.body.p.org_id, 'org-1');
+    assert.equal(create.body.p.source_kind, action ? 'action' : 'music');
+    assert.equal(calls.some(x => x.path === 'rpc/clip_campaign_set_distribution'), !action,
+      'music saves its brief separately; action creation already saves it');
+    assert.equal(ui.state.sel, 'campaign-1');
+    assert.equal(ui.state.tab, 'overview');
+    const html = ui.render();
+    for (const target of ['data-clip-pick', 'data-clip-tab="clips"', 'data-clip-tab="clippers"', 'data-clip-tab="money"', 'data-clip-fund', 'data-clip-status']) {
+      assert.ok(html.includes(target), `${target} remains accessible after creating a draft`);
+    }
+  }
+});
+
+test('a failed music distribution save identifies the saved draft rather than inviting duplicate creation', async () => {
+  const { ui, calls } = await clippingUI(false, true);
+  assert.equal(calls.filter(x => x.path === 'rpc/clip_campaign_create').length, 1);
+  assert.equal(ui.state.sel, 'campaign-1');
+  assert.equal(ui.state.tab, 'overview');
+  assert.equal(ui.state.bad, true);
+  assert.match(ui.state.msg, /Draft saved.*brief could not be saved/);
+});

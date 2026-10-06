@@ -17,3 +17,8 @@ To promote one:
 
 Promoted: `action_clipping_marketplace_v1.sql` is
 `20261006170955_action_clipping_marketplace_v1.sql`.
+
+Pending: `equity_uprise_clipping_sources.sql` adds Action Network content sources
+and distribution briefs. It is not applied in production. API Economic Core CI
+applies it only to its isolated rebuilt database before the clipping regression.
+Promote it using the steps above after production application is verified.
