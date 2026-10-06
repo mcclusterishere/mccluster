@@ -30,7 +30,7 @@ Identity of record: [ORCID 0009-0000-8988-8955](https://orcid.org/0009-0000-8988
 
 ## The record
 
-*I AM HERE* — Antisocial · Write a Song · Who Did The Shoot · Runway Walk ·
+*I AM HERE* — Antisocial · Write a Song · Runway Walk · Who Did The Shoot ·
 Lightroom · Here
 
 ## The Equity Uprise platform
