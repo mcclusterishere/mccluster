@@ -1077,6 +1077,7 @@ declare
   v_payable   bigint;
   v_target    bigint;
   v_accrued   bigint;
+  v_seq       integer;
   v_other     bigint;
   v_delta     bigint;
   v_money     record;
@@ -1106,8 +1107,11 @@ begin
     v_target := least(v_target, greatest(0, v.per_clipper_cap_cents - v_other));
   end if;
 
-  select coalesce(sum(amount_cents), 0) into v_accrued from public.action_clip_earnings
-   where submission_id = p_submission and kind in ('views', 'reversal') and state <> 'void';
+  -- rows are keyed by their place in this clip's sequence (taken under the campaign lock), so a total
+  -- reached twice, after a reversal, is still a new row and a replay of the same step is not
+  select coalesce(sum(amount_cents) filter (where state <> 'void'), 0), count(*) + 1 into v_accrued, v_seq
+    from public.action_clip_earnings
+   where submission_id = p_submission and kind in ('views', 'reversal');
   v_delta := v_target - v_accrued;
   v_hold := greatest(now() + make_interval(days => v.hold_days), v_sub.posted_at + make_interval(days => v.keep_live_days));
 
@@ -1126,7 +1130,7 @@ begin
       values (v.mission_id, v.org_id, v_sub.claim_id, p_submission, v_sub.m_uid, 'views', v_delta, v_hold,
               jsonb_build_object('payable_views', v_payable, 'verified_views', v_views, 'cpm_cents', v.base_cpm_cents,
                                  'target_cents', v_target, 'previously_accrued_cents', v_accrued),
-              'views:' || p_submission || ':' || (v_accrued + v_delta))
+              'views:' || p_submission || ':' || v_seq)
       on conflict (idempotency_key) do nothing
       returning id into v_entry;
     end if;
@@ -1135,7 +1139,7 @@ begin
     values (v.mission_id, v.org_id, v_sub.claim_id, p_submission, v_sub.m_uid, 'reversal', v_delta, v_hold,
             jsonb_build_object('payable_views', v_payable, 'verified_views', v_views, 'target_cents', v_target,
                                'previously_accrued_cents', v_accrued),
-            'reversal:' || p_submission || ':' || v_target)
+            'views:' || p_submission || ':' || v_seq)
     on conflict (idempotency_key) do nothing
     returning id into v_entry;
   end if;

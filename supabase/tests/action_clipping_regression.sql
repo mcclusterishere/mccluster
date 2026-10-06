@@ -372,8 +372,28 @@ begin
   assert not has_table_privilege('authenticated', 'public.action_clip_earnings', 'select'), 'the ledger is server-only';
   assert not has_table_privilege('authenticated', 'public.action_clip_submissions', 'select');
 
-  -- the payout ledger guards itself, even against the service role
+  -- a total reached twice (down by a reversal, then back up) is two ledger rows, never a skipped one
   perform pg_temp.sign_in(null);
+  declare
+    sub2 uuid := (select v::uuid from t where k = 'sub2');
+    v_cap integer := (select per_clip_cap_cents from public.action_clip_campaigns where mission_id = mission);
+    v_before bigint := (select sum(amount_cents) from public.action_clip_earnings
+                         where submission_id = sub2 and kind in ('views', 'reversal') and state <> 'void');
+  begin
+    update public.action_clip_campaigns set per_clip_cap_cents = v_before - 500 where mission_id = mission;
+    perform public.clip_settle_submission(sub2);
+    assert (select sum(amount_cents) from public.action_clip_earnings where submission_id = sub2 and kind in ('views', 'reversal') and state <> 'void')
+           = v_before - 500, 'a lower target is a reversal row';
+    update public.action_clip_campaigns set per_clip_cap_cents = v_cap where mission_id = mission;
+    perform public.clip_settle_submission(sub2);
+    assert (select sum(amount_cents) from public.action_clip_earnings where submission_id = sub2 and kind in ('views', 'reversal') and state <> 'void')
+           = v_before, 'and back up again is a new row, not a collision with the first';
+    perform public.clip_settle_submission(sub2);
+    assert (select count(*) from public.action_clip_earnings where submission_id = sub2 and kind in ('views', 'reversal'))
+           = (select count(distinct idempotency_key) from public.action_clip_earnings where submission_id = sub2), 'a replay adds nothing';
+  end;
+
+  -- the payout ledger guards itself, even against the service role
   assert pg_temp.raises(format('delete from public.action_clip_earnings where mission_id = %L', mission), '%append-only%'),
          'ledger rows are never deleted';
   assert pg_temp.raises(format('update public.action_clip_earnings set amount_cents = amount_cents + 1 where mission_id = %L and state = ''paid''', mission),
