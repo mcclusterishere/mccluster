@@ -8,6 +8,87 @@
    "by": "Have no fear.",
    "tracks": [
     {
+     "title": "Antisocial",
+     "src": "assets/audio/antisocial.mp3",
+     "poster": "assets/frames/nightscroll_0001.jpg",
+     "lyrics": "data/lyrics/antisocial.json",
+     "reel": "data/reels/antisocial.json",
+     "pulse": "#8f0f16",
+     "music_video": "assets/video/nightscroll.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "anti-social",
+       "label": "Get your presence managed",
+       "href": "onboard.html?offer=anti-social"
+      },
+      "theme": {
+       "accent": "#8f0f16",
+       "background": "#060708",
+       "foreground": "#f8f3ef",
+       "surface": "#111217"
+      },
+      "lyric_ctas": [
+       {
+        "match": "I can help you get more conversions than the Pope did",
+        "label": "Get conversion help",
+        "href": "onboard.html?offer=anti-social",
+        "offer_id": "anti-social"
+       },
+       {
+        "match": "That's why I offer coaching to get you back focused",
+        "label": "Get focused",
+        "href": "onboard.html?offer=anti-social",
+        "offer_id": "anti-social"
+       },
+       {
+        "match": "write a note below this",
+        "label": "Start the conversation",
+        "href": "onboard.html?offer=anti-social",
+        "offer_id": "anti-social"
+       },
+       {
+        "match": "After a consultation",
+        "label": "Book the consultation",
+        "href": "onboard.html?offer=anti-social",
+        "offer_id": "anti-social"
+       },
+       {
+        "match": "Profile optimization",
+        "label": "Optimize your presence",
+        "href": "onboard.html?offer=social",
+        "offer_id": "social"
+       },
+       {
+        "match": "make content, make it",
+        "label": "Get content moving",
+        "href": "onboard.html?offer=social",
+        "offer_id": "social"
+       }
+      ]
+     }
+    },
+    {
+     "title": "Write a Song",
+     "src": "assets/audio/write-a-song.mp3",
+     "poster": "assets/frames/studio360_0001.jpg",
+     "pulse": "#c1121f",
+     "music_video": "assets/video/studio360.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "write-a-song",
+       "label": "Start a song campaign",
+       "href": "onboard.html?offer=write-a-song"
+      },
+      "theme": {
+       "accent": "#c1121f",
+       "background": "#090708",
+       "foreground": "#fff4ef",
+       "surface": "#190c0e"
+      },
+      "lyric_ctas": []
+     }
+    },
+    {
      "title": "Who Did The Shoot",
      "src": "assets/audio/who-did-the-shoot.mp3",
      "poster": "assets/frames/hero_0001.jpg",
@@ -82,22 +163,22 @@
      }
     },
     {
-     "title": "Write a Song",
-     "src": "assets/audio/write-a-song.mp3",
-     "poster": "assets/frames/studio360_0001.jpg",
-     "pulse": "#c1121f",
-     "music_video": "assets/video/studio360.mp4",
+     "title": "Lightroom",
+     "src": "assets/audio/lightroom.mp3",
+     "poster": "assets/frames/editors_0001.jpg",
+     "pulse": "#f0453f",
+     "music_video": "assets/video/editors.mp4",
      "experience": {
       "commerce": {
-       "offer_id": "write-a-song",
-       "label": "Start a song campaign",
-       "href": "onboard.html?offer=write-a-song"
+       "offer_id": "who-did-the-shoot",
+       "label": "Book photography + video",
+       "href": "onboard.html?offer=who-did-the-shoot"
       },
       "theme": {
-       "accent": "#c1121f",
-       "background": "#090708",
-       "foreground": "#fff4ef",
-       "surface": "#190c0e"
+       "accent": "#f0453f",
+       "background": "#08090a",
+       "foreground": "#f5f4f0",
+       "surface": "#121417"
       },
       "lyric_ctas": []
      }
@@ -120,87 +201,6 @@
        "background": "#080708",
        "foreground": "#fff6ef",
        "surface": "#170c10"
-      },
-      "lyric_ctas": []
-     }
-    },
-    {
-     "title": "Antisocial",
-     "src": "assets/audio/antisocial.mp3",
-     "poster": "assets/frames/nightscroll_0001.jpg",
-     "lyrics": "data/lyrics/antisocial.json",
-     "reel": "data/reels/antisocial.json",
-     "pulse": "#8f0f16",
-     "music_video": "assets/video/nightscroll.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "anti-social",
-       "label": "Get your presence managed",
-       "href": "onboard.html?offer=anti-social"
-      },
-      "theme": {
-       "accent": "#8f0f16",
-       "background": "#060708",
-       "foreground": "#f8f3ef",
-       "surface": "#111217"
-      },
-      "lyric_ctas": [
-       {
-        "match": "I can help you get more conversions than the Pope did",
-        "label": "Get conversion help",
-        "href": "onboard.html?offer=anti-social",
-        "offer_id": "anti-social"
-       },
-       {
-        "match": "That's why I offer coaching to get you back focused",
-        "label": "Get focused",
-        "href": "onboard.html?offer=anti-social",
-        "offer_id": "anti-social"
-       },
-       {
-        "match": "write a note below this",
-        "label": "Start the conversation",
-        "href": "onboard.html?offer=anti-social",
-        "offer_id": "anti-social"
-       },
-       {
-        "match": "After a consultation",
-        "label": "Book the consultation",
-        "href": "onboard.html?offer=anti-social",
-        "offer_id": "anti-social"
-       },
-       {
-        "match": "Profile optimization",
-        "label": "Optimize your presence",
-        "href": "onboard.html?offer=social",
-        "offer_id": "social"
-       },
-       {
-        "match": "make content, make it",
-        "label": "Get content moving",
-        "href": "onboard.html?offer=social",
-        "offer_id": "social"
-       }
-      ]
-     }
-    },
-    {
-     "title": "Lightroom",
-     "src": "assets/audio/lightroom.mp3",
-     "poster": "assets/frames/editors_0001.jpg",
-     "pulse": "#f0453f",
-     "music_video": "assets/video/editors.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "who-did-the-shoot",
-       "label": "Book photography + video",
-       "href": "onboard.html?offer=who-did-the-shoot"
-      },
-      "theme": {
-       "accent": "#f0453f",
-       "background": "#08090a",
-       "foreground": "#f5f4f0",
-       "surface": "#121417"
       },
       "lyric_ctas": []
      }
