@@ -72,6 +72,17 @@ test('funding a creator records is owner-attested; card funding is staged, not t
   assert.match(control, /<option value="stripe" disabled>Card payment \(not connected yet\)<\/option>/);
 });
 
+test('credentials are references, end dates only move later, and every campaign has a song link', async () => {
+  const sql = await read(MIGRATION);
+  const attach = fnBody(sql, 'public.clip_account_attach_credential');
+  assert.match(attach, /\^vault:/);
+  assert.match(attach, /SOCIAL_IG_\[A-Z0-9_\]\+_ACCESS_TOKEN/);
+  assert.ok(attach.indexOf('never a token') < attach.indexOf('update public.social_accounts'), 'checked before anything is stored');
+  assert.match(fnBody(sql, 'public.clip_campaign_update'), /'infinity'::timestamptz/);
+  assert.match(fnBody(sql, 'private.clip_song_url'), /album\.html\?track=/);
+  assert.match(fnBody(sql, 'public.clip_my_work'), /'link', private\.clip_song_url\(c\.music_object_id, c\.creator_track_id\)/);
+});
+
 test('settlement is budget-safe: it locks the campaign and never commits past funded budget', async () => {
   const sql = await read(MIGRATION);
   const settle = fnBody(sql, 'public.clip_settle_submission');

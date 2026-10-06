@@ -404,6 +404,46 @@ begin
            = (select count(distinct idempotency_key) from public.action_clip_earnings where submission_id = sub2), 'a replay adds nothing';
   end;
 
+  -- after launch an open-ended campaign stays open-ended, and a deadline only moves later
+  perform pg_temp.sign_in((select v::uuid from t where k = 'u_creator'), 'creator@example.com');
+  update public.action_missions set ends_at = null where id = mission;
+  assert pg_temp.raises(format('select public.clip_campaign_update(%L, %L::jsonb)', mission,
+         jsonb_build_object('ends_at', now() + interval '3 days')), '%can only move later%'), 'no deadline is the latest deadline';
+  update public.action_missions set ends_at = now() + interval '10 days' where id = mission;
+  assert pg_temp.raises(format('select public.clip_campaign_update(%L, %L::jsonb)', mission,
+         jsonb_build_object('ends_at', now() + interval '5 days')), '%can only move later%'), 'a deadline never moves earlier';
+  perform public.clip_campaign_update(mission, jsonb_build_object('ends_at', now() + interval '20 days'));
+  assert (select ends_at from public.action_missions where id = mission) = now() + interval '20 days', 'later is fine';
+
+  -- the desk attaches only a credential reference the Worker can read, never a pasted token
+  perform pg_temp.sign_in(gen_random_uuid(), 'matthew@mccluster.org');
+  declare
+    v_acct uuid := (select id from public.social_accounts where owner_m_uid = (select v::uuid from t where k = 'm_clipper') limit 1);
+    v_before text := (select credential_ref from public.social_accounts where id = v_acct);
+  begin
+    assert pg_temp.raises(format('select public.clip_account_attach_credential(%L, ''EAAGabc123rawtoken'')', v_acct), '%never a token%'),
+           'a raw token is refused';
+    assert pg_temp.raises(format('select public.clip_account_attach_credential(%L, ''vault:not-a-uuid'')', v_acct), '%never a token%'),
+           'a malformed vault reference is refused';
+    assert (select credential_ref from public.social_accounts where id = v_acct) is not distinct from v_before, 'and nothing was stored';
+    perform public.clip_account_attach_credential(v_acct, 'env:SOCIAL_IG_CLIPPER_ACCESS_TOKEN');
+    perform public.clip_account_attach_credential(v_acct, 'vault:0b7f1c2e-3d4a-4b5c-8d6e-7f8091a2b3c4');
+    assert (select credential_ref from public.social_accounts where id = v_acct) = 'vault:0b7f1c2e-3d4a-4b5c-8d6e-7f8091a2b3c4', 'a vault reference is kept';
+  end;
+
+  -- a creator-track campaign still gives clippers a link to the song
+  perform pg_temp.sign_in(null);
+  declare v_track uuid;
+  begin
+    insert into public.creator_tracks (uid, m_uid, title, audio_url, slug)
+    values ((select v::uuid from t where k = 'u_creator'), (select v::uuid from t where k = 'm_creator'),
+            'Regress Creator Cut', 'https://example.com/regress.mp3', 'regress-creator-cut')
+    returning id into v_track;
+    assert private.clip_song_url(null, v_track) = 'https://matthew.mccluster.org/album.html?track=' || v_track, 'creator tracks link to their player';
+    assert private.clip_song_url((select v::uuid from t where k = 'song'), null) like 'https://matthew.mccluster.org/album.html?album=regress-album%',
+           'catalogue songs link to their page';
+  end;
+
   -- the payout ledger guards itself, even against the service role
   assert pg_temp.raises(format('delete from public.action_clip_earnings where mission_id = %L', mission), '%append-only%'),
          'ledger rows are never deleted';

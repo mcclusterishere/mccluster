@@ -432,6 +432,20 @@ immutable
 set search_path = ''
 as $$ select p_platform = 'instagram' $$;
 
+-- Where a clip sends people: the catalogue song's own page, or the creator
+-- track's player (album.html?track=<id>, the creator-cut deep link).
+create or replace function private.clip_song_url(p_music uuid, p_track uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (select o.canonical_url from public.music_catalog_objects o where o.id = p_music),
+    (select 'https://matthew.mccluster.org/album.html?track=' || t.id from public.creator_tracks t where t.id = p_track))
+$$;
+
 create or replace function private.clip_audit(p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb)
 returns void
 language sql
@@ -486,7 +500,7 @@ $$;
 do $$
 declare f text;
 begin
-  foreach f in array array['private.clip_code()', 'private.clip_parse_url(text, text)', 'private.clip_platform_enabled(text)', 'private.clip_canonical_url(text, text)',
+  foreach f in array array['private.clip_code()', 'private.clip_parse_url(text, text)', 'private.clip_platform_enabled(text)', 'private.clip_canonical_url(text, text)', 'private.clip_song_url(uuid, uuid)',
                            'private.clip_audit(uuid, text, text, text, jsonb)', 'private.clip_money(uuid)',
                            'private.clip_require_owner(uuid)'] loop
     execute format('revoke all on function %s from public, anon, authenticated', f);
@@ -653,7 +667,10 @@ begin
     end if;
   end if;
   if p ? 'ends_at' then
-    if v.status <> 'draft' and (select ends_at from public.action_missions where id = p_mission) > nullif(p->>'ends_at', '')::timestamptz then
+    -- no end date is the latest end date: after launch a finite date never replaces it, and never moves earlier
+    if v.status <> 'draft' and nullif(p->>'ends_at', '') is not null
+       and coalesce((select ends_at from public.action_missions where id = p_mission), 'infinity'::timestamptz)
+           > (p->>'ends_at')::timestamptz then
       raise exception 'after launch the end date can only move later';
     end if;
     update public.action_missions set ends_at = nullif(p->>'ends_at', '')::timestamptz, updated_at = now() where id = p_mission;
@@ -871,7 +888,8 @@ as $$
       'starts_at', m.starts_at, 'ends_at', m.ends_at, 'launched_at', c.launched_at,
       'song', case when o.id is not null then jsonb_build_object('id', o.id, 'key', o.catalog_key, 'title', o.track_title,
                     'artist', o.artist_name, 'url', o.canonical_url, 'artwork', o.artwork_path) end,
-      'track', case when t.id is not null then jsonb_build_object('id', t.id, 'title', t.title, 'artist', t.artist) end,
+      'track', case when t.id is not null then jsonb_build_object('id', t.id, 'title', t.title, 'artist', t.artist,
+                    'url', private.clip_song_url(null, t.id)) end,
       'creator', (select jsonb_build_object('handle', cp.handle, 'artist_name', cp.artist_name)
                     from public.music_creator_profiles cp where cp.m_uid = c.creator_m_uid),
       'budget_left_cents', (select available_cents from private.clip_money(c.mission_id)),
@@ -999,6 +1017,12 @@ begin
   select * into v_acct from public.social_accounts where id = p_account and owner_m_uid is not null for update;
   if not found then raise exception 'member account not found'; end if;
   if v_acct.platform <> 'instagram' then raise exception 'only Instagram credentials can be attached'; end if;
+  -- the shapes the Worker reads (parseSocialCredentialRef); anything else, a pasted token above all, is refused unstored
+  if nullif(btrim(coalesce(p_credential_ref, '')), '') is not null
+     and btrim(p_credential_ref) !~* '^vault:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+     and btrim(p_credential_ref) !~ '^(env:)?SOCIAL_IG_[A-Z0-9_]+_ACCESS_TOKEN$' then
+    raise exception 'a credential is a vault:<secret id> or env:SOCIAL_IG_<NAME>_ACCESS_TOKEN reference, never a token';
+  end if;
   update public.social_accounts set credential_ref = nullif(btrim(coalesce(p_credential_ref, '')), ''), updated_at = now()
    where id = p_account;
   perform private.clip_audit(private.clip_network_org(), 'clip.account.credential_attached', 'social_account', p_account::text,
@@ -1747,7 +1771,7 @@ begin
     'claims', (select coalesce(jsonb_agg(jsonb_build_object(
         'claim_id', k.id, 'mission_id', k.mission_id, 'title', m.title, 'status', k.status, 'ref_code', k.ref_code,
         'campaign_status', c.status, 'platforms', to_jsonb(c.platforms), 'base_cpm_cents', c.base_cpm_cents, 'min_views', c.min_views,
-        'link', (select o.canonical_url from public.music_catalog_objects o where o.id = c.music_object_id),
+        'link', private.clip_song_url(c.music_object_id, c.creator_track_id),
         'submissions', (select coalesce(jsonb_agg(jsonb_build_object('submission_id', s.id, 'platform', s.platform, 'url', s.submitted_url,
               'status', s.status, 'review_state', s.review_state, 'rejection_reason', s.rejection_reason, 'waiting_reason', s.waiting_reason,
               'hold_reason', case when s.status = 'held' then 'Under review' end, 'ref_code', s.ref_code,
