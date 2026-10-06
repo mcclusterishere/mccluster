@@ -44,8 +44,8 @@ for (const path of trackStubs) {
   /* it must still exist and it must still go somewhere: an indexed URL that
      404s is worse than one that forwards, and both mechanisms are required
      because the meta refresh is what carries a visitor with scripting off */
-  must(path + " forwards to the reel without scripting", /http-equiv="refresh"[^>]*films\.html/.test(html));
-  must(path + " forwards to the reel with scripting", html.includes('location.replace("../films.html")'));
+  must(path + " forwards to the music video without scripting", /http-equiv="refresh"[^>]*music-videos\.html/.test(html));
+  must(path + " forwards to the music video with scripting", html.includes("music-videos.html"));
   must(path + " stays out of the index", html.includes('name="robots" content="noindex"'));
 }
 
@@ -54,7 +54,8 @@ must("album keeps the six-track mount", album.includes('id="tracks"'));
 must("album keeps the shared deck", album.includes('id="deck"'));
 must("album keeps persistent Music transport hooks", album.includes("MCC_NP_PLAY") && album.includes("MCC_NP_PAUSE"));
 
-const films = await readFile("music-videos.html", "utf8");\nconst filmsRedirect = await readFile("films.html", "utf8");
+const films = await readFile("music-videos.html", "utf8");
+const filmsRedirect = await readFile("films.html", "utf8");
 must("music videos keeps one-tap sound intent", films.includes('id="fa"') && films.includes("music_videos_armed"));
 must("music videos keeps swipe cards", films.includes('class="fc"'));
 /* the reel absorbed the track pages, so it now owes what they carried: a
@@ -73,7 +74,7 @@ must("license keeps track preselection", license.includes('get("track")'));
 
 /* BOTH ENDS OF THE LINK, OR NEITHER.
 
-   The first pass checked only that a slug appeared somewhere in films.html
+   The first pass checked only that a slug appeared somewhere in music-videos.html
    and called that "can license this record". It cannot: license.html
    pre-picks the track with
 
@@ -81,7 +82,7 @@ must("license keeps track preselection", license.includes('get("track")'));
 
    which silently does nothing when no option matches. Rename or drop an
    <option> and the door still opens — onto a form with no record chosen —
-   while a contract that only reads films.html reports all six fine. That is
+   while a contract that only reads music-videos.html reports all six fine. That is
    worse than no check, because it is a check that lies.
 
    So each slug is verified at both ends: the reel emits the link, and the
