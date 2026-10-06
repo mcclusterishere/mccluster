@@ -547,7 +547,7 @@ begin
       if not exists (select 1 from public.creator_tracks t where t.id = v_song.creator_track_id and t.m_uid = v_muid) then
         raise exception 'that song belongs to another creator';
       end if;
-    elsif v_org <> public.commerce_resolve_org(null) then
+    elsif v_org is distinct from (select o.id from public.orgs o where o.slug = 'mccluster') then
       raise exception 'the house catalogue can only be clipped by the house organization';
     end if;
   else
