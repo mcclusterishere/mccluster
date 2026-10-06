@@ -356,6 +356,17 @@ begin
   assert not has_table_privilege('authenticated', 'public.action_clip_earnings', 'select'), 'the ledger is server-only';
   assert not has_table_privilege('authenticated', 'public.action_clip_submissions', 'select');
 
+  -- the payout ledger guards itself, even against the service role
+  perform pg_temp.sign_in(null);
+  assert pg_temp.raises(format('delete from public.action_clip_earnings where mission_id = %L', mission), '%append-only%'),
+         'ledger rows are never deleted';
+  assert pg_temp.raises(format('update public.action_clip_earnings set amount_cents = amount_cents + 1 where mission_id = %L and state = ''paid''', mission),
+         '%never edited%'), 'an earned amount is never edited';
+  assert pg_temp.raises(format('update public.action_clip_earnings set state = ''held'', payout_id = null, paid_at = null where mission_id = %L and state = ''paid''', mission),
+         '%cannot move from paid%'), 'a paid earning is final';
+  assert pg_temp.raises(format('update public.action_clip_earnings set state = ''payable'' where submission_id = %L and state = ''void''', sub4),
+         '%cannot move from void%'), 'a voided earning stays void';
+
   raise notice 'clipping regression: all assertions passed';
 end $$;
 

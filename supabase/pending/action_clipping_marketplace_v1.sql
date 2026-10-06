@@ -337,6 +337,39 @@ begin
   end loop;
 end $$;
 
+-- The ledger enforces its own shape: rows are never deleted, what was earned
+-- (amount, kind, keys, basis) is never edited, and state only moves forward
+-- (held <-> payable while in review, either -> void, payable -> paid; paid and
+-- void are final). A decrease is a new 'reversal' row.
+create or replace function private.clip_earnings_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' then
+    raise exception 'the clip payout ledger is append-only';
+  end if;
+  if (new.id, new.mission_id, new.org_id, new.claim_id, new.submission_id, new.m_uid, new.kind, new.amount_cents,
+      new.hold_until, new.basis, new.idempotency_key, new.created_at)
+     is distinct from
+     (old.id, old.mission_id, old.org_id, old.claim_id, old.submission_id, old.m_uid, old.kind, old.amount_cents,
+      old.hold_until, old.basis, old.idempotency_key, old.created_at) then
+    raise exception 'a clip earning is never edited; record a reversal instead';
+  end if;
+  if new.state is distinct from old.state and not (
+       (old.state = 'held' and new.state in ('payable', 'void'))
+    or (old.state = 'payable' and new.state in ('held', 'paid', 'void'))) then
+    raise exception 'a clip earning cannot move from % to %', old.state, new.state;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.clip_earnings_guard() from public, anon, authenticated;
+drop trigger if exists action_clip_earnings_guard on public.action_clip_earnings;
+create trigger action_clip_earnings_guard before update or delete on public.action_clip_earnings
+  for each row execute function private.clip_earnings_guard();
+
 -- ---------------------------------------------------------------------------
 -- 4. Helpers.
 create or replace function private.clip_code()
