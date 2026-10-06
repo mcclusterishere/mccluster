@@ -38,7 +38,7 @@ test('Control Analytics mount paints immediately and fails visibly instead of go
   await new Promise((resolve)=>setTimeout(resolve,0));
   assert.match(host.innerHTML,/Analytics load failed/);
   assert.match(host.innerHTML,/did not load/);
-  for(const section of ['overview','audience','content','identity','forensics','setup']){
+  for(const section of ['overview','audience','adaptive','content','identity','forensics','setup']){
     A.state.section=section;
     assert.doesNotThrow(()=>A.render(),section+' should render in a failed-data state');
     assert.ok(A.render().length>200,section+' rendered an empty surface');
@@ -106,7 +106,7 @@ test('custom range edits survive progressive Analytics repaints',async()=>{
   assert.equal(A.state.from,'','Apply must not resurrect a deliberately cleared date');
 });
 
-test('all six Analytics sections render representative successful data',async()=>{
+test('all seven Analytics sections render representative successful data',async()=>{
   const js=await read('js/control-room/analytics.js');
   const context={window:{CR:{}},console};
   vm.createContext(context);
@@ -123,11 +123,13 @@ test('all six Analytics sections render representative successful data',async()=
     content:[{track:'pull up',album:'cia-mind-control',starts:3,listeners:2,repeat_listeners:1,plays_per_listener:1.5,full_plays:1,completions:1,shares:1}],
     contentEvents:[{event_name:'album_play',events:3}],
     identity:{coverage:{accounts:1,bridged_accounts:1,attributed_accounts:1,accounts_with_ip:1,accounts_with_location:1},tracks:[{track:'pull up',last_touch_accounts:1,assisted_accounts:1}],journeys:[{created_at:'2026-09-27T00:00:00Z',first_name:'Test',source:'direct',last_track:'pull up',minutes_after_last_track:5}]},
+    experience:{totals:{decisions:2,impressions:2,visible:2,interactions:1,outcomes:1,impression_rate_pct:100,interaction_rate_pct:50,outcome_rate_pct:50},recent:[{id:'44444444-4444-4444-8444-444444444444',created_at:'2026-09-27T00:00:00Z',surface:'music.next_step',policy:'control-order@v1',experiment:null,arm:null,eligible_count:3,selected:[{id:'track-a'}],events:[{name:'experience_impression'},{name:'experience_visible'}]}],registry:{policies:[{key:'control-order',version:'v1',plane:'production',mode:'promoted',algorithm:'identity_order',enabled:true}],experiments:[],research_projects:[{key:'mccluster-adaptive-experience-lab',title:'McCluster Adaptive Experience Research Lab',status:'planning',human_subjects_status:'undetermined',canonical_url:'research.html'}]}},
     business:{snapshot:{users:{total:1,created_in_window:1},window:true,music:{plays:{in_window:3,total:3},revenue:{gross_cents_in_window:100,gross_cents:100}}}}
   };
   const expected={
     overview:/Page performance/,
     audience:/Conversion funnel/,
+    adaptive:/Decision ledger/,
     content:/Reach vs repeat/,
     identity:/Source → track → account/,
     forensics:/data-crf-host/,
@@ -150,6 +152,7 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   }
   assert.match(js,/\/v1\/analytics\/business\?since=/);
   assert.match(js,/\/v1\/analytics\/identity\?since=/);
+  assert.match(js,/\/v1\/analytics\/experience\?since=/);
   /* Forensics is its own module, mounted into the tab with the same range. */
   assert.match(js,/window\.CR\.forensics\.mount\(fh,\{request:S\.request,range:S\.range\}\)/);
   const forensics=await read('js/control-room/forensics.js');
