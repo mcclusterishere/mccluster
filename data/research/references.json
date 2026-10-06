@@ -1,0 +1,384 @@
+{
+  "schema_version": "research-references/v1",
+  "curated_at": "2026-10-06",
+  "curator": "Matthew McCluster / McCluster Research Lab",
+  "note": "Canonical source registry for methods, governance, adaptive-experience architecture, and publication infrastructure. URLs are preserved even when a DOI is not yet recorded.",
+  "sources": [
+    {
+      "citation_key": "brusilovsky_1996_adaptive_hypermedia",
+      "title": "Methods and Techniques of Adaptive Hypermedia",
+      "authors": [
+        "Peter Brusilovsky"
+      ],
+      "year": 1996,
+      "url": "https://www.researchgate.net/publication/227223782_Methods_and_Techniques_of_Adaptive_Hypermedia",
+      "category": "adaptive_interfaces",
+      "relevance": "Foundational adaptive hypermedia and user-model-driven navigation/content adaptation."
+    },
+    {
+      "citation_key": "linden_smith_york_2003_amazon",
+      "title": "Amazon.com Recommendations: Item-to-Item Collaborative Filtering",
+      "authors": [
+        "Greg Linden",
+        "Brent Smith",
+        "Jeremy York"
+      ],
+      "year": 2003,
+      "url": "https://www.cs.umd.edu/~samir/498/Amazon-Recommendations.pdf",
+      "category": "recommender_systems",
+      "relevance": "Foundational scalable item-to-item collaborative filtering."
+    },
+    {
+      "citation_key": "koren_bell_volinsky_2009_matrix_factorization",
+      "title": "Matrix Factorization Techniques for Recommender Systems",
+      "authors": [
+        "Yehuda Koren",
+        "Robert Bell",
+        "Chris Volinsky"
+      ],
+      "year": 2009,
+      "url": "https://datajobs.com/data-science-repo/Recommender-Systems-[Netflix].pdf",
+      "category": "recommender_systems",
+      "relevance": "Latent-factor recommendation, implicit feedback, confidence and temporal effects."
+    },
+    {
+      "citation_key": "li_chu_langford_schapire_2010_linucb",
+      "title": "A Contextual-Bandit Approach to Personalized News Article Recommendation",
+      "authors": [
+        "Lihong Li",
+        "Wei Chu",
+        "John Langford",
+        "Robert E. Schapire"
+      ],
+      "year": 2010,
+      "url": "https://arxiv.org/abs/1003.0146",
+      "category": "bandits",
+      "relevance": "Contextual bandits, explore/exploit personalization and logged-policy evaluation."
+    },
+    {
+      "citation_key": "covington_adams_sargin_2016_youtube",
+      "title": "Deep Neural Networks for YouTube Recommendations",
+      "authors": [
+        "Paul Covington",
+        "Jay Adams",
+        "Emre Sargin"
+      ],
+      "year": 2016,
+      "url": "https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/",
+      "category": "recommender_systems",
+      "relevance": "Industrial candidate-generation and ranking architecture."
+    },
+    {
+      "citation_key": "joachims_swaminathan_schnabel_2016_unbiased_ltr",
+      "title": "Unbiased Learning-to-Rank with Biased Feedback",
+      "authors": [
+        "Thorsten Joachims",
+        "Adith Swaminathan",
+        "Tobias Schnabel"
+      ],
+      "year": 2016,
+      "url": "https://arxiv.org/abs/1608.04468",
+      "category": "causal_counterfactual",
+      "relevance": "Propensity correction for exposure/position-biased implicit feedback."
+    },
+    {
+      "citation_key": "kang_mcauley_2018_sasrec",
+      "title": "Self-Attentive Sequential Recommendation",
+      "authors": [
+        "Wang-Cheng Kang",
+        "Julian McAuley"
+      ],
+      "year": 2018,
+      "url": "https://arxiv.org/abs/1808.09781",
+      "category": "sequential_recommendation",
+      "relevance": "Sequence-aware recommendation using self-attention."
+    },
+    {
+      "citation_key": "netzer_lattin_srinivasan_2008_hmm",
+      "title": "A Hidden Markov Model of Customer Relationship Dynamics",
+      "authors": [
+        "Oded Netzer",
+        "James M. Lattin",
+        "V. Srinivasan"
+      ],
+      "year": 2008,
+      "doi": "10.1287/mksc.1070.0294",
+      "url": "https://pubsonline.informs.org/doi/10.1287/mksc.1070.0294",
+      "category": "latent_state_models",
+      "relevance": "Longitudinal latent relationship-state modeling with out-of-sample validation."
+    },
+    {
+      "citation_key": "ie_et_al_slateq",
+      "title": "SlateQ: A Tractable Decomposition for Reinforcement Learning with Recommendation Sets",
+      "authors": [
+        "Eugene Ie et al."
+      ],
+      "year": 2019,
+      "url": "https://research.google/pubs/slateq-a-tractable-decomposition-for-reinforcement-learning-with-recommendation-sets/",
+      "category": "reinforcement_learning",
+      "relevance": "Long-horizon slate optimization rather than single-click optimization."
+    },
+    {
+      "citation_key": "google_recsim_2019",
+      "title": "RecSim: A Configurable Simulation Platform for Recommender Systems",
+      "authors": [
+        "Google Research"
+      ],
+      "year": 2019,
+      "url": "https://research.google/blog/recsim-a-configurable-simulation-platform-for-recommender-systems/",
+      "category": "simulation",
+      "relevance": "Simulation of sequential recommender policies and evolving user state."
+    },
+    {
+      "citation_key": "poulain_tarissan_music_diversity",
+      "title": "Music-listening diversity measurement using calibrated concentration measures",
+      "authors": [
+        "Raphaël Poulain",
+        "Fabien Tarissan"
+      ],
+      "year": 2020,
+      "url": "https://www.sciencedirect.com/science/article/pii/S0306457319306296",
+      "category": "music_behavior",
+      "relevance": "Formal concentration/diversity measures for music-listening behavior."
+    },
+    {
+      "citation_key": "actr_music_relistening_2021",
+      "title": "Modeling Music Relistening with ACT-R and Listening Histories",
+      "authors": [
+        "Research authors as indexed by arXiv"
+      ],
+      "year": 2021,
+      "url": "https://arxiv.org/abs/2108.02138",
+      "category": "music_behavior",
+      "relevance": "Recency, frequency, familiarity and similarity as predictors of relistening."
+    },
+    {
+      "citation_key": "latent_class_model_selection_uu",
+      "title": "Beyond the Number of Classes: Separating Substantive from Non-Substantive Latent Classes",
+      "authors": [
+        "Authors as indexed by Utrecht University"
+      ],
+      "url": "https://research-portal.uu.nl/en/publications/beyond-the-number-of-classes-separating-substantive-from-non-subs/",
+      "category": "latent_class_analysis",
+      "relevance": "Model-selection cautions for latent-class segmentation."
+    },
+    {
+      "citation_key": "athey_imbens_heterogeneous_treatment_2019",
+      "title": "Machine Learning Methods That Economists Should Know About / heterogeneous treatment-effect methods",
+      "authors": [
+        "Susan Athey",
+        "Guido Imbens and collaborators"
+      ],
+      "year": 2019,
+      "doi": "10.1073/pnas.1804597116",
+      "url": "https://www.pnas.org/doi/10.1073/pnas.1804597116",
+      "category": "causal_inference",
+      "relevance": "Heterogeneous treatment-effect estimation for personalized interventions."
+    },
+    {
+      "citation_key": "smartphone_big_five_meta_2023",
+      "title": "Meta-analysis of smartphone sensing and Big Five personality associations",
+      "authors": [
+        "Authors indexed by PubMed"
+      ],
+      "year": 2023,
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36738137/",
+      "category": "measurement_validity",
+      "relevance": "Evidence that digital-trace personality inference is limited; supports avoiding psychological overclaiming."
+    },
+    {
+      "citation_key": "hst_u_2024",
+      "title": "Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations",
+      "authors": [
+        "Jiaqi Zhai et al."
+      ],
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2402.17152",
+      "category": "generative_recommendation",
+      "relevance": "HSTU / generative sequential recommendation at very large scale."
+    },
+    {
+      "citation_key": "recsys_2026_conference",
+      "title": "20th ACM Conference on Recommender Systems",
+      "authors": [
+        "ACM RecSys"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/",
+      "category": "conference",
+      "relevance": "Primary 2026 conference index for current recommender-system research."
+    },
+    {
+      "citation_key": "recsys_2026_genpage",
+      "title": "GenPage: Towards End-to-End Generative Homepage Construction at Netflix",
+      "authors": [
+        "Lequn Wang",
+        "Jiangwei Pan",
+        "Linas Baltrunas"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-8/",
+      "category": "generative_ui",
+      "relevance": "End-to-end structured homepage generation with production A/B evidence."
+    },
+    {
+      "citation_key": "recsys_2026_unipinrec",
+      "title": "UniPinRec: Unifying Generative Retrieval and Ranking at Pinterest Scale",
+      "authors": [
+        "Hanyu Li et al."
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-8/",
+      "category": "recommender_systems",
+      "relevance": "Shared user representation and full-stack retrieval/ranking unification."
+    },
+    {
+      "citation_key": "recsys_2026_egrec",
+      "title": "There’s Something About You: Epistemic Recommendation for Latent Interest Discovery",
+      "authors": [
+        "Daniel Nemirovsky",
+        "Priya Khokher",
+        "Adarsh Jois",
+        "Marco Zagha",
+        "Joaquin Delgado"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-2/",
+      "category": "epistemic_recommendation",
+      "relevance": "Recommendation chosen partly for information gain about latent interests."
+    },
+    {
+      "citation_key": "recsys_2026_conalign",
+      "title": "ConAlign: Conditional Alignment Framework for Balancing Biased and Unbiased Recommendation",
+      "authors": [
+        "Jingcheng Zhang",
+        "Yihan Wang",
+        "Qi Song",
+        "Liyin Hong"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-4/",
+      "category": "debiasing",
+      "relevance": "Uses a small unbiased random-traffic stream to counter observational bias and filter-bubble collapse."
+    },
+    {
+      "citation_key": "recsys_2026_self_evolving",
+      "title": "Self-Evolving Recommendation System: End-To-End Autonomous Model Optimization With LLM Agents",
+      "authors": [
+        "Haochen Wang",
+        "Yi Wu",
+        "Daryl Chang",
+        "Li Wei",
+        "Lukasz Heldt"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-4/",
+      "category": "agentic_ml",
+      "relevance": "Offline fast loop plus online slow loop for autonomous recommendation-model optimization."
+    },
+    {
+      "citation_key": "recsys_2026_network_experiments",
+      "title": "Spillover-contained social experimentation with Balanced Louvain and CUPAC",
+      "authors": [
+        "Authors listed by ACM RecSys 2026"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/session-7/",
+      "category": "experimentation",
+      "relevance": "Cluster randomization and variance reduction for experiments with social-network interference."
+    },
+    {
+      "citation_key": "recsys_2026_music_crs",
+      "title": "RecSys 2026 Challenge on Conversational Music Recommendation (Music-CRS)",
+      "authors": [
+        "ACM RecSys 2026 Challenge organizers"
+      ],
+      "year": 2026,
+      "url": "https://recsys.acm.org/recsys26/challenge/",
+      "category": "music_recommendation",
+      "relevance": "Multi-turn music preference elicitation, ranking and explanation."
+    },
+    {
+      "citation_key": "peng_2026_personalized_generative_ui",
+      "title": "Efficient Personalization of Generative User Interfaces",
+      "authors": [
+        "Peng et al."
+      ],
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2604.09876",
+      "category": "generative_ui",
+      "relevance": "Personalizing interface generation using sparse user preference feedback."
+    },
+    {
+      "citation_key": "hhs_common_rule",
+      "title": "Federal Policy for the Protection of Human Subjects (Common Rule)",
+      "authors": [
+        "U.S. Department of Health and Human Services, OHRP"
+      ],
+      "url": "https://www.hhs.gov/ohrp/regulations-and-policy/regulations/common-rule/index.html",
+      "category": "research_governance",
+      "relevance": "Federal human-subjects research governance baseline."
+    },
+    {
+      "citation_key": "hhs_human_subjects_definition",
+      "title": "Lesson 2: What is Human Subjects Research?",
+      "authors": [
+        "U.S. Department of Health and Human Services, OHRP"
+      ],
+      "url": "https://www.hhs.gov/ohrp/education-and-outreach/online-education/human-research-protection-training/lesson-2-what-is-human-subjects-research/index.html",
+      "category": "research_governance",
+      "relevance": "Operational definition of research and human-subjects research."
+    },
+    {
+      "citation_key": "scsu_irb",
+      "title": "Southern Connecticut State University Institutional Review Board",
+      "authors": [
+        "Southern Connecticut State University"
+      ],
+      "url": "https://inside.southernct.edu/rpp/irb",
+      "category": "research_governance",
+      "relevance": "Institutional review path for SCSU student/faculty human-participant research."
+    },
+    {
+      "citation_key": "orcid_add_works",
+      "title": "Add works to your ORCID record",
+      "authors": [
+        "ORCID"
+      ],
+      "url": "https://support.orcid.org/hc/en-us/articles/360006973133-Add-works-to-your-ORCID-record",
+      "category": "research_identity",
+      "relevance": "ORCID work registration for publications, datasets and other research outputs."
+    },
+    {
+      "citation_key": "zenodo_github_software",
+      "title": "GitHub and Software",
+      "authors": [
+        "Zenodo"
+      ],
+      "url": "https://help.zenodo.org/docs/github/",
+      "category": "research_publishing",
+      "relevance": "GitHub release archiving and software preservation."
+    },
+    {
+      "citation_key": "zenodo_doi_versioning",
+      "title": "FAQ: DOI versioning",
+      "authors": [
+        "Zenodo"
+      ],
+      "url": "https://zenodo.org/help/versioning",
+      "category": "research_publishing",
+      "relevance": "Version-specific and concept DOI model for evolving software and research outputs."
+    },
+    {
+      "citation_key": "nsf_26_510_sbir_sttr",
+      "title": "NSF 26-510: SBIR/STTR Phase I, Phase II, Fast-Track Programs",
+      "authors": [
+        "U.S. National Science Foundation"
+      ],
+      "year": 2026,
+      "url": "https://www.nsf.gov/funding/opportunities/small-business-innovation-research-small-business-technology/nsf26-510/solicitation",
+      "category": "funding",
+      "relevance": "Current NSF deep-technology small-business R&D funding pathway."
+    }
+  ]
+}
