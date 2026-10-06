@@ -229,7 +229,8 @@ test('Now Playing preserves live video artwork instead of flattening every track
   assert.match(engine,/audio\.currentTime % film\.duration/);
   assert.match(css,/\.music-now__artwrap\.has-video \.music-now__film\{opacity:1\}/);
   assert.match(css,/prefers-reduced-motion: reduce/);
-  assert.match(albums,/"music_video":/);\n  assert.doesNotMatch(albums,/"video":/);
+  assert.match(albums,/"music_video":/);
+  assert.doesNotMatch(albums,/"video":/);
 });
 
 
