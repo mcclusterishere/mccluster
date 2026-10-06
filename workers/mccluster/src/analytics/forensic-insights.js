@@ -127,9 +127,12 @@ export function summarizeFlows(rows, { limit = 12 } = {}) {
     page(seq[0]).entries++;
     page(seq[seq.length - 1]).exits++;
     if (seq.length === 1) { bounced++; page(seq[0]).bounces++; }
+    // A step is counted once per session (A → B → A → B is one session
+    // taking A → B); the per-page next split stays a share of departures.
+    const stepped = new Set();
     for (let i = 0; i < seq.length - 1; i++) {
       const key = `${seq[i]}\u0000${seq[i + 1]}`;
-      bump(transitions, key);
+      if (!stepped.has(key)) { stepped.add(key); bump(transitions, key); }
       bump(page(seq[i]).next, seq[i + 1]);
       if (!samples.has(key)) samples.set(key, new Set());
       addSample(samples.get(key), s.id, 3);

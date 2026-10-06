@@ -100,6 +100,13 @@ test('sign-up refusals take the visitor to the field and count the reason only',
   assert.match(fail, /MCC_TRACK\("signup_blocked", \{ reason: reason \}\)/, 'never what was typed');
 });
 
+test('the current app-bar tab scrolls to the top, home included', async () => {
+  const tabbar = await read('js/tabbar.js');
+  assert.match(tabbar, /closest\("a\.appbar__tab\.is-here"\)/);
+  assert.match(tabbar, /var same = function \(p\) \{ return p\.replace\(\/\\\/index\\\.html\$\/, "\/"\); \};/, '"/" and "/index.html" are one page');
+  assert.match(tabbar, /same\(to\.pathname\) !== same\(location\.pathname\)/);
+});
+
 test('locked pages do not offer a theme they cannot change', async () => {
   const theme = await read('js/theme.js');
   assert.match(theme, /dual: !LOCK/);

@@ -69,6 +69,15 @@ test('flows: entries, exits, bounces, transitions, next steps and outcomes per p
   assert.ok(f.paths.some((p) => p.path === 'album.html → account.html → album.html'));
 });
 
+test('flows: a step repeated inside one session counts that session once', () => {
+  const rows = [pv('r', 1, 'a.html'), pv('r', 2, 'b.html'), pv('r', 3, 'a.html'), pv('r', 4, 'b.html')];
+  const f = summarizeFlows(rows);
+  const ab = f.transitions.find((x) => x.from === 'a.html' && x.to === 'b.html');
+  assert.equal(ab.sessions, 1);
+  assert.deepEqual(ab.sample_sessions, ['r']);
+  assert.equal(f.pages.find((p) => p.path === 'a.html').next.find((n) => n.path === 'b.html').count, 2, 'the next-step split still counts each departure');
+});
+
 test('errors: classified by origin, grouped by fingerprint, site errors first', () => {
   const rows = [
     { at: t(1), name: 'js_error', path: 'album.html', session_id: 's1', device_id: 'd1', user_agent: IG,

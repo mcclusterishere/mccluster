@@ -264,7 +264,10 @@
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
-    if (to.origin !== location.origin || to.pathname !== location.pathname) return;
+    /* "/" and "/index.html" are the same page (the HERE tab links the
+       latter; the canonical home URL is the former) */
+    var same = function (p) { return p.replace(/\/index\.html$/, "/"); };
+    if (to.origin !== location.origin || same(to.pathname) !== same(location.pathname)) return;
     e.preventDefault();
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
