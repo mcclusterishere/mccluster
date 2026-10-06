@@ -43,6 +43,7 @@
     a.textContent=text.slice(hit.start,hit.end);
     a.dataset.offer=String(hit.rule.offer_id||"");
     a.dataset.label=String(hit.rule.label||"");
+    a.dataset.phrase=String(hit.rule.match||"");
     a.setAttribute("aria-label",String(hit.rule.label||("Open "+hit.rule.href)));
     a.addEventListener("click",function(){
       if(window.MCC_TRACK)window.MCC_TRACK("lyric_service_cta_click",{
@@ -55,7 +56,7 @@
     });
     container.appendChild(a);
     if(hit.end<text.length)container.appendChild(document.createTextNode(text.slice(hit.end)));
-    if(window.MCC_TRACK)window.MCC_TRACK("lyric_service_cta_view",{
+    if((!context || context.track_view !== false) && window.MCC_TRACK)window.MCC_TRACK("lyric_service_cta_view",{
       track:context&&context.track||null,
       album:context&&context.album||null,
       offer:hit.rule.offer_id||null,
