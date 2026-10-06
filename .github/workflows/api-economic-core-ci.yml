@@ -10,6 +10,7 @@ on:
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
+      - 'supabase/tests/commerce_stripe_reconciler_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -24,6 +25,7 @@ on:
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
+      - 'supabase/tests/commerce_stripe_reconciler_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -77,6 +79,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/api_rate_limit_regression.sql
+      - name: Run commerce reconciler regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_regression.sql
       - name: Run compute COGS regression suite
         env:
           PGPASSWORD: postgres

@@ -131,6 +131,8 @@
       rows.map(function(r){return'<tr>'+cols.map(function(c){return'<td>'+c[1](r)+'</td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>';
   }
   function verification(r){
+    /* Stripe test-mode money is shown, never counted: see /v1/work/history totals */
+    if(r.livemode===false)return'<span class="cr-state cr-state--warn">test mode, not revenue</span>';
     return r.verification==="provider_verified"
       ?'<span class="cr-state cr-state--ok">provider verified</span>'
       :'<span class="cr-state cr-state--warn">owner recorded</span>';
@@ -152,7 +154,9 @@
     if(h.error)return'<section class="cro-card cro-history">'+head+note("History did not load: "+(h.error.message||h.error),true)+'</section>';
     var d=h.data||{},t=d.totals||{},rec=d.records||{};
     var kpis='<div class="cro-kpis">'+
-      [["Billed",money(t.billed_cents)],["Paid",money(t.paid_cents)],["Provider verified",money(t.provider_verified_cents)],["Open deliverables",String(t.open_deliverables||0)],["Next renewal",day(t.next_renewal_at)]]
+      [["Billed",money(t.billed_cents)],["Paid",money(t.paid_cents)],["Provider verified",money(t.provider_verified_cents)]]
+        .concat(t.test_mode_cents?[["Test mode (not revenue)",money(t.test_mode_cents)]]:[])
+        .concat([["Open deliverables",String(t.open_deliverables||0)],["Next renewal",day(t.next_renewal_at)]])
         .map(function(k){return'<div><small>'+e(k[0])+'</small><b>'+e(k[1])+'</b></div>';}).join("")+'</div>';
     var counts=["relationships","projects","orders","bookings","deliverables","renewals","payments","tasks"].map(function(k){return(rec[k]||[]).length+" "+k;}).join(" · ");
     var items=(d.timeline||[]).slice(0,60).map(function(ev){
@@ -190,7 +194,7 @@
       cols=[["Renewal",function(r){return e(r.title)+'<div class="cro-meta">'+e(words(r.cadence))+'</div>';}],["Client",function(r){return e(party(r));}],["Renews",function(r){return e(day(r.renews_at));}],["Amount",function(r){return e(money(r.amount_cents,r.currency));}],["State",function(r){return stateSelect(kind,r);}]];
     }else{
       /* Verification sits in the first column so it is visible at phone width without scrolling the table. */
-      cols=[["Payment",function(r){return e(r.title)+'<div class="cro-meta">'+e(r.provider||"manual")+(r.provider_reference?" · "+e(r.provider_reference):"")+'</div>'+verification(r);}],["Amount",function(r){return e(money(r.amount_cents,r.currency));}],["State",function(r){return stateSelect(kind,r);}],["For",function(r){return e(titleOf("projects",r.project_id)||titleOf("orders",r.order_id)||party(r));}],["Due / paid",function(r){return e(r.paid_at?"paid "+day(r.paid_at):day(r.due_at));}]];
+      cols=[["Payment",function(r){return e(r.title)+'<div class="cro-meta">'+e(r.provider||"manual")+(r.provider_reference?" · "+e(r.provider_reference):"")+'</div>'+verification(r);}],["Amount",function(r){return e(money(r.amount_cents,r.currency));}],["State",function(r){return r.verification==="provider_verified"?'<span class="cr-state">'+e(words(r.state))+'</span><div class="cro-meta">set by '+e(r.provider||"the provider")+'</div>':stateSelect(kind,r);}],["For",function(r){return e(titleOf("projects",r.project_id)||titleOf("orders",r.order_id)||party(r));}],["Due / paid",function(r){return e(r.paid_at?"paid "+day(r.paid_at):day(r.due_at));}]];
     }
     return history+(W.msg&&!W.form?note(W.msg,W.bad):"")+'<section class="cro-card"><div class="cro-row__top"><h2>'+e(LABEL[kind])+' records</h2><button class="cr-btn" type="button" data-wk-form="'+kind+'">+ New '+e(LABEL[kind].toLowerCase())+'</button></div>'+
       table(cols,rows,"No "+kind+" recorded yet.")+'</section>';
