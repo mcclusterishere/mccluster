@@ -434,6 +434,89 @@
       "url": "https://docs.jetstream-cloud.org/faq/gpu/",
       "category": "research_compute",
       "relevance": "Documents available A100, L40S and H100 GPU resources and the need for an explicit Jetstream2-GPU allocation."
+    },
+    {
+      "citation_key": "parapar_radlinski_2021_accuracy_diversity",
+      "title": "Towards Unified Metrics for Accuracy and Diversity for Recommender Systems",
+      "authors": [
+        "Javier Parapar",
+        "Filip Radlinski"
+      ],
+      "year": 2021,
+      "url": "https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/",
+      "category": "production_policy",
+      "relevance": "Supports evaluating diversity alongside relevance rather than optimizing accuracy alone."
+    },
+    {
+      "citation_key": "xu_et_al_2022_long_term_ux",
+      "title": "Surrogate for Long-Term User Experience in Recommender Systems",
+      "authors": [
+        "Can Xu",
+        "Ed H. Chi",
+        "Lee Richardson",
+        "Lisa Mijung Chung",
+        "Minmin Chen",
+        "Mohit Sharma",
+        "Qian Sun",
+        "Sriraj Badam",
+        "Yuyan Wang"
+      ],
+      "year": 2022,
+      "url": "https://research.google/pubs/surrogate-for-long-term-user-experience-in-recommender-systems/",
+      "category": "production_policy",
+      "relevance": "Supports long-horizon/revisit outcomes instead of immediate clicks as the only recommendation objective."
+    },
+    {
+      "citation_key": "chen_et_al_2021_values_exploration",
+      "title": "Values of Exploration in Recommender Systems",
+      "authors": [
+        "Minmin Chen et al."
+      ],
+      "year": 2021,
+      "url": "https://research.google/pubs/values-of-exploration-in-recommender-systems/",
+      "category": "production_policy",
+      "relevance": "Supports novelty/diversity guardrails and informs the later randomized exploration research phase."
+    },
+    {
+      "citation_key": "zhan_et_al_provider_aware",
+      "title": "Towards Content Provider-Aware Recommendation Systems: A Simulation Study on Interplays among User and Provider Utilities",
+      "authors": [
+        "Ruohan Zhan",
+        "Konstantina Christakopoulou",
+        "Elaine Le",
+        "Jayden Ooi",
+        "Martin Mladenov",
+        "Alex Beutel",
+        "Craig Boutilier",
+        "Ed H. Chi",
+        "Minmin Chen"
+      ],
+      "year": 2021,
+      "url": "https://research.google/pubs/towards-content-provider-aware-recommendation-systems-a-simulation-study-on-interplays-among-user-and-provider-utilities/",
+      "category": "multi_stakeholder",
+      "relevance": "Supports treating provider/business utility as a distinct bounded objective instead of silently replacing user relevance."
+    },
+    {
+      "citation_key": "ftc_endorsements_material_connections",
+      "title": "Endorsements, Influencers, and Reviews",
+      "authors": [
+        "U.S. Federal Trade Commission"
+      ],
+      "year": 2026,
+      "url": "https://www.ftc.gov/business-guidance/advertising-marketing/endorsements-influencers-reviews",
+      "category": "commercial_disclosure",
+      "relevance": "Material brand relationships connected to creator promotion should be clearly disclosed."
+    },
+    {
+      "citation_key": "schema_musicrecording_sponsor",
+      "title": "Schema.org MusicRecording",
+      "authors": [
+        "Schema.org Community Group"
+      ],
+      "year": 2026,
+      "url": "https://schema.org/MusicRecording",
+      "category": "music_metadata",
+      "relevance": "MusicRecording inherits sponsor/funder properties, providing a standards-compatible representation for disclosed support."
     }
   ]
 }

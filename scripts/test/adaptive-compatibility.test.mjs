@@ -56,12 +56,19 @@ test('all three initial adaptive surfaces are live and decision-instrumented',as
   assert.match(adaptive,/interact/);
 });
 
-test('PR B cannot silently become a ranking-policy launch',async()=>{
-  const router=await read('workers/mccluster/src/experience/router.js');
-  assert.match(router,/policy\.algorithm !== 'identity_order'/);
+test('PR C launches only the deterministic production policy, not a research bandit',async()=>{
+  const [router,migration,protocol]=await Promise.all([
+    read('workers/mccluster/src/experience/router.js'),
+    read('supabase/migrations/20261006235944_adaptive_production_policy_v1.sql'),
+    read('docs/research/PROTOCOL-002-PRODUCTION-POLICY-V1.md')
+  ]);
+  assert.match(router,/deterministic_score_mmr/);
+  assert.match(router,/production-mature/);
   assert.match(router,/caller_order_preserved/);
   assert.match(router,/Unsupported\/shadow policies never silently alter production traffic/);
-  assert.doesNotMatch(router,/bandit|thompson|linucb/i);
+  assert.match(migration,/'production-mature','v1','production','promoted','deterministic_score_mmr'/);
+  assert.match(protocol,/No training job, embedding model, LLM call/);
+  assert.doesNotMatch(router,/thompson_sampling|linucb|epsilon_greedy/i);
 });
 
 test('all three surfaces preserve caller order when the decision service is unavailable',async()=>{
@@ -82,4 +89,24 @@ test('experience decisions stay behind the existing privacy gate',async()=>{
   const gate=body.indexOf('privacy gate not acknowledged');
   const fetchAt=body.indexOf('fetch(');
   assert.ok(gate>-1 && (fetchAt===-1 || gate<fetchAt),'privacy fallback must happen before any decision fetch');
+});
+
+
+test('signed-in adaptive cards expose explicit preference controls without changing anonymous fallback',async()=>{
+  const [adaptive,experience,css]=await Promise.all([
+    read('js/adaptive-surfaces.js'),read('js/experience.js'),read('css/adaptive-surfaces.css')
+  ]);
+  assert.match(adaptive,/More like this/);
+  assert.match(adaptive,/Less like this/);
+  assert.match(adaptive,/MCC_EXPERIENCE\.prefer/);
+  assert.match(experience,/function preferences\(surface\)/);
+  assert.match(experience,/function clearPreference\(surface,key\)/);
+  assert.match(experience,/experience_preference_set/);
+  assert.match(css,/adaptive-card__tune/);
+  assert.match(adaptive,/local\.slice\(0,maxItems\)/);
+});
+
+test('server-ranked positions replace caller positions for downstream evidence',async()=>{
+  const adaptive=await read('js/adaptive-surfaces.js');
+  assert.match(adaptive,/Object\.assign\(\{\},localCandidate,\{position:/);
 });

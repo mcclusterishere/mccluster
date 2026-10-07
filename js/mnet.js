@@ -1433,13 +1433,16 @@
       return;
     }
     host.innerHTML = '<div class="mng__grid">' + list.map(groupCard).join("") + "</div>";
-    /* a ?group= link lands on its room: scrolled to, and marked */
+    /* A canonical group deep link opens the room, not merely the Groups tab.
+       Satellite products use this as their return path into the m_uid network. */
     if (groups.target) {
-      var card = host.querySelector('[data-group="' + groups.target + '"]');
+      var targetSlug = groups.target;
+      groups.target = null;
+      var card = host.querySelector('[data-group="' + targetSlug + '"]');
       if (card) {
         card.classList.add("is-target");
-        try { card.scrollIntoView({ block: "center" }); } catch (_) {}
-        groups.target = null;
+        openGroup(targetSlug);
+        return;
       }
     }
   }
@@ -1450,10 +1453,12 @@
   function openDeepLinkedGroup() {
     if (/[?&]mission=/.test(location.search)) return;
     var slug = null, view = null;
-    try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); } catch (_) {}
+    var source = "";
+    try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); source = u.get("src") || ""; } catch (_) {}
     /* ?view=missions opens a tab by name (the Action Record lives there) */
     if (!slug && view && /^(live|clips|feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
     if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) return;
+    if(source && /^[a-z0-9][a-z0-9._-]{0,47}$/i.test(source)) track("ecosystem_bridge_open",{group:slug,direction:"in",source:source.toLowerCase()});
     groups.target = slug;
     groups.seg = "explore";
     Array.prototype.forEach.call(document.querySelectorAll("[data-mng-seg]"), function (x) {
@@ -1525,9 +1530,14 @@
       "</div>";
     var org=groups.organization, campaigns=groups.campaigns||[];
     if(org){
+      var front=safeHttpUrl(g.front_page_url||org.website_url);
       $("mngHead").insertAdjacentHTML("beforeend",
         '<div class="mng__org"><span>Organization</span><strong>'+esc(org.name)+'</strong>'+
-        (org.verification_state==="verified"?'<b>Verified</b>':'')+'</div>');
+        (org.verification_state==="verified"?'<b>Verified</b>':'')+
+        (front?'<a href="'+esc(front)+'" target="_blank" rel="noopener" data-ecosystem-exit="'+esc(g.slug)+'">Open '+esc(org.name)+' ↗</a>':'')+
+        '</div>');
+      var exit=$("mngHead").querySelector('[data-ecosystem-exit="'+g.slug+'"]');
+      if(exit) exit.addEventListener("click",function(){track("ecosystem_bridge_open",{group:g.slug,direction:"out",destination:front});});
     }
     if(campaigns.length){
       $("mngHead").insertAdjacentHTML("beforeend",

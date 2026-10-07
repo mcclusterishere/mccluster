@@ -689,3 +689,12 @@ body.music-v2 .appbar__tab.is-active{color:#fff}
   .music-v2 .music-now__artwrap.has-video .music-now__film{opacity:0}
   .music-v2 .music-now__artwrap.has-video .music-now__art{opacity:1}
 }
+
+.music-now__partners{display:grid;gap:8px;width:min(100%,430px);margin:10px auto 0}
+.music-now__partners[hidden]{display:none}
+.music-now__partner{display:grid;gap:3px;padding:10px 12px;border-radius:14px;text-decoration:none;color:inherit;text-align:left;
+  background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.11)}
+.music-now__partner span{font:800 9px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.58}
+.music-now__partner b{font:800 13px/1.3 system-ui,sans-serif}
+.music-now__partner small{font:600 10px/1.4 system-ui,sans-serif;opacity:.7}
+.music-now__partner:focus-visible{outline:2px solid currentColor;outline-offset:3px}
