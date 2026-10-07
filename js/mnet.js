@@ -1453,10 +1453,12 @@
   function openDeepLinkedGroup() {
     if (/[?&]mission=/.test(location.search)) return;
     var slug = null, view = null;
-    try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); } catch (_) {}
+    var source = "";
+    try { var u = new URLSearchParams(location.search); slug = u.get("group"); view = u.get("view"); source = u.get("src") || ""; } catch (_) {}
     /* ?view=missions opens a tab by name (the Action Record lives there) */
     if (!slug && view && /^(live|clips|feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
     if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) return;
+    if(source && /^[a-z0-9][a-z0-9._-]{0,47}$/i.test(source)) track("ecosystem_bridge_open",{group:slug,direction:"in",source:source.toLowerCase()});
     groups.target = slug;
     groups.seg = "explore";
     Array.prototype.forEach.call(document.querySelectorAll("[data-mng-seg]"), function (x) {
