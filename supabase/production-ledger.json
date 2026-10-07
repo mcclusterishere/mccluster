@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 277,
-  "latest_version": "20261006234316",
-  "latest_name": "end_racism_track_funnel_taxonomy_v1",
-  "ledger_sha256": "37a27e040c297ccb01a0854a5e6b9c3fa1cd425a572fae5c824b8696d3de6e49",
+  "migration_count": 278,
+  "latest_version": "20261006235944",
+  "latest_name": "adaptive_production_policy_v1",
+  "ledger_sha256": "59e9b9cc6df58ec79f81010d5382c0c3bf4695f9045d3f8c297073bdf5188e6b",
   "migrations": [
     {
       "version": "0001",
@@ -1114,6 +1114,10 @@
     {
       "version": "20261006234316",
       "name": "end_racism_track_funnel_taxonomy_v1"
+    },
+    {
+      "version": "20261006235944",
+      "name": "adaptive_production_policy_v1"
     }
   ]
 }
