@@ -46,6 +46,7 @@ test('Production Policy v1 has no sponsorship input feature',async()=>{
   ]);
   const vector=router.slice(router.indexOf('function featureVector'),router.indexOf('async function hmacHex'));
   assert.doesNotMatch(vector,/sponsor|material_connection|paid_cents|payment_amount/i);
-  assert.match(migration,/commercial_relationship_excluded_from_rank/);
+  assert.match(router,/commercial_relationship_excluded_from_rank/);
+  assert.match(migration,/Material sponsorship\/brand connection does not affect ranking score/);
   assert.match(migration,/"business_priority":0\.05/);
 });
