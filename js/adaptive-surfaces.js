@@ -74,24 +74,46 @@
     },{threshold:[0.55]});
     io.observe(el);
   }
+  function hasSession(){
+    try{var s=JSON.parse(localStorage.getItem("mccdb_session")||"null");return !!(s&&s.access_token);}catch(_){return false;}
+  }
   function card(candidate,decision,surface){
     var href=safeHref(candidate.href);
-    var a=doc.createElement(href?"a":"div");
-    a.className="adaptive-card";
-    if(href)a.href=href;
-    a.dataset.candidateId=candidate.id;
+    var wrap=doc.createElement("article");
+    wrap.className="adaptive-card";
+    wrap.dataset.candidateId=candidate.id;
+    var main=doc.createElement(href?"a":"div");
+    main.className="adaptive-card__main";
+    if(href)main.href=href;
     var k=doc.createElement("span");k.className="adaptive-card__k";k.textContent=candidate.eyebrow||"Next";
     var b=doc.createElement("b");b.textContent=candidate.label||candidate.id;
     var s=doc.createElement("small");s.textContent=candidate.sub||"";
     var go=doc.createElement("span");go.className="adaptive-card__go";go.textContent="→";go.setAttribute("aria-hidden","true");
-    a.append(k,b,s,go);
+    main.append(k,b,s,go);
+    wrap.appendChild(main);
+    if(hasSession()&&root.MCC_EXPERIENCE&&typeof root.MCC_EXPERIENCE.prefer==="function"){
+      var tune=doc.createElement("div");tune.className="adaptive-card__tune";tune.setAttribute("aria-label","Tune this recommendation");
+      [["more","More like this"],["less","Less like this"]].forEach(function(pair){
+        var btn=doc.createElement("button");btn.type="button";btn.textContent=pair[1];btn.dataset.preference=pair[0];
+        btn.addEventListener("click",function(){
+          btn.disabled=true;
+          root.MCC_EXPERIENCE.prefer(surface,candidate.id,pair[0]).then(function(out){
+            btn.disabled=false;
+            if(!out||!out.ok)return;
+            Array.prototype.forEach.call(tune.querySelectorAll("button"),function(x){x.classList.toggle("is-on",x===btn);});
+          });
+        });
+        tune.appendChild(btn);
+      });
+      wrap.appendChild(tune);
+    }
     evidence("impression",decision,candidate,{surface:surface});
-    watchVisible(a,decision,candidate,surface);
-    a.addEventListener("click",function(){
+    watchVisible(wrap,decision,candidate,surface);
+    main.addEventListener("click",function(){
       evidence("interact",decision,candidate,{surface:surface});
       if(root.MCC_TRACK)root.MCC_TRACK("foryou_tap",{dom:candidate.meta&&candidate.meta.domain||"",surface:surface,candidate_id:candidate.id});
     });
-    return a;
+    return wrap;
   }
   async function mount(rootEl,surface,candidates,opts){
     if(typeof rootEl==="string")rootEl=doc.querySelector(rootEl);
