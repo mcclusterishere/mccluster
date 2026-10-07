@@ -15,7 +15,7 @@
     "Anything sensitive (EIN, UEI, CAGE, SAM registration) stays OUT of this",
     "file. It ships with the public site. Those live in the private desk."
   ],
-  "updated": "2026-10-02",
+  "updated": "2026-10-07",
   "person": {
     "legalName": "Matthew Christian Perry McCluster",
     "preferredName": "Matthew McCluster",
@@ -161,9 +161,27 @@
   "work": [
     {
       "client": "Whip Equipped LLC",
-      "role": "Founder / Automotive Systems & Telematics Operator",
-      "period": "2024–Present",
-      "scope": "GPS and fleet telematics, vehicle electrical and embedded diagnostics, immobilizer/security systems, ADAS/cameras/sensors and connected-mobility product development"
+      "role": "Research & Development — Telematics & Connected Mobility",
+      "period": "2026-10 – Present",
+      "scope": "Connected-mobility R&D, GNSS/telematics, vehicle systems, sensors and urban-motorcycle product/manufacturing readiness"
+    },
+    {
+      "client": "Whip Equipped LLC",
+      "role": "Parts Operations",
+      "period": "2024 – 2026-09",
+      "scope": "Automotive parts sourcing, inventory and vehicle-component operations within the applicable parts-business scope"
+    },
+    {
+      "client": "Whip Equipped LLC",
+      "role": "Dealer Operations / Vehicle Acquisition",
+      "period": "2024 licensed dealer phase",
+      "scope": "Vehicle acquisition and dealer operations limited to the applicable licensed dealer period"
+    },
+    {
+      "client": "The WorkPlace",
+      "role": "Marketing Technology & Web Operations Specialist (Contract)",
+      "period": "2024-02 – 2024-04",
+      "scope": "Client project: Onyx Elite LLC — web design/development, application development, digital operations, AI onboarding and assistance, social-media marketing, content and campaign operations"
     },
     {
       "client": "The Heat Chart",

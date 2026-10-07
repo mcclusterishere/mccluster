@@ -19,16 +19,59 @@
       "credentials": []
     },
     {
-      "slug": "whip-equipped",
-      "dates": "2024 to Present",
-      "title": "Founder / Automotive Systems & Telematics Operator",
+      "slug": "whip-equipped-rd",
+      "dates": "October 2026 to Present",
+      "title": "Research & Development — Telematics & Connected Mobility",
+      "org": "Whip Equipped LLC",
+      "location": "Remote",
+      "summary": "Current R&D work focused on connected mobility, GNSS/telematics, vehicle systems and an in-development urban motorcycle platform.",
+      "bullets": [
+        "Develops connected-mobility and telematics systems spanning GNSS, vehicle data, sensors and embedded hardware.",
+        "Researches product and manufacturing readiness for an in-development urban motorcycle platform.",
+        "Current R&D is maintained separately from Whip Equipped's earlier licensed dealer and parts operations."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "whip-equipped-parts",
+      "dates": "2024 to September 2026",
+      "title": "Parts Operations",
       "org": "Whip Equipped LLC",
       "location": "Georgia",
-      "summary": "Founded Whip Equipped LLC and now develops connected-mobility and vehicle-system work spanning GNSS/fleet telematics, electrical and embedded diagnostics, sensors and an in-development urban motorcycle platform.",
+      "summary": "Operated Whip Equipped's vehicle-parts business during its licensed parts-operation phase.",
       "bullets": [
-        "Deployed GPS and fleet-telematics systems, integrating connected hardware with vehicle power, data and monitoring workflows.",
-        "Diagnosed electrical and embedded-system faults and worked with immobilizer, vehicle-security, ADAS, camera and sensor-calibration systems.",
-        "Operated the parts/dealer phase through September 2026; current work centers on connected-mobility R&D and motorcycle product/manufacturing readiness."
+        "Managed automotive parts sourcing, inventory and operational workflows within the applicable parts-business scope.",
+        "Supported vehicle systems work involving electrical, security, camera, sensor and related components.",
+        "Parts operations ended September 2026 before the current R&D phase began."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "whip-equipped-dealer",
+      "dates": "2024",
+      "title": "Dealer Operations / Vehicle Acquisition",
+      "org": "Whip Equipped LLC",
+      "location": "Georgia",
+      "summary": "Operated the vehicle-dealer and acquisition side of Whip Equipped during its licensed dealer phase.",
+      "bullets": [
+        "Handled vehicle acquisition and dealer operations only during the applicable licensed dealer period.",
+        "Kept dealer activity distinct from later parts operations and current connected-mobility R&D."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "workplace-onyx",
+      "dates": "February 2024 to April 2024",
+      "title": "Marketing Technology & Web Operations Specialist (Contract)",
+      "org": "The WorkPlace",
+      "location": "Connecticut",
+      "summary": "Short-term marketing-technology contract through The WorkPlace, assigned to the Onyx Elite LLC client project.",
+      "bullets": [
+        "Designed and supported client-facing websites and digital experiences for the Onyx Elite project.",
+        "Contributed to web and application development, digital operations and client technology workflows.",
+        "Supported AI onboarding and AI-assisted business and marketing workflows.",
+        "Contributed to social-media marketing, content production, digital campaigns, prospect development and marketing operations.",
+        "Worked with Onyx Elite leadership, team members and clients on technology-enabled marketing initiatives."
       ],
       "credentials": []
     },
