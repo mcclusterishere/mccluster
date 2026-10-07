@@ -45,7 +45,7 @@ test("SEO/AEO authority surfaces stay coherent",()=>{
  assert.doesNotMatch(portfolio,/registered Connecticut public charity/i);
  assert.doesNotMatch(press,/Street Credit Bureau|registered Connecticut public charity/i);
  assert.doesNotMatch(brands,/registered Connecticut public charity|Every frame, chord, and line of code/i);
- assert.match(roles,/Automotive Systems & Telematics Operator/);
+ assert.match(roles,/Research & Development — Telematics & Connected Mobility/);
  assert.match(h,/Founder · connected mobility/);
  assert.match(l,/Southern Connecticut State University/);
  assert.match(l,/telematics/);
