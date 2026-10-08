@@ -20,6 +20,7 @@ import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
 import { handleWorkRequest } from './work.js';
+import { checkoutReceipt } from './commerce/receipt.js';
 import { handleClippingRequest } from './clipping/router.js';
 import { runClipping } from './clipping/runner.js';
 import { recentAudit } from './lib/audit.js';
@@ -63,6 +64,19 @@ async function dispatchRequest(request, env, ctx) {
 
     if (path === '/.well-known/oauth-protected-resource' && request.method === 'GET') {
       return coreOAuthMetadataResponse();
+    }
+
+    /* The buyer's confirmation page after Stripe (pay.html). Public by design:
+       the Checkout Session id is the key, and the answer carries no personal
+       or payment details (see commerce/receipt.js). */
+    if (path === '/v1/commerce/receipt' && request.method === 'GET') {
+      try {
+        const res = reply(request, env, await checkoutReceipt(env, url.searchParams.get('session')));
+        res.headers.set('cache-control', 'no-store');
+        return res;
+      } catch (err) {
+        return fail(request, env, err.status && err.status < 500 ? err.message : 'receipt unavailable', err.status || 500);
+      }
     }
 
     if (path === '/a.js' && request.method === 'GET') {

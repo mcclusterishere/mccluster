@@ -22,3 +22,14 @@ Pending: `equity_uprise_clipping_sources.sql` adds Action Network content source
 and distribution briefs. It is not applied in production. API Economic Core CI
 applies it only to its isolated rebuilt database before the clipping regression.
 Promote it using the steps above after production application is verified.
+
+Pending: `commerce_stripe_reconciler_v3.sql` makes concurrent Stripe deliveries
+for one sale wait for each other (a refund racing its checkout was lost),
+promotes a payment the owner typed in instead of shadowing it, and keeps partial
+refunds as `work_payments.refunded_cents`. The webhook calls the same functions
+before and after it applies. API Economic Core CI applies it to its rebuilt
+database, reruns the v1/v2 suite, then runs
+`supabase/tests/commerce_stripe_reconciler_v3_regression.sql` and the two-session
+race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
+Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
+steps above.

@@ -12,6 +12,9 @@ on:
       - 'supabase/tests/compute_cogs_regression.sql'
       - 'supabase/pending/**'
       - 'supabase/tests/action_clipping_regression.sql'
+      - 'supabase/tests/commerce_stripe_*'
+      - 'supabase/functions/stripe-webhook/commerce.ts'
+      - 'scripts/stripe-test/**'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -28,6 +31,9 @@ on:
       - 'supabase/tests/compute_cogs_regression.sql'
       - 'supabase/pending/**'
       - 'supabase/tests/action_clipping_regression.sql'
+      - 'supabase/tests/commerce_stripe_*'
+      - 'supabase/functions/stripe-webhook/commerce.ts'
+      - 'scripts/stripe-test/**'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -81,6 +87,34 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/api_rate_limit_regression.sql
+      - name: Run commerce reconciler regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_regression.sql
+      # Reconciler v3 waits in supabase/pending/ until production applies it
+      # (see its README). Apply it to this rebuild, prove the v1/v2 suite still
+      # holds on it, then its own suite and the two-session race it fixes.
+      - name: Apply pending commerce reconciler v3 in the isolated database
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --single-transaction -v ON_ERROR_STOP=1 -f supabase/pending/commerce_stripe_reconciler_v3.sql
+      - name: Run commerce reconciler regression suites on v3
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_regression.sql
+          psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_v3_regression.sql
+      - name: Race two Stripe deliveries for one sale
+        env:
+          PGPASSWORD: postgres
+        run: bash supabase/tests/commerce_stripe_concurrency.sh 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Replay Stripe webhook scenarios in random orders, with repeats and races
+        env:
+          PGPASSWORD: postgres
+        run: node scripts/stripe-test/replay.mjs --db 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --runs 3
       - name: Run compute COGS regression suite
         env:
           PGPASSWORD: postgres
