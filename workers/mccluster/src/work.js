@@ -709,7 +709,8 @@ export async function workHistory(env, user, params) {
     ? await read(`control_audit?org_id=eq.${org}&resource_id=${inList(ids.slice(0, 200))}&select=id,event,resource_type,resource_id,actor_user_id,detail,at&order=at.desc&limit=${cap}`)
     : [];
 
-  const paid = payments.filter((p) => p.state === 'paid');
+  const livePayments = payments.filter((p) => p.livemode !== false);
+  const paid = livePayments.filter((p) => p.state === 'paid');
   const totals = {
     billed_cents: payments.filter((p) => !['cancelled'].includes(p.state)).reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     paid_cents: paid.reduce((sum, p) => sum + (p.amount_cents || 0), 0),
