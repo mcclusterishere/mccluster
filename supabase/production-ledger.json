@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 272,
-  "latest_version": "20261006213626",
-  "latest_name": "here_album_commerce_v1",
-  "ledger_sha256": "18a3141c2eeb42d885037b0498eabd05815c10c9025cec1e9846150b4fae60a4",
+  "migration_count": 277,
+  "latest_version": "20261006234316",
+  "latest_name": "end_racism_track_funnel_taxonomy_v1",
+  "ledger_sha256": "37a27e040c297ccb01a0854a5e6b9c3fa1cd425a572fae5c824b8696d3de6e49",
   "migrations": [
     {
       "version": "0001",
@@ -1080,6 +1080,18 @@
       "name": "analytics_session_forensics_v5"
     },
     {
+      "version": "20261006021431",
+      "name": "commerce_stripe_reconciler_v1"
+    },
+    {
+      "version": "20261006022702",
+      "name": "leads_status_vocabulary_reconcile_v1"
+    },
+    {
+      "version": "20261006023453",
+      "name": "commerce_stripe_reconciler_v2"
+    },
+    {
       "version": "20261006170955",
       "name": "action_clipping_marketplace_v1"
     },
@@ -1092,8 +1104,16 @@
       "name": "experience_evidence_plane_v1"
     },
     {
-      "version": "20261006213626",
-      "name": "here_album_commerce_v1"
+      "version": "20261006232625",
+      "name": "music_direct_track_sales_v1"
+    },
+    {
+      "version": "20261006233518",
+      "name": "here_album_commerce_v1_reconcile"
+    },
+    {
+      "version": "20261006234316",
+      "name": "end_racism_track_funnel_taxonomy_v1"
     }
   ]
 }

@@ -56,6 +56,7 @@
 
   function fromGate(gate) {
     if (!gate) return { state: "unavailable", reason: "no-gate" };
+    if (gate.purchase_required) return { state: "purchase", gate: gate, purchase_offer: gate.purchase_offer || "" };
     return gate.allowed
       ? { state: "earned", gate: gate, operator: !!gate.operator }
       : { state: "locked", gate: gate };
@@ -90,6 +91,7 @@
     if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
     return ask("/v1/music/gates/" + encodeURIComponent(key) + "/play", "POST").then(function (r) {
       if (r.status === 200 && r.data && r.data.url) return { state: "full", url: r.data.url, gate: r.data.gate };
+      if (r.status === 402) return { state: "purchase", gate: r.data || {}, purchase_offer: r.data && r.data.purchase_offer || "" };
       if (r.status === 403) return { state: "locked", gate: r.data && r.data.gate };
       if (r.status === 401) return { state: "preview", reason: "account" };
       if (r.status === 404) return { state: "unavailable", reason: "missing" };
@@ -101,6 +103,7 @@
   function progress(out) {
     var g = out && out.gate;
     if (!out) return null;
+    if (out.state === "purchase") return { b: "FULL MP3 · $1", s: "supports End Racism" };
     if (out.state === "earned") return out.operator ? { b: "PLAY", s: "owner" } : { b: "PLAY ONCE", s: "you earned it" };
     if (out.state !== "locked" || !g) return null;
     /* Album order: the record closes its album and plays only after the

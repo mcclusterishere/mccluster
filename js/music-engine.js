@@ -257,6 +257,7 @@
     var artist = current.artist || "Matthew McCluster";
     var album = current.albumName || "";
     var accessLabel = currentAccess === "full" ? "Full track" :
+      currentAccess === "preview" && current.gated && current.gated.purchase_offer ? "Preview · Full MP3 $1" :
       currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" :
       currentAccess === "unavailable" ? "Unavailable" : "";
     var duration = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
@@ -377,6 +378,9 @@
               ? { state: "full", url: c.url, granted: true }
               : { state: "preview", url: t.src, reason: c.state };
           });
+        }
+        if (out.state === "purchase") {
+          return { state: "preview", url: t.src, reason: "purchase", purchase_offer: out.purchase_offer || t.gated.purchase_offer || "" };
         }
         if (out.state === "preview" || out.state === "locked" || out.state === "earned") {
           return { state: "preview", url: t.src, reason: out.state };

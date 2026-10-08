@@ -47,8 +47,10 @@ if (mccPrivacyAcknowledged()) {
    WHAT LEAVES THIS BROWSER. An event name, the path, the small bag of
    properties the calling page chose, a device id, a session id, and
    what the browser can honestly say about itself: screen, timezone,
-   platform, language. MCC_MODEL below still runs entirely on-device
-   and still sends nothing.
+   platform, language. MCC_MODEL keeps its legacy profile on-device, but its
+   compatibility adapter may now send a bounded candidate/opportunity set to
+   the first-party ExperienceDecision service. Legacy interest weights and
+   inferred domain scores are never uploaded by this adapter.
    ============================================================ */
 
 /* Lead intake: the Apps Script web app URL (ends in /exec) that appends
@@ -392,7 +394,39 @@ window.MCC_TRACK = (function () {
 window.MCC_MODEL = (function () {
   "use strict";
   var KEY = "mcc_model_v1";
+  var DECISION_KEY = "mcc_model_decisions_v1";
   var HALF_LIFE_DAYS = 14; // interests cool off; the model stays current
+  var inflight = {};
+  function readDecisions() {
+    try {
+      var v = JSON.parse(sessionStorage.getItem(DECISION_KEY) || "{}");
+      return v && typeof v === "object" ? v : {};
+    } catch (_) { return {}; }
+  }
+  var DECISIONS = readDecisions();
+  function writeDecisions() {
+    try { sessionStorage.setItem(DECISION_KEY, JSON.stringify(DECISIONS)); } catch (_) {}
+  }
+  function usableDecision(surface) {
+    var d = DECISIONS[surface];
+    if (!d || !d.ok || !d.decision_id) return null;
+    if (d.expires_at && Date.parse(d.expires_at) <= Date.now()) {
+      delete DECISIONS[surface]; writeDecisions(); return null;
+    }
+    return d;
+  }
+  function rememberDecision(surface, d) {
+    if (!d || !d.ok || !d.decision_id) return d;
+    DECISIONS[surface] = d; writeDecisions(); return d;
+  }
+  function decide(surface, candidates, opts) {
+    if (!window.MCC_EXPERIENCE || typeof window.MCC_EXPERIENCE.decide !== "function") {
+      return Promise.resolve({ ok:false, fallback:true, candidates:candidates || [], error:"experience client unavailable" });
+    }
+    return window.MCC_EXPERIENCE.decide(surface, candidates || [], opts || {}).then(function (d) {
+      return rememberDecision(surface, d);
+    });
+  }
 
   /* what an event means: first match wins, weight = how loud the signal is */
   var MAP = [
@@ -501,6 +535,14 @@ window.MCC_MODEL = (function () {
       visits: S.visits, events: S.events, heat: S.heat,
       streak: S.streak || 1,
       goals: S.goals,
+      experience: {
+        source: usableDecision("global.for_you") ? "experience-decision" : "local-fallback",
+        decisions: Object.keys(DECISIONS).reduce(function (out, surface) {
+          var d = usableDecision(surface);
+          if (d) out[surface] = { decision_id:d.decision_id, policy:d.policy || null, expires_at:d.expires_at || null };
+          return out;
+        }, {})
+      }
     };
   }
 
@@ -512,7 +554,7 @@ window.MCC_MODEL = (function () {
     return (S.shows[dom] || 0) >= 5 && !(S.taps[dom] || 0);
   }
 
-  function suggest() {
+  function localSuggest() {
     var p = profile();
     var here = location.pathname.split("/").pop() || "index.html";
     if (!p.top || p.stage === "new") {
@@ -536,12 +578,65 @@ window.MCC_MODEL = (function () {
     return { label: "Start with the sound", sub: "The catalogue \u00b7 every record on the page", href: "app.html", dom: "music", why: "fallback" };
   }
 
+  function domainCandidate(dom, position) {
+    var g = PAGES[dom];
+    if (!g) return null;
+    return { id:dom, kind:"destination", position:position, meta:{ domain:dom, href:g[0] } };
+  }
+  function legacyCandidates(first) {
+    var order = [];
+    if (first && first.dom && PAGES[first.dom]) order.push(first.dom);
+    var ranked = profile().ranked.map(function (r) { return r[0]; });
+    ranked.concat(["music","experience","client","artist","civic","org"]).forEach(function (d) {
+      if (PAGES[d] && order.indexOf(d) < 0) order.push(d);
+    });
+    return order.map(domainCandidate).filter(Boolean);
+  }
+  function selectedLegacy(decision, fallback) {
+    var id = decision && decision.candidates && decision.candidates[0] && String(decision.candidates[0].id || "");
+    var g = PAGES[id];
+    if (!g) return fallback;
+    return {
+      label:g[1], sub:g[2], href:g[0], dom:id,
+      why:"decision:" + (decision.policy ? decision.policy.key + "@" + decision.policy.version : "experience"),
+      decision_id:decision.decision_id, source:"experience-decision"
+    };
+  }
+  function warmSuggest(fallback) {
+    var surface = "global.for_you";
+    if (usableDecision(surface) || inflight[surface]) return;
+    if (!window.MCC_EXPERIENCE || typeof window.MCC_EXPERIENCE.decide !== "function") return;
+    inflight[surface] = decide(surface, legacyCandidates(fallback), { maxItems:1 })
+      .catch(function () { return null; })
+      .then(function (d) { delete inflight[surface]; return d; });
+  }
+  function suggest() {
+    var fallback = localSuggest();
+    var cached = usableDecision("global.for_you");
+    warmSuggest(fallback);
+    if (cached) return selectedLegacy(cached, fallback);
+    fallback.source = "local-fallback";
+    return fallback;
+  }
+  function suggestAsync(surface) {
+    var fallback = localSuggest();
+    surface = surface || "global.for_you";
+    return decide(surface, legacyCandidates(fallback), { maxItems:1 }).then(function (d) {
+      return d && d.ok ? selectedLegacy(d, fallback) : fallback;
+    }).catch(function () { return fallback; });
+  }
+
   /* a surface that rendered the suggestion reports it: fatigue is learned,
      not guessed: five silent impressions and that domain rotates out */
   function shown(dom) {
     if (!dom) return;
     S.shows[dom] = +((S.shows[dom] || 0) + 1).toFixed(2);
     save();
+    var d = usableDecision("global.for_you");
+    if (d && d.candidates && d.candidates[0] && String(d.candidates[0].id) === String(dom) &&
+        window.MCC_EXPERIENCE && typeof window.MCC_EXPERIENCE.impression === "function") {
+      try { window.MCC_EXPERIENCE.impression(d, d.candidates[0], { compatibility_api:true }); } catch (_) {}
+    }
   }
 
   /* the money framing: same deal, two doors. Mission-leaning people
@@ -595,8 +690,16 @@ window.MCC_MODEL = (function () {
     return orig(name, params);
   };
 
-  return { profile: profile, suggest: suggest, shown: shown, pitch: pitch, persuade: persuade, observe: observe,
-    reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} } };
+  return {
+    profile:profile, suggest:suggest, suggestAsync:suggestAsync, shown:shown, decide:decide,
+    pitch:pitch, persuade:persuade, observe:observe,
+    lastDecision:function(surface){ return usableDecision(surface || "global.for_you"); },
+    reset:function () {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      try { sessionStorage.removeItem(DECISION_KEY); } catch (e) {}
+      DECISIONS = {};
+    }
+  };
 })();
 
 /* ============================================================

@@ -8,123 +8,6 @@
    "by": "Have no fear.",
    "tracks": [
     {
-     "title": "Who Did The Shoot",
-     "src": "assets/audio/who-did-the-shoot.mp3",
-     "poster": "assets/frames/hero_0001.jpg",
-     "lyrics": "data/lyrics/who-did-the-shoot.json",
-     "pulse": "#e5383b",
-     "music_video": "assets/video/hero.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "who-did-the-shoot",
-       "label": "Book a shoot",
-       "href": "onboard.html?offer=who-did-the-shoot"
-      },
-      "theme": {
-       "accent": "#e5383b",
-       "background": "#090706",
-       "foreground": "#f4efe6",
-       "surface": "#17110f"
-      },
-      "lyric_ctas": [
-       {
-        "match": "Pay the fee",
-        "label": "Book the shoot",
-        "href": "onboard.html?offer=who-did-the-shoot",
-        "offer_id": "who-did-the-shoot"
-       },
-       {
-        "match": "Deposit lock the day in",
-        "label": "Lock a shoot date",
-        "href": "onboard.html?offer=who-did-the-shoot",
-        "offer_id": "who-did-the-shoot"
-       },
-       {
-        "match": "the content so engaging",
-        "label": "Get content made",
-        "href": "onboard.html?offer=who-did-the-shoot",
-        "offer_id": "who-did-the-shoot"
-       },
-       {
-        "match": "lights, camera, action",
-        "label": "Book production",
-        "href": "onboard.html?offer=who-did-the-shoot",
-        "offer_id": "who-did-the-shoot"
-       },
-       {
-        "match": "connect with us",
-        "label": "Connect with the studio",
-        "href": "onboard.html?offer=who-did-the-shoot",
-        "offer_id": "who-did-the-shoot"
-       }
-      ]
-     }
-    },
-    {
-     "title": "Runway Walk",
-     "src": "assets/audio/runway-walk.mp3",
-     "poster": "assets/frames/vauntlive_0001.jpg",
-     "pulse": "#ff5a5c",
-     "music_video": "assets/video/vauntlive.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "runway",
-       "label": "Get your website live",
-       "href": "onboard.html?offer=runway"
-      },
-      "theme": {
-       "accent": "#ff5a5c",
-       "background": "#0b0809",
-       "foreground": "#fff4ef",
-       "surface": "#1b0f12"
-      },
-      "lyric_ctas": []
-     }
-    },
-    {
-     "title": "Write a Song",
-     "src": "assets/audio/write-a-song.mp3",
-     "poster": "assets/frames/studio360_0001.jpg",
-     "pulse": "#c1121f",
-     "music_video": "assets/video/studio360.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "write-a-song",
-       "label": "Start a song campaign",
-       "href": "onboard.html?offer=write-a-song"
-      },
-      "theme": {
-       "accent": "#c1121f",
-       "background": "#090708",
-       "foreground": "#fff4ef",
-       "surface": "#190c0e"
-      },
-      "lyric_ctas": []
-     }
-    },
-    {
-     "title": "Here",
-     "sub": "the title track",
-     "src": "assets/audio/here.mp3",
-     "poster": "assets/frames/keynote_0001.jpg",
-     "pulse": "#ff3040",
-     "music_video": "assets/video/keynote.mp4",
-     "experience": {
-      "commerce": {
-       "offer_id": "runway",
-       "label": "Build your own front door",
-       "href": "onboard.html?offer=runway"
-      },
-      "theme": {
-       "accent": "#ff3040",
-       "background": "#080708",
-       "foreground": "#fff6ef",
-       "surface": "#170c10"
-      },
-      "lyric_ctas": []
-     }
-    },
-    {
      "title": "Antisocial",
      "src": "assets/audio/antisocial.mp3",
      "poster": "assets/frames/nightscroll_0001.jpg",
@@ -185,6 +68,101 @@
      }
     },
     {
+     "title": "Write a Song",
+     "src": "assets/audio/write-a-song.mp3",
+     "poster": "assets/frames/studio360_0001.jpg",
+     "pulse": "#c1121f",
+     "music_video": "assets/video/studio360.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "write-a-song",
+       "label": "Start a song campaign",
+       "href": "onboard.html?offer=write-a-song"
+      },
+      "theme": {
+       "accent": "#c1121f",
+       "background": "#090708",
+       "foreground": "#fff4ef",
+       "surface": "#190c0e"
+      },
+      "lyric_ctas": []
+     }
+    },
+    {
+     "title": "Runway Walk",
+     "src": "assets/audio/runway-walk.mp3",
+     "poster": "assets/frames/vauntlive_0001.jpg",
+     "pulse": "#ff5a5c",
+     "music_video": "assets/video/vauntlive.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "runway",
+       "label": "Get your website live",
+       "href": "onboard.html?offer=runway"
+      },
+      "theme": {
+       "accent": "#ff5a5c",
+       "background": "#0b0809",
+       "foreground": "#fff4ef",
+       "surface": "#1b0f12"
+      },
+      "lyric_ctas": []
+     }
+    },
+    {
+     "title": "Who Did The Shoot",
+     "src": "assets/audio/who-did-the-shoot.mp3",
+     "poster": "assets/frames/hero_0001.jpg",
+     "lyrics": "data/lyrics/who-did-the-shoot.json",
+     "pulse": "#e5383b",
+     "music_video": "assets/video/hero.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "who-did-the-shoot",
+       "label": "Book a shoot",
+       "href": "onboard.html?offer=who-did-the-shoot"
+      },
+      "theme": {
+       "accent": "#e5383b",
+       "background": "#090706",
+       "foreground": "#f4efe6",
+       "surface": "#17110f"
+      },
+      "lyric_ctas": [
+       {
+        "match": "Pay the fee",
+        "label": "Book the shoot",
+        "href": "onboard.html?offer=who-did-the-shoot",
+        "offer_id": "who-did-the-shoot"
+       },
+       {
+        "match": "Deposit lock the day in",
+        "label": "Lock a shoot date",
+        "href": "onboard.html?offer=who-did-the-shoot",
+        "offer_id": "who-did-the-shoot"
+       },
+       {
+        "match": "the content so engaging",
+        "label": "Get content made",
+        "href": "onboard.html?offer=who-did-the-shoot",
+        "offer_id": "who-did-the-shoot"
+       },
+       {
+        "match": "lights, camera, action",
+        "label": "Book production",
+        "href": "onboard.html?offer=who-did-the-shoot",
+        "offer_id": "who-did-the-shoot"
+       },
+       {
+        "match": "connect with us",
+        "label": "Connect with the studio",
+        "href": "onboard.html?offer=who-did-the-shoot",
+        "offer_id": "who-did-the-shoot"
+       }
+      ]
+     }
+    },
+    {
      "title": "Lightroom",
      "src": "assets/audio/lightroom.mp3",
      "poster": "assets/frames/editors_0001.jpg",
@@ -201,6 +179,28 @@
        "background": "#08090a",
        "foreground": "#f5f4f0",
        "surface": "#121417"
+      },
+      "lyric_ctas": []
+     }
+    },
+    {
+     "title": "Here",
+     "sub": "the title track",
+     "src": "assets/audio/here.mp3",
+     "poster": "assets/frames/keynote_0001.jpg",
+     "pulse": "#ff3040",
+     "music_video": "assets/video/keynote.mp4",
+     "experience": {
+      "commerce": {
+       "offer_id": "runway",
+       "label": "Build your own front door",
+       "href": "onboard.html?offer=runway"
+      },
+      "theme": {
+       "accent": "#ff3040",
+       "background": "#080708",
+       "foreground": "#fff6ef",
+       "surface": "#170c10"
       },
       "lyric_ctas": []
      }
@@ -393,25 +393,12 @@
         "label": "MP3",
         "note": "plays anywhere",
         "object": "niggy-nigg/niggy-nigg.mp3"
-       },
-       {
-        "ext": "m4r",
-        "label": "Ringtone",
-        "note": "iPhone",
-        "object": "niggy-nigg/niggy-nigg.m4r"
        }
       ],
-      "access_mode": "account",
-      "preview_visibility": "until_earned",
-      "full_visibility": "earned_play",
-      "listen_gate": {
-       "any_of": [
-        "you-the-feds",
-        "pull-up"
-       ],
-       "minimum_completed": 1,
-       "each_play_needs_a_fresh_listen": true
-      }
+      "access_mode": "purchase",
+      "preview_visibility": "public",
+      "full_visibility": "purchase",
+      "purchase_offer": "end-racism-niggy-nigg-full"
      }
     }
    ]

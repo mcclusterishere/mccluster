@@ -1,3 +1,6 @@
+-- Production reconciliation for the HERE album commerce migration.
+-- The original 20261006213626 migration existed in source/ledger but was not present
+-- in Supabase migration history. Applied to production as 20261006233518.
 -- I AM HERE commerce + artist-custom player v1.
 -- Canonical nomenclature: music_video / music_video_url. Legacy "video" readers
 -- may remain temporarily for backward compatibility, but new writes use the

@@ -7,6 +7,14 @@ on:
       - 'js/mc-analytics.js'
       - 'js/analytics-product.js'
       - 'js/analytics.js'
+      - 'js/experience.js'
+      - 'js/adaptive-surfaces.js'
+      - 'css/adaptive-surfaces.css'
+      - 'index.html'
+      - 'listen.html'
+      - 'action/index.html'
+      - 'js/action.js'
+      - 'scripts/test/adaptive-compatibility.test.mjs'
       - 'js/live-content.js'
       - 'js/name-integrity.js'
       - 'account.html'
@@ -25,6 +33,14 @@ on:
       - 'js/mc-analytics.js'
       - 'js/analytics-product.js'
       - 'js/analytics.js'
+      - 'js/experience.js'
+      - 'js/adaptive-surfaces.js'
+      - 'css/adaptive-surfaces.css'
+      - 'index.html'
+      - 'listen.html'
+      - 'action/index.html'
+      - 'js/action.js'
+      - 'scripts/test/adaptive-compatibility.test.mjs'
       - 'js/live-content.js'
       - 'js/name-integrity.js'
       - 'account.html'
@@ -52,12 +68,17 @@ jobs:
           node --check js/mc-analytics.js
           node --check js/analytics-product.js
           node --check js/analytics.js
+          node --check js/experience.js
+          node --check js/adaptive-surfaces.js
+          node --check js/action.js
           node --check js/live-content.js
           node --check js/name-integrity.js
           node --check workers/mccluster/src/analytics/router.js
           node --check workers/mccluster/src/entry.js
       - name: Run analytics product contracts
         run: node --test scripts/test/analytics-platform.test.mjs
+      - name: Run adaptive compatibility contracts
+        run: node --test scripts/test/adaptive-compatibility.test.mjs
       - name: Run account identity and privacy gate contracts
         run: node --test scripts/test/account-identity-gate.test.mjs
 

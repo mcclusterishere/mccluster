@@ -102,6 +102,8 @@ fails when `config.toml` gains one that is missing here.
 | `checkout` | anonymous buyers | server-priced offering rows; no browser-chosen price, seller or account |
 | `shake-order` | anonymous buyers | server recomputes every cent; open window and capacity enforced; payment re-confirmed with Stripe |
 | `pay-now` | legacy, superseded by `checkout` | **retired in code**: every request gets `410` before Stripe is touched. Its `mccluster` / `equity-uprise` branch skipped the provider lookup and minted Checkout sessions on the platform account for any amount and title. Nothing calls it. |
+| `music-direct-checkout` | anonymous $1 track buyers | browser supplies only a registered offer key; price/currency/product are loaded server-side from locked `music_direct_offers`; Checkout metadata binds one pending order; no caller-selected amount or asset path |
+| `music-direct-access` | paid buyer returning from Stripe Checkout | server retrieves the Checkout Session directly from Stripe, requires `payment_status=paid` plus matching direct-sale metadata/order, and signs only the registered private object for 15 minutes; refund webhook revokes entitlement |
 | `stripe-webhook` | provider callback | Stripe signature (`STRIPE_WEBHOOK_SECRET`) |
 | `outreach-webhook` | provider callback | Svix signature (`RESEND_WEBHOOK_SECRET`) |
 | `inbox` | Meta / Slack callbacks and site chat | HMAC signatures compared in constant time; Meta verify token |

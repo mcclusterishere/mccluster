@@ -118,51 +118,38 @@ test('the gated record never counts toward its own gate, and unknown songs are r
   assert.ok(!calls.some((c) => c.url.endsWith('/rpc/music_listen_start')));
 });
 
-test('finishing a listen reports whether it counted and the gate progress', async () => {
+test('finishing a listen reports the paid gate without turning listening into entitlement', async () => {
   fakeSupabase();
   const res = await call('/v1/music/listens/11111111-1111-4111-8111-111111111111/finish', { method: 'POST' });
   const data = await res.json();
   assert.equal(data.counted, true);
-  assert.equal(data.gates['niggy-nigg'].need, 1);
-  assert.deepEqual(data.gates['niggy-nigg'].titles, ['You the Feds', 'Pull Up'], 'the page is told which album songs can unlock the closer');
+  assert.equal(data.gates['niggy-nigg'].purchase_required, true);
+  assert.equal(data.gates['niggy-nigg'].purchase_offer, 'end-racism-niggy-nigg-full');
+  assert.equal(data.gates['niggy-nigg'].allowed, false);
   assert.equal((await call('/v1/music/listens/not-a-uuid/finish', { method: 'POST' })).status, 404);
 });
 
-test('a locked listener gets progress and no URL', async () => {
-  const calls = fakeSupabase({ claim: { mode: 'any', claimed: false, allowed: false, progress: 0, need: 1 } });
-  const res = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
-  assert.equal(res.status, 403);
-  const data = await res.json();
-  assert.equal(data.locked, true);
-  assert.equal(data.gate.progress, 0);
-  assert.deepEqual(data.gate.titles, ['You the Feds', 'Pull Up']);
-  assert.ok(!calls.some((c) => c.url.includes('/storage/v1/object/sign/')), 'a locked listener must never cause a signature');
+test('the paid master cannot be earned through the legacy public gate route', async () => {
+  const calls = fakeSupabase({ claim: { claimed: true, allowed: true } });
+  const stateRes = await call('/v1/music/gates/niggy-nigg');
+  assert.equal(stateRes.status, 200);
+  const state = await stateRes.json();
+  assert.equal(state.gate.purchase_required, true);
+  assert.equal(state.gate.purchase_offer, 'end-racism-niggy-nigg-full');
+
+  const playRes = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
+  assert.equal(playRes.status, 402);
+  const play = await playRes.json();
+  assert.equal(play.purchase_required, true);
+  assert.equal(play.purchase_offer, 'end-racism-niggy-nigg-full');
+  assert.ok(!calls.some((x) => /music_gate_claim/.test(x.url)), 'a paid listener route must never call an earn/claim RPC');
+  assert.ok(!calls.some((x) => x.url.includes('/storage/v1/object/sign/')), 'a paid listener route must never sign the private master');
 });
 
-test('an earned play is a one-play stream token, never a storage URL', async () => {
-  const calls = fakeSupabase({ claim: { claimed: true, play_id: 'p1', allowed: false } });
-  const res = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
-  assert.equal(res.status, 200);
-  const data = await res.json();
-  assert.match(data.url, /^https:\/\/api\.mccluster\.org\/v1\/music\/stream\/[0-9a-f]{64}$/);
-  assert.doesNotMatch(data.url, /storage/);
-  assert.ok(!calls.some((c) => c.url.includes('/storage/v1/object/sign/')), 'a listener play must not mint a reusable storage URL');
-  const claim = calls.find((c) => c.url.endsWith('/rpc/music_gate_claim_any'));
-  assert.equal(claim.body.p_token, data.url.split('/').pop(), 'the token handed out is the one the database holds');
-  assert.equal(claim.body.p_stream_seconds, GATES['niggy-nigg'].stream_seconds);
-  assert.ok(GATES['niggy-nigg'].stream_seconds <= 300, 'a play token must not outlive one sitting');
-});
-
-test('CIA Mind Control closer unlocks after either earlier album song', async () => {
-  const albums = JSON.parse(readFileSync(new URL('../../../data/albums.json', import.meta.url), 'utf8')).albums;
-  const album = albums.find((a) => a.slug === 'cia-mind-control');
-  const keys = album.tracks.map((t) => t.gated ? String(t.gated.object).split('/')[0] : t.src.split('/').pop().replace(/\.[^.]+$/, ''));
-  assert.equal(keys[keys.length - 1], 'niggy-nigg', 'the gated record closes the album');
-  assert.deepEqual(GATES['niggy-nigg'].any_of, keys.slice(0, -1), 'either earlier album song can unlock one closer play');
-  const calls = fakeSupabase({ claim: { claimed: false, allowed: false } });
-  await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
-  const claim = calls.find((c) => c.url.endsWith('/rpc/music_gate_claim_any'));
-  assert.deepEqual(claim.body.p_eligible, ['you-the-feds', 'pull-up']);
+test('the CIA master has a fixed purchase offer instead of an album-listen unlock rule', () => {
+  assert.equal(GATES['niggy-nigg'].purchase_offer, 'end-racism-niggy-nigg-full');
+  assert.equal(GATES['niggy-nigg'].any_of, undefined);
+  assert.equal(GATES['niggy-nigg'].sequence, undefined);
 });
 
 test('the stream serves the master with ranges while the token holds, and refuses after', async () => {

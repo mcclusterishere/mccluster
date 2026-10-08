@@ -1,5 +1,12 @@
 # End Racism two-path campaign v1
 
+> **Current public gateway contract — 2026-10-06**
+>
+> `end-racism.html` is intentionally short: **I'M NOT RACIST** (white) / **I'M RACIST** (red) → **$1 full-track offer** → **End Racism action**.
+> The two visual choices have equal weight. The public click is navigation only: it does **not** persist a racist/not-racist trait, score, belief, or profile field.
+> The extended Certified Racist / Wigger Recovery satire remains on recovery/member-controlled surfaces and must not be restored above the public gateway funnel.
+> The full `Niggy Nigg Niggr` master is no longer earned through listening. The public preview is free; the full MP3 is a fixed **$1 music purchase** that supports End Racism. It is not represented as a tax-deductible charitable contribution.
+
 ## Purpose
 
 Use a provocative joke to route people into measurable anti-racism action without granting permission to harass anyone or having Action label a person racist.
@@ -8,11 +15,11 @@ The campaign asks one deliberately blunt question:
 
 **PROVE YOU'RE NOT RACIST.**
 
-A participant chooses one of two paths. Action records the choice and what happens next; it does not infer a person's beliefs.
+A visitor sees two navigation paths. The public gateway does not record either declaration as an identity trait. Action records actual missions and verified work; it does not infer a person's beliefs.
 
 ## Path A — Prove it
 
-The participant chooses **PROVE IT** and receives the End Racism mission sequence.
+The visitor chooses **I'M NOT RACIST** and is routed to the End Racism mission sequence.
 
 Progress is earned only through verified mission completions. Payment, posting volume, likes, referrals, political agreement, or demographic identity cannot substitute for proof.
 
@@ -27,9 +34,9 @@ The shareable object is a normal Action Receipt showing verified actions. It is 
 
 ## Path B — Self-declare + Racist Tax
 
-The participant may instead choose **NO. I'M RACIST.**
+The visitor may instead choose **I'M RACIST** and enter the recovery satire.
 
-This creates a satirical, explicitly voluntary status:
+The public click itself creates no profile status. A signed-in member may separately opt into the existing satirical, explicitly voluntary profile presentation:
 
 **SELF-DECLARED: CERTIFIED RACIST™**
 

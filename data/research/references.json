@@ -379,6 +379,61 @@
       "url": "https://www.nsf.gov/funding/opportunities/small-business-innovation-research-small-business-technology/nsf26-510/solicitation",
       "category": "funding",
       "relevance": "Current NSF deep-technology small-business R&D funding pathway."
+    },
+    {
+      "citation_key": "minisforum_ai_x1_pro_470_official",
+      "title": "MINISFORUM AI X1 Pro-470",
+      "authors": [
+        "MINISFORUM"
+      ],
+      "year": 2026,
+      "url": "https://store.minisforum.com/products/minisforum-ai-x1-pro-470-mini-pc",
+      "category": "compute_infrastructure",
+      "relevance": "Official specifications and current configuration pricing for the local AMD AI mini-PC evaluated as a possible always-on inference node."
+    },
+    {
+      "citation_key": "access_allocations_no_cost",
+      "title": "ACCESS Allocations",
+      "authors": [
+        "ACCESS Cyberinfrastructure"
+      ],
+      "year": 2026,
+      "url": "https://allocations.access-ci.org/",
+      "category": "research_compute",
+      "relevance": "Establishes that eligible researchers can request advanced computing allocations at no cost and without already holding an NSF award."
+    },
+    {
+      "citation_key": "access_project_types",
+      "title": "ACCESS Allocations: Project Types",
+      "authors": [
+        "ACCESS Cyberinfrastructure"
+      ],
+      "year": 2026,
+      "url": "https://allocations.access-ci.org/project-types",
+      "category": "research_compute",
+      "relevance": "Defines Explore, Discover, Accelerate and Maximize allocation scales; Explore is explicitly suitable for benchmarking and graduate-student projects."
+    },
+    {
+      "citation_key": "jetstream2_overview",
+      "title": "Jetstream2 System Overview",
+      "authors": [
+        "Jetstream2"
+      ],
+      "year": 2026,
+      "url": "https://docs.jetstream-cloud.org/overview/overview-doc/",
+      "category": "research_compute",
+      "relevance": "Documents Jetstream2 as interactive research cloud infrastructure and a science-gateway backend accessible through ACCESS allocations."
+    },
+    {
+      "citation_key": "jetstream2_gpu_faq",
+      "title": "Jetstream2 GPU FAQ",
+      "authors": [
+        "Jetstream2"
+      ],
+      "year": 2026,
+      "url": "https://docs.jetstream-cloud.org/faq/gpu/",
+      "category": "research_compute",
+      "relevance": "Documents available A100, L40S and H100 GPU resources and the need for an explicit Jetstream2-GPU allocation."
     }
   ]
 }
