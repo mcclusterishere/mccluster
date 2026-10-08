@@ -123,3 +123,30 @@ export function subscriptionEndedRecord(subscription: Obj, event: Obj): Obj | nu
   if (!owner) return null;
   return { subscription: id, livemode: event.livemode === true, org_id: owner.org_id };
 }
+
+/**
+ * Which commerce_record_stripe_* function a verified event calls, and with
+ * what. The webhook routes these event types the same way (a contract test
+ * holds the two together); scripts/stripe-test/replay.mjs uses this to drive
+ * a local database through the exact payloads the webhook would send. The
+ * webhook still adds what only Stripe can tell it (a subscription's
+ * PaymentIntent and period end) before calling.
+ */
+export function commerceCall(event: Obj): { rpc: string; payload: Obj } | null {
+  const object = event?.data?.object || {};
+  let rpc: string, payload: Obj | null;
+  switch (event?.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded":
+      rpc = "commerce_record_stripe_checkout"; payload = checkoutRecord(object, event); break;
+    case "charge.refunded":
+      rpc = "commerce_record_stripe_refund"; payload = refundRecord(object, event); break;
+    case "invoice.paid":
+      rpc = "commerce_record_stripe_invoice"; payload = invoiceRecord(object, event); break;
+    case "customer.subscription.deleted":
+      rpc = "commerce_record_stripe_subscription_ended"; payload = subscriptionEndedRecord(object, event); break;
+    default:
+      return null;
+  }
+  return payload ? { rpc, payload } : null;
+}
