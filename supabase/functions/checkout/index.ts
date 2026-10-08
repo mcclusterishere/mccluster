@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     phone_number_collection: { enabled: true },
     custom_text: { submit: { message: "After this you will get a link to pick a time. Nothing to fill in." } },
     metadata,
-    ...(interval ? { subscription_data: { metadata } } : {}),
+    ...(interval ? { subscription_data: { metadata } } : { payment_intent_data: { metadata } }),
     success_url: `${SITE}/pay.html?offer=${encodeURIComponent(slug)}&done=1&s={CHECKOUT_SESSION_ID}`,
     cancel_url: `${SITE}/pay.html?offer=${encodeURIComponent(slug)}`,
   };
