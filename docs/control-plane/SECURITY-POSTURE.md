@@ -119,6 +119,8 @@ fails when `config.toml` gains one that is missing here.
 | `eu-worker`, `eu-external-worker`, `eu-ddex-worker`, `eu-monitor` | cron / internal | `EU_WORKER_SECRET` via `secretMatches` |
 | `eu-crossref-callback` | Crossref callback | `CROSSREF_CALLBACK_SECRET` (query or header) via `secretMatches` |
 | `eu-google-workspace` | Gmail Pub/Sub and internal calls | `/push`: Google-signed identity token checked for audience and service account; otherwise `EU_GOOGLE_WORKSPACE_SECRET` via `secretMatches` |
+| `music-direct-checkout` | anonymous direct-track buyers | server loads active offer and price from `music_direct_offers`, validates offer key, refuses browser-supplied pricing, and creates the pending order only after Stripe Checkout session creation; checkout origin is restricted by CORS to the site (CORS is not authentication) |
+| `music-direct-access` | buyers redeeming completed checkout sessions | Stripe checkout-session id is the bearer capability; Stripe payment status is verified server-side, the session's order and offer must match stored order, revoked entitlements are refused, and downloads use a 900-second signed storage URL (session-id possession must be protected) |
 | `l3-login` | sign-in | 12 failures per IP per 15 min; exact username shape and `eq` lookup; app access checked after the password |
 | `l3-checkout` | anonymous buyers | product price read server-side; checkout created on the seller's connected account |
 | `l3-download` | buyers without accounts | **download token**: the Stripe checkout-session id; payment re-verified with Stripe on every request; 300-second signed storage URL; every download logged with a hashed IP |
