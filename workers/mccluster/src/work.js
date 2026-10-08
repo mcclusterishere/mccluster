@@ -33,6 +33,7 @@
    supabase/migrations/20261005075808_control_post_sale_work_v1.sql (+ rls, grants, indexes). */
 
 import { recordAudit } from './lib/audit.js';
+import { refundedOf } from './commerce/summary.js';
 import { requireMembership } from './workspaces.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -748,6 +749,10 @@ export async function workHistory(env, user, params) {
     paid_cents: paid.reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     provider_verified_cents: paid.filter((p) => p.verification === 'provider_verified').reduce((sum, p) => sum + (p.amount_cents || 0), 0),
     test_mode_cents: payments.filter((p) => p.livemode === false && p.state === 'paid').reduce((sum, p) => sum + (p.amount_cents || 0), 0),
+    /* a partial refund leaves the payment paid; Stripe's amount_refunded
+       (refunded_cents, reconciler v3) is what came back off it */
+    partly_refunded_cents: paid.reduce((sum, p) => sum + refundedOf(p), 0),
+    net_paid_cents: paid.reduce((sum, p) => sum + (p.amount_cents || 0) - refundedOf(p), 0),
     open_deliverables: deliverables.filter((d) => !['accepted', 'rejected'].includes(d.state)).length,
     next_renewal_at: renewals.filter((r) => r.state === 'upcoming' && r.renews_at).map((r) => r.renews_at).sort()[0] || null
   };

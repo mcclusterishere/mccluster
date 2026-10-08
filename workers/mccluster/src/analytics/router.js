@@ -2,6 +2,7 @@ import { requireCapability } from '../lib/capabilities.js';
 import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
+import { loadCommerceSummary } from '../commerce/summary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -540,6 +541,12 @@ export async function businessSnapshot(env, windowSpec = null) {
     sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')
   ]);
 
+  /* Verified Stripe sales and bookings from the commerce reconciler, live
+     only, net of refunds; test-mode money is reported apart (commerce/
+     summary.js). A failure here leaves the rest of the snapshot intact. */
+  const commerce = await loadCommerceSummary((path) => sbRows(env, path), windowSpec)
+    .catch((err) => ({ available: false, reason: String(err?.message || err).slice(0, 200) }));
+
   const paidRowsInWindow = since
     ? paidOrderRows.filter((row) => {
         const at = Date.parse(row.created_at || '');
@@ -579,6 +586,7 @@ export async function businessSnapshot(env, windowSpec = null) {
       follows: { total: followsTotal, created_in_window: followsWindow },
       reactions: { total: reactionsTotal, created_in_window: reactionsWindow }
     },
+    commerce,
     music: {
       legacy_album_plays: { total: legacyPlaysTotal, in_window: legacyPlaysWindow },
       inline_plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },

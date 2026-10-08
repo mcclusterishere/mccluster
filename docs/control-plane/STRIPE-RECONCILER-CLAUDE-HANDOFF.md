@@ -30,5 +30,13 @@ Four existing files were ported from #376: `supabase/functions/stripe-webhook/in
 ## Portfolio scope
 Near-term priority: Stripe #396, Analytics #395 (already merged), lean AI continuity #261, essential Control functionality #356; consolidate overlapping #354. Defer speculative adaptive policy #385 and lab expansion #200; budget-cap FAL #269. User wants revenue-producing workflows, not endless audits.
 
-## Immediate next steps
+## Immediate next steps (as handed over)
 Fetch fresh main and PR #396 head; inspect CI, ledger format and migration deployment truth; fix failures in branch; add repeatable tests; push, rerun, report exact status. Do not imply deployed or tested until independently verified.
+
+## State after the takeover (2026-10-08)
+- **Drift Guard.** The three migrations were checked against production's `supabase_migrations.schema_migrations` (read-only): v1 `20261006021431`, the leads vocabulary `20261006022702` and v2 `20261006023453` are applied and byte-identical, so they are now in `supabase/production-ledger.json` and `core/drift-contract.json`. `here_album_commerce_v1` is recorded under the version production gave it, `20261006233518_here_album_commerce_v1_reconcile`. Nothing unapplied is marked applied.
+- **Reconciler v3** (`supabase/pending/commerce_stripe_reconciler_v3.sql`) is **pending, not applied in production.** It serialises deliveries for one sale (a refund racing its checkout was lost on v2; `supabase/tests/commerce_stripe_concurrency.sh` reproduces that), promotes an owner-typed payment instead of shadowing it, and keeps partial refunds as `refunded_cents`. CI applies it to the rebuilt database and runs both regressions, the race and the replay harness. The deployed webhook works before and after it.
+- **Repeatable testing.** `scripts/stripe-test/replay.mjs` (no Stripe; every scenario in random orders, repeats and races; CI runs it) and `scripts/stripe-test/stripe-test-mode.mjs` (Stripe test mode against the real site; refuses live keys). Runbook: `COMMERCE-RECONCILER.md` → "Repeatable testing".
+- **Test mode end to end** needs the owner: a Stripe test-mode endpoint for the same function and the `STRIPE_WEBHOOK_SECRET_TEST` and `STRIPE_SK_TEST` secrets, then a deploy. A test-endpoint event writes TEST commerce rows only: no plan, music licence or provider flag changes.
+- **Booking flow.** Service → `pay.html?offer=booking-deposit` → Stripe → `pay.html` asks `GET /v1/commerce/receipt` and shows the item, amount and the next step (an email to agree the date; no scheduling link is promised because none exists) → Control Work (order, verified payment, proposed booking, Schedule task) → Analytics Sales card (verified live sales net of refunds; test money named apart).
+- **Not verified in production:** v3 apply, any real test-mode event through the deployed function, and the live endpoint itself (`stripe_events` has never held a row).

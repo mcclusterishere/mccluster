@@ -258,8 +258,17 @@
         '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",S.errors.content?null:starts,"first-party events")+metric("Active tracks",S.errors.content?null:rows.length,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
       cards+=section("Campaigns & acquisition","How people arrive and move toward an action.",
         '<div class="cra-kpis">'+metric("Sources",S.errors.sources?null:(t.sources||[]).length,"observed")+metric("Acquisition rows",S.errors.acquisition?null:acq.length,"measured")+metric("Journey paths",S.errors.paths?null:paths.length,"tracked")+metric("Funnel stages",S.errors.funnel?null:funnel.length,"reported")+'</div><p>Campaign outcomes require verified mission or conversion events; source counts are not campaign results.</p>',"identity","Explore journeys");
-      cards+=section("Sales, bookings & operations","Verified totals only; no estimated checkout or appointment figures.",
-        '<div class="cra-kpis">'+metric("Music gross",S.data.business?gross:null,"cents converted to currency",money)+metric("Bookings",null,"not connected to this report")+metric("Other sales",null,"not connected to this report")+'</div><p>Connect verified Stripe sales and booking records to complete this panel.</p>',"setup","Data sources");
+      /* Stripe sales the reconciler verified, net of refunds, live only.
+         Test-mode payments are named apart and never added (commerce/summary.js). */
+      var cm=b.commerce||{},sales=cm.available?(b.window?cm.live_in_window:cm.live):null,tst=cm.available?cm.test:null;
+      var bk=sales&&sales.bookings||{};
+      cards+=section("Sales, bookings & operations","Verified totals only; test payments are never counted.",
+        '<div class="cra-kpis">'+metric("Verified sales",sales?sales.net_cents:null,sales?n(sales.payments)+" Stripe payment"+(sales.payments===1?"":"s")+", net of refunds":"not available",money)+
+        metric("Bookings",sales?bk.total:null,sales?(bk.proposed?n(bk.proposed)+" waiting for a time":"proposed, confirmed or done"):"not available")+
+        metric("Refunded",sales?sales.refunded_cents:null,"returned to buyers",money)+
+        metric("Music gross",S.data.business?gross:null,"recorded music sales",money)+'</div>'+
+        (tst&&tst.payments?'<p><b>Test mode:</b> '+n(tst.payments)+' test payment'+(tst.payments===1?"":"s")+' ('+money(tst.gross_cents)+') kept apart, not revenue.</p>':"")+
+        (cm.available===false?'<p>Sales records did not load: '+e(cm.reason||"unavailable")+'.</p>':""),null,null);
       cards+=section("Audience behavior","Listener distribution and engagement quality.",
         '<div class="cra-kpis">'+metric("Profiled visitors",science.version?audience.profiled_visitors:null,"measured")+metric("Action-engaged",science.version?audience.action_engaged_listeners:null,"listeners")+metric("Returning",science.version?audience.returning_listeners:null,"listeners")+'</div>',"audience","Explore audience");
     }else{

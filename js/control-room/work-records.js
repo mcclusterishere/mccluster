@@ -155,6 +155,7 @@
     var d=h.data||{},t=d.totals||{},rec=d.records||{};
     var kpis='<div class="cro-kpis">'+
       [["Billed",money(t.billed_cents)],["Paid",money(t.paid_cents)],["Provider verified",money(t.provider_verified_cents)]]
+        .concat(t.partly_refunded_cents?[["Partly refunded",money(t.partly_refunded_cents)],["Net paid",money(t.net_paid_cents)]]:[])
         .concat(t.test_mode_cents?[["Test mode (not revenue)",money(t.test_mode_cents)]]:[])
         .concat([["Open deliverables",String(t.open_deliverables||0)],["Next renewal",day(t.next_renewal_at)]])
         .map(function(k){return'<div><small>'+e(k[0])+'</small><b>'+e(k[1])+'</b></div>';}).join("")+'</div>';
@@ -194,7 +195,7 @@
       cols=[["Renewal",function(r){return e(r.title)+'<div class="cro-meta">'+e(words(r.cadence))+'</div>';}],["Client",function(r){return e(party(r));}],["Renews",function(r){return e(day(r.renews_at));}],["Amount",function(r){return e(money(r.amount_cents,r.currency));}],["State",function(r){return stateSelect(kind,r);}]];
     }else{
       /* Verification sits in the first column so it is visible at phone width without scrolling the table. */
-      cols=[["Payment",function(r){return e(r.title)+'<div class="cro-meta">'+e(r.provider||"manual")+(r.provider_reference?" · "+e(r.provider_reference):"")+'</div>'+verification(r);}],["Amount",function(r){return e(money(r.amount_cents,r.currency));}],["State",function(r){return r.verification==="provider_verified"?'<span class="cr-state">'+e(words(r.state))+'</span><div class="cro-meta">set by '+e(r.provider||"the provider")+'</div>':stateSelect(kind,r);}],["For",function(r){return e(titleOf("projects",r.project_id)||titleOf("orders",r.order_id)||party(r));}],["Due / paid",function(r){return e(r.paid_at?"paid "+day(r.paid_at):day(r.due_at));}]];
+      cols=[["Payment",function(r){return e(r.title)+'<div class="cro-meta">'+e(r.provider||"manual")+(r.provider_reference?" · "+e(r.provider_reference):"")+'</div>'+verification(r);}],["Amount",function(r){return e(money(r.amount_cents,r.currency))+(r.refunded_cents>0?'<div class="cro-meta">'+e(money(r.refunded_cents,r.currency))+' refunded</div>':"");}],["State",function(r){return r.verification==="provider_verified"?'<span class="cr-state">'+e(words(r.state))+'</span><div class="cro-meta">set by '+e(r.provider||"the provider")+'</div>':stateSelect(kind,r);}],["For",function(r){return e(titleOf("projects",r.project_id)||titleOf("orders",r.order_id)||party(r));}],["Due / paid",function(r){return e(r.paid_at?"paid "+day(r.paid_at):day(r.due_at));}]];
     }
     return history+(W.msg&&!W.form?note(W.msg,W.bad):"")+'<section class="cro-card"><div class="cro-row__top"><h2>'+e(LABEL[kind])+' records</h2><button class="cr-btn" type="button" data-wk-form="'+kind+'">+ New '+e(LABEL[kind].toLowerCase())+'</button></div>'+
       table(cols,rows,"No "+kind+" recorded yet.")+'</section>';
