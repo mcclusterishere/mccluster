@@ -92,22 +92,35 @@
   function seconds(v){v=Number(v);if(!isFinite(v))return"—";if(v<60)return Math.round(v)+"s";var m=Math.floor(v/60),s=Math.round(v%60);return m+"m"+(s?" "+s+"s":"");}
   function signedPct(v){v=Number(v);if(!isFinite(v))return"—";return(v>0?"+":"")+v.toFixed(1)+"%";}
   function pagePerformance(rows){
-    rows=(rows||[]).slice(0,25);
+    rows=(rows||[]).slice().sort(function(a,b){return Number(b.overall_score||0)-Number(a.overall_score||0);}).slice(0,25);
     if(!rows.length)return'<p>No page performance in this range.</p>';
-    return'<div class="cra-scroll"><table class="cra-table"><thead><tr>'+
-      '<th>Page</th><th class="n">Score</th><th class="n">Views</th><th class="n">Trend</th><th class="n">Visitors</th>'+
-      '<th class="n">Median visible</th><th class="n">P75 visible</th><th class="n">Depth</th><th class="n">30s+</th>'+
-      '<th class="n">Actions</th><th class="n">Return</th><th class="n">Short exits</th>'+
-      '</tr></thead><tbody>'+rows.map(function(r){return'<tr>'+
-      '<td><b>'+e(r.path||"—")+'</b><small style="display:block;opacity:.65">quality '+e(r.quality_score==null?"—":r.quality_score)+' · confidence '+e(r.confidence==null?"—":Math.round(Number(r.confidence)*100)+"%")+'</small></td>'+
-      '<td class="n"><b>'+e(r.overall_score==null?"—":r.overall_score)+'</b></td>'+
-      '<td class="n">'+n(r.views)+'</td><td class="n">'+e(signedPct(r.view_change_pct))+'</td><td class="n">'+n(r.visitors)+'</td>'+
-      '<td class="n">'+e(seconds(r.median_visible_s))+'</td><td class="n">'+e(seconds(r.p75_visible_s))+'</td>'+
-      '<td class="n">'+e(r.avg_depth==null?"—":Number(r.avg_depth).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+e(r.engaged_30_pct==null?"—":Number(r.engaged_30_pct).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+n(r.action_events)+'</td><td class="n">'+e(r.return_pct==null?"—":Number(r.return_pct).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+e(r.short_exit_pct==null?"—":Number(r.short_exit_pct).toFixed(1)+"%")+'</td></tr>';}).join("")+
-      '</tbody></table></div>';
+    function pct(v){return v==null?"—":Number(v).toFixed(0)+"%";}
+    function score(r){return r.overall_score==null?null:Math.max(0,Math.min(100,Number(r.overall_score)||0));}
+    function interpretation(r){
+      var s=score(r),conf=Number(r.confidence||0);
+      if(s===null)return"Not enough measurement";
+      if(conf<.3)return"Early signal · limited sample";
+      return s>=75?"Strong engagement":s>=50?"Moderate engagement":"Needs attention";
+    }
+    var list=rows.map(function(r,i){
+      var s=score(r),trend=r.view_change_pct==null?"Trend unavailable":signedPct(r.view_change_pct)+" vs prior range";
+      return'<details class="cra-page-row"'+(i===0?' open':'')+'><summary class="cra-page-row__summary">'+
+        '<span class="cra-page-row__rank">'+(i+1)+'</span>'+
+        '<span class="cra-page-row__main"><b>'+e(r.path||"Unknown page")+'</b><small>'+e(interpretation(r))+'</small>'+
+        '<span class="cra-page-row__bar" role="img" aria-label="'+e(s===null?"No score available":"Engagement score "+s.toFixed(0)+" of 100")+'"><i style="width:'+(s===null?0:s).toFixed(1)+'%"></i></span></span>'+
+        '<span class="cra-page-row__traffic"><b>'+n(r.views)+'</b><small>views</small></span>'+
+        '<span class="cra-page-row__score"><b>'+(s===null?"—":s.toFixed(0))+'</b><small>score / 100</small></span>'+
+        '</summary><div class="cra-page-row__detail"><p><b>Traffic:</b> '+e(trend)+' · '+n(r.visitors)+' visitors</p>'+
+        '<div class="cra-kpis">'+
+          kpi("Typical visible time",r.median_visible_s==null?"—":seconds(r.median_visible_s),"median")+
+          kpi("Scroll depth",pct(r.avg_depth),"average")+
+          kpi("Engaged 30s+",pct(r.engaged_30_pct),"visitors")+
+          kpi("Actions",n(r.action_events),"recorded events")+
+          kpi("Returning",pct(r.return_pct),"visitors")+
+          kpi("Short exits",pct(r.short_exit_pct),"visitors")+
+        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · Measurement confidence: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with confidence weighting; it is not a speed or SEO grade.</small></p></div></details>';
+    }).join("");
+    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
     if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
