@@ -136,6 +136,7 @@
     @media (prefers-reduced-motion: reduce) { .ac__note--again { animation: none; } }
     input[aria-invalid="true"] { outline: 2px solid #fca5a5; outline-offset: 1px; }
     @media (hover:hover){.ac__card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 28px 80px -52px rgba(229,56,59,.75)}.ac__prov:hover,.ac__ghost:hover,.ac__forgot:hover{transform:translateY(-1px)}}
+    .ac__owner-tools{margin:1.2rem 0;padding:1.3rem;border:1px solid rgba(229,56,59,.4);border-radius:20px;background:radial-gradient(ellipse at top right,rgba(229,56,59,.18),transparent 65%),linear-gradient(140deg,#211c1d,#111113);box-shadow:0 20px 60px #0005}.ac__owner-eyebrow{color:#ff7779;font-size:.68rem;font-weight:800;letter-spacing:.22em}.ac__owner-tools h2{margin:.45rem 0;font-size:1.5rem;letter-spacing:-.03em}.ac__owner-tools p{margin:0 0 1rem;color:var(--cream-dim);font-size:.85rem}.ac__owner-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}.ac__owner-grid a{display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:.9rem .75rem;border:1px solid rgba(255,255,255,.15);border-radius:12px;color:var(--cream);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(255,255,255,.045)}.ac__owner-grid a:hover,.ac__owner-grid a:focus-visible{border-color:#ff7779;background:rgba(229,56,59,.13)}.ac__owner-grid .ac__owner-primary{grid-column:1/-1;background:linear-gradient(110deg,#b51d2c,#e5383b);border-color:#f66;color:#fff;font-size:.94rem;padding:1rem}.ac__owner-grid a span{opacity:.7}
     [hidden] { display: none !important; }
   </style>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
@@ -205,7 +206,7 @@
     <div class="ac__card" id="acDesk" hidden>
       <p class="ac__lab">Signed in</p>
       <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
-      <a class="ac__ghost" href="control.html#home" id="acControl" hidden>Open Control</a>
+      <section class="ac__owner-tools" id="acControl" hidden aria-label="Owner workspace"><div class="ac__owner-eyebrow">YOUR WORKSPACE</div><h2>Command Center</h2><p>Everything you run, one place to enter.</p><div class="ac__owner-grid"><a class="ac__owner-primary" href="control.html#home">✦ Enter Command Room <span aria-hidden="true">↗</span></a><a href="control.html#campaigns">Campaigns <span aria-hidden="true">↗</span></a><a href="control.html#analytics">Analytics <span aria-hidden="true">↗</span></a><a href="control.html#apps">Apps &amp; tools <span aria-hidden="true">↗</span></a></div></section>
       <a class="ac__ghost" href="console.html">Client console</a>
 
       <!-- SECURITY. The current password is asked for first, so an unlocked
@@ -783,7 +784,6 @@
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
-  <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>
