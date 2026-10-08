@@ -258,7 +258,7 @@
       card("Traffic trend",S.rangeId==="24h"?"Hourly page views and visitors; hover or tap for exact values.":"Daily page views and visitors.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+
       card("Acquisition sources","Source breakdown.",donut(t.sources,"source","count"))+
       card("Geography","Visitor country breakdown.",donut(t.countries,"country","count"))+
-      card("Top pages","Attention, depth and friction.",pagePerformance(t.pages),true)+
+      card("Page performance","Attention, depth and friction.",pagePerformance(t.pages),true)+
       card("Networks","Observed network breakdown.",rank(t.networks,"network","count"))+
       card("Music leaderboard","Track starts in the selected range.",rank(rows,"track","starts"))+
       card("Content event mix","Observed media player events.",donut(S.data.contentEvents||[],"event_name","events"))+
