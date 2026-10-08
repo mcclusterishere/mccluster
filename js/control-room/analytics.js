@@ -92,22 +92,35 @@
   function seconds(v){v=Number(v);if(!isFinite(v))return"—";if(v<60)return Math.round(v)+"s";var m=Math.floor(v/60),s=Math.round(v%60);return m+"m"+(s?" "+s+"s":"");}
   function signedPct(v){v=Number(v);if(!isFinite(v))return"—";return(v>0?"+":"")+v.toFixed(1)+"%";}
   function pagePerformance(rows){
-    rows=(rows||[]).slice(0,25);
+    rows=(rows||[]).slice().sort(function(a,b){return Number(b.overall_score||0)-Number(a.overall_score||0);}).slice(0,25);
     if(!rows.length)return'<p>No page performance in this range.</p>';
-    return'<div class="cra-scroll"><table class="cra-table"><thead><tr>'+
-      '<th>Page</th><th class="n">Score</th><th class="n">Views</th><th class="n">Trend</th><th class="n">Visitors</th>'+
-      '<th class="n">Median visible</th><th class="n">P75 visible</th><th class="n">Depth</th><th class="n">30s+</th>'+
-      '<th class="n">Actions</th><th class="n">Return</th><th class="n">Short exits</th>'+
-      '</tr></thead><tbody>'+rows.map(function(r){return'<tr>'+
-      '<td><b>'+e(r.path||"—")+'</b><small style="display:block;opacity:.65">quality '+e(r.quality_score==null?"—":r.quality_score)+' · confidence '+e(r.confidence==null?"—":Math.round(Number(r.confidence)*100)+"%")+'</small></td>'+
-      '<td class="n"><b>'+e(r.overall_score==null?"—":r.overall_score)+'</b></td>'+
-      '<td class="n">'+n(r.views)+'</td><td class="n">'+e(signedPct(r.view_change_pct))+'</td><td class="n">'+n(r.visitors)+'</td>'+
-      '<td class="n">'+e(seconds(r.median_visible_s))+'</td><td class="n">'+e(seconds(r.p75_visible_s))+'</td>'+
-      '<td class="n">'+e(r.avg_depth==null?"—":Number(r.avg_depth).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+e(r.engaged_30_pct==null?"—":Number(r.engaged_30_pct).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+n(r.action_events)+'</td><td class="n">'+e(r.return_pct==null?"—":Number(r.return_pct).toFixed(1)+"%")+'</td>'+
-      '<td class="n">'+e(r.short_exit_pct==null?"—":Number(r.short_exit_pct).toFixed(1)+"%")+'</td></tr>';}).join("")+
-      '</tbody></table></div>';
+    function pct(v){return v==null?"—":Number(v).toFixed(0)+"%";}
+    function score(r){return r.overall_score==null?null:Math.max(0,Math.min(100,Number(r.overall_score)||0));}
+    function interpretation(r){
+      var s=score(r),conf=Number(r.confidence||0);
+      if(s===null)return"Not enough measurement";
+      if(conf<.3)return"Early signal · limited sample";
+      return s>=75?"Strong engagement":s>=50?"Moderate engagement":"Needs attention";
+    }
+    var list=rows.map(function(r,i){
+      var s=score(r),trend=r.view_change_pct==null?"Trend unavailable":signedPct(r.view_change_pct)+" vs prior range";
+      return'<details class="cra-page-row"'+(i===0?' open':'')+'><summary class="cra-page-row__summary">'+
+        '<span class="cra-page-row__rank">'+(i+1)+'</span>'+
+        '<span class="cra-page-row__main"><b>'+e(r.path||"Unknown page")+'</b><small>'+e(interpretation(r))+'</small>'+
+        '<span class="cra-page-row__bar" role="img" aria-label="'+e(s===null?"No score available":"Engagement score "+s.toFixed(0)+" of 100")+'"><i style="width:'+(s===null?0:s).toFixed(1)+'%"></i></span></span>'+
+        '<span class="cra-page-row__traffic"><b>'+n(r.views)+'</b><small>views</small></span>'+
+        '<span class="cra-page-row__score"><b>'+(s===null?"—":s.toFixed(0))+'</b><small>score / 100</small></span>'+
+        '</summary><div class="cra-page-row__detail"><p><b>Traffic:</b> '+e(trend)+' · '+n(r.visitors)+' visitors</p>'+
+        '<div class="cra-kpis">'+
+          kpi("Typical visible time",r.median_visible_s==null?"—":seconds(r.median_visible_s),"median")+
+          kpi("Scroll depth",pct(r.avg_depth),"average")+
+          kpi("Engaged 30s+",pct(r.engaged_30_pct),"visitors")+
+          kpi("Actions",n(r.action_events),"recorded events")+
+          kpi("Returning",pct(r.return_pct),"visitors")+
+          kpi("Short exits",pct(r.short_exit_pct),"visitors")+
+        '</div><p><small>Quality signal: '+e(r.quality_score==null?"—":Number(r.quality_score).toFixed(1))+' · Measurement confidence: '+pct(r.confidence==null?null:Number(r.confidence)*100)+'. The score combines attention, depth, actions, return behavior and friction, with confidence weighting; it is not a speed or SEO grade.</small></p></div></details>';
+    }).join("");
+    return'<div class="cra-page-performance"><p class="cra-page-performance__intro">Ranked by measured engagement. Longer bars indicate stronger relative signals; low-confidence pages are marked as early signals. Select any page to see the evidence behind its score.</p>'+list+'</div>';
   }
   function funnel(rows){
     if(!rows||!rows.length)return'<p>No funnel rows in this range.</p>';var keys=[["arrived","Arrived"],["heard_something","Heard"],["engaged","Engaged"],["searched","Searched"],["asked_for_something","Asked"],["made_an_account","Account"],["confirmed_the_email","Confirmed"],["reached_checkout","Checkout"],["paid","Paid"]],tot={};keys.forEach(function(k){tot[k[0]]=0;});rows.forEach(function(r){keys.forEach(function(k){tot[k[0]]+=Number(r[k[0]])||0;});});var topv=tot.arrived||1;
@@ -223,13 +236,46 @@
   function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
-    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null,b=S.data.business&&S.data.business.snapshot||{},rangeLabel=S.range&&S.range.label||"Selected range";
-    var trend=trafficTrend(t),core=kpi("Page views",n(tot.page_views),rangeLabel)+kpi("Visitors",n(tot.visitors),"unique")+kpi("Sessions",n(tot.sessions),"selected range");
-    var scoped=house
-      ? kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),b.window?"created":"all time")+kpi("Music plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"plays")+kpi("Gross music",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"revenue")
-      : kpi("Plays",n(tot.plays),"selected property")+kpi("Events",n(tot.events),"selected property");
-    var businessOverview=house?'<div class="cra-grid">'+card("Music","Listening and sales at a glance.",'<div class="cra-kpis">'+kpi("Plays",n(b.music&&b.music.plays&&(b.window?b.music.plays.in_window:b.music.plays.total)),"recorded")+kpi("Gross revenue",money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents)),"music") +'</div><p><button type="button" class="cr-btn" data-cra-sec="content">View music in Content →</button></p>')+card("Accounts & conversion","Audience growth and signup attribution.",'<div class="cra-kpis">'+kpi("Accounts",n(b.users&&(b.window?b.users.created_in_window:b.users.total)),"created")+kpi("Music-attributed",n(S.data.identity&&S.data.identity.coverage&&S.data.identity.coverage.attributed_accounts),"accounts")+'</div><p><button type="button" class="cr-btn" data-cra-sec="identity">View identity →</button></p>')+card("Content & campaigns","Top content and acquisition signals.",'<p>'+n((S.data.content||[]).length)+' tracked tracks · '+n((t.sources||[]).length)+' acquisition sources</p><p><button type="button" class="cr-btn" data-cra-sec="content">View content →</button></p>')+card("Operations & revenue","Business totals are shown only when backed by a connected source.",'<p>Music gross: '+money(b.music&&b.music.revenue&&(b.window?b.music.revenue.gross_cents_in_window:b.music.revenue.gross_cents))+'</p><p>Bookings and campaign revenue require connected reporting; they are not inferred from page views.</p>')+'</div>':"";
-    return'<div class="cra-kpis">'+core+scoped+'</div>'+businessOverview+'<div class="cra-grid">'+card("Traffic trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Page views and visitors in the selected timestamp window.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+card("Acquisition mix","Top sources.",donut(t.sources,"source","count"))+card("Geography","Country distribution.",donut(t.countries,"country","count"))+card("Page performance","Ranked by confidence-weighted attention, depth, action, return behavior and friction — not raw views alone.",pagePerformance(t.pages),true)+card("Network","Observed connection/network.",rank(t.networks,"network","count"))+'</div>'+(house?err("business"):"")+(S.rangeId==="24h"?err("hourly"):err("daily"))+err("totals");
+    var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
+    var b=S.data.business&&S.data.business.snapshot||{},music=b.music||{},users=b.users||{};
+    var identity=S.data.identity||{},coverage=identity.coverage||{},science=S.data.audienceScience||{},audience=science.totals||{};
+    var rows=S.data.content||[],acq=S.data.acquisition||[],paths=S.data.paths||[],funnel=S.data.funnel||[];
+    var rangeLabel=S.range&&S.range.label||"Selected range",trend=trafficTrend(t);
+    function known(v,formatter){return v===null||v===undefined?"—":formatter?formatter(v):n(v);}
+    function metric(label,v,sub,formatter){return kpi(label,known(v,formatter),sub);}
+    function section(title,sub,body,link,label){return card(title,sub,body+(link?'<p><button class="cr-btn" type="button" data-cra-sec="'+link+'">'+label+' →</button></p>':""),false);}
+    var traffic='<div class="cra-kpis">'+metric("Page views",tot.page_views,rangeLabel)+metric("Visitors",tot.visitors,"unique")+metric("Sessions",tot.sessions,"selected range")+metric("Events",tot.events,"tracked")+'</div>';
+    var musicPlays=music.plays&&(b.window?music.plays.in_window:music.plays.total);
+    var gross=music.revenue&&(b.window?music.revenue.gross_cents_in_window:music.revenue.gross_cents);
+    var accounts=b.window?users.created_in_window:users.total;
+    var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0);
+    var topSong=rows.slice().sort(function(a,z){return Number(z.starts||0)-Number(a.starts||0);})[0];
+    var cards='';
+    if(house){
+      cards+=section("Audience & accounts","Membership, returning listeners and signup attribution.",
+        '<div class="cra-kpis">'+metric("Accounts",S.data.business?accounts:null,b.window?"created in range":"all time")+metric("Music listeners",science.version?audience.music_listeners:null,"distinct in measured audience")+metric("Returning listeners",science.version?audience.returning_listeners:null,"measured")+metric("Song → signup",S.data.identity?coverage.attributed_accounts:null,"attributed accounts")+'</div>',"identity","Explore conversion");
+      cards+=section("Music & content","Track engagement and recorded music revenue.",
+        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",S.errors.content?null:starts,"first-party events")+metric("Active tracks",S.errors.content?null:rows.length,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
+      cards+=section("Campaigns & acquisition","How people arrive and move toward an action.",
+        '<div class="cra-kpis">'+metric("Sources",S.errors.sources?null:(t.sources||[]).length,"observed")+metric("Acquisition rows",S.errors.acquisition?null:acq.length,"measured")+metric("Journey paths",S.errors.paths?null:paths.length,"tracked")+metric("Funnel stages",S.errors.funnel?null:funnel.length,"reported")+'</div><p>Campaign outcomes require verified mission or conversion events; source counts are not campaign results.</p>',"identity","Explore journeys");
+      cards+=section("Sales, bookings & operations","Verified totals only; no estimated checkout or appointment figures.",
+        '<div class="cra-kpis">'+metric("Music gross",S.data.business?gross:null,"cents converted to currency",money)+metric("Bookings",null,"not connected to this report")+metric("Other sales",null,"not connected to this report")+'</div><p>Connect verified Stripe sales and booking records to complete this panel.</p>',"setup","Data sources");
+      cards+=section("Audience behavior","Listener distribution and engagement quality.",
+        '<div class="cra-kpis">'+metric("Profiled visitors",science.version?audience.profiled_visitors:null,"measured")+metric("Action-engaged",science.version?audience.action_engaged_listeners:null,"listeners")+metric("Returning",science.version?audience.returning_listeners:null,"listeners")+'</div>',"audience","Explore audience");
+    }else{
+      cards+=section("Property engagement","Music and event activity scoped to this property.",
+        '<div class="cra-kpis">'+metric("Plays",tot.plays,"property")+metric("Events",tot.events,"property")+'</div>',"content","Explore content");
+    }
+    var coverageNote='<p class="cra-lead"><b>Coverage:</b> Figures are drawn from the selected property and date range. An em dash means unavailable or not yet connected, not zero. Track starts and total music plays come from different measurements and should not be added together.</p>';
+    return coverageNote+traffic+'<div class="cra-grid">'+cards+'</div><div class="cra-grid">'+
+      card("Traffic trend",S.rangeId==="24h"?"Hourly page views and visitors; hover or tap for exact values.":"Daily page views and visitors.",line(trend.rows,"page_views","visitors","Page views","Visitors",trend.opts),true)+
+      card("Acquisition sources","Source breakdown.",donut(t.sources,"source","count"))+
+      card("Geography","Visitor country breakdown.",donut(t.countries,"country","count"))+
+      card("Page performance","Attention, depth and friction.",pagePerformance(t.pages),true)+
+      card("Networks","Observed network breakdown.",rank(t.networks,"network","count"))+
+      card("Music leaderboard","Track starts in the selected range.",rank(rows,"track","starts"))+
+      card("Content event mix","Observed media player events.",donut(S.data.contentEvents||[],"event_name","events"))+
+      '</div>'+["business","content","contentEvents","identity","audienceScience","acquisition","paths","funnel","pages","sources","countries","networks","totals",S.rangeId==="24h"?"hourly":"daily"].map(err).join("");
   }
   function scienceSignalLabel(v){
     return String(v||"").split("_").map(function(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}).join(" ");
