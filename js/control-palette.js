@@ -78,12 +78,36 @@
     '</div>';
   doc.body.appendChild(el);
 
+  /* Owner navigation belongs in the header, not a stray bottom-right pill.
+     Keep the palette accessible by touch and Cmd/Ctrl-K, and give the
+     Command Room its own direct entrance plus an account menu. */
+  var navStyle = doc.createElement("style");
+  navStyle.textContent =
+    ".cmdk-owner-nav{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:clamp(12px,3vw,32px);z-index:198;display:flex;align-items:center;gap:7px;font:600 12px/1.3 system-ui,sans-serif}" +
+    ".cmdk-owner-nav a,.cmdk-owner-nav button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid rgba(255,255,255,.25);border-radius:12px;background:rgba(15,16,20,.92);color:#f4efe6;text-decoration:none;cursor:pointer;backdrop-filter:blur(16px);font:inherit}" +
+    ".cmdk-owner-nav a:focus-visible,.cmdk-owner-nav button:focus-visible{outline:2px solid #ff6a6c;outline-offset:2px}" +
+    ".cmdk-owner-nav__account{position:relative}" +
+    ".cmdk-owner-nav__account summary{list-style:none;cursor:pointer;min-height:40px;display:flex;align-items:center;padding:9px 13px;border:1px solid rgba(255,255,255,.25);border-radius:12px;background:rgba(15,16,20,.92);color:#f4efe6}" +
+    ".cmdk-owner-nav__account summary::-webkit-details-marker{display:none}" +
+    ".cmdk-owner-nav__menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;padding:7px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:#151519;box-shadow:0 16px 42px #0009;display:grid;gap:5px}" +
+    ".cmdk-owner-nav__menu a{justify-content:flex-start;border:0;background:transparent}" +
+    "@media(max-width:540px){.cmdk-owner-nav{top:calc(8px + env(safe-area-inset-top,0px));right:10px;gap:5px}.cmdk-owner-nav a,.cmdk-owner-nav button,.cmdk-owner-nav__account summary{padding:8px 10px;font-size:11px;min-height:38px}.cmdk-owner-nav__shortcut{display:none}}";
+  doc.head.appendChild(navStyle);
+  var ownerNav = doc.createElement("nav");
+  ownerNav.className = "cmdk-owner-nav";
+  ownerNav.setAttribute("aria-label", "Owner shortcuts");
+  ownerNav.innerHTML =
+    '<a href="' + (location.pathname.indexOf("/walls/") >= 0 || location.pathname.indexOf("/tracks/") >= 0 ? "../" : "") + 'control.html#home">Command Room</a>' +
+    '<details class="cmdk-owner-nav__account"><summary aria-label="Owner account menu">Account ▾</summary>' +
+    '<div class="cmdk-owner-nav__menu"><a href="' + (location.pathname.indexOf("/walls/") >= 0 || location.pathname.indexOf("/tracks/") >= 0 ? "../" : "") + 'account.html">My account</a>' +
+    '<a href="' + (location.pathname.indexOf("/walls/") >= 0 || location.pathname.indexOf("/tracks/") >= 0 ? "../" : "") + 'control.html#home">Command Room</a></div></details>';
   var hint = doc.createElement("button");
-  hint.className = "cmdk-hint";
   hint.type = "button";
-  hint.innerHTML = '<span aria-hidden="true">&#9906;</span> Go to&nbsp; <kbd>' +
-    (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl") + 'K</kbd>';
-  doc.body.appendChild(hint);
+  hint.className = "cmdk-owner-nav__shortcut";
+  hint.textContent = "Search ⌘K";
+  hint.setAttribute("aria-label", "Open command palette");
+  ownerNav.appendChild(hint);
+  doc.body.appendChild(ownerNav);
 
   var input = doc.getElementById("cmdkIn");
   var list  = doc.getElementById("cmdkList");
