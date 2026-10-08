@@ -158,4 +158,4 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-page-row__score b{font-size:1.35em}
 .cra-page-row__detail{padding:4px 14px 15px;border-top:1px solid rgba(130,145,165,.18)}
 .cra-page-row__detail .cra-kpis{margin:12px 0}
-@media(max-width:560px){.cra-page-row__summary{grid-template-columns:18px minmax(0,1fr) 52px;gap:8px;padding:10px}.cra-page-row__traffic{display:none}.cra-page-row__score b{font-size:1.1em}.cra-page-row__detail{padding:4px 10px 12px}}
+@media(min-width:36rem){.cra-page-row__summary{grid-template-columns:28px minmax(0,1fr) 74px 72px;gap:12px;padding:13px}.cra-page-row__traffic{display:grid}.cra-page-row__score b{font-size:1.35em}}
