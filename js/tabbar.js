@@ -51,15 +51,6 @@
     '<path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/>' +
     '<path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/>';
 
-  /* THE RECORD BUTTON. The owner's one addition to the bar: a way to make
-     something for the Action Network from anywhere in the house. It is a
-     door, not a wing (holding it opens nothing), so it carries no WINGS
-     entry and morph() keeps it in its own column while a wing is open. The
-     glyph is a plain record mark drawn in the bar's own stroke, not a logo. */
-  var CREATE_TAB =
-    '<a class="appbar__tab appbar__tab--create" href="' + ROOT + 'create.html" data-appnav="create" aria-label="Create">' +
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/>' +
-      '<circle class="appbar__rec" cx="12" cy="12" r="4.2"/></svg><span>Create</span></a>';
   function eqSvg(np) {
     var a = np ? ' class="np-arrow"' : '', b = np ? ' class="np-bar"' : '';
     return '<svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true">' + EQ_PATHS +
