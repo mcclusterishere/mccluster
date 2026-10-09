@@ -79,7 +79,6 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      CREATE_TAB +
       /* LAST COLUMN: identity. It resolves to Sign in while signed out and
          to the member's Action Network feed once the session is verified. */
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
@@ -114,15 +113,11 @@
     return;
   }
   if (!dock) dock = buildBar();
-  /* Pages that carry the bar as hand-written markup predate the record
-     button; give them the same cell, in the same column, right before the
-     identity tab. */
-  if (!dock.querySelector('[data-appnav="create"]')) {
-    var idTab = dock.querySelector('[data-appnav="profile"]');
-    var holder = document.createElement("div");
-    holder.innerHTML = CREATE_TAB;
-    dock.insertBefore(holder.firstChild, idTab || null);
-  }
+  /* Trinity: preserve the existing Music, emblem and Profile tabs.
+     Remove any legacy Record/Create tab, including inline page copies. */
+  Array.prototype.forEach.call(dock.querySelectorAll('[data-appnav="create"]'), function (tab) {
+    tab.remove();
+  });
 
 
   /* The identity column is auth-aware. Start conservatively as a sign-in door;
