@@ -35,4 +35,4 @@ Status: design and static pricing UI in PR #400; **not production ready**. Do no
 
 ## Pricing source of truth to implement
 
-Starter monthly 750 cents; Starter annual 6000 cents (equivalent 500 cents/month). Proposed Plus 1500 cents monthly, Pro 4000 cents monthly, Business 9900 cents monthly; no annual discount for these until explicitly approved. Domain registration and renewals are additional; worker budgets are separate. The first 10,000 eligible unique creator accounts may receive founding offer eligibility, without conferring verification or guaranteed cohort selection.
+Starter monthly 750 cents; Starter annual 6000 cents (equivalent 500 cents/month). Proposed Plus 1500 cents monthly, Pro 4000 cents monthly, Business 9900 cents monthly; no annual discount for these until explicitly approved. Domain registration and renewals are additional, paid entirely by the customer, with no domain allowance or subsidy; worker budgets are separate. The first 10,000 eligible unique creator accounts may receive founding offer eligibility, without conferring verification or guaranteed cohort selection.
