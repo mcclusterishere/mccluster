@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 335,
+  "candidate_count": 337,
   "capability_source_count": 99,
-  "support_only_count": 236,
-  "checks_total": 1243,
-  "checks_passed": 1243,
+  "support_only_count": 238,
+  "checks_total": 1251,
+  "checks_passed": 1251,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -90,7 +90,9 @@
     "desk.html",
     "docket-516.html",
     "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
+    "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md",
     "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
+    "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
     "docs/agent-web.md",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
@@ -349,7 +351,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "335 entries"
+      "detail": "337 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1743,6 +1745,46 @@
     },
     {
       "name": "docs/ACTION-NETWORK-REWARD-SYSTEM.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md classified",
+      "passed": true,
+      "detail": "classification='commercial_context_support'"
+    },
+    {
+      "name": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md support rationale present",
       "passed": true,
       "detail": ""
     },
