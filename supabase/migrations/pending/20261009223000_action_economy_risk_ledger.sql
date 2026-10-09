@@ -64,6 +64,49 @@ create trigger action_economy_entries_immutable before update or delete on publi
 for each row execute function public.action_economy_immutable();
 -- Atomic posting: same-unit double-entry balance, event idempotency, and
 -- no negative balances for spendable user accounts.
+create table if not exists public.action_economy_entries (
+ id bigint generated always as identity primary key,
+ event_id uuid not null references public.action_economy_events(id),
+ account_id uuid not null references public.action_economy_accounts(id),
+ amount bigint not null check(amount<>0),
+ created_at timestamptz not null default now(),
+ unique(event_id,account_id)
+);
+create index if not exists action_economy_entries_account_idx on public.action_economy_entries(account_id,id);
+create table if not exists public.action_economy_risk_holds (
+ id uuid primary key default gen_random_uuid(),
+ creator_user_id uuid not null references auth.users(id),
+ reason text not null check(reason in ('chargeback','fraud_review','identity_review','payout_review')),
+ status text not null default 'active' check(status in ('active','released')),
+ source_event_id uuid references public.action_economy_events(id),
+ created_at timestamptz not null default now(),
+ released_at timestamptz
+);
+create index if not exists action_economy_risk_holds_active_idx on public.action_economy_risk_holds(creator_user_id) where status='active';
+-- Server-only writes and reads; no exposed client policies.
+do $$
+declare t text;
+begin
+ foreach t in array array['action_economy_accounts','action_economy_events','action_economy_entries','action_economy_risk_holds'] loop
+  execute format('alter table public.%I enable row level security',t);
+  execute format('alter table public.%I force row level security',t);
+  execute format('revoke all on public.%I from anon, authenticated',t);
+ end loop;
+end $$;
+-- Prevent edits and deletes even if a privileged app accidentally attempts them.
+create or replace function public.action_economy_immutable()
+returns trigger language plpgsql as $$
+begin
+ raise exception 'Action economy ledger records are immutable';
+end $$;
+drop trigger if exists action_economy_events_immutable on public.action_economy_events;
+create trigger action_economy_events_immutable before update or delete on public.action_economy_events
+for each row execute function public.action_economy_immutable();
+drop trigger if exists action_economy_entries_immutable on public.action_economy_entries;
+create trigger action_economy_entries_immutable before update or delete on public.action_economy_entries
+for each row execute function public.action_economy_immutable();
+-- Atomic posting: same-unit double-entry balance, event idempotency, and
+-- no negative balances for spendable user accounts.
 create or replace function public.action_economy_post(
  p_key text,p_type text,p_lines jsonb,p_reference text default null
 ) returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
@@ -139,46 +182,3 @@ grant execute on function public.action_economy_post(text,text,jsonb,text) to se
 ),
  metadata jsonb not null default '{}'::jsonb
 );
-create table if not exists public.action_economy_entries (
- id bigint generated always as identity primary key,
- event_id uuid not null references public.action_economy_events(id),
- account_id uuid not null references public.action_economy_accounts(id),
- amount bigint not null check(amount<>0),
- created_at timestamptz not null default now(),
- unique(event_id,account_id)
-);
-create index if not exists action_economy_entries_account_idx on public.action_economy_entries(account_id,id);
-create table if not exists public.action_economy_risk_holds (
- id uuid primary key default gen_random_uuid(),
- creator_user_id uuid not null references auth.users(id),
- reason text not null check(reason in ('chargeback','fraud_review','identity_review','payout_review')),
- status text not null default 'active' check(status in ('active','released')),
- source_event_id uuid references public.action_economy_events(id),
- created_at timestamptz not null default now(),
- released_at timestamptz
-);
-create index if not exists action_economy_risk_holds_active_idx on public.action_economy_risk_holds(creator_user_id) where status='active';
--- Server-only writes and reads; no exposed client policies.
-do $$
-declare t text;
-begin
- foreach t in array array['action_economy_accounts','action_economy_events','action_economy_entries','action_economy_risk_holds'] loop
-  execute format('alter table public.%I enable row level security',t);
-  execute format('alter table public.%I force row level security',t);
-  execute format('revoke all on public.%I from anon, authenticated',t);
- end loop;
-end $$;
--- Prevent edits and deletes even if a privileged app accidentally attempts them.
-create or replace function public.action_economy_immutable()
-returns trigger language plpgsql as $$
-begin
- raise exception 'Action economy ledger records are immutable';
-end $$;
-drop trigger if exists action_economy_events_immutable on public.action_economy_events;
-create trigger action_economy_events_immutable before update or delete on public.action_economy_events
-for each row execute function public.action_economy_immutable();
-drop trigger if exists action_economy_entries_immutable on public.action_economy_entries;
-create trigger action_economy_entries_immutable before update or delete on public.action_economy_entries
-for each row execute function public.action_economy_immutable();
--- Atomic posting: same-unit double-entry balance, event idempotency, and
--- no negative balances for spendable user accounts.
