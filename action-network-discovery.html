@@ -23,4 +23,4 @@ function decide(interested){if(index>=queue.length)return;decisions.push({candid
 document.getElementById('pass').onclick=()=>decide(false);document.getElementById('like').onclick=()=>decide(true);
 card.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();decide(e.key==='ArrowRight')}});
 let startX=null;card.addEventListener('pointerdown',e=>{startX=e.clientX});card.addEventListener('pointerup',e=>{if(startX===null)return;const delta=e.clientX-startX;startX=null;if(Math.abs(delta)>65)decide(delta>0)});card.addEventListener('pointercancel',()=>startX=null);
-</script></body></html>
+</script><script src="js/tabbar.js" defer></script></body></html>
