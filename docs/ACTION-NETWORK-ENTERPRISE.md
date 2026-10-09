@@ -83,3 +83,10 @@ Add enterprise_customer_orgs and enterprise_programs to existing org structure, 
 - The first Founder 40 instance is a **nonbillable McCluster artist case study** with the founder occupying the real client seat. Do not fabricate invoices or revenue; record all actual campaign costs and performance. Use it to validate the same product sold to external artists.
 - Case-study claim discipline: distinguish reach, geographic audience distribution, plays, clips, referral traffic, verified signups, returning users, paid conversions, rights-cleared releases and cost. Viral or international success is an objective, never a guaranteed result; obtain creator and fan consents for testimonials and identifiable reporting.
 - The public offer should lead with 'Your branded clipping platform, powered by a rotating creator network' and explain tier differences through capacity, geography and guaranteed scoped deliverables rather than implying ownership of McCluster's underlying software.
+
+
+## Founder 40 pricing decision — Oct 9, authoritative
+- Founder 40 commercial list pricing is **2.5× Founder 20**: **$30,000/year prepaid** (2.5 × $12,000), or **$3,000/month on a 12-month commitment** ($36,000 total; 2.5 × $1,200/month). This supersedes any prior 'Founder 40 price TBD' language.
+- Founder 20 remains $12,000 prepaid or $1,200/month ($14,400 annual total), with 20 distinct placements/year, five active per quarter.
+- Founder 40 includes 40 distinct placements/year, ten active per quarter, with a dedicated international production/collaboration track alongside U.S. production. The 2.5× premium is for increased capacity and cross-border operations, not a guarantee of virality, unique audience, or commercial results.
+- Founder 40 McCluster artist case study is internally nonbillable despite this external list price; record actual costs, not fictional sales. Prior to public checkout, validate unit economics, workforce/rights compliance, capacity, and production scope.
