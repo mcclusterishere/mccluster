@@ -22,8 +22,8 @@
 - Subsidized/free hosting eligibility must be a published, objective policy, not automatic discrimination by nationality; consider hardship-based scholarships with a clear budget and appeals path.
 
 ## Global recruitment
-- Pilot candidate markets: South Korea, Japan (high income); Brazil, Mexico (upper middle); Nigeria (lower middle), subject to payout availability, contracts, localization and sanctions compliance.
-- Country income group is not a proxy for individual creator value or exchange-rate advantage. Select based on music relevance, content skill, audience authenticity, payment feasibility, internet access and legal compliance.
+- Revised English-first pilot candidate markets: United Kingdom, Jamaica, Ghana, Nigeria and Kenya. These are candidate recruitment markets, not guarantees that applicants or their audiences primarily use English. Verify actual English-language posts, spoken communication, audience demographics and platform reach for each applicant.
+- English-language campaign production is an explicit program requirement: captions, calls to action, briefs, reporting and spoken content where applicable should be in English. English proficiency is evaluated on work samples, not assumed from nationality.\n- Country income group is not a proxy for individual creator value or exchange-rate advantage. Select based on music relevance, content skill, audience authenticity, payment feasibility, internet access and legal compliance.
 - Avoid blanket higher targets for lower-income countries. Set baseline-adjusted objectives with documented measurement and appeal.
 - Creator sites should be tenant-scoped sub-sites within the existing McCluster ecosystem, reusing auth, music player, Control, analytics, Action Network and clipping infrastructure.
 
