@@ -70,3 +70,16 @@ returns trigger language plpgsql set search_path=public,pg_temp as $$
 begin raise exception 'Creator selection snapshots are immutable'; end $$;
 create trigger creator_selection_snapshot_immutable before update or delete on public.creator_selection_snapshots
  for each row execute function public.creator_selection_snapshot_immutable();
+
+-- A snapshot must never attach one creator's score to another creator's report.
+create or replace function public.creator_selection_validate_report_owner()
+returns trigger language plpgsql set search_path=public,pg_temp as $$
+begin
+ if not exists(select 1 from public.creator_trial_report_cards r
+   where r.id=new.report_card_id and r.creator_user_id=new.creator_user_id)
+ then raise exception 'Creator report ownership mismatch'; end if;
+ return new;
+end $$;
+create trigger creator_selection_report_owner before insert on public.creator_selection_snapshots
+ for each row execute function public.creator_selection_validate_report_owner();
+revoke all on function public.creator_selection_validate_report_owner() from public,anon,authenticated;
