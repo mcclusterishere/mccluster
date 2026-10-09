@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const db=createClient('https://zmnhbrjyhxzhkxmhkexs.supabase.co','sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4',{auth:{persistSession:true,autoRefreshToken:true}});
 const status=document.getElementById('accountStatus');
-async function refresh(){status.textContent='Checking account…';try{const {data,error}=await db.auth.getUser();if(error)throw error;status.textContent=data.user?'Signed in as '+(data.user.email||'McCluster member')+'. Profile drafts are still stored on this device only.':'Not signed in. Sign in to your McCluster account to prepare for account-linked publishing.'}catch(_){status.textContent='Could not verify account status. Try again or open the account page.'}}
+async function refresh(){status.textContent='Checking account…';try{const {data,error}=await db.auth.getUser();if(error)throw error;status.textContent=data.user?'Signed in as '+(data.user.email||'McCluster member')+'. You can save your profile to your account.':'Not signed in. Sign in to your McCluster account to save your creator profile.'}catch(_){status.textContent='Could not verify account status. Try again or open the account page.'}}
 document.getElementById('refreshAccount').addEventListener('click',refresh);
 db.auth.onAuthStateChange(()=>{refresh()});refresh();
 
@@ -17,13 +17,35 @@ if(save)save.addEventListener('click',async()=>{
     const website=document.getElementById('portfolio').value.trim();
     if(!name||name.length>120)throw new Error('Creator name must be 1–120 characters.');
     if(bio.length>2000)throw new Error('Bio is too long.');
-    if(website&&new URL(website).protocol!=='https:')throw new Error('Portfolio must use HTTPS.');
+    if(website){let url;try{url=new URL(website)}catch(_){throw new Error('Portfolio must be a valid HTTPS URL.')}if(url.protocol!=='https:')throw new Error('Portfolio must use HTTPS.');}
     const {error}=await db.rpc('mnet_complete_surface_profile',{
-      p_app_key:'mnet',p_display_name:name,p_headline:document.getElementById('role').value,
+      p_app_key:'mnet-web',p_display_name:name,p_headline:document.getElementById('role').value,
       p_bio:bio,p_website_url:website
     });
     if(error)throw new Error(error.message);
     status.textContent='Account profile saved. Public publishing is a separate step.';
   }catch(e){status.textContent='Account save failed: '+(e.message||'Unknown error');}
   finally{save.disabled=false;}
+});
+
+const load=document.getElementById('loadAccount');
+if(load)load.addEventListener('click',async()=>{
+ load.disabled=true;
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError||!user)throw new Error('Sign in to load your profile.');
+  const {data:id,error:idError}=await db.rpc('current_m_uid');
+  if(idError||!id)throw new Error('Your McCluster member identity is not ready.');
+  const {data:p,error}=await db.from('network_profiles').select('display_name,headline,bio,website_url').eq('m_uid',id).maybeSingle();
+  if(error)throw new Error(error.message);
+  if(!p)throw new Error('No readable profile exists for this account yet.');
+  document.getElementById('name').value=p.display_name||'';
+  document.getElementById('bio').value=p.bio||'';
+  document.getElementById('portfolio').value=p.website_url||'';
+  const role=document.getElementById('role');
+  if([...role.options].some(o=>o.value===p.headline))role.value=p.headline;
+  ['name','bio','portfolio','role'].forEach(id=>document.getElementById(id).dispatchEvent(new Event('input')));
+  status.textContent='Account profile loaded. Unsaved local edits were replaced.';
+ }catch(e){status.textContent='Account load failed: '+(e.message||'Unknown error');}
+ finally{load.disabled=false;}
 });
