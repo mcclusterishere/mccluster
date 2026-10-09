@@ -84,3 +84,58 @@ publish.addEventListener('click',async()=>{
 });
 
 function showLink(id,visibility){const area=document.getElementById('publicProfileLink');area.replaceChildren();if(visibility!=='public') {area.textContent='Your profile is not public.';return;}const a=document.createElement('a');a.href='mccluster-creator.html?id='+encodeURIComponent(id);a.textContent='View public creator profile';area.append(a)}
+
+
+const websiteStatus=document.getElementById('websiteStatus');
+const websiteSelect=document.getElementById('websiteWorkspace');
+const websitePublish=document.getElementById('publishWebsite');
+const apiOrigin='https://api.mccluster.org';
+async function creatorApi(path,method='GET',body){
+ const {data:{session},error}=await db.auth.getSession();
+ if(error||!session?.access_token)throw new Error('Sign in before managing a paid website.');
+ const response=await fetch(apiOrigin+path,{
+  method,headers:{authorization:'Bearer '+session.access_token,...(body?{'content-type':'application/json'}:{})},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error||'Website service unavailable ('+response.status+').');
+ return data;
+}
+async function checkWebsiteAccess(){
+ websiteStatus.textContent='Checking subscription and workspace access…';
+ websitePublish.disabled=true;
+ websiteSelect.replaceChildren();
+ const option=document.createElement('option');option.value='';option.textContent='Choose a workspace';websiteSelect.append(option);
+ try{
+  const data=await creatorApi('/v1/creator-billing/entitlement');
+  for(const workspace of data.workspaces||[]){
+   if(!workspace.org_id)continue;
+   const item=document.createElement('option');
+   item.value=workspace.org_id;
+   item.textContent='Creator workspace '+workspace.org_id.slice(0,8);
+   websiteSelect.append(item);
+  }
+  websiteStatus.textContent=data.paid?'Active paid access verified. Select your workspace.':'No active paid creator subscription. Your free profile remains available.';
+ }catch(error){websiteStatus.textContent='Access check failed: '+error.message;}
+}
+document.getElementById('checkWebsiteAccess')?.addEventListener('click',checkWebsiteAccess);
+websiteSelect?.addEventListener('change',()=>{websitePublish.disabled=!websiteSelect.value;});
+websitePublish?.addEventListener('click',async()=>{
+ websitePublish.disabled=true;
+ websiteStatus.textContent='Checking payment and publishing…';
+ try{
+  const org_id=websiteSelect.value;
+  if(!org_id)throw new Error('Select your workspace.');
+  const title=document.getElementById('name').value.trim();
+  const tagline=document.getElementById('role').value.trim();
+  const bio=document.getElementById('bio').value.trim();
+  if(!title||title.length>120||tagline.length>300||bio.length>4000)throw new Error('Check your website title and biography.');
+  const data=await creatorApi('/v1/creator-sites/publish','POST',{org_id,title,tagline,bio});
+  const url=new URL(data.url);
+  if(url.origin!==apiOrigin||!url.pathname.startsWith('/v1/creator-sites/view/'))throw new Error('Unexpected published URL.');
+  const link=document.getElementById('websiteLink');link.replaceChildren();
+  const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open published website';link.append(a);
+  websiteStatus.textContent='Website published successfully.';
+ }catch(error){websiteStatus.textContent='Website publishing failed: '+error.message;}
+ finally{websitePublish.disabled=!websiteSelect.value;}
+});
