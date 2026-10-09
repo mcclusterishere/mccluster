@@ -57,8 +57,8 @@ test('every tab destination has the bar it was reached from', async () => {
      no bar — tap it, and the navigation you tapped is gone. */
   const bar = await read('js/tabbar.js');
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['create.html', 'listen.html', 'index.html', 'mnet.html'],
-    `expected the record button and the three canonical tab destinations, found ${hrefs.join(', ')}`);
+  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
+    `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/,
@@ -71,7 +71,7 @@ test('the bar always writes the three canonical tabs, unconditionally', async ()
   const block = /nav\.innerHTML\s*=([\s\S]*?);\n/.exec(bar);
   assert.ok(block, 'could not find the bar markup');
   const markup = block[1];
-  assert.match(markup, /CREATE_TAB/, 'the record button cell is missing from the bar');
+  assert.doesNotMatch(markup, /data-appnav="create"/, 'the retired Create column must not return');
   for (const nav of ['music', 'home', 'profile']) {
     assert.match(markup, new RegExp(`data-appnav="${nav}"`),
       `the ${nav} cell is missing from the bar`);
@@ -102,16 +102,11 @@ test('the native shell mirrors the same three primary destinations', async () =>
 });
 
 
-test('the record button keeps its own column and never opens a wing', async () => {
+test('the retired Create column is removed from legacy bars', async () => {
   const bar = await read('js/tabbar.js');
-  assert.match(bar, /var ORDER = \["music", "home", "create", "profile"\];/);
-  assert.match(bar, /var FIXED = \{ create: true \};/);
-  assert.match(bar, /data-appnav="create"/);
-  /* pages with a hand-written bar get the same cell before the identity tab */
-  assert.match(bar, /if \(!dock\.querySelector\('\[data-appnav="create"\]'\)\)/);
-  /* every wing still has exactly two rooms, so the capsule never changes width */
-  const wings = /var WINGS = \{([\s\S]*?)\n  \};/.exec(bar)[1];
-  assert.doesNotMatch(wings, /create:/, 'the record button is a door, not a wing');
+  assert.match(bar, /dock\.querySelectorAll\('\[data-appnav="create"\]'\)/,
+    'old page copies of the Create tab must be removed');
+  assert.match(bar, /tab\.remove\(\)/);
   const create = await read('create.html');
   assert.match(create, /js\/tabbar\.js/);
 });
