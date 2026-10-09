@@ -18,15 +18,20 @@ revoke all on public.creator_lifecycle_events from anon,authenticated;
 -- from the current active subscription, not from arbitrary request payloads.
 create or replace function public.creator_lifecycle_from_site()
 returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
-declare v_owner uuid;
+declare v_owner uuid; v_owner_count integer;
 begin
- select owner_user_id into v_owner from public.creator_billing_subscriptions
- where org_id=new.org_id and status='active' and current_period_end>now()
- order by current_period_end desc, owner_user_id asc limit 1;
- if v_owner is null then raise exception 'Cannot attribute creator publication to active owner'; end if;
+ select count(distinct owner_user_id),min(owner_user_id) into v_owner_count,v_owner
+ from public.creator_billing_subscriptions
+ where org_id=new.org_id and status='active' and current_period_end>now();
+ if v_owner_count<>1 or v_owner is null then
+  raise exception 'Creator publication requires exactly one attributable active owner';
+ end if;
+ if tg_op='UPDATE' and new.title is not distinct from old.title
+  and new.tagline is not distinct from old.tagline
+  and new.bio is not distinct from old.bio then return new; end if;
  insert into public.creator_lifecycle_events(creator_user_id,org_id,event_key,event_type)
  values(v_owner,new.org_id,
-  'creator-site:'||new.org_id::text||':'||case when tg_op='INSERT' then 'published' else 'updated' end||':'||new.updated_at::text,
+  'creator-site:'||new.org_id::text||':'||gen_random_uuid()::text,
   case when tg_op='INSERT' then 'site_published' else 'site_updated' end)
  on conflict(event_key) do nothing;
  return new;
