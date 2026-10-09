@@ -1236,7 +1236,7 @@
     $("mnShowBlocked").onclick = loadBlocked;
     $("mnDiscoverQuery").addEventListener("keydown", function (e) { if (e.key === "Enter") loadDiscover(); });
     $("mnRefreshMessages").onclick = loadConversations;
-    $("mnPersonClose").onclick = function () { $("mnPersonDialog").close(); };
+    $("mnPersonClose").onclick = function () { $("mnPersonDialog").close(); setView("feed"); };
     $("mnConversationClose").onclick = function () { $("mnConversationDialog").close(); state.currentConversation=null; };
     $("mnMessageForm").addEventListener("submit", sendMessage);
     $("mnAcceptConversation").onclick = function () {
