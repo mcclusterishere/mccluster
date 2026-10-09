@@ -34,3 +34,17 @@ Implement a creator context resolver that yields canonical creator ID, verified 
 
 ## Updated global bottom navigation — Trinity (supersedes prior four-button layout)
 User decision: global bottom navigation is **Music | centered emblem | Profile**, exactly three destinations. Remove the Record control from the bottom bar (without removing recording functionality). Move Record into Action Network feed/composer as a contextual action, with permissions, microphone consent and existing record behavior preserved. The center emblem is McCluster M on the network home; in verified creator context it becomes that creator's emblem and links to their public portfolio. Music and Profile retain existing semantics, including player continuity and account identity. Preserve current component, style, safe-area layout and routes as the basis; modify existing code, do not create a separate nav component. Future tenant apps may configure navigation via explicit supported settings, not forks. Regression-test signed-out, signed-in, creator and network routes, recording from feed, playback while switching creators, mobile layout and keyboard/screen-reader navigation.
+
+## Creator profiles for everyone — entitlement model (supersedes verified-only emblem restriction)
+Every applicant may retain a public creator profile irrespective of selection or paid status. Whenever a visitor enters a public creator context, the existing central M tab routes to that creator's portfolio; it can show an approved avatar, monogram or logo without implying identity verification. The free tier uses a constrained polished template with editable text, city/country, portfolio, images, links and color presets. Template fields must never allow executable HTML or CSS. Free profiles remain discoverable.
+
+Expanded white-label website branding is an entitlement granted by (a) active accepted accelerator award or (b) paid website subscription. Identity verification, accelerator selection and website entitlement are three independent states. A paid subscription does not grant an identity-verification badge or funded compensation. Free profile persists before domain purchase and after cancellation.
+
+### Founding creator offer
+The first 10,000 eligible unique verified creator accounts receive a founding_creator offer eligibility record allocated atomically, not one per application. Proposed price: $15 first-year domain allowance plus $5 setup/processing = $20 upfront; $5 per month thereafter for website service. Verify actual registrar prices, TLD, renewal, taxes and fees before advertising an at-cost claim. A domain is not a perpetual one-time purchase. Eligibility is independent of cohort rejection and does not grant an active paid entitlement until checkout.
+
+### Upgrade moment
+After profile completion and after cohort decisions, preview the creator's branded site with their real profile data and an optional invitation: "Want this to be your website?" Show founding offer eligibility and actual domain/renewal price. Never imply payment improves selection chances.
+
+### Privacy and publication
+Do not require or publish a home street address as part of the public creator profile. Keep private contact details separate and restrict access. Explicit rights and public-publication consent, plus moderation, precede discovery of applicant media. Keep application status, profile publication, media status, identity verification and subscription entitlements separate.
