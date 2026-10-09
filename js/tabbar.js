@@ -309,6 +309,21 @@
       if (homeLabel) homeLabel.textContent = signedIn ? "Feed" : "HERE";
     }
     WINGS.home.home = signedIn ? ROOT + "mnet.html?view=feed" : ROOT + "index.html";
+    /* The member workspace is a five-position bar: create, feed, analytics and account. */
+    Array.prototype.forEach.call(dock.querySelectorAll('[data-member-tab]'), function (node) { node.remove(); });
+    if (signedIn) {
+      var record = document.createElement("a");
+      record.className = "appbar__tab"; record.href = ROOT + "creator-capture.html";
+      record.setAttribute("data-member-tab", "record"); record.setAttribute("aria-label", "Record, upload media or edit drafts");
+      record.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg><span>Record</span>';
+      if (homeTab) dock.insertBefore(record, homeTab);
+      var analytics = document.createElement("a");
+      analytics.className = "appbar__tab"; analytics.href = ROOT + "creator-landing-analytics.html";
+      analytics.setAttribute("data-member-tab", "analytics"); analytics.setAttribute("aria-label", "Analytics for your landing page");
+      analytics.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M22 20V3"/></svg><span>Analytics</span>';
+      if (homeTab && homeTab.nextSibling) dock.insertBefore(analytics, homeTab.nextSibling);
+      else dock.appendChild(analytics);
+    }
     var session = readAuthSession();
     var payload = session && session.access_token ? jwtPayload(session.access_token) : {};
     var name = authDisplay(user, payload);
@@ -317,10 +332,10 @@
       var label = tab.querySelector("span:last-child");
       var svg = tab.querySelector(":scope > svg");
       var av = tab.querySelector(".appbar__auth-avatar");
-      tab.href = signedIn ? ROOT + "mnet.html" : ROOT + "account.html";
-      tab.setAttribute("aria-label", signedIn ? "Open your Action Network feed" : "Sign in or create an account");
+      tab.href = signedIn ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
+      tab.setAttribute("aria-label", signedIn ? "Open your member workspace" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
-      if (label) label.textContent = signedIn ? "Feed" : "Sign in";
+      if (label) label.textContent = signedIn ? "Me" : "Sign in";
       /* The person icon stays, signed in or not: that is the owner's call.
          Signed in is shown by the green dot on the tab (the ::after rule
          below), not by swapping the icon for initials. */
@@ -337,7 +352,7 @@
       chip.innerHTML = '<span class="mcc-auth-chip__dot" aria-hidden="true"></span><span class="mcc-auth-chip__text"></span>';
       document.body.appendChild(chip);
     }
-    chip.href = signedIn ? ROOT + "mnet.html" : ROOT + "account.html";
+    chip.href = signedIn ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
     chip.querySelector(".mcc-auth-chip__text").textContent =
       signedIn ? ("Signed in · " + name) : "Guest · Sign in";
     window.MCC_AUTH_STATE = AUTH_STATE;
@@ -671,7 +686,7 @@
        A held press never reaches this line (the lpFired gate above swallows
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
-    if (key === "profile") dest = AUTH_STATE.signed_in ? ROOT + "mnet.html" : ROOT + "account.html";
+    if (key === "profile") dest = AUTH_STATE.signed_in ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
 
     /* This column used to open the desk widget in place instead of sailing
        anywhere, because the tab WAS Chat. It is the Closet now, and a tab
