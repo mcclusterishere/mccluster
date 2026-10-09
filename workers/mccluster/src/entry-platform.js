@@ -8,6 +8,7 @@ import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
 import { handleCreatorCheckout } from './creator-billing.js';
+import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -44,6 +45,8 @@ export default {
         return healthResponse(request, env);
       }
 
+      const billingWebhook = await handleCreatorBillingWebhook(request, env);
+      if (billingWebhook) return billingWebhook;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
 
