@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 336,
+  "candidate_count": 337,
   "capability_source_count": 99,
-  "support_only_count": 237,
+  "support_only_count": 238,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -641,6 +641,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network reward and cohort documentation; names the Equity Uprise policy-writer cohort as the first cohort the desk seats. Mobilization documentation, not a building capability."
+    },
+    {
+      "path": "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network creator-economy release-risk audit; references Equity Uprise-related platform boundaries but does not add a building capability."
     },
     {
       "path": "docs/agent-web.md",
