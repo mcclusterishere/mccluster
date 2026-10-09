@@ -40,6 +40,19 @@ export async function handleCreatorPublish(request,env){
     stripe.items?.data?.[0]?.price?.id===record.stripe_price_id){valid=true;break}
  }
  if(!valid)return fail(request,env,'An active creator subscription is required to publish',403);
- // No public site is written until a tenant-scoped publishing backend is implemented.
- return fail(request,env,'Publishing storage is not configured',503);
+ const title=body?.title,tagline=body?.tagline??'',bio=body?.bio??'';
+ if(typeof title!=='string'||!title.trim()||title.length>120||
+    typeof tagline!=='string'||tagline.length>300||
+    typeof bio!=='string'||bio.length>4000)
+  return fail(request,env,'Invalid website content',400);
+ const saved=await fetch(env.SUPABASE_URL+'/rest/v1/rpc/creator_publish_site',{
+  method:'POST',
+  headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json'},
+  body:JSON.stringify({p_org_id:orgId,p_title:title.trim(),p_tagline:tagline,p_bio:bio})
+ });
+ if(!saved.ok)return fail(request,env,'Publishing storage is not configured or entitlement expired',503);
+ const slug=await saved.json();
+ if(typeof slug!=='string'||!/^site-[a-f0-9]{32}$/.test(slug))
+  return fail(request,env,'Invalid publishing result',502);
+ return reply(request,env,{published:true,url:'https://api.mccluster.org/v1/creator-sites/view/'+slug});
 }
