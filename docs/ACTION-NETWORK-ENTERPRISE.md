@@ -1,22 +1,34 @@
-# Action Network Enterprise — white-label managed influencer network
+# Action Network Enterprise — scalable white-label influencer network
 
-## Commercial proposal (not yet launched)
-- $12,000/year per customer ($1,000/month equivalent), with a roster capacity of 10 influencers.
-- Confirmed payout rule: each of 10 influencers receives $50/month, in two $25 installments (start and middle of each month), for $600/year per influencer and $6,000/year total. The $25 installment is not the monthly rate.
-- Annual client fee $9,000 minus annual influencer compensation $6,000 leaves $3,000/year ($250/month) before all other operating expenses.
-- Influencer compensation is included in the $9,000 annual client price; do not invoice separately by default.
-- Payout allocations, advance vs milestone conditions, and service obligations must be set by signed program terms and tracked in the ledger.
-- Payment model must distinguish client-to-McCluster subscription, client-funded creator incentives, creator advance, conditional milestone remainder, refunds, chargebacks, and payout eligibility.
-- No guaranteed audience growth or plays. Quotas should be mutually agreed, measured from trusted first-party data, and reviewed by humans.
+## Pricing policy (proposed; not live)
+- Capacity selector: integer 1 through 1,000,000. Presets for 5 and 10 are shortcuts, not separate products. A million is a pricing-input ceiling, **not** a claim of current operational capacity.
+- Annual rate: $1,200 per active contracted influencer, inclusive of $600 annual influencer compensation and $600 retained by McCluster before other costs.
+- Annual prepaid: 12 × $100 × N, due upfront.
+- Annual contract with quarterly installments: 4 × ($300 × N), each installment covering three months; 12-month commitment.
+- Month-to-month trial/flexible contract: 1.5 × annual-equivalent monthly rate = $150 × N per month; $50 × N creator compensation, $100 × N retained before costs. Do not call this an annual commitment.
+- Influencer compensation: $50 per influencer per month, in two $25 installments at the start and middle of the month, with agreed eligibility rules. Do not mistake the $25 installment for the monthly rate.
+- For N=5: annual prepaid $6,000; quarterly $1,500; flexible monthly $750.
+- For N=10: annual prepaid $12,000; quarterly $3,000; flexible monthly $1,500.
+- Contract amendment, prorations, roster changes, cancellations, refunds, payment failures, reserves, and trial-to-annual conversions require explicit billing rules. Never charge on the basis of a client-only count input without validated entitlements.
+- Separate client billing ledger from influencer payouts; no payout until contract, funding, identity and eligibility checks succeed.
+- No guaranteed audience growth or plays; quotas should be mutually agreed, sourced from trustworthy analytics, and human-reviewed.
+
+## Implementation requirements
+- Price server-side in integer cents: annual_total = 120000*N; quarterly_installment = 30000*N; flexible_monthly = 15000*N. Enforce safe integer bounds and versioned price quotes.
+- Per-program roster_limit is purchased capacity; active seats are constrained by the contract. Allow seat increments with explicit amendments and invoicing.
+- Stripe invoices/subscriptions must use idempotent reconciliation and webhooks; never trust client-calculated totals.
+- Annual installment terms must make all four quarterly payments and renewal behavior explicit. Quarterly prepayment is three months of coverage, not a three-month contract.
+- Large capacities require sales approval, capacity planning, support staffing, rate-limit design, queue-based provisioning, and load tests before acceptance.
+- Preserve multi-tenant RLS, creator privacy, delegated roles, notifications, asset licenses and payout auditability.
 
 ## Multi-tenant architecture
 Add enterprise_customer_orgs and enterprise_programs to existing org structure, not a second identity system.
-- enterprise_programs: id, customer_org_id, provider_org_id, plan_version, roster_limit=10, annual_fee_cents=1200000, monthly_equivalent_cents=100000, monthly_incentive_budget_cents=50000, billing_status, contract_signed_at, status.
-- enterprise_program_members: program_id, partnership_id, influencer_person_id, role, effective_from/to; cap active roster at 10 transactionally.
+- enterprise_programs: id, customer_org_id, provider_org_id, plan_version, roster_limit, price_version, billing_cadence, annual_rate_per_seat_cents=120000, monthly_creator_comp_per_seat_cents=5000, billing_status, contract_signed_at, status.
+- enterprise_program_members: program_id, partnership_id, influencer_person_id, role, effective_from/to; cap active roster at purchased roster_limit transactionally.
 - enterprise_program_staff: program_id, person_id, role (client_owner, client_manager, mccluster_admin, producer, influencer), permissions.
 - enterprise_campaigns, enterprise_campaign_quotas, enterprise_campaign_assignments, enterprise_monthly_reviews, enterprise_invoices and enterprise_creator_payouts reference program_id and org_id.
 - Scope analytics, media, tasks, notifications, Stripe customers, domains and exports by tenant. Enforce RLS plus server-side permission checks, including cross-tenant negative tests.
-- Client-branded dashboard, ten influencer sites, monthly quota overview, task and review inbox, notification preferences, invoices and budget reconciliation.
+- Client-branded dashboard, contracted influencer sites, monthly quota overview, task and review inbox, notification preferences, invoices and budget reconciliation.
 - Provider Control dashboard manages multiple customer programs, staffing capacity, SLA and margin reporting without exposing other tenants.
 - Device push is opt-in, delivery deduplicated and scoped to assigned staff. Escalate missed milestones to the designated account manager.
 
