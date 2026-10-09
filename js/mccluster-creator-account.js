@@ -139,3 +139,46 @@ websitePublish?.addEventListener('click',async()=>{
  }catch(error){websiteStatus.textContent='Website publishing failed: '+error.message;}
  finally{websitePublish.disabled=!websiteSelect.value;}
 });
+
+
+// Free service offers are tied to the signed-in member identity, not paid creator workspaces.
+const serviceStatus=document.getElementById('serviceStatus');
+const serviceLaunchStatus=document.getElementById('serviceLaunchStatus');
+async function refreshServiceReadiness(){
+ try{
+  const {data:{user}}=await db.auth.getUser();
+  if(!user){serviceLaunchStatus.textContent='Sign in to set up your first service.';return}
+  const identity=await db.rpc('current_m_uid');
+  if(identity.error||!identity.data)throw Error('Member identity unavailable');
+  const result=await db.from('creator_service_offers').select('title,description,price_cents,action_url,status').eq('m_uid',identity.data).eq('status','published').order('created_at',{ascending:true}).limit(1);
+  if(result.error)throw result.error;
+  const offer=result.data?.[0];
+  serviceLaunchStatus.textContent=offer?'Service-ready: '+offer.title+'. Your free profile can link clients to this offer.':'Not service-ready yet. Publish at least one actionable service.';
+  if(offer){document.getElementById('serviceTitle').value=offer.title;document.getElementById('serviceDescription').value=offer.description||'';document.getElementById('servicePrice').value=(offer.price_cents/100).toFixed(2);document.getElementById('serviceUrl').value=offer.action_url;}
+ }catch(e){serviceLaunchStatus.textContent='Service readiness unavailable: '+(e.message||'Unknown error')}
+}
+document.getElementById('saveService')?.addEventListener('click',async()=>{
+ const button=document.getElementById('saveService');button.disabled=true;
+ try{
+  const {data:{user},error}=await db.auth.getUser();
+  if(error||!user)throw Error('Sign in first');
+  const identity=await db.rpc('current_m_uid');
+  if(identity.error||!identity.data)throw Error('Member identity unavailable');
+  const title=document.getElementById('serviceTitle').value.trim();
+  const description=document.getElementById('serviceDescription').value.trim();
+  const price=Number(document.getElementById('servicePrice').value);
+  const actionUrl=document.getElementById('serviceUrl').value.trim();
+  const url=new URL(actionUrl);
+  if(url.protocol!=='https:'||url.username||url.password||!url.hostname||actionUrl.length>2000)throw Error('Provide a valid HTTPS booking URL');
+  if(title.length<3||title.length>120||description.length>1200||!Number.isFinite(price)||price<0||price>1000000||Math.round(price*100)!==price*100)throw Error('Check the service title, description and price');
+  const offer={m_uid:identity.data,title,description,price_cents:Math.round(price*100),action_url:url.href,status:'published'};
+  const existing=await db.from('creator_service_offers').select('id').eq('m_uid',identity.data).order('created_at',{ascending:true}).limit(1);
+  if(existing.error)throw existing.error;
+  const saved=existing.data?.[0]?await db.from('creator_service_offers').update(offer).eq('id',existing.data[0].id):await db.from('creator_service_offers').insert(offer);
+  if(saved.error)throw saved.error;
+  serviceStatus.textContent='Service published to your free creator profile.';
+  await refreshServiceReadiness();
+ }catch(e){serviceStatus.textContent='Could not publish service: '+(e.message||'Unknown error')}
+ finally{button.disabled=false}
+});
+refreshServiceReadiness();
