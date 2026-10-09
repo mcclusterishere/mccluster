@@ -7,6 +7,7 @@ import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
+import { handleCreatorCheckout } from './creator-billing.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -46,6 +47,8 @@ export default {
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
 
+      const creatorCheckout = await handleCreatorCheckout(request, env);
+      if (creatorCheckout) return creatorCheckout;
       const computeResponse = await handleComputeApi(request, env);
       if (computeResponse) return computeResponse;
       const planResponse = await handlePlatformPlanApi(request, env);
