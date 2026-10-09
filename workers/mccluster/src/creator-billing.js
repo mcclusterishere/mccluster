@@ -28,7 +28,9 @@ export async function handleCreatorCheckout(request,env){
  if(!envName)return fail(request,env,'Unsupported plan or billing period',400);
  const price=env[envName];
  if(!price||!/^price_[A-Za-z0-9]+$/.test(price))return fail(request,env,'Selected subscription is not available',503);
- const origin=env.PUBLIC_APP_URL&&new URL(env.PUBLIC_APP_URL).origin===ORIGIN?ORIGIN:ORIGIN;
+ if(env.CREATOR_BILLING_ALLOW_LIVE!=='true'&&!env.STRIPE_SECRET_KEY.startsWith('sk_test_'))
+  return fail(request,env,'Creator checkout is restricted to Stripe test mode',503);
+ const origin=ORIGIN;
  const session=await stripeRequest(env,'checkout/sessions',{
   mode:'subscription',
   line_items:[{price,quantity:1}],
