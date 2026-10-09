@@ -179,6 +179,3 @@ begin
 end $$;
 revoke all on function public.action_economy_post(text,text,jsonb,text) from public,anon,authenticated;
 grant execute on function public.action_economy_post(text,text,jsonb,text) to service_role;
-),
- metadata jsonb not null default '{}'::jsonb
-);
