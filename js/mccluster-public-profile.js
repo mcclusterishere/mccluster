@@ -20,10 +20,12 @@ async function load(){
    heading.textContent=offer.title;description.textContent=offer.description||'';
    price.textContent=offer.price_cents===0?'Free':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(offer.price_cents/100);
    action.href=url.href;action.target='_blank';action.rel='noopener noreferrer';action.textContent='Book or inquire';
+   action.addEventListener('click',()=>{if(typeof window.MCC_TRACK==='function')window.MCC_TRACK('creator_service_click',{creator_m_uid:id,offer_title:offer.title,source:'creator_public_profile'});});
    li.append(heading,description,price,document.createTextNode(' · '),action);list.append(li);
   }
   section.hidden=!list.children.length;
  }
  document.getElementById('profile').hidden=false;state.hidden=true;
+ if(typeof window.MCC_TRACK==='function')window.MCC_TRACK('creator_profile_view',{creator_m_uid:id,source:'creator_public_profile'});
 }
 load();
