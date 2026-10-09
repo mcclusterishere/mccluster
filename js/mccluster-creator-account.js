@@ -1,9 +1,22 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const db=createClient('https://zmnhbrjyhxzhkxmhkexs.supabase.co','sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4',{auth:{persistSession:true,autoRefreshToken:true}});
 const status=document.getElementById('accountStatus');
+async function importLegacySession(){
+ const {data:{session}}=await db.auth.getSession();
+ if(session)return;
+ for(const key of ['mccdb_session','mcc_sess_keep']){
+  let legacy;
+  try{legacy=JSON.parse(localStorage.getItem(key)||'null')}catch(_){continue}
+  if(!legacy?.access_token||!legacy?.refresh_token)continue;
+  const {error}=await db.auth.setSession({access_token:legacy.access_token,refresh_token:legacy.refresh_token});
+  if(!error)break;
+ }
+}
+
 async function refresh(){status.textContent='Checking account…';try{const {data,error}=await db.auth.getUser();if(error)throw error;status.textContent=data.user?'Signed in as '+(data.user.email||'McCluster member')+'. You can save your profile to your account.':'Not signed in. Sign in to your McCluster account to save your creator profile.'}catch(_){status.textContent='Could not verify account status. Try again or open the account page.'}}
 document.getElementById('refreshAccount').addEventListener('click',refresh);
-db.auth.onAuthStateChange(()=>{refresh()});refresh();
+db.auth.onAuthStateChange(()=>{setTimeout(refresh,0)});
+importLegacySession().catch(()=>{}).finally(refresh);
 
 // Persist through the existing owner-checked Action Network RPC; never write directly to network_profiles.
 const save=document.getElementById('saveAccount');
