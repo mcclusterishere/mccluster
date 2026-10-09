@@ -5,12 +5,13 @@ const KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 const supabase = createClient(SB, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
 const $ = (id) => document.getElementById(id);
-const ALB = window.MCC_CREATOR_ALBUMS;
+const PAGE = window.MCC_CREATOR_PAGE;
 let session = null;
 let mUid = null;
 let profile = null;
 let tracksCache = [];
 let editingAlbum = null;
+let editingService = null;
 
 function status(id, message, tone = "") {
   const el = $(id);
@@ -134,6 +135,7 @@ async function loadProfile() {
     "&select=m_uid,handle,artist_name,bio,website_url,avatar_url,banner_url,status,verification_state,payout_state,settings&limit=1");
   profile = rows?.[0] || null;
   renderAlbums();
+  renderServices();
   if (!profile) return;
   $("creatorAvatarNow").textContent = profile.avatar_url ? "Photo set. Choose a file to replace it." : "Square works best. Shown on your page and beside your tracks.";
   $("creatorBannerNow").textContent = profile.banner_url ? "Front-page photo set. Choose a file to replace it." : "Wide and dark works best. It sits behind your name at the top of your page.";
@@ -191,15 +193,17 @@ async function saveSettings(change) {
   const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
   const settings = Object.assign({}, rows?.[0]?.settings || {});
   change(settings);
-  settings.albums = ALB.normalizeAlbums(settings);
+  settings.albums = PAGE.normalizeAlbums(settings);
+  settings.services = PAGE.normalizeServices(settings);
   if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
   await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
     method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ settings })
   });
   profile = Object.assign({}, profile, { settings });
   renderAlbums();
+  renderServices();
 }
-function albumsNow() { return ALB.normalizeAlbums(profile && profile.settings); }
+function albumsNow() { return PAGE.normalizeAlbums(profile && profile.settings); }
 function trackById(id) { return tracksCache.find((t) => String(t.id).toLowerCase() === id) || null; }
 function trackLabel(t) {
   return t ? t.title + (t.status === "published" ? "" : " · " + t.status.replace(/_/g, " ")) : "Removed track";
@@ -207,9 +211,9 @@ function trackLabel(t) {
 function renderAlbums() {
   const list = $("creatorAlbums");
   const select = $("trackAlbum");
-  if (!list || !ALB) return;
+  if (!list || !PAGE) return;
   const albums = albumsNow();
-  const featured = ALB.featuredId(profile && profile.settings, albums);
+  const featured = PAGE.featuredId(profile && profile.settings, albums);
   if (!profile) {
     list.innerHTML = '<div class="creator-status">Save your creator profile first.</div>';
   } else if (!albums.length) {
@@ -218,7 +222,7 @@ function renderAlbums() {
     list.innerHTML = albums.map((a) => {
       const published = a.tracks.filter((id) => trackById(id)?.status === "published").length;
       return '<div class="creator-item"><div><b>' + escapeHtml(a.title) + '</b><small>' +
-        escapeHtml([ALB.kindLabel(a.kind), a.release_date, a.tracks.length + " track" + (a.tracks.length === 1 ? "" : "s"),
+        escapeHtml([PAGE.kindLabel(a.kind), a.release_date, a.tracks.length + " track" + (a.tracks.length === 1 ? "" : "s"),
           published + " published", a.id === featured ? "featured" : ""].filter(Boolean).join(" · ")) +
         '</small></div><button class="creator-btn quiet" type="button" data-edit-album="' + escapeHtml(a.id) + '">Edit</button></div>';
     }).join("");
@@ -247,7 +251,7 @@ function renderAlbumTracks() {
 }
 function openAlbum(album) {
   if (!profile) { status("albumStatus", "Save your creator profile first.", "bad"); return; }
-  editingAlbum = album ? JSON.parse(JSON.stringify(album)) : { id: ALB.newAlbumId(), title: "", kind: "album", release_date: "", description: "", cover_url: "", tracks: [] };
+  editingAlbum = album ? JSON.parse(JSON.stringify(album)) : { id: PAGE.newAlbumId(), title: "", kind: "album", release_date: "", description: "", cover_url: "", tracks: [] };
   const isNew = !album;
   $("albumForm").hidden = false;
   $("albumTitle").value = editingAlbum.title;
@@ -256,7 +260,7 @@ function openAlbum(album) {
   $("albumDescription").value = editingAlbum.description;
   $("albumCover").value = "";
   $("albumCoverNow").textContent = editingAlbum.cover_url ? "Cover set. Choose a file to replace it." : "Square, at least 1000×1000.";
-  $("albumFeatured").checked = !isNew && ALB.featuredId(profile.settings, albumsNow()) === editingAlbum.id;
+  $("albumFeatured").checked = !isNew && PAGE.featuredId(profile.settings, albumsNow()) === editingAlbum.id;
   $("deleteAlbum").hidden = isNew;
   status("albumStatus", "");
   renderAlbumTracks();
@@ -278,7 +282,7 @@ $("albumForm").addEventListener("click", (e) => {
   const move = e.target.closest("[data-album-move]");
   const remove = e.target.closest("[data-album-remove]");
   const list = editingAlbum.tracks;
-  if (add && list.length < ALB.MAX_TRACKS) list.push(add.getAttribute("data-album-add"));
+  if (add && list.length < PAGE.MAX_TRACKS) list.push(add.getAttribute("data-album-add"));
   if (move) {
     const [i, d] = move.getAttribute("data-album-move").split(":").map(Number);
     const j = i + d;
@@ -310,7 +314,7 @@ $("albumForm").addEventListener("submit", async (e) => {
       coverUpload = { bucket: "creator-artwork", path };
       editingAlbum.cover_url = publicUrl("creator-artwork", path);
     }
-    const album = ALB.normalizeAlbum(Object.assign({}, editingAlbum, {
+    const album = PAGE.normalizeAlbum(Object.assign({}, editingAlbum, {
       title: $("albumTitle").value,
       kind: $("albumKind").value,
       release_date: $("albumDate").value,
@@ -324,7 +328,7 @@ $("albumForm").addEventListener("submit", async (e) => {
       const at = list.findIndex((a) => a && a.id === album.id);
       if (at >= 0) list[at] = album;
       else {
-        if (ALB.normalizeAlbums({ albums: list }).length >= ALB.MAX_ALBUMS) throw new Error("You have the most albums a page can hold (" + ALB.MAX_ALBUMS + ").");
+        if (PAGE.normalizeAlbums({ albums: list }).length >= PAGE.MAX_ALBUMS) throw new Error("You have the most albums a page can hold (" + PAGE.MAX_ALBUMS + ").");
         list.push(album);
       }
       s.albums = list;
@@ -337,6 +341,106 @@ $("albumForm").addEventListener("submit", async (e) => {
   } catch (err) {
     if (coverUpload) { try { await removeUpload(coverUpload.bucket, coverUpload.path); } catch (_) { /* best effort */ } }
     status("albumStatus", err.message || "Could not save the album.", "bad");
+  } finally {
+    save.disabled = false;
+  }
+});
+
+/* ---------- rate sheet (music_creator_profiles.settings.services) ---------- */
+
+function servicesNow() { return PAGE.normalizeServices(profile && profile.settings); }
+function renderServices() {
+  const list = $("creatorServices");
+  if (!list || !PAGE) return;
+  const services = servicesNow();
+  if (!profile) { list.innerHTML = '<div class="creator-status">Save your creator profile first.</div>'; return; }
+  if (!services.length) { list.innerHTML = '<div class="creator-status">No rates yet.</div>'; return; }
+  list.innerHTML = services.map((svc, i) =>
+    '<div class="creator-item"><div><b>' + escapeHtml(svc.title) + '</b><small>' + escapeHtml(PAGE.servicePrice(svc)) + '</small></div>' +
+    '<span class="creator-rowactions">' +
+    '<button type="button" class="creator-mini" data-service-move="' + i + ':-1" aria-label="Move ' + escapeHtml(svc.title) + ' up"' + (i ? '' : ' disabled') + '>↑</button>' +
+    '<button type="button" class="creator-mini" data-service-move="' + i + ':1" aria-label="Move ' + escapeHtml(svc.title) + ' down"' + (i < services.length - 1 ? '' : ' disabled') + '>↓</button>' +
+    '<button class="creator-btn quiet" type="button" data-edit-service="' + escapeHtml(svc.id) + '">Edit</button></span></div>'
+  ).join("");
+}
+function openService(svc) {
+  if (!profile) { status("serviceStatus", "Save your creator profile first.", "bad"); return; }
+  editingService = svc ? Object.assign({}, svc) : { id: PAGE.newServiceId() };
+  $("serviceForm").hidden = false;
+  $("serviceTitle").value = svc ? svc.title : "";
+  $("servicePrice").value = svc ? String(svc.price_cents / 100) : "";
+  $("serviceUnit").value = svc ? svc.unit : "song";
+  $("serviceRoyalty").value = svc && svc.royalty_pct ? String(svc.royalty_pct) : "";
+  $("serviceDescription").value = svc ? svc.description : "";
+  $("deleteService").hidden = !svc;
+  status("serviceStatus", "");
+  $("serviceTitle").focus();
+}
+function closeService() { editingService = null; $("serviceForm").hidden = true; }
+
+$("newService").addEventListener("click", () => openService(null));
+$("cancelService").addEventListener("click", () => { closeService(); status("serviceStatus", ""); });
+$("creatorServices").addEventListener("click", async (e) => {
+  const edit = e.target.closest("[data-edit-service]");
+  const move = e.target.closest("[data-service-move]");
+  if (edit) {
+    const svc = servicesNow().find((x) => x.id === edit.getAttribute("data-edit-service"));
+    if (svc) openService(svc);
+    return;
+  }
+  if (!move) return;
+  const [i, d] = move.getAttribute("data-service-move").split(":").map(Number);
+  const id = servicesNow()[i]?.id;
+  try {
+    await saveSettings((s) => {
+      const list = PAGE.normalizeServices(s);
+      const at = list.findIndex((x) => x.id === id);
+      const to = at + d;
+      if (at >= 0 && to >= 0 && to < list.length) [list[at], list[to]] = [list[to], list[at]];
+      s.services = list;
+    });
+  } catch (err) { status("serviceStatus", err.message || "Could not reorder your rates.", "bad"); }
+});
+$("deleteService").addEventListener("click", async () => {
+  if (!editingService || !confirm("Delete this rate from your page?")) return;
+  const id = editingService.id;
+  try {
+    await saveSettings((s) => { s.services = (s.services || []).filter((x) => x && x.id !== id); });
+    closeService();
+    status("serviceStatus", "Rate deleted.", "good");
+  } catch (err) { status("serviceStatus", err.message || "Could not delete the rate.", "bad"); }
+});
+$("serviceForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!editingService) return;
+  const save = $("saveService");
+  try {
+    save.disabled = true;
+    const svc = PAGE.normalizeService({
+      id: editingService.id,
+      title: $("serviceTitle").value,
+      price_cents: Math.round(Number($("servicePrice").value) * 100),
+      unit: $("serviceUnit").value,
+      royalty_pct: Number($("serviceRoyalty").value || 0),
+      description: $("serviceDescription").value
+    });
+    if (!svc) throw new Error("Give the rate a name and a price between $1 and $100,000.");
+    status("serviceStatus", "Saving rate…");
+    await saveSettings((s) => {
+      const list = Array.isArray(s.services) ? s.services.slice() : [];
+      const at = list.findIndex((x) => x && x.id === svc.id);
+      if (at >= 0) list[at] = svc;
+      else {
+        if (PAGE.normalizeServices({ services: list }).length >= PAGE.MAX_SERVICES) throw new Error("A rate sheet holds up to " + PAGE.MAX_SERVICES + " rates.");
+        list.push(svc);
+      }
+      s.services = list;
+    });
+    closeService();
+    status("serviceStatus", "Rate saved: " + PAGE.servicePrice(svc) + ".", "good");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_rate_saved", { unit: svc.unit, royalty: svc.royalty_pct > 0 });
+  } catch (err) {
+    status("serviceStatus", err.message || "Could not save the rate.", "bad");
   } finally {
     save.disabled = false;
   }
@@ -561,7 +665,7 @@ $("trackForm").addEventListener("submit", async (e) => {
       try {
         await saveSettings((s) => {
           const a = (s.albums || []).find((x) => x && x.id === albumId);
-          if (a && Array.isArray(a.tracks) && a.tracks.length < ALB.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
+          if (a && Array.isArray(a.tracks) && a.tracks.length < PAGE.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
         });
       } catch (albumErr) {
         albumWarning = " It was not added to the album: add it from Your albums.";

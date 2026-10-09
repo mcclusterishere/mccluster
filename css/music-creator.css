@@ -81,3 +81,4 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
 .creator-albumtracks li.creator-status::before{content:none}
 .creator-mini{appearance:none;min-width:40px;min-height:40px;border:1px solid var(--mc-line);border-radius:999px;background:rgba(255,255,255,.06);color:var(--mc-text);font:800 13px/1 var(--ui,system-ui);cursor:pointer;padding:0 10px}
 .creator-mini:disabled{opacity:.35;cursor:default}
+.creator-rowactions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}

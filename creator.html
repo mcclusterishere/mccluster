@@ -59,6 +59,28 @@
         </form>
       </section>
 
+      <section class="creator-card wide" id="rateCard">
+        <h2>Your rate sheet</h2>
+        <p>What you sell, shown near the top of your page. Buyers send a booking request; nothing is charged until you confirm, then they get a payment link.</p>
+        <div class="creator-list" id="creatorServices"><div class="creator-status">No rates yet.</div></div>
+        <div class="creator-actions"><button class="creator-btn quiet" id="newService" type="button">+ Add a rate</button></div>
+        <form class="creator-form two creator-album-form" id="serviceForm" hidden>
+          <div class="creator-field wide"><label for="serviceTitle">What you sell</label><input id="serviceTitle" required maxlength="80" placeholder="Feature on a song"></div>
+          <div class="creator-field"><label for="servicePrice">Price (USD)</label><input id="servicePrice" type="number" inputmode="decimal" min="1" max="100000" step="0.01" required placeholder="50"></div>
+          <div class="creator-field"><label for="serviceUnit">Charged</label>
+            <select id="serviceUnit"><option value="song">Per song</option><option value="hour">Per hour</option><option value="flat">Flat fee</option></select>
+          </div>
+          <div class="creator-field"><label for="serviceRoyalty">Royalty share (%)</label><input id="serviceRoyalty" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="0"><small class="creator-help">Optional: your share of the song's royalties on top of the price.</small></div>
+          <div class="creator-field wide"><label for="serviceDescription">What the buyer gets</label><textarea id="serviceDescription" maxlength="600"></textarea></div>
+          <div class="creator-actions wide">
+            <button class="creator-btn primary" id="saveService" type="submit">Save rate</button>
+            <button class="creator-btn quiet" id="cancelService" type="button">Cancel</button>
+            <button class="creator-btn quiet" id="deleteService" type="button" hidden>Delete rate</button>
+          </div>
+          <div class="creator-status wide" id="serviceStatus"></div>
+        </form>
+      </section>
+
       <section class="creator-card wide" id="albumCard">
         <h2>Your albums</h2>
         <p>Group your tracks into albums, EPs and mixtapes for your page. An album shows on your page once at least one of its tracks is published, with only its published tracks.</p>
@@ -147,7 +169,7 @@
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script src="js/music-creator-albums.js?v=__STAMP__"></script>
+  <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>

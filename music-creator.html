@@ -36,6 +36,15 @@
       </div>
     </section>
 
+    <!-- THE RATE SHEET: what the artist sells. A request, never a charge:
+         it lands on the McCluster Music desk (Control → Operations →
+         Bookings), the artist confirms, then the buyer gets a payment link. -->
+    <section class="ap-rates" id="apRates" aria-labelledby="apRatesTitle" hidden>
+      <h2 class="ap-label" id="apRatesTitle">Book</h2>
+      <div class="ap-rates__grid" id="apRateCards"></div>
+      <p class="ap-rates__note" id="apRatesNote">Send a request. Nothing is charged until the artist confirms; then you get a payment link by email.</p>
+    </section>
+
     <section class="ap-album" id="apFeatured" aria-labelledby="apAlbumTitle" hidden>
       <img class="ap-album__art" id="apAlbumArt" alt="">
       <div class="ap-album__copy">
@@ -58,15 +67,36 @@
       <div class="ap-tracks" id="creatorPublicTracks" role="list"><div class="creator-status">Loading releases…</div></div>
     </section>
 
+    <dialog class="ap-book" id="apBook" aria-labelledby="apBookTitle">
+      <form class="ap-book__form" id="apBookForm" method="dialog" novalidate>
+        <p class="ap-label" id="apBookKicker">Booking request</p>
+        <h2 id="apBookTitle">Book</h2>
+        <p class="ap-book__price" id="apBookPrice"></p>
+        <label class="ap-book__field"><span>Your name</span><input name="name" autocomplete="name" maxlength="120" required></label>
+        <label class="ap-book__field"><span>Email</span><input name="email" type="email" autocomplete="email" maxlength="200" required></label>
+        <label class="ap-book__field" id="apBookQtyWrap"><span id="apBookQtyLabel">Songs</span><input name="quantity" type="number" inputmode="numeric" min="1" max="100" step="1" value="1"></label>
+        <label class="ap-book__field"><span>Date (if you have one)</span><input name="date" type="date"></label>
+        <label class="ap-book__field"><span>Tell them about it</span><textarea name="message" rows="4" maxlength="1500" placeholder="The song, the event, the budget, anything that helps"></textarea></label>
+        <p class="ap-book__estimate" id="apBookEstimate" aria-live="polite"></p>
+        <p class="ap-book__status" id="apBookStatus" role="status" aria-live="polite"></p>
+        <div class="ap-book__actions">
+          <button class="ap-play" id="apBookSend" type="submit" value="send">Send request</button>
+          <button class="ap-door" id="apBookCancel" type="button">Cancel</button>
+        </div>
+        <p class="ap-book__fine">Nothing is charged now. McCluster Music passes your request to the artist; once they confirm, you get a payment link by email.</p>
+      </form>
+    </dialog>
+
     <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <a href="creator.html">Make your own artist page</a></p>
   </main>
 
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script src="js/music-creator-albums.js?v=__STAMP__"></script>
+  <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/music-creator-profile.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>

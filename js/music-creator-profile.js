@@ -5,11 +5,11 @@
    its tracklist, the rest of the albums on a shelf, and the singles. It reads
    only what RLS shows the public: an active creator profile (with the albums
    the creator arranged in Creator Studio, settings.albums) and that
-   creator's PUBLISHED tracks. Albums and their rules: js/music-creator-albums.js. */
+   creator's PUBLISHED tracks. Albums and their rules: js/music-creator-page.js. */
 (function (root) {
   "use strict";
   var doc = root.document;
-  var ALB = root.MCC_CREATOR_ALBUMS;
+  var PAGE = root.MCC_CREATOR_PAGE;
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   /* No artwork: a transparent pixel over the page's own colour tile
@@ -47,11 +47,11 @@
 
   if (!handle || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(handle)) { profileError("No artist was named in the link."); return; }
 
-  var state = { p: null, cat: null, byTrack: {}, featured: "" };
+  var state = { p: null, cat: null, byTrack: {}, featured: "", services: [], booking: null };
 
   /* The artist's colours from Creator Studio, validated hex only. */
   function applyTheme(settings) {
-    var t = ALB.theme(settings);
+    var t = PAGE.theme(settings);
     var page = $("artistPage");
     if (t.accent) { page.style.setProperty("--ap-accent", t.accent); doc.body.style.setProperty("--music-accent", t.accent); }
     if (t.background) { page.style.setProperty("--ap-bg", t.background); doc.body.style.setProperty("--music-bg", t.background); }
@@ -73,7 +73,7 @@
   }
 
   function realArt(track, album) {
-    return ALB.safeArtwork(track && track.poster_url) || (album && album.cover_url) || ALB.safeArtwork(state.p.avatar_url) || "";
+    return PAGE.safeArtwork(track && track.poster_url) || (album && album.cover_url) || PAGE.safeArtwork(state.p.avatar_url) || "";
   }
   function artFor(track, album) { return realArt(track, album) || NO_ART; }
   function coverOf(album) {
@@ -113,7 +113,7 @@
     $("apFeatured").hidden = false;
     $("apAlbumArt").src = coverOf(a);
     $("apAlbumArt").alt = a.title + " cover";
-    $("apAlbumKicker").textContent = [ALB.kindLabel(a.kind), a.rows.length + (a.rows.length === 1 ? " track" : " tracks"), year].filter(Boolean).join(" · ");
+    $("apAlbumKicker").textContent = [PAGE.kindLabel(a.kind), a.rows.length + (a.rows.length === 1 ? " track" : " tracks"), year].filter(Boolean).join(" · ");
     $("apAlbumTitle").textContent = a.title;
     $("apAlbumArtist").textContent = state.p.artist_name;
     $("apAlbumPlay").setAttribute("data-creator-track", a.rows[0].id);
@@ -132,18 +132,19 @@
     $("apShelf").innerHTML = others.map(function (a) {
       return '<button class="ap-card" type="button" data-album="' + attr(a.id) + '">' +
         '<img src="' + attr(coverOf(a)) + '" alt="" loading="lazy">' +
-        "<b>" + esc(a.title) + "</b><small>" + esc([ALB.kindLabel(a.kind), a.release_date ? a.release_date.slice(0, 4) : ""].filter(Boolean).join(" · ")) + "</small></button>";
+        "<b>" + esc(a.title) + "</b><small>" + esc([PAGE.kindLabel(a.kind), a.release_date ? a.release_date.slice(0, 4) : ""].filter(Boolean).join(" · ")) + "</small></button>";
     }).join("");
   }
 
   function renderDoors(p, firstTrack) {
     var doors = [];
+    if (state.services.length) doors.push('<a class="ap-door ap-door--lead" href="#apRates">Book ' + esc(p.artist_name) + "</a>");
     if (firstTrack) {
-      doors.push('<button class="ap-door ap-door--lead" type="button" data-music-play data-creator-track="' + attr(firstTrack.id) +
+      doors.push('<button class="ap-door' + (state.services.length ? "" : " ap-door--lead") + '" type="button" data-music-play data-creator-track="' + attr(firstTrack.id) +
         '" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>');
     }
     if (state.cat.albums.length) doors.push('<a class="ap-door" href="#apFeatured">' + (state.cat.albums.length > 1 ? "Albums" : "The album") + "</a>");
-    var site = ALB.safeLink(p.website_url);
+    var site = PAGE.safeLink(p.website_url);
     if (site) doors.push('<a class="ap-door" href="' + attr(site) + '" rel="noopener nofollow ugc" target="_blank">Website</a>');
     $("apDoors").innerHTML = doors.join("");
     var identityLink = doc.createElement("a");
@@ -154,11 +155,97 @@
     $("apDoors").appendChild(identityLink);
   }
 
+  /* ---------- the rate sheet and booking requests ---------- */
+  function renderRates(p) {
+    var services = state.services;
+    $("apRates").hidden = !services.length;
+    if (!services.length) return;
+    $("apRatesTitle").textContent = "Book " + p.artist_name;
+    $("apRatesNote").textContent = "Send a request. Nothing is charged until " + p.artist_name + " confirms; then you get a payment link by email.";
+    $("apRateCards").innerHTML = services.map(function (svc) {
+      return '<article class="ap-rate">' +
+        "<h3>" + esc(svc.title) + "</h3>" +
+        '<p class="ap-rate__price">' + esc(PAGE.servicePrice(svc)) + "</p>" +
+        (svc.description ? '<p class="ap-rate__about">' + esc(svc.description) + "</p>" : "") +
+        '<button class="ap-play ap-rate__book" type="button" data-book="' + attr(svc.id) + '">Book</button>' +
+        "</article>";
+    }).join("");
+  }
+
+  function bookingEstimate() {
+    var svc = state.booking;
+    if (!svc) return;
+    var form = $("apBookForm");
+    var est = PAGE.estimate(svc, form.elements.quantity.value);
+    var qty = PAGE.UNITS[svc.unit] ? est.quantity + " " + svc.unit + (est.quantity === 1 ? "" : "s") + " · " : "";
+    $("apBookEstimate").textContent = "Estimate: " + qty + PAGE.dollars(est.cents) + (svc.royalty_pct ? " up front + " + svc.royalty_pct + "% royalty" : "") + ". Confirmed by the artist before anything is charged.";
+  }
+
+  function openBooking(id) {
+    var svc = state.services.filter(function (x) { return x.id === id; })[0];
+    var dialog = $("apBook");
+    if (!svc || !dialog) return;
+    state.booking = svc;
+    var form = $("apBookForm");
+    $("apBookKicker").textContent = "Booking request · " + state.p.artist_name;
+    $("apBookTitle").textContent = svc.title;
+    $("apBookPrice").textContent = PAGE.servicePrice(svc);
+    $("apBookQtyWrap").hidden = !PAGE.UNITS[svc.unit];
+    $("apBookQtyLabel").textContent = svc.unit === "hour" ? "Hours" : "Songs";
+    form.elements.quantity.value = "1";
+    $("apBookStatus").textContent = "";
+    $("apBookStatus").className = "ap-book__status";
+    $("apBookSend").disabled = false;
+    $("apBookSend").textContent = "Send request";
+    bookingEstimate();
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+    if (root.MCC_TRACK) root.MCC_TRACK("creator_booking_open", { handle: handle, service: svc.title.slice(0, 80) });
+  }
+
+  function closeBooking() {
+    var dialog = $("apBook");
+    if (dialog && typeof dialog.close === "function" && dialog.open) dialog.close(); else if (dialog) dialog.removeAttribute("open");
+  }
+
+  function sendBooking(e) {
+    e.preventDefault();
+    var svc = state.booking;
+    var form = $("apBookForm");
+    if (!svc) return;
+    var name = form.elements.name.value.trim();
+    var email = form.elements.email.value.trim();
+    var say = function (msg, tone) { $("apBookStatus").textContent = msg; $("apBookStatus").className = "ap-book__status" + (tone ? " " + tone : ""); };
+    if (!name) { say("Add your name so they know who's asking.", "bad"); form.elements.name.focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say("Add an email they can reply to.", "bad"); form.elements.email.focus(); return; }
+    if (!root.MCC_CRM || typeof root.MCC_CRM.send !== "function") { say("Requests are unavailable right now. Email matthew@mccluster.org instead.", "bad"); return; }
+    var note = PAGE.bookingNote(state.p, svc, { quantity: form.elements.quantity.value, date: form.elements.date.value, message: form.elements.message.value });
+    var send = $("apBookSend");
+    send.disabled = true;
+    send.textContent = "Sending…";
+    root.MCC_CRM.send({
+      name: name.slice(0, 120),
+      email: email.slice(0, 200),
+      want: ("Booking · " + svc.title + " · @" + state.p.handle).slice(0, 300),
+      note: note,
+      campaign: ("artist-booking:" + state.p.handle).slice(0, 200)
+    }).then(function () {
+      say("Sent. " + state.p.artist_name + " will confirm, then you'll get a payment link at " + email + ".", "good");
+      send.textContent = "Sent";
+      form.elements.message.value = "";
+      if (root.MCC_TRACK) root.MCC_TRACK("creator_booking_request", { handle: handle, service: svc.title.slice(0, 80), unit: svc.unit });
+    }).catch(function () {
+      send.disabled = false;
+      send.textContent = "Send request";
+      say("That didn't go through. Try again, or email matthew@mccluster.org.", "bad");
+    });
+  }
+
   function renderPage(p, tracks, offers) {
     state.p = p;
     state.byTrack = {};
     (offers || []).forEach(function (o) { (state.byTrack[o.track_id] || (state.byTrack[o.track_id] = [])).push(o); });
-    state.cat = ALB.publicCatalogue(p.settings || {}, tracks || []);
+    state.cat = PAGE.publicCatalogue(p.settings || {}, tracks || []);
+    state.services = PAGE.normalizeServices(p.settings || {});
     var cat = state.cat;
 
     applyTheme(p.settings || {});
@@ -168,7 +255,7 @@
     $("creatorHandle").textContent = "@" + p.handle + (p.verification_state === "verified" ? " · verified" : "") + " · McCluster Music";
     setName(p.artist_name);
     $("creatorBio").textContent = p.bio || "Independent artist on McCluster Music.";
-    var avatar = ALB.safeArtwork(p.avatar_url);
+    var avatar = PAGE.safeArtwork(p.avatar_url);
     if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
 
     /* Every published track goes to the player in page order: the featured
@@ -194,13 +281,17 @@
       });
     }
 
-    var heroImg = ALB.safeArtwork(p.banner_url) || (first && coverOf(first)) || avatar;
+    var heroImg = PAGE.safeArtwork(p.banner_url) || (first && coverOf(first)) || avatar;
     if (heroImg && heroImg !== NO_ART) { $("apHeroImg").src = heroImg; $("apHeroImg").hidden = false; }
+    else $("creatorHero").classList.add("ap-hero--plain");
     renderDoors(p, first ? first.rows[0] : cat.singles[0]);
+    renderRates(p);
 
     if (first) showAlbum(first.id, false);
     var wrap = $("creatorPublicTracks");
-    if (!cat.albums.length && !cat.singles.length) {
+    if (!cat.albums.length && !cat.singles.length && state.services.length) {
+      $("apSinglesWrap").hidden = true;
+    } else if (!cat.albums.length && !cat.singles.length) {
       wrap.innerHTML = '<div class="creator-status">No published releases yet.</div>';
     } else if (!cat.singles.length) {
       $("apSinglesWrap").hidden = true;
@@ -208,7 +299,7 @@
       $("apSinglesTitle").textContent = cat.albums.length ? "Singles" : "Releases";
       wrap.innerHTML = cat.singles.map(function (t, i) { return rowHtml(t, i + 1, null, "div"); }).join("");
     }
-    if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle, albums: cat.albums.length, tracks: (tracks || []).length });
+    if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle, albums: cat.albums.length, tracks: (tracks || []).length, rates: state.services.length });
   }
 
   api("music_creator_profiles?handle=eq." + encodeURIComponent(handle) +
@@ -228,7 +319,18 @@
     .then(function (all) { renderPage(all[0], all[1], all[2]); })
     .catch(function () { profileError("This artist's page is unavailable."); });
 
+  if ($("apBookForm")) {
+    $("apBookForm").addEventListener("submit", sendBooking);
+    $("apBookForm").elements.quantity.addEventListener("input", bookingEstimate);
+    $("apBookForm").addEventListener("input", function () {
+      if (/\bbad\b/.test($("apBookStatus").className)) { $("apBookStatus").textContent = ""; $("apBookStatus").className = "ap-book__status"; }
+    });
+    $("apBookCancel").addEventListener("click", closeBooking);
+  }
+
   doc.addEventListener("click", function (e) {
+    var book = e.target && e.target.closest ? e.target.closest("[data-book]") : null;
+    if (book && state.p) { e.preventDefault(); openBooking(book.getAttribute("data-book")); return; }
     var card = e.target && e.target.closest ? e.target.closest("[data-album]") : null;
     if (card && state.cat) {
       e.preventDefault();

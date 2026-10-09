@@ -33,6 +33,9 @@
   display:flex;
   align-items:flex-end;
 }
+/* No photo yet: the name and the doors only, so a phone reaches the rate
+   sheet and the music without scrolling past an empty stage. */
+.ap-hero--plain{min-height:0;padding-top:calc(env(safe-area-inset-top,0px) + 104px)}
 .ap-hero__bg{position:absolute;inset:0;z-index:-1;background:radial-gradient(90% 60% at 50% 20%,color-mix(in srgb,var(--ap-accent) 26%,transparent),transparent 70%),var(--ap-bg)}
 .ap-hero__bg img{width:100%;height:100%;object-fit:cover;opacity:.62}
 .ap-hero__bg::after{
@@ -119,15 +122,44 @@
 .ap-foot{margin:56px 0 0;text-align:center;color:var(--ap-dim);font-size:.8rem}
 .ap-foot a{color:var(--ap-fg)}
 
+/* ---------- THE RATE SHEET ---------- */
+.ap-rates{padding:40px 0 0;scroll-margin-top:16px}
+.ap-rates__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:14px}
+.ap-rate{display:grid;gap:6px;align-content:start;padding:18px;border-radius:18px;border:1px solid var(--ap-line);background:linear-gradient(180deg,color-mix(in srgb,var(--ap-fg) 6%,transparent),color-mix(in srgb,var(--ap-fg) 2%,transparent))}
+.ap-rate h3{margin:0;font:800 1.05rem/1.25 var(--ui,system-ui)}
+.ap-rate__price{margin:0;font-family:var(--display,"Anton",Impact,sans-serif);font-size:clamp(2rem,9vw,2.6rem);line-height:1;letter-spacing:.01em;color:var(--ap-fg)}
+.ap-rate__about{margin:2px 0 0;color:var(--ap-dim);font-size:.9rem;line-height:1.55}
+.ap-rate__book{width:100%;margin-top:10px}
+.ap-rates__note{margin:14px 0 0;color:var(--ap-dim);font-size:.85rem;line-height:1.55}
+
+/* ---------- THE BOOKING REQUEST ---------- */
+.ap-book{width:min(100vw - 24px,480px);max-height:calc(100svh - 24px);margin:auto;padding:0;border:1px solid var(--ap-line);border-radius:20px;background:var(--ap-surface);color:var(--ap-fg);box-shadow:0 40px 120px rgba(0,0,0,.7)}
+.ap-book::backdrop{background:rgba(0,0,0,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ap-book__form{display:grid;gap:12px;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+.ap-book h2{margin:0;font-family:var(--display,"Anton",Impact,sans-serif);font-weight:400;text-transform:uppercase;font-size:clamp(1.9rem,8vw,2.6rem);line-height:.95}
+.ap-book__price{margin:-4px 0 4px;font-weight:800;color:var(--ap-accent)}
+.ap-book__field{display:grid;gap:6px}
+.ap-book__field>span{font:800 10px/1.4 var(--ui,system-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--ap-dim)}
+.ap-book__field input,.ap-book__field textarea{width:100%;box-sizing:border-box;min-height:44px;padding:11px 12px;border-radius:10px;border:1px solid var(--ap-line);background:color-mix(in srgb,var(--ap-bg) 70%,transparent);color:var(--ap-fg);font:600 max(16px,1rem)/1.35 var(--ui,system-ui)}
+.ap-book__field input:focus,.ap-book__field textarea:focus{outline:2px solid var(--ap-accent);outline-offset:1px}
+.ap-book__estimate,.ap-book__fine{margin:0;color:var(--ap-dim);font-size:.85rem;line-height:1.5}
+.ap-book__status{margin:0;min-height:1.2em;font-size:.9rem;font-weight:700}
+.ap-book__status.good{color:#9ce9b3}.ap-book__status.bad{color:#ff8f91}
+.ap-book__actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ap-book__actions .ap-play{margin-top:0}
+
 @media (min-width:640px){
+  .ap-rates__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .ap{padding-left:24px;padding-right:24px}
   .ap-hero{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px}
   .ap-shelf__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (min-width:900px){
+  .ap-rates__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .ap-album{grid-template-columns:minmax(0,340px) minmax(0,1fr);justify-items:start;align-items:end;text-align:left;gap:32px}
   .ap-album__about{margin-left:0}
   .ap-track{padding:10px 8px}
   .ap-shelf__grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media (prefers-reduced-motion:reduce){.ap-card img{transition:none}}
+.ap-tracks:empty{display:none}

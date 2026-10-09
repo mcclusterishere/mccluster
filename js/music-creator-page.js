@@ -1,6 +1,16 @@
-/* McCluster Music: a creator's albums.
+/* McCluster Music: an artist's page, as the artist arranged it.
 
-   An album is a creator's own grouping of their own tracks: a title, a
+   Two things a creator writes into music_creator_profiles.settings and
+   strangers read back: albums and a rate sheet.
+
+   RATE SHEET (settings.services): what the artist sells, each with a price in
+   US cents, a unit (per song, per hour, or a flat fee) and an optional royalty
+   share. The page shows it and takes BOOKING REQUESTS, never payment: a
+   request lands on the McCluster Music desk (public.leads, Control →
+   Operations → Bookings), the artist confirms, then the buyer is sent a
+   payment link. Nothing is charged from this page.
+
+   ALBUMS (settings.albums): an album is a creator's own grouping of their own tracks: a title, a
    cover, a release date, a description and an ordered list of track ids.
    Albums live in music_creator_profiles.settings.albums, which the creator
    may edit (their profile row, their RLS policy) and the public may read
@@ -16,7 +26,7 @@
 (function (root, factory) {
   var api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.MCC_CREATOR_ALBUMS = api;
+  if (root) root.MCC_CREATOR_PAGE = api;
 })(typeof window !== "undefined" ? window : null, function () {
   "use strict";
 
@@ -29,6 +39,10 @@
   var ALBUM_ID = /^alb_[a-z0-9]{6,24}$/;
   var DATE = /^\d{4}-\d{2}-\d{2}$/;
   var HEX = /^#[0-9a-f]{6}$/i;
+  var MAX_SERVICES = 12;
+  var SERVICE_ID = /^svc_[a-z0-9]{6,24}$/;
+  var UNITS = { song: "song", hour: "hour", flat: "" };
+  var MAX_PRICE_CENTS = 10000000; // $100,000
 
   function text(value, max) {
     return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
@@ -136,6 +150,80 @@
 
   function kindLabel(kind) { return KINDS[kind] || KINDS.album; }
 
+  function newServiceId() {
+    var s = "";
+    while (s.length < 10) s += Math.random().toString(36).slice(2);
+    return "svc_" + s.slice(0, 10);
+  }
+
+  /* One thing the artist sells, bounded. A price is whole cents, $1 to
+     $100,000; a royalty is a share of the song's royalties, 0 to 100 percent
+     in steps of 0.5. Unknown fields are dropped. */
+  function normalizeService(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var id = SERVICE_ID.test(String(raw.id || "")) ? String(raw.id) : "";
+    var title = text(raw.title, 80);
+    var cents = Math.round(Number(raw.price_cents));
+    if (!id || !title || !(cents >= 100 && cents <= MAX_PRICE_CENTS)) return null;
+    var royalty = Math.round(Number(raw.royalty_pct || 0) * 2) / 2;
+    return {
+      id: id,
+      title: title,
+      price_cents: cents,
+      unit: Object.prototype.hasOwnProperty.call(UNITS, raw.unit) ? raw.unit : "flat",
+      royalty_pct: royalty > 0 && royalty <= 100 ? royalty : 0,
+      description: longText(raw.description, 600)
+    };
+  }
+
+  function normalizeServices(settings) {
+    var list = settings && Array.isArray(settings.services) ? settings.services : [];
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < list.length && out.length < MAX_SERVICES; i++) {
+      var s = normalizeService(list[i]);
+      if (!s || seen[s.id]) continue;
+      seen[s.id] = true;
+      out.push(s);
+    }
+    return out;
+  }
+
+  function dollars(cents) {
+    var n = Number(cents) / 100;
+    return "$" + (n % 1 ? n.toFixed(2) : String(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function pct(n) { return (n % 1 ? n.toFixed(1) : String(n)) + "%"; }
+
+  /* "$50 per song", "$200 per hour", "$150 + 15% royalty". */
+  function servicePrice(s) {
+    var unit = UNITS[s.unit] ? " per " + UNITS[s.unit] : "";
+    return dollars(s.price_cents) + unit + (s.royalty_pct ? " + " + pct(s.royalty_pct) + " royalty" : "");
+  }
+
+  /* What a request is likely to cost up front: price × songs or hours. */
+  function estimate(s, quantity) {
+    var q = UNITS[s.unit] ? Math.max(1, Math.min(100, Math.round(Number(quantity) || 1))) : 1;
+    return { quantity: q, cents: s.price_cents * q };
+  }
+
+  /* The booking request as the desk reads it in Control: one plain note that
+     names the artist, the service, the rate, the estimate and the details. */
+  function bookingNote(profile, s, form) {
+    var est = estimate(s, form.quantity);
+    var lines = [
+      "Booking request for @" + profile.handle + " (" + text(profile.artist_name, 160) + ")",
+      "Service: " + s.title + " · " + servicePrice(s)
+    ];
+    if (UNITS[s.unit]) lines.push((s.unit === "song" ? "Songs: " : "Hours: ") + est.quantity + " · estimate " + dollars(est.cents) + (s.royalty_pct ? " + " + pct(s.royalty_pct) + " royalty" : ""));
+    var date = validDate(form.date);
+    if (date) lines.push("Date: " + date);
+    var msg = longText(form.message, 1500);
+    if (msg) lines.push("Message: " + msg);
+    lines.push("Nothing charged yet: confirm with the artist, then send a payment link.");
+    return lines.join("\n").slice(0, 8000);
+  }
+
   return {
     SB: SB,
     ARTWORK: ARTWORK,
@@ -146,6 +234,15 @@
     safeLink: safeLink,
     validDate: validDate,
     newAlbumId: newAlbumId,
+    MAX_SERVICES: MAX_SERVICES,
+    UNITS: UNITS,
+    newServiceId: newServiceId,
+    normalizeService: normalizeService,
+    normalizeServices: normalizeServices,
+    servicePrice: servicePrice,
+    dollars: dollars,
+    estimate: estimate,
+    bookingNote: bookingNote,
     normalizeAlbum: normalizeAlbum,
     normalizeAlbums: normalizeAlbums,
     featuredId: featuredId,
