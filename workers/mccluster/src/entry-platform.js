@@ -10,6 +10,7 @@ import { companySiteResponse } from './company-site/router.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement } from './creator-entitlement.js';
+import { handleCreatorPublish } from './creator-site-publish.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -51,6 +52,8 @@ export default {
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
 
+      const creatorPublish = await handleCreatorPublish(request, env);
+      if (creatorPublish) return creatorPublish;
       const creatorEntitlement = await handleCreatorEntitlement(request, env);
       if (creatorEntitlement) return creatorEntitlement;
       const creatorCheckout = await handleCreatorCheckout(request, env);
