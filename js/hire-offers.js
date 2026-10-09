@@ -42,43 +42,19 @@
 
   /* ---------- the ground: a receipt and one big number, no service number ---------- */
   function runwayChapter(o) {
-    var p = o.pricing;
-    var rows = (p.deposit ? "<li><span class='rates__k'>" + esc(p.deposit.label) +
-        "<span class='rates__u'>credited to your first month, not charged on top of it</span></span><b>$" +
-        M(p.deposit.amount) + "</b></li>" : "") +
-      (p.start.components || []).map(function (c) {
-        return "<li><span class='rates__k'>" + esc(c.label) + "</span><b>$" + M(c.amount) + "</b></li>";
-      }).join("") +
-      "<li><span class='rates__k'>To go live<span class='rates__u'>domain plus the first month</span></span><b>$" +
-        M(p.start.total) + "</b></li>" +
-      "<li><span class='rates__k'>" + esc(p.recurring.label) + "</span><b>$" +
-        M(p.recurring.amount) + "/" + esc(p.recurring.cadence) + "</b></li>" +
-      "<li><span class='rates__k'>" + esc(p.domain_renewal.label) + "</span><b>$" +
-        M(p.domain_renewal.amount) + "/" + esc(p.domain_renewal.cadence) + "</b></li>" +
-      "<li><span class='rates__k'>Basic website build</span><b>Included</b></li>" +
-      "<li><span class='rates__k'>Revenue share</span><b>None</b></li>" +
-      "<li><span class='rates__k'>First year, all in<span class='rates__u'>" +
-        esc(p.first_year.breakdown) + "</span></span><b>$" + M(p.first_year.amount) + "</b></li>";
-
+    var p = o.pricing || {}, draft = p.deposit || {};
     return '<section class="chapter chapter--lead" id="offer-runway">' +
-      /* no numeral: numbering it 01 is what made it read as the first of
-         four services instead of the ground the three stand on */
-      '<p class="chapter__no">' + esc(o.stage) + " &middot; infrastructure, not a service</p>" +
-      '<div class="chapter__head"><h3>' + esc(o.name) + "</h3></div>" +
-      '<p class="chapter__lede">' + esc(o.lede) + "</p>" +
-      '<div class="chapter__grid">' +
-        "<div>" +
-          /* the headline is what it costs to start, which is the deposit:
-             nobody is asked for the go-live total before seeing a draft */
-          '<div class="chapter__money"><sup>$</sup>' + M((p.deposit || p.start).amount || p.start.total) +
-            '<span class="chapter__per">' + esc((p.deposit || p.start).label) + "</span></div>" +
-          '<a class="chapter__go" href="' + esc(o.next_step.href) + '">' + esc(o.next_step.label) + "</a>" +
-          (p.deposit ? '<p class="rung__fine">' + esc(p.deposit.line) + "</p>" : "") +
-          chips(o.includes) +
-          '<p class="rung__fine">' + esc(o.equity_note) + "</p>" +
-        "</div>" +
-        '<div><ul class="rates">' + rows + "</ul></div>" +
-      "</div></section>";
+      '<p class="chapter__no">Website platform · hosting included with your plan</p>' +
+      '<div class="chapter__head"><h3>' + esc(o.name) + '</h3></div>' +
+      '<p class="chapter__lede">' + esc(o.lede) + '</p>' +
+      '<div class="chapter__grid"><div>' +
+      '<div class="chapter__money"><sup>$</sup>' + M(draft.amount || 33) +
+      '<span class="chapter__per">optional first custom draft · once</span></div>' +
+      '<a class="chapter__go" href="' + esc(o.next_step.href) + '">' + esc(o.next_step.label) + '</a>' +
+      '<p class="rung__fine">' + esc(draft.line || '') + '</p></div><div>' +
+      chips(o.includes) +
+      '<p class="rung__fine">Subscriptions, domains and any additional custom work are priced separately. Existing agreements remain unchanged.</p>' +
+      '</div></div></section>';
   }
 
   /* ---------- the mode panel inside a service chapter ---------- */
