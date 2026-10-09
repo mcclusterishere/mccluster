@@ -36,16 +36,34 @@ if(load)load.addEventListener('click',async()=>{
   if(authError||!user)throw new Error('Sign in to load your profile.');
   const {data:id,error:idError}=await db.rpc('current_m_uid');
   if(idError||!id)throw new Error('Your McCluster member identity is not ready.');
-  const {data:p,error}=await db.from('network_profiles').select('display_name,headline,bio,website_url').eq('m_uid',id).maybeSingle();
+  const {data:p,error}=await db.from('network_profiles').select('display_name,headline,bio,website_url,visibility').eq('m_uid',id).maybeSingle();
   if(error)throw new Error(error.message);
   if(!p)throw new Error('No readable profile exists for this account yet.');
   document.getElementById('name').value=p.display_name||'';
   document.getElementById('bio').value=p.bio||'';
   document.getElementById('portfolio').value=p.website_url||'';
+  if(['private','network','public'].includes(p.visibility))document.getElementById('visibility').value=p.visibility;
   const role=document.getElementById('role');
   if([...role.options].some(o=>o.value===p.headline))role.value=p.headline;
   ['name','bio','portfolio','role'].forEach(id=>document.getElementById(id).dispatchEvent(new Event('input')));
   status.textContent='Account profile loaded. Unsaved local edits were replaced.';
  }catch(e){status.textContent='Account load failed: '+(e.message||'Unknown error');}
  finally{load.disabled=false;}
+});
+
+const publish=document.getElementById('publishProfile');
+publish.addEventListener('click',async()=>{
+ publish.disabled=true;
+ try{
+  const auth=await db.auth.getUser();
+  if(auth.error||!auth.data.user)throw Error('Sign in first.');
+  const identity=await db.rpc('current_m_uid');
+  if(identity.error||!identity.data)throw Error('Member identity unavailable.');
+  const visibility=document.getElementById('visibility').value;
+  if(!['private','network','public'].includes(visibility))throw Error('Invalid visibility.');
+  const result=await db.from('network_profiles').update({visibility,discoverable:visibility==='public'}).eq('m_uid',identity.data).select('visibility').single();
+  if(result.error)throw result.error;
+  status.textContent='Profile visibility updated: '+result.data.visibility+'. Save profile text separately.';
+ }catch(error){status.textContent='Visibility update failed: '+error.message;}
+ finally{publish.disabled=false;}
 });
