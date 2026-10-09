@@ -46,3 +46,18 @@
 - Pilot hypothesis targets for review (not promises): 50–100 qualified visits/month, 15–20% meaningful engagement, and 5–10 verified conversions; calibrate after week-one baseline and measurement validation.
 - Cross-border payments require provider coverage, KYC/tax screening, local-law review and clear payout terms. $5/$20/$5/$20 is a **program budget allocation**, not permission to withhold earned wages.
 - Research: IFPI Global Music Report 2026 https://www.ifpi.org/global-music-report-2026-global-recorded-music-revenues-grow-6-4-as-record-companies-drive-innovation/ ; World Bank FY2027 income groups https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups ; Spotify Nigeria https://newsroom.spotify.com/2026-02-23/5-years-nigeria-music-trends/ ; Spotify amapiano https://newsroom.spotify.com/2024-06-13/why-amapiano-wins-hearts-and-minds-as-it-travels-the-globe/ .
+
+
+## Five-archetype workforce recruitment allocation
+- Annual US track: four recording artists, four beat producers, four video editors, four videographers, four recording/mixing engineers (20 total).
+- Annual international track: same distribution, 20 total. Each quarterly track admits one of each archetype, five creators per track, ten total.
+- Each international market supplies one creator per quarter, four annually. Rotate roles so no country is permanently assigned to a single profession:
+  - Nigeria: Q1 artist, Q2 producer, Q3 editor, Q4 videographer.
+  - Ghana: Q1 producer, Q2 editor, Q3 videographer, Q4 audio engineer.
+  - Kenya: Q1 editor, Q2 videographer, Q3 audio engineer, Q4 artist.
+  - Jamaica: Q1 videographer, Q2 audio engineer, Q3 artist, Q4 producer.
+  - South Africa: Q1 audio engineer, Q2 artist, Q3 producer, Q4 editor.
+- Country/role allocations are recruitment hypotheses; swap based on actual applicant evidence and cohort results. English posting and collaboration remain required; select individual portfolios rather than stereotypes or exchange rates.
+- Suggested selection rubric: portfolio/technical quality 30%, English content/communication 20%, verified audience fit 20%, reliability/collaboration 15%, learning/analytics aptitude 15%.
+- Cross-role deliverable: artist + producer + engineer + videographer + editor collaborate on rights-cleared music and a short-form release campaign, each with role-appropriate work milestones and shared verified traffic/conversion measures.
+- Seek diverse artist perspectives and representation; assess all applicants fairly and comply with local anti-discrimination laws.
