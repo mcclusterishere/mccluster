@@ -8,6 +8,7 @@ import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
 import { handleCreatorCheckout } from './creator-billing.js';
+import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
@@ -59,6 +60,8 @@ export default {
       if (creatorPublish) return creatorPublish;
       const creatorEntitlement = await handleCreatorEntitlement(request, env);
       if (creatorEntitlement) return creatorEntitlement;
+      const actionConnect = await handleActionConnect(request, env);
+      if (actionConnect) return actionConnect;
       const creatorCheckout = await handleCreatorCheckout(request, env);
       if (creatorCheckout) return creatorCheckout;
       const computeResponse = await handleComputeApi(request, env);
