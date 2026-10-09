@@ -96,8 +96,20 @@ async function uploadGrant(bucket, file) {
   if (error) throw error;
   return grant.path;
 }
+/* Deleting an object needs its owner: the storage policy only lets an
+   authenticated creator remove files under their own folder. The module
+   client above is anonymous (uploads go through signed URLs and need no
+   session), so a delete through it was refused and every rollback left its
+   files behind. Each removal uses a client carrying the creator's token. */
+function ownerStorage() {
+  return createClient(SB, KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: "Bearer " + session.access_token } }
+  });
+}
 async function removeUpload(bucket, path) {
   if (!bucket || !path) return;
+  const supabase = ownerStorage();
   const { error } = await supabase.storage.from(bucket).remove([path]);
   if (error) throw error;
 }
@@ -187,21 +199,32 @@ function escapeHtml(value) {
 
 /* ---------- albums (music_creator_profiles.settings.albums) ---------- */
 
-/* Read the profile's settings fresh, change them, write them back: two
-   studio tabs never silently undo each other's album edits. */
+/* Change the profile's settings without undoing anyone else's change.
+   Read the settings with their updated_at (music_creator_guard sets it on
+   every write), apply the change, and write back only if updated_at is still
+   the one read. If another tab or the profile form wrote in between, nothing
+   is written: read again and reapply, a few times at most. */
 async function saveSettings(change) {
-  const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
-  const settings = Object.assign({}, rows?.[0]?.settings || {});
-  change(settings);
-  settings.albums = PAGE.normalizeAlbums(settings);
-  settings.services = PAGE.normalizeServices(settings);
-  if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
-  await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
-    method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ settings })
-  });
-  profile = Object.assign({}, profile, { settings });
-  renderAlbums();
-  renderServices();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings,updated_at&limit=1");
+    if (!rows?.[0]) throw new Error("Save your creator profile first.");
+    const settings = Object.assign({}, rows[0].settings || {});
+    change(settings);
+    settings.albums = PAGE.normalizeAlbums(settings);
+    settings.services = PAGE.normalizeServices(settings);
+    if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
+    const written = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
+      "&updated_at=eq." + encodeURIComponent(rows[0].updated_at), {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ settings })
+    });
+    if (Array.isArray(written) && written.length) {
+      profile = Object.assign({}, profile, { settings: written[0].settings || settings });
+      renderAlbums();
+      renderServices();
+      return;
+    }
+  }
+  throw new Error("Your profile changed in another window while saving. Reload and try again.");
 }
 function albumsNow() { return PAGE.normalizeAlbums(profile && profile.settings); }
 function trackById(id) { return tracksCache.find((t) => String(t.id).toLowerCase() === id) || null; }
@@ -493,24 +516,26 @@ $("profileForm").addEventListener("submit", async (e) => {
       artist_name: $("creatorName").value.trim(),
       bio: $("creatorBio").value.trim(),
       website_url: $("creatorWebsite").value.trim(),
-      settings: Object.assign({}, profile && profile.settings || {}, {
-        experience_theme: {
-          accent: $("creatorAccent").value,
-          background: $("creatorBackground").value,
-          foreground: $("creatorForeground").value,
-          surface: $("creatorSurface").value
-        }
-      }),
       terms_version: "music-creator-v1",
       terms_accepted_at: new Date().toISOString()
     };
+    const theme = {
+      accent: $("creatorAccent").value,
+      background: $("creatorBackground").value,
+      foreground: $("creatorForeground").value,
+      surface: $("creatorSurface").value
+    };
     if (profile) {
+      /* The profile fields, then the colours through saveSettings: this form
+         never writes back its own (possibly old) copy of the albums and rates. */
       await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
         method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
       });
+      await saveSettings((s) => { s.experience_theme = theme; });
     } else {
       await rest("music_creator_profiles", {
-        method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
+        method: "POST", headers: { Prefer: "return=representation" },
+        body: JSON.stringify(Object.assign(body, { settings: { experience_theme: theme } }))
       });
     }
     await loadProfile();
@@ -683,9 +708,9 @@ $("trackForm").addEventListener("submit", async (e) => {
       $("trackSurface").value = baseTheme.surface || "#17110f";
     }
     $("derivativeField").hidden = true;
-    status("trackStatus", derivative
+    status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review." + licenseWarning, licenseWarning ? "bad" : "good");
+      : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
     await loadTracks();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
