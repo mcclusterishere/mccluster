@@ -8,7 +8,11 @@ const allowedPriceIds=env=>new Set(ALLOWED_PRICE_ENV.map(k=>env[k]).filter(Boole
 function subscriptionId(event){
  const o=event.data?.object||{};
  if(event.type.startsWith('customer.subscription.'))return o.id;
- if(event.type.startsWith('invoice.'))return typeof o.subscription==='string'?o.subscription:null;
+ if(event.type.startsWith('invoice.')){
+  const nested=o.parent?.subscription_details?.subscription;
+  const value=o.subscription||nested;
+  return typeof value==='string'?value:value?.id||null;
+ }
  if(event.type.startsWith('checkout.session.'))return typeof o.subscription==='string'?o.subscription:null;
  return null;
 }
@@ -29,6 +33,7 @@ export async function handleCreatorBillingWebhook(request,env){
  try{event=await verifyStripeWebhook(await request.text(),request.headers.get('stripe-signature'),env.CREATOR_STRIPE_WEBHOOK_SECRET)}
  catch{return fail(request,env,'Invalid Stripe webhook signature',400)}
  if(!event?.id||!event?.type||!Number.isInteger(event.created))return fail(request,env,'Malformed Stripe event',400);
+ if(event.livemode!==false && env.CREATOR_BILLING_ALLOW_LIVE!=='true')return fail(request,env,'Live creator billing is disabled',503);
  if(!EVENTS.has(event.type))return reply(request,env,{received:true,ignored:true});
  const id=subscriptionId(event);
  if(!id||!/^sub_[A-Za-z0-9]+$/.test(id))return reply(request,env,{received:true,ignored:true});
