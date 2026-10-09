@@ -129,3 +129,10 @@
 - All 40 annual creator placements are scoped to the founder's coordinated music/content campaigns for this internal beta, with domestic/international production collaboration, distributed recording and video shoots, editing and clipping. A shared production may include many credited contributors; count deliverables separately from placements.
 - Founder 20 remains the proposed external 20-placement product ($12,000 annual prepaid or $1,200 monthly on annual commitment). Founder 40 is a distinct larger tier; **no external Founder 40 price is approved yet** and no paid Founder 40 offer should be published until costed.
 - Preserve nonbillable internal entitlement, actual-cost accounting, funded incentives, security/rights gates, and clear cross-border responsibilities. Supersedes prior wording treating international collaboration as merely optional Founder 20 overage for the McCluster beta.
+
+
+## Founder 40 pricing decision — Oct 9, authoritative
+- Founder 40 commercial list pricing is **2.5× Founder 20**: **$30,000/year prepaid** (2.5 × $12,000), or **$3,000/month on a 12-month commitment** ($36,000 total; 2.5 × $1,200/month). This supersedes any prior 'Founder 40 price TBD' language.
+- Founder 20 remains $12,000 prepaid or $1,200/month ($14,400 annual total), with 20 distinct placements/year, five active per quarter.
+- Founder 40 includes 40 distinct placements/year, ten active per quarter, with a dedicated international production/collaboration track alongside U.S. production. The 2.5× premium is for increased capacity and cross-border operations, not a guarantee of virality, unique audience, or commercial results.
+- Founder 40 McCluster artist case study is internally nonbillable despite this external list price; record actual costs, not fictional sales. Prior to public checkout, validate unit economics, workforce/rights compliance, capacity, and production scope.
