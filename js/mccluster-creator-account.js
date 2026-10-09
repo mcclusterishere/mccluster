@@ -46,6 +46,7 @@ if(load)load.addEventListener('click',async()=>{
   const role=document.getElementById('role');
   if([...role.options].some(o=>o.value===p.headline))role.value=p.headline;
   ['name','bio','portfolio','role'].forEach(id=>document.getElementById(id).dispatchEvent(new Event('input')));
+  showLink(id,p.visibility);
   status.textContent='Account profile loaded. Unsaved local edits were replaced.';
  }catch(e){status.textContent='Account load failed: '+(e.message||'Unknown error');}
  finally{load.disabled=false;}
@@ -63,7 +64,10 @@ publish.addEventListener('click',async()=>{
   if(!['private','network','public'].includes(visibility))throw Error('Invalid visibility.');
   const result=await db.from('network_profiles').update({visibility,discoverable:visibility==='public'}).eq('m_uid',identity.data).select('visibility').single();
   if(result.error)throw result.error;
+  showLink(identity.data,result.data.visibility);
   status.textContent='Profile visibility updated: '+result.data.visibility+'. Save profile text separately.';
  }catch(error){status.textContent='Visibility update failed: '+error.message;}
  finally{publish.disabled=false;}
 });
+
+function showLink(id,visibility){const area=document.getElementById('publicProfileLink');area.replaceChildren();if(visibility!=='public') {area.textContent='Your profile is not public.';return;}const a=document.createElement('a');a.href='mccluster-creator.html?id='+encodeURIComponent(id);a.textContent='View public creator profile';area.append(a)}
