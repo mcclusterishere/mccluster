@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 328,
+  "candidate_count": 336,
   "capability_source_count": 99,
-  "support_only_count": 229,
+  "support_only_count": 237,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -276,6 +276,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": ".github/workflows/api-economic-core-ci.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
     },
     {
       "path": ".github/workflows/equity-uprise-core-v2-ci.yml",
@@ -646,13 +653,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Stripe reconciler handoff names Equity Uprise only in a list of CI workflows and the portfolio scope; commerce documentation, not a building capability."
-    },
-    {
       "path": "docs/control-plane/branch-reconciliation-2026-09-26.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -674,11 +674,25 @@
       "rationale": "Domain and entity architecture: which property and entity each product belongs to, including Equity Uprise as a McCluster Corp project. Not a building capability."
     },
     {
+      "path": "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
       "path": "docs/control-plane/GMAIL-CONNECT.md",
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/control-plane/PROGRAM-LEDGER.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Program status ledger for the 19-item McCluster program; it names the playable Equity Uprise building only as a status row and defines no building geometry, program or capability."
     },
     {
       "path": "docs/control-plane/registry.json",
@@ -695,6 +709,13 @@
       "rationale": "Repository governance and branch-lifecycle documentation mentions Equity Uprise only when describing shared contract checks and historical branch handling; it does not define a building capability."
     },
     {
+      "path": "docs/control-plane/SECURITY-POSTURE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security posture ledger references Equity Uprise Edge Functions and policies only to document authorization and operational hardening; it defines no building capability."
+    },
+    {
       "path": "docs/control-plane/SPATIAL-INTELLIGENCE.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -702,6 +723,13 @@
       ],
       "support_only": false,
       "rationale": "Defines the canonical Seek First / Hitman's Halo control-plane boundary and the sanitized Equity Uprise Floor 6 projection."
+    },
+    {
+      "path": "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stripe reconciler handoff names Equity Uprise only in a list of CI workflows and the portfolio scope; commerce documentation, not a building capability."
     },
     {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
@@ -911,6 +939,13 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
+      "classification": "commercial_context_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Commercial catalog reconciliation references Equity Uprise contractual terms but does not implement a building capability."
+    },
+    {
       "path": "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1060,6 +1095,13 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/control-room/clipping.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
       "path": "js/crm.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1144,6 +1186,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/mnet-clips.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
     },
     {
       "path": "js/mnet-live.js",
@@ -1484,6 +1533,13 @@
       "rationale": "Regression test for company/product context and entity wiring; it references Equity Uprise but defines no building capability."
     },
     {
+      "path": "scripts/test/security-reaudit.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression coverage for shared security boundaries and Equity Uprise function hardening; test support, not a physical building capability."
+    },
+    {
       "path": "scripts/test/seo-authority.test.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -1510,6 +1566,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file for the song test; not itself a program capability."
+    },
+    {
+      "path": "scripts/test/supabase-functions-deploy.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Edge Function deploy-pipeline regression coverage; it names Equity Uprise functions only as deploy targets that import shared code. Test support, not a physical building capability."
     },
     {
       "path": "services.html",
@@ -2029,6 +2092,41 @@
       "rationale": "Applied Action Network function that lets the desk seat an accepted fellow in an active cohort; it names the Equity Uprise seed it ships with. Mobilization infrastructure, not a building capability, as with the seed itself."
     },
     {
+      "path": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security re-audit migration tightens execution grants and shared authorization helpers used by Equity Uprise and Mnet; runtime security support, not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Security re-audit migration hardens eu_log and private-profile fellowship matching; runtime security support, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/README.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2340,55 +2438,6 @@
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
     },
     {
-      "path": "js/mnet-clips.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "js/control-room/clipping.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": ".github/workflows/api-economic-core-ci.yml",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "supabase/pending/README.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
-    },
-    {
       "path": "supabase/tests/eu_platform_test.sql",
       "classification": "test_support",
       "capability_ids": [],
@@ -2555,48 +2604,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
-    },
-    {
-      "path": "docs/control-plane/PROGRAM-LEDGER.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Program status ledger for the 19-item McCluster program; it names the playable Equity Uprise building only as a status row and defines no building geometry, program or capability."
-    },
-    {
-      "path": "docs/control-plane/SECURITY-POSTURE.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Security posture ledger references Equity Uprise Edge Functions and policies only to document authorization and operational hardening; it defines no building capability."
-    },
-    {
-      "path": "scripts/test/security-reaudit.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Regression coverage for shared security boundaries and Equity Uprise function hardening; test support, not a physical building capability."
-    },
-    {
-      "path": "scripts/test/supabase-functions-deploy.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Edge Function deploy-pipeline regression coverage; it names Equity Uprise functions only as deploy targets that import shared code. Test support, not a physical building capability."
-    },
-    {
-      "path": "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
-      "classification": "runtime_security_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Security re-audit migration tightens execution grants and shared authorization helpers used by Equity Uprise and Mnet; runtime security support, not a building capability."
-    },
-    {
-      "path": "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
-      "classification": "runtime_security_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Security re-audit migration hardens eu_log and private-profile fellowship matching; runtime security support, not a physical building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
