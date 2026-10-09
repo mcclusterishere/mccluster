@@ -479,7 +479,8 @@ body.music-now-open{overflow:hidden}
   width:100%;box-sizing:border-box;
   border:0;border-radius:9px;
   background:#0d0d10;color:var(--music-text);
-  padding:11px;font-size:13px
+  /* 16px or more: iOS zooms the page into any smaller field on focus */
+  padding:11px;font-size:max(16px,13px)
 }
 .music-v2 .creator-field input:focus,.music-v2 .creator-field textarea:focus,.music-v2 .creator-field select:focus{
   outline:0;box-shadow:0 0 0 2px rgba(229,56,59,.36)

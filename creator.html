@@ -46,6 +46,8 @@
           <div class="creator-field"><label for="creatorName">Artist / creator name</label><input id="creatorName" name="artist_name" required maxlength="160"></div>
           <div class="creator-field"><label for="creatorBio">Bio</label><textarea id="creatorBio" name="bio" maxlength="2000"></textarea></div>
           <div class="creator-field"><label for="creatorWebsite">Website</label><input id="creatorWebsite" name="website_url" type="url" placeholder="https://"></div>
+          <div class="creator-field"><label for="creatorAvatarFile">Profile photo</label><input id="creatorAvatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small class="creator-help" id="creatorAvatarNow">Square works best. Shown on your page and beside your tracks.</small></div>
+          <div class="creator-field"><label for="creatorBannerFile">Front-page photo</label><input id="creatorBannerFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small class="creator-help" id="creatorBannerNow">Wide and dark works best. It sits behind your name at the top of your page.</small></div>
           <div class="creator-field"><label for="creatorAccent">Player accent</label><input id="creatorAccent" type="color" value="#e5383b"></div>
           <div class="creator-field"><label for="creatorBackground">Player background</label><input id="creatorBackground" type="color" value="#090706"></div>
           <div class="creator-field"><label for="creatorForeground">Player text</label><input id="creatorForeground" type="color" value="#f4efe6"></div>
@@ -54,6 +56,57 @@
           <label class="creator-check"><input id="creatorTerms" type="checkbox" required><span>I accept the <a href="music-creator-terms.html" target="_blank">Creator Hosting & Licensing Terms</a>.</span></label>
           <div class="creator-actions"><button class="creator-btn primary" type="submit">Save creator profile</button><a class="creator-btn quiet" id="publicProfile" href="#" hidden>View public profile</a></div>
           <div class="creator-status" id="profileStatus"></div>
+        </form>
+      </section>
+
+      <section class="creator-card wide" id="rateCard">
+        <h2>Your rate sheet</h2>
+        <p>What you sell, shown near the top of your page. Buyers send a booking request; nothing is charged until you confirm, then they get a payment link.</p>
+        <div class="creator-list" id="creatorServices"><div class="creator-status">No rates yet.</div></div>
+        <div class="creator-actions"><button class="creator-btn quiet" id="newService" type="button">+ Add a rate</button></div>
+        <form class="creator-form two creator-album-form" id="serviceForm" hidden>
+          <div class="creator-field wide"><label for="serviceTitle">What you sell</label><input id="serviceTitle" required maxlength="80" placeholder="Feature on a song"></div>
+          <div class="creator-field"><label for="servicePrice">Price (USD)</label><input id="servicePrice" type="number" inputmode="decimal" min="1" max="100000" step="0.01" required placeholder="50"></div>
+          <div class="creator-field"><label for="serviceUnit">Charged</label>
+            <select id="serviceUnit"><option value="song">Per song</option><option value="hour">Per hour</option><option value="flat">Flat fee</option></select>
+          </div>
+          <div class="creator-field"><label for="serviceRoyalty">Royalty share (%)</label><input id="serviceRoyalty" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="0"><small class="creator-help">Optional: your share of the song's royalties on top of the price.</small></div>
+          <div class="creator-field wide"><label for="serviceDescription">What the buyer gets</label><textarea id="serviceDescription" maxlength="600"></textarea></div>
+          <div class="creator-actions wide">
+            <button class="creator-btn primary" id="saveService" type="submit">Save rate</button>
+            <button class="creator-btn quiet" id="cancelService" type="button">Cancel</button>
+            <button class="creator-btn quiet" id="deleteService" type="button" hidden>Delete rate</button>
+          </div>
+          <div class="creator-status wide" id="serviceStatus"></div>
+        </form>
+      </section>
+
+      <section class="creator-card wide" id="albumCard">
+        <h2>Your albums</h2>
+        <p>Group your tracks into albums, EPs and mixtapes for your page. An album shows on your page once at least one of its tracks is published, with only its published tracks.</p>
+        <div class="creator-list" id="creatorAlbums"><div class="creator-status">No albums yet.</div></div>
+        <div class="creator-actions"><button class="creator-btn quiet" id="newAlbum" type="button">+ New album</button></div>
+        <form class="creator-form two creator-album-form" id="albumForm" hidden>
+          <div class="creator-field"><label for="albumTitle">Album title</label><input id="albumTitle" required maxlength="160"></div>
+          <div class="creator-field"><label for="albumKind">Type</label>
+            <select id="albumKind"><option value="album">Album</option><option value="ep">EP</option><option value="mixtape">Mixtape</option><option value="single">Single</option></select>
+          </div>
+          <div class="creator-field"><label for="albumDate">Release date</label><input id="albumDate" type="date"></div>
+          <div class="creator-field"><label for="albumCover">Cover art</label><input id="albumCover" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small class="creator-help" id="albumCoverNow">Square, at least 1000×1000.</small></div>
+          <div class="creator-field wide"><label for="albumDescription">About this album</label><textarea id="albumDescription" maxlength="2000"></textarea></div>
+          <label class="creator-check wide"><input id="albumFeatured" type="checkbox"><span>Feature this album at the top of my page.</span></label>
+          <div class="creator-field wide">
+            <span class="creator-label">Tracklist, in order</span>
+            <ol class="creator-albumtracks" id="albumTracks"></ol>
+            <span class="creator-label">Add tracks</span>
+            <ul class="creator-albumpool" id="albumPool"></ul>
+          </div>
+          <div class="creator-actions wide">
+            <button class="creator-btn primary" id="saveAlbum" type="submit">Save album</button>
+            <button class="creator-btn quiet" id="cancelAlbum" type="button">Cancel</button>
+            <button class="creator-btn quiet" id="deleteAlbum" type="button" hidden>Delete album</button>
+          </div>
+          <div class="creator-status wide" id="albumStatus"></div>
         </form>
       </section>
 
@@ -70,6 +123,7 @@
           <div class="creator-field"><label for="trackTitle">Title</label><input id="trackTitle" required maxlength="220"></div>
           <div class="creator-field"><label for="trackArtist">Artist credit</label><input id="trackArtist" maxlength="220"></div>
           <div class="creator-field"><label for="trackGenre">Genre</label><input id="trackGenre" maxlength="80"></div>
+          <div class="creator-field"><label for="trackAlbum">Album</label><select id="trackAlbum"><option value="">No album (single)</option></select></div>
           <div class="creator-field"><label for="trackAccess">Listener access</label>
             <select id="trackAccess">
               <option value="account">Full track with free M Account</option>
@@ -115,6 +169,7 @@
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>

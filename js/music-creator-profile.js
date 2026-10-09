@@ -1,15 +1,33 @@
+/* An artist's front page on McCluster Music: music-creator.html?handle=x.
+
+   The house album's front door (album.html) for any creator: the name you
+   cannot miss over the artist's own photo, the featured record with Play and
+   its tracklist, the rest of the albums on a shelf, and the singles. It reads
+   only what RLS shows the public: an active creator profile (with the albums
+   the creator arranged in Creator Studio, settings.albums) and that
+   creator's PUBLISHED tracks. Albums and their rules: js/music-creator-page.js. */
 (function (root) {
   "use strict";
   var doc = root.document;
+  var PAGE = root.MCC_CREATOR_PAGE;
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  /* No artwork: a transparent pixel over the page's own colour tile
+     (css/music-artist.css). The house mark is McCluster's, not the artist's. */
+  var NO_ART = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
   var handle = (new URLSearchParams(location.search).get("handle") || "").trim().toLowerCase();
+  var $ = function (id) { return doc.getElementById(id); };
 
   function esc(x) { var d = doc.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
   function attr(x) { return esc(x).replace(/"/g, "&quot;"); }
   function money(cents, cur) {
     try { return new Intl.NumberFormat(undefined,{style:"currency",currency:(cur||"usd").toUpperCase()}).format(Number(cents||0)/100); }
     catch (_) { return "$" + (Number(cents||0)/100).toFixed(2); }
+  }
+  function duration(ms) {
+    var s = Math.round(Number(ms) / 1000);
+    if (!(s > 0)) return "";
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
   }
   function api(path, token) {
     return fetch(SB + "/rest/v1/" + path, {
@@ -21,86 +39,307 @@
     });
   }
   function profileError(message) {
-    doc.getElementById("creatorArtist").textContent = "Creator not found";
-    doc.getElementById("creatorBio").textContent = message || "This profile is unavailable.";
-    doc.getElementById("creatorPublicTracks").innerHTML = "";
+    $("creatorArtist").textContent = "Artist not found";
+    $("creatorBio").textContent = message || "This page is unavailable.";
+    $("creatorPublicTracks").innerHTML = "";
+    $("apSinglesWrap").hidden = true;
   }
 
-  if (!handle) { profileError("No creator handle was supplied."); return; }
+  if (!handle || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(handle)) { profileError("No artist was named in the link."); return; }
 
-  api("music_creator_profiles?handle=eq." + encodeURIComponent(handle) +
-      "&status=eq.active&select=m_uid,handle,artist_name,bio,avatar_url,banner_url,website_url,verification_state&limit=1")
-    .then(function (profiles) {
-      var p = profiles && profiles[0];
-      if (!p) throw new Error("profile missing");
-      doc.title = p.artist_name + " · McCluster Music";
-      doc.getElementById("creatorHandle").textContent = "@" + p.handle +
-        (p.verification_state === "verified" ? " · verified" : "");
-      doc.getElementById("creatorArtist").textContent = p.artist_name;
-      doc.getElementById("creatorBio").textContent = p.bio || "Independent creator on McCluster Music.";
-      if (p.avatar_url) doc.getElementById("creatorAvatar").src = p.avatar_url;
-      if (p.banner_url) {
-        var img = doc.createElement("img");
-        img.className = "creator-hero__banner";
-        img.src = p.banner_url; img.alt = "";
-        doc.getElementById("creatorHero").prepend(img);
-      }
-      var identityLink = doc.createElement("a");
-      identityLink.className = "creator-action-network";
-      identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
-      identityLink.textContent = "Put this music into action → @" + p.handle;
-      identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on the Action Network");
-      doc.getElementById("creatorHero").querySelector(".creator-hero__copy").appendChild(identityLink);
-      if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle });
+  var state = { p: null, cat: null, byTrack: {}, featured: "", services: [], booking: null };
 
-      return Promise.all([
-        Promise.resolve(p),
-        api("creator_tracks?m_uid=eq." + encodeURIComponent(p.m_uid) +
-            "&status=eq.published&select=id,title,artist,description,poster_url,audio_url,preview_bucket,preview_path,access_mode,genre,published_at&order=published_at.desc"),
-        api("music_license_offers?creator_m_uid=eq." + encodeURIComponent(p.m_uid) +
-            "&active=eq.true&select=id,track_id,title,license_type,price_cents,currency,terms_text,checkout_enabled,sort_order&order=sort_order.asc")
-      ]);
-    })
-    .then(function (all) {
-      var p = all[0], tracks = all[1] || [], offers = all[2] || [];
-      var byTrack = {};
-      offers.forEach(function (o) { (byTrack[o.track_id] || (byTrack[o.track_id] = [])).push(o); });
-      var wrap = doc.getElementById("creatorPublicTracks");
-      if (!tracks.length) {
-        wrap.innerHTML = '<div class="creator-status">No published releases yet.</div>';
-        return;
-      }
-      tracks.forEach(function (t) {
-        if (root.MCC_MUSIC) root.MCC_MUSIC.registerCreatorTrack(Object.assign({}, t, {
-          artist_name: p.artist_name,
-          avatar_url: p.avatar_url || "",
+  /* The artist's colours from Creator Studio, validated hex only. */
+  function applyTheme(settings) {
+    var t = PAGE.theme(settings);
+    var page = $("artistPage");
+    if (t.accent) { page.style.setProperty("--ap-accent", t.accent); doc.body.style.setProperty("--music-accent", t.accent); }
+    if (t.background) { page.style.setProperty("--ap-bg", t.background); doc.body.style.setProperty("--music-bg", t.background); }
+    if (t.foreground) { page.style.setProperty("--ap-fg", t.foreground); doc.body.style.setProperty("--music-text", t.foreground); }
+    if (t.surface) page.style.setProperty("--ap-surface", t.surface);
+  }
+
+  /* The name, set like the house front page: every word but the last, then
+     the last in the artist's accent. Sized to the longest word so a long
+     name shrinks instead of pushing the page sideways. */
+  function setName(name) {
+    var h1 = $("creatorArtist");
+    var words = String(name).trim().split(/\s+/).filter(Boolean);
+    var longest = words.reduce(function (n, w) { return Math.max(n, w.length); }, 4);
+    h1.style.setProperty("--ap-fit", String(Math.min(longest, 160)));
+    if (words.length < 2) { h1.innerHTML = '<span class="ap-hero__line">' + esc(name) + "</span>"; return; }
+    h1.innerHTML = '<span class="ap-hero__line">' + esc(words.slice(0, -1).join(" ")) + '</span>' +
+      '<span class="ap-hero__line ap-hero__line--accent">' + esc(words[words.length - 1]) + "</span>";
+  }
+
+  function realArt(track, album) {
+    return PAGE.safeArtwork(track && track.poster_url) || (album && album.cover_url) || PAGE.safeArtwork(state.p.avatar_url) || "";
+  }
+  function artFor(track, album) { return realArt(track, album) || NO_ART; }
+  function coverOf(album) {
+    return album.cover_url || artFor(album.rows[0], null);
+  }
+
+  function offersHtml(t) {
+    return (state.byTrack[t.id] || []).map(function (o) {
+      var label = o.price_cents != null ? o.title + " · " + money(o.price_cents, o.currency) : o.title;
+      return '<button type="button" class="creator-offer" data-offer="' + attr(o.id) + '" data-checkout="' +
+        (o.checkout_enabled ? "1" : "0") + '" title="' + attr(o.terms_text) + '">' + esc(label) + '</button>';
+    }).join("");
+  }
+
+  function rowHtml(t, n, album, tag) {
+    var state2 = t.access_mode === "public" ? "" : t.access_mode === "account" ? "Full track with free M Account" : "Preview · license available";
+    var meta = [t.artist && t.artist !== state.p.artist_name ? t.artist : "", t.genre, state2].filter(Boolean).join(" · ");
+    var offers = offersHtml(t);
+    return "<" + tag + ' class="ap-track"' + (tag === "div" ? ' role="listitem"' : "") + ">" +
+      '<span class="ap-track__n">' + n + "</span>" +
+      '<img src="' + attr(artFor(t, album)) + '" alt="" loading="lazy">' +
+      '<span class="ap-track__t"><b>' + esc(t.title) + "</b>" + (meta ? "<small>" + esc(meta) + "</small>" : "") +
+        (offers ? '<span class="creator-offers">' + offers + "</span>" : "") + "</span>" +
+      '<span class="ap-track__d">' + esc(duration(t.duration_ms)) + "</span>" +
+      '<button class="creator-play" type="button" data-music-play data-creator-track="' + attr(t.id) +
+        '" aria-label="Play ' + attr(t.title) + '" aria-pressed="false">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>' +
+    "</" + tag + ">";
+  }
+
+  function showAlbum(id, scroll) {
+    var albums = state.cat.albums;
+    var a = albums.filter(function (x) { return x.id === id; })[0] || albums[0];
+    if (!a) return;
+    state.featured = a.id;
+    var year = a.release_date ? a.release_date.slice(0, 4) : "";
+    $("apFeatured").hidden = false;
+    $("apAlbumArt").src = coverOf(a);
+    $("apAlbumArt").alt = a.title + " cover";
+    $("apAlbumKicker").textContent = [PAGE.kindLabel(a.kind), a.rows.length + (a.rows.length === 1 ? " track" : " tracks"), year].filter(Boolean).join(" · ");
+    $("apAlbumTitle").textContent = a.title;
+    $("apAlbumArtist").textContent = state.p.artist_name;
+    $("apAlbumPlay").setAttribute("data-creator-track", a.rows[0].id);
+    $("apAlbumPlay").setAttribute("aria-label", "Play " + a.title);
+    $("apAlbumAbout").textContent = a.description;
+    $("apAlbumAbout").hidden = !a.description;
+    $("apTracks").innerHTML = a.rows.map(function (t, i) { return rowHtml(t, i + 1, a, "li"); }).join("");
+    renderShelf();
+    if (scroll) $("apFeatured").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderShelf() {
+    var others = state.cat.albums.filter(function (a) { return a.id !== state.featured; });
+    $("apShelfWrap").hidden = !others.length;
+    $("apShelfTitle").textContent = "More from " + state.p.artist_name;
+    $("apShelf").innerHTML = others.map(function (a) {
+      return '<button class="ap-card" type="button" data-album="' + attr(a.id) + '">' +
+        '<img src="' + attr(coverOf(a)) + '" alt="" loading="lazy">' +
+        "<b>" + esc(a.title) + "</b><small>" + esc([PAGE.kindLabel(a.kind), a.release_date ? a.release_date.slice(0, 4) : ""].filter(Boolean).join(" · ")) + "</small></button>";
+    }).join("");
+  }
+
+  function renderDoors(p, firstTrack) {
+    var doors = [];
+    if (state.services.length) doors.push('<a class="ap-door ap-door--lead" href="#apRates">Book ' + esc(p.artist_name) + "</a>");
+    if (firstTrack) {
+      doors.push('<button class="ap-door' + (state.services.length ? "" : " ap-door--lead") + '" type="button" data-music-play data-creator-track="' + attr(firstTrack.id) +
+        '" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>');
+    }
+    if (state.cat.albums.length) doors.push('<a class="ap-door" href="#apFeatured">' + (state.cat.albums.length > 1 ? "Albums" : "The album") + "</a>");
+    var site = PAGE.safeLink(p.website_url);
+    if (site) doors.push('<a class="ap-door" href="' + attr(site) + '" rel="noopener nofollow ugc" target="_blank">Website</a>');
+    $("apDoors").innerHTML = doors.join("");
+    var identityLink = doc.createElement("a");
+    identityLink.className = "ap-door creator-action-network";
+    identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
+    identityLink.textContent = "Put this music into action → @" + p.handle;
+    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on the Action Network");
+    $("apDoors").appendChild(identityLink);
+  }
+
+  /* ---------- the rate sheet and booking requests ---------- */
+  function renderRates(p) {
+    var services = state.services;
+    $("apRates").hidden = !services.length;
+    if (!services.length) return;
+    $("apRatesTitle").textContent = "Book " + p.artist_name;
+    $("apRatesNote").textContent = "Send a request. Nothing is charged until " + p.artist_name + " confirms; then you get a payment link by email.";
+    $("apRateCards").innerHTML = services.map(function (svc) {
+      return '<article class="ap-rate">' +
+        "<h3>" + esc(svc.title) + "</h3>" +
+        '<p class="ap-rate__price">' + esc(PAGE.servicePrice(svc)) + "</p>" +
+        (svc.description ? '<p class="ap-rate__about">' + esc(svc.description) + "</p>" : "") +
+        '<button class="ap-play ap-rate__book" type="button" data-book="' + attr(svc.id) + '">Book</button>' +
+        "</article>";
+    }).join("");
+  }
+
+  function bookingEstimate() {
+    var svc = state.booking;
+    if (!svc) return;
+    var form = $("apBookForm");
+    var est = PAGE.estimate(svc, form.elements.quantity.value);
+    var qty = PAGE.UNITS[svc.unit] ? est.quantity + " " + svc.unit + (est.quantity === 1 ? "" : "s") + " · " : "";
+    $("apBookEstimate").textContent = "Estimate: " + qty + PAGE.dollars(est.cents) + (svc.royalty_pct ? " up front + " + svc.royalty_pct + "% royalty" : "") + ". Confirmed by the artist before anything is charged.";
+  }
+
+  function openBooking(id) {
+    var svc = state.services.filter(function (x) { return x.id === id; })[0];
+    var dialog = $("apBook");
+    if (!svc || !dialog) return;
+    state.booking = svc;
+    var form = $("apBookForm");
+    $("apBookKicker").textContent = "Booking request · " + state.p.artist_name;
+    $("apBookTitle").textContent = svc.title;
+    $("apBookPrice").textContent = PAGE.servicePrice(svc);
+    $("apBookQtyWrap").hidden = !PAGE.UNITS[svc.unit];
+    $("apBookQtyLabel").textContent = svc.unit === "hour" ? "Hours" : "Songs";
+    form.elements.quantity.value = "1";
+    $("apBookStatus").textContent = "";
+    $("apBookStatus").className = "ap-book__status";
+    $("apBookSend").disabled = false;
+    $("apBookSend").textContent = "Send request";
+    bookingEstimate();
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+    if (root.MCC_TRACK) root.MCC_TRACK("creator_booking_open", { handle: handle, service: svc.title.slice(0, 80) });
+  }
+
+  function closeBooking() {
+    var dialog = $("apBook");
+    if (dialog && typeof dialog.close === "function" && dialog.open) dialog.close(); else if (dialog) dialog.removeAttribute("open");
+  }
+
+  function sendBooking(e) {
+    e.preventDefault();
+    var svc = state.booking;
+    var form = $("apBookForm");
+    if (!svc) return;
+    var name = form.elements.name.value.trim();
+    var email = form.elements.email.value.trim();
+    var say = function (msg, tone) { $("apBookStatus").textContent = msg; $("apBookStatus").className = "ap-book__status" + (tone ? " " + tone : ""); };
+    if (!name) { say("Add your name so they know who's asking.", "bad"); form.elements.name.focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say("Add an email they can reply to.", "bad"); form.elements.email.focus(); return; }
+    if (!root.MCC_CRM || typeof root.MCC_CRM.send !== "function") { say("Requests are unavailable right now. Email matthew@mccluster.org instead.", "bad"); return; }
+    var note = PAGE.bookingNote(state.p, svc, { quantity: form.elements.quantity.value, date: form.elements.date.value, message: form.elements.message.value });
+    var send = $("apBookSend");
+    send.disabled = true;
+    send.textContent = "Sending…";
+    root.MCC_CRM.send({
+      name: name.slice(0, 120),
+      email: email.slice(0, 200),
+      want: ("Booking · " + svc.title + " · @" + state.p.handle).slice(0, 300),
+      note: note,
+      campaign: ("artist-booking:" + state.p.handle).slice(0, 200)
+    }).then(function () {
+      say("Sent. " + state.p.artist_name + " will confirm, then you'll get a payment link at " + email + ".", "good");
+      send.textContent = "Sent";
+      form.elements.message.value = "";
+      if (root.MCC_TRACK) root.MCC_TRACK("creator_booking_request", { handle: handle, service: svc.title.slice(0, 80), unit: svc.unit });
+    }).catch(function () {
+      send.disabled = false;
+      send.textContent = "Send request";
+      say("That didn't go through. Try again, or email matthew@mccluster.org.", "bad");
+    });
+  }
+
+  function renderPage(p, tracks, offers) {
+    state.p = p;
+    state.byTrack = {};
+    (offers || []).forEach(function (o) { (state.byTrack[o.track_id] || (state.byTrack[o.track_id] = [])).push(o); });
+    state.cat = PAGE.publicCatalogue(p.settings || {}, tracks || []);
+    state.services = PAGE.normalizeServices(p.settings || {});
+    var cat = state.cat;
+
+    applyTheme(p.settings || {});
+    doc.title = p.artist_name + " · McCluster Music";
+    var desc = doc.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute("content", (p.bio || (p.artist_name + " on McCluster Music.")).slice(0, 300));
+    $("creatorHandle").textContent = "@" + p.handle + (p.verification_state === "verified" ? " · verified" : "") + " · McCluster Music";
+    setName(p.artist_name);
+    $("creatorBio").textContent = p.bio || "Independent artist on McCluster Music.";
+    var avatar = PAGE.safeArtwork(p.avatar_url);
+    if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
+
+    /* Every published track goes to the player in page order: the featured
+       album, the other albums, then the singles, so Next follows the page. */
+    var hash = (location.hash.match(/^#album=(alb_[a-z0-9]{6,24})$/) || [])[1];
+    var first = cat.albums.filter(function (a) { return a.id === hash; })[0] ||
+      cat.albums.filter(function (a) { return a.id === cat.featured; })[0] || cat.albums[0] || null;
+    var ordered = (first ? [first] : []).concat(cat.albums.filter(function (a) { return a !== first; }));
+    if (root.MCC_MUSIC) {
+      ordered.forEach(function (a) {
+        a.rows.forEach(function (t) {
+          root.MCC_MUSIC.registerCreatorTrack(Object.assign({}, t, {
+            poster_url: realArt(t, a), artist_name: p.artist_name, avatar_url: avatar, release_name: a.title,
+            preview_seconds: t.access_mode === "public" ? 0 : 30
+          }));
+        });
+      });
+      cat.singles.forEach(function (t) {
+        root.MCC_MUSIC.registerCreatorTrack(Object.assign({}, t, {
+          poster_url: realArt(t, null), artist_name: p.artist_name, avatar_url: avatar, release_name: "Singles",
           preview_seconds: t.access_mode === "public" ? 0 : 30
         }));
       });
-      wrap.innerHTML = tracks.map(function (t) {
-        var art = t.poster_url || p.avatar_url || "assets/img/m-mark.png";
-        var os = byTrack[t.id] || [];
-        var offerHtml = os.map(function (o) {
-          var label = o.price_cents != null ? o.title + " · " + money(o.price_cents, o.currency) : o.title;
-          return '<button type="button" class="creator-offer" data-offer="' + attr(o.id) + '" data-checkout="' +
-            (o.checkout_enabled ? "1" : "0") + '" title="' + attr(o.terms_text) + '">' + esc(label) + '</button>';
-        }).join("");
-        var state = t.access_mode === "public" ? "Public full play" :
-          t.access_mode === "account" ? "Full track with free M Account" : "Preview · license available";
-        return '<article class="creator-track">' +
-          '<img src="' + attr(art) + '" alt="">' +
-          '<div><h3>' + esc(t.title) + '</h3><p>' + esc(t.artist || p.artist_name) +
-            (t.genre ? " · " + esc(t.genre) : "") + " · " + esc(state) + '</p>' +
-            (offerHtml ? '<div class="creator-offers">' + offerHtml + '</div>' : '') + '</div>' +
-          '<button class="creator-play" type="button" data-music-play data-creator-track="' + attr(t.id) +
-            '" aria-label="Play ' + attr(t.title) + '" aria-pressed="false">' +
-            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>' +
-        '</article>';
-      }).join("");
+    }
+
+    var heroImg = PAGE.safeArtwork(p.banner_url) || (first && coverOf(first)) || avatar;
+    if (heroImg && heroImg !== NO_ART) { $("apHeroImg").src = heroImg; $("apHeroImg").hidden = false; }
+    else $("creatorHero").classList.add("ap-hero--plain");
+    renderDoors(p, first ? first.rows[0] : cat.singles[0]);
+    renderRates(p);
+
+    if (first) showAlbum(first.id, false);
+    var wrap = $("creatorPublicTracks");
+    if (!cat.albums.length && !cat.singles.length && state.services.length) {
+      $("apSinglesWrap").hidden = true;
+    } else if (!cat.albums.length && !cat.singles.length) {
+      wrap.innerHTML = '<div class="creator-status">No published releases yet.</div>';
+    } else if (!cat.singles.length) {
+      $("apSinglesWrap").hidden = true;
+    } else {
+      $("apSinglesTitle").textContent = cat.albums.length ? "Singles" : "Releases";
+      wrap.innerHTML = cat.singles.map(function (t, i) { return rowHtml(t, i + 1, null, "div"); }).join("");
+    }
+    if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle, albums: cat.albums.length, tracks: (tracks || []).length, rates: state.services.length });
+  }
+
+  api("music_creator_profiles?handle=eq." + encodeURIComponent(handle) +
+      "&status=eq.active&select=m_uid,handle,artist_name,bio,avatar_url,banner_url,website_url,verification_state,settings&limit=1")
+    .then(function (profiles) {
+      var p = profiles && profiles[0];
+      if (!p) throw new Error("profile missing");
+      return Promise.all([
+        Promise.resolve(p),
+        api("creator_tracks?m_uid=eq." + encodeURIComponent(p.m_uid) +
+            "&status=eq.published&select=id,title,artist,description,poster_url,audio_url,preview_bucket,preview_path,access_mode,genre,duration_ms,music_video_url,lyrics_url,experience,published_at&order=published_at.desc"),
+        api("music_license_offers?creator_m_uid=eq." + encodeURIComponent(p.m_uid) +
+            "&active=eq.true&select=id,track_id,title,license_type,price_cents,currency,terms_text,checkout_enabled,sort_order&order=sort_order.asc")
+          .catch(function () { return []; })
+      ]);
     })
-    .catch(function () { profileError("This creator profile is unavailable."); });
+    .then(function (all) { renderPage(all[0], all[1], all[2]); })
+    .catch(function () { profileError("This artist's page is unavailable."); });
+
+  if ($("apBookForm")) {
+    $("apBookForm").addEventListener("submit", sendBooking);
+    $("apBookForm").elements.quantity.addEventListener("input", bookingEstimate);
+    $("apBookForm").addEventListener("input", function () {
+      if (/\bbad\b/.test($("apBookStatus").className)) { $("apBookStatus").textContent = ""; $("apBookStatus").className = "ap-book__status"; }
+    });
+    $("apBookCancel").addEventListener("click", closeBooking);
+  }
 
   doc.addEventListener("click", function (e) {
+    var book = e.target && e.target.closest ? e.target.closest("[data-book]") : null;
+    if (book && state.p) { e.preventDefault(); openBooking(book.getAttribute("data-book")); return; }
+    var card = e.target && e.target.closest ? e.target.closest("[data-album]") : null;
+    if (card && state.cat) {
+      e.preventDefault();
+      var id = card.getAttribute("data-album");
+      if (history.replaceState) history.replaceState(null, "", "#album=" + id);
+      showAlbum(id, true);
+      if (root.MCC_TRACK) root.MCC_TRACK("creator_album_open", { handle: handle });
+      return;
+    }
     var b = e.target && e.target.closest ? e.target.closest("[data-offer]") : null;
     if (!b) return;
     e.preventDefault();

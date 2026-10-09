@@ -3,43 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Creator · McCluster Music</title>
+  <title>Artist · McCluster Music</title>
   <meta name="description" content="Listen to and license independent music on McCluster Music.">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-artist.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
-<body class="songpage music-v2">
+<body class="songpage music-v2 artist-page">
+  <!-- An ARTIST'S FRONT PAGE on McCluster Music: the same front door the
+       house album has (a name you cannot miss, the record, Play, the
+       tracklist), filled from one creator's own profile, albums and
+       published tracks: music-creator.html?handle=<handle>. The page is
+       McCluster Music's (company product); the artist is the artist. -->
   <header class="music-contextbar">
     <a class="music-contextbar__brand" href="listen.html"><img src="assets/img/m-mark.png" alt=""><span>Music</span></a>
     <nav class="music-contextbar__nav" aria-label="Music"><a href="listen.html">Listen</a><a href="creator.html">Creator Studio</a></nav>
   </header>
-  <main class="creator-shell">
-    <section class="creator-hero" id="creatorHero">
-      <div class="creator-hero__copy">
-        <img class="creator-avatar" id="creatorAvatar" src="assets/img/m-mark.png" alt="">
-        <div class="creator-kicker" id="creatorHandle">@creator</div>
-        <h1 id="creatorArtist">Creator</h1>
-        <p id="creatorBio">Opening profile…</p>
+  <main class="ap" id="artistPage">
+    <section class="ap-hero" id="creatorHero" aria-labelledby="creatorArtist">
+      <div class="ap-hero__bg" aria-hidden="true"><img id="apHeroImg" alt="" hidden></div>
+      <div class="ap-hero__copy">
+        <img class="ap-hero__avatar" id="creatorAvatar" alt="" hidden>
+        <p class="ap-hero__kicker" id="creatorHandle">McCluster Music</p>
+        <h1 class="ap-hero__name" id="creatorArtist">Artist</h1>
+        <p class="ap-hero__bio" id="creatorBio">Opening the artist's page…</p>
+        <p class="ap-hero__doors" id="apDoors"></p>
       </div>
     </section>
 
-    <section class="creator-card wide" style="margin-top:18px">
-      <h2>Releases</h2>
-      <p>Play here. You do not need to leave this page to hear a track.</p>
-      <div class="creator-tracks" id="creatorPublicTracks"><div class="creator-status">Loading releases…</div></div>
+    <!-- THE RATE SHEET: what the artist sells. A request, never a charge:
+         it lands on the McCluster Music desk (Control → Operations →
+         Bookings), the artist confirms, then the buyer gets a payment link. -->
+    <section class="ap-rates" id="apRates" aria-labelledby="apRatesTitle" hidden>
+      <h2 class="ap-label" id="apRatesTitle">Book</h2>
+      <div class="ap-rates__grid" id="apRateCards"></div>
+      <p class="ap-rates__note" id="apRatesNote">Send a request. Nothing is charged until the artist confirms; then you get a payment link by email.</p>
     </section>
+
+    <section class="ap-album" id="apFeatured" aria-labelledby="apAlbumTitle" hidden>
+      <img class="ap-album__art" id="apAlbumArt" alt="">
+      <div class="ap-album__copy">
+        <p class="ap-album__k" id="apAlbumKicker">Album</p>
+        <h2 id="apAlbumTitle">Album</h2>
+        <p class="ap-album__by">by <b id="apAlbumArtist">Artist</b></p>
+        <button class="ap-play" id="apAlbumPlay" type="button" data-music-play aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
+        <p class="ap-album__about" id="apAlbumAbout" hidden></p>
+      </div>
+    </section>
+    <section aria-label="Tracklist"><ol class="ap-tracks" id="apTracks"></ol></section>
+
+    <section class="ap-shelf" id="apShelfWrap" aria-labelledby="apShelfTitle" hidden>
+      <h2 class="ap-label" id="apShelfTitle">Albums</h2>
+      <div class="ap-shelf__grid" id="apShelf"></div>
+    </section>
+
+    <section class="ap-singles" id="apSinglesWrap" aria-labelledby="apSinglesTitle">
+      <h2 class="ap-label" id="apSinglesTitle">Releases</h2>
+      <div class="ap-tracks" id="creatorPublicTracks" role="list"><div class="creator-status">Loading releases…</div></div>
+    </section>
+
+    <dialog class="ap-book" id="apBook" aria-labelledby="apBookTitle">
+      <form class="ap-book__form" id="apBookForm" method="dialog" novalidate>
+        <p class="ap-label" id="apBookKicker">Booking request</p>
+        <h2 id="apBookTitle">Book</h2>
+        <p class="ap-book__price" id="apBookPrice"></p>
+        <label class="ap-book__field"><span>Your name</span><input name="name" autocomplete="name" maxlength="120" required></label>
+        <label class="ap-book__field"><span>Email</span><input name="email" type="email" autocomplete="email" maxlength="200" required></label>
+        <label class="ap-book__field" id="apBookQtyWrap"><span id="apBookQtyLabel">Songs</span><input name="quantity" type="number" inputmode="numeric" min="1" max="100" step="1" value="1"></label>
+        <label class="ap-book__field"><span>Date (if you have one)</span><input name="date" type="date"></label>
+        <label class="ap-book__field"><span>Tell them about it</span><textarea name="message" rows="4" maxlength="1500" placeholder="The song, the event, the budget, anything that helps"></textarea></label>
+        <p class="ap-book__estimate" id="apBookEstimate" aria-live="polite"></p>
+        <p class="ap-book__status" id="apBookStatus" role="status" aria-live="polite"></p>
+        <div class="ap-book__actions">
+          <button class="ap-play" id="apBookSend" type="submit" value="send">Send request</button>
+          <button class="ap-door" id="apBookCancel" type="button">Cancel</button>
+        </div>
+        <p class="ap-book__fine">Nothing is charged now. McCluster Music passes your request to the artist; once they confirm, you get a payment link by email.</p>
+      </form>
+    </dialog>
+
+    <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <a href="creator.html">Make your own artist page</a></p>
   </main>
 
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/music-creator-profile.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
