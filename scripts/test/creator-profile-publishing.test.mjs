@@ -23,3 +23,11 @@ test('creator profile page retains shared navigation and inaccessible default',a
  assert.match(html,/id="profile" hidden/);
  assert.match(html,/js\/mccluster-public-profile\.js/);
 });
+
+test('creator Studio recognizes existing McCluster login and avoids auth callback reentrancy',async()=>{
+ const js=await read('js/mccluster-creator-account.js');
+ assert.match(js,/mccdb_session/);
+ assert.match(js,/mcc_sess_keep/);
+ assert.match(js,/auth\.setSession/);
+ assert.match(js,/setTimeout\(refresh,0\)/);
+});
