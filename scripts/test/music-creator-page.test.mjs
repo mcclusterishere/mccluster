@@ -126,7 +126,7 @@ test('Creator Studio saves albums through the same rules and never clobbers newe
   assert.match(js, /async function removeUpload\(bucket, path\) \{\s+if \(!bucket \|\| !path\) return;\s+const supabase = ownerStorage\(\);/);
   assert.match(js, /"Uploaded\. Submitted for rights and publication review\."\) \+ licenseWarning/, 'a derivative upload shows its warnings too');
   assert.match(js, /uploadGrant\("creator-artwork", cover\)/);
-  assert.match(js, /if \(coverUpload\) \{ try \{ await removeUpload\(coverUpload\.bucket, coverUpload\.path\)/, 'a failed album save removes its cover');
+  assert.match(js, /if \(!inUse\) await removeUpload\(coverUpload\.bucket, coverUpload\.path\)/, 'a failed album save removes its cover when no saved album uses it');
   assert.match(js, /patch\.avatar_url = publicUrl\("creator-artwork"/);
   assert.match(js, /patch\.banner_url = publicUrl\("creator-artwork"/);
   assert.match(js, /const albumId = \$\("trackAlbum"\)\.value;[\s\S]*?committed = true|committed = true;[\s\S]*?const albumId = \$\("trackAlbum"\)\.value;/, 'a track joins its album only after the release is committed');
@@ -203,4 +203,33 @@ test('an album or rate save that races another window is reapplied, never lost',
   assert.deepEqual(writes, ['conflict', 'written']);
   assert.deepEqual(db.settings.albums.map((a) => a.title), ['Mine']);
   assert.deepEqual(db.settings.services.map((x) => x.title), ['Other tab'], "the other window's rate survives");
+});
+
+test('a rollback deletes uploads only when no saved release still uses them', async () => {
+  const js = read('js/music-creator-studio.js');
+  const src = js.slice(js.indexOf('async function uploadsInUse('), js.indexOf('function publicUrl('));
+  const run = async (dbRows, failCheck = false) => {
+    const removed = [];
+    const calls = [];
+    const rest = async (path, init = {}) => {
+      calls.push((init.method || 'GET') + ' ' + decodeURIComponent(path));
+      if (init.method === 'DELETE') return null;            // RLS: a pending_review row is silently not deleted
+      if (failCheck) throw new Error('offline');
+      return dbRows;
+    };
+    const removeUpload = async (bucket, path) => { removed.push(bucket + ':' + path); };
+    const rollbackRelease = new Function('rest', 'removeUpload', 'mUid', 'window', `${src} return rollbackRelease;`)(rest, removeUpload, 'm-1', {});
+    const uploads = [{ bucket: 'creator-masters', path: 'u1/m.wav' }, { bucket: 'creator-previews', path: 'u1/p.mp3' }, { bucket: 'creator-artwork', path: 'u1/a.jpg' }];
+    const failures = await rollbackRelease('00000001-0000-4000-8000-000000000001', uploads);
+    return { removed, failures, calls };
+  };
+  const committed = await run([{ id: '00000001-0000-4000-8000-000000000001' }]);
+  assert.deepEqual(committed.removed, [], 'a release that committed keeps its audio and artwork');
+  assert.deepEqual(committed.failures, ['files kept: a saved release still uses them']);
+  assert.match(committed.calls[1], /creator_tracks\?m_uid=eq\.m-1&or=\(id\.eq\.00000001-[^,]+,master_path\.in\.\("u1\/m\.wav","u1\/p\.mp3"\),preview_path\.in\.\("u1\/m\.wav","u1\/p\.mp3"\)\)/);
+  const gone = await run([]);
+  assert.deepEqual(gone.removed, ['creator-artwork:u1/a.jpg', 'creator-previews:u1/p.mp3', 'creator-masters:u1/m.wav'], 'nothing saved: every upload is removed');
+  const unsure = await run([], true);
+  assert.deepEqual(unsure.removed, [], 'when it cannot tell, it keeps the files');
+  assert.match(js, /const inUse = PAGE\.normalizeAlbums\(rows\?\.\[0\]\?\.settings\)\.some\(\(a\) => a\.cover_url === url\);\s+if \(!inUse\) await removeUpload/, 'an album cover is removed only when no saved album uses it');
 });

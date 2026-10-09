@@ -113,11 +113,36 @@ async function removeUpload(bucket, path) {
   const { error } = await supabase.storage.from(bucket).remove([path]);
   if (error) throw error;
 }
+/* Is any of this creator's releases still pointing at these uploads? A write
+   can commit even when its response never arrives, and a release already
+   moved to pending_review cannot be deleted by its creator (a zero-row
+   DELETE is not an error). Files are removed only when this says no; when it
+   cannot tell, it answers yes, because a stray file costs less than a release
+   whose audio was deleted from under it. */
+async function uploadsInUse(trackId, uploads) {
+  const paths = uploads.filter((u) => u.bucket !== "creator-artwork").map((u) => '"' + u.path + '"').join(",");
+  const clauses = [];
+  if (trackId) clauses.push("id.eq." + trackId);
+  if (paths) clauses.push("master_path.in.(" + paths + ")", "preview_path.in.(" + paths + ")");
+  if (!clauses.length) return false;
+  try {
+    const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
+      "&or=" + encodeURIComponent("(" + clauses.join(",") + ")") + "&select=id&limit=1");
+    return Array.isArray(rows) && rows.length > 0;
+  } catch (_) {
+    return true;
+  }
+}
 async function rollbackRelease(trackId, uploads) {
   const failures = [];
   if (trackId) {
     try { await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), { method: "DELETE", headers: { Prefer: "return=minimal" } }); }
     catch (err) { failures.push("release record: " + (err.message || err)); }
+  }
+  if (await uploadsInUse(trackId, uploads)) {
+    failures.push("files kept: a saved release still uses them");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_release_cleanup_failed", { failures });
+    return failures;
   }
   for (const item of uploads.slice().reverse()) {
     try { await removeUpload(item.bucket, item.path); }
@@ -362,7 +387,16 @@ $("albumForm").addEventListener("submit", async (e) => {
     status("albumStatus", "Album saved.", "good");
     if (window.MCC_TRACK) window.MCC_TRACK("creator_album_saved", { tracks: album.tracks.length, kind: album.kind });
   } catch (err) {
-    if (coverUpload) { try { await removeUpload(coverUpload.bucket, coverUpload.path); } catch (_) { /* best effort */ } }
+    /* Remove the new cover only when no saved album uses it: the save may
+       have committed even though its response was lost. */
+    if (coverUpload) {
+      try {
+        const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
+        const url = publicUrl(coverUpload.bucket, coverUpload.path);
+        const inUse = PAGE.normalizeAlbums(rows?.[0]?.settings).some((a) => a.cover_url === url);
+        if (!inUse) await removeUpload(coverUpload.bucket, coverUpload.path);
+      } catch (_) { /* unsure: keep the file */ }
+    }
     status("albumStatus", err.message || "Could not save the album.", "bad");
   } finally {
     save.disabled = false;
@@ -717,7 +751,11 @@ $("trackForm").addEventListener("submit", async (e) => {
     if (!committed && (createdTrackId || uploaded.length)) {
       status("trackStatus", "That submission failed. Cleaning up the partial release…", "bad");
       const cleanupFailures = await rollbackRelease(createdTrackId, uploaded);
-      status("trackStatus", (err.message || "Upload failed.") + (cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+      const kept = cleanupFailures.some((f) => f.startsWith("files kept"));
+      status("trackStatus", (err.message || "Upload failed.") + (kept
+        ? " It may have been submitted after all: check Your releases before uploading it again."
+        : cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+      if (kept) { try { await loadTracks(); } catch (_) { /* the list refreshes on the next load */ } }
     } else {
       status("trackStatus", err.message || "Upload failed.", "bad");
     }
