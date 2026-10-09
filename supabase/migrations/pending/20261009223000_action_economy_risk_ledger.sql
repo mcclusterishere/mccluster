@@ -76,7 +76,7 @@ declare
  v_sum_usd numeric;
  v_balance numeric;
 begin
- if current_user <> 'service_role' then raise exception 'Service role required'; end if;
+ if current_setting('request.jwt.claim.role',true) is distinct from 'service_role' then raise exception 'Service role required'; end if;
  if p_key is null or length(p_key)<8 or length(p_key)>200 or
  p_type not in ('purchase','gift','earn','release','reserve','withdrawal','chargeback','refund','recovery') or
  jsonb_typeof(p_lines)<>'array' or jsonb_array_length(p_lines)<2 or jsonb_array_length(p_lines)>20
