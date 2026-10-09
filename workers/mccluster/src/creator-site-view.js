@@ -23,7 +23,17 @@ export async function handleCreatorSiteView(request,env){
  subs.searchParams.set('limit','1');
  const access=await fetch(subs,{headers});
  if(!access.ok)return new Response('Unavailable',{status:503});
- if(!(await access.json())?.length)return new Response('Site unavailable',{status:404});
+ const paid=Boolean((await access.json())?.length);
+ if(!paid){
+  const grants=new URL(env.SUPABASE_URL+'/rest/v1/creator_site_cohort_grants');
+  grants.searchParams.set('org_id','eq.'+site.org_id);
+  grants.searchParams.set('revoked_at','is.null');
+  grants.searchParams.set('select','org_id');
+  grants.searchParams.set('limit','1');
+  const cohort=await fetch(grants,{headers});
+  if(!cohort.ok)return new Response('Unavailable',{status:503});
+  if(!(await cohort.json())?.length)return new Response('Site unavailable',{status:404});
+ }
  const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+
  escapeHtml(site.title)+'</title><style>body{font:18px/1.6 system-ui;background:#111;color:#fafafa;margin:auto;padding:8vw 6vw;max-width:780px}h1{font-size:clamp(2.5rem,7vw,5rem);line-height:1.1}p{white-space:pre-wrap}</style></head><body><main><h1>'+
  escapeHtml(site.title)+'</h1><h2>'+escapeHtml(site.tagline)+'</h2><p>'+escapeHtml(site.bio)+'</p></main></body></html>';
