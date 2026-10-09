@@ -34,3 +34,15 @@
 4. Build hosting plan checkout and renewal; clear consent before any charges.
 5. Add automated cohort analytics, quality-based traffic metrics and accessible appeals.
 6. Validate employment/contractor status, minimum compensation, taxes, payment providers and jurisdiction-specific restrictions before launch.
+
+
+## 2026 English-first dual-track pilot — research update
+- Two parallel cohorts each quarter: five U.S. creators plus five international creators, for 10 active creators per quarter, 40 placements/year. Annual maximum allocation $6,000 (40 × 3 months × $50); not the earlier $3,000 single-track ceiling. This excludes all operating costs.
+- International cohort: one English-language creator per market per quarter across Nigeria, Ghana, Jamaica, South Africa and Kenya; 4 annual participants per country. Philippines as production-oriented alternate. This is a hypothesis to test, not a claim of verified U.S. audience conversion.
+- English-language posting, briefs, CTA, reporting and work samples required. Evaluate English-language audience fit from actual creator analytics rather than nationality.
+- Candidate specializations: music/culture promotion, video clipping/editing, graphic/motion design, audio engineering/music production, and community/audience development. Each participant also needs content distribution capability.
+- Selection rubric: work samples and English communication 25%, verified U.S./diaspora audience fit 25%, content quality and rights discipline 20%, execution reliability 15%, collaboration/learning 15%. Do not select or pay based solely on currency nominal exchange rate or country of origin.
+- Experimental design: randomized coaching/content-distribution variants within each track where feasible; report geography as a covariate rather than claiming country causes outcomes. Quality traffic metrics include verified referred sessions, meaningful interactions, opt-in conversions, and bot/fraud filters. Baseline-adjust goals; track McCluster site/analytics failures separately.
+- Pilot hypothesis targets for review (not promises): 50–100 qualified visits/month, 15–20% meaningful engagement, and 5–10 verified conversions; calibrate after week-one baseline and measurement validation.
+- Cross-border payments require provider coverage, KYC/tax screening, local-law review and clear payout terms. $5/$20/$5/$20 is a **program budget allocation**, not permission to withhold earned wages.
+- Research: IFPI Global Music Report 2026 https://www.ifpi.org/global-music-report-2026-global-recorded-music-revenues-grow-6-4-as-record-companies-drive-innovation/ ; World Bank FY2027 income groups https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups ; Spotify Nigeria https://newsroom.spotify.com/2026-02-23/5-years-nigeria-music-trends/ ; Spotify amapiano https://newsroom.spotify.com/2024-06-13/why-amapiano-wins-hearts-and-minds-as-it-travels-the-globe/ .
