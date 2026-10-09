@@ -7,11 +7,11 @@ declare v_actor uuid:=auth.uid();v_id uuid;
 begin
  if v_actor is null then raise exception 'Authentication required'; end if;
  if not exists(select 1 from public.action_cohort_members m
-   where m.cohort_id=p_cohort and m.user_id=v_actor)
+   join public.m_auth_user_links l on l.m_uid=m.m_uid where m.cohort_id=p_cohort and l.auth_user_id=v_actor)
  then raise exception 'Not a cohort participant'; end if;
  if p_candidate=v_actor then raise exception 'Self-rating is not allowed'; end if;
  if not exists(select 1 from public.action_cohort_members m
-   where m.cohort_id=p_cohort and m.user_id=p_candidate)
+   join public.m_auth_user_links l on l.m_uid=m.m_uid where m.cohort_id=p_cohort and l.auth_user_id=p_candidate)
  then raise exception 'Candidate is not in cohort'; end if;
  insert into public.creator_team_preferences(cohort_id,selector_user_id,candidate_user_id,target_role,preference_score,rationale)
  values(p_cohort,v_actor,p_candidate,p_role,p_score,p_reason)
@@ -20,7 +20,7 @@ begin
  returning id into v_id;
  return v_id;
 end $$;
--- No public grants until action_cohort_members identity mapping is verified.
+-- Uses canonical M-to-auth links for cohort membership; no client grants until reviewed.
 revoke all on function public.creator_selection_submit_preference(uuid,uuid,text,integer,text) from public,anon,authenticated;
 create or replace function public.creator_selection_submit_review(
  p_cohort uuid,p_creator uuid,p_media text,p_craft integer,p_fit integer,p_comment text)
@@ -39,5 +39,4 @@ begin
  return v_id;
 end $$;
 revoke all on function public.creator_selection_submit_review(uuid,uuid,text,integer,integer,text) from public,anon,authenticated;
--- IMPORTANT: no grants yet. Existing action_cohort_members identity column
--- must be reconciled to auth.users before these functions can be deployed.
+-- IMPORTANT: no grants yet. Verify identity and owner/cohort scope before deploy.
