@@ -300,6 +300,15 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
+    /* Signed-in M opens the community feed; guests still see the public homepage. */
+    var homeTab = dock.querySelector('[data-appnav="home"]');
+    if (homeTab) {
+      homeTab.href = signedIn ? ROOT + "mnet.html?view=feed" : ROOT + "index.html";
+      homeTab.setAttribute("aria-label", signedIn ? "Open the community newsfeed" : "Open McCluster homepage");
+      var homeLabel = homeTab.querySelector("span:last-child");
+      if (homeLabel) homeLabel.textContent = signedIn ? "Feed" : "HERE";
+    }
+    WINGS.home.home = signedIn ? ROOT + "mnet.html?view=feed" : ROOT + "index.html";
     var session = readAuthSession();
     var payload = session && session.access_token ? jwtPayload(session.access_token) : {};
     var name = authDisplay(user, payload);
