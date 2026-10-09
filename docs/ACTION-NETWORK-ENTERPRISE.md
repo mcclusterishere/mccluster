@@ -40,3 +40,12 @@ Add enterprise_customer_orgs and enterprise_programs to existing org structure, 
 5. Validate tenant isolation, financial idempotency, accessible UI and deployment rollback before selling or activating accounts.
 
 **Status:** commercial architecture specification only. No billing, customer tenancy, provisioning or payments implemented.
+
+
+## Founder 20 commercial package — revised Oct 9, 2026
+- Founder is a **paying client** rather than a $75/month paid star-creator role. Founder 20 is a proposed 12-month managed music creator and distribution package: $12,000 annual upfront or $1,200/month ($14,400 over 12 months), subject to signed term, service limits and fulfillment capacity.
+- “20 Clippers” means 20 annual creator placements across four quarterly five-person pods, **not** 20 full-time simultaneous contractors. Client receives defined campaign output and reporting, not an unrestricted claim on each participant's time or copyrights.
+- Initial supported vertical: music founder (recording artist/label/music brand). Proposed annual minimums: four founder-focused shoots, four finished founder videos, four music collaborations or production packages (scope and rights to be agreed), 24 vertical promotional clips, 20 coordinated creator collaboration posts, and 12 monthly performance reports. Per quarter: 1 shoot, 1 finished video, 1 music collaboration/production, 6 clips, 5 collaboration posts, 3 reports.
+- Founder-specific output is separate from cohort artist work, McCluster company campaigns, and creator training objectives. Allocate exact hours, usage rights, travel, revisions, approval deadlines, posting windows, cancellation and make-good policies before sale. Do not promise simultaneous geographic production access or guaranteed audience conversions.
+- Founder-client revenue is not a replacement for the existing creator stipend/fan reward ledger; separately track delivery cost, coordinator wages, creator payments, hosting, promotion and margin. Founder role no longer counts as a $75/month program cost, unless a distinct founder-creator service contract is approved.
+- Future founder verticals (videographer, producer, engineer, editor) require separate service inventories and economics; do not publish them as purchasable until scoped.
