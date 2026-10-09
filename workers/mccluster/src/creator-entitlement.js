@@ -24,8 +24,10 @@ export async function handleCreatorEntitlement(request,env){
  const now=Date.now();
  const active=(Array.isArray(rows)?rows:[]).filter(r=>r.status==='active'&&r.org_id&&
   r.current_period_end&&Date.parse(r.current_period_end)>now);
- return reply(request,env,{paid:active.length>0,workspaces:active.map(r=>({
+ const response=reply(request,env,{paid:active.length>0,workspaces:active.map(r=>({
   org_id:r.org_id,price_id:r.stripe_price_id,current_period_end:r.current_period_end,
   cancel_at_period_end:r.cancel_at_period_end
- }))},{'cache-control':'no-store'});
+ }))});
+ response.headers.set('cache-control','no-store');
+ return response;
 }
