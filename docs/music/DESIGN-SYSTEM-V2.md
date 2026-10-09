@@ -81,7 +81,7 @@ The interaction model is familiar, while the visual identity stays McCluster:
 - `listen.html` — primary discovery/home surface.
 - `album.html` — album detail / richer record world.
 - `catalogue.html` — registered library/reference.
-- `music-creator.html` — public artist/creator profile.
+- `music-creator.html` — an artist's front page: name hero, featured album, shelf, singles (`docs/music/ARTIST-PAGES.md`).
 - `creator.html` — Creator Studio.
 - `music-creator-terms.html` — licensing/hosting terms.
 - `music-admin.html` — operator review desk.

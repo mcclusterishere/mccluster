@@ -1,0 +1,133 @@
+/* An artist's front page on McCluster Music (music-creator.html).
+
+   Phone first, at 390px: one column, the name filling the width, the record
+   below it, the tracklist, then the shelf. Wider screens only add room (the
+   album sits beside its art, the shelf gains columns); nothing the phone shows
+   is hidden. The artist's colours arrive as --ap-* from Creator Studio. */
+.ap{
+  --ap-accent:#e5383b;
+  --ap-bg:#090706;
+  --ap-fg:#f4efe6;
+  --ap-surface:#17110f;
+  --ap-dim:color-mix(in srgb,var(--ap-fg) 68%,transparent);
+  --ap-line:color-mix(in srgb,var(--ap-fg) 12%,transparent);
+  padding:0 16px calc(env(safe-area-inset-bottom,0px) + 150px);
+  color:var(--ap-fg);
+  font-family:var(--ui,system-ui,sans-serif);
+  overflow-wrap:anywhere;
+}
+/* `hidden` wins over every display rule below: an album the artist has not
+   published, or a photo they have not uploaded, never shows a placeholder. */
+.ap [hidden]{display:none!important}
+/* The hero runs edge to edge; everything else keeps a readable width. */
+.ap>:not(.ap-hero){max-width:1180px;margin-left:auto;margin-right:auto}
+
+/* ---------- THE NAME ---------- */
+.ap-hero{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:calc(-1 * (env(safe-area-inset-top,0px) + 56px)) -16px 0;
+  padding:calc(env(safe-area-inset-top,0px) + 96px) 16px 34px;
+  min-height:min(86svh,780px);
+  display:flex;
+  align-items:flex-end;
+}
+.ap-hero__bg{position:absolute;inset:0;z-index:-1;background:radial-gradient(90% 60% at 50% 20%,color-mix(in srgb,var(--ap-accent) 26%,transparent),transparent 70%),var(--ap-bg)}
+.ap-hero__bg img{width:100%;height:100%;object-fit:cover;opacity:.62}
+.ap-hero__bg::after{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--ap-bg) 30%,transparent) 0%,color-mix(in srgb,var(--ap-bg) 45%,transparent) 45%,var(--ap-bg) 100%),
+    radial-gradient(120% 80% at 50% 110%,color-mix(in srgb,var(--ap-accent) 18%,transparent),transparent 60%);
+}
+.ap-hero__copy{position:relative;width:100%;max-width:1180px;margin:0 auto;text-align:center}
+.ap-hero__avatar{display:block;width:84px;height:84px;margin:0 auto 14px;border-radius:50%;object-fit:cover;border:2px solid color-mix(in srgb,var(--ap-fg) 40%,transparent);box-shadow:0 18px 40px -16px rgba(0,0,0,.8)}
+.ap-hero__kicker{margin:0;font:800 11px/1.5 var(--ui,system-ui);letter-spacing:.34em;text-transform:uppercase;color:var(--ap-fg);opacity:.86}
+.ap-hero__name{
+  margin:.18em 0 .16em;
+  font-family:var(--display,"Anton",Impact,sans-serif);
+  font-weight:400;
+  text-transform:uppercase;
+  line-height:.86;
+  letter-spacing:.005em;
+  /* the longest word fills the width at most: Anton is about half an em per letter */
+  font-size:min(9.5rem,calc((100vw - 2.5rem) * 1.9 / var(--ap-fit,6)));
+  color:var(--ap-fg);
+  text-shadow:0 10px 50px rgba(0,0,0,.5);
+}
+.ap-hero__line{display:block}
+.ap-hero__line--accent{color:var(--ap-accent)}
+.ap-hero__bio{max-width:38rem;margin:0 auto;color:var(--ap-dim);font-size:1rem;line-height:1.6}
+.ap-hero__doors{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px 0 0}
+.ap-door,body.music-v2 .ap-door{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;padding:0 18px;margin:0;
+  border-radius:999px;border:1px solid color-mix(in srgb,var(--ap-fg) 34%,transparent);
+  background:color-mix(in srgb,var(--ap-bg) 40%,transparent);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  color:var(--ap-fg);text-decoration:none;cursor:pointer;
+  font:800 12px/1 var(--ui,system-ui);letter-spacing:.08em;text-transform:uppercase;
+}
+.ap-door svg{width:13px;height:13px;fill:currentColor}
+.ap-door--lead,body.music-v2 .ap-door--lead{background:var(--ap-accent);border-color:transparent;color:#fff}
+.ap-door.is-playing{box-shadow:0 0 0 3px color-mix(in srgb,var(--ap-accent) 35%,transparent)}
+.ap-door:focus-visible,.ap-card:focus-visible,.ap-play:focus-visible{outline:2px solid var(--ap-fg);outline-offset:3px}
+
+/* ---------- THE RECORD ---------- */
+.ap-album{display:grid;gap:18px;justify-items:center;text-align:center;padding:40px 0 6px;scroll-margin-top:20px}
+.ap-album__art,.ap-track img,.ap-card img{background:linear-gradient(145deg,color-mix(in srgb,var(--ap-accent) 55%,var(--ap-surface)),var(--ap-surface))}
+.ap-album__art{width:min(78vw,340px);aspect-ratio:1;object-fit:cover;border-radius:20px;box-shadow:0 30px 80px -24px rgba(0,0,0,.85)}
+.ap-album__copy{min-width:0;max-width:100%}
+.ap-album__k,.ap-label{margin:0;font:800 10px/1.5 var(--ui,system-ui);letter-spacing:.3em;text-transform:uppercase;color:var(--ap-accent)}
+.ap-album h2{margin:.22rem 0 .2rem;font-family:var(--display,"Anton",Impact,sans-serif);font-weight:400;text-transform:uppercase;line-height:.9;font-size:clamp(2.4rem,13vw,5.5rem)}
+.ap-album__by{margin:0;color:var(--ap-dim);font-size:.92rem}
+.ap-album__by b{color:var(--ap-fg)}
+.ap-play{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5em;
+  min-height:48px;min-width:170px;margin-top:16px;padding:0 22px;
+  border:0;border-radius:12px;cursor:pointer;touch-action:manipulation;
+  background:var(--ap-accent);color:#fff;font:800 15px/1 var(--ui,system-ui);
+}
+.ap-play svg{width:.9em;height:.9em;fill:currentColor}
+.ap-play.is-playing{box-shadow:0 0 0 3px color-mix(in srgb,var(--ap-accent) 35%,transparent)}
+.ap-album__about{max-width:40rem;margin:16px auto 0;color:var(--ap-dim);line-height:1.65;white-space:pre-line}
+
+/* ---------- THE TRACKLIST ---------- */
+.ap-tracks{list-style:none;margin:20px 0 0;padding:0;border-top:1px solid var(--ap-line)}
+.ap-track{display:grid;grid-template-columns:auto 48px minmax(0,1fr) auto 44px;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--ap-line)}
+.ap-track__n{min-width:1.3rem;text-align:right;color:var(--ap-dim);font:800 12px/1 var(--ui,system-ui);font-variant-numeric:tabular-nums}
+.ap-track img{width:48px;height:48px;border-radius:10px;object-fit:cover}
+.ap-track__t{min-width:0}
+.ap-track__t b{display:block;font-weight:800;font-size:.98rem;line-height:1.25}
+.ap-track__t small{display:block;margin-top:3px;color:var(--ap-dim);font-size:.76rem;line-height:1.35}
+.ap-track__d{color:var(--ap-dim);font-size:.76rem;font-variant-numeric:tabular-nums}
+.ap .creator-play{width:44px;height:44px;background:var(--ap-fg);color:var(--ap-bg)}
+.ap .creator-play.is-playing{background:var(--ap-accent);color:#fff}
+.ap .creator-offers{margin-top:8px}
+.ap .creator-offer{min-height:36px;color:var(--ap-fg)}
+
+/* ---------- THE SHELF ---------- */
+.ap-shelf,.ap-singles{padding:46px 0 0}
+.ap-shelf__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;margin-top:14px}
+.ap-card{appearance:none;display:block;width:100%;margin:0;padding:0;border:0;background:none;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.ap-card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;transition:transform .2s ease}
+.ap-card:hover img{transform:translateY(-2px)}
+.ap-card b{display:block;margin-top:9px;font-weight:800;font-size:.95rem;line-height:1.25}
+.ap-card small{display:block;margin-top:2px;color:var(--ap-dim);font-size:.76rem}
+.ap-singles .creator-status{padding:14px 4px;color:var(--ap-dim)}
+.ap-foot{margin:56px 0 0;text-align:center;color:var(--ap-dim);font-size:.8rem}
+.ap-foot a{color:var(--ap-fg)}
+
+@media (min-width:640px){
+  .ap{padding-left:24px;padding-right:24px}
+  .ap-hero{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px}
+  .ap-shelf__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:900px){
+  .ap-album{grid-template-columns:minmax(0,340px) minmax(0,1fr);justify-items:start;align-items:end;text-align:left;gap:32px}
+  .ap-album__about{margin-left:0}
+  .ap-track{padding:10px 8px}
+  .ap-shelf__grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:reduce){.ap-card img{transition:none}}

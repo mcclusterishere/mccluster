@@ -5,9 +5,12 @@ const KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 const supabase = createClient(SB, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
 const $ = (id) => document.getElementById(id);
+const ALB = window.MCC_CREATOR_ALBUMS;
 let session = null;
 let mUid = null;
 let profile = null;
+let tracksCache = [];
+let editingAlbum = null;
 
 function status(id, message, tone = "") {
   const el = $(id);
@@ -128,9 +131,12 @@ function durationMs(file) {
 }
 async function loadProfile() {
   const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=m_uid,handle,artist_name,bio,website_url,status,verification_state,payout_state,settings&limit=1");
+    "&select=m_uid,handle,artist_name,bio,website_url,avatar_url,banner_url,status,verification_state,payout_state,settings&limit=1");
   profile = rows?.[0] || null;
+  renderAlbums();
   if (!profile) return;
+  $("creatorAvatarNow").textContent = profile.avatar_url ? "Photo set. Choose a file to replace it." : "Square works best. Shown on your page and beside your tracks.";
+  $("creatorBannerNow").textContent = profile.banner_url ? "Front-page photo set. Choose a file to replace it." : "Wide and dark works best. It sits behind your name at the top of your page.";
   $("creatorHandle").value = profile.handle || "";
   $("creatorName").value = profile.artist_name || "";
   $("creatorBio").value = profile.bio || "";
@@ -155,7 +161,9 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+  tracksCache = rows || [];
+  renderAlbums();
   const list = $("creatorTracks");
   if (!rows?.length) {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
@@ -173,6 +181,181 @@ function escapeHtml(value) {
   const d = document.createElement("i");
   d.textContent = value == null ? "" : String(value);
   return d.innerHTML;
+}
+
+/* ---------- albums (music_creator_profiles.settings.albums) ---------- */
+
+/* Read the profile's settings fresh, change them, write them back: two
+   studio tabs never silently undo each other's album edits. */
+async function saveSettings(change) {
+  const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
+  const settings = Object.assign({}, rows?.[0]?.settings || {});
+  change(settings);
+  settings.albums = ALB.normalizeAlbums(settings);
+  if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
+  await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
+    method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ settings })
+  });
+  profile = Object.assign({}, profile, { settings });
+  renderAlbums();
+}
+function albumsNow() { return ALB.normalizeAlbums(profile && profile.settings); }
+function trackById(id) { return tracksCache.find((t) => String(t.id).toLowerCase() === id) || null; }
+function trackLabel(t) {
+  return t ? t.title + (t.status === "published" ? "" : " · " + t.status.replace(/_/g, " ")) : "Removed track";
+}
+function renderAlbums() {
+  const list = $("creatorAlbums");
+  const select = $("trackAlbum");
+  if (!list || !ALB) return;
+  const albums = albumsNow();
+  const featured = ALB.featuredId(profile && profile.settings, albums);
+  if (!profile) {
+    list.innerHTML = '<div class="creator-status">Save your creator profile first.</div>';
+  } else if (!albums.length) {
+    list.innerHTML = '<div class="creator-status">No albums yet.</div>';
+  } else {
+    list.innerHTML = albums.map((a) => {
+      const published = a.tracks.filter((id) => trackById(id)?.status === "published").length;
+      return '<div class="creator-item"><div><b>' + escapeHtml(a.title) + '</b><small>' +
+        escapeHtml([ALB.kindLabel(a.kind), a.release_date, a.tracks.length + " track" + (a.tracks.length === 1 ? "" : "s"),
+          published + " published", a.id === featured ? "featured" : ""].filter(Boolean).join(" · ")) +
+        '</small></div><button class="creator-btn quiet" type="button" data-edit-album="' + escapeHtml(a.id) + '">Edit</button></div>';
+    }).join("");
+  }
+  if (select) {
+    const keep = select.value;
+    select.innerHTML = '<option value="">No album (single)</option>' +
+      albums.map((a) => '<option value="' + escapeHtml(a.id) + '">' + escapeHtml(a.title) + '</option>').join("");
+    if (albums.some((a) => a.id === keep)) select.value = keep;
+  }
+}
+function renderAlbumTracks() {
+  if (!editingAlbum) return;
+  const chosen = editingAlbum.tracks;
+  $("albumTracks").innerHTML = chosen.length ? chosen.map((id, i) =>
+    '<li><span>' + escapeHtml(trackLabel(trackById(id))) + '</span>' +
+    '<button type="button" class="creator-mini" data-album-move="' + i + ':-1" aria-label="Move up"' + (i ? '' : ' disabled') + '>↑</button>' +
+    '<button type="button" class="creator-mini" data-album-move="' + i + ':1" aria-label="Move down"' + (i < chosen.length - 1 ? '' : ' disabled') + '>↓</button>' +
+    '<button type="button" class="creator-mini" data-album-remove="' + i + '" aria-label="Remove from album">✕</button></li>'
+  ).join("") : '<li class="creator-status">No tracks yet. Add them below.</li>';
+  const pool = tracksCache.filter((t) => !chosen.includes(String(t.id).toLowerCase()) && t.status !== "rejected" && t.status !== "archived");
+  $("albumPool").innerHTML = pool.length ? pool.map((t) =>
+    '<li><span>' + escapeHtml(trackLabel(t)) + '</span><button type="button" class="creator-mini" data-album-add="' +
+    escapeHtml(String(t.id).toLowerCase()) + '">+ Add</button></li>'
+  ).join("") : '<li class="creator-status">' + (tracksCache.length ? "Every track is already on this album." : "Upload a track below, then add it here.") + '</li>';
+}
+function openAlbum(album) {
+  if (!profile) { status("albumStatus", "Save your creator profile first.", "bad"); return; }
+  editingAlbum = album ? JSON.parse(JSON.stringify(album)) : { id: ALB.newAlbumId(), title: "", kind: "album", release_date: "", description: "", cover_url: "", tracks: [] };
+  const isNew = !album;
+  $("albumForm").hidden = false;
+  $("albumTitle").value = editingAlbum.title;
+  $("albumKind").value = editingAlbum.kind;
+  $("albumDate").value = editingAlbum.release_date;
+  $("albumDescription").value = editingAlbum.description;
+  $("albumCover").value = "";
+  $("albumCoverNow").textContent = editingAlbum.cover_url ? "Cover set. Choose a file to replace it." : "Square, at least 1000×1000.";
+  $("albumFeatured").checked = !isNew && ALB.featuredId(profile.settings, albumsNow()) === editingAlbum.id;
+  $("deleteAlbum").hidden = isNew;
+  status("albumStatus", "");
+  renderAlbumTracks();
+  $("albumTitle").focus();
+}
+function closeAlbum() { editingAlbum = null; $("albumForm").hidden = true; status("albumStatus", ""); }
+
+$("newAlbum").addEventListener("click", () => openAlbum(null));
+$("cancelAlbum").addEventListener("click", closeAlbum);
+$("creatorAlbums").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-edit-album]");
+  if (!b) return;
+  const album = albumsNow().find((a) => a.id === b.getAttribute("data-edit-album"));
+  if (album) openAlbum(album);
+});
+$("albumForm").addEventListener("click", (e) => {
+  if (!editingAlbum) return;
+  const add = e.target.closest("[data-album-add]");
+  const move = e.target.closest("[data-album-move]");
+  const remove = e.target.closest("[data-album-remove]");
+  const list = editingAlbum.tracks;
+  if (add && list.length < ALB.MAX_TRACKS) list.push(add.getAttribute("data-album-add"));
+  if (move) {
+    const [i, d] = move.getAttribute("data-album-move").split(":").map(Number);
+    const j = i + d;
+    if (j >= 0 && j < list.length) [list[i], list[j]] = [list[j], list[i]];
+  }
+  if (remove) list.splice(Number(remove.getAttribute("data-album-remove")), 1);
+  if (add || move || remove) renderAlbumTracks();
+});
+$("deleteAlbum").addEventListener("click", async () => {
+  if (!editingAlbum || !confirm("Delete this album? Its tracks stay in your releases.")) return;
+  const id = editingAlbum.id;
+  try {
+    await saveSettings((s) => { s.albums = (s.albums || []).filter((a) => a && a.id !== id); });
+    closeAlbum();
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_album_deleted", {});
+  } catch (err) { status("albumStatus", err.message || "Could not delete the album.", "bad"); }
+});
+$("albumForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!editingAlbum) return;
+  const save = $("saveAlbum");
+  let coverUpload = null;
+  try {
+    save.disabled = true;
+    const cover = $("albumCover").files[0] || null;
+    if (cover) {
+      status("albumStatus", "Uploading cover…");
+      const path = await uploadGrant("creator-artwork", cover);
+      coverUpload = { bucket: "creator-artwork", path };
+      editingAlbum.cover_url = publicUrl("creator-artwork", path);
+    }
+    const album = ALB.normalizeAlbum(Object.assign({}, editingAlbum, {
+      title: $("albumTitle").value,
+      kind: $("albumKind").value,
+      release_date: $("albumDate").value,
+      description: $("albumDescription").value
+    }));
+    if (!album) throw new Error("Give the album a title.");
+    status("albumStatus", "Saving album…");
+    const feature = $("albumFeatured").checked;
+    await saveSettings((s) => {
+      const list = Array.isArray(s.albums) ? s.albums.slice() : [];
+      const at = list.findIndex((a) => a && a.id === album.id);
+      if (at >= 0) list[at] = album;
+      else {
+        if (ALB.normalizeAlbums({ albums: list }).length >= ALB.MAX_ALBUMS) throw new Error("You have the most albums a page can hold (" + ALB.MAX_ALBUMS + ").");
+        list.push(album);
+      }
+      s.albums = list;
+      if (feature) s.featured_album = album.id;
+      else if (s.featured_album === album.id) delete s.featured_album;
+    });
+    closeAlbum();
+    status("albumStatus", "Album saved.", "good");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_album_saved", { tracks: album.tracks.length, kind: album.kind });
+  } catch (err) {
+    if (coverUpload) { try { await removeUpload(coverUpload.bucket, coverUpload.path); } catch (_) { /* best effort */ } }
+    status("albumStatus", err.message || "Could not save the album.", "bad");
+  } finally {
+    save.disabled = false;
+  }
+});
+
+/* Profile photo and front-page photo: uploaded to creator-artwork once the
+   profile exists (an upload grant needs an active creator profile). */
+async function uploadProfileImages() {
+  const avatar = $("creatorAvatarFile").files[0] || null;
+  const banner = $("creatorBannerFile").files[0] || null;
+  if (!avatar && !banner) return;
+  const patch = {};
+  if (avatar) { status("profileStatus", "Uploading profile photo…"); patch.avatar_url = publicUrl("creator-artwork", await uploadGrant("creator-artwork", avatar)); }
+  if (banner) { status("profileStatus", "Uploading front-page photo…"); patch.banner_url = publicUrl("creator-artwork", await uploadGrant("creator-artwork", banner)); }
+  await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
+    method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(patch)
+  });
+  $("creatorAvatarFile").value = "";
+  $("creatorBannerFile").value = "";
 }
 
 function parseLyricCtas(raw) {
@@ -226,6 +409,8 @@ $("profileForm").addEventListener("submit", async (e) => {
         method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
       });
     }
+    await loadProfile();
+    await uploadProfileImages();
     await loadProfile();
     status("profileStatus", "Creator profile saved.", "good");
     if (window.MCC_TRACK) window.MCC_TRACK("creator_profile_saved", {});
@@ -369,6 +554,20 @@ $("trackForm").addEventListener("submit", async (e) => {
         if (window.MCC_TRACK) window.MCC_TRACK("creator_license_offer_failed", { track_id: track.id });
       }
     }
+
+    const albumId = $("trackAlbum").value;
+    let albumWarning = "";
+    if (albumId) {
+      try {
+        await saveSettings((s) => {
+          const a = (s.albums || []).find((x) => x && x.id === albumId);
+          if (a && Array.isArray(a.tracks) && a.tracks.length < ALB.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
+        });
+      } catch (albumErr) {
+        albumWarning = " It was not added to the album: add it from Your albums.";
+      }
+    }
+    licenseWarning += albumWarning;
 
     $("trackForm").reset();
     $("trackAccess").value = "account";
