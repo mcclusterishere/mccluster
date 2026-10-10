@@ -31,7 +31,8 @@ begin
    where v.user_id=v_actor and v.status='active')
  then raise exception 'Verified Super Creator required'; end if;
  if not exists(select 1 from public.action_cohort_members m
-   where m.cohort_id=p_cohort and m.user_id=p_creator)
+   join public.m_auth_user_links l on l.m_uid=m.m_uid
+   where m.cohort_id=p_cohort and l.auth_user_id=p_creator)
  then raise exception 'Creator not in cohort'; end if;
  insert into public.creator_media_reviews(cohort_id,reviewer_user_id,creator_user_id,media_reference,craft_score,fit_score,comment)
  values(p_cohort,v_actor,p_creator,p_media,p_craft,p_fit,p_comment)
