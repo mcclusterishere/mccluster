@@ -10,7 +10,7 @@ begin
  values(p.id,p.org_id,p_event_id,p_kind,p_amount_cents) on conflict(event_key) do nothing;
  if not found then return false; end if;
  if p_kind='transfer.reversed' then
-   if p.state='transferred' then
+   if p.state='transferred' and p_amount_cents >= p.amount_cents then
      update public.action_creator_payout_intents set state='reversed',updated_at=now() where id=p.id;
    end if;
  end if;
