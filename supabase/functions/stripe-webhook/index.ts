@@ -197,6 +197,18 @@ Deno.serve(async (req) => {
       }) });
     }
 
+    // Connect bank payout events are account-scoped. They must never mark
+    // individual clip earnings as bank-paid: a bank payout can batch transfers.
+    if (!event.livemode && ["payout.paid", "payout.failed", "payout.canceled"].includes(event.type)
+      && typeof event.account === "string") {
+      const payout = event.data.object as Stripe.Payout;
+      await db("rpc/action_creator_record_bank_payout", { method: "POST", body: JSON.stringify({
+        p_event_id: event.id, p_payout_id: payout.id, p_account_id: event.account,
+        p_status: event.type.split(".")[1], p_amount_cents: payout.amount,
+        p_currency: payout.currency
+      }) });
+    }
+
     if (event.type === "account.updated") {
       const a = event.data.object as Stripe.Account;
       if (effects) await patchBy("providers", "stripe_acct", a.id, { charges_enabled: a.charges_enabled === true });
