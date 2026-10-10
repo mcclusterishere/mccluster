@@ -4,7 +4,7 @@ import { reply, fail } from './lib/http.js';
 const ORIGIN='https://matthew.mccluster.org';
 async function userFromBearer(request,env){
  const token=request.headers.get('authorization')||'';
- if(!/^Bearer\\s+\\S+$/i.test(token))return null;
+ if(!/^Bearer\s+\S+$/i.test(token))return null;
  const res=await fetch(env.SUPABASE_URL+'/auth/v1/user',{
   headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:token}
  });
