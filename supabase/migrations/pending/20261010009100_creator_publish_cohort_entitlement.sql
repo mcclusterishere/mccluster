@@ -41,7 +41,9 @@ begin
  returning slug into v_slug;
  return v_slug;
 end $function$;
--- Remove the old four-argument signature so callers cannot bypass the user binding.
-drop function if exists public.creator_publish_site(uuid,text,text,text);
+-- Keep the old four-argument RPC temporarily for zero-downtime rollout.
+-- It continues to require a paid subscription; the new five-argument RPC
+-- enforces creator identity and cohort eligibility. Remove the old RPC in
+-- a later migration after all deployed Workers use the new signature.
 revoke all on function public.creator_publish_site(uuid,text,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.creator_publish_site(uuid,text,text,text,uuid) to service_role;
