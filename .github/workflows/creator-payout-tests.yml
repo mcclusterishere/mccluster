@@ -1,0 +1,26 @@
+name: Creator payout safety
+on:
+  pull_request:
+    paths:
+      - 'workers/mccluster/src/creator-transfers.js'
+      - 'workers/mccluster/src/index.js'
+      - 'workers/mccluster/test/creator-transfers.test.js'
+      - 'workers/mccluster/test/creator-payouts-staging.integration.test.js'
+      - 'workers/mccluster/package.json'
+      - 'supabase/migrations/*action_creator*'
+      - '.github/workflows/creator-payout-tests.yml'
+  workflow_dispatch:
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/mccluster
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm test
+      - run: node --test test/creator-payouts-staging.integration.test.js
