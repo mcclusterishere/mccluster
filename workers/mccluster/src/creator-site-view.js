@@ -35,6 +35,14 @@ export async function handleCreatorSiteView(request,env){
   const candidates=await cohort.json();
   let memberValid=false;
   for(const grant of candidates){
+   const cohorts=new URL(env.SUPABASE_URL+'/rest/v1/action_cohorts');
+   cohorts.searchParams.set('id','eq.'+grant.cohort_id);
+   cohorts.searchParams.set('status','eq.active');
+   cohorts.searchParams.set('select','id');
+   cohorts.searchParams.set('limit','1');
+   const active=await fetch(cohorts,{headers});
+   if(!active.ok)return new Response('Unavailable',{status:503});
+   if(!(await active.json())?.length)continue;
    const links=new URL(env.SUPABASE_URL+'/rest/v1/m_auth_user_links');
    links.searchParams.set('auth_user_id','eq.'+grant.creator_user_id);
    links.searchParams.set('select','m_uid');
