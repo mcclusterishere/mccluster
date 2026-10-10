@@ -22,7 +22,7 @@ export async function handleCreatorPublish(request,env){
  const path=new URL(request.url).pathname;
  if(path!=='/v1/creator-sites/publish')return null;
  if(request.method!=='POST')return fail(request,env,'Method not allowed',405);
- if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY||!env.STRIPE_SECRET_KEY)return fail(request,env,'Publishing unavailable',503);
+ if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return fail(request,env,'Publishing unavailable',503);
  const user=await getOwner(request,env);
  if(!user?.id)return fail(request,env,'Sign in required',401);
  let body;
@@ -33,13 +33,42 @@ export async function handleCreatorPublish(request,env){
  const allowedPrices=new Set(PRICE_KEYS.map(k=>env[k]).filter(Boolean));
  let valid=false;
  for(const record of subscriptions){
+  if(!env.STRIPE_SECRET_KEY)break;
   if(record.status!=='active'||!allowedPrices.has(record.stripe_price_id)||!record.current_period_end||Date.parse(record.current_period_end)<=Date.now())continue;
   // A live provider check prevents stale local state from publishing after cancellation.
   const stripe=await stripeRequest(env,'subscriptions/'+encodeURIComponent(record.stripe_subscription_id),{}, {method:'GET'});
   if(stripe.status==='active'&&stripe.metadata?.mccluster_user_id===user.id&&
     stripe.items?.data?.[0]?.price?.id===record.stripe_price_id){valid=true;break}
  }
- if(!valid)return fail(request,env,'An active creator subscription is required to publish',403);
+ if(!valid){
+  const grants=new URL(env.SUPABASE_URL+'/rest/v1/creator_site_cohort_grants');
+  grants.searchParams.set('org_id','eq.'+orgId);
+  grants.searchParams.set('creator_user_id','eq.'+user.id);
+  grants.searchParams.set('revoked_at','is.null');
+  grants.searchParams.set('select','cohort_id');
+  grants.searchParams.set('limit','1');
+  const grantResponse=await fetch(grants,{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+  if(!grantResponse.ok)return fail(request,env,'Cohort publishing eligibility unavailable',503);
+  const grant=(await grantResponse.json())?.[0];
+  if(grant){
+   const membership=new URL(env.SUPABASE_URL+'/rest/v1/m_auth_user_links');
+   membership.searchParams.set('auth_user_id','eq.'+user.id);
+   membership.searchParams.set('select','m_uid');
+   const links=await fetch(membership,{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+   if(!links.ok)return fail(request,env,'Cohort membership unavailable',503);
+   for(const link of await links.json()){
+    const members=new URL(env.SUPABASE_URL+'/rest/v1/action_cohort_members');
+    members.searchParams.set('cohort_id','eq.'+grant.cohort_id);
+    members.searchParams.set('m_uid','eq.'+link.m_uid);
+    members.searchParams.set('select','cohort_id');
+    members.searchParams.set('limit','1');
+    const member=await fetch(members,{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+    if(!member.ok)return fail(request,env,'Cohort membership unavailable',503);
+    if((await member.json())?.length){valid=true;break}
+   }
+  }
+ }
+ if(!valid)return fail(request,env,'A creator subscription or approved cohort membership is required to publish',403);
  const title=body?.title,tagline=body?.tagline??'',bio=body?.bio??'';
  if(typeof title!=='string'||!title.trim()||title.length>120||
     typeof tagline!=='string'||tagline.length>300||
@@ -48,7 +77,7 @@ export async function handleCreatorPublish(request,env){
  const saved=await fetch(env.SUPABASE_URL+'/rest/v1/rpc/creator_publish_site',{
   method:'POST',
   headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json'},
-  body:JSON.stringify({p_org_id:orgId,p_title:title.trim(),p_tagline:tagline,p_bio:bio})
+  body:JSON.stringify({p_org_id:orgId,p_user_id:user.id,p_title:title.trim(),p_tagline:tagline,p_bio:bio})
  });
  if(!saved.ok)return fail(request,env,'Publishing storage is not configured or entitlement expired',503);
  const slug=await saved.json();
