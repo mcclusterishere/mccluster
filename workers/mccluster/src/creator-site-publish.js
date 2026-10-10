@@ -51,6 +51,14 @@ export async function handleCreatorPublish(request,env){
   if(!grantResponse.ok)return fail(request,env,'Cohort publishing eligibility unavailable',503);
   const grant=(await grantResponse.json())?.[0];
   if(grant){
+   const cohorts=new URL(env.SUPABASE_URL+'/rest/v1/action_cohorts');
+   cohorts.searchParams.set('id','eq.'+grant.cohort_id);
+   cohorts.searchParams.set('status','eq.active');
+   cohorts.searchParams.set('select','id');
+   cohorts.searchParams.set('limit','1');
+   const activeCohort=await fetch(cohorts,{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY}});
+   if(!activeCohort.ok)return fail(request,env,'Cohort eligibility unavailable',503);
+   if(!(await activeCohort.json())?.length)return fail(request,env,'Selected cohort is inactive',403);
    const membership=new URL(env.SUPABASE_URL+'/rest/v1/m_auth_user_links');
    membership.searchParams.set('auth_user_id','eq.'+user.id);
    membership.searchParams.set('select','m_uid');
