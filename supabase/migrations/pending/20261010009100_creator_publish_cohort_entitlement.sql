@@ -19,6 +19,7 @@ begin
   )
   or exists (
    select 1 from public.creator_site_cohort_grants g
+   join public.action_cohorts c on c.id=g.cohort_id and c.status='active'
    join public.action_cohort_members m on m.cohort_id=g.cohort_id
    join public.m_auth_user_links l on l.m_uid=m.m_uid
    where g.org_id=p_org_id and g.creator_user_id=p_user_id
