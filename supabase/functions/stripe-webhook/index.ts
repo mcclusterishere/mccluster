@@ -188,6 +188,15 @@ Deno.serve(async (req) => {
     const seen = await db(`stripe_events?event_id=eq.${encodeURIComponent(event.id)}&select=event_id&limit=1`);
     if (Array.isArray(seen) && seen.length) return new Response("ok", { status: 200 });
 
+    // Creator payout expense rail: test events only, distinct from commerce revenue.
+    if (!event.livemode && event.type === "transfer.reversed") {
+      const transfer = event.data.object as Stripe.Transfer;
+      await db("rpc/action_creator_record_stripe_event", { method: "POST", body: JSON.stringify({
+        p_event_id: event.id, p_transfer_id: transfer.id,
+        p_kind: "transfer.reversed", p_amount_cents: transfer.amount_reversed || transfer.amount
+      }) });
+    }
+
     if (event.type === "account.updated") {
       const a = event.data.object as Stripe.Account;
       if (effects) await patchBy("providers", "stripe_acct", a.id, { charges_enabled: a.charges_enabled === true });
