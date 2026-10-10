@@ -170,7 +170,7 @@ document.getElementById('saveService')?.addEventListener('click',async()=>{
   const actionUrl=document.getElementById('serviceUrl').value.trim();
   const url=new URL(actionUrl);
   if(url.protocol!=='https:'||url.username||url.password||!url.hostname||actionUrl.length>2000)throw Error('Provide a valid HTTPS booking URL');
-  if(title.length<3||title.length>120||description.length>1200||!Number.isFinite(price)||price<0||price>1000000||Math.round(price*100)!==price*100)throw Error('Check the service title, description and price');
+  if(title.length<3||title.length>120||description.length>1200||!Number.isFinite(price)||price<0||price>1000000||Math.abs(Math.round(price*100)-price*100)>0.000001)throw Error('Check the service title, description and price');
   const offer={m_uid:identity.data,title,description,price_cents:Math.round(price*100),action_url:url.href,status:'published'};
   const existing=await db.from('creator_service_offers').select('id').eq('m_uid',identity.data).order('created_at',{ascending:true}).limit(1);
   if(existing.error)throw existing.error;
