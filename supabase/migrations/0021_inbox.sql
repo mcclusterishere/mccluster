@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0021_inbox.
--- Executable reconstruction SQL: supabase/replay_migrations/0021_inbox.sql
--- Intentionally no-op in production; this version is already registered live.

@@ -1,0 +1,119 @@
+{
+  "scene_id": "equity-uprise-floor-01",
+  "version": "hybrid-v1-design-core-v2-truth-1",
+  "design_formula": "V1 interior quality + assembled-building stacking behavior + Core V2 truth",
+  "not_for_construction": true,
+  "mesh_count": 348,
+  "glb_bytes": 231876,
+  "sha256": "66b4b0449526fca00ac2e5f36f11e24d16a3202cf4e0bff6eb61c8607d8b0358",
+  "bounds_m": [
+    [
+      0.0,
+      0.0,
+      -0.1524
+    ],
+    [
+      21.945600000000002,
+      21.945600000000002,
+      4.1148
+    ]
+  ],
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 67,
+  "inventory_records_modeled": 67,
+  "inventory_records_missing": [],
+  "checks_total": 14,
+  "checks_passed": 14,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft building width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft building depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory records loaded",
+      "passed": true,
+      "actual": 67,
+      "expected": 67
+    },
+    {
+      "name": "all inventory records represented in 3D",
+      "passed": true,
+      "actual": 67,
+      "expected": 67
+    },
+    {
+      "name": "passenger elevator retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight elevator retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair A retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair B retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Journey Wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Reception modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Orientation Lounge modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Intake modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Passport Studio modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Directory modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

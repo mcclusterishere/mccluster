@@ -1,5 +1,0 @@
--- Historical production-ledger anchor for 20260913022505_mnet_phase1_outbox_and_features.
--- The original production migration was applied before canonical Git reconciliation.
--- Historical schema reconstruction is provided by the numbered replay migrations.
--- Intentionally no-op: this exact version/name file exists so Supabase Git integration
--- can reconcile the remote migration ledger without re-applying historical DDL.

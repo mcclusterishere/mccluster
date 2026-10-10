@@ -1,0 +1,166 @@
+{
+  "scene_id": "equity-uprise-floor-06",
+  "version": "penthouse-command-hybrid-v1",
+  "mesh_count": 436,
+  "glb_bytes": 317716,
+  "sha256": "938836f6c4fc46211cab1cec842b87fea35ce0a2115621737901ba77274b125b",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 74,
+  "inventory_records_modeled": 74,
+  "inventory_records_missing": [],
+  "visual_completion_gate": "penthouse-command-halo-roof-transition-detail-v1",
+  "checks_total": 24,
+  "checks_passed": 24,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory summary matches records",
+      "passed": true,
+      "actual": 74,
+      "expected": 74
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 74,
+      "expected": 74
+    },
+    {
+      "name": "six command chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "command wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo globe modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo within canonical vertical envelope",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "salon complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "strategy room complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "briefing room complete",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "roof transition terminal modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger and freight interfaces",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "command wall architectural surround",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Halo visually instrumented",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "strategy acoustic enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "briefing acoustic enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support rooms have doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "restrooms have mirrors and sinks",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "audit storage visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "desk systems visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "roof direction physically visible",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

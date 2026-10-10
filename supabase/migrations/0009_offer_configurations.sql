@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0009_offer_configurations.
--- Executable reconstruction SQL: supabase/replay_migrations/0009_offer_configurations.sql
--- Intentionally no-op in production; this version is already registered live.
