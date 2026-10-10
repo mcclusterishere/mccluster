@@ -96,16 +96,53 @@ async function uploadGrant(bucket, file) {
   if (error) throw error;
   return grant.path;
 }
+/* Deleting an object needs its owner: the storage policy only lets an
+   authenticated creator remove files under their own folder. The module
+   client above is anonymous (uploads go through signed URLs and need no
+   session), so a delete through it was refused and every rollback left its
+   files behind. Each removal uses a client carrying the creator's token. */
+function ownerStorage() {
+  return createClient(SB, KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: "Bearer " + session.access_token } }
+  });
+}
 async function removeUpload(bucket, path) {
   if (!bucket || !path) return;
+  const supabase = ownerStorage();
   const { error } = await supabase.storage.from(bucket).remove([path]);
   if (error) throw error;
+}
+/* Is any of this creator's releases still pointing at these uploads? A write
+   can commit even when its response never arrives, and a release already
+   moved to pending_review cannot be deleted by its creator (a zero-row
+   DELETE is not an error). Files are removed only when this says no; when it
+   cannot tell, it answers yes, because a stray file costs less than a release
+   whose audio was deleted from under it. */
+async function uploadsInUse(trackId, uploads) {
+  const paths = uploads.filter((u) => u.bucket !== "creator-artwork").map((u) => '"' + u.path + '"').join(",");
+  const clauses = [];
+  if (trackId) clauses.push("id.eq." + trackId);
+  if (paths) clauses.push("master_path.in.(" + paths + ")", "preview_path.in.(" + paths + ")");
+  if (!clauses.length) return false;
+  try {
+    const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
+      "&or=" + encodeURIComponent("(" + clauses.join(",") + ")") + "&select=id&limit=1");
+    return Array.isArray(rows) && rows.length > 0;
+  } catch (_) {
+    return true;
+  }
 }
 async function rollbackRelease(trackId, uploads) {
   const failures = [];
   if (trackId) {
     try { await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), { method: "DELETE", headers: { Prefer: "return=minimal" } }); }
     catch (err) { failures.push("release record: " + (err.message || err)); }
+  }
+  if (await uploadsInUse(trackId, uploads)) {
+    failures.push("files kept: a saved release still uses them");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_release_cleanup_failed", { failures });
+    return failures;
   }
   for (const item of uploads.slice().reverse()) {
     try { await removeUpload(item.bucket, item.path); }
@@ -187,21 +224,32 @@ function escapeHtml(value) {
 
 /* ---------- albums (music_creator_profiles.settings.albums) ---------- */
 
-/* Read the profile's settings fresh, change them, write them back: two
-   studio tabs never silently undo each other's album edits. */
+/* Change the profile's settings without undoing anyone else's change.
+   Read the settings with their updated_at (music_creator_guard sets it on
+   every write), apply the change, and write back only if updated_at is still
+   the one read. If another tab or the profile form wrote in between, nothing
+   is written: read again and reapply, a few times at most. */
 async function saveSettings(change) {
-  const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
-  const settings = Object.assign({}, rows?.[0]?.settings || {});
-  change(settings);
-  settings.albums = PAGE.normalizeAlbums(settings);
-  settings.services = PAGE.normalizeServices(settings);
-  if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
-  await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
-    method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ settings })
-  });
-  profile = Object.assign({}, profile, { settings });
-  renderAlbums();
-  renderServices();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings,updated_at&limit=1");
+    if (!rows?.[0]) throw new Error("Save your creator profile first.");
+    const settings = Object.assign({}, rows[0].settings || {});
+    change(settings);
+    settings.albums = PAGE.normalizeAlbums(settings);
+    settings.services = PAGE.normalizeServices(settings);
+    if (settings.featured_album && !settings.albums.some((a) => a.id === settings.featured_album)) delete settings.featured_album;
+    const written = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
+      "&updated_at=eq." + encodeURIComponent(rows[0].updated_at), {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ settings })
+    });
+    if (Array.isArray(written) && written.length) {
+      profile = Object.assign({}, profile, { settings: written[0].settings || settings });
+      renderAlbums();
+      renderServices();
+      return;
+    }
+  }
+  throw new Error("Your profile changed in another window while saving. Reload and try again.");
 }
 function albumsNow() { return PAGE.normalizeAlbums(profile && profile.settings); }
 function trackById(id) { return tracksCache.find((t) => String(t.id).toLowerCase() === id) || null; }
@@ -339,7 +387,16 @@ $("albumForm").addEventListener("submit", async (e) => {
     status("albumStatus", "Album saved.", "good");
     if (window.MCC_TRACK) window.MCC_TRACK("creator_album_saved", { tracks: album.tracks.length, kind: album.kind });
   } catch (err) {
-    if (coverUpload) { try { await removeUpload(coverUpload.bucket, coverUpload.path); } catch (_) { /* best effort */ } }
+    /* Remove the new cover only when no saved album uses it: the save may
+       have committed even though its response was lost. */
+    if (coverUpload) {
+      try {
+        const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=settings&limit=1");
+        const url = publicUrl(coverUpload.bucket, coverUpload.path);
+        const inUse = PAGE.normalizeAlbums(rows?.[0]?.settings).some((a) => a.cover_url === url);
+        if (!inUse) await removeUpload(coverUpload.bucket, coverUpload.path);
+      } catch (_) { /* unsure: keep the file */ }
+    }
     status("albumStatus", err.message || "Could not save the album.", "bad");
   } finally {
     save.disabled = false;
@@ -493,24 +550,26 @@ $("profileForm").addEventListener("submit", async (e) => {
       artist_name: $("creatorName").value.trim(),
       bio: $("creatorBio").value.trim(),
       website_url: $("creatorWebsite").value.trim(),
-      settings: Object.assign({}, profile && profile.settings || {}, {
-        experience_theme: {
-          accent: $("creatorAccent").value,
-          background: $("creatorBackground").value,
-          foreground: $("creatorForeground").value,
-          surface: $("creatorSurface").value
-        }
-      }),
       terms_version: "music-creator-v1",
       terms_accepted_at: new Date().toISOString()
     };
+    const theme = {
+      accent: $("creatorAccent").value,
+      background: $("creatorBackground").value,
+      foreground: $("creatorForeground").value,
+      surface: $("creatorSurface").value
+    };
     if (profile) {
+      /* The profile fields, then the colours through saveSettings: this form
+         never writes back its own (possibly old) copy of the albums and rates. */
       await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid), {
         method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
       });
+      await saveSettings((s) => { s.experience_theme = theme; });
     } else {
       await rest("music_creator_profiles", {
-        method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(body)
+        method: "POST", headers: { Prefer: "return=representation" },
+        body: JSON.stringify(Object.assign(body, { settings: { experience_theme: theme } }))
       });
     }
     await loadProfile();
@@ -683,16 +742,20 @@ $("trackForm").addEventListener("submit", async (e) => {
       $("trackSurface").value = baseTheme.surface || "#17110f";
     }
     $("derivativeField").hidden = true;
-    status("trackStatus", derivative
+    status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review." + licenseWarning, licenseWarning ? "bad" : "good");
+      : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
     await loadTracks();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
     if (!committed && (createdTrackId || uploaded.length)) {
       status("trackStatus", "That submission failed. Cleaning up the partial release…", "bad");
       const cleanupFailures = await rollbackRelease(createdTrackId, uploaded);
-      status("trackStatus", (err.message || "Upload failed.") + (cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+      const kept = cleanupFailures.some((f) => f.startsWith("files kept"));
+      status("trackStatus", (err.message || "Upload failed.") + (kept
+        ? " It may have been submitted after all: check Your releases before uploading it again."
+        : cleanupFailures.length ? " Some cleanup also needs attention." : " Nothing partial was kept."), "bad");
+      if (kept) { try { await loadTracks(); } catch (_) { /* the list refreshes on the next load */ } }
     } else {
       status("trackStatus", err.message || "Upload failed.", "bad");
     }
