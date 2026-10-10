@@ -1,5 +1,6 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
@@ -123,6 +124,10 @@ export default {
           ok: true,
           service: 'mccluster'
         });
+      }
+
+      if (path.startsWith('/v1/at-night/')) {
+        return handleAtNight(request, env);
       }
 
       if (path === '/v1' && request.method === 'GET') {

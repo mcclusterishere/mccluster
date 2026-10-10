@@ -180,6 +180,7 @@
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
+            <a class="mn__attach" href="create.html" aria-label="Open Action Network recording and creation tools">Record / Create</a>
             <label class="mn__attach" for="mnMediaInput">Photo / video
               <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
             </label>
@@ -321,6 +322,7 @@
       </section>
 
       <section class="mn__view" id="mnProfileView" hidden>
+        <button class="mn__back" id="mnProfileViewBack" type="button" data-mn-view="feed">← Back to newsfeed</button>
         <div class="mn__frontpage" id="mnFrontPage" hidden>
           <div class="mn__frontpage-head"><div><span>Front page</span><strong id="mnFrontPageTitle">Your public home</strong></div><a id="mnFrontPageOpen" target="_blank" rel="noopener">Open site ↗</a></div>
           <div class="mn__frontpage-stage"><iframe id="mnFrontPageFrame" title="Public front page preview" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></div>
@@ -404,7 +406,7 @@
   <dialog class="mn__thread mn__person-dialog" id="mnPersonDialog">
     <div class="mn__thread-head">
       <strong>Profile</strong>
-      <button type="button" id="mnPersonClose" aria-label="Close profile">×</button>
+      <button type="button" id="mnPersonClose" aria-label="Back to newsfeed">← Back to feed</button>
     </div>
     <div id="mnPersonBody"></div>
   </dialog>

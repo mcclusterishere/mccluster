@@ -1,5 +1,5 @@
 {
-  "note": "The published mirror of the offerings ledger (supabase/migrations/0007_offerings.sql). DISPLAY ONLY: the checkout function reads the database row for the authoritative price and seller; this file just paints the page. Keep the two in step. One seller everywhere: McCluster. Recurring rows carry action:subscribe; the checkout function decides how they bill from offerings.billing_interval, never from this file.",
+  "note": "The published mirror of the offerings ledger (supabase/migrations/0007_offerings.sql). DISPLAY ONLY: the checkout function reads the database row for the authoritative price and seller; this file just paints the page. Keep the two in step. One seller everywhere: McCluster. Recurring rows carry action:subscribe; the checkout function decides how they bill from offerings.billing_interval, never from this file. LEGACY WARNING: old Runway domain/hosting SKUs below are not the new Creator Platform checkout and must not be used for new customers. Do not change this display mirror without reconciling the authoritative database offering rows.",
   "offerings": [
     {
       "slug": "print-5x7",

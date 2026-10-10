@@ -1,5 +1,5 @@
 {
-  "note": "THE OFFER LEDGER: four core offers, seven selectable configurations, one source of truth. Prices live here and nowhere else. Values marked approved:true render as real prices. Values marked approved:false NEVER render a number to a visitor; they render the offer's public_note instead, in polished language, with no warning chip, no filename, no branch name and no developer reasoning. Internal reasoning belongs in docs/sales-redesign/, never on the page. Derived values (Equity base, Equity cap, Runway first-year) are computed by js/offers.js from the formulas below and must never be hardcoded.",
+  "note": "Creator Platform replaces the old Runway domain-and-hosting offer for new customers. The $33 payment is now an optional one-time first custom draft, not a hosting deposit. Existing agreements are not retroactively changed. The former Runway price formulas remain historical only and must not be used for new checkout.",
   "version": "2026-08-10",
   "approved_by": "McCluster",
   "currency": "USD",
@@ -57,27 +57,27 @@
       "agreement_required": true,
       "program_fit_review_required": true,
       "eligibility": {
-       "note": "WHAT MAKES SOMEBODY ELIGIBLE, and why each one is not negotiable. Equity Uprise is paid out of a share of revenue, so the whole arrangement rests on that revenue being measurable. Every requirement below exists to make it measurable; none of them is a preference.",
-       "requirements": [
-        {
-         "id": "site_built_here",
-         "must": "The website has to be one we built.",
-         "why": "The revenue share is calculated from what the site brings in. On a site somebody else built and hosts, we cannot see the orders, cannot verify a total, and would be asking the customer to self-report the number their own bill is based on. That is not a term either side should accept."
-        },
-        {
-         "id": "traffic_through_the_site",
-         "must": "The connected traffic has to run through that website.",
-         "why": "A link in a bio that goes straight to a third-party checkout is a sale the site never sees. The share is on CONNECTED revenue, and traffic routed around the site is revenue nobody can connect - which ends in an argument about a number instead of a business getting built."
-        },
-        {
-         "id": "payment_rails_connected",
-         "must": "Payments have to run on the rails we connect for you.",
-         "why": "This is the meter. It is what turns 'eligible connected revenue' from a phrase in an agreement into a figure both sides can read off the same screen on the same day."
-        }
-       ],
-       "plain": "To qualify: the website is one we built, your traffic runs through it, and payments run on the rails we connect. That is what makes the revenue countable, and the whole arrangement is priced off a count.",
-       "not_eligible": "A business that wants to keep its existing site, or send its buyers somewhere else to pay, can still work with us - at the standard price, with no revenue share and nothing to measure. That is M Mode, and it is not a lesser door.",
-       "discount_percent": 50
+        "note": "WHAT MAKES SOMEBODY ELIGIBLE, and why each one is not negotiable. Equity Uprise is paid out of a share of revenue, so the whole arrangement rests on that revenue being measurable. Every requirement below exists to make it measurable; none of them is a preference.",
+        "requirements": [
+          {
+            "id": "site_built_here",
+            "must": "The website has to be one we built.",
+            "why": "The revenue share is calculated from what the site brings in. On a site somebody else built and hosts, we cannot see the orders, cannot verify a total, and would be asking the customer to self-report the number their own bill is based on. That is not a term either side should accept."
+          },
+          {
+            "id": "traffic_through_the_site",
+            "must": "The connected traffic has to run through that website.",
+            "why": "A link in a bio that goes straight to a third-party checkout is a sale the site never sees. The share is on CONNECTED revenue, and traffic routed around the site is revenue nobody can connect - which ends in an argument about a number instead of a business getting built."
+          },
+          {
+            "id": "payment_rails_connected",
+            "must": "Payments have to run on the rails we connect for you.",
+            "why": "This is the meter. It is what turns 'eligible connected revenue' from a phrase in an agreement into a figure both sides can read off the same screen on the same day."
+          }
+        ],
+        "plain": "To qualify: the website is one we built, your traffic runs through it, and payments run on the rails we connect. That is what makes the revenue countable, and the whole arrangement is priced off a count.",
+        "not_eligible": "A business that wants to keep its existing site, or send its buyers somewhere else to pay, can still work with us - at the standard price, with no revenue share and nothing to measure. That is M Mode, and it is not a lesser door.",
+        "discount_percent": 50
       },
       "never_preselected": true,
       "plain": "No stock. No membership interest. No ownership. Equity Uprise is a time-limited revenue-share agreement. Revenue sharing ends at the earlier of the stated term or the stated cap, whichever comes first. The domain is always paid separately, up front. Participation requires a program-fit review and a signed agreement.",
@@ -106,112 +106,68 @@
       "id": "runway",
       "position": 1,
       "stage": "Take off",
-      "name": "Domain and hosting",
-      "former_name": "Runway",
+      "name": "Creator Platform websites",
+      "former_name": "Domain and hosting",
       "infrastructure": true,
       "infrastructure_note": "This is not the fourth service. It is the ground the other three stand on, and it is priced like plumbing rather than like work.",
       "identity": "legitimacy and access",
-      "tagline": "Icons in the clique. Stop scrolls of death.",
-      "lede": "The runway your business takes off from, and here is what the runway actually is. The domain is your address: yourname.com, rented a year at a time, and it is yours, not a slug hanging off somebody else's platform. The hosting is the ground it sits on: the machine that answers when somebody types that address, kept online, kept secure, kept backed up. Two bills, both mine to run. The website itself I build for free.",
+      "tagline": "Build here, bring your site, or get a first draft.",
+      "lede": "Choose a Creator Platform plan to publish your website. Start from a selected design, bring a compatible existing website for hosting, or order a first custom draft for a one-time $33. Hosting is included with your selected plan. Domain registration and renewal are separate.",
       "primary": true,
       "modes": [
         "m"
       ],
       "equity_available": false,
-      "equity_note": "Domain and hosting has no Equity Uprise version. There is no reason to trade a share of your revenue for an address and a machine to keep it online.",
+      "equity_note": "Creator Platform subscriptions do not include the managed Anti-Social service or Equity Uprise revenue-share terms.",
       "pricing": {
         "deposit": {
-          "label": "to start the draft",
+          "label": "optional first custom draft",
           "amount": 33,
           "cadence": "once",
           "approved": true,
-          "credited_to": "hosting_first",
-          "line": "Sends the work before the domain. The draft gets built and previewed first, and the $33 is your first month, not an extra fee. It is also the first of the drafts: buying the domain puts you on a draft a month."
+          "credited_to": null,
+          "line": "A one-time $33 first-draft build for customers who do not choose an available design. This is not a hosting deposit or a recurring fee. Additional revisions or custom development require a separate quote."
         },
         "start": {
-          "label": "to go live",
-          "approved": true,
-          "components": [
-            {
-              "id": "domain",
-              "label": "Domain, one year",
-              "amount": 33,
-              "cadence": "once",
-              "approved": true
-            },
-            {
-              "id": "hosting_first",
-              "label": "First month of hosting",
-              "amount": 33,
-              "cadence": "once",
-              "approved": true
-            }
-          ],
-          "total": 66
+          "label": "choose a platform subscription",
+          "approved": false,
+          "public_note": "Select Starter, Plus, Pro or Business to see the applicable monthly or annual subscription price. Domain registration is separate."
         },
         "recurring": {
-          "label": "hosting, every month after the first",
-          "amount": 33,
-          "cadence": "month",
-          "approved": true
+          "label": "hosting",
+          "approved": false,
+          "public_note": "Hosting is included with your selected Creator Platform plan."
         },
         "domain_renewal": {
-          "label": "Domain renewal",
-          "amount": 33,
-          "cadence": "year",
-          "approved": true
+          "label": "domain renewal",
+          "approved": false,
+          "public_note": "Domain registration and renewal are billed separately at the disclosed rate."
         },
         "first_year": {
-          "label": "first year, all in",
-          "derived": "runway_first_year",
-          "approved": true,
-          "breakdown": "$33 domain + 12 × $33 hosting"
+          "approved": false,
+          "public_note": "Your first-year total depends on your plan, billing cadence, optional draft and domain choice."
         },
         "annual": {
-          "label": "to go live, year of hosting paid",
-          "approved": true,
-          "monthly_equivalent": 30,
-          "months": 12,
-          "cadence": "once",
-          "note": "The same service. Paying the twelve months together drops the monthly rate from $33 to $30."
+          "approved": false,
+          "public_note": "Annual billing is available where a verified plan price is offered."
         },
         "hosting_year": {
-          "label": "hosting, renewed by the year",
-          "approved": true,
-          "cadence": "year",
-          "derived": "runway_hosting_year"
+          "approved": false,
+          "public_note": "Hosting is included in your Creator Platform subscription."
         }
       },
       "drafts": {
-        "name": "A draft a month",
-        "headline": "Buying the domain puts you on a redraw.",
-        "what": "A draft is a fresh cut of your site: new work on the layout, the copy, the photography, whatever the last month showed was not landing. Not a support ticket and not a patch. A draft, made for you, that you either take or leave standing.",
-        "included_with": "domain",
-        "first_payment_is_first_draft": true,
-        "first_year": {
-          "cadence": "month",
-          "count": 12,
-          "line": "Twelve months, twelve drafts. One a month for the first year, starting with the one the deposit paid for."
-        },
-        "after": {
-          "cadence": "quarter",
-          "forever": true,
-          "line": "After the first year it settles to a draft every quarter, and it never stops. Four a year, for as long as the site is hosted here, at no extra charge."
-        },
-        "upgraded": {
-          "cadence": "month",
-          "forever": true,
-          "requires": "anti-social",
-          "line": "On the full management service it never steps down. A draft a month, for as long as the service runs."
-        },
-        "plain": "Nobody else gives you a redesign every month for the price of hosting. That is the whole point: the site is never the one you bought a year ago."
+        "name": "Optional first draft",
+        "headline": "Get your first custom draft for $33.",
+        "what": "If you do not choose an available design, we can produce the first draft for a one-time $33. Further revisions and ongoing creative direction are not included in platform hosting.",
+        "included_with": "optional_one_time_purchase",
+        "first_payment_is_first_draft": false
       },
       "includes": [
-        "Domain registration, one year",
-        "Hosting",
-        "SSL",
-        "The website build itself, free",
-        "Backups"
+        "Website hosting with the selected Creator Platform plan",
+        "Choose an available design or bring a compatible existing site",
+        "Optional $33 first custom draft",
+        "Domain purchase and renewal billed separately"
       ],
       "excludes": [
         "Ongoing website management",
@@ -229,8 +185,8 @@
         "internal_note": "Domain and hosting replaces the $87/mo Hosting plan for all new customers. The $87 plan is preserved in legacy_plans for grandfathered agreements and existing records. It must not appear in the active new-customer journey."
       },
       "next_step": {
-        "label": "Get the address",
-        "href": "onboard.html?offer=runway"
+        "label": "Choose a Creator Platform plan",
+        "href": "mccluster-platform.html"
       },
       "checkout_step": {
         "label": "Start the draft for $33",
@@ -238,7 +194,7 @@
       },
       "one_line": "Your own address, and a machine that keeps it online.",
       "checkout": {
-        "note": "domain_search puts the address box in this card. WHICH endings get looked up, and which of them can be bought in one tap, live in public.domain_tlds and not here \u2014 a figure that decides what a card is charged belongs in the same database as every other one. This flag only says the box appears.",
+        "note": "domain_search puts the address box in this card. WHICH endings get looked up, and which of them can be bought in one tap, live in public.domain_tlds and not here — a figure that decides what a card is charged belongs in the same database as every other one. This flag only says the box appears.",
         "m": {
           "offering": "domain-hosting-start",
           "domain_search": true,
@@ -524,7 +480,7 @@
             {
               "id": "photo-full",
               "label": "Photo brand full-day",
-              "amount": 1842.50,
+              "amount": 1842.5,
               "unit": "eight hours",
               "priced_by": "golden-33",
               "was": 2680,

@@ -78,6 +78,7 @@
       '<button class="cro-chip'+(action?" is-on":"")+'" type="button" data-clip-source="action">Action content</button></div></section>'+
       '<section class="cro-card"><h3>1 · Source</h3><div class="cro-form">'+
       '<label>Campaign title<input id="clTitle" maxlength="160" required placeholder="'+(action?"Amplify this action":"Clip this release")+'"></label>'+
+      '<label>Creator / campaign brand<input id="clBrand" maxlength="120" placeholder="Your creator name or brand"></label>'+
       (action?'<label>Action Network source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
         '<label class="cro-span-2">Send traffic here<input id="clDestination" type="url" placeholder="https://mccluster.org/action/…"></label>':
         '<label>Song<select id="clSong"><option value="">Choose a song…</option>'+songs+'</select></label>')+
@@ -123,7 +124,7 @@
     return{org_id:org(),title:val("clTitle"),music_object_id:val("clSong")||null,source_content_id:val("clSource")||null,
       source_kind:C.sourceType==="action"?"action":"music",destination_url:val("clDestination")||null,rules:val("clRules"),
       required_tags:listVal("clTags"),attribution_handles:listVal("clAttribution"),collaborator_handles:listVal("clCollaborators"),
-      collaboration_mode:val("clCollabMode")||"none",operator_brand:"Equity Uprise",
+      collaboration_mode:val("clCollabMode")||"none",operator_brand:val("clBrand")||"Creator campaign",
       platforms:document.getElementById("clIg")&&document.getElementById("clIg").checked?["instagram"]:[],
       budget_cents:cents("clBudget"),base_cpm_cents:cents("clCpm"),min_views:int("clMin"),
       per_clip_cap_cents:cents("clClipCap"),per_clipper_cap_cents:cents("clClipperCap"),max_payable_views_per_clip:int("clMaxViews"),
