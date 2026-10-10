@@ -23,8 +23,20 @@ begin
  select count(distinct owner_user_id),min(owner_user_id) into v_owner_count,v_owner
  from public.creator_billing_subscriptions
  where org_id=new.org_id and status='active' and current_period_end>now();
+ -- A cohort-granted creator can publish without a subscription. Only accept
+ -- a single currently active, unrevoked grant with actual M-account membership.
+ if v_owner_count=0 then
+  select count(distinct g.creator_user_id),min(g.creator_user_id)
+    into v_owner_count,v_owner
+  from public.creator_site_cohort_grants g
+  join public.action_cohorts c on c.id=g.cohort_id and c.status='active'
+  join public.action_cohort_members m on m.cohort_id=g.cohort_id
+  join public.m_auth_user_links l on l.m_uid=m.m_uid
+   and l.auth_user_id=g.creator_user_id
+  where g.org_id=new.org_id and g.revoked_at is null;
+ end if;
  if v_owner_count<>1 or v_owner is null then
-  raise exception 'Creator publication requires exactly one attributable active owner';
+  raise exception 'Creator publication requires exactly one attributable eligible owner';
  end if;
  if tg_op='UPDATE' and new.title is not distinct from old.title
   and new.tagline is not distinct from old.tagline
