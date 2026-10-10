@@ -211,6 +211,16 @@ export default {
         return stub.fetch(request);
       }
 
+      if (path === '/v1/creator-payouts' && request.method === 'GET') {
+        await requireHouseOwner(request, env);
+        const [funding, intents, earnings] = await Promise.all([
+          sb(env, 'action_creator_funding?select=org_id,mission_id,currency,funded_cents,reserved_cents,spent_cents&order=created_at.desc&limit=100'),
+          sb(env, 'action_creator_payout_intents?select=id,org_id,mission_id,earning_id,creator_m_uid,amount_cents,currency,state,approved_at,stripe_transfer_id&order=created_at.desc&limit=100'),
+          sb(env, 'action_clip_earnings?select=id,org_id,mission_id,m_uid,amount_cents,state,hold_until&order=created_at.desc&limit=100')
+        ]);
+        return reply(request, env, { mode: 'read_only', funding, intents, earnings });
+      }
+
       if (path === '/v1/me' && request.method === 'GET') {
         const user = await authUser(request, env);
         if (!user) return fail(request, env, 'Authentication required', 401);
