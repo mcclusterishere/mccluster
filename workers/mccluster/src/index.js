@@ -248,10 +248,15 @@ export default {
         if (!/^[0-9a-f-]{36}$/i.test(String(input.intent_id || ''))) return fail(request, env, 'Invalid payout intent', 400);
         const rows = await sb(env, 'action_creator_payout_intents?id=eq.' + encodeURIComponent(input.intent_id) + '&select=*');
         const intent = rows?.[0];
-        if (!intent || !['reserved','transferring','transferred'].includes(intent.state)) return fail(request, env, 'Payout intent unavailable', 409);
+        if (!intent || !['reserved','transferred'].includes(intent.state)) return fail(request, env, 'Payout intent unavailable; transferring requires reconciliation', 409);
         if (intent.state === 'transferred') return reply(request, env, { state:'transferred',transfer_id:intent.stripe_transfer_id });
         const binding = await sb(env, 'action_creator_connect_accounts?org_id=eq.' + intent.org_id + '&creator_m_uid=eq.' + intent.creator_m_uid + '&livemode=is.false&select=stripe_account_id&limit=1');
         if (binding?.[0]?.stripe_account_id !== intent.stripe_account_id) return fail(request, env, 'Creator destination changed', 409);
+        // Atomic compare-and-swap prevents two concurrent HTTP requests from issuing transfers.
+        const claim = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/action_creator_claim_transfer', {
+          method:'POST',headers:sbHeaders(env),body:JSON.stringify({p_intent_id:intent.id})
+        });
+        if (!claim.ok || await claim.json() !== true) return fail(request, env, 'Transfer already claimed; reconcile before retry', 409);
         const transfer = await transferApprovedCreatorEarning(env,{approved:true,reserved:true,verified:true,destination:intent.stripe_account_id,amountCents:Number(intent.amount_cents),currency:intent.currency,earningId:intent.earning_id,orgId:intent.org_id});
         const response = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/action_creator_finalize_transfer',{method:'POST',headers:sbHeaders(env),body:JSON.stringify({p_intent_id:intent.id,p_transfer_id:transfer.transferId})});
         if (!response.ok) return fail(request, env, 'Transfer created; ledger reconciliation required', 503);
