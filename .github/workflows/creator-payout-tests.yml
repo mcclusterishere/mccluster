@@ -10,6 +10,8 @@ on:
       - 'supabase/migrations/*action_creator*'
       - '.github/workflows/creator-payout-tests.yml'
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   safety:
     runs-on: ubuntu-latest
