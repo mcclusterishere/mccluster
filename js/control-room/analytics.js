@@ -506,7 +506,8 @@
     if(S.usersLoading||!S.request)return;
     S.usersLoading=true;S.usersState=null;paint();
     S.request("/v1/analytics/users?limit=100").then(function(result){
-      S.usersState={rows:Array.isArray(result&&result.users)?result.users:[]};
+      if(!result||result.ok===false||!Array.isArray(result.users))throw Error("Invalid Users API response: expected an authorized users array");
+      S.usersState={rows:result.users};
     }).catch(function(error){
       var message=String(error&&error.message||error||"Unknown API failure");
       S.usersState={error:"User intelligence could not load: "+message+". Check your owner permissions, login session, and API deployment."};
