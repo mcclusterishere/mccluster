@@ -41,6 +41,9 @@ F.R.E.E.D.O.M. Inc., Whip Equipped LLC and McCluster Corp.
 - [IT support résumé](https://matthew.mccluster.org/resume-it-support.html)
   · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.pdf)
   · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-it-support.docx)
+- [Technology education, digital inclusion & marketing operations résumé](https://matthew.mccluster.org/resume-digital-inclusion.html)
+  · [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-digital-inclusion.pdf)
+  · [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume-digital-inclusion.docx)
 - [Full résumé](https://matthew.mccluster.org/matthew-mccluster.html)
 - [Engineering & IT evidence](https://matthew.mccluster.org/engineering/): every claim with its source (résumé, IPC's engagement document, or public source code), plus two case studies: [the IPC Systems data center](https://matthew.mccluster.org/engineering/ipc-infrastructure.html) and [the McCluster platform](https://matthew.mccluster.org/engineering/mccluster-platform.html).
 - [Recruiter role & evidence map](https://matthew.mccluster.org/engineering/recruiter-role-map.html) · [machine-readable ledger](https://matthew.mccluster.org/data/seo/recruiter-evidence.json)
