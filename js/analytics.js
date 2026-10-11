@@ -955,6 +955,9 @@ window.MCC_MODEL = (function () {
     if (!el || !d) return false;
     if (d.tag === "input" || d.tag === "textarea" || d.tag === "select" || d.tag === "label") return false;
     if (el.isContentEditable) return false;
+    /* Current-page navigation and media controls may perform meaningful work
+       without DOM mutations within 450ms; do not mislabel them as dead. */
+    if (el.closest && el.closest(".appbar__tab.is-here,.music-inline-play,.alb__play,[aria-pressed]")) return false;
     if (d.tag === "a") {
       var href = el.getAttribute("href") || "";
       if (!href || href.charAt(0) === "#") return true;
