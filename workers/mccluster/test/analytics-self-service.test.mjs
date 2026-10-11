@@ -9,6 +9,7 @@ function mock(){
  globalThis.fetch=async input=>{
   const url=String(input);calls.push(url);
   if(url.includes('m_auth_user_links?'))return Response.json([{m_uid:'00000000-0000-0000-0000-000000000003'}]);
+  if(url.includes('music_creator_profiles?'))return Response.json([{handle:'own-artist'}]);
   if(url.includes('creator_tracks?'))return Response.json([{id:'00000000-0000-0000-0000-000000000004',title:'Own song',status:'published'}]);
   if(url.includes('events?'))return Response.json(url.includes('my-listening')?[]:[
    {uid:other,name:'music_play',props:{creator_track_id:'00000000-0000-0000-0000-000000000004'},at:new Date().toISOString()},
