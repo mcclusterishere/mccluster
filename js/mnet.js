@@ -1825,13 +1825,17 @@
     setStatus($("mnMissionDialogStatus"),"Captured. Review it, add any detail you want, then submit.","ok");
   }
   function closeMission(){
+    missionOpenVersion++;
     var dlg=$("mnMissionDialog");if(dlg&&dlg.open)dlg.close();
     clearMissionCapture();
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var missionOpenVersion=0;
   function openMission(id){
+    var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
+      if(version!==missionOpenVersion)return;
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
       missions.current=m;missions.assignment=null;clearMissionCapture();
       if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
@@ -1846,6 +1850,7 @@
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
+        if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
         missions.assignment=a;$("mnMissionJoin").hidden=true;
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
@@ -1858,7 +1863,7 @@
               :"Mission in progress.";
         setStatus($("mnMissionDialogStatus"),assignmentMessage,a.status==="rejected"?"error":"ok");
       });
-    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
+    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
   }
   function joinMission(){
     var m=missions.current;if(!m)return;var b=$("mnMissionJoin");
