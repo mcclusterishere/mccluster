@@ -1,0 +1,25 @@
+name: Users Analytics CI
+on:
+  pull_request:
+    paths:
+      - 'workers/mccluster/src/analytics/**'
+      - 'workers/mccluster/test/analytics-users*.test.mjs'
+      - '.github/workflows/users-analytics-ci.yml'
+  push:
+    branches: [feat/analytics-users-intelligence]
+permissions:
+  contents: read
+jobs:
+  users-analytics:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/mccluster
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/analytics-users.test.mjs test/analytics-users-integration.test.mjs
+      - run: node --check src/analytics/router.js
+      - run: node --check ../../js/analytics-users.js
