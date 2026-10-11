@@ -751,7 +751,7 @@
   </div>
 
   <!-- the deck: the mini player that rides above the bar -->
-  <div id="seekStatus" role="status" aria-live="polite" class="sr-only"></div>
+  <div id="seekStatus" role="status" aria-live="polite" style="text-align:center;font-size:.85rem;padding:.3rem .8rem;color:#f0c8a0" hidden></div>
   <div class="deckbar" id="deckbar" data-off="1">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
@@ -1585,7 +1585,7 @@
     el("tpPrev").addEventListener("click", prev);
     function seekFeedback(message) {
       var status = el("seekStatus");
-      if (status) status.textContent = message;
+      if (status) { status.textContent = message; status.hidden = !message; }
     }
     function seekDeck(control, fraction) {
       if (!Number.isFinite(deck.duration) || deck.duration <= 0 || deck.readyState < 1) {
