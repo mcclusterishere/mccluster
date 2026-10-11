@@ -1893,7 +1893,7 @@
     return uploadMediaWithPoster(file);
   }
   function submitMissionProof(ev){
-    ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');if(!b||b.disabled)return;b.disabled=true;
+    ev.preventDefault();var a=missions.assignment;if(!a)return;var proofMissionId=missions.current&&missions.current.id;var b=ev.target.querySelector('button[type="submit"]');if(!b||b.disabled)return;b.disabled=true;
     var picker=$("mnMissionProofFile"),file=missions.proofFile||(picker&&picker.files&&picker.files[0]);
     var type=$("mnMissionProofType").value,link=($("mnMissionProofUrl").value||"").trim()||null,statement=($("mnMissionProofStatement").value||"").trim();
     setStatus($("mnMissionDialogStatus"),file?"Uploading your proof…":"Submitting…");
@@ -1908,12 +1908,13 @@
       return sbRpc("set_action_share_intent",body).catch(function(){return sbRpc("set_action_share_intent",body);})
         .then(function(){return true;},function(){return false;});
     }).then(function(choiceSaved){
+      if(!missions.assignment||missions.assignment.id!==a.id||!missions.current||missions.current.id!==proofMissionId)return;
       missions.assignment.status="submitted";clearMissionCapture();
       if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted. Once verified, this action can appear on the feed with your proof.","ok");
       else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. You can share it after verification.","error");
-      if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
+      if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:proofMissionId,upload:!!file});
       loadMissions();
-    }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
+    }).catch(function(e){if(missions.assignment&&missions.assignment.id===a.id&&missions.current&&missions.current.id===proofMissionId)setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
       .then(function(){b.disabled=false;});
   }
   /* A shared mission link opens that mission, not the feed. */
