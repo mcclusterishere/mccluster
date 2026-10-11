@@ -460,6 +460,8 @@
     });
 
     el("acCreateGo").onclick = function () {
+      if (el("acCreateGo").disabled) return;
+      if (window.MCC_TRACK) window.MCC_TRACK("signup_started", { flow: "password" });
       var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
       var em = el("acCreateEmail").value.trim();
       var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
@@ -500,23 +502,27 @@
       };
       MCC.signUpWithPassword(em, pw, metadata).then(function (result) {
         if (result && result.session) {
+          if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "immediate" });
           if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
           freshSignIn = true;
           paint();
           return;
         }
         if (result && result.existing) {
+          if (window.MCC_TRACK) window.MCC_TRACK("signup_existing_account", { flow: "password" });
           el("acInEmail").value = em;
           setAuthMode("signin");
           el("acMsg").textContent = "An account already exists for that email. Sign in, or use Forgot password.";
           return;
         }
         pendingVerificationEmail = em;
+        if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "pending" });
         el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
         el("acResend").hidden = false;
       }).catch(function (e) {
         var rateLimited = String((e && (e.code || e.status)) || "").includes("429") ||
           /rate.limit|too many requests/i.test(String(e && e.message || ""));
+        if (window.MCC_TRACK) window.MCC_TRACK("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
         createFail(rateLimited
           ? "Too many signup attempts right now. Please wait before trying again; repeated taps will not help. You can also sign in if you already have an account."
           : (e.message || "Could not create that account."), null,
