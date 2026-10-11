@@ -914,6 +914,28 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
    '&select=id,title,status,published_at&limit=200');
  const ids=new Set(tracks.map(t=>String(t.id)));
  const counts={};
+ const profiles=await sbRows(env,'music_creator_profiles?m_uid=eq.'+encodeURIComponent(mUid)+
+   '&select=handle&limit=1');
+ const handle=String(profiles[0]?.handle||'');
+ const pagePath='music-creator.html?handle='+encodeURIComponent(handle);
+ const trafficRows=handle?await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props&order=at.desc&limit=5000'):[];
+ const traffic=trafficRows.filter(e=>{
+   const raw=String(e.path||'');
+   const query=raw.includes('?')?raw.slice(raw.indexOf('?')+1):'';
+   try{return raw.startsWith('music-creator.html')&&new URLSearchParams(query).get('handle')===handle;}catch{return false;}
+ });
+ const daily={};const sources={};const sessions=new Set();
+ for(const e of traffic){
+   const day=String(e.at||'').slice(0,10);
+   if(/^\\d{4}-\\d{2}-\\d{2}$/.test(day))daily[day]=(daily[day]||0)+1;
+   if(e.session_id)sessions.add(e.session_id);
+   let source='Direct / unknown';
+   try{if(e.referrer){const u=new URL(e.referrer);source=u.hostname;}}catch{}
+   sources[source]=(sources[source]||0)+1;
+ }
+ const pageTraffic={views:traffic.length,approximate_sessions:sessions.size,
+   daily,sources,sample_limited:trafficRows.length===5000};
  const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
    plays:0,completions:0,shares:0}]));
  if(ids.size){
@@ -933,7 +955,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  }
  return json({ok:true,creator:true,window_days:30,sample_limited:true,
    disclaimer:'Observed matching events only; counts may be incomplete due to event sampling.',
-   counts,tracks:[...perTrack.values()]});
+   counts,page_traffic:pageTraffic,tracks:[...perTrack.values()]});
 }
 
 export async function handleAnalyticsRequest(request, env, user) {
