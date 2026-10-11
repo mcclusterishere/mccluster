@@ -9,18 +9,27 @@ const heading=creator?'Artist analytics':'My listening';
 const btn=document.getElementById('selfMusicRefresh');
 const section=document.getElementById('fanListeningSection');
 let requestVersion=0;
+let activeToken=null;
+function clearPrivateView(){
+ requestVersion++;
+ activeToken=null;
+ host.textContent='';
+ if(section)section.hidden=true;
+}
 async function run(){
- const version=++requestVersion;
+ clearPrivateView();
+ const version=requestVersion;
  host.textContent='Loading '+heading.toLowerCase()+'…';
  try{
   const session=await window.MCC?.refreshIfNeeded?.();
   if(version!==requestVersion)return;
   if(!session?.access_token){if(section)section.hidden=true;host.textContent='Sign in to see your own activity.';return;}
-  if(section)section.hidden=false;
+  activeToken=session.access_token;
   const res=await fetch('https://api.mccluster.org/v1/analytics/'+(creator?'my-creator':'my-listening'),{
     headers:{Authorization:'Bearer '+session.access_token}});
   const data=await res.json();
-  if(version!==requestVersion)return;
+  if(version!==requestVersion||activeToken!==session.access_token)return;
+  if(section)section.hidden=false;
   if(!res.ok||data.ok===false)throw Error(data.error||'Analytics unavailable');
   if(creator&&!data.creator){host.textContent='Create your artist profile to see catalog analytics.';return;}
   const metrics=creator?[
@@ -40,7 +49,7 @@ async function run(){
  }catch(e){if(version!==requestVersion)return;if(section)section.hidden=true;host.textContent='Analytics unavailable. Please try again.';}
 }
 btn?.addEventListener('click',run);
-window.addEventListener('mcc:auth-changed',run);
+window.addEventListener('mcc:auth-changed',function(){clearPrivateView();run();});
 window.addEventListener('storage',function(e){if(e.key==='mccdb_session'||e.key==='mccdb_session_keep')run();});
 window.addEventListener('pageshow',function(e){if(e.persisted)run();});
 run();
