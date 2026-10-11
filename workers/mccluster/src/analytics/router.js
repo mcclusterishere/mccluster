@@ -890,10 +890,58 @@ async function handleUserExplorer(request, env, user, url) {
     scoring:'Engagement is a preliminary descriptive activity index; other dimensions require validated conversion and retention signals.'});
 }
 
+
+/* Self-service dashboards: never use caller-provided user or creator IDs. */
+async function handleSelfMusicAnalytics(request,env,user,url,path){
+ if(!user?.id)throw Object.assign(new Error('Authentication required'),{status:401});
+ if(request.method!=='GET')return json({ok:false,error:'GET only'},405);
+ const since=new Date(Date.now()-30*86400000).toISOString();
+ if(path==='/v1/analytics/my-listening'){
+   const rows=await sbRows(env,'events?site_id=is.null&uid=eq.'+encodeURIComponent(user.id)+
+     '&at=gte.'+encodeURIComponent(since)+
+     '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&select=at,name,path,props&order=at.desc&limit=500');
+   const counts={};for(const e of rows)counts[e.name]=(counts[e.name]||0)+1;
+   return json({ok:true,window_days:30,sample_limited:rows.length===500,
+     counts,activity:rows.slice(0,60).map(e=>({at:e.at,name:e.name,
+       track:String(e.props?.track||e.props?.song||'').slice(0,120)}))});
+ }
+ const links=await sbRows(env,'m_auth_user_links?auth_user_id=eq.'+encodeURIComponent(user.id)+
+   '&is_primary=eq.true&select=m_uid&limit=1');
+ const mUid=links[0]?.m_uid;
+ if(!mUid)return json({ok:true,creator:false,window_days:30,tracks:[],counts:{}});
+ const tracks=await sbRows(env,'creator_tracks?m_uid=eq.'+encodeURIComponent(mUid)+
+   '&select=id,title,status,published_at&limit=200');
+ const ids=new Set(tracks.map(t=>String(t.id)));
+ const counts={};
+ const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
+   plays:0,completions:0,shares:0}]));
+ if(ids.size){
+   // Catalog-specific event filtering occurs in memory only after a bounded
+   // 30-day query. Do not return individual listener identities to creators.
+   const rows=await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+     '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&select=name,props&order=at.desc&limit=5000');
+   for(const e of rows){
+     const id=String(e.props?.creator_track_id||'');
+     const item=perTrack.get(id);if(!item)continue;
+     if(['music_play','music_full_play','music_preview_play','song_start'].includes(e.name))item.plays++;
+     if(e.name==='music_complete')item.completions++;
+     if(e.name==='track_share')item.shares++;
+     counts[e.name]=(counts[e.name]||0)+1;
+   }
+ }
+ return json({ok:true,creator:true,window_days:30,sample_limited:true,
+   disclaimer:'Observed matching events only; counts may be incomplete due to event sampling.',
+   counts,tracks:[...perTrack.values()]});
+}
+
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
 
+  if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
+    return handleSelfMusicAnalytics(request,env,user,url,path);
   if (path === '/v1/analytics/users') return handleUserExplorer(request, env, user, url);
   if (path === '/v1/analytics/business') {
     return handleBusinessSnapshot(request, env, user, url);
