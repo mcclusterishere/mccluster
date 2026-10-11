@@ -1861,7 +1861,9 @@
     }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
   }
   function joinMission(){
-    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
+    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");
+    if(b.disabled)return;
+    b.disabled=true;
     var joinRequest = missions.liveSession&&missions.liveMission===m.id
       ? sbRpc("join_action_mission_live",{p_mission_id:m.id,p_live_session_id:missions.liveSession})
       : missions.content&&missions.attributedMission===m.id
@@ -1869,20 +1871,21 @@
         : sbRpc("join_action_mission",{p_mission_id:m.id});
     joinRequest
       .then(function(r){
+        if(!missions.current||missions.current.id!==m.id)return;
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;
         setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
         if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
         loadMissions();
       })
-      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
+      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
       .then(function(){b.disabled=false;});
   }
   function uploadProofFile(file){
     return uploadMediaWithPoster(file);
   }
   function submitMissionProof(ev){
-    ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
+    ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');if(!b||b.disabled)return;b.disabled=true;
     var picker=$("mnMissionProofFile"),file=missions.proofFile||(picker&&picker.files&&picker.files[0]);
     var type=$("mnMissionProofType").value,link=($("mnMissionProofUrl").value||"").trim()||null,statement=($("mnMissionProofStatement").value||"").trim();
     setStatus($("mnMissionDialogStatus"),file?"Uploading your proof…":"Submitting…");
