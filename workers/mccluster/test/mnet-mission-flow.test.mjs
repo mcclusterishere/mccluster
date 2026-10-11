@@ -33,7 +33,7 @@ function harness(){
   const fetchStart=source.indexOf('  function fetchMission(id){');
   const fetchEnd=source.indexOf('  function clearMissionCapture(){',fetchStart);
   assert.ok(fetchStart>0&&fetchEnd>fetchStart);
-  vm.runInNewContext(source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,closeMission,joinMission,submitMissionProof};',context);
+  vm.runInNewContext(source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
   return {actions:context.actions,missions,calls,el};
 }
 test('rapid mission switches ignore stale detail response',async()=>{
