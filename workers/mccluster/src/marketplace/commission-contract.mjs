@@ -12,9 +12,9 @@ export const MARKETPLACE_POLICY_V1 = Object.freeze({
   operatorBps: 1000,
   reserveBps: 1000,
   payoutsEnabled: false,
-  // Intentionally unset until the owner approves a specific dollar cap.
-  customerReferralCapCents: null,
-  supplyReferralCapCents: null
+  // Owner-approved $5,000 lifetime cap per referred account, per role, shared across rentals and rideshare.
+  customerReferralCapCents: 500000,
+  supplyReferralCapCents: 500000
 });
 
 const ROLES = ['providerBps','customerReferrerBps','supplyReferrerBps','operatorBps','reserveBps'];
@@ -29,7 +29,7 @@ export function validateMarketplacePolicy(policy) {
   return policy;
 }
 function capAward(nominal, cap, previouslyAccrued) {
-  if (cap === null) return 0; // fail closed until cap is approved
+  if (cap === null) return 0; // fail closed if a future policy omits its cap
   if (!validMoney(previouslyAccrued)) throw new RangeError('Invalid prior accrual');
   return Math.min(nominal, Math.max(0, cap - previouslyAccrued));
 }
