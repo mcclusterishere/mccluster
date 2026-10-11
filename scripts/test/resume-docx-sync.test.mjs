@@ -36,7 +36,8 @@ const decode = (s) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/
 const flat = (s) => decode(s.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
 
 for (const [page, file] of [
-  ['resume-it-support.html', 'assets/resume/matthew-mccluster-resume-it-support.docx']
+  ['resume-it-support.html', 'assets/resume/matthew-mccluster-resume-it-support.docx'],
+  ['resume-digital-inclusion.html', 'assets/resume/matthew-mccluster-resume-digital-inclusion.docx']
 ]) {
   test(`${file} says everything ${page} says`, async () => {
     const html = (await readFile(page, 'utf8')).split('<main')[1].split('</main>')[0];
