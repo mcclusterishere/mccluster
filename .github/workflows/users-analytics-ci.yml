@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - 'workers/mccluster/src/analytics/**'
-      - 'workers/mccluster/test/analytics-users*.test.mjs'
+      - 'workers/mccluster/test/analytics-*.test.mjs'
       - '.github/workflows/users-analytics-ci.yml'
   push:
     branches: [feat/analytics-users-intelligence]
@@ -20,6 +20,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - run: node --test test/analytics-users.test.mjs test/analytics-users-integration.test.mjs
+      - run: node --test test/analytics-users.test.mjs test/analytics-users-integration.test.mjs test/analytics-self-service.test.mjs
       - run: node --check src/analytics/router.js
       - run: node --check ../../js/analytics-users.js
+      - run: node --check ../../js/music-self-analytics.js
