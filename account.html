@@ -297,7 +297,8 @@
       <button class="ac__btn" id="fnSave" type="button">Save</button>
       <p class="ac__note" id="fnMsg"></p>
     </div>
-  </main>
+  <section class="ac__card" id="fanListeningSection" aria-labelledby="fanAnalyticsHeading" hidden><h2 id="fanAnalyticsHeading">My Listening</h2><p>Your private listening activity and music discovery.</p><button type="button" id="selfMusicRefresh">Refresh listening</button><div id="selfMusicAnalytics" data-mode="fan" aria-live="polite"></div></section>
+</main>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
   <!-- The social door. It shares mccdb_session with backend.js, so a Google
@@ -792,7 +793,7 @@
     paint();
   })();
   </script>
-<section class="ac__card" aria-labelledby="fanAnalyticsHeading"><h2 id="fanAnalyticsHeading">My Listening</h2><p>Your private listening activity and music discovery.</p><button type="button" id="selfMusicRefresh">Refresh listening</button><div id="selfMusicAnalytics" data-mode="fan" aria-live="polite"></div></section>
+
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
