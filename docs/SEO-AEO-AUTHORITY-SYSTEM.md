@@ -196,7 +196,7 @@ PRIM3 game lore as biography.
 
 Indexable (in `sitemap.xml`; each self-canonical and never `noindex`):
 
-- **Identity:** `/matthew-mccluster.html`, `/resume-it-support.html`, `/card.html`, `/press.html`, `/newsroom.html`
+- **Identity:** `/matthew-mccluster.html`, `/resume-it-support.html`, `/resume-digital-inclusion.html`, `/card.html`, `/press.html`, `/newsroom.html`
 - **Recruiter / IT:** `/engineering/` (hub), the four lanes `/engineering/it-support-systems.html`, `/engineering/data-center-networking.html`, `/engineering/mccluster-platform.html`, `/engineering/field-technology-telematics.html`, the case study `/engineering/ipc-infrastructure.html`, and `/engineering/recruiter-role-map.html`
 - **Services:** `/services.html`, `/hire.html`, `/sites.html`, `/sites-details.html`, `/case-designer-kicks.html`
 - **Photography and film:** `/gallery.html`, `/walls/*.html`, `/shots.html`, `/films.html`, `/portfolio.html`
@@ -283,7 +283,7 @@ publication. Claims that cannot be evidenced go to
    (a Domain property for `mccluster.org` also covers the apex and `here.`);
    submit `sitemap.xml` and `sitemap-video.xml`; URL-inspect and request
    indexing for `/matthew-mccluster.html`, `/engineering/`,
-   `/resume-it-support.html`, `/docket-516.html`, `/newsroom.html`.
+   `/resume-it-support.html`, `/resume-digital-inclusion.html`, `/docket-516.html`, `/newsroom.html`.
    AI Overviews/AI Mode traffic appears in Performance → Search type: Web.
 2. **Bing Webmaster Tools:** import from Search Console; submit both
    sitemaps. IndexNow is already wired (`indexnow.yml`, key file at the root).
@@ -368,7 +368,7 @@ HTML; changing `index.html`'s UI for SEO; a city page.
 
 **P0 · indexability and entity correctness**
 1. Apply the two Equity Uprise group migrations (§13).
-2. Submit both sitemaps and request indexing for the five authority pages (§10).
+2. Submit both sitemaps and request indexing for the six authority pages (§10).
 3. Resolve the IPC title and the two résumé bullets (§13).
 4. Confirm the CT charity renewal (§13).
 
