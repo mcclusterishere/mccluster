@@ -489,7 +489,43 @@
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+/* Additive decision layer: preserve all legacy modules, metrics, and drilldowns. */
+  function decisionLayer(){
+    var t=S.data.traffic||{},tot=t.totals||{},src=t.sources||[],d=S.data||{};
+    function item(title,detail,value){return '<article class="cra-insight"><div class="cra-insight__copy"><b>'+e(title)+'</b><small>'+e(detail)+'</small></div>'+(value===undefined?'':'<strong>'+e(String(value))+'</strong>')+'</article>';}
+    var blocks=[];
+    if(S.section==="overview"){
+      var top=src.slice().sort(function(a,b){return Number(b.count||0)-Number(a.count||0);})[0];
+      blocks.push(item("Leading observed source",top?(top.source||"Unknown"):"No source data in selected range",top?n(top.count)+" events":undefined));
+      blocks.push(item("Returning audience","See repeat behavior and acquisition paths in Audience."));
+      blocks.push(item("Verified business outcomes","Keep reconciled payments separate from tracked engagement."));
+    }else if(S.section==="audience"){
+      blocks.push(item("Acquisition versus retention","Compare new and returning cohorts once cross-visit identity is available."));
+      blocks.push(item("Club retention","Requires club membership and return events; no inferred membership counts."));
+      blocks.push(item("Attribution quality",src.length?"Source categories observed; validate external versus internal referrals.":"No acquisition source breakdown available."));
+    }else if(S.section==="adaptive"){
+      blocks.push(item("Experiment comparison","Compare control and treatment on a pre-registered primary outcome."));
+      blocks.push(item("Guardrails","Check sample size, allocation, errors and negative outcomes before promotion."));
+    }else if(S.section==="content"){
+      var songs=d.content||[],topSong=songs.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0];
+      blocks.push(item("Leading track by starts",topSong?topSong.track||"Unknown":"No track data",topSong?n(topSong.starts)+" starts":undefined));
+      blocks.push(item("Listening quality","Use existing starts, completions, repeats and shares; do not sum unique listeners across tracks."));
+      blocks.push(item("Source to song to outcome","Compare verified signup and revenue outcomes by track."));
+    }else if(S.section==="identity"){
+      var coverage=(d.identity||{}).coverage||{};
+      blocks.push(item("Device-to-account coverage","Linkage is observational and may be unavailable.",coverage.bridged_accounts===undefined?undefined:n(coverage.bridged_accounts)+" linked"));
+      blocks.push(item("Signup friction","Instrument started, submitted, verified and failed signup steps before showing a conversion rate."));
+    }else if(S.section==="forensics"){
+      blocks.push(item("Impact-ranked friction","Rank errors and dead clicks by affected sessions and observed abandonment."));
+      blocks.push(item("Playback and account blockers","Correlate failed plays and signups with trace timelines; do not treat every click as a failure."));
+    }else if(S.section==="setup"){
+      blocks.push(item("Property attribution",S.sites&&S.sites.length?"Review registered domains and collector coverage.":"No external analytics properties registered."));
+      blocks.push(item("Event naming quality","Audit unlabeled clicks, duplicate events, bot filtering and missing source hosts."));
+      blocks.push(item("Collection freshness","Use the existing live collector test before trusting dashboard comparisons."));
+    }
+    return '<section class="cra-decision-layer" aria-label="Decision support"><div class="cra-decision-layer__head"><div><h2>Decision support</h2><p>Additional insights and measurement requirements. Existing dashboard modules remain below.</p></div><span class="cra-decision-layer__status">Additive</span></div><div class="cra-insights">'+blocks.join("")+'</div></section>';
+  }
+    function body(){return decisionLayer()+ (S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview());}
   function render(){
     var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
     return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, adaptive experience, experiments, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
