@@ -515,7 +515,11 @@
         el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
         el("acResend").hidden = false;
       }).catch(function (e) {
-        createFail(e.message || "Could not create that account.", null,
+        var rateLimited = String((e && (e.code || e.status)) || "").includes("429") ||
+          /rate.limit|too many requests/i.test(String(e && e.message || ""));
+        createFail(rateLimited
+          ? "Too many signup attempts right now. Please wait before trying again; repeated taps will not help. You can also sign in if you already have an account."
+          : (e.message || "Could not create that account."), null,
           "server_" + String((e && (e.code || e.status)) || "error").slice(0, 40));
       }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
     };
