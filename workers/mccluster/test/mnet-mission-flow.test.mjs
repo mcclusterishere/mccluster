@@ -43,7 +43,8 @@ test('rapid mission switches ignore stale detail response',async()=>{
   await settle();
   assert.equal(h.missions.current.id,'mission-B');
   h.calls[0].resolve({id:'mission-A',title:'A',status:'open',skills:[]});
-  await Promise.all([a,b.then(()=>{})].map(p=>p.catch(()=>{})));
+  h.calls[2].resolve([]);
+  await Promise.all([a,b]);
   assert.equal(h.missions.current.id,'mission-B');
 });
 test('older assignment lookup cannot overwrite a newly opened mission',async()=>{
