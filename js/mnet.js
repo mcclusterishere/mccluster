@@ -1707,7 +1707,9 @@
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
+  var missionListVersion=0;
   function loadMissions(){
+    var version=++missionListVersion;
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
     loadActionRecord();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
@@ -1716,12 +1718,13 @@
       sbRest("action_missions?status=eq.open"+campaignFilter+"&select=*&order=created_at.desc"),
       sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
     ]).then(function(out){
+      if(version!==missionListVersion)return;
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
       setStatus($("mnMissionStatus"),"");
-    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+    }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
