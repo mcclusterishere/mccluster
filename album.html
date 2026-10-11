@@ -751,6 +751,7 @@
   </div>
 
   <!-- the deck: the mini player that rides above the bar -->
+  <div id="seekStatus" role="status" aria-live="polite" class="sr-only"></div>
   <div class="deckbar" id="deckbar" data-off="1">
     <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
     <div class="deckbar__row">
@@ -1582,10 +1583,39 @@
     el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
     el("tpNext").addEventListener("click", next);
     el("tpPrev").addEventListener("click", prev);
-    el("seek").addEventListener("click", function (e) {
-      if (!deck.duration) return;
-      var r = this.getBoundingClientRect();
-      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
+    function seekFeedback(message) {
+      var status = el("seekStatus");
+      if (status) status.textContent = message;
+    }
+    function seekDeck(control, fraction) {
+      if (!Number.isFinite(deck.duration) || deck.duration <= 0 || deck.readyState < 1) {
+        seekFeedback("Start a track before seeking.");
+        return;
+      }
+      var target = Math.max(0, Math.min(1, fraction)) * deck.duration;
+      /* One-pass earned tracks cannot rewind. Keep the existing media guard,
+         but explain why a backward tap is not permitted. */
+      if (typeof granted === "function" && granted() && target < grantMax - 0.75) {
+        seekFeedback("This one-pass track cannot be rewound.");
+        return;
+      }
+      try { deck.currentTime = target; seekFeedback(""); }
+      catch (error) { seekFeedback("Seeking is not available for this track."); }
+    }
+    ["seek", "nowSeek"].forEach(function (id) {
+      var control = el(id);
+      if (!control) return;
+      control.addEventListener("click", function (e) {
+        var r = control.getBoundingClientRect();
+        if (r.width) seekDeck(control, (e.clientX - r.left) / r.width);
+      });
+      control.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+        e.preventDefault();
+        var fraction = e.key === "Home" ? 0 : e.key === "End" ? 1 :
+          ((deck.currentTime || 0) + (e.key === "ArrowLeft" ? -5 : 5)) / (deck.duration || 1);
+        seekDeck(control, fraction);
+      });
     });
 
     var ICO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
@@ -2055,11 +2085,7 @@
     el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
     el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
     el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
-    el("nowSeek").addEventListener("click", function (e) {
-      if (!deck.duration) return;
-      var r = this.getBoundingClientRect();
-      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
-    });
+
     deck.addEventListener("timeupdate", paintSheet);
     deck.addEventListener("play", paintSheet);
     deck.addEventListener("pause", paintSheet);
