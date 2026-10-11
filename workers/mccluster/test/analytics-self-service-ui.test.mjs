@@ -14,9 +14,13 @@ function setup(mode = 'fan') {
   const listeners = new Map();
   const host = {
     dataset: { mode },
-    textContent: '',
-    innerHTML: '',
-    replaceChildren() { this.textContent = ''; this.innerHTML = ''; }
+    _text: '',
+    _html: '',
+    get textContent() { return this._text; },
+    set textContent(v) { this._text = v; this._html = ''; },
+    get innerHTML() { return this._html; },
+    set innerHTML(v) { this._html = v; this._text = ''; },
+    replaceChildren() { this.textContent = ''; }
   };
   const section = { hidden: true };
   const btn = { addEventListener() {} };
