@@ -30,15 +30,7 @@
       "source": "static HTML at the repository root, published by .github/workflows/deploy-pages.yml",
       "served_by": "GitHub Pages (repository CNAME = matthew.mccluster.org)",
       "front_door": "index.html: the I AM HERE experience, kept. It is a door into Matthew's house, not the semantic identity of the house.",
-      "hierarchy": [
-        "Matthew McCluster",
-        "music / I AM HERE",
-        "engineering",
-        "portfolio",
-        "services and work",
-        "civic projects",
-        "companies and products he founded or operates"
-      ],
+      "hierarchy": ["Matthew McCluster", "music / I AM HERE", "engineering", "portfolio", "services and work", "civic projects", "companies and products he founded or operates"],
       "journeys": [
         "recruiter: Matthew -> role lane -> evidence -> resume -> contact",
         "creative visitor: Matthew -> music / photography / film / portfolio",
@@ -110,64 +102,19 @@
   "url_ownership": {
     "_rule": "Ownership decides navigation, metadata and which entity a page is about. It does not by itself move a URL. Every path here keeps working where it is.",
     "personal": [
-      "/",
-      "/matthew-mccluster.html",
-      "/resume-it-support.html",
-      "/resume-digital-inclusion.html",
-      "/engineering/",
-      "/engineering/it-support-systems.html",
-      "/engineering/data-center-networking.html",
-      "/engineering/mccluster-platform.html",
-      "/engineering/field-technology-telematics.html",
-      "/engineering/ipc-infrastructure.html",
-      "/engineering/recruiter-role-map.html",
-      "/portfolio.html",
-      "/card.html",
-      "/press.html",
-      "/gallery.html",
-      "/walls/",
-      "/shots.html",
-      "/films.html",
-      "/album.html",
-      "/listen.html",
-      "/catalogue.html",
-      "/license.html",
-      "/policy.html",
-      "/policy-memo-dna.html",
-      "/case-designer-kicks.html",
-      "/newsroom.html"
+      "/", "/matthew-mccluster.html", "/resume-it-support.html", "/resume-digital-inclusion.html", "/engineering/", "/engineering/it-support-systems.html",
+      "/engineering/data-center-networking.html", "/engineering/mccluster-platform.html", "/engineering/field-technology-telematics.html",
+      "/engineering/ipc-infrastructure.html", "/engineering/recruiter-role-map.html", "/portfolio.html", "/card.html", "/press.html",
+      "/gallery.html", "/walls/", "/shots.html", "/films.html", "/album.html", "/listen.html", "/catalogue.html", "/license.html",
+      "/policy.html", "/policy-memo-dna.html", "/case-designer-kicks.html", "/newsroom.html"
     ],
     "company_hosted_on_personal_for_compatibility": [
-      "/mccluster-corp.html",
-      "/data/product-context.json",
-      "/docket-516.html",
-      "/action/",
-      "/mnet.html",
-      "/receipt.html",
-      "/heal-the-3rd-world.html",
-      "/end-racism.html",
-      "/wigger-recovery.html",
-      "/prim3.html",
-      "/prim3-range.html",
-      "/hitman-facility.html",
-      "/sites.html",
-      "/sites-details.html",
-      "/services.html",
-      "/hire.html",
-      "/creator.html",
-      "/music-creator.html",
-      "/music-creator-terms.html",
-      "/privacy.html"
+      "/mccluster-corp.html", "/data/product-context.json", "/docket-516.html", "/action/", "/mnet.html", "/receipt.html", "/heal-the-3rd-world.html", "/end-racism.html", "/wigger-recovery.html",
+      "/prim3.html", "/prim3-range.html", "/hitman-facility.html", "/sites.html", "/sites-details.html", "/services.html", "/hire.html",
+      "/creator.html", "/music-creator.html", "/music-creator-terms.html", "/privacy.html"
     ],
-    "separate_company_hosted_on_personal": [
-      "/whip.html"
-    ],
-    "owner_decision": [
-      "/prayer-closet.html",
-      "/closet/",
-      "/inner-room.html",
-      "/fbi.html"
-    ],
+    "separate_company_hosted_on_personal": ["/whip.html"],
+    "owner_decision": ["/prayer-closet.html", "/closet/", "/inner-room.html", "/fbi.html"],
     "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving the Action Network, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
   },
   "edge": {
