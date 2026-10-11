@@ -16,7 +16,7 @@
     "data/seo/recruiter-evidence.json; the recruiter sets here are the ones the",
     "2026-10-03 baseline measured."
   ],
-  "updated": "2026-10-03",
+  "updated": "2026-10-11",
   "landing_pages": {
     "entity": "https://matthew.mccluster.org/matthew-mccluster.html",
     "recruiter": "https://matthew.mccluster.org/engineering/",
@@ -29,7 +29,8 @@
     "services": "https://matthew.mccluster.org/services.html",
     "music": "https://matthew.mccluster.org/catalogue.html",
     "equity_uprise": "https://matthew.mccluster.org/docket-516.html",
-    "press": "https://matthew.mccluster.org/newsroom.html"
+    "press": "https://matthew.mccluster.org/newsroom.html",
+    "resume_digital_inclusion": "https://matthew.mccluster.org/resume-digital-inclusion.html"
   },
   "sets": {
     "branded_entity": [
@@ -106,7 +107,18 @@
       "What services does Matthew McCluster offer?",
       "What is Equity Uprise?",
       "What happened in Connecticut Siting Council Docket 516R?",
-      "What songs has Matthew McCluster released?"
+      "What songs has Matthew McCluster released?",
+      "What technology education and digital inclusion experience does Matthew McCluster have?"
+    ],
+    "digital_inclusion": [
+      "Matthew McCluster digital inclusion",
+      "Matthew McCluster technology instructor",
+      "Matthew McCluster technology education",
+      "Matthew McCluster digital marketing",
+      "technology instructor New Haven CT resume",
+      "digital inclusion instructor Connecticut",
+      "computer science student technology instructor Connecticut",
+      "digital marketing community outreach Connecticut"
     ]
   },
   "baseline": {
