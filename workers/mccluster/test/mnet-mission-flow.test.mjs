@@ -39,10 +39,10 @@ function harness(){
 test('rapid mission switches ignore stale detail response',async()=>{
   const h=harness();
   const a=h.actions.openMission('mission-A'),b=h.actions.openMission('mission-B');
-  h.calls[1].resolve({id:'mission-B',title:'B',status:'open',skills:[]});
+  h.calls[1].resolve([{id:'mission-B',title:'B',status:'open',skills:[]}]);
   await settle();
   assert.equal(h.missions.current.id,'mission-B');
-  h.calls[0].resolve({id:'mission-A',title:'A',status:'open',skills:[]});
+  h.calls[0].resolve([{id:'mission-A',title:'A',status:'open',skills:[]}]);
   h.calls[2].resolve([]);
   await Promise.all([a,b]);
   assert.equal(h.missions.current.id,'mission-B');
