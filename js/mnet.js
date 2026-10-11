@@ -1707,7 +1707,9 @@
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
+  var missionListVersion=0;
   function loadMissions(){
+    var version=++missionListVersion;
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
     loadActionRecord();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
@@ -1716,12 +1718,13 @@
       sbRest("action_missions?status=eq.open"+campaignFilter+"&select=*&order=created_at.desc"),
       sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
     ]).then(function(out){
+      if(version!==missionListVersion)return;
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
       setStatus($("mnMissionStatus"),"");
-    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+    }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
@@ -1825,13 +1828,17 @@
     setStatus($("mnMissionDialogStatus"),"Captured. Review it, add any detail you want, then submit.","ok");
   }
   function closeMission(){
+    missionOpenVersion++;
     var dlg=$("mnMissionDialog");if(dlg&&dlg.open)dlg.close();
     clearMissionCapture();
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var missionOpenVersion=0;
   function openMission(id){
+    var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
+      if(version!==missionOpenVersion)return;
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
       missions.current=m;missions.assignment=null;clearMissionCapture();
       if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
@@ -1846,6 +1853,7 @@
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
+        if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
         missions.assignment=a;$("mnMissionJoin").hidden=true;
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
@@ -1858,10 +1866,12 @@
               :"Mission in progress.";
         setStatus($("mnMissionDialogStatus"),assignmentMessage,a.status==="rejected"?"error":"ok");
       });
-    }).catch(function(e){setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
+    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
   }
   function joinMission(){
-    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");b.disabled=true;
+    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");
+    if(b.disabled)return;
+    b.disabled=true;
     var joinRequest = missions.liveSession&&missions.liveMission===m.id
       ? sbRpc("join_action_mission_live",{p_mission_id:m.id,p_live_session_id:missions.liveSession})
       : missions.content&&missions.attributedMission===m.id
@@ -1869,20 +1879,21 @@
         : sbRpc("join_action_mission",{p_mission_id:m.id});
     joinRequest
       .then(function(r){
+        if(!missions.current||missions.current.id!==m.id)return;
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;
         setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
         if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
         loadMissions();
       })
-      .catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
+      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
       .then(function(){b.disabled=false;});
   }
   function uploadProofFile(file){
     return uploadMediaWithPoster(file);
   }
   function submitMissionProof(ev){
-    ev.preventDefault();var a=missions.assignment;if(!a)return;var b=ev.target.querySelector('button[type="submit"]');b.disabled=true;
+    ev.preventDefault();var a=missions.assignment;if(!a)return;var proofMissionId=missions.current&&missions.current.id;var b=ev.target.querySelector('button[type="submit"]');if(!b||b.disabled)return;b.disabled=true;
     var picker=$("mnMissionProofFile"),file=missions.proofFile||(picker&&picker.files&&picker.files[0]);
     var type=$("mnMissionProofType").value,link=($("mnMissionProofUrl").value||"").trim()||null,statement=($("mnMissionProofStatement").value||"").trim();
     setStatus($("mnMissionDialogStatus"),file?"Uploading your proof…":"Submitting…");
@@ -1897,12 +1908,13 @@
       return sbRpc("set_action_share_intent",body).catch(function(){return sbRpc("set_action_share_intent",body);})
         .then(function(){return true;},function(){return false;});
     }).then(function(choiceSaved){
+      if(!missions.assignment||missions.assignment.id!==a.id||!missions.current||missions.current.id!==proofMissionId)return;
       missions.assignment.status="submitted";clearMissionCapture();
       if(choiceSaved)setStatus($("mnMissionDialogStatus"),"Proof submitted. Once verified, this action can appear on the feed with your proof.","ok");
       else setStatus($("mnMissionDialogStatus"),"Proof submitted, but your feed choice did not save. You can share it after verification.","error");
-      if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:missions.current&&missions.current.id,upload:!!file});
+      if(window.MCC_TRACK)window.MCC_TRACK("mission_proof",{mission:proofMissionId,upload:!!file});
       loadMissions();
-    }).catch(function(e){setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
+    }).catch(function(e){if(missions.assignment&&missions.assignment.id===a.id&&missions.current&&missions.current.id===proofMissionId)setStatus($("mnMissionDialogStatus"),e.message||"Proof could not be submitted.","error");})
       .then(function(){b.disabled=false;});
   }
   /* A shared mission link opens that mission, not the feed. */

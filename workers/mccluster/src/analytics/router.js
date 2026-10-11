@@ -1,4 +1,5 @@
 import { requireCapability } from '../lib/capabilities.js';
+import { engagementScore, validateUserPage, groupUserEvents } from './users-utils.js';
 import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
@@ -839,10 +840,130 @@ const forensics = createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, fini
 const audienceScience = createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, requireHouseOwner });
 const experienceAnalytics = createExperienceAnalyticsRoutes({ json, sbRows, sbRowsPaged, finiteDate, requireHouseOwner });
 
+
+/* Bounded owner-only account explorer. Events are matched by authenticated uid
+   only; shared device IDs must never be treated as proof of identity. */
+async function handleUserExplorer(request, env, user, url) {
+  await requireHouseOwner(env, user);
+  if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
+  const paging=validateUserPage(url);
+  if(!paging)return json({ok:false,error:'Invalid pagination'},400);
+  const {limit,page}=paging;
+  const res=await fetch(env.SUPABASE_URL+'/auth/v1/admin/users?page='+page+'&per_page='+limit,{
+    headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,
+      authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,accept:'application/json'}
+  });
+  if(!res.ok)throw Object.assign(new Error('Account listing unavailable'),{status:502});
+  const data=await res.json();
+  const accounts=Array.isArray(data?.users)?data.users:[];
+  const ids=accounts.map(u=>String(u.id||'')).filter(id=>/^[0-9a-f-]{36}$/i.test(id));
+  const allEvents=[];
+  // Fetch a single bounded page of events per account batch, not one network
+  // request per user. Individual histories may be incomplete; never imply
+  // the sample covers all events.
+  for(let i=0;i<ids.length;i+=20){
+    const group=ids.slice(i,i+20);
+    const rows=await sbRows(env,'events?site_id=is.null&uid=in.('+group.join(',')+')'+
+      '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=2000');
+    allEvents.push(...rows);
+  }
+  const eventsById=groupUserEvents(allEvents,new Set(ids));
+  const users=[];
+  for(const u of accounts){
+    const id=String(u.id||'');
+    if(!eventsById.has(id))continue;
+    const events=eventsById.get(id);
+    const activity=engagementScore(events);
+    const meta=u.user_metadata&&typeof u.user_metadata==='object'?u.user_metadata:{};
+    users.push({
+      id,display_name:[meta.first_name,meta.last_name].filter(Boolean).join(' ')||u.email||id,
+      email:u.email||null,segment:activity.events?'Active in last 30 days':'No recent recorded activity',
+      attributes:{created_at:u.created_at||null,email_confirmed_at:u.email_confirmed_at||null,
+        first_name:meta.first_name||null,last_name:meta.last_name||null,
+        observed_events_sample:events.length,observed_sessions_sample:activity.sessions},
+      events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer})),
+      scores:{engagement:{value:activity.value,window_days:30,
+        explanation:'4 points per meaningful event plus 3 per observed session, capped at 100; based on latest 100 authenticated events.'}}
+    });
+  }
+  return json({ok:true,users,page,limit,has_more:accounts.length===limit,
+    scoring:'Engagement is a preliminary descriptive activity index; other dimensions require validated conversion and retention signals.'});
+}
+
+
+/* Self-service dashboards: never use caller-provided user or creator IDs. */
+async function handleSelfMusicAnalytics(request,env,user,url,path){
+ if(!user?.id)throw Object.assign(new Error('Authentication required'),{status:401});
+ if(request.method!=='GET')return json({ok:false,error:'GET only'},405);
+ const since=new Date(Date.now()-30*86400000).toISOString();
+ if(path==='/v1/analytics/my-listening'){
+   const rows=await sbRows(env,'events?site_id=is.null&uid=eq.'+encodeURIComponent(user.id)+
+     '&at=gte.'+encodeURIComponent(since)+
+     '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&select=at,name,path,props&order=at.desc&limit=500');
+   const counts={};for(const e of rows)counts[e.name]=(counts[e.name]||0)+1;
+   return json({ok:true,window_days:30,sample_limited:rows.length===500,
+     counts,activity:rows.slice(0,60).map(e=>({at:e.at,name:e.name,
+       track:String(e.props?.track||e.props?.song||'').slice(0,120)}))});
+ }
+ const links=await sbRows(env,'m_auth_user_links?auth_user_id=eq.'+encodeURIComponent(user.id)+
+   '&is_primary=eq.true&select=m_uid&limit=1');
+ const mUid=links[0]?.m_uid;
+ if(!mUid)return json({ok:true,creator:false,window_days:30,tracks:[],counts:{}});
+ const tracks=await sbRows(env,'creator_tracks?m_uid=eq.'+encodeURIComponent(mUid)+
+   '&select=id,title,status,published_at&limit=200');
+ const ids=new Set(tracks.map(t=>String(t.id)));
+ const counts={};
+ const profiles=await sbRows(env,'music_creator_profiles?m_uid=eq.'+encodeURIComponent(mUid)+
+   '&select=handle&limit=1');
+ const handle=String(profiles[0]?.handle||'');
+ const trafficRows=handle?await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props&order=at.desc&limit=1000'):[];
+ const traffic=trafficRows.filter(e=>{
+   const raw=String(e.path||'');
+   const query=raw.includes('?')?raw.slice(raw.indexOf('?')+1):'';
+   try{return raw.startsWith('music-creator.html')&&new URLSearchParams(query).get('handle')===handle;}catch{return false;}
+ });
+ const daily={};const sources={};const sessions=new Set();
+ for(const e of traffic){
+   const day=String(e.at||'').slice(0,10);
+   if(/^\d{4}-\d{2}-\d{2}$/.test(day))daily[day]=(daily[day]||0)+1;
+   if(e.session_id)sessions.add(e.session_id);
+   let source='Direct / unknown';
+   try{if(e.referrer){const u=new URL(e.referrer);source=u.hostname;}}catch{}
+   sources[source]=(sources[source]||0)+1;
+ }
+ const pageTraffic={views:traffic.length,approximate_sessions:sessions.size,
+   daily,sources,sample_limited:trafficRows.length===1000};
+ const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
+   plays:0,completions:0,shares:0}]));
+ if(ids.size){
+   // Catalog-specific event filtering occurs in memory only after a bounded
+   // 30-day query. Do not return individual listener identities to creators.
+   const rows=await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+     '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&select=name,props&order=at.desc&limit=1000');
+   for(const e of rows){
+     const id=String(e.props?.creator_track_id||'');
+     const item=perTrack.get(id);if(!item)continue;
+     if(['music_play','music_full_play','music_preview_play','song_start'].includes(e.name))item.plays++;
+     if(e.name==='music_complete')item.completions++;
+     if(e.name==='track_share')item.shares++;
+     counts[e.name]=(counts[e.name]||0)+1;
+   }
+ }
+ return json({ok:true,creator:true,window_days:30,sample_limited:true,
+   disclaimer:'Observed matching events only; counts may be incomplete due to event sampling.',
+   counts,page_traffic:pageTraffic,tracks:[...perTrack.values()]});
+}
+
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
 
+  if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
+    return handleSelfMusicAnalytics(request,env,user,url,path);
+  if (path === '/v1/analytics/users') return handleUserExplorer(request, env, user, url);
   if (path === '/v1/analytics/business') {
     return handleBusinessSnapshot(request, env, user, url);
   }

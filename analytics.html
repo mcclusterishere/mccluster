@@ -291,6 +291,7 @@
     <nav class="an-tabs" id="anTabs" role="tablist" aria-label="Analytics sections">
       <button type="button" class="an-tab" id="anOverviewTab" data-sec="overview" role="tab" aria-selected="false" hidden>Overview</button>
       <button type="button" class="an-tab is-on" data-sec="traffic" role="tab" aria-selected="true">Traffic</button>
+      <button type="button" class="an-tab" id="anUsersTab" data-sec="users" role="tab" aria-selected="false" hidden>Users</button>
       <button type="button" class="an-tab" data-sec="audience" role="tab" aria-selected="false">Audience</button>
       <button type="button" class="an-tab" data-sec="content" role="tab" aria-selected="false">Content</button>
       <button type="button" class="an-tab" id="anIdentityTab" data-sec="identity" role="tab" aria-selected="false" hidden>Identity</button>
@@ -307,6 +308,11 @@
         <div id="overviewBody" style="margin-top:1rem"></div>
         <p class="bd-sub" id="overviewStamp" style="margin-top:1rem"></p>
       </section>
+    </section>
+
+    <!-- ============ USERS / OWNER INTELLIGENCE ============ -->
+    <section class="an-sec" data-sec="users" hidden>
+      <section class="an-panel an-wide"><h2>Users · Intelligence</h2><p class="bd-sub">Owner-only user exploration, observed journeys, explainable activity scores and cohort inspection. Scores describe recorded product activity, not personal character.</p><div id="userIntelligence" aria-live="polite">Waiting for authorized user data…</div></section>
     </section>
 
     <!-- ============ TRAFFIC ============ -->
@@ -471,6 +477,7 @@
 <script src="js/insights.js?v=__STAMP__" defer></script>
 <script src="js/analytics-product.js"></script>
 <script src="js/analytics-suite.js?v=__STAMP__"></script>
+<script src="js/analytics-users.js?v=__STAMP__" defer></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

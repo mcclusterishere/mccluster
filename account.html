@@ -297,7 +297,8 @@
       <button class="ac__btn" id="fnSave" type="button">Save</button>
       <p class="ac__note" id="fnMsg"></p>
     </div>
-  </main>
+  <section class="ac__card" id="fanListeningSection" aria-labelledby="fanAnalyticsHeading" hidden><h2 id="fanAnalyticsHeading">My Listening</h2><p>Your private listening activity and music discovery.</p><button type="button" id="selfMusicRefresh">Refresh listening</button><div id="selfMusicAnalytics" data-mode="fan" aria-live="polite"></div></section>
+</main>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
   <!-- The social door. It shares mccdb_session with backend.js, so a Google
@@ -460,6 +461,8 @@
     });
 
     el("acCreateGo").onclick = function () {
+      if (el("acCreateGo").disabled) return;
+      if (window.MCC_TRACK) window.MCC_TRACK("signup_started", { flow: "password" });
       var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
       var em = el("acCreateEmail").value.trim();
       var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
@@ -500,22 +503,30 @@
       };
       MCC.signUpWithPassword(em, pw, metadata).then(function (result) {
         if (result && result.session) {
+          if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "immediate" });
           if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
           freshSignIn = true;
           paint();
           return;
         }
         if (result && result.existing) {
+          if (window.MCC_TRACK) window.MCC_TRACK("signup_existing_account", { flow: "password" });
           el("acInEmail").value = em;
           setAuthMode("signin");
           el("acMsg").textContent = "An account already exists for that email. Sign in, or use Forgot password.";
           return;
         }
         pendingVerificationEmail = em;
+        if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "pending" });
         el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
         el("acResend").hidden = false;
       }).catch(function (e) {
-        createFail(e.message || "Could not create that account.", null,
+        var rateLimited = String((e && (e.code || e.status)) || "").includes("429") ||
+          /rate.limit|too many requests/i.test(String(e && e.message || ""));
+        if (window.MCC_TRACK) window.MCC_TRACK("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
+        createFail(rateLimited
+          ? "Too many signup attempts right now. Please wait before trying again; repeated taps will not help. You can also sign in if you already have an account."
+          : (e.message || "Could not create that account."), null,
           "server_" + String((e && (e.code || e.status)) || "error").slice(0, 40));
       }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
     };
@@ -782,6 +793,8 @@
     paint();
   })();
   </script>
+
+  <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

@@ -955,6 +955,9 @@ window.MCC_MODEL = (function () {
     if (!el || !d) return false;
     if (d.tag === "input" || d.tag === "textarea" || d.tag === "select" || d.tag === "label") return false;
     if (el.isContentEditable) return false;
+    /* Current-page navigation and media controls may perform meaningful work
+       without DOM mutations within 450ms; do not mislabel them as dead. */
+    if (el.closest && el.closest(".appbar__tab.is-here,.music-inline-play,.alb__play,[aria-pressed]")) return false;
     if (d.tag === "a") {
       var href = el.getAttribute("href") || "";
       if (!href || href.charAt(0) === "#") return true;
@@ -976,9 +979,9 @@ window.MCC_MODEL = (function () {
     var t = now();
     recent = recent.filter(function (r) { return t - r.t < 1000; });
     var near = recent.filter(function (r) {
-      return Math.abs(r.x - e.clientX) < 40 && Math.abs(r.y - e.clientY) < 40;
+      return r.sel === d.sel && r.path === location.pathname && Math.abs(r.x - e.clientX) < 40 && Math.abs(r.y - e.clientY) < 40;
     });
-    recent.push({ t: t, x: e.clientX, y: e.clientY });
+    recent.push({ t: t, x: e.clientX, y: e.clientY, sel: d.sel, path: location.pathname });
 
     var payload = {
       el: d.sel, text: d.text, href: d.href, cta: d.cta,
@@ -988,7 +991,7 @@ window.MCC_MODEL = (function () {
       pct_y: n2(e.pageY / Math.max(1, doc.documentElement.scrollHeight) * 100),
     };
 
-    if (near.length >= 2) {
+    if (near.length >= 2 && deadEligible(hit, d)) {
       T("rage_click", payload);
       recent = [];
       return;
