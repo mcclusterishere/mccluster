@@ -1,4 +1,5 @@
 import { requireCapability } from '../lib/capabilities.js';
+import { engagementScore, validateUserPage, groupUserEvents } from './users-utils.js';
 import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
@@ -845,12 +846,9 @@ const experienceAnalytics = createExperienceAnalyticsRoutes({ json, sbRows, sbRo
 async function handleUserExplorer(request, env, user, url) {
   await requireHouseOwner(env, user);
   if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
-  const limitRaw = Number(url.searchParams.get('limit') || 50);
-  const pageRaw = Number(url.searchParams.get('page') || 1);
-  if (!Number.isInteger(limitRaw) || limitRaw < 1 || limitRaw > 100 ||
-      !Number.isInteger(pageRaw) || pageRaw < 1 || pageRaw > 10000)
-    return json({ok:false,error:'Invalid pagination'},400);
-  const limit=limitRaw, page=pageRaw;
+  const paging=validateUserPage(url);
+  if(!paging)return json({ok:false,error:'Invalid pagination'},400);
+  const {limit,page}=paging;
   const res=await fetch(env.SUPABASE_URL+'/auth/v1/admin/users?page='+page+'&per_page='+limit,{
     headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,
       authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,accept:'application/json'}
@@ -858,26 +856,33 @@ async function handleUserExplorer(request, env, user, url) {
   if(!res.ok)throw Object.assign(new Error('Account listing unavailable'),{status:502});
   const data=await res.json();
   const accounts=Array.isArray(data?.users)?data.users:[];
+  const ids=accounts.map(u=>String(u.id||'')).filter(id=>/^[0-9a-f-]{36}$/i.test(id));
+  const allEvents=[];
+  // Fetch a single bounded page of events per account batch, not one network
+  // request per user. Individual histories may be incomplete; never imply
+  // the sample covers all events.
+  for(let i=0;i<ids.length;i+=20){
+    const group=ids.slice(i,i+20);
+    const rows=await sbRows(env,'events?site_id=is.null&uid=in.('+group.join(',')+')'+
+      '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=2000');
+    allEvents.push(...rows);
+  }
+  const eventsById=groupUserEvents(allEvents,new Set(ids));
   const users=[];
   for(const u of accounts){
     const id=String(u.id||'');
-    if(!/^[0-9a-f-]{36}$/i.test(id))continue;
-    const events=await sbRows(env,'events?site_id=is.null&uid=eq.'+encodeURIComponent(id)+
-      '&select=at,name,path,session_id,referrer&order=at.desc&limit=100');
-    const sessions=new Set(events.map(e=>e.session_id).filter(Boolean));
-    const now=Date.now();
-    const recent=events.filter(e=>{const t=Date.parse(e.at||'');return Number.isFinite(t)&&t>=now-30*86400000&&t<=now;});
-    const meaningful=recent.filter(e=>!['page_view','heartbeat'].includes(e.name));
-    const engagement=Math.min(100,Math.round(meaningful.length*4+sessions.size*3));
+    if(!eventsById.has(id))continue;
+    const events=eventsById.get(id);
+    const activity=engagementScore(events);
     const meta=u.user_metadata&&typeof u.user_metadata==='object'?u.user_metadata:{};
     users.push({
       id,display_name:[meta.first_name,meta.last_name].filter(Boolean).join(' ')||u.email||id,
-      email:u.email||null,segment:recent.length?'Active in last 30 days':'No recent recorded activity',
+      email:u.email||null,segment:activity.events?'Active in last 30 days':'No recent recorded activity',
       attributes:{created_at:u.created_at||null,email_confirmed_at:u.email_confirmed_at||null,
         first_name:meta.first_name||null,last_name:meta.last_name||null,
-        observed_events_sample:events.length,observed_sessions_sample:sessions.size},
+        observed_events_sample:events.length,observed_sessions_sample:activity.sessions},
       events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer})),
-      scores:{engagement:{value:engagement,window_days:30,
+      scores:{engagement:{value:activity.value,window_days:30,
         explanation:'4 points per meaningful event plus 3 per observed session, capped at 100; based on latest 100 authenticated events.'}}
     });
   }
