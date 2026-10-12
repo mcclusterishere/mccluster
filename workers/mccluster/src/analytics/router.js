@@ -860,10 +860,15 @@ async function handleUserExplorer(request, env, user, url) {
   const allEvents=[];
   // Per-account bounds prevent one prolific account from starving others.
   // Histories remain explicitly sampled, with at most 100 events per UID.
-  for (const id of ids) {
-    const rows = await sbRows(env, 'events?site_id=is.null&uid=eq.' + encodeURIComponent(id) +
-      '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=100');
-    allEvents.push(...rows);
+  // Bound concurrent PostgREST requests while retaining independent per-UID caps.
+  // Promise.all preserves account order; one failed query fails the owner request.
+  const EVENT_QUERY_CONCURRENCY = 5;
+  for (let offset = 0; offset < ids.length; offset += EVENT_QUERY_CONCURRENCY) {
+    const batches = await Promise.all(ids.slice(offset, offset + EVENT_QUERY_CONCURRENCY).map(id =>
+      sbRows(env, 'events?site_id=is.null&uid=eq.' + encodeURIComponent(id) +
+        '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=100')
+    ));
+    for (const rows of batches) allEvents.push(...rows);
   }
   const eventsById=groupUserEvents(allEvents,new Set(ids));
   const users=[];
