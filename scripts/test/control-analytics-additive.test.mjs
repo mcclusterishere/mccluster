@@ -58,5 +58,6 @@ test('responsive decision layer CSS is present',async()=>{
   const css=await readFile('css/control-analytics.css','utf8');
   assert.match(css,/\.cra-decision-layer/);
   assert.match(css,/\.cra-insights/);
-  assert.doesNotMatch(css,/@media\\s*\\(max-width:/);\n  assert.match(css,/@media\\(min-width:601px\\)/);
+  assert.doesNotMatch(css, /@media\s*\(max-width:/);
+  assert.match(css, /@media\s*\(min-width:\s*601px\)/);
 });
