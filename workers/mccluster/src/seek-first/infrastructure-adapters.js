@@ -139,17 +139,15 @@ function entity(fields) {
  * NONPROFIT lane; this adapter never silently upgrades that permission.
  */
 async function peeringDb(input = {}, env = {}) {
-  const bbox = normalizeBbox(input, { required: false, maxSpan: 40 });
+  const bbox = normalizeBbox(input, { required: true, maxSpan: 40 });
   const limit = integer(input.limit, 'limit', 1, 500, 250);
   const url = new URL('https://www.peeringdb.com/api/fac');
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('depth', '0');
-  if (bbox) {
-    url.searchParams.set('latitude__gte', String(bbox.minLat));
-    url.searchParams.set('latitude__lte', String(bbox.maxLat));
-    url.searchParams.set('longitude__gte', String(bbox.minLon));
-    url.searchParams.set('longitude__lte', String(bbox.maxLon));
-  }
+  url.searchParams.set('latitude__gte', String(bbox.minLat));
+  url.searchParams.set('latitude__lte', String(bbox.maxLat));
+  url.searchParams.set('longitude__gte', String(bbox.minLon));
+  url.searchParams.set('longitude__lte', String(bbox.maxLon));
   if (input.country) url.searchParams.set('country', String(input.country).trim().toUpperCase().slice(0, 2));
   if (input.state) url.searchParams.set('state', String(input.state).trim().slice(0, 32));
   if (input.city) url.searchParams.set('city', String(input.city).trim().slice(0, 80));
@@ -191,7 +189,7 @@ async function peeringDb(input = {}, env = {}) {
   return result('peeringdb', 'facilities', url.toString(), records, {
     provider_count: rows.length,
     mapped_count: records.length,
-    bbox: bbox ? [bbox.minLon, bbox.minLat, bbox.maxLon, bbox.maxLat] : null,
+    bbox: [bbox.minLon, bbox.minLat, bbox.maxLon, bbox.maxLat],
   });
 }
 
