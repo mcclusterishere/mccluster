@@ -61,6 +61,32 @@ Timecodes are **lyric cues**, not locked seconds. Confirm against the master aud
 
 **Branch implementation:** preserve a single audio clock and one canonical film as the fallback. For each choice, play a time-aligned variant clip or render an overlay/effect for a bounded window, then rejoin canon. Make missing/late selections non-disruptive. The exact number of choice points should be decided from lyric and edit structure, not forced to exactly 11.
 
+## Current production decision — synchronized dual-track reels (2026-10-12)
+**This section supersedes the earlier assumption of many independently branching clips or one immutable canonical visual track.** The song's **audio and musical timeline are canonical**, while there are two parallel, time-aligned **visual lanes**, Social and Anti-Social. The viewer can switch lanes at an eligible decision point without resetting the music or creating a new timeline. Each lane has its own location, artist behavior, camera pickup and scene transitions.
+
+### Three chapters / reels
+Plan **three content chapters** spanning the 176-second song, approximately one minute each (exact chapter boundaries determined by lyric cues, not rigid 60s):
+1. **Opening:** Social = outdoors in nature, meditating, one-eye peek, acknowledges viewer; Anti-Social = inside dorm, sitting on couch/phone, ignores viewer entirely. The opening location is an inverse pair.
+2. **Middle:** Social = camera pickup and church/conversions sequence; Anti-Social = matched camera pickup from dorm/private scene into a withdrawn setting (candidate: library, writing homework with tablet beside artist). No acknowledgment of viewer.
+3. **Ending:** Social = office/coaching/performance; Anti-Social = home/balcony at night, looking into the distance or using tablet, or library/study material if better aligned with song. The exact Anti-Social ending scene is not locked; preserve both candidates.
+
+### Decision and transition semantics
+- **Every branch point chooses the lane for the upcoming segment.** The current shot may finish at the next cut/pickup; prepare/preload the chosen lane and switch on the synchronized transition boundary. A choice made while Matthew ignores the viewer in the dorm can therefore lead into the church at the next eligible transition.
+- **Staying Anti-Social** continues the corresponding Anti-Social chapter and its own matched pickup/edit; **switching to Social** leads to the Social chapter at the same song timestamp. The inverse applies to Social → Anti-Social.
+- A viewer can change lanes repeatedly; **there are two variants at each chapter/time segment, not exponentially more assets per prior decision history**.
+- **Canon events** are shared musical/story *cues* (e.g., pickup, location change, lyric sync), not a requirement that both lanes show the same location or action. Both lanes maintain synchronized anchor events so switches are coherent.
+- The initial mode may set the initial lane, but narrative Social/Anti-Social lane choices **must not silently enable recording**. Reaction recording is a separate opt-in.
+- For mobile and VR, viewer can look around in each 360 environment; switching requires preloading, timestamp alignment, matching view orientation/horizon, transition masking, and audio uninterrupted.
+
+### Asset-count clarification
+- User's current creative planning target is **18 reels**, potentially **36 edited reel outputs** once environment/AI transition variants are counted. This is a production target, **not** mathematically required by a two-lane, three-chapter runtime.
+- Minimal long-form baseline: **3 chapters × 2 lanes = 6 chapter masters**, each approximately 60s, plus transition edits and optional short-form exports. Reels/exports, scene takes, AI variants and interactive segments are distinct counts; inventory them separately before scheduling 18/36 deliverables.
+- If 18 source reels are intentionally produced, track each reel's chapter, lane, lyric in/out, location, source capture, transition effect and derived edits in a shot manifest. Do not claim 36 unique shoots unless planned.
+- Existing media/lyrics: `assets/audio/antisocial.mp3`, `assets/video/nightscroll.mp4`, `data/lyrics/antisocial.json` (176s metadata). Night Scroll can remain an interactive phone/feed layer or optional visual treatment.
+
+### Immediate production artifacts to prepare
+- Three-chapter beat/lyric cue sheet; two-column Social vs Anti-Social shot list; camera pickup match-cut specification; lane-switch state machine; 18-reel/36-edit asset manifest with explicit source-vs-export definitions; 360 viewing and fallback QA checklist.
+
 ## Interactive story rules
 1. **Social mode:** viewer separately opts into camera reaction recording. Eventually may see their own silhouette/visual presence in the scene. Recording must require explicit consent; no camera/audio upload by default.
 2. **Anti-Social mode:** camera is used **locally for head-tracked parallax only**, with no reaction recording, uploading, biometric enrollment, or emotion inference. Provide no-camera touch/drag fallback.
