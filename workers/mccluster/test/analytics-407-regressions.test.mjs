@@ -14,7 +14,8 @@ test('creator completion emits stable creator track identifier', () => {
   assert.match(engine, /trackEvent\("music_complete",[\s\S]*?creator_track_id: current && current\.creatorTrackId/);
 });
 test('owner explorer queries bounded events per uid rather than a shared batch cap', () => {
-  assert.match(router, /for \(const id of ids\)/);
+  assert.match(router, /EVENT_QUERY_CONCURRENCY = 5/);
+  assert.match(router, /Promise\.all\(ids\.slice\(offset, offset \+ EVENT_QUERY_CONCURRENCY\)\.map/);
   assert.match(router, /uid=eq\.' \+ encodeURIComponent\(id\)/);
 });
 test('listening activity includes album player events', () => {
