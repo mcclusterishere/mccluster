@@ -25,3 +25,22 @@ test('self-service fan and creator endpoints are distinct from owner explorer',a
  const self=await readFile('js/music-self-analytics.js','utf8');
  assert.match(self,/creator\?'my-creator':'my-listening'/);
 });
+
+test('owner status is not a public health endpoint',async()=>{
+ const worker=await readFile('workers/mccluster/src/index.js','utf8');
+ const start=worker.indexOf("if (path === '/v1/status' && request.method === 'GET')");
+ assert.ok(start>=0,'status route missing');
+ const route=worker.slice(start,start+300);
+ assert.match(route,/await requireHouseOwner\(request, env\)/);
+ const auth=worker.slice(worker.indexOf('async function requireHouseOwner(req, env)'),worker.indexOf('async function appByKey'));
+ assert.match(auth,/role=eq\.owner/);
+ assert.match(auth,/Authentication required/);
+});
+test('owner user explorer enforces house owner and self endpoints bind identity to bearer',async()=>{
+ const router=await readFile('workers/mccluster/src/analytics/router.js','utf8');
+ const users=router.slice(router.indexOf('async function handleUserExplorer('),router.indexOf('/* Self-service dashboards'));
+ assert.match(users,/await requireHouseOwner\(env, user\)/);
+ const self=router.slice(router.indexOf('async function handleSelfMusicAnalytics('),router.indexOf('async function handleSelfMusicAnalytics(')+1700);
+ assert.match(self,/user\.id/);
+ assert.doesNotMatch(self,/url\.searchParams\.get\(['"]uid['"]\)/);
+});
