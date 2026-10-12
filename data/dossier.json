@@ -15,7 +15,7 @@
     "Anything sensitive (EIN, UEI, CAGE, SAM registration) stays OUT of this",
     "file. It ships with the public site. Those live in the private desk."
   ],
-  "updated": "2026-10-07",
+  "updated": "2026-10-11",
   "person": {
     "legalName": "Matthew Christian Perry McCluster",
     "preferredName": "Matthew McCluster",
@@ -242,7 +242,9 @@
       "Field IT / Field Service Technician",
       "Platform / Web / Backend Developer",
       "Telematics / Fleet Technology Specialist",
-      "Creative Director / Media Producer"
+      "Creative Director / Media Producer",
+      "Technology Instructor / Digital Inclusion Instructor",
+      "Marketing Intern / Digital Marketing Coordinator"
     ],
     "fellowships": [
       "Civic technology",

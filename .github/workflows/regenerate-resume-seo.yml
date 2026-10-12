@@ -27,10 +27,12 @@ jobs:
           node tools/build-sitemap.mjs
           node tools/build-resume.mjs
           node tools/build-it-resume.mjs
+          node tools/build-digital-inclusion-resume.mjs
       - name: Verify generated artifacts
         run: |
           node tools/verify-resume.mjs
           node tools/verify-it-resume.mjs
+          node tools/verify-digital-inclusion-resume.mjs
           node --test scripts/test/resume-docx-sync.test.mjs scripts/test/seo-authority.test.mjs
       - name: Upload generated artifacts for review
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

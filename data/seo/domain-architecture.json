@@ -102,7 +102,7 @@
   "url_ownership": {
     "_rule": "Ownership decides navigation, metadata and which entity a page is about. It does not by itself move a URL. Every path here keeps working where it is.",
     "personal": [
-      "/", "/matthew-mccluster.html", "/resume-it-support.html", "/engineering/", "/engineering/it-support-systems.html",
+      "/", "/matthew-mccluster.html", "/resume-it-support.html", "/resume-digital-inclusion.html", "/engineering/", "/engineering/it-support-systems.html",
       "/engineering/data-center-networking.html", "/engineering/mccluster-platform.html", "/engineering/field-technology-telematics.html",
       "/engineering/ipc-infrastructure.html", "/engineering/recruiter-role-map.html", "/portfolio.html", "/card.html", "/press.html",
       "/gallery.html", "/walls/", "/shots.html", "/films.html", "/album.html", "/listen.html", "/catalogue.html", "/license.html",
