@@ -598,6 +598,62 @@
   });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
+  /* Playback quality telemetry: media-clock deltas rather than Date.now() alone.
+     Session-scoped pseudonymous ID; never store face or camera data. Events
+     are best effort, and the server must deduplicate and validate them. */
+  var quality = null;
+  function qualityId() {
+    if (root.crypto && root.crypto.randomUUID) return root.crypto.randomUUID();
+    return String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+  }
+  function qualityStart() {
+    if (!current) return;
+    if (quality && quality.item === current && !quality.closed) return;
+    quality = { id: qualityId(), item: current, last: audio.currentTime || 0,
+      listened: 0, buckets: {}, lastSent: 0, closed: false, seeks: 0 };
+    qualityEvent("music_listen_start", {position_seconds:quality.last});
+  }
+  function qualityEvent(name, extra) {
+    if (!quality || !current) return;
+    trackEvent(name, Object.assign({
+      playback_id:quality.id, position_seconds:Math.round((audio.currentTime||0)*10)/10,
+      duration_seconds:isFinite(audio.duration)?Math.round(audio.duration*10)/10:null,
+      listened_seconds:Math.round(quality.listened*10)/10,
+      preview:!!previewLimit, creator_track_id:current.creatorTrackId||undefined
+    },extra||{}));
+  }
+  function qualityTick() {
+    if (!quality || quality.closed || audio.paused || audio.seeking ||
+        doc.visibilityState === "hidden" || !current) return;
+    var now=audio.currentTime||0, delta=now-quality.last;
+    /* Discard seeks, jumps and large background gaps. */
+    if (delta>0 && delta<=2.5) {
+      quality.listened+=delta;
+      var first=Math.floor(quality.last/5), last=Math.floor(now/5);
+      for(var b=first;b<=last;b++) quality.buckets[b]=1;
+    }
+    quality.last=now;
+    if (quality.listened-quality.lastSent>=10) {
+      quality.lastSent=quality.listened;
+      qualityEvent("music_listen_checkpoint", {covered_buckets:Object.keys(quality.buckets).map(Number)});
+    }
+  }
+  function qualityFinish(reason) {
+    if (!quality || quality.closed) return;
+    qualityTick();
+    quality.closed=true;
+    qualityEvent("music_listen_end", {reason:reason,seek_count:quality.seeks,
+      covered_buckets:Object.keys(quality.buckets).map(Number)});
+  }
+  audio.addEventListener("play", function(){qualityStart();if(quality)quality.last=audio.currentTime||0;});
+  audio.addEventListener("timeupdate", qualityTick);
+  audio.addEventListener("pause", function(){qualityFinish("pause");});
+  audio.addEventListener("seeking", function(){if(quality){quality.seeks++;quality.last=audio.currentTime||0;}});
+  audio.addEventListener("seeked", function(){if(quality)quality.last=audio.currentTime||0;});
+  audio.addEventListener("ended", function(){qualityFinish("complete");});
+  audio.addEventListener("waiting", function(){qualityFinish("buffering");});
+  doc.addEventListener("visibilitychange",function(){if(doc.visibilityState==="hidden")qualityFinish("background");});
+  root.addEventListener("pagehide",function(){qualityFinish("pagehide");});
   /* Present the membership invitation over the actual player when a public
      preview expires. This is a conversion surface, not an auth entitlement. */
   var previewInvitationShown = false;
