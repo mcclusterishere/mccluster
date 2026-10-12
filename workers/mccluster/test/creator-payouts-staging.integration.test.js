@@ -10,7 +10,9 @@ import assert from 'node:assert/strict';
 const api = process.env.CREATOR_PAYOUTS_API;
 const jwt = process.env.CREATOR_PAYOUTS_OWNER_JWT;
 const earningId = process.env.CREATOR_PAYOUTS_TEST_EARNING_ID;
-const enabled = Boolean(api && jwt && earningId);
+const configured = [api, jwt, earningId].filter(Boolean).length;
+if (configured > 0 && configured < 3) throw new Error('Creator payout staging test configuration incomplete; set all three variables');
+const enabled = configured === 3;
 
 async function post(path, payload) {
   const response = await fetch(new URL(path, api), {
@@ -43,4 +45,9 @@ test('concurrent transfers cannot both claim the same payout intent', { skip: !e
   const accepted = results.filter(x => x.status >= 200 && x.status < 300);
   assert.ok(accepted.length <= 1, JSON.stringify(results));
   assert.ok(results.some(x => x.status === 409), JSON.stringify(results));
+});
+
+test('staging suite does not silently pass without configured integration credentials', () => {
+ assert.equal(enabled, configured === 3);
+ if (!enabled) console.log('Creator payout staging integration tests SKIPPED: no staging credentials; not end-to-end verified.');
 });
