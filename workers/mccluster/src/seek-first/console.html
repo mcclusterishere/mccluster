@@ -435,15 +435,15 @@
     }).forEach(function (spec) {
       var node = document.querySelector('[data-layer="' + spec.key + '"]');
       if (!node || node.getAttribute('data-on') !== '1') return;
+      var requestId = (spec.requestId || 0) + 1;
+      spec.requestId = requestId;
       var maxSpan = spec.key === 'ripe_atlas' ? 20 : 40;
       if (bbox[2] - bbox[0] > maxSpan || bbox[3] - bbox[1] > maxSpan) {
         setMeta(node, 'Zoom in to load this viewport (' + maxSpan + '° maximum)', '');
         if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
         return;
       }
-      var requestId = (spec.requestId || 0) + 1;
-      spec.requestId = requestId;
-      loadProvider(spec).then(function (summary) {
+      loadProvider(spec, requestId).then(function (summary) {
         if (spec.requestId !== requestId || node.getAttribute('data-on') !== '1') return;
         spec.attribution = summary.attribution;
         setMeta(node, summary.records + ' records, ' + summary.mapped + ' mapped', '');
@@ -533,13 +533,16 @@
     });
   }
 
-  function loadProvider(spec) {
+  function loadProvider(spec, requestId) {
     var body = spec.build ? spec.build(cameraCentre()) : {};
     body.persist = false;
     body.lane = 'INTERNAL';
     return api('/v1/seek-first/fetch/' + spec.source, { method: 'POST', body: body }).then(function (payload) {
       var result = (payload && payload.result) || {};
       var records = result.records || [];
+      if (requestId !== undefined && (spec.requestId !== requestId || !document.querySelector('[data-layer="' + spec.key + '"][data-on="1"]'))) {
+        return { records: records.length, mapped: 0, attribution: result.attribution, stale: true };
+      }
       var mapped = drawPoints(spec, records.map(function (row) {
         return {
           lat: row.point && row.point.lat, lon: row.point && row.point.lon,
@@ -556,6 +559,7 @@
     if (on) {
       node.setAttribute('data-on', '0');
       node.querySelector('button.toggle').textContent = 'Off';
+      spec.requestId = (spec.requestId || 0) + 1;
       if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
       setMeta(node, spec.hint || '', '');
       renderAttribution();
@@ -564,9 +568,12 @@
     node.setAttribute('data-on', '1');
     node.querySelector('button.toggle').textContent = 'Loading';
     var loader = spec.kind === 'stored' ? loadStored : spec.kind === 'ais' ? loadAis : loadProvider;
+    var requestId = (spec.requestId || 0) + 1;
+    spec.requestId = requestId;
 
-    withTimeout(loader(spec), STEP_TIMEOUT_MS + 8000, spec.name)
+    withTimeout(loader(spec, requestId), STEP_TIMEOUT_MS + 8000, spec.name)
       .then(function (summary) {
+        if (spec.requestId !== requestId || node.getAttribute('data-on') !== '1' || summary.stale) return;
         node.querySelector('button.toggle').textContent = 'On';
         spec.attribution = summary.attribution;
         var detail = summary.records + ' records, ' + summary.mapped + ' mapped';
