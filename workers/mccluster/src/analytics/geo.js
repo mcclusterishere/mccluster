@@ -12,10 +12,12 @@ export function aggregateGeoEvents(rows, granularity, asOf) {
     const region=String(e.region||'').trim().slice(0,60);
     if (!country) continue;
     const key=region ? country+' / '+region : country;
-    const g=groups.get(key)||{region:key,visits:0,latSum:0,lonSum:0};
-    g.visits++;g.latSum+=lat;g.lonSum+=lon;groups.set(key,g);
+    const session=typeof e.session_id==='string'?e.session_id.trim():'';
+    if(!session)continue;
+    const g=groups.get(key)||{region:key,visits:0,latSum:0,lonSum:0,sessions:new Set()};
+    g.visits++;g.latSum+=lat;g.lonSum+=lon;g.sessions.add(session);groups.set(key,g);
   }
-  const cells=[...groups.values()].filter(g=>g.visits>=MIN_COHORT)
+  const cells=[...groups.values()].filter(g=>g.sessions.size>=MIN_COHORT)
     .sort((a,b)=>b.visits-a.visits).slice(0,500)
     .map(g=>({region:g.region,visits:g.visits,
       // Never derive a plotted point from a small group of visitors.
@@ -23,7 +25,7 @@ export function aggregateGeoEvents(rows, granularity, asOf) {
       lat:Math.round(g.latSum/g.visits/10)*10,lon:Math.round(g.lonSum/g.visits/10)*10}));
   return {schema:'mccluster.geo-aggregate.v1',granularity,asOf,cells,
     sample_limited:rows.length>=MAX_ROWS,
-    disclaimer:'Sampled first-party geographic observations. Regional approximations, not device locations.'};
+    disclaimer:'Sampled first-party geographic observations. Only regions with at least five distinct observed sessions are shown; sessions are not unique people. Regional approximations, not device locations.'};
 }
 export async function ownerGeoResponse({url,env,user,requireHouseOwner,sbRowsPaged,json}) {
   await requireHouseOwner(env,user);
@@ -32,7 +34,7 @@ export async function ownerGeoResponse({url,env,user,requireHouseOwner,sbRowsPag
   const days={day:1,week:7,month:30}[granularity];
   const now=new Date(),since=new Date(now.getTime()-days*86400000).toISOString();
   const path='events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
-    '&name=in.(page_view,pageview)&select=latitude,longitude,country,region&order=at.desc';
+    '&name=in.(page_view,pageview)&select=latitude,longitude,country,region,session_id&order=at.desc';
   const rows=await sbRowsPaged(env,path,MAX_ROWS);
   return json(aggregateGeoEvents(rows,granularity,now.toISOString()));
 }
