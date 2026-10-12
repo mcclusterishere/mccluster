@@ -9,7 +9,7 @@
     if(!S||!S.token||!S.url||!S.key)return;
     S.token().then(function(t){
       if(!t)return false;
-      return fetch("https://api.mccluster.org/v1/status",{
+      return fetch("https://api.mccluster.org/v1/analytics/users?limit=1",{
         method:"GET",
         headers:{authorization:"Bearer "+t},
         cache:"no-store"
