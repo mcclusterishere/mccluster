@@ -858,13 +858,11 @@ async function handleUserExplorer(request, env, user, url) {
   const accounts=Array.isArray(data?.users)?data.users:[];
   const ids=accounts.map(u=>String(u.id||'')).filter(id=>/^[0-9a-f-]{36}$/i.test(id));
   const allEvents=[];
-  // Fetch a single bounded page of events per account batch, not one network
-  // request per user. Individual histories may be incomplete; never imply
-  // the sample covers all events.
-  for(let i=0;i<ids.length;i+=20){
-    const group=ids.slice(i,i+20);
-    const rows=await sbRows(env,'events?site_id=is.null&uid=in.('+group.join(',')+')'+
-      '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=2000');
+  // Per-account bounds prevent one prolific account from starving others.
+  // Histories remain explicitly sampled, with at most 100 events per UID.
+  for (const id of ids) {
+    const rows = await sbRows(env, 'events?site_id=is.null&uid=eq.' + encodeURIComponent(id) +
+      '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=100');
     allEvents.push(...rows);
   }
   const eventsById=groupUserEvents(allEvents,new Set(ids));
@@ -899,7 +897,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  if(path==='/v1/analytics/my-listening'){
    const rows=await sbRows(env,'events?site_id=is.null&uid=eq.'+encodeURIComponent(user.id)+
      '&at=gte.'+encodeURIComponent(since)+
-     '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&name=in.(album_play,music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
      '&select=at,name,path,props&order=at.desc&limit=500');
    const counts={};for(const e of rows)counts[e.name]=(counts[e.name]||0)+1;
    return json({ok:true,window_days:30,sample_limited:rows.length===500,
@@ -946,7 +944,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
    for(const e of rows){
      const id=String(e.props?.creator_track_id||'');
      const item=perTrack.get(id);if(!item)continue;
-     if(['music_play','music_full_play','music_preview_play','song_start'].includes(e.name))item.plays++;
+     if(['music_play','song_start'].includes(e.name))item.plays++;
      if(e.name==='music_complete')item.completions++;
      if(e.name==='track_share')item.shares++;
      counts[e.name]=(counts[e.name]||0)+1;
