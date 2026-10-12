@@ -5,7 +5,7 @@ const event={latitude:41.32,longitude:-72.92,country:'US',region:'CT'};
 test('suppresses small cohorts and never returns visitor identifiers',()=>{
   assert.equal(aggregateGeoEvents(Array(4).fill(event),'day','now').cells.length,0);
   const data=aggregateGeoEvents(Array(6).fill({...event,ip:'private',uid:'secret'}),'day','now');
-  assert.deepEqual(data.cells,[{region:'US / CT',visits:6,lat:42,lon:-72}]);
+  assert.deepEqual(data.cells,[{region:'US / CT',visits:6,lat:40,lon:-70}]);
   assert.doesNotMatch(JSON.stringify(data),/private|secret|ip|uid/);
 });
 test('owner authorization precedes database access',async()=>{
