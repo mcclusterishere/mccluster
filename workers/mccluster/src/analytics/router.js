@@ -1,4 +1,5 @@
 import { requireCapability } from '../lib/capabilities.js';
+import { ownerGeoResponse } from './geo.js';
 import { engagementScore, validateUserPage, groupUserEvents } from './users-utils.js';
 import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
@@ -964,6 +965,10 @@ export async function handleAnalyticsRequest(request, env, user) {
   if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
     return handleSelfMusicAnalytics(request,env,user,url,path);
   if (path === '/v1/analytics/users') return handleUserExplorer(request, env, user, url);
+  if (path === '/v1/analytics/geo') {
+    if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
+    return ownerGeoResponse({url,env,user,requireHouseOwner,sbRows,json});
+  }
   if (path === '/v1/analytics/business') {
     return handleBusinessSnapshot(request, env, user, url);
   }
