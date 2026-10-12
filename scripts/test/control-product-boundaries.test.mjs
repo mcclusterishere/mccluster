@@ -62,3 +62,14 @@ test('Whip sales lead writes are restricted to operator membership',async()=>{
  assert.match(handler,/Operator access required/);
  assert.ok(handler.indexOf('operator_members')<handler.indexOf("sb(env,'sales_leads"),'authorization must precede privileged write');
 });
+
+test('operator membership is bound only to authenticated immutable user ID',async()=>{
+ const worker=await readFile('workers/mccluster/src/whip/worker.js','utf8');
+ const start=worker.indexOf('async function requireOperator(req, env, tenantId)');
+ const end=worker.indexOf('function requestIdentity(',start);
+ assert.ok(start>=0&&end>start);
+ const guard=worker.slice(start,end);
+ assert.match(guard,/auth_user_id=eq/);
+ assert.doesNotMatch(guard,/email=eq/);
+ assert.doesNotMatch(guard,/x-we-role|x-we-user-id/);
+});
