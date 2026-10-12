@@ -102,8 +102,6 @@
     #globe { inset: 0 0 46% 0; }
     #toast { left: 12px; }
   }
-  #network-inspector { position:absolute;right:12px;top:12px;z-index:5;width:min(330px,calc(100vw - 24px));max-height:42vh;overflow:auto;background:rgba(13,18,25,.94);border:1px solid var(--line);border-radius:9px;padding:12px 14px;pointer-events:auto;box-shadow:0 5px 20px #0008; }
-  #network-inspector strong {font-size:13px} #network-inspector p {margin:8px 0 0;color:var(--dim);overflow-wrap:anywhere} #network-inspector a {color:#60d8fa} #network-inspector dl {display:grid;grid-template-columns:85px 1fr;gap:4px 8px;margin:10px 0 0;overflow-wrap:anywhere} #network-inspector dt {color:var(--dim)} #network-inspector dd {margin:0}
 </style>
 </head>
 <body>
@@ -142,7 +140,6 @@
     <div id="footer"></div>
   </div>
   <div id="globe"></div>
-  <aside id="network-inspector" aria-live="polite"><strong>Network intelligence</strong><p>Select a PeeringDB facility or RIPE Atlas probe to inspect its source, coordinates and metadata. Proximity does not establish connectivity.</p></aside>
   <div id="attrib"></div>
   <div id="toast"></div>
 </div>
@@ -350,11 +347,6 @@
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_nm: 150 }; }
     },
     {
-      key: 'cctv', source: 'cctv', name: 'Public traffic cameras (Austin)', color: '#f59f6b',
-      build: function (c) { return { provider: 'austin', bbox: c.bbox, limit: 250 }; },
-      hint: 'Public camera catalog only. Live feed status and viewing rights are unverified.'
-    },
-    {
       key: 'peeringdb', source: 'peeringdb', name: 'Internet facilities (PeeringDB)', color: '#60d8fa',
       build: function (c) { return { bbox: c.bbox, limit: 250 }; },
       hint: 'NONPROFIT/INTERNAL lane only. Provider coordinates are approximate.'
@@ -439,13 +431,13 @@
     if (!bbox || bbox.length !== 4 || !bbox.every(Number.isFinite)) return;
     if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return;
     LAYER_SPECS.filter(function (spec) {
-      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas' || spec.key === 'cctv';
+      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas';
     }).forEach(function (spec) {
       var node = document.querySelector('[data-layer="' + spec.key + '"]');
       if (!node || node.getAttribute('data-on') !== '1') return;
       var requestId = (spec.requestId || 0) + 1;
       spec.requestId = requestId;
-      var maxSpan = spec.key === 'ripe_atlas' ? 20 : spec.key === 'cctv' ? 10 : 40;
+      var maxSpan = spec.key === 'ripe_atlas' ? 20 : 40;
       if (bbox[2] - bbox[0] > maxSpan || bbox[3] - bbox[1] > maxSpan) {
         setMeta(node, 'Zoom in to load this viewport (' + maxSpan + '° maximum)', '');
         if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
@@ -485,7 +477,6 @@
         point: { pixelSize: 7, color: colour, outlineColor: Cesium.Color.BLACK, outlineWidth: 1,
                  disableDepthTestDistance: Number.POSITIVE_INFINITY },
         name: item.name || spec.name,
-        haloEvidence: item.evidence || null,
         description: item.description || ''
       });
     });
@@ -556,13 +547,6 @@
         return {
           lat: row.point && row.point.lat, lon: row.point && row.point.lon,
           name: row.name || row.metric || row.event_type || spec.name,
-          evidence: (spec.key === 'peeringdb' || spec.key === 'ripe_atlas' || spec.key === 'cctv') ? {
-            id: row.external_id, source: spec.source, entity_type: row.entity_type,
-            lat: row.point && row.point.lat, lon: row.point && row.point.lon,
-            source_url: row.source_url, observed_at: row.observed_at,
-            geo_precision_m: row.properties && row.properties.geo_precision_m,
-            attribution: result.attribution, feed_status: row.properties && row.properties.feed_status
-          } : null,
           description: describe(Object.assign({}, row.properties || {}, { source_url: row.source_url || result.source_url, observed_at: row.observed_at, attribution: result.attribution }))
         };
       }));
@@ -702,43 +686,6 @@
       url: 'https://tile.openstreetmap.org/',
       credit: new Cesium.Credit('© OpenStreetMap contributors')
     });
-  }
-
-  function renderNetworkSelection(entity) {
-    var panel = el('network-inspector');
-    if (!panel) return;
-    var data = entity && entity.haloEvidence;
-    panel.textContent = '';
-    var title = document.createElement('strong');
-    title.textContent = data ? (entity.name || 'Network entity') : 'Network intelligence';
-    panel.appendChild(title);
-    if (!data) {
-      var hint = document.createElement('p');
-      hint.textContent = 'Select a PeeringDB facility or RIPE Atlas probe to inspect verified provider metadata. Nearby markers are not necessarily connected.';
-      panel.appendChild(hint);
-      return;
-    }
-    var dl = document.createElement('dl');
-    [['Identifier', data.id], ['Provider', data.source], ['Type', data.entity_type],
-     ['Latitude', data.lat], ['Longitude', data.lon], ['Observed', data.observed_at],
-     ['Precision (m)', data.geo_precision_m], ['Feed status', data.feed_status], ['Attribution', data.attribution]].forEach(function (entry) {
-      if (entry[1] === undefined || entry[1] === null || entry[1] === '') return;
-      var dt = document.createElement('dt'), dd = document.createElement('dd');
-      dt.textContent = entry[0]; dd.textContent = String(entry[1]);
-      dl.appendChild(dt); dl.appendChild(dd);
-    });
-    if (typeof data.source_url === 'string' && /^https:\/\//i.test(data.source_url)) {
-      var dt = document.createElement('dt'), dd = document.createElement('dd');
-      dt.textContent = 'Evidence';
-      var link = document.createElement('a');
-      link.href = data.source_url; link.textContent = 'Provider record';
-      link.target = '_blank'; link.rel = 'noopener noreferrer';
-      dd.appendChild(link); dl.appendChild(dt); dl.appendChild(dd);
-    }
-    panel.appendChild(dl);
-    var note = document.createElement('p');
-    note.textContent = 'No network connection is asserted without an independently sourced relationship.';
-    panel.appendChild(note);
   }
 
   function buildViewer() {
@@ -900,7 +847,6 @@
         try {
           state.viewer = buildViewer();
           state.viewer.camera.moveEnd.addEventListener(refreshInfrastructureLayers);
-          state.viewer.selectedEntityChanged.addEventListener(renderNetworkSelection);
           // Named handle for operators in devtools and for automated boot tests.
           window.__gevViewer = state.viewer;
           mark(globeStep, 'ok', 'open imagery');
