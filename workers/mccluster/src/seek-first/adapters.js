@@ -1,3 +1,4 @@
+import { normalizeAustinCameraCatalog } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -886,7 +887,16 @@ async function cctv(input) {
   if (provider !== 'austin') throw new GeoAdapterError('Only the audited Austin CCTV catalog is enabled in this adapter', 400, 'unsupported_provider');
   const url = new URL('https://data.austintexas.gov/api/views/b4k4-adkb/rows.json?accessType=DOWNLOAD');
   const { data } = await jsonFetch(url);
-  return result('cctv', 'catalog', url, [], data, { note: 'Catalog is returned transiently; camera-frame redistribution remains provider-governed.' });
+  const limit = integer(input?.limit, 'limit', { min: 1, max: 500, fallback: 250 });
+  const bbox = input?.bbox;
+  const bounds = bbox === undefined ? null : (Array.isArray(bbox) ? bbox : String(bbox).split(',')).map(Number);
+  let records;
+  try { records = normalizeAustinCameraCatalog(data, { bbox: bounds, limit }); }
+  catch (error) { throw new GeoAdapterError(error.message, 400, 'invalid_parameter'); }
+  return result('cctv', 'catalog', url, records, null, {
+    note: 'Public catalog metadata only. Live stream availability and redistribution rights are not verified.',
+    attribution: 'City of Austin Open Data'
+  });
 }
 
 async function copernicus(input, env) {
