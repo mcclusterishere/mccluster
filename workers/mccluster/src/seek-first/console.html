@@ -839,6 +839,7 @@
         var globeStep = step('globe', 'Globe');
         try {
           state.viewer = buildViewer();
+          state.viewer.camera.moveEnd.addEventListener(refreshInfrastructureLayers);
           // Named handle for operators in devtools and for automated boot tests.
           window.__gevViewer = state.viewer;
           mark(globeStep, 'ok', 'open imagery');
