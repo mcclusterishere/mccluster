@@ -15,7 +15,7 @@ Owner-only `Control → Analytics → Fans` is **not** a fan-facing dashboard: i
 
 ## Compatibility and migration
 - `analytics.html` and `console.html` still contain customer-facing functionality and conditional operator redirects. Do not unconditionally redirect them until the customer functions have verified replacement routes.
-- `js/owner-control-redirect.js` currently treats successful `GET /v1/status` as an operator signal. Audit this authorization check: status success must not be assumed equivalent to owner access. Replace with an explicit owner-capability check before migrating redirects.
+- `js/owner-control-redirect.js` uses `GET /v1/status` as its operator check. Source review confirms the Worker route calls `requireHouseOwner(request, env)` before returning 200; preserve that contract with regression tests. Do not substitute a public health endpoint.
 - Preserve deep links, keyboard navigation, and mobile-first visual branding.
 - Consolidate only duplicate **operator** surfaces. Never merge admin, creator, and fan permissions.
 - Ensure a cross-account test proves creators cannot read other creators' data, fans cannot read other listeners' data, and neither can access the owner user explorer.
