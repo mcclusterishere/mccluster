@@ -32,11 +32,20 @@ Timecodes are **lyric cues**, not locked seconds. Confirm against the master aud
 - Matthew moves to a computer and types; show an interactive work surface and a clear optional coaching CTA. The viewer can inspect the office and choose to engage or ignore.
 - Additional scenes/ending remain undecided. Do not invent canonical lyrics, wardrobe, church, office, or scene count.
 
+## Timing and canon-event revision (2026-10-12)
+- Repository source `data/lyrics/antisocial.json` declares `duration_seconds: 176` (2:56). This is lyric metadata, not independently verified audio-container duration; verify against the master audio before locking edits.
+- **Cadence:** target decisions every ~15 seconds, not every 7. Offer approximately 11 decision opportunities over the track; move exact prompts to lyric-safe moments instead of imposing a rigid grid.
+- **Canon events:** reconverge after approximately every second decision (~30-second story chapters). Allow five to six major canonical beats, determined by the actual song structure, not invented timecodes.
+- **Narrative logic:** Social/Anti-Social choices change the immediate outcome and persistent state; the next canon beat is shared. Persistent state may still alter dialogue, camera viewpoint, overlays, wardrobe or the ending.
+- **Math:** 11 binary choices = 2,048 possible choice sequences, **not** 2,048 required videos. With shared canonical scenes and two variants per decision window, a baseline could use ~22 branch variants plus canonical footage and reusable overlays, subject to the actual edit.
+- **Canon candidates:** meditation/one-eye peek; artist picks up viewer/camera; church/conversions; controlled drop; office pickup/coaching; ending/CTA. Exact ordering and spacing must be confirmed from the lyric timing; some may be grouped into one canon event.
+- **Missed prompt:** choose a safe default consistent with the selected experience mode, and log that it was auto-resolved rather than user-selected. Social camera-recording consent remains independent of narrative choices.
+
 ## Interactive story rules
 1. **Social mode:** viewer separately opts into camera reaction recording. Eventually may see their own silhouette/visual presence in the scene. Recording must require explicit consent; no camera/audio upload by default.
 2. **Anti-Social mode:** camera is used **locally for head-tracked parallax only**, with no reaction recording, uploading, biometric enrollment, or emotion inference. Provide no-camera touch/drag fallback.
 3. **Virtual phone:** scroll by touch on mobile; in headset, implement a controller/hand-tracking ray or pinch gesture when supported. Head gaze selects/focuses, not scrolls by itself. The phone is a composited 3D interactive object, **not** a prerecorded phone screen.
-4. **Branching:** offer social vs anti-social narrative actions near lyric cues, roughly every seven seconds where dramatically appropriate. Branching is a reconverging scene graph, not an exponentially expanding set of unique videos. Musical audio never restarts on branch selection. Missed choices follow an explicit default.
+4. **Branching:** offer social vs anti-social narrative actions near lyric cues, approximately every 15 seconds where dramatically appropriate, with canonical reconvergence events after roughly every two choices (about 30 seconds). Branching is a reconverging scene graph, not an exponentially expanding set of unique videos. Canonical story beats preserve the core narrative regardless of prior choices; intervening branches can change perspective, interaction and scene variants. Musical audio never restarts on branch selection. Missed choices follow an explicit default.
 5. **Reactive lyrics:** synced words or phrases become in-world prompts, never obscure Matthew's face or important scene action. Offer reduced-motion and captions.
 6. **Telemetry:** playback clock, scene exposure, offered choice, selected choice, time-to-choice, interaction type, seek/replay, and dropoff. Avoid transmitting camera pixels or face landmarks in private mode.
 
