@@ -52,3 +52,13 @@ test('Whip mobility worker never trusts caller-provided demo identity or operato
  assert.doesNotMatch(worker,/req\.headers\.get\('x-we-user-id'\)/);
  assert.match(worker,/operator_members\?tenant_id=eq/);
 });
+
+test('Whip sales lead writes are restricted to operator membership',async()=>{
+ const router=await readFile('workers/mccluster/src/whip/router.js','utf8');
+ const start=router.indexOf("if(path==='/api/sales/leads'&&req.method==='POST')");
+ assert.ok(start>=0);
+ const handler=router.slice(start,start+800);
+ assert.match(handler,/operator_members\?auth_user_id=eq/);
+ assert.match(handler,/Operator access required/);
+ assert.ok(handler.indexOf('operator_members')<handler.indexOf("sb(env,'sales_leads"),'authorization must precede privileged write');
+});
