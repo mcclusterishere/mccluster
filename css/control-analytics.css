@@ -159,3 +159,15 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-page-row__detail{padding:4px 14px 15px;border-top:1px solid rgba(130,145,165,.18)}
 .cra-page-row__detail .cra-kpis{margin:12px 0}
 @media(min-width:36rem){.cra-page-row__summary{grid-template-columns:28px minmax(0,1fr) 74px 72px;gap:12px;padding:13px}.cra-page-row__traffic{display:grid}.cra-page-row__score b{font-size:1.35em}}
+
+/* Owner artist intelligence: mobile-first, Linktree-inspired creator cards. */
+.cra-artist-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.cra-artist-controls label{display:flex;flex-direction:column;gap:6px;font-size:12px;min-width:0}
+.cra-artist-controls select{width:100%;min-width:0;min-height:44px;border-radius:12px}
+.cra-artist-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:12px 0}
+.cra-artist-card{min-width:0;border:1px solid rgba(130,145,165,.25);border-radius:20px;padding:16px;background:rgba(130,145,165,.06)}
+.cra-artist-card__head{display:flex;gap:10px;align-items:center;min-width:0;margin-bottom:12px}
+.cra-artist-card__head code{overflow-wrap:anywhere;font-size:11px}
+.cra-artist-card__stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cra-artist-card__stats .cra-kpi{min-width:0}
+@media(min-width:48rem){.cra-artist-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
