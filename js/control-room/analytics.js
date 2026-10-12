@@ -335,12 +335,34 @@
     var trend=trafficTrend(S.data.traffic||{});
     return (house?'<div class="cra-grid">'+audienceScience()+'</div>':"")+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
   }
+  function artistCards(){
+    var rows=S.artistRankings||[],loading=S.artistLoading;
+    var head='<div class="cra-artist-controls"><label>Period <select data-cra-artist-days><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option></select></label><label>Rank by <select data-cra-artist-sort><option value="starts">Starts</option><option value="completions">Completions</option><option value="shares">Shares</option><option value="identified_listeners">Signed-in listeners</option></select></label></div>';
+    var sort=S.artistSort||'starts';
+    var cards=rows.slice().sort(function(a,b){return Number(b[sort]||0)-Number(a[sort]||0);}).map(function(t,i){
+      return '<article class="cra-artist-card"><div class="cra-artist-card__head"><strong>#'+(i+1)+'</strong><code>'+e(t.track_id)+'</code></div><div class="cra-artist-card__stats">'+
+        kpi('Starts',n(t.starts))+kpi('Completed',n(t.completions))+kpi('Shares',n(t.shares))+kpi('Signed-in listeners',n(t.identified_listeners))+'</div></article>';
+    }).join('');
+    return card('Creator-track rankings','Recorded events only. Artist attribution requires verified ownership; totals may be sampled.',head+
+      (loading?'<p>Loading rankings…</p>':S.artistError?'<p class="cra-error">'+e(S.artistError)+'</p>':cards?'<div class="cra-artist-cards">'+cards+'</div>':'<p>No attributed creator-track activity in this period.</p>')+
+      (S.artistSampled?'<p>Sample limited to 10,000 events; totals may be undercounted.</p>':''),true);
+  }
+  function loadArtistRankings(){
+    if(!S.request||S.artistLoading)return;
+    S.artistLoading=true;S.artistError=null;paint();
+    var days=S.artistDays||30;
+    return S.request('/v1/analytics/artist-rankings?days='+days).then(function(data){
+      if(S.artistDays!==days)return;
+      S.artistRankings=Array.isArray(data.rankings)?data.rankings:[];
+      S.artistSampled=!!data.sample_limited;
+    }).catch(function(err){S.artistError=err.message||String(err);}).finally(function(){S.artistLoading=false;if(S.section==='content')paint();});
+  }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
     var table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th>Album</th><th class="n">Starts</th><th class="n">Listeners</th><th class="n">Repeat</th><th class="n">Starts/listener</th><th class="n">Full</th><th class="n">Complete</th><th class="n">Shares</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td><b>'+e(r.track||"—")+'</b></td><td>'+e(r.album||"—")+'</td><td class="n">'+n(r.starts)+'</td><td class="n">'+n(r.listeners)+'</td><td class="n">'+n(r.repeat_listeners)+'</td><td class="n">'+e(r.plays_per_listener==null?"—":r.plays_per_listener)+'</td><td class="n">'+n(r.full_plays)+'</td><td class="n">'+n(r.completions)+'</td><td class="n">'+n(r.shares)+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No content rows.</p>';
     var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0),listeners=rows.reduce(function(sum,r){return sum+Number(r.listeners||0);},0);
     var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(starts),"selected range")+kpi("Track listeners",n(listeners),"summed across tracks")+kpi("Tracked songs",n(rows.length),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':'<p>No recorded music activity in this range.</p>'));
-    return'<div class="cra-grid">'+musicSummary+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
+    return'<div class="cra-grid">'+musicSummary+artistCards()+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
     var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
@@ -498,6 +520,7 @@
     if(!S.host)return;S.host.innerHTML=render();bind(S.host);drawReach();
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
+    if(S.section==="content"&&!S.artistRankings&&!S.artistLoading&&!S.artistError)void loadArtistRankings();
   }
   function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
   function blankData(){
@@ -616,6 +639,9 @@
   }
   function bind(root){
     bindChartPoints(root);
+    var ad=root.querySelector('[data-cra-artist-days]'),as=root.querySelector('[data-cra-artist-sort]');
+    if(ad){ad.value=String(S.artistDays||30);ad.onchange=function(){S.artistDays=Number(ad.value);S.artistRankings=null;S.artistError=null;void loadArtistRankings();};}
+    if(as){as.value=S.artistSort||'starts';as.onchange=function(){S.artistSort=as.value;paint();};}
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
