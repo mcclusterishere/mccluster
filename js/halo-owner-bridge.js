@@ -2,6 +2,8 @@
 (function () {
   'use strict';
   var allowedOrigin = 'https://halo.mccluster.org';
+  // The owner-only iframe must be mounted by Control after successful sign-in.
+  // A missing frame is a closed gate, not an invitation to trust other windows.
   var handler = async function (event) {
     if (event.origin !== allowedOrigin) return;
     var frame = document.querySelector('iframe[data-mccluster-owner-halo]');
@@ -20,6 +22,8 @@
         credentials: 'omit', cache: 'no-store'
       });
       if (!response.ok) token = null;
+      // Never send a token after the control page has lost focus through logout.
+      if (document.visibilityState === 'hidden') token = null;
     } catch (_) { token = null; }
     if (event.source !== frame.contentWindow) { port.close(); return; }
     port.postMessage({ type: 'mccluster:owner-token:response', nonce: nonce,
