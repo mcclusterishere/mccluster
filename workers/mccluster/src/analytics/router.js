@@ -967,7 +967,7 @@ export async function handleAnalyticsRequest(request, env, user) {
   if (path === '/v1/analytics/users') return handleUserExplorer(request, env, user, url);
   if (path === '/v1/analytics/geo') {
     if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
-    return ownerGeoResponse({url,env,user,requireHouseOwner,sbRows,json});
+    return ownerGeoResponse({url,env,user,requireHouseOwner,sbRowsPaged,json});
   }
   if (path === '/v1/analytics/business') {
     return handleBusinessSnapshot(request, env, user, url);
