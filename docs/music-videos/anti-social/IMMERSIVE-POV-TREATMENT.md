@@ -1,3 +1,21 @@
+## Locked creative corrections — six environments, three excerpts (2026-10-12)
+**Authoritative latest direction.** Produce **three featured excerpts/reels per song**, **not necessarily the entire song**. Each excerpt has two synchronized alternate 360 environments: **3 excerpts × 2 lanes = 6 environments per song**. These six are the creative units, not six full-song chapter masters. Any earlier assumption that the three reels must cover all 176 seconds is superseded. Excerpt duration and precise in/out points remain to be chosen against the audio.
+
+| Excerpt | Social lane | Anti-Social lane |
+|---|---|---|
+| 1 — Opening | Outdoors in nature, meditating; artist peeks and acknowledges viewer | Dorm room couch, on phone, disengaged; does not acknowledge viewer |
+| 2 — Transition | Artist picks up viewer/camera and moves into church | Artist picks up viewer/camera and transitions into **library**, studying/writing with tablet nearby, disengaged |
+| 3 — Ending | **Office**, interacting with viewer about coaching/work | **Home balcony at night**, on tablet, disengaged, looking outward as appropriate |
+
+**Core emotional principle:** In *both* lanes the viewer is physically/virtually present **with Matthew in his actual-feeling environment**, free to look around and notice where he is and what he is doing. The difference is whether Matthew acknowledges them. Social = engaged with viewer; Anti-Social = viewer is still there, but Matthew is absorbed in his own world. Do not make Anti-Social a disconnected montage or a blank screen.
+
+**Calm ending:** The instrumental outro after the chaotic/funky passage becomes peaceful, beautiful and contemplative. Preserve this contrast; let the nighttime balcony breathe, with minimal prompts/overlays. Earlier labeling as merely an 'untimed ending' describes lyric timestamps only, **not an absence of artistic direction**.
+
+**Device interaction:** 360 video enables rotational looking around; use phone gyroscope/device-orientation controls when supported and permission granted, touch-drag as reliable fallback, and optional local head-tracking/parallax only where technically valid. True positional 6DoF cannot be inferred from ordinary monoscopic 360 capture. Prioritize a compelling phone experience before committing to headset-only features.
+
+**Production scope:** Six environment setups for Anti-Social. The next song may also receive three excerpt pairs/six environments, but **its title and concept are not yet specified**; do not fabricate them. Any 18/36 reel numbers refer to a broader potential slate or edits, not the confirmed per-song requirement.
+
+
 # ANTI-SOCIAL — immersive POV music-video treatment
 **Status:** Creative treatment / production brief, not filmed or implemented
 **Owner:** Matthew McCluster · **Project:** Anti-Social interactive music video
@@ -65,7 +83,7 @@ Timecodes are **lyric cues**, not locked seconds. Confirm against the master aud
 **This section supersedes the earlier assumption of many independently branching clips or one immutable canonical visual track.** The song's **audio and musical timeline are canonical**, while there are two parallel, time-aligned **visual lanes**, Social and Anti-Social. The viewer can switch lanes at an eligible decision point without resetting the music or creating a new timeline. Each lane has its own location, artist behavior, camera pickup and scene transitions.
 
 ### Three chapters / reels
-Plan **three content chapters** spanning the 176-second song, approximately one minute each (exact chapter boundaries determined by lyric cues, not rigid 60s):
+Historical proposal, superseded by the locked three-excerpt plan above. Earlier plan was three chapters spanning the 176-second song:
 1. **Opening:** Social = outdoors in nature, meditating, one-eye peek, acknowledges viewer; Anti-Social = inside dorm, sitting on couch/phone, ignores viewer entirely. The opening location is an inverse pair.
 2. **Middle:** Social = camera pickup and church/conversions sequence; Anti-Social = matched camera pickup from dorm/private scene into a withdrawn setting (candidate: library, writing homework with tablet beside artist). No acknowledgment of viewer.
 3. **Ending:** Social = office/coaching/performance; Anti-Social = home/balcony at night, looking into the distance or using tablet, or library/study material if better aligned with song. The exact Anti-Social ending scene is not locked; preserve both candidates.
