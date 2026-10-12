@@ -598,12 +598,48 @@
   });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
+  /* Present the membership invitation over the actual player when a public
+     preview expires. This is a conversion surface, not an auth entitlement. */
+  var previewInvitationShown = false;
+  function showPreviewInvitation() {
+    if (previewInvitationShown || !current) return;
+    previewInvitationShown = true;
+    var now = doc.getElementById("musicNow");
+    if (!now) return;
+    var stage = now.querySelector(".music-now__stage") || now;
+    var overlay = doc.createElement("div");
+    overlay.id = "mnetPreviewInvitation";
+    overlay.setAttribute("role", "status");
+    overlay.style.cssText = "position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:24px;text-align:center;color:#fff;";
+    var heading = doc.createElement("strong");
+    heading.textContent = "Preview finished";
+    heading.style.cssText = "font-size:clamp(22px,5vw,32px)";
+    var message = doc.createElement("p");
+    message.textContent = "Want to hear the whole song? Membership is by application.";
+    var link = doc.createElement("a");
+    var params = new URLSearchParams({source:"music_preview",track:current.title || "",album:current.albumSlug || ""});
+    link.href = (root.MCC_ROOT || "/") + "apply.html?" + params.toString();
+    link.textContent = "Apply for Access";
+    link.style.cssText = "display:inline-block;padding:14px 24px;border-radius:30px;background:#fff;color:#111;font-weight:700;text-decoration:none";
+    link.addEventListener("click", function () { trackEvent("application_start", {source:"music_preview"}); });
+    overlay.appendChild(heading);overlay.appendChild(message);overlay.appendChild(link);
+    stage.style.position = "relative";
+    stage.appendChild(overlay);
+    trackEvent("music_preview_cta_view", {source:"music_preview"});
+  }
+  function clearPreviewInvitation() {
+    previewInvitationShown = false;
+    var overlay = doc.getElementById("mnetPreviewInvitation");
+    if (overlay) overlay.remove();
+  }
+  audio.addEventListener("play", clearPreviewInvitation);
   audio.addEventListener("timeupdate", function () {
     if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
       audio.pause();
       audio.currentTime = Math.max(0, previewLimit - .05);
       trackEvent("music_preview_complete", { preview_seconds: previewLimit });
+      showPreviewInvitation();
     }
     paint();
     syncNowFilm(false);
