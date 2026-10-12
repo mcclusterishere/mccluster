@@ -7,7 +7,7 @@ const sections=['overview','audience','adaptive','content','identity','forensics
 
 async function analytics(){
   const source=await readFile('js/control-room/analytics.js','utf8');
-  const context={window:{CR:{}},console};
+  const context={window:{CR:{forensics:{}}},console};
   vm.createContext(context);
   vm.runInContext(source,context);
   const a=context.window.CR.analytics;
