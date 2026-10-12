@@ -423,6 +423,37 @@
     }
   }
 
+  // Refresh viewport-bound infrastructure layers when the globe stops moving.
+  // Skip world-scale views: provider bounds enforce a smaller query window.
+  function refreshInfrastructureLayers() {
+    var view = cameraCentre();
+    var bbox = view.bbox;
+    if (!bbox || bbox.length !== 4 || !bbox.every(Number.isFinite)) return;
+    if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return;
+    LAYER_SPECS.filter(function (spec) {
+      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas';
+    }).forEach(function (spec) {
+      var node = document.querySelector('[data-layer="' + spec.key + '"]');
+      if (!node || node.getAttribute('data-on') !== '1') return;
+      var maxSpan = spec.key === 'ripe_atlas' ? 20 : 40;
+      if (bbox[2] - bbox[0] > maxSpan || bbox[3] - bbox[1] > maxSpan) {
+        setMeta(node, 'Zoom in to load this viewport (' + maxSpan + '° maximum)', '');
+        if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
+        return;
+      }
+      var requestId = (spec.requestId || 0) + 1;
+      spec.requestId = requestId;
+      loadProvider(spec).then(function (summary) {
+        if (spec.requestId !== requestId || node.getAttribute('data-on') !== '1') return;
+        spec.attribution = summary.attribution;
+        setMeta(node, summary.records + ' records, ' + summary.mapped + ' mapped', '');
+        renderAttribution();
+      }).catch(function (error) {
+        if (spec.requestId === requestId) setMeta(node, error.message || 'Refresh failed', 'failed');
+      });
+    });
+  }
+
   function dataSource(spec) {
     if (!state.layers[spec.key]) {
       var source = new Cesium.CustomDataSource(spec.key);
