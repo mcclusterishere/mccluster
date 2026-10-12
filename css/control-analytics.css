@@ -171,3 +171,19 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-artist-card__stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .cra-artist-card__stats .cra-kpi{min-width:0}
 @media(min-width:48rem){.cra-artist-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Fan explorer is owner-only and mobile-first; no wide account table. */
+.cra-fan-tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.cra-fan-tools input{flex:1 1 180px;min-width:0}
+.cra-fan-tools input,.cra-fan-tools button,.cra-fan-paging button{min-height:44px;border-radius:12px}
+.cra-fan-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.cra-fan-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:5px;min-width:0;width:100%;padding:14px;border-radius:16px;border:1px solid rgba(130,145,165,.25);background:rgba(130,145,165,.06);overflow-wrap:anywhere}
+.cra-fan-card.is-on{outline:2px solid currentColor;outline-offset:1px}
+.cra-fan-card small{opacity:.75}
+.cra-fan-paging{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.cra-fan-detail{min-width:0;overflow-wrap:anywhere}
+.cra-fan-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.cra-fan-timeline{padding-left:20px}
+.cra-fan-timeline li{padding:8px 0;border-bottom:1px solid rgba(130,145,165,.18);overflow-wrap:anywhere}
+.cra-fan-timeline small{display:block;opacity:.7;margin-top:4px}
+@media(min-width:48rem){.cra-fan-list{grid-template-columns:repeat(2,minmax(0,1fr))}.cra-fan-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
