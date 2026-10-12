@@ -122,6 +122,22 @@
     if (mnetLabel) mnetLabel.textContent = "Sign in";
   }
 
+  /* Public Whip Equipped destination: reuse the actual WE icon already shipped
+     in this repository, not a replacement glyph or duplicate brand asset.
+     A fixed tab keeps the existing three wing destinations intact. */
+  if (!dock.querySelector('[data-appnav="whip"]')) {
+    var whipTab = document.createElement("a");
+    whipTab.className = "appbar__tab";
+    whipTab.setAttribute("data-appnav", "whip");
+    whipTab.setAttribute("aria-label", "Whip Equipped automotive marketplace");
+    whipTab.href = ROOT + "whip/rentals/index.html";
+    whipTab.innerHTML = '<img class="appbar__m" src="' + ROOT +
+      'whip/rentals/assets/we-icon.png" alt=""><span>Whip Equipped</span>';
+    var homeTab = dock.querySelector('[data-appnav="home"]');
+    if (homeTab) dock.insertBefore(whipTab, homeTab);
+    else dock.appendChild(whipTab);
+  }
+
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
   document.body.classList.add("has-appbar");
@@ -187,9 +203,9 @@
      long-press and drags the held tab out of its own column. Three winged
      tabs, therefore two rooms per wing; the record button is FIXED and
      simply keeps its cell. Change this list and every wing changes with it. */
-  var ORDER = ["music", "home", "create", "profile"];
+  var ORDER = ["music", "whip", "home", "create", "profile"];
   /* columns that never open a wing and keep their cell while one is open */
-  var FIXED = { create: true };
+  var FIXED = { create: true, whip: true };
 
   /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
      THIS ENFORCES IT.
