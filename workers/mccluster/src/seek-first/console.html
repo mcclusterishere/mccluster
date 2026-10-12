@@ -350,6 +350,11 @@
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_nm: 150 }; }
     },
     {
+      key: 'cctv', source: 'cctv', name: 'Public traffic cameras (Austin)', color: '#f59f6b',
+      build: function (c) { return { provider: 'austin', bbox: c.bbox, limit: 250 }; },
+      hint: 'Public camera catalog only. Live feed status and viewing rights are unverified.'
+    },
+    {
       key: 'peeringdb', source: 'peeringdb', name: 'Internet facilities (PeeringDB)', color: '#60d8fa',
       build: function (c) { return { bbox: c.bbox, limit: 250 }; },
       hint: 'NONPROFIT/INTERNAL lane only. Provider coordinates are approximate.'
@@ -434,13 +439,13 @@
     if (!bbox || bbox.length !== 4 || !bbox.every(Number.isFinite)) return;
     if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return;
     LAYER_SPECS.filter(function (spec) {
-      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas';
+      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas' || spec.key === 'cctv';
     }).forEach(function (spec) {
       var node = document.querySelector('[data-layer="' + spec.key + '"]');
       if (!node || node.getAttribute('data-on') !== '1') return;
       var requestId = (spec.requestId || 0) + 1;
       spec.requestId = requestId;
-      var maxSpan = spec.key === 'ripe_atlas' ? 20 : 40;
+      var maxSpan = spec.key === 'ripe_atlas' ? 20 : spec.key === 'cctv' ? 10 : 40;
       if (bbox[2] - bbox[0] > maxSpan || bbox[3] - bbox[1] > maxSpan) {
         setMeta(node, 'Zoom in to load this viewport (' + maxSpan + '° maximum)', '');
         if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
@@ -551,12 +556,12 @@
         return {
           lat: row.point && row.point.lat, lon: row.point && row.point.lon,
           name: row.name || row.metric || row.event_type || spec.name,
-          evidence: (spec.key === 'peeringdb' || spec.key === 'ripe_atlas') ? {
+          evidence: (spec.key === 'peeringdb' || spec.key === 'ripe_atlas' || spec.key === 'cctv') ? {
             id: row.external_id, source: spec.source, entity_type: row.entity_type,
             lat: row.point && row.point.lat, lon: row.point && row.point.lon,
             source_url: row.source_url, observed_at: row.observed_at,
             geo_precision_m: row.properties && row.properties.geo_precision_m,
-            attribution: result.attribution
+            attribution: result.attribution, feed_status: row.properties && row.properties.feed_status
           } : null,
           description: describe(Object.assign({}, row.properties || {}, { source_url: row.source_url || result.source_url, observed_at: row.observed_at, attribution: result.attribution }))
         };
@@ -716,7 +721,7 @@
     var dl = document.createElement('dl');
     [['Identifier', data.id], ['Provider', data.source], ['Type', data.entity_type],
      ['Latitude', data.lat], ['Longitude', data.lon], ['Observed', data.observed_at],
-     ['Precision (m)', data.geo_precision_m], ['Attribution', data.attribution]].forEach(function (entry) {
+     ['Precision (m)', data.geo_precision_m], ['Feed status', data.feed_status], ['Attribution', data.attribution]].forEach(function (entry) {
       if (entry[1] === undefined || entry[1] === null || entry[1] === '') return;
       var dt = document.createElement('dt'), dd = document.createElement('dd');
       dt.textContent = entry[0]; dd.textContent = String(entry[1]);
