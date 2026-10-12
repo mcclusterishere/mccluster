@@ -24,7 +24,7 @@ test('refund errors do not disclose raw Stripe or database errors',async()=>{
 
 test('refund reservation is acquired before Stripe mutation and finalized atomically',async()=>{
  const handler=await readFile('supabase/functions/l3-refund/index.ts','utf8');
- const sql=await readFile('supabase/migrations/20261011093000_l3_refund_reservations.sql','utf8');
+ const sql=await readFile('supabase/pending_migrations/20261011093000_l3_refund_reservations.sql','utf8');
  assert.ok(handler.indexOf("rpc/l3_reserve_refund")<handler.indexOf("stripe.refunds.create"));
  assert.ok(handler.indexOf("stripe.refunds.create")<handler.indexOf("rpc/l3_finish_refund"));
  assert.match(sql,/for update/);
