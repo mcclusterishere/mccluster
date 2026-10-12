@@ -18,8 +18,9 @@ export function aggregateGeoEvents(rows, granularity, asOf) {
   const cells=[...groups.values()].filter(g=>g.visits>=MIN_COHORT)
     .sort((a,b)=>b.visits-a.visits).slice(0,500)
     .map(g=>({region:g.region,visits:g.visits,
-      // Snap aggregate centroid to a coarse 2-degree grid; never expose a device point.
-      lat:Math.round(g.latSum/g.visits/2)*2,lon:Math.round(g.lonSum/g.visits/2)*2}));
+      // Never derive a plotted point from a small group of visitors.
+      // A 10-degree grid is intentionally approximate, not a device location.
+      lat:Math.round(g.latSum/g.visits/10)*10,lon:Math.round(g.lonSum/g.visits/10)*10}));
   return {schema:'mccluster.geo-aggregate.v1',granularity,asOf,cells,
     sample_limited:rows.length>=MAX_ROWS,
     disclaimer:'Sampled first-party geographic observations. Regional approximations, not device locations.'};
