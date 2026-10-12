@@ -615,7 +615,8 @@
       currentAccess = "spent";
       if (root.MCC_GATED) root.MCC_GATED.forget();
     }
-    trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000) });
+    trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000),
+      creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
     paint();
     if (!previewLimit && queue.length > 1) playAdjacent(1);
   });
