@@ -352,7 +352,7 @@
     S.artistLoading=true;S.artistError=null;paint();
     var days=S.artistDays||30;
     return S.request('/v1/analytics/artist-rankings?days='+days).then(function(data){
-      if(S.artistDays!==days)return;
+      if((S.artistDays||30)!==days)return;
       S.artistRankings=Array.isArray(data.rankings)?data.rankings:[];
       S.artistSampled=!!data.sample_limited;
     }).catch(function(err){S.artistError=err.message||String(err);}).finally(function(){S.artistLoading=false;if(S.section==='content')paint();});
