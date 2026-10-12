@@ -37,6 +37,7 @@ function boundedText(value, max = 160) {
 }
 
 function point(latitude, longitude) {
+  if (latitude === null || latitude === undefined || latitude === '' || longitude === null || longitude === undefined || longitude === '') return null;
   const lat = Number(latitude);
   const lon = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
