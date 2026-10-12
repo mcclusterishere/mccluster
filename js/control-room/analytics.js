@@ -233,7 +233,7 @@
     }).join("")+'</div>';
   }
   function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["fans","Fans"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
@@ -511,7 +511,41 @@
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function fans(){
+    var users=S.fanUsers||[],selected=users.find(function(u){return u.id===S.fanSelected;});
+    var search=String(S.fanSearch||'').toLowerCase();
+    var filtered=users.filter(function(u){return [u.display_name,u.email,u.id].some(function(v){return String(v||'').toLowerCase().includes(search);});});
+    var cards=filtered.map(function(u){
+      var events=u.events||[],music=events.filter(function(ev){return /^(music_play|song_start|music_complete|track_share|album_play)$/.test(ev.name);});
+      return '<button type="button" class="cra-fan-card'+(u.id===S.fanSelected?' is-on':'')+'" data-cra-fan="'+e(u.id)+'"><strong>'+e(u.display_name||u.id)+'</strong><small>'+e(u.segment||'')+'</small><span>'+n(music.length)+' sampled music events</span></button>';
+    }).join('');
+    var detail='';
+    if(selected){
+      var activity=(selected.events||[]).filter(function(ev){return /^(music_play|song_start|music_complete|track_share|album_play)$/.test(ev.name);});
+      var starts=activity.filter(function(ev){return ev.name==='music_play'||ev.name==='song_start';}).length;
+      var completions=activity.filter(function(ev){return ev.name==='music_complete';}).length;
+      var shares=activity.filter(function(ev){return ev.name==='track_share';}).length;
+      detail='<section class="cra-fan-detail"><h3>'+e(selected.display_name||selected.id)+'</h3><p>'+e(selected.email||'No verified email displayed')+'</p><div class="cra-fan-metrics">'+kpi('Starts',n(starts))+kpi('Completions',n(completions))+kpi('Shares',n(shares))+'</div><h4>Observed music timeline</h4>'+
+        (activity.length?'<ol class="cra-fan-timeline">'+activity.slice(0,40).map(function(ev){return '<li><b>'+e(ev.name)+'</b> · '+e(ev.track||ev.track_id||'Unattributed track')+'<small>'+e(ev.at||'')+'</small></li>';}).join('')+'</ol>':'<p>No recorded music events in this account sample.</p>')+
+        '<p>Latest 100 recorded account events only. This is not a complete listening history or a measure of personal preferences.</p></section>';
+    }
+    return '<div class="cra-grid">'+card('Fans · verified accounts','Owner-only account activity; anonymous visitors are not identified. Search is limited to this page.', '<div class="cra-fan-tools"><input data-cra-fan-search type="search" placeholder="Search accounts on this page" aria-label="Search accounts" value="'+e(S.fanSearch||'')+'"><button type="button" data-cra-fan-refresh>Refresh</button></div>'+
+      (S.fanLoading?'<p>Loading accounts…</p>':S.fanError?'<p class="cra-error">'+e(S.fanError)+'</p>':'<div class="cra-fan-list">'+(cards||'<p>No matching accounts with observed activity.</p>')+'</div>')+
+      '<div class="cra-fan-paging"><button type="button" data-cra-fan-prev'+((S.fanPage||1)<=1?' disabled':'')+'>Previous</button><span>Page '+(S.fanPage||1)+'</span><button type="button" data-cra-fan-next'+(!S.fanHasMore?' disabled':'')+'>Next</button></div>',true)+
+      (selected?card('Fan activity','Recorded first-party events only.',detail,true):'')+'</div>';
+  }
+  function loadFans(){
+    if(!S.request||S.fanLoading)return;
+    var page=S.fanPage||1;
+    S.fanLoading=true;S.fanError=null;paint();
+    return S.request('/v1/analytics/users?limit=100&page='+page).then(function(data){
+      if((S.fanPage||1)!==page)return;
+      S.fanUsers=Array.isArray(data.users)?data.users:[];
+      S.fanHasMore=!!data.has_more;
+      if(!S.fanUsers.some(function(u){return u.id===S.fanSelected;}))S.fanSelected=null;
+    }).catch(function(err){S.fanError=err.message||String(err);}).finally(function(){S.fanLoading=false;if(S.section==='fans')paint();});
+  }
+  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="fans"?fans():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
     var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
     return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, adaptive experience, experiments, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
@@ -520,6 +554,7 @@
     if(!S.host)return;S.host.innerHTML=render();bind(S.host);drawReach();
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
+    if(S.section==="fans"&&!S.fanUsers&&!S.fanLoading&&!S.fanError)void loadFans();
     if(S.section==="content"&&!S.artistRankings&&!S.artistLoading&&!S.artistError)void loadArtistRankings();
   }
   function loadSites(){return S.supa("analytics_sites?select=id,name,public_key,status,consent_mode,created_at,analytics_site_domains(id,hostname,verified_at,verification_method,verification_token,enabled)&order=created_at.desc").then(function(x){S.sites=x||[];}).catch(function(x){S.errors.sites=x;S.sites=[];});}
@@ -639,6 +674,12 @@
   }
   function bind(root){
     bindChartPoints(root);
+    var fs=root.querySelector('[data-cra-fan-search]');
+    if(fs)fs.oninput=function(){S.fanSearch=fs.value;var selectionStart=fs.selectionStart;paint();var replacement=S.host.querySelector('[data-cra-fan-search]');if(replacement){replacement.focus();try{replacement.setSelectionRange(selectionStart,selectionStart);}catch(_){}}};
+    root.querySelectorAll('[data-cra-fan]').forEach(function(b){b.onclick=function(){S.fanSelected=b.getAttribute('data-cra-fan');paint();};});
+    var fr=root.querySelector('[data-cra-fan-refresh]');if(fr)fr.onclick=function(){S.fanUsers=null;void loadFans();};
+    var fp=root.querySelector('[data-cra-fan-prev]');if(fp)fp.onclick=function(){S.fanPage=Math.max(1,(S.fanPage||1)-1);S.fanUsers=null;void loadFans();};
+    var fn=root.querySelector('[data-cra-fan-next]');if(fn)fn.onclick=function(){S.fanPage=(S.fanPage||1)+1;S.fanUsers=null;void loadFans();};
     var ad=root.querySelector('[data-cra-artist-days]'),as=root.querySelector('[data-cra-artist-sort]');
     if(ad){ad.value=String(S.artistDays||30);ad.onchange=function(){S.artistDays=Number(ad.value);S.artistRankings=null;S.artistError=null;void loadArtistRankings();};}
     if(as){as.value=S.artistSort||'starts';as.onchange=function(){S.artistSort=as.value;paint();};}
