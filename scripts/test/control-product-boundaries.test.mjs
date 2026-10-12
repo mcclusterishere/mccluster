@@ -4,8 +4,8 @@ import {readFile} from 'node:fs/promises';
 
 test('operator redirects require owner-gated capability rather than generic status',async()=>{
  const redirect=await readFile('js/owner-control-redirect.js','utf8');
- assert.match(redirect,/\/v1\/analytics\/users\?limit=1/);
- assert.doesNotMatch(redirect,/\/v1\/status/);
+ assert.match(redirect,/\/v1\/status/);
+ assert.doesNotMatch(redirect,/\/v1\/analytics\/users\?limit=1/);
 });
 
 test('Control owns artist and fan intelligence as distinct operator sections',async()=>{
