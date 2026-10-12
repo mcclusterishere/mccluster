@@ -347,6 +347,16 @@
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_nm: 150 }; }
     },
     {
+      key: 'peeringdb', source: 'peeringdb', name: 'Internet facilities (PeeringDB)', color: '#60d8fa',
+      build: function (c) { return { bbox: c.bbox, limit: 250 }; },
+      hint: 'NONPROFIT/INTERNAL lane only. Provider coordinates are approximate.'
+    },
+    {
+      key: 'ripe_atlas', source: 'ripe_atlas', name: 'Network probes (RIPE Atlas)', color: '#b8a5ff',
+      build: function (c) { return { bbox: c.bbox, limit: 250 }; },
+      hint: 'ACADEMIC/INTERNAL lane only. Probe positions are privacy-obfuscated.'
+    },
+    {
       key: 'overpass', source: 'overpass', name: 'Infrastructure (OSM)', color: '#9bd17b',
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_m: 3000, operation: 'infrastructure' }; }
     },
@@ -503,7 +513,7 @@
         return {
           lat: row.point && row.point.lat, lon: row.point && row.point.lon,
           name: row.name || row.metric || row.event_type || spec.name,
-          description: describe(row.properties)
+          description: describe(Object.assign({}, row.properties || {}, { source_url: row.source_url || result.source_url, observed_at: row.observed_at, attribution: result.attribution }))
         };
       }));
       return { records: records.length, mapped: mapped, attribution: result.attribution };
