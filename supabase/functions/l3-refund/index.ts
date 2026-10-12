@@ -59,6 +59,17 @@ Deno.serve(async (req) => {
     const amount = body.amount_cents === undefined || body.amount_cents === null ? remaining : body.amount_cents;
     if (!Number.isSafeInteger(amount) || amount <= 0 || amount > remaining) return json({ error: 'invalid_refund_amount', remaining_cents: remaining }, 400);
 
+    const reservation = await rest('rpc/l3_reserve_refund', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_id: body.refund_request_id, p_order: order.id, p_org: org.id,
+        p_actor: actor.id, p_amount: amount, p_charge: charge.id,
+      }),
+    });
+    if (reservation.status === 'reconciled') {
+      return json({ ok: true, refund_id: reservation.stripe_refund_id, already_reconciled: true });
+    }
+    // Repeated requests use the same Stripe idempotency key and the same reservation.
     const refund = await stripe.refunds.create(
       { charge: charge.id, amount, metadata: { order_id: order.id, refund_request_id: body.refund_request_id } },
       { stripeAccount: order.connected_account_id, idempotencyKey: `l3-refund-${body.refund_request_id}` }
@@ -66,12 +77,9 @@ Deno.serve(async (req) => {
     // Re-read Stripe's authoritative aggregate after refund creation.
     const current = await stripe.charges.retrieve(charge.id, {}, { stripeAccount: order.connected_account_id });
     const complete = Number(current.amount_refunded || 0) >= Number(current.amount);
-    await rest(`l3_orders?id=eq.${order.id}&org_id=eq.${org.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: complete ? 'refunded' : 'partially_refunded', refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
-    });
-    if (complete) await rest(`l3_entitlements?order_id=eq.${order.id}`, {
-      method: 'PATCH', body: JSON.stringify({ revoked_at: new Date().toISOString() }),
+    await rest('rpc/l3_finish_refund', {
+      method: 'POST',
+      body: JSON.stringify({ p_id: body.refund_request_id, p_refund: refund.id, p_complete: complete }),
     });
     await rest('l3_activity', {
       method: 'POST',
