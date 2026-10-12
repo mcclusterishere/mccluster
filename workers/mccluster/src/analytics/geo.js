@@ -14,15 +14,21 @@ export function aggregateGeoEvents(rows, granularity, asOf) {
     const key=region ? country+' / '+region : country;
     const session=typeof e.session_id==='string'?e.session_id.trim():'';
     if(!session)continue;
-    const g=groups.get(key)||{region:key,visits:0,latSum:0,lonSum:0,sessions:new Set()};
-    g.visits++;g.latSum+=lat;g.lonSum+=lon;g.sessions.add(session);groups.set(key,g);
+    const g=groups.get(key)||{region:key,visits:0,sessions:new Set(),gridCounts:new Map()};
+    g.visits++;g.sessions.add(session);
+    // Plot a fixed coarse grid cell, not a centroid calculated from visitors.
+    const gridLat=Math.round(lat/10)*10,gridLon=Math.round(lon/10)*10;
+    const gridKey=gridLat+','+gridLon;
+    g.gridCounts.set(gridKey,(g.gridCounts.get(gridKey)||0)+1);
+    groups.set(key,g);
   }
   const cells=[...groups.values()].filter(g=>g.sessions.size>=MIN_COHORT)
     .sort((a,b)=>b.visits-a.visits).slice(0,500)
-    .map(g=>({region:g.region,visits:g.visits,
-      // Never derive a plotted point from a small group of visitors.
-      // A 10-degree grid is intentionally approximate, not a device location.
-      lat:Math.round(g.latSum/g.visits/10)*10,lon:Math.round(g.lonSum/g.visits/10)*10}));
+    .map(g=>{
+      const grid=[...g.gridCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0][0];
+      const [lat,lon]=grid.split(',').map(Number);
+      return {region:g.region,visits:g.visits,lat,lon};
+    });
   return {schema:'mccluster.geo-aggregate.v1',granularity,asOf,cells,
     sample_limited:rows.length>=MAX_ROWS,
     disclaimer:'Sampled first-party geographic observations. Only regions with at least five distinct observed sessions are shown; sessions are not unique people. Regional approximations, not device locations.'};
