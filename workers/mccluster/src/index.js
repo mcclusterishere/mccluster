@@ -1,3 +1,4 @@
+import { transferApprovedCreatorEarning } from './creator-transfers.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 import {handleAtNight} from './at-night.js';
@@ -209,6 +210,67 @@ export default {
         const id = env.HereTenantAgent.idFromName('health');
         const stub = env.HereTenantAgent.get(id);
         return stub.fetch(request);
+      }
+
+      if (path === '/v1/creator-payouts/bind' && request.method === 'POST') {
+        await requireHouseOwner(request, env);
+        if (!/^sk_test_/.test(String(env.STRIPE_SECRET_KEY || ''))) return fail(request, env, 'Test Stripe key required', 503);
+        const input = await request.json();
+        if (!/^[0-9a-f-]{36}$/i.test(String(input.org_id || '')) || !/^[0-9a-f-]{36}$/i.test(String(input.creator_m_uid || '')) || !/^acct_[A-Za-z0-9]+$/.test(String(input.stripe_account_id || ''))) return fail(request, env, 'Invalid account binding', 400);
+        const account = await (await fetch('https://api.stripe.com/v1/accounts/' + encodeURIComponent(input.stripe_account_id), { headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY } })).json();
+        if (account.id !== input.stripe_account_id || account.capabilities?.transfers !== 'active' || !account.payouts_enabled) return fail(request, env, 'Connect account is not transfer-ready', 409);
+        const orgs = await sb(env, 'orgs?id=eq.' + encodeURIComponent(input.org_id) + '&select=id');
+        if (!orgs?.length) return fail(request, env, 'Unknown org', 404);
+        const result = await fetch(env.SUPABASE_URL + '/rest/v1/action_creator_connect_accounts', { method:'POST', headers:{...sbHeaders(env),prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({org_id:input.org_id,creator_m_uid:input.creator_m_uid,stripe_account_id:account.id,livemode:false}) });
+        if (!result.ok) return fail(request, env, 'Account binding failed', 409);
+        return reply(request, env, { ok:true, creator_m_uid:input.creator_m_uid, account_id:account.id });
+      }
+
+      if (path === '/v1/creator-payouts/reserve' && request.method === 'POST') {
+        const owner = await requireHouseOwner(request, env);
+        if (env.CREATOR_PAYOUTS_TEST_ENABLED !== 'true' || !/^sk_test_/.test(String(env.STRIPE_SECRET_KEY || ''))) return fail(request, env, 'Test payouts disabled', 503);
+        const input = await request.json();
+        if (!/^[0-9a-f-]{36}$/i.test(String(input.earning_id || ''))) return fail(request, env, 'Invalid earning', 400);
+        const earnings = await sb(env, 'action_clip_earnings?id=eq.' + encodeURIComponent(input.earning_id) + '&select=id,org_id,m_uid&limit=1');
+        const earning = earnings?.[0];
+        if (!earning) return fail(request, env, 'Earning not found', 404);
+        const bound = await sb(env, 'action_creator_connect_accounts?org_id=eq.' + earning.org_id + '&creator_m_uid=eq.' + earning.m_uid + '&livemode=is.false&select=stripe_account_id&limit=1');
+        if (!bound?.length) return fail(request, env, 'Creator Connect account not bound', 409);
+        const response = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/action_creator_reserve_payout', {method:'POST',headers:sbHeaders(env),body:JSON.stringify({p_org_id:earning.org_id,p_earning_id:earning.id,p_destination:bound[0].stripe_account_id,p_approver:owner.id})});
+        if (!response.ok) return fail(request, env, 'Payout reservation rejected', 409);
+        return reply(request, env, { intent_id:await response.json(),state:'reserved' });
+      }
+
+      if (path === '/v1/creator-payouts/transfer' && request.method === 'POST') {
+        await requireHouseOwner(request, env);
+        if (env.CREATOR_PAYOUTS_TEST_ENABLED !== 'true' || !/^sk_test_/.test(String(env.STRIPE_SECRET_KEY || ''))) return fail(request, env, 'Test payouts disabled', 503);
+        const input = await request.json();
+        if (!/^[0-9a-f-]{36}$/i.test(String(input.intent_id || ''))) return fail(request, env, 'Invalid payout intent', 400);
+        const rows = await sb(env, 'action_creator_payout_intents?id=eq.' + encodeURIComponent(input.intent_id) + '&select=*');
+        const intent = rows?.[0];
+        if (!intent || !['reserved','transferred'].includes(intent.state)) return fail(request, env, 'Payout intent unavailable; transferring requires reconciliation', 409);
+        if (intent.state === 'transferred') return reply(request, env, { state:'transferred',transfer_id:intent.stripe_transfer_id });
+        const binding = await sb(env, 'action_creator_connect_accounts?org_id=eq.' + intent.org_id + '&creator_m_uid=eq.' + intent.creator_m_uid + '&livemode=is.false&select=stripe_account_id&limit=1');
+        if (binding?.[0]?.stripe_account_id !== intent.stripe_account_id) return fail(request, env, 'Creator destination changed', 409);
+        // Atomic compare-and-swap prevents two concurrent HTTP requests from issuing transfers.
+        const claim = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/action_creator_claim_transfer', {
+          method:'POST',headers:sbHeaders(env),body:JSON.stringify({p_intent_id:intent.id})
+        });
+        if (!claim.ok || await claim.json() !== true) return fail(request, env, 'Transfer already claimed; reconcile before retry', 409);
+        const transfer = await transferApprovedCreatorEarning(env,{approved:true,reserved:true,verified:true,destination:intent.stripe_account_id,amountCents:Number(intent.amount_cents),currency:intent.currency,earningId:intent.earning_id,orgId:intent.org_id});
+        const response = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/action_creator_finalize_transfer',{method:'POST',headers:sbHeaders(env),body:JSON.stringify({p_intent_id:intent.id,p_transfer_id:transfer.transferId})});
+        if (!response.ok) return fail(request, env, 'Transfer created; ledger reconciliation required', 503);
+        return reply(request, env, {state:'transferred',transfer_id:transfer.transferId});
+      }
+
+      if (path === '/v1/creator-payouts' && request.method === 'GET') {
+        await requireHouseOwner(request, env);
+        const [funding, intents, earnings] = await Promise.all([
+          sb(env, 'action_creator_funding?select=org_id,mission_id,currency,funded_cents,reserved_cents,spent_cents&order=created_at.desc&limit=100'),
+          sb(env, 'action_creator_payout_intents?select=id,org_id,mission_id,earning_id,creator_m_uid,amount_cents,currency,state,approved_at,stripe_transfer_id&order=created_at.desc&limit=100'),
+          sb(env, 'action_clip_earnings?select=id,org_id,mission_id,m_uid,amount_cents,state,hold_until&order=created_at.desc&limit=100')
+        ]);
+        return reply(request, env, { mode: 'read_only', funding, intents, earnings });
       }
 
       if (path === '/v1/me' && request.method === 'GET') {

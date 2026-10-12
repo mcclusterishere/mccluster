@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 275,
-  "latest_version": "20261006233518",
-  "latest_name": "here_album_commerce_v1_reconcile",
-  "ledger_sha256": "bdf6a7f2f9197016df5fbc038842a33226f2ac9aea3a7755370061453ad732a2",
+  "migration_count": 281,
+  "latest_version": "20261010070310",
+  "latest_name": "action_creator_partial_reversal_guard",
+  "ledger_sha256": "ca594b151b45c36c1e440085b2f6815d7e711ea7dcb59fed6e27b22545d8a9da",
   "migrations": [
     {
       "version": "0001",
@@ -1106,6 +1106,30 @@
     {
       "version": "20261006233518",
       "name": "here_album_commerce_v1_reconcile"
+    },
+    {
+      "version": "20261010011154",
+      "name": "action_creator_payout_reservations"
+    },
+    {
+      "version": "20261010011201",
+      "name": "action_creator_payout_reservation_rpc"
+    },
+    {
+      "version": "20261010011502",
+      "name": "action_creator_connect_binding_finalize"
+    },
+    {
+      "version": "20261010011611",
+      "name": "action_creator_stripe_event_reconciliation"
+    },
+    {
+      "version": "20261010064726",
+      "name": "action_creator_transfer_claim_bank_events"
+    },
+    {
+      "version": "20261010070310",
+      "name": "action_creator_partial_reversal_guard"
     }
   ]
 }
