@@ -645,41 +645,13 @@
     paintSound(); // the snapshot is from boot, when nothing was playing yet
   }
 
-  /* the hold belongs to the bar, not to the browser. Without this, a long
-     press on a tab raises the phone's own link preview (iOS peek, Android
-     context menu) right over the wing that is trying to open. The CSS half
-     of the fix lives with .appbar in css/style.css. */
-  dock.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-  dock.addEventListener("dragstart", function (e) { e.preventDefault(); });
-
-  var LP_MS = 450;
-  var lpTimer = null, lpFired = false, lpX = 0, lpY = 0;
-  dock.addEventListener("pointerdown", function (e) {
-    var a = e.target.closest && e.target.closest("a[data-dock],a[data-appnav]");
-    if (!a || !dock.contains(a)) return;
-    lpFired = false; lpX = e.clientX; lpY = e.clientY;
-    clearTimeout(lpTimer);
-    lpTimer = setTimeout(function () {
-      lpFired = true;
-      var key = a.getAttribute("data-appnav");
-      var slot = a.getAttribute("data-dock");
-      if (key && WINGS[key]) { if (wingOn === key) revert(); else morph(key); }
-      else if (slot) peek(slot);
-    }, LP_MS);
-  });
-  dock.addEventListener("pointermove", function (e) {
-    if (Math.abs(e.clientX - lpX) > 8 || Math.abs(e.clientY - lpY) > 8) clearTimeout(lpTimer);
-  });
-  ["pointerup", "pointercancel"].forEach(function (ev) {
-    dock.addEventListener(ev, function () { clearTimeout(lpTimer); });
-  });
-
+  /* Long-press wings retired: each tab is an ordinary, predictable link.
+     Deeper destinations remain accessible through the existing site pages. */
   dock.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest("a[data-dock],a[data-appnav]");
     if (!a || !dock.contains(a)) return;
     e.preventDefault();
-    if (lpFired) { lpFired = false; return; } // the hold already did its work
     var key = a.getAttribute("data-appnav");
     var slot = a.getAttribute("data-dock");
     var w = key ? WINGS[key] : null;
