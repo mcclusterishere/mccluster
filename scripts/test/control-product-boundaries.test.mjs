@@ -44,3 +44,11 @@ test('owner user explorer enforces house owner and self endpoints bind identity 
  assert.match(self,/user\.id/);
  assert.doesNotMatch(self,/url\.searchParams\.get\(['"]uid['"]\)/);
 });
+
+test('Whip mobility worker never trusts caller-provided demo identity or operator role',async()=>{
+ const worker=await readFile('workers/mccluster/src/whip/worker.js','utf8');
+ assert.doesNotMatch(worker,/ALLOW_DEMO_IDENTITIES/);
+ assert.doesNotMatch(worker,/req\.headers\.get\('x-we-role'\)/);
+ assert.doesNotMatch(worker,/req\.headers\.get\('x-we-user-id'\)/);
+ assert.match(worker,/operator_members\?tenant_id=eq/);
+});
