@@ -87,7 +87,6 @@ async function requireUser(req, env) {
 async function requireOperator(req, env, tenantId) {
   const user = await requireUser(req, env);
   let rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
-  if (!rows?.length && user.email) rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&email=eq.${encodeURIComponent(user.email)}&select=*`);
   if (!rows?.length) throw Object.assign(new Error('Operator access required'), { status: 403 });
   return user;
 }
