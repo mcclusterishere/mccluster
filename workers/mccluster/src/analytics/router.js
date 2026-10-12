@@ -866,7 +866,7 @@ async function handleUserExplorer(request, env, user, url) {
   for (let offset = 0; offset < ids.length; offset += EVENT_QUERY_CONCURRENCY) {
     const batches = await Promise.all(ids.slice(offset, offset + EVENT_QUERY_CONCURRENCY).map(id =>
       sbRows(env, 'events?site_id=is.null&uid=eq.' + encodeURIComponent(id) +
-        '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=100')
+        '&select=uid,at,name,path,session_id,referrer,props&order=at.desc&limit=100')
     ));
     for (const rows of batches) allEvents.push(...rows);
   }
@@ -884,7 +884,7 @@ async function handleUserExplorer(request, env, user, url) {
       attributes:{created_at:u.created_at||null,email_confirmed_at:u.email_confirmed_at||null,
         first_name:meta.first_name||null,last_name:meta.last_name||null,
         observed_events_sample:events.length,observed_sessions_sample:activity.sessions},
-      events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer})),
+      events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer,\n        track_id:String(e.props?.creator_track_id||'').slice(0,64),\n        track:String(e.props?.track||e.props?.song||'').slice(0,120)})),
       scores:{engagement:{value:activity.value,window_days:30,
         explanation:'4 points per meaningful event plus 3 per observed session, capped at 100; based on latest 100 authenticated events.'}}
     });
