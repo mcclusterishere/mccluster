@@ -648,11 +648,12 @@
   audio.addEventListener("play", function(){qualityStart();if(quality)quality.last=audio.currentTime||0;});
   audio.addEventListener("timeupdate", qualityTick);
   audio.addEventListener("pause", function(){qualityFinish("pause");});
+  audio.addEventListener("playing", function(){qualityStart();if(quality)quality.last=audio.currentTime||0;});
   audio.addEventListener("seeking", function(){if(quality){quality.seeks++;quality.last=audio.currentTime||0;}});
   audio.addEventListener("seeked", function(){if(quality)quality.last=audio.currentTime||0;});
   audio.addEventListener("ended", function(){qualityFinish("complete");});
   audio.addEventListener("waiting", function(){qualityFinish("buffering");});
-  doc.addEventListener("visibilitychange",function(){if(doc.visibilityState==="hidden")qualityFinish("background");});
+  doc.addEventListener("visibilitychange",function(){if(quality)quality.last=audio.currentTime||0;});
   root.addEventListener("pagehide",function(){qualityFinish("pagehide");});
   /* Present the membership invitation over the actual player when a public
      preview expires. This is a conversion surface, not an auth entitlement. */
