@@ -35,17 +35,37 @@ Timecodes are **lyric cues**, not locked seconds. Confirm against the master aud
 ## Timing and canon-event revision (2026-10-12)
 - Repository source `data/lyrics/antisocial.json` declares `duration_seconds: 176` (2:56). This is lyric metadata, not independently verified audio-container duration; verify against the master audio before locking edits.
 - **Cadence:** target decisions every ~15 seconds, not every 7. Offer approximately 11 decision opportunities over the track; move exact prompts to lyric-safe moments instead of imposing a rigid grid.
-- **Canon events:** reconverge after approximately every second decision (~30-second story chapters). Allow five to six major canonical beats, determined by the actual song structure, not invented timecodes.
+- **Canon events:** reconverge after approximately every second decision (~30-second story chapters). Canon includes the meditation, camera pickup, church, controlled fall and office pickup; these are not branch alternatives.
 - **Narrative logic:** Social/Anti-Social choices change the immediate outcome and persistent state; the next canon beat is shared. Persistent state may still alter dialogue, camera viewpoint, overlays, wardrobe or the ending.
 - **Math:** 11 binary choices = 2,048 possible choice sequences, **not** 2,048 required videos. With shared canonical scenes and two variants per decision window, a baseline could use ~22 branch variants plus canonical footage and reusable overlays, subject to the actual edit.
 - **Canon candidates:** meditation/one-eye peek; artist picks up viewer/camera; church/conversions; controlled drop; office pickup/coaching; ending/CTA. Exact ordering and spacing must be confirmed from the lyric timing; some may be grouped into one canon event.
 - **Missed prompt:** choose a safe default consistent with the selected experience mode, and log that it was auto-resolved rather than user-selected. Social camera-recording consent remains independent of narrative choices.
 
+## Canon-first video switching (revision 2026-10-12)
+**Corrected creative rule:** meditation, camera pickup, church, controlled fall, and office pickup are **all canonical events**, not optional branch alternatives. They happen in the baseline film regardless of listener input. The choice matrix only temporarily switches the displayed video treatment to a social or anti-social alternative at a decision point, then returns to canonical footage at a planned rejoin. Do not multiply full-song shoots into a tree.
+
+**Lyric-source audit:** `data/lyrics/antisocial.json` contains `duration_seconds: 176`, 34 nonempty lyric lines, approximately 476 words and 34 line-timing objects. The existing described nature → church → office story covers approximately the first 53 seconds; the remaining ~123 seconds need a separate creative storyboard. The final lyric timing ends near 157 seconds, leaving ~19 seconds after the final timestamp (potential outro; verify against audio).
+
+**Proposed timeline, subject to source-audio confirmation:**
+- 0–17s: meditation, scrolling, eye peek, dopamine; canonical.
+- 17–31s: social-vs-anti-social experience choices and reactive lyrics, returning to canon.
+- 31–39s: camera pickup and “own it / follow me”; canonical.
+- 39–44s: church and conversions; canonical.
+- 44–53s: controlled camera fall → office pickup → coaching; canonical.
+- 53–70s: repeated fee/belief hook; potential branchable overlay/scene variants.
+- 70–105s: consultation, profile optimization, creating content and overcoming procrastination; **new material requiring creative decisions**.
+- 105–123s: repeated fee/belief hook; potential branch variants.
+- 123–139s: instrumental or untimed gap according to lyric metadata; verify.
+- 139–157s: closing fee/belief refrain; canonical ending candidate.
+- 157–176s: outro or untimed material; verify audio.
+
+**Branch implementation:** preserve a single audio clock and one canonical film as the fallback. For each choice, play a time-aligned variant clip or render an overlay/effect for a bounded window, then rejoin canon. Make missing/late selections non-disruptive. The exact number of choice points should be decided from lyric and edit structure, not forced to exactly 11.
+
 ## Interactive story rules
 1. **Social mode:** viewer separately opts into camera reaction recording. Eventually may see their own silhouette/visual presence in the scene. Recording must require explicit consent; no camera/audio upload by default.
 2. **Anti-Social mode:** camera is used **locally for head-tracked parallax only**, with no reaction recording, uploading, biometric enrollment, or emotion inference. Provide no-camera touch/drag fallback.
 3. **Virtual phone:** scroll by touch on mobile; in headset, implement a controller/hand-tracking ray or pinch gesture when supported. Head gaze selects/focuses, not scrolls by itself. The phone is a composited 3D interactive object, **not** a prerecorded phone screen.
-4. **Branching:** offer social vs anti-social narrative actions near lyric cues, approximately every 15 seconds where dramatically appropriate, with canonical reconvergence events after roughly every two choices (about 30 seconds). Branching is a reconverging scene graph, not an exponentially expanding set of unique videos. Canonical story beats preserve the core narrative regardless of prior choices; intervening branches can change perspective, interaction and scene variants. Musical audio never restarts on branch selection. Missed choices follow an explicit default.
+4. **Branching:** offer social vs anti-social narrative actions near lyric cues, approximately every 15 seconds where dramatically appropriate, with rejoining of the canonical footage at each planned scene boundary. Branching is a reconverging scene graph, not an exponentially expanding set of unique videos. Canonical story beats preserve the core narrative regardless of prior choices; intervening branches can change perspective, interaction and scene variants. Musical audio never restarts on branch selection. Missed choices follow an explicit default.
 5. **Reactive lyrics:** synced words or phrases become in-world prompts, never obscure Matthew's face or important scene action. Offer reduced-motion and captions.
 6. **Telemetry:** playback clock, scene exposure, offered choice, selected choice, time-to-choice, interaction type, seek/replay, and dropoff. Avoid transmitting camera pixels or face landmarks in private mode.
 
