@@ -552,7 +552,18 @@ async function handleMnet(req,env,path,url){
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    return fail(req,env,'Reactions are retired on the Action Network. Take the mission or share proof instead.',410);
+    if(external)return fail(req,env,'Likes require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id);
+    if(!muid)return fail(req,env,'Sign in to like posts',401);
+    const rows=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`);
+    const post=rows?.[0];
+    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(req.method==='POST'){
+      await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({post_id:post.id,actor_m_uid:muid,reaction:'like'})});
+    }else{
+      await service(env,`network_reactions?post_id=eq.${post.id}&actor_m_uid=eq.${muid}&reaction=eq.like`,{method:'DELETE',headers:{prefer:'return=minimal'}});
+    }
+    return reply(req,env,{liked:req.method==='POST'});
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){
