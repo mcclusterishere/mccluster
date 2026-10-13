@@ -10,7 +10,7 @@
     nextBefore: null,
     loadingFeed: false,
     threadPost: null,
-    currentView: "live",
+    currentView: "feed",
     mediaAssets: [],
     mediaCache: {},
     conversations: [],
@@ -441,6 +441,7 @@
         '<div class="mn__post-actions">' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
+          '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">Share</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
     '</article>';
@@ -522,6 +523,18 @@
         }
         setView("missions");
         openMission(missionId);
+      };
+    });
+    root.querySelectorAll("[data-action=share]").forEach(function (b) {
+      b.onclick = function () {
+        var url = new URL(location.href);
+        url.searchParams.set("post", b.dataset.post);
+        var link = url.toString();
+        if (navigator.share) {
+          navigator.share({ title:"Action Network", url:link }).catch(function () {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
+        } else window.prompt("Copy post link",link);
       };
     });
     root.querySelectorAll("[data-action=save]").forEach(function (b) {
