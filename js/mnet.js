@@ -439,6 +439,7 @@
       postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
+          '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + ' <span class="mn__count">' + esc(post.like_count || '') + '</span> Like</button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">Share</button>' +
@@ -523,6 +524,20 @@
         }
         setView("missions");
         openMission(missionId);
+      };
+    });
+    root.querySelectorAll("[data-action=like]").forEach(function (b) {
+      b.onclick = function () {
+        var item=findPost(b.dataset.post),post=item&&(item.post||item);
+        if(!post)return;
+        var before=!!post.liked_by_me, count=Number(post.like_count)||0;
+        post.liked_by_me=!before;
+        post.like_count=Math.max(0,count+(before?-1:1));
+        paintToggle(b,!before,post.like_count);
+        b.disabled=true;
+        api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/reactions",{method:before?"DELETE":"POST",body:{reaction:"like"}})
+          .catch(function(e){post.liked_by_me=before;post.like_count=count;paintToggle(b,before,count);setStatus($("mnFeedStatus"),e.message||"Could not like post.","error");})
+          .finally(function(){b.disabled=false;});
       };
     });
     root.querySelectorAll("[data-action=share]").forEach(function (b) {
