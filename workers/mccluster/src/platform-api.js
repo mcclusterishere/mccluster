@@ -119,12 +119,15 @@ async function canReadNetworkPost(env,muid,post){
 async function hydratePostRows(env,posts=[],viewerMuid=null){
   if(!posts.length)return [];
   const ids=uniq(posts.map(p=>p.id)).filter(uuidLike);
-  const [actors,bookmarks]=await Promise.all([
+  const [actors,bookmarks,likes]=await Promise.all([
     networkActors(env,posts.map(p=>p.author_m_uid)),
-    viewerMuid&&ids.length?service(env,`network_bookmarks?m_uid=eq.${viewerMuid}&post_id=in.(${ids.join(',')})&select=post_id`):[]
+    viewerMuid&&ids.length?service(env,`network_bookmarks?m_uid=eq.${viewerMuid}&post_id=in.(${ids.join(',')})&select=post_id`):[],
+    ids.length?service(env,`network_reactions?post_id=in.(${ids.join(',')})&reaction=eq.like&select=post_id,actor_m_uid`):[]
   ]);
   const saved=new Set((bookmarks||[]).map(x=>x.post_id));
-  return posts.map(p=>({post:{...p,bookmarked_by_me:saved.has(p.id)},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
+  const counts=new Map(),mine=new Set();
+  (likes||[]).forEach(x=>{counts.set(x.post_id,(counts.get(x.post_id)||0)+1);if(viewerMuid&&x.actor_m_uid===viewerMuid)mine.add(x.post_id)});
+  return posts.map(p=>({post:{...p,bookmarked_by_me:saved.has(p.id),liked_by_me:mine.has(p.id),like_count:counts.get(p.id)||0},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
 }
 async function hydrateFeedItems(env,items=[],viewerMuid=null){
   if(!items.length)return [];
