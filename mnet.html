@@ -124,16 +124,18 @@
 
     <section class="mn__app" id="mnApp" hidden>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="live">Live</button>
+        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
+        <button type="button" data-mn-view="missions">Campaigns</button>
+        <button type="button" data-mn-view="messages">Inbox <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
+        <button type="button" data-mn-view="profile">Profile</button>
+        <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
+      </nav>
+      <nav class="mn__quicklinks" aria-label="More network features">
         <button type="button" data-mn-view="clips">Clips</button>
-        <button type="button" data-mn-view="feed">Action</button>
-        <button type="button" data-mn-view="missions">Missions</button>
+        <button type="button" data-mn-view="live">Live</button>
         <button type="button" data-mn-view="discover">People</button>
         <button type="button" data-mn-view="groups">Groups</button>
-        <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
-        <button type="button" data-mn-view="profile">Me</button>
-        <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
       </nav>
 
       <section class="mn__view" id="mnLiveView">
@@ -160,7 +162,6 @@
           <div class="mn__live-track" id="mnLiveTrack"></div>
           <p class="mn__status" id="mnLiveDirectoryStatus" role="status"></p>
         </section>
-        <section class="mn__manifesto" aria-label="Action Network purpose"><p>THE PLACE FOR DOERS</p><h1>Put it into action.</h1><div><span>Music</span><span>Build</span><span>Learn</span><span>Field</span><span>Forum</span></div></section>
         <section class="mn__actionboard" id="mnActionBoard"><div class="mn__actionboard-head"><div><p>YOUR ACTION</p><h2>Build a record of doing.</h2></div><strong id="mnActionScore">0 pts</strong></div><div class="mn__actionboard-grid"><article><span>Verified actions</span><b id="mnVerifiedActions">0</b><small>Proof over posts.</small></article><article><span>Current streak</span><b id="mnActionStreak">0 days</b><small>Consistency, not spam.</small></article><article><span>Cohort</span><b id="mnCohortProgress">-</b><small>Move together.</small></article></div><div class="mn__mission-strip"><div><p>MISSIONS</p><h3>Choose something worth finishing.</h3></div><a href="action/">Find missions →</a></div></section>
         <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>Live rooms and missions connect attention to measurable work. No points for ideology. No points for outrage. Support does not buy discovery rank.</small></div><a href="action/">Explore initiatives →</a></section>
       </section>
@@ -176,7 +177,7 @@
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
-            <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="What are you putting into action?" aria-label="Post text"></textarea>
+            <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="What’s happening?" aria-label="Post text"></textarea>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
@@ -202,7 +203,7 @@
                 <option value="private">Only me</option>
               </select>
             </label>
-            <button class="mn__post" id="mnPost" type="button">Put it in action</button>
+            <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
           <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
