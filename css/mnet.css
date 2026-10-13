@@ -830,3 +830,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__tabs>button{font-size:.7rem;min-height:42px;letter-spacing:-.02em}
   .mn__tabs>button .mn__badge{font-size:.6rem;min-width:15px;padding:0 3px}
 }
+
+/* Keep optional clipping setup out of the campaign browsing path. */
+.mn__creator-tools{margin-top:1rem;min-width:0;border:1px solid var(--mn-rule-2);border-radius:14px;padding:.65rem .85rem}
+.mn__creator-tools>summary{cursor:pointer;font-weight:700;list-style-position:inside;min-height:40px;align-content:center}
+.mn__creator-tools>.mn__panel{margin-top:.75rem}
+.mn__creator-tools :is(code,input,select,button){max-width:100%;overflow-wrap:anywhere}
