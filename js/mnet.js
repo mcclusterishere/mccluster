@@ -219,6 +219,7 @@
         return;
       }
       showGate("app");
+      setView("feed");
       paintSelf();
       $("mnBell").hidden = false;
       loadRail();
