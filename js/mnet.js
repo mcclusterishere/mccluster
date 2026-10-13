@@ -651,14 +651,14 @@
 
   function createPost() {
     var body = $("mnPostBody").value.trim();
-    var track = pickedTrack();
-    if (!body && !state.mediaAssets.length && !track) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
+    var selectedTrack = pickedTrack();
+    if (!body && !state.mediaAssets.length && !selectedTrack) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
     var button = $("mnPost");
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
-      body:{ body:body, visibility:$("mnVisibility").value, track:track,
+      body:{ body:body, visibility:$("mnVisibility").value, track:selectedTrack,
              media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
              poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }) }
     }).then(function () {
@@ -666,7 +666,7 @@
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
       clearMediaQueue();
       setStatus($("mnPostStatus"), "Posted.", "ok");
-      track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!track, visibility:$("mnVisibility").value });
+      track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
       return loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
