@@ -443,6 +443,7 @@
           '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + ' <span class="mn__count">' + esc(post.like_count || '') + '</span> Like</button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
+          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">Comment</button>' +
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">Share</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
@@ -525,6 +526,42 @@
         }
         setView("missions");
         openMission(missionId);
+      };
+    });
+    root.querySelectorAll("[data-action=comments]").forEach(function (b) {
+      b.onclick = function () {
+        var card=b.closest("[data-post-id]"), existing=card&&card.querySelector(".mn__comments");
+        if(!card)return;
+        if(existing){existing.remove();return;}
+        var section=document.createElement("section");
+        section.className="mn__comments";
+        section.setAttribute("aria-label","Post comments");
+        section.innerHTML='<div class="mn__comments-list" aria-live="polite">Loading comments…</div><form class="mn__comment-form"><input aria-label="Write a comment" maxlength="1000" required placeholder="Write a comment…"><button type="submit">Send</button></form><p class="mn__status" role="status"></p>';
+        card.appendChild(section);
+        var list=section.querySelector(".mn__comments-list"),form=section.querySelector("form"),status=section.querySelector(".mn__status");
+        function refresh(){
+          return api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/replies").then(function(data){
+            list.innerHTML="";
+            (data.comments||[]).forEach(function(c){
+              var p=document.createElement("p"),strong=document.createElement("strong"),body=document.createElement("span");
+              strong.textContent=(c.actor&&c.actor.display_name)||"Member";
+              body.textContent=" "+c.body;
+              p.appendChild(strong);p.appendChild(body);list.appendChild(p);
+            });
+            if(!list.children.length)list.textContent="No comments yet.";
+          }).catch(function(e){list.textContent=e.message||"Could not load comments.";});
+        }
+        form.onsubmit=function(e){
+          e.preventDefault();
+          var input=form.querySelector("input"),body=input.value.trim(),send=form.querySelector("button");
+          if(!body)return;
+          send.disabled=true;
+          api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/replies",{method:"POST",body:{body:body}})
+            .then(function(){input.value="";setStatus(status,"");return refresh();})
+            .catch(function(err){setStatus(status,err.message||"Could not comment.","error");})
+            .finally(function(){send.disabled=false;});
+        };
+        refresh();
       };
     });
     root.querySelectorAll("[data-action=like]").forEach(function (b) {
