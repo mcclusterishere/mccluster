@@ -127,7 +127,7 @@
       (K.msg ? '<p class="mn__hint' + (K.bad ? ' mn__danger' : '') + '" role="status">' + esc(K.msg) + '</p>' : "") +
       (K.song ? '<p class="mn__hint">Showing campaigns for one song. <button class="mn__quiet" type="button" data-clip-all>See all</button></p>' : "");
     var cards = K.all.length ? K.all.map(campaignCard).join("") : '<div class="mn__empty">No campaigns yet.</div>';
-    root.innerHTML = head + (K.all.length ? earnings() + cards + myClips() : cards) + '<details class="mn__creator-tools"><summary>Creator tools</summary>' + earnings() + myClips() + accounts() + '</details>';
+    root.innerHTML = head + cards + '<details class="mn__creator-tools"><summary>Creator tools</summary>' + earnings() + myClips() + accounts() + '</details>';
   }
 
   function act(btn, fn, ok) {
