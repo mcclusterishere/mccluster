@@ -64,10 +64,11 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
   assert.match(api,/bookmarked_by_me/);
 });
 
-test('Action Network retires conventional reactions/comments and enforces group membership', async()=>{
+test('Action Network supports access-checked likes/comments and enforces group membership', async()=>{
   const api=await read('workers/mccluster/src/platform-api.js');
   assert.match(api,/Comments are retired on the Action Network/);
-  assert.match(api,/Reactions are retired on the Action Network/);
+  assert.match(api,/network_reactions/);
+  assert.match(api,/network_post_comments/);
   assert.match(api,/if\(post\.group_id\)/);
   assert.match(api,/network_group_members\?group_id=eq\.\$\{post\.group_id\}.*state=eq\.joined/);
   assert.match(api,/const posts=joined/);
@@ -188,8 +189,8 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
-  assert.doesNotMatch(js, /data-action="like"/);
-  assert.doesNotMatch(js, /data-action="comments"/);
+  assert.match(js, /data-action="like"/);
+  assert.match(js, /data-action="comments"/);
   assert.doesNotMatch(html, /id="mnThread"/);
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
@@ -208,7 +209,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/Put it into action/);assert.match(html,/What are you putting into action/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/data-mn-view="feed">Feed/);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{
@@ -245,6 +246,9 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     }]);
     if(u.includes('/network_profiles?m_uid=in.'))return ok([{m_uid:MUID,display_name:'Doer',avatar_url:'',verification_state:'unverified'}]);
     if(u.includes('/network_bookmarks?'))return ok([]);
+    if(u.includes('/network_reactions?'))return ok([]);
+    if(u.includes('/network_post_comments?'))return ok([]);
+    if(u.includes('/network_posts?id=eq.'))return ok([{id:POST,author_m_uid:MUID,visibility:'network',group_id:GROUP,deleted_at:null}]);
     if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
     return ok([]);
   };
@@ -289,9 +293,9 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     res=await req('/v1/mnet/posts?app_key=mnet-web',{method:'POST',body:{body:'old comment',reply_to_id:POST}});
     assert.equal(res.status,410);
     res=await req('/v1/mnet/posts/'+POST+'/replies');
-    assert.equal(res.status,410);
+    assert.equal(res.status,200);
     res=await req('/v1/mnet/posts/'+POST+'/reactions',{method:'POST',body:{reaction:'like'}});
-    assert.equal(res.status,410);
+    assert.equal(res.status,200);
   } finally {
     globalThis.fetch=realFetch;
   }
