@@ -792,3 +792,52 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__quicklinks button{font:inherit;font-size:.8rem;border:0;background:transparent;color:inherit;opacity:.7;padding:.35rem .5rem;cursor:pointer}
 .mn__quicklinks button:hover,.mn__quicklinks button:focus-visible{opacity:1;text-decoration:underline}
 .mn__action--share{font:inherit;font-size:.85rem;cursor:pointer}
+
+
+/* Phone-first controls: labels and selection indicators stay inside their own hit targets. */
+.mn__tabs{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(2px,.65vw,8px);
+  overflow:hidden;
+  width:100%;
+  box-sizing:border-box;
+}
+.mn__tabs>button{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:0 clamp(2px,1.2vw,12px);
+  justify-content:center;
+  text-align:center;
+  font-size:clamp(.72rem,2.8vw,.92rem);
+  line-height:1.2;
+  white-space:nowrap;
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mn__tabs>button .mn__badge{flex-shrink:0}
+.mn__tabs-thumb{max-width:calc(25% - 4px);box-sizing:border-box}
+.mn__quicklinks{min-width:0}
+.mn__quicklinks button{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.mn__app,.mn__view,.mn__card,.mn__panel{min-width:0}
+.mn__app :is(button,a,input,select,textarea){max-width:100%;box-sizing:border-box}
+.mn__app :is(p,h1,h2,h3,li,label,small,strong){overflow-wrap:break-word}
+.mn__app :is(code,.mn__cliplist,.mn__clipclaimed){overflow-wrap:anywhere}
+@media(max-width:380px){
+  .mn__tabs{gap:2px;padding:3px}
+  .mn__tabs>button{font-size:.7rem;min-height:42px;letter-spacing:-.02em}
+  .mn__tabs>button .mn__badge{font-size:.6rem;min-width:15px;padding:0 3px}
+}
+
+/* Keep optional clipping setup out of the campaign browsing path. */
+.mn__creator-tools{margin-top:1rem;min-width:0;border:1px solid var(--mn-rule-2);border-radius:14px;padding:.65rem .85rem}
+.mn__creator-tools>summary{cursor:pointer;font-weight:700;list-style-position:inside;min-height:40px;align-content:center}
+.mn__creator-tools>.mn__panel{margin-top:.75rem}
+.mn__creator-tools :is(code,input,select,button){max-width:100%;overflow-wrap:anywhere}
+
+/* Keep sensitive account actions available without dominating the profile. */
+.mn__account-settings{margin:1rem 0;border:1px solid var(--mn-rule-2);border-radius:14px;padding:.7rem .85rem;min-width:0}
+.mn__account-settings>summary{cursor:pointer;font-weight:750;min-height:40px;align-content:center}
+.mn__account-settings>.mn__panel{margin-top:.75rem}
