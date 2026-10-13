@@ -134,7 +134,7 @@
         <button type="button" data-mn-view="clips">Clips</button>
         <button type="button" data-mn-view="live">Live</button>
         <button type="button" data-mn-view="discover">People</button>
-        <button type="button" data-mn-view="groups">Groups</button>
+        <button type="button" data-mn-view="groups">Behind the Record</button>
         <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
       </nav>
 
@@ -338,9 +338,10 @@
             <p class="mn__profile-headline" id="mnProfileHeadline"></p>
             <p class="mn__profile-bio" id="mnProfileBio"></p>
             <a class="mn__profile-link" id="mnProfileWebsite" target="_blank" rel="noopener" hidden></a>
-            <button class="mn__quiet mn__tour-again" id="mnTakeTour" type="button" data-tour-start>Take the tour</button>
+            <button class="mn__quiet mn__tour-again" id="mnTakeTour" type="button" data-tour-start hidden>Take the tour</button>
           </div>
         </div>
+        <details class="mn__account-settings"><summary>Account settings</summary>
         <section class="mn__panel" id="mnSecurity">
           <h3>Password and sign-in</h3>
           <p>Change your password, or set one if you signed up with Google.</p>
@@ -360,6 +361,8 @@
           <button class="mn__secondary" id="mnDeleteCancel" type="button" hidden>Keep my account</button>
           <p class="mn__status" id="mnDeleteStatus" role="status"></p>
         </section>
+
+        </details>
       </section>
     </section>
   <dialog class="mn__thread mn__livewatch" id="mnLiveWatch" aria-labelledby="mnLiveWatchTitle">
