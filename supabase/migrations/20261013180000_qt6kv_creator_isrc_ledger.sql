@@ -8,6 +8,12 @@ create table if not exists public.music_isrc_creator_registry (
   designation integer not null check (designation between 1 and 99999),
   isrc text generated always as (prefix_code || lpad((reference_year % 100)::text, 2, '0') || lpad(designation::text, 5, '0')) stored,
   recording_title text not null,
+  version_title text not null default '',
+  asset_type text not null default 'Audio',
+  production_year smallint,
+  duration_text text not null default '',
+  explicit_content boolean,
+  immersive boolean,
   artist text not null default '',
   rights_owner text not null default 'McCluster Corp',
   assignment_source text not null check (assignment_source in ('historical','platform','external')),
@@ -85,7 +91,8 @@ grant execute on function public.music_assign_creator_isrc(uuid,text) to service
 
 -- Admin export: service role only; never expose the registry through client RLS.
 create or replace view public.music_isrc_admin_export as
-select r.isrc,r.recording_title as title,r.artist,r.rights_owner,
+select r.isrc,r.recording_title as title,r.version_title,r.artist,r.rights_owner,
+       r.asset_type,r.production_year,r.duration_text,r.explicit_content,r.immersive,
        r.reference_year,r.designation,r.assignment_source,r.assigned_at,
        r.creator_track_id,t.duration_ms,t.genre,t.status
 from public.music_isrc_creator_registry r
