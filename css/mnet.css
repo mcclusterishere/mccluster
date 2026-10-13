@@ -784,3 +784,11 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__cliprow { grid-template-columns: minmax(0, 10rem) minmax(0, 1fr) auto; align-items: center; }
   .mn__cliprow:has(select + input + select) { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) minmax(0, 11rem) auto; }
 }
+
+/* Action Network four-tab primary navigation; secondary destinations remain accessible. */
+.mn__tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;overflow:visible}
+.mn__tabs>button{min-width:0;white-space:nowrap}
+.mn__quicklinks{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem}
+.mn__quicklinks button{font:inherit;font-size:.8rem;border:0;background:transparent;color:inherit;opacity:.7;padding:.35rem .5rem;cursor:pointer}
+.mn__quicklinks button:hover,.mn__quicklinks button:focus-visible{opacity:1;text-decoration:underline}
+.mn__action--share{font:inherit;font-size:.85rem;cursor:pointer}
