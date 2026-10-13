@@ -836,3 +836,8 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__creator-tools>summary{cursor:pointer;font-weight:700;list-style-position:inside;min-height:40px;align-content:center}
 .mn__creator-tools>.mn__panel{margin-top:.75rem}
 .mn__creator-tools :is(code,input,select,button){max-width:100%;overflow-wrap:anywhere}
+
+/* Keep sensitive account actions available without dominating the profile. */
+.mn__account-settings{margin:1rem 0;border:1px solid var(--mn-rule-2);border-radius:14px;padding:.7rem .85rem;min-width:0}
+.mn__account-settings>summary{cursor:pointer;font-weight:750;min-height:40px;align-content:center}
+.mn__account-settings>.mn__panel{margin-top:.75rem}
