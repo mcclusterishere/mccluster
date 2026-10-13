@@ -10,7 +10,7 @@
     nextBefore: null,
     loadingFeed: false,
     threadPost: null,
-    currentView: "live",
+    currentView: "feed",
     mediaAssets: [],
     mediaCache: {},
     conversations: [],
