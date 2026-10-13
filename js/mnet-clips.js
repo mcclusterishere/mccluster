@@ -123,11 +123,11 @@
   function render() {
     var root = $("mnClipsRoot"); if (!root) return;
     var head = '<div class="mn__section-head"><div><p class="mn__eyebrow">Music · paid clipping</p><h2 id="mnClipsTitle">Clip songs. Get paid on real views.</h2></div></div>' +
-      '<p class="mn__lede">Claim a campaign, post a Reel with the song, paste its link. We read the views from Instagram itself, so screenshots never count.</p>' +
+      '' +
       (K.msg ? '<p class="mn__hint' + (K.bad ? ' mn__danger' : '') + '" role="status">' + esc(K.msg) + '</p>' : "") +
       (K.song ? '<p class="mn__hint">Showing campaigns for one song. <button class="mn__quiet" type="button" data-clip-all>See all</button></p>' : "");
-    var cards = K.all.length ? K.all.map(campaignCard).join("") : '<div class="mn__empty">No clipping campaigns are open right now.</div>';
-    root.innerHTML = head + earnings() + cards + myClips() + accounts();
+    var cards = K.all.length ? K.all.map(campaignCard).join("") : '<div class="mn__empty">No campaigns yet.</div>';
+    root.innerHTML = head + (K.all.length ? earnings() + cards + myClips() : cards) + '<details class="mn__creator-tools"><summary>Creator tools</summary>' + earnings() + myClips() + accounts() + '</details>';
   }
 
   function act(btn, fn, ok) {
