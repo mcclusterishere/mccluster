@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const worker=readFileSync(new URL('../../workers/mccluster/src/platform-api.js',import.meta.url),'utf8');
 const client=readFileSync(new URL('../../js/mnet.js',import.meta.url),'utf8');
 const page=readFileSync(new URL('../../mnet.html',import.meta.url),'utf8');
-const migration=readFileSync(new URL('../../supabase/migrations/20261013190000_action_network_comments.sql',import.meta.url),'utf8');
+const migration=readFileSync(new URL('../../supabase/migrations/20261013201327_action_network_comments.sql',import.meta.url),'utf8');
 
 test('only four top-level Action Network tabs',()=>{
  const nav=page.match(/<nav class="mn__tabs"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
