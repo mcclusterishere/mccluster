@@ -527,7 +527,13 @@
     });
     root.querySelectorAll("[data-action=share]").forEach(function (b) {
       b.onclick = function () {
+        var item = findPost(b.dataset.post), post = item && (item.post || item);
+        if (!post || post.visibility !== "public") {
+          setStatus($("mnFeedStatus"), "Only public posts can be shared externally.", "error");
+          return;
+        }
         var url = new URL(location.href);
+        url.searchParams.set("view", "feed");
         url.searchParams.set("post", b.dataset.post);
         var link = url.toString();
         if (navigator.share) {
@@ -612,6 +618,13 @@
       state.feed = reset ? incoming : state.feed.concat(incoming);
       state.nextBefore = data.next_before || null;
       renderFeed(false);
+      try {
+        var linkedPost = new URLSearchParams(location.search).get("post");
+        if (linkedPost && /^[0-9a-f-]{36}$/i.test(linkedPost)) {
+          var target = Array.prototype.find.call($("mnFeed").querySelectorAll("[data-post-id]"), function (node) { return node.getAttribute("data-post-id") === linkedPost; });
+          if (target) { target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true }); }
+        }
+      } catch (_) {}
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) renderFeed(false);
       });
