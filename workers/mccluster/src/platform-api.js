@@ -119,12 +119,15 @@ async function canReadNetworkPost(env,muid,post){
 async function hydratePostRows(env,posts=[],viewerMuid=null){
   if(!posts.length)return [];
   const ids=uniq(posts.map(p=>p.id)).filter(uuidLike);
-  const [actors,bookmarks]=await Promise.all([
+  const [actors,bookmarks,likes]=await Promise.all([
     networkActors(env,posts.map(p=>p.author_m_uid)),
-    viewerMuid&&ids.length?service(env,`network_bookmarks?m_uid=eq.${viewerMuid}&post_id=in.(${ids.join(',')})&select=post_id`):[]
+    viewerMuid&&ids.length?service(env,`network_bookmarks?m_uid=eq.${viewerMuid}&post_id=in.(${ids.join(',')})&select=post_id`):[],
+    ids.length?service(env,`network_reactions?post_id=in.(${ids.join(',')})&reaction=eq.like&select=post_id,actor_m_uid`):[]
   ]);
   const saved=new Set((bookmarks||[]).map(x=>x.post_id));
-  return posts.map(p=>({post:{...p,bookmarked_by_me:saved.has(p.id)},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
+  const counts=new Map(),mine=new Set();
+  (likes||[]).forEach(x=>{counts.set(x.post_id,(counts.get(x.post_id)||0)+1);if(viewerMuid&&x.actor_m_uid===viewerMuid)mine.add(x.post_id)});
+  return posts.map(p=>({post:{...p,bookmarked_by_me:saved.has(p.id),liked_by_me:mine.has(p.id),like_count:counts.get(p.id)||0},actor:actors[p.author_m_uid]||{m_uid:p.author_m_uid}}));
 }
 async function hydrateFeedItems(env,items=[],viewerMuid=null){
   if(!items.length)return [];
@@ -547,12 +550,41 @@ async function handleMnet(req,env,path,url){
     return reply(req,env,{joined:state==='joined',requested:state==='requested'});
   }
   const replies=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/replies$/i);
-  if(replies&&req.method==='GET'){
-    return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
+  if(replies&&['GET','POST'].includes(req.method)){
+    if(external)return fail(req,env,'Comments require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id);
+    if(!muid)return fail(req,env,'Sign in to comment',401);
+    const rows=await service(env,`network_posts?id=eq.${replies[1]}&deleted_at=is.null&select=*&limit=1`);
+    const post=rows?.[0];
+    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(req.method==='POST'){
+      const input=await json(req),body=String(input.body||'').trim();
+      if(!body||body.length>1000)return fail(req,env,'Comment must contain 1–1000 characters',400);
+      const created=await service(env,'network_post_comments',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({post_id:post.id,author_m_uid:muid,body})});
+      return reply(req,env,{comment:created?.[0]||null},201);
+    }
+    const comments=await service(env,`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null&select=id,post_id,author_m_uid,body,created_at&order=created_at.asc&limit=100`);
+    const allowed=[];
+    for(const c of comments||[]){
+      if(!await networkBlocked(env,muid,c.author_m_uid))allowed.push(c);
+    }
+    const actors=await networkActors(env,allowed.map(c=>c.author_m_uid));
+    return reply(req,env,{comments:allowed.map(c=>({...c,actor:actors[c.author_m_uid]||{m_uid:c.author_m_uid}}))});
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    return fail(req,env,'Reactions are retired on the Action Network. Take the mission or share proof instead.',410);
+    if(external)return fail(req,env,'Likes require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id);
+    if(!muid)return fail(req,env,'Sign in to like posts',401);
+    const rows=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`);
+    const post=rows?.[0];
+    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(req.method==='POST'){
+      await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({post_id:post.id,actor_m_uid:muid,reaction:'like'})});
+    }else{
+      await service(env,`network_reactions?post_id=eq.${post.id}&actor_m_uid=eq.${muid}&reaction=eq.like`,{method:'DELETE',headers:{prefer:'return=minimal'}});
+    }
+    return reply(req,env,{liked:req.method==='POST'});
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){
