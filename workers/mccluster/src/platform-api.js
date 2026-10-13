@@ -550,8 +550,26 @@ async function handleMnet(req,env,path,url){
     return reply(req,env,{joined:state==='joined',requested:state==='requested'});
   }
   const replies=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/replies$/i);
-  if(replies&&req.method==='GET'){
-    return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
+  if(replies&&['GET','POST'].includes(req.method)){
+    if(external)return fail(req,env,'Comments require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id);
+    if(!muid)return fail(req,env,'Sign in to comment',401);
+    const rows=await service(env,`network_posts?id=eq.${replies[1]}&deleted_at=is.null&select=*&limit=1`);
+    const post=rows?.[0];
+    if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
+    if(req.method==='POST'){
+      const input=await json(req),body=String(input.body||'').trim();
+      if(!body||body.length>1000)return fail(req,env,'Comment must contain 1–1000 characters',400);
+      const created=await service(env,'network_post_comments',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({post_id:post.id,author_m_uid:muid,body})});
+      return reply(req,env,{comment:created?.[0]||null},201);
+    }
+    const comments=await service(env,`network_post_comments?post_id=eq.${post.id}&deleted_at=is.null&select=id,post_id,author_m_uid,body,created_at&order=created_at.asc&limit=100`);
+    const allowed=[];
+    for(const c of comments||[]){
+      if(!await networkBlocked(env,muid,c.author_m_uid))allowed.push(c);
+    }
+    const actors=await networkActors(env,allowed.map(c=>c.author_m_uid));
+    return reply(req,env,{comments:allowed.map(c=>({...c,actor:actors[c.author_m_uid]||{m_uid:c.author_m_uid}}))});
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
