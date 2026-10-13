@@ -248,6 +248,8 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     if(u.includes('/network_bookmarks?'))return ok([]);
     if(u.includes('/network_reactions?'))return ok([]);
     if(u.includes('/network_post_comments?'))return ok([]);
+    if(u.endsWith('/network_post_comments')&&method==='POST')return ok([{id:'66666666-6666-4666-8666-666666666666',...body}],201);
+    if(u.endsWith('/network_reactions')&&method==='POST')return ok(null,201);
     if(u.includes('/network_posts?id=eq.'))return ok([{id:POST,author_m_uid:MUID,visibility:'network',group_id:GROUP,deleted_at:null}]);
     if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
     return ok([]);
@@ -296,6 +298,10 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     assert.equal(res.status,200);
     res=await req('/v1/mnet/posts/'+POST+'/reactions',{method:'POST',body:{reaction:'like'}});
     assert.equal(res.status,200);
+    res=await req('/v1/mnet/posts/'+POST+'/replies',{method:'POST',body:{body:'Useful update'}});
+    assert.equal(res.status,201);
+    res=await req('/v1/mnet/posts/'+POST+'/replies',{method:'POST',body:{body:' '}});
+    assert.equal(res.status,400);
   } finally {
     globalThis.fetch=realFetch;
   }
