@@ -265,6 +265,19 @@
     doc.getElementById("musicMiniArt").src = art;
     doc.getElementById("musicMiniTitle").textContent = current.title;
     doc.getElementById("musicMiniAlbum").textContent = artist || album;
+    // Mission portfolio entry: shared Action globe, scoped to the playing song.
+    // Never fabricate a completed-action count; the globe must resolve approved evidence.
+    var impactLink = doc.getElementById("musicMiniImpact");
+    if (!impactLink) {
+      impactLink = doc.createElement("a");
+      impactLink.id = "musicMiniImpact";
+      impactLink.textContent = "See this song's impact ↗";
+      impactLink.style.cssText = "display:inline-block;color:#ef5362;font-size:12px;margin-top:4px";
+      var titleNode = doc.getElementById("musicMiniTitle");
+      titleNode.parentNode.appendChild(impactLink);
+    }
+    impactLink.href = "action-globe.html?song=" + encodeURIComponent(current.title || "");
+
     var access = doc.getElementById("musicMiniAccess");
     access.textContent = accessLabel;
     access.className = "music-mini__access is-" + (currentAccess || "idle");
