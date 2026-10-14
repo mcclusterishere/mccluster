@@ -1801,7 +1801,9 @@
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
-      host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
+      var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
+        ? '<article class="mn__panel mn__panel--resource"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Explore trusted national and international service directories. No proof of needing help, photos, or public post required.</p><div><button class="mn__primary" type="button" data-open-mission="51000000-0000-4000-8000-000000000003">Find help</button></div></article>' : "";
+      host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       setStatus($("mnMissionStatus"),"");
     }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
@@ -1830,7 +1832,7 @@
   /* THE FELLOWSHIP. Three verified actions open the application; the
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
-    var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=Math.max(0,need-verified);
+    var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
     if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are an Action Network fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
@@ -1913,6 +1915,41 @@
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var HELP_MISSION_ID="51000000-0000-4000-8000-000000000003";
+  var RECYCLE_MISSION_ID="49d654e1-dfc8-42aa-a26e-22912ebf8dc6";
+  var BLACK_BUSINESS_MISSION_ID="ba66d4a3-cb62-4403-9b56-7ee00af059d8";
+  var POLICY_MEMO_MISSION_ID="368fd75a-77d2-4de0-9722-17020674a914";
+  function resourceCategoryForMission(id){
+    if(id===HELP_MISSION_ID)return "social_services";
+    if(id===RECYCLE_MISSION_ID)return "recycling";
+    if(id===BLACK_BUSINESS_MISSION_ID)return "black_business";
+    return "";
+  }
+  function loadMissionResourceSources(m,version){
+    var category=resourceCategoryForMission(m.id);
+    if(!category)return Promise.resolve();
+    var detail=$("mnMissionDetail");
+    var section=document.createElement("section");section.className="mn__resource-sources";
+    section.innerHTML='<p class="mn__eyebrow">Resource directories · external websites</p><p>Loading trusted directories…</p>';
+    detail.appendChild(section);
+    return sbRest("action_resource_sources?category=eq."+encodeURIComponent(category)+"&published=eq.true&select=name,country_codes,directory_url,notes&order=name.asc")
+      .then(function(rows){
+        if(version!==missionOpenVersion)return;
+        rows=Array.isArray(rows)?rows:[];
+        if(!rows.length){section.innerHTML='<p>Directories are temporarily unavailable. Please use the provider’s official website.</p>';return;}
+        var countries={};rows.forEach(function(r){(r.country_codes||[]).forEach(function(c){countries[c]=true;});});
+        var options=Object.keys(countries).sort().map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join("");
+        section.innerHTML='<p class="mn__eyebrow">Official resource directories · external sites</p>'+
+          '<p class="mn__hint">Directory links are not partnership agreements or guaranteed availability. Select a country, then check the provider’s current listings.</p>'+
+          '<label class="mn__label">Country <select class="mn__input" data-resource-country><option value="">All countries</option>'+options+'</select></label>'+
+          '<div data-resource-list></div>'+
+          (category==="social_services"?'<p class="mn__hint">You can use these services for yourself or share this page with someone you know. No personal case details are collected here.</p>':"");
+        var picker=section.querySelector("[data-resource-country]"),list=section.querySelector("[data-resource-list]");
+        function paint(){var country=picker.value;var shown=rows.filter(function(r){return !country||!(r.country_codes||[]).length||(r.country_codes||[]).indexOf(country)>=0;});
+          list.innerHTML=shown.map(function(r){return '<p><a href="'+esc(r.directory_url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+' ↗</a><small> '+esc(r.notes||"")+'</small></p>';}).join("")||'<p>No listed directory for that country yet. Try All countries.</p>';}
+        picker.addEventListener("change",paint);paint();
+      }).catch(function(){if(version===missionOpenVersion)section.innerHTML='<p>Resource directory is unavailable right now. Try the official 211 or local public-service directory directly.</p>';});
+  }
   var missionOpenVersion=0;
   function openMission(id){
     var version=++missionOpenVersion;
@@ -1924,13 +1961,21 @@
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
-      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p>'+
+        (m.id===HELP_MISSION_ID?'':('<p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>'));
+      if(m.id===POLICY_MEMO_MISSION_ID){
+        var applyLink=document.createElement("button");applyLink.type="button";applyLink.className="mn__primary";applyLink.textContent="Policy team application →";
+        applyLink.addEventListener("click",function(){var d=$("mnMissionDialog");if(d&&d.open)d.close();var record=$("mnRecord");if(record){record.scrollIntoView({behavior:"smooth"});var b=record.querySelector("[data-fellow-open]");if(b)b.click();}});
+        $("mnMissionDetail").appendChild(applyLink);
+      }
+      loadMissionResourceSources(m,version);
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
       if($("mnMissionShare"))$("mnMissionShare").checked=true;
-      setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
+      setStatus($("mnMissionDialogStatus"),m.id===HELP_MISSION_ID?"Find trusted services below. You do not need to join or submit proof.":(open?"":"This mission is not taking new people."));
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+      if(m.id===HELP_MISSION_ID)return;
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
