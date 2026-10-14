@@ -60,7 +60,7 @@
   /* Line icons for the post actions, drawn in currentColor so the active
      state is a colour change, not a second asset. */
   var ICON = {
-    like: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.5-4.6-9.3-9.2C1.4 7.6 3.6 4.4 7 4.4c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.2 4.3 6.7-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>',
+    uprise: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19.5V5.5M5.5 12l6.5-6.5 6.5 6.5"/></svg>',
     comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
@@ -263,7 +263,7 @@
     state.feed = []; state.nextBefore = null;
   }
   function askToSignIn(why) {
-    var line = { like:"Sign in to like posts.", comments:"Sign in to read and write comments.", save:"Sign in to save posts.",
+    var line = { uprise:"Sign in and complete a mission to uprise posts.", save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
@@ -510,8 +510,8 @@
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + '<span class="mn__count">' + esc(post.like_count || '') + '</span><span class="mn__action-label">Like</span></button>' +
-          '<button class="mn__action mn__action--comment" type="button" data-action="comments" data-post="' + esc(id) + '" aria-label="Comments">' + ICON.comment + '<span class="mn__action-label">Comment</span></button>' +
+          /* UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction, and it counts only from a member who has completed a mission; no comments */
+          '<button class="mn__action mn__action--uprise' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="uprise" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Uprise this post">' + ICON.uprise + '<span class="mn__count">' + esc(post.like_count || '') + '</span><span class="mn__action-label">Uprise</span></button>' +
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
@@ -624,7 +624,7 @@
     if (state.guest) {
       /* read-only: the same buttons, but each one is a door to sign in,
          and nothing is sent. Share works, because every guest post is public. */
-      root.querySelectorAll("[data-take-mission],[data-action=like],[data-action=comments],[data-action=save],[data-person],[data-guest-ask]").forEach(function (b) {
+      root.querySelectorAll("[data-take-mission],[data-action=uprise],[data-action=save],[data-person],[data-guest-ask]").forEach(function (b) {
         b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); askToSignIn(b.getAttribute("data-action") || (b.hasAttribute("data-take-mission") ? "mission" : "act")); };
       });
       root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
@@ -652,53 +652,26 @@
     root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
       b.onclick = function () { focusOnGlobe(b.getAttribute("data-globe-mission")); };
     });
-    root.querySelectorAll("[data-action=comments]").forEach(function (b) {
-      b.onclick = function () {
-        var card=b.closest("[data-post-id]"), existing=card&&card.querySelector(".mn__comments");
-        if(!card)return;
-        if(existing){existing.remove();return;}
-        var section=document.createElement("section");
-        section.className="mn__comments";
-        section.setAttribute("aria-label","Post comments");
-        section.innerHTML='<div class="mn__comments-list" aria-live="polite">Loading comments…</div><form class="mn__comment-form"><input aria-label="Write a comment" maxlength="1000" required placeholder="Write a comment…"><button type="submit">Send</button></form><p class="mn__status" role="status"></p>';
-        card.appendChild(section);
-        var list=section.querySelector(".mn__comments-list"),form=section.querySelector("form"),status=section.querySelector(".mn__status");
-        function refresh(){
-          return api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/replies").then(function(data){
-            list.innerHTML="";
-            (data.comments||[]).forEach(function(c){
-              var p=document.createElement("p"),strong=document.createElement("strong"),body=document.createElement("span");
-              strong.textContent=(c.actor&&c.actor.display_name)||"Member";
-              body.textContent=" "+c.body;
-              p.appendChild(strong);p.appendChild(body);list.appendChild(p);
-            });
-            if(!list.children.length)list.textContent="No comments yet.";
-          }).catch(function(e){list.textContent=e.message||"Could not load comments.";});
-        }
-        form.onsubmit=function(e){
-          e.preventDefault();
-          var input=form.querySelector("input"),body=input.value.trim(),send=form.querySelector("button");
-          if(!body)return;
-          send.disabled=true;
-          api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/replies",{method:"POST",body:{body:body}})
-            .then(function(){input.value="";setStatus(status,"");return refresh();})
-            .catch(function(err){setStatus(status,err.message||"Could not comment.","error");})
-            .finally(function(){send.disabled=false;});
-        };
-        refresh();
-      };
-    });
-    root.querySelectorAll("[data-action=like]").forEach(function (b) {
+    /* UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction, and it counts
+       only from a member who has completed a mission. The Action Record
+       says so before a request is made; the server refuses regardless. */
+    root.querySelectorAll("[data-action=uprise]").forEach(function (b) {
       b.onclick = function () {
         var item=findPost(b.dataset.post),post=item&&(item.post||item);
         if(!post)return;
         var before=!!post.liked_by_me, count=Number(post.like_count)||0;
+        if(!before&&missions.record&&!(Number(missions.record.verified_actions)>0)){explainUprise(b);return;}
         post.liked_by_me=!before;
         post.like_count=Math.max(0,count+(before?-1:1));
         paintToggle(b,!before,post.like_count);
         b.disabled=true;
-        api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/reactions",{method:before?"DELETE":"POST",body:{reaction:"like"}})
-          .catch(function(e){post.liked_by_me=before;post.like_count=count;paintToggle(b,before,count);setStatus($("mnFeedStatus"),e.message||"Could not like post.","error");})
+        api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/reactions",{method:before?"DELETE":"POST",body:{reaction:"uprise"}})
+          .catch(function(e){
+            post.liked_by_me=before;post.like_count=count;paintToggle(b,before,count);
+            var why=e&&e.data&&e.data.detail&&e.data.detail.reason;
+            if(why==="no_verified_action"||/Complete a mission to uprise/.test(e&&e.message||""))explainUprise(b);
+            else setStatus($("mnFeedStatus"),e.message||"Could not uprise this post.","error");
+          })
           .finally(function(){b.disabled=false;});
       };
     });
@@ -912,6 +885,16 @@
     }).finally(function () { button.disabled = false; });
   }
 
+  /* the uprise gate, said in the card: what unlocks it and where to go */
+  function explainUprise(b) {
+    var card=b.closest("[data-post-id]"); if(!card)return;
+    var old=card.querySelector(".mn__gate-line"); if(old){old.remove();return;}
+    var line=document.createElement("p"); line.className="mn__gate-line"; line.setAttribute("role","status");
+    line.innerHTML='<span>Complete a mission to uprise. Your first verified action unlocks it.</span><button type="button">Find a mission</button>';
+    line.querySelector("button").onclick=function(){setView("missions");};
+    card.appendChild(line);
+    track("uprise_gate",{post:String(b.dataset.post||"").slice(0,36)});
+  }
   function findPost(postId) {
     for (var i=0; i<state.feed.length; i++) {
       var item = state.feed[i];
@@ -943,7 +926,7 @@
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(mission)+'">'+
           (meta.decision==="rejected"?"Fix proof →":"View action →")+'</a>';
       }
-      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
+      return '<article class="mn__notification"><strong>' + esc(String(n.body || n.type || "Notification").replace(/\bliked your post\b/i, "uprised your post")) + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
     }).join("");
   }
 

@@ -90,7 +90,7 @@ function freshWorld() {
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
 
-async function routeBackends(ctx, world, { member, creator = true }) {
+async function routeBackends(ctx, world, { member, creator = true, verified = true }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
@@ -100,6 +100,8 @@ async function routeBackends(ctx, world, { member, creator = true }) {
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
     if (u.includes('/rest/v1/action_missions?')) return json(route, OPEN_MISSIONS);
     if (u.includes('/rest/v1/music_creator_profiles?')) return json(route, member && creator ? [{ handle: 'fixture-you' }] : []);
+    /* the Action Record: whether this member has completed a mission decides whether Uprise is theirs yet */
+    if (/\/rpc\/action_record$/.test(u)) return json(route, { verified_actions: verified ? 1 : 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
     if (u.includes('action_offer_cards')) {
       const linked = world.posts.filter((p) => p.content_id === CONTENT);
       return json(route, linked.map((p) => ({ post_id: p.id, mission_id: M1, content_id: CONTENT, title: MISSIONS[0].title, description: MISSIONS[0].description, mission_open: true })));
@@ -142,7 +144,8 @@ async function routeBackends(ctx, world, { member, creator = true }) {
     const react = u.pathname.match(/^\/v1\/mnet\/posts\/([^/]+)\/reactions$/);
     if (react) {
       const p = world.posts.find((x) => x.id === react[1]);
-      if (!p || body?.reaction !== 'like') return json(route, { error: 'bad reaction' }, 400);
+      if (!p || body?.reaction !== 'uprise') return json(route, { error: 'bad reaction' }, 400);
+      if (m === 'POST' && !verified) return json(route, { error: 'Complete a mission to uprise posts. Your first verified action unlocks it.', detail: { reason: 'no_verified_action' } }, 403);
       if (m === 'POST' && !p.liked_by_me) { p.liked_by_me = true; p.like_count++; }
       if (m === 'DELETE' && p.liked_by_me) { p.liked_by_me = false; p.like_count--; }
       return json(route, { liked: p.liked_by_me, like_count: p.like_count });
@@ -178,7 +181,7 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-async function open(device, { member, creator = true }) {
+async function open(device, { member, creator = true, verified = true }) {
   const world = freshWorld();
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
@@ -187,7 +190,7 @@ async function open(device, { member, creator = true }) {
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
-  await routeBackends(ctx, world, { member, creator });
+  await routeBackends(ctx, world, { member, creator, verified });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -218,9 +221,9 @@ for (const device of DEVICES) {
   check(device.name, 'the strip opens on the newest pinned mission, labelled as the latest', (await page.isVisible('#mnWorldFocusFlag')) && /Latest/.test(await page.textContent('#mnWorldFocusFlag')));
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
   check(device.name, 'app bar is exactly Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
-  check(device.name, 'feed shows member posts (author, text, Like/Comment/Share), not mission cards', await page.evaluate(() => {
+  check(device.name, 'feed shows member posts (author, text, Uprise/Share; no like, no comment), not mission cards', await page.evaluate(() => {
     const c = document.querySelector('#mnFeed [data-post-id]');
-    return !!(c && c.querySelector('.mn__author-name') && c.querySelector('[data-action=like]') && c.querySelector('[data-action=comments]') && c.querySelector('[data-action=share]')) && !document.querySelector('#mnFeed .world-story');
+    return !!(c && c.querySelector('.mn__author-name') && c.querySelector('[data-action=uprise]') && c.querySelector('[data-action=share]')) && !c.querySelector('[data-action=like]') && !c.querySelector('[data-action=comments]') && !document.querySelector('#mnFeed .world-story');
   }));
   await page.screenshot({ path: join(OUT, `member-${device.name}.png`) });
   check(device.name, 'no page errors', errors.length === 0, errors);
@@ -244,28 +247,20 @@ for (const device of DEVICES) {
   check(scope, 'Post sends an authenticated POST /v1/mnet/posts and the post lands at the top', posted && posted.auth && posted.body.body === 'E2E: posted from the World screen', posted);
   check(scope, 'the composer folds once the post is away', !(await page.$eval('#mnComposer', (c) => c.classList.contains('is-open'))));
 
-  // Like, then unlike
+  // Uprise, then take it back (this member has a verified action)
   const target = world.posts.find((p) => p.author === PEERS[1] && p.visibility === 'public');
-  const like = `#mnFeed [data-post-id="${target.id}"] [data-action=like]`;
-  const before = Number((await page.textContent(`${like} .mn__count`)) || 0);
-  await page.click(like); await page.waitForTimeout(400);
-  const afterLike = Number((await page.textContent(`${like} .mn__count`)) || 0);
-  const likeReq = req(world, 'POST', /\/reactions$/).at(-1);
-  check(scope, 'Like sends POST …/reactions {reaction:"like"} and the count goes up', likeReq && likeReq.auth && likeReq.body.reaction === 'like' && afterLike === before + 1 && (await page.getAttribute(like, 'aria-pressed')) === 'true', { before, afterLike, likeReq });
-  await page.click(like); await page.waitForTimeout(400);
-  const afterUnlike = Number((await page.textContent(`${like} .mn__count`)) || 0);
-  check(scope, 'Unlike sends DELETE …/reactions and the count goes back', req(world, 'DELETE', /\/reactions$/).length === 1 && afterUnlike === before, { afterUnlike });
-
-  // Comment
+  const uprise = `#mnFeed [data-post-id="${target.id}"] [data-action=uprise]`;
+  const before = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
+  await page.click(uprise); await page.waitForTimeout(400);
+  const afterUprise = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
+  const upriseReq = req(world, 'POST', /\/reactions$/).at(-1);
+  check(scope, 'Uprise sends POST …/reactions {reaction:"uprise"} and the count goes up', upriseReq && upriseReq.auth && upriseReq.body.reaction === 'uprise' && afterUprise === before + 1 && (await page.getAttribute(uprise, 'aria-pressed')) === 'true', { before, afterUprise, upriseReq });
+  await page.screenshot({ path: join(OUT, 'member-iphone-after-uprise.png') });
+  await page.click(uprise); await page.waitForTimeout(400);
+  const afterBack = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
+  check(scope, 'taking it back sends DELETE …/reactions and the count goes back', req(world, 'DELETE', /\/reactions$/).length === 1 && afterBack === before, { afterBack });
   const card = `#mnFeed [data-post-id="${target.id}"]`;
-  await page.click(`${card} [data-action=comments]`);
-  await page.waitForSelector(`${card} .mn__comment-form input`);
-  await page.fill(`${card} .mn__comment-form input`, 'E2E: a comment from the World screen');
-  await page.click(`${card} .mn__comment-form button`);
-  await page.waitForFunction((sel) => /E2E: a comment from the World screen/.test(document.querySelector(sel + ' .mn__comments-list')?.textContent || ''), card, { timeout: 10000 });
-  const commentReq = req(world, 'POST', /\/replies$/).at(-1);
-  check(scope, 'Comment sends an authenticated POST …/replies and appears in the thread', commentReq && commentReq.auth && commentReq.body.body === 'E2E: a comment from the World screen', commentReq);
-  await page.screenshot({ path: join(OUT, 'member-iphone-after-like-and-comment.png') });
+  check(scope, 'there is no comment button: Uprise is the one reaction', !(await page.$(`${card} [data-action=comments]`)));
 
   // Share
   await page.click(`${card} [data-action=share]`);
@@ -432,8 +427,20 @@ for (const device of DEVICES) {
 
 /* ---------- member, no creator profile: no analytics door ---------- */
 {
-  const { ctx, page, errors } = await open(DEVICES[0], { member: true, creator: false });
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, creator: false, verified: false });
   const scope = 'member-not-creator';
+  // Uprise before any verified action: the card explains, nothing is sent
+  const firstPost = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
+  const sentBefore = world.requests.length;
+  await page.click(`#mnFeed [data-post-id="${firstPost}"] [data-action=uprise]`);
+  await page.waitForSelector('.mn__gate-line', { timeout: 5000 }).catch(() => {});
+  check(scope, 'without a completed mission, Uprise explains itself and sends nothing', /Complete a mission to uprise\. Your first verified action unlocks it\./.test((await page.textContent('.mn__gate-line').catch(() => '')) || '') && world.requests.slice(sentBefore).every((r) => !/reactions/.test(r.path)) && (await page.getAttribute(`#mnFeed [data-post-id="${firstPost}"] [data-action=uprise]`, 'aria-pressed')) === 'false');
+  await page.screenshot({ path: join(OUT, 'member-iphone-uprise-gate.png') });
+  await page.click('.mn__gate-line button');
+  await page.waitForSelector('#mnMissionsView:not([hidden])');
+  check(scope, 'Find a mission opens the missions', await page.isVisible('#mnMissionsView'));
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
   await page.click('#mnMe');
   await page.click('#mnMenu [data-mn-view="profile"]');
   await page.waitForSelector('#mnProfileView:not([hidden])');
@@ -480,14 +487,10 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(300);
   const first = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
   const sent = world.requests.length;
-  await page.click(`#mnFeed [data-post-id="${first}"] [data-action=like]`);
+  await page.click(`#mnFeed [data-post-id="${first}"] [data-action=uprise]`);
   await page.waitForSelector('#mnSignedOut:not([hidden])');
-  check(scope, 'Like opens sign-in with a reason, and nothing is sent', /Sign in to like posts/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(sent).every((r) => !/reactions|replies|posts$/.test(r.path)));
+  check(scope, 'Uprise opens sign-in with the rule, and nothing is sent', /Sign in and complete a mission to uprise posts/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(sent).every((r) => !/reactions|replies|posts$/.test(r.path)));
   await page.screenshot({ path: join(OUT, `guest-${device.name}-sign-in.png`) });
-  await page.click('#mnSignedOutBack');
-  await page.waitForSelector('#mnFeed [data-post-id]');
-  await page.click(`#mnFeed [data-post-id="${first}"] [data-action=comments]`);
-  check(scope, 'Comment opens sign-in too', await page.isVisible('#mnSignedOut'));
   await page.click('#mnSignedOutBack');
   await page.waitForSelector('#mnFeed [data-post-id]');
   await page.click(`#mnFeed [data-post-id="${first}"] [data-action=share]`);

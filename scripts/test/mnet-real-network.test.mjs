@@ -190,8 +190,9 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
-  assert.match(js, /data-action="like"/);
-  assert.match(js, /data-action="comments"/);
+  /* UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction; no like, no comment button on a card */
+  assert.match(js, /data-action="uprise"/);
+  assert.doesNotMatch(js, /data-action="like"|data-action="comments"/);
   assert.doesNotMatch(html, /id="mnThread"/);
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
@@ -251,6 +252,9 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     if(u.includes('/network_post_comments?'))return ok([]);
     if(u.endsWith('/network_post_comments')&&method==='POST')return ok([{id:'66666666-6666-4666-8666-666666666666',...body}],201);
     if(u.endsWith('/network_reactions')&&method==='POST')return ok(null,201);
+    /* an uprise counts only from a member who has completed a mission: this one has */
+    if(u.includes('/action_mission_assignments?m_uid=eq.')&&u.includes('status=eq.verified'))return ok([{mission_id:'77777777-7777-4777-8777-777777777777'}]);
+    if(u.includes('/action_missions?id=in.('))return ok([{id:'77777777-7777-4777-8777-777777777777'}]);
     if(u.includes('/network_posts?id=eq.'))return ok([{id:POST,author_m_uid:MUID,visibility:'network',group_id:GROUP,deleted_at:null}]);
     if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
     return ok([]);

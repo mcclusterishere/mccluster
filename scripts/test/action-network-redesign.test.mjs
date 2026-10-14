@@ -88,7 +88,8 @@ test('the World look is graphite and one red, scoped to the World screen',()=>{
  assert.match(look,/\.mn-world-on \.mn \{[^}]*--mn-hot: #ff2a4d/);
  assert.match(look,/--w-steel: linear-gradient\(180deg, #181b21, #0d0f13\)/);
  assert.doesNotMatch(look,/#0f1626|#131c31|#070b14/,'the navy of the earlier mockup is gone');
- assert.match(look,/\.mn-world-on \.mn__brand-world::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under WORLD');
+ assert.match(look,/\.mn-world-on \.mn__top \.mn__brand strong::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under HUMAN UPRISE');
+ assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Human Uprise, and only that');
  assert.doesNotMatch(look,/\.appbar/,'the house bar is styled by the house');
  assert.match(look,/\.mn__world-tag \{ display: none;/,'the corner tag waits for tablet width, where the credit line leaves room');
 });
@@ -101,13 +102,21 @@ test('text-only post does not shadow analytics track function',()=>{
  assert.match(client,/track\("mnet_post_created"/);
  assert.doesNotMatch(client,/var track = pickedTrack\(\)/);
 });
-test('comment and like APIs enforce visibility and authenticated sessions',()=>{
- assert.match(worker,/if\(replies&&\['GET','POST'\]\.includes\(req.method\)\)/);
+test('Uprise is the one reaction: the server counts it only from a member who completed a mission; comments are off the cards',()=>{
  assert.match(worker,/if\(!post\|\|!\(await canReadNetworkPost\(env,muid,post\)\)\)/);
- assert.match(worker,/network_post_comments/);
  assert.match(worker,/network_reactions/);
- assert.match(client,/data-action="comments"/);
- assert.match(client,/data-action="like"/);
+ assert.match(worker,/async function hasVerifiedAction\(env,muid\)/);
+ assert.match(worker,/status=eq\.verified/);
+ assert.match(worker,/or=\(kind\.is\.null,kind\.neq\.clip\)/,'a clip job is paid work, not a completed mission');
+ assert.match(worker,/if\(!\(await hasVerifiedAction\(env,muid\)\)\)return fail\(req,env,'Complete a mission to uprise posts\. Your first verified action unlocks it\.',403,\{reason:'no_verified_action'\}\)/);
+ assert.match(worker,/reaction:'like'/,'stored under the existing reaction value; no table change');
+ assert.match(client,/data-action="uprise"/);
+ assert.doesNotMatch(client,/data-action="comments"|data-action="like"/);
+ assert.match(client,/function explainUprise\(b\)/);
+ assert.match(client,/Complete a mission to uprise\. Your first verified action unlocks it\./);
+ assert.match(client,/uprise:"Sign in and complete a mission to uprise posts\."/);
+ /* the Worker keeps its comment routes (live chat runs over replies); the cards do not offer them */
+ assert.match(worker,/network_post_comments/);
 });
 test('comments are private by default with length constraints',()=>{
  assert.match(migration,/enable row level security/);

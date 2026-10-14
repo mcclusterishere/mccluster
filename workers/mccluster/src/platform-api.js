@@ -431,6 +431,14 @@ async function publicWorldFeed(req,env,url){
   return res;
 }
 
+/* a member has completed a mission when one of their own assignments is verified on a mission that is not a clip job */
+async function hasVerifiedAction(env,muid){
+  const done=await service(env,`action_mission_assignments?m_uid=eq.${muid}&status=eq.verified&select=mission_id&limit=50`)||[];
+  const ids=[...new Set(done.map(a=>a.mission_id).filter(Boolean))];
+  if(!ids.length)return false;
+  const real=await service(env,`action_missions?id=in.(${ids.join(',')})&or=(kind.is.null,kind.neq.clip)&select=id&limit=1`)||[];
+  return real.length>0;
+}
 async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/public-feed'&&req.method==='GET')return publicWorldFeed(req,env,url);
   const external=await apiKeyPrincipal(req,env);
@@ -607,18 +615,22 @@ async function handleMnet(req,env,path,url){
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    if(external)return fail(req,env,'Likes require a McCluster user session',403);
+    if(external)return fail(req,env,'Uprises require a McCluster user session',403);
     const muid=await currentMuid(env,user.id);
-    if(!muid)return fail(req,env,'Sign in to like posts',401);
+    if(!muid)return fail(req,env,'Sign in to uprise posts',401);
     const rows=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`);
     const post=rows?.[0];
     if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
     if(req.method==='POST'){
+      // UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction on a post, and it counts only
+      // from a member who has completed a mission. Refused here, whatever the page shows.
+      // The row keeps the reaction value 'like', so no table changes.
+      if(!(await hasVerifiedAction(env,muid)))return fail(req,env,'Complete a mission to uprise posts. Your first verified action unlocks it.',403,{reason:'no_verified_action'});
       await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({post_id:post.id,actor_m_uid:muid,reaction:'like'})});
     }else{
       await service(env,`network_reactions?post_id=eq.${post.id}&actor_m_uid=eq.${muid}&reaction=eq.like`,{method:'DELETE',headers:{prefer:'return=minimal'}});
     }
-    return reply(req,env,{liked:req.method==='POST'});
+    return reply(req,env,{uprised:req.method==='POST',liked:req.method==='POST'});
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){

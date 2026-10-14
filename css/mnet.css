@@ -268,6 +268,12 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__action--like.is-active svg { fill: var(--mn-hot); }
 .mn__action--save.is-active { color: var(--mn-gold); }
 .mn__action--save.is-active svg { fill: var(--mn-gold); }
+/* UPRISE: the one reaction; lit red once given. The gate line says what unlocks it. */
+.mn__action--uprise.is-active { color: var(--mn-hot); }
+.mn__action--uprise.is-active svg { stroke-width: 2.4; filter: drop-shadow(0 0 6px rgba(255, 42, 77, 0.75)); }
+.mn__gate-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 77, 61, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.3); color: var(--mn-dim); font-size: 0.85rem; line-height: 1.4; }
+.mn__gate-line span { flex: 1 1 14rem; min-width: 0; }
+.mn__gate-line button { flex: none; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
 .mn__action.is-pop svg { animation: mn-pop 0.5s var(--mn-spring); }
 .mn__danger { color: #ff9a91 !important; }
 .mn__more { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); box-shadow: inset 0 0 0 1px var(--mn-rule-2); cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); }
@@ -959,13 +965,12 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 }
 .mn-world-on.mn-world-overlay .mn__top { background: linear-gradient(180deg, rgba(5, 5, 7, 0.92), rgba(5, 5, 7, 0)); }
 
-/* header: HUMAN UPRISE over WORLD in chrome type with a red rule (no drawn
-   mark), the search bar, and round glass buttons */
-.mn__brand-world { display: none; }
+/* header: HUMAN UPRISE, and only that (owner, 2026-10-14), in chrome type
+   with a red rule under it (no drawn mark), the search bar, and round glass
+   buttons. The name is set in type; a mark is the owner's to supply. */
 .mn-world-on .mn__brand-plate, .mn-world-on .mn__brand small { display: none; }
-.mn-world-on .mn__top .mn__brand strong { font-family: var(--mn-ui); font-weight: 800; font-size: 0.58rem; line-height: 1; letter-spacing: 0.24em; color: var(--mn-dim); }
-.mn-world-on .mn__brand-world { display: block; margin-top: 3px; font-family: var(--mn-display); font-weight: 400; font-size: 1.45rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: linear-gradient(180deg, #ffffff 0%, #dfe2e7 55%, #9ba1ab 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-.mn-world-on .mn__brand-world::after { content: ""; display: block; width: 34px; height: 3px; margin-top: 4px; border-radius: 2px; background: var(--mn-hot); box-shadow: 0 0 12px rgba(255, 42, 77, 0.85); }
+.mn-world-on .mn__top .mn__brand strong { display: block; font-family: var(--mn-display); font-weight: 400; font-size: 1.45rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: linear-gradient(180deg, #ffffff 0%, #dfe2e7 55%, #9ba1ab 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mn-world-on .mn__top .mn__brand strong::after { content: ""; display: block; width: 34px; height: 3px; margin-top: 5px; border-radius: 2px; background: var(--mn-hot); box-shadow: 0 0 12px rgba(255, 42, 77, 0.85); }
 .mn-world-on .mn__brand { flex: none; margin-right: 0; }
 .mn-world-on .mn__bell, .mn-world-on .mn__avatar-btn { background: var(--w-glass); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .mn-world-on .mn__avatar-dot, .mn-world-on .mn__bell-count { box-shadow: 0 0 0 2px #0a0b0e, 0 0 10px rgba(255, 42, 77, 0.8); }
@@ -1062,8 +1067,8 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn-world-on #mnFeed .mn__author-avatar { width: 40px; height: 40px; }
 .mn-world-on #mnFeed .mn__post-body { margin: 8px 0 0; color: #e3e6ec; font-size: 0.95rem; line-height: 1.5; }
 .mn-world-on #mnFeed .mn__post-actions { grid-column: 1 / -1; margin: 8px -6px -4px; }
-.mn-world-on #mnFeed .mn__action--like .mn__action-label, .mn-world-on #mnFeed .mn__action--comment .mn__action-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.mn-world-on #mnFeed .mn__action--like .mn__count { color: var(--mn-ink); }
+.mn-world-on #mnFeed .mn__action--uprise .mn__count, .mn-world-on #mnFeed .mn__action--uprise .mn__action-label { color: var(--mn-ink); }
+.mn-world-on #mnFeed .mn__gate-line { background: rgba(255, 42, 77, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 42, 77, 0.4); }
 /* MISSION ATTACHED: the red banner inside a post that carries a mission */
 .mn-world-on #mnFeed .mn__actcard { border-radius: 16px; background: linear-gradient(120deg, rgba(196, 16, 44, 0.6), rgba(70, 10, 22, 0.72) 55%, rgba(16, 11, 13, 0.92)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 42, 77, 0.45); }
 .mn-world-on #mnFeed .mn__actcard-eyebrow { color: #ffb3c0; }
@@ -1082,7 +1087,7 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 
 @media (min-width: 600px) {
   .mn-world-on .mn__search { max-width: 26rem; margin: 0 8px 0 auto; padding: 0 16px; }
-  .mn-world-on .mn__brand-world { font-size: 1.9rem; }
+  .mn-world-on .mn__top .mn__brand strong { font-size: 1.9rem; }
   .mn-world-on .mn__guest-join { display: inline-flex; align-items: center; }
   /* the Earth in a bezel, with its corner tag */
   .mn-world-on .mn__world-home { margin: 0; border: 0; border-radius: 22px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 0 1px #000, 0 0 44px -18px rgba(255, 42, 77, 0.55), var(--w-shadow); }

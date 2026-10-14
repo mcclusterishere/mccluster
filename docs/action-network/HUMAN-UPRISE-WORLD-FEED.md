@@ -37,9 +37,30 @@ stays as a frame.
    **Join** (canonical join flow), **Locate**, **Only posts about this**,
    **All missions** and ✕.
 3. **Feed** (bottom): the real network from `js/mnet.js`: composer, posts,
-   media, tracks, Like, Comment (thread opens inside the post), Share, Save,
-   verified-action and mission-offer cards. It scrolls on its own; the page
-   does not.
+   media, tracks, Uprise, Share, Save, verified-action and mission-offer
+   cards. It scrolls on its own; the page does not.
+
+### Uprise, not like (owner, 2026-10-14)
+
+"This is not a social media where you can like and comment things." A post
+has one reaction, **Uprise**, and it counts only from a member who has
+completed a mission.
+
+- **Server:** `POST /v1/mnet/posts/:id/reactions` is refused with 403 and
+  `detail.reason = "no_verified_action"` unless the caller has a verified
+  assignment of their own on a mission that is not a clip job
+  (`hasVerifiedAction`, the same test `action_record` applies). Taking an
+  uprise back is never gated. The row keeps the reaction value `like`, so
+  no table changes; the response carries `uprised` (and `liked` for older
+  callers).
+- **Page:** the card offers Uprise, Share and Save; there is no comment
+  button and no thread. A member whose Action Record shows no verified
+  action is told in the card ("Complete a mission to uprise. Your first
+  verified action unlocks it.") with **Find a mission**, before any request;
+  a 403 from the server says the same. A guest is asked to sign in with the
+  rule. The alerts trigger still writes "liked your post"; the page shows
+  "uprised your post" until a migration renames it.
+- The Worker keeps its reply routes: live-room chat runs over them.
 
 Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 
@@ -66,7 +87,8 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 
 - **Material:** graphite and one red (the owner's later mockups): steel
   panels (`--w-steel`), dark glass pills with a faint red rim (`--w-rim`),
-  chrome type for WORLD with a red rule under it, the Earth in a bezel from
+  chrome type for HUMAN UPRISE (and only that, no WORLD line; the mark is
+  the owner's to supply) with a red rule under it, the Earth in a bezel from
   600px with a "Global missions · n" corner tag, and an instrument scale
   down the frame's left edge (decoration only). No navy remains. The house
   app bar is left to the house stylesheet.
@@ -84,7 +106,7 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
   public pins only and hide when their continent is round the back of the
   Earth. Floating controls: World (reset), Near me, zoom in/out, the layers
   cycle, and for a creator only, Your audience.
-- **Header:** HUMAN UPRISE over WORLD set in type (no drawn mark), search,
+- **Header:** HUMAN UPRISE set in type (no drawn mark), search,
   bell (with the unread count) and avatar. The search is a bar in the header
   row at every width (the owner's iPhone mockup); on a phone a guest's row is
   wordmark, search and Sign in, with Join added from 600px. Search narrows the feed and the pins as you type and
@@ -100,7 +122,7 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 - **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
   a post carries; no invented topics or locations), steel cards, picture as
   a right-hand thumbnail with a 1/n badge that opens all of them on tap,
-  heart with count, comment, share, save. A post that carries a mission
+  **Uprise** with count, share, save. A post that carries a mission
   shows it as a red **Mission attached** banner with Take action and Locate
   on globe (server-vouched, as before).
 - **Time rewind** (owner's desktop mockup): Live · −24h · −7d · −30d under
@@ -124,9 +146,9 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 - The strip opens on **Explore the world** (the owner's signed-out
   reference) rather than the latest mission. The composer is replaced by
   **Member posts live here.** over a real Equity Uprise rally photo
-  (`assets/img/rally/rally-01.jpg`) with Sign in → and Create account. Like,
-  Comment, Save, people, groups, missions, media and every other room open
-  sign-in with the reason at the top and a way back to the World. Nothing is sent. Share works (every guest
+  (`assets/img/rally/rally-01.jpg`) with Sign in → and Create account. Uprise,
+  Save, people, groups, missions, media and every other room open sign-in
+  with the reason at the top and a way back to the World. Nothing is sent. Share works (every guest
   post is public). Verified-action cards still show (`action_feed_cards` is
   anon-granted); mission-offer cards need a session.
 - `mnet.html?signin=1` opens sign-in directly.
@@ -240,8 +262,9 @@ own browser.
 `node scripts/e2e/world-screen.e2e.mjs [outDir]` serves the checkout, fakes
 api.mccluster.org and Supabase in memory (every request recorded and
 checked) and drives: the composition on iPhone portrait/landscape, iPad
-portrait/landscape and desktop; Post, Like, Unlike, Comment and Share round
-trips with the exact requests; pin → strip and narrowed feed; post → globe
+portrait/landscape and desktop; Post, Uprise (and taking it back), the
+uprise gate for a member with no verified action, and Share round trips
+with the exact requests; pin → strip and narrowed feed; post → globe
 without narrowing; Time rewind (the request carries before= a day ago, the
 honest empty state, Live brings the feed back); the layers cycle; search
 suggestions (pinned and unpinned missions, never a clip job; people;
