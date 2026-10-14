@@ -19,7 +19,7 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null }
+    world: { pins: {}, focus: null, fromFeed: "" }
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -175,6 +175,7 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
+    sizeWorld();
   }
 
   function providerLabel(key) {
@@ -635,7 +636,7 @@
       return;
     }
     var items = state.feed, focus = state.world.focus;
-    if (focus) {
+    if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
         host.innerHTML = '<div class="mn__empty">Nothing in your feed about this mission yet. Open it, do the work, and your proof can be the first post here.</div>';
@@ -1155,6 +1156,7 @@
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
     if(name==="profile"){paintSelf();loadDeletion();}
     window.scrollTo({top:0,behavior:"smooth"});
+    sizeWorld();
   }
 
   /* The tab indicator slides to the tab it belongs under, and the row
@@ -2056,38 +2058,76 @@
     if($("mnMissionProofFile"))$("mnMissionProofFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
   })();
 
-  /* THE WORLD IS THE FEED. The globe frame (action-globe.html, network
-     surface) and this page talk over same-origin postMessage. The frame
-     sends which missions have public pins and which one was tapped; this
-     page asks it to fly to a mission or to let go. Nothing private crosses:
-     the frame only ever held public, admin-approved mission pins. */
-  var WORLD_ID = /^[0-9a-f-]{36}$/i;
+  /* THE WORLD SCREEN. The globe frame (action-globe.html, network surface)
+     and this page talk over same-origin postMessage. The frame sends which
+     missions have public pins and which one was tapped; this page asks it
+     to fly to a mission or to let go. Nothing private crosses: the frame
+     only ever holds public, admin-approved mission pins.
+
+     Layout (owner's contract, WORLD-SCREEN-UX-HANDOFF-20261014.md): when
+     the World tab is open and the screen is tall enough, the view is sized
+     to the room between the tabs and the app bar, so globe, context strip
+     and feed are all on screen and only the feed scrolls. On a short
+     screen (a phone on its side) the same pieces simply stack and scroll. */
+  var WORLD_ID = /^[0-9a-f-]{36}$/i, WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340;
   function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
   function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
   function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
+  function sizeWorld() {
+    var view = $("mnFeedView"), root = document.documentElement, app = $("mnApp");
+    if (!view) return;
+    var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
+    root.classList.toggle("mn-world-on", on);
+    if (!on) { root.classList.remove("mn-world-fit"); view.style.removeProperty("--mn-world-h"); return; }
+    root.classList.add("mn-world-fit");
+    window.scrollTo(0, 0);
+    /* the bar's resting top, from layout rather than its rect, so an
+       entrance animation (a transform) cannot skew the measurement */
+    var bottom = window.innerHeight, bar = document.querySelector(".appbar");
+    if (bar && bar.offsetHeight) {
+      var cs = getComputedStyle(bar);
+      if (cs.position === "fixed" && cs.display !== "none") bottom = Math.min(bottom, window.innerHeight - (parseFloat(cs.bottom) || 0) - bar.offsetHeight);
+    }
+    var room = Math.floor(bottom - view.getBoundingClientRect().top - 8);
+    /* a small phone held upright still gets one screen; a phone on its side does not have the room */
+    if (room < (window.innerHeight > window.innerWidth ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit"); view.style.removeProperty("--mn-world-h"); return; }
+    view.style.setProperty("--mn-world-h", room + "px");
+  }
   function paintWorldFocus() {
-    var f = state.world.focus, host = $("mnWorldFocus");
+    var f = state.world.focus, host = $("mnWorldFocus"), idle = $("mnWorldIdle");
     if (!host) return;
     host.hidden = !f;
+    if (idle) idle.hidden = !!f;
     if (!f) return;
     $("mnWorldFocusWhere").textContent = (f.region_label || "World") + " · " + pathLabel(f.action_path);
     $("mnWorldFocusTitle").textContent = f.title || "Mission";
+    var filter = $("mnWorldFocusFilter");
+    filter.setAttribute("aria-pressed", f.filter ? "true" : "false");
+    filter.textContent = f.filter ? "Showing posts about this" : "Only posts about this";
   }
   function setWorldFocus(mission) {
     state.world.focus = mission;
     paintWorldFocus();
     if (!state.loadingFeed) renderFeed(false);
-    track("world_focus", { mission: mission ? mission.mission_id : null });
+    var feed = $("mnWorldFeed");
+    if (mission && mission.filter && feed) feed.scrollTop = 0;
+    track("world_focus", { mission: mission ? mission.mission_id : null, filter: !!(mission && mission.filter) });
   }
+  /* from a post: show its mission on the Earth, but leave the feed alone,
+     because the member is reading it */
   function focusOnGlobe(missionId) {
     if (!WORLD_ID.test(String(missionId || "")) || !state.world.pins[missionId]) return;
-    var home = $("mnWorld");
-    if (home && home.scrollIntoView) home.scrollIntoView({ block: "start", behavior: window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    state.world.fromFeed = missionId;
     tellWorld({ type: "hu:focus-mission", missionId: missionId });
   }
   (function wireWorld() {
     var frame = $("mnWorldFrame");
     if (!frame) return;
+    /* the music player's "See this song's impact" lands here with ?song= */
+    try {
+      var song = new URLSearchParams(location.search).get("song");
+      if (song && song.length <= 160) frame.src = "action-globe.html?embedded=1&surface=network&song=" + encodeURIComponent(song);
+    } catch (_) {}
     frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
     window.addEventListener("message", function (ev) {
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
@@ -2103,17 +2143,24 @@
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
       } else if (d.type === "hu:globe-unavailable") {
-        if (caption) caption.textContent = "The globe can’t run on this device. Everything else works: the feed is below.";
+        if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
-        var m = d.mission;
-        setWorldFocus({ mission_id: String(m.mission_id), title: String(m.title || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || "") });
+        var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;
+        state.world.fromFeed = "";
+        setWorldFocus({ mission_id: id, title: String(m.title || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || ""), filter: !fromFeed });
       } else if (d.type === "hu:selection-cleared") {
+        state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
       }
     });
     $("mnWorldFocusClear").addEventListener("click", function () {
       setWorldFocus(null);
       tellWorld({ type: "hu:clear-selection" });
+    });
+    $("mnWorldFocusFilter").addEventListener("click", function () {
+      var f = state.world.focus;
+      if (!f) return;
+      setWorldFocus(Object.assign({}, f, { filter: !f.filter }));
     });
     $("mnWorldFocusJoin").addEventListener("click", function () {
       var f = state.world.focus;
@@ -2122,6 +2169,12 @@
       setView("missions");
       openMission(f.mission_id);
     });
+    var pending = 0;
+    function resize() { if (pending) return; pending = requestAnimationFrame(function () { pending = 0; sizeWorld(); }); }
+    window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", resize);
+    window.addEventListener("load", resize);
+    window.addEventListener("mcc:auth-state", resize);
   })();
 
 })();

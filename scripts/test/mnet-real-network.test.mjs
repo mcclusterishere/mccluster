@@ -185,7 +185,7 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.match(js, /first\.classList\.add\("is-just-posted"\)/);
   assert.match(css, /\.mn__tabs-thumb \{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /\.mn__world-home \{[^}]*height: clamp\(260px, 52dvh, 560px\)/, 'mobile globe viewport is sized for the phone first');
+  assert.match(css, /\.mn-world-fit \.mn__world-home \{ flex: 45 1 0;/, 'World screen keeps the globe on top of the phone screen');
   assert.doesNotMatch(css, /@media\s*\(max-width/, 'breakpoints only add room (AGENTS.md hard rule 14)');
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */

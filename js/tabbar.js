@@ -312,7 +312,8 @@
   function paintAuthState(signedIn, user, verified) {
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
     var worldDoor = dock.querySelector('[data-appnav="world"]');
-    if (worldDoor) worldDoor.href = ROOT + (signedIn ? "action-globe.html" : "guest-globe.html");
+    /* members go to the one World screen (globe over their feed); guests to the data-free Earth */
+    if (worldDoor) worldDoor.href = ROOT + (signedIn ? "mnet.html?view=feed" : "guest-globe.html");
     var guestIdentity = dock.querySelector('[data-appnav="profile"]');
     if (guestIdentity) { guestIdentity.hidden = !signedIn; guestIdentity.setAttribute("aria-hidden", signedIn ? "false" : "true"); }
     var body = document.body;

@@ -19,22 +19,58 @@ It does not lift any release gate in `EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`.
   surface names, native component names, applied migrations, history docs,
   and the résumé dossier (regenerated only through its own manual workflow).
 
-## The World tab
+## The World screen
 
-`mnet.html` → World is the Earth over the live network, phone first:
+Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`.
+`mnet.html` → World is one persistent screen, phone first:
 
-1. `action-globe.html?embedded=1&surface=network` fills a full-bleed band
-   (`clamp(260px, 52dvh, 560px)`; rounded and taller from 600px up). In that
+1. **Globe** (top): `action-globe.html?embedded=1&surface=network`. In that
    surface the frame shows only the Earth, pins, region outlines and Near me.
-2. Under it: the selected-mission banner, then the composer and the feed
-   (posts, media, tracks, likes, comments, share, save). Nothing is hidden.
-3. Tap a pin → the banner shows the mission (region · path · title) with
-   **Open mission** (canonical join flow in the Missions view) and **Show
-   everything**; the feed narrows to posts about that mission.
-4. A post the server ties to a mission (`action_feed_cards`,
-   `action_offer_cards`) whose mission has a public pin gets **Locate on
-   globe**, which scrolls to the Earth and flies it to the mission.
-5. Posting clears any mission filter so the new post is seen landing.
+2. **Context strip** (middle, ~92px): idle, it says what is pinned; after a
+   pin or a post picks a mission it shows region · path · title with
+   **Open mission** (canonical join flow), **Only posts about this**
+   (toggle) and ✕.
+3. **Feed** (bottom): composer and the real member feed (posts, media,
+   tracks, Like, Comment, Share, Save), scrolling on its own.
+
+`js/mnet.js` sizes the view to the room between the tabs and the app bar
+(`--mn-world-h`, class `mn-world-fit`): globe and feed share it 45:35 and the
+page itself does not scroll, so dragging the Earth never scrolls the feed and
+reading the feed never turns the Earth. Below 340px of room in portrait (or
+440px otherwise, e.g. a phone on its side) the pieces stack and the page
+scrolls instead of hiding anything. From 1100px the Earth and its strip sit
+on the left and the feed runs beside them.
+
+- Pin → strip shows the mission and the feed narrows to posts the server ties
+  to it (`action_feed_cards`, `action_offer_cards`); an honest empty state
+  when there are none.
+- Post → **Locate on globe** (only when its mission has a public pin) flies
+  the Earth there and fills the strip **without** narrowing the feed being
+  read.
+- Posting lets go of any mission so the new post is seen landing.
+
+Measured with a stubbed member (Playwright): at 390×844 the globe, strip and
+feed take 32% / 11% / 28% of the screen. That is 45 : 16 : 39 of the World
+area, matching the contract's hierarchy. The remaining ~30% is the house
+header, the four tabs and the app bar, which sit outside the World area. The
+spec's "~5% chrome" is not reachable without hiding those; that is the
+owner's call. iPhone SE (375×667) also fits on one screen; a phone on its
+side scrolls.
+
+### Standalone `action-globe.html`
+
+- Members are sent to the World screen (`mnet.html?view=feed`, carrying
+  `?song=` from the music player's "See this song's impact"), so there is
+  one World for members. `?explore=1` keeps the full explorer (search,
+  layers, policy links); the World screen's **Full world ↗** uses it.
+- Guests get the public explorer at 45 / 15 / 40 with one readable column
+  of mission cards and a "Member posts live here · Sign in" card where the
+  feed would be. Member posts are never shown without a session.
+- The house app bar is styled now. It used to render as raw links and a
+  giant mark because the page did not load `css/style.css`, and the page's
+  bare `nav` rules hijacked it. Those rules are scoped to `.world-tools`.
+- The member World tab in the app bar points at `mnet.html?view=feed`;
+  guests still get `guest-globe.html`.
 
 ## Bridge contract (same-origin `postMessage`)
 
@@ -67,10 +103,13 @@ admin-approved pin fields cross; no coordinates, member ids or counts.
 
 ## Verified
 
-Browser harness (Playwright, stubbed member session and APIs) at 390, 768
-and 1280px: globe boots, pins report to the page, Locate on globe → banner
-and narrowed feed, Show everything → full feed, pin with no posts → honest
-empty state, `scrollWidth === clientWidth` throughout.
+Browser harness (Playwright, stubbed member session and APIs) at 390×844,
+375×667, 844×390, 768×1024 and 1280×800: the globe boots, pins report to the
+page, the composition fits where it should, and only the feed scrolls (page
+`scrollY` stays 0). Post → globe leaves the feed whole; the toggle narrows
+it; pin → narrowed feed or honest empty state. `scrollWidth ===
+clientWidth` everywhere. Standalone page: guest at 45 / 15 / 40 and one
+column; a member is redirected with `?song=` intact.
 
 ## Still open (unchanged by this work)
 

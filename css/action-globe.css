@@ -1,17 +1,17 @@
-*{box-sizing:border-box}body{margin:0;background:#080809;color:white;font-family:system-ui,sans-serif}#globe{position:fixed;inset:0}header{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:12px;padding:20px;background:linear-gradient(#080809,transparent);font-size:12px;letter-spacing:.06em}header a{color:white;text-decoration:none}header strong{color:#ff404e}nav{position:fixed;top:76px;left:12px;display:flex;gap:8px}button,#missionLink{background:#4a101a;color:white;border:1px solid #e4394b;border-radius:20px;padding:10px 14px;font:inherit}#deck{position:fixed;bottom:0;left:0;right:0;max-width:650px;margin:auto;background:#0c0809ee;border:1px solid #68212a;border-radius:20px 20px 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));touch-action:pan-y}#deck h1{font-size:24px;margin:6px 0}#deck p{color:#ddd}#deck small{color:#b5b5b5;font-size:11px}#missionLink{display:inline-block;text-decoration:none;margin-left:10px}.cesium-viewer-bottom,.cesium-viewer-toolbar{display:none!important}
-.globe-embedded header{display:none}.globe-embedded nav{top:12px;z-index:3}.globe-embedded #deck{padding:12px;max-height:42%;overflow-y:auto}.globe-embedded #deck h1{font-size:18px}.globe-embedded #deck p{font-size:13px}.globe-embedded .appbar{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:#080809;color:white;font-family:system-ui,sans-serif}#globe{position:fixed;inset:0}header{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:12px;padding:20px;background:linear-gradient(#080809,transparent);font-size:12px;letter-spacing:.06em}header a{color:white;text-decoration:none}header strong{color:#ff404e}.world-tools{position:fixed;top:76px;left:12px;display:flex;gap:8px}button,#missionLink{background:#4a101a;color:white;border:1px solid #e4394b;border-radius:20px;padding:10px 14px;font:inherit}#deck{position:fixed;bottom:0;left:0;right:0;max-width:650px;margin:auto;background:#0c0809ee;border:1px solid #68212a;border-radius:20px 20px 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));touch-action:pan-y}#deck h1{font-size:24px;margin:6px 0}#deck p{color:#ddd}#deck small{color:#b5b5b5;font-size:11px}#missionLink{display:inline-block;text-decoration:none;margin-left:10px}.cesium-viewer-bottom,.cesium-viewer-toolbar{display:none!important}
+.globe-embedded header{display:none}.globe-embedded .world-tools{top:12px;z-index:3}.globe-embedded #deck{padding:12px;max-height:42%;overflow-y:auto}.globe-embedded #deck h1{font-size:18px}.globe-embedded #deck p{font-size:13px}.globe-embedded .appbar{display:none!important}
 
-.world-mode{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:3px;padding:4px;border-radius:30px;background:#101218e8;border:1px solid #60414b}.world-mode button{border:0;background:transparent;color:#cfc9cb;padding:9px 18px;cursor:pointer}.world-mode button.is-active{background:#a52739;color:#fff}.world-feed-mode #globe,.world-feed-mode #deck{visibility:hidden;pointer-events:none}.world-feed-mode #worldFeed{display:block}.world-feed-mode nav{z-index:9}.world-feed-mode .world-mode{position:fixed}#worldFeed{position:fixed;inset:0;z-index:5;overflow:auto;background:#090b11;padding:110px max(16px,calc((100vw - 700px)/2)) 100px}#worldFeed[hidden]{display:none!important}.world-feed-head{display:flex;justify-content:space-between;gap:12px;color:#f0d5d9;font-size:12px;letter-spacing:.08em;margin-bottom:20px}.world-story{background:#14161e;border:1px solid #40323c;border-radius:20px;padding:22px;margin-bottom:18px;min-height:240px;scroll-margin-top:110px}.world-story small{color:#f29ba8;text-transform:uppercase}.world-story h2{font-size:25px;margin:14px 0}.world-story p{line-height:1.6;color:#d7d6db;white-space:pre-line}.world-story a{display:inline-block;background:#a52739;border-radius:20px;color:white;text-decoration:none;padding:11px 16px;margin-right:8px}.world-story button{cursor:pointer}#worldSearch{background:#12141a;color:white;border:1px solid #624651;border-radius:20px;padding:10px 12px;max-width:220px;min-width:120px}.world-feed-mode header{z-index:6}.world-feed-mode nav{top:70px}#deck #openFeed{cursor:pointer}@media(max-width:650px){.world-mode{top:6px}.world-mode button{padding:8px 12px}.globe-embedded nav,nav{top:56px;right:8px;left:8px;flex-wrap:wrap}.world-feed-mode nav{top:56px}#worldSearch{flex:1;max-width:none}.world-feed-mode #worldFeed{padding-top:158px}.world-story{padding:17px}.world-story h2{font-size:22px}.globe-embedded .world-mode{top:4px}.globe-embedded nav{top:50px}}
+.world-mode{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:3px;padding:4px;border-radius:30px;background:#101218e8;border:1px solid #60414b}.world-mode button{border:0;background:transparent;color:#cfc9cb;padding:9px 18px;cursor:pointer}.world-mode button.is-active{background:#a52739;color:#fff}.world-feed-mode #globe,.world-feed-mode #deck{visibility:hidden;pointer-events:none}.world-feed-mode #worldFeed{display:block}.world-feed-mode .world-tools{z-index:9}.world-feed-mode .world-mode{position:fixed}#worldFeed{position:fixed;inset:0;z-index:5;overflow:auto;background:#090b11;padding:110px max(16px,calc((100vw - 700px)/2)) 100px}#worldFeed[hidden]{display:none!important}.world-feed-head{display:flex;justify-content:space-between;gap:12px;color:#f0d5d9;font-size:12px;letter-spacing:.08em;margin-bottom:20px}.world-story{background:#14161e;border:1px solid #40323c;border-radius:20px;padding:22px;margin-bottom:18px;min-height:240px;scroll-margin-top:110px}.world-story small{color:#f29ba8;text-transform:uppercase}.world-story h2{font-size:25px;margin:14px 0}.world-story p{line-height:1.6;color:#d7d6db;white-space:pre-line}.world-story a{display:inline-block;background:#a52739;border-radius:20px;color:white;text-decoration:none;padding:11px 16px;margin-right:8px}.world-story button{cursor:pointer}#worldSearch{background:#12141a;color:white;border:1px solid #624651;border-radius:20px;padding:10px 12px;max-width:220px;min-width:120px}.world-feed-mode header{z-index:6}.world-feed-mode .world-tools{top:70px}#deck #openFeed{cursor:pointer}
 
 /* Persistent World viewport: 45% globe, 20% context, 35% discovery. */
-html,body{height:100%;overflow:hidden}body{--world-map:45dvh;--world-context:20dvh;--world-discover:35dvh}
+html,body{height:100%;overflow:hidden}body{--world-map:45dvh;--world-context:15dvh;--world-discover:35dvh}
 #globe{position:absolute;inset:0 0 auto;height:var(--world-map);overflow:hidden;z-index:0;touch-action:pan-x pan-y}
 header{z-index:4;pointer-events:none;padding:10px 12px}header a{pointer-events:auto}
 .world-mode{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;white-space:nowrap;align-items:center}
 .world-mode strong{font-size:12px;padding:0 9px}
 .world-mode button{padding:7px 10px}
-nav,.globe-embedded nav,.world-feed-mode nav,.globe-embedded.world-feed-mode nav{position:absolute;top:calc(var(--world-map) + 10px);left:12px;right:12px;z-index:6;display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none}
-nav button{white-space:nowrap;font-size:11px;padding:8px}
+.world-tools,.globe-embedded .world-tools,.world-feed-mode .world-tools,.globe-embedded.world-feed-mode .world-tools{position:absolute;top:calc(var(--world-map) + 10px);left:12px;right:12px;z-index:6;display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none}
+.world-tools button{white-space:nowrap;font-size:11px;padding:8px}
 #worldSearch{min-width:130px;max-width:none;flex:1;font-size:12px;padding:8px}
 #deck,.globe-embedded #deck{position:absolute;inset:var(--world-map) 0 auto;height:var(--world-context);width:100%;max-width:none;overflow-y:auto;padding:52px 14px 8px;border-radius:0;border:0;border-top:1px solid #482f39;background:#11131b;z-index:3;touch-action:pan-y}
 #deck h1,.globe-embedded #deck h1{font-size:16px;margin:4px 0}
@@ -46,9 +46,9 @@ nav button{white-space:nowrap;font-size:11px;padding:8px}
 .world-detail-open #deck{border-top-color:#b03d50}
 .globe-embedded header{display:none}
 .globe-embedded .world-mode{top:6px}
-.globe-embedded nav{top:calc(var(--world-map) + 10px)}
+.globe-embedded .world-tools{top:calc(var(--world-map) + 10px)}
 .globe-embedded .appbar{display:none!important}
-@media(max-width:600px){#worldFeedList{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.world-story{padding:8px}.world-story h2{font-size:12px}.world-story p{-webkit-line-clamp:2}#deck,.globe-embedded #deck{padding-top:48px}.world-mode{left:auto;right:8px;transform:none}nav{left:6px;right:6px}#worldFeed{padding-left:7px;padding-right:7px}}
+
 
 /* World design polish: glass navigation, visible geography, restrained mission cards. */
 body{background:#050912;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -57,8 +57,8 @@ body{background:#050912;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,
 .world-mode{background:rgba(9,16,27,.82);border:1px solid rgba(188,209,230,.22);box-shadow:0 8px 30px #0009;backdrop-filter:blur(18px);border-radius:99px}
 .world-mode button{border-radius:99px;color:#cdd5e2}
 .world-mode button.is-active{background:#bd314c;color:#fff}
-nav{padding:4px 0;scrollbar-width:none}
-nav button{background:rgba(12,20,31,.9);border:1px solid #576679;border-radius:99px;color:#e9f1fa;backdrop-filter:blur(12px)}
+.world-tools{padding:4px 0;scrollbar-width:none}
+.world-tools button{background:rgba(12,20,31,.9);border:1px solid #576679;border-radius:99px;color:#e9f1fa;backdrop-filter:blur(12px)}
 #worldSearch{background:#0e1725e8;border-color:#657184;outline-offset:2px}
 #deck,.globe-embedded #deck{background:linear-gradient(135deg,#111a27,#14141c);border-top:1px solid #526074;box-shadow:0 -6px 24px #0005}
 .world-deck-top{color:#ffb9c5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:750}
@@ -85,10 +85,38 @@ nav button{background:rgba(12,20,31,.9);border:1px solid #576679;border-radius:9
    World tab. The parent page owns the feed and mission context; only "Near me" stays on the globe. */
 .globe-surface-network header,.globe-surface-network .world-mode,.globe-surface-network #deck,.globe-surface-network #worldFeed,.globe-surface-network #worldFeed[hidden]{display:none!important}
 .globe-surface-network #globe{inset:0;height:100%}
-.globe-surface-network nav{top:auto;right:auto;bottom:10px;left:10px;overflow:visible;padding:0}
-.globe-surface-network nav>*:not(#nearMe){display:none}
+.globe-surface-network .world-tools{top:auto;right:auto;bottom:10px;left:10px;overflow:visible;padding:0}
+.globe-surface-network .world-tools>*:not(#nearMe){display:none}
 .globe-surface-network #nearMe{font-size:max(12px,.75rem);padding:8px 12px;min-height:36px}
 
 /* Tile attribution is a condition of using OpenStreetMap tiles; Cesium's own credit bar is hidden above. */
 .osm-credit{position:absolute;z-index:4;right:8px;top:calc(var(--world-map) - 22px);font:10px/1.4 system-ui,sans-serif;color:#d9e2ef;background:#05091299;padding:2px 6px;border-radius:6px;text-decoration:none}
 .globe-surface-network .osm-credit{top:auto;bottom:8px}
+
+/* Owner's World contract (WORLD-SCREEN-UX-HANDOFF-20261014.md): ~45% globe, ~15% context, ~35% feed, one readable
+   column on a phone. Mission cards were a three-across grid of 12px type; they are one column first and only gain
+   columns as the screen widens. The context strip keeps its controls reachable inside its 15%. */
+#worldFeedList{grid-template-columns:minmax(0,1fr);gap:10px}
+.world-story{padding:14px}
+.world-story h2{font-size:16px}
+.world-story p{font-size:13px;-webkit-line-clamp:3}
+#deck,.globe-embedded #deck{padding-top:46px}
+.world-members{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;padding:12px 14px;border:1px solid #4e5d75;border-radius:14px;background:#111a27;font-size:13px;line-height:1.4;color:#c8d4e6}
+.world-members strong{color:#fff}
+.world-members a{margin-left:auto;padding:8px 14px;border-radius:99px;background:#bd314c;color:#fff;text-decoration:none;font-weight:750}
+@media(min-width:700px){#worldFeedList{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px){#worldFeedList{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* The house app bar is a <nav> too: page rules above are scoped to .world-tools so they never move it, and the
+   mission list keeps clear of it when it is showing (the standalone page). */
+html:not(.globe-embedded) #worldFeed{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+/* Phone first: one row of compact chips, and the Map/Missions switch kept clear of the back link; the page title
+   and a centred switch return only when there is room. */
+.world-tools{align-items:center}
+.world-tools>*{flex:none;white-space:nowrap}
+.world-tools a{display:inline-flex;align-items:center;min-height:34px;padding:0 10px;border:1px solid #576679;border-radius:99px;background:rgba(12,20,31,.9);color:#e9f1fa;font-size:11px;text-decoration:none}
+.world-tools button{min-height:34px}
+header strong{display:none}
+.world-mode{left:auto;right:8px;transform:none}
+@media(min-width:700px){header strong{display:inline}.world-mode{left:50%;right:auto;transform:translateX(-50%)}}
+.globe-embedded .world-members{display:none}

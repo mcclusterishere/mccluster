@@ -168,24 +168,35 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
-        <!-- THE WORLD IS THE FEED. The Earth sits on top of the live network:
-             a pin opens its mission here and narrows the feed to the posts
-             about it; a post that carries a mission can fly the Earth to it.
-             The frame reads public, admin-approved mission pins only. -->
+        <!-- THE WORLD SCREEN (owner's contract, docs/action-network/
+             WORLD-SCREEN-UX-HANDOFF-20261014.md): one persistent screen,
+             about 45% globe on top, a 15% context strip, 35% real member
+             feed that scrolls on its own. The globe never scrolls away.
+             A pin fills the strip and narrows the feed to posts the server
+             ties to that mission; a post with such a mission can show it on
+             the Earth. The frame reads public, admin-approved pins only. -->
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <a class="mn__world-expand" href="action-globe.html">Full world ↗</a>
+          <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
         </section>
-        <p class="mn__world-caption" id="mnWorldCaption" role="status">Drag the Earth. Tap a red pin to see what people are doing there.</p>
-        <section class="mn__world-focus" id="mnWorldFocus" aria-live="polite" hidden>
-          <p class="mn__eyebrow" id="mnWorldFocusWhere"></p>
-          <h2 id="mnWorldFocusTitle"></h2>
-          <div class="mn__world-focus-row">
-            <button class="mn__primary" id="mnWorldFocusJoin" type="button">Open mission</button>
-            <button class="mn__quiet" id="mnWorldFocusClear" type="button">Show everything</button>
+        <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
+          <div class="mn__world-idle" id="mnWorldIdle">
+            <p class="mn__eyebrow">The world</p>
+            <p class="mn__world-caption" id="mnWorldCaption">Drag the Earth. Tap a red pin to see what people are doing there.</p>
+          </div>
+          <div class="mn__world-focus" id="mnWorldFocus" hidden>
+            <div class="mn__world-focus-top">
+              <p class="mn__eyebrow" id="mnWorldFocusWhere"></p>
+              <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
+            </div>
+            <h2 id="mnWorldFocusTitle"></h2>
+            <div class="mn__world-focus-row">
+              <button class="mn__world-go" id="mnWorldFocusJoin" type="button">Open mission</button>
+              <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false">Only posts about this</button>
+            </div>
           </div>
         </section>
-        <div class="mn__world-feed">
+        <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->

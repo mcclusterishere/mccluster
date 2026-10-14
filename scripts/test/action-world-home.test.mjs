@@ -13,6 +13,20 @@ test('Human Uprise World tab puts the globe over the live feed',()=>{
  assert.doesNotMatch(read('css/mnet.css'),/\.mn__legacy-feed/);
 });
 
+test("World screen follows the owner's 45/15/35 contract: globe, context strip, independently scrolling feed",()=>{
+ const html=read('mnet.html'), css=read('css/mnet.css'), js=read('js/mnet.js');
+ assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldContext"[\s\S]*?id="mnWorldFeed"/);
+ assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 45 1 0;/);
+ assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 35 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
+ assert.match(css,/html\.mn-world-fit, html\.mn-world-fit body \{ overflow: hidden;/,'only the feed scrolls, so the globe never leaves the screen');
+ assert.match(js,/function sizeWorld\(\)/);
+ assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340/,'short screens fall back to a stacked, scrolling page instead of hiding content');
+ /* a post shows its mission on the Earth without narrowing the feed being read */
+ assert.match(js,/filter: !fromFeed/);
+ assert.match(read('js/tabbar.js'),/signedIn \? "mnet\.html\?view=feed" : "guest-globe\.html"/);
+ assert.match(read('action-globe.html'),/location\.replace\('mnet\.html\?view=feed'/);
+});
+
 test('globe and feed talk over same-origin messages carrying public mission fields only',()=>{
  const js=read('js/mnet.js'), globe=read('js/action-globe.js');
  assert.match(js,/ev\.origin !== location\.origin \|\| ev\.source !== frame\.contentWindow/);
@@ -37,7 +51,7 @@ test('Cesium imagery is constructed with the provider the runtime actually ships
 });
 test('embedded globe remains interactive and has a full-screen exit',()=>{
  const html=read('mnet.html');
- assert.match(html,/class="mn__world-expand" href="action-globe\.html"/);
+ assert.match(html,/class="mn__world-expand" href="action-globe\.html\?explore=1"/);
  const js=read('js/action-globe.js');
  assert.match(js,/globe-embedded/);
  assert.match(js,/ScreenSpaceEventType\.LEFT_CLICK/);
@@ -46,4 +60,4 @@ test('embedded globe remains interactive and has a full-screen exit',()=>{
 
 test('world event card opens filtered, scrollable mission feed',()=>{const html=read('action-globe.html');const js=read('js/action-globe.js');const css=read('css/action-globe.css');assert.match(html,/id="globeMode"/);assert.match(html,/id="feedMode"/);assert.match(html,/id="openFeed"/);assert.match(html,/id="worldSearch"/);assert.match(js,/function setMode\(mode\)/);assert.match(js,/function filterMissions\(\)/);assert.match(js,/function openDetail\(n\)/);assert.match(js,/document\.createElement\('article'\)/);assert.match(css,/#worldFeed\{position:fixed/);});
 
-test('world uses persistent 45/20/35 layout and inline story detail',()=>{const html=read('action-globe.html');const css=read('css/action-globe.css');const js=read('js/action-globe.js');assert.match(css,/--world-map:45dvh/);assert.match(css,/--world-context:20dvh/);assert.match(css,/--world-discover:35dvh/);assert.match(html,/id="worldDetail"/);assert.match(html,/id="feedBack"/);assert.match(js,/function openDetail\(n\)/);assert.match(js,/function closeDetail\(\)/);assert.match(js,/function setSelection\(selected\)/);assert.match(js,/article\.onclick=\(\)=>openDetail\(n\)/);});
+test('world uses persistent 45/15/35 layout and inline story detail',()=>{const html=read('action-globe.html');const css=read('css/action-globe.css');const js=read('js/action-globe.js');assert.match(css,/--world-map:45dvh/);assert.match(css,/--world-context:15dvh/);assert.match(css,/--world-discover:35dvh/);assert.match(html,/id="worldDetail"/);assert.match(html,/id="feedBack"/);assert.match(js,/function openDetail\(n\)/);assert.match(js,/function closeDetail\(\)/);assert.match(js,/function setSelection\(selected\)/);assert.match(js,/article\.onclick=\(\)=>openDetail\(n\)/);});
