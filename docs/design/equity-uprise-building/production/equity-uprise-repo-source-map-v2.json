@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 345,
+  "candidate_count": 349,
   "capability_source_count": 99,
-  "support_only_count": 246,
+  "support_only_count": 250,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2167,6 +2167,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261014080000_media_geo_ingestion.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "News ingestion schema and reliability support, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261014081000_media_ingest_rpc.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "News ingestion schema and reliability support, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261014081500_media_news_namespace.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "News ingestion schema and reliability support, not a physical building capability."
+    },
+    {
+      "path": "supabase/migrations/20261014083000_gdelt_backoff_cache.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "News ingestion schema and reliability support, not a physical building capability."
     },
     {
       "path": "supabase/pending/README.md",
