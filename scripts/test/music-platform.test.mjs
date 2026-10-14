@@ -267,3 +267,18 @@ test('album throttles the expensive public play-count RPC behind a fresh cache',
   assert.match(album,/Date\.now\(\) - c\.at < 15 \* 60 \* 1000/);
   assert.match(album,/if \(fresh\) return;\s*fetch\(SB_URL \+ "\/rest\/v1\/rpc\/play_counts"/);
 });
+
+
+test('Creator Studio validates rights, metadata and file sizes before any storage transfer', async()=>{
+  const studio=await read('js/music-creator-studio.js');
+  const submit=studio.slice(studio.indexOf('$("trackForm").addEventListener("submit"'));
+  const preflight=submit.indexOf('Validate metadata, rights and all file sizes before transferring any bytes.');
+  const upload=submit.indexOf('await uploadGrant("creator-masters", master)');
+  assert.ok(preflight>=0 && upload>preflight,'preflight must run before master upload');
+  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!$("ownsMaster").checked','!$("collaboratorsCleared").checked','durationMs(master)','!Number.isFinite(dur)']){
+    const index=submit.indexOf(clause);
+    assert.ok(index>preflight && index<upload,clause+' must be checked before storage transfer');
+  }
+  assert.ok(submit.indexOf('const title = $("trackTitle").value.trim();')<upload);
+  assert.ok(submit.indexOf('const artist = $("trackArtist").value.trim() || profile.artist_name;')<upload);
+});
