@@ -11,7 +11,7 @@ begin
     into v_definition;
   if position('action_creator_transfer_reversal_totals' in v_definition)=0
      or position('p_amount_cents - v_prior' in v_definition)=0
-     or position('spent_cents = spent_cents - v_delta' in v_definition)=0 then
+     or position('action_creator_reversal_quarantine' in v_definition)=0 then
     raise exception 'transfer reversal accounting guard missing';
   end if;
 end
