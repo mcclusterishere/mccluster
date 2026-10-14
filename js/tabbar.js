@@ -122,6 +122,22 @@
     if (mnetLabel) mnetLabel.textContent = "Sign in";
   }
 
+  /* World tab: the public Cesium mission globe, separate from the private Halo console.
+     Normalize hand-written bars and generated bars to the same globe destination. */
+  var worldTab = dock.querySelector('[data-appnav="world"]');
+  if (!worldTab) {
+    worldTab = document.createElement("a");
+    worldTab.className = "appbar__tab appbar__world";
+    worldTab.setAttribute("data-appnav", "world");
+    worldTab.setAttribute("aria-label", "Explore the world globe");
+    worldTab.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg><span>World</span>';
+    var profileTab = dock.querySelector('[data-appnav="profile"]');
+    if (profileTab) dock.insertBefore(worldTab, profileTab);
+    else dock.appendChild(worldTab);
+  }
+  worldTab.href = ROOT + "action-globe.html";
+  if (/action-globe\\.html(?:$|[?#])/.test(location.href)) worldTab.setAttribute("aria-current", "page");
+
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
   document.body.classList.add("has-appbar");
