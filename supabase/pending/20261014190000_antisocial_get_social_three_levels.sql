@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.action_antisocial_levels(
  level smallint NOT NULL CHECK(level BETWEEN 1 AND 3),
  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
  proof_url text,
+ media_asset_id uuid REFERENCES public.network_media_assets(id) ON DELETE SET NULL,
  statement text NOT NULL DEFAULT '' CHECK(char_length(statement)<=1500),
  post_id uuid REFERENCES public.network_posts(id) ON DELETE SET NULL,
  collaborator_m_uid uuid REFERENCES public.m_people(id) ON DELETE SET NULL,
@@ -39,7 +40,8 @@ USING(user_id=(SELECT auth.uid()) OR (SELECT public.eu_is_admin()));
 -- Only a server RPC can submit. This is also an audit trail for moderation.
 CREATE OR REPLACE FUNCTION public.submit_antisocial_level(
  p_assignment_id uuid,p_level smallint,p_statement text,
- p_proof_url text DEFAULT NULL,p_post_id uuid DEFAULT NULL,p_collaborator_m_uid uuid DEFAULT NULL
+ p_proof_url text DEFAULT NULL,p_post_id uuid DEFAULT NULL,p_collaborator_m_uid uuid DEFAULT NULL,
+ p_media_asset_id uuid DEFAULT NULL
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
@@ -65,12 +67,17 @@ BEGIN
    WHERE assignment_id=p_assignment_id AND level=p_level-1;
    IF v_prior IS DISTINCT FROM 'verified' THEN RAISE EXCEPTION 'finish the previous level first'; END IF;
  END IF;
+ IF p_media_asset_id IS NOT NULL AND NOT EXISTS(
+   SELECT 1 FROM public.network_media_assets ma WHERE ma.id=p_media_asset_id
+   AND ma.owner_m_uid=v_self AND ma.media_type IN ('video','image')
+   AND ma.status IN ('ready','staged')
+ ) THEN RAISE EXCEPTION 'proof upload is not yours or not ready'; END IF;
  IF p_level<3 THEN
    IF p_post_id IS NOT NULL OR p_collaborator_m_uid IS NOT NULL THEN
      RAISE EXCEPTION 'collaboration fields only apply to level three';
    END IF;
    IF nullif(btrim(coalesce(p_statement,'')),'') IS NULL
-      AND nullif(btrim(coalesce(p_proof_url,'')),'') IS NULL THEN
+      AND nullif(btrim(coalesce(p_proof_url,'')),'') IS NULL AND p_media_asset_id IS NULL THEN
       RAISE EXCEPTION 'describe or link your action';
    END IF;
  ELSE
@@ -92,17 +99,17 @@ BEGIN
  WHERE assignment_id=p_assignment_id AND level=p_level;
  IF v_status='verified' THEN RAISE EXCEPTION 'level already verified'; END IF;
  INSERT INTO public.action_antisocial_levels
- (assignment_id,level,user_id,proof_url,statement,post_id,collaborator_m_uid,status)
- VALUES(p_assignment_id,p_level,v_user,p_proof_url,coalesce(p_statement,''),p_post_id,p_collaborator_m_uid,'pending')
+ (assignment_id,level,user_id,proof_url,media_asset_id,statement,post_id,collaborator_m_uid,status)
+ VALUES(p_assignment_id,p_level,v_user,p_proof_url,p_media_asset_id,coalesce(p_statement,''),p_post_id,p_collaborator_m_uid,'pending')
  ON CONFLICT(assignment_id,level) DO UPDATE SET
- proof_url=EXCLUDED.proof_url,statement=EXCLUDED.statement,post_id=EXCLUDED.post_id,
+ proof_url=EXCLUDED.proof_url,media_asset_id=EXCLUDED.media_asset_id,statement=EXCLUDED.statement,post_id=EXCLUDED.post_id,
  collaborator_m_uid=EXCLUDED.collaborator_m_uid,status='pending',review_note=NULL,
  reviewed_at=NULL,updated_at=now()
  WHERE public.action_antisocial_levels.status<>'verified';
  RETURN jsonb_build_object('level',p_level,'status','pending','assignment_id',p_assignment_id);
 END;
 $$;
-REVOKE ALL ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid,uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid) TO authenticated,service_role;
 
 CREATE OR REPLACE FUNCTION public.review_antisocial_level(
