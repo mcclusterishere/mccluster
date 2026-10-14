@@ -195,3 +195,10 @@ verify_jwt = true
 # an order can be created and the function repeats authorization in-process.
 [functions.music-checkout]
 verify_jwt = true
+
+# Production music direct-sale endpoints; authorization enforced in function.
+[functions.music-direct-checkout]
+verify_jwt = false
+
+[functions.music-direct-access]
+verify_jwt = false
