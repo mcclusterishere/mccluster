@@ -13,7 +13,7 @@ WITH retirement(id) AS (
     ('51000000-0000-4000-8000-000000000002'::uuid), -- care kits
     ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- 10 care kits
     ('a195dc51-5593-5640-b51c-836850c3babf'::uuid), -- audit circle
-    ('a4333d6f-52a6-511a-b957-fb4f21916b88'::uuid), -- shared resource -> project
+    ('a4333d6f-52a6-511a-b957-fb4f21916b88'::uuid), -- shared resource -> projects
     ('3467cf5e-9b43-515c-a8bd-8f96c30f7421'::uuid), -- correct it
     ('e83aaa5e-2e44-53e4-9ffc-6eb92f457096'::uuid), -- cross the room
     ('4872dbe5-bafe-5464-986c-622941927ba7'::uuid), -- fix resource list
@@ -23,28 +23,33 @@ WITH retirement(id) AS (
     ('51587300-5442-5708-8ccb-13bb4145d7b0'::uuid), -- teach
     ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- community fridge
     ('bbcffaaf-f437-4355-a1c2-7bf2a36dfa62'::uuid), -- school lunch debt
-    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- free cuts (hold)
-    ('ebe8f4ee-bc56-4ed6-83f0-f501c68490cf'::uuid), -- laundry (hold)
-    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- voter help (hold)
-    ('b2ab3911-78ae-490c-bd95-21573c8c34e9'::uuid), -- hiring help (hold)
     ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- feed five (duplicate)
-    ('9144bd42-f94a-494e-a17a-a45f9e155f86'::uuid), -- minerals research step
+    ('9144bd42-f94a-494e-a17a-a45f9e155f86'::uuid), -- minerals research -> guidance
     ('7cfac26a-d757-42b9-803b-970f9d5030a8'::uuid), -- public comment
-    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- draft voter (idempotent)
-    ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- draft fridge (idempotent)
-    ('ba66d4a3-cb62-4403-9b56-7ee00af059d8'::uuid), -- $20 draft: reopened below
     ('5276f3b8-61fe-5363-8690-80d98a88878b'::uuid), -- map
-    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- voter
-    ('51000000-0000-4000-8000-000000000005'::uuid), -- document work -> media workflow
+    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- voter (hold)
+    ('51000000-0000-4000-8000-000000000005'::uuid), -- documentation -> media workflow
     ('6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04'::uuid), -- freestyle
     ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- sneaker request -> specialist
     ('42a2b39a-831f-496b-83da-b4ef71cc2b43'::uuid), -- suspicious listing -> specialist
     ('24b16f1a-0f76-4390-a755-eba24f641f71'::uuid), -- sneaker review -> specialist
+    ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- ten care kits
+    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- free cuts (hold)
+    ('ebe8f4ee-bc56-4ed6-83f0-f501c68490cf'::uuid), -- laundry (hold)
+    ('b2ab3911-78ae-490c-bd95-21573c8c34e9'::uuid), -- hiring help (hold)
+    ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- specialist
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- duplicate
+    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- hold
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- duplicate
     ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- fridge
-    ('ba66d4a3-cb62-4403-9b56-7ee00af059d8'::uuid), -- replaced below
-    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- voter
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- duplicate meal
-    ('df26314d-d4e1-47e3-b980-1b60b1a682ea'::uuid) -- Equity paper restored below
+    ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- care kits
+    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- free cuts
+    ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- sneakers
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
+    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid)  -- meals
 )
 UPDATE public.action_missions m
 SET status = CASE WHEN EXISTS (
@@ -54,6 +59,26 @@ SET status = CASE WHEN EXISTS (
 updated_at=now()
 WHERE m.id IN (SELECT id FROM retirement)
   AND m.status <> 'closed';
+
+-- Held programs are not published until a local sponsor/operator exists.
+UPDATE public.action_missions
+SET status='draft',updated_at=now()
+WHERE id IN (
+ 'd207ca6b-a626-49c5-9fbb-fbc8204f02bb', -- free cuts
+ 'ebe8f4ee-bc56-4ed6-83f0-f501c68490cf', -- laundry
+ 'a0a81625-9ac2-4167-a133-fa5d4f63ea75', -- voter registration
+ 'b2ab3911-78ae-490c-bd95-21573c8c34e9'  -- hiring help
+) AND NOT EXISTS (
+ SELECT 1 FROM public.action_mission_assignments a
+ WHERE a.mission_id=action_missions.id
+   AND a.status IN ('joined','in_progress','submitted','rejected')
+);
+
+-- General spending was rejected in favor of the explicit $20 action.
+UPDATE public.action_missions
+SET status='closed',updated_at=now()
+WHERE id='d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'
+  AND NOT EXISTS (SELECT 1 FROM public.action_mission_assignments a WHERE a.mission_id=action_missions.id);
 
 -- Explicit keeps and restorations: Equity paper, Black business spend.
 UPDATE public.action_missions
