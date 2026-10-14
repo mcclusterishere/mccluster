@@ -36,7 +36,10 @@ test('collaboration is connected, reciprocal and counted for both members',()=>{
  assert.match(sql,/antisocial_public_collaborations/);
  assert.match(sql,/own\.status='verified' AND other\.status='verified'/);
  assert.match(ui,/antisocial_public_collaborations/);
- assert.match(ui,/p_collaborator_m_uid:partner/);
+ /* level 3 publishes together through the platform (supabase/pending/antisocial_get_social_completion_v1.sql):
+    the partner rides as p_partner_m_uid, and confirming a project published with me carries reciprocal credit */
+ assert.match(ui,/p_partner_m_uid:partner/);
+ assert.match(ui,/p_collaborator_m_uid:b\.getAttribute\("data-with"\)/);
 });
 
 test('consent-safe evidence and private review queue',()=>{

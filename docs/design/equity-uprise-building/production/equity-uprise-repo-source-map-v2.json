@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 359,
+  "candidate_count": 360,
   "capability_source_count": 99,
-  "support_only_count": 260,
+  "support_only_count": 261,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2251,6 +2251,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/antisocial_get_social_completion_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",

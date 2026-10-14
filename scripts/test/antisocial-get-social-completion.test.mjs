@@ -77,3 +77,56 @@ test('a request is answered from the bell; the level-3 partner list is the serve
   const css = await read('css/mnet.css');
   assert.match(css, /\.mn__notification-actions \{ display: flex; flex-wrap: wrap; gap: 8px; \}/);
 });
+
+test('publish together, in the platform: one post credited to both, vouched, and one review settles the pair', async () => {
+  const sql = await read(SQL);
+  assert.match(sql, /create table if not exists public\.action_collaboration_posts \(/);
+  assert.match(sql, /revoke all on public\.action_collaboration_posts from public, anon, authenticated;/, 'the vouch table is the server\'s');
+  assert.match(sql, /create or replace function public\.publish_antisocial_collaboration\(\n  p_assignment_id uuid, p_partner_m_uid uuid, p_title text, p_kind text,\n  p_link text default null, p_media_asset_id uuid default null, p_statement text default ''\n\)/);
+  assert.match(sql, /raise exception 'finish levels 1 and 2 first'/);
+  assert.match(sql, /raise exception 'connect with your collaborator on Action Network first'/);
+  assert.match(sql, /'credits', jsonb_build_array\(/, 'both credits ride on the post');
+  assert.match(sql, /perform public\.submit_antisocial_level\(v_a\.id, 3::smallint/, 'publishing is the initiator\'s level 3, through the draft\'s own rule');
+  assert.match(sql, /'collaboration_published'/, 'the partner is told');
+  assert.match(sql, /create or replace function public\.antisocial_collaborations_for_me\(\)/);
+  assert.match(sql, /create or replace function public\.action_collaboration_cards\(p_post_ids uuid\[\]\)/);
+  assert.match(sql, /grant execute on function public\.action_collaboration_cards\(uuid\[\]\) to anon, authenticated, service_role;/, 'the card is public, like the action card');
+  /* D: one verification settles both, with the collaboration award */
+  assert.match(sql, /perform public\.antisocial_settle_level3\(v_a\.id, v_l\.post_id\);\n    perform public\.antisocial_settle_level3\(v_other, v_l\.post_id\);/);
+  assert.match(sql, /'collaboration', 100, 'Anti-Social: made something together'/);
+  assert.match(sql, /revoke all on function public\.antisocial_settle_level3\(uuid, uuid\) from public, anon, authenticated;/);
+  /* C: the record carries levels; F: the mission opens */
+  assert.match(sql, /'levels', coalesce\(\(select jsonb_agg\(jsonb_build_object\('level', lv\.level, 'status', lv\.status/);
+  assert.match(sql, /'level_count', case when m\.id = 'a17050c1-a551-4c5c-80c1-5a1750c1a001'::uuid then 3 end/);
+  assert.match(sql, /update public\.action_missions set status = 'open', updated_at = now\(\)\n where id = 'a17050c1-a551-4c5c-80c1-5a1750c1a001'::uuid and status = 'draft';/);
+  const runner = await read('scripts/test-antisocial-db.sh');
+  assert.match(runner, /antisocial_levels\.behaviour\.sql/);
+  await access(join(ROOT, 'supabase/tests/antisocial_levels.behaviour.sql'));
+});
+
+test('the page publishes together from Level 3, confirms a project published with me, and reads n / 3', async () => {
+  const js = await read('js/mnet.js'), html = await read('mnet.html');
+  assert.match(js, /sbRpc\("publish_antisocial_collaboration",\{p_assignment_id:a\.id,p_partner_m_uid:partner,p_title:title,p_kind:kind,p_link:url,p_media_asset_id:asset,p_statement:statement\}\)/);
+  assert.doesNotMatch(js, /mnAntisocialPost\b/, 'no pasted post id');
+  assert.doesNotMatch(html, /Post ID or shared post link/);
+  assert.match(html, /id="mnAntisocialTitle" maxlength="120"/);
+  assert.match(html, /id="mnAntisocialKind"><option value="song">Song<\/option><option value="video">Video<\/option><option value="photo">Photo project<\/option><option value="writing">Writing<\/option><option value="other">Other original work<\/option>/);
+  assert.match(js, /sbRpc\("antisocial_collaborations_for_me",\{\}\)/);
+  assert.match(js, /data-confirm-collab="'\+esc\(r\.post_id\)\+'" data-with="'\+esc\(r\.initiator_m_uid\)\+'"/);
+  assert.match(js, /p_post_id:b\.getAttribute\("data-confirm-collab"\),p_collaborator_m_uid:b\.getAttribute\("data-with"\)/, 'confirming is my level 3 with the same post and reciprocal credit');
+  assert.match(js, /"Publish together and submit Level 3"/);
+  /* the card, only for vouched posts */
+  assert.match(js, /function collaborationCardHtml\(postId\)/);
+  assert.match(js, /sbRpc\("action_collaboration_cards", \{ p_post_ids: ids\.slice\(0, 100\) \}\)/);
+  assert.match(js, /p && p\.metadata && p\.metadata\.collaboration \? p\.id : null/);
+  assert.match(js, /collaborationCardHtml\(id\) \+/);
+  assert.match(js, /loadCollaborationCards\(incoming\)\]\)/);
+  assert.match(js, /c\.verified \? "Verified collaboration" : "Made together · in review"/);
+  /* progress outside the dialog */
+  assert.match(js, /var label=total\?\(m\.status==="verified"\?total\+" \/ "\+total\+" · Verified":done\+" \/ "\+total/);
+  assert.match(js, /if\(m\.id===ANTISOCIAL_ID\)activity="One mission, three levels"\+\(mine\?" · you: "\+mine\.done\+" \/ "\+mine\.total:""\)/);
+  assert.match(js, /n\.type==="collaboration_published"/);
+  /* the partner's page lists the projects they are credited on */
+  const worker = await read('workers/mccluster/src/platform-api.js');
+  assert.match(worker, /action_collaboration_posts\?partner_m_uid=eq\.\$\{resolved\.m_uid\}&select=post_id/);
+});

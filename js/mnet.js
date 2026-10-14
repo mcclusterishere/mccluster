@@ -505,6 +505,7 @@
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
       actionOfferCardHtml(id) +
       actionCardHtml(id) +
+      collaborationCardHtml(id) +
       trackCardHtml(item, post) +
       postMediaHtml(post) +
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
@@ -611,6 +612,37 @@
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
         fundButtonHtml(c) +
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
+  }
+  /* MADE TOGETHER (owner, 2026-10-14: "a jointly credited project linked to
+     both profiles"). A joint post carries metadata.collaboration, which a
+     member could forge, so the card is drawn only for posts the server
+     vouches for (action_collaboration_cards): both credits by name, the
+     work, and whether the desk has verified the pair. */
+  function collaborationCardHtml(postId) {
+    var c = postId && state.collabCards && state.collabCards[postId];
+    if (!c) return "";
+    var credits = (c.credits || []).map(function (p) {
+      return p.handle ? '<button type="button" class="mn__collab-credit" data-person="' + esc(p.handle) + '">' + esc(p.name || "Action Network member") + '</button>' : '<span class="mn__collab-credit">' + esc(p.name || "Action Network member") + '</span>';
+    });
+    return '<div class="mn__actcard mn__actcard--collab">' +
+      '<p class="mn__actcard-eyebrow">' + (c.verified ? "Verified collaboration" : "Made together · in review") + '</p>' +
+      '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
+      '<p class="mn__collab-by">' + esc(c.kind || "work") + ' · by ' + credits.join(' <span aria-hidden="true">&amp;</span> ') + '</p>' +
+      '<div class="mn__actcard-row">' +
+        (c.link ? '<a class="mn__quiet" href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">Open the work ↗</a>' : '') +
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '') +
+      '</div>' + missionStatsHtml(c.mission_id) + '</div>';
+  }
+  function loadCollaborationCards(items) {
+    var ids = (items || []).map(function (it) { var p = it.post; return p && p.metadata && p.metadata.collaboration ? p.id : null; })
+      .filter(function (id) { return id && !(state.collabCards && id in state.collabCards); });
+    if (!ids.length) return Promise.resolve(false);
+    state.collabCards = state.collabCards || {};
+    ids.forEach(function (id) { state.collabCards[id] = null; });
+    return sbRpc("action_collaboration_cards", { p_post_ids: ids.slice(0, 100) }).then(function (rows) {
+      (rows || []).forEach(function (c) { state.collabCards[c.post_id] = c; });
+      return (rows || []).length > 0;
+    }).catch(function () { return false; });
   }
   function loadActionCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
@@ -829,7 +861,7 @@
           if (target) { target.scrollIntoView({ block:"center" }); target.setAttribute("tabindex", "-1"); target.focus({ preventScroll:true }); }
         }
       } catch (_) {}
-      Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming)]).then(function (flags) {
+      Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming), loadCollaborationCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
       if (reset && !state.guest) paintFeedMissions();
@@ -949,6 +981,9 @@
           '<button class="mn__notification-action" type="button" data-connection-answer="'+esc(meta.connection_id)+'" data-accept="1">Accept</button>'+
           '<button class="mn__notification-action mn__notification-action--quiet" type="button" data-connection-answer="'+esc(meta.connection_id)+'" data-accept="0">Decline</button>'+
           (meta.handle?'<button class="mn__notification-action mn__notification-action--quiet" type="button" data-person="'+esc(meta.handle)+'">View profile</button>':'')+'</span>';
+      }
+      if(n.type==="collaboration_published"&&/^[0-9a-f-]{36}$/i.test(String(meta.mission_id||""))){
+        action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(meta.mission_id)+'">Confirm as my Level 3 →</a>';
       }
       if(n.type==="connection_accepted"&&meta.handle){
         action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';
@@ -2089,6 +2124,8 @@
   function missionCard(m){
     var st=missions.stats[m.id]||{}, joined=Number(st.joined)||0, submitted=Number(st.submitted)||0, verified=Number(st.verified)||0;
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
+    var mine=missions.levelsByMission&&missions.levelsByMission[m.id];
+    if(m.id===ANTISOCIAL_ID)activity="One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"")+" · "+activity;
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
@@ -2173,8 +2210,13 @@
     var host=$("mnRecord"); if(!host)return;
     var fellowship=fellowshipBlock(verified);
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
+    missions.levelsByMission={};
     var list=(r.missions||[]).map(function(m){
-      return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(STATUS_LABEL[m.status]||m.status)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
+      /* a mission with levels reads its progress: n / 3 (owner, 2026-10-14: 1 / 3 → 2 / 3 → 3 / 3) */
+      var done=(m.levels||[]).filter(function(x){return x.status==="verified";}).length, total=Number(m.level_count)||0;
+      if(total)missions.levelsByMission[m.mission_id]={done:done,total:total,status:m.status};
+      var label=total?(m.status==="verified"?total+" / "+total+" · Verified":done+" / "+total+(m.status==="submitted"||(m.levels||[]).some(function(x){return x.status==="pending";})?" · Awaiting review":" · In progress")):(STATUS_LABEL[m.status]||m.status);
+      return '<li class="mn__record-item is-'+esc(m.status)+'"><button type="button" data-open-mission="'+esc(m.mission_id)+'"><b>'+esc(m.title)+'</b><span>'+esc(label)+(m.points?" · "+esc(m.points)+" pts":"")+'</span></button>'+
         (m.status==="verified"?'<a class="mn__record-receipt" href="'+esc(receiptHref(m.assignment_id))+'">Receipt</a>'+
           (missions.shared&&missions.shared[m.assignment_id]?'<span class="mn__record-shared">On the feed</span>':'<button class="mn__record-share" type="button" data-share-action="'+esc(m.assignment_id)+'">Share to feed</button>'):"")+
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
@@ -2242,7 +2284,11 @@
     var box=$("mnAntisocialLevels"),a=missions.assignment;
     if(!box||!missions.current||missions.current.id!==ANTISOCIAL_ID)return;
     box.hidden=false;$("mnMissionProof").hidden=true;
-    if(!a){$("mnAntisocialForm").hidden=true;setStatus($("mnAntisocialStatus"),"Join to start Level 1.");return;}
+    if(!a){
+      /* the three levels are the card, before anyone joins: 1 / 3 → 2 / 3 → 3 / 3 */
+      $("mnAntisocialProgress").innerHTML=ANTISOCIAL_TITLES.map(function(t,i){return '<li class="mn__record-item is-'+(i?"locked":"ready")+'"><b>'+(i+1)+'/3 · '+esc(t)+'</b><span>'+(i?"Locked":"Ready")+'</span></li>';}).join("");
+      $("mnAntisocialForm").hidden=true;setStatus($("mnAntisocialStatus"),"Join to start Level 1.");return;
+    }
     var version=++antisocialVersion;
     return sbRest("action_antisocial_levels?assignment_id=eq."+encodeURIComponent(a.id)+"&select=level,status,review_note&order=level.asc")
       .then(function(rows){
@@ -2257,21 +2303,56 @@
         var pending=next<=3&&levels[next]&&levels[next].status==="pending";
         $("mnAntisocialForm").hidden=next>3||!!pending||a.status==="verified";
         if(next<=3){$("mnAntisocialNext").textContent="Level "+next+"/3 · "+ANTISOCIAL_TITLES[next-1];$("mnAntisocialCollab").hidden=next!==3;}
-        setStatus($("mnAntisocialStatus"),next>3?"All three levels verified. Mission complete.":pending?"Awaiting review for Level "+next+".":next===3?"Publish original work with a connected member. Both submit the same post.":"Complete the action. Record yourself, or only film others with permission.");
+        if($("mnAntisocialGo"))$("mnAntisocialGo").textContent=next===3?"Publish together and submit Level 3":"Submit this level for review";
+        if(next===3)antisocialWithMe(a);else if($("mnAntisocialWithMe")){$("mnAntisocialWithMe").hidden=true;$("mnAntisocialWithMe").innerHTML="";}
+        setStatus($("mnAntisocialStatus"),next>3?"All three levels verified. Mission complete.":pending?"Awaiting review for Level "+next+".":next===3?"Make something with a connected member and publish it here. One post, credited to both.":"Complete the action. Record yourself, or only film others with permission.");
         if(next===3&&!pending)antisocialConnections();
       }).catch(function(e){if(version===antisocialVersion)setStatus($("mnAntisocialStatus"),e.message||"Could not load levels.","error");});
+  }
+  /* Owner, 2026-10-14: "Connect → Collaborate → Publish. Both creators are
+     credited. The finished project counts toward the same mission." The
+     server lists the projects a connection published with me
+     (antisocial_collaborations_for_me); confirming one is my level 3,
+     with the same post and reciprocal credit, so one desk review settles
+     us both. */
+  function antisocialWithMe(a){
+    var host=$("mnAntisocialWithMe");if(!host)return;
+    sbRpc("antisocial_collaborations_for_me",{}).then(function(rows){
+      rows=rows||[];
+      host.hidden=!rows.length;
+      host.innerHTML=rows.length?'<p class="mn__eyebrow">Published with you</p>'+rows.map(function(r){
+        var who=esc(r.initiator_name||"A member")+(r.initiator_handle?' · @'+esc(r.initiator_handle):'');
+        var state=r.mine_status==="verified"?'<span class="mn__withme-state">Verified</span>':r.mine_status==="pending"?'<span class="mn__withme-state">Confirmed · awaiting review</span>':r.mine_status==="rejected"?'<span class="mn__withme-state">Not verified · confirm again</span>':'';
+        return '<div class="mn__withme" data-post="'+esc(r.post_id)+'"><b>'+esc(r.title)+'</b><span>'+esc(r.kind)+' · with '+who+'</span>'+
+          (r.link?'<a href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer">Open the work ↗</a>':'')+
+          (r.mine_status&&r.mine_status!=="rejected"?state:'<button class="mn__primary" type="button" data-confirm-collab="'+esc(r.post_id)+'" data-with="'+esc(r.initiator_m_uid)+'" data-link="'+esc(r.link||"")+'">Confirm as my Level 3</button>')+'</div>';
+      }).join(""):"";
+      host.querySelectorAll("[data-confirm-collab]").forEach(function(b){
+        b.addEventListener("click",function(){
+          if(!missions.assignment||missions.assignment.id!==a.id)return;
+          b.disabled=true;setStatus($("mnAntisocialStatus"),"Confirming…");
+          sbRpc("submit_antisocial_level",{p_assignment_id:a.id,p_level:3,p_statement:"Made together.",p_proof_url:b.getAttribute("data-link")||null,p_post_id:b.getAttribute("data-confirm-collab"),p_collaborator_m_uid:b.getAttribute("data-with"),p_media_asset_id:null})
+            .then(function(){antisocialPaint();loadActionRecord();})
+            .catch(function(e){b.disabled=false;setStatus($("mnAntisocialStatus"),e.message||"That did not go through.","error");});
+        });
+      });
+    }).catch(function(){host.hidden=true;});
   }
   function antisocialSubmit(ev){
     ev.preventDefault();var a=missions.assignment;if(!a||!missions.current||missions.current.id!==ANTISOCIAL_ID||antisocialLevel>3)return;
     var btn=ev.target.querySelector('button[type="submit"]');if(btn.disabled)return;btn.disabled=true;
     var level=antisocialLevel,statement=$("mnAntisocialStatement").value.trim(),url=$("mnAntisocialLink").value.trim()||null;
     var file=$("mnAntisocialVideo").files&&$("mnAntisocialVideo").files[0],partner=level===3?$("mnAntisocialPartner").value:null;
-    var post=level===3?$("mnAntisocialPost").value.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i):null;
-    if(level===3&&(!partner||!post)){setStatus($("mnAntisocialStatus"),"Select a connected member and paste the shared post ID.","error");btn.disabled=false;return;}
-    setStatus($("mnAntisocialStatus"),file?"Uploading your clip…":"Submitting for review…");
+    var title=level===3?$("mnAntisocialTitle").value.trim():"",kind=level===3?$("mnAntisocialKind").value:"";
+    if(level===3&&!partner){setStatus($("mnAntisocialStatus"),"Choose the connected member you made this with.","error");btn.disabled=false;return;}
+    if(level===3&&!title){setStatus($("mnAntisocialStatus"),"Give the work a title.","error");btn.disabled=false;return;}
+    if(level===3&&!url&&!file){setStatus($("mnAntisocialStatus"),"Add the work: upload it or link to where it lives.","error");btn.disabled=false;return;}
+    setStatus($("mnAntisocialStatus"),file?"Uploading…":level===3?"Publishing…":"Submitting for review…");
     (file?uploadProofFile(file):Promise.resolve(null)).then(function(out){
-      return sbRpc("submit_antisocial_level",{p_assignment_id:a.id,p_level:level,p_statement:statement,p_proof_url:url,
-        p_post_id:post?post[0]:null,p_collaborator_m_uid:partner||null,p_media_asset_id:out&&out.asset?out.asset.id:null});
+      var asset=out&&out.asset?out.asset.id:null;
+      /* level 3: the platform publishes one post credited to both and submits it as mine */
+      if(level===3)return sbRpc("publish_antisocial_collaboration",{p_assignment_id:a.id,p_partner_m_uid:partner,p_title:title,p_kind:kind,p_link:url,p_media_asset_id:asset,p_statement:statement});
+      return sbRpc("submit_antisocial_level",{p_assignment_id:a.id,p_level:level,p_statement:statement,p_proof_url:url,p_post_id:null,p_collaborator_m_uid:null,p_media_asset_id:asset});
     }).then(function(){if(missions.assignment&&missions.assignment.id===a.id){ev.target.reset();antisocialPaint();loadActionRecord();}})
       .catch(function(e){setStatus($("mnAntisocialStatus"),e.message||"Submission failed.","error");})
       .then(function(){btn.disabled=false;});

@@ -229,6 +229,66 @@ like they experience the site from my perspective", with the M in the middle.
 - Nothing is drawn for a creator; a handle is validated before it becomes a
   link; only an https picture is painted.
 
+### Anti-Social — Get Social: one mission, three levels (owner, 2026-10-14)
+
+"Three levels, one Anti-Social mission … connect with one person, connect
+with five people, then turn that connection into a collaboration through
+Action Network … levels within a single mission, not three separate mission
+cards." One card, 1 / 3 → 2 / 3 → 3 / 3; Level 3 is the flagship.
+
+| Level | Do | Proof |
+| --- | --- | --- |
+| 1 · High Five | Give one person a high five. | A short clip, with permission. |
+| 2 · Five High Fives | Give five different people a high five. | One compilation video or short recap. No filming without consent. |
+| 3 · Make Something Together | Find another Action Network member, connect through the platform, create something together. | A jointly credited project linked to both profiles. |
+
+How it works (audit and build record:
+`docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md`):
+
+- The mission is one row (`a17050c1-…`), with a level table and RPCs from
+  the draft migration applied earlier today
+  (`supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql`);
+  `supabase/pending/antisocial_get_social_completion_v1.sql` completes it
+  and opens it, and waits for production to apply it.
+- **Connect through the platform.** Connect on any member's profile (Connect
+  → Requested → Connected; Accept / Decline when they asked first), answered
+  from the bell too; server RPCs over `network_connections`
+  (`request_connection`, `answer_connection`, `withdraw_connection`,
+  `connection_with`, `my_connections`); a block reads as member not found.
+- **Levels 1 and 2** are submitted from the mission dialog (recap, a clip
+  with permission or an https link) and verified by the desk
+  (`js/control-room/action-network.js`), one level at a time; the next
+  opens when the previous is verified.
+- **Level 3 publishes together, in the platform.** Choose a connected
+  member, title the work, say its kind, upload it or link to it: the server
+  writes one public post credited to both (`publish_antisocial_collaboration`,
+  vouched in `action_collaboration_posts`), submits it as the initiator's
+  level 3 and tells the partner, whose Level 3 is one tap ("Published with
+  you — Confirm as my Level 3"). One desk verification settles the pair:
+  both level-3 rows, both assignments, 150 mission points and a 100-point
+  collaboration award for each (`review_antisocial_level`,
+  `antisocial_settle_level3`).
+- **Credited where people see it.** The feed card under a joint post reads
+  "Made together · in review" or "Verified collaboration", with both names
+  (drawn only for vouched posts, `action_collaboration_cards`); the partner's
+  page lists the projects they are credited on; the person view keeps the
+  draft's "Verified collaborations" block.
+- **Progress everywhere.** The Action Record row reads n / 3 (`action_record`
+  carries `levels` and `level_count`); the Missions card reads "One mission,
+  three levels · you: n / 3".
+- Consent wording ships verbatim in the dialog and above the camera.
+
+Proof: `scripts/test-antisocial-db.sh` applies the real chain to a scratch
+Postgres 16 and runs `supabase/tests/antisocial_connections.behaviour.sql`
+and `supabase/tests/antisocial_levels.behaviour.sql` as the API roles (join
+through the ordinary join, the standard proof route refused, levels 1–2 for
+both, publish refused before 1–2 / with a stranger / without a title or the
+work, the joint post with both credits, the guest card, the desk refused
+until the partner confirms, the partner's one-tap confirm, one review
+settling both with the awards, the record at 3 / 3 and 250 points, the
+card verified, the mission open). Contract tests:
+`scripts/test/antisocial-get-social-completion.test.mjs`.
+
 ### A creator's audience on the globe
 
 The handoff's creator scope ("an authorized layer or overlay … based on

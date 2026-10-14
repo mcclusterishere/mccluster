@@ -396,14 +396,18 @@
             <label class="mn__label" for="mnAntisocialLink">Or an HTTPS link to your clip</label>
             <input class="mn__input" id="mnAntisocialLink" type="url" placeholder="https://…">
             <div id="mnAntisocialCollab" hidden>
-              <p class="mn__hint">Connect with a member through Action Network, make original work, publish it, and have both members submit the same post. Both must complete levels 1 and 2 before the joint work counts.</p>
+              <p class="mn__hint">Connect → Collaborate → Publish. Connect with a member here, make original work together, and publish it from this form: one post credited to both of you, counting for both. Your collaborator confirms it with one tap. Both must finish levels 1 and 2 first.</p>
+              <div id="mnAntisocialWithMe" hidden></div>
               <label class="mn__label" for="mnAntisocialPartner">Your Action Network collaborator</label>
               <select class="mn__input" id="mnAntisocialPartner"><option value="">Select an accepted connection</option></select>
               <p class="mn__hint">No one yet? <a href="mnet.html?view=discover">Find a member</a> and tap <b>Connect</b> on their profile; when they accept, they appear here.</p>
-              <label class="mn__label" for="mnAntisocialPost">Your published joint post ID or post link</label>
-              <input class="mn__input" id="mnAntisocialPost" placeholder="Post ID or shared post link">
+              <label class="mn__label" for="mnAntisocialTitle">What you made together</label>
+              <input class="mn__input" id="mnAntisocialTitle" maxlength="120" placeholder="Title of the song, video, photo project or other work">
+              <label class="mn__label" for="mnAntisocialKind">Kind of work</label>
+              <select class="mn__input" id="mnAntisocialKind"><option value="song">Song</option><option value="video">Video</option><option value="photo">Photo project</option><option value="writing">Writing</option><option value="other">Other original work</option></select>
+              <p class="mn__hint">The clip or link above is the work itself: upload it, or link to where it lives.</p>
             </div>
-            <button class="mn__primary" type="submit">Submit this level for review</button>
+            <button class="mn__primary" type="submit" id="mnAntisocialGo">Submit this level for review</button>
           </form>
           <p class="mn__status" id="mnAntisocialStatus" role="status"></p>
         </section>

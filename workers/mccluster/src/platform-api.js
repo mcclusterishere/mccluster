@@ -669,7 +669,16 @@ async function handleMnet(req,env,path,url){
     const viewer=external?null:await currentMuid(env,user.id);
     if(!(await canReadNetworkProfile(env,viewer,resolved)))return fail(req,env,'Person not found',404);
     const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20))),before=url.searchParams.get('before');
-    const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
+    let rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
+    /* "a jointly credited project linked to both profiles": the projects a
+       member is credited on as the partner sit on their page too, vouched by
+       action_collaboration_posts (server-written) rather than by metadata */
+    const credited=await service(env,`action_collaboration_posts?partner_m_uid=eq.${resolved.m_uid}&select=post_id&order=created_at.desc&limit=${limit}`);
+    const creditedIds=(credited||[]).map(x=>x.post_id).filter(uuidLike).filter(id=>!(rows||[]).some(p=>p.id===id));
+    if(creditedIds.length){
+      const joint=await service(env,`network_posts?id=in.(${creditedIds.join(',')})&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&select=*`);
+      rows=[...(rows||[]),...(joint||[])].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+    }
     const visible=[];
     for(const post of rows||[]){if(external?(!post.group_id&&post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
     const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer);

@@ -220,6 +220,19 @@ E. **Proof.** A behaviour test on a scratch Postgres (stub + the action
 F. **Open the mission** once A–E pass, in the same migration, with the
    owner told.
 
+## Built on the audit (same day)
+
+- A: `supabase/pending/antisocial_get_social_completion_v1.sql` (connect
+  RPCs), the Worker's person route, Connect on the person view, the bell.
+- B: `publish_antisocial_collaboration`, `action_collaboration_posts`,
+  `antisocial_collaborations_for_me`, `action_collaboration_cards`; Level 3
+  publishes together; the made-together card; the partner's page.
+- C: `action_record` carries levels; n / 3 on the record and the card.
+- D: `review_antisocial_level` settles both and awards `collaboration`.
+- E: `scripts/test-antisocial-db.sh` + two behaviour tests on a scratch
+  Postgres; contract tests; the browser run.
+- F: the pending file opens the mission when applied.
+
 ## Design note written before the parallel work was found (kept for the record)
 
 1. **A level model on the mission, not three cards.** `action_missions.levels

@@ -70,3 +70,9 @@ create function public.mnet_is_blocked_pair(a uuid, b uuid) returns boolean lang
   select exists(select 1 from public.network_blocks x where (x.blocker_m_uid = a and x.blocked_m_uid = b) or (x.blocker_m_uid = b and x.blocked_m_uid = a))
 $$;
 grant execute on function public.mnet_is_blocked_pair(uuid, uuid) to anon, authenticated, service_role;
+-- the upload columns the joint post reads (the roles stub creates the table)
+alter table public.network_media_assets
+  add column if not exists mime_type text not null default 'application/octet-stream',
+  add column if not exists width integer, add column if not exists height integer, add column if not exists duration_ms integer,
+  add column if not exists alt_text text not null default '',
+  add column if not exists post_id uuid, add column if not exists updated_at timestamptz not null default now();
