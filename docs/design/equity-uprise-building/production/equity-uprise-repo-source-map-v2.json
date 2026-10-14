@@ -650,6 +650,20 @@
       "rationale": "Action Network creator-economy release-risk audit; references Equity Uprise-related platform boundaries but does not add a building capability."
     },
     {
+      "path": "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fellowship credit evidence and private graduate claim planning, not building capabilities."
+    },
+    {
+      "path": "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Fellowship credit evidence and private graduate claim planning, not building capabilities."
+    },
+    {
       "path": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
       "classification": "shared_backend_support",
       "capability_ids": [],
