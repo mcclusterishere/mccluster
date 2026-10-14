@@ -1028,6 +1028,25 @@ async function handleMnet(req,env,path,url){
   /* THE OWNER'S TWO LEVERS. Both check mnet_is_admin() inside the function
      rather than here, so the rule lives beside the data and a future caller
      cannot route around it. */
+  /* Anti-Social level clips: admin-only, signed for 15 minutes. */
+  const antiMedia=path.match(/^\/v1\/mnet\/missions\/antisocial\/([0-9a-f-]{36})\/([123])\/media$/i);
+  if(antiMedia&&req.method==='GET'){
+    if(external)return fail(req,env,'Proof review requires a McCluster user session',403);
+    if((await userRpc(req,env,'eu_is_admin',{}))!==true)return fail(req,env,'Proof not found',404);
+    const levels=await service(env,`action_antisocial_levels?assignment_id=eq.${antiMedia[1]}&level=eq.${antiMedia[2]}&select=assignment_id,media_asset_id&limit=1`);
+    const level=levels?.[0];
+    if(!level||!uuidLike(level.media_asset_id))return fail(req,env,'Proof has no upload',404);
+    const [assignments,assets]=await Promise.all([
+      service(env,`action_mission_assignments?id=eq.${level.assignment_id}&select=m_uid&limit=1`),
+      service(env,`network_media_assets?id=eq.${level.media_asset_id}&select=id,bucket_id,object_path,owner_m_uid,media_type,mime_type&limit=1`)
+    ]);
+    const asset=assets?.[0];
+    if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    const signed=await res.json().catch(()=>null);
+    if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
+    return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
+  }
   const pin=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/pin$/i);
   if(pin&&['POST','DELETE'].includes(req.method)){
     if(external)return fail(req,env,'Moderation requires a McCluster user session',403);
