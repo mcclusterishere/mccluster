@@ -311,6 +311,10 @@
   }
   function paintAuthState(signedIn, user, verified) {
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
+    var worldDoor = dock.querySelector('[data-appnav="world"]');
+    if (worldDoor) worldDoor.href = ROOT + (signedIn ? "action-globe.html" : "guest-globe.html");
+    var guestIdentity = dock.querySelector('[data-appnav="profile"]');
+    if (guestIdentity) { guestIdentity.hidden = !signedIn; guestIdentity.setAttribute("aria-hidden", signedIn ? "false" : "true"); }
     var body = document.body;
     body.classList.toggle("mcc-auth-in", !!signedIn);
     body.classList.toggle("mcc-auth-out", !signedIn);
