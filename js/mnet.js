@@ -1192,6 +1192,15 @@
         '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button><button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
         '<div class="mn__person-posts" id="mnPersonPosts">'+(posts.length?posts.map(function(x){return postCard(x);}).join(""):'<div class="mn__empty">No posts yet.</div>')+'</div></div></div>';
       bindFeedActions($("mnPersonPosts"));
+      if(p.m_uid){
+        sbRpc("antisocial_public_collaborations",{p_member_m_uid:p.m_uid}).then(function(credits){
+          if(!credits||!credits.length||!$("mnPersonPosts"))return;
+          var area=document.createElement("section");area.className="mn__panel";
+          area.innerHTML='<p class="mn__eyebrow">Anti-Social · Make Something Together</p><h3>Verified collaborations</h3>'+
+            credits.map(function(c){return '<p><a href="/mnet.html?post='+encodeURIComponent(c.post_id)+'">Original project ↗</a> · with '+esc(c.collaborator_name||"Action Network member")+'</p>';}).join("");
+          $("mnPersonPosts").parentNode.insertBefore(area,$("mnPersonPosts"));
+        }).catch(function(){});
+      }
       $("mnPersonFollow").onclick=function(){var was=data.following;api("/v1/mnet/people/"+encodeURIComponent(handle)+"/follow",{method:was?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
