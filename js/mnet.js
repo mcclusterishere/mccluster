@@ -1802,7 +1802,7 @@
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
-        ? '<article class="mn__panel mn__panel--resource"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Explore trusted national and international service directories. No proof of needing help, photos, or public post required.</p><div><button class="mn__primary" type="button" data-open-mission="51000000-0000-4000-8000-000000000003">Find help</button></div></article>' : "";
+        ? '<article class="mn__panel mn__panel--resource"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Explore trusted national and international service directories. No proof of needing help, photos, or public post required.</p><div><a class="mn__primary" href="/help.html">Find help now ↗</a> <button type="button" data-open-mission="51000000-0000-4000-8000-000000000003">Mission details</button></div></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       setStatus($("mnMissionStatus"),"");
     }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
@@ -1963,6 +1963,9 @@
       $("mnMissionTitle").textContent=m.title;
       $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p>'+
         (m.id===HELP_MISSION_ID?'':('<p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>'));
+      if(m.id===HELP_MISSION_ID){
+        $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/help.html">Open public help directory ↗</a></p>';
+      }
       if(m.id===POLICY_MEMO_MISSION_ID){
         var applyLink=document.createElement("button");applyLink.type="button";applyLink.className="mn__primary";applyLink.textContent="Policy team application →";
         applyLink.addEventListener("click",function(){var d=$("mnMissionDialog");if(d&&d.open)d.close();var record=$("mnRecord");if(record){record.scrollIntoView({behavior:"smooth"});var b=record.querySelector("[data-fellow-open]");if(b)b.click();}});
