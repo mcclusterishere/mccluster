@@ -2701,6 +2701,8 @@
     $("mnWorldFocusJoin").addEventListener("click", function () {
       var f = state.world.focus;
       if (!f) return;
+      /* E=Up as a guest: the reason is this mission, not the whole list */
+      if (state.guest) { askToSignIn("mission"); return; }
       missions.content = ""; missions.source = ""; missions.attributedMission = "";
       setView("missions");
       openMission(f.mission_id);

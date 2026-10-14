@@ -114,6 +114,7 @@ test('E=Up or Fund it: no like, comment or reaction; a mission post offers the e
  assert.match(client,/href="give\.html"/);
  assert.match(client,/Funding isn\\u2019t open for this mission yet\. You can still E=Up and do it\./);
  assert.doesNotMatch(client,/stripe|checkout/i,'no payment endpoint of its own');
+ assert.match(client,/\$\("mnWorldFocusJoin"\)\.addEventListener\("click"[\s\S]{0,160}if \(state\.guest\) \{ askToSignIn\("mission"\); return; \}/,'E=Up as a guest names this mission as the reason to sign in');
  /* nothing else reacts */
  assert.doesNotMatch(client,/data-action="comments"|data-action="like"|data-action="uprise"/);
  assert.doesNotMatch(client,/function explainUprise/);
