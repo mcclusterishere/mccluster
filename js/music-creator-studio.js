@@ -611,6 +611,24 @@ $("trackForm").addEventListener("submit", async (e) => {
       throw new Error("Describe the underlying work and your derivative/parody rights basis.");
     }
 
+    // Validate metadata, rights and all file sizes before transferring any bytes.
+    const title = $("trackTitle").value.trim();
+    const artist = $("trackArtist").value.trim() || profile.artist_name;
+    if (!title) throw new Error("Add a song title.");
+    if (!artist) throw new Error("Add an artist name.");
+    for (const [bucket, file] of [["creator-masters", master], ["creator-previews", preview], ["creator-artwork", art]]) {
+      if (!file) continue;
+      const limit = BUCKET_MAX_BYTES[bucket];
+      if (limit && file.size > limit) {
+        throw new Error(`${file.name} is ${describeSize(file.size, true)}. Maximum: ${describeSize(limit)}.`);
+      }
+      if (!file.size) throw new Error(`${file.name} is empty. Choose a valid file.`);
+    }
+    if (!$("ownsMaster").checked) throw new Error("Confirm your rights to the master recording.");
+    if (!$("collaboratorsCleared").checked) throw new Error("Confirm collaborator permissions before submitting.");
+    const dur = await durationMs(master);
+    if (!Number.isFinite(dur) || dur <= 0) throw new Error("The master audio could not be read. Try a supported audio file.");
+
     submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
@@ -629,9 +647,6 @@ $("trackForm").addEventListener("submit", async (e) => {
       posterUrl = publicUrl("creator-artwork", artPath);
     }
 
-    const title = $("trackTitle").value.trim();
-    const artist = $("trackArtist").value.trim() || profile.artist_name;
-    const dur = await durationMs(master);
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
     const rights = {
       owns_master: $("ownsMaster").checked,
