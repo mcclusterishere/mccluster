@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 291,
-  "latest_version": "20261013234500",
-  "latest_name": "action_globe_song_portfolios",
-  "ledger_sha256": "9870329ebf16c126d96c10a845efbc4f12a8a3b1e726acd235cc2ab1779bd320",
+  "migration_count": 292,
+  "latest_version": "20261014030000",
+  "latest_name": "action_globe_adm1_boundaries",
+  "ledger_sha256": "d41089f237c4a3bf4741119241f228437b0ed77dbd061d55cabf1486051f15e8",
   "migrations": [
     {
       "version": "0001",
@@ -1173,6 +1173,11 @@
       "version": "20261013234500",
       "name": "action_globe_song_portfolios",
       "applied_version": "20261014013601"
+    },
+    {
+      "version": "20261014030000",
+      "name": "action_globe_adm1_boundaries",
+      "applied_version": "20261014014033"
     }
   ]
 }
