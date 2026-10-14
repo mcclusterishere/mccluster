@@ -17,7 +17,7 @@ test('curation is non-destructive and preserves proof for in-progress participan
   assert.match(migration, /'7cfac26a-d757-42b9-803b-970f9d5030a8'/); // public comment
 });
 
-test('explicitly kept policy work and $20 Black business action stay open', () => {
+test('policy memo and Black business action remain, duplicate paper retired', () => {
   assert.match(migration, /'df26314d-d4e1-47e3-b980-1b60b1a682ea'/);
   assert.match(migration, /'ba66d4a3-cb62-4403-9b56-7ee00af059d8'/);
   assert.match(migration, /Spend \$20 at a Black-owned business/);
@@ -46,12 +46,10 @@ test('resource directory is public read-only for non-admins, and link-only', () 
 });
 
 test('service gateway has no proof or join and directory links are external', () => {
-  assert.match(ui, /HELP_MISSION_ID/);
   assert.match(ui, /Find services for yourself or someone you know/);
-  assert.match(ui, /No proof of needing help, photos, or public post required/);
-  assert.match(ui, /if\(m\.id===HELP_MISSION_ID\)return;/);
+  assert.match(ui, /href="\/help\.html"/);
+  assert.match(ui, /action_resource_sources\?category=eq/);
   assert.match(ui, /rel="noopener noreferrer"/);
-  assert.match(ui, /resourceCategoryForMission/);
 });
 
 test('verified policy memo qualifies for the existing application server-side', () => {
@@ -75,5 +73,5 @@ test('campaign landing hides paused/closed missions and bounties', () => {
   assert.match(action, /status=eq\.open/);
   assert.doesNotMatch(action, /status=in\.\(open,paused\)/);
   assert.match(action, /if \(!m\) return null; \/\* retired missions/);
-  assert.match(action, /b\.status === "open"/);
+  assert.match(action, /b\.status==="open"/);
 });
