@@ -121,7 +121,7 @@
         '<p class="cro-meta">Assignment '+e(x.assignment_id)+'</p>'+
         '<blockquote>'+e(x.statement||"No recap")+'</blockquote>'+
         (x.proof_url?'<p><a href="'+e(x.proof_url)+'" target="_blank" rel="noopener noreferrer">Review linked proof ↗</a></p>':"")+
-        (x.media_asset_id?'<p class="cro-meta">Private upload ID: '+e(x.media_asset_id)+' (review via authorized media viewer)</p>':"")+
+        (x.media_asset_id?'<div data-anti-upload="'+e(x.assignment_id)+'" data-anti-level="'+e(x.level)+'"><div class="cro-note">Loading consent-safe clip for reviewer…</div></div>':"")+
         (x.post_id?'<p class="cro-meta">Shared work post: '+e(x.post_id)+' · partner '+e(x.collaborator_m_uid)+'</p>':"")+
         '<label>Review note<textarea data-anti-note="'+e(x.assignment_id)+'-'+e(x.level)+'"></textarea></label>'+
         '<div class="cro-actions"><button class="cr-btn cr-btn--primary" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="verified">Verify level</button>'+
@@ -337,6 +337,15 @@
   }
   function loadUploads(root){
     if(!A.request)return;
+    root.querySelectorAll("[data-anti-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return;box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/antisocial/"+encodeURIComponent(box.getAttribute("data-anti-upload"))+"/"+encodeURIComponent(box.getAttribute("data-anti-level"))+"/media")
+        .then(function(m){var u=e(m&&m.url||"");if(!u)throw new Error("no url");
+          box.innerHTML=m.media_type==="video"
+            ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+            :'<img alt="Submitted Anti-Social proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+        }).catch(function(){box.innerHTML='<div class="cro-note">The level clip could not be opened.</div>';});
+    });
     root.querySelectorAll("[data-proof-upload]").forEach(function(box){
       if(box.getAttribute("data-loaded"))return; box.setAttribute("data-loaded","1");
       A.request("/v1/mnet/missions/proofs/"+encodeURIComponent(box.getAttribute("data-proof-upload"))+"/media").then(function(m){
