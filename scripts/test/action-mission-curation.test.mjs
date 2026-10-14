@@ -72,6 +72,6 @@ test('help is publicly accessible and shareable without personal-data collection
 test('campaign landing hides paused/closed missions and bounties', () => {
   assert.match(action, /status=eq\.open/);
   assert.doesNotMatch(action, /status=in\.\(open,paused\)/);
-  assert.match(action, /if \(!m\) return null; \/\* retired missions/);
+  assert.match(action, /if \(!m\) return null; \/\* never resurrect/);
   assert.match(action, /b\.status==="open"/);
 });
