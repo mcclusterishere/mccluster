@@ -650,6 +650,13 @@
       "rationale": "Action Network creator-economy release-risk audit; references Equity Uprise-related platform boundaries but does not add a building capability."
     },
     {
+      "path": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-product globe reconciliation and privacy design; not a physical building capability."
+    },
+    {
       "path": "docs/agent-web.md",
       "classification": "capability_source",
       "capability_ids": [
