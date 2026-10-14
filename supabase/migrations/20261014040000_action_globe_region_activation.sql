@@ -42,3 +42,6 @@ revoke all on function public.action_globe_can_join_mission(uuid,uuid) from publ
 grant execute on function public.action_globe_can_join_mission(uuid,uuid) to service_role;
 comment on function public.action_globe_can_join_mission(uuid,uuid) is
  'Service-only prerequisite, not a complete authorization decision. Canonical mission join endpoint must also enforce identity, eligibility and assignment policy.';
+
+-- The canonical mission join must enforce this predicate before assigning a mission.
+-- Never expose the service-only predicate to untrusted clients.
