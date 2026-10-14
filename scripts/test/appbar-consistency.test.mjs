@@ -29,6 +29,7 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
    A page is not exempt because somebody forgot — it is exempt because it
    is not a place you navigate around from. */
 const EXEMPT = {
+  'equity-uprise.html': 'public logged-out globe gateway with deliberately minimal navigation',
   'embed.html': 'an embeddable widget that runs inside somebody else\'s page',
   'archive.html': 'redirect stub', 'brand.html': 'redirect stub',
   'cut.html': 'redirect stub', 'door.html': 'redirect stub',
