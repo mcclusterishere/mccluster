@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const sql=readFileSync(new URL('../../supabase/pending/20261014190000_antisocial_get_social_three_levels.sql',import.meta.url),'utf8');
+const sql=readFileSync(new URL('../../supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql',import.meta.url),'utf8');
 const ui=readFileSync(new URL('../../js/mnet.js',import.meta.url),'utf8');
 const html=readFileSync(new URL('../../mnet.html',import.meta.url),'utf8');
 const control=readFileSync(new URL('../../js/control-room/action-network.js',import.meta.url),'utf8');
