@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 288,
-  "latest_version": "20261013201327",
-  "latest_name": "action_network_comments",
-  "ledger_sha256": "df0d899ce951435c5d52fa679ca49b2e5ab3378ee6af6c15e8d2d262c437e8a6",
+  "migration_count": 291,
+  "latest_version": "20261013234500",
+  "latest_name": "action_globe_song_portfolios",
+  "ledger_sha256": "9870329ebf16c126d96c10a845efbc4f12a8a3b1e726acd235cc2ab1779bd320",
   "migrations": [
     {
       "version": "0001",
@@ -1158,6 +1158,21 @@
     {
       "version": "20261013201327",
       "name": "action_network_comments"
+    },
+    {
+      "version": "20261013230000",
+      "name": "action_globe_public_projection",
+      "applied_version": "20261014013627"
+    },
+    {
+      "version": "20261013233000",
+      "name": "action_globe_regions",
+      "applied_version": "20261014013557"
+    },
+    {
+      "version": "20261013234500",
+      "name": "action_globe_song_portfolios",
+      "applied_version": "20261014013601"
     }
   ]
 }
