@@ -22,6 +22,11 @@ begin
     raise exception 'authenticated role has direct mutation privileges';
   end if;
   select pg_get_functiondef('public.join_action_mission(uuid)'::regprocedure) into join_source;
+  -- Regression guard: the rejoin branch must check capacity before reactivation.
+  if position('if v_assignment.status = ''withdrawn'' then' in join_source)=0
+     or position('if v_taken >= v_mission.capacity then' in join_source)=0 then
+    raise exception 'withdrawn rejoin capacity guard missing';
+  end if;
   if position('action_globe_can_join_mission(v_m_uid, p_mission_id)' in join_source)=0 then
     raise exception 'canonical mission join does not enforce regional eligibility';
   end if;
