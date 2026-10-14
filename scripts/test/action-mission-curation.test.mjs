@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 const migration = readFileSync(new URL('../../supabase/migrations/20261014170000_action_mission_curated_catalog_resources.sql', import.meta.url), 'utf8');
 const application = readFileSync(new URL('../../supabase/migrations/20261014170100_equity_policy_memo_application_path.sql', import.meta.url), 'utf8');
 const ui = readFileSync(new URL('../../js/mnet.js', import.meta.url), 'utf8');
+const publicHelp = readFileSync(new URL('../../help.html', import.meta.url), 'utf8');
 
 test('curation is non-destructive and preserves proof for in-progress participants', () => {
   assert.doesNotMatch(migration, /\bdelete\s+from\s+public\.action_missions\b/i);
@@ -58,4 +59,13 @@ test('verified policy memo qualifies for the existing application server-side', 
   assert.match(application, /if v_verified < public\.action_fellowship_min_verified\(\)/);
   assert.match(ui, /left=f\.eligible\?0:/);
   assert.match(ui, /Policy team application/);
+});
+
+test('help is publicly accessible and shareable without personal-data collection', () => {
+  assert.match(ui, /href="\/help\.html"/);
+  assert.match(publicHelp, /No account, photograph, public story, or proof of need required/);
+  assert.match(publicHelp, /navigator\.share/);
+  assert.doesNotMatch(publicHelp, /<form[\s>]/i);
+  assert.match(publicHelp, /UNHCR Help/);
+  assert.match(publicHelp, /IFRC National Societies/);
 });
