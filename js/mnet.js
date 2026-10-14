@@ -2160,13 +2160,70 @@
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var ANTISOCIAL_ID="a17050c1-a551-4c5c-80c1-5a1750c1a001",antisocialLevel=1,antisocialVersion=0;
+  var ANTISOCIAL_TITLES=["High Five","Five High Fives","Make Something Together"];
+  function antisocialReset(){
+    antisocialVersion++;
+    if($("mnAntisocialLevels"))$("mnAntisocialLevels").hidden=true;
+    if($("mnAntisocialForm"))$("mnAntisocialForm").hidden=true;
+  }
+  function antisocialConnections(){
+    var uid=identity().m_uid,select=$("mnAntisocialPartner");if(!uid||!select)return;
+    sbRest("network_connections?status=eq.accepted&or=(requester_m_uid.eq."+encodeURIComponent(uid)+",addressee_m_uid.eq."+encodeURIComponent(uid)+")&select=requester_m_uid,addressee_m_uid&limit=100")
+      .then(function(rows){
+        var ids=(rows||[]).map(function(c){return c.requester_m_uid===uid?c.addressee_m_uid:c.requester_m_uid;}).filter(Boolean);
+        if(!ids.length){select.innerHTML='<option value="">No accepted connections yet</option>';return;}
+        return sbRest("network_profiles?m_uid=in.("+ids.map(encodeURIComponent).join(",")+")&select=m_uid,display_name&limit=100")
+          .then(function(profiles){var names={};(profiles||[]).forEach(function(p){names[p.m_uid]=p.display_name;});
+            select.innerHTML='<option value="">Select a collaborator</option>'+ids.map(function(id){return '<option value="'+esc(id)+'">'+esc(names[id]||"Action Network member")+'</option>';}).join("");
+          });
+      }).catch(function(){select.innerHTML='<option value="">Connections unavailable</option>';});
+  }
+  function antisocialPaint(){
+    var box=$("mnAntisocialLevels"),a=missions.assignment;
+    if(!box||!missions.current||missions.current.id!==ANTISOCIAL_ID)return;
+    box.hidden=false;$("mnMissionProof").hidden=true;
+    if(!a){$("mnAntisocialForm").hidden=true;setStatus($("mnAntisocialStatus"),"Join to start Level 1.");return;}
+    var version=++antisocialVersion;
+    return sbRest("action_antisocial_levels?assignment_id=eq."+encodeURIComponent(a.id)+"&select=level,status,review_note&order=level.asc")
+      .then(function(rows){
+        if(version!==antisocialVersion||!missions.assignment||missions.assignment.id!==a.id)return;
+        var levels={};(rows||[]).forEach(function(x){levels[x.level]=x;});
+        var next=1;while(next<=3&&levels[next]&&levels[next].status==="verified")next++;
+        antisocialLevel=next;
+        $("mnAntisocialProgress").innerHTML=ANTISOCIAL_TITLES.map(function(t,i){
+          var n=i+1,x=levels[n],status=x?x.status:n===next?"ready":"locked";
+          return '<li class="mn__record-item is-'+esc(status)+'"><b>'+n+'/3 · '+esc(t)+'</b><span>'+esc(status==="verified"?"Verified":status==="pending"?"Awaiting review":status==="rejected"?"Revise and resubmit":status==="ready"?"Ready":"Locked")+'</span>'+(x&&x.review_note?'<small>'+esc(x.review_note)+'</small>':"")+'</li>';
+        }).join("");
+        var pending=next<=3&&levels[next]&&levels[next].status==="pending";
+        $("mnAntisocialForm").hidden=next>3||!!pending||a.status==="verified";
+        if(next<=3){$("mnAntisocialNext").textContent="Level "+next+"/3 · "+ANTISOCIAL_TITLES[next-1];$("mnAntisocialCollab").hidden=next!==3;}
+        setStatus($("mnAntisocialStatus"),next>3?"All three levels verified. Mission complete.":pending?"Awaiting review for Level "+next+".":next===3?"Publish original work with a connected member. Both submit the same post.":"Complete the action. Record yourself, or only film others with permission.");
+        if(next===3&&!pending)antisocialConnections();
+      }).catch(function(e){if(version===antisocialVersion)setStatus($("mnAntisocialStatus"),e.message||"Could not load levels.","error");});
+  }
+  function antisocialSubmit(ev){
+    ev.preventDefault();var a=missions.assignment;if(!a||!missions.current||missions.current.id!==ANTISOCIAL_ID||antisocialLevel>3)return;
+    var btn=ev.target.querySelector('button[type="submit"]');if(btn.disabled)return;btn.disabled=true;
+    var level=antisocialLevel,statement=$("mnAntisocialStatement").value.trim(),url=$("mnAntisocialLink").value.trim()||null;
+    var file=$("mnAntisocialVideo").files&&$("mnAntisocialVideo").files[0],partner=level===3?$("mnAntisocialPartner").value:null;
+    var post=level===3?$("mnAntisocialPost").value.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i):null;
+    if(level===3&&(!partner||!post)){setStatus($("mnAntisocialStatus"),"Select a connected member and paste the shared post ID.","error");btn.disabled=false;return;}
+    setStatus($("mnAntisocialStatus"),file?"Uploading your clip…":"Submitting for review…");
+    (file?uploadProofFile(file):Promise.resolve(null)).then(function(out){
+      return sbRpc("submit_antisocial_level",{p_assignment_id:a.id,p_level:level,p_statement:statement,p_proof_url:url,
+        p_post_id:post?post[0]:null,p_collaborator_m_uid:partner||null,p_media_asset_id:out&&out.asset?out.asset.id:null});
+    }).then(function(){if(missions.assignment&&missions.assignment.id===a.id){ev.target.reset();antisocialPaint();loadActionRecord();}})
+      .catch(function(e){setStatus($("mnAntisocialStatus"),e.message||"Submission failed.","error");})
+      .then(function(){btn.disabled=false;});
+  }
   var missionOpenVersion=0;
   function openMission(id){
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
       if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
-      missions.current=m;missions.assignment=null;clearMissionCapture();
+      missions.current=m;missions.assignment=null;clearMissionCapture();antisocialReset();
       if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
@@ -2175,6 +2232,7 @@
       fundState(m.id,m.campaign_id||"").then(function(st){var line=$("mnMissionFund");if(line&&missions.current&&missions.current.id===m.id)line.innerHTML=fundLineHtml(st);});
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
+      if(m.id===ANTISOCIAL_ID)antisocialPaint();
       if($("mnMissionShare"))$("mnMissionShare").checked=true;
       setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
@@ -2183,6 +2241,7 @@
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
         missions.assignment=a;$("mnMissionJoin").hidden=true;
+        if(m.id===ANTISOCIAL_ID){antisocialPaint();return;}
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
         var assignmentMessage=a.status==="submitted"
           ?"Proof submitted for review. You can replace it until it is reviewed."
@@ -2207,7 +2266,8 @@
     joinRequest
       .then(function(r){
         if(!missions.current||missions.current.id!==m.id)return;
-        missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=false;
+        missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=m.id===ANTISOCIAL_ID;
+        if(m.id===ANTISOCIAL_ID)antisocialPaint();
         setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
         if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
@@ -2268,6 +2328,7 @@
     $("mnRefreshMissions").addEventListener("click",loadMissions);
     $("mnMissionClose").addEventListener("click",closeMission);
     $("mnMissionJoin").addEventListener("click",joinMission);
+    if($("mnAntisocialForm"))$("mnAntisocialForm").addEventListener("submit",antisocialSubmit);
     $("mnMissionProof").addEventListener("submit",submitMissionProof);
     if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
     if($("mnMissionCameraFile"))$("mnMissionCameraFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
