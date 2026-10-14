@@ -46,7 +46,7 @@ create or replace function public.action_globe_public_missions()
 returns table(mission_id uuid,title text,description text,action_path text,city_label text,latitude double precision,longitude double precision)
 language sql stable security definer set search_path = ''
 as $$
- select m.id,m.title,m.description,m.action_path,p.public_label,p.latitude,p.longitude
+ select m.id,m.title,m.description,(case when m.kind='clip' then 'amplify' when m.domain='creative' then 'create' when m.domain in ('community','mutual_aid','advocacy') then 'show_up' else 'explore' end),p.public_label,p.latitude,p.longitude
  from public.action_globe_mission_pins p join public.action_missions m on m.id=p.mission_id
  where p.published and m.status='open'
 $$;
