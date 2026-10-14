@@ -330,6 +330,15 @@ initial), McCluster in Music opens the house where the M is back and the
 stored perspective is gone, a creator without a picture gets their initial,
 and on a desktop the held coin opens her wing with McCluster (the M) beside
 Everything.
+Then one M Account, every host: a member signed in on the checkout's own
+origin taps a page link to `https://humanuprise.com/?view=feed`; the run
+reads back that the fragment is gone from the address, that the World's host
+exchanged the carried token from its own origin, that Supabase was asked to
+turn the one-time magic-link token into a session, that the session stored
+on the World's host is the fresh one (not the house's), that the World booted
+as a member (composer, member feed with the fresh bearer, bar signed in), and
+that the Music tab then carries the fresh token back to Matthew's site in the
+fragment; a guest's crossing carries nothing.
 
 ## Still open (unchanged by this work)
 
