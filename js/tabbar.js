@@ -122,6 +122,22 @@
     if (mnetLabel) mnetLabel.textContent = "Sign in";
   }
 
+  /* Public Whip Equipped destination: reuse the actual WE icon already shipped
+     in this repository, not a replacement glyph or duplicate brand asset.
+     A fixed tab keeps the existing three wing destinations intact. */
+  if (!dock.querySelector('[data-appnav="whip"]')) {
+    var whipTab = document.createElement("a");
+    whipTab.className = "appbar__tab";
+    whipTab.setAttribute("data-appnav", "whip");
+    whipTab.setAttribute("aria-label", "Whip Equipped automotive marketplace");
+    whipTab.href = ROOT + "whip/rentals/index.html";
+    whipTab.innerHTML = '<img class="appbar__m" src="' + ROOT +
+      'whip/rentals/assets/we-icon.png" alt=""><span>Whip Equipped</span>';
+    var homeTab = dock.querySelector('[data-appnav="home"]');
+    if (homeTab) dock.insertBefore(whipTab, homeTab);
+    else dock.appendChild(whipTab);
+  }
+
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
   document.body.classList.add("has-appbar");
@@ -187,9 +203,9 @@
      long-press and drags the held tab out of its own column. Three winged
      tabs, therefore two rooms per wing; the record button is FIXED and
      simply keeps its cell. Change this list and every wing changes with it. */
-  var ORDER = ["music", "home", "create", "profile"];
+  var ORDER = ["music", "whip", "home", "create", "profile"];
   /* columns that never open a wing and keep their cell while one is open */
-  var FIXED = { create: true };
+  var FIXED = { create: true, whip: true };
 
   /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
      THIS ENFORCES IT.
@@ -629,41 +645,13 @@
     paintSound(); // the snapshot is from boot, when nothing was playing yet
   }
 
-  /* the hold belongs to the bar, not to the browser. Without this, a long
-     press on a tab raises the phone's own link preview (iOS peek, Android
-     context menu) right over the wing that is trying to open. The CSS half
-     of the fix lives with .appbar in css/style.css. */
-  dock.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-  dock.addEventListener("dragstart", function (e) { e.preventDefault(); });
-
-  var LP_MS = 450;
-  var lpTimer = null, lpFired = false, lpX = 0, lpY = 0;
-  dock.addEventListener("pointerdown", function (e) {
-    var a = e.target.closest && e.target.closest("a[data-dock],a[data-appnav]");
-    if (!a || !dock.contains(a)) return;
-    lpFired = false; lpX = e.clientX; lpY = e.clientY;
-    clearTimeout(lpTimer);
-    lpTimer = setTimeout(function () {
-      lpFired = true;
-      var key = a.getAttribute("data-appnav");
-      var slot = a.getAttribute("data-dock");
-      if (key && WINGS[key]) { if (wingOn === key) revert(); else morph(key); }
-      else if (slot) peek(slot);
-    }, LP_MS);
-  });
-  dock.addEventListener("pointermove", function (e) {
-    if (Math.abs(e.clientX - lpX) > 8 || Math.abs(e.clientY - lpY) > 8) clearTimeout(lpTimer);
-  });
-  ["pointerup", "pointercancel"].forEach(function (ev) {
-    dock.addEventListener(ev, function () { clearTimeout(lpTimer); });
-  });
-
+  /* Long-press wings retired: each tab is an ordinary, predictable link.
+     Deeper destinations remain accessible through the existing site pages. */
   dock.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest("a[data-dock],a[data-appnav]");
     if (!a || !dock.contains(a)) return;
     e.preventDefault();
-    if (lpFired) { lpFired = false; return; } // the hold already did its work
     var key = a.getAttribute("data-appnav");
     var slot = a.getAttribute("data-dock");
     var w = key ? WINGS[key] : null;
