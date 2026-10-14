@@ -39,10 +39,10 @@
 
     <div class="creator-grid" id="creatorApp" hidden><section class="creator-card wide" aria-labelledby="artistAnalyticsHeading"><h2 id="artistAnalyticsHeading">Artist Analytics</h2><p>Your catalog performance, based on recorded first-party activity.</p><button type="button" class="creator-btn quiet" id="selfMusicRefresh">Refresh analytics</button><div id="selfMusicAnalytics" data-mode="creator" aria-live="polite"></div></section>
       <section class="creator-card">
-        <h2>Your creator identity</h2>
-        <p>This is the public profile listeners see. It is an extension of your M Account, not a separate login.</p>
+        <h2>Artist settings</h2>
+        <p>Your artist tools use your existing M Account profile. Edit your public identity from Profile; music releases and licensing remain available here.</p><p><a href="mnet.html">Edit your main profile</a></p>
         <form class="creator-form" id="profileForm">
-          <div class="creator-field"><label for="creatorHandle">Handle</label><input id="creatorHandle" name="handle" autocomplete="off" placeholder="artist-name" required pattern="[a-z0-9._-]{3,40}"></div>
+          <div class="creator-field"><label for="creatorHandle">Handle</label><input id="creatorHandle" name="handle" autocomplete="off" readonly aria-describedby="artistHandleHelp"></div>
           <div class="creator-field"><label for="creatorName">Artist / creator name</label><input id="creatorName" name="artist_name" required maxlength="160"></div>
           <div class="creator-field"><label for="creatorBio">Bio</label><textarea id="creatorBio" name="bio" maxlength="2000"></textarea></div>
           <div class="creator-field"><label for="creatorWebsite">Website</label><input id="creatorWebsite" name="website_url" type="url" placeholder="https://"></div>
