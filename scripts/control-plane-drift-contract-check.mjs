@@ -54,7 +54,7 @@ for (const exact of ledgerFiles) if (!sqlFiles.includes(exact)) failures.push(`m
 // They must be strictly newer than the production ledger's latest local version.
 const pendingFiles = sqlFiles.filter((file) => !ledgerFiles.has(file));
 for (const file of pendingFiles) {
-  const match = /^(\\d{14})_([a-z0-9_]+)\\.sql$/.exec(file);
+  const match = /^(\d{14})_([a-z0-9_]+)\.sql$/.exec(file);
   if (!match || !latest || match[1] <= latest.version) {
     failures.push(`unregistered historical or invalid migration: ${file}`);
   }
