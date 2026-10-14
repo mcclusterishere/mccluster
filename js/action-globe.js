@@ -1,6 +1,6 @@
 (function(){'use strict';
 const SB='https://zmnhbrjyhxzhkxmhkexs.supabase.co',KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
-const $=id=>document.getElementById(id);let missions=[],cities=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true;
+const $=id=>document.getElementById(id);const embedded=new URLSearchParams(location.search).has('embedded');if(embedded)document.documentElement.classList.add('globe-embedded');let missions=[],cities=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true;
 async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
 function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
 function draw(){clear(missionPins);clear(cityPins);
