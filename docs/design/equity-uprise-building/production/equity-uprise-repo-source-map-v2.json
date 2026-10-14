@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 356,
+  "candidate_count": 357,
   "capability_source_count": 99,
-  "support_only_count": 257,
+  "support_only_count": 258,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2204,6 +2204,20 @@
       "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
     },
     {
+      "path": "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Anti-Social social mission schema; not a building capability."
+    },
+    {
+      "path": "supabase/migrations/20261014185255_action_resource_sources_link_only.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public link-only directory registry; no case data or new control plane."
+    },
+    {
       "path": "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2216,13 +2230,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unapplied verified memo application eligibility."
-    },
-    {
-      "path": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending Anti-Social social mission schema; not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
