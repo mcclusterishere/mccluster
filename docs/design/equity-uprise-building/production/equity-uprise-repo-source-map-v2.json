@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 352,
+  "candidate_count": 356,
   "capability_source_count": 99,
-  "support_only_count": 253,
+  "support_only_count": 257,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -676,6 +676,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Human Uprise rename and globe-over-feed product contract; not a physical building capability."
+    },
+    {
+      "path": "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Mission catalog and partner research handoff."
     },
     {
       "path": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
@@ -1540,6 +1547,13 @@
       "rationale": "Tests Action Network mission, reward and demographic privacy contracts; not a building capability."
     },
     {
+      "path": "scripts/test/action-mission-curation.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Mission catalog and application regression tests."
+    },
+    {
       "path": "scripts/test/action-network-live-governance.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -2188,6 +2202,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unapplied mission curation and resource registry."
+    },
+    {
+      "path": "supabase/pending/20261014170100_equity_policy_memo_application_path.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unapplied verified memo application eligibility."
     },
     {
       "path": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql",
