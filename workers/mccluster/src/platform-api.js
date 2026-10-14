@@ -479,6 +479,14 @@ async function handleMnet(req,env,path,url){
       ]);
       following=!!f?.length;blocked=!!b?.length;muted=!!m?.length;
     }
+    /* Connect through the platform (Anti-Social, level 3): the one row the
+       pair may hold in network_connections, read as the viewer sees it. */
+    let connection={status:'none'};
+    if(me&&me!==resolved.m_uid){
+      const c=await service(env,`network_connections?or=(and(requester_m_uid.eq.${me},addressee_m_uid.eq.${resolved.m_uid}),and(requester_m_uid.eq.${resolved.m_uid},addressee_m_uid.eq.${me}))&status=neq.declined&select=id,status,requester_m_uid&limit=1`);
+      const row=c?.[0];
+      if(row)connection={id:row.id,status:row.status,direction:row.status==='accepted'?'both':row.requester_m_uid===me?'sent':'received'};
+    }
     const [fc,fg,pc]=await Promise.all([
       service(env,`network_follows?followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid`),
       service(env,`network_follows?follower_m_uid=eq.${resolved.m_uid}&status=eq.following&select=followed_m_uid`),
@@ -487,7 +495,7 @@ async function handleMnet(req,env,path,url){
     followers=(fc||[]).length;followingCount=(fg||[]).length;
     posts=(pc||[]).filter(x=>resolved.m_uid===me||x.visibility==='public'||(x.visibility==='network'&&following)).length;
     if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start);
-    return reply(req,env,{identity:resolved.identity,profile:resolved.profile,following,blocked,muted,counts:{followers,following:followingCount,posts}});
+    return reply(req,env,{identity:resolved.identity,profile:resolved.profile,following,blocked,muted,connection,counts:{followers,following:followingCount,posts}});
   }
   if(path==='/v1/mnet/profile'&&req.method==='PATCH'){
     if(external)return fail(req,env,'Profile mutation requires a McCluster user session',403); const b=await json(req);

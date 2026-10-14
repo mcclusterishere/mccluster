@@ -265,7 +265,7 @@
   function askToSignIn(why) {
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
-      groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
+      groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -938,12 +938,34 @@
     }
     host.innerHTML = rows.map(function (n) {
       var action="", meta=n&&n.metadata||{}, mission=String(meta.mission_id||"");
+      if(n.type==="connection_request"&&meta.answered)return "";
       if(n.type==="action_proof_review"&&/^[0-9a-f-]{36}$/i.test(mission)){
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(mission)+'">'+
           (meta.decision==="rejected"?"Fix proof →":"View action →")+'</a>';
       }
+      /* a connection request is answered here; an acceptance opens the person */
+      if(n.type==="connection_request"&&/^[0-9a-f-]{36}$/i.test(String(meta.connection_id||""))){
+        action='<span class="mn__notification-actions">'+
+          '<button class="mn__notification-action" type="button" data-connection-answer="'+esc(meta.connection_id)+'" data-accept="1">Accept</button>'+
+          '<button class="mn__notification-action mn__notification-action--quiet" type="button" data-connection-answer="'+esc(meta.connection_id)+'" data-accept="0">Decline</button>'+
+          (meta.handle?'<button class="mn__notification-action mn__notification-action--quiet" type="button" data-person="'+esc(meta.handle)+'">View profile</button>':'')+'</span>';
+      }
+      if(n.type==="connection_accepted"&&meta.handle){
+        action='<button class="mn__notification-action" type="button" data-person="'+esc(meta.handle)+'">View profile →</button>';
+      }
       return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
     }).join("");
+    host.querySelectorAll("[data-connection-answer]").forEach(function(b){
+      b.addEventListener("click",function(){
+        var id=b.getAttribute("data-connection-answer"), accept=b.getAttribute("data-accept")==="1", card=b.closest(".mn__notification");
+        card.querySelectorAll("button").forEach(function(x){x.disabled=true;});
+        sbRpc("answer_connection",{p_connection_id:id,p_accept:accept}).then(function(){
+          card.querySelector("strong").textContent=accept?"Connected":"Declined";
+          var acts=card.querySelector(".mn__notification-actions"); if(acts)acts.remove();
+        }).catch(function(e){card.querySelectorAll("button").forEach(function(x){x.disabled=false;});setStatus($("mnNotificationStatus"),e.message||"That did not go through.","error");});
+      });
+    });
+    host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){openPerson(b.getAttribute("data-person"));});});
   }
 
   function loadNotificationsSilently() {
@@ -1174,6 +1196,33 @@
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
     }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search the network.","error"); });
   }
+  /* CONNECT THROUGH THE PLATFORM (owner, 2026-10-14: Anti-Social, level 3).
+     One row per pair in network_connections, written only by the server
+     (request_connection, answer_connection, withdraw_connection). The button
+     reads the pair's state: Connect → Requested (tap again to withdraw) →
+     Connected (tap to end); when they asked first it reads Accept, with a
+     Decline beside it. */
+  function connectButtonHtml(c) {
+    c=c||{status:"none"};
+    if(c.status==="accepted")return '<button type="button" id="mnPersonConnect" data-connect="end" aria-label="Connected. Tap to end the connection">Connected ✓</button>';
+    if(c.status==="pending"&&c.direction==="received")return '<button class="is-primary" type="button" id="mnPersonConnect" data-connect="accept">Accept connection</button><button type="button" id="mnPersonDecline" data-connect="decline">Decline</button>';
+    if(c.status==="pending")return '<button type="button" id="mnPersonConnect" data-connect="withdraw" aria-label="Requested. Tap to withdraw">Requested…</button>';
+    return '<button type="button" id="mnPersonConnect" data-connect="ask">Connect</button>';
+  }
+  function bindConnectButton(host, c, targetMuid, done) {
+    c=c||{status:"none"};
+    var ask=host.querySelector("#mnPersonConnect"), decline=host.querySelector("#mnPersonDecline");
+    function run(p){ask.disabled=true;p.then(done).catch(function(e){ask.disabled=false;alert(e.message||"That did not go through.");});}
+    if(ask)ask.onclick=function(){
+      var what=ask.getAttribute("data-connect");
+      if(state.guest){askToSignIn("connect");return;}
+      if(what==="ask"){if(!targetMuid)return;run(sbRpc("request_connection",{p_target_m_uid:targetMuid}));}
+      else if(what==="accept")run(sbRpc("answer_connection",{p_connection_id:c.id,p_accept:true}));
+      else if(what==="withdraw"||what==="end"){if(what==="end"&&!confirm("End this connection?"))return;run(sbRpc("withdraw_connection",{p_connection_id:c.id}));}
+    };
+    if(decline)decline.onclick=function(){decline.disabled=true;sbRpc("answer_connection",{p_connection_id:c.id,p_accept:false}).then(done).catch(function(){decline.disabled=false;});};
+  }
+
   function openPerson(handle) {
     if(!handle)return;
     try { history.replaceState(null,"","mnet.html?profile="+encodeURIComponent(handle)); } catch (_) {}
@@ -1189,7 +1238,7 @@
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
-        '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button><button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
+        '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button>'+connectButtonHtml(data.connection)+'<button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
         '<div class="mn__person-posts" id="mnPersonPosts">'+(posts.length?posts.map(function(x){return postCard(x);}).join(""):'<div class="mn__empty">No posts yet.</div>')+'</div></div></div>';
       bindFeedActions($("mnPersonPosts"));
       if(p.m_uid){
@@ -1202,6 +1251,7 @@
         }).catch(function(){});
       }
       $("mnPersonFollow").onclick=function(){var was=data.following;api("/v1/mnet/people/"+encodeURIComponent(handle)+"/follow",{method:was?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
+      bindConnectButton($("mnPersonBody"), data.connection, p.m_uid||id.m_uid||data.m_uid, function(){openPerson(handle);});
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
       $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Human Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
@@ -2180,16 +2230,13 @@
     if($("mnAntisocialForm"))$("mnAntisocialForm").hidden=true;
   }
   function antisocialConnections(){
-    var uid=identity().m_uid,select=$("mnAntisocialPartner");if(!uid||!select)return;
-    sbRest("network_connections?status=eq.accepted&or=(requester_m_uid.eq."+encodeURIComponent(uid)+",addressee_m_uid.eq."+encodeURIComponent(uid)+")&select=requester_m_uid,addressee_m_uid&limit=100")
-      .then(function(rows){
-        var ids=(rows||[]).map(function(c){return c.requester_m_uid===uid?c.addressee_m_uid:c.requester_m_uid;}).filter(Boolean);
-        if(!ids.length){select.innerHTML='<option value="">No accepted connections yet</option>';return;}
-        return sbRest("network_profiles?m_uid=in.("+ids.map(encodeURIComponent).join(",")+")&select=m_uid,display_name&limit=100")
-          .then(function(profiles){var names={};(profiles||[]).forEach(function(p){names[p.m_uid]=p.display_name;});
-            select.innerHTML='<option value="">Select a collaborator</option>'+ids.map(function(id){return '<option value="'+esc(id)+'">'+esc(names[id]||"Action Network member")+'</option>';}).join("");
-          });
-      }).catch(function(){select.innerHTML='<option value="">Connections unavailable</option>';});
+    var select=$("mnAntisocialPartner");if(!select)return;
+    /* the server lists my accepted connections with names and handles (my_connections) */
+    sbRpc("my_connections",{}).then(function(rows){
+      rows=rows||[];
+      if(!rows.length){select.innerHTML='<option value="">No connections yet. Find a member and tap Connect.</option>';return;}
+      select.innerHTML='<option value="">Select a collaborator</option>'+rows.map(function(r){return '<option value="'+esc(r.m_uid)+'">'+esc(r.display_name||"Action Network member")+(r.mccluster_id?" · @"+esc(r.mccluster_id):"")+'</option>';}).join("");
+    }).catch(function(){select.innerHTML='<option value="">Connections unavailable</option>';});
   }
   function antisocialPaint(){
     var box=$("mnAntisocialLevels"),a=missions.assignment;

@@ -23,6 +23,17 @@ and distribution briefs. It is not applied in production. API Economic Core CI
 applies it only to its isolated rebuilt database before the clipping regression.
 Promote it using the steps above after production application is verified.
 
+Pending: `antisocial_get_social_completion_v1.sql` completes the three-level
+Anti-Social mission on top of the applied draft
+(`20261014185154_antisocial_get_social_three_levels_draft.sql`): the writers
+for `network_connections` (request, answer, withdraw, the pair's state, my
+connections with names) so "connect through the platform" exists, with
+notifications. Behaviour test: `supabase/tests/antisocial_connections.behaviour.sql`,
+run by `scripts/test-antisocial-db.sh` on a scratch Postgres (the chain:
+the role stub, `supabase/tests/mnet_network_tables.stub.sql`, the
+gamification, proof-review and feed-share migrations, the draft, then this
+file). Promote it using the steps above.
+
 Pending: `commerce_stripe_reconciler_v3.sql` makes concurrent Stripe deliveries
 for one sale wait for each other (a refund racing its checkout was lost),
 promotes a payment the owner typed in instead of shadowing it, and keeps partial
