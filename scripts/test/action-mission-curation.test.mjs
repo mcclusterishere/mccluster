@@ -48,7 +48,7 @@ test('service gateway has no proof or join and directory links are external', ()
   assert.match(ui, /Find services for yourself or someone you know/);
   assert.match(ui, /No proof of needing help, photos, or public post required/);
   assert.match(ui, /if\(m\.id===HELP_MISSION_ID\)return;/);
-  assert.match(ui, /rel=\\"noopener noreferrer\\"/);
+  assert.match(ui, /rel="noopener noreferrer"/);
   assert.match(ui, /resourceCategoryForMission/);
 });
 
