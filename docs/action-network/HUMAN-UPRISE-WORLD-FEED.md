@@ -21,60 +21,71 @@ It does not lift any release gate in `EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`.
 
 ## The World screen
 
-Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`.
-`mnet.html` → World is one persistent screen, phone first:
+Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`. One
+World for everyone at `mnet.html?view=feed`: the Globe column of the app
+bar, `action-globe.html` (which hands over, keeping `?song=`) and the music
+player's "See this song's impact" all land there. `action-globe.html?explore=1`
+stays as the optional full-screen explorer ("Full world ↗"); `?embedded=1`
+stays as a frame.
 
-1. **Globe** (top): `action-globe.html?embedded=1&surface=network`. In that
-   surface the frame shows only the Earth, pins, region outlines and Near me.
-2. **Context strip** (middle, ~92px): idle, it says what is pinned; after a
-   pin or a post picks a mission it shows region · path · title with
-   **Open mission** (canonical join flow), **Only posts about this**
-   (toggle) and ✕.
-3. **Feed** (bottom): composer and the real member feed (posts, media,
-   tracks, Like, Comment, Share, Save), scrolling on its own.
+1. **Globe** (top): `action-globe.html?embedded=1&surface=network`, the
+   Earth, public admin-approved pins, region outlines and Near me only.
+2. **Context strip** (middle, `clamp(92px, 14dvh, 150px)`): idle, what is
+   pinned; after a pin or a post picks a mission, region · path · title with
+   **Open mission** (canonical join flow), **Only posts about this** and ✕.
+3. **Feed** (bottom): the real network from `js/mnet.js`: composer, posts,
+   media, tracks, Like, Comment (thread opens inside the post), Share, Save,
+   verified-action and mission-offer cards. It scrolls on its own; the page
+   does not.
 
-`js/mnet.js` sizes the view to the room between the header and the app bar
-(`--mn-world-h`, class `mn-world-fit`): globe and feed share it 50:30 and the
-page itself does not scroll, so dragging the Earth never scrolls the feed and
-reading the feed never turns the Earth. Below 340px of room in portrait (or
-440px otherwise, e.g. a phone on its side) the pieces stack and the page
-scrolls instead of hiding anything. From 1100px the Earth and its strip sit
-on the left and the feed runs beside them.
+Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 
-- Pin → strip shows the mission and the feed narrows to posts the server ties
-  to it (`action_feed_cards`, `action_offer_cards`); an honest empty state
-  when there are none.
-- Post → **Locate on globe** (only when its mission has a public pin) flies
-  the Earth there and fills the strip **without** narrowing the feed being
-  read.
-- Posting lets go of any mission so the new post is seen landing.
+| Device | Globe | Context | Feed | Notes |
+|---|---|---|---|---|
+| iPhone 390×844 portrait | 45% | 14% | 30% | header floats over the starfield; app bar and safe area are the rest |
+| iPhone SE 375×667 | fits one screen | | | |
+| iPhone 844×390 landscape | left half | right, top | right, below | side by side, one screen |
+| iPad 820×1180 portrait | 45% | 13% | 30% | |
+| iPad 1180×820 landscape, desktop | left column | under the globe | right column | feed beside the Earth |
 
-Measured with a stubbed member (Playwright): at 390×844 the globe, strip and
-feed took 32% / 11% / 28% of the screen while the network still had its own
-tab rows; see Navigation below for the measurements after they were removed.
-iPhone SE (375×667) also fits on one screen; a phone on its side scrolls.
+- Pin → the strip fills and the feed narrows to posts the server ties to that
+  mission (`action_feed_cards`, `action_offer_cards`), outlined; an honest
+  empty state when there are none. The globe stays.
+- Tap a post (or its **Locate on globe**) → the Earth flies to its mission
+  and the strip fills, without narrowing the feed being read. Only posts the
+  server ties to a pinned mission do this; no coordinates are invented.
+- Posting lets go of any mission and folds the composer, so the new post is
+  seen landing.
+
+### Guests: the same World, read-only
+
+- `GET /v1/mnet/public-feed` (Worker, no session): `visibility=public`
+  posts outside any group, not deleted, not replies, by members whose own
+  profile is public; no internal ids, viewer state or media addresses; page
+  of 20, `cache-control: public, max-age=30`. Recorded in
+  `docs/control-plane/SECURITY-POSTURE.md`; tested in
+  `workers/mccluster/test/mnet-public-feed.test.mjs`.
+- The composer is replaced by an invitation; Like, Comment, Save, people,
+  missions, media and every other room open sign-in with the reason at the
+  top and a way back to the World. Nothing is sent. Share works (every guest
+  post is public). Verified-action cards still show (`action_feed_cards` is
+  anon-granted); mission-offer cards need a session.
+- `mnet.html?signin=1` opens sign-in directly.
 
 ### Standalone `action-globe.html`
 
-- Members are sent to the World screen (`mnet.html?view=feed`, carrying
-  `?song=` from the music player's "See this song's impact"), so there is
-  one World for members. `?explore=1` keeps the full explorer (search,
-  layers, policy links); the World screen's **Full world ↗** uses it.
-- Guests get the public explorer at 45 / 15 / 40 with one readable column
-  of mission cards and a "Member posts live here · Sign in" card where the
-  feed would be. Member posts are never shown without a session.
-- The house app bar is styled now. It used to render as raw links and a
-  giant mark because the page did not load `css/style.css`, and the page's
-  bare `nav` rules hijacked it. Those rules are scoped to `.world-tools`.
-- The member World tab in the app bar points at `mnet.html?view=feed`;
-  guests still get `guest-globe.html`.
+Hands over to the World screen (see above). With `?explore=1` it is the
+full-screen explorer, now with the house stylesheet (its app bar used to
+render as raw links and a giant mark), toolbar rules scoped to
+`.world-tools`, a 15dvh context strip and one column of mission cards on a
+phone.
 
 ## Navigation (owner's binding decision, 2026-10-14)
 
 - **App bar: exactly three columns for everyone: Music | M | Globe.** The
-  Globe replaced Profile. Members' Globe opens the World screen
-  (`mnet.html?view=feed`); guests' Globe opens the public World shell
-  (`action-globe.html`). M is the platform home (`index.html`) signed in or
+  Globe replaced Profile and opens the one World screen
+  (`mnet.html?view=feed`) for guests and members alike. M is the platform
+  home (`index.html`) signed in or
   out. The member-only Record and Analytics columns are gone. Each column
   keeps a two-room long-press wing so a held tab never moves; the Globe
   wing holds Missions and Account.
@@ -84,12 +95,8 @@ iPhone SE (375×667) also fits on one screen; a phone on its side scrolls.
   plus a dot on the avatar), Alerts, Missions & campaigns, People, Groups,
   Clips, Live, Record or create, Your analytics, M Account. The bell stays
   as the alerts indicator, and every room has a "← World" way back.
-- With the rows gone, the World screen measures **42% globe / 11% context
-  / 28% feed** at 390×844 (36 / 14 / 25 on an iPhone SE). The rest is the
-  header and the app bar.
 - Not yet changed: the native app (`native/src/AppBar.tsx`) still has its
-  own Music · HERE · Create · Network bar, and the guest World still has no
-  public post projection (guests see missions and a sign-in card).
+  own Music · HERE · Create · Network bar.
 
 ## Bridge contract (same-origin `postMessage`)
 
@@ -122,13 +129,15 @@ admin-approved pin fields cross; no coordinates, member ids or counts.
 
 ## Verified
 
-Browser harness (Playwright, stubbed member session and APIs) at 390×844,
-375×667, 844×390, 768×1024 and 1280×800: the globe boots, pins report to the
-page, the composition fits where it should, and only the feed scrolls (page
-`scrollY` stays 0). Post → globe leaves the feed whole; the toggle narrows
-it; pin → narrowed feed or honest empty state. `scrollWidth ===
-clientWidth` everywhere. Standalone page: guest at 45 / 15 / 40 and one
-column; a member is redirected with `?song=` intact.
+`node scripts/e2e/world-screen.e2e.mjs [outDir]` serves the checkout, fakes
+api.mccluster.org and Supabase in memory (every request recorded and
+checked) and drives: the composition on iPhone portrait/landscape, iPad
+portrait/landscape and desktop; Post, Like, Unlike, Comment and Share round
+trips with the exact requests; pin → strip and narrowed feed; post → globe
+without narrowing; the avatar menu; the three-column bar; and the guest path
+(no session sent, public posts only, actions open sign-in and send nothing).
+64/64 on 2026-10-14. It does not touch production; Worker authorization is
+covered by the Worker test suite.
 
 ## Still open (unchanged by this work)
 

@@ -398,7 +398,41 @@ export async function pruneNetworkRateEvents(env){
   await service(env,`network_rate_events?at=lt.${cutoff}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
 }
 
+/* THE GUEST FEED. A signed-out visitor on the World screen reads permitted
+   public material only (owner's role matrix, docs/action-network/
+   WORLD-SCREEN-UX-HANDOFF-20261014.md): posts a member marked public, outside
+   any group, not deleted and not replies, by members whose own profile is
+   public. No viewer state, no internal ids, no media addresses (those stay
+   behind a session), a small page and a short shared cache. Liking,
+   commenting and posting stay on the authenticated routes below. */
+const PUBLIC_FEED_LIMIT=20;
+function publicFeedItem(item){
+  const p=item.post,a=item.actor||{},meta=p.metadata&&typeof p.metadata==='object'?p.metadata:{};
+  const media=(Array.isArray(p.media)?p.media:[]).slice(0,4).map(m=>({type:String(m&&(m.type||m.media_type)||'file').slice(0,16)}));
+  return {item_type:'post',post_id:p.id,occurred_at:item.occurred_at||p.created_at,
+    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified'},
+    post:{id:p.id,body:p.body||'',post_type:p.post_type||'post',visibility:'public',created_at:p.created_at,
+      like_count:p.like_count||0,liked_by_me:false,bookmarked_by_me:false,media_locked:media.length,
+      metadata:{...(postTrack(meta.track)?{track:postTrack(meta.track)}:{}),...(meta.action?{action:true}:{})}}};
+}
+async function publicWorldFeed(req,env,url){
+  const limit=Math.min(PUBLIC_FEED_LIMIT,Math.max(1,Number(url.searchParams.get('limit'))||PUBLIC_FEED_LIMIT)),fetchLimit=limit*3;
+  const before=url.searchParams.get('before');
+  if(before&&!Number.isFinite(Date.parse(before)))return fail(req,env,'Invalid cursor',400);
+  const beforeFilter=before?`&occurred_at=lt.${encodeURIComponent(new Date(before).toISOString())}`:'';
+  const rows=await service(env,`network_feed_items?visibility=eq.public&item_type=eq.post${beforeFilter}&order=occurred_at.desc&limit=${fetchLimit}&select=*`)||[];
+  const items=(await hydrateFeedItems(env,rows,null)).filter(x=>x.post&&x.post.visibility==='public'&&!x.post.group_id);
+  const authors=uniq(items.map(x=>x.post.author_m_uid)).filter(uuidLike);
+  const open=authors.length?await service(env,`network_profiles?m_uid=in.(${authors.join(',')})&visibility=eq.public&select=m_uid`):[];
+  const publicAuthors=new Set((open||[]).map(x=>x.m_uid));
+  const out=items.filter(x=>publicAuthors.has(x.post.author_m_uid)).slice(0,limit).map(publicFeedItem);
+  const res=reply(req,env,{items:out,scope:'public',next_before:rows.length===fetchLimit?rows[rows.length-1]?.occurred_at||null:null});
+  res.headers.set('cache-control','public, max-age=30');
+  return res;
+}
+
 async function handleMnet(req,env,path,url){
+  if(path==='/v1/mnet/public-feed'&&req.method==='GET')return publicWorldFeed(req,env,url);
   const external=await apiKeyPrincipal(req,env);
   const user=external?null:await authUser(req,env);
   if(!external&&!user) return fail(req,env,'Authentication required',401);

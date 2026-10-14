@@ -13,18 +13,32 @@ test('Human Uprise World tab puts the globe over the live feed',()=>{
  assert.doesNotMatch(read('css/mnet.css'),/\.mn__legacy-feed/);
 });
 
-test("World screen follows the owner's 50/15/30 contract: globe, context strip, independently scrolling feed",()=>{
+test("World screen follows the owner's contract: 45-50% globe, ~15% context, 30-35% feed that scrolls on its own",()=>{
  const html=read('mnet.html'), css=read('css/mnet.css'), js=read('js/mnet.js');
  assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldContext"[\s\S]*?id="mnWorldFeed"/);
- assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 50 1 0;/);
+ assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 49 1 0;/);
+ assert.match(css,/\.mn-world-fit \.mn__world-context \{ flex: none; min-height: clamp\(92px, 14dvh, 150px\); \}/);
  assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
  assert.match(css,/html\.mn-world-fit, html\.mn-world-fit body \{ overflow: hidden;/,'only the feed scrolls, so the globe never leaves the screen');
  assert.match(js,/function sizeWorld\(\)/);
- assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340/,'short screens fall back to a stacked, scrolling page instead of hiding content');
+ assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200/,'short screens fall back to a stacked, scrolling page instead of hiding content');
  /* a post shows its mission on the Earth without narrowing the feed being read */
  assert.match(js,/filter: !fromFeed/);
- assert.match(read('js/tabbar.js'),/signedIn \? "mnet\.html\?view=feed" : "action-globe\.html"/,'one World: members get their feed, guests the public shell');
- assert.match(read('action-globe.html'),/location\.replace\('mnet\.html\?view=feed'/);
+ /* one World for everyone: the Globe column and the standalone route both land on it */
+ assert.match(read('js/tabbar.js'),/if \(worldDoor\) worldDoor\.href = ROOT \+ "mnet\.html\?view=feed";/);
+ assert.match(read('action-globe.html'),/if\(q\.has\('embedded'\)\|\|q\.has\('explore'\)\)return;var song=q\.get\('song'\);location\.replace\('mnet\.html\?view=feed'/);
+});
+
+test('guests get the same World, read-only, through the public projection',()=>{
+ const js=read('js/mnet.js'), html=read('mnet.html'), css=read('css/mnet.css');
+ assert.match(js,/else enterGuestWorld\(\);/,'a signed-out visitor lands on the World, not a wall');
+ assert.match(js,/state\.guest \? "\/v1\/mnet\/public-feed\?limit=20"/);
+ assert.match(js,/state\.guest \? fetch\("https:\/\/api\.mccluster\.org" \+ path\)\.then\(parse\) : api\(path\)/,'guests send no session; members keep the authenticated feed');
+ assert.match(js,/if \(state\.guest && name !== "feed"\) \{ askToSignIn\(name\); return; \}/);
+ assert.match(js,/\[data-take-mission\],\[data-action=like\],\[data-action=comments\],\[data-action=save\],\[data-person\],\[data-guest-ask\]/,'every member action is a door to sign in for a guest');
+ assert.match(html,/id="mnGuestBar" hidden/);
+ assert.match(html,/id="mnGuestCard"/);
+ assert.match(css,/\.mn-guest #mnComposer/);
 });
 
 test('globe and feed talk over same-origin messages carrying public mission fields only',()=>{

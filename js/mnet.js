@@ -19,7 +19,9 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null, fromFeed: "" }
+    world: { pins: {}, focus: null, fromFeed: "" },
+    /* a signed-out visitor on the World screen: public feed, no actions */
+    guest: false
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -205,6 +207,45 @@
       });
       $("mnProviders").hidden = !any;
     }).catch(function () {});
+  }
+
+  /* THE WORLD FOR GUESTS. One World shell for everyone (owner's role
+     matrix): a signed-out visitor gets the same globe, strip and feed,
+     reading public posts through /v1/mnet/public-feed. Every action that
+     needs a member (like, comment, save, follow, post, join, other rooms)
+     opens sign-in instead, and the server refuses it anyway. */
+  function enterGuestWorld() {
+    state.guest = true;
+    document.documentElement.classList.add("mn-guest");
+    $("mnGuestBar").hidden = false;
+    var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
+    if (q && q.get("signin") === "1") { openSignIn("signin"); return; }
+    showGate("app");
+    setView("feed");
+    loadFeed(true);
+  }
+  /* the sign-in panel, opened from the World: the reason and the way back
+     sit at the top, so neither ends up under the keyboard or the bar */
+  function openSignIn(mode, why) {
+    setAuthMode(mode);
+    showGate("signedout");
+    $("mnGuestWhyRow").hidden = !state.guest;
+    $("mnGuestWhy").textContent = why || "";
+    window.scrollTo(0, 0);
+    var email = $("mnEmail"); if (email) email.focus({ preventScroll: true });
+  }
+  function leaveGuestWorld() {
+    if (!state.guest) return;
+    state.guest = false;
+    document.documentElement.classList.remove("mn-guest");
+    $("mnGuestBar").hidden = true;
+    state.feed = []; state.nextBefore = null;
+  }
+  function askToSignIn(why) {
+    var line = { like:"Sign in to like posts.", comments:"Sign in to read and write comments.", save:"Sign in to save posts.",
+      mission:"Sign in to join this mission.", media:"Sign in to see photos and video.", post:"Sign in to post." }[why] || "Sign in to do that.";
+    track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
+    openSignIn("signin", line);
   }
 
   function bootstrap() {
@@ -433,7 +474,8 @@
     var saved = !!post.bookmarked_by_me;
     var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
     var pinned = !!(item && item.payload && item.payload.pinned);
-    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + '" data-post-id="' + esc(id || "") + '">' +
+    var onGlobe = !!(state.world.focus && postMissionId(item) === state.world.focus.mission_id);
+    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + (onGlobe ? ' is-on-globe' : '') + '" data-post-id="' + esc(id || "") + '">' +
       (pinned ? '<span class="mn__pin">Pinned</span>' : '') +
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
@@ -442,6 +484,7 @@
       actionCardHtml(id) +
       trackCardHtml(item, post) +
       postMediaHtml(post) +
+      (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
           '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + ' <span class="mn__count">' + esc(post.like_count || '') + '</span> Like</button>' +
@@ -524,12 +567,36 @@
     var c = id && ((state.actionCards && state.actionCards[id]) || state.actionOffers[id]);
     return c && c.mission_id || "";
   }
+  /* Tapping a post (not one of its buttons or links) shows its mission on
+     the Earth, only when the server ties the post to a pinned mission. */
+  function bindPostTaps(root) {
+    root.querySelectorAll("[data-post-id]").forEach(function (card) {
+      card.addEventListener("click", function (e) {
+        if (e.target.closest && e.target.closest("a,button,input,textarea,select,label,video,audio,form,.mn__comments")) return;
+        var mid = postMissionId(findPost(card.getAttribute("data-post-id")));
+        if (mid && state.world.pins[mid]) focusOnGlobe(mid);
+      });
+    });
+  }
   function globeChipHtml(missionId) {
     if (!missionId || !state.world.pins[missionId]) return "";
     return '<button class="mn__globe-chip" type="button" data-globe-mission="' + esc(missionId) + '">Locate on globe</button>';
   }
 
   function bindFeedActions(root) {
+    if (state.guest) {
+      /* read-only: the same buttons, but each one is a door to sign in,
+         and nothing is sent. Share works, because every guest post is public. */
+      root.querySelectorAll("[data-take-mission],[data-action=like],[data-action=comments],[data-action=save],[data-person],[data-guest-ask]").forEach(function (b) {
+        b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); askToSignIn(b.getAttribute("data-action") || (b.hasAttribute("data-take-mission") ? "mission" : "act")); };
+      });
+      root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
+        b.onclick = function () { focusOnGlobe(b.getAttribute("data-globe-mission")); };
+      });
+      root.querySelectorAll("[data-action=share]").forEach(function (b) { b.onclick = function () { sharePost(b); }; });
+      bindPostTaps(root);
+      return;
+    }
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
@@ -599,22 +666,7 @@
       };
     });
     root.querySelectorAll("[data-action=share]").forEach(function (b) {
-      b.onclick = function () {
-        var item = findPost(b.dataset.post), post = item && (item.post || item);
-        if (!post || post.visibility !== "public") {
-          setStatus($("mnFeedStatus"), "Only public posts can be shared externally.", "error");
-          return;
-        }
-        var url = new URL(location.href);
-        url.searchParams.set("view", "feed");
-        url.searchParams.set("post", b.dataset.post);
-        var link = url.toString();
-        if (navigator.share) {
-          navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
-        } else if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
-        } else window.prompt("Copy post link",link);
-      };
+      b.onclick = function () { sharePost(b); };
     });
     root.querySelectorAll("[data-action=save]").forEach(function (b) {
       b.onclick = function () { toggleBookmark(b.dataset.post, b); };
@@ -625,14 +677,34 @@
     root.querySelectorAll("[data-person]").forEach(function (b) {
       b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); openPerson(b.dataset.person); };
     });
+    bindPostTaps(root);
     resolvePostMedia(root);
+  }
+
+  function sharePost(b) {
+    var item = findPost(b.dataset.post), post = item && (item.post || item);
+    if (!post || post.visibility !== "public") {
+      setStatus($("mnFeedStatus"), "Only public posts can be shared externally.", "error");
+      return;
+    }
+    var url = new URL(location.href);
+    url.searchParams.set("view", "feed");
+    url.searchParams.set("post", b.dataset.post);
+    var link = url.toString();
+    if (navigator.share) {
+      navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
+    } else window.prompt("Copy post link",link);
   }
 
   function renderFeed(append) {
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
+      host.innerHTML = state.guest
+        ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
+        : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
     var items = state.feed, focus = state.world.focus;
@@ -692,9 +764,10 @@
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
-    var path = "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20";
+    var path = (state.guest ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
-    return api(path).then(function (data) {
+    var read = state.guest ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
+    return read.then(function (data) {
       var incoming = data.items || [];
       state.feed = reset ? incoming : state.feed.concat(incoming);
       state.nextBefore = data.next_before || null;
@@ -709,7 +782,7 @@
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming)]).then(function (flags) {
         if (flags.some(Boolean)) renderFeed(false);
       });
-      if (reset) paintFeedMissions();
+      if (reset && !state.guest) paintFeedMissions();
       $("mnMore").hidden = !state.nextBefore;
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
@@ -777,6 +850,10 @@
       /* a fresh post must be seen landing, so let go of any mission the
          feed was narrowed to on the globe */
       if (state.world.focus) { state.world.focus = null; paintWorldFocus(); tellWorld({ type: "hu:clear-selection" }); }
+      /* the composer folds once the post is away, so the feed band is the feed again */
+      var composerBox = $("mnComposer"), focused = document.activeElement;
+      if (focused && composerBox && composerBox.contains(focused) && focused.blur) focused.blur();
+      if (composerBox) composerBox.classList.remove("is-open");
       return loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
@@ -1164,6 +1241,7 @@
   }
 
   function setView(name) {
+    if (state.guest && name !== "feed") { askToSignIn(name); return; }
     state.currentView = name;
     track("mnet_view", { view:name });
     ["live","clips","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
@@ -1276,6 +1354,7 @@
     return MCC.user().then(function (user) {
       state.user = user;
       if (!user) throw new Error("Your session did not open.");
+      leaveGuestWorld();
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
       return MCC.autoTouch().catch(function () {}).then(function () {
         if (!state.pollTimer) state.pollTimer = setInterval(function () {
@@ -1387,6 +1466,10 @@
     $("mnMore").onclick = function () { loadFeed(false); };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
     wireMenu();
+    $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
+    $("mnGuestJoin").onclick = function () { openSignIn("create"); };
+    document.querySelectorAll("[data-guest-open]").forEach(function (b) { b.onclick = function () { openSignIn(b.getAttribute("data-guest-open")); }; });
+    $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     $("mnBell").onclick = function () { setView("notifications"); };
@@ -1410,7 +1493,7 @@
       if (!user) {
         var existing = MCC.session && MCC.session();
         if (existing && existing.access_token) showSignedInLoadError(new Error("Could not verify the existing session."));
-        else showGate("signedout");
+        else enterGuestWorld();
         return;
       }
       return MCC.autoTouch().catch(function () {}).then(function () {
@@ -1422,7 +1505,7 @@
     }).catch(function (error) {
       var existing = MCC.session && MCC.session();
       if (existing && existing.access_token) showSignedInLoadError(error);
-      else showGate("signedout");
+      else enterGuestWorld();
     });
   }
 
@@ -1763,7 +1846,7 @@
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
   var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",liveSession:"",liveMission:"",returnHref:"",proofFile:null,proofPreview:""};
   function sbRest(path,init){
-    var token=sessionToken(); init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
+    var token=sessionToken()||SB_KEY; init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
   }
   function sbRpc(name,args){return sbRest("rpc/"+name,{method:"POST",body:JSON.stringify(args||{})});}
@@ -2097,7 +2180,7 @@
      to the room between the tabs and the app bar, so globe, context strip
      and feed are all on screen and only the feed scrolls. On a short
      screen (a phone on its side) the same pieces simply stack and scroll. */
-  var WORLD_ID = /^[0-9a-f-]{36}$/i, WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340;
+  var WORLD_ID = /^[0-9a-f-]{36}$/i, WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200;
   function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
   function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
   function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
@@ -2106,8 +2189,9 @@
     if (!view) return;
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
     root.classList.toggle("mn-world-on", on);
-    if (!on) { root.classList.remove("mn-world-fit"); view.style.removeProperty("--mn-world-h"); return; }
+    if (!on) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
     root.classList.add("mn-world-fit");
+    root.classList.toggle("mn-world-overlay", window.innerWidth < 600);
     window.scrollTo(0, 0);
     /* the bar's resting top, from layout rather than its rect, so an
        entrance animation (a transform) cannot skew the measurement */
@@ -2117,8 +2201,13 @@
       if (cs.position === "fixed" && cs.display !== "none") bottom = Math.min(bottom, window.innerHeight - (parseFloat(cs.bottom) || 0) - bar.offsetHeight);
     }
     var room = Math.floor(bottom - view.getBoundingClientRect().top - 8);
-    /* a small phone held upright still gets one screen; a phone on its side does not have the room */
-    if (room < (window.innerHeight > window.innerWidth ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit"); view.style.removeProperty("--mn-world-h"); return; }
+    /* upright: one stacked screen from a small phone up. On its side a phone
+       has too little height to stack, so the Earth takes the left and the
+       strip and feed the right, still one screen. */
+    var portrait = window.innerHeight > window.innerWidth;
+    var side = !portrait && room < WORLD_FIT_MIN && room >= WORLD_FIT_MIN_SIDE;
+    root.classList.toggle("mn-world-side", side);
+    if (!side && room < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
     view.style.setProperty("--mn-world-h", room + "px");
   }
   function paintWorldFocus() {

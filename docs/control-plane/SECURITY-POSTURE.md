@@ -124,6 +124,12 @@ fails when `config.toml` gains one that is missing here.
 | `l3-checkout` | anonymous buyers | product price read server-side; checkout created on the seller's connected account |
 | `l3-download` | buyers without accounts | **download token**: the Stripe checkout-session id; payment re-verified with Stripe on every request; 300-second signed storage URL; every download logged with a hashed IP |
 
+Worker `mccluster` routes reachable without a session are listed here too.
+
+| Route | Why it is public | Compensating control |
+|---|---|---|
+| `GET /v1/mnet/public-feed` | Human Uprise World screen for signed-out visitors (owner's role matrix: guests read permitted public material) | read-only; only `visibility=public` posts outside any group, not deleted, not replies, by members whose own profile is public; projection drops internal ids, viewer state and media addresses; page capped at 20; `cache-control: public, max-age=30`; every other `/v1/mnet/*` route still requires a session (`workers/mccluster/test/mnet-public-feed.test.mjs`) |
+
 ## Internal signing and nonces
 
 - **Compute nodes → Core.** Every request is signed with the node's Ed25519

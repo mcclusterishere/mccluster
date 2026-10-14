@@ -75,7 +75,7 @@
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
-      '<a class="appbar__tab appbar__world" href="' + ROOT + 'action-globe.html" data-appnav="world">' +
+      '<a class="appbar__tab appbar__world" href="' + ROOT + 'mnet.html?view=feed" data-appnav="world">' +
         WORLD_SVG + '<span>Globe</span></a>';
     document.body.appendChild(nav);
     return nav;
@@ -116,8 +116,8 @@
   /* THE GLOBE COLUMN. Hand-written bars on older pages still carry the
      retired Profile column; the Globe takes its place, in the same cell,
      and the ORDER sweep below removes anything else. One World for
-     everyone: guests reach the public World shell (action-globe.html),
-     members the World screen with their feed (set in paintAuthState). */
+     everyone: the World screen (globe, context strip, feed) in mnet.html,
+     read-only for guests, with their own feed for members. */
   var worldTab = dock.querySelector('[data-appnav="world"]');
   if (!worldTab) {
     worldTab = document.createElement("a");
@@ -131,7 +131,7 @@
   worldTab.setAttribute("aria-label", "Open the World globe");
   var worldLabel = worldTab.querySelector("span:last-child");
   if (worldLabel) worldLabel.textContent = "Globe";
-  worldTab.href = ROOT + "action-globe.html";
+  worldTab.href = ROOT + "mnet.html?view=feed";
 
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
@@ -173,7 +173,7 @@
       ],
     },
     world: {
-      home: "action-globe.html",
+      home: "mnet.html?view=feed",
       slots: [
         ["mnet.html?view=missions", "folk", "Missions", { title: "Human Uprise missions",
           sub: "Pick a mission, do the work, send proof. Verified action builds your record on Human Uprise." }],
@@ -308,12 +308,10 @@
   }
   function paintAuthState(signedIn, user, verified) {
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
-    /* one World: members land on the World screen with their feed,
-       guests on the public World shell; same column, same bar */
+    /* one World, signed in or not: the same screen, read-only for guests */
     var worldDoor = dock.querySelector('[data-appnav="world"]');
-    var worldHome = ROOT + (signedIn ? "mnet.html?view=feed" : "action-globe.html");
-    if (worldDoor) worldDoor.href = worldHome;
-    WINGS.world.home = worldHome;
+    if (worldDoor) worldDoor.href = ROOT + "mnet.html?view=feed";
+    WINGS.world.home = ROOT + "mnet.html?view=feed";
     var body = document.body;
     body.classList.toggle("mcc-auth-in", !!signedIn);
     body.classList.toggle("mcc-auth-out", !signedIn);

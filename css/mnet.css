@@ -795,8 +795,8 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 
 /* ---------- the World screen ----------
    Owner's contract (docs/action-network/WORLD-SCREEN-UX-HANDOFF-20261014.md):
-   one persistent screen with the globe on top (~50%), a context strip
-   (~15%) and the real member feed (~30%) that scrolls on its own, all on
+   one persistent screen with the globe on top (45-50%), a context strip
+   (~15%) and the real member feed (30-35%) that scrolls on its own, all on
    screen at first load. js/mnet.js sizes the view to the room between the
    header and the app bar (--mn-world-h) and adds .mn-world-fit when that
    room is tall enough; otherwise (a phone on its side) the same pieces
@@ -831,8 +831,8 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 .mn-world-fit .mn__top .mn__brand-mark { transform: scale(0.88); }
 .mn-world-fit .mn__top .mn__brand strong { font-size: 1.3rem; }
 .mn-world-fit #mnFeedView:not([hidden]) { display: flex; flex-direction: column; height: var(--mn-world-h, 70dvh); }
-.mn-world-fit .mn__world-home { flex: 50 1 0; min-height: 0; height: auto; }
-.mn-world-fit .mn__world-context { flex: none; }
+.mn-world-fit .mn__world-home { flex: 49 1 0; min-height: 0; height: auto; }
+.mn-world-fit .mn__world-context { flex: none; min-height: clamp(92px, 14dvh, 150px); }
 .mn-world-fit .mn__world-feed { flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 12px; }
 @media (min-width: 600px) {
   .mn__world-home { margin: 0; border: 1px solid var(--mn-rule); border-radius: 22px; }
@@ -860,3 +860,65 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 @media (min-width: 600px) {
   .mn__menu { right: 24px; }
 }
+
+/* On a phone the bar floats over the top of the Earth (starfield, never the
+   planet: the frame centres it lower), so the globe gets the room the
+   header would take. js/mnet.js adds .mn-world-overlay below 600px only;
+   wider screens keep the bar in its own row. */
+.mn-world-overlay .mn__top { position: fixed; top: 0; left: 0; right: 0; margin: 0; background: linear-gradient(180deg, rgba(5, 9, 18, 0.88), rgba(5, 9, 18, 0)); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+.mn-world-overlay .mn__world-expand { top: auto; bottom: 34px; }
+
+/* posts about the mission picked on the Earth */
+.mn__post-card.is-on-globe { box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.65); }
+.mn__post-card[data-post-id] { cursor: default; }
+
+/* ---------- guests on the World ----------
+   Same screen, read-only: public posts, Share works, everything else is a
+   door to sign in. The composer is replaced by a plain invitation. */
+.mn__guest-bar { display: flex; gap: 6px; align-items: center; }
+.mn__guest-bar[hidden] { display: none; }
+.mn__guest-in, .mn__guest-join { min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+.mn__guest-in { border: 1px solid var(--mn-rule-2); background: rgba(10, 8, 7, 0.6); color: var(--mn-ink); }
+.mn__guest-join { border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }
+.mn__guest-card { display: none; padding: 14px 16px; border-radius: 20px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn__guest-card p { margin: 0 0 10px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; }
+.mn__guest-card strong { color: var(--mn-ink); }
+.mn__guest-card-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn-guest .mn__guest-card { display: block; }
+.mn-guest #mnComposer, .mn-guest .mn__post-actions [data-action="delete"] { display: none; }
+.mn__media-locked { display: block; width: 100%; min-height: 72px; margin-top: 10px; border: 1px dashed var(--mn-rule-2); border-radius: 14px; background: var(--mn-raise-2); color: var(--mn-dim); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+
+/* a phone on its side: the Earth on the left, the strip and the feed on the
+   right, one screen (js/mnet.js adds .mn-world-side when the room is short
+   and wide) */
+.mn-world-side .mn { max-width: none; }
+.mn-world-side #mnFeedView:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 16px; }
+.mn-world-side .mn__world-home { grid-column: 1; grid-row: 1 / span 2; }
+.mn-world-side .mn__world-context { grid-column: 2; grid-row: 1; min-height: 0; padding-top: 0; }
+.mn-world-side .mn__world-feed { grid-column: 2; grid-row: 2; padding-top: 8px; }
+
+/* ---------- comments, inside the post they belong to ----------
+   The thread opens in the feed region (js/mnet.js builds it); the globe
+   stays put. Inputs at 16px+ so iOS never zooms the page. */
+.mn__comments { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mn-rule); }
+.mn__comments-list { display: grid; gap: 6px; margin-bottom: 8px; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.mn__comments-list p { margin: 0; }
+.mn__comments-list strong { color: var(--mn-ink); }
+.mn__comment-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.mn__comment-form input { min-width: 0; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--mn-raise-2); color: var(--mn-ink); font: inherit; font-size: max(16px, 0.95rem); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn__comment-form button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--mn-ink); color: var(--mn-bg); font: inherit; font-weight: 800; cursor: pointer; }
+.mn__comment-form button:disabled { opacity: 0.55; }
+
+/* the header already says who you are on the World screen, so the
+   house's floating signed-in chip stays off the feed */
+.mn-world-on .mcc-auth-chip { display: none; }
+
+/* a guest's header: two short pills that never wrap, and a brand that
+   gives way first */
+.mn__brand > span:last-child { min-width: 0; overflow: hidden; }
+.mn__brand strong, .mn__brand small { overflow: hidden; text-overflow: ellipsis; }
+.mn__guest-in, .mn__guest-join { flex: none; white-space: nowrap; padding: 0 12px; }
+.mn__gate-why { display: grid; gap: 8px; margin: 4px 0 18px; }
+.mn__gate-why[hidden] { display: none; }
+.mn__gate-why p { margin: 0; color: var(--mn-gold); font-weight: 700; }
+.mn__gate-why p:empty { display: none; }

@@ -57,9 +57,9 @@ test('every tab destination has the bar it was reached from', async () => {
   /* The specific bug. whip.html is where the fourth tab goes and it had
      no bar — tap it, and the navigation you tapped is gone. */
   const bar = await read('js/tabbar.js');
-  const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+  const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)(?:\?[a-z=&]*)?"/g)].map((m) => m[1]);
   /* Music | M | Globe (owner, 2026-10-14): the Globe replaced Profile */
-  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'action-globe.html'],
+  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
     `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
