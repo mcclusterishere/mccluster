@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 356,
+  "candidate_count": 357,
   "capability_source_count": 99,
-  "support_only_count": 257,
-  "checks_total": 1327,
-  "checks_passed": 1327,
+  "support_only_count": 258,
+  "checks_total": 1331,
+  "checks_passed": 1331,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -295,9 +295,10 @@
     "supabase/migrations/20261005082148_security_reaudit_execute_grants_v1.sql",
     "supabase/migrations/20261005082220_security_reaudit_function_bodies_v1.sql",
     "supabase/migrations/20261006170955_action_clipping_marketplace_v1.sql",
+    "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql",
+    "supabase/migrations/20261014185255_action_resource_sources_link_only.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261014170100_equity_policy_memo_application_path.sql",
-    "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql",
     "supabase/pending/README.md",
     "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/production-ledger.json",
@@ -370,7 +371,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "356 entries"
+      "detail": "357 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5718,6 +5719,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261014185255_action_resource_sources_link_only.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261014185255_action_resource_sources_link_only.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261014185255_action_resource_sources_link_only.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261014185255_action_resource_sources_link_only.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -5754,26 +5795,6 @@
     },
     {
       "name": "supabase/pending/20261014170100_equity_policy_memo_application_path.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/20261014190000_antisocial_get_social_three_levels.sql support rationale present",
       "passed": true,
       "detail": ""
     },
