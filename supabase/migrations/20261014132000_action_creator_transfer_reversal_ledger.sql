@@ -1,11 +1,21 @@
 -- Record Stripe transfer reversals exactly once and reconcile campaign funding.
--- A reversal returns platform funds but does not cancel a creator's underlying earning.
+-- A reversal does not cancel the creator's underlying earning.
+-- Returned funds remain quarantined until Stripe balance reconciliation.
 -- Amounts are cumulative per transfer; Stripe webhook deliveries may be duplicated or reordered.
 create table if not exists public.action_creator_transfer_reversal_totals (
   payout_intent_id uuid primary key references public.action_creator_payout_intents(id),
   reversed_cents bigint not null default 0 check (reversed_cents >= 0),
   updated_at timestamptz not null default now()
 );
+-- Reversal credit is tracked separately, never automatically made spendable.
+create table if not exists public.action_creator_reversal_quarantine (
+  payout_intent_id uuid primary key references public.action_creator_payout_intents(id),
+  quarantined_cents bigint not null default 0 check (quarantined_cents >= 0),
+  updated_at timestamptz not null default now()
+);
+alter table public.action_creator_reversal_quarantine enable row level security;
+alter table public.action_creator_reversal_quarantine force row level security;
+revoke all on public.action_creator_reversal_quarantine from public,anon,authenticated;
 alter table public.action_creator_transfer_reversal_totals enable row level security;
 alter table public.action_creator_transfer_reversal_totals force row level security;
 revoke all on public.action_creator_transfer_reversal_totals from public, anon, authenticated;
@@ -51,12 +61,13 @@ begin
       where payout_intent_id=p.id for update;
     v_delta := greatest(p_amount_cents - v_prior,0);
     if v_delta > 0 then
-      update public.action_creator_funding
-        set spent_cents = spent_cents - v_delta,
-            updated_at = now()
-        where org_id=p.org_id and mission_id=p.mission_id
-          and spent_cents >= v_delta;
-      if not found then raise exception 'funding reversal mismatch'; end if;
+      -- Do not decrease spent_cents here: that would instantly reopen budget.
+      -- Finance must separately verify Stripe funds before authorizing reuse.
+      insert into public.action_creator_reversal_quarantine(payout_intent_id,quarantined_cents)
+        values(p.id,v_delta)
+        on conflict (payout_intent_id) do update
+        set quarantined_cents=public.action_creator_reversal_quarantine.quarantined_cents+excluded.quarantined_cents,
+            updated_at=now();
       update public.action_creator_transfer_reversal_totals
         set reversed_cents=p_amount_cents, updated_at=now()
         where payout_intent_id=p.id;
