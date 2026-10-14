@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const migration = readFileSync(new URL('../../supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql', import.meta.url), 'utf8');
+const resources = readFileSync(new URL('../../supabase/migrations/20261014185255_action_resource_sources_link_only.sql', import.meta.url), 'utf8');
 const application = readFileSync(new URL('../../supabase/pending/20261014170100_equity_policy_memo_application_path.sql', import.meta.url), 'utf8');
 const ui = readFileSync(new URL('../../js/mnet.js', import.meta.url), 'utf8');
 const publicHelp = readFileSync(new URL('../../help.html', import.meta.url), 'utf8');
@@ -33,16 +34,16 @@ test('hotel mission is a draft with strict recipient privacy controls', () => {
 });
 
 test('resource directory is public read-only for non-admins, and link-only', () => {
-  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.action_resource_sources/);
-  assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
-  assert.match(migration, /GRANT SELECT ON public\.action_resource_sources TO anon, authenticated/);
-  assert.match(migration, /GRANT INSERT,UPDATE,DELETE ON public\.action_resource_sources TO authenticated/);
-  assert.match(migration, /public\.eu_is_admin\(\)/);
-  assert.match(migration, /'link_only'/);
-  assert.match(migration, /united-way-211-us/);
-  assert.match(migration, /211-canada/);
-  assert.match(migration, /byblack/);
-  assert.match(migration, /r2-facilities/);
+  assert.match(resources, /CREATE TABLE IF NOT EXISTS public\.action_resource_sources/);
+  assert.match(resources, /ENABLE ROW LEVEL SECURITY/);
+  assert.match(resources, /GRANT SELECT ON public\.action_resource_sources TO anon, authenticated/);
+  assert.match(resources, /GRANT INSERT,UPDATE,DELETE ON public\.action_resource_sources TO authenticated/);
+  assert.match(resources, /public\.eu_is_admin\(\)/);
+  assert.match(resources, /'link_only'/);
+  assert.match(resources, /united-way-211-us/);
+  assert.match(resources, /211-canada/);
+  assert.match(resources, /byblack/);
+  assert.match(resources, /r2-facilities/);
 });
 
 test('service gateway has no proof or join and directory links are external', () => {
