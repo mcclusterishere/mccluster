@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Explore Earth · McCluster</title>
+<link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Widgets/widgets.css">
+<style>html,body,#earth{width:100%;height:100%;margin:0;overflow:hidden;background:#070c16} .notice{position:absolute;left:12px;bottom:12px;color:#d5deec;font:12px system-ui;pointer-events:none} .cesium-viewer-bottom,.cesium-viewer-toolbar,.cesium-viewer-animation,.cesium-viewer-timeline{display:none!important}</style></head>
+<body><div id="earth" aria-label="Interactive Earth. Drag to rotate, pinch to zoom."></div><div id="notice" class="notice">Drag to explore Earth · Sign in to see activity</div>
+<script>window.CESIUM_BASE_URL="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/";</script>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Cesium.js"></script>
+<script>
+(function(){var notice=document.getElementById('notice');if(!window.Cesium){notice.textContent='Earth preview unavailable';return;}
+try{var viewer=new Cesium.Viewer('earth',{animation:false,timeline:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,infoBox:false,selectionIndicator:false,fullscreenButton:false,terrainProvider:new Cesium.EllipsoidTerrainProvider()});
+viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(-20,14,19000000)});
+viewer.scene.globe.enableLighting=true;
+viewer.scene.screenSpaceCameraController.enableTilt=false;
+viewer.scene.screenSpaceCameraController.minimumZoomDistance=1900000;
+viewer.scene.screenSpaceCameraController.maximumZoomDistance=38000000;
+}catch(err){notice.textContent='Earth preview unavailable';console.warn('Guest globe initialization failed',err);}
+})();
+</script></body></html>
