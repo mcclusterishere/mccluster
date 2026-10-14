@@ -287,7 +287,20 @@ work, the joint post with both credits, the guest card, the desk refused
 until the partner confirms, the partner's one-tap confirm, one review
 settling both with the awards, the record at 3 / 3 and 250 points, the
 card verified, the mission open). Contract tests:
-`scripts/test/antisocial-get-social-completion.test.mjs`.
+`scripts/test/antisocial-get-social-completion.test.mjs`. Browser:
+`scripts/e2e/anti-social.e2e.mjs` on an iPhone against the fake backend,
+24/24: the card lists the three levels before joining, joining opens Level
+1 with the consent line, Level 1 and 2 go through `submit_antisocial_level`
+with the recap and the link and the list reads awaiting review → verified →
+the next level ready, Level 3 opens with the publish-together form and the
+way to find a member, Connect on a member's profile asks the server and
+reads Requested, a request is answered from the bell and reads Connected,
+the partner list is my connections by name and handle, Level 3 publishes
+together with partner, title, kind, link and note, the record reads 2 / 3 ·
+Awaiting review and the card reads you: 2 / 3, the feed card reads Made
+together with both names and the work and is drawn from the server's
+vouch, nothing scrolls sideways, and a project published with me is
+confirmed as my Level 3 with the same post and reciprocal credit.
 
 ### A creator's audience on the globe
 

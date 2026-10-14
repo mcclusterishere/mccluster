@@ -171,8 +171,10 @@ await page.screenshot({ path: join(OUT, 'level-3-no-partner.png') });
 
 /* 4. Connect on Ana's profile: Connect → Requested; Ana accepts (through the bell, as if she had asked us) */
 await page.click('#mnMissionClose');
-await page.evaluate(() => { history.replaceState(null, '', 'mnet.html?view=feed'); });
-await page.goto(`${BASE}/mnet.html?profile=fixture.ana`, { waitUntil: 'domcontentloaded' });
+/* a profile opens from a post's author, as it does for a member */
+await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('.mn__post-card .mn__author-link[data-person="fixture.ana"]', { timeout: 60000 });
+await page.click('.mn__post-card .mn__author-link[data-person="fixture.ana"]');
 await page.waitForSelector('#mnPersonConnect', { timeout: 60000 });
 check(S, 'a member\'s profile offers Connect', (await page.textContent('#mnPersonConnect')).trim() === 'Connect');
 await page.click('#mnPersonConnect');
