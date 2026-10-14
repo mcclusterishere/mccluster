@@ -203,9 +203,9 @@
      long-press and drags the held tab out of its own column. Three winged
      tabs, therefore two rooms per wing; the record button is FIXED and
      simply keeps its cell. Change this list and every wing changes with it. */
-  var ORDER = ["music", "home", "create", "profile"];
+  var ORDER = ["music", "home", "world", "profile"];
   /* columns that never open a wing and keep their cell while one is open */
-  var FIXED = { create: true };
+  var FIXED = { world: true };
 
   /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
      THIS ENFORCES IT.
