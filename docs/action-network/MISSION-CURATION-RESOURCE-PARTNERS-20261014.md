@@ -13,7 +13,7 @@ User's specific rejections override broad enthusiasm for a program. Thus Equity 
 7. Co-write a policy reform paper (Equity Uprise).
 8. Write a Song for Equity Uprise (new).
 
-Separate prominent **Find help for yourself or someone you know** gateway (no public mission proof, no points, no join) links to resource directories. The underlying legacy service mission remains paused to prevent its proof/points engine from treating need as a public achievement. The new private referral workflow is not implemented yet.
+Separate prominent **Find help for yourself or someone you know** gateway (no public mission proof, no points, no join) links to resource directories. A public no-login `/help.html` offers country/category filtering and shareable links; anyone can pass the page onward without sharing recipient identities. This is not a tracked referral graph. The underlying legacy service mission remains paused to prevent its proof/points engine from treating need as a public achievement. The new private referral workflow is not implemented yet.
 
 **One Safe Night** is a new *draft* mission; cannot go public before an authorized accommodation partner, room funding, booking and consent process exist. Housing navigation remains partner-only/paused. Documentation of field actions moves to the media/creator workflow; it is not an extra public mission. Free cuts, employment assistance, voter registration, and laundry are held as drafts until a real local operating program exists. Sneaker authentication moves to its own specialist workflow. Existing participants on retired/moved missions retain proof access via paused status.
 
