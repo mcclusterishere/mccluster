@@ -49,3 +49,34 @@ nav button{white-space:nowrap;font-size:11px;padding:8px}
 .globe-embedded nav{top:calc(var(--world-map) + 10px)}
 .globe-embedded .appbar{display:none!important}
 @media(max-width:600px){#worldFeedList{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.world-story{padding:8px}.world-story h2{font-size:12px}.world-story p{-webkit-line-clamp:2}#deck,.globe-embedded #deck{padding-top:48px}.world-mode{left:auto;right:8px;transform:none}nav{left:6px;right:6px}#worldFeed{padding-left:7px;padding-right:7px}}
+
+/* World design polish: glass navigation, visible geography, restrained mission cards. */
+body{background:#050912;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#globe{background:radial-gradient(circle at 50% 42%,#123353 0,#07101d 50%,#020408 100%)}
+#globe:after{content:"";position:absolute;inset:auto 0 0;height:45px;pointer-events:none;background:linear-gradient(transparent,#0b1018)}
+.world-mode{background:rgba(9,16,27,.82);border:1px solid rgba(188,209,230,.22);box-shadow:0 8px 30px #0009;backdrop-filter:blur(18px);border-radius:99px}
+.world-mode button{border-radius:99px;color:#cdd5e2}
+.world-mode button.is-active{background:#bd314c;color:#fff}
+nav{padding:4px 0;scrollbar-width:none}
+nav button{background:rgba(12,20,31,.9);border:1px solid #576679;border-radius:99px;color:#e9f1fa;backdrop-filter:blur(12px)}
+#worldSearch{background:#0e1725e8;border-color:#657184;outline-offset:2px}
+#deck,.globe-embedded #deck{background:linear-gradient(135deg,#111a27,#14141c);border-top:1px solid #526074;box-shadow:0 -6px 24px #0005}
+.world-deck-top{color:#ffb9c5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:750}
+#mission{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:4px 8px}
+#mission[hidden]{display:none}
+#mission #path,#mission #title,#mission #description{grid-column:1 / -1}
+#mission #title{letter-spacing:-.025em}
+#mission #previous,#mission #next{background:#222c3b;border-color:#526077}
+#mission #openFeed{background:#b82e48;border-color:#d94b64}
+#missionLink{background:transparent;border-color:#8b6b7b;color:#f5e7ed}
+#worldFeed{background:#080d15}
+.world-feed-head{color:#c8d4e6;font-weight:750}
+.world-story{background:linear-gradient(145deg,#172334,#121821);border:1px solid #35465d;box-shadow:0 4px 16px #0003;transition:transform .15s ease,border-color .15s ease}
+.world-story:focus-visible{outline:2px solid #ff8298;outline-offset:2px}
+.world-story:active{transform:scale(.975)}
+.world-story h2{color:#fff}
+.world-story small{color:#ff9bac}
+.world-story p{color:#bbc8d9}
+#worldDetail{background:linear-gradient(150deg,#172338,#121821);border-color:#4e5d75}
+#worldDetail h2{letter-spacing:-.035em}
+@media(prefers-reduced-motion:reduce){.world-story{transition:none}}
