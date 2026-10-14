@@ -11,6 +11,12 @@ ON CONFLICT(id) DO UPDATE SET
  title=EXCLUDED.title,description=EXCLUDED.description,
  domain=EXCLUDED.domain,skills=EXCLUDED.skills,updated_at=now();
 
+-- The catalog track is titled "Antisocial" on the "here" album.
+-- The owner explicitly approved this song-to-mission association.
+INSERT INTO public.action_globe_song_missions(mission_id,song_title,album_slug)
+VALUES('a17050c1-a551-4c5c-80c1-5a1750c1a001','Antisocial','here')
+ON CONFLICT(mission_id) DO UPDATE SET song_title=EXCLUDED.song_title,album_slug=EXCLUDED.album_slug;
+
 CREATE TABLE IF NOT EXISTS public.action_antisocial_levels(
  assignment_id uuid NOT NULL REFERENCES public.action_mission_assignments(id) ON DELETE CASCADE,
  level smallint NOT NULL CHECK(level BETWEEN 1 AND 3),
