@@ -251,15 +251,17 @@ for (const device of DEVICES) {
   check(scope, 'Post sends an authenticated POST /v1/mnet/posts and the post lands at the top', posted && posted.auth && posted.body.body === 'E2E: posted from the World screen', posted);
   check(scope, 'the composer folds once the post is away', !(await page.$eval('#mnComposer', (c) => c.classList.contains('is-open'))));
 
-  // E=Up or Fund: the post that carries a mission offers both; the rest offer neither
+  // the emblem or Fund: the post that carries a mission offers both; the rest offer neither. The mark is never written out (owner, 2026-10-14).
   const target = world.posts.find((p) => p.content_id === CONTENT);
   const card = `#mnFeed [data-post-id="${target.id}"]`;
   await page.waitForSelector(`${card} .mn__actcard .mn__primary--eup`, { timeout: 10000 });
   await page.waitForFunction((sel) => /12 joined/.test(document.querySelector(sel + ' .mn__actcard')?.textContent || ''), card, { timeout: 8000 }).catch(() => {});
   const banner = await page.textContent(`${card} .mn__actcard`);
-  check(scope, 'a mission post offers E=Up (the owner\'s emblem) and Fund, with the mission\'s public counts', /E=Up/.test(banner) && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-logo\.webp$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), banner);
+  const eupJoin = await page.$eval(`${card} .mn__primary--eup`, (a) => ({ text: a.textContent.trim(), label: a.getAttribute('aria-label'), imgs: a.querySelectorAll('img').length, box: a.getBoundingClientRect().toJSON(), img: a.querySelector('img') && a.querySelector('img').getBoundingClientRect().toJSON(), natural: a.querySelector('img') ? [a.querySelector('img').naturalWidth, a.querySelector('img').naturalHeight] : null })).catch(() => null);
+  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-logo\.webp$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
+  check(scope, 'nothing on the screen writes the mark out', !/E\s*=\s*Up/i.test(await page.evaluate(() => document.body.innerText)));
   const plain = world.posts.find((p) => !p.content_id && p.visibility === 'public');
-  check(scope, 'a post with no mission has no E=Up, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
+  check(scope, 'a post with no mission has no join emblem, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
   await page.click(`${card} [data-fund-mission]`);
   await page.waitForSelector(`${card} .mn__fund-line a`, { timeout: 8000 }).catch(() => {});
   check(scope, 'Fund tells the truth for this mission: its campaign\'s governed support rail, open', /governed support rail/.test((await page.textContent(`${card} .mn__fund-line`).catch(() => '')) || '') && (await page.getAttribute(`${card} .mn__fund-line a`, 'href').catch(() => '')) === 'give.html' && /verified by the desk/.test(await page.textContent(`${card} .mn__fund-line`)));
@@ -267,7 +269,7 @@ for (const device of DEVICES) {
   await page.click(`${card} .mn__primary--eup`);
   await page.waitForSelector('#mnMissionDialog[open]', { timeout: 10000 });
   await page.waitForFunction(() => /support rail|isn’t open/.test(document.getElementById('mnMissionFund')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
-  check(scope, 'E=Up opens the mission to join it and do it, and the dialog says whether funding is open', /Clean up the Mill River/.test(await page.textContent('#mnMissionTitle')) && (await page.isVisible('#mnMissionJoin')) && /governed support rail/.test(await page.textContent('#mnMissionFund')));
+  check(scope, 'the emblem opens the mission to join it and do it, and the dialog says whether funding is open', /Clean up the Mill River/.test(await page.textContent('#mnMissionTitle')) && (await page.isVisible('#mnMissionJoin')) && /governed support rail/.test(await page.textContent('#mnMissionFund')));
   await page.screenshot({ path: join(OUT, 'member-iphone-eup.png') });
   await page.click('#mnMissionClose');
   await page.click('#mnToWorld');
@@ -481,9 +483,11 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   await page.screenshot({ path: join(OUT, `guest-${device.name}-mission.png`) });
   await page.click('#mnWorldFocusFund');
   const guestSentEup = world.requests.length;
+  const cardJoin = await page.$eval('#mnWorldFocusJoin', (b) => ({ text: b.textContent.trim(), label: b.getAttribute('aria-label'), imgs: b.querySelectorAll('img').length, box: b.getBoundingClientRect().toJSON() }));
+  check(scope, 'the mission card\'s join is the emblem alone, a real tap target, with no words', cardJoin.text === '' && cardJoin.label === 'Join this mission and do it' && cardJoin.imgs === 1 && cardJoin.box.height >= 36 && cardJoin.box.width >= 44 && !/E\s*=\s*Up/i.test(await page.evaluate(() => document.body.innerText)), cardJoin);
   await page.click('#mnWorldFocusJoin');
   await page.waitForSelector('#mnSignedOut:not([hidden])');
-  check(scope, 'E=Up as a guest opens sign-in with the reason, and sends nothing', /Sign in to join this mission/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(guestSentEup).every((r) => !/posts|missions/.test(r.path)));
+  check(scope, 'the emblem as a guest opens sign-in with the reason, and sends nothing', /Sign in to join this mission/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(guestSentEup).every((r) => !/posts|missions/.test(r.path)));
   await page.click('#mnSignedOutBack');
   await page.waitForSelector('#mnFeed [data-post-id]');
   await page.waitForSelector('#mnWorldFocus:not([hidden])', { timeout: 8000 }).catch(() => {});

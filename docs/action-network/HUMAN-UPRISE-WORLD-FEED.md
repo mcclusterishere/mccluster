@@ -34,39 +34,48 @@ stays as a frame.
    the world · Find a mission or region**, with Missions (steps through the
    pins), Regional impact (shows or hides the counted regions), Policy ↗ and
    Near me; after a pin or a post picks a mission, the mission card with
-   **E=Up** (the emblem; the canonical join flow), **Fund**, **Locate**, **Only posts about this**,
+   **the emblem** (the owner's Equity Uprise mark alone; the canonical join flow), **Fund**, **Locate**, **Only posts about this**,
    **All missions** and ✕.
 3. **Feed** (bottom): the real network from `js/mnet.js`: composer, posts,
    media, tracks, Share, Save, verified-action and mission-offer cards with
-   E=Up and Fund. It scrolls on its own; the page does not.
+   the emblem and Fund. It scrolls on its own; the page does not.
 
-### E=Up or Fund it (owner, 2026-10-14)
+### The emblem or Fund it (owner, 2026-10-14)
 
-"There's no comment or like. It's either E=Up or fund it." A post has no
-reaction at all. A post that carries a mission (a server-vouched offer or
-verified-action card) offers two things in its **Mission attached** banner,
-and the mission card in the context strip offers the same two:
+"There's no comment or like. It's either [the emblem] or fund it." A post
+has no reaction at all. A post that carries a mission (a server-vouched
+offer or verified-action card) offers two things in its **Mission
+attached** banner, and the mission card in the context strip offers the
+same two:
 
-- **E=Up** is the owner's Equity Uprise emblem
-  (`assets/img/equity-uprise-logo.webp`, the "E =" with the rising bars),
-  shown as supplied on its own white ground, scaled only. Tapping it is the
-  canonical join flow (`openMission` → Take this mission, with the offer's
-  attribution): join the mission's cohort and do it. Cohort admission
-  itself stays with the desk (`admit_fellow_to_cohort`). The banner shows
-  the mission's public counts, "n joined · n verified"
-  (`action_mission_stats`, anon-granted).
+- **The emblem** is the owner's Equity Uprise mark
+  (`assets/img/equity-uprise-logo.webp`), complete, shown as supplied on
+  its own white ground, scaled only, with no rounding and no crop. **It is
+  never written out.** The owner, later the same day: "just the symbol; I
+  never want to state it; I just want to use the mark, never work it out."
+  So the control is the artwork alone: no caption, no wordmark, no chevron
+  beside it, and no spelled-out name anywhere in the product's copy, which
+  says "join" instead. The accessible name says what the control does
+  ("Join this mission and do it"), not what the mark is called. The pill
+  around it is the tap target (44px in the feed; the mission card's pill
+  row). Tapping it is the canonical join flow (`openMission` → Take this
+  mission, with the offer's attribution): join the mission's cohort and do
+  it. Cohort admission itself stays with the desk
+  (`admit_fellow_to_cohort`). The banner shows the mission's public counts,
+  "n joined · n verified" (`action_mission_stats`, anon-granted).
 - **Fund** (a banknote) asks the campaign's public bounty board
   (`action_bounty_public`, keyed by the mission's `campaign_id`) and says
   the truth in a line under the banner or card: when the campaign has
   money enabled, "Funding is open through the campaign's governed support
   rail" with a link to `give.html` and the campaign's allocation note;
-  otherwise "Funding isn't open for this mission yet. You can still E=Up
-  and do it." The page never takes money itself. The mission dialog shows
+  otherwise "Funding isn't open for this mission yet. You can still join
+  it and do it." The page never takes money itself. The mission dialog shows
   the same line under the mission's details.
 - A post with no vouched mission carries Share and Save only. A guest's
   public cards carry no mission tie (offer cards need a session), so a
-  guest meets E=Up and Fund on the mission card: E=Up asks them to sign in
-  with the reason; Fund answers without one, because the rail is public.
+  guest meets the emblem and Fund on the mission card: the emblem asks them
+  to sign in with the reason; Fund answers without one, because the rail is
+  public.
 - The Worker keeps its reaction route (gated on a completed mission,
   `hasVerifiedAction`) and its reply routes (live-room chat) for any older
   caller; the page calls neither.
@@ -105,13 +114,13 @@ and the mission card in the context strip offers the same two:
 - **Mission card:** the kind as an icon tile (missions carry no photo and
   none is invented), Latest badge when nothing is picked (members), place,
   kind, public joined/verified counts (`action_mission_stats`, anon-granted),
-  title, description from 600px, and **E=Up · Fund · Locate · Posts · All
-  missions**. No Fund button: there is no verified funding flow yet.
+  title, description from 600px, and **the emblem · Fund · Locate · Posts ·
+  All missions**. No Fund button: there is no verified funding flow yet.
 - **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
   a post carries; no invented topics or locations), steel cards, picture as
   a right-hand thumbnail with a 1/n badge that opens all of them on tap,
   share, save. A post that carries a mission shows it as a red **Mission
-  attached** banner with E=Up, Fund, its public counts and Locate on globe
+  attached** banner with the emblem, Fund, its public counts and Locate on globe
   (server-vouched, as before).
 - **Time rewind** (owner's desktop mockup): Live · −24h · −7d · −30d under
   the composer. It reads the feed from before that moment through the same
@@ -134,7 +143,7 @@ and the mission card in the context strip offers the same two:
 - The strip opens on **Explore the world** (the owner's signed-out
   reference) rather than the latest mission. The composer is replaced by
   **Member posts live here.** over a real Equity Uprise rally photo
-  (`assets/img/rally/rally-01.jpg`) with Sign in → and Create account. E=Up,
+  (`assets/img/rally/rally-01.jpg`) with Sign in → and Create account. The emblem,
   Save, people, groups, missions, media and every other room open sign-in
   with the reason at the top and a way back to the World. Nothing is sent. Share works (every guest
   post is public). Verified-action cards still show (`action_feed_cards` is
@@ -369,7 +378,7 @@ own browser.
 api.mccluster.org and Supabase in memory (every request recorded and
 checked) and drives: the composition on iPhone portrait/landscape, iPad
 portrait/landscape and desktop; Post and Share round trips with the exact
-requests; E=Up and Fund on a mission post and on the mission card, for a
+requests; the emblem (alone, no words, the complete artwork) and Fund on a mission post and on the mission card, for a
 member and a guest, with the funding truth from the campaign's board; pin → strip and narrowed feed; post → globe
 without narrowing; Time rewind (the request carries before= a day ago, the
 honest empty state, Live brings the feed back); the layers cycle; search

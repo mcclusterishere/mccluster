@@ -511,7 +511,7 @@
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          /* E=UP OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction. A post that carries a mission offers E=Up and Fund in its mission banner; every card keeps Share and Save. */
+          /* THE EMBLEM OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction. A post that carries a mission offers the emblem (join) and Fund in its mission banner; every card keeps Share and Save. */
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
@@ -520,16 +520,19 @@
     '</article>';
   }
 
-  /* E=UP OR FUND IT (owner, 2026-10-14). The mark is the owner's Equity
-     Uprise artwork, scaled only, never redrawn. E=Up joins the mission's
-     cohort and does it (the canonical join flow); Fund opens the campaign's
-     governed support rail, and only says so when that campaign has money
-     enabled (action_bounty_public). Never a payment endpoint of its own. */
-  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="24" height="24">';
+  /* THE EMBLEM OR FUND IT (owner, 2026-10-14). The join is the owner's
+     Equity Uprise artwork, complete and scaled only, never redrawn, and
+     never written out: the mark stands alone, with no caption or wordmark
+     beside it, and its accessible name says what it does. Tapping it joins
+     the mission's cohort and does it (the canonical join flow); Fund opens
+     the campaign's governed support rail, and only says so when that
+     campaign has money enabled (action_bounty_public). Never a payment
+     endpoint of its own. */
+  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28">';
   function fundButtonHtml(c) {
     return '<button class="mn__fund" type="button" data-fund-mission="' + esc(c.mission_id) + '"' + (c.campaign_id ? ' data-campaign="' + esc(c.campaign_id) + '"' : '') + ' aria-label="Fund this mission">' + ICON.fund + '<span>Fund</span></button>';
   }
-  /* the mission's public counts (action_mission_stats, anon-granted): how many E=Up, how many verified; never who */
+  /* the mission's public counts (action_mission_stats, anon-granted): how many joined, how many verified; never who */
   function missionStatsHtml(missionId) {
     var st = state.world.stats[missionId];
     if (!st) return "";
@@ -550,7 +553,7 @@
   function fundLineHtml(st) {
     return (st.open
       ? '<span>Funding is open through the campaign\u2019s governed support rail.</span><a class="mn__fund-go" href="give.html">Open the support rail \u2192</a>'
-      : '<span>Funding isn\u2019t open for this mission yet. You can still E=Up and do it.</span>') +
+      : '<span>Funding isn\u2019t open for this mission yet. You can still join it and do it.</span>') +
       (st.note ? '<small>' + esc(st.note) + '</small>' : '');
   }
   function toggleFundLine(host, missionId, campaignId) {
@@ -580,7 +583,7 @@
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
       (c.description ? '<p class="mn__actcard-foot">' + esc(c.description) + '</p>' : '') +
       '<div class="mn__actcard-row">' +
-        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '<span class="mn__hint">Mission closed</span>') +
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '<span class="mn__hint">Mission closed</span>') +
         fundButtonHtml(c) +
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
@@ -608,7 +611,7 @@
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
       '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
-        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '') +
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
         fundButtonHtml(c) +
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
@@ -630,7 +633,7 @@
       '<p class="mn__collab-by">' + esc(c.kind || "work") + ' · by ' + credits.join(' <span aria-hidden="true">&amp;</span> ') + '</p>' +
       '<div class="mn__actcard-row">' +
         (c.link ? '<a class="mn__quiet" href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">Open the work ↗</a>' : '') +
-        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '') +
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
       '</div>' + missionStatsHtml(c.mission_id) + '</div>';
   }
   function loadCollaborationCards(items) {
@@ -2917,7 +2920,7 @@
     $("mnWorldFocusJoin").addEventListener("click", function () {
       var f = state.world.focus;
       if (!f) return;
-      /* E=Up as a guest: the reason is this mission, not the whole list */
+      /* the emblem as a guest: the reason is this mission, not the whole list */
       if (state.guest) { askToSignIn("mission"); return; }
       missions.content = ""; missions.source = ""; missions.attributedMission = "";
       setView("missions");

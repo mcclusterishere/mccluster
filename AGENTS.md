@@ -72,6 +72,13 @@ Rules, no exceptions:
   the supplied file does not contain is drawing.
 - **If the variant you need does not exist, ask for it.** A missing asset is a
   question for the owner, not a gap to fill.
+- **Do not write a mark out in words where the mark is the control.** The
+  Equity Uprise emblem (`assets/img/equity-uprise-logo.webp`) is the join
+  on the Human Uprise World screen, and it stands alone: no caption, no
+  wordmark, no chevron beside it, no spelled-out name in product copy
+  (owner, 2026-10-14: "just the symbol; I never want to state it; I just
+  want to use the mark, never work it out"). Give the control an accessible
+  name that says what it does, not what the mark is called.
 - **For PRIM3 specifically, use the full uncropped owner-supplied artwork.** Resize only by proportional scaling; never crop a PRIM3 mark or lockup to make it fit a UI slot.
 
 ### Whip Equipped — the supplied kit

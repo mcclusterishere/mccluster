@@ -190,7 +190,7 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
-  /* E=UP OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction; a mission post offers E=Up and Fund */
+  /* THE EMBLEM OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction; a mission post offers the emblem and Fund */
   assert.match(js, /mn__primary--eup/);
   assert.match(js, /data-fund-mission=/);
   assert.doesNotMatch(js, /data-action="like"|data-action="comments"|data-action="uprise"/);

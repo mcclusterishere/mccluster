@@ -102,19 +102,25 @@ test('text-only post does not shadow analytics track function',()=>{
  assert.match(client,/track\("mnet_post_created"/);
  assert.doesNotMatch(client,/var track = pickedTrack\(\)/);
 });
-test('E=Up or Fund it: no like, comment or reaction; a mission post offers the emblem and the governed rail',()=>{
- /* the join is the owner's emblem, scaled only, never redrawn */
- assert.match(client,/var EUP_MARK = '<img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp" alt="" width="24" height="24">'/);
- assert.match(client,/class="mn__primary mn__primary--eup" href="' \+ esc\(actionOfferHref\(c\)\)[\s\S]{0,200}aria-label="E=Up: join this mission and do it">' \+ EUP_MARK \+ 'E=Up<\/a>/);
- assert.match(page,/id="mnWorldFocusJoin"[^>]*aria-label="E=Up: join this mission and do it"[^>]*><img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp"/);
+test('the emblem or Fund it: no like, comment or reaction; a mission post offers the emblem and the governed rail',()=>{
+ const css=readFileSync(new URL('../../css/mnet.css',import.meta.url),'utf8');
+ /* the join is the owner's emblem, complete, scaled only, never redrawn, and never written out (owner, 2026-10-14: "just the symbol … never state it") */
+ assert.match(client,/var EUP_MARK = '<img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp" alt="" width="28" height="28">'/);
+ assert.match(client,/class="mn__primary mn__primary--eup" href="' \+ esc\(actionOfferHref\(c\)\)[\s\S]{0,200}aria-label="Join this mission and do it">' \+ EUP_MARK \+ '<\/a>/);
+ assert.equal((client.match(/EUP_MARK \+ '<\/a>'/g)||[]).length,3,'every feed join is the mark alone: offer, verified action, made together');
+ assert.match(page,/id="mnWorldFocusJoin"[^>]*aria-label="Join this mission and do it"[^>]*><img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp" alt="" width="28" height="28"><\/button>/);
+ for(const [name,text] of [['the page',page],['the script',client],['the stylesheet',css]]) assert.doesNotMatch(text,/E\s*=\s*Up/i,name+' never writes the mark out');
+ assert.match(css,/\.mn__eup \{ width: 28px; height: 28px; object-fit: contain; flex: none; \}/,'the complete artwork, scaled only, no rounding');
+ assert.match(css,/\.mn__primary--eup, \.mn__world-go--eup \{ display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px;/,'the pill is the tap target');
+ assert.match(css,/\.mn-world-on #mnFeed \.mn__actcard-row \.mn__primary--eup::after \{ content: none; \}/,'no chevron beside the mark');
  assert.match(page,/id="mnWorldFocusFund"/);
  /* Fund tells the truth per campaign and never pays by itself */
  assert.match(client,/function fundState\(missionId, campaignId\)/);
  assert.match(client,/sbRpc\("action_bounty_public", \{ p_campaign: cid \}\)/);
  assert.match(client,/href="give\.html"/);
- assert.match(client,/Funding isn\\u2019t open for this mission yet\. You can still E=Up and do it\./);
+ assert.match(client,/Funding isn\\u2019t open for this mission yet\. You can still join it and do it\./);
  assert.doesNotMatch(client,/stripe|checkout/i,'no payment endpoint of its own');
- assert.match(client,/\$\("mnWorldFocusJoin"\)\.addEventListener\("click"[\s\S]{0,160}if \(state\.guest\) \{ askToSignIn\("mission"\); return; \}/,'E=Up as a guest names this mission as the reason to sign in');
+ assert.match(client,/\$\("mnWorldFocusJoin"\)\.addEventListener\("click"[\s\S]{0,160}if \(state\.guest\) \{ askToSignIn\("mission"\); return; \}/,'the emblem as a guest names this mission as the reason to sign in');
  /* nothing else reacts */
  assert.doesNotMatch(client,/data-action="comments"|data-action="like"|data-action="uprise"/);
  assert.doesNotMatch(client,/function explainUprise/);
