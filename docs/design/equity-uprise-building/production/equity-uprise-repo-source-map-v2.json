@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 349,
+  "candidate_count": 343,
   "capability_source_count": 99,
-  "support_only_count": 250,
+  "support_only_count": 244,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1306,13 +1306,6 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
-      "path": "js/world-news.js",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
-    },
-    {
       "path": "lanes.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -1833,13 +1826,6 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
-      "path": "supabase/functions/public-gdelt-news/index.ts",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
-    },
-    {
       "path": "supabase/functions/shake-order/index.ts",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2167,34 +2153,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network paid-clipping migration (commercial clip missions, settlement and payout ledger). It calls eu_is_admin only for the desk's credential attach; it is commerce/mobilization infrastructure, not a physical building capability."
-    },
-    {
-      "path": "supabase/migrations/20261014080000_media_geo_ingestion.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "News ingestion schema and reliability support, not a physical building capability."
-    },
-    {
-      "path": "supabase/migrations/20261014081000_media_ingest_rpc.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "News ingestion schema and reliability support, not a physical building capability."
-    },
-    {
-      "path": "supabase/migrations/20261014081500_media_news_namespace.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "News ingestion schema and reliability support, not a physical building capability."
-    },
-    {
-      "path": "supabase/migrations/20261014083000_gdelt_backoff_cache.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "News ingestion schema and reliability support, not a physical building capability."
     },
     {
       "path": "supabase/pending/README.md",
