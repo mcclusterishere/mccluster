@@ -382,6 +382,30 @@
           <label class="mn__check" for="mnMissionShare"><input id="mnMissionShare" type="checkbox" checked><span><b>Put this action on the feed once it's verified</b>The verified post can include the proof you submitted, with a real video thumbnail.</span></label>
           <button class="mn__primary" type="submit">Submit mission proof</button>
         </form>
+        <section id="mnAntisocialLevels" hidden aria-label="Anti-Social mission levels">
+          <p class="mn__eyebrow">Anti-Social · Get Social</p>
+          <h3>One mission. Three levels.</h3>
+          <ol id="mnAntisocialProgress" class="mn__record-list"></ol>
+          <p class="mn__hint">High five only when someone wants to. Record yourself or ask before filming anyone else. Do not publish someone who did not consent.</p>
+          <form id="mnAntisocialForm" hidden>
+            <p id="mnAntisocialNext" class="mn__eyebrow"></p>
+            <label class="mn__label" for="mnAntisocialStatement">Tell us what you did</label>
+            <textarea class="mn__input mn__textarea" id="mnAntisocialStatement" rows="3" maxlength="1500" placeholder="A short recap of your action"></textarea>
+            <label class="mn__label" for="mnAntisocialVideo">Your optional clip (only with permission)</label>
+            <input class="mn__input" id="mnAntisocialVideo" type="file" accept="video/*,image/*">
+            <label class="mn__label" for="mnAntisocialLink">Or an HTTPS link to your clip</label>
+            <input class="mn__input" id="mnAntisocialLink" type="url" placeholder="https://…">
+            <div id="mnAntisocialCollab" hidden>
+              <p class="mn__hint">Connect with a member through Action Network, make original work, publish it, and have both members submit the same post. Both must complete levels 1 and 2 before the joint work counts.</p>
+              <label class="mn__label" for="mnAntisocialPartner">Your Action Network collaborator</label>
+              <select class="mn__input" id="mnAntisocialPartner"><option value="">Select an accepted connection</option></select>
+              <label class="mn__label" for="mnAntisocialPost">Your published joint post ID or post link</label>
+              <input class="mn__input" id="mnAntisocialPost" placeholder="Post ID or shared post link">
+            </div>
+            <button class="mn__primary" type="submit">Submit this level for review</button>
+          </form>
+          <p class="mn__status" id="mnAntisocialStatus" role="status"></p>
+        </section>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
       </dialog>
 
