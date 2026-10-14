@@ -2218,18 +2218,18 @@
       "rationale": "Public link-only directory registry; no case data or new control plane."
     },
     {
+      "path": "supabase/migrations/20261014185932_equity_policy_memo_application_path.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unapplied verified memo application eligibility."
+    },
+    {
       "path": "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unapplied mission curation and resource registry."
-    },
-    {
-      "path": "supabase/pending/20261014170100_equity_policy_memo_application_path.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unapplied verified memo application eligibility."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
