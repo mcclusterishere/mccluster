@@ -17,6 +17,28 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  /* ---------- THREE HOSTS, ONE BAR ----------
+     The World is served on Human Uprise's own host as well
+     (workers/mccluster/src/human-uprise/router.js; owner, 2026-10-14: "the
+     globe experience as its own solo experience ... interconnected with all
+     the systems"). Standing there, Music and the M are Matthew's site and
+     link to it outright; the Globe stays home. Standing on Matthew's site,
+     the Globe goes to WORLD_ORIGIN once the owner has routed the host and
+     flipped it (docs/control-plane/DOMAINS-AND-ENTITIES.md, Activation);
+     empty keeps the World on this origin, which is the live site today.
+     A session is per origin (localStorage), so flipping it means a member
+     signs in once more, on the World's own host. */
+  var HU_HOSTS = ["humanuprise.com", "www.humanuprise.com"];
+  var ON_HU = HU_HOSTS.indexOf(String(location.hostname).toLowerCase()) !== -1;
+  var HOUSE_ORIGIN = "https://matthew.mccluster.org/";
+  var WORLD_ORIGIN = "";
+  /* where Matthew's rooms are, and where the World is, seen from here;
+     static files always come from ROOT (the World's host carries them) */
+  var HOUSE = ON_HU ? HOUSE_ORIGIN : ROOT;
+  var WORLD = ON_HU ? ROOT : (WORLD_ORIGIN || ROOT);
+  /* the World's address: the root of its own host, mnet.html elsewhere */
+  function worldAt(query) { return (ON_HU || WORLD_ORIGIN ? WORLD : WORLD + "mnet.html") + (query || ""); }
+
   /* ---------- THE BAR EXISTS WHEREVER THIS SCRIPT DOES ----------
 
      The bar was twenty lines of inline SVG pasted into each page, and
@@ -67,15 +89,15 @@
     nav.className = "appbar";
     nav.setAttribute("aria-label", "Sections");
     nav.innerHTML =
-      '<a class="appbar__tab" id="appbarNP" href="' + ROOT + 'listen.html" data-appnav="music">' +
+      '<a class="appbar__tab" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
+      '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* LAST COLUMN: the Globe, Human Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
-      '<a class="appbar__tab appbar__world" href="' + ROOT + 'mnet.html?view=feed" data-appnav="world">' +
+      '<a class="appbar__tab appbar__world" href="' + WORLD + 'mnet.html?view=feed" data-appnav="world">' +
         WORLD_SVG + '<span>Globe</span></a>';
     document.body.appendChild(nav);
     return nav;
@@ -131,7 +153,7 @@
   worldTab.setAttribute("aria-label", "Open the World globe");
   var worldLabel = worldTab.querySelector("span:last-child");
   if (worldLabel) worldLabel.textContent = "Globe";
-  worldTab.href = ROOT + "mnet.html?view=feed";
+  worldTab.href = worldAt("?view=feed");
 
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
@@ -182,11 +204,18 @@
       ],
     },
   };
-  /* every wing door resolves against the house root, wherever the page
-     sits. The map is not a room, so it never takes a path. */
+  /* every wing door resolves against its own host, wherever the page sits:
+     Matthew's rooms against the house, the World's rooms against the
+     World's door, and the account against the page's own host (a session
+     is per origin). The map is not a room, so it never takes a path. */
+  function resolveRoom(wing, path) {
+    if (path === MAP) return MAP;
+    if (path.indexOf("mnet.html") === 0) return worldAt(path.slice("mnet.html".length));
+    return (wing === "world" ? ROOT : HOUSE) + path;
+  }
   Object.keys(WINGS).forEach(function (k) {
-    WINGS[k].home = ROOT + WINGS[k].home;
-    WINGS[k].slots.forEach(function (s) { if (s[0] !== MAP) s[0] = ROOT + s[0]; });
+    WINGS[k].home = resolveRoom(k, WINGS[k].home);
+    WINGS[k].slots.forEach(function (s) { s[0] = resolveRoom(k, s[0]); });
   });
   /* ORDER is the bar's DOM order, and morph() reads it as such: the column a
      held tab keeps is its index here, so this list and the hand-written
@@ -253,7 +282,10 @@
        says the word "uprise" anywhere. Lighting a coin there would be an
        editorial claim the pages do not make. Left for the owner to call. */
   };
-  var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[location.pathname.split("/").pop()] || "") + '"]');
+  var PAGE_KEY = location.pathname.split("/").pop();
+  /* on the World's own host the root is the World, not the house */
+  if (ON_HU && (PAGE_KEY === "" || PAGE_KEY === "index.html")) PAGE_KEY = "mnet.html";
+  var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[PAGE_KEY] || "") + '"]');
   if (hereTab) hereTab.classList.add("is-here");
   /* The tab you are already on: a tap used to reload the same page (slow in
      the in-app browsers, and it lost the place), so people tapped it again.
@@ -273,6 +305,104 @@
   var HOME_BAR = dock.innerHTML;
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
+
+  /* ---------- A CREATOR'S PERSPECTIVE ----------
+     Owner, 2026-10-14: from Music, "if they select one individual, they
+     should be able to go to their front page and experience the site from
+     their perspective, just like they experience the site from my
+     perspective" with the M in the middle. A creator's front page
+     (music-creator.html?handle=) tells the bar whose it is (the
+     mcc:perspective event from js/music-creator-profile.js), and for the
+     rest of the session the middle cell is that creator: their own avatar,
+     round, or the initial of their name (never a mark drawn for them,
+     AGENTS.md), and it opens their front page. The held wing keeps the way
+     to McCluster's house, the M as supplied, beside Everything. The house
+     clears it: standing at Matthew's front door, the M is back. */
+  var PERSPECTIVE_KEY = "mcc_perspective";
+  var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
+  var HOUSE_ROOM = WINGS.home.slots[0];
+  var HOUSE_LABEL = (function () {
+    var t = dock.querySelector('[data-appnav="home"] span:last-child');
+    return t && t.textContent ? t.textContent : "HERE";
+  })();
+  function textOf(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
+  function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
+  function cleanPerspective(p) {
+    if (!p || typeof p !== "object") return null;
+    var handle = String(p.handle || "").trim().toLowerCase();
+    if (!HANDLE_RE.test(handle)) return null;
+    var name = String(p.name || "").replace(/\s+/g, " ").trim().slice(0, 60) || "@" + handle;
+    var avatar = "";
+    try { var u = new URL(String(p.avatar || ""), location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
+    return { handle: handle, name: name, avatar: avatar };
+  }
+  function readPerspective() {
+    try { return cleanPerspective(JSON.parse(sessionStorage.getItem(PERSPECTIVE_KEY) || "null")); } catch (e) { return null; }
+  }
+  function storePerspective(p) {
+    try { if (p) sessionStorage.setItem(PERSPECTIVE_KEY, JSON.stringify(p)); else sessionStorage.removeItem(PERSPECTIVE_KEY); } catch (e) {}
+  }
+  var AT_HOUSE = !ON_HU && (function () {
+    try { return samePath(location.pathname) === samePath(new URL(HOUSE + "index.html", location.href).pathname); } catch (e) { return false; }
+  })();
+  var PERSPECTIVE = AT_HOUSE ? null : readPerspective();
+  if (AT_HOUSE) storePerspective(null);
+  function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
+  function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
+  function paintPerspective() {
+    var homeTab = dock.querySelector('[data-appnav="home"]');
+    if (!homeTab) return;
+    var p = PERSPECTIVE, label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
+    if (!p) {
+      /* M is the McCluster platform home for everyone (owner, 2026-10-14);
+         the member feed lives in World, not behind the emblem. */
+      homeTab.href = HOUSE + "index.html";
+      homeTab.setAttribute("aria-label", "Open the McCluster home");
+      homeTab.removeAttribute("data-perspective");
+      if (coin && (coin.tagName !== "IMG" || coin.classList.contains("appbar__m--creator"))) {
+        coin.outerHTML = '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">';
+      }
+      if (label) label.textContent = HOUSE_LABEL;
+      WINGS.home.home = HOUSE + "index.html";
+      WINGS.home.slots[0] = HOUSE_ROOM;
+      return;
+    }
+    var door = HOUSE + "music-creator.html?handle=" + encodeURIComponent(p.handle);
+    homeTab.href = door;
+    homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
+    homeTab.setAttribute("data-perspective", p.handle);
+    if (coin) {
+      coin.outerHTML = p.avatar
+        ? '<img class="appbar__m appbar__m--creator" src="' + attrOf(p.avatar) + '" alt="">'
+        : '<span class="appbar__m appbar__m--initial" aria-hidden="true">' + textOf(initialOf(p.name)) + "</span>";
+    }
+    if (label) label.textContent = shortName(p.name);
+    /* their own front page lights the middle coin, as the house lights the M */
+    var theirs = /music-creator\.html$/.test(location.pathname) &&
+      String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
+    homeTab.classList.toggle("is-here", theirs);
+    WINGS.home.home = door;
+    WINGS.home.slots[0] = [HOUSE + "index.html", "mmark", "McCluster", { title: "McCluster, the house",
+      sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
+  }
+  function setPerspective(raw) {
+    var p = cleanPerspective(raw);
+    if (!p) return false;
+    PERSPECTIVE = p;
+    storePerspective(p);
+    if (wingOn) revert();
+    paintPerspective();
+    HOME_BAR = dock.innerHTML;
+    return true;
+  }
+  function clearPerspective() {
+    PERSPECTIVE = null;
+    storePerspective(null);
+    if (wingOn) revert();
+    paintPerspective();
+    HOME_BAR = dock.innerHTML;
+  }
+  window.addEventListener("mcc:perspective", function (e) { setPerspective(e.detail); });
 
   function readAuthSession() {
     try { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); }
@@ -310,21 +440,15 @@
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
     /* one World, signed in or not: the same screen, read-only for guests */
     var worldDoor = dock.querySelector('[data-appnav="world"]');
-    if (worldDoor) worldDoor.href = ROOT + "mnet.html?view=feed";
-    WINGS.world.home = ROOT + "mnet.html?view=feed";
+    if (worldDoor) worldDoor.href = worldAt("?view=feed");
+    WINGS.world.home = worldAt("?view=feed");
     var body = document.body;
     body.classList.toggle("mcc-auth-in", !!signedIn);
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* M is the McCluster platform home for everyone (owner, 2026-10-14);
-       the member feed lives in World, not behind the emblem. */
-    var homeTab = dock.querySelector('[data-appnav="home"]');
-    if (homeTab) {
-      homeTab.href = ROOT + "index.html";
-      homeTab.setAttribute("aria-label", "Open the McCluster home");
-    }
-    WINGS.home.home = ROOT + "index.html";
+    /* the middle cell: the M, or the creator whose perspective this session holds */
+    paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
        composer, a creator's analytics on their profile), so any copy of
@@ -338,7 +462,7 @@
       var label = tab.querySelector("span:last-child");
       var svg = tab.querySelector(":scope > svg");
       var av = tab.querySelector(".appbar__auth-avatar");
-      tab.href = signedIn ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
+      tab.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
       tab.setAttribute("aria-label", signedIn ? "Open your member workspace" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
       if (label) label.textContent = signedIn ? "Me" : "Sign in";
@@ -358,7 +482,7 @@
       chip.innerHTML = '<span class="mcc-auth-chip__dot" aria-hidden="true"></span><span class="mcc-auth-chip__text"></span>';
       document.body.appendChild(chip);
     }
-    chip.href = signedIn ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
+    chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
     chip.querySelector(".mcc-auth-chip__text").textContent =
       signedIn ? ("Signed in · " + name) : "Guest · Sign in";
     window.MCC_AUTH_STATE = AUTH_STATE;
@@ -455,6 +579,8 @@
 
   var MARKS = {
     whipmark: ["assets/img/we-icon-dark-bar.png", "appbar__we"],
+    /* the house, when a creator holds the middle cell: the M as supplied */
+    mmark: ["assets/img/m-mark.png", "appbar__m"],
   };
   function emit(n, d) { try { window.dispatchEvent(new CustomEvent(n, { detail: d || {} })); } catch (e) {} }
 
@@ -503,7 +629,7 @@
       if (!was) return;             // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();
-      emit("mcc:nowplaying", { title: "I AM HERE", href: ROOT + "album.html", playing: false });
+      emit("mcc:nowplaying", { title: "I AM HERE", href: HOUSE + "album.html", playing: false });
     }, 0);
   }
 
@@ -538,7 +664,7 @@
   }
 
   function sail(dest, wait) {
-    if (dest === MAP) { if (openMap()) return; dest = ROOT + "index.html"; }
+    if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
     unpeek();
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
@@ -692,7 +818,7 @@
        A held press never reaches this line (the lpFired gate above swallows
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
-    if (key === "profile") dest = AUTH_STATE.signed_in ? ROOT + "mnet.html?view=profile" : ROOT + "account.html";
+    if (key === "profile") dest = AUTH_STATE.signed_in ? worldAt("?view=profile") : ROOT + "account.html";
 
     /* This column used to open the desk widget in place instead of sailing
        anywhere, because the tab WAS Chat. It is the Closet now, and a tab
@@ -722,7 +848,9 @@
     peek: peek,
     wing: function () { return wingOn; },
     refreshAuth: refreshAuthState,
-    auth: function () { return AUTH_STATE; }
+    auth: function () { return AUTH_STATE; },
+    perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
+    clearPerspective: clearPerspective
   };
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 

@@ -12,10 +12,20 @@
 - `mnet.html` provides sign-in and the member network. Server-side RLS, RPC checks, and role verification—not visible buttons—must enforce member permissions.
 - Admin-only publishing, moderation, analytics, and source management must be authorized on the server. Do not infer admin from client-side session flags.
 
-## Production domain target (not yet configured)
-- User-owned public hostname: `humanuprise.com`. Verify Cloudflare zone, actual hosting origin, TLS and CSP before creating DNS records.
-- Proposed host-specific HTTP 200 rewrite: `/` -> `/equity-uprise.html` as an interim entry, preserving the Human Uprise hostname; a dedicated `human-uprise.html` is preferable later.
-- Keep `mccluster.org`, `matthew.mccluster.org`, and existing routes functional. No DNS, TLS, or production routing changes are made by this PR.
+## Production domain: `humanuprise.com` (built; inert until the owner routes it)
+- Owner, 2026-10-14: the World is Human Uprise's own solo experience at its own address, interconnected with the rest. The bar's Music and M go to Matthew's site; the Globe stays home.
+- Served by the one Worker `mccluster`, by host (`workers/mccluster/src/human-uprise/router.js`), the way the company property is. `/` is the World: `mnet.html` from `matthew.mccluster.org`, passed through with this host's own canonical and `og:url`; the `noindex` that belongs to Matthew's site does not follow it. The World's rooms (`action-globe.html`, `action-network-*.html`, `/action/`, `give.html`, `create.html`, `action-policy.html`, `world-news.html`, `privacy.html`), the sign-in pages (`account.html`, `login.html`, `forgot-password.html`, `reset-password.html`, `onboard.html`, `/auth/`), `sw.js` and the static files (`/js/`, `/css/`, `/assets/`, `/data/`) ride the same way, with `x-robots-tag: noindex` on documents. Every other path is a 301 to the same path on `matthew.mccluster.org` (Music, the M, creators, records, checkout). `www` is a 301 to the apex; `/mnet.html` is a 301 to `/` with its query. `robots.txt` and a one-URL `sitemap.xml` are the host's own. Nothing is rewritten beyond the World's head: no base tag, no link rewriting.
+- The API allows the origin (`workers/mccluster/src/lib/http.js` `DEFAULT_ORIGINS`; `workers/mccluster/wrangler.toml` `ALLOWED_ORIGINS`).
+- A session is per origin (localStorage, `js/backend.js`): a member signs in on `humanuprise.com` once, separately from `matthew.mccluster.org`. No cross-origin session handoff is built; sign-in there is a real sign-in.
+- The bar (`js/tabbar.js`) reads the same on either host, Music | M | Globe. On `humanuprise.com`, Music and the M link to Matthew's site outright and the Globe is `/?view=feed`. On Matthew's site the Globe stays on his origin until the owner flips `WORLD_ORIGIN` (step 5).
+- Activation (owner):
+  1. Merge and deploy the Worker; confirm `https://api.mccluster.org/v1/health` reports the merged SHA.
+  2. Cloudflare → the `humanuprise.com` zone → Workers Routes: `humanuprise.com/*` and `www.humanuprise.com/*` → Worker `mccluster`, with proxied DNS records for the apex and `www` and no redirect rule in front of them.
+  3. Supabase Auth → URL configuration: add `https://humanuprise.com/auth/` and `https://humanuprise.com/reset-password.html` to the redirect allowlist, or social sign-in and password reset from that host return to a disallowed URL.
+  4. Verify: `curl -I https://humanuprise.com/` is 200 and the HTML carries `<link rel="canonical" href="https://humanuprise.com/">`; `curl -I https://humanuprise.com/album.html` is a 301 to `https://matthew.mccluster.org/album.html`; `curl -I https://www.humanuprise.com/` is a 301 to `https://humanuprise.com/`; `curl -I https://humanuprise.com/mnet.html?view=missions` is a 301 to `https://humanuprise.com/?view=missions`.
+  5. Then set `WORLD_ORIGIN = "https://humanuprise.com/"` in `js/tabbar.js` so the Globe on Matthew's site opens the World's own door. Until then it stays on `matthew.mccluster.org`, which is what the live site does today.
+- Tests: `workers/mccluster/test/human-uprise-site.test.mjs`, `scripts/test/human-uprise-door.test.mjs`; browser: `scripts/e2e/human-uprise-door.e2e.mjs` runs the real router in front of a checkout at `https://humanuprise.com`.
+- Keep `mccluster.org`, `matthew.mccluster.org`, and existing routes functional. No DNS, TLS, or production routing change is made by the repository.
 
 ## Pre-merge acceptance gates
 1. Guest: interact with Earth using mouse/touch/keyboard fallback; explore approved public missions and sourced news; no member actions or private records.

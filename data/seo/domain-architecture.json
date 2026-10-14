@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-domain-architecture/v1",
-  "updated_at": "2026-10-03",
+  "updated_at": "2026-10-14",
   "authority": "Owner instruction, 2026-10-03. Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Tests: scripts/test/domain-architecture.test.mjs.",
   "rule": "Two related but distinct canonical web properties. mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house. Do not collapse them, do not make the two entities interchangeable, and do not move a working URL merely for tidiness.",
   "properties": {
@@ -30,7 +30,15 @@
       "source": "static HTML at the repository root, published by .github/workflows/deploy-pages.yml",
       "served_by": "GitHub Pages (repository CNAME = matthew.mccluster.org)",
       "front_door": "index.html: the I AM HERE experience, kept. It is a door into Matthew's house, not the semantic identity of the house.",
-      "hierarchy": ["Matthew McCluster", "music / I AM HERE", "engineering", "portfolio", "services and work", "civic projects", "companies and products he founded or operates"],
+      "hierarchy": [
+        "Matthew McCluster",
+        "music / I AM HERE",
+        "engineering",
+        "portfolio",
+        "services and work",
+        "civic projects",
+        "companies and products he founded or operates"
+      ],
       "journeys": [
         "recruiter: Matthew -> role lane -> evidence -> resume -> contact",
         "creative visitor: Matthew -> music / photography / film / portfolio",
@@ -38,6 +46,25 @@
         "potential client: Matthew's work -> the company or service that delivers that capability",
         "civic visitor: Matthew's public work -> the relevant McCluster Corp / Equity Uprise initiative"
       ]
+    },
+    "human_uprise": {
+      "host": "humanuprise.com",
+      "origin": "https://humanuprise.com",
+      "entity": "https://matthew.mccluster.org/#mccluster-corp",
+      "owner": "mccluster_corp",
+      "answers": "Where is the movement, and what can I do today? The World: the globe, the context strip, the feed.",
+      "share_preview": "Human Uprise, the World. McCluster Corp's platform; a company host, never a third entity and never Matthew's site.",
+      "source": "the World (mnet.html) as published on the personal property, passed through by workers/mccluster/src/human-uprise/router.js with this host's own canonical; nothing is duplicated",
+      "served_by": "Worker mccluster, host-routed (workers/mccluster/src/human-uprise/router.js) once the owner routes humanuprise.com/* to it",
+      "state": "built 2026-10-14; inert until routed (owner instruction, 2026-10-14)",
+      "serves": [
+        "/ : the World",
+        "the World's rooms: action-globe.html, action-network-*.html, /action/, give.html, create.html, action-policy.html, world-news.html, privacy.html",
+        "sign-in: account.html, login.html, forgot-password.html, reset-password.html, onboard.html, /auth/",
+        "sw.js and /js/, /css/, /assets/, /data/"
+      ],
+      "everything_else": "301 to the same path on https://matthew.mccluster.org: Music, the M, creators, records, checkout",
+      "sessions": "per origin; a member signs in on humanuprise.com separately; no cross-origin handoff is built"
     }
   },
   "entities": {
@@ -102,19 +129,64 @@
   "url_ownership": {
     "_rule": "Ownership decides navigation, metadata and which entity a page is about. It does not by itself move a URL. Every path here keeps working where it is.",
     "personal": [
-      "/", "/matthew-mccluster.html", "/resume-it-support.html", "/resume-digital-inclusion.html", "/engineering/", "/engineering/it-support-systems.html",
-      "/engineering/data-center-networking.html", "/engineering/mccluster-platform.html", "/engineering/field-technology-telematics.html",
-      "/engineering/ipc-infrastructure.html", "/engineering/recruiter-role-map.html", "/portfolio.html", "/card.html", "/press.html",
-      "/gallery.html", "/walls/", "/shots.html", "/films.html", "/album.html", "/listen.html", "/catalogue.html", "/license.html",
-      "/policy.html", "/policy-memo-dna.html", "/case-designer-kicks.html", "/newsroom.html"
+      "/",
+      "/matthew-mccluster.html",
+      "/resume-it-support.html",
+      "/resume-digital-inclusion.html",
+      "/engineering/",
+      "/engineering/it-support-systems.html",
+      "/engineering/data-center-networking.html",
+      "/engineering/mccluster-platform.html",
+      "/engineering/field-technology-telematics.html",
+      "/engineering/ipc-infrastructure.html",
+      "/engineering/recruiter-role-map.html",
+      "/portfolio.html",
+      "/card.html",
+      "/press.html",
+      "/gallery.html",
+      "/walls/",
+      "/shots.html",
+      "/films.html",
+      "/album.html",
+      "/listen.html",
+      "/catalogue.html",
+      "/license.html",
+      "/policy.html",
+      "/policy-memo-dna.html",
+      "/case-designer-kicks.html",
+      "/newsroom.html"
     ],
     "company_hosted_on_personal_for_compatibility": [
-      "/mccluster-corp.html", "/data/product-context.json", "/docket-516.html", "/action/", "/mnet.html", "/receipt.html", "/heal-the-3rd-world.html", "/end-racism.html", "/wigger-recovery.html",
-      "/prim3.html", "/prim3-range.html", "/hitman-facility.html", "/sites.html", "/sites-details.html", "/services.html", "/hire.html",
-      "/creator.html", "/music-creator.html", "/music-creator-terms.html", "/privacy.html"
+      "/mccluster-corp.html",
+      "/data/product-context.json",
+      "/docket-516.html",
+      "/action/",
+      "/mnet.html",
+      "/receipt.html",
+      "/heal-the-3rd-world.html",
+      "/end-racism.html",
+      "/wigger-recovery.html",
+      "/prim3.html",
+      "/prim3-range.html",
+      "/hitman-facility.html",
+      "/sites.html",
+      "/sites-details.html",
+      "/services.html",
+      "/hire.html",
+      "/creator.html",
+      "/music-creator.html",
+      "/music-creator-terms.html",
+      "/privacy.html"
     ],
-    "separate_company_hosted_on_personal": ["/whip.html"],
-    "owner_decision": ["/prayer-closet.html", "/closet/", "/inner-room.html", "/fbi.html"],
+    "separate_company_hosted_on_personal": [
+      "/whip.html"
+    ],
+    "owner_decision": [
+      "/prayer-closet.html",
+      "/closet/",
+      "/inner-room.html",
+      "/fbi.html"
+    ],
     "why_company_apps_stay_put": "Sessions are per-origin localStorage (js/backend.js), checkout returns and the Supabase Auth redirect allowlist name matthew.mccluster.org, and printed QR codes and live campaign links point at these paths. Moving Human Uprise, accounts or checkout to mccluster.org would sign members out and break returns. The company property describes these products and links into them; it does not re-host them."
   },
   "edge": {
@@ -128,6 +200,16 @@
       "Search Console: add the mccluster.org URL-prefix property (DNS TXT verification records already exist), submit https://mccluster.org/sitemap.xml.",
       "Supply a 1200x630 McCluster Corp share card; until then the company preview uses the supplied M mark (assets/img/m-mark.png), unaltered."
     ],
-    "mx_note": "mccluster.org mail is Google Workspace MX. Routing HTTP to a Worker does not touch MX; do not replace the apex DNS record with a Worker custom domain without checking the MX and TXT records survive."
+    "mx_note": "mccluster.org mail is Google Workspace MX. Routing HTTP to a Worker does not touch MX; do not replace the apex DNS record with a Worker custom domain without checking the MX and TXT records survive.",
+    "human_uprise": {
+      "target": "humanuprise.com/* and www.humanuprise.com/* routed to Worker mccluster. The Human Uprise router serves the World at / and the World's rooms and files from the personal origin, and answers every other path with a 301 to https://matthew.mccluster.org/$1.",
+      "activation_owner_steps": [
+        "Merge and deploy; confirm https://api.mccluster.org/v1/health reports the merged SHA.",
+        "Cloudflare -> humanuprise.com zone -> Workers Routes: humanuprise.com/* and www.humanuprise.com/* -> Worker mccluster, with proxied DNS records and no redirect rule in front.",
+        "Supabase Auth -> URL configuration: allow https://humanuprise.com/auth/ and https://humanuprise.com/reset-password.html.",
+        "Verify: curl -I https://humanuprise.com/ (200, canonical to itself); https://humanuprise.com/album.html (301 to matthew.mccluster.org); https://www.humanuprise.com/ (301 to the apex).",
+        "Set WORLD_ORIGIN in js/tabbar.js to https://humanuprise.com/ so the Globe on Matthew's site opens the World's own door."
+      ]
+    }
   }
 }

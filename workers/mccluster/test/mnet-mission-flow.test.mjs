@@ -20,6 +20,8 @@ function harness(){
     sbRest(path){const d=deferred();calls.push({kind:'rest',path,...d});return d.promise;},
     sbRpc(name,args){const d=deferred();calls.push({kind:'rpc',name,args,...d});return d.promise;},
     clearMissionCapture(){},setStatus(node,message){node.textContent=message;},
+    /* E=Up or Fund it: the dialog asks the fund line after the mission loads; not this test's subject */
+    fundState(){return Promise.resolve({open:false,note:''});},fundLineHtml(){return '';},
     esc:String,missionHref:id=>'/mnet.html?mission='+id,loadMissions(){},
     uploadProofFile(){return Promise.resolve(null);},
     history:{replaceState(){}},location:{assign(){}},

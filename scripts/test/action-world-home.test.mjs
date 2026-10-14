@@ -27,7 +27,7 @@ test("World screen follows the owner's contract: 45-50% globe, ~15% context, 30-
  /* a post shows its mission on the Earth without narrowing the feed being read */
  assert.match(js,/filter: !fromFeed/);
  /* one World for everyone: the Globe column and the standalone route both land on it */
- assert.match(read('js/tabbar.js'),/if \(worldDoor\) worldDoor\.href = ROOT \+ "mnet\.html\?view=feed";/);
+ assert.match(read('js/tabbar.js'),/if \(worldDoor\) worldDoor\.href = worldAt\("\?view=feed"\);/);
  assert.match(read('action-globe.html'),/if\(q\.has\('embedded'\)\|\|q\.has\('explore'\)\)return;var song=q\.get\('song'\);location\.replace\('mnet\.html\?view=feed'/);
 });
 

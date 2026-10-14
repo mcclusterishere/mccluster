@@ -113,6 +113,14 @@
       "served_by": "worker:mccluster",
       "source": "workers/mccluster/src/company-site",
       "state": "inert until the owner routes mccluster.org/* to the Worker"
+    },
+    "human_uprise": {
+      "host": "humanuprise.com",
+      "entity": "https://matthew.mccluster.org/#mccluster-corp",
+      "served_by": "worker:mccluster",
+      "source": "workers/mccluster/src/human-uprise",
+      "state": "inert until the owner routes humanuprise.com/* to the Worker",
+      "serves": "the World (mnet.html) passed through from the personal property with its own canonical; every other path 301s to matthew.mccluster.org"
     }
   }
 }

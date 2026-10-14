@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 346,
+  "candidate_count": 350,
   "capability_source_count": 99,
-  "support_only_count": 247,
-  "checks_total": 1287,
-  "checks_passed": 1287,
+  "support_only_count": 251,
+  "checks_total": 1303,
+  "checks_passed": 1303,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -212,6 +212,7 @@
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
+    "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
     "scripts/test/seo-authority.test.mjs",
@@ -343,7 +344,9 @@
     "walls/eu-rally.html",
     "workers/mccluster/src/ai/envelope.js",
     "workers/mccluster/src/company-site/pages.generated.js",
+    "workers/mccluster/src/entry-platform.js",
     "workers/mccluster/src/entry.js",
+    "workers/mccluster/src/human-uprise/router.js",
     "workers/mccluster/src/index.js",
     "workers/mccluster/src/music/tracks.js",
     "workers/mccluster/src/platform-api.js",
@@ -351,6 +354,7 @@
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
+    "workers/mccluster/test/human-uprise-site.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
@@ -360,7 +364,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "346 entries"
+      "detail": "350 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4148,6 +4152,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/human-uprise-door.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/human-uprise-door.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/human-uprise-door.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/human-uprise-door.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/product-context.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -6563,6 +6587,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/entry-platform.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/entry-platform.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/entry-platform.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/entry-platform.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/entry.js capability ids known",
       "passed": true,
       "detail": ""
@@ -6579,6 +6623,26 @@
     },
     {
       "name": "workers/mccluster/src/entry.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/human-uprise/router.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/human-uprise/router.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/human-uprise/router.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/human-uprise/router.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6709,6 +6773,26 @@
     },
     {
       "name": "workers/mccluster/test/halo-projection.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/human-uprise-site.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/human-uprise-site.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/human-uprise-site.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/human-uprise-site.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

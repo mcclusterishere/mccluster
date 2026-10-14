@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 343,
+  "candidate_count": 350,
   "capability_source_count": 99,
-  "support_only_count": 244,
+  "support_only_count": 251,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1589,6 +1589,13 @@
       "rationale": "Regression tests for the Action Network Homelessness Action intake, recipient-privacy rules, bounty funding/claim lifecycle and persistent Field room; not a physical building capability."
     },
     {
+      "path": "scripts/test/human-uprise-door.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests of Human Uprise's own door on this side of the edge: the bar across hosts, a creator's perspective, the Artists rail and the authorities that name the host. Not a building capability."
+    },
+    {
       "path": "scripts/test/product-context.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -2588,11 +2595,25 @@
       "rationale": "Generated company property pages for mccluster.org; Equity Uprise appears as a product door to its existing page. Not a building capability."
     },
     {
+      "path": "workers/mccluster/src/entry-platform.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The API Worker's entry: host routing for the company property and Human Uprise's own host, then the platform API. Names the public globe entry contract in a comment; not a building capability."
+    },
+    {
       "path": "workers/mccluster/src/entry.js",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "workers/mccluster/src/human-uprise/router.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Human Uprise's host router: serves the World on humanuprise.com by host and sends every other path to Matthew's property. Names the public globe entry contract; not a building capability."
     },
     {
       "path": "workers/mccluster/src/index.js",
@@ -2646,6 +2667,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
+    },
+    {
+      "path": "workers/mccluster/test/human-uprise-site.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests of the Human Uprise host router: inert elsewhere, the World and its rooms passed through, every other path sent to Matthew's property. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/mission-proof-media.test.mjs",

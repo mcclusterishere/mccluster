@@ -7,6 +7,7 @@ import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
+import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
@@ -43,6 +44,11 @@ export default {
        owner routes the apex to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
     const company = companySiteResponse(request);
     if (company) return company;
+    /* Human Uprise's own door (humanuprise.com, www): the World by host, the
+       same way. Null for every other host; inert until the owner routes it:
+       docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md */
+    const humanUprise = await humanUpriseResponse(request, env);
+    if (humanUprise) return humanUprise;
     try {
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {

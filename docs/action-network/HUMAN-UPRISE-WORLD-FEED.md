@@ -184,6 +184,47 @@ everywhere else." Navigation entries were removed; no capability was.
 - Not yet changed: the native app (`native/src/AppBar.tsx`) still has its
   own Music · HERE · Create · Network bar.
 
+### The World's own door: `humanuprise.com` (owner, 2026-10-14)
+
+"The globe experience as its own solo experience ... interconnected with all
+the systems." The same World is served at `https://humanuprise.com/` by the
+one Worker, by host (`workers/mccluster/src/human-uprise/router.js`): `/` is
+`mnet.html` passed through from Matthew's property with this host's own
+canonical; the World's rooms, the sign-in pages and the static files ride
+along (noindex); every other path is a 301 to the same path on
+`matthew.mccluster.org`. Inert until the owner routes the host; the steps are
+in `EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md` → "Production domain".
+
+The bar is the same Music | M | Globe on either host (`js/tabbar.js`):
+
+- on `humanuprise.com`, Music and the M link to Matthew's site outright and
+  the Globe is the root of this host (`/?view=feed`), which lights the Globe
+  coin, not the M;
+- on Matthew's site the Globe stays on his origin until the owner flips
+  `WORLD_ORIGIN` to `https://humanuprise.com/` after routing;
+- a session is per origin: a member signs in on `humanuprise.com` once,
+  separately. No handoff is built.
+
+### A creator's perspective (owner, 2026-10-14)
+
+"If they go into music and they select one individual, they should be able to
+go to their front page and experience the site from their perspective, just
+like they experience the site from my perspective", with the M in the middle.
+
+- Music opens with an **Artists** rail (`js/music-community.js`): McCluster
+  first, the house, opening `index.html`; then every active creator, opening
+  `music-creator.html?handle=`. A creator's picture is their own avatar or
+  their initial; the M is the supplied mark, scaled, on no plate.
+- A creator's front page announces itself (`mcc:perspective`,
+  `js/music-creator-profile.js`) and the bar keeps that perspective for the
+  session (`sessionStorage.mcc_perspective`): the middle cell is the creator
+  (round avatar or initial, their first name as the label) and opens their
+  front page; held, its wing is **McCluster** (the M as supplied →
+  `index.html`) and **Everything**. Standing on Matthew's front door clears
+  it: the M is back.
+- Nothing is drawn for a creator; a handle is validated before it becomes a
+  link; only an https picture is painted.
+
 ### A creator's audience on the globe
 
 The handoff's creator scope ("an authorized layer or overlay … based on
@@ -264,6 +305,27 @@ the guest World; and the guest path (Explore the world, Member posts live
 here, the chips, no session sent, public posts only, actions open sign-in and
 send nothing). It does not touch production; Worker authorization is
 covered by the Worker test suite.
+
+`node scripts/e2e/human-uprise-door.e2e.mjs [outDir]` puts the real host
+router (`workers/mccluster/src/human-uprise/router.js`) in front of the same
+checkout at `https://humanuprise.com` in a real Chromium, with Matthew's site
+as a stub that records where a cross-site tap lands, and drives: the World
+at its own root on an iPhone (this host's canonical and `og:url`, no
+`noindex`, the Earth's frame on the same host, the World's files through
+this host, `noindex` on the rooms and not on the front door, no sideways
+scroll); the bar read back as the browser sees it (Music and the M to
+`matthew.mccluster.org`, the Globe at `/?view=feed`, the Globe coin lit);
+the 301s (`/mnet.html?view=missions` → `/?view=missions`, `www` → the apex,
+`/album.html` → Matthew's site), each recorded from the router and walked;
+a tap on Music landing on `matthew.mccluster.org/listen.html`. Then, on the
+checkout's own origin, a creator's perspective: Fixture Ana's front page
+puts her in the middle cell (her stored picture, round; her first name; her
+coin lit), Music keeps her there and shows the Artists rail (McCluster
+first with the M as supplied, then each creator with their picture or
+initial), McCluster in Music opens the house where the M is back and the
+stored perspective is gone, a creator without a picture gets their initial,
+and on a desktop the held coin opens her wing with McCluster (the M) beside
+Everything.
 
 ## Still open (unchanged by this work)
 

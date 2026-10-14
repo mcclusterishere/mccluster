@@ -136,6 +136,39 @@ Mail for `mccluster.org` is Google Workspace (MX). Routing HTTP to the Worker
 does not touch MX; do not swap the apex DNS record for a Worker custom domain
 without checking the MX and TXT records survive.
 
+## Human Uprise's host: `humanuprise.com`
+
+Three hosts, still two entities. Human Uprise is McCluster Corp's platform
+(the Organization above), so `humanuprise.com` is a company host, not a third
+entity and not Matthew's. Owner, 2026-10-14: the World (the globe, the context
+strip, the feed) is Human Uprise's own solo experience at its own address,
+interconnected with the rest.
+
+| | `https://humanuprise.com/` |
+| --- | --- |
+| Whose | McCluster Corp's platform, Human Uprise |
+| Answers | Where is the movement, and what can I do today? |
+| Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` (the same stable `@id`) |
+| Source | the World, `mnet.html`, as published on Matthew's property; nothing is duplicated |
+| Served by | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise/router.js`); inert until the owner routes the host |
+
+- `/` is the World, passed through from `matthew.mccluster.org/mnet.html` with
+  this host's own canonical. The World's rooms, the sign-in pages and the
+  static files ride the same way (noindex); every other path is a 301 to the
+  same path on `matthew.mccluster.org`. So Music, the M, every creator page
+  and every record land on Matthew's property; the World stays here.
+- The bar (`js/tabbar.js`) reads the same on either host: Music | M | Globe.
+  On `humanuprise.com`, Music and the M link to Matthew's site outright; on
+  Matthew's site the Globe stays on his origin until the owner flips
+  `WORLD_ORIGIN` after routing.
+- Sessions are per origin. A member signs in on `humanuprise.com` separately;
+  nothing hands a session across. The API's CORS allowlist carries the host.
+- Why not a second Pages site or Worker: the same reasons as the company host
+  (one custom domain per repository; one Worker; serving a host is ingress).
+- Activation and verification: `docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`
+  → "Production domain". Tests: `workers/mccluster/test/human-uprise-site.test.mjs`,
+  `scripts/test/human-uprise-door.test.mjs`.
+
 ## Changing either property
 
 - Company copy: edit `data/seo/company-site.json` (facts only; the same
