@@ -20,6 +20,18 @@ Deno.serve(async (req:Request)=>{
  const date=String(a.seendate||"");const published=/^\\d{14}$/.test(date)?date.replace(/^(\\d{4})(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})$/,"$1-$2-$3T$4:$5:$6Z"):null;
  return [{title:String(a.title||"Untitled").slice(0,250),url:href,domain:String(a.domain||parsed.hostname).slice(0,150),source_country:String(a.sourcecountry||"").slice(0,80),language:String(a.language||"").slice(0,40),published_at:published,topic}];
  });
+ // Persist through service-role-only RPC; public clients never receive the secret.
+ const base=Deno.env.get("SUPABASE_URL"),key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+ if(base&&key&&articles.length){
+  try{
+   const recent=await fetch(base+"/rest/v1/media_ingestion_runs?select=id&provider=eq.gdelt_doc_v2&topic=eq."+encodeURIComponent(topic)+"&started_at=gte."+encodeURIComponent(new Date(Date.now()-15*60*1000).toISOString())+"&limit=1",{headers:{apikey:key,Authorization:"Bearer "+key}});
+   const prior=recent.ok?await recent.json():[];
+   if(recent.ok&&Array.isArray(prior)&&prior.length===0){
+    const write=await fetch(base+"/rest/v1/rpc/media_ingest_gdelt_batch",{method:"POST",headers:{apikey:key,Authorization:"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({p_topic:topic,p_articles:articles})});
+    if(!write.ok)console.error("GDELT ingestion failed",write.status,(await write.text()).slice(0,250));
+   }
+  }catch(e){console.error("GDELT ingestion unavailable",String(e))}
+ }
  return new Response(JSON.stringify({provider:"GDELT DOC 2.0",topic,articles,fetched_at:new Date().toISOString(),geolocation:"not_provided_by_doc_api",source_country_meaning:"publisher location, not event location"}),{headers:{...allow,"Content-Type":"application/json"}});
  }catch(e){return new Response(JSON.stringify({error:"news_temporarily_unavailable",articles:[],detail:String(e).slice(0,120)}),{status:503,headers:{...allow,"Content-Type":"application/json","Cache-Control":"no-store"}})}
 });
