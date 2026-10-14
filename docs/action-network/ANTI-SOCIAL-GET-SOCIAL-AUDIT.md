@@ -130,7 +130,97 @@ for both. One mission, three levels, 1 / 3 → 2 / 3 → 3 / 3; one card.
   applies the whole action chain in order, and its behaviour test runs here
   and in CI.
 
-## What the three-level mission needs, and what is decided
+## What a parallel session built today (read on the branch at 14:35–14:58)
+
+Ninety-four commits landed on this branch while the audit above was being
+written, including a first implementation of this mission and a ledger
+reconciliation. Read before anything is changed.
+
+- **Ledger reconciled.** `supabase/production-ledger.json` now lists 306
+  migrations, every file in `supabase/migrations` among them, the globe
+  migrations renamed to their applied versions; the "fifteen unapplied"
+  statement earlier in this document is superseded. The draft below is
+  recorded as applied (`6db7b69`, `c8ce996`).
+- **The mission** (`supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql`):
+  one row `a17050c1-a551-4c5c-80c1-5a1750c1a001`, "Anti-Social — Get Social",
+  community, difficulty 1, 150 base points, skills community · collaboration
+  · creativity, **status `draft`**, linked to the *Antisocial* track through
+  `action_globe_song_missions` ("the owner explicitly approved", `34dcda6`).
+- **Levels** live in a mission-specific table `action_antisocial_levels`
+  (assignment × level 1–3; proof_url, media_asset_id, statement, post_id,
+  collaborator_m_uid, status pending|verified|rejected, review note),
+  readable by the owner and admins only. `submit_antisocial_level` requires
+  the previous level verified, a clip or https link for levels 1–2, and for
+  level 3 a public post by one of the two plus **an accepted
+  `network_connections` row** between them. `review_antisocial_level`
+  (admins, not own work) verifies a level; level 3 verifies only when the
+  partner has independently submitted the same post with reciprocal credit;
+  then 150 points (`kind='mission'`, once) and the assignment is `verified`.
+  A trigger blocks the standard proof route for this mission.
+- **Credit** is derived at read time: `antisocial_public_collaborations`
+  lists a member's verified joint posts with the partner's public name; the
+  person view shows a "Verified collaborations" block from it.
+- **Member UI** (`mnet.html` `#mnAntisocialLevels`, `js/mnet.js`
+  `antisocialPaint`/`antisocialSubmit`): a 1/3 · 2/3 · 3/3 list with
+  Ready/Locked/Awaiting review/Verified/Revise, one form per level
+  (recap, optional clip or https link; level 3 adds a partner select built
+  from accepted connections and a pasted post id), consent hints verbatim.
+- **Desk** (`js/control-room/action-network.js`): a pending-levels queue
+  with the recap, linked proof, the clip through a new admin-only signed
+  route (`/v1/mnet/missions/antisocial/:assignment/:level/media`, 15 min),
+  the partner and post for level 3, Verify / Reject.
+- **Tests**: `scripts/test/antisocial-three-levels.test.mjs` pins the SQL and
+  page text (regex contracts). No behaviour test, no browser run.
+
+### Gaps against the owner's spec
+
+1. **Nobody can connect, so Level 3 is unreachable.** `network_connections`
+   is select-only for members (`…mnet_real_network_v1.sql:265`); no RPC and
+   no Worker route creates or accepts a connection; the person view offers
+   Follow, Message, Mute, Block, Report and no Connect. The level-3 select
+   will always read "No accepted connections yet".
+2. **"Connect → Collaborate → Publish" is not in the platform.** Level 3
+   asks the member to paste a post id of a post one of them made; nothing
+   publishes the work as a joint project, and the post itself has one
+   author. "Both creators are credited" is true only on the person view,
+   after both are verified, and not on the post people actually see.
+3. **Progress is invisible outside the dialog.** The Action Record row says
+   "In progress" with no 1/3 · 2/3; the Missions list card does not say the
+   mission has levels; `action_mission_stats` has no level counts.
+4. **Draft.** The mission is hidden from members (RLS reads open|paused);
+   the parallel session wrote "open only after member UI, reviewer UI and
+   Worker are live and verified". The UI and desk exist; what is missing is
+   the connect flow and a verified run.
+5. Points are a flat 150 at 3/3 with no collaboration award, although the
+   ledger kind exists; the owner calls level 3 the flagship.
+6. A mission-specific table and a hard-coded mission id: it works for this
+   mission and cannot carry a second multi-level mission. Acceptable for
+   now; noted.
+
+## What completes it (building in this order)
+
+A. **Connect.** `request_connection(p_handle)` / `answer_connection(p_id,
+   p_accept)` as server RPCs over the existing table, with a notification to
+   the other member; a **Connect** button on the person view (Connect →
+   Requested → Connected; Accept when they asked first); requests reachable
+   from the bell.
+B. **Publish together, in the platform.** From Level 3, "Publish together":
+   title, kind (song · video · photo · writing · other), a link or an upload;
+   the server writes one public post credited to both in `metadata.
+   collaboration` and vouches it in a server-only table, submits the
+   initiator's level 3, and tells the partner, whose Level 3 becomes one
+   tap ("A published *Title* with you — submit it as your Level 3"). The
+   feed card reads "Made together by A and B".
+C. **Progress everywhere.** The Action Record row and the Missions card read
+   n/3.
+D. **A collaboration award** (`kind='collaboration'`) for both at 3/3.
+E. **Proof.** A behaviour test on a scratch Postgres (stub + the action
+   chain + this migration), the browser run through 1/3 → 2/3 → connect →
+   publish → 3/3 against the fake backend, and the contract tests.
+F. **Open the mission** once A–E pass, in the same migration, with the
+   owner told.
+
+## Design note written before the parallel work was found (kept for the record)
 
 1. **A level model on the mission, not three cards.** `action_missions.levels
    jsonb` (an ordered array; empty for every existing mission), validated by a

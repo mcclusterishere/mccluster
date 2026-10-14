@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 358,
+  "candidate_count": 359,
   "capability_source_count": 99,
-  "support_only_count": 259,
-  "checks_total": 1335,
-  "checks_passed": 1335,
+  "support_only_count": 260,
+  "checks_total": 1339,
+  "checks_passed": 1339,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -94,6 +94,7 @@
     "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
     "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
+    "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md",
     "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
     "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
     "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
@@ -372,7 +373,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "358 entries"
+      "detail": "359 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1926,6 +1927,26 @@
     },
     {
       "name": "docs/SEO-AEO-AUTHORITY-SYSTEM.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md support rationale present",
       "passed": true,
       "detail": ""
     },

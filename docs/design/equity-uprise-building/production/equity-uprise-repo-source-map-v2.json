@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 358,
+  "candidate_count": 359,
   "capability_source_count": 99,
-  "support_only_count": 259,
+  "support_only_count": 260,
   "entries": [
     {
       "path": ".cursorrules",
@@ -690,6 +690,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "SEO/AEO system documentation; describes Equity Uprise only as public identity and record context."
+    },
+    {
+      "path": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Audit of the mission, proof, review, record, feed-share and connection models before and after the three-level Anti-Social mission landed; names the Equity Uprise capability map only to say it has no collaboration entry. Not a building capability."
     },
     {
       "path": "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
