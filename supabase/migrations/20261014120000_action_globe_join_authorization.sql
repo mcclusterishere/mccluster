@@ -31,6 +31,13 @@ begin
   where mission_id = p_mission_id and user_id = v_user for update;
  if found then
    if v_assignment.status = 'withdrawn' then
+     -- A withdrawn member no longer occupies a slot. Rejoining must
+     -- enforce the same capacity limit as a first-time assignment.
+     if v_mission.capacity is not null then
+       select count(*) into v_taken from public.action_mission_assignments
+        where mission_id = p_mission_id and status <> 'withdrawn';
+       if v_taken >= v_mission.capacity then raise exception 'this mission is full'; end if;
+     end if;
      update public.action_mission_assignments set status = 'in_progress', joined_at = now()
       where id = v_assignment.id returning * into v_assignment;
    end if;
