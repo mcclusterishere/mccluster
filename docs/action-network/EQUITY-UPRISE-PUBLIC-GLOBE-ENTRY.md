@@ -32,3 +32,14 @@
 - Near Me pans the camera; it is not authoritative proof of regional eligibility.
 - The member mission participation and funding lifecycle is not established by the globe's links alone.
 - The entry route filename is legacy and must not be mistaken for the parent brand.
+
+## Rise, movement tallies, and Street Credit (proposed product contract)
+- **Rise** is the native affirmative reaction. It replaces the ambiguous favorite/like vocabulary for Human Uprise movement participation, while ordinary content reactions may remain separate if required by existing clients.
+- A **verified, consented join** to a movement counts as exactly **one unique Rise** for that movement. Email/account verification alone does not automatically enroll a person into an unrelated movement.
+- Separate counters: `unique_risers` (distinct verified participants), `verified_actions` (completed reviewed contributions), and `supporter_reactions` (explicit reactions). Never conflate signups, reactions, or completed work.
+- Deduplicate joins using an immutable account/person identity and movement ID; enforce uniqueness in the database, not merely the browser. Retries, double taps, session changes, and concurrent requests must not double-count. Define account closure and consent withdrawal semantics before launch.
+- **Street Credit** is a proposed opt-in reputation record for *verified positive contributions*, not a financial credit score or an assessment of human worth. Show the evidence, criteria, appeal process, and provenance for every credited contribution.
+- Equity Uprise may administer a specific transparent contribution rubric within Human Uprise; it must not unilaterally control all programs' reputation or score members on protected traits, neighborhood, wealth, political affiliation, or inactivity.
+- Do not use Street Credit for credit, employment, housing, insurance, or other eligibility decisions. Avoid unreviewed global rankings of people; prioritize project-level accomplishments.
+- All writes require authenticated authorization, anti-bot/anti-fraud checks, audit logs, reversible moderation, and tests for duplicate joins and account transitions.
+- **Implementation status:** requirements only; no database tables, API endpoints, or counters are claimed to be implemented by this document.
