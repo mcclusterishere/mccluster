@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 344,
+  "candidate_count": 346,
   "capability_source_count": 99,
-  "support_only_count": 245,
-  "checks_total": 1279,
-  "checks_passed": 1279,
+  "support_only_count": 247,
+  "checks_total": 1287,
+  "checks_passed": 1287,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -200,11 +200,13 @@
     "redirects/equity-uprise.html",
     "redirects/walls/eu-rally.html",
     "resume-it-support.html",
+    "scripts/e2e/world-screen.e2e.mjs",
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-network-live-governance.test.mjs",
+    "scripts/test/action-network-redesign.test.mjs",
     "scripts/test/action-network.test.mjs",
     "scripts/test/action-origin-attribution.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
@@ -358,7 +360,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "344 entries"
+      "detail": "346 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3911,6 +3913,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/world-screen.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/world-screen.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/world-screen.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/world-screen.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/kb-build.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -4002,6 +4024,26 @@
     },
     {
       "name": "scripts/test/action-network-live-governance.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-network-redesign.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/action-network-redesign.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/action-network-redesign.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/action-network-redesign.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -98,7 +98,11 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
+    if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = MISSIONS.find((x) => u.includes(x.mission_id)); return json(route, m ? [{ id: m.mission_id, campaign_id: 'camp-1', title: m.title, description: m.description, domain: 'civic', difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'desk', skills: ['field'], capacity: null, status: 'open', starts_at: null, ends_at: null }] : []); }
     if (u.includes('/rest/v1/action_missions?')) return json(route, OPEN_MISSIONS);
+    if (u.includes('/rest/v1/action_mission_assignments?')) return json(route, []);
+    /* the campaign's governed support rail is open for this fixture */
+    if (/\/rpc\/action_bounty_public$/.test(u)) return json(route, { support_open: true, support_note: 'Allocations are verified by the desk.', bounties: [] });
     if (u.includes('/rest/v1/music_creator_profiles?')) return json(route, member && creator ? [{ handle: 'fixture-you' }] : []);
     /* the Action Record: whether this member has completed a mission decides whether Uprise is theirs yet */
     if (/\/rpc\/action_record$/.test(u)) return json(route, { verified_actions: verified ? 1 : 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
@@ -221,9 +225,9 @@ for (const device of DEVICES) {
   check(device.name, 'the strip opens on the newest pinned mission, labelled as the latest', (await page.isVisible('#mnWorldFocusFlag')) && /Latest/.test(await page.textContent('#mnWorldFocusFlag')));
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
   check(device.name, 'app bar is exactly Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
-  check(device.name, 'feed shows member posts (author, text, Uprise/Share; no like, no comment), not mission cards', await page.evaluate(() => {
+  check(device.name, 'feed shows member posts (author, text, Share; no like, comment or reaction), not mission cards', await page.evaluate(() => {
     const c = document.querySelector('#mnFeed [data-post-id]');
-    return !!(c && c.querySelector('.mn__author-name') && c.querySelector('[data-action=uprise]') && c.querySelector('[data-action=share]')) && !c.querySelector('[data-action=like]') && !c.querySelector('[data-action=comments]') && !document.querySelector('#mnFeed .world-story');
+    return !!(c && c.querySelector('.mn__author-name') && c.querySelector('[data-action=share]')) && !c.querySelector('[data-action=like]') && !c.querySelector('[data-action=comments]') && !c.querySelector('[data-action=uprise]') && !document.querySelector('#mnFeed .world-story');
   }));
   await page.screenshot({ path: join(OUT, `member-${device.name}.png`) });
   check(device.name, 'no page errors', errors.length === 0, errors);
@@ -247,20 +251,28 @@ for (const device of DEVICES) {
   check(scope, 'Post sends an authenticated POST /v1/mnet/posts and the post lands at the top', posted && posted.auth && posted.body.body === 'E2E: posted from the World screen', posted);
   check(scope, 'the composer folds once the post is away', !(await page.$eval('#mnComposer', (c) => c.classList.contains('is-open'))));
 
-  // Uprise, then take it back (this member has a verified action)
-  const target = world.posts.find((p) => p.author === PEERS[1] && p.visibility === 'public');
-  const uprise = `#mnFeed [data-post-id="${target.id}"] [data-action=uprise]`;
-  const before = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
-  await page.click(uprise); await page.waitForTimeout(400);
-  const afterUprise = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
-  const upriseReq = req(world, 'POST', /\/reactions$/).at(-1);
-  check(scope, 'Uprise sends POST …/reactions {reaction:"uprise"} and the count goes up', upriseReq && upriseReq.auth && upriseReq.body.reaction === 'uprise' && afterUprise === before + 1 && (await page.getAttribute(uprise, 'aria-pressed')) === 'true', { before, afterUprise, upriseReq });
-  await page.screenshot({ path: join(OUT, 'member-iphone-after-uprise.png') });
-  await page.click(uprise); await page.waitForTimeout(400);
-  const afterBack = Number((await page.textContent(`${uprise} .mn__count`)) || 0);
-  check(scope, 'taking it back sends DELETE …/reactions and the count goes back', req(world, 'DELETE', /\/reactions$/).length === 1 && afterBack === before, { afterBack });
+  // E=Up or Fund: the post that carries a mission offers both; the rest offer neither
+  const target = world.posts.find((p) => p.content_id === CONTENT);
   const card = `#mnFeed [data-post-id="${target.id}"]`;
-  check(scope, 'there is no comment button: Uprise is the one reaction', !(await page.$(`${card} [data-action=comments]`)));
+  await page.waitForSelector(`${card} .mn__actcard .mn__primary--eup`, { timeout: 10000 });
+  await page.waitForFunction((sel) => /12 joined/.test(document.querySelector(sel + ' .mn__actcard')?.textContent || ''), card, { timeout: 8000 }).catch(() => {});
+  const banner = await page.textContent(`${card} .mn__actcard`);
+  check(scope, 'a mission post offers E=Up (the owner\'s emblem) and Fund, with the mission\'s public counts', /E=Up/.test(banner) && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-logo\.webp$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), banner);
+  const plain = world.posts.find((p) => !p.content_id && p.visibility === 'public');
+  check(scope, 'a post with no mission has no E=Up, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
+  await page.click(`${card} [data-fund-mission]`);
+  await page.waitForSelector(`${card} .mn__fund-line a`, { timeout: 8000 }).catch(() => {});
+  check(scope, 'Fund tells the truth for this mission: its campaign\'s governed support rail, open', /governed support rail/.test((await page.textContent(`${card} .mn__fund-line`).catch(() => '')) || '') && (await page.getAttribute(`${card} .mn__fund-line a`, 'href').catch(() => '')) === 'give.html' && /verified by the desk/.test(await page.textContent(`${card} .mn__fund-line`)));
+  await page.screenshot({ path: join(OUT, 'member-iphone-fund.png') });
+  await page.click(`${card} .mn__primary--eup`);
+  await page.waitForSelector('#mnMissionDialog[open]', { timeout: 10000 });
+  await page.waitForFunction(() => /support rail|isn’t open/.test(document.getElementById('mnMissionFund')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  check(scope, 'E=Up opens the mission to join it and do it, and the dialog says whether funding is open', /Clean up the Mill River/.test(await page.textContent('#mnMissionTitle')) && (await page.isVisible('#mnMissionJoin')) && /governed support rail/.test(await page.textContent('#mnMissionFund')));
+  await page.screenshot({ path: join(OUT, 'member-iphone-eup.png') });
+  await page.click('#mnMissionClose');
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+  await page.waitForSelector(`${card}`);
 
   // Share
   await page.click(`${card} [data-action=share]`);
@@ -429,18 +441,7 @@ for (const device of DEVICES) {
 {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, creator: false, verified: false });
   const scope = 'member-not-creator';
-  // Uprise before any verified action: the card explains, nothing is sent
-  const firstPost = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
-  const sentBefore = world.requests.length;
-  await page.click(`#mnFeed [data-post-id="${firstPost}"] [data-action=uprise]`);
-  await page.waitForSelector('.mn__gate-line', { timeout: 5000 }).catch(() => {});
-  check(scope, 'without a completed mission, Uprise explains itself and sends nothing', /Complete a mission to uprise\. Your first verified action unlocks it\./.test((await page.textContent('.mn__gate-line').catch(() => '')) || '') && world.requests.slice(sentBefore).every((r) => !/reactions/.test(r.path)) && (await page.getAttribute(`#mnFeed [data-post-id="${firstPost}"] [data-action=uprise]`, 'aria-pressed')) === 'false');
-  await page.screenshot({ path: join(OUT, 'member-iphone-uprise-gate.png') });
-  await page.click('.mn__gate-line button');
-  await page.waitForSelector('#mnMissionsView:not([hidden])');
-  check(scope, 'Find a mission opens the missions', await page.isVisible('#mnMissionsView'));
-  await page.click('#mnToWorld');
-  await page.waitForSelector('#mnFeedView:not([hidden])');
+  void world;
   await page.click('#mnMe');
   await page.click('#mnMenu [data-mn-view="profile"]');
   await page.waitForSelector('#mnProfileView:not([hidden])');
@@ -474,7 +475,18 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   await page.click('[data-world-chip="missions"]');
   await page.waitForSelector('#mnWorldFocus:not([hidden])', { timeout: 8000 }).catch(() => {});
   check(scope, 'the Missions chip steps to a pinned mission on the globe', await page.isVisible('#mnWorldFocus'));
+  await page.click('#mnWorldFocusFund');
+  await page.waitForSelector('#mnWorldFocus .mn__fund-line a', { timeout: 8000 }).catch(() => {});
+  check(scope, 'Fund on the mission card answers a guest too: the campaign\'s governed support rail', /governed support rail/.test((await page.textContent('#mnWorldFocus .mn__fund-line').catch(() => '')) || ''));
   await page.screenshot({ path: join(OUT, `guest-${device.name}-mission.png`) });
+  await page.click('#mnWorldFocusFund');
+  const guestSentEup = world.requests.length;
+  await page.click('#mnWorldFocusJoin');
+  await page.waitForSelector('#mnSignedOut:not([hidden])');
+  check(scope, 'E=Up as a guest opens sign-in with the reason, and sends nothing', /Sign in to join this mission/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(guestSentEup).every((r) => !/posts|missions/.test(r.path)));
+  await page.click('#mnSignedOutBack');
+  await page.waitForSelector('#mnFeed [data-post-id]');
+  await page.waitForSelector('#mnWorldFocus:not([hidden])', { timeout: 8000 }).catch(() => {});
   await page.click('#mnWorldFocusClear');
   await page.fill('#mnSearchInput', 'ana');
   await page.waitForSelector('#mnSuggest [data-suggest="people"]', { timeout: 8000 });
@@ -487,9 +499,10 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(300);
   const first = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
   const sent = world.requests.length;
-  await page.click(`#mnFeed [data-post-id="${first}"] [data-action=uprise]`);
+  check(scope, 'a guest\'s cards carry Share and Save only: no like, comment or reaction, and no mission tie (those need a session)', !(await page.$('#mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise], #mnFeed [data-take-mission], #mnFeed [data-fund-mission]')));
+  await page.click(`#mnFeed [data-post-id="${first}"] [data-action=save]`);
   await page.waitForSelector('#mnSignedOut:not([hidden])');
-  check(scope, 'Uprise opens sign-in with the rule, and nothing is sent', /Sign in and complete a mission to uprise posts/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(sent).every((r) => !/reactions|replies|posts$/.test(r.path)));
+  check(scope, 'Save opens sign-in with a reason, and nothing is sent', /Sign in to save posts/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(sent).every((r) => !/bookmarks|reactions|replies|posts$/.test(r.path)));
   await page.screenshot({ path: join(OUT, `guest-${device.name}-sign-in.png`) });
   await page.click('#mnSignedOutBack');
   await page.waitForSelector('#mnFeed [data-post-id]');

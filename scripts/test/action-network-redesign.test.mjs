@@ -102,20 +102,24 @@ test('text-only post does not shadow analytics track function',()=>{
  assert.match(client,/track\("mnet_post_created"/);
  assert.doesNotMatch(client,/var track = pickedTrack\(\)/);
 });
-test('Uprise is the one reaction: the server counts it only from a member who completed a mission; comments are off the cards',()=>{
- assert.match(worker,/if\(!post\|\|!\(await canReadNetworkPost\(env,muid,post\)\)\)/);
- assert.match(worker,/network_reactions/);
+test('E=Up or Fund it: no like, comment or reaction; a mission post offers the emblem and the governed rail',()=>{
+ /* the join is the owner's emblem, scaled only, never redrawn */
+ assert.match(client,/var EUP_MARK = '<img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp" alt="" width="24" height="24">'/);
+ assert.match(client,/class="mn__primary mn__primary--eup" href="' \+ esc\(actionOfferHref\(c\)\)[\s\S]{0,200}aria-label="E=Up: join this mission and do it">' \+ EUP_MARK \+ 'E=Up<\/a>/);
+ assert.match(page,/id="mnWorldFocusJoin"[^>]*aria-label="E=Up: join this mission and do it"[^>]*><img class="mn__eup" src="assets\/img\/equity-uprise-logo\.webp"/);
+ assert.match(page,/id="mnWorldFocusFund"/);
+ /* Fund tells the truth per campaign and never pays by itself */
+ assert.match(client,/function fundState\(missionId, campaignId\)/);
+ assert.match(client,/sbRpc\("action_bounty_public", \{ p_campaign: cid \}\)/);
+ assert.match(client,/href="give\.html"/);
+ assert.match(client,/Funding isn\\u2019t open for this mission yet\. You can still E=Up and do it\./);
+ assert.doesNotMatch(client,/stripe|checkout/i,'no payment endpoint of its own');
+ /* nothing else reacts */
+ assert.doesNotMatch(client,/data-action="comments"|data-action="like"|data-action="uprise"/);
+ assert.doesNotMatch(client,/function explainUprise/);
+ assert.doesNotMatch(page,/data-action="like"|Comment<\/button>/);
+ /* the Worker keeps its routes: reactions stay gated on a completed mission for any older caller, replies carry live-room chat */
  assert.match(worker,/async function hasVerifiedAction\(env,muid\)/);
- assert.match(worker,/status=eq\.verified/);
- assert.match(worker,/or=\(kind\.is\.null,kind\.neq\.clip\)/,'a clip job is paid work, not a completed mission');
- assert.match(worker,/if\(!\(await hasVerifiedAction\(env,muid\)\)\)return fail\(req,env,'Complete a mission to uprise posts\. Your first verified action unlocks it\.',403,\{reason:'no_verified_action'\}\)/);
- assert.match(worker,/reaction:'like'/,'stored under the existing reaction value; no table change');
- assert.match(client,/data-action="uprise"/);
- assert.doesNotMatch(client,/data-action="comments"|data-action="like"/);
- assert.match(client,/function explainUprise\(b\)/);
- assert.match(client,/Complete a mission to uprise\. Your first verified action unlocks it\./);
- assert.match(client,/uprise:"Sign in and complete a mission to uprise posts\."/);
- /* the Worker keeps its comment routes (live chat runs over replies); the cards do not offer them */
  assert.match(worker,/network_post_comments/);
 });
 test('comments are private by default with length constraints',()=>{

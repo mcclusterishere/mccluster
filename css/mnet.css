@@ -268,12 +268,18 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__action--like.is-active svg { fill: var(--mn-hot); }
 .mn__action--save.is-active { color: var(--mn-gold); }
 .mn__action--save.is-active svg { fill: var(--mn-gold); }
-/* UPRISE: the one reaction; lit red once given. The gate line says what unlocks it. */
-.mn__action--uprise.is-active { color: var(--mn-hot); }
-.mn__action--uprise.is-active svg { stroke-width: 2.4; filter: drop-shadow(0 0 6px rgba(255, 42, 77, 0.75)); }
-.mn__gate-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 77, 61, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.3); color: var(--mn-dim); font-size: 0.85rem; line-height: 1.4; }
-.mn__gate-line span { flex: 1 1 14rem; min-width: 0; }
-.mn__gate-line button { flex: none; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }
+/* E=UP OR FUND IT: the owner's emblem is the join, shown as supplied on its own
+   white ground; Fund is a plain pill; the fund line says whether the
+   campaign's support rail is open. */
+.mn__eup { width: 22px; height: 22px; border-radius: 5px; object-fit: contain; flex: none; }
+.mn__primary--eup, .mn__world-go--eup { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.8); }
+.mn__fund { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+.mn__fund svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__actcard-stats { margin: 6px 0 0; color: var(--mn-dim); font-size: 0.78rem; font-weight: 700; }
+.mn__fund-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(244, 239, 230, 0.06); box-shadow: inset 0 0 0 1px var(--mn-rule-2); color: var(--mn-dim); font-size: 0.85rem; line-height: 1.4; }
+.mn__fund-line span { flex: 1 1 14rem; min-width: 0; }
+.mn__fund-line small { flex-basis: 100%; color: var(--mn-faint); font-size: 0.78rem; }
+.mn__fund-go { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-size: 0.82rem; font-weight: 800; text-decoration: none; }
 .mn__action.is-pop svg { animation: mn-pop 0.5s var(--mn-spring); }
 .mn__danger { color: #ff9a91 !important; }
 .mn__more { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); box-shadow: inset 0 0 0 1px var(--mn-rule-2); cursor: pointer; font-family: inherit; font-weight: 800; font-size: max(16px, 0.9rem); }
@@ -1020,6 +1026,8 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .mn__world-go svg, .mn__world-locate svg, .mn__world-filter svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mn__world-go { border: 0; background: linear-gradient(180deg, #ff3d5e, #c4102c); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 26px -10px rgba(255, 42, 77, 0.95); }
+.mn__world-go--eup, .mn-world-on .mn__world-go--eup { background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.9); }
+.mn__mission-card .mn__fund-line { grid-column: 1 / -1; margin-top: 2px; }
 .mn__world-locate, .mn__mission-card .mn__world-filter { border: 0; background: var(--w-glass); color: var(--mn-ink); box-shadow: var(--w-edge); }
 .mn__mission-card .mn__world-filter[aria-pressed="true"] { background: rgba(255, 42, 77, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 42, 77, 0.6); }
 .mn__mission-card .mn__world-close { position: absolute; top: 8px; right: 8px; width: 30px; min-height: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--w-glass); box-shadow: var(--w-edge); font-size: 0.8rem; }
@@ -1067,15 +1075,16 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn-world-on #mnFeed .mn__author-avatar { width: 40px; height: 40px; }
 .mn-world-on #mnFeed .mn__post-body { margin: 8px 0 0; color: #e3e6ec; font-size: 0.95rem; line-height: 1.5; }
 .mn-world-on #mnFeed .mn__post-actions { grid-column: 1 / -1; margin: 8px -6px -4px; }
-.mn-world-on #mnFeed .mn__action--uprise .mn__count, .mn-world-on #mnFeed .mn__action--uprise .mn__action-label { color: var(--mn-ink); }
-.mn-world-on #mnFeed .mn__gate-line { background: rgba(255, 42, 77, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 42, 77, 0.4); }
+.mn-world-on .mn__fund-line { background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn-world-on #mnFeed .mn__actcard .mn__fund { background: var(--w-glass); border: 0; box-shadow: var(--w-edge); }
+.mn-world-on #mnFeed .mn__actcard-stats { color: #f3d7dc; }
 /* MISSION ATTACHED: the red banner inside a post that carries a mission */
 .mn-world-on #mnFeed .mn__actcard { border-radius: 16px; background: linear-gradient(120deg, rgba(196, 16, 44, 0.6), rgba(70, 10, 22, 0.72) 55%, rgba(16, 11, 13, 0.92)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 42, 77, 0.45); }
 .mn-world-on #mnFeed .mn__actcard-eyebrow { color: #ffb3c0; }
 .mn-world-on #mnFeed .mn__actcard-title { font-size: clamp(1.3rem, 5.5vw, 1.7rem); color: #fff; }
 .mn-world-on #mnFeed .mn__actcard-foot { color: #f3d7dc; }
-.mn-world-on #mnFeed .mn__actcard-row .mn__primary { min-height: 40px; border-radius: 999px; background: linear-gradient(180deg, #ff3d5e, #c4102c); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 26px -10px rgba(255, 42, 77, 0.95); }
-.mn-world-on #mnFeed .mn__actcard-row .mn__primary::after { content: "\203A"; margin-left: 8px; font-size: 1.1em; line-height: 1; }
+.mn-world-on #mnFeed .mn__actcard-row .mn__primary { min-height: 40px; border-radius: 999px; background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.9); }
+.mn-world-on #mnFeed .mn__actcard-row .mn__primary::after { content: "\203A"; margin-left: 4px; font-size: 1.1em; line-height: 1; }
 .mn-world-on #mnFeed .mn__globe-chip { border: 0; background: var(--w-glass); box-shadow: var(--w-edge); }
 .mn-world-on .mn__composer { background: var(--w-glass); box-shadow: var(--w-edge); }
 .mn-world-on .mn__create { background: var(--w-glass); box-shadow: var(--w-edge); }
@@ -1092,16 +1101,18 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
   /* the Earth in a bezel, with its corner tag */
   .mn-world-on .mn__world-home { margin: 0; border: 0; border-radius: 22px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 0 1px #000, 0 0 44px -18px rgba(255, 42, 77, 0.55), var(--w-shadow); }
   .mn__world-tag { display: inline-flex; }
-  .mn__mission-card { grid-template-columns: 112px minmax(0, 1fr) auto; padding: 14px 48px 14px 14px; gap: 6px 16px; }
+  .mn__mission-card { grid-template-columns: 92px minmax(0, 1fr) auto; padding: 14px 40px 14px 14px; gap: 6px 14px; }
   .mn__mission-meta { flex-wrap: wrap; white-space: normal; }
-  .mn__mission-art { width: 112px; height: 100%; min-height: 96px; grid-row: 1; border-radius: 16px; }
+  .mn__mission-art { width: 92px; height: 100%; min-height: 96px; grid-row: 1; border-radius: 16px; }
   .mn__mission-art svg { width: 38px; height: 38px; }
   .mn__mission-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .mn__mission-card h2 { font-size: 1.2rem; }
-  .mn__mission-actions { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0, auto)); grid-auto-flow: dense; align-self: center; }
+  /* two lines of title from tablet width; the three action rows beside it set the card's height anyway */
+  .mn__mission-card h2 { font-size: 1.2rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .mn__mission-actions { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(3, minmax(0, auto)); grid-auto-flow: dense; gap: 6px; align-self: center; }
   .mn__mission-actions > * { min-width: 0; }
-  /* Join and the posts filter span the column; Locate and All missions share a row, so the card is no taller for the fourth action */
+  /* E=Up and the posts filter span the column; Fund, Locate and All missions share a row, so the card stays three rows tall */
   #mnWorldFocusJoin, #mnWorldFocusFilter { grid-column: 1 / -1; min-width: 9.5rem; }
+  .mn__mission-card .mn__fund-line { grid-column: 1 / -1; grid-row: 2; }
   .mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 180px; }
   .mn-world-on #mnFeed .mn__post-card { padding: 16px 18px; }
   .mn__rewind { gap: 8px 12px; padding: 10px 12px; border-radius: 18px; background: var(--w-steel); }
@@ -1117,7 +1128,7 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
    its half of the right column */
 .mn-world-side .mn__mission-card { grid-template-columns: minmax(0, 1fr); padding: 8px 36px 8px 10px; gap: 6px; }
 .mn-world-side .mn__mission-art { display: none; }
-.mn-world-side .mn__mission-card h2 { font-size: 0.95rem; }
+.mn-world-side .mn__mission-card h2 { display: block; white-space: nowrap; font-size: 0.95rem; }
 .mn-world-side .mn__mission-actions .mn__world-filter span { display: none; }
 .mn-world-side .mn__mission-actions { grid-column: 1; grid-row: auto; display: flex; flex-direction: row; align-self: auto; }
 .mn-world-side .mn__mission-actions > *, .mn-world-side #mnWorldFocusJoin, .mn-world-side #mnWorldFocusFilter { min-width: 0; }

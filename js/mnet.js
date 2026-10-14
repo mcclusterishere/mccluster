@@ -60,7 +60,7 @@
   /* Line icons for the post actions, drawn in currentColor so the active
      state is a colour change, not a second asset. */
   var ICON = {
-    uprise: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19.5V5.5M5.5 12l6.5-6.5 6.5 6.5"/></svg>',
+    fund: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>',
     comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
@@ -263,7 +263,7 @@
     state.feed = []; state.nextBefore = null;
   }
   function askToSignIn(why) {
-    var line = { uprise:"Sign in and complete a mission to uprise posts.", save:"Sign in to save posts.",
+    var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
@@ -510,8 +510,7 @@
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          /* UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction, and it counts only from a member who has completed a mission; no comments */
-          '<button class="mn__action mn__action--uprise' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="uprise" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Uprise this post">' + ICON.uprise + '<span class="mn__count">' + esc(post.like_count || '') + '</span><span class="mn__action-label">Uprise</span></button>' +
+          /* E=UP OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction. A post that carries a mission offers E=Up and Fund in its mission banner; every card keeps Share and Save. */
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
@@ -520,6 +519,47 @@
     '</article>';
   }
 
+  /* E=UP OR FUND IT (owner, 2026-10-14). The mark is the owner's Equity
+     Uprise artwork, scaled only, never redrawn. E=Up joins the mission's
+     cohort and does it (the canonical join flow); Fund opens the campaign's
+     governed support rail, and only says so when that campaign has money
+     enabled (action_bounty_public). Never a payment endpoint of its own. */
+  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="24" height="24">';
+  function fundButtonHtml(c) {
+    return '<button class="mn__fund" type="button" data-fund-mission="' + esc(c.mission_id) + '"' + (c.campaign_id ? ' data-campaign="' + esc(c.campaign_id) + '"' : '') + ' aria-label="Fund this mission">' + ICON.fund + '<span>Fund</span></button>';
+  }
+  /* the mission's public counts (action_mission_stats, anon-granted): how many E=Up, how many verified; never who */
+  function missionStatsHtml(missionId) {
+    var st = state.world.stats[missionId];
+    if (!st) return "";
+    var joined = Number(st.joined) || 0, verified = Number(st.verified) || 0;
+    return '<p class="mn__actcard-stats">' + esc(joined + " joined") + ' \u00b7 ' + esc(verified + " verified") + '</p>';
+  }
+  function fundState(missionId, campaignId) {
+    missions.support = missions.support || {};
+    var withCampaign = campaignId ? Promise.resolve(campaignId) : fetchMission(missionId).then(function (m) { return m && m.campaign_id || ""; }).catch(function () { return ""; });
+    return withCampaign.then(function (cid) {
+      if (!cid) return { open: false, note: "" };
+      if (missions.support[cid]) return missions.support[cid];
+      return sbRpc("action_bounty_public", { p_campaign: cid }).then(function (d) {
+        return (missions.support[cid] = { open: !!(d && d.support_open), note: String(d && d.support_note || "").slice(0, 240) });
+      }).catch(function () { return { open: false, note: "" }; });
+    });
+  }
+  function fundLineHtml(st) {
+    return (st.open
+      ? '<span>Funding is open through the campaign\u2019s governed support rail.</span><a class="mn__fund-go" href="give.html">Open the support rail \u2192</a>'
+      : '<span>Funding isn\u2019t open for this mission yet. You can still E=Up and do it.</span>') +
+      (st.note ? '<small>' + esc(st.note) + '</small>' : '');
+  }
+  function toggleFundLine(host, missionId, campaignId) {
+    if (!host) return;
+    var old = host.querySelector(".mn__fund-line"); if (old) { old.remove(); return; }
+    var line = document.createElement("p"); line.className = "mn__fund-line"; line.setAttribute("role", "status"); line.textContent = "Checking funding\u2026";
+    host.appendChild(line);
+    track("fund_open", { mission: String(missionId || "").slice(0, 36) });
+    fundState(missionId, campaignId).then(function (st) { if (line.isConnected) line.innerHTML = fundLineHtml(st); });
+  }
   /* A CREATOR POST MAY CARRY A MISSION. Like verified-action cards, this
      is read from a server-vouched relation, never trusted from post metadata. */
   function actionOfferHref(c) {
@@ -539,8 +579,9 @@
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
       (c.description ? '<p class="mn__actcard-foot">' + esc(c.description) + '</p>' : '') +
       '<div class="mn__actcard-row">' +
-        (c.mission_open ? '<a class="mn__primary" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network">Take action</a>' : '<span class="mn__hint">Mission closed</span>') +
-      '</div>' + globeChipHtml(c.mission_id) + '</div>';
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '<span class="mn__hint">Mission closed</span>') +
+        fundButtonHtml(c) +
+      '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
     var ids = (items || []).map(function (it) {
@@ -566,9 +607,10 @@
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
       '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
-        (c.mission_open ? '<a class="mn__primary" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '">Take this mission too</a>' : '') +
+        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="E=Up: join this mission and do it">' + EUP_MARK + 'E=Up</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
-      '</div>' + globeChipHtml(c.mission_id) + '</div>';
+        fundButtonHtml(c) +
+      '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
@@ -624,8 +666,12 @@
     if (state.guest) {
       /* read-only: the same buttons, but each one is a door to sign in,
          and nothing is sent. Share works, because every guest post is public. */
-      root.querySelectorAll("[data-take-mission],[data-action=uprise],[data-action=save],[data-person],[data-guest-ask]").forEach(function (b) {
+      root.querySelectorAll("[data-take-mission],[data-action=save],[data-person],[data-guest-ask]").forEach(function (b) {
         b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); askToSignIn(b.getAttribute("data-action") || (b.hasAttribute("data-take-mission") ? "mission" : "act")); };
+      });
+      /* the support rail is public, so Fund answers a guest too */
+      root.querySelectorAll("[data-fund-mission]").forEach(function (b) {
+        b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); toggleFundLine(b.closest(".mn__actcard") || b.closest("[data-post-id]"), b.getAttribute("data-fund-mission"), b.getAttribute("data-campaign") || ""); };
       });
       root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
         b.onclick = function () { focusOnGlobe(b.getAttribute("data-globe-mission")); };
@@ -652,28 +698,8 @@
     root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
       b.onclick = function () { focusOnGlobe(b.getAttribute("data-globe-mission")); };
     });
-    /* UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction, and it counts
-       only from a member who has completed a mission. The Action Record
-       says so before a request is made; the server refuses regardless. */
-    root.querySelectorAll("[data-action=uprise]").forEach(function (b) {
-      b.onclick = function () {
-        var item=findPost(b.dataset.post),post=item&&(item.post||item);
-        if(!post)return;
-        var before=!!post.liked_by_me, count=Number(post.like_count)||0;
-        if(!before&&missions.record&&!(Number(missions.record.verified_actions)>0)){explainUprise(b);return;}
-        post.liked_by_me=!before;
-        post.like_count=Math.max(0,count+(before?-1:1));
-        paintToggle(b,!before,post.like_count);
-        b.disabled=true;
-        api("/v1/mnet/posts/"+encodeURIComponent(b.dataset.post)+"/reactions",{method:before?"DELETE":"POST",body:{reaction:"uprise"}})
-          .catch(function(e){
-            post.liked_by_me=before;post.like_count=count;paintToggle(b,before,count);
-            var why=e&&e.data&&e.data.detail&&e.data.detail.reason;
-            if(why==="no_verified_action"||/Complete a mission to uprise/.test(e&&e.message||""))explainUprise(b);
-            else setStatus($("mnFeedStatus"),e.message||"Could not uprise this post.","error");
-          })
-          .finally(function(){b.disabled=false;});
-      };
+    root.querySelectorAll("[data-fund-mission]").forEach(function (b) {
+      b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); toggleFundLine(b.closest(".mn__actcard") || b.closest("[data-post-id]"), b.getAttribute("data-fund-mission"), b.getAttribute("data-campaign") || ""); };
     });
     root.querySelectorAll("[data-action=share]").forEach(function (b) {
       b.onclick = function () { sharePost(b); };
@@ -804,7 +830,7 @@
         }
       } catch (_) {}
       Promise.all([loadActionCards(incoming), loadActionOfferCards(incoming)]).then(function (flags) {
-        if (flags.some(Boolean)) renderFeed(false);
+        if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
       if (reset && !state.guest) paintFeedMissions();
       $("mnMore").hidden = !state.nextBefore;
@@ -885,16 +911,6 @@
     }).finally(function () { button.disabled = false; });
   }
 
-  /* the uprise gate, said in the card: what unlocks it and where to go */
-  function explainUprise(b) {
-    var card=b.closest("[data-post-id]"); if(!card)return;
-    var old=card.querySelector(".mn__gate-line"); if(old){old.remove();return;}
-    var line=document.createElement("p"); line.className="mn__gate-line"; line.setAttribute("role","status");
-    line.innerHTML='<span>Complete a mission to uprise. Your first verified action unlocks it.</span><button type="button">Find a mission</button>';
-    line.querySelector("button").onclick=function(){setView("missions");};
-    card.appendChild(line);
-    track("uprise_gate",{post:String(b.dataset.post||"").slice(0,36)});
-  }
   function findPost(postId) {
     for (var i=0; i<state.feed.length; i++) {
       var item = state.feed[i];
@@ -926,7 +942,7 @@
         action='<a class="mn__notification-action" href="mnet.html?mission='+encodeURIComponent(mission)+'">'+
           (meta.decision==="rejected"?"Fix proof →":"View action →")+'</a>';
       }
-      return '<article class="mn__notification"><strong>' + esc(String(n.body || n.type || "Notification").replace(/\bliked your post\b/i, "uprised your post")) + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
+      return '<article class="mn__notification"><strong>' + esc(n.body || n.type || "Notification") + '</strong><p>' + esc(timeAgo(n.created_at)) + '</p>'+action+'</article>';
     }).join("");
   }
 
@@ -2155,7 +2171,8 @@
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
-      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p>';
+      $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p><p class="mn__fund-line" id="mnMissionFund" role="status">Checking funding\u2026</p>';
+      fundState(m.id,m.campaign_id||"").then(function(st){var line=$("mnMissionFund");if(line&&missions.current&&missions.current.id===m.id)line.innerHTML=fundLineHtml(st);});
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
       if($("mnMissionShare"))$("mnMissionShare").checked=true;
@@ -2335,9 +2352,12 @@
     sbRpc("action_mission_stats", { p_campaign: null }).then(function (rows) {
       (rows || []).forEach(function (r) { if (r && r.mission_id) state.world.stats[r.mission_id] = r; });
       paintWorldFocus();
+      if (!state.loadingFeed) renderFeed(false);
     }).catch(function () {});
   }
   function setWorldFocus(mission) {
+    var stale = $("mnWorldFocus") && $("mnWorldFocus").querySelector(".mn__fund-line");
+    if (stale && !(mission && state.world.focus && mission.mission_id === state.world.focus.mission_id)) stale.remove();
     state.world.focus = mission;
     paintWorldFocus();
     if (!state.loadingFeed) renderFeed(false);
@@ -2599,6 +2619,10 @@
     $("mnWorldFocusLocate").addEventListener("click", function () {
       var f = state.world.focus;
       if (f) focusOnGlobe(f.mission_id);
+    });
+    $("mnWorldFocusFund").addEventListener("click", function () {
+      var f = state.world.focus;
+      if (f) toggleFundLine($("mnWorldFocus"), f.mission_id, "");
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-rewind]"), function (b) {
       b.addEventListener("click", function () { if (!state.loadingFeed) setRewind(Number(b.getAttribute("data-rewind")) || 0); });

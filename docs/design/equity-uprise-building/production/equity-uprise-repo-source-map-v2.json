@@ -1503,6 +1503,13 @@
       "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
+      "path": "scripts/e2e/world-screen.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the Human Uprise World screen against a fake backend; names the Equity Uprise emblem only to check the E=Up join uses the owner's artwork. Not a building capability."
+    },
+    {
       "path": "scripts/kb-build.mjs",
       "classification": "capability_source",
       "capability_ids": [
@@ -1538,6 +1545,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests governed Action Network live rooms, host capability boundaries, first-class music discovery and live mission attribution; not a physical building capability."
+    },
+    {
+      "path": "scripts/test/action-network-redesign.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World screen's navigation and E=Up/Fund contract; names the Equity Uprise emblem path. Not a building capability."
     },
     {
       "path": "scripts/test/action-network.test.mjs",
