@@ -7,7 +7,7 @@
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Cesium.js"></script>
 <script>
 (function(){var notice=document.getElementById('notice');if(!window.Cesium){notice.textContent='Earth preview unavailable';return;}
-try{var viewer=new Cesium.Viewer('earth',{animation:false,timeline:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,infoBox:false,selectionIndicator:false,fullscreenButton:false,terrainProvider:new Cesium.EllipsoidTerrainProvider()});
+try{var viewer=new Cesium.Viewer('earth',{animation:false,timeline:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,infoBox:false,selectionIndicator:false,fullscreenButton:false,terrainProvider:new Cesium.EllipsoidTerrainProvider(),baseLayer:Cesium.ImageryLayer.fromProviderAsync(Cesium.OpenStreetMapImageryProvider.fromUrl('https://tile.openstreetmap.org/'))});
 viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(-20,14,19000000)});
 viewer.scene.globe.enableLighting=true;
 viewer.scene.screenSpaceCameraController.enableTilt=false;
