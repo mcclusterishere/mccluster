@@ -108,6 +108,7 @@ fails when `config.toml` gains one that is missing here.
 | `eu-converse` | anonymous visitors | a thread answers only to its owner (signed-in profile, or the visitor's `anon_key` on an unclaimed thread); server-side usage limits; fixed agent tools |
 | `intake`, `eu-intake` | public forms | fixed org and field set, length caps, per-IP limit / Turnstile; the browser cannot set status, roles or approvals |
 | `unsubscribe` | a recipient holding an old email | per-contact unsubscribe token; the only effect is a suppression |
+| `public-gdelt-news` | public read-only world reporting | anonymous GET serves cached article rows; `sync=1` requires a service-role bearer token before database ingestion; GDELT requests use bounded topics and backoff claims; never expose the service-role key to browsers |
 | `domain-check` | anonymous lookup | read-only; registry answer plus the `domain_tlds` price, never charged from here |
 | `collect` | anonymous telemetry | the only writer of `events`; IP and user agent observed server-side; a token, when sent, is verified in-function |
 | `mnet-track` | anonymous and signed-in activity | token verified in-function when present; unknown source app refused |
