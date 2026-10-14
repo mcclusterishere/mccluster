@@ -29,7 +29,9 @@ WITH retired(id) AS (
   ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- Stock a community fridge
   ('51587300-5442-5708-8ccb-13bb4145d7b0'::uuid), -- Teach what you verified
   ('9144bd42-f94a-494e-a17a-a45f9e155f86'::uuid), -- Trace the minerals in your phone
-  ('4c57292e-7835-5d29-b1ac-7de53e5bbb81'::uuid) -- Trace your own community history
+  ('4c57292e-7835-5d29-b1ac-7de53e5bbb81'::uuid), -- Trace your own community history
+  ('df26314d-d4e1-47e3-b980-1b60b1a682ea'::uuid), -- Co-write policy paper (duplicate)
+  ('df26314d-d4e1-47e3-b980-1b60b1a682ea'::uuid) -- duplicate paper
 )
 UPDATE public.action_missions m
 SET status=CASE WHEN EXISTS (
@@ -65,13 +67,29 @@ WHERE id IN (
  AND a.status IN ('joined','in_progress','submitted','rejected')
 );
 
--- Explicit keeps and restorations: Equity paper, Black business spend.
+-- Explicit keep: Black business spend; policy memo stays open.
 UPDATE public.action_missions
 SET status='open', updated_at=now()
 WHERE id IN (
- 'df26314d-d4e1-47e3-b980-1b60b1a682ea',
  'ba66d4a3-cb62-4403-9b56-7ee00af059d8'
 );
+
+-- Retire the institutional-change mission and docket-reading mission by title.
+-- Preserve assignments by pausing missions that have started participants.
+UPDATE public.action_missions m
+SET status=CASE WHEN EXISTS (
+ SELECT 1 FROM public.action_mission_assignments a
+ WHERE a.mission_id=m.id AND a.status IN ('joined','in_progress','submitted','rejected')
+) THEN 'paused' ELSE 'closed' END,updated_at=now()
+WHERE m.title IN ('Change one institutional thing','Read the Docket 516R record','Read the Docket 516R','Read Docket 516R')
+AND m.status='open';
+
+-- Feed ONE person, rather than two; keep the existing mission ID and receipts.
+UPDATE public.action_missions
+SET title='Feed One Person',
+ description='Provide one meal to a person who needs it, respectfully and without filming their vulnerability. Verification can use a redacted purchase receipt or a self-focused volunteer recap; no recipient identity or image is required.',
+ updated_at=now()
+WHERE title ILIKE 'Feed two people' OR title ILIKE 'Feed 2 people';
 
 UPDATE public.action_missions
 SET title='Spend $20 at a Black-owned business',
@@ -138,11 +156,9 @@ SET body=$copy$Choose an action that helps: provide meals, find services for you
 WHERE id='homelessness-action-001';
 
 UPDATE public.action_campaigns
-SET body=$copy$Equity Uprise turns the Docket 516R public record into practical policy and original creative work: read the record, write a policy memo, co-write a reform paper, or write a song for the initiative. A verified policy memo opens the existing fellowship application for the policy team; the original three-verified-action path also remains available. Applications are reviewed, not automatically accepted.$copy$,
+SET body=$copy$Equity Uprise turns the Docket 516R public record into practical policy and original creative work: write a policy memo to apply for the policy team, or write an original song for the initiative. A verified policy memo opens the existing fellowship application for the policy team; the original three-verified-action path also remains available. Applications are reviewed, not automatically accepted.$copy$,
     phases='[
-      {"key":"read","title":"Read","detail":"Learn from the Docket 516R record."},
       {"key":"write","title":"Write","detail":"Produce a sourced policy memo and qualify to apply."},
-      {"key":"reform","title":"Reform","detail":"Co-write a costed policy reform paper."},
       {"key":"song","title":"Write a Song","detail":"Submit an original Equity Uprise song for editorial review."},
       {"key":"cohort","title":"Policy team","detail":"Apply after a verified memo or three verified actions; desk reviews applications."}
     ]'::jsonb,
