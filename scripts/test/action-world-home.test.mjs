@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 test('Human Uprise World tab puts the globe over the live feed',()=>{
@@ -65,6 +67,19 @@ test('Cesium imagery is constructed with the provider the runtime actually ships
   assert.match(src,/new Cesium\.ImageryLayer\(new Cesium\.OpenStreetMapImageryProvider\(\{url:/,f);
  }
  for(const f of ['action-globe.html','guest-globe.html','world-news.html'])assert.match(read(f),/openstreetmap\.org\/copyright/,f+': OpenStreetMap tiles carry attribution');
+});
+test('the Earth has three looks from one button: lit by the real sun, night with city lights, street map; all NASA or OSM, nothing drawn',()=>{
+  const js=read('js/action-globe.js'), html=read('action-globe.html');
+  assert.match(js,/const DAY_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/BlueMarble_NextGeneration\//);
+  assert.match(js,/const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_Black_Marble\//);
+  assert.match(js,/const CLOUDS='assets\/img\/globe\/nasa-clouds-2048\.webp'/);
+  assert.match(js,/sc\.globe\.enableLighting=true/,'the real sun lights the default Earth');
+  assert.match(js,/lightingFadeOutDistance=R\+1\.2e6/,'fade distances carry the radius: Cesium measures them from the centre');
+  assert.match(js,/on\('ctlLayers',\(\)=>setLayer\(\{auto:'night',night:'map',map:'auto'\}\[layerMode\]\|\|'auto'\)\)/,'Earth -> night -> street -> Earth');
+  assert.match(js,/nightLayer\.dayAlpha=night\?1:0/,'night mode shows the city lights everywhere');
+  assert.match(js,/g\.enableLighting=!night/);
+  assert.match(html,/NASA Blue Marble, Black Marble<\/a>, <a href="https:\/\/visibleearth\.nasa\.gov\/"/,'the imagery credit names its sources');
+  assert.ok(require('node:fs').existsSync(new URL('../../assets/img/globe/nasa-clouds-2048.webp',import.meta.url)),'the cloud layer is committed');
 });
 test('embedded globe remains interactive and has a full-screen exit',()=>{
  const html=read('mnet.html');

@@ -215,6 +215,8 @@
           <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
+          <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
+          <p class="mn__world-tag" aria-hidden="true"><i></i>Global missions <b id="mnWorldTagCount"></b></p>
         </section>
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
@@ -319,6 +321,18 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
+        <!-- TIME REWIND (owner's desktop mockup, 2026-10-14): the feed as it
+             stood a day, a week or a month ago, read from the same server
+             pages (before=). Posts only: the Earth and its pins stay live. -->
+        <section class="mn__rewind" id="mnRewind" aria-label="Time rewind">
+          <div class="mn__rewind-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg><div><b>Time rewind</b><small id="mnRewindLine">Live. Rewind the feed a day, a week or a month.</small></div></div>
+          <div class="mn__rewind-row" role="group" aria-label="Feed time">
+            <button type="button" class="is-on" data-rewind="0" aria-pressed="true"><i aria-hidden="true"></i>Live</button>
+            <button type="button" data-rewind="24" aria-pressed="false">−24h</button>
+            <button type="button" data-rewind="168" aria-pressed="false">−7d</button>
+            <button type="button" data-rewind="720" aria-pressed="false">−30d</button>
+          </div>
+        </section>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>

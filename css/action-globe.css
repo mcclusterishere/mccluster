@@ -51,9 +51,9 @@ header{z-index:4;pointer-events:none;padding:10px 12px}header a{pointer-events:a
 
 
 /* World design polish: glass navigation, visible geography, restrained mission cards. */
-body{background:#050912;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#globe{background:radial-gradient(circle at 50% 42%,#123353 0,#07101d 50%,#020408 100%)}
-#globe:after{content:"";position:absolute;inset:auto 0 0;height:45px;pointer-events:none;background:linear-gradient(transparent,#0b1018)}
+body{background:#050507;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#globe{background:radial-gradient(circle at 50% 45%,#0b0d12 0,#050507 55%,#020203 100%)}
+#globe:after{content:"";position:absolute;inset:auto 0 0;height:45px;pointer-events:none;background:linear-gradient(transparent,#050507)}
 .world-mode{background:rgba(9,16,27,.82);border:1px solid rgba(188,209,230,.22);box-shadow:0 8px 30px #0009;backdrop-filter:blur(18px);border-radius:99px}
 .world-mode button{border-radius:99px;color:#cdd5e2}
 .world-mode button.is-active{background:#bd314c;color:#fff}
@@ -123,14 +123,15 @@ header strong{display:none}
 
 /* ---------- the World look: floating controls, credit (owner's mockup, 2026-10-14) ---------- */
 .globe-controls{position:absolute;z-index:6;top:calc(var(--world-map) - 252px);right:10px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.globe-ctl{display:grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid rgba(190,205,230,.22);border-radius:50%;background:rgba(9,14,26,.78);color:#e8edf7;cursor:pointer;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+/* dark glass with a faint red rim (owner's mockups, 2026-10-14) */
+.globe-ctl{display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:rgba(13,14,18,.82);color:#eef0f4;cursor:pointer;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,42,77,.3),0 0 16px -6px rgba(255,42,77,.55),0 8px 20px rgba(0,0,0,.45)}
 .globe-ctl svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .globe-ctl--wide{display:inline-flex;gap:6px;width:auto;padding:0 12px;border-radius:999px;font:600 12px/1 Inter,system-ui,sans-serif}
-.globe-ctl[aria-pressed="true"]{border-color:#ff3d5e;color:#fff;background:rgba(255,61,94,.22)}
+.globe-ctl[aria-pressed="true"]{color:#fff;background:linear-gradient(180deg,#ff3d5e,#c4102c);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 10px 26px -10px rgba(255,42,77,.95)}
 .globe-ctl:focus-visible{outline:2px solid #ff8298;outline-offset:2px}
-.globe-ctl-pair{display:flex;flex-direction:column;border:1px solid rgba(190,205,230,.22);border-radius:22px;background:rgba(9,14,26,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden}
+.globe-ctl-pair{display:flex;flex-direction:column;border:0;border-radius:22px;background:rgba(13,14,18,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,42,77,.3),0 0 16px -6px rgba(255,42,77,.55),0 8px 20px rgba(0,0,0,.45)}
 .globe-ctl-pair .globe-ctl{border:0;border-radius:0;background:transparent;box-shadow:none}
-.globe-ctl-pair .globe-ctl+.globe-ctl{border-top:1px solid rgba(190,205,230,.18)}
+.globe-ctl-pair .globe-ctl+.globe-ctl{border-top:1px solid rgba(255,255,255,.1)}
 .osm-credit{margin:0;color:#c3ccdb}.osm-credit a{color:inherit;text-decoration:none}
 /* inside the network the frame is all globe: controls ride its right edge, Near me lives in the stack */
 .globe-surface-network .world-tools{display:none!important}
@@ -139,4 +140,7 @@ header strong{display:none}
 /* the creator-only audience layer switch: hidden unless the World says this member is a creator */
 .globe-ctl[hidden]{display:none}
 .globe-ctl--audience{position:absolute;right:calc(100% + 8px);bottom:0}
-.globe-ctl--audience[aria-pressed="true"]{border-color:#4fd1ff;background:rgba(79,209,255,.2)}
+.globe-ctl--audience[aria-pressed="true"]{background:rgba(79,209,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(79,209,255,.7),0 0 16px -6px rgba(79,209,255,.7)}
+/* a faint instrument scale down the left edge of the frame (owner's mockups): decoration only, under nothing a hand needs */
+.globe-surface-network #globe::before{content:"";position:absolute;z-index:1;left:12px;top:30%;bottom:26%;width:9px;pointer-events:none;opacity:.32;background:linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,.7)) 0 0/1px 100% no-repeat,repeating-linear-gradient(to bottom,rgba(255,255,255,.7) 0 1px,transparent 1px 14px) 0 0/6px 100% no-repeat}
+.globe-surface-network .osm-credit{background:rgba(5,5,7,.6)}

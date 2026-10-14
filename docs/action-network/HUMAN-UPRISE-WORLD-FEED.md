@@ -62,20 +62,28 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 - Posting lets go of any mission and folds the composer, so the new post is
   seen landing.
 
-### The look (owner's mockup, 2026-10-14)
+### The look (owner's mockups, 2026-10-14)
 
+- **Material:** graphite and one red (the owner's later mockups): steel
+  panels (`--w-steel`), dark glass pills with a faint red rim (`--w-rim`),
+  chrome type for WORLD with a red rule under it, the Earth in a bezel from
+  600px with a "Global missions · n" corner tag, and an instrument scale
+  down the frame's left edge (decoration only). No navy remains. The house
+  app bar is left to the house stylesheet.
 - **Globe:** a lit NASA Earth (owner's signed-out reference): Blue Marble Next
   Generation by day, Black Marble city lights by night (lifted so the sea
   reads navy), the Visible Earth cloud composite (a still, not today's
   weather), an atmosphere rim, and the sun where it really is when the page
-  opens, so the day/night line is the real one. All NASA imagery is public
+  opens, so the day/night line is the real one. The layers button cycles
+  three looks: **Earth** (that lit one), **Night** (the city lights
+  everywhere, the owner's World mockups), **Street** (OpenStreetMap, which
+  also fades in on its own below ~900 km). All NASA imagery is public
   domain; the clouds are served from `assets/img/globe/`. In 3D Cesium
   measures the lighting fade distances from the Earth's centre, so they
-  carry the radius. The street map (OpenStreetMap) fades in below ~900 km
-  or from the layers button. Pins are glowing red markers; continent labels
-  count public pins only and hide when their continent is round the back of
-  the Earth. Floating controls: World (reset), Near me, zoom in/out, Earth/
-  Street layers, and for a creator only, Your audience.
+  carry the radius. Pins are glowing red markers; continent labels count
+  public pins only and hide when their continent is round the back of the
+  Earth. Floating controls: World (reset), Near me, zoom in/out, the layers
+  cycle, and for a creator only, Your audience.
 - **Header:** HUMAN UPRISE over WORLD set in type (no drawn mark), search,
   bell (with the unread count) and avatar. The search is a bar in the header
   row at every width (the owner's iPhone mockup); on a phone a guest's row is
@@ -90,11 +98,19 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
   title, description from 600px, and **Join · Locate · Posts · All
   missions**. No Fund button: there is no verified funding flow yet.
 - **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
-  a post carries; no invented topics or locations), navy cards, picture as
+  a post carries; no invented topics or locations), steel cards, picture as
   a right-hand thumbnail with a 1/n badge that opens all of them on tap,
-  heart with count, comment, share, save.
-- Navy and one red, on the World screen only; the other rooms keep the house
-  look. The bottom bar stays the house bar (Music | M | Globe, the
+  heart with count, comment, share, save. A post that carries a mission
+  shows it as a red **Mission attached** banner with Take action and Locate
+  on globe (server-vouched, as before).
+- **Time rewind** (owner's desktop mockup): Live · −24h · −7d · −30d under
+  the composer. It reads the feed from before that moment through the same
+  `before=` paging the server already does (member and public feeds alike);
+  nothing is reconstructed. Posts only: the Earth and its pins stay live,
+  and the line under the control says so. One glass row on a phone, the
+  description joins it from 600px.
+- Graphite and one red, on the World screen only; the other rooms keep the
+  house look. The bottom bar stays the house bar (Music | M | Globe, the
   contract's order), not the mockup's Home | Music | Globe.
 
 ### Guests: the same World, read-only
@@ -226,8 +242,10 @@ api.mccluster.org and Supabase in memory (every request recorded and
 checked) and drives: the composition on iPhone portrait/landscape, iPad
 portrait/landscape and desktop; Post, Like, Unlike, Comment and Share round
 trips with the exact requests; pin → strip and narrowed feed; post → globe
-without narrowing; search suggestions (pinned and unpinned missions, never
-a clip job; people; groups; the full lists); the Clips door; the Live badge;
+without narrowing; Time rewind (the request carries before= a day ago, the
+honest empty state, Live brings the feed back); the layers cycle; search
+suggestions (pinned and unpinned missions, never a clip job; people;
+groups; the full lists); the Clips door; the Live badge;
 the bell's count; the account menu (exactly four entries, whose account,
 message requests on the avatar); a creator's analytics door and audience
 layer, and their absence for a member who is not a creator; signing out to

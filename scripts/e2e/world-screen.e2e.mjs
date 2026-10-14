@@ -109,16 +109,19 @@ async function routeBackends(ctx, world, { member, creator = true }) {
   await ctx.route('https://api.mccluster.org/**', async (route) => {
     const req = route.request(), u = new URL(req.url()), m = req.method(), auth = req.headers().authorization || '';
     const body = req.postData() ? JSON.parse(req.postData()) : null;
-    world.requests.push({ m, path: u.pathname, auth: !!auth, body });
+    world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    const before = u.searchParams.get('before');
+    if (before && Number.isNaN(Date.parse(before))) return json(route, { error: 'bad cursor' }, 400);
+    const asOf = (list) => before ? list.filter((p) => p.created_at < before) : list;
     if (u.pathname === '/v1/mnet/public-feed') {
       if (auth) return json(route, { error: 'a guest read carries no session' }, 400);
-      const pub = world.posts.filter((p) => p.visibility === 'public').map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
+      const pub = asOf(world.posts.filter((p) => p.visibility === 'public')).map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
       return json(route, { items: pub, scope: 'public', next_before: null });
     }
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
-    if (u.pathname === '/v1/mnet/feed') return json(route, { items: world.posts.map(item), next_before: null });
+    if (u.pathname === '/v1/mnet/feed') return json(route, { items: asOf(world.posts).map(item), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
     if (u.pathname === '/v1/mnet/notifications/read') { world.alertsRead = true; return json(route, {}); }
     if (u.pathname === '/v1/mnet/discover') { const q = (u.searchParams.get('q') || '').toLowerCase(); return json(route, { people: PEERS.filter((p) => (p.display_name + ' ' + p.mccluster_id).toLowerCase().includes(q)).map((p) => ({ ...p, following: false })) }); }
@@ -318,8 +321,11 @@ for (const device of DEVICES) {
   const globeFrame = page.frame({ url: /action-globe\.html/ });
   const controls = await globeFrame.$$eval('.globe-controls button', (a) => a.map((b) => b.id));
   await globeFrame.click('#ctlLayers');
-  check(scope, 'globe controls: world, locate, zoom in/out, an Earth/street switch, and (for a creator) the audience layer', JSON.stringify(controls) === JSON.stringify(['ctlWorld', 'ctlLocate', 'ctlZoomIn', 'ctlZoomOut', 'ctlLayers', 'ctlAudience']) && (await globeFrame.getAttribute('#ctlLayers', 'aria-pressed')) === 'true' && await globeFrame.isVisible('#ctlAudience'), controls);
+  const night = await globeFrame.getAttribute('#ctlLayers', 'title');
   await globeFrame.click('#ctlLayers');
+  const street = await globeFrame.getAttribute('#ctlLayers', 'title');
+  await globeFrame.click('#ctlLayers');
+  check(scope, 'globe controls: world, locate, zoom in/out, a layers switch that cycles Earth, night and street, and (for a creator) the audience layer', JSON.stringify(controls) === JSON.stringify(['ctlWorld', 'ctlLocate', 'ctlZoomIn', 'ctlZoomOut', 'ctlLayers', 'ctlAudience']) && /^Night Earth/.test(night) && /^Street map/.test(street) && (await globeFrame.getAttribute('#ctlLayers', 'aria-pressed')) === 'false' && await globeFrame.isVisible('#ctlAudience'), { controls, night, street });
   // Analytics for a creator: an optional layer on the same globe, from the Worker's measurement
   await globeFrame.click('#ctlAudience');
   await page.waitForFunction(() => /Your audience, last 30 days/.test(document.getElementById('mnWorldCaption').textContent), null, { timeout: 8000 }).catch(() => {});
@@ -331,6 +337,25 @@ for (const device of DEVICES) {
   await page.waitForTimeout(300);
   check(scope, 'turning it off clears the points', (await globeFrame.evaluate(() => window.__huAudienceCount())) === 0);
   await page.screenshot({ path: join(OUT, 'member-iphone-mission-card.png') });
+
+  // Time rewind: the feed from before a day ago, from the same server pages; Live brings it back
+  const seenBefore = world.requests.length;
+  await page.click('[data-rewind="24"]');
+  await page.waitForFunction(() => /No posts from before 24 hours ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
+  const rewound = world.requests.slice(seenBefore).find((r) => r.m === 'GET' && r.path === '/v1/mnet/feed');
+  const rewoundAt = rewound && new URL('http://x' + (rewound.search || '')).searchParams.get('before');
+  check(scope, 'Time rewind −24h asks the server for posts before a day ago and says so when there are none', !!rewoundAt && Math.abs(Date.now() - 24 * 3600e3 - Date.parse(rewoundAt)) < 60e3 && /No posts from before 24 hours ago/.test(await page.textContent('#mnFeed')) && (await page.getAttribute('[data-rewind="24"]', 'aria-pressed')) === 'true', { rewoundAt });
+  await page.screenshot({ path: join(OUT, 'member-iphone-rewind.png') });
+  await page.click('[data-rewind="0"]');
+  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 8000 });
+  const liveAgain = world.requests.slice(seenBefore).filter((r) => r.m === 'GET' && r.path === '/v1/mnet/feed').at(-1);
+  check(scope, 'Live brings the feed back without a cursor', liveAgain && !/before=/.test(liveAgain.search || '') && (await page.$$eval('#mnFeed [data-post-id]', (a) => a.length)) > 1, liveAgain);
+  await page.click('[data-rewind="168"]');
+  await page.waitForFunction(() => /No posts from before 7 days ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
+  await page.fill('#mnPostBody', 'E2E: posted while rewound');
+  await page.click('#mnPost');
+  await page.waitForFunction(() => /E2E: posted while rewound/.test(document.querySelector('#mnFeed [data-post-id]')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  check(scope, 'posting while rewound brings the feed back to Live with the post on top', (await page.getAttribute('[data-rewind="0"]', 'aria-pressed')) === 'true' && /E2E: posted while rewound/.test(await page.$eval('#mnFeed [data-post-id]', (n) => n.textContent)));
 
   // Clips: a door under the Music and Photos & video tabs, with the real terms
   await page.click('[data-feed-tab="music"]');

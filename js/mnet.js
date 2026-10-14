@@ -19,7 +19,7 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "", tab: "all" },
+    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "", tab: "all", rewind: 0 },
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -739,7 +739,9 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = state.guest
+      host.innerHTML = state.world.rewind
+        ? '<div class="mn__empty">No posts from before ' + esc(rewindLabel(state.world.rewind)) + ' ago in ' + (state.guest ? 'the public feed' : 'your feed') + ' yet.</div>'
+        : state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
@@ -813,6 +815,8 @@
     }
     var path = (state.guest ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
+    /* Time rewind: the first page starts before the chosen moment; later pages follow the server's cursor as usual */
+    else if (reset && state.world.rewind) path += "&before=" + encodeURIComponent(new Date(Date.now() - state.world.rewind * 3600e3).toISOString());
     var read = state.guest ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
     return read.then(function (data) {
       var incoming = data.items || [];
@@ -901,7 +905,8 @@
       var composerBox = $("mnComposer"), focused = document.activeElement;
       if (focused && composerBox && composerBox.contains(focused) && focused.blur) focused.blur();
       if (composerBox) composerBox.classList.remove("is-open");
-      return loadFeed(true);
+      /* a post lands now, so a rewound feed comes back to Live to show it */
+      return state.world.rewind ? setRewind(0) : loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
     }).finally(function () { button.disabled = false; });
@@ -2489,6 +2494,24 @@
         : "No recorded views of your creator page in the last 30 days.";
     }).catch(function () { if (seq === audience.seq && caption) caption.textContent = "Your audience could not load right now."; });
   }
+  /* TIME REWIND: the feed as it stood a day, a week or a month ago. The
+     server pages by time already (before=), so this is the same read from
+     an earlier point; nothing is reconstructed. Posts only: the Earth and
+     its pins stay live, and the line says so. */
+  function rewindLabel(hours) { return hours >= 720 ? "30 days" : hours >= 168 ? "7 days" : hours + " hours"; }
+  function setRewind(hours) {
+    state.world.rewind = hours;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-rewind]"), function (b) {
+      var on = Number(b.getAttribute("data-rewind")) === hours;
+      b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    var line = $("mnRewindLine"), panel = $("mnRewind");
+    if (line) line.textContent = hours ? "Posts from before " + rewindLabel(hours) + " ago. The Earth stays live." : "Live. Rewind the feed a day, a week or a month.";
+    if (panel) panel.classList.toggle("is-rewound", !!hours);
+    track("world_rewind", { hours: hours });
+    var feed = $("mnWorldFeed"); if (feed) feed.scrollTop = 0;
+    return loadFeed(true);
+  }
   /* the Clips door under the tabs: asked for once, on the first Music or
      Photos & video tap, and only real terms from the campaigns are shown */
   function paintClipDoor() {
@@ -2536,6 +2559,7 @@
         if (!state.world.focus && state.world.latest && !state.guest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
         /* a guest starts at Explore the world (owner's signed-out reference) */
         if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
+        if ($("mnWorldTagCount")) $("mnWorldTagCount").textContent = String(Object.keys(state.world.pins).length);
         if (state.world.latest) loadMissionStats();
         if (state.creator) tellWorld({ type: "hu:creator-mode", on: true });
         var n = Object.keys(state.world.pins).length;
@@ -2592,6 +2616,9 @@
     $("mnWorldFocusLocate").addEventListener("click", function () {
       var f = state.world.focus;
       if (f) focusOnGlobe(f.mission_id);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-rewind]"), function (b) {
+      b.addEventListener("click", function () { if (!state.loadingFeed) setRewind(Number(b.getAttribute("data-rewind")) || 0); });
     });
     /* the feed tabs: what a post carries */
     Array.prototype.forEach.call(document.querySelectorAll("[data-feed-tab]"), function (b) {

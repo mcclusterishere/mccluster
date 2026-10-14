@@ -74,6 +74,24 @@ test('the World search is a bar in the header at every width, not an icon',()=>{
  assert.match(page,/id="mnSearchInput"[^>]*role="combobox"[^>]*aria-controls="mnSuggest"/);
  assert.match(client,/function refreshSuggest\(\)/,'late answers never reopen a closed panel');
 });
+test('Time rewind reads the feed from an earlier point, posts only, and says so',()=>{
+ assert.match(page,/<section class="mn__rewind" id="mnRewind"[\s\S]*?data-rewind="0"[\s\S]*?data-rewind="24"[\s\S]*?data-rewind="168"[\s\S]*?data-rewind="720"/);
+ assert.match(client,/else if \(reset && state\.world\.rewind\) path \+= "&before=" \+ encodeURIComponent\(new Date\(Date\.now\(\) - state\.world\.rewind \* 3600e3\)\.toISOString\(\)\)/,'the first page starts before the chosen moment; later pages follow the server cursor');
+ assert.match(client,/"Posts from before " \+ rewindLabel\(hours\) \+ " ago\. The Earth stays live\."/,'the globe is not rewound and the line says so');
+ assert.match(client,/No posts from before ' \+ esc\(rewindLabel\(state\.world\.rewind\)\) \+ ' ago in/);
+ assert.match(client,/panel\.classList\.toggle\("is-rewound", !!hours\)/);
+ assert.match(client,/return state\.world\.rewind \? setRewind\(0\) : loadFeed\(true\);/,'posting brings a rewound feed back to Live so the post is seen');
+});
+test('the World look is graphite and one red, scoped to the World screen',()=>{
+ const css=readFileSync(new URL('../../css/mnet.css',import.meta.url),'utf8');
+ const look=css.slice(css.indexOf('THE WORLD LOOK'));
+ assert.match(look,/\.mn-world-on \.mn \{[^}]*--mn-hot: #ff2a4d/);
+ assert.match(look,/--w-steel: linear-gradient\(180deg, #181b21, #0d0f13\)/);
+ assert.doesNotMatch(look,/#0f1626|#131c31|#070b14/,'the navy of the earlier mockup is gone');
+ assert.match(look,/\.mn-world-on \.mn__brand-world::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under WORLD');
+ assert.doesNotMatch(look,/\.appbar/,'the house bar is styled by the house');
+ assert.match(look,/\.mn__world-tag \{ display: none;/,'the corner tag waits for tablet width, where the credit line leaves room');
+});
 test('a narrowed feed with nothing in it gives the whole feed back',()=>{
  assert.match(client,/data-world-unfilter/);
  assert.match(client,/setWorldFocus\(Object\.assign\(\{\}, state\.world\.focus, \{ filter: false \}\)\)/);
