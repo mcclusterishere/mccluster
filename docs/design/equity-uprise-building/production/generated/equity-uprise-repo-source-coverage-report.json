@@ -4,8 +4,8 @@
   "candidate_count": 358,
   "capability_source_count": 99,
   "support_only_count": 259,
-  "checks_total": 1334,
-  "checks_passed": 1334,
+  "checks_total": 1335,
+  "checks_passed": 1335,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -5776,6 +5776,11 @@
     },
     {
       "name": "supabase/migrations/20261014185932_equity_policy_memo_application_path.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql capability ids known",
       "passed": true,
       "detail": ""
     },
