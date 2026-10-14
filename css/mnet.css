@@ -866,7 +866,7 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
    header would take. js/mnet.js adds .mn-world-overlay below 600px only;
    wider screens keep the bar in its own row. */
 .mn-world-overlay .mn__top { position: fixed; top: 0; left: 0; right: 0; margin: 0; background: linear-gradient(180deg, rgba(5, 9, 18, 0.88), rgba(5, 9, 18, 0)); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
-.mn-world-overlay .mn__world-expand { top: auto; bottom: 34px; }
+.mn-world-overlay .mn__world-expand { top: calc(64px + env(safe-area-inset-top, 0px)); }
 
 /* posts about the mission picked on the Earth */
 .mn__post-card.is-on-globe { box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.65); }
@@ -922,3 +922,148 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 .mn__gate-why[hidden] { display: none; }
 .mn__gate-why p { margin: 0; color: var(--mn-gold); font-weight: 700; }
 .mn__gate-why p:empty { display: none; }
+
+/* ================================================================
+   THE WORLD LOOK (owner's mockup, 2026-10-14)
+   Deep navy and one red, glass over the Earth, a mission card with its
+   actions, filter tabs, and posts with their picture on the right. Scoped
+   to the World screen (.mn-world-on); every other room keeps its look.
+   Phone first; wider screens only add room.
+   ================================================================ */
+html.mn-world-on, html.mn-world-on body { background: #060a13; }
+.mn-world-on .mn {
+  --mn-bg: #070b14; --mn-raise: #0f1626; --mn-raise-2: #172036;
+  --mn-ink: #f3f6fc; --mn-dim: #a7b2c6; --mn-faint: #6f7b92;
+  --mn-rule: rgba(160, 182, 222, 0.12); --mn-rule-2: rgba(160, 182, 222, 0.22);
+  --mn-hot: #ff3d5e; --mn-hot-ink: #ffffff;
+}
+
+/* header: HUMAN UPRISE over WORLD, set in type (no drawn mark), glass buttons */
+.mn__brand-world { display: none; }
+.mn-world-on .mn__brand-plate, .mn-world-on .mn__brand small { display: none; }
+.mn-world-on .mn__top .mn__brand strong { font-family: var(--mn-ui); font-weight: 800; font-size: 0.6rem; line-height: 1; letter-spacing: 0.2em; color: var(--mn-ink); }
+.mn-world-on .mn__brand-world { display: block; margin-top: 3px; font-family: var(--mn-display); font-weight: 400; font-size: 1.9rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6); }
+.mn-world-on .mn__bell, .mn-world-on .mn__avatar-btn, .mn__search-toggle { background: rgba(9, 14, 26, 0.72); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.mn-world-on .mn__bell-dot { background: var(--mn-hot); }
+
+/* search: a button on a phone that opens a row under the bar; a field from 600px */
+.mn__search, .mn__search-toggle { display: none; }
+.mn-world-on .mn__search-toggle { display: grid; place-items: center; flex: none; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; color: var(--mn-ink); cursor: pointer; }
+.mn__search-toggle svg, .mn__search svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mn-world-on.mn-search-open .mn__search { display: flex; position: absolute; left: 16px; right: 16px; top: calc(100% + 4px); z-index: 25; }
+.mn__search { align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(9, 14, 26, 0.82); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22), 0 10px 30px -12px rgba(0, 0, 0, 0.8); color: var(--mn-dim); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.mn__search input { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); outline: none; }
+.mn__search input::placeholder { color: var(--mn-faint); opacity: 1; }
+.mn__search:focus-within { box-shadow: inset 0 0 0 1px var(--mn-hot), 0 10px 30px -12px rgba(0, 0, 0, 0.8); }
+
+/* the mission card in the context strip */
+.mn-world-on .mn__world-context { border-bottom: 0; padding: 6px 0; }
+.mn-world-fit.mn-world-on .mn__world-context { min-height: 0; }
+.mn__mission-card { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 8px 12px; align-items: start; padding: 10px 40px 10px 10px; border-radius: 20px; background: linear-gradient(145deg, #131c31, #0c1220); box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 18px 40px -26px rgba(0, 0, 0, 0.9); }
+.mn__mission-card[hidden] { display: none; }
+.mn__mission-art { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 13px; background: radial-gradient(circle at 30% 25%, rgba(255, 61, 94, 0.55), rgba(255, 61, 94, 0.08) 70%), #101a2e; color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 61, 94, 0.35); }
+.mn__mission-art svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mn__mission-body { min-width: 0; }
+.mn__mission-meta { display: flex; gap: 10px; margin: 0; overflow: hidden; color: var(--mn-dim); font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.mn__mission-meta > span { flex: none; }
+.mn__mission-meta > span:first-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 3px rgba(255, 61, 94, 0.22); vertical-align: 1px; }
+.mn__mission-kind { color: #8fd3a8; text-transform: capitalize; }
+.mn__mission-card h2 { margin: 3px 0 0; color: var(--mn-ink); font-size: 1.02rem; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__mission-desc { display: none; margin: 4px 0 0; color: var(--mn-dim); font-size: 0.86rem; line-height: 1.45; }
+.mn__mission-desc:empty { display: none !important; }
+.mn__mission-stats { color: var(--mn-faint); }
+.mn__mission-stats[hidden] { display: none; }
+.mn__mission-actions { grid-column: 1 / -1; display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.mn__world-go svg, .mn__world-locate svg, .mn__world-filter svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__world-go { border: 0; background: var(--mn-hot); color: #fff; box-shadow: 0 8px 22px -10px rgba(255, 61, 94, 0.9); }
+.mn__world-locate, .mn__mission-card .mn__world-filter { border: 1px solid var(--mn-rule-2); background: rgba(255, 255, 255, 0.03); color: var(--mn-ink); }
+.mn__mission-card .mn__world-filter[aria-pressed="true"] { border-color: var(--mn-hot); background: rgba(255, 61, 94, 0.14); }
+.mn__mission-card .mn__world-close { position: absolute; top: 8px; right: 8px; width: 30px; min-height: 30px; height: 30px; border-radius: 50%; font-size: 0.8rem; }
+
+/* feed tabs: sticky at the top of the feed band */
+.mn__feed-tabs { display: none; }
+.mn-world-on .mn__feed-tabs { position: sticky; top: 0; z-index: 3; display: flex; gap: 4px; margin: 0 -2px 10px; padding: 2px 0 0; overflow-x: auto; scrollbar-width: none; background: var(--mn-bg); box-shadow: inset 0 -1px 0 var(--mn-rule); }
+.mn__feed-tabs::-webkit-scrollbar { display: none; }
+.mn__feed-tabs button { flex: none; min-height: 40px; padding: 0 12px; border: 0; background: transparent; color: var(--mn-dim); font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; box-shadow: inset 0 -2px 0 transparent; }
+.mn__feed-tabs button.is-on { color: var(--mn-ink); box-shadow: inset 0 -2px 0 var(--mn-hot); }
+.mn-world-on .mn__world-feed { padding-top: 0; }
+
+/* posts on the World: navy cards, picture on the right, heart and counts */
+.mn-world-on #mnFeed .mn__post-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 14px; padding: 14px; border-radius: 18px; background: linear-gradient(160deg, #111a2c, #0c1322); box-shadow: inset 0 0 0 1px var(--mn-rule); }
+.mn-world-on #mnFeed .mn__post-card.is-on-globe { box-shadow: inset 0 0 0 1px rgba(255, 61, 94, 0.7), 0 16px 36px -26px rgba(255, 61, 94, 0.9); }
+.mn-world-on #mnFeed .mn__post-card > * { grid-column: 1; min-width: 0; }
+.mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 104px; }
+.mn-world-on #mnFeed .mn__post-card > .mn__post-media, .mn-world-on #mnFeed .mn__post-card > .mn__media-locked { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: relative; margin: 0; }
+.mn-world-on #mnFeed .mn__post-card > .mn__post-media { display: block; cursor: zoom-in; }
+.mn-world-on #mnFeed .mn__post-media > .mn__post-media-item:not(:first-child) { display: none; }
+.mn-world-on #mnFeed .mn__post-media .mn__post-media-item { aspect-ratio: 1; border-radius: 14px; }
+.mn-world-on #mnFeed .mn__post-media .mn__post-media-item img, .mn-world-on #mnFeed .mn__post-media .mn__post-media-item video { height: 100%; object-fit: cover; }
+.mn-world-on #mnFeed .mn__post-media[data-count]:not([data-count="1"])::after { content: "1/" attr(data-count); position: absolute; top: 6px; right: 6px; padding: 2px 7px; border-radius: 999px; background: rgba(4, 7, 14, 0.78); color: #fff; font-size: 0.68rem; font-weight: 800; }
+/* a tap on the picture opens all of them across the card */
+.mn-world-on #mnFeed .mn__post-card.is-media-open { grid-template-columns: minmax(0, 1fr); }
+.mn-world-on #mnFeed .mn__post-card.is-media-open > .mn__post-media { grid-column: 1; grid-row: auto; display: grid; margin-top: 10px; cursor: zoom-out; }
+.mn-world-on #mnFeed .mn__post-card.is-media-open .mn__post-media > .mn__post-media-item:not(:first-child) { display: block; }
+.mn-world-on #mnFeed .mn__post-card.is-media-open .mn__post-media::after { content: none; }
+.mn-world-on #mnFeed .mn__media-locked { min-height: 104px; margin: 0; font-size: 0.72rem; padding: 8px; }
+.mn-world-on #mnFeed .mn__post-head { gap: 10px; }
+.mn-world-on #mnFeed .mn__author-avatar { width: 40px; height: 40px; }
+.mn-world-on #mnFeed .mn__post-body { margin: 8px 0 0; color: #dfe5f1; font-size: 0.95rem; line-height: 1.5; }
+.mn-world-on #mnFeed .mn__post-actions { grid-column: 1 / -1; margin: 8px -6px -4px; }
+.mn-world-on #mnFeed .mn__action--like .mn__action-label, .mn-world-on #mnFeed .mn__action--comment .mn__action-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mn-world-on #mnFeed .mn__action--like .mn__count { color: var(--mn-ink); }
+.mn-world-on #mnFeed .mn__actcard { background: linear-gradient(160deg, rgba(255, 61, 94, 0.14), rgba(255, 61, 94, 0.03)); }
+.mn-world-on .mn__composer { background: #0f1626; box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn-world-on .mn__guest-card { background: linear-gradient(145deg, #131c31, #0c1220); }
+.mn-world-on .mn__world-expand { border-color: rgba(190, 205, 230, 0.28); background: rgba(9, 14, 26, 0.72); }
+
+@media (min-width: 600px) {
+  .mn-world-on .mn__search { display: flex; flex: 1 1 auto; max-width: 26rem; margin: 0 8px; }
+  .mn-world-on .mn__search-toggle { display: none; }
+  .mn-world-on.mn-search-open .mn__search { position: static; }
+  .mn__mission-card { grid-template-columns: 112px minmax(0, 1fr) auto; padding: 14px 48px 14px 14px; gap: 6px 16px; }
+  .mn__mission-meta { flex-wrap: wrap; white-space: normal; }
+  .mn__mission-art { width: 112px; height: 100%; min-height: 96px; grid-row: 1; border-radius: 16px; }
+  .mn__mission-art svg { width: 38px; height: 38px; }
+  .mn__mission-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mn__mission-card h2 { font-size: 1.2rem; }
+  .mn__mission-actions { grid-column: 3; grid-row: 1; flex-direction: column; align-self: center; }
+  .mn__mission-actions > * { min-width: 9.5rem; }
+  .mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 180px; }
+  .mn-world-on #mnFeed .mn__post-card { padding: 16px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .mn__mission-card, .mn__feed-tabs button { transition: none; } }
+
+/* a phone on its side: the strip keeps to one tight card so the feed keeps
+   its half of the right column */
+.mn-world-side .mn__mission-card { grid-template-columns: minmax(0, 1fr); padding: 8px 36px 8px 10px; gap: 6px; }
+.mn-world-side .mn__mission-art { display: none; }
+.mn-world-side .mn__mission-card h2 { font-size: 0.95rem; }
+.mn-world-side .mn__mission-actions .mn__world-filter span { display: none; }
+.mn-world-side .mn__mission-actions { grid-column: 1; grid-row: auto; flex-direction: row; align-self: auto; }
+.mn-world-side .mn__mission-actions > * { min-width: 0; }
+.mn-world-side .mn__mission-desc { display: none; }
+.mn-world-side .mn__mission-meta { flex-wrap: nowrap; white-space: nowrap; }
+
+/* the card's meta on a phone: Latest, the place, the counts; the kind is
+   already the art. Labels: short on a phone, whole from 600px. */
+.mn__mission-flag { flex: none; padding: 1px 7px; border-radius: 999px; background: rgba(255, 61, 94, 0.18); color: #ff8da1; font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.mn__mission-flag[hidden] { display: none; }
+.mn__mission-meta > .mn__mission-where { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-meta > .mn__mission-stats { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__mission-kind { display: none; }
+.mn__label-long { display: none; }
+.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { padding: 0 12px; }
+@media (min-width: 600px) {
+  .mn__mission-kind { display: inline; }
+  .mn__label-long { display: inline; }
+  .mn__label-short { display: none; }
+  .mn__mission-meta > .mn__mission-where { max-width: none; }
+}
+.mn__mission-meta > span.mn__mission-flag { flex: none; overflow: visible; }
+.mn__stats-more { display: none; }
+@media (min-width: 600px) { .mn__stats-more { display: inline; } }
+/* the open search row takes the pill's place on a phone */
+.mn-search-open .mn__world-expand { visibility: hidden; }
+@media (min-width: 600px) { .mn-search-open .mn__world-expand { visibility: visible; } }

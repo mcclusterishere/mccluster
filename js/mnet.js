@@ -19,7 +19,7 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null, fromFeed: "" },
+    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "", tab: "all" },
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -63,7 +63,8 @@
     like: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.5-4.6-9.3-9.2C1.4 7.6 3.6 4.4 7 4.4c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.2 4.3 6.7-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>',
     comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/></svg>',
     save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.8h11v16.4l-5.5-3.9-5.5 3.9z"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>'
+    trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9.5 7V4.8h5V7M7 7l.8 12.2h8.4L17 7"/></svg>',
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l6 6-6 6M20 11H9a5 5 0 0 0-5 5v2"/></svg>'
   };
   /* Every member gets a stable ring colour from their handle: abstract
      colour that tells people apart at a glance, never a mark. */
@@ -243,7 +244,7 @@
   }
   function askToSignIn(why) {
     var line = { like:"Sign in to like posts.", comments:"Sign in to read and write comments.", save:"Sign in to save posts.",
-      mission:"Sign in to join this mission.", media:"Sign in to see photos and video.", post:"Sign in to post." }[why] || "Sign in to do that.";
+      mission:"Sign in to join this mission.", missions:"Sign in to join this mission.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -439,7 +440,7 @@
     if (clip && (clip.start_ms || clip.end_ms)) {
       frag = "#t=" + ((Number(clip.start_ms) || 0) / 1000).toFixed(2) + (clip.end_ms ? "," + (Number(clip.end_ms) / 1000).toFixed(2) : "");
     }
-    return '<div class="mn__post-media' + (media.length > 1 ? ' is-grid' : '') + '">' +
+    return '<div class="mn__post-media' + (media.length > 1 ? ' is-grid' : '') + '" data-count="' + media.length + '">' +
       media.map(function (m) {
         var id = m && (m.asset_id || m.id);
         if (!id) return "";
@@ -487,11 +488,11 @@
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + ' <span class="mn__count">' + esc(post.like_count || '') + '</span> Like</button>' +
+          '<button class="mn__action mn__action--like' + (post.liked_by_me ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '" aria-pressed="' + !!post.liked_by_me + '" aria-label="Like post">' + ICON.like + '<span class="mn__count">' + esc(post.like_count || '') + '</span><span class="mn__action-label">Like</span></button>' +
+          '<button class="mn__action mn__action--comment" type="button" data-action="comments" data-post="' + esc(id) + '" aria-label="Comments">' + ICON.comment + '<span class="mn__action-label">Comment</span></button>' +
+          '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
-          '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">Comment</button>' +
-          '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">Share</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
         '</div>') +
     '</article>';
@@ -572,11 +573,25 @@
   function bindPostTaps(root) {
     root.querySelectorAll("[data-post-id]").forEach(function (card) {
       card.addEventListener("click", function (e) {
+        /* on the World a picture is a thumbnail; a tap opens them all across the card */
+        if (e.target.closest && e.target.closest(".mn__post-media") && !e.target.closest("video,audio")) { card.classList.toggle("is-media-open"); return; }
         if (e.target.closest && e.target.closest("a,button,input,textarea,select,label,video,audio,form,.mn__comments")) return;
         var mid = postMissionId(findPost(card.getAttribute("data-post-id")));
         if (mid && state.world.pins[mid]) focusOnGlobe(mid);
       });
     });
+  }
+  /* what a post actually carries, for the feed tabs; no invented topics */
+  function feedHas(item, tab) {
+    var post = item && (item.post || item) || {}, meta = post.metadata || {};
+    if (tab === "missions") return !!(postMissionId(item) || meta.action);
+    if (tab === "music") return !!((item.payload && item.payload.track) || meta.track);
+    if (tab === "media") return !!((Array.isArray(post.media) && post.media.length) || post.media_locked);
+    return true;
+  }
+  function feedMatches(item, query) {
+    var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
+    return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
   }
   function globeChipHtml(missionId) {
     if (!missionId || !state.world.pins[missionId]) return "";
@@ -707,13 +722,19 @@
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed, focus = state.world.focus;
+    var items = state.feed, focus = state.world.focus, tab = state.world.tab, query = state.world.query;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
         host.innerHTML = '<div class="mn__empty">Nothing in your feed about this mission yet. Open it, do the work, and your proof can be the first post here.</div>';
         return;
       }
+    }
+    if (tab !== "all") items = items.filter(function (item) { return feedHas(item, tab); });
+    if (query) items = items.filter(function (item) { return feedMatches(item, query); });
+    if (!items.length) {
+      host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : { missions:"No posts tied to a mission in your feed yet.", music:"No posts with a track in your feed yet.", media:"No photos or video in your feed yet." }[tab] || "Nothing here yet.") + '</div>';
+      return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
     host.innerHTML = items.map(function (item) {
@@ -2210,17 +2231,44 @@
     if (!side && room < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
     view.style.setProperty("--mn-world-h", room + "px");
   }
+  /* the mission card's art is its kind, as an icon: missions carry no photo
+     and the World never invents one */
+  var PATH_ART = {
+    create: '<svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>',
+    amplify: '<svg viewBox="0 0 24 24"><path d="M4 10v4h4l6 4V6l-6 4z"/><path d="M17.5 9a4 4 0 0 1 0 6M19.8 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+    show_up: '<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
+    mission: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>'
+  };
   function paintWorldFocus() {
     var f = state.world.focus, host = $("mnWorldFocus"), idle = $("mnWorldIdle");
     if (!host) return;
     host.hidden = !f;
     if (idle) idle.hidden = !!f;
     if (!f) return;
-    $("mnWorldFocusWhere").textContent = (f.region_label || "World") + " · " + pathLabel(f.action_path);
-    $("mnWorldFocusTitle").textContent = f.title || "Mission";
+    var known = state.world.missions[f.mission_id] || {}, st = state.world.stats[f.mission_id];
+    var path = String(f.action_path || known.action_path || "mission");
+    $("mnWorldFocusArt").innerHTML = PATH_ART[path] || PATH_ART.mission;
+    $("mnWorldFocusFlag").hidden = !f.latest;
+    $("mnWorldFocusWhere").textContent = f.region_label || known.region_label || "World";
+    $("mnWorldFocusKind").textContent = pathLabel(path);
+    $("mnWorldFocusTitle").textContent = f.title || known.title || "Mission";
+    $("mnWorldFocusDesc").textContent = f.description || known.description || "";
+    var joined = st ? Number(st.joined) || 0 : 0, verified = st ? Number(st.verified) || 0 : 0;
+    $("mnWorldFocusStats").innerHTML = st ? esc(joined + " joined") + '<span class="mn__stats-more"> · ' + esc(verified + " verified") + "</span>" : "";
+    $("mnWorldFocusStats").hidden = !st;
     var filter = $("mnWorldFocusFilter");
     filter.setAttribute("aria-pressed", f.filter ? "true" : "false");
-    filter.textContent = f.filter ? "Showing posts about this" : "Only posts about this";
+    $("mnWorldFocusFilterLong").textContent = f.filter ? "Showing posts about this" : "Only posts about this";
+  }
+  /* public per-mission counts (action_mission_stats is granted to anon):
+     how many joined and how many were verified, never who */
+  function loadMissionStats() {
+    if (state.world.statsLoaded) return;
+    state.world.statsLoaded = true;
+    sbRpc("action_mission_stats", { p_campaign: null }).then(function (rows) {
+      (rows || []).forEach(function (r) { if (r && r.mission_id) state.world.stats[r.mission_id] = r; });
+      paintWorldFocus();
+    }).catch(function () {});
   }
   function setWorldFocus(mission) {
     state.world.focus = mission;
@@ -2250,8 +2298,18 @@
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
       var d = ev.data || {}, caption = $("mnWorldCaption");
       if (d.type === "hu:globe-ready") {
-        state.world.pins = {};
+        state.world.pins = {}; state.world.missions = {}; state.world.latest = null;
         (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
+        (Array.isArray(d.missions) ? d.missions : []).forEach(function (m) {
+          if (!m || !WORLD_ID.test(String(m.mission_id || ""))) return;
+          var clean = { mission_id: String(m.mission_id), title: String(m.title || ""), description: String(m.description || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || "") };
+          state.world.missions[clean.mission_id] = clean;
+          if (!state.world.latest) state.world.latest = clean;
+        });
+        /* with nothing picked yet, the strip shows the newest pinned mission,
+           labelled as the latest, without moving the Earth or the feed */
+        if (!state.world.focus && state.world.latest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
+        if (state.world.latest) loadMissionStats();
         var n = Object.keys(state.world.pins).length;
         if (caption) caption.textContent = d.dataUnavailable ? "The map is up, but mission pins could not load. The feed below is live."
           : n ? n + (n === 1 ? " mission is" : " missions are") + " pinned on the Earth. Tap a red pin to see what people are doing there."
@@ -2264,10 +2322,13 @@
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;
         state.world.fromFeed = "";
-        setWorldFocus({ mission_id: id, title: String(m.title || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || ""), filter: !fromFeed });
+        setWorldFocus({ mission_id: id, title: String(m.title || ""), description: String(m.description || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || ""), filter: !fromFeed });
       } else if (d.type === "hu:selection-cleared") {
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
+      } else if (d.type === "hu:status" && typeof d.text === "string") {
+        if (caption) caption.textContent = d.text.slice(0, 200);
+        if (state.world.focus && state.world.focus.latest) setWorldFocus(null);
       }
     });
     $("mnWorldFocusClear").addEventListener("click", function () {
@@ -2278,6 +2339,54 @@
       var f = state.world.focus;
       if (!f) return;
       setWorldFocus(Object.assign({}, f, { filter: !f.filter }));
+    });
+    $("mnWorldFocusLocate").addEventListener("click", function () {
+      var f = state.world.focus;
+      if (f) focusOnGlobe(f.mission_id);
+    });
+    /* the feed tabs: what a post carries */
+    Array.prototype.forEach.call(document.querySelectorAll("[data-feed-tab]"), function (b) {
+      b.addEventListener("click", function () {
+        state.world.tab = b.getAttribute("data-feed-tab");
+        Array.prototype.forEach.call(document.querySelectorAll("[data-feed-tab]"), function (x) {
+          var on = x === b; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        if (!state.loadingFeed) renderFeed(false);
+        var feed = $("mnWorldFeed"); if (feed) feed.scrollTop = 0;
+      });
+    });
+    /* SEARCH: as you type, the feed narrows to posts that say it and the
+       Earth to pins that match; Enter flies to the first matching mission,
+       or, for a member, looks the words up among people. */
+    var form = $("mnSearch"), input = $("mnSearchInput"), toggle = $("mnSearchToggle"), searchTimer = 0;
+    if (form && input) {
+      input.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          state.world.query = input.value.trim().slice(0, 80);
+          if (!state.loadingFeed) renderFeed(false);
+          tellWorld({ type: "hu:search", q: state.world.query });
+        }, 180);
+      });
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var q = input.value.trim().toLocaleLowerCase();
+        if (!q) return;
+        var hit = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; }).find(function (m) {
+          return [m.title, m.description, m.region_label, m.action_path].join(" ").toLocaleLowerCase().indexOf(q) !== -1;
+        });
+        if (hit) { focusOnGlobe(hit.mission_id); return; }
+        if (state.guest) { askToSignIn("people"); return; }
+        if ($("mnDiscoverQuery")) $("mnDiscoverQuery").value = input.value.trim();
+        setView("discover");
+      });
+      input.addEventListener("keydown", function (e) { if (e.key === "Escape") { input.value = ""; input.dispatchEvent(new Event("input")); input.blur(); } });
+    }
+    if (toggle && form) toggle.addEventListener("click", function () {
+      var open = !document.documentElement.classList.contains("mn-search-open");
+      document.documentElement.classList.toggle("mn-search-open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) input.focus(); else if (!input.value) toggle.focus();
     });
     $("mnWorldFocusJoin").addEventListener("click", function () {
       var f = state.world.focus;

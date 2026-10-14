@@ -18,8 +18,17 @@
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Human Uprise home">
         <span class="mn__brand-plate"><img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" width="36" height="36"></span>
-        <span><strong>Human Uprise</strong><small>Founded by Equity Uprise</small></span>
+        <span><strong>Human Uprise</strong><small>Founded by Equity Uprise</small><b class="mn__brand-world" aria-hidden="true">World</b></span>
       </a>
+      <!-- search the World: places and causes on the globe, words in the feed,
+           people for members. A field from tablet width, a button on a phone. -->
+      <form class="mn__search" id="mnSearch" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input id="mnSearchInput" type="search" placeholder="Search places, people, or causes…" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80">
+      </form>
+      <button class="mn__search-toggle" id="mnSearchToggle" type="button" aria-label="Search" aria-controls="mnSearch" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+      </button>
       <!-- a guest's door in: the World is readable without an account -->
       <div class="mn__guest-bar" id="mnGuestBar" hidden>
         <button class="mn__guest-in" id="mnGuestSignIn" type="button">Sign in</button>
@@ -198,19 +207,33 @@
             <p class="mn__eyebrow">The world</p>
             <p class="mn__world-caption" id="mnWorldCaption">Drag the Earth. Tap a red pin to see what people are doing there.</p>
           </div>
-          <div class="mn__world-focus" id="mnWorldFocus" hidden>
-            <div class="mn__world-focus-top">
-              <p class="mn__eyebrow" id="mnWorldFocusWhere"></p>
-              <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
+          <!-- THE MISSION CARD: the pin you tapped (or the newest pinned
+               mission, labelled as such). Art is the mission's kind, drawn as
+               an icon, because missions carry no photo and none is invented. -->
+          <article class="mn__mission-card" id="mnWorldFocus" hidden>
+            <div class="mn__mission-art" id="mnWorldFocusArt" aria-hidden="true"></div>
+            <div class="mn__mission-body">
+              <p class="mn__mission-meta"><span class="mn__mission-flag" id="mnWorldFocusFlag" hidden>Latest</span><span class="mn__mission-where" id="mnWorldFocusWhere"></span><span class="mn__mission-kind" id="mnWorldFocusKind"></span><span class="mn__mission-stats" id="mnWorldFocusStats"></span></p>
+              <h2 id="mnWorldFocusTitle"></h2>
+              <p class="mn__mission-desc" id="mnWorldFocusDesc"></p>
             </div>
-            <h2 id="mnWorldFocusTitle"></h2>
-            <div class="mn__world-focus-row">
-              <button class="mn__world-go" id="mnWorldFocusJoin" type="button">Open mission</button>
-              <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false">Only posts about this</button>
+            <div class="mn__mission-actions">
+              <button class="mn__world-go" id="mnWorldFocusJoin" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 19a6 6 0 0 1 12 0M18 8v6M15 11h6"/></svg><span>Join</span></button>
+              <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
+              <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
             </div>
-          </div>
+            <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
+          </article>
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
+        <!-- filters over what is loaded, by what a post actually carries;
+             no invented categories or locations -->
+        <nav class="mn__feed-tabs" id="mnFeedTabs" aria-label="Filter the feed">
+          <button type="button" class="is-on" data-feed-tab="all" aria-pressed="true">All posts</button>
+          <button type="button" data-feed-tab="missions" aria-pressed="false">Missions</button>
+          <button type="button" data-feed-tab="music" aria-pressed="false">Music</button>
+          <button type="button" data-feed-tab="media" aria-pressed="false">Photos &amp; video</button>
+        </nav>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->

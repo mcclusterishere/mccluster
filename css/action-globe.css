@@ -120,3 +120,19 @@ header strong{display:none}
 .world-mode{left:auto;right:8px;transform:none}
 @media(min-width:700px){header strong{display:inline}.world-mode{left:50%;right:auto;transform:translateX(-50%)}}
 .globe-embedded .world-members{display:none}
+
+/* ---------- the World look: floating controls, credit (owner's mockup, 2026-10-14) ---------- */
+.globe-controls{position:absolute;z-index:6;top:calc(var(--world-map) - 252px);right:10px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.globe-ctl{display:grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid rgba(190,205,230,.22);border-radius:50%;background:rgba(9,14,26,.78);color:#e8edf7;cursor:pointer;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.globe-ctl svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.globe-ctl--wide{display:inline-flex;gap:6px;width:auto;padding:0 12px;border-radius:999px;font:600 12px/1 Inter,system-ui,sans-serif}
+.globe-ctl[aria-pressed="true"]{border-color:#ff3d5e;color:#fff;background:rgba(255,61,94,.22)}
+.globe-ctl:focus-visible{outline:2px solid #ff8298;outline-offset:2px}
+.globe-ctl-pair{display:flex;flex-direction:column;border:1px solid rgba(190,205,230,.22);border-radius:22px;background:rgba(9,14,26,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden}
+.globe-ctl-pair .globe-ctl{border:0;border-radius:0;background:transparent;box-shadow:none}
+.globe-ctl-pair .globe-ctl+.globe-ctl{border-top:1px solid rgba(190,205,230,.18)}
+.osm-credit{margin:0;color:#c3ccdb}.osm-credit a{color:inherit;text-decoration:none}
+/* inside the network the frame is all globe: controls ride its right edge, Near me lives in the stack */
+.globe-surface-network .world-tools{display:none!important}
+.globe-surface-network .globe-controls{top:auto;bottom:34px}
+@media(prefers-reduced-motion:reduce){.globe-ctl{transition:none}}

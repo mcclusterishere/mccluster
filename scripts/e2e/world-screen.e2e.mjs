@@ -52,7 +52,14 @@ const CONTENT = '55555555-5555-4555-8555-555555555555';
 const MISSIONS = [
   { mission_id: M1, title: 'Clean up the Mill River', description: 'Bag a block of shoreline.', action_path: 'show_up', region_key: 'US-CT', region_label: 'Connecticut', latitude: 41.6, longitude: -72.7 },
   { mission_id: M2, title: 'Amplify a local food pantry', description: 'Share the pantry hours.', action_path: 'amplify', region_key: 'GB-ENG', region_label: 'England', latitude: 52.3, longitude: -1.2 },
+  { mission_id: '33333333-3333-4333-8333-333333333331', title: 'Record a neighbourhood oral history', description: 'Interview an elder about the block.', action_path: 'create', region_key: 'NG-LA', region_label: 'Lagos', latitude: 6.5, longitude: 3.4 },
+  { mission_id: '33333333-3333-4333-8333-333333333332', title: 'Plant a street tree', description: 'Join the Saturday planting crew.', action_path: 'show_up', region_key: 'BR-SP', region_label: 'São Paulo', latitude: -23.5, longitude: -46.6 },
+  { mission_id: '33333333-3333-4333-8333-333333333333', title: 'Translate the shelter guide', description: 'Make the guide readable in three languages.', action_path: 'create', region_key: 'JP-13', region_label: 'Tokyo', latitude: 35.7, longitude: 139.7 },
 ];
+const STATS = [{ mission_id: M1, joined: 12, submitted: 3, verified: 9 }];
+/* fixture pictures: the owner's own frames already in this repository */
+const PHOTOS = ['assets/frames/affix_0001.jpg', 'assets/frames/bussalick_0001.jpg', 'assets/frames/church_0001.jpg', 'assets/img/peaceful-places.jpg'];
+const asset = (n) => `eeeeeeee-eeee-4eee-8eee-${String(n).padStart(12, '0')}`;
 const ME = { m_uid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', mccluster_id: 'fixture.you', display_name: 'Fixture You' };
 const PEERS = [
   { m_uid: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', mccluster_id: 'fixture.ana', display_name: 'Fixture Ana' },
@@ -63,14 +70,14 @@ function freshWorld() {
   const id = () => `dddddddd-dddd-4ddd-8ddd-${String(++n).padStart(12, '0')}`;
   const now = Date.now();
   const posts = [
-    { id: id(), author: PEERS[0], body: 'Bagged the whole north bank of the Mill River today. Two more blocks Saturday.', visibility: 'public', content_id: CONTENT, like_count: 3, liked_by_me: false, comments: [{ actor: PEERS[1], body: 'Count me in for Saturday.' }] },
-    { id: id(), author: PEERS[1], body: 'Listening to Docket 516R on repeat while I write the memo.', visibility: 'public', like_count: 1, liked_by_me: false, comments: [] },
+    { id: id(), author: PEERS[0], body: 'Bagged the whole north bank of the Mill River today. Two more blocks Saturday.', visibility: 'public', content_id: CONTENT, like_count: 3, liked_by_me: false, comments: [{ actor: PEERS[1], body: 'Count me in for Saturday.' }], media: [{ asset_id: asset(1), type: 'image' }, { asset_id: asset(2), type: 'image' }, { asset_id: asset(3), type: 'image' }] },
+    { id: id(), author: PEERS[1], body: 'Listening to Docket 516R on repeat while I write the memo.', visibility: 'public', like_count: 1, liked_by_me: false, comments: [], media: [{ asset_id: asset(4), type: 'image' }] },
     { id: id(), author: PEERS[0], body: 'Network-only update for the people I follow.', visibility: 'network', like_count: 0, liked_by_me: false, comments: [] },
     ...Array.from({ length: 6 }, (_, k) => ({ id: id(), author: PEERS[k % 2], body: `Field note ${k + 1}: what we did, what is next, and who can help.`, visibility: 'public', like_count: k, liked_by_me: false, comments: [] })),
   ].map((p, k) => ({ ...p, created_at: new Date(now - (k + 1) * 3600e3).toISOString() }));
   return { posts, id, requests: [] };
 }
-const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid } });
+const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
 
 async function routeBackends(ctx, world, { member }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
@@ -78,6 +85,7 @@ async function routeBackends(ctx, world, { member }) {
     const u = route.request().url();
     if (u.includes('/auth/v1/user')) return member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
+    if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('action_offer_cards')) {
       const linked = world.posts.filter((p) => p.content_id === CONTENT);
       return json(route, linked.map((p) => ({ post_id: p.id, mission_id: M1, content_id: CONTENT, title: MISSIONS[0].title, description: MISSIONS[0].description, mission_open: true })));
@@ -91,12 +99,14 @@ async function routeBackends(ctx, world, { member }) {
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
     if (u.pathname === '/v1/mnet/public-feed') {
       if (auth) return json(route, { error: 'a guest read carries no session' }, 400);
-      const pub = world.posts.filter((p) => p.visibility === 'public').map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; return x; });
+      const pub = world.posts.filter((p) => p.visibility === 'public').map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
       return json(route, { items: pub, scope: 'public', next_before: null });
     }
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: world.posts.map(item), next_before: null });
+    const media = u.pathname.match(/^\/v1\/mnet\/media\/eeeeeeee-eeee-4eee-8eee-0*(\d+)\/url$/);
+    if (media) return json(route, { url: `${BASE}/${PHOTOS[(Number(media[1]) - 1) % PHOTOS.length]}`, media_type: 'image' });
     if (u.pathname === '/v1/mnet/posts' && m === 'POST') {
       if (!body || !String(body.body || '').trim()) return json(route, { error: 'empty' }, 400);
       const p = { id: world.id(), author: ME, body: body.body, visibility: body.visibility, like_count: 0, liked_by_me: false, comments: [], created_at: new Date().toISOString() };
@@ -155,11 +165,16 @@ async function open(device, { member }) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  /* the globe catches its own start-up failure and only warns; that is still a failure here */
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
   await page.goto(BASE + '/action-globe.html', { waitUntil: 'domcontentloaded' });
   await page.waitForURL(/mnet\.html\?view=feed/, { timeout: 15000 });
   await page.waitForFunction(() => /pinned on the Earth|No missions are pinned|could not load|can.t run/.test((document.getElementById('mnWorldCaption') || {}).textContent || ''), null, { timeout: 90000 });
   await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000 });
-  await page.waitForTimeout(2500);
+  /* evidence shots wait for the Earth's tiles, up to 25s */
+  const globe = page.frame({ url: /action-globe\.html/ });
+  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(1500);
   return { ctx, page, world, errors };
 }
 const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(r.path));
@@ -169,9 +184,12 @@ for (const device of DEVICES) {
   const { ctx, page, world, errors } = await open(device, { member: true });
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
-  check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh, s);
+  check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
+  /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
   check(device.name, 'no sideways overflow', s.scrollW === s.clientW, s);
+  check(device.name, 'the strip opens on the newest pinned mission, labelled as the latest', (await page.isVisible('#mnWorldFocusFlag')) && /Latest/.test(await page.textContent('#mnWorldFocusFlag')));
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
   check(device.name, 'app bar is exactly Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
   check(device.name, 'feed shows member posts (author, text, Like/Comment/Share), not mission cards', await page.evaluate(() => {
@@ -244,6 +262,36 @@ for (const device of DEVICES) {
   await page.waitForSelector('#mnWorldFocus:not([hidden])');
   check(scope, 'Locate on globe shows the mission without narrowing the feed', (await page.getAttribute('#mnWorldFocusFilter', 'aria-pressed')) === 'false' && (await page.$$eval('#mnFeed [data-post-id]', (a) => a.length)) > 1);
 
+  // The World look: mission card, tabs, search, thumbnails, globe controls
+  await page.click('#mnWorldFocusClear');
+  check(scope, 'with nothing picked the strip falls back to the caption', await page.isVisible('#mnWorldIdle'));
+  const thumb = `#mnFeed [data-post-id="${linked.id}"] .mn__post-media`;
+  check(scope, 'a post with three photos shows one thumbnail with a 1/3 badge', (await page.$eval(thumb, (n) => getComputedStyle(n, '::after').content)) === '"1/3"' && (await page.$$eval(`${thumb} .mn__post-media-item img`, (a) => a.filter((x) => x.offsetParent).length)) === 1);
+  await page.click(`${thumb} .mn__post-media-item`);
+  check(scope, 'tapping the thumbnail opens all three across the card', (await page.$$eval(`${thumb} .mn__post-media-item img`, (a) => a.filter((x) => x.offsetParent).length)) === 3);
+  await page.click(`${thumb} .mn__post-media-item`);
+  await page.click('[data-feed-tab="media"]');
+  const mediaPosts = await page.$$eval('#mnFeed [data-post-id]', (a) => a.length);
+  await page.click('[data-feed-tab="music"]');
+  const musicEmpty = await page.textContent('#mnFeed');
+  await page.click('[data-feed-tab="all"]');
+  check(scope, 'feed tabs filter by what posts carry (2 with photos; no tracks -> honest empty state)', mediaPosts === 2 && /No posts with a track/.test(musicEmpty), { mediaPosts });
+  if (!(await page.isVisible('#mnSearchInput'))) await page.click('#mnSearchToggle');
+  await page.fill('#mnSearchInput', 'river');
+  await page.waitForTimeout(500);
+  const searched = await page.$$eval('#mnFeed [data-post-id]', (a) => a.length);
+  await page.press('#mnSearchInput', 'Enter');
+  await page.waitForSelector('#mnWorldFocus:not([hidden])');
+  check(scope, 'search narrows the feed as you type and Enter flies to the matching mission', searched === 1 && /Mill River/.test(await page.textContent('#mnWorldFocusTitle')), { searched });
+  check(scope, 'the mission card shows public joined/verified counts', /12 joined · 9 verified/.test(await page.textContent('#mnWorldFocusStats')));
+  await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
+  const globeFrame = page.frame({ url: /action-globe\.html/ });
+  const controls = await globeFrame.$$eval('.globe-controls button', (a) => a.map((b) => b.id));
+  await globeFrame.click('#ctlLayers');
+  check(scope, 'globe controls: world, locate, zoom in/out and a night/street layer switch', JSON.stringify(controls) === JSON.stringify(['ctlWorld', 'ctlLocate', 'ctlZoomIn', 'ctlZoomOut', 'ctlLayers']) && (await globeFrame.getAttribute('#ctlLayers', 'aria-pressed')) === 'true', controls);
+  await globeFrame.click('#ctlLayers');
+  await page.screenshot({ path: join(OUT, 'member-iphone-mission-card.png') });
+
   // The avatar menu keeps every room
   await page.click('#mnMe');
   const rooms = await page.$$eval('#mnMenu [data-mn-view], #mnMenu a', (a) => a.map((x) => x.textContent.trim()));
@@ -262,8 +310,9 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   const texts = await page.$$eval('#mnFeed [data-post-id]', (a) => a.map((x) => x.textContent));
   check(scope, 'shows public member posts, never network-only ones', texts.length === 8 && !texts.some((t) => /Network-only/.test(t)), texts.length);
   check(scope, 'the composer is replaced by an invitation to sign in', !(await page.isVisible('#mnComposer')) && await page.isVisible('#mnGuestCard'));
+  check(scope, 'a guest sees that a post has photos, never where they live', (await page.$$eval('#mnFeed .mn__media-locked', (a) => a.length)) === 2 && !world.requests.some((r) => /\/media\//.test(r.path)));
   const s = await split(page);
-  check(scope, 'same composition as a member: globe, strip and feed on one screen', s.feedTop < s.vh - 60, s);
+  check(scope, 'same composition as a member: globe, strip and feed on one screen', s.feedTop < s.vh - 60 && s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   await page.screenshot({ path: join(OUT, `guest-${device.name}.png`) });
   const first = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
   const sent = world.requests.length;

@@ -50,9 +50,12 @@ test('globe and feed talk over same-origin messages carrying public mission fiel
  assert.match(globe,/e\.source!==parentFrame\|\|e\.origin!==location\.origin/);
  assert.match(globe,/postMessage\(msg,location\.origin\)/);
  assert.doesNotMatch(js+globe,/postMessage\([^)]*['"]\*['"]\)/,'never broadcast to any origin');
- const announce=/function announce\(\)\{[^\n]*/.exec(globe)[0];
- assert.match(announce,/mission_id:m\.mission_id,title:m\.title,region_label:m\.region_label,action_path:m\.action_path/);
- assert.doesNotMatch(announce,/latitude|longitude|m_uid/);
+ /* one projection for everything the frame tells the page: public pin fields, never coordinates or keys */
+ const pub=/function publicMission\(m\)\{[^\n]*/.exec(globe)[0];
+ assert.match(pub,/mission_id:m\.mission_id,title:m\.title,description:String\(m\.description\|\|''\)\.slice\(0,280\),region_label:m\.region_label,action_path:m\.action_path/);
+ assert.doesNotMatch(pub,/latitude|longitude|m_uid|region_key/);
+ assert.match(globe,/function announce\(\)\{const m=missions\[i\];if\(m\)tell\(\{type:'hu:mission-selected',mission:publicMission\(m\)\}\)\}/);
+ assert.match(globe,/missions:allMissions\.slice\(0,200\)\.map\(publicMission\)/);
 });
 
 test('Cesium imagery is constructed with the provider the runtime actually ships',()=>{

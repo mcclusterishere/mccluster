@@ -57,6 +57,31 @@ Measured (Playwright, `scripts/e2e/world-screen.e2e.mjs`):
 - Posting lets go of any mission and folds the composer, so the new post is
   seen landing.
 
+### The look (owner's mockup, 2026-10-14)
+
+- **Globe:** NASA Black Marble night Earth (public domain, NASA GIBS), lifted
+  so the sea reads deep blue, with an atmosphere rim; the street map
+  (OpenStreetMap) fades in below ~900 km or from the layers button. Pins
+  are glowing red markers; continent labels count public pins only and
+  hide when their continent is round the back of the Earth. Floating
+  controls: World (reset), Near me, zoom in/out, Night/Street layers.
+- **Header:** HUMAN UPRISE over WORLD set in type (no drawn mark), search
+  ("places, people, or causes": narrows the feed and the pins as you type;
+  Enter flies to the first matching mission, or for a member searches
+  people), bell and avatar. A search button on a phone, a field from 600px.
+- **Mission card:** the kind as an icon tile (missions carry no photo and
+  none is invented), Latest badge when nothing is picked, place, kind,
+  public joined/verified counts (`action_mission_stats`, anon-granted),
+  title, description from 600px, and **Join · Locate · Posts**. No Fund
+  button: there is no verified funding flow yet.
+- **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
+  a post carries; no invented topics or locations), navy cards, picture as
+  a right-hand thumbnail with a 1/n badge that opens all of them on tap,
+  heart with count, comment, share, save.
+- Navy and one red, on the World screen only; the other rooms keep the house
+  look. The bottom bar stays the house bar (Music | M | Globe, the
+  contract's order), not the mockup's Home | Music | Globe.
+
 ### Guests: the same World, read-only
 
 - `GET /v1/mnet/public-feed` (Worker, no session): `visibility=public`
@@ -136,7 +161,7 @@ portrait/landscape and desktop; Post, Like, Unlike, Comment and Share round
 trips with the exact requests; pin → strip and narrowed feed; post → globe
 without narrowing; the avatar menu; the three-column bar; and the guest path
 (no session sent, public posts only, actions open sign-in and send nothing).
-64/64 on 2026-10-14. It does not touch production; Worker authorization is
+80/80 on 2026-10-14, including the composition split on iPhone and iPad, the mission card, tabs, search, thumbnails and globe controls. It does not touch production; Worker authorization is
 covered by the Worker test suite.
 
 ## Still open (unchanged by this work)
