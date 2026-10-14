@@ -66,8 +66,19 @@ begin
   end if;
   select * into t from public.creator_tracks where id = p_track;
   if not found then raise exception 'Recording not found'; end if;
-  if t.status <> 'published' or t.rights_status not in ('approved','cleared') then
+  if t.status <> 'published' or t.rights_status <> 'cleared' then
     raise exception 'Recording must be published and rights-cleared before assigning ISRC';
+  end if;
+  if not exists (
+    select 1 from public.music_cohort_isrc_grants g
+    join public.action_cohorts c on c.id=g.cohort_id and c.status='active'
+    join public.action_cohort_members m on m.cohort_id=g.cohort_id and m.m_uid=g.m_uid
+    join public.music_creator_profiles p on p.m_uid=g.m_uid and p.status='active'
+    where g.m_uid=t.m_uid and g.isrc_eligible and g.rights_authorized
+      and g.approved_by is not null and g.approved_at is not null
+      and g.rights_evidence_url <> '' and g.revoked_at is null
+  ) then
+    raise exception 'Approved cohort ISRC eligibility and rights authorization required';
   end if;
   perform pg_advisory_xact_lock(hashtext('QT6KV-ISRC'),yr::integer);
   select isrc into existing from public.music_isrc_creator_registry where creator_track_id = p_track;
