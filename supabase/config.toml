@@ -195,3 +195,7 @@ verify_jwt = true
 # an order can be created and the function repeats authorization in-process.
 [functions.music-checkout]
 verify_jwt = true
+
+# Public read-only world news; privileged sync authenticates internally.
+[functions.public-gdelt-news]
+verify_jwt = false

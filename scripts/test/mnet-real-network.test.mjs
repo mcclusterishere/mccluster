@@ -185,7 +185,7 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.match(js, /first\.classList\.add\("is-just-posted"\)/);
   assert.match(css, /\.mn__tabs-thumb \{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
+  assert.match(css, /@media\s*\(max-width:650px\)/, 'mobile globe viewport remains accessible');
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
@@ -209,7 +209,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/data-mn-view="feed">Feed/);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/data-mn-view="feed">🌐 World/);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{

@@ -122,6 +122,22 @@
     if (mnetLabel) mnetLabel.textContent = "Sign in";
   }
 
+  /* World tab: the public Cesium mission globe, separate from the private Halo console.
+     Normalize hand-written bars and generated bars to the same globe destination. */
+  var worldTab = dock.querySelector('[data-appnav="world"]');
+  if (!worldTab) {
+    worldTab = document.createElement("a");
+    worldTab.className = "appbar__tab appbar__world";
+    worldTab.setAttribute("data-appnav", "world");
+    worldTab.setAttribute("aria-label", "Explore the world globe");
+    worldTab.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg><span>World</span>';
+    var profileTab = dock.querySelector('[data-appnav="profile"]');
+    if (profileTab) dock.insertBefore(worldTab, profileTab);
+    else dock.appendChild(worldTab);
+  }
+  worldTab.href = ROOT + "action-globe.html";
+  if (/action-globe\\.html(?:$|[?#])/.test(location.href)) worldTab.setAttribute("aria-current", "page");
+
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
   document.body.classList.add("has-appbar");
@@ -187,9 +203,9 @@
      long-press and drags the held tab out of its own column. Three winged
      tabs, therefore two rooms per wing; the record button is FIXED and
      simply keeps its cell. Change this list and every wing changes with it. */
-  var ORDER = ["music", "home", "create", "profile"];
+  var ORDER = ["music", "home", "world", "profile"];
   /* columns that never open a wing and keep their cell while one is open */
-  var FIXED = { create: true };
+  var FIXED = { world: true };
 
   /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
      THIS ENFORCES IT.
@@ -295,6 +311,10 @@
   }
   function paintAuthState(signedIn, user, verified) {
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
+    var worldDoor = dock.querySelector('[data-appnav="world"]');
+    if (worldDoor) worldDoor.href = ROOT + (signedIn ? "action-globe.html" : "guest-globe.html");
+    var guestIdentity = dock.querySelector('[data-appnav="profile"]');
+    if (guestIdentity) { guestIdentity.hidden = !signedIn; guestIdentity.setAttribute("aria-hidden", signedIn ? "false" : "true"); }
     var body = document.body;
     body.classList.toggle("mcc-auth-in", !!signedIn);
     body.classList.toggle("mcc-auth-out", !signedIn);

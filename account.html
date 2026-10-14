@@ -169,7 +169,7 @@
           <input type="text" id="acCreateLast" placeholder="Legal last name" autocomplete="family-name" maxlength="80" required>
         </div>
         <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email" required>
-        <input type="text" id="acCreateAddr1" placeholder="Mailing address" autocomplete="address-line1" required>
+        <input type="text" id="acCreateAddr1" placeholder="Search and select a Google Places address" autocomplete="off" required><p class="ac__note" id="acPlacesStatus" role="status">Select a Google Places result to continue. Manual entries are not accepted.</p>
         <input type="text" id="acCreateAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
         <div class="fan__row">
           <input type="text" id="acCreateCity" placeholder="City" autocomplete="address-level2" required>
@@ -461,6 +461,7 @@
     });
 
     el("acCreateGo").onclick = function () {
+      if (window.MCC_REQUIRE_GOOGLE_PLACES_ADDRESS === true && (!window.MCC_VERIFIED_ADDRESS || !window.MCC_VERIFIED_ADDRESS.isSelected())) { createFail("Select your real address from Google Places. Typed addresses are not accepted.", "acCreateAddr1", "address_not_selected"); return; }
       if (el("acCreateGo").disabled) return;
       if (window.MCC_TRACK) window.MCC_TRACK("signup_started", { flow: "password" });
       var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
@@ -492,6 +493,8 @@
         full_name: display,
         first_name: nameCheck.first_name,
         last_name: nameCheck.last_name,
+        google_place_id: window.MCC_VERIFIED_ADDRESS && window.MCC_VERIFIED_ADDRESS.isSelected() ? window.MCC_VERIFIED_ADDRESS.placeId() : null,
+        address_verification_status: "pending_server_validation",
         shipping_address_line1: el("acCreateAddr1").value.trim(),
         shipping_address_line2: el("acCreateAddr2").value.trim(),
         shipping_city: el("acCreateCity").value.trim(),
@@ -797,6 +800,7 @@
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
+  <script defer src="js/google-places-address.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>

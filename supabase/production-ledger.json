@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 288,
-  "latest_version": "20261013201327",
-  "latest_name": "action_network_comments",
-  "ledger_sha256": "df0d899ce951435c5d52fa679ca49b2e5ab3378ee6af6c15e8d2d262c437e8a6",
+  "migration_count": 302,
+  "latest_version": "20261014083000",
+  "latest_name": "gdelt_backoff_cache",
+  "ledger_sha256": "a0c22c4a8c345a946aed1cb8c45f21683146cc7fe750d0a4a5bde0f24c5c2d36",
   "migrations": [
     {
       "version": "0001",
@@ -1104,6 +1104,10 @@
       "name": "experience_evidence_plane_v1"
     },
     {
+      "version": "20261006232625",
+      "name": "music_direct_track_sales_v1"
+    },
+    {
       "version": "20261006233518",
       "name": "here_album_commerce_v1_reconcile"
     },
@@ -1158,6 +1162,71 @@
     {
       "version": "20261013201327",
       "name": "action_network_comments"
+    },
+    {
+      "version": "20261013230000",
+      "name": "action_globe_public_projection",
+      "applied_version": "20261014013627"
+    },
+    {
+      "version": "20261013233000",
+      "name": "action_globe_regions",
+      "applied_version": "20261014013557"
+    },
+    {
+      "version": "20261013234500",
+      "name": "action_globe_song_portfolios",
+      "applied_version": "20261014013601"
+    },
+    {
+      "version": "20261014030000",
+      "name": "action_globe_adm1_boundaries",
+      "applied_version": "20261014014033"
+    },
+    {
+      "version": "20261014033000",
+      "name": "action_globe_presence",
+      "applied_version": "20261014014747"
+    },
+    {
+      "version": "20261014040000",
+      "name": "action_globe_region_activation",
+      "applied_version": "20261014014547"
+    },
+    {
+      "version": "20261014050000",
+      "name": "action_policy_memo_bounties",
+      "applied_version": "20261014020454"
+    },
+    {
+      "version": "20261014060000",
+      "name": "civic_global_discovery",
+      "applied_version": "20261014021057"
+    },
+    {
+      "version": "20261014070000",
+      "name": "candidate_labs_media_graph",
+      "applied_version": "20261014021258"
+    },
+    {
+      "version": "20261014080000",
+      "name": "media_geo_ingestion",
+      "applied_version": "20261014023302"
+    },
+    {
+      "version": "20261014081000",
+      "name": "media_ingest_rpc",
+      "applied_version": "20261014023317"
+    },
+    {
+      "version": "20261014081500",
+      "name": "media_news_namespace",
+      "applied_version": "20261014023548"
+    },
+    {
+      "version": "20261014083000",
+      "name": "gdelt_backoff_cache",
+      "applied_version": "20261014023813"
     }
   ]
 }

@@ -1003,6 +1003,14 @@
     /* deep links: ?offer= and ?plan= (the legacy lane links still work) */
     var q = new URLSearchParams(location.search);
     var qOffer = q.get("offer"), qMode = q.get("mode"), qPlan = q.get("plan");
+    /* Preserve business-mission attribution in the existing local intake state.
+       Client attribution is informational only, never proof of purchase or completion. */
+    var missionSource = q.get("mission"), missionGoal = q.get("goal");
+    if (missionSource === "anti-social-business" && ["website","brand","business","content"].indexOf(missionGoal) !== -1) {
+      S.mission_source = missionSource;
+      S.mission_goal = missionGoal;
+      save();
+    }
     if (qOffer && window.MCC_OFFERS.offerOf(L, qOffer)) {
       S.offer = qOffer;
       if (qOffer === "runway") S.mode = "m";
