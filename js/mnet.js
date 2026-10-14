@@ -2169,6 +2169,7 @@
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var missionOpenVersion=0;
   var ANTISOCIAL_ID="a17050c1-a551-4c5c-80c1-5a1750c1a001",antisocialLevel=1,antisocialVersion=0;
   var ANTISOCIAL_TITLES=["High Five","Five High Fives","Make Something Together"];
   function antisocialReset(){
@@ -2226,7 +2227,6 @@
       .catch(function(e){setStatus($("mnAntisocialStatus"),e.message||"Submission failed.","error");})
       .then(function(){btn.disabled=false;});
   }
-  var missionOpenVersion=0;
   function openMission(id){
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
