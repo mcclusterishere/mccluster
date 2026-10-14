@@ -21,44 +21,56 @@
         <span><strong>Human Uprise</strong><small>Founded by Equity Uprise</small><b class="mn__brand-world" aria-hidden="true">World</b></span>
       </a>
       <!-- search the World: places and causes on the globe, words in the feed,
-           people for members. A field from tablet width, a button on a phone. -->
+           people, groups and missions. A bar in the header at every width. -->
       <form class="mn__search" id="mnSearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-        <input id="mnSearchInput" type="search" placeholder="Search places, people, or causes…" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80">
+        <input id="mnSearchInput" type="search" placeholder="Search places, people, or causes…" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80" role="combobox" aria-controls="mnSuggest" aria-expanded="false" aria-autocomplete="list">
+        <!-- PEOPLE, GROUPS AND MISSIONS LIVE IN SEARCH (owner, 2026-10-14):
+             places and pinned missions, open missions, people and groups that
+             match, and the three full lists, all from the one field -->
+        <div class="mn__suggest" id="mnSuggest" hidden>
+          <div id="mnSuggestRows"></div>
+          <div class="mn__suggest-foot">
+            <button type="button" data-mn-view="missions">All missions</button>
+            <button type="button" data-mn-view="discover">Find people</button>
+            <button type="button" data-mn-view="groups">Browse groups</button>
+          </div>
+        </div>
       </form>
-      <button class="mn__search-toggle" id="mnSearchToggle" type="button" aria-label="Search" aria-controls="mnSearch" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-      </button>
       <!-- a guest's door in: the World is readable without an account -->
       <div class="mn__guest-bar" id="mnGuestBar" hidden>
         <button class="mn__guest-in" id="mnGuestSignIn" type="button">Sign in</button>
         <button class="mn__guest-join" id="mnGuestJoin" type="button">Join</button>
       </div>
-      <!-- the header's one live signal: your unread alerts, without opening the tab -->
+      <!-- ALERTS LIVE ON THE BELL: the count of unread alerts, and the tap
+           that opens them. There is no Alerts entry anywhere else. -->
       <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
-        <i class="mn__bell-dot" id="mnBellDot" hidden></i>
+        <span class="mn__bell-count" id="mnNotifBadge" hidden></span>
       </button>
-      <!-- THE AVATAR IS THE MENU (owner, 2026-10-14): World is the only
-           surface here, so profile, inbox and every other room live behind
-           the avatar instead of in a second row of tabs. -->
-      <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Your menu" aria-haspopup="true" aria-expanded="false" aria-controls="mnMenu" hidden>
+      <!-- THE ACCOUNT MENU (owner, 2026-10-14): three destinations in the
+           bar, one small account menu here, everything else in context.
+           Alerts are the bell; missions are the pins, the mission card and
+           search; people and groups are the World search; Live is a badge
+           over the globe; clips are a door under the Music and Photos &
+           video tabs; creating is the composer; a creator's analytics is a
+           layer on the globe and a door on their profile; the M Account is
+           Settings & account.
+           Do not add rooms to this menu. -->
+      <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Your account" aria-haspopup="true" aria-expanded="false" aria-controls="mnMenu" hidden>
         <span id="mnAvatarFallback">M</span>
         <img id="mnAvatar" alt="" hidden>
         <i class="mn__avatar-dot" id="mnMeDot" hidden></i>
       </button>
-      <nav class="mn__menu" id="mnMenu" aria-label="Your Human Uprise" hidden>
-        <button type="button" data-mn-view="profile">Profile</button>
-        <button type="button" data-mn-view="messages">Inbox <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
-        <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
-        <button type="button" data-mn-view="missions">Missions &amp; campaigns</button>
-        <button type="button" data-mn-view="discover">People</button>
-        <button type="button" data-mn-view="groups">Groups</button>
-        <button type="button" data-mn-view="clips">Clips</button>
-        <button type="button" data-mn-view="live">Live</button>
-        <a href="creator-capture.html">Record or create</a>
-        <a href="creator-landing-analytics.html">Your analytics</a>
-        <a href="account.html?stay=1">M Account</a>
+      <nav class="mn__menu" id="mnMenu" aria-label="Your account" hidden>
+        <div class="mn__menu-who">
+          <span class="mn__menu-face" id="mnMenuFace" aria-hidden="true">M</span>
+          <span class="mn__menu-id"><strong id="mnMenuName">Your profile</strong><small id="mnMenuHandle"></small></span>
+        </div>
+        <button type="button" data-mn-view="profile">View profile</button>
+        <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
+        <a href="account.html?stay=1">Settings &amp; account</a>
+        <button type="button" class="mn__menu-out" id="mnSignOut">Sign out</button>
       </nav>
     </header>
 
@@ -201,11 +213,23 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
+          <!-- what is on air right now, over the Earth; opens the live rooms -->
+          <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
         </section>
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
+          <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
+               what a guest sees first, and what anyone sees with no mission
+               picked. The chips act on the globe; nothing here is invented. -->
           <div class="mn__world-idle" id="mnWorldIdle">
-            <p class="mn__eyebrow">The world</p>
-            <p class="mn__world-caption" id="mnWorldCaption">Drag the Earth. Tap a red pin to see what people are doing there.</p>
+            <p class="mn__eyebrow">Explore the world</p>
+            <h2 class="mn__world-idle-h">Find a mission or region</h2>
+            <p class="mn__world-caption" id="mnWorldCaption">Tap a marker or search to discover action around the world.</p>
+            <nav class="mn__world-chips" aria-label="Explore the globe">
+              <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
+              <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
+              <a href="action-policy.html">Policy ↗</a>
+              <button type="button" data-world-chip="near">Near me</button>
+            </nav>
           </div>
           <!-- THE MISSION CARD: the pin you tapped (or the newest pinned
                mission, labelled as such). Art is the mission's kind, drawn as
@@ -221,6 +245,8 @@
               <button class="mn__world-go" id="mnWorldFocusJoin" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 19a6 6 0 0 1 12 0M18 8v6M15 11h6"/></svg><span>Join</span></button>
               <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
               <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
+              <!-- every open mission, pinned or not, with your Action Record -->
+              <button class="mn__world-locate mn__world-all" type="button" data-mn-view="missions"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
             </div>
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
@@ -234,6 +260,13 @@
           <button type="button" data-feed-tab="music" aria-pressed="false">Music</button>
           <button type="button" data-feed-tab="media" aria-pressed="false">Photos &amp; video</button>
         </nav>
+        <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
+             they are a door from the Music and Photos & video tabs, shown only
+             while campaigns are open, with their real terms -->
+        <aside class="mn__clipdoor" id="mnClipDoor" hidden>
+          <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
+          <button class="mn__world-go" type="button" data-mn-view="clips">See clipping campaigns</button>
+        </aside>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -241,18 +274,24 @@
           <div class="mn__rail-head"><div><p class="mn__rail-k">WAYS TO MOVE</p><h2 id="mnRailH">Campaigns & missions</h2></div><a href="action/">See all</a></div>
           <div class="mn__rail-track" id="mnRailTrack"></div>
         </section>
+        <!-- a guest's door into the members' side: a real Equity Uprise rally
+             (Bridgeport Creates), then the public posts, read-only -->
         <aside class="mn__guest-card" id="mnGuestCard">
-          <p><strong>Public posts from Human Uprise.</strong> Sign in to post, like, comment and join missions.</p>
-          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
+          <p><strong>Member posts live here.</strong> These are the public ones. Sign in to see your network, and to post, like, comment and join missions.</p>
+          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
         </aside>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
             <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="What’s happening?" aria-label="Post text"></textarea>
+            <!-- CREATE, in context: record, film or write with the full tools -->
+            <a class="mn__create" href="create.html" aria-label="Record or create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
             <a class="mn__attach" href="create.html" aria-label="Open Human Uprise recording and creation tools">Record / Create</a>
+            <!-- shown only to a member the desk has granted live hosting, once live video is switched on -->
+            <button class="mn__attach" id="mnComposerLive" type="button" hidden>Go live</button>
             <label class="mn__attach" for="mnMediaInput">Photo / video
               <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
             </label>
@@ -351,6 +390,7 @@
 
       <div id="mnGroupsList">
         <a class="mn__secondary mn__fbi-link" href="fbi.html">Legit or cap? The Fashion Bureau of Investigation →</a>
+        <p class="mng__query" id="mngQuery" hidden><span id="mngQueryText"></span> <button type="button" id="mngQueryClear">Clear</button></p>
         <div class="mng__split" id="mngSplit" role="tablist" aria-label="Groups">
           <button type="button" class="mng__seg is-on" data-mng-seg="yours" role="tab" aria-selected="true">Your groups</button>
           <button type="button" class="mng__seg" data-mng-seg="explore" role="tab" aria-selected="false">Explore</button>
@@ -415,7 +455,21 @@
         <section class="mn__panel" id="mnSecurity">
           <h3>Password and sign-in</h3>
           <p>Change your password, or set one if you signed up with Google.</p>
-          <a class="mn__secondary" href="account.html#password">Change password</a>
+          <a class="mn__secondary" href="account.html?stay=1#password">Change password</a>
+          <button class="mn__secondary" id="mnProfileBlocked" type="button">People you blocked</button>
+        </section>
+        <!-- a music creator's analytics (Creator Studio), shown only to someone
+             with a music creator profile; nobody else sees this door -->
+        <section class="mn__panel" id="mnProfileAnalytics" hidden>
+          <h3>Your analytics</h3>
+          <p>Plays, completions, shares and page traffic for your catalogue, from recorded activity.</p>
+          <a class="mn__secondary" href="creator.html#artistAnalyticsHeading">Open your analytics</a>
+        </section>
+        <!-- the Action Record lives with the missions; this is its door from your profile -->
+        <section class="mn__panel" id="mnProfileRecord">
+          <h3>Your Action Record</h3>
+          <p>Verified actions, points, cohorts and receipts.</p>
+          <button class="mn__secondary" type="button" data-mn-view="missions">Open your Action Record</button>
         </section>
         <!-- Account deletion, started here. Required by the App Store and
              Google Play; the request is real and the desk completes it. -->

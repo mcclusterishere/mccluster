@@ -6,12 +6,15 @@
    interaction is a round trip whose request is checked), and drives:
 
      member: the composition on iPhone / iPad / desktop, posting, Like and
-             unlike, comments, Share, the avatar menu, pin -> context strip
-             and narrowed feed, post -> globe without narrowing, the
-             three-column app bar;
+             unlike, comments, Share, pin -> context strip and narrowed feed,
+             post -> globe without narrowing, the three-column app bar, and
+             the consolidated navigation: the compact account menu, alerts
+             on the bell, people/groups/missions in search, Live over the
+             globe, Clips under the tabs, Create in the composer, a
+             creator's analytics on the profile, and signing out;
      guest:  the same World, read-only through /v1/mnet/public-feed with no
-             session sent, every member action opening sign-in and sending
-             nothing, Share still working.
+             session sent, opening on Explore the world, every member action
+             opening sign-in and sending nothing, Share still working.
 
    Nothing here touches production. The fixture people and posts exist only
    in this file's memory.
@@ -57,6 +60,14 @@ const MISSIONS = [
   { mission_id: '33333333-3333-4333-8333-333333333333', title: 'Translate the shelter guide', description: 'Make the guide readable in three languages.', action_path: 'create', region_key: 'JP-13', region_label: 'Tokyo', latitude: 35.7, longitude: 139.7 },
 ];
 const STATS = [{ mission_id: M1, joined: 12, submitted: 3, verified: 9 }];
+/* an open mission with no pin (search must still find it), and a clip job (never a mission) */
+const OPEN_MISSIONS = [
+  { id: '44444444-4444-4444-8444-444444444441', title: 'Write to the river council', description: 'Ask for a cleanup budget.', domain: 'civic', kind: 'mission' },
+  { id: '44444444-4444-4444-8444-444444444442', title: 'Clip the river song', description: 'Paid clipping.', domain: 'music', kind: 'clip' },
+];
+const CLIPS = [{ mission_id: '44444444-4444-4444-8444-444444444442', title: 'Clip Docket 516R', base_cpm_cents: 300, platforms: ['instagram'] }];
+const GROUPS = [{ id: 'g1', slug: 'river-keepers', name: 'River Keepers', purpose: 'Keep the Mill River clean.', visibility: 'open', member_count: 14, joined: false }];
+const LIVE = [{ id: '66666666-6666-4666-8666-666666666661', title: 'Mill River cleanup, live', room_kind: 'mission', category_key: 'field', host: { display_name: 'Fixture Ana' }, room: { title: 'River room' }, started_at: new Date().toISOString(), metrics: { joined: 3, verified: 1 } }];
 /* fixture pictures: the owner's own frames already in this repository */
 const PHOTOS = ['assets/frames/affix_0001.jpg', 'assets/frames/bussalick_0001.jpg', 'assets/frames/church_0001.jpg', 'assets/img/peaceful-places.jpg'];
 const asset = (n) => `eeeeeeee-eeee-4eee-8eee-${String(n).padStart(12, '0')}`;
@@ -79,13 +90,16 @@ function freshWorld() {
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
 
-async function routeBackends(ctx, world, { member }) {
+async function routeBackends(ctx, world, { member, creator = true }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
     if (u.includes('/auth/v1/user')) return member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
+    if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
+    if (u.includes('/rest/v1/action_missions?')) return json(route, OPEN_MISSIONS);
+    if (u.includes('/rest/v1/music_creator_profiles?')) return json(route, member && creator ? [{ handle: 'fixture-you' }] : []);
     if (u.includes('action_offer_cards')) {
       const linked = world.posts.filter((p) => p.content_id === CONTENT);
       return json(route, linked.map((p) => ({ post_id: p.id, mission_id: M1, content_id: CONTENT, title: MISSIONS[0].title, description: MISSIONS[0].description, mission_open: true })));
@@ -105,6 +119,15 @@ async function routeBackends(ctx, world, { member }) {
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: world.posts.map(item), next_before: null });
+    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
+    if (u.pathname === '/v1/mnet/notifications/read') { world.alertsRead = true; return json(route, {}); }
+    if (u.pathname === '/v1/mnet/discover') { const q = (u.searchParams.get('q') || '').toLowerCase(); return json(route, { people: PEERS.filter((p) => (p.display_name + ' ' + p.mccluster_id).toLowerCase().includes(q)).map((p) => ({ ...p, following: false })) }); }
+    if (u.pathname === '/v1/mnet/conversations') return json(route, { conversations: [{ conversation: { id: 'c1' }, my: { member_state: 'requested' }, members: [], last_message: null }] });
+    if (u.pathname === '/v1/mnet/groups') return json(route, { groups: GROUPS });
+    if (u.pathname === '/v1/mnet/groups/river-keepers') return json(route, { group: GROUPS[0], organization: null, campaigns: [], items: [] });
+    if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: LIVE });
+    if (u.pathname === '/v1/mnet/live/eligibility') return json(route, { can_host: false, enabled: false });
+    if (u.pathname === '/v1/analytics/my-creator') return json(route, { ok: true, creator: creator, audience: creator ? { countries: [{ country: 'US', views: 42 }, { country: 'GB', views: 7 }], elsewhere_views: 3, unknown_views: 1, min_views: 5 } : { countries: [] } });
     const media = u.pathname.match(/^\/v1\/mnet\/media\/eeeeeeee-eeee-4eee-8eee-0*(\d+)\/url$/);
     if (media) return json(route, { url: `${BASE}/${PHOTOS[(Number(media[1]) - 1) % PHOTOS.length]}`, media_type: 'image' });
     if (u.pathname === '/v1/mnet/posts' && m === 'POST') {
@@ -152,16 +175,16 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-async function open(device, { member }) {
+async function open(device, { member, creator = true }) {
   const world = freshWorld();
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
-    if (m) { const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
-  await routeBackends(ctx, world, { member });
+  await routeBackends(ctx, world, { member, creator });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -276,9 +299,16 @@ for (const device of DEVICES) {
   const musicEmpty = await page.textContent('#mnFeed');
   await page.click('[data-feed-tab="all"]');
   check(scope, 'feed tabs filter by what posts carry (2 with photos; no tracks -> honest empty state)', mediaPosts === 2 && /No posts with a track/.test(musicEmpty), { mediaPosts });
-  if (!(await page.isVisible('#mnSearchInput'))) await page.click('#mnSearchToggle');
   await page.fill('#mnSearchInput', 'river');
   await page.waitForTimeout(500);
+  await page.waitForFunction(() => /River Keepers/.test(document.getElementById('mnSuggest')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  const sug = await page.$$eval('#mnSuggest [data-suggest]', (a) => a.map((b) => b.getAttribute('data-suggest') + ':' + b.querySelector('span').textContent));
+  check(scope, 'search suggests the pinned mission, an unpinned open mission (never a clip job), people and groups', sug.includes('globe:Clean up the Mill River') && sug.includes('mission:Write to the river council') && !sug.some((x) => /Clip the river song/.test(x)) && sug.includes('group:River Keepers') && sug.some((x) => /^people:Search people for/.test(x)) && sug.some((x) => /^groups:Groups about/.test(x)), sug);
+  const foot = await page.$$eval('#mnSuggest .mn__suggest-foot [data-mn-view]', (a) => a.map((b) => b.getAttribute('data-mn-view')));
+  check(scope, 'search keeps the full lists one tap away: all missions, people, groups', JSON.stringify(foot) === JSON.stringify(['missions', 'discover', 'groups']), foot);
+  const sugBox = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  check(scope, 'the suggestions never push the page sideways', sugBox.sw === sugBox.cw, sugBox);
+  await page.screenshot({ path: join(OUT, 'member-iphone-search-suggestions.png') });
   const searched = await page.$$eval('#mnFeed [data-post-id]', (a) => a.length);
   await page.press('#mnSearchInput', 'Enter');
   await page.waitForSelector('#mnWorldFocus:not([hidden])');
@@ -288,15 +318,104 @@ for (const device of DEVICES) {
   const globeFrame = page.frame({ url: /action-globe\.html/ });
   const controls = await globeFrame.$$eval('.globe-controls button', (a) => a.map((b) => b.id));
   await globeFrame.click('#ctlLayers');
-  check(scope, 'globe controls: world, locate, zoom in/out and a night/street layer switch', JSON.stringify(controls) === JSON.stringify(['ctlWorld', 'ctlLocate', 'ctlZoomIn', 'ctlZoomOut', 'ctlLayers']) && (await globeFrame.getAttribute('#ctlLayers', 'aria-pressed')) === 'true', controls);
+  check(scope, 'globe controls: world, locate, zoom in/out, an Earth/street switch, and (for a creator) the audience layer', JSON.stringify(controls) === JSON.stringify(['ctlWorld', 'ctlLocate', 'ctlZoomIn', 'ctlZoomOut', 'ctlLayers', 'ctlAudience']) && (await globeFrame.getAttribute('#ctlLayers', 'aria-pressed')) === 'true' && await globeFrame.isVisible('#ctlAudience'), controls);
   await globeFrame.click('#ctlLayers');
+  // Analytics for a creator: an optional layer on the same globe, from the Worker's measurement
+  await globeFrame.click('#ctlAudience');
+  await page.waitForFunction(() => /Your audience, last 30 days/.test(document.getElementById('mnWorldCaption').textContent), null, { timeout: 8000 }).catch(() => {});
+  const audienceLine = await page.textContent('#mnWorldCaption');
+  const audiencePins = await globeFrame.evaluate(() => window.__huAudienceCount());
+  check(scope, 'a creator turns on the audience layer: country points on the globe and a measured summary', audiencePins === 2 && /49 views of your creator page from 2 countries, and 4 from places with under 5 views or unknown/.test(audienceLine) && req(world, 'GET', /^\/v1\/analytics\/my-creator$/).every((r) => r.auth), { audiencePins, audienceLine });
+  await page.screenshot({ path: join(OUT, 'member-iphone-creator-audience.png') });
+  await globeFrame.click('#ctlAudience');
+  await page.waitForTimeout(300);
+  check(scope, 'turning it off clears the points', (await globeFrame.evaluate(() => window.__huAudienceCount())) === 0);
   await page.screenshot({ path: join(OUT, 'member-iphone-mission-card.png') });
 
-  // The avatar menu keeps every room
+  // Clips: a door under the Music and Photos & video tabs, with the real terms
+  await page.click('[data-feed-tab="music"]');
+  await page.waitForSelector('#mnClipDoor:not([hidden])', { timeout: 8000 }).catch(() => {});
+  const clipLine = await page.textContent('#mnClipDoor');
+  await page.click('[data-feed-tab="all"]');
+  check(scope, 'Clips: the Music tab shows the clipping door with real terms; All hides it', /1 campaign open · from \$3\.00 per 1,000 views/.test(clipLine) && await page.isHidden('#mnClipDoor'), clipLine);
+
+  // Live: a badge over the globe while something is on air, opening the live rooms
+  await page.waitForSelector('#mnWorldLive:not([hidden])', { timeout: 8000 }).catch(() => {});
+  check(scope, 'Live: the badge over the globe shows while a room is on air', await page.isVisible('#mnWorldLive'));
+  await page.screenshot({ path: join(OUT, 'member-iphone-live-badge.png') });
+  await page.click('#mnWorldLive');
+  await page.waitForSelector('#mnLiveView:not([hidden])');
+  check(scope, 'Live: tapping it opens the live rooms, with the way back to the World', /Mill River cleanup, live|River room/.test(await page.textContent('#mnLiveTrack')) && await page.isVisible('#mnToWorld'));
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+
+  // Create: one tap from the folded composer
+  check(scope, 'Create: the folded composer has a visible Record or create button', (await page.isVisible('#mnComposer .mn__create')) && (await page.getAttribute('#mnComposer .mn__create', 'href')) === 'create.html');
+
+  // Alerts: the bell carries the count and opens them
+  check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '1');
+  await page.click('#mnBell');
+  await page.waitForSelector('#mnNotificationsView:not([hidden])');
+  await page.waitForTimeout(400);
+  check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+
+  // Groups from search: a matching group opens directly
+  await page.fill('#mnSearchInput', 'keepers');
+  await page.waitForSelector('#mnSuggest [data-suggest="group"]', { timeout: 8000 });
+  await page.click('#mnSuggest [data-suggest="group"]');
+  await page.waitForSelector('#mnGroupsOne:not([hidden])');
+  check(scope, 'Groups: a group found in search opens', req(world, 'GET', /^\/v1\/mnet\/groups\/river-keepers$/).length === 1);
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+  // People from search: the full people search, with the words carried over
+  await page.fill('#mnSearchInput', 'ana');
+  await page.waitForSelector('#mnSuggest [data-suggest="person"]', { timeout: 8000 });
+  check(scope, 'People: members who match appear as you type', /Fixture Ana/.test(await page.textContent('#mnSuggest')));
+  await page.click('#mnSuggest [data-suggest="people"]');
+  await page.waitForSelector('#mnDiscoverView:not([hidden])');
+  await page.waitForTimeout(400);
+  check(scope, 'People: "Search people" opens the people search with the words carried over', (await page.inputValue('#mnDiscoverQuery')) === 'ana' && /Fixture Ana/.test(await page.textContent('#mnDiscoverResults')));
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+  await page.fill('#mnSearchInput', ''); await page.waitForTimeout(300);
+
+  // The account menu: whose account, View profile, Messages, Settings & account, Sign out
   await page.click('#mnMe');
-  const rooms = await page.$$eval('#mnMenu [data-mn-view], #mnMenu a', (a) => a.map((x) => x.textContent.trim()));
-  check(scope, 'profile, inbox, alerts, missions, people, groups, clips, live, create, analytics and account are behind the avatar', rooms.length === 11, rooms);
-  await page.screenshot({ path: join(OUT, 'member-iphone-avatar-menu.png') });
+  const rooms = await page.$$eval('#mnMenu button, #mnMenu a', (a) => a.map((x) => { const c = x.cloneNode(true); c.querySelectorAll('.mn__badge').forEach((b) => b.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); }));
+  check(scope, 'the avatar opens a compact account menu: four entries and nothing else', JSON.stringify(rooms) === JSON.stringify(['View profile', 'Messages', 'Settings & account', 'Sign out']), rooms);
+  check(scope, 'a waiting message request shows on the avatar and on Messages, without opening Messages', (await page.isVisible('#mnMeDot')) && (await page.textContent('#mnMessageBadge')).trim() === '1');
+  check(scope, 'the account menu says whose account it is', (await page.textContent('#mnMenuName')) === 'Fixture You' && (await page.textContent('#mnMenuHandle')) === '@fixture.you');
+  check(scope, 'Settings & account is the M Account', (await page.getAttribute('#mnMenu a', 'href')) === 'account.html?stay=1');
+  await page.screenshot({ path: join(OUT, 'member-iphone-account-menu.png') });
+  await page.click('#mnMenu [data-mn-view="profile"]');
+  await page.waitForSelector('#mnProfileView:not([hidden])');
+  await page.waitForSelector('#mnProfileAnalytics:not([hidden])', { timeout: 8000 }).catch(() => {});
+  check(scope, 'a creator finds their analytics on their profile; the Action Record and block list are there too', (await page.isVisible('#mnProfileAnalytics')) && (await page.isVisible('#mnProfileRecord')) && (await page.isVisible('#mnProfileBlocked')));
+  await page.click('#mnToWorld');
+  await page.waitForSelector('#mnFeedView:not([hidden])');
+  check(scope, 'no page errors', errors.length === 0, errors);
+
+  // Sign out: the session ends and the World reopens as a guest
+  await page.click('#mnMe');
+  await Promise.all([page.waitForURL(/\/mnet\.html$/, { timeout: 15000 }), page.click('#mnSignOut')]);
+  await page.waitForSelector('#mnGuestBar:not([hidden])', { timeout: 20000 });
+  check(scope, 'Sign out ends the session and reopens the World as a guest', !(await page.evaluate(() => localStorage.getItem('mccdb_session'))) && await page.isVisible('#mnGuestBar'));
+  await ctx.close();
+}
+
+/* ---------- member, no creator profile: no analytics door ---------- */
+{
+  const { ctx, page, errors } = await open(DEVICES[0], { member: true, creator: false });
+  const scope = 'member-not-creator';
+  await page.click('#mnMe');
+  await page.click('#mnMenu [data-mn-view="profile"]');
+  await page.waitForSelector('#mnProfileView:not([hidden])');
+  await page.waitForTimeout(1000);
+  check(scope, 'a member without a music creator profile sees no analytics door', await page.isHidden('#mnProfileAnalytics'));
+  const plainGlobe = page.frame({ url: /action-globe\.html/ });
+  check(scope, '…and no audience layer switch on the globe', await plainGlobe.isHidden('#ctlAudience'));
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
@@ -309,11 +428,31 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   check(scope, 'reads /v1/mnet/public-feed and sends no session', reads.length > 0 && reads.every((r) => !r.auth), reads);
   const texts = await page.$$eval('#mnFeed [data-post-id]', (a) => a.map((x) => x.textContent));
   check(scope, 'shows public member posts, never network-only ones', texts.length === 8 && !texts.some((t) => /Network-only/.test(t)), texts.length);
-  check(scope, 'the composer is replaced by an invitation to sign in', !(await page.isVisible('#mnComposer')) && await page.isVisible('#mnGuestCard'));
+  check(scope, 'the composer is replaced by "Member posts live here." and a way in', !(await page.isVisible('#mnComposer')) && await page.isVisible('#mnGuestCard') && /Member posts live here\./.test(await page.textContent('#mnGuestCard')));
+  check(scope, 'a guest opens on Explore the world, with Missions, Regional impact, Policy and Near me', (await page.isVisible('#mnWorldIdle')) && (await page.isHidden('#mnWorldFocus')) && /Find a mission or region/.test(await page.textContent('#mnWorldIdle')) &&
+    JSON.stringify(await page.$$eval('.mn__world-chips > *', (a) => a.map((x) => x.textContent.replace(/\s+/g, ' ').trim().replace(/ \d+$/, '')))) === JSON.stringify(['Missions', 'Regional impact', 'Policy ↗', 'Near me']));
   check(scope, 'a guest sees that a post has photos, never where they live', (await page.$$eval('#mnFeed .mn__media-locked', (a) => a.length)) === 2 && !world.requests.some((r) => /\/media\//.test(r.path)));
   const s = await split(page);
-  check(scope, 'same composition as a member: globe, strip and feed on one screen', s.feedTop < s.vh - 60 && s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
+  check(scope, 'same composition as a member: globe, strip and feed on one screen', s.feedTop < s.vh - 60 && s.globe >= 44 && s.context <= 17 && s.feed >= 26 && s.scrollW === s.clientW, s);
   await page.screenshot({ path: join(OUT, `guest-${device.name}.png`) });
+  await page.click('[data-world-chip="regional"]');
+  await page.waitForFunction(() => /Regional impact is hidden/.test(document.getElementById('mnWorldCaption').textContent), null, { timeout: 8000 }).catch(() => {});
+  check(scope, 'Regional impact switches the counted regions on the globe and says so', (await page.getAttribute('[data-world-chip="regional"]', 'aria-pressed')) === 'false' && /Regional impact is hidden/.test(await page.textContent('#mnWorldCaption')));
+  await page.click('[data-world-chip="regional"]');
+  await page.click('[data-world-chip="missions"]');
+  await page.waitForSelector('#mnWorldFocus:not([hidden])', { timeout: 8000 }).catch(() => {});
+  check(scope, 'the Missions chip steps to a pinned mission on the globe', await page.isVisible('#mnWorldFocus'));
+  await page.screenshot({ path: join(OUT, `guest-${device.name}-mission.png`) });
+  await page.click('#mnWorldFocusClear');
+  await page.fill('#mnSearchInput', 'ana');
+  await page.waitForSelector('#mnSuggest [data-suggest="people"]', { timeout: 8000 });
+  const guestSent = world.requests.length;
+  await page.click('#mnSuggest [data-suggest="people"]');
+  await page.waitForSelector('#mnSignedOut:not([hidden])');
+  check(scope, 'people search asks a guest to sign in and sends nothing', /Sign in to search for people/.test(await page.textContent('#mnGuestWhy')) && world.requests.slice(guestSent).every((r) => !/discover|groups/.test(r.path)));
+  await page.click('#mnSignedOutBack');
+  await page.waitForSelector('#mnFeed [data-post-id]');
+  await page.fill('#mnSearchInput', ''); await page.waitForTimeout(300);
   const first = await page.getAttribute('#mnFeed [data-post-id]', 'data-post-id');
   const sent = world.requests.length;
   await page.click(`#mnFeed [data-post-id="${first}"] [data-action=like]`);

@@ -117,11 +117,24 @@
     if (!host || !trackEl) return;
     host.hidden = false;
     $("mnGoLive").hidden = !live.can;
+    paintWorldSignal();
     trackEl.innerHTML = live.list.length
       ? live.list.map(liveCard).join("")
       : '<div class="mn__live-empty"><b>Nobody is live in this lane right now.</b><span>' +
           (live.can ? "You have live access. Open a governed room when there is real work to show." : "Try another room type or category.") +
         '</span></div>';
+  }
+  /* LIVE ON THE WORLD (owner, 2026-10-14): Live is a layer of the World,
+     not a room in a menu. The badge over the globe counts what is on air
+     across every lane (never a filtered list) and opens the directory;
+     hosts go live from the composer. Both stay hidden until this knows. */
+  function paintWorldSignal() {
+    var badge = $("mnWorldLive"), count = $("mnWorldLiveCount"), go = $("mnComposerLive");
+    if (go) go.hidden = !(live.can && live.enabled);
+    if (!badge || live.kind || live.category) return;
+    badge.hidden = !live.list.length;
+    if (count) count.textContent = live.list.length > 1 ? String(live.list.length) : "";
+    badge.setAttribute("aria-label", live.list.length === 1 ? "Live now: 1 broadcast" : "Live now: " + live.list.length + " broadcasts");
   }
   function setFilter(button, key) {
     var group = button.parentNode;
@@ -455,10 +468,12 @@
       live.can = !!(r && r.can_host);
       live.enabled = !!(r && r.enabled);
       $("mnGoLive").hidden = !live.can;
+      paintWorldSignal();
       return r;
     }).catch(function () {
       live.can = false;
       $("mnGoLive").hidden = true;
+      paintWorldSignal();
       return null;
     });
   }
@@ -478,6 +493,7 @@
       live.timer = setInterval(function () { if (!d.hidden) loadLive(); }, 30000);
     },
     refresh: loadLive,
-    open: openWatch
+    open: openWatch,
+    studio: function () { if (live.started) openStudio(); }
   };
 })(window, document);

@@ -66,7 +66,6 @@ html, body { background: #0a0807; }
 .mn__bell, .mn__avatar-btn { flex: none; position: relative; width: 42px; height: 42px; display: grid; place-items: center; border: 0; padding: 0; border-radius: 50%; cursor: pointer; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); transition: transform 0.2s var(--mn-ease), background 0.2s; }
 .mn__bell:active, .mn__avatar-btn:active { transform: scale(0.92); }
 .mn__bell svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.mn__bell-dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 2px var(--mn-raise-2); animation: mn-pulse 2s var(--mn-ease) infinite; }
 .mn__avatar-btn { overflow: hidden; }
 .mn__avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
 .mn__avatar-btn span { font-weight: 800; font-size: 0.82rem; }
@@ -187,7 +186,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 /* ---------- the composer: one line until it is used ---------- */
 .mn__composer { padding: 10px 12px; border-radius: 26px; transition: border-radius 0.35s var(--mn-ease), box-shadow 0.35s var(--mn-ease), padding 0.35s var(--mn-ease); }
 .mn__composer.is-open { border-radius: 22px; padding: 14px; box-shadow: inset 0 0 0 1px rgba(232, 200, 119, 0.35), 0 20px 50px -30px rgba(255, 77, 61, 0.45); }
-.mn__composer-head { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; }
+.mn__composer-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .mn__composer.is-open .mn__composer-head { align-items: start; }
 .mn__mini-avatar { width: 40px; height: 40px; display: grid; place-items: center; background-size: cover; background-position: center; font-weight: 800; font-size: 0.8rem; }
 .mn__composer textarea { min-height: 40px; padding: 9px 0; background: transparent; box-shadow: none; resize: none; field-sizing: content; max-height: 16rem; font-size: max(16px, 1rem); }
@@ -195,10 +194,14 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__composer.is-open textarea { min-height: 84px; }
 .mn__composer-actions {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  max-height: 0; margin-top: 0; padding-top: 0; overflow: hidden; opacity: 0; border-top: 1px solid transparent;
-  transition: max-height 0.4s var(--mn-ease), opacity 0.3s var(--mn-ease), margin 0.4s var(--mn-ease), padding 0.4s var(--mn-ease), border-color 0.4s;
+  max-height: 0; margin-top: 0; padding-top: 0; overflow: hidden; opacity: 0; border-top: 1px solid transparent; visibility: hidden;
+  transition: max-height 0.4s var(--mn-ease), opacity 0.3s var(--mn-ease), margin 0.4s var(--mn-ease), padding 0.4s var(--mn-ease), border-color 0.4s, visibility 0s linear 0.4s;
 }
-.mn__composer.is-open .mn__composer-actions { max-height: 12rem; margin-top: 12px; padding-top: 12px; opacity: 1; border-top-color: var(--mn-rule); }
+.mn__composer.is-open .mn__composer-actions { max-height: 12rem; margin-top: 12px; padding-top: 12px; opacity: 1; border-top-color: var(--mn-rule); visibility: visible; transition-delay: 0s; }
+/* Create, one tap from the folded composer */
+.mn__create { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule-2); text-decoration: none; }
+.mn__create svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.mn__composer.is-open .mn__create { display: none; }
 .mn__composer-actions > label { min-width: 0; }
 .mn__attach, .mn__composer select {
   display: inline-flex; align-items: center; min-height: 40px; max-width: 100%; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
@@ -458,7 +461,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   animation:mn-sweep 1.25s ease-in-out infinite;
 }
 
-.mn__badge:not([hidden]), .mn__bell-dot:not([hidden]) { animation: mn-badge-in .45s var(--mn-spring) both; }
+.mn__badge:not([hidden]), .mn__bell-count:not([hidden]) { animation: mn-badge-in .45s var(--mn-spring) both; }
 .mn__count { display:inline-block; transform-origin:center; }
 .mn__action.is-pop .mn__count { animation: mn-count-pop .42s var(--mn-spring); }
 
@@ -846,15 +849,24 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
   .mn-world-fit .mn__world-feed { grid-column: 2; grid-row: 1 / span 2; padding-top: 0; }
 }
 
-/* ---------- the avatar menu ----------
-   World is the one surface, so profile, inbox, alerts and the network's
-   other rooms open from the avatar instead of a second row of tabs
-   (owner, 2026-10-14). The bar itself stays Music | M | Globe. */
+/* ---------- the account menu ----------
+   Three destinations in the bar, one small account menu, everything else
+   in context (owner, 2026-10-14): whose account, View profile, Messages,
+   Settings & account, Sign out. Alerts are the bell. */
 .mn__avatar-dot { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 2px var(--mn-bg); }
 .mn__menu { position: absolute; z-index: 30; top: calc(100% - 4px); right: 12px; display: grid; width: min(17rem, calc(100vw - 24px)); max-height: min(70dvh, 32rem); overflow-y: auto; padding: 6px; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 24px 48px -18px rgba(0, 0, 0, 0.9); }
 .mn__menu[hidden] { display: none; }
 .mn__menu button, .mn__menu a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.95rem); font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; }
 .mn__menu button:hover, .mn__menu a:hover, .mn__menu button:focus-visible, .mn__menu a:focus-visible { background: var(--mn-raise-2); }
+.mn__menu-who { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; padding: 10px 12px 12px; border-bottom: 1px solid var(--mn-rule); }
+.mn__menu-face { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: hsl(var(--hue, 350) 70% 42%) center / cover no-repeat; color: #fff; font-weight: 800; }
+.mn__menu-id { display: grid; min-width: 0; }
+.mn__menu-id strong, .mn__menu-id small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__menu-id small { color: var(--mn-dim); font-size: 0.82rem; }
+.mn__menu-id small:empty { display: none; }
+.mn__menu .mn__menu-out { margin-top: 6px; border-top: 1px solid var(--mn-rule); border-radius: 0 0 12px 12px; color: var(--mn-dim); }
+.mn__bell-count { position: absolute; top: -3px; right: -4px; display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--mn-hot); color: #fff; font-size: 0.66rem; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px var(--mn-bg); }
+.mn__bell-count[hidden] { display: none; }
 .mn__to-world { display: inline-flex; align-items: center; min-height: 40px; margin: 4px 0 10px; padding: 0 14px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; }
 .mn__to-world[hidden] { display: none; }
 @media (min-width: 600px) {
@@ -942,17 +954,19 @@ html.mn-world-on, html.mn-world-on body { background: #060a13; }
 .mn__brand-world { display: none; }
 .mn-world-on .mn__brand-plate, .mn-world-on .mn__brand small { display: none; }
 .mn-world-on .mn__top .mn__brand strong { font-family: var(--mn-ui); font-weight: 800; font-size: 0.6rem; line-height: 1; letter-spacing: 0.2em; color: var(--mn-ink); }
-.mn-world-on .mn__brand-world { display: block; margin-top: 3px; font-family: var(--mn-display); font-weight: 400; font-size: 1.9rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6); }
-.mn-world-on .mn__bell, .mn-world-on .mn__avatar-btn, .mn__search-toggle { background: rgba(9, 14, 26, 0.72); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.mn-world-on .mn__bell-dot { background: var(--mn-hot); }
+.mn-world-on .mn__brand-world { display: block; margin-top: 3px; font-family: var(--mn-display); font-weight: 400; font-size: 1.45rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6); }
+.mn-world-on .mn__brand { flex: none; margin-right: 0; }
+.mn-world-on .mn__bell, .mn-world-on .mn__avatar-btn { background: rgba(9, 14, 26, 0.72); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 
-/* search: a button on a phone that opens a row under the bar; a field from 600px */
-.mn__search, .mn__search-toggle { display: none; }
-.mn-world-on .mn__search-toggle { display: grid; place-items: center; flex: none; width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; color: var(--mn-ink); cursor: pointer; }
-.mn__search-toggle svg, .mn__search svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.mn-world-on.mn-search-open .mn__search { display: flex; position: absolute; left: 16px; right: 16px; top: calc(100% + 4px); z-index: 25; }
-.mn__search { align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(9, 14, 26, 0.82); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22), 0 10px 30px -12px rgba(0, 0, 0, 0.8); color: var(--mn-dim); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.mn__search input { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); outline: none; }
+/* search: a bar in the header row at every width (owner's iPhone mockup:
+   "a search bar up there on top"), between the wordmark and the bell */
+.mn__search { display: none; }
+.mn-world-on .mn__search { display: flex; flex: 1 1 auto; min-width: 0; }
+.mn__search svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mn__search { align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 999px; background: rgba(9, 14, 26, 0.82); box-shadow: inset 0 0 0 1px rgba(190, 205, 230, 0.22), 0 10px 30px -12px rgba(0, 0, 0, 0.8); color: var(--mn-dim); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.mn__search input { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); outline: none; text-overflow: ellipsis; }
+/* a guest's phone header keeps Sign in; Create account is in the card just below, and Join joins the row from 600px */
+.mn-world-on .mn__guest-join { display: none; }
 .mn__search input::placeholder { color: var(--mn-faint); opacity: 1; }
 .mn__search:focus-within { box-shadow: inset 0 0 0 1px var(--mn-hot), 0 10px 30px -12px rgba(0, 0, 0, 0.8); }
 
@@ -1015,21 +1029,25 @@ html.mn-world-on, html.mn-world-on body { background: #060a13; }
 .mn-world-on #mnFeed .mn__action--like .mn__count { color: var(--mn-ink); }
 .mn-world-on #mnFeed .mn__actcard { background: linear-gradient(160deg, rgba(255, 61, 94, 0.14), rgba(255, 61, 94, 0.03)); }
 .mn-world-on .mn__composer { background: #0f1626; box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
-.mn-world-on .mn__guest-card { background: linear-gradient(145deg, #131c31, #0c1220); }
+.mn-world-on .mn__guest-card { position: relative; overflow: hidden; margin-bottom: 12px; padding: 18px 16px 16px; background: linear-gradient(100deg, rgba(7, 11, 20, 0.94) 30%, rgba(7, 11, 20, 0.55)), url("../assets/img/rally/rally-01.jpg") 70% 40% / cover no-repeat, #0c1220; }
+.mn-world-on .mn__guest-card p { color: #d3dae7; }
+.mn-world-on .mn__guest-card strong { display: block; margin-bottom: 4px; color: #fff; font-size: 1.12rem; }
 .mn-world-on .mn__world-expand { border-color: rgba(190, 205, 230, 0.28); background: rgba(9, 14, 26, 0.72); }
 
 @media (min-width: 600px) {
-  .mn-world-on .mn__search { display: flex; flex: 1 1 auto; max-width: 26rem; margin: 0 8px; }
-  .mn-world-on .mn__search-toggle { display: none; }
-  .mn-world-on.mn-search-open .mn__search { position: static; }
+  .mn-world-on .mn__search { max-width: 26rem; margin: 0 8px 0 auto; padding: 0 16px; }
+  .mn-world-on .mn__brand-world { font-size: 1.9rem; }
+  .mn-world-on .mn__guest-join { display: inline-flex; align-items: center; }
   .mn__mission-card { grid-template-columns: 112px minmax(0, 1fr) auto; padding: 14px 48px 14px 14px; gap: 6px 16px; }
   .mn__mission-meta { flex-wrap: wrap; white-space: normal; }
   .mn__mission-art { width: 112px; height: 100%; min-height: 96px; grid-row: 1; border-radius: 16px; }
   .mn__mission-art svg { width: 38px; height: 38px; }
   .mn__mission-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .mn__mission-card h2 { font-size: 1.2rem; }
-  .mn__mission-actions { grid-column: 3; grid-row: 1; flex-direction: column; align-self: center; }
-  .mn__mission-actions > * { min-width: 9.5rem; }
+  .mn__mission-actions { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0, auto)); grid-auto-flow: dense; align-self: center; }
+  .mn__mission-actions > * { min-width: 0; }
+  /* Join and the posts filter span the column; Locate and All missions share a row, so the card is no taller for the fourth action */
+  #mnWorldFocusJoin, #mnWorldFocusFilter { grid-column: 1 / -1; min-width: 9.5rem; }
   .mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 180px; }
   .mn-world-on #mnFeed .mn__post-card { padding: 16px 18px; }
 }
@@ -1041,8 +1059,8 @@ html.mn-world-on, html.mn-world-on body { background: #060a13; }
 .mn-world-side .mn__mission-art { display: none; }
 .mn-world-side .mn__mission-card h2 { font-size: 0.95rem; }
 .mn-world-side .mn__mission-actions .mn__world-filter span { display: none; }
-.mn-world-side .mn__mission-actions { grid-column: 1; grid-row: auto; flex-direction: row; align-self: auto; }
-.mn-world-side .mn__mission-actions > * { min-width: 0; }
+.mn-world-side .mn__mission-actions { grid-column: 1; grid-row: auto; display: flex; flex-direction: row; align-self: auto; }
+.mn-world-side .mn__mission-actions > *, .mn-world-side #mnWorldFocusJoin, .mn-world-side #mnWorldFocusFilter { min-width: 0; }
 .mn-world-side .mn__mission-desc { display: none; }
 .mn-world-side .mn__mission-meta { flex-wrap: nowrap; white-space: nowrap; }
 
@@ -1054,7 +1072,10 @@ html.mn-world-on, html.mn-world-on body { background: #060a13; }
 .mn__mission-meta > .mn__mission-stats { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .mn__mission-kind { display: none; }
 .mn__label-long { display: none; }
-.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { padding: 0 12px; }
+.mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { padding: 0 11px; }
+/* on a phone the action row may use the room the ✕ keeps free above it */
+.mn__mission-actions { gap: 6px; margin-right: -30px; }
+@media (min-width: 600px) { .mn__mission-actions { gap: 8px; margin-right: 0; } }
 @media (min-width: 600px) {
   .mn__mission-kind { display: inline; }
   .mn__label-long { display: inline; }
@@ -1064,6 +1085,61 @@ html.mn-world-on, html.mn-world-on body { background: #060a13; }
 .mn__mission-meta > span.mn__mission-flag { flex: none; overflow: visible; }
 .mn__stats-more { display: none; }
 @media (min-width: 600px) { .mn__stats-more { display: inline; } }
-/* the open search row takes the pill's place on a phone */
-.mn-search-open .mn__world-expand { visibility: hidden; }
-@media (min-width: 600px) { .mn-search-open .mn__world-expand { visibility: visible; } }
+
+.mn__empty-row { margin: 14px 0 0; }
+
+/* LIVE over the Earth: shown only while something is on air; opens the
+   live rooms. Top left of the globe, clear of "Full world ↗" on the right. */
+.mn__world-live { position: absolute; z-index: 2; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--mn-hot); color: #fff; font: inherit; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; box-shadow: 0 10px 26px -12px rgba(255, 61, 94, 0.95); }
+.mn__world-live[hidden] { display: none; }
+.mn__world-live i { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: mnLivePulse 1.6s ease-out infinite; }
+.mn__world-live b:empty { display: none; }
+.mn-world-overlay .mn__world-live { top: calc(64px + env(safe-area-inset-top, 0px)); }
+@media (prefers-reduced-motion: reduce) { .mn__world-live i { animation: none; } }
+.mn__attach[hidden] { display: none; }
+.mn__clipdoor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 0 0 12px; padding: 14px 16px; border-radius: 18px; background: linear-gradient(140deg, rgba(255, 61, 94, 0.16), rgba(255, 61, 94, 0.04)); box-shadow: inset 0 0 0 1px rgba(255, 61, 94, 0.32); }
+.mn__clipdoor[hidden] { display: none; }
+.mn__clipdoor p { margin: 0; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; }
+.mn__clipdoor b { color: var(--mn-ink); }
+.mn__clipdoor .mn__world-go { justify-self: start; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; }
+@media (min-width: 600px) { .mn__clipdoor { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+
+/* the search suggestions: under the field, never wider than it, rows a
+   thumb tall, its own scroll so the keyboard never pushes it off screen */
+.mn__search { position: relative; }
+/* on a phone the panel spans the screen under the floating header, not just the field */
+.mn-world-overlay .mn__suggest { position: fixed; left: 12px; right: 12px; top: calc(62px + env(safe-area-inset-top, 0px)); }
+.mn__suggest { position: absolute; z-index: 32; top: calc(100% + 6px); left: 0; right: 0; display: grid; max-height: min(52dvh, 26rem); overflow-y: auto; padding: 6px; border-radius: 18px; background: #0f1626; box-shadow: inset 0 0 0 1px var(--mn-rule-2), 0 24px 48px -18px rgba(0, 0, 0, 0.9); }
+.mn__suggest[hidden] { display: none; }
+.mn__suggest-k { margin: 8px 10px 2px; color: var(--mn-faint); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.mn__suggest button { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--mn-ink); font: inherit; font-size: max(16px, 0.92rem); font-weight: 700; text-align: left; cursor: pointer; }
+.mn__suggest button span, .mn__suggest button small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn__suggest button small { color: var(--mn-dim); font-size: 0.78rem; font-weight: 600; }
+.mn__suggest button:hover, .mn__suggest button:focus-visible, .mn__suggest button.is-hl { background: var(--mn-raise-2); }
+.mn__suggest-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding: 8px 4px 2px; border-top: 1px solid var(--mn-rule); }
+#mnSuggestRows:empty + .mn__suggest-foot { margin-top: 0; border-top: 0; }
+.mn__suggest-foot button { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--mn-rule-2); font-size: max(16px, 0.84rem); }
+.mng__query { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--mn-ink); font-weight: 700; }
+.mng__query[hidden] { display: none; }
+.mng__query button { min-height: 36px; padding: 0 12px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+
+/* EXPLORE THE WORLD: the idle strip (a guest's first view), compact enough
+   to stay inside the context band on a phone; the chips scroll sideways
+   inside the strip, never the page */
+.mn__world-idle[hidden] { display: none; }
+.mn-world-on .mn__world-idle { min-width: 0; padding: 12px 14px; border-radius: 20px; background: linear-gradient(145deg, #131c31, #0c1220); box-shadow: inset 0 0 0 1px var(--mn-rule-2); }
+.mn__world-idle-h { margin: 3px 0 0; color: var(--mn-ink); font-size: 1.02rem; line-height: 1.25; }
+.mn-world-on .mn__world-caption { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; }
+.mn__world-chips { display: flex; gap: 6px; margin: 8px -14px -2px; padding: 0 14px 2px; overflow-x: auto; scrollbar-width: none; }
+.mn__world-chips::-webkit-scrollbar { display: none; }
+.mn__world-chips > * { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: rgba(255, 255, 255, 0.03); color: var(--mn-ink); font: inherit; font-size: 0.82rem; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.mn__world-chips [aria-pressed="true"] { border-color: rgba(255, 61, 94, 0.7); background: rgba(255, 61, 94, 0.14); }
+.mn__world-chips b { color: var(--mn-dim); font-weight: 800; }
+.mn__world-chips b:empty { display: none; }
+.mn-world-side .mn__world-idle-h, .mn-world-side .mn__world-caption { display: none; }
+@media (min-width: 600px) {
+  .mn-world-on .mn__world-idle { padding: 16px 18px; }
+  .mn__world-idle-h { font-size: 1.2rem; }
+  .mn-world-on .mn__world-caption { white-space: normal; }
+  .mn__world-chips { flex-wrap: wrap; overflow: visible; margin: 10px 0 0; padding: 0; }
+}

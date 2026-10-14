@@ -78,8 +78,13 @@ test('Action Network is world-first while live remains accessible and multi-seat
     read('mnet.html'), read('js/mnet.js'), read('js/mnet-live.js'), read('workers/mccluster/src/platform-api.js')
   ]);
   assert.match(js, /currentView:\s*"feed"/);
-  /* World is the surface; Live stays one tap away in the avatar menu */
-  assert.match(html, /id="mnMenu"[\s\S]*?data-mn-view="live">Live</);
+  /* World is the surface; Live is a layer of it: a badge over the globe
+     while something is on air, and Go live in the composer for hosts */
+  assert.match(html, /id="mnWorldLive"[^>]*data-mn-view="live"[^>]*hidden/);
+  assert.match(html, /id="mnComposerLive"[^>]*hidden/);
+  assert.match(live, /function paintWorldSignal\(\)/);
+  assert.match(live, /if \(!badge \|\| live\.kind \|\| live\.category\) return;/, 'the badge never counts a filtered list');
+  assert.match(live, /go\.hidden = !\(live\.can && live\.enabled\)/, 'Go live shows only when it would work');
   assert.match(html, /id="mnFeedView" hidden/);
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);

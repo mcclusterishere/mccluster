@@ -142,6 +142,12 @@
     $("mnProfileBanner").style.setProperty("--hue", hue);
     $("mnProfileName").textContent = p.display_name || name;
     $("mnProfileHandle").textContent = id.mccluster_id ? "@" + id.mccluster_id : "";
+    /* the account menu says whose account it is */
+    $("mnMenuName").textContent = p.display_name || name;
+    $("mnMenuHandle").textContent = id.mccluster_id ? "@" + id.mccluster_id : "";
+    $("mnMenuFace").textContent = avatar ? "" : initials(name);
+    $("mnMenuFace").style.backgroundImage = avatar ? "url(" + JSON.stringify(avatar) + ")" : "";
+    $("mnMenuFace").style.setProperty("--hue", hue);
     $("mnProfileHeadline").textContent = p.headline || "";
     $("mnProfileBio").textContent = p.bio || "";
     var banner = safeHttpUrl(p.banner_url);
@@ -156,6 +162,20 @@
       site.textContent = website.replace(/^https?:\/\//, "");
       site.hidden = false;
     } else site.hidden = true;
+  }
+
+  /* a creator's analytics door: shown only when this member has a music
+     creator profile (their own row, read under its own RLS) */
+  function paintCreatorDoor() {
+    var door = $("mnProfileAnalytics"), id = identity();
+    if (!door || !id.m_uid || state.creatorChecked) return;
+    state.creatorChecked = true;
+    sbRest("music_creator_profiles?m_uid=eq." + encodeURIComponent(id.m_uid) + "&select=handle&limit=1").then(function (rows) {
+      state.creator = !!(rows && rows.length);
+      door.hidden = !state.creator;
+      /* a creator also gets the audience layer switch on the globe */
+      tellWorld({ type: "hu:creator-mode", on: state.creator });
+    }).catch(function () { state.creatorChecked = false; });
   }
 
   function fillProfileForm(editing) {
@@ -244,7 +264,8 @@
   }
   function askToSignIn(why) {
     var line = { like:"Sign in to like posts.", comments:"Sign in to read and write comments.", save:"Sign in to save posts.",
-      mission:"Sign in to join this mission.", missions:"Sign in to join this mission.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people." }[why] || "Sign in to do that.";
+      mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
+      groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -267,6 +288,7 @@
       showGate("app");
       setView("feed");
       paintSelf();
+      paintCreatorDoor();
       $("mnBell").hidden = false;
       loadRail();
       loadActionRecord();
@@ -276,7 +298,7 @@
       /* A deep link to a mission or a group wins over the first-run tour. */
       if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
-      return loadFeed(true).then(loadNotificationsSilently);
+      return loadFeed(true).then(function () { loadNotificationsSilently(); refreshMessageBadge(); });
     });
   }
 
@@ -726,7 +748,11 @@
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
-        host.innerHTML = '<div class="mn__empty">Nothing in your feed about this mission yet. Open it, do the work, and your proof can be the first post here.</div>';
+        /* narrowed to nothing: say so, and one tap gives the whole feed back
+           while the mission stays picked */
+        host.innerHTML = '<div class="mn__empty">Nothing in your feed about this mission yet. Open it, do the work, and your proof can be the first post here.' +
+          '<p class="mn__empty-row"><button class="mn__world-filter" type="button" data-world-unfilter>See every post</button></p></div>';
+        host.querySelector("[data-world-unfilter]").onclick = function () { setWorldFocus(Object.assign({}, state.world.focus, { filter: false })); };
         return;
       }
     }
@@ -922,7 +948,7 @@
       var unread = rows.filter(function (n) { return !n.read_at; }).length;
       $("mnNotifBadge").hidden = !unread;
       $("mnNotifBadge").textContent = unread > 99 ? "99+" : unread;
-      $("mnBellDot").hidden = !unread;
+      $("mnBell").setAttribute("aria-label", unread ? "Alerts, " + unread + " unread" : "Alerts");
       renderNotifications(rows);
       setStatus($("mnNotificationStatus"), "");
       return rows;
@@ -932,7 +958,7 @@
   function markNotificationsRead() {
     return api("/v1/mnet/notifications/read", { method:"POST", body:{} }).then(function () {
       $("mnNotifBadge").hidden = true;
-      $("mnBellDot").hidden = true;
+      $("mnBell").setAttribute("aria-label", "Alerts");
     }).catch(function () {});
   }
 
@@ -1138,7 +1164,7 @@
   }
 
   function loadDiscover() {
-    var q=$("mnDiscoverQuery").value.trim(); setStatus($("mnDiscoverStatus"),"Searching…");
+    var q=$("mnDiscoverQuery").value.trim().replace(/^@+/,""); setStatus($("mnDiscoverStatus"),"Searching…");
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
       var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
       bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
@@ -1170,13 +1196,21 @@
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
 
+  /* message requests waiting: the Messages badge in the account menu and
+     the dot on the avatar, kept current from anywhere, not only Messages */
+  function paintMessageBadge() {
+    var requests=(state.conversations||[]).filter(function (x) { return x.my&&x.my.member_state==="requested"; }).length;
+    $("mnMessageBadge").hidden=!requests; $("mnMessageBadge").textContent=requests||"";
+    if($("mnMeDot"))$("mnMeDot").hidden=!requests;
+  }
+  function refreshMessageBadge() {
+    return api("/v1/mnet/conversations").then(function (data) { state.conversations=data.conversations||[]; paintMessageBadge(); }).catch(function () {});
+  }
   function loadConversations() {
     setStatus($("mnMessageStatus"),"Loading…");
     return api("/v1/mnet/conversations").then(function (data) {
       state.conversations=data.conversations||[];
-      var requests=state.conversations.filter(function (x) { return x.my&&x.my.member_state==="requested"; }).length;
-      $("mnMessageBadge").hidden=!requests; $("mnMessageBadge").textContent=requests||"";
-      if($("mnMeDot"))$("mnMeDot").hidden=!requests;
+      paintMessageBadge();
       $("mnConversations").innerHTML=state.conversations.length?state.conversations.map(function (x) {
         var other=(x.members||[]).find(function(m){return m.m_uid!==identity().m_uid;})||{},p=other.profile||{},name=p.display_name||p.mccluster_id||"Conversation",last=x.last_message;
         return '<article class="mn__conversation-row"><div class="mn__author-avatar">'+esc(initials(name))+'</div><button type="button" class="mn__conversation-copy" data-conversation="'+esc(x.conversation.id)+'"><span class="mn__conversation-name">'+esc(name)+'</span><span class="mn__conversation-sub">'+esc(x.my&&x.my.member_state==="requested"?"Message request":last&&last.body||"Start the conversation")+'</span></button><span class="mn__author-sub">'+esc(last?timeAgo(last.created_at):"")+'</span></article>';
@@ -1236,9 +1270,10 @@
       .finally(function(){b.disabled=false;});
   }
 
-  /* THE AVATAR MENU. Profile, inbox, alerts and the network's other rooms
-     sit behind the avatar; World is the surface. Escape and any tap
-     outside close it, and focus goes back to the avatar. */
+  /* THE ACCOUNT MENU. Whose account this is, View profile, Messages,
+     Settings & account, Sign out, and nothing else (owner, 2026-10-14):
+     every other room is reached where it belongs on the World. Escape and
+     any tap outside close it, and focus goes back to the avatar. */
   function closeMenu(restore) {
     var menu = $("mnMenu"), me = $("mnMe");
     if (!menu || menu.hidden) return;
@@ -1259,6 +1294,18 @@
     };
     document.addEventListener("click", function (e) { if (!menu.hidden && !menu.contains(e.target) && e.target !== me) closeMenu(false); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(true); });
+    /* signing out ends the session here and on the server, then reopens the
+       World as a guest, so nothing a member loaded stays on the page */
+    $("mnSignOut").onclick = function () {
+      var b = this; b.disabled = true; b.textContent = "Signing out\u2026";
+      track("mnet_sign_out", {});
+      /* the local session is gone at once; the server logout gets 1.5s, so a
+         slow network never leaves the button hanging */
+      Promise.race([
+        Promise.resolve(window.MCC && MCC.signOut && MCC.signOut()).catch(function () {}),
+        new Promise(function (r) { setTimeout(r, 1500); })
+      ]).then(function () { location.replace("mnet.html"); });
+    };
   }
 
   function setView(name) {
@@ -1281,7 +1328,7 @@
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
     if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
-    if(name==="profile"){paintSelf();loadDeletion();}
+    if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
     window.scrollTo({top:0,behavior:"smooth"});
     sizeWorld();
   }
@@ -1371,6 +1418,19 @@
     setStatus($("mnAuthStatus"), "");
   }
 
+  /* alerts, message requests and an open conversation stay current while the
+     page is visible, for a member who just signed in or came back signed in */
+  function startPoll() {
+    if (state.pollTimer) return;
+    state.pollTimer = setInterval(function () {
+      if (document.visibilityState !== "visible" || !state.user) return;
+      loadNotificationsSilently();
+      state.pollTick = (state.pollTick || 0) + 1;
+      /* message requests: live while Messages is open, once a minute otherwise */
+      if (state.currentView === "messages") loadConversations(); else if (state.pollTick % 4 === 0) refreshMessageBadge();
+      if (state.currentConversation && $("mnConversationDialog").open) loadConversationMessages(state.currentConversation);
+    }, 15000);
+  }
   function enterAfterAuth() {
     return MCC.user().then(function (user) {
       state.user = user;
@@ -1378,12 +1438,7 @@
       leaveGuestWorld();
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
       return MCC.autoTouch().catch(function () {}).then(function () {
-        if (!state.pollTimer) state.pollTimer = setInterval(function () {
-          if (document.visibilityState !== "visible" || !state.user) return;
-          loadNotificationsSilently();
-          if (state.currentView === "messages") loadConversations();
-          if (state.currentConversation && $("mnConversationDialog").open) loadConversationMessages(state.currentConversation);
-        }, 15000);
+        startPoll();
         return bootstrap().catch(function (error) {
           showSignedInLoadError(error);
           return null;
@@ -1494,6 +1549,8 @@
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     $("mnBell").onclick = function () { setView("notifications"); };
+    $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
+    $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
     window.addEventListener("resize", function () { moveThumb(false); });
     /* the header settles into a slimmer bar once the page moves */
     var top = document.querySelector(".mn__top");
@@ -1518,6 +1575,7 @@
         return;
       }
       return MCC.autoTouch().catch(function () {}).then(function () {
+        startPoll();
         return bootstrap().catch(function (error) {
           showSignedInLoadError(error);
           return null;
@@ -1646,7 +1704,7 @@
     return n.toLocaleString() + " member" + (n === 1 ? "" : "s");
   }
 
-  var groups = { all: [], seg: "yours", open: null, busy: false, target: null };
+  var groups = { all: [], seg: "yours", open: null, busy: false, target: null, q: "" };
 
   function groupCard(g) {
     return '<article class="mng__card" data-group="' + esc(g.slug) + '">' +
@@ -1667,7 +1725,15 @@
     if (!host) return;
     var mine = groups.all.filter(function (g) { return g.joined; });
     var list = groups.seg === "yours" ? mine : groups.all;
+    /* "Groups about ..." from the World search narrows the list here */
+    var q = groups.q, chip = $("mngQuery");
+    if (q) list = list.filter(function (g) { return [g.name, g.purpose, g.slug].join(" ").toLocaleLowerCase().indexOf(q) !== -1; });
+    if (chip) { chip.hidden = !q; $("mngQueryText").textContent = q ? "Groups about \u201c" + q + "\u201d" : ""; }
 
+    if (!list.length && q) {
+      host.innerHTML = '<p class="mng__empty"><b>No groups about \u201c' + esc(q) + '\u201d yet.</b>Clear the search to see them all.</p>';
+      return;
+    }
     if (!list.length) {
       host.innerHTML = '<p class="mng__empty">' + (groups.seg === "yours"
         ? "<b>You have not joined a room yet.</b>Explore is where they are. " +
@@ -1698,6 +1764,7 @@
     if (!slug && view && /^(live|clips|feed|missions|discover|groups|messages|notifications|profile)$/.test(view)) { setView(view); return; }
     if (!slug || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) return;
     groups.target = slug;
+    groups.q = "";
     groups.seg = "explore";
     Array.prototype.forEach.call(document.querySelectorAll("[data-mng-seg]"), function (x) {
       var on = x.getAttribute("data-mng-seg") === "explore";
@@ -1707,6 +1774,17 @@
     setView("groups");
   }
 
+  function exploreGroups(q) {
+    groups.q = String(q || "").trim().toLocaleLowerCase().slice(0, 80);
+    groups.seg = "explore";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mng-seg]"), function (x) {
+      var on = x.getAttribute("data-mng-seg") === "explore";
+      x.classList.toggle("is-on", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    if ($("mnGroupsOne") && !$("mnGroupsOne").hidden) closeGroup();
+    setView("groups");
+  }
   function loadGroups() {
     var host = $("mngCards");
     if (!host) return Promise.resolve();
@@ -1836,6 +1914,7 @@
     if (!view) return;
     view.addEventListener("click", function (e) {
       var seg = e.target.closest && e.target.closest("[data-mng-seg]");
+      if (e.target.closest && e.target.closest("#mngQueryClear")) { groups.q = ""; renderGroups(); return; }
       if (seg) {
         groups.seg = seg.getAttribute("data-mng-seg");
         Array.prototype.forEach.call(view.querySelectorAll("[data-mng-seg]"), function (x) {
@@ -2285,6 +2364,152 @@
     state.world.fromFeed = missionId;
     tellWorld({ type: "hu:focus-mission", missionId: missionId });
   }
+  /* SEARCH SUGGESTIONS. The World search is where people, groups and
+     missions are found (owner, 2026-10-14), so typing offers: pinned
+     missions and places (fly there), open missions without a pin, people
+     and groups that match (members; a guest is asked to sign in), and the
+     three full lists. Nothing is fetched until the field is used. */
+  var suggest = { seq: 0, people: { q: "", rows: [] }, groupsAsked: false, missions: null, timer: 0 };
+  function suggestRows() { return Array.prototype.slice.call($("mnSuggest").querySelectorAll("button")); }
+  function hideSuggest() {
+    var panel = $("mnSuggest");
+    if (!panel || panel.hidden) return;
+    panel.hidden = true;
+    $("mnSearchInput").setAttribute("aria-expanded", "false");
+    $("mnSearchInput").removeAttribute("aria-activedescendant");
+  }
+  function suggestRow(kind, id, label, sub) {
+    return '<button type="button" role="option" id="mnSug' + (suggest.n++) + '" data-suggest="' + kind + '" data-id="' + esc(id) + '"><span>' + esc(label) + '</span>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>';
+  }
+  function suggestHead(label) { return '<p class="mn__suggest-k">' + esc(label) + '</p>'; }
+  /* an answer that arrives after the field was left never reopens the panel */
+  function refreshSuggest() { var panel = $("mnSuggest"); if (panel && !panel.hidden) paintSuggest(); }
+  function paintSuggest() {
+    var panel = $("mnSuggest"), host = $("mnSuggestRows"), input = $("mnSearchInput");
+    if (!panel || !host || state.currentView !== "feed") return;
+    var raw = input.value.trim().slice(0, 80), q = raw.toLocaleLowerCase(), html = "";
+    suggest.n = 0;
+    if (q) {
+      var hits = function (fields) { return fields.join(" ").toLocaleLowerCase().indexOf(q) !== -1; };
+      var pinned = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
+        .filter(function (m) { return hits([m.title, m.description, m.region_label, m.action_path]); }).slice(0, 4);
+      if (pinned.length) html += suggestHead("On the globe") + pinned.map(function (m) { return suggestRow("globe", m.mission_id, m.title, m.region_label); }).join("");
+      if (!state.guest) {
+        if (!suggest.missions) {
+          suggest.missions = [];
+          sbRest("action_missions?status=eq.open&select=id,title,description,domain,kind&order=created_at.desc&limit=200").then(function (rows) {
+            suggest.missions = (rows || []).filter(function (m) { return m && m.kind !== "clip"; });
+            refreshSuggest();
+          }).catch(function () {});
+        }
+        var open = suggest.missions.filter(function (m) { return !state.world.pins[m.id] && hits([m.title, m.description, m.domain]); }).slice(0, 3);
+        if (open.length) html += suggestHead("Missions") + open.map(function (m) { return suggestRow("mission", m.id, m.title, m.domain || "Mission"); }).join("");
+        var who = q.replace(/^@+/, "");
+        if (who && suggest.people.q !== who) {
+          var seq = ++suggest.seq;
+          clearTimeout(suggest.timer);
+          suggest.timer = setTimeout(function () {
+            api("/v1/mnet/discover?q=" + encodeURIComponent(who) + "&limit=3").then(function (out) {
+              if (seq !== suggest.seq) return;
+              suggest.people = { q: who, rows: (out && out.people) || [] };
+              refreshSuggest();
+            }).catch(function () {});
+          }, 300);
+        }
+        var people = suggest.people.q === who ? suggest.people.rows : [];
+        html += suggestHead("People") + people.map(function (p) {
+          return suggestRow("person", p.mccluster_id || "", p.display_name || p.mccluster_id || "Member", p.mccluster_id ? "@" + p.mccluster_id : "");
+        }).join("") + suggestRow("people", raw, "Search people for \u201c" + raw + "\u201d", "");
+        if (!suggest.groupsAsked && !groups.all.length) {
+          suggest.groupsAsked = true;
+          api("/v1/mnet/groups").then(function (out) {
+            if (!groups.all.length) { groups.all = (out && out.groups) || []; assignSkins(groups.all); }
+            refreshSuggest();
+          }).catch(function () {});
+        }
+        var rooms = groups.all.filter(function (g) { return hits([g.name, g.purpose, g.slug]); }).slice(0, 3);
+        html += suggestHead("Groups") + rooms.map(function (g) {
+          return suggestRow("group", g.slug, g.name, (Number(g.member_count) || 0) + (Number(g.member_count) === 1 ? " member" : " members"));
+        }).join("") + suggestRow("groups", raw, "Groups about \u201c" + raw + "\u201d", "");
+      } else {
+        html += suggestHead("People and groups") + suggestRow("people", raw, "People named \u201c" + raw + "\u201d", "Sign in to search") +
+          suggestRow("groups", raw, "Groups about \u201c" + raw + "\u201d", "Sign in to search");
+      }
+    }
+    host.innerHTML = html;
+    panel.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    input.removeAttribute("aria-activedescendant");
+  }
+  function pickSuggest(row) {
+    var kind = row.getAttribute("data-suggest"), id = row.getAttribute("data-id") || "";
+    if (kind === "globe") { focusOnGlobe(id); return; }
+    if (kind === "mission") { missions.content = ""; missions.source = ""; missions.attributedMission = ""; setView("missions"); openMission(id); return; }
+    if (state.guest) { askToSignIn(kind === "groups" || kind === "group" ? "groups" : "people"); return; }
+    if (kind === "person") { if (id) openPerson(id); return; }
+    if (kind === "people") { $("mnDiscoverQuery").value = id.replace(/^@+/, ""); setView("discover"); return; }
+    if (kind === "group") { setView("groups"); openGroup(id); return; }
+    if (kind === "groups") exploreGroups(id);
+  }
+  /* THE CREATOR AUDIENCE LAYER (owner, 2026-10-14: "for creators, analytics
+     becomes an optional layer on that same globe"). Only for a member with a
+     music creator profile; the numbers are the Worker's own measurement of
+     views of their creator page in the last 30 days, by country only, with
+     countries under its threshold folded away. Placed by Natural Earth's
+     public-domain label points. Nothing is drawn that was not measured. */
+  var audience = { places: null, seq: 0 };
+  function showAudience(on) {
+    var caption = $("mnWorldCaption"), seq = ++audience.seq;
+    if (!state.creator) return;
+    if (!on) {
+      tellWorld({ type: "hu:audience-points", points: [] });
+      if (caption && state.world.caption) caption.textContent = state.world.caption;
+      return;
+    }
+    if (state.world.focus && state.world.focus.latest) setWorldFocus(null);
+    if (caption) caption.textContent = "Loading your audience\u2026";
+    var places = audience.places ? Promise.resolve(audience.places) : fetch("data/geo/country-label-points.json").then(function (r) { return r.json(); }).then(function (j) { return (audience.places = j.points || {}); });
+    Promise.all([api("/v1/analytics/my-creator"), places]).then(function (out) {
+      /* switched off (or on again) while this was loading: drop it */
+      if (seq !== audience.seq) return;
+      var data = out[0] || {}, at = out[1] || {}, a = data.audience || { countries: [] }, total = 0;
+      var points = (a.countries || []).map(function (c) {
+        var p = at[String(c.country || "").toUpperCase()];
+        if (!p) return null;
+        total += Number(c.views) || 0;
+        return { lon: p[0], lat: p[1], name: p[2], views: Number(c.views) || 0 };
+      }).filter(Boolean);
+      tellWorld({ type: "hu:audience-points", points: points });
+      if (!caption) return;
+      var more = (Number(a.elsewhere_views) || 0) + (Number(a.unknown_views) || 0);
+      caption.textContent = points.length
+        ? "Your audience, last 30 days: " + total.toLocaleString("en-US") + " views of your creator page from " + points.length + (points.length === 1 ? " country" : " countries") +
+          (more ? ", and " + more.toLocaleString("en-US") + " from places with under " + (a.min_views || 5) + " views or unknown." : ".")
+        : more ? "Your creator page has " + more.toLocaleString("en-US") + " recorded views in the last 30 days, none yet from a country with " + (a.min_views || 5) + " or more."
+        : "No recorded views of your creator page in the last 30 days.";
+    }).catch(function () { if (seq === audience.seq && caption) caption.textContent = "Your audience could not load right now."; });
+  }
+  /* the Clips door under the tabs: asked for once, on the first Music or
+     Photos & video tap, and only real terms from the campaigns are shown */
+  function paintClipDoor() {
+    var door = $("mnClipDoor"), tab = state.world.tab;
+    if (!door) return;
+    if (tab !== "music" && tab !== "media") { door.hidden = true; return; }
+    if (!state.clipOpen) {
+      state.clipOpen = [];
+      sbRpc("clip_campaigns_open", { p_song: null }).then(function (rows) {
+        state.clipOpen = Array.isArray(rows) ? rows : [];
+        paintClipDoor();
+      }).catch(function () {});
+      return;
+    }
+    var list = state.clipOpen, cpm = list.map(function (c) { return Number(c.base_cpm_cents) || 0; }).filter(Boolean);
+    door.hidden = !list.length;
+    if (!list.length) return;
+    var low = cpm.length ? Math.min.apply(Math, cpm) : 0;
+    $("mnClipDoorLine").textContent = list.length + (list.length === 1 ? " campaign open" : " campaigns open") +
+      (low ? " \u00b7 from $" + (low / 100).toFixed(2) + " per 1,000 views" : "") + ".";
+  }
   (function wireWorld() {
     var frame = $("mnWorldFrame");
     if (!frame) return;
@@ -2308,12 +2533,16 @@
         });
         /* with nothing picked yet, the strip shows the newest pinned mission,
            labelled as the latest, without moving the Earth or the feed */
-        if (!state.world.focus && state.world.latest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
+        if (!state.world.focus && state.world.latest && !state.guest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
+        /* a guest starts at Explore the world (owner's signed-out reference) */
+        if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
         if (state.world.latest) loadMissionStats();
+        if (state.creator) tellWorld({ type: "hu:creator-mode", on: true });
         var n = Object.keys(state.world.pins).length;
-        if (caption) caption.textContent = d.dataUnavailable ? "The map is up, but mission pins could not load. The feed below is live."
-          : n ? n + (n === 1 ? " mission is" : " missions are") + " pinned on the Earth. Tap a red pin to see what people are doing there."
+        state.world.caption = d.dataUnavailable ? "The map is up, but mission pins could not load. The feed below is live."
+          : n ? n + (n === 1 ? " mission is" : " missions are") + " pinned on the Earth. Tap a marker or search to discover action around the world."
           : "No missions are pinned on the Earth yet. The feed below is live.";
+        if (caption) caption.textContent = state.world.caption;
         /* repaint so posts can grow their "Locate on globe" door, unless
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
@@ -2326,10 +2555,30 @@
       } else if (d.type === "hu:selection-cleared") {
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
+      } else if (d.type === "hu:audience") {
+        showAudience(!!d.on);
       } else if (d.type === "hu:status" && typeof d.text === "string") {
         if (caption) caption.textContent = d.text.slice(0, 200);
         if (state.world.focus && state.world.focus.latest) setWorldFocus(null);
       }
+    });
+    /* the Explore chips: Missions steps through the pins, Regional impact
+       shows or hides the counted regions, Near me asks the globe to locate */
+    var chipAt = -1;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-world-chip]"), function (b) {
+      b.addEventListener("click", function () {
+        var kind = b.getAttribute("data-world-chip");
+        if (kind === "missions") {
+          var ids = Object.keys(state.world.missions);
+          if (!ids.length) { var c = $("mnWorldCaption"); if (c) c.textContent = "No missions are pinned on the Earth yet."; return; }
+          chipAt = (chipAt + 1) % ids.length;
+          focusOnGlobe(ids[chipAt]);
+        } else if (kind === "regional") {
+          var on = b.getAttribute("aria-pressed") !== "true";
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          tellWorld({ type: "hu:regional", on: on });
+        } else if (kind === "near") tellWorld({ type: "hu:near-me" });
+      });
     });
     $("mnWorldFocusClear").addEventListener("click", function () {
       setWorldFocus(null);
@@ -2352,24 +2601,57 @@
           var on = x === b; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on ? "true" : "false");
         });
         if (!state.loadingFeed) renderFeed(false);
+        paintClipDoor();
         var feed = $("mnWorldFeed"); if (feed) feed.scrollTop = 0;
       });
     });
     /* SEARCH: as you type, the feed narrows to posts that say it and the
        Earth to pins that match; Enter flies to the first matching mission,
        or, for a member, looks the words up among people. */
-    var form = $("mnSearch"), input = $("mnSearchInput"), toggle = $("mnSearchToggle"), searchTimer = 0;
+    var form = $("mnSearch"), input = $("mnSearchInput"), searchTimer = 0;
     if (form && input) {
+      /* a phone's bar is short: one word there, the whole invitation from 600px */
+      var wide = window.matchMedia ? window.matchMedia("(min-width: 600px)") : null;
+      var placeholder = function () { input.placeholder = !wide || wide.matches ? "Search places, people, or causes\u2026" : "Search"; };
+      placeholder();
+      if (wide && wide.addEventListener) wide.addEventListener("change", placeholder);
       input.addEventListener("input", function () {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(function () {
           state.world.query = input.value.trim().slice(0, 80);
           if (!state.loadingFeed) renderFeed(false);
           tellWorld({ type: "hu:search", q: state.world.query });
+          if (document.activeElement === input) paintSuggest();
         }, 180);
+      });
+      input.addEventListener("focus", function () { paintSuggest(); });
+      /* the panel keeps the field's focus, so a tap on a row never closes it
+         first; leaving the field (or the frame taking the tap) closes it */
+      $("mnSuggest").addEventListener("mousedown", function (e) { e.preventDefault(); });
+      $("mnSuggest").addEventListener("click", function (e) {
+        var row = e.target.closest && e.target.closest("button");
+        if (!row) return;
+        if (row.hasAttribute("data-suggest")) pickSuggest(row);
+        hideSuggest();
+      });
+      form.addEventListener("focusout", function () {
+        setTimeout(function () { if (!form.contains(document.activeElement)) hideSuggest(); }, 120);
+      });
+      input.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+        var rows = suggestRows();
+        if (!rows.length || $("mnSuggest").hidden) return;
+        e.preventDefault();
+        var at = rows.indexOf($("mnSuggest").querySelector(".is-hl"));
+        at = e.key === "ArrowDown" ? (at + 1) % rows.length : (at <= 0 ? rows.length - 1 : at - 1);
+        rows.forEach(function (r, n) { r.classList.toggle("is-hl", n === at); });
+        input.setAttribute("aria-activedescendant", rows[at].id);
       });
       form.addEventListener("submit", function (e) {
         e.preventDefault();
+        var hl = $("mnSuggest").hidden ? null : $("mnSuggest").querySelector(".is-hl");
+        if (hl) { hl.click(); return; }
+        hideSuggest();
         var q = input.value.trim().toLocaleLowerCase();
         if (!q) return;
         var hit = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; }).find(function (m) {
@@ -2380,14 +2662,8 @@
         if ($("mnDiscoverQuery")) $("mnDiscoverQuery").value = input.value.trim();
         setView("discover");
       });
-      input.addEventListener("keydown", function (e) { if (e.key === "Escape") { input.value = ""; input.dispatchEvent(new Event("input")); input.blur(); } });
+      input.addEventListener("keydown", function (e) { if (e.key === "Escape") { hideSuggest(); input.value = ""; input.dispatchEvent(new Event("input")); input.blur(); } });
     }
-    if (toggle && form) toggle.addEventListener("click", function () {
-      var open = !document.documentElement.classList.contains("mn-search-open");
-      document.documentElement.classList.toggle("mn-search-open", open);
-      toggle.setAttribute("aria-expanded", open ? "true" : "false");
-      if (open) input.focus(); else if (!input.value) toggle.focus();
-    });
     $("mnWorldFocusJoin").addEventListener("click", function () {
       var f = state.world.focus;
       if (!f) return;

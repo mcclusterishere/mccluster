@@ -136,3 +136,7 @@ header strong{display:none}
 .globe-surface-network .world-tools{display:none!important}
 .globe-surface-network .globe-controls{top:auto;bottom:34px}
 @media(prefers-reduced-motion:reduce){.globe-ctl{transition:none}}
+/* the creator-only audience layer switch: hidden unless the World says this member is a creator */
+.globe-ctl[hidden]{display:none}
+.globe-ctl--audience{position:absolute;right:calc(100% + 8px);bottom:0}
+.globe-ctl--audience[aria-pressed="true"]{border-color:#4fd1ff;background:rgba(79,209,255,.2)}

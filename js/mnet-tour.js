@@ -37,7 +37,7 @@
     { title: "Welcome to Human Uprise",
       body: "The place for doers. Don't just watch. Act. This takes about a minute." },
     { view: "feed", target: "#mnWorld", title: "The world is your feed",
-      body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Everything else, from your inbox to your profile, is behind your picture at the top." },
+      body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Search finds places, people, groups and missions. Your bell has your alerts; your picture has your profile, messages and settings." },
     { view: "missions", target: "#mnMissionList", title: "Start with a mission",
       body: "A mission is one real thing to do out in the world, like feeding someone who is unhoused or paying off a kid's lunch debt. Join one, then go do it." },
     { view: "missions", target: "#mnMissionList", title: "Show your proof",
@@ -53,7 +53,7 @@
     { target: '.appbar [data-appnav="music"]', title: "The music",
       body: "This tab at the bottom takes you to the music. The middle one is home, and the Globe brings you back here." },
     { title: "Put it into action",
-      body: "You can replay this any time from your picture \u2192 Profile \u2192 Take the tour.",
+      body: "You can replay this any time from your picture \u2192 View profile \u2192 Take the tour.",
       finish: [
         { label: "Look around" },
         { label: "Pick a mission", view: "missions" }

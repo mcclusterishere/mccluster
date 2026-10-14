@@ -326,9 +326,9 @@
     }
     WINGS.home.home = ROOT + "index.html";
     /* Exactly three columns, signed in or not. Record and Analytics were
-       member-only columns; they are contextual now (the composer's
-       Record / Create, the World screen's More menu), so any copy of them
-       is removed rather than hidden. */
+       member-only columns; they are contextual now (Create in the World
+       composer, a creator's analytics on their profile), so any copy of
+       them is removed rather than hidden. */
     Array.prototype.forEach.call(dock.querySelectorAll('[data-member-tab]'), function (node) { node.remove(); });
     var session = readAuthSession();
     var payload = session && session.access_token ? jwtPayload(session.access_token) : {};
