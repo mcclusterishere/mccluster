@@ -5,7 +5,7 @@
 ## Verified production baseline
 
 - Production ledger initially had 302 migrations. `action_globe_join_authorization` was missing and its canonical `join_action_mission(uuid)` did not check regional eligibility or rejoin capacity.
-- Applied `action_globe_join_authorization` through the Supabase migration connector, which assigned **version `20261014184518`**. The ledger then had 303 entries. The subsequent draft Anti-Social schema migration brought it to **304**.
+- Applied `action_globe_join_authorization` through the Supabase migration connector, which assigned **version `20261014184518`**. The ledger then had 303 entries. The subsequent draft Anti-Social schema migration brought it to **304**, and the standalone link-only resource directory migration brought it to **305**.
 - Read-only post-apply verification found the regional eligibility call and the withdrawn-rejoin capacity check in the production function. No change to the observed 5 assignments, 26 open missions, or 3 open bounties.
 - The branch's 13 expected globe/media function bodies matched production (normalized for whitespace). The 34 expected tables/views were present; all corresponding tables had RLS enabled. This is a scoped source-to-live check, **not** a complete production schema diff or a successful authenticated end-to-end browser run.
 - The original branch used 14 different timestamps for SQL already present on production. The PR's migration files were **renamed to the exact production ledger versions**, without replaying the already-applied DDL.
@@ -30,12 +30,13 @@
 | 20261014023813 | gdelt_backoff_cache | Already applied |
 | 20261014184518 | action_globe_join_authorization | Applied and verified in production |
 | 20261014185154 | antisocial_get_social_three_levels_draft | Applied; mission remains draft |
+| 20261014185255 | action_resource_sources_link_only | Applied; 12 public link-only directories |
 
 ## Not yet deployed
 
 The remaining files are intentionally **outside** `supabase/migrations`, so CI/production migration runners do not execute them without explicit promotion:
 
-- `supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql` — changes existing mission statuses and pauses two bounties. Requires a reviewed catalog and financial-state preview; **not** applied.
+- `supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql` — changes existing mission statuses and pauses two bounties. Its resource directory was split into the separately applied migration above. Requires a reviewed catalog and financial-state preview; **not** applied.
 - `supabase/pending/20261014170100_equity_policy_memo_application_path.sql` — changes fellowship eligibility; **not** applied.
 The Anti-Social schema migration (`20261014185154`) **was applied**, but its mission is seeded as **draft**, with no public join or proof UI until the deployment is verified.
 
