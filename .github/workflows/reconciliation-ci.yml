@@ -204,6 +204,8 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_funnel_exact_window.behaviour.sql
+      - name: Verify regional mission authorization against database roles
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_join_authorization.behaviour.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
