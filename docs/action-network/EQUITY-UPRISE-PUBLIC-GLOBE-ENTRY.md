@@ -83,3 +83,41 @@
 7. Do not merge or deploy these features on documentation alone. The current PR remains subject to the separate globe/security release gates above.
 
 **Status:** product and architecture notes only. This change does not create credit scores, roles, cohorts, compensation, or transfers.
+
+## PR #427 release blocker execution checklist (2026-10-14; owner-requested)
+
+**Release status: BLOCKED.** Do not merge, run production migrations, cut over DNS, or enable payouts on the strength of green CI alone.
+
+### 1. Migration reconciliation — highest priority
+- Live Supabase project `zmnhbrjyhxzhkxmhkexs` reported **302** distinct migration versions; branch `supabase/production-ledger.json` reports **301**. The live latest is `20261014023813 gdelt_backoff_cache`; the branch ledger's latest is `20261014083000 gdelt_backoff_cache`.
+- Additional same-name/different-version examples: live `20261014013557 action_globe_regions` versus repository `20261013233000_action_globe_regions.sql`; live `20261014014547 action_globe_region_activation` versus repository `20261014040000_action_globe_region_activation.sql`.
+- Do **not** assume matching names mean matching SQL, or assume the extra migration is safe to discard. Retrieve full production history, migration contents where accessible, and local files; produce a name/version/checksum comparison including duplicates, missing and renamed migrations. Check for pending PR overlaps and the repo's production-ledger generator.
+- Prefer a fresh staging clone and schema diff. Reconcile history using supported Supabase migration repair only after verifying applied schema and obtaining explicit production-change approval. No blanket replay, deletion, or history rewrite.
+- Acceptance: deterministic ledger generation; documented one-to-one or justified exception mapping; staging `db push --dry-run` / schema comparison; no unintended production DDL.
+
+### 2. Guest / member / program-manager / owner authorization
+- Inventory existing M Account auth, `m_people` identity, service-role APIs, RLS policies, and owner Control session enforcement.
+- Build a route-to-permission matrix covering globe, public mission details, join/claim/proof, funding, publication, Street Credit issuance, cohort roles, and private analytics. Explicitly test unauthenticated, unverified, authenticated, cross-account, program-manager, and owner/admin cases.
+- Public globe RPCs must return only approved data. Client-side hiding is not authorization. Never ship service-role secrets in browser JS. Verify SECURITY DEFINER grants/search paths and inspect Supabase security advisor warnings.
+- Ensure member/admin UI is session-aware while server checks remain authoritative. No implicit program-manager privileges from a reputation tally.
+
+### 3. Regional eligibility
+- Distinguish *browse worldwide* from *participate in a region*. `Near me` currently pans the camera and **does not verify residence**.
+- Define consented, server-validated regional affiliation, verification/appeal, opt-out, moves, and region activation. Do not derive residency from IP, nearest centroid, or unverified browser GPS.
+- The existing `action_globe_can_join_mission` is service-only and explicitly a **prerequisite**, not complete join authorization. Wire it into the canonical identity-bound mission join transaction with all existing eligibility checks.
+- Test zero/one/two-member activation, public suppression below five, cross-region access, and concurrency.
+
+### 4. Mission participation, evidence and funding
+- Inventory existing mission/assignment, payment/Stripe, receipts, refunds, creator transfer, and reconciliation endpoints before implementing duplicates.
+- Complete authenticated **discover → join/claim → do → submit evidence → review → verified contribution** journey, including idempotency, authorization, moderation, disputes, audit logs, and explicit states.
+- Complete **fund → payment confirmation/webhook → allocated funding → refund/reversal → verified impact** journey in Stripe **test mode**; do not infer payment from client redirects.
+- Do not award Street Credit or cohort eligibility from a self-reported action, a mere click, or unverified payment.
+- Ensure funding, payouts, and member-facing proof never expose sensitive payment details.
+
+### 5. End-to-end browser acceptance
+- Use Playwright or an equivalent real-browser harness against a staging environment with seeded, non-production test identities. Test desktop, iPhone-sized, and Android-sized viewports, keyboard navigation, reduced motion, and low-memory/no-WebGL fallback.
+- Cover guest globe rotation and navigation, sign-in/session expiry, member-only actions, wrong-region denial, legitimate-region join, duplicate join, evidence submission, admin review, funding receipt and webhook, privacy thresholds, and owner-only publication.
+- Add runtime/API assertions and negative authorization tests; source-text regex checks alone do not establish behavior.
+- Publish CI artifact evidence, failure screenshots/traces, test account setup, and an explicit go/no-go report for #427. Re-run all checks on final head commit.
+
+**Required handoff:** for every blocker, include file paths, tests added, commands/results, schema diffs, open risks, and exact commit IDs. Do not mark an item fixed without evidence.
