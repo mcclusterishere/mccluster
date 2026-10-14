@@ -22,6 +22,9 @@ test('progression and moderation are server-authoritative',()=>{
  assert.match(sql,/cannot review own work/);
  assert.match(sql,/ON CONFLICT\(assignment_id,kind\)/);
  assert.match(sql,/antisocial_block_legacy_proof/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.submit_antisocial_level\(uuid,smallint,text,text,uuid,uuid,uuid\) TO authenticated,service_role/);
+ assert.doesNotMatch(sql,/GRANT EXECUTE ON FUNCTION public\.submit_antisocial_level\(uuid,smallint,text,text,uuid,uuid\) TO authenticated/);
+
  assert.match(control,/rpc\/review_antisocial_level/);
 });
 
