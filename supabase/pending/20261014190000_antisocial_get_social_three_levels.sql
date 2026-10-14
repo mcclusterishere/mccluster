@@ -1,12 +1,13 @@
 -- Anti-Social / Get Social: one mission, three sequential, independently reviewed levels.
 -- Stage under pending until the globe migration ledger is reconciled.
 -- No recording of strangers without consent; self-focused proof is allowed.
+-- Deploy as DRAFT. Open only after member UI, reviewer UI and Worker are live and verified.
 INSERT INTO public.action_missions
 (id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,status)
 VALUES
 ('a17050c1-a551-4c5c-80c1-5a1750c1a001',NULL,'Anti-Social — Get Social',
  '1. High Five: offer one high five. 2. Five High Fives: connect with five different people. 3. Make Something Together: connect with an Action Network member and publish original work credited to both profiles. Record only with consent; you may show yourself rather than a stranger.',
- 'community',1,150,true,'review',ARRAY['community','collaboration','creativity']::text[],'open')
+ 'community',1,150,true,'review',ARRAY['community','collaboration','creativity']::text[],'draft')
 ON CONFLICT(id) DO UPDATE SET
  title=EXCLUDED.title,description=EXCLUDED.description,
  domain=EXCLUDED.domain,skills=EXCLUDED.skills,updated_at=now();
