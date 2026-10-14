@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 337,
+  "candidate_count": 342,
   "capability_source_count": 99,
-  "support_only_count": 238,
+  "support_only_count": 243,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -664,6 +664,13 @@
       "rationale": "Fellowship credit evidence and private graduate claim planning, not building capabilities."
     },
     {
+      "path": "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
+    },
+    {
       "path": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -1063,6 +1070,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Platform/backend evidence page; mentions the deterministic Equity Uprise building build only as an example of the release pipeline, not as a program capability."
+    },
+    {
+      "path": "equity-uprise.html",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
     },
     {
       "path": "feed.xml",
