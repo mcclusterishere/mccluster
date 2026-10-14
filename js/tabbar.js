@@ -61,6 +61,7 @@
       '<rect' + b + ' x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/>' +
       '<rect' + b + ' x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>';
   }
+  var WORLD_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>';
   function buildBar() {
     var nav = document.createElement("nav");
     nav.className = "appbar";
@@ -70,11 +71,12 @@
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* LAST COLUMN: identity. It resolves to Sign in while signed out and
-         to the member's Human Uprise feed once the session is verified. */
-      '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
-        '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Network</span></a>';
+      /* LAST COLUMN: the Globe, Human Uprise's World screen. It replaced the
+         Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
+         Account and profile are contextual now (the auth chip, the header
+         avatar, and the Globe wing's Account room). */
+      '<a class="appbar__tab appbar__world" href="' + ROOT + 'action-globe.html" data-appnav="world">' +
+        WORLD_SVG + '<span>Globe</span></a>';
     document.body.appendChild(nav);
     return nav;
   }
@@ -111,32 +113,25 @@
   });
 
 
-  /* The identity column is auth-aware. Start conservatively as a sign-in door;
-     the shared state controller below promotes it to Feed as soon as a real
-     McCluster session is verified. This also normalizes the many older pages
-     that still carry a hand-written copy of the bar. */
-  var mnetTab = dock.querySelector('[data-appnav="profile"]');
-  if (mnetTab) {
-    mnetTab.href = ROOT + "account.html";
-    var mnetLabel = mnetTab.querySelector("span:last-child");
-    if (mnetLabel) mnetLabel.textContent = "Sign in";
-  }
-
-  /* World tab: the public Cesium mission globe, separate from the private Halo console.
-     Normalize hand-written bars and generated bars to the same globe destination. */
+  /* THE GLOBE COLUMN. Hand-written bars on older pages still carry the
+     retired Profile column; the Globe takes its place, in the same cell,
+     and the ORDER sweep below removes anything else. One World for
+     everyone: guests reach the public World shell (action-globe.html),
+     members the World screen with their feed (set in paintAuthState). */
   var worldTab = dock.querySelector('[data-appnav="world"]');
   if (!worldTab) {
     worldTab = document.createElement("a");
     worldTab.className = "appbar__tab appbar__world";
     worldTab.setAttribute("data-appnav", "world");
-    worldTab.setAttribute("aria-label", "Explore the world globe");
-    worldTab.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg><span>World</span>';
+    worldTab.innerHTML = WORLD_SVG + '<span>Globe</span>';
     var profileTab = dock.querySelector('[data-appnav="profile"]');
     if (profileTab) dock.insertBefore(worldTab, profileTab);
     else dock.appendChild(worldTab);
   }
+  worldTab.setAttribute("aria-label", "Open the World globe");
+  var worldLabel = worldTab.querySelector("span:last-child");
+  if (worldLabel) worldLabel.textContent = "Globe";
   worldTab.href = ROOT + "action-globe.html";
-  if (/action-globe\\.html(?:$|[?#])/.test(location.href)) worldTab.setAttribute("aria-current", "page");
 
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
@@ -177,11 +172,11 @@
           sub: "The full map: the tracks, the gallery, the print shop, the archive, the desks. Everything the three wings do not carry." }],
       ],
     },
-    profile: {
-      home: "mnet.html",
+    world: {
+      home: "action-globe.html",
       slots: [
-        ["mnet.html", "folk", "Network", { title: "Human Uprise",
-          sub: "Human Uprise by McCluster: missions, proof, groups, messages and verified action across the ecosystem." }],
+        ["mnet.html?view=missions", "folk", "Missions", { title: "Human Uprise missions",
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Human Uprise." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
@@ -203,9 +198,9 @@
      long-press and drags the held tab out of its own column. Three winged
      tabs, therefore two rooms per wing; the record button is FIXED and
      simply keeps its cell. Change this list and every wing changes with it. */
-  var ORDER = ["music", "home", "world", "profile"];
+  var ORDER = ["music", "home", "world"];
   /* columns that never open a wing and keep their cell while one is open */
-  var FIXED = { world: true };
+  var FIXED = {};
 
   /* THE BAR IS FOUR COLUMNS NOW (three wings and the record button), AND
      THIS ENFORCES IT.
@@ -245,8 +240,10 @@
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
     "create.html": "create",
-    "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
-    "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
+    /* the Globe column is the World: Human Uprise and its public shell.
+       Account rooms light no coin; they are contextual, not a column. */
+    "mnet.html": "world", "action-globe.html": "world", "world-news.html": "world",
+    "press.html": "home", "matthew-mccluster.html": "home",
     /* Rooms from shelved columns keep working; they simply light the
        closest surviving house coin and remain reachable through Everything. */
     "sites.html": "home", "inner-room.html": "home",
@@ -311,40 +308,30 @@
   }
   function paintAuthState(signedIn, user, verified) {
     AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
+    /* one World: members land on the World screen with their feed,
+       guests on the public World shell; same column, same bar */
     var worldDoor = dock.querySelector('[data-appnav="world"]');
-    /* members go to the one World screen (globe over their feed); guests to the data-free Earth */
-    if (worldDoor) worldDoor.href = ROOT + (signedIn ? "mnet.html?view=feed" : "guest-globe.html");
-    var guestIdentity = dock.querySelector('[data-appnav="profile"]');
-    if (guestIdentity) { guestIdentity.hidden = !signedIn; guestIdentity.setAttribute("aria-hidden", signedIn ? "false" : "true"); }
+    var worldHome = ROOT + (signedIn ? "mnet.html?view=feed" : "action-globe.html");
+    if (worldDoor) worldDoor.href = worldHome;
+    WINGS.world.home = worldHome;
     var body = document.body;
     body.classList.toggle("mcc-auth-in", !!signedIn);
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* Signed-in M opens the community feed; guests still see the public homepage. */
+    /* M is the McCluster platform home for everyone (owner, 2026-10-14);
+       the member feed lives in World, not behind the emblem. */
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (homeTab) {
-      homeTab.href = signedIn ? ROOT + "mnet.html?view=feed" : ROOT + "index.html";
-      homeTab.setAttribute("aria-label", signedIn ? "Open the community newsfeed" : "Open McCluster homepage");
-      var homeLabel = homeTab.querySelector("span:last-child");
-      if (homeLabel) homeLabel.textContent = signedIn ? "Feed" : "HERE";
+      homeTab.href = ROOT + "index.html";
+      homeTab.setAttribute("aria-label", "Open the McCluster home");
     }
-    WINGS.home.home = signedIn ? ROOT + "mnet.html?view=feed" : ROOT + "index.html";
-    /* The member workspace is a five-position bar: create, feed, analytics and account. */
+    WINGS.home.home = ROOT + "index.html";
+    /* Exactly three columns, signed in or not. Record and Analytics were
+       member-only columns; they are contextual now (the composer's
+       Record / Create, the World screen's More menu), so any copy of them
+       is removed rather than hidden. */
     Array.prototype.forEach.call(dock.querySelectorAll('[data-member-tab]'), function (node) { node.remove(); });
-    if (signedIn) {
-      var record = document.createElement("a");
-      record.className = "appbar__tab"; record.href = ROOT + "creator-capture.html";
-      record.setAttribute("data-member-tab", "record"); record.setAttribute("aria-label", "Record, upload media or edit drafts");
-      record.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg><span>Record</span>';
-      if (homeTab) dock.insertBefore(record, homeTab);
-      var analytics = document.createElement("a");
-      analytics.className = "appbar__tab"; analytics.href = ROOT + "creator-landing-analytics.html";
-      analytics.setAttribute("data-member-tab", "analytics"); analytics.setAttribute("aria-label", "Analytics for your landing page");
-      analytics.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M22 20V3"/></svg><span>Analytics</span>';
-      if (homeTab && homeTab.nextSibling) dock.insertBefore(analytics, homeTab.nextSibling);
-      else dock.appendChild(analytics);
-    }
     var session = readAuthSession();
     var payload = session && session.access_token ? jwtPayload(session.access_token) : {};
     var name = authDisplay(user, payload);

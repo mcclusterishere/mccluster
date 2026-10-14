@@ -78,7 +78,8 @@ test('Action Network is world-first while live remains accessible and multi-seat
     read('mnet.html'), read('js/mnet.js'), read('js/mnet-live.js'), read('workers/mccluster/src/platform-api.js')
   ]);
   assert.match(js, /currentView:\s*"feed"/);
-  assert.match(html, /class="is-active" data-mn-view="feed">🌐 World</);
+  /* World is the surface; Live stays one tap away in the avatar menu */
+  assert.match(html, /id="mnMenu"[\s\S]*?data-mn-view="live">Live</);
   assert.match(html, /id="mnFeedView" hidden/);
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);

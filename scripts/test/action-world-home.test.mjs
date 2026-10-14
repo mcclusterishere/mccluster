@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 test('Human Uprise World tab puts the globe over the live feed',()=>{
  const html=read('mnet.html');
- assert.match(html,/data-mn-view="feed">🌐 World<\/button>/);
+ assert.match(html,/id="mnToWorld" type="button" data-mn-view="feed"/);
  assert.match(html,/id="mnFeedView"[\s\S]*?class="mn__world-home"/);
  assert.match(html,/action-globe\.html\?embedded=1&amp;surface=network/);
  /* the network is under the globe, not hidden behind it */
@@ -13,17 +13,17 @@ test('Human Uprise World tab puts the globe over the live feed',()=>{
  assert.doesNotMatch(read('css/mnet.css'),/\.mn__legacy-feed/);
 });
 
-test("World screen follows the owner's 45/15/35 contract: globe, context strip, independently scrolling feed",()=>{
+test("World screen follows the owner's 50/15/30 contract: globe, context strip, independently scrolling feed",()=>{
  const html=read('mnet.html'), css=read('css/mnet.css'), js=read('js/mnet.js');
  assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldContext"[\s\S]*?id="mnWorldFeed"/);
- assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 45 1 0;/);
- assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 35 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
+ assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 50 1 0;/);
+ assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
  assert.match(css,/html\.mn-world-fit, html\.mn-world-fit body \{ overflow: hidden;/,'only the feed scrolls, so the globe never leaves the screen');
  assert.match(js,/function sizeWorld\(\)/);
  assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340/,'short screens fall back to a stacked, scrolling page instead of hiding content');
  /* a post shows its mission on the Earth without narrowing the feed being read */
  assert.match(js,/filter: !fromFeed/);
- assert.match(read('js/tabbar.js'),/signedIn \? "mnet\.html\?view=feed" : "guest-globe\.html"/);
+ assert.match(read('js/tabbar.js'),/signedIn \? "mnet\.html\?view=feed" : "action-globe\.html"/,'one World: members get their feed, guests the public shell');
  assert.match(read('action-globe.html'),/location\.replace\('mnet\.html\?view=feed'/);
 });
 

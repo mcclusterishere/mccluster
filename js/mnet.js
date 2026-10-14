@@ -1078,6 +1078,7 @@
       state.conversations=data.conversations||[];
       var requests=state.conversations.filter(function (x) { return x.my&&x.my.member_state==="requested"; }).length;
       $("mnMessageBadge").hidden=!requests; $("mnMessageBadge").textContent=requests||"";
+      if($("mnMeDot"))$("mnMeDot").hidden=!requests;
       $("mnConversations").innerHTML=state.conversations.length?state.conversations.map(function (x) {
         var other=(x.members||[]).find(function(m){return m.m_uid!==identity().m_uid;})||{},p=other.profile||{},name=p.display_name||p.mccluster_id||"Conversation",last=x.last_message;
         return '<article class="mn__conversation-row"><div class="mn__author-avatar">'+esc(initials(name))+'</div><button type="button" class="mn__conversation-copy" data-conversation="'+esc(x.conversation.id)+'"><span class="mn__conversation-name">'+esc(name)+'</span><span class="mn__conversation-sub">'+esc(x.my&&x.my.member_state==="requested"?"Message request":last&&last.body||"Start the conversation")+'</span></button><span class="mn__author-sub">'+esc(last?timeAgo(last.created_at):"")+'</span></article>';
@@ -1137,6 +1138,31 @@
       .finally(function(){b.disabled=false;});
   }
 
+  /* THE AVATAR MENU. Profile, inbox, alerts and the network's other rooms
+     sit behind the avatar; World is the surface. Escape and any tap
+     outside close it, and focus goes back to the avatar. */
+  function closeMenu(restore) {
+    var menu = $("mnMenu"), me = $("mnMe");
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    if (me) { me.setAttribute("aria-expanded", "false"); if (restore) me.focus(); }
+  }
+  function wireMenu() {
+    var menu = $("mnMenu"), me = $("mnMe");
+    if (!menu || !me) return;
+    me.onclick = function (e) {
+      e.stopPropagation();
+      if (!menu.hidden) { closeMenu(true); return; }
+      showGate("app");
+      menu.hidden = false;
+      me.setAttribute("aria-expanded", "true");
+      var first = menu.querySelector("button,a");
+      if (first) first.focus();
+    };
+    document.addEventListener("click", function (e) { if (!menu.hidden && !menu.contains(e.target) && e.target !== me) closeMenu(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(true); });
+  }
+
   function setView(name) {
     state.currentView = name;
     track("mnet_view", { view:name });
@@ -1147,6 +1173,8 @@
       if(tab)tab.classList.toggle("is-active",view===name);
     });
     moveThumb(true);
+    if($("mnToWorld"))$("mnToWorld").hidden=name==="feed";
+    closeMenu();
     if(name==="live"&&window.MCC_LIVE&&window.MCC_LIVE.refresh)window.MCC_LIVE.refresh();
     if(name==="clips"&&window.MCC_CLIPS)window.MCC_CLIPS.load();
     if(name==="missions")loadMissions();
@@ -1358,7 +1386,7 @@
     };
     $("mnMore").onclick = function () { loadFeed(false); };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
-    $("mnMe").onclick = function () { showGate("app"); setView("profile"); };
+    wireMenu();
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     $("mnBell").onclick = function () { setView("notifications"); };

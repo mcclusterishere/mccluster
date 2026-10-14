@@ -36,24 +36,24 @@
   var STEPS = [
     { title: "Welcome to Human Uprise",
       body: "The place for doers. Don't just watch. Act. This takes about a minute." },
-    { target: ".mn__tabs", title: "Seven tabs, one map",
-      body: "Action, Missions, People, Groups, Messages, Alerts and Me. Everything on the network lives behind one of these." },
+    { view: "feed", target: "#mnWorld", title: "The world is your feed",
+      body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Everything else, from your inbox to your profile, is behind your picture at the top." },
     { view: "missions", target: "#mnMissionList", title: "Start with a mission",
       body: "A mission is one real thing to do out in the world, like feeding someone who is unhoused or paying off a kid's lunch debt. Join one, then go do it." },
     { view: "missions", target: "#mnMissionList", title: "Show your proof",
       body: "When it's done, add a photo, a link or a short note. A person on the desk checks it. Once it's verified it goes on your Action Record with a receipt you can share." },
     { view: "missions", target: "#mnRecord", title: "Three verified actions",
       body: "After three verified actions you can apply to be a fellow. Fellows help lead missions and can go live on the network." },
-    { view: "feed", target: "#mnPostBody", title: "The Action feed",
+    { view: "feed", target: "#mnPostBody", title: "Your feed",
       body: "Post what you did, what you're listening to, and what's next. Follow the people doing the same missions as you." },
     { view: "messages", target: "#mnConversations", title: "A straight line to Matthew",
       body: "Matthew's welcome is in your messages. Reply any time with questions, ideas or problems. It goes straight to him." },
     { view: "profile", target: "#mnEditProfile", title: "Make it yours",
       body: "Add a photo, a headline and a short bio so people know who they're doing this with." },
     { target: '.appbar [data-appnav="music"]', title: "The music",
-      body: "This tab at the bottom takes you to the music. The middle one is home, and the last one brings you back here." },
+      body: "This tab at the bottom takes you to the music. The middle one is home, and the Globe brings you back here." },
     { title: "Put it into action",
-      body: "You can replay this any time from Me \u2192 Take the tour.",
+      body: "You can replay this any time from your picture \u2192 Profile \u2192 Take the tour.",
       finish: [
         { label: "Look around" },
         { label: "Pick a mission", view: "missions" }
@@ -147,8 +147,8 @@
 
   function openView(name) {
     if (!name) return;
-    var tab = d.querySelector('.mn__tabs [data-mn-view="' + name + '"]');
-    if (tab && !tab.classList.contains("is-active")) tab.click();
+    /* there is no tab row any more: ask the network to switch rooms */
+    if (window.MCC_MNET && typeof window.MCC_MNET.setView === "function") window.MCC_MNET.setView(name);
   }
 
   function show(i) {

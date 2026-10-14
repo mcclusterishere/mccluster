@@ -58,7 +58,8 @@ test('every tab destination has the bar it was reached from', async () => {
      no bar — tap it, and the navigation you tapped is gone. */
   const bar = await read('js/tabbar.js');
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*ROOT\s*\+\s*'([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
-  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
+  /* Music | M | Globe (owner, 2026-10-14): the Globe replaced Profile */
+  assert.deepEqual(hrefs, ['listen.html', 'index.html', 'action-globe.html'],
     `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
   for (const href of hrefs) {
     const html = await read(href);
@@ -73,7 +74,7 @@ test('the bar always writes the three canonical tabs, unconditionally', async ()
   assert.ok(block, 'could not find the bar markup');
   const markup = block[1];
   assert.doesNotMatch(markup, /data-appnav="create"/, 'the retired Create column must not return');
-  for (const nav of ['music', 'home', 'profile']) {
+  for (const nav of ['music', 'home', 'world']) {
     assert.match(markup, new RegExp(`data-appnav="${nav}"`),
       `the ${nav} cell is missing from the bar`);
   }
@@ -85,6 +86,21 @@ test('the bar always writes the three canonical tabs, unconditionally', async ()
     'a tab is being written conditionally — the bar must be identical on every page');
 });
 
+
+test('exactly three columns for everyone: Music | M | Globe', async () => {
+  /* Owner, 2026-10-14: the Globe replaced Profile, and member-only Record and
+     Analytics columns are gone; signed in or out, the bar is three cells. */
+  const bar = await read('js/tabbar.js');
+  assert.match(bar, /var ORDER = \["music", "home", "world"\];/);
+  assert.doesNotMatch(bar, /setAttribute\("data-member-tab", "(?:record|analytics)"\)/,
+    'no member-only columns are added after sign-in');
+  assert.match(bar, /querySelectorAll\('\[data-member-tab\]'\), function \(node\) \{ node\.remove\(\); \}\);/);
+  /* the trim law: three winged tabs, two rooms each, so a held tab never moves */
+  const wing = bar.slice(bar.indexOf('  var WINGS = {'));
+  const world = wing.slice(wing.indexOf('world: {'), wing.indexOf('\n  };'));
+  assert.equal((world.match(/\["[a-z0-9-]+\.html[^"]*",/g) || []).length, 2, 'the Globe wing carries two rooms');
+  assert.match(bar, /var FIXED = \{\};/);
+});
 
 test('the native shell mirrors the same three primary destinations', async () => {
   const [appbar, layout] = await Promise.all([

@@ -33,8 +33,8 @@ Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`.
 3. **Feed** (bottom): composer and the real member feed (posts, media,
    tracks, Like, Comment, Share, Save), scrolling on its own.
 
-`js/mnet.js` sizes the view to the room between the tabs and the app bar
-(`--mn-world-h`, class `mn-world-fit`): globe and feed share it 45:35 and the
+`js/mnet.js` sizes the view to the room between the header and the app bar
+(`--mn-world-h`, class `mn-world-fit`): globe and feed share it 50:30 and the
 page itself does not scroll, so dragging the Earth never scrolls the feed and
 reading the feed never turns the Earth. Below 340px of room in portrait (or
 440px otherwise, e.g. a phone on its side) the pieces stack and the page
@@ -50,12 +50,9 @@ on the left and the feed runs beside them.
 - Posting lets go of any mission so the new post is seen landing.
 
 Measured with a stubbed member (Playwright): at 390×844 the globe, strip and
-feed take 32% / 11% / 28% of the screen. That is 45 : 16 : 39 of the World
-area, matching the contract's hierarchy. The remaining ~30% is the house
-header, the four tabs and the app bar, which sit outside the World area. The
-spec's "~5% chrome" is not reachable without hiding those; that is the
-owner's call. iPhone SE (375×667) also fits on one screen; a phone on its
-side scrolls.
+feed took 32% / 11% / 28% of the screen while the network still had its own
+tab rows; see Navigation below for the measurements after they were removed.
+iPhone SE (375×667) also fits on one screen; a phone on its side scrolls.
 
 ### Standalone `action-globe.html`
 
@@ -71,6 +68,28 @@ side scrolls.
   bare `nav` rules hijacked it. Those rules are scoped to `.world-tools`.
 - The member World tab in the app bar points at `mnet.html?view=feed`;
   guests still get `guest-globe.html`.
+
+## Navigation (owner's binding decision, 2026-10-14)
+
+- **App bar: exactly three columns for everyone: Music | M | Globe.** The
+  Globe replaced Profile. Members' Globe opens the World screen
+  (`mnet.html?view=feed`); guests' Globe opens the public World shell
+  (`action-globe.html`). M is the platform home (`index.html`) signed in or
+  out. The member-only Record and Analytics columns are gone. Each column
+  keeps a two-room long-press wing so a held tab never moves; the Globe
+  wing holds Missions and Account.
+- **No second nav inside the network.** The World / Campaigns / Inbox /
+  Profile row and the Clips / Live / People / Groups / Alerts row are gone.
+  Every room opens from the **avatar menu**: Profile, Inbox (unread badge,
+  plus a dot on the avatar), Alerts, Missions & campaigns, People, Groups,
+  Clips, Live, Record or create, Your analytics, M Account. The bell stays
+  as the alerts indicator, and every room has a "← World" way back.
+- With the rows gone, the World screen measures **42% globe / 11% context
+  / 28% feed** at 390×844 (36 / 14 / 25 on an iPhone SE). The rest is the
+  header and the app bar.
+- Not yet changed: the native app (`native/src/AppBar.tsx`) still has its
+  own Music · HERE · Create · Network bar, and the guest World still has no
+  public post projection (guests see missions and a sign-in card).
 
 ## Bridge contract (same-origin `postMessage`)
 
