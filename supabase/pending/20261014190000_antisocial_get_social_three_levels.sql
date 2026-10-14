@@ -82,9 +82,8 @@ BEGIN
    IF p_post_id IS NOT NULL OR p_collaborator_m_uid IS NOT NULL THEN
      RAISE EXCEPTION 'collaboration fields only apply to level three';
    END IF;
-   IF nullif(btrim(coalesce(p_statement,'')),'') IS NULL
-      AND nullif(btrim(coalesce(p_proof_url,'')),'') IS NULL AND p_media_asset_id IS NULL THEN
-      RAISE EXCEPTION 'describe or link your action';
+   IF nullif(btrim(coalesce(p_proof_url,'')),'') IS NULL AND p_media_asset_id IS NULL THEN
+      RAISE EXCEPTION 'submit a consent-safe clip or a secure video link';
    END IF;
  ELSE
    IF p_post_id IS NULL OR p_collaborator_m_uid IS NULL OR p_collaborator_m_uid=v_self
