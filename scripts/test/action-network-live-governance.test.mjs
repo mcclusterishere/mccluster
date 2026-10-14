@@ -73,12 +73,12 @@ test('Every current catalogue song is a first-class live discovery object', asyn
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });
 
-test('Action Network is feed-first while live remains accessible and multi-seat stays disabled', async () => {
+test('Action Network is world-first while live remains accessible and multi-seat stays disabled', async () => {
   const [html, js, live, worker] = await Promise.all([
     read('mnet.html'), read('js/mnet.js'), read('js/mnet-live.js'), read('workers/mccluster/src/platform-api.js')
   ]);
   assert.match(js, /currentView:\s*"feed"/);
-  assert.match(html, /class="is-active" data-mn-view="feed">Feed</);
+  assert.match(html, /class="is-active" data-mn-view="feed">🌐 World</);
   assert.match(html, /id="mnFeedView" hidden/);
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);
