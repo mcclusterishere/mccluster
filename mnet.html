@@ -124,7 +124,7 @@
 
     <section class="mn__app" id="mnApp" hidden>
       <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
+        <button type="button" class="is-active" data-mn-view="feed">🌐 World</button>
         <button type="button" data-mn-view="missions">Campaigns</button>
         <button type="button" data-mn-view="messages">Inbox <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
         <button type="button" data-mn-view="profile">Profile</button>
@@ -167,6 +167,11 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
+        <section class="mn__world-home" aria-label="Make the world your feed">
+          <iframe class="mn__world-frame" src="action-globe.html?embedded=1" title="Interactive world missions globe" loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <a class="mn__world-expand" href="action-globe.html">Explore full world ↗</a>
+        </section>
+        <div class="mn__legacy-feed" hidden>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -213,6 +218,7 @@
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
         <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
+      </div>
       </section>
 
       <section class="mn__view" id="mnClipsView" hidden aria-labelledby="mnClipsTitle">
