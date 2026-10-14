@@ -28,3 +28,16 @@ test('player links to song-specific approved mission portfolio',()=>{
  assert.match(globe,/requestedSong/);
  assert.match(globe,/No approved regional missions are linked/);
 });
+
+test('regional mission joining is enforced by canonical database RPC, not the UI',()=>{
+ const join=read('supabase/migrations/20261014120000_action_globe_join_authorization.sql');
+ assert.match(join,/create or replace function public\.join_action_mission\(p_mission_id uuid\)/i);
+ assert.match(join,/public\.current_m_uid\(\)/);
+ assert.match(join,/public\.action_globe_can_join_mission\(v_m_uid, p_mission_id\)/);
+ assert.match(join,/raise exception 'regional mission not eligible for this member'/);
+ assert.match(join,/for update/);
+ assert.match(join,/v_mission\.capacity/);
+ const activation=read('supabase/migrations/20261014040000_action_globe_region_activation.sql');
+ assert.match(activation,/revoke all on function public\.action_globe_can_join_mission\(uuid,uuid\) from public,anon,authenticated/i);
+ assert.match(activation,/grant execute on function public\.action_globe_can_join_mission\(uuid,uuid\) to service_role/i);
+});
