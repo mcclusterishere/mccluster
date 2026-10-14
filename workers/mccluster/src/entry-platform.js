@@ -8,6 +8,7 @@ import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
 import { humanUpriseResponse } from './human-uprise/router.js';
+import { handleAuthHandoff } from './auth-handoff.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
@@ -59,6 +60,9 @@ export default {
       if (billingWebhook) return billingWebhook;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
+      /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
+      const handoff = await handleAuthHandoff(request, env);
+      if (handoff) return handoff;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;

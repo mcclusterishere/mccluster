@@ -161,8 +161,11 @@ interconnected with the rest.
   On `humanuprise.com`, Music and the M link to Matthew's site outright; on
   Matthew's site the Globe stays on his origin until the owner flips
   `WORLD_ORIGIN` after routing.
-- Sessions are per origin. A member signs in on `humanuprise.com` separately;
-  nothing hands a session across. The API's CORS allowlist carries the host.
+- Sessions are per origin, and one M Account works on every host anyway: the
+  bar carries a member's sign-in across (`js/tabbar.js` → `/v1/auth/handoff`,
+  `workers/mccluster/src/auth-handoff.js`), and the arriving host earns a
+  session of its own. No refresh token crosses. The API's CORS allowlist
+  carries the host; it is also the list of hosts a sign-in may be carried to.
 - Why not a second Pages site or Worker: the same reasons as the company host
   (one custom domain per repository; one Worker; serving a host is ingress).
 - Activation and verification: `docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`

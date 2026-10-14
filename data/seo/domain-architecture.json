@@ -64,7 +64,7 @@
         "sw.js and /js/, /css/, /assets/, /data/"
       ],
       "everything_else": "301 to the same path on https://matthew.mccluster.org: Music, the M, creators, records, checkout",
-      "sessions": "per origin; a member signs in on humanuprise.com separately; no cross-origin handoff is built"
+      "sessions": "per origin; the bar carries a member's sign-in across hosts (js/tabbar.js -> POST /v1/auth/handoff, workers/mccluster/src/auth-handoff.js: bearer checked live, Origin on the CORS allowlist, Supabase admin generate_link magiclink) and the arriving host earns its own session; no refresh token crosses"
     }
   },
   "entities": {

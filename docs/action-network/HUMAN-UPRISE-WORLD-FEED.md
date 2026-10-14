@@ -202,8 +202,12 @@ The bar is the same Music | M | Globe on either host (`js/tabbar.js`):
   coin, not the M;
 - on Matthew's site the Globe stays on his origin until the owner flips
   `WORLD_ORIGIN` to `https://humanuprise.com/` after routing;
-- a session is per origin: a member signs in on `humanuprise.com` once,
-  separately. No handoff is built.
+- a session is per origin, and the bar carries a member's sign-in across
+  (`/v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`): the token
+  rides in the link's fragment, the arriving page scrubs it, exchanges it
+  from its own origin for a one-time magic-link token, and Supabase mints a
+  session of that origin's own. One M Account, every host; no refresh token
+  ever crosses.
 
 ### A creator's perspective (owner, 2026-10-14)
 

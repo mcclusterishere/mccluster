@@ -62,13 +62,36 @@ const POSTS = [0, 1, 2].map((k) => ({ item_type: 'post', post_id: `dddddddd-dddd
 const landed = [];   // every cross-site arrival at Matthew's site
 const served = [];   // every request the Human Uprise host answered
 
+/* one M Account, every host: the session a member holds on Matthew's site,
+   and the one Supabase mints for the World's host when the bar carries the
+   sign-in across */
+const jwt = (tag) => tag + '.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, sub: 'auth-you' })).replace(/=+$/, '') + '.sig';
+const SESSION = { token: jwt('house'), fresh: jwt('world') };
+const ME = { m_uid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', mccluster_id: 'fixture.you', display_name: 'Fixture You' };
+const carried = { handoff: [], verify: [], bootstrap: [] };
+
 async function routeBackends(ctx) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
-    const u = route.request().url();
+    const u = route.request().url(), r = route.request();
     /* a creator's picture, where Creator Studio stores it */
     if (u.includes('/storage/v1/object/public/creator-artwork/')) return route.fulfill({ status: 200, contentType: 'image/jpeg', body: await readFile(join(ROOT, 'assets/img/peaceful-places.jpg')) });
-    if (u.includes('/auth/v1/user')) return json(route, { msg: 'no' }, 401);
+    if (r.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,apikey,content-type', 'access-control-allow-methods': 'GET,POST' } });
+    if (u.includes('/auth/v1/user')) {
+      const auth = (await r.allHeaders()).authorization || '';
+      return [SESSION.token, SESSION.fresh].map((t) => 'Bearer ' + t).includes(auth) ? json(route, { id: 'auth-you', email: 'you@example.org' }) : json(route, { msg: 'no' }, 401);
+    }
+    /* a refresh keeps whichever session asked */
+    if (u.includes('/auth/v1/token') && r.method() === 'POST') {
+      const body = r.postDataJSON() || {};
+      const tok = body.refresh_token === 'refresh-world' ? SESSION.fresh : SESSION.token;
+      return json(route, { access_token: tok, refresh_token: body.refresh_token || '', token_type: 'bearer', expires_in: 3600, user: { id: 'auth-you' } });
+    }
+    /* the one-time magic-link token becomes a session of the arriving origin's own */
+    if (u.includes('/auth/v1/verify') && r.method() === 'POST') {
+      carried.verify.push({ origin: (await r.allHeaders()).origin || '', body: r.postDataJSON() });
+      return json(route, { access_token: SESSION.fresh, refresh_token: 'refresh-world', token_type: 'bearer', expires_in: 3600, user: { id: 'auth-you' } });
+    }
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('/rest/v1/music_creator_profiles?handle=eq.fixture-ana')) return json(route, [ANA]);
     if (u.includes('/rest/v1/music_creator_profiles?handle=eq.fixture-dev')) return json(route, [DEV]);
@@ -77,10 +100,24 @@ async function routeBackends(ctx) {
     if (u.includes('/rest/v1/creator_tracks?m_uid=eq.')) return json(route, TRACKS.filter((t) => u.includes(t.m_uid)));
     return json(route, []);
   });
-  await ctx.route('https://api.mccluster.org/**', (route) => {
+  await ctx.route('https://api.mccluster.org/**', async (route) => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
     if (u.pathname === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });
+    /* the sign-in handoff: the arriving page's bearer and Origin, answered with a token hash */
+    if (u.pathname === '/v1/auth/handoff' && req.method() === 'POST') {
+      const h = await req.allHeaders();
+      carried.handoff.push({ origin: h.origin || '', authorization: h.authorization || '' });
+      if (h.authorization !== 'Bearer ' + SESSION.token) return json(route, { error: 'sign in first' }, 401);
+      return json(route, { token_hash: 'th-fixture', type: 'magiclink', origin: h.origin });
+    }
+    if (u.pathname === '/v1/mnet/bootstrap') {
+      carried.bootstrap.push({ origin: (await req.allHeaders()).origin || '', authorization: (await req.allHeaders()).authorization || '' });
+      return json(route, { identity: ME, profile: ME, next_step: null, tour_done_at: new Date().toISOString() });
+    }
+    if (u.pathname === '/v1/mnet/feed') return json(route, { items: POSTS.map((p) => ({ ...p, post: { ...p.post, author_m_uid: ME.m_uid, media: [] } })), next_before: null });
+    if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: [] });
+    if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: [] });
     return json(route, {});
   });
   /* Matthew's site: a stub that remembers where the tap landed */
@@ -117,12 +154,14 @@ function check(scope, name, ok, detail) {
   results.push({ scope, name, ok: !!ok, detail });
   console.log(`${ok ? 'PASS' : 'FAIL'} [${scope}] ${name}${detail !== undefined ? ' :: ' + JSON.stringify(detail) : ''}`);
 }
-async function open(device) {
+async function open(device, { memberOn = '' } = {}) {
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile, serviceWorkers: 'block' });
-  await ctx.addInitScript(() => {
+  await ctx.addInitScript(({ memberOn, token }) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
-  });
+    /* signed in on one house only: the other must earn its own session */
+    if (memberOn && location.origin === memberOn && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'refresh-house', expires_at: Math.floor(Date.now() / 1000) + 3600 })); }
+  }, { memberOn, token: SESSION.token });
   await routeBackends(ctx);
   const page = await ctx.newPage();
   const errors = [];
@@ -188,7 +227,7 @@ const settleWorld = async (page) => {
   landed.length = 0;
   await page.click('.appbar [data-appnav="music"]');
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
-  check(S, 'tapping Music lands on matthew.mccluster.org/listen.html', page.url() === `${HOUSE}/listen.html` && landed[0] === `${HOUSE}/listen.html`, page.url());
+  check(S, 'tapping Music lands on matthew.mccluster.org/listen.html, and a guest carries nothing', page.url() === `${HOUSE}/listen.html` && landed[0] === `${HOUSE}/listen.html` && !/mcc_handoff/.test(page.url()), page.url());
   /* a record's address on this host is Matthew's */
   await page.goto(`${HU}/album.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForURL(`${HOUSE}/album.html`, { timeout: 15000 }).catch(() => {});
@@ -261,9 +300,39 @@ const settleWorld = async (page) => {
   await ctx.close();
 }
 
+/* ---------- 4. one M Account, every host: a member crosses to the World's own door and back ---------- */
+{
+  const S = 'sign-in-handoff';
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
+  await page.goto(`${BASE}/listen.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
+  const signedIn = await page.evaluate(() => document.body.classList.contains('mcc-auth-in'));
+  check(S, 'signed in on Matthew\'s site', signedIn);
+  /* a link to the World's own host, as any page might carry one */
+  await page.evaluate((href) => { const a = document.createElement('a'); a.id = 'crossing'; a.href = href; a.textContent = 'Open the World'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); }, `${HU}/?view=feed`);
+  await page.click('#crossing');
+  await page.waitForURL((u) => u.origin === HU && !u.hash, { timeout: 30000 });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
+  const arrived = await page.evaluate(() => ({ url: location.href, hash: location.hash, signedIn: document.body.classList.contains('mcc-auth-in'), session: JSON.parse(localStorage.getItem('mccdb_session') || 'null'), composer: !!document.querySelector('.mn__create'), guestCard: !!document.querySelector('[data-guest-ask]') }));
+  check(S, 'the World\'s host received the sign-in: the fragment is gone from the address', arrived.url === `${HU}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
+  check(S, 'the arriving page exchanged the carried token from its own origin', carried.handoff.length >= 1 && carried.handoff[0].origin === HU && carried.handoff[0].authorization === 'Bearer ' + SESSION.token, carried.handoff);
+  check(S, 'Supabase turned the one-time token into a session of this origin\'s own', carried.verify.length >= 1 && carried.verify[0].body && carried.verify[0].body.type === 'magiclink' && carried.verify[0].body.token_hash === 'th-fixture', carried.verify);
+  check(S, 'the session stored on the World\'s host is the fresh one, not the house\'s', arrived.session && arrived.session.access_token === SESSION.fresh && arrived.session.refresh_token === 'refresh-world', arrived.session);
+  check(S, 'the World booted as a member: the composer, the member feed, the bar signed in', arrived.signedIn && arrived.composer && carried.bootstrap.some((b) => b.authorization === 'Bearer ' + SESSION.fresh && b.origin === HU), { signedIn: arrived.signedIn, composer: arrived.composer, bootstrap: carried.bootstrap });
+  check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  await page.screenshot({ path: join(OUT, 'handoff-member-iphone.png') });
+  /* and back: the Music tab carries the World host's own fresh token to Matthew's site */
+  await page.click('.appbar [data-appnav="music"]');
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  const back = page.url();
+  check(S, 'tapping Music from the World\'s host carries the sign-in back in the fragment', back.startsWith(`${HOUSE}/listen.html#mcc_handoff=`) && decodeURIComponent(back.split('mcc_handoff=')[1]) === SESSION.fresh && landed.includes(`${HOUSE}/listen.html`), back.replace(SESSION.fresh, '<fresh token>'));
+  check(S, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r.ok);
-await writeFile(join(OUT, 'report.json'), JSON.stringify({ results, served, landed }, null, 2));
+await writeFile(join(OUT, 'report.json'), JSON.stringify({ results, served, landed, carried }, null, 2));
 console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots and report in ${OUT}`);
 process.exit(failed.length ? 1 : 0);

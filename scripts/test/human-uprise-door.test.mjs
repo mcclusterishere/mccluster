@@ -122,7 +122,7 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.match(entry, /workers\/mccluster\/src\/human-uprise\/router\.js/);
   assert.match(entry, /Supabase Auth → URL configuration: add `https:\/\/humanuprise\.com\/auth\/`/, 'the owner\'s sign-in step is written down');
   assert.match(entry, /set `WORLD_ORIGIN = "https:\/\/humanuprise\.com\/"` in `js\/tabbar\.js`/, 'the flip is the last step, after routing');
-  assert.match(entry, /A session is per origin/);
+  assert.match(entry, /\*\*One M Account, every host\.\*\* A session is per origin/);
   const domains = await read('docs/control-plane/DOMAINS-AND-ENTITIES.md');
   assert.match(domains, /## Human Uprise's host: `humanuprise\.com`/);
   assert.match(domains, /Three hosts, still two entities\./);
@@ -139,4 +139,35 @@ test('the authorities name the host: three hosts, still two entities, one Worker
   assert.match(await read('AGENTS.md'), /Three hosts, still two entities:/);
   assert.match(await read('CLAUDE.md'), /`https:\/\/humanuprise\.com` is Human Uprise's own door to the World, a \*\*McCluster Corp\*\* host/);
   assert.match(await read('docs/action-network/HUMAN-UPRISE-WORLD-FEED.md'), /### The World's own door: `humanuprise\.com`[\s\S]*### A creator's perspective/);
+});
+
+test('one M Account, every host: the bar carries the sign-in across and the arriving page earns its own session', async () => {
+  const bar = await read('js/tabbar.js');
+  assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'only the ecosystem\'s own origins are carried to');
+  assert.match(bar, /var HANDOFF = "mcc_handoff";/);
+  assert.match(bar, /return url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && ECOSYSTEM\.indexOf\(url\.origin\) !== -1;/);
+  /* leaving: the token rides in the fragment, never a query */
+  assert.match(bar, /url\.hash = \(url\.hash && url\.hash !== "#" \? url\.hash \+ "&" : "#"\) \+ HANDOFF \+ "=" \+ encodeURIComponent\(token\);/);
+  assert.doesNotMatch(bar, /searchParams\.set\("mcc_handoff"/);
+  assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ location\.href = h; \}, function \(\) \{ location\.href = dest; \}\);/, 'the bar\'s own tabs carry it');
+  assert.match(bar, /if \(!a \|\| a\.target === "_blank" \|\| a\.hasAttribute\("download"\) \|\| a\.closest\("\.appbar"\)\) return;/, 'any page link carries it; the bar sails itself');
+  /* arriving: scrub first, exchange from this origin, verify, store, reload */
+  const scrub = bar.indexOf('history.replaceState(null, "", location.pathname + location.search + rest)');
+  const exchange = bar.indexOf('fetch(API_ORIGIN + "/v1/auth/handoff"');
+  assert.ok(scrub > 0 && exchange > scrub, 'the fragment is scrubbed before anything is sent');
+  assert.match(bar, /if \(!token \|\| readAuthSession\(\)\) return Promise\.resolve\(false\);/, 'a page that already holds a session keeps it');
+  assert.match(bar, /headers: \{ authorization: "Bearer " \+ token, "content-type": "application\/json" \}, body: "\{\}"/);
+  assert.match(bar, /body: JSON\.stringify\(\{ type: "magiclink", token_hash: j\.token_hash \}\)/);
+  assert.match(bar, /expires_at: Number\(s\.expires_at\) \|\| Math\.floor\(Date\.now\(\) \/ 1000\) \+ \(Number\(s\.expires_in\) \|\| 3600\)/, 'the stored session carries its expiry, as the auth client writes it');
+  assert.match(bar, /localStorage\.setItem\("mccdb_session", session\);/);
+  assert.match(bar, /location\.reload\(\);/);
+  assert.match(bar, /arriveWithHandoff\(\)\.then\(function \(carried\) \{ if \(!carried\) refreshAuthState\(\); \}\);/);
+  /* the Worker side */
+  const route = await read('workers/mccluster/src/auth-handoff.js');
+  assert.match(route, /export const HANDOFF_PATH = '\/v1\/auth\/handoff';/);
+  assert.match(route, /if \(!origin \|\| !allowedOrigins\(env\)\.includes\(origin\)\) return fail\(request, env, 'only the ecosystem\\'s own hosts can carry a sign-in across', 403\);/);
+  assert.match(route, /body: JSON\.stringify\(\{ type: 'magiclink', email: user\.email \}\)/);
+  assert.doesNotMatch(route, /refresh_token/, 'no refresh token ever leaves the route: one session per origin');
+  const entry = await read('workers/mccluster/src/entry-platform.js');
+  assert.match(entry, /const handoff = await handleAuthHandoff\(request, env\);/);
 });

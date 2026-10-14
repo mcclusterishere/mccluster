@@ -528,7 +528,88 @@
     });
   }
 
-  refreshAuthState();
+  /* ---------- ONE M ACCOUNT, EVERY HOST ----------
+     Owner, 2026-10-14: "one M Account works on every site". A session is
+     per origin (localStorage), so crossing from one house to another
+     while signed in used to mean arriving as a guest. Now the bar carries
+     the sign-in across. LEAVING: a cross-host link to one of the
+     ecosystem's own origins gets the member's current access token in its
+     URL fragment, the way auth/seek-first-handoff.html already hands a
+     token to the console: a fragment is never sent to any server and
+     never appears in a Referer. ARRIVING: before anything else, the
+     fragment is scrubbed from the address; then the token is exchanged at
+     the API (POST /v1/auth/handoff, which answers only the ecosystem's own
+     origins and checks the token with Supabase) for a one-time magic-link
+     token, Supabase turns that into a session of THIS origin's own, it is
+     stored the ordinary way, and the page reloads signed in. No password,
+     no second sign-in. A page that already holds a session keeps it. */
+  var API_ORIGIN = "https://api.mccluster.org";
+  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://humanuprise.com", "https://www.humanuprise.com"];
+  var HANDOFF = "mcc_handoff";
+  function crossesHouse(url) {
+    return url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && ECOSYSTEM.indexOf(url.origin) !== -1;
+  }
+  /* the link, with the sign-in riding along when there is one to carry */
+  function handoffHref(dest) {
+    var url;
+    try { url = new URL(dest, location.href); } catch (e) { return Promise.resolve(dest); }
+    var stored = readAuthSession();
+    if (!crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
+    var fresh = window.MCC && typeof window.MCC.refreshIfNeeded === "function"
+      ? window.MCC.refreshIfNeeded().then(function (s) { return (s && s.access_token) || stored.access_token; })
+      : Promise.resolve(stored.access_token);
+    return fresh.catch(function () { return stored.access_token; }).then(function (token) {
+      url.hash = (url.hash && url.hash !== "#" ? url.hash + "&" : "#") + HANDOFF + "=" + encodeURIComponent(token);
+      return url.href;
+    });
+  }
+  function arriveWithHandoff() {
+    var hash = location.hash || "";
+    var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
+    if (!m) return Promise.resolve(false);
+    var token = decodeURIComponent(m[1] || "");
+    var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
+    if (rest === "#") rest = "";
+    try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
+    if (!token || readAuthSession()) return Promise.resolve(false);
+    return fetch(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("handoff refused")); })
+      .then(function (j) {
+        if (!j || !j.token_hash) throw new Error("no token");
+        return fetch(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) });
+      })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("verify refused")); })
+      .then(function (s) {
+        if (!s || !s.access_token) throw new Error("no session");
+        var session = JSON.stringify({
+          access_token: s.access_token, refresh_token: s.refresh_token || "",
+          expires_at: Number(s.expires_at) || Math.floor(Date.now() / 1000) + (Number(s.expires_in) || 3600)
+        });
+        localStorage.setItem("mccdb_session", session);
+        try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
+        emit("mcc:handoff", { ok: true });
+        location.reload();
+        return true;
+      })
+      .catch(function () { emit("mcc:handoff", { ok: false }); return false; });
+  }
+  /* any link on the page that crosses to another of the houses carries the sign-in */
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".appbar")) return;
+    var url;
+    try { url = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
+    if (!crossesHouse(url)) return;
+    var stored = readAuthSession();
+    if (!stored || !stored.access_token) return;
+    e.preventDefault();
+    handoffHref(url.href).then(function (h) { location.href = h; }, function () { location.href = url.href; });
+  });
+
+  arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
   window.addEventListener("storage", function (e) {
     if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") refreshAuthState();
   });
@@ -675,7 +756,9 @@
       return;
     }
     veilOn();
-    setTimeout(function () { location.href = dest; }, wait);
+    setTimeout(function () {
+      handoffHref(dest).then(function (h) { location.href = h; }, function () { location.href = dest; });
+    }, wait);
   }
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
