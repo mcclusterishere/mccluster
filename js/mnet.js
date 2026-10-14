@@ -2057,7 +2057,9 @@
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
-      host.innerHTML=missions.all.length?missions.all.map(missionCard).join(""):'<div class="mn__empty">No open missions right now.</div>';
+      var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
+        ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
+      host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
       setStatus($("mnMissionStatus"),"");
     }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
   }
@@ -2086,7 +2088,7 @@
   /* THE FELLOWSHIP. Three verified actions open the application; the
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
-    var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=Math.max(0,need-verified);
+    var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
     if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Human Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
@@ -2238,6 +2240,20 @@
       if($("mnMissionProofType"))$("mnMissionProofType").value="video";
       $("mnMissionTitle").textContent=m.title;
       $("mnMissionDetail").innerHTML='<p>'+esc(m.description||"")+'</p><p><strong>'+esc(m.base_points)+' base points</strong> · difficulty '+esc(m.difficulty)+'</p><p>'+esc((m.skills||[]).join(" · "))+'</p><p class="mn__fund-line" id="mnMissionFund" role="status">Checking funding\u2026</p>';
+      if(m.id==="368fd75a-77d2-4de0-9722-17020674a914"){
+        $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/mnet.html?view=missions#mnRecord">Policy team application → Action Record</a></p>';
+      }
+      if(m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"||m.id==="ba66d4a3-cb62-4403-9b56-7ee00af059d8"){
+        var category=m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"?"recycling":"black_business";
+        var sources=document.createElement("section");sources.className="mn__resource-sources";sources.textContent="Loading official directories…";
+        $("mnMissionDetail").appendChild(sources);
+        sbRest("action_resource_sources?category=eq."+category+"&published=eq.true&select=name,directory_url&order=name.asc")
+          .then(function(rows){if(version!==missionOpenVersion)return;
+            sources.innerHTML='<p class="mn__eyebrow">Find a real place · official directories</p>'+
+              (rows||[]).map(function(r){return '<p><a target="_blank" rel="noopener noreferrer" href="'+esc(r.directory_url)+'">'+esc(r.name)+' ↗</a></p>';}).join("")+
+              '<p class="mn__hint">External directories only. In-app directions require licensed, verified individual places.</p>';
+          }).catch(function(){sources.textContent="Directories unavailable. Try again later.";});
+      }
       fundState(m.id,m.campaign_id||"").then(function(st){var line=$("mnMissionFund");if(line&&missions.current&&missions.current.id===m.id)line.innerHTML=fundLineHtml(st);});
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
