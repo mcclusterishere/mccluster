@@ -115,7 +115,7 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid,uuid) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid) TO authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.submit_antisocial_level(uuid,smallint,text,text,uuid,uuid,uuid) TO authenticated,service_role;
 
 CREATE OR REPLACE FUNCTION public.review_antisocial_level(
  p_assignment_id uuid,p_level smallint,p_decision text,p_note text DEFAULT NULL
