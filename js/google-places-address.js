@@ -9,6 +9,7 @@ function reset(){selected=null;if(status)status.textContent='Select an address f
 ['acCreateCity','acCreateRegion','acCreatePostal','acCreateCountry'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',reset)});
 window.MCC_VERIFIED_ADDRESS={isSelected:function(){return !!selected&&field.value===selected.address;},placeId:function(){return selected?selected.id:null;}};
 var key=window.MCC_GOOGLE_MAPS_BROWSER_KEY;
+if(window.MCC_REQUIRE_GOOGLE_PLACES_ADDRESS!==true){if(status)status.textContent='Address verification will be required when enabled. Enter your mailing address for now.';return;}
 if(!key){if(status)status.textContent='Google address verification is not configured yet. Signup is temporarily unavailable.';return;}
 function init(){if(!window.google||!google.maps||!google.maps.places){if(status)status.textContent='Google Places could not load. Please retry later.';return;}
 var autocomplete=new google.maps.places.Autocomplete(field,{types:['address'],fields:['place_id','formatted_address','address_components','geometry']});
