@@ -124,6 +124,35 @@ VALUES
    'Partner and hotel confirmation only. Redact all guest information; do not require identifiable footage. No public reservation or promise until approved and funded.')
 ON CONFLICT(mission_id) DO NOTHING;
 
+-- Keep campaign copy aligned with the actual public mission catalog.
+UPDATE public.action_campaigns
+SET body=$copy$Choose an action that helps: provide meals, find services for yourself or someone you know, support approved housing navigation, or help fund One Safe Night when a verified hotel partner and funding are in place. No one needs to expose their identity or vulnerability to receive help. Volunteer documentation is optional and must protect recipients.$copy$,
+    phases='[
+      {"key":"mobilize","title":"Mobilize","detail":"Build a trusted local field and service partner network."},
+      {"key":"serve","title":"Serve","detail":"Complete direct food assistance and connect people to services."},
+      {"key":"navigate","title":"Find help","detail":"Find and share services privately; no proof of need."},
+      {"key":"house","title":"One Safe Night","detail":"Fund and arrange accommodation only after provider, guest and payment checks."},
+      {"key":"prove","title":"Verify","detail":"Verify volunteer outcomes without identifying service recipients."}
+    ]'::jsonb,
+    updated_at=now()
+WHERE id='homelessness-action-001';
+
+UPDATE public.action_campaigns
+SET body=$copy$Equity Uprise turns the Docket 516R public record into practical policy and original creative work: read the record, write a policy memo, co-write a reform paper, or write a song for the initiative. A verified policy memo opens the existing fellowship application for the policy team; the original three-verified-action path also remains available. Applications are reviewed, not automatically accepted.$copy$,
+    phases='[
+      {"key":"read","title":"Read","detail":"Learn from the Docket 516R record."},
+      {"key":"write","title":"Write","detail":"Produce a sourced policy memo and qualify to apply."},
+      {"key":"reform","title":"Reform","detail":"Co-write a costed policy reform paper."},
+      {"key":"song","title":"Write a Song","detail":"Submit an original Equity Uprise song for editorial review."},
+      {"key":"cohort","title":"Policy team","detail":"Apply after a verified memo or three verified actions; desk reviews applications."}
+    ]'::jsonb,
+    updated_at=now()
+WHERE id='equity-uprise-003';
+
+UPDATE public.action_cohorts
+SET description='Forming now: Equity Uprise policy writers. A verified policy memo or three verified Action Network missions opens the existing fellowship application; acceptance and cohort admission are reviewed by the desk.'
+WHERE id='d68908b7-1665-4d83-9895-6adeb2204896';
+
 -- Public catalog can link to these directories today; these organizations
 -- have NOT granted API/data redistribution rights or agreed to partnership.
 CREATE TABLE IF NOT EXISTS public.action_resource_sources (
