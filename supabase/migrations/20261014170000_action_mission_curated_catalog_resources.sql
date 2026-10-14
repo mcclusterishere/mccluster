@@ -8,77 +8,62 @@
 --
 -- A user who has joined a retiring mission can still finish it. All other
 -- retiring missions close; paused/closed rows remain queryable for receipts.
-WITH retirement(id) AS (
-  VALUES
-    ('51000000-0000-4000-8000-000000000002'::uuid), -- care kits
-    ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- 10 care kits
-    ('a195dc51-5593-5640-b51c-836850c3babf'::uuid), -- audit circle
-    ('a4333d6f-52a6-511a-b957-fb4f21916b88'::uuid), -- shared resource -> projects
-    ('3467cf5e-9b43-515c-a8bd-8f96c30f7421'::uuid), -- correct it
-    ('e83aaa5e-2e44-53e4-9ffc-6eb92f457096'::uuid), -- cross the room
-    ('4872dbe5-bafe-5464-986c-622941927ba7'::uuid), -- fix resource list
-    ('ed2e7ae0-32d7-5a8e-b70a-c0f7b7958265'::uuid), -- listen
-    ('8830ae39-4033-5131-98e6-d590a6481f25'::uuid), -- make introduction
-    ('4c57292e-7835-5d29-b1ac-7de53e5bbb81'::uuid), -- community history
-    ('51587300-5442-5708-8ccb-13bb4145d7b0'::uuid), -- teach
-    ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- community fridge
-    ('bbcffaaf-f437-4355-a1c2-7bf2a36dfa62'::uuid), -- school lunch debt
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- feed five (duplicate)
-    ('9144bd42-f94a-494e-a17a-a45f9e155f86'::uuid), -- minerals research -> guidance
-    ('7cfac26a-d757-42b9-803b-970f9d5030a8'::uuid), -- public comment
-    ('5276f3b8-61fe-5363-8690-80d98a88878b'::uuid), -- map
-    ('a0a81625-9ac2-4167-a133-fa5d4f63ea75'::uuid), -- voter (hold)
-    ('51000000-0000-4000-8000-000000000005'::uuid), -- documentation -> media workflow
-    ('6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04'::uuid), -- freestyle
-    ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- sneaker request -> specialist
-    ('42a2b39a-831f-496b-83da-b4ef71cc2b43'::uuid), -- suspicious listing -> specialist
-    ('24b16f1a-0f76-4390-a755-eba24f641f71'::uuid), -- sneaker review -> specialist
-    ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- ten care kits
-    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- free cuts (hold)
-    ('ebe8f4ee-bc56-4ed6-83f0-f501c68490cf'::uuid), -- laundry (hold)
-    ('b2ab3911-78ae-490c-bd95-21573c8c34e9'::uuid), -- hiring help (hold)
-    ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- specialist
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- duplicate
-    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- hold
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- duplicate
-    ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- fridge
-    ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- care kits
-    ('d207ca6b-a626-49c5-9fbb-fbc8204f02bb'::uuid), -- free cuts
-    ('e1da8234-cd83-485d-b4a9-4fb8cf14add3'::uuid), -- sneakers
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- meals
-    ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid)  -- meals
+-- Retire rejected/duplicate missions without destroying receipts or history.
+-- If anyone has already started a mission, pause instead of closing it so
+-- submit_action_proof() still accepts the participant's completion.
+WITH retired(id) AS (
+ VALUES
+  ('a195dc51-5593-5640-b51c-836850c3babf'::uuid), -- Audit your own circle
+  ('51000000-0000-4000-8000-000000000002'::uuid), -- Build and hand out two care kits
+  ('3467cf5e-9b43-515c-a8bd-8f96c30f7421'::uuid), -- Correct it with sources
+  ('e83aaa5e-2e44-53e4-9ffc-6eb92f457096'::uuid), -- Cross the room
+  ('dd82194b-9f1d-482d-860d-8913f0094136'::uuid), -- Feed someone who's unhoused
+  ('7cfac26a-d757-42b9-803b-970f9d5030a8'::uuid), -- File a public comment
+  ('4872dbe5-bafe-5464-986c-622941927ba7'::uuid), -- Fix the resource list
+  ('05d92dc9-e101-46c0-8cbb-1b53fc3503ea'::uuid), -- Hand out 10 care kits
+  ('ed2e7ae0-32d7-5a8e-b70a-c0f7b7958265'::uuid), -- Listen, with permission
+  ('8830ae39-4033-5131-98e6-d590a6481f25'::uuid), -- Make an introduction across communities
+  ('5276f3b8-61fe-5363-8690-80d98a88878b'::uuid), -- Map who is represented
+  ('bbcffaaf-f437-4355-a1c2-7bf2a36dfa62'::uuid), -- Pay off a kid's school lunch debt
+  ('d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'::uuid), -- Spend with intention
+  ('a4fbc309-3878-4db4-ba41-a0c4f1ddf0d7'::uuid), -- Stock a community fridge
+  ('51587300-5442-5708-8ccb-13bb4145d7b0'::uuid), -- Teach what you verified
+  ('9144bd42-f94a-494e-a17a-a45f9e155f86'::uuid), -- Trace the minerals in your phone
+  ('4c57292e-7835-5d29-b1ac-7de53e5bbb81'::uuid) -- Trace your own community history
 )
 UPDATE public.action_missions m
-SET status = CASE WHEN EXISTS (
+SET status=CASE WHEN EXISTS (
   SELECT 1 FROM public.action_mission_assignments a
   WHERE a.mission_id=m.id AND a.status IN ('joined','in_progress','submitted','rejected')
 ) THEN 'paused' ELSE 'closed' END,
 updated_at=now()
-WHERE m.id IN (SELECT id FROM retirement)
-  AND m.status <> 'closed';
+WHERE m.id IN (SELECT id FROM retired) AND m.status <> 'closed';
 
--- Held programs are not published until a local sponsor/operator exists.
+-- Move specialist/creator workflows out of public discovery. No deletion.
+UPDATE public.action_missions
+SET status='paused',updated_at=now()
+WHERE id IN (
+ 'a4333d6f-52a6-511a-b957-fb4f21916b88', -- Build the shared resource
+ '42a2b39a-831f-496b-83da-b4ef71cc2b43', -- Document a suspicious listing
+ '51000000-0000-4000-8000-000000000005', -- Document one completed homelessness action
+ '6ec6b7a5-5290-4ba1-9f05-8f3a82e1cc04', -- Freestyle Containment Protocol
+ 'e1da8234-cd83-485d-b4a9-4fb8cf14add3', -- Get my kicks legit checked
+ '24b16f1a-0f76-4390-a755-eba24f641f71' -- Help legit check a pair
+);
+
+-- Keep the future campaigns unpublished until local partners are ready.
 UPDATE public.action_missions
 SET status='draft',updated_at=now()
 WHERE id IN (
- 'd207ca6b-a626-49c5-9fbb-fbc8204f02bb', -- free cuts
- 'ebe8f4ee-bc56-4ed6-83f0-f501c68490cf', -- laundry
- 'a0a81625-9ac2-4167-a133-fa5d4f63ea75', -- voter registration
- 'b2ab3911-78ae-490c-bd95-21573c8c34e9'  -- hiring help
+ 'd207ca6b-a626-49c5-9fbb-fbc8204f02bb', -- Free cuts
+ 'b2ab3911-78ae-490c-bd95-21573c8c34e9', -- Get someone hired
+ 'a0a81625-9ac2-4167-a133-fa5d4f63ea75', -- Help three people check their voter registration
+ 'ebe8f4ee-bc56-4ed6-83f0-f501c68490cf' -- Laundry day's on you
 ) AND NOT EXISTS (
  SELECT 1 FROM public.action_mission_assignments a
  WHERE a.mission_id=action_missions.id
-   AND a.status IN ('joined','in_progress','submitted','rejected')
+ AND a.status IN ('joined','in_progress','submitted','rejected')
 );
-
--- General spending was rejected in favor of the explicit $20 action.
-UPDATE public.action_missions
-SET status='closed',updated_at=now()
-WHERE id='d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c'
-  AND NOT EXISTS (SELECT 1 FROM public.action_mission_assignments a WHERE a.mission_id=action_missions.id);
 
 -- Explicit keeps and restorations: Equity paper, Black business spend.
 UPDATE public.action_missions
@@ -107,8 +92,10 @@ WHERE id='51000000-0000-4000-8000-000000000003';
 -- attached to the media-only mission until it is moved to a creator workflow.
 UPDATE public.action_bounties
 SET status='paused',updated_at=now()
-WHERE mission_id='51000000-0000-4000-8000-000000000005'
-  AND status='open';
+WHERE mission_id IN (
+ '51000000-0000-4000-8000-000000000005',
+ '51000000-0000-4000-8000-000000000003'
+) AND status='open';
 
 -- Keep the original partner-only housing-navigation lane paused.
 UPDATE public.action_missions
