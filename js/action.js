@@ -402,7 +402,7 @@
     var chapter = C.chapter && typeof C.chapter === "object" ? C.chapter : {};
     var custom = Array.isArray(chapter.intake_choices) ? chapter.intake_choices.filter(function (x) { return x && x.label; }) : [];
     if (custom.length) {
-      return custom.map(function (x, i) {
+      var filtered = custom.map(function (x, i) {
         var out = Object.assign({}, x);
         out.key = out.key || (out.kind || "action") + "-" + i;
         if (out.mission_id) {
@@ -415,6 +415,7 @@
         }
         return out;
       }).filter(Boolean);
+      if (filtered.length) return filtered;
     }
     return MISSIONS.map(function (m) {
       return {
