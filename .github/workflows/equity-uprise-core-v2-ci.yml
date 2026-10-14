@@ -184,9 +184,9 @@ jobs:
   publish-generated:
     name: Publish generated building artifacts
     needs: validate
-    # Same-repository PRs may repair stale generated artifacts without weakening validation.
-    # Forked PRs never receive a write token.
-    if: ${{ always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && needs.validate.result == 'failure') || (github.ref_name != 'main' && ((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))))) }}
+    # Never grant branch-writing automation to pull_request validation.
+    # Artifact publishing requires explicit workflow_dispatch opt-in on a non-main branch.
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' && inputs.publish_generated == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
