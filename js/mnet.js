@@ -2237,6 +2237,7 @@
       setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return;}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
         var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
