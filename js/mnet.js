@@ -2294,8 +2294,9 @@
         if(!missions.current||missions.current.id!==m.id)return;
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=m.id===ANTISOCIAL_ID;
         if(m.id===ANTISOCIAL_ID)antisocialPaint();
-        setStatus($("mnMissionDialogStatus"),"Mission started. Describe what you're about to do, then open the camera.","ok");
-        if($("mnMissionProofStatement"))$("mnMissionProofStatement").focus();
+        setStatus($("mnMissionDialogStatus"),m.id===ANTISOCIAL_ID?"Mission started. Begin Level 1: High Five. Record only with permission.":"Mission started. Describe what you're about to do, then open the camera.","ok");
+        var focusTarget=m.id===ANTISOCIAL_ID?$("mnAntisocialStatement"):$("mnMissionProofStatement");
+        if(focusTarget&&!focusTarget.closest("[hidden]"))focusTarget.focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
         loadMissions();
       })
