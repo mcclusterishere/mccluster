@@ -5,7 +5,7 @@
   "migration_count": 297,
   "latest_version": "20261014070000",
   "latest_name": "candidate_labs_media_graph",
-  "ledger_sha256": "a2ebb5f3524e79065de1e5ef88be4c32c62b84de98fbf140bccde54d930fb4be",
+  "ledger_sha256": "419309ca91c8b24603a19d5fab1189cdf7406eb43c8ed57a8adee9fd8ab6d39d",
   "migrations": [
     {
       "version": "0001",
