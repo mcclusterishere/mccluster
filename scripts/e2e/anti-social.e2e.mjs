@@ -218,6 +218,11 @@ check(S, 'the Missions card says one mission, three levels · you: 2 / 3', /One 
 await page.screenshot({ path: join(OUT, 'record-2-of-3.png') });
 await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('.mn__actcard--collab', { timeout: 60000 });
+/* the evidence shot waits for the Earth's tiles (up to 25s) and brings the card into view */
+const globe = page.frame({ url: /action-globe\.html/ });
+if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+await page.evaluate(() => { const c = document.querySelector('.mn__actcard--collab'); c.scrollIntoView({ block: 'center' }); });
+await page.waitForTimeout(800);
 const card = await page.evaluate(() => { const c = document.querySelector('.mn__actcard--collab'); return { eyebrow: c.querySelector('.mn__actcard-eyebrow').textContent, title: c.querySelector('.mn__actcard-title').textContent, by: c.querySelector('.mn__collab-by').textContent.replace(/\s+/g, ' '), link: (c.querySelector('a[target="_blank"]') || {}).href || '' }; });
 check(S, 'the feed card reads Made together with both names and the work', card.eyebrow === 'Made together · in review' && card.title === 'North Bank' && /Fixture Ana & Fixture You/.test(card.by) && card.link === 'https://example.org/north-bank', card);
 check(S, 'the card is drawn from the server\'s vouch, not the post\'s own metadata', world.calls.some((c) => c.rpc === 'action_collaboration_cards' && (c.body.p_post_ids || []).includes(POST)));
