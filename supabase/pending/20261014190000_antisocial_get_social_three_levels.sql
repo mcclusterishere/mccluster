@@ -199,9 +199,13 @@ CREATE OR REPLACE FUNCTION public.antisocial_public_collaborations(p_member_m_ui
 RETURNS TABLE(post_id uuid,collaborator_m_uid uuid,collaborator_name text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
 AS $$
- SELECT own.post_id,other_assignment.m_uid,coalesce(np.display_name,'Action Network member')
+ SELECT own.post_id,
+   CASE WHEN np.visibility='public' AND np.discoverable THEN other_assignment.m_uid ELSE NULL END,
+   CASE WHEN np.visibility='public' AND np.discoverable THEN np.display_name ELSE 'Action Network member' END
  FROM public.action_antisocial_levels own
  JOIN public.action_mission_assignments mine ON mine.id=own.assignment_id
+ JOIN public.network_profiles own_profile ON own_profile.m_uid=mine.m_uid
+   AND own_profile.visibility='public' AND own_profile.discoverable
  JOIN public.action_antisocial_levels other ON other.post_id=own.post_id
    AND other.level=3 AND other.assignment_id<>own.assignment_id
  JOIN public.action_mission_assignments other_assignment ON other_assignment.id=other.assignment_id
