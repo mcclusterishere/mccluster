@@ -6,6 +6,7 @@ const migration = readFileSync(new URL('../../supabase/migrations/20261014170000
 const application = readFileSync(new URL('../../supabase/migrations/20261014170100_equity_policy_memo_application_path.sql', import.meta.url), 'utf8');
 const ui = readFileSync(new URL('../../js/mnet.js', import.meta.url), 'utf8');
 const publicHelp = readFileSync(new URL('../../help.html', import.meta.url), 'utf8');
+const action = readFileSync(new URL('../../js/action.js', import.meta.url), 'utf8');
 
 test('curation is non-destructive and preserves proof for in-progress participants', () => {
   assert.doesNotMatch(migration, /\bdelete\s+from\s+public\.action_missions\b/i);
@@ -68,4 +69,11 @@ test('help is publicly accessible and shareable without personal-data collection
   assert.doesNotMatch(publicHelp, /<form[\s>]/i);
   assert.match(publicHelp, /UNHCR Help/);
   assert.match(publicHelp, /IFRC National Societies/);
+});
+
+test('campaign landing hides paused/closed missions and bounties', () => {
+  assert.match(action, /status=eq\.open/);
+  assert.doesNotMatch(action, /status=in\.\(open,paused\)/);
+  assert.match(action, /if \(!m\) return null; \/\* retired missions/);
+  assert.match(action, /b\.status === "open"/);
 });
