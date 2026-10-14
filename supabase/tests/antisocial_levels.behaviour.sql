@@ -127,6 +127,15 @@ do $$ declare r record; begin
   if r.mine_status <> 'pending' then raise exception 'confirmed: %', r; end if;
 end $$;
 
+-- Even when reviewing the OTHER submission, a contributing admin cannot settle themselves.
+-- Give Dev the desk claim for this call; selecting Ana's submission must still fail.
+select pg_temp.as_user('00000000-0000-4000-8000-000000000002', 'matthew@mccluster.org');
+select pg_temp.must_fail(format($q$ select public.review_antisocial_level('%s', 3::smallint, 'verified', null) $q$, (select v from ids where k = 'ana')), '%cannot review own work%');
+do $$ begin
+  if exists (select 1 from public.action_antisocial_levels where level = 3 and status = 'verified') then raise exception 'self-review changed the pair'; end if;
+  if exists (select 1 from public.action_points_ledger) then raise exception 'self-review awarded points'; end if;
+end $$;
+
 -- one verification settles both: levels, assignments, 150 + 100 each
 select pg_temp.as_user('00000000-0000-4000-8000-000000000009', 'matthew@mccluster.org');
 do $$ declare r jsonb; begin

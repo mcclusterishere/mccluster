@@ -473,6 +473,11 @@ begin
        and oa.id <> v_a.id
      limit 1;
     if v_other is null then raise exception 'collaborator must join, finish levels 1-2, and submit this same work'; end if;
+    -- One review settles both assignments: neither contributor may review the pair.
+    if exists (select 1 from public.action_mission_assignments
+               where id = v_other and user_id = (select auth.uid())) then
+      raise exception 'cannot review own work';
+    end if;
   end if;
   update public.action_antisocial_levels
      set status = p_decision, review_note = left(coalesce(p_note, ''), 500), reviewed_at = now(), updated_at = now()
