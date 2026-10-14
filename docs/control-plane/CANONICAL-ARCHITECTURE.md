@@ -32,9 +32,9 @@ Two public web properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIE
 | --- | --- | --- |
 | `matthew.mccluster.org` | Matthew McCluster (Person) | GitHub Pages from this repository |
 | `mccluster.org` | McCluster Corp (Organization) | Worker `mccluster`, host-routed: company pages generated from `data/seo/company-site.json`; every other path keeps a 301 to `matthew.mccluster.org` |
+| `humanuprise.com` | McCluster Corp (Organization) | Worker `mccluster`, host-routed: the Human Uprise World experience from `workers/mccluster/src/human-uprise`; other paths redirect to `matthew.mccluster.org` |
 
-Serving the company host is public ingress and routing, inside the one Worker; it adds no Worker, store or
-identity. The router answers only its own hosts and is inert until the owner routes the apex to the Worker.
+Serving the company and Human Uprise hosts is public ingress and routing inside the one Worker; it adds no Worker, store or identity. The Human Uprise door remains inert until the owner routes `humanuprise.com/*` to the Worker. Human Uprise shares the M Account identity spine and canonical Supabase project, not a second login system.
 
 ## Canonical orchestration
 
