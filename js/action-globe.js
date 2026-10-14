@@ -1,0 +1,16 @@
+(function(){'use strict';
+const SB='https://zmnhbrjyhxzhkxmhkexs.supabase.co',KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+const $=id=>document.getElementById(id);let missions=[],cities=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true;
+async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
+function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
+function draw(){clear(missionPins);clear(cityPins);
+if(showMissions)missions.forEach((m,n)=>missionPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude),point:{pixelSize:12,color:Cesium.Color.RED,outlineColor:Cesium.Color.WHITE,outlineWidth:2},properties:{missionIndex:n}})));
+if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.city_label+' · '+c.member_count,font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
+function show(n){if(!missions.length)return;i=(n+missions.length)%missions.length;const m=missions[i];$('title').textContent=m.title;$('description').textContent=m.description;$('path').textContent=(m.action_path||'mission').replace('_',' ').toUpperCase()+' · '+m.city_label;$('position').textContent=(i+1)+' / '+missions.length;$('missionLink').href='mnet.html?mission='+encodeURIComponent(m.mission_id);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude,1300000),duration:1.2})}
+async function boot(){viewer=new Cesium.Viewer('globe',{baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false});viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(0,15,19000000)});
+viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n))show(n)},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+$('previous').onclick=()=>show(i-1);$('next').onclick=()=>show(i+1);
+$('missionsLayer').onclick=()=>{showMissions=!showMissions;draw()};$('citiesLayer').onclick=()=>{showCities=!showCities;draw()};
+let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY},{passive:true});deck.addEventListener('touchend',e=>{if(touchY===undefined)return;const d=e.changedTouches[0].clientY-touchY;if(Math.abs(d)>45)show(i+(d<0?1:-1));touchY=undefined},{passive:true});
+try{[missions,cities]=await Promise.all([rpc('action_globe_public_missions'),rpc('action_globe_public_cities')]);draw();$('status').textContent=missions.length?'':'No approved globe missions published yet.';if(missions.length){$('status').hidden=true;$('mission').hidden=false;show(0)}}catch(e){$('status').textContent='Globe data is not available yet.';console.warn(e)}}
+if(window.Cesium)boot();else $('status').textContent='Unable to load globe.';})();
