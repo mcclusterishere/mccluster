@@ -375,7 +375,7 @@
   function loadMissions() {
     if (!C) return Promise.resolve([]);
     var path = "action_missions?campaign_id=eq." + encodeURIComponent(C.id) +
-      "&status=in.(open,paused)&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,status,skills&order=created_at.asc&limit=50";
+      "&status=eq.open&select=id,campaign_id,title,description,domain,difficulty,base_points,proof_required,status,skills&order=created_at.asc&limit=50";
     return rest(path).then(function (rows) {
       MISSIONS = Array.isArray(rows) ? rows : [];
       var requested = String(q.get("mission") || "");
@@ -407,13 +407,14 @@
         out.key = out.key || (out.kind || "action") + "-" + i;
         if (out.mission_id) {
           var m = missionRow(out.mission_id);
+          if (!m) return null; /* retired missions must not reappear via custom intake */
           if (m) {
             out.status = m.status;
             if (!out.note) out.note = m.description;
           }
         }
         return out;
-      });
+      }).filter(Boolean);
     }
     return MISSIONS.map(function (m) {
       return {
@@ -591,7 +592,7 @@
     BOUNTIES = data || { bounties: [] };
     var sec = $("anBounties"), box = $("anBountyList");
     if (!sec || !box) return;
-    var rows = Array.isArray(BOUNTIES.bounties) ? BOUNTIES.bounties : [];
+    var rows = Array.isArray(BOUNTIES.bounties) ? BOUNTIES.bounties.filter(function (b) { return b && b.status === "open"; }) : [];
     sec.hidden = !rows.length;
     if (!rows.length) return;
     box.textContent = "";
