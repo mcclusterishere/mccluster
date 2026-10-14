@@ -1915,6 +1915,7 @@
     if(missions.returnHref){location.assign(missions.returnHref);return;}
     try{history.replaceState(null,"","/mnet.html"+(missions.campaign?"?view=missions&campaign="+encodeURIComponent(missions.campaign):""));}catch(_){}
   }
+  var missionOpenVersion=0;
   var HELP_MISSION_ID="51000000-0000-4000-8000-000000000003";
   var RECYCLE_MISSION_ID="49d654e1-dfc8-42aa-a26e-22912ebf8dc6";
   var BLACK_BUSINESS_MISSION_ID="ba66d4a3-cb62-4403-9b56-7ee00af059d8";
@@ -1950,7 +1951,6 @@
         picker.addEventListener("change",paint);paint();
       }).catch(function(){if(version===missionOpenVersion)section.innerHTML='<p>Resource directory is unavailable right now. Try the official 211 or local public-service directory directly.</p>';});
   }
-  var missionOpenVersion=0;
   function openMission(id){
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
