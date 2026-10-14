@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const migration = readFileSync(new URL('../../supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql', import.meta.url), 'utf8');
 const resources = readFileSync(new URL('../../supabase/migrations/20261014185255_action_resource_sources_link_only.sql', import.meta.url), 'utf8');
-const application = readFileSync(new URL('../../supabase/pending/20261014170100_equity_policy_memo_application_path.sql', import.meta.url), 'utf8');
+const application = readFileSync(new URL('../../supabase/migrations/20261014185932_equity_policy_memo_application_path.sql', import.meta.url), 'utf8');
 const ui = readFileSync(new URL('../../js/mnet.js', import.meta.url), 'utf8');
 const publicHelp = readFileSync(new URL('../../help.html', import.meta.url), 'utf8');
 const action = readFileSync(new URL('../../js/action.js', import.meta.url), 'utf8');
