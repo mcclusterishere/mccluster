@@ -186,3 +186,29 @@ $$;
 DROP TRIGGER IF EXISTS antisocial_no_legacy_proof ON public.action_proofs;
 CREATE TRIGGER antisocial_no_legacy_proof BEFORE INSERT OR UPDATE ON public.action_proofs
 FOR EACH ROW EXECUTE FUNCTION public.antisocial_block_legacy_proof();
+
+-- A publicly viewable, verified credit on BOTH profiles. A collaborator is
+-- never publicly credited until they themselves submitted the reciprocal post
+-- and both submissions passed desk review. Private proofs are not returned.
+CREATE OR REPLACE FUNCTION public.antisocial_public_collaborations(p_member_m_uid uuid)
+RETURNS TABLE(post_id uuid,collaborator_m_uid uuid,collaborator_name text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
+AS $$
+ SELECT own.post_id,other_assignment.m_uid,coalesce(np.display_name,'Action Network member')
+ FROM public.action_antisocial_levels own
+ JOIN public.action_mission_assignments mine ON mine.id=own.assignment_id
+ JOIN public.action_antisocial_levels other ON other.post_id=own.post_id
+   AND other.level=3 AND other.assignment_id<>own.assignment_id
+ JOIN public.action_mission_assignments other_assignment ON other_assignment.id=other.assignment_id
+ LEFT JOIN public.network_profiles np ON np.m_uid=other_assignment.m_uid
+ JOIN public.network_posts post ON post.id=own.post_id
+ WHERE own.level=3 AND own.status='verified' AND other.status='verified'
+   AND mine.status='verified' AND other_assignment.status='verified'
+   AND mine.m_uid=p_member_m_uid
+   AND own.collaborator_m_uid=other_assignment.m_uid
+   AND other.collaborator_m_uid=mine.m_uid
+   AND post.visibility='public' AND post.deleted_at IS NULL AND post.removed_at IS NULL
+   AND post.author_m_uid IN (mine.m_uid,other_assignment.m_uid);
+$$;
+REVOKE ALL ON FUNCTION public.antisocial_public_collaborations(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.antisocial_public_collaborations(uuid) TO anon,authenticated,service_role;
