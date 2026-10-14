@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const read=(p)=>readFile(p,"utf8");
 
-test("Control Instagram is a creator to Action Network funnel, not a detached publisher",async()=>{
+test("Control Instagram is a creator to Human Uprise funnel, not a detached publisher",async()=>{
   const [ui,router,meta,network,migration]=await Promise.all([
     read("js/control-room/instagram.js"),
     read("workers/mccluster/src/social/router.js"),
@@ -15,7 +15,7 @@ test("Control Instagram is a creator to Action Network funnel, not a detached pu
   assert.match(ui,/Make this actionable/);
   assert.match(ui,/id="igActionCampaign"/);
   assert.match(ui,/id="igActionMission"/);
-  assert.match(ui,/Also publish this content to the Action Network/);
+  assert.match(ui,/Also publish this content to Human Uprise/);
   assert.match(ui,/action_mission_id/);
   assert.match(ui,/publish_to_action_network/);
   assert.match(ui,/\/v1\/social\/action-targets/);

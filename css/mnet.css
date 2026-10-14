@@ -1,5 +1,5 @@
 /* ============================================================
-   THE ACTION NETWORK — the McCluster social surface (mnet.html).
+   HUMAN UPRISE — the McCluster social surface (mnet.html).
 
    Rebuilt in one piece rather than patched: the old sheet had grown
    three layers of overrides (a six-tab bar on a five-column grid, a
@@ -513,7 +513,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__composer, .mn__composer:focus-within { transform:none !important; }
 }
 
-/* Action Network identity: action is the product, not generic social posting. */
+/* Human Uprise identity: action is the product, not generic social posting. */
 .mn__manifesto{margin:18px 0 20px;padding:24px 20px 20px;border:1px solid var(--mn-rule-2);border-radius:24px;background:radial-gradient(circle at 92% 0,rgba(255,77,61,.22),transparent 38%),linear-gradient(145deg,#191310,#0b0908 72%);overflow:hidden}
 .mn__manifesto p,.mn__rail-k{margin:0;color:var(--mn-hot);font-size:.64rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
 .mn__manifesto h1{max-width:9ch;margin:7px 0 18px;font-family:var(--mn-display);font-size:clamp(2.7rem,12vw,4.8rem);font-weight:400;line-height:.88;text-transform:uppercase}
@@ -785,7 +785,7 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
   .mn__cliprow:has(select + input + select) { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) minmax(0, 11rem) auto; }
 }
 
-/* Action Network four-tab primary navigation; secondary destinations remain accessible. */
+/* Human Uprise four-tab primary navigation; secondary destinations remain accessible. */
 .mn__tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;overflow:visible}
 .mn__tabs>button{min-width:0;white-space:nowrap}
 .mn__quicklinks{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem}
@@ -793,5 +793,25 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__quicklinks button:hover,.mn__quicklinks button:focus-visible{opacity:1;text-decoration:underline}
 .mn__action--share{font:inherit;font-size:.85rem;cursor:pointer}
 
-/* The world is the primary feed. Legacy feed nodes remain for compatibility but are not displayed. */
-.mn__legacy-feed{display:none!important}.mn__world-home{position:relative;min-height:min(75dvh,850px);height:calc(100dvh - 230px);max-height:900px;overflow:hidden;border-radius:16px;background:#06080d;border:1px solid #312329}.mn__world-frame{display:block;width:100%;height:100%;border:0;background:#06080d}.mn__world-expand{position:absolute;top:12px;right:12px;padding:10px 14px;border:1px solid #b43c4c;border-radius:24px;background:#160b12e8;color:#fff;text-decoration:none;font-size:12px;z-index:2}@media(max-width:650px){.mn__world-home{height:calc(100dvh - 180px);min-height:55dvh;border-radius:0;margin:0 -12px}.mn__world-expand{top:10px;right:10px}}
+/* ---------- the world is the feed ----------
+   The Earth heads the World tab and the live network runs under it. Phone
+   first: a full-bleed globe a little over half the screen, so the composer
+   and the first post are still in sight; wider screens only get a taller,
+   rounded globe. Dragging the globe turns the Earth, so the page scrolls
+   from the feed below it. */
+.mn__world-home { position: relative; height: clamp(260px, 52dvh, 560px); scroll-margin-top: calc(118px + env(safe-area-inset-top, 0px)); margin: 0 -16px; overflow: hidden; background: #050912; border-block: 1px solid var(--mn-rule); }
+.mn__world-frame { display: block; width: 100%; height: 100%; border: 0; background: #050912; }
+.mn__world-expand { position: absolute; z-index: 2; top: 10px; right: 10px; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid rgba(255, 77, 61, 0.7); border-radius: 999px; background: rgba(10, 8, 7, 0.86); color: var(--mn-ink); font-size: 0.8rem; font-weight: 800; text-decoration: none; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.mn__world-caption { margin: 10px 0 0; color: var(--mn-dim); font-size: 0.82rem; line-height: 1.45; }
+.mn__world-focus { margin-top: 12px; padding: 14px 16px; border-radius: 20px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px rgba(255, 77, 61, 0.45); }
+.mn__world-focus h2 { margin: 4px 0 10px; font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
+.mn__world-focus .mn__eyebrow { overflow-wrap: anywhere; }
+.mn__world-focus-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mn__world-focus-row .mn__primary { width: auto; margin: 0; }
+.mn__world-feed { margin-top: 16px; }
+/* the post's door back to the map */
+.mn__globe-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-top: 8px; padding: 0 12px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.mn__globe-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mn-hot); box-shadow: 0 0 0 3px rgba(255, 77, 61, 0.25); }
+@media (min-width: 600px) {
+  .mn__world-home { height: clamp(320px, 56dvh, 620px); margin: 0; border: 1px solid var(--mn-rule); border-radius: 22px; }
+}

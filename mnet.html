@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Action Network · McCluster</title>
-  <meta name="description" content="The Action Network is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
+  <title>Human Uprise · McCluster</title>
+  <meta name="description" content="Human Uprise is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
@@ -14,11 +14,11 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
-  <main class="mn"><a href="action-globe.html" style="display:block;margin:10px 16px;padding:14px;border:1px solid #b32131;border-radius:14px;background:#19090c;color:#fff;text-decoration:none;font-weight:700">🌍 Make the world your feed <span style="font-weight:400">· Explore missions on the globe →</span></a>
+  <main class="mn">
     <header class="mn__top">
-      <a class="mn__brand" href="mnet.html" aria-label="Action Network home">
+      <a class="mn__brand" href="mnet.html" aria-label="Human Uprise home">
         <span class="mn__brand-plate"><img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" width="36" height="36"></span>
-        <span><strong>Action Network</strong><small>Founded by Equity Uprise</small></span>
+        <span><strong>Human Uprise</strong><small>Founded by Equity Uprise</small></span>
       </a>
       <!-- the header's one live signal: your unread alerts, without opening the tab -->
       <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
@@ -34,9 +34,9 @@
     <section class="mn__gate" id="mnSignedOut">
       <p class="mn__eyebrow">The place for doers.</p>
       <h1>Turn what you care about into action.</h1>
-      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. The Action Network is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
+      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. Human Uprise is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
       <div class="mn__panel">
-        <div class="mn__auth-tabs" role="tablist" aria-label="Action Network account">
+        <div class="mn__auth-tabs" role="tablist" aria-label="Human Uprise account">
           <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
           <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
@@ -63,11 +63,12 @@
         </div>
         <a class="mn__text-link" href="account.html?stay=1">Manage your M Account</a>
       </div>
+      <a class="mn__text-link" href="action-globe.html">Look around the world first →</a>
     </section>
 
     <section class="mn__gate" id="mnProfileGate" hidden>
       <button class="mn__back" id="mnProfileBack" type="button" hidden>← Back to feed</button>
-      <p class="mn__eyebrow">Your Action Network profile</p>
+      <p class="mn__eyebrow">Your Human Uprise profile</p>
       <h1 id="mnProfileTitle">Finish your profile.</h1>
       <p class="mn__lede">Pick a username. It is how people find you and mention you, here and on every McCluster product.</p>
       <form class="mn__panel mn__profile-form" id="mnProfileForm">
@@ -78,7 +79,7 @@
         <label class="mn__label" for="mnDisplay">Display name</label>
         <input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required>
 
-        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who the Action Network is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
+        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Human Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
 
         <label class="mn__label" for="mnHeadline">Headline</label>
         <input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?">
@@ -123,7 +124,7 @@
     </section>
 
     <section class="mn__app" id="mnApp" hidden>
-      <nav class="mn__tabs" aria-label="Action Network">
+      <nav class="mn__tabs" aria-label="Human Uprise">
         <button type="button" class="is-active" data-mn-view="feed">🌐 World</button>
         <button type="button" data-mn-view="missions">Campaigns</button>
         <button type="button" data-mn-view="messages">Inbox <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
@@ -167,11 +168,24 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
-        <section class="mn__world-home" aria-label="Make the world your feed">
-          <iframe class="mn__world-frame" src="action-globe.html?embedded=1" title="Interactive world missions globe" loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <a class="mn__world-expand" href="action-globe.html">Explore full world ↗</a>
+        <!-- THE WORLD IS THE FEED. The Earth sits on top of the live network:
+             a pin opens its mission here and narrows the feed to the posts
+             about it; a post that carries a mission can fly the Earth to it.
+             The frame reads public, admin-approved mission pins only. -->
+        <section class="mn__world-home" id="mnWorld" aria-label="The world">
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <a class="mn__world-expand" href="action-globe.html">Full world ↗</a>
         </section>
-        <div class="mn__legacy-feed" hidden>
+        <p class="mn__world-caption" id="mnWorldCaption" role="status">Drag the Earth. Tap a red pin to see what people are doing there.</p>
+        <section class="mn__world-focus" id="mnWorldFocus" aria-live="polite" hidden>
+          <p class="mn__eyebrow" id="mnWorldFocusWhere"></p>
+          <h2 id="mnWorldFocusTitle"></h2>
+          <div class="mn__world-focus-row">
+            <button class="mn__primary" id="mnWorldFocusJoin" type="button">Open mission</button>
+            <button class="mn__quiet" id="mnWorldFocusClear" type="button">Show everything</button>
+          </div>
+        </section>
+        <div class="mn__world-feed">
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -186,7 +200,7 @@
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
-            <a class="mn__attach" href="create.html" aria-label="Open Action Network recording and creation tools">Record / Create</a>
+            <a class="mn__attach" href="create.html" aria-label="Open Human Uprise recording and creation tools">Record / Create</a>
             <label class="mn__attach" for="mnMediaInput">Photo / video
               <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
             </label>
@@ -312,7 +326,7 @@
 
       <section class="mn__view" id="mnMessagesView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Messages</h2></div>
+          <div><p class="mn__eyebrow">Human Uprise</p><h2>Messages</h2></div>
           <button class="mn__quiet" id="mnRefreshMessages" type="button">Refresh</button>
         </div>
         <div class="mn__conversations" id="mnConversations"></div>
@@ -321,7 +335,7 @@
 
       <section class="mn__view" id="mnNotificationsView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Notifications</h2></div>
+          <div><p class="mn__eyebrow">Human Uprise</p><h2>Notifications</h2></div>
           <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
         </div>
         <div class="mn__notifications" id="mnNotifications"></div>
@@ -356,7 +370,7 @@
              Google Play; the request is real and the desk completes it. -->
         <section class="mn__panel mn__delete" id="mnDelete">
           <h3>Delete my account</h3>
-          <p id="mnDeleteState">This deletes your Action Network profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
+          <p id="mnDeleteState">This deletes your Human Uprise profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
           <details class="mn__delete-go" id="mnDeleteGo"><summary>Delete my account…</summary>
             <label class="mn__label" for="mnDeleteReason">Anything we should know? <span>optional</span></label>
             <textarea class="mn__input mn__textarea" id="mnDeleteReason" rows="3" maxlength="2000"></textarea>

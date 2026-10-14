@@ -1,5 +1,5 @@
 /* ============================================================
-   UPRISE ACTION NETWORK — the campaign page (/action/?c=<slug>).
+   HUMAN UPRISE — the campaign page (/action/?c=<slug>).
 
    Attention in, organized people out. Someone taps the link under a
    Reel (/action/?c=cobalt&src=ig&reel=0047), reads what is true and
@@ -223,13 +223,13 @@
 
   function paintCampaign() {
     doc.title = (C.headline || C.title) + " · " + C.title;
-    $("anKicker").textContent = C.kicker || "Uprise Action Network";
+    $("anKicker").textContent = C.kicker || "Human Uprise";
     paintHeadline(C.headline || "You saw it. Now do something.");
     $("anTitle").textContent = C.title || "";
     $("anBody").textContent = C.body || "";
     $("anCrumb").textContent = C.title || "Campaign";
     doc.body.classList.add("an-action-first");
-    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Uprise Action Network";
+    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Human Uprise";
     if ($("anActionHead")) $("anActionHead").textContent = "Pick an action.";
     if ($("anActionSub")) $("anActionSub").textContent = "Tap one. The system takes you straight to the mission.";
     if (URL_ORIGIN.reel || URL_ORIGIN.src) {
@@ -707,7 +707,7 @@
 
     $("anCta").hidden = true;
     if ($("anMnet")) {
-      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter the Action Network →";
+      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter Human Uprise →";
       $("anMnet").setAttribute("href", signedIn() ? missionHubHref() : "/mnet.html");
     }
 
@@ -727,7 +727,7 @@
         ? "Take action"
         : (mode === "new" ? "Create account & take action" : "Sign in & take action");
     } else {
-      $("anJoinH").textContent = "Join the Action Network.";
+      $("anJoinH").textContent = "Join Human Uprise.";
       $("anJoinSub").textContent = "Choose an action above first.";
       $("anJoin").textContent = signedIn() ? "Join campaign" : (mode === "new" ? "Create account & join" : "Sign in & join");
     }
@@ -1018,7 +1018,7 @@
       g.textBaseline = "alphabetic";
       g.fillStyle = "#ff4d3d";
       g.font = "800 40px Manrope, system-ui, sans-serif";
-      g.fillText("UPRISE ACTION NETWORK", 96, 340);
+      g.fillText("HUMAN UPRISE", 96, 340);
       g.fillStyle = "#b3a89c";
       g.fillText("YOU ARE PARTICIPANT", 96, 620);
       g.fillStyle = "#f4efe6";

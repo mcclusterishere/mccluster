@@ -31,7 +31,7 @@ of the property, and it is never the company's homepage.
 Matthew McCluster  (Person, matthew.mccluster.org)
 ├── founder of ─► McCluster Corp  (Organization, url https://mccluster.org/)
 │                 ├── Equity Uprise            public-interest project
-│                 ├── Uprise Action Network    software product, connected to Equity Uprise's action model
+│                 ├── Human Uprise             movement-creation social platform (formerly the Uprise Action Network); Equity Uprise runs on it as a program
 │                 ├── PRIM3                    learning project / product
 │                 ├── McCluster Platform       the technical platform operated for McCluster Corp
 │                 ├── McCluster Sites          web services
@@ -67,8 +67,8 @@ Rules that follow from it:
 - **McCluster Corp products hosted on Matthew's property for compatibility:**
   the company's product map (`mccluster-corp.html`, with
   `data/product-context.json`; it explains how the products connect, the
-  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), the Action Network
-  (`/action/`, `mnet.html`, receipts), the campaign pages, PRIM3, McCluster
+  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), Human Uprise,
+  formerly the Action Network (`/action/`, `mnet.html`, `action-globe.html`, receipts), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the music-creator platform, the privacy policy.
 - **Whip Equipped LLC** (separate company) at `whip.html`.
 
@@ -81,7 +81,7 @@ does not move a URL.** The company *apps* stay where they are, deliberately:
 - The Supabase Auth redirect allowlist names that host.
 - Printed QR codes and live campaign links point at these paths.
 
-Moving the Action Network, accounts or checkout to `mccluster.org` would sign
+Moving Human Uprise, accounts or checkout to `mccluster.org` would sign
 members out and break payment returns. The company property describes these
 products and links into them.
 

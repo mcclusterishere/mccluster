@@ -28,7 +28,7 @@ test("McCluster Corp product context is wired into the public authority graph", 
   assert.ok(sitemap.pages.some((p) => p.url === url), "company hub must be indexable");
   assert.ok(corp.includes(`<link rel="canonical" href="${url}">`));
   assert.ok(corp.includes("data/product-context.json"));
-  for (const label of ["McCluster Platform", "Equity Uprise", "Uprise Action Network", "PRIM3"]) assert.ok(corp.includes(label), label + " must be explained");
+  for (const label of ["McCluster Platform", "Equity Uprise", "Human Uprise", "PRIM3"]) assert.ok(corp.includes(label), label + " must be explained");
   assert.ok(home.includes(`"url": "${company}"`), "home Organization must point at the company property");
   assert.ok(profile.includes(`"url": "${company}"`), "profile Organization must point at the company property");
   assert.ok(profile.includes('href="mccluster-corp.html"'), "the profile links the product map");

@@ -1,4 +1,4 @@
-/* LIVE ON THE ACTION NETWORK.
+/* LIVE ON HUMAN UPRISE.
    Live is the network's front door: governed Home and Mission rooms, five
    fixed categories, first-class music and measured outcomes.
 

@@ -1,4 +1,4 @@
-/* Governed Action Network live rooms.
+/* Governed Human Uprise live rooms.
    Host access is an explicit cohort/client-project/staff capability, room
    context survives into the session/feed post, viewers are measured through
    a private service-side heartbeat, and Cloudflare's WHIP publish credential

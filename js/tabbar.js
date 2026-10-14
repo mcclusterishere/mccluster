@@ -71,7 +71,7 @@
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* LAST COLUMN: identity. It resolves to Sign in while signed out and
-         to the member's Action Network feed once the session is verified. */
+         to the member's Human Uprise feed once the session is verified. */
       '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Network</span></a>';
@@ -92,7 +92,7 @@
      matthew-mccluster.html used to opt out, on the reasoning that a hiring
      manager opening it from a job application should not be handed a bar
      reading "Music · Equity Uprise · HERE · Shakes · Profile". The bar is
-     three columns now and the site is the music, the house and Action Network, so
+     three columns now and the site is the music, the house and Human Uprise, so
      that reasoning no longer holds: the page was simply a dead end with no
      way onward. It carries the bar like everything else. demo.html and
      embed.html still opt out, and should: one is a client's own site
@@ -180,8 +180,8 @@
     profile: {
       home: "mnet.html",
       slots: [
-        ["mnet.html", "folk", "Network", { title: "Action Network",
-          sub: "The McCluster Action Network: missions, proof, groups, messages and verified action across the ecosystem." }],
+        ["mnet.html", "folk", "Network", { title: "Human Uprise",
+          sub: "Human Uprise by McCluster: missions, proof, groups, messages and verified action across the ecosystem." }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
@@ -211,7 +211,7 @@
      THIS ENFORCES IT.
 
      Equity Uprise, Whip Equipped and PRIM3 are put away while the site
-     concentrates on the music and on Action Network. Put away, not deleted: every
+     concentrates on the music and on Human Uprise. Put away, not deleted: every
      page and every route still exists and still answers, and restoring a
      column is adding its tab back to ORDER and its wing back to WINGS.
 

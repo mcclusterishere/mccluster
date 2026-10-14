@@ -713,6 +713,13 @@
       "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
     },
     {
+      "path": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Human Uprise rename and globe-over-feed product contract; not a physical building capability."
+    },
+    {
       "path": "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
       "classification": "shared_backend_support",
       "capability_ids": [],

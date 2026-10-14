@@ -16,7 +16,10 @@
     conversations: [],
     currentConversation: null,
     pollTimer: null,
-    actionOffers: {}
+    actionOffers: {},
+    /* the globe in the World tab: which missions have a public pin, and
+       the one the member picked on the Earth (it narrows the feed) */
+    world: { pins: {}, focus: null }
   };
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -33,7 +36,7 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
-  /* One telemetry seam for the whole Action Network. Product writes remain
+  /* One telemetry seam for the whole Human Uprise. Product writes remain
      authoritative in the database; these events describe the journey around
      them so Control can answer which surfaces actually move people to act. */
   function track(name, data) {
@@ -208,7 +211,7 @@
       state.boot = boot;
       if (boot.next_step === "contact") {
         /* Private contact completion is a prerequisite for entering the
-           Action Network. The mailing address lives in fan_profiles, never
+           Human Uprise. The mailing address lives in fan_profiles, never
            network_profiles, so it is not exposed on the social profile. */
         location.replace("account.html?complete=contact");
         return;
@@ -239,7 +242,7 @@
   function showSignedInLoadError(error) {
     showGate("app");
     var host = $("mnFeed");
-    host.innerHTML = '<div class="mn__empty">You are signed in. The Action Network could not load the feed right now.</div>';
+    host.innerHTML = '<div class="mn__empty">You are signed in. Human Uprise could not load the feed right now.</div>';
     var retry = document.createElement("button");
     retry.type = "button";
     retry.className = "mn__more";
@@ -470,7 +473,7 @@
       (c.description ? '<p class="mn__actcard-foot">' + esc(c.description) + '</p>' : '') +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary" href="' + esc(actionOfferHref(c)) + '" data-take-mission="' + esc(c.mission_id) + '" data-content="' + esc(c.content_id) + '" data-source="network">Take action</a>' : '<span class="mn__hint">Mission closed</span>') +
-      '</div></div>';
+      '</div>' + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
     var ids = (items || []).map(function (it) {
@@ -494,11 +497,11 @@
     return '<div class="mn__actcard">' +
       '<p class="mn__actcard-eyebrow">Verified action</p>' +
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
-      '<p class="mn__actcard-foot">Action Network · Don\u2019t just watch. Act.</p>' +
+      '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '">Take this mission too</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
-      '</div></div>';
+      '</div>' + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
@@ -510,6 +513,19 @@
       (rows || []).forEach(function (c) { state.actionCards[c.post_id] = c; });
       return (rows || []).length > 0;
     }).catch(function () { return false; });
+  }
+
+  /* A POST CAN POINT AT THE MAP. Only posts the server ties to a mission
+     (action_feed_cards / action_offer_cards) carry one, and only missions
+     an admin has pinned publicly have a place on the Earth. */
+  function postMissionId(item) {
+    var post = item && (item.post || item), id = post && (post.id || item.post_id);
+    var c = id && ((state.actionCards && state.actionCards[id]) || state.actionOffers[id]);
+    return c && c.mission_id || "";
+  }
+  function globeChipHtml(missionId) {
+    if (!missionId || !state.world.pins[missionId]) return "";
+    return '<button class="mn__globe-chip" type="button" data-globe-mission="' + esc(missionId) + '">Locate on globe</button>';
   }
 
   function bindFeedActions(root) {
@@ -527,6 +543,9 @@
         setView("missions");
         openMission(missionId);
       };
+    });
+    root.querySelectorAll("[data-globe-mission]").forEach(function (b) {
+      b.onclick = function () { focusOnGlobe(b.getAttribute("data-globe-mission")); };
     });
     root.querySelectorAll("[data-action=comments]").forEach(function (b) {
       b.onclick = function () {
@@ -590,7 +609,7 @@
         url.searchParams.set("post", b.dataset.post);
         var link = url.toString();
         if (navigator.share) {
-          navigator.share({ title:"Action Network", url:link }).catch(function () {});
+          navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
         } else window.prompt("Copy post link",link);
@@ -615,8 +634,16 @@
       host.innerHTML = '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
+    var items = state.feed, focus = state.world.focus;
+    if (focus) {
+      items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
+      if (!items.length) {
+        host.innerHTML = '<div class="mn__empty">Nothing in your feed about this mission yet. Open it, do the work, and your proof can be the first post here.</div>';
+        return;
+      }
+    }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = state.feed.map(function (item) {
+    host.innerHTML = items.map(function (item) {
       if (item.item_type === "activity") {
         var p = item.payload || {};
         return '<article class="mn__post-card"><div class="mn__post-head">' + authorHtml(item.actor) + '<span class="mn__author-sub">' + esc(timeAgo(item.occurred_at)) + '</span></div><p class="mn__post-body">' + esc(p.summary || p.text || "Activity on McCluster") + '</p></article>';
@@ -746,6 +773,9 @@
       clearMediaQueue();
       setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
+      /* a fresh post must be seen landing, so let go of any mission the
+         feed was narrowed to on the globe */
+      if (state.world.focus) { state.world.focus = null; paintWorldFocus(); tellWorld({ type: "hu:clear-selection" }); }
       return loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
@@ -1036,7 +1066,7 @@
       $("mnPersonFollow").onclick=function(){var was=data.following;api("/v1/mnet/people/"+encodeURIComponent(handle)+"/follow",{method:was?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on the Action Network."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Human Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
@@ -1831,7 +1861,7 @@
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
     var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=Math.max(0,need-verified);
-    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are an Action Network fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Human Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
     var declined=app&&app.status==="declined";
@@ -2024,6 +2054,74 @@
     if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
     if($("mnMissionCameraFile"))$("mnMissionCameraFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
     if($("mnMissionProofFile"))$("mnMissionProofFile").addEventListener("change",function(){paintMissionCapture(this.files&&this.files[0]);});
+  })();
+
+  /* THE WORLD IS THE FEED. The globe frame (action-globe.html, network
+     surface) and this page talk over same-origin postMessage. The frame
+     sends which missions have public pins and which one was tapped; this
+     page asks it to fly to a mission or to let go. Nothing private crosses:
+     the frame only ever held public, admin-approved mission pins. */
+  var WORLD_ID = /^[0-9a-f-]{36}$/i;
+  function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
+  function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
+  function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
+  function paintWorldFocus() {
+    var f = state.world.focus, host = $("mnWorldFocus");
+    if (!host) return;
+    host.hidden = !f;
+    if (!f) return;
+    $("mnWorldFocusWhere").textContent = (f.region_label || "World") + " · " + pathLabel(f.action_path);
+    $("mnWorldFocusTitle").textContent = f.title || "Mission";
+  }
+  function setWorldFocus(mission) {
+    state.world.focus = mission;
+    paintWorldFocus();
+    if (!state.loadingFeed) renderFeed(false);
+    track("world_focus", { mission: mission ? mission.mission_id : null });
+  }
+  function focusOnGlobe(missionId) {
+    if (!WORLD_ID.test(String(missionId || "")) || !state.world.pins[missionId]) return;
+    var home = $("mnWorld");
+    if (home && home.scrollIntoView) home.scrollIntoView({ block: "start", behavior: window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    tellWorld({ type: "hu:focus-mission", missionId: missionId });
+  }
+  (function wireWorld() {
+    var frame = $("mnWorldFrame");
+    if (!frame) return;
+    frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
+    window.addEventListener("message", function (ev) {
+      if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
+      var d = ev.data || {}, caption = $("mnWorldCaption");
+      if (d.type === "hu:globe-ready") {
+        state.world.pins = {};
+        (Array.isArray(d.missionIds) ? d.missionIds : []).forEach(function (id) { if (WORLD_ID.test(String(id))) state.world.pins[id] = true; });
+        var n = Object.keys(state.world.pins).length;
+        if (caption) caption.textContent = d.dataUnavailable ? "The map is up, but mission pins could not load. The feed below is live."
+          : n ? n + (n === 1 ? " mission is" : " missions are") + " pinned on the Earth. Tap a red pin to see what people are doing there."
+          : "No missions are pinned on the Earth yet. The feed below is live.";
+        /* repaint so posts can grow their "Locate on globe" door, unless
+           the first page of the feed is still on its way */
+        if (!state.loadingFeed) renderFeed(false);
+      } else if (d.type === "hu:globe-unavailable") {
+        if (caption) caption.textContent = "The globe can’t run on this device. Everything else works: the feed is below.";
+      } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
+        var m = d.mission;
+        setWorldFocus({ mission_id: String(m.mission_id), title: String(m.title || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || "") });
+      } else if (d.type === "hu:selection-cleared") {
+        if (state.world.focus) setWorldFocus(null);
+      }
+    });
+    $("mnWorldFocusClear").addEventListener("click", function () {
+      setWorldFocus(null);
+      tellWorld({ type: "hu:clear-selection" });
+    });
+    $("mnWorldFocusJoin").addEventListener("click", function () {
+      var f = state.world.focus;
+      if (!f) return;
+      missions.content = ""; missions.source = ""; missions.attributedMission = "";
+      setView("missions");
+      openMission(f.mission_id);
+    });
   })();
 
 })();

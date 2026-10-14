@@ -80,3 +80,15 @@ nav button{background:rgba(12,20,31,.9);border:1px solid #576679;border-radius:9
 #worldDetail{background:linear-gradient(150deg,#172338,#121821);border-color:#4e5d75}
 #worldDetail h2{letter-spacing:-.035em}
 @media(prefers-reduced-motion:reduce){.world-story{transition:none}}
+
+/* Network surface (?embedded=1&surface=network): the Earth alone, filling the frame inside the Human Uprise
+   World tab. The parent page owns the feed and mission context; only "Near me" stays on the globe. */
+.globe-surface-network header,.globe-surface-network .world-mode,.globe-surface-network #deck,.globe-surface-network #worldFeed,.globe-surface-network #worldFeed[hidden]{display:none!important}
+.globe-surface-network #globe{inset:0;height:100%}
+.globe-surface-network nav{top:auto;right:auto;bottom:10px;left:10px;overflow:visible;padding:0}
+.globe-surface-network nav>*:not(#nearMe){display:none}
+.globe-surface-network #nearMe{font-size:max(12px,.75rem);padding:8px 12px;min-height:36px}
+
+/* Tile attribution is a condition of using OpenStreetMap tiles; Cesium's own credit bar is hidden above. */
+.osm-credit{position:absolute;z-index:4;right:8px;top:calc(var(--world-map) - 22px);font:10px/1.4 system-ui,sans-serif;color:#d9e2ef;background:#05091299;padding:2px 6px;border-radius:6px;text-decoration:none}
+.globe-surface-network .osm-credit{top:auto;bottom:8px}

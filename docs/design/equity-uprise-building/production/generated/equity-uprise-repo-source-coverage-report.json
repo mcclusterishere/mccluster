@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 343,
+  "candidate_count": 344,
   "capability_source_count": 99,
-  "support_only_count": 244,
-  "checks_total": 1275,
-  "checks_passed": 1275,
+  "support_only_count": 245,
+  "checks_total": 1279,
+  "checks_passed": 1279,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -97,6 +97,7 @@
     "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
     "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
     "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
+    "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
     "docs/agent-web.md",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
@@ -357,7 +358,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "343 entries"
+      "detail": "344 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1971,6 +1972,26 @@
     },
     {
       "name": "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md support rationale present",
       "passed": true,
       "detail": ""
     },
