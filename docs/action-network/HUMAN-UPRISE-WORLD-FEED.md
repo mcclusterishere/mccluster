@@ -10,8 +10,10 @@ It does not lift any release gate in `EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`.
   Action Network). The entity graph keeps both old names as `alternateName`
   and the stable `@id` (`mnet.html#uprise-action-network`) does not move.
 - Equity Uprise runs on Human Uprise as a program and remains its own
-  McCluster Corp public-interest project. "Founded by Equity Uprise" stays
-  under the wordmark, with the owner-supplied Equity Uprise mark.
+  McCluster Corp public-interest project. Per the owner’s 2026-10-14 copy
+  update, "A McCluster Corp program" sits under the Human Uprise wordmark.
+  The profile form uses the equation "Hu=Up" and the heading "Profile".
+  The owner-supplied Equity Uprise mark remains unchanged.
 - **There is no Human Uprise logo yet.** The header shows the name as text.
   Do not draw one (AGENTS.md, "THE LOGOS ARE NOT YOURS TO DRAW"); ask the owner.
 - Unchanged on purpose, for compatibility: `mnet.html`, `/v1/mnet/*`,
