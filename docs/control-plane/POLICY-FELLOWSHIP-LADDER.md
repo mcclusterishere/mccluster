@@ -131,6 +131,11 @@ pushed** when this was written (`git fetch origin feat/world-globe-feed-analytic
 found no ref). Whichever lands second must reconcile to one shared predicate,
 ideally one SQL function (`action_member_has_verified_mission(uid)`), so the
 two gates cannot drift.
+That function now exists, pending, in
+`supabase/pending/mission_admin_approval_v1.sql` (with
+`action_member_verified_mission_count(uid)`), and that file makes `verified`
+reachable only through an admin's recorded review
+(`docs/control-plane/MISSION-ADMIN-APPROVAL.md`).
 
 The evidence canon (PR #438) states "approved proof = `action_proofs.status =
 'verified'`". `review_action_proof()` sets the proof and its assignment to

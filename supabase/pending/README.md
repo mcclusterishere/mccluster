@@ -73,3 +73,20 @@ policy cohorts. Behaviour tests: `supabase/tests/policy_fellowship_ladder.behavi
 run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
 decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
 Promote using the steps above after the owner approves it.
+
+Pending: `mission_admin_approval_v1.sql` (rollback `mission_admin_approval_v1.rollback.sql`)
+makes "only an admin completes a mission" a database invariant (owner,
+2026-10-15): proofs are born pending, a proof or assignment becomes `verified`
+only under an admin token that is not the submitter's with a same-transaction
+review in `action_proof_review_history` (Anti-Social levels now archived there
+too), points are minted only by that review, bounties are approved only behind
+a verified mission and paid only by an admin, clips have no automatic approval
+and no money without an approved clip, and a mission opens only after an admin
+approved it for publication. Apply after `policy_fellowship_ladder_v1.sql`.
+Pending: `gated_track_mission_identity_v1.sql` (rollback alongside) is the
+CIA Mind Control gated-track rule as an `action_unlock_rules` row (three
+admin-verified missions and `member_identity_verified(uid)`), the Worker's
+`music_gate_rule_state` / `music_gate_claim_rule`, and the taxonomy rows for
+`music_preview_play` / `music_full_play`. Apply after the approval file.
+Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
+and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.
