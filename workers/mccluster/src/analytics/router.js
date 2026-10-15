@@ -7,6 +7,9 @@ import { loadCommerceSummary } from '../commerce/summary.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
+/* A creator sees where their page was read from by country only; a country
+   with fewer views than this is folded into "elsewhere" (never named). */
+const AUDIENCE_MIN_VIEWS = 5;
 const MAX_AUTH_PAGES = 100;
 const AUTH_PAGE_SIZE = 1000;
 
@@ -921,7 +924,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
    '&select=handle&limit=1');
  const handle=String(profiles[0]?.handle||'');
  const trafficRows=handle?await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
-   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props&order=at.desc&limit=1000'):[];
+   '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props,country&order=at.desc&limit=1000'):[];
  const traffic=trafficRows.filter(e=>{
    const raw=String(e.path||'');
    const query=raw.includes('?')?raw.slice(raw.indexOf('?')+1):'';
@@ -938,6 +941,19 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  }
  const pageTraffic={views:traffic.length,approximate_sessions:sessions.size,
    daily,sources,sample_limited:trafficRows.length===1000};
+ // The creator-only audience layer on the World globe: views of this
+ // creator's own page by country. Country only, never region, city, postal
+ // code or coordinates; small countries are folded into "elsewhere".
+ const byCountry={};let unknownViews=0;
+ for(const e of traffic){
+   const c=String(e.country||'').toUpperCase();
+   if(/^[A-Z]{2}$/.test(c)&&c!=='XX'&&c!=='T1')byCountry[c]=(byCountry[c]||0)+1;else unknownViews++;
+ }
+ const countries=[];let elsewhere=0;
+ for(const [country,views] of Object.entries(byCountry)){if(views>=AUDIENCE_MIN_VIEWS)countries.push({country,views});else elsewhere+=views;}
+ countries.sort((a,b)=>b.views-a.views||a.country.localeCompare(b.country));
+ const audience={countries,elsewhere_views:elsewhere,unknown_views:unknownViews,min_views:AUDIENCE_MIN_VIEWS,
+   sample_limited:trafficRows.length===1000};
  const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
    plays:0,completions:0,shares:0}]));
  if(ids.size){
@@ -955,9 +971,10 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
      counts[e.name]=(counts[e.name]||0)+1;
    }
  }
- return json({ok:true,creator:true,window_days:30,sample_limited:true,
+ // A creator is someone with a music profile or tracks, not every linked member.
+ return json({ok:true,creator:!!handle||tracks.length>0,window_days:30,sample_limited:true,
    disclaimer:'Observed matching events only; counts may be incomplete due to event sampling.',
-   counts,page_traffic:pageTraffic,tracks:[...perTrack.values()]});
+   counts,page_traffic:pageTraffic,audience,tracks:[...perTrack.values()]});
 }
 
 export async function handleAnalyticsRequest(request, env, user) {

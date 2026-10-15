@@ -66,7 +66,7 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
 
 test('Action Network supports access-checked likes/comments and enforces group membership', async()=>{
   const api=await read('workers/mccluster/src/platform-api.js');
-  assert.match(api,/Comments are retired on the Action Network/);
+  assert.match(api,/Comments are retired on Human Uprise/);
   assert.match(api,/network_reactions/);
   assert.match(api,/network_post_comments/);
   assert.match(api,/if\(post\.group_id\)/);
@@ -185,12 +185,15 @@ test('the Action Network moves with intent and keeps the copy clean', async()=>{
   assert.match(js, /first\.classList\.add\("is-just-posted"\)/);
   assert.match(css, /\.mn__tabs-thumb \{/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.doesNotMatch(css, /@media[^{]*max-width/, 'breakpoints only add room');
+  assert.match(css, /\.mn-world-fit \.mn__world-home \{ flex: 49 1 0;/, 'World screen keeps the globe on top of the phone screen');
+  assert.doesNotMatch(css, /@media\s*\(max-width/, 'breakpoints only add room (AGENTS.md hard rule 14)');
   assert.doesNotMatch(css, /\.appbar/, 'the house bar is styled by the house, not here');
   /* Mission/proof is the response primitive. Ordinary social feedback stays retired. */
   assert.doesNotMatch(js, /function toggleLike\(/);
-  assert.match(js, /data-action="like"/);
-  assert.match(js, /data-action="comments"/);
+  /* THE EMBLEM OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction; a mission post offers the emblem and Fund */
+  assert.match(js, /mn__primary--eup/);
+  assert.match(js, /data-fund-mission=/);
+  assert.doesNotMatch(js, /data-action="like"|data-action="comments"|data-action="uprise"/);
   assert.doesNotMatch(html, /id="mnThread"/);
   assert.doesNotMatch(html, /Write a comment/);
   assert.match(js, /data-take-mission/);
@@ -209,7 +212,7 @@ test("Action Network profile treats the member website as the identity front pag
 test("unified identity presentation carries public front page through people profiles",async()=>{const js=await read("js/mnet.js");assert.match(js,/presentation=data\.presentation\|\|\{\}/);assert.match(js,/presentation\.front_page_url\|\|p\.website_url/);assert.match(js,/mnet\.html\?profile=/);});
 
 
-test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/data-mn-view="feed">Feed/);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of the Action Network/);});
+test("Action Network product language is doer-first and legacy Mnet branding is absent from the primary surface",async()=>{const html=await read("mnet.html"),listen=await read("listen.html");assert.match(html,/The place for doers/);assert.match(html,/id="mnToWorld"[^>]*>← World</);assert.match(html,/placeholder="What’s happening\?"/);assert.doesNotMatch(html,/\bMnet\b|M Network/);assert.match(listen,/Put your music into action/);assert.match(listen,/Every creator is part of Human Uprise/);});
 
 
 test('Action Network runtime keeps invite rooms private and makes mission/proof the response path', async()=>{
@@ -250,6 +253,9 @@ test('Action Network runtime keeps invite rooms private and makes mission/proof 
     if(u.includes('/network_post_comments?'))return ok([]);
     if(u.endsWith('/network_post_comments')&&method==='POST')return ok([{id:'66666666-6666-4666-8666-666666666666',...body}],201);
     if(u.endsWith('/network_reactions')&&method==='POST')return ok(null,201);
+    /* an uprise counts only from a member who has completed a mission: this one has */
+    if(u.includes('/action_mission_assignments?m_uid=eq.')&&u.includes('status=eq.verified'))return ok([{mission_id:'77777777-7777-4777-8777-777777777777'}]);
+    if(u.includes('/action_missions?id=in.('))return ok([{id:'77777777-7777-4777-8777-777777777777'}]);
     if(u.includes('/network_posts?id=eq.'))return ok([{id:POST,author_m_uid:MUID,visibility:'network',group_id:GROUP,deleted_at:null}]);
     if(u.endsWith('/network_posts')&&method==='POST')return ok([{id:POST,author_m_uid:MUID,...body}],201);
     return ok([]);

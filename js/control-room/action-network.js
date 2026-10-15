@@ -1,6 +1,6 @@
-/* Native Control · Create · Action Network.
+/* Native Control · Create · Human Uprise.
 
-   The owner's side of the Uprise Action Network (/action/?c=<slug>).
+   The owner's side of Human Uprise (/action/?c=<slug>).
    A campaign is a row in public.action_campaigns, so the next one is
    launched here, not in a deploy: write it as a draft, check it, then
    set it live. Row-level security lets only the owner write.
@@ -18,7 +18,7 @@
   "use strict";
   window.CR=window.CR||{};
   var A={supa:null,rerender:null,loading:false,loaded:false,error:null,
-    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,
+    campaigns:[],sel:null,tab:"overview",detail:{},busy:false,msg:"",proofs:[],proofBusy:false,antiLevels:[],antiBusy:false,antiLoaded:false,
     missions:null,missionStats:{},missionBusy:false,apps:null,appBusy:false,cohorts:[],seats:{},liveGrants:[]};
   var STATUSES=["draft","live","paused","closed"];
   var LEDGER_KINDS=["received","committed","disbursed","expense"];
@@ -104,11 +104,36 @@
       .then(function(rows){A.proofs=rows||[];}).catch(function(err){A.msg="Proof queue could not load: "+(err.message||err);})
       .then(function(){A.proofBusy=false;redraw();});
   }
+  function loadAntiLevels(){
+    A.antiBusy=true;redraw();
+    return A.supa("action_antisocial_levels?status=eq.pending&select=assignment_id,level,user_id,proof_url,media_asset_id,statement,post_id,collaborator_m_uid,created_at&order=created_at.asc&limit=100")
+      .then(function(rows){A.antiLevels=rows||[];A.antiLoaded=true;})
+      .catch(function(err){A.msg="Anti-Social review queue unavailable: "+(err.message||err);A.antiLoaded=true;})
+      .then(function(){A.antiBusy=false;redraw();});
+  }
+  function antisocialReviews(){
+    if(!A.antiLoaded&&!A.antiBusy)loadAntiLevels();
+    if(A.antiBusy)return note("Loading Anti-Social levels…");
+    if(!A.antiLevels.length)return note("No pending Anti-Social levels.");
+    return '<div class="cro-list">'+A.antiLevels.map(function(x){
+      return '<article class="cro-card"><p class="cro-meta">ANTI-SOCIAL · LEVEL '+e(x.level)+'/3 · '+e(new Date(x.created_at).toLocaleString())+'</p>'+
+        '<h2>'+e(["High Five","Five High Fives","Make Something Together"][x.level-1])+'</h2>'+
+        '<p class="cro-meta">Assignment '+e(x.assignment_id)+'</p>'+
+        '<blockquote>'+e(x.statement||"No recap")+'</blockquote>'+
+        (x.proof_url?'<p><a href="'+e(x.proof_url)+'" target="_blank" rel="noopener noreferrer">Review linked proof ↗</a></p>':"")+
+        (x.media_asset_id?'<div data-anti-upload="'+e(x.assignment_id)+'" data-anti-level="'+e(x.level)+'"><div class="cro-note">Loading consent-safe clip for reviewer…</div></div>':"")+
+        (x.post_id?'<p class="cro-meta">Shared work post: '+e(x.post_id)+' · partner '+e(x.collaborator_m_uid)+'</p>':"")+
+        '<label>Review note<textarea data-anti-note="'+e(x.assignment_id)+'-'+e(x.level)+'"></textarea></label>'+
+        '<div class="cro-actions"><button class="cr-btn cr-btn--primary" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="verified">Verify level</button>'+
+        '<button class="cr-btn" data-anti-review="'+e(x.assignment_id)+'" data-level="'+e(x.level)+'" data-decision="rejected">Reject</button></div></article>';
+    }).join("")+'</div>';
+  }
   function reviews(){
     if(!A.proofs.length&&!A.proofBusy)loadProofs();
-    if(A.proofBusy)return note("Loading proof queue…");
-    if(!A.proofs.length)return note("Review queue clear. No pending mission proof.");
-    return '<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
+    var anti=antisocialReviews();
+    if(A.proofBusy)return anti+note("Loading proof queue…");
+    if(!A.proofs.length)return anti+note("Review queue clear. No pending standard mission proof.");
+    return anti+'<div class="cro-list">'+A.proofs.map(function(p){var a=p.action_mission_assignments||{},m=a.action_missions||{},origin=[a.source_channel||"",a.source_reel?"Reel "+a.source_reel:"",a.source_actionable||""].filter(Boolean).join(" · ");return '<article class="cro-card" style="margin-bottom:14px"><div class="cro-item__head"><div><p class="cro-meta">MISSION PROOF · '+e(p.proof_type)+' · '+e(new Date(p.created_at).toLocaleString())+'</p><h2>'+e(m.title||"Mission")+'</h2><p class="cro-meta">'+e(m.domain||"community")+' · difficulty '+e(m.difficulty||"")+' · '+e(m.base_points||0)+' base pts</p>'+(origin?'<p class="cro-meta"><b>Origin:</b> '+e(origin)+'</p>':'')+'</div><span class="cro-pill">pending</span></div><div style="margin:14px 0">'+proofMedia(p)+'</div><blockquote style="margin:12px 0;padding:12px 14px;border-left:3px solid currentColor">'+e(p.statement||"No statement.")+'</blockquote><label>Review note<textarea data-proof-note="'+e(p.id)+'" placeholder="What did you verify, or why was this rejected?"></textarea></label><p class="cro-meta">Verify the submitted action and evidence only. This does not certify a member’s character, beliefs, race, or whether they are “racist” or “not racist.” Self-declared satire badges remain self-declared.</p><div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-proof-review="'+e(p.id)+'" data-decision="verified">Verify action</button><button class="cr-btn" type="button" data-proof-review="'+e(p.id)+'" data-decision="rejected">Reject proof</button></div></article>';}).join("")+'</div>';
   }
 
   function controls(c){
@@ -284,7 +309,7 @@
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
     var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
-    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, the Action Network migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
     var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
@@ -312,6 +337,15 @@
   }
   function loadUploads(root){
     if(!A.request)return;
+    root.querySelectorAll("[data-anti-upload]").forEach(function(box){
+      if(box.getAttribute("data-loaded"))return;box.setAttribute("data-loaded","1");
+      A.request("/v1/mnet/missions/antisocial/"+encodeURIComponent(box.getAttribute("data-anti-upload"))+"/"+encodeURIComponent(box.getAttribute("data-anti-level"))+"/media")
+        .then(function(m){var u=e(m&&m.url||"");if(!u)throw new Error("no url");
+          box.innerHTML=m.media_type==="video"
+            ?'<video controls playsinline preload="metadata" style="width:100%;max-height:62vh;background:#000;border-radius:14px" src="'+u+'"></video>'
+            :'<img alt="Submitted Anti-Social proof" style="display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:14px;background:#111" src="'+u+'">';
+        }).catch(function(){box.innerHTML='<div class="cro-note">The level clip could not be opened.</div>';});
+    });
     root.querySelectorAll("[data-proof-upload]").forEach(function(box){
       if(box.getAttribute("data-loaded"))return; box.setAttribute("data-loaded","1");
       A.request("/v1/mnet/missions/proofs/"+encodeURIComponent(box.getAttribute("data-proof-upload"))+"/media").then(function(m){
@@ -385,6 +419,16 @@
       A.request("/v1/mnet/live/admin/grants/"+encodeURIComponent(id),{method:"DELETE"})
         .then(function(){A.msg="Live access revoked.";return loadApps();})
         .catch(function(err){b.disabled=false;alert(err.message||"Live access was not revoked.");});
+    };});
+    root.querySelectorAll("[data-anti-review]").forEach(function(b){b.onclick=function(){
+      var assignment=b.getAttribute("data-anti-review"),level=Number(b.getAttribute("data-level")),decision=b.getAttribute("data-decision");
+      var el=root.querySelector('[data-anti-note="'+assignment+'-'+level+'"]'),reviewNote=el?el.value.trim():"";
+      if(decision==="rejected"&&!reviewNote){alert("Explain the rejection.");return;}
+      if(!confirm("Review Anti-Social level "+level+" as "+decision+"?"))return;
+      b.disabled=true;
+      A.supa("rpc/review_antisocial_level",{method:"POST",body:{p_assignment_id:assignment,p_level:level,p_decision:decision,p_note:reviewNote||null}})
+        .then(function(){A.msg="Anti-Social level "+level+" "+decision+".";return Promise.all([loadAntiLevels(),loadMissions()]);})
+        .catch(function(err){b.disabled=false;alert(err.message||"Review failed.");});
     };});
     root.querySelectorAll("[data-proof-review]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-proof-review"),decision=b.getAttribute("data-decision"),noteEl=root.querySelector('[data-proof-note="'+id+'"]'),reviewNote=noteEl?noteEl.value.trim():"";
       if(decision==="rejected"&&!reviewNote){alert("Add a review note explaining why the proof is rejected.");return;}

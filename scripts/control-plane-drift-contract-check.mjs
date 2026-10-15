@@ -50,7 +50,16 @@ if (expected && latest) {
 }
 
 for (const exact of ledgerFiles) if (!sqlFiles.includes(exact)) failures.push(`missing exact production migration: ${exact}`);
-for (const file of sqlFiles) if (!ledgerFiles.has(file)) failures.push(`active migration is not in production ledger: ${file}`);
+// New migrations are valid PR changes but must not be represented as already applied.
+// They must be strictly newer than the production ledger's latest local version.
+const pendingFiles = sqlFiles.filter((file) => !ledgerFiles.has(file));
+for (const file of pendingFiles) {
+  const match = /^(\d{14})_([a-z0-9_]+)\.sql$/.exec(file);
+  if (!match || !latest || match[1] <= latest.version) {
+    failures.push(`unregistered historical or invalid migration: ${file}`);
+  }
+}
+if (pendingFiles.length) console.log(`Pending unapplied migrations (not in production ledger): ${pendingFiles.join(', ')}`);
 
 for (const row of ledgerRows.filter((item)=>/^\d{4}$/.test(item.version))) {
   const exact=`${row.version}_${row.name}.sql`;

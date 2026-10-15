@@ -250,7 +250,7 @@ async function prepareNetworkPost(env,muid,b,appKey){
      they wrote without knowing. Comments are retired; every new row here is
      a top-level post, ideally carrying or reporting an action. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id)return {error:'Comments are retired on the Action Network. Take the mission or share proof instead.',status:410};
+  if(b.reply_to_id)return {error:'Comments are retired on Human Uprise. Take the mission or share proof instead.',status:410};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
   const mediaIds=uniq(rawMediaIds);
@@ -398,7 +398,49 @@ export async function pruneNetworkRateEvents(env){
   await service(env,`network_rate_events?at=lt.${cutoff}`,{method:'DELETE',headers:{prefer:'return=minimal'}});
 }
 
+/* THE GUEST FEED. A signed-out visitor on the World screen reads permitted
+   public material only (owner's role matrix, docs/action-network/
+   WORLD-SCREEN-UX-HANDOFF-20261014.md): posts a member marked public, outside
+   any group, not deleted and not replies, by members whose own profile is
+   public. No viewer state, no internal ids, no media addresses (those stay
+   behind a session), a small page and a short shared cache. Liking,
+   commenting and posting stay on the authenticated routes below. */
+const PUBLIC_FEED_LIMIT=20;
+function publicFeedItem(item){
+  const p=item.post,a=item.actor||{},meta=p.metadata&&typeof p.metadata==='object'?p.metadata:{};
+  const media=(Array.isArray(p.media)?p.media:[]).slice(0,4).map(m=>({type:String(m&&(m.type||m.media_type)||'file').slice(0,16)}));
+  return {item_type:'post',post_id:p.id,occurred_at:item.occurred_at||p.created_at,
+    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified'},
+    post:{id:p.id,body:p.body||'',post_type:p.post_type||'post',visibility:'public',created_at:p.created_at,
+      like_count:p.like_count||0,liked_by_me:false,bookmarked_by_me:false,media_locked:media.length,
+      metadata:{...(postTrack(meta.track)?{track:postTrack(meta.track)}:{}),...(meta.action?{action:true}:{})}}};
+}
+async function publicWorldFeed(req,env,url){
+  const limit=Math.min(PUBLIC_FEED_LIMIT,Math.max(1,Number(url.searchParams.get('limit'))||PUBLIC_FEED_LIMIT)),fetchLimit=limit*3;
+  const before=url.searchParams.get('before');
+  if(before&&!Number.isFinite(Date.parse(before)))return fail(req,env,'Invalid cursor',400);
+  const beforeFilter=before?`&occurred_at=lt.${encodeURIComponent(new Date(before).toISOString())}`:'';
+  const rows=await service(env,`network_feed_items?visibility=eq.public&item_type=eq.post${beforeFilter}&order=occurred_at.desc&limit=${fetchLimit}&select=*`)||[];
+  const items=(await hydrateFeedItems(env,rows,null)).filter(x=>x.post&&x.post.visibility==='public'&&!x.post.group_id);
+  const authors=uniq(items.map(x=>x.post.author_m_uid)).filter(uuidLike);
+  const open=authors.length?await service(env,`network_profiles?m_uid=in.(${authors.join(',')})&visibility=eq.public&select=m_uid`):[];
+  const publicAuthors=new Set((open||[]).map(x=>x.m_uid));
+  const out=items.filter(x=>publicAuthors.has(x.post.author_m_uid)).slice(0,limit).map(publicFeedItem);
+  const res=reply(req,env,{items:out,scope:'public',next_before:rows.length===fetchLimit?rows[rows.length-1]?.occurred_at||null:null});
+  res.headers.set('cache-control','public, max-age=30');
+  return res;
+}
+
+/* a member has completed a mission when one of their own assignments is verified on a mission that is not a clip job */
+async function hasVerifiedAction(env,muid){
+  const done=await service(env,`action_mission_assignments?m_uid=eq.${muid}&status=eq.verified&select=mission_id&limit=50`)||[];
+  const ids=[...new Set(done.map(a=>a.mission_id).filter(Boolean))];
+  if(!ids.length)return false;
+  const real=await service(env,`action_missions?id=in.(${ids.join(',')})&or=(kind.is.null,kind.neq.clip)&select=id&limit=1`)||[];
+  return real.length>0;
+}
 async function handleMnet(req,env,path,url){
+  if(path==='/v1/mnet/public-feed'&&req.method==='GET')return publicWorldFeed(req,env,url);
   const external=await apiKeyPrincipal(req,env);
   const user=external?null:await authUser(req,env);
   if(!external&&!user) return fail(req,env,'Authentication required',401);
@@ -437,6 +479,14 @@ async function handleMnet(req,env,path,url){
       ]);
       following=!!f?.length;blocked=!!b?.length;muted=!!m?.length;
     }
+    /* Connect through the platform (Anti-Social, level 3): the one row the
+       pair may hold in network_connections, read as the viewer sees it. */
+    let connection={status:'none'};
+    if(me&&me!==resolved.m_uid){
+      const c=await service(env,`network_connections?or=(and(requester_m_uid.eq.${me},addressee_m_uid.eq.${resolved.m_uid}),and(requester_m_uid.eq.${resolved.m_uid},addressee_m_uid.eq.${me}))&status=neq.declined&select=id,status,requester_m_uid&limit=1`);
+      const row=c?.[0];
+      if(row)connection={id:row.id,status:row.status,direction:row.status==='accepted'?'both':row.requester_m_uid===me?'sent':'received'};
+    }
     const [fc,fg,pc]=await Promise.all([
       service(env,`network_follows?followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid`),
       service(env,`network_follows?follower_m_uid=eq.${resolved.m_uid}&status=eq.following&select=followed_m_uid`),
@@ -445,7 +495,7 @@ async function handleMnet(req,env,path,url){
     followers=(fc||[]).length;followingCount=(fg||[]).length;
     posts=(pc||[]).filter(x=>resolved.m_uid===me||x.visibility==='public'||(x.visibility==='network'&&following)).length;
     if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start);
-    return reply(req,env,{identity:resolved.identity,profile:resolved.profile,following,blocked,muted,counts:{followers,following:followingCount,posts}});
+    return reply(req,env,{identity:resolved.identity,profile:resolved.profile,following,blocked,muted,connection,counts:{followers,following:followingCount,posts}});
   }
   if(path==='/v1/mnet/profile'&&req.method==='PATCH'){
     if(external)return fail(req,env,'Profile mutation requires a McCluster user session',403); const b=await json(req);
@@ -573,18 +623,22 @@ async function handleMnet(req,env,path,url){
   }
   const react=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/reactions$/i);
   if(react&&['POST','DELETE'].includes(req.method)){
-    if(external)return fail(req,env,'Likes require a McCluster user session',403);
+    if(external)return fail(req,env,'Uprises require a McCluster user session',403);
     const muid=await currentMuid(env,user.id);
-    if(!muid)return fail(req,env,'Sign in to like posts',401);
+    if(!muid)return fail(req,env,'Sign in to uprise posts',401);
     const rows=await service(env,`network_posts?id=eq.${react[1]}&deleted_at=is.null&select=*&limit=1`);
     const post=rows?.[0];
     if(!post||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
     if(req.method==='POST'){
+      // UPRISE, NOT LIKE (owner, 2026-10-14): the one reaction on a post, and it counts only
+      // from a member who has completed a mission. Refused here, whatever the page shows.
+      // The row keeps the reaction value 'like', so no table changes.
+      if(!(await hasVerifiedAction(env,muid)))return fail(req,env,'Complete a mission to uprise posts. Your first verified action unlocks it.',403,{reason:'no_verified_action'});
       await service(env,'network_reactions',{method:'POST',headers:{prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({post_id:post.id,actor_m_uid:muid,reaction:'like'})});
     }else{
       await service(env,`network_reactions?post_id=eq.${post.id}&actor_m_uid=eq.${muid}&reaction=eq.like`,{method:'DELETE',headers:{prefer:'return=minimal'}});
     }
-    return reply(req,env,{liked:req.method==='POST'});
+    return reply(req,env,{uprised:req.method==='POST',liked:req.method==='POST'});
   }
   const follow=path.match(/^\/v1\/mnet\/people\/([^/]+)\/follow$/);
   if(follow&&['POST','DELETE'].includes(req.method)){
@@ -615,7 +669,16 @@ async function handleMnet(req,env,path,url){
     const viewer=external?null:await currentMuid(env,user.id);
     if(!(await canReadNetworkProfile(env,viewer,resolved)))return fail(req,env,'Person not found',404);
     const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20))),before=url.searchParams.get('before');
-    const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
+    let rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
+    /* "a jointly credited project linked to both profiles": the projects a
+       member is credited on as the partner sit on their page too, vouched by
+       action_collaboration_posts (server-written) rather than by metadata */
+    const credited=await service(env,`action_collaboration_posts?partner_m_uid=eq.${resolved.m_uid}&select=post_id&order=created_at.desc&limit=${limit}`);
+    const creditedIds=(credited||[]).map(x=>x.post_id).filter(uuidLike).filter(id=>!(rows||[]).some(p=>p.id===id));
+    if(creditedIds.length){
+      const joint=await service(env,`network_posts?id=in.(${creditedIds.join(',')})&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&select=*`);
+      rows=[...(rows||[]),...(joint||[])].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+    }
     const visible=[];
     for(const post of rows||[]){if(external?(!post.group_id&&post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
     const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer);
@@ -636,7 +699,7 @@ async function handleMnet(req,env,path,url){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
-    if(post.reply_to_id)return fail(req,env,'Comments are retired on the Action Network. Take the mission or share proof instead.',410);
+    if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
@@ -752,7 +815,7 @@ async function handleMnet(req,env,path,url){
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
   if(path==='/v1/mnet/media/discard'&&req.method==='POST'){if(external)return fail(req,env,'Media cleanup requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'discard',asset_id:b.asset_id}));}
   /* GOVERNED LIVE.
-     Live is an Action Network program surface, not a follower entitlement.
+     Live is a Human Uprise program surface, not a follower entitlement.
      The database returns the caller's bounded host capability; the Worker
      validates that capability against a persistent Home/Mission room before
      it creates a one-use Cloudflare Stream input. Audience presence is
@@ -982,6 +1045,25 @@ async function handleMnet(req,env,path,url){
   /* THE OWNER'S TWO LEVERS. Both check mnet_is_admin() inside the function
      rather than here, so the rule lives beside the data and a future caller
      cannot route around it. */
+  /* Anti-Social level clips: admin-only, signed for 15 minutes. */
+  const antiMedia=path.match(/^\/v1\/mnet\/missions\/antisocial\/([0-9a-f-]{36})\/([123])\/media$/i);
+  if(antiMedia&&req.method==='GET'){
+    if(external)return fail(req,env,'Proof review requires a McCluster user session',403);
+    if((await userRpc(req,env,'eu_is_admin',{}))!==true)return fail(req,env,'Proof not found',404);
+    const levels=await service(env,`action_antisocial_levels?assignment_id=eq.${antiMedia[1]}&level=eq.${antiMedia[2]}&select=assignment_id,media_asset_id&limit=1`);
+    const level=levels?.[0];
+    if(!level||!uuidLike(level.media_asset_id))return fail(req,env,'Proof has no upload',404);
+    const [assignments,assets]=await Promise.all([
+      service(env,`action_mission_assignments?id=eq.${level.assignment_id}&select=m_uid&limit=1`),
+      service(env,`network_media_assets?id=eq.${level.media_asset_id}&select=id,bucket_id,object_path,owner_m_uid,media_type,mime_type&limit=1`)
+    ]);
+    const asset=assets?.[0];
+    if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    const signed=await res.json().catch(()=>null);
+    if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
+    return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
+  }
   const pin=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/pin$/i);
   if(pin&&['POST','DELETE'].includes(req.method)){
     if(external)return fail(req,env,'Moderation requires a McCluster user session',403);

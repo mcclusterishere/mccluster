@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Action Network · McCluster</title>
-  <meta name="description" content="The Action Network is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
+  <title>Human Uprise · McCluster</title>
+  <meta name="description" content="Human Uprise is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
@@ -16,27 +16,75 @@
 <body class="songpage">
   <main class="mn">
     <header class="mn__top">
-      <a class="mn__brand" href="mnet.html" aria-label="Action Network home">
+      <a class="mn__brand" href="mnet.html" aria-label="Human Uprise home">
         <span class="mn__brand-plate"><img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" width="36" height="36"></span>
-        <span><strong>Action Network</strong><small>Founded by Equity Uprise</small></span>
+        <span><strong>Human Uprise</strong><small>Founded by Equity Uprise</small></span>
       </a>
-      <!-- the header's one live signal: your unread alerts, without opening the tab -->
+      <!-- search the World: places and causes on the globe, words in the feed,
+           people, groups and missions. A bar in the header at every width. -->
+      <form class="mn__search" id="mnSearch" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input id="mnSearchInput" type="search" placeholder="Search places, people, or causes…" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80" role="combobox" aria-controls="mnSuggest" aria-expanded="false" aria-autocomplete="list">
+        <!-- PEOPLE, GROUPS AND MISSIONS LIVE IN SEARCH (owner, 2026-10-14):
+             places and pinned missions, open missions, people and groups that
+             match, and the three full lists, all from the one field -->
+        <div class="mn__suggest" id="mnSuggest" hidden>
+          <div id="mnSuggestRows"></div>
+          <div class="mn__suggest-foot">
+            <button type="button" data-mn-view="missions">All missions</button>
+            <button type="button" data-mn-view="discover">Find people</button>
+            <button type="button" data-mn-view="groups">Browse groups</button>
+          </div>
+        </div>
+      </form>
+      <!-- a guest's door in: the World is readable without an account -->
+      <div class="mn__guest-bar" id="mnGuestBar" hidden>
+        <button class="mn__guest-in" id="mnGuestSignIn" type="button">Sign in</button>
+        <button class="mn__guest-join" id="mnGuestJoin" type="button">Join</button>
+      </div>
+      <!-- ALERTS LIVE ON THE BELL: the count of unread alerts, and the tap
+           that opens them. There is no Alerts entry anywhere else. -->
       <button class="mn__bell" id="mnBell" type="button" aria-label="Alerts" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
-        <i class="mn__bell-dot" id="mnBellDot" hidden></i>
+        <span class="mn__bell-count" id="mnNotifBadge" hidden></span>
       </button>
-      <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Open your profile" hidden>
+      <!-- THE ACCOUNT MENU (owner, 2026-10-14): three destinations in the
+           bar, one small account menu here, everything else in context.
+           Alerts are the bell; missions are the pins, the mission card and
+           search; people and groups are the World search; Live is a badge
+           over the globe; clips are a door under the Music and Photos &
+           video tabs; creating is the composer; a creator's analytics is a
+           layer on the globe and a door on their profile; the M Account is
+           Settings & account.
+           Do not add rooms to this menu. -->
+      <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Your account" aria-haspopup="true" aria-expanded="false" aria-controls="mnMenu" hidden>
         <span id="mnAvatarFallback">M</span>
         <img id="mnAvatar" alt="" hidden>
+        <i class="mn__avatar-dot" id="mnMeDot" hidden></i>
       </button>
+      <nav class="mn__menu" id="mnMenu" aria-label="Your account" hidden>
+        <div class="mn__menu-who">
+          <span class="mn__menu-face" id="mnMenuFace" aria-hidden="true">M</span>
+          <span class="mn__menu-id"><strong id="mnMenuName">Your profile</strong><small id="mnMenuHandle"></small></span>
+        </div>
+        <button type="button" data-mn-view="profile">View profile</button>
+        <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
+        <a href="account.html?stay=1">Settings &amp; account</a>
+        <button type="button" class="mn__menu-out" id="mnSignOut">Sign out</button>
+      </nav>
     </header>
 
     <section class="mn__gate" id="mnSignedOut">
+      <!-- opened from the World: say why, and keep the way back in reach -->
+      <div class="mn__gate-why" id="mnGuestWhyRow" hidden>
+        <button class="mn__to-world" id="mnSignedOutBack" type="button">← Back to the World</button>
+        <p id="mnGuestWhy" role="status"></p>
+      </div>
       <p class="mn__eyebrow">The place for doers.</p>
       <h1>Turn what you care about into action.</h1>
-      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. The Action Network is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
+      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. Human Uprise is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
       <div class="mn__panel">
-        <div class="mn__auth-tabs" role="tablist" aria-label="Action Network account">
+        <div class="mn__auth-tabs" role="tablist" aria-label="Human Uprise account">
           <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
           <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
@@ -67,7 +115,7 @@
 
     <section class="mn__gate" id="mnProfileGate" hidden>
       <button class="mn__back" id="mnProfileBack" type="button" hidden>← Back to feed</button>
-      <p class="mn__eyebrow">Your Action Network profile</p>
+      <p class="mn__eyebrow">Your Human Uprise profile</p>
       <h1 id="mnProfileTitle">Finish your profile.</h1>
       <p class="mn__lede">Pick a username. It is how people find you and mention you, here and on every McCluster product.</p>
       <form class="mn__panel mn__profile-form" id="mnProfileForm">
@@ -78,7 +126,7 @@
         <label class="mn__label" for="mnDisplay">Display name</label>
         <input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required>
 
-        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who the Action Network is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
+        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Human Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
 
         <label class="mn__label" for="mnHeadline">Headline</label>
         <input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?">
@@ -123,20 +171,8 @@
     </section>
 
     <section class="mn__app" id="mnApp" hidden>
-      <nav class="mn__tabs" aria-label="Action Network">
-        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
-        <button type="button" data-mn-view="missions">Campaigns</button>
-        <button type="button" data-mn-view="messages">Inbox <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
-        <button type="button" data-mn-view="profile">Profile</button>
-        <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
-      </nav>
-      <nav class="mn__quicklinks" aria-label="More network features">
-        <button type="button" data-mn-view="clips">Clips</button>
-        <button type="button" data-mn-view="live">Live</button>
-        <button type="button" data-mn-view="discover">People</button>
-        <button type="button" data-mn-view="groups">Groups</button>
-        <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
-      </nav>
+      <!-- every room but World has a way home to it -->
+      <button class="mn__to-world" id="mnToWorld" type="button" data-mn-view="feed" hidden>← World</button>
 
       <section class="mn__view" id="mnLiveView">
         <section class="mn__onair mn__onair--directory" id="mnLive" aria-live="polite">
@@ -167,6 +203,74 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
+        <!-- THE WORLD SCREEN (owner's contract, docs/action-network/
+             WORLD-SCREEN-UX-HANDOFF-20261014.md): one persistent screen,
+             about 45% globe on top, a 15% context strip, 35% real member
+             feed that scrolls on its own. The globe never scrolls away.
+             A pin fills the strip and narrows the feed to posts the server
+             ties to that mission; a post with such a mission can show it on
+             the Earth. The frame reads public, admin-approved pins only. -->
+        <section class="mn__world-home" id="mnWorld" aria-label="The world">
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
+          <!-- what is on air right now, over the Earth; opens the live rooms -->
+          <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
+          <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
+          <p class="mn__world-tag" aria-hidden="true"><i></i>Global missions <b id="mnWorldTagCount"></b></p>
+        </section>
+        <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
+          <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
+               what a guest sees first, and what anyone sees with no mission
+               picked. The chips act on the globe; nothing here is invented. -->
+          <div class="mn__world-idle" id="mnWorldIdle">
+            <p class="mn__eyebrow">Explore the world</p>
+            <h2 class="mn__world-idle-h">Find a mission or region</h2>
+            <p class="mn__world-caption" id="mnWorldCaption">Tap a marker or search to discover action around the world.</p>
+            <nav class="mn__world-chips" aria-label="Explore the globe">
+              <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
+              <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
+              <a href="action-policy.html">Policy ↗</a>
+              <button type="button" data-world-chip="near">Near me</button>
+            </nav>
+          </div>
+          <!-- THE MISSION CARD: the pin you tapped (or the newest pinned
+               mission, labelled as such). Art is the mission's kind, drawn as
+               an icon, because missions carry no photo and none is invented. -->
+          <article class="mn__mission-card" id="mnWorldFocus" hidden>
+            <div class="mn__mission-art" id="mnWorldFocusArt" aria-hidden="true"></div>
+            <div class="mn__mission-body">
+              <p class="mn__mission-meta"><span class="mn__mission-flag" id="mnWorldFocusFlag" hidden>Latest</span><span class="mn__mission-where" id="mnWorldFocusWhere"></span><span class="mn__mission-kind" id="mnWorldFocusKind"></span><span class="mn__mission-stats" id="mnWorldFocusStats"></span></p>
+              <h2 id="mnWorldFocusTitle"></h2>
+              <p class="mn__mission-desc" id="mnWorldFocusDesc"></p>
+            </div>
+            <div class="mn__mission-actions">
+              <!-- THE EMBLEM OR FUND IT (owner, 2026-10-14): the owner's emblem, complete, scaled only and never written out, is the join; Fund opens the campaign's governed support rail -->
+              <button class="mn__world-go mn__world-go--eup" id="mnWorldFocusJoin" type="button" aria-label="Join this mission and do it"><img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28"></button>
+              <button class="mn__world-locate" id="mnWorldFocusFund" type="button" aria-label="Fund this mission"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg><span>Fund</span></button>
+              <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
+              <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
+              <!-- every open mission, pinned or not, with your Action Record -->
+              <button class="mn__world-locate mn__world-all" type="button" data-mn-view="missions"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
+            </div>
+            <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
+          </article>
+        </section>
+        <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
+        <!-- filters over what is loaded, by what a post actually carries;
+             no invented categories or locations -->
+        <nav class="mn__feed-tabs" id="mnFeedTabs" aria-label="Filter the feed">
+          <button type="button" class="is-on" data-feed-tab="all" aria-pressed="true">All posts</button>
+          <button type="button" data-feed-tab="missions" aria-pressed="false">Missions</button>
+          <button type="button" data-feed-tab="music" aria-pressed="false">Music</button>
+          <button type="button" data-feed-tab="media" aria-pressed="false">Photos &amp; video</button>
+        </nav>
+        <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
+             they are a door from the Music and Photos & video tabs, shown only
+             while campaigns are open, with their real terms -->
+        <aside class="mn__clipdoor" id="mnClipDoor" hidden>
+          <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
+          <button class="mn__world-go" type="button" data-mn-view="clips">See clipping campaigns</button>
+        </aside>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -174,14 +278,24 @@
           <div class="mn__rail-head"><div><p class="mn__rail-k">WAYS TO MOVE</p><h2 id="mnRailH">Campaigns & missions</h2></div><a href="action/">See all</a></div>
           <div class="mn__rail-track" id="mnRailTrack"></div>
         </section>
+        <!-- a guest's door into the members' side: a real Equity Uprise rally
+             (Bridgeport Creates), then the public posts, read-only -->
+        <aside class="mn__guest-card" id="mnGuestCard">
+          <p><strong>Member posts live here.</strong> These are the public ones. Sign in to see your network, to post, and to join or fund a mission.</p>
+          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
+        </aside>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
             <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="What’s happening?" aria-label="Post text"></textarea>
+            <!-- CREATE, in context: record, film or write with the full tools -->
+            <a class="mn__create" href="create.html" aria-label="Record or create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
           </div>
           <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
-            <a class="mn__attach" href="create.html" aria-label="Open Action Network recording and creation tools">Record / Create</a>
+            <a class="mn__attach" href="create.html" aria-label="Open Human Uprise recording and creation tools">Record / Create</a>
+            <!-- shown only to a member the desk has granted live hosting, once live video is switched on -->
+            <button class="mn__attach" id="mnComposerLive" type="button" hidden>Go live</button>
             <label class="mn__attach" for="mnMediaInput">Photo / video
               <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
             </label>
@@ -209,10 +323,23 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
+        <!-- TIME REWIND (owner's desktop mockup, 2026-10-14): the feed as it
+             stood a day, a week or a month ago, read from the same server
+             pages (before=). Posts only: the Earth and its pins stay live. -->
+        <section class="mn__rewind" id="mnRewind" aria-label="Time rewind">
+          <div class="mn__rewind-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg><div><b>Time rewind</b><small id="mnRewindLine">Live. Rewind the feed a day, a week or a month.</small></div></div>
+          <div class="mn__rewind-row" role="group" aria-label="Feed time">
+            <button type="button" class="is-on" data-rewind="0" aria-pressed="true"><i aria-hidden="true"></i>Live</button>
+            <button type="button" data-rewind="24" aria-pressed="false">−24h</button>
+            <button type="button" data-rewind="168" aria-pressed="false">−7d</button>
+            <button type="button" data-rewind="720" aria-pressed="false">−30d</button>
+          </div>
+        </section>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
         <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
+      </div>
       </section>
 
       <section class="mn__view" id="mnClipsView" hidden aria-labelledby="mnClipsTitle">
@@ -255,6 +382,35 @@
           <label class="mn__check" for="mnMissionShare"><input id="mnMissionShare" type="checkbox" checked><span><b>Put this action on the feed once it's verified</b>The verified post can include the proof you submitted, with a real video thumbnail.</span></label>
           <button class="mn__primary" type="submit">Submit mission proof</button>
         </form>
+        <section id="mnAntisocialLevels" hidden aria-label="Anti-Social mission levels">
+          <p class="mn__eyebrow">Anti-Social · Get Social</p>
+          <h3>One mission. Three levels.</h3>
+          <ol id="mnAntisocialProgress" class="mn__record-list"></ol>
+          <p class="mn__hint">High five only when someone wants to. Record yourself or ask before filming anyone else. Do not publish someone who did not consent.</p>
+          <form id="mnAntisocialForm" hidden>
+            <p id="mnAntisocialNext" class="mn__eyebrow"></p>
+            <label class="mn__label" for="mnAntisocialStatement">Tell us what you did</label>
+            <textarea class="mn__input mn__textarea" id="mnAntisocialStatement" rows="3" maxlength="1500" placeholder="A short recap of your action"></textarea>
+            <label class="mn__label" for="mnAntisocialVideo">Your optional clip (only with permission)</label>
+            <input class="mn__input" id="mnAntisocialVideo" type="file" accept="video/*,image/*">
+            <label class="mn__label" for="mnAntisocialLink">Or an HTTPS link to your clip</label>
+            <input class="mn__input" id="mnAntisocialLink" type="url" placeholder="https://…">
+            <div id="mnAntisocialCollab" hidden>
+              <p class="mn__hint">Connect → Collaborate → Publish. Connect with a member here, make original work together, and publish it from this form: one post credited to both of you, counting for both. Your collaborator confirms it with one tap. Both must finish levels 1 and 2 first.</p>
+              <div id="mnAntisocialWithMe" hidden></div>
+              <label class="mn__label" for="mnAntisocialPartner">Your Action Network collaborator</label>
+              <select class="mn__input" id="mnAntisocialPartner"><option value="">Select an accepted connection</option></select>
+              <p class="mn__hint">No one yet? <a href="mnet.html?view=discover">Find a member</a> and tap <b>Connect</b> on their profile; when they accept, they appear here.</p>
+              <label class="mn__label" for="mnAntisocialTitle">What you made together</label>
+              <input class="mn__input" id="mnAntisocialTitle" maxlength="120" placeholder="Title of the song, video, photo project or other work">
+              <label class="mn__label" for="mnAntisocialKind">Kind of work</label>
+              <select class="mn__input" id="mnAntisocialKind"><option value="song">Song</option><option value="video">Video</option><option value="photo">Photo project</option><option value="writing">Writing</option><option value="other">Other original work</option></select>
+              <p class="mn__hint">The clip or link above is the work itself: upload it, or link to where it lives.</p>
+            </div>
+            <button class="mn__primary" type="submit" id="mnAntisocialGo">Submit this level for review</button>
+          </form>
+          <p class="mn__status" id="mnAntisocialStatus" role="status"></p>
+        </section>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
       </dialog>
 
@@ -279,6 +435,7 @@
 
       <div id="mnGroupsList">
         <a class="mn__secondary mn__fbi-link" href="fbi.html">Legit or cap? The Fashion Bureau of Investigation →</a>
+        <p class="mng__query" id="mngQuery" hidden><span id="mngQueryText"></span> <button type="button" id="mngQueryClear">Clear</button></p>
         <div class="mng__split" id="mngSplit" role="tablist" aria-label="Groups">
           <button type="button" class="mng__seg is-on" data-mng-seg="yours" role="tab" aria-selected="true">Your groups</button>
           <button type="button" class="mng__seg" data-mng-seg="explore" role="tab" aria-selected="false">Explore</button>
@@ -306,7 +463,7 @@
 
       <section class="mn__view" id="mnMessagesView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Messages</h2></div>
+          <div><p class="mn__eyebrow">Human Uprise</p><h2>Messages</h2></div>
           <button class="mn__quiet" id="mnRefreshMessages" type="button">Refresh</button>
         </div>
         <div class="mn__conversations" id="mnConversations"></div>
@@ -315,7 +472,7 @@
 
       <section class="mn__view" id="mnNotificationsView" hidden>
         <div class="mn__section-head">
-          <div><p class="mn__eyebrow">Action Network</p><h2>Notifications</h2></div>
+          <div><p class="mn__eyebrow">Human Uprise</p><h2>Notifications</h2></div>
           <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
         </div>
         <div class="mn__notifications" id="mnNotifications"></div>
@@ -323,7 +480,6 @@
       </section>
 
       <section class="mn__view" id="mnProfileView" hidden>
-        <button class="mn__back" id="mnProfileViewBack" type="button" data-mn-view="feed">← Back to newsfeed</button>
         <div class="mn__frontpage" id="mnFrontPage" hidden>
           <div class="mn__frontpage-head"><div><span>Front page</span><strong id="mnFrontPageTitle">Your public home</strong></div><a id="mnFrontPageOpen" target="_blank" rel="noopener">Open site ↗</a></div>
           <div class="mn__frontpage-stage"><iframe id="mnFrontPageFrame" title="Public front page preview" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></div>
@@ -344,13 +500,27 @@
         <section class="mn__panel" id="mnSecurity">
           <h3>Password and sign-in</h3>
           <p>Change your password, or set one if you signed up with Google.</p>
-          <a class="mn__secondary" href="account.html#password">Change password</a>
+          <a class="mn__secondary" href="account.html?stay=1#password">Change password</a>
+          <button class="mn__secondary" id="mnProfileBlocked" type="button">People you blocked</button>
+        </section>
+        <!-- a music creator's analytics (Creator Studio), shown only to someone
+             with a music creator profile; nobody else sees this door -->
+        <section class="mn__panel" id="mnProfileAnalytics" hidden>
+          <h3>Your analytics</h3>
+          <p>Plays, completions, shares and page traffic for your catalogue, from recorded activity.</p>
+          <a class="mn__secondary" href="creator.html#artistAnalyticsHeading">Open your analytics</a>
+        </section>
+        <!-- the Action Record lives with the missions; this is its door from your profile -->
+        <section class="mn__panel" id="mnProfileRecord">
+          <h3>Your Action Record</h3>
+          <p>Verified actions, points, cohorts and receipts.</p>
+          <button class="mn__secondary" type="button" data-mn-view="missions">Open your Action Record</button>
         </section>
         <!-- Account deletion, started here. Required by the App Store and
              Google Play; the request is real and the desk completes it. -->
         <section class="mn__panel mn__delete" id="mnDelete">
           <h3>Delete my account</h3>
-          <p id="mnDeleteState">This deletes your Action Network profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
+          <p id="mnDeleteState">This deletes your Human Uprise profile, posts, messages, missions and your M Account. You have 30 days to change your mind, then it is gone for good.</p>
           <details class="mn__delete-go" id="mnDeleteGo"><summary>Delete my account…</summary>
             <label class="mn__label" for="mnDeleteReason">Anything we should know? <span>optional</span></label>
             <textarea class="mn__input mn__textarea" id="mnDeleteReason" rows="3" maxlength="2000"></textarea>

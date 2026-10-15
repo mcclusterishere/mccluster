@@ -42,7 +42,7 @@
     var mission = selectedMission();
     return '<div class="cro-card" style="margin-top:10px;padding:12px">' +
       '<label class="cro-check"><input type="checkbox" id="igActionOn"' + (S.actionOn ? " checked" : "") + '> <b>Make this actionable</b></label>' +
-      '<p class="cro-meta">Attach this Reel to a real Action Network mission. McCluster adds a tracked Take action link and can publish the same content to the Action Network.</p>' +
+      '<p class="cro-meta">Attach this Reel to a real Human Uprise mission. McCluster adds a tracked Take action link and can publish the same content to Human Uprise.</p>' +
       (S.actionOn ? '<div class="cro-form cro-form--2" style="margin-top:8px">' +
         '<label>Campaign<select class="cr-select" id="igActionCampaign">' +
           cs.map(function (x) { return '<option value="' + e(x.id) + '"' + (x.id === S.actionCampaign ? " selected" : "") + '>' + e(x.title) + '</option>'; }).join("") +
@@ -52,7 +52,7 @@
         '</select></label></div>' +
         (!cs.length || !ms.length ? '<div class="cro-note cro-note--bad" style="margin-top:8px">No open campaign mission is available yet.</div>' : '') +
         (mission ? '<div class="cro-note" style="margin-top:8px"><b>' + e(mission.title) + '</b><br>' + e(mission.description || "") + '</div>' : '') +
-        '<label class="cro-check" style="margin-top:8px"><input type="checkbox" id="igActionNetwork"' + (S.publishToNetwork ? " checked" : "") + '> Also publish this content to the Action Network</label>' +
+        '<label class="cro-check" style="margin-top:8px"><input type="checkbox" id="igActionNetwork"' + (S.publishToNetwork ? " checked" : "") + '> Also publish this content to Human Uprise</label>' +
         '<p class="cro-meta">One content ID will connect the Reel, the network post, mission joins, submitted proof and verified completions.</p>'
       : '') + '</div>';
   }
@@ -165,7 +165,7 @@
       if (S.when) body.scheduled_at = new Date(S.when).toISOString();
       return S.request("/v1/social/publish", { method: "POST", body: body });
     }).then(function (out) {
-      var linked = out && out.action_url ? " Linked to the Action Network mission." : "";
+      var linked = out && out.action_url ? " Linked to Human Uprise mission." : "";
       S.note = (draft ? "Saved as a draft." : S.when ? "Scheduled." : "Queued. It goes out within about five minutes.") + linked;
       S.file = null; S.caption = ""; S.when = "";
       S.loaded = false; S.busy = null; load();

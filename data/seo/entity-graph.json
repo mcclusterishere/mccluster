@@ -417,15 +417,16 @@
       "founder": {
         "@id": "https://matthew.mccluster.org/#matthew-mccluster"
       },
-      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in the Uprise Action Network."
+      "description": "Music-and-action gateway connecting the Heal the 3 project to campaigns in Human Uprise."
     }
   },
   "software": {
     "action_network": {
       "@type": "SoftwareApplication",
       "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
-      "name": "Uprise Action Network",
+      "name": "Human Uprise",
       "alternateName": [
+        "Uprise Action Network",
         "Action Network"
       ],
       "url": "https://matthew.mccluster.org/mnet.html",
@@ -440,7 +441,7 @@
       },
       "applicationCategory": "SocialNetworkingApplication",
       "operatingSystem": "Web",
-      "description": "Action-first social and campaign network organized around missions, proof of action, groups, messaging and campaign participation."
+      "description": "Movement-creation social network, formerly the Uprise Action Network, organized around a live world globe, missions, proof of action, groups, messaging and campaign participation."
     },
     "mccluster_platform": {
       "@type": "SoftwareSourceCode",

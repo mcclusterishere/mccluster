@@ -31,7 +31,7 @@ of the property, and it is never the company's homepage.
 Matthew McCluster  (Person, matthew.mccluster.org)
 ├── founder of ─► McCluster Corp  (Organization, url https://mccluster.org/)
 │                 ├── Equity Uprise            public-interest project
-│                 ├── Uprise Action Network    software product, connected to Equity Uprise's action model
+│                 ├── Human Uprise             movement-creation social platform (formerly the Uprise Action Network); Equity Uprise runs on it as a program
 │                 ├── PRIM3                    learning project / product
 │                 ├── McCluster Platform       the technical platform operated for McCluster Corp
 │                 ├── McCluster Sites          web services
@@ -67,8 +67,8 @@ Rules that follow from it:
 - **McCluster Corp products hosted on Matthew's property for compatibility:**
   the company's product map (`mccluster-corp.html`, with
   `data/product-context.json`; it explains how the products connect, the
-  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), the Action Network
-  (`/action/`, `mnet.html`, receipts), the campaign pages, PRIM3, McCluster
+  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), Human Uprise,
+  formerly the Action Network (`/action/`, `mnet.html`, `action-globe.html`, receipts), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the music-creator platform, the privacy policy.
 - **Whip Equipped LLC** (separate company) at `whip.html`.
 
@@ -81,7 +81,7 @@ does not move a URL.** The company *apps* stay where they are, deliberately:
 - The Supabase Auth redirect allowlist names that host.
 - Printed QR codes and live campaign links point at these paths.
 
-Moving the Action Network, accounts or checkout to `mccluster.org` would sign
+Moving Human Uprise, accounts or checkout to `mccluster.org` would sign
 members out and break payment returns. The company property describes these
 products and links into them.
 
@@ -135,6 +135,42 @@ depends on the old origin.
 Mail for `mccluster.org` is Google Workspace (MX). Routing HTTP to the Worker
 does not touch MX; do not swap the apex DNS record for a Worker custom domain
 without checking the MX and TXT records survive.
+
+## Human Uprise's host: `humanuprise.com`
+
+Three hosts, still two entities. Human Uprise is McCluster Corp's platform
+(the Organization above), so `humanuprise.com` is a company host, not a third
+entity and not Matthew's. Owner, 2026-10-14: the World (the globe, the context
+strip, the feed) is Human Uprise's own solo experience at its own address,
+interconnected with the rest.
+
+| | `https://humanuprise.com/` |
+| --- | --- |
+| Whose | McCluster Corp's platform, Human Uprise |
+| Answers | Where is the movement, and what can I do today? |
+| Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` (the same stable `@id`) |
+| Source | the World, `mnet.html`, as published on Matthew's property; nothing is duplicated |
+| Served by | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise/router.js`); inert until the owner routes the host |
+
+- `/` is the World, passed through from `matthew.mccluster.org/mnet.html` with
+  this host's own canonical. The World's rooms, the sign-in pages and the
+  static files ride the same way (noindex); every other path is a 301 to the
+  same path on `matthew.mccluster.org`. So Music, the M, every creator page
+  and every record land on Matthew's property; the World stays here.
+- The bar (`js/tabbar.js`) reads the same on either host: Music | M | Globe.
+  On `humanuprise.com`, Music and the M link to Matthew's site outright; on
+  Matthew's site the Globe stays on his origin until the owner flips
+  `WORLD_ORIGIN` after routing.
+- Sessions are per origin, and one M Account works on every host anyway: the
+  bar carries a member's sign-in across (`js/tabbar.js` → `/v1/auth/handoff`,
+  `workers/mccluster/src/auth-handoff.js`), and the arriving host earns a
+  session of its own. No refresh token crosses. The API's CORS allowlist
+  carries the host; it is also the list of hosts a sign-in may be carried to.
+- Why not a second Pages site or Worker: the same reasons as the company host
+  (one custom domain per repository; one Worker; serving a host is ingress).
+- Activation and verification: `docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md`
+  → "Production domain". Tests: `workers/mccluster/test/human-uprise-site.test.mjs`,
+  `scripts/test/human-uprise-door.test.mjs`.
 
 ## Changing either property
 

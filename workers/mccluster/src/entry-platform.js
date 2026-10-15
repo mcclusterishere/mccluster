@@ -7,6 +7,8 @@ import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
+import { humanUpriseResponse } from './human-uprise/router.js';
+import { handleAuthHandoff } from './auth-handoff.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
@@ -43,6 +45,11 @@ export default {
        owner routes the apex to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
     const company = companySiteResponse(request);
     if (company) return company;
+    /* Human Uprise's own door (humanuprise.com, www): the World by host, the
+       same way. Null for every other host; inert until the owner routes it:
+       docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md */
+    const humanUprise = await humanUpriseResponse(request, env);
+    if (humanUprise) return humanUprise;
     try {
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
@@ -53,6 +60,9 @@ export default {
       if (billingWebhook) return billingWebhook;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
+      /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
+      const handoff = await handleAuthHandoff(request, env);
+      if (handoff) return handoff;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;
@@ -76,7 +86,7 @@ export default {
     return existing.fetch(request, env, ctx);
   },
   async scheduled(controller, env, ctx) {
-    /* Scheduled Action Network posts ride the same five-minute cron as the
+    /* Scheduled Human Uprise posts ride the same five-minute cron as the
        social queue. A failure here is logged and never stops the rest. */
     ctx.waitUntil(publishDueNetworkPosts(env, { limit: 20 }).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_scheduled_publish_failed', message: error instanceof Error ? error.message : String(error) }));

@@ -14,7 +14,7 @@
    NOTHING THAT WORKS TODAY BREAKS. The company property owns only the paths
    in PAGES. Every other path gets exactly what the redirect rule gives today:
    a 301 to the same path and query on https://matthew.mccluster.org, so
-   shared links, printed QR codes and Action Network campaign links keep
+   shared links, printed QR codes and Human Uprise campaign links keep
    landing where they do now. */
 import { PAGES, COMPANY_ORIGIN, PERSONAL_ORIGIN } from './pages.generated.js';
 

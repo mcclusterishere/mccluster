@@ -108,6 +108,7 @@ fails when `config.toml` gains one that is missing here.
 | `eu-converse` | anonymous visitors | a thread answers only to its owner (signed-in profile, or the visitor's `anon_key` on an unclaimed thread); server-side usage limits; fixed agent tools |
 | `intake`, `eu-intake` | public forms | fixed org and field set, length caps, per-IP limit / Turnstile; the browser cannot set status, roles or approvals |
 | `unsubscribe` | a recipient holding an old email | per-contact unsubscribe token; the only effect is a suppression |
+| `public-gdelt-news` | public read-only world reporting | anonymous GET serves cached article rows; `sync=1` requires a service-role bearer token before database ingestion; GDELT requests use bounded topics and backoff claims; never expose the service-role key to browsers |
 | `domain-check` | anonymous lookup | read-only; registry answer plus the `domain_tlds` price, never charged from here |
 | `collect` | anonymous telemetry | the only writer of `events`; IP and user agent observed server-side; a token, when sent, is verified in-function |
 | `mnet-track` | anonymous and signed-in activity | token verified in-function when present; unknown source app refused |
@@ -122,6 +123,12 @@ fails when `config.toml` gains one that is missing here.
 | `l3-login` | sign-in | 12 failures per IP per 15 min; exact username shape and `eq` lookup; app access checked after the password |
 | `l3-checkout` | anonymous buyers | product price read server-side; checkout created on the seller's connected account |
 | `l3-download` | buyers without accounts | **download token**: the Stripe checkout-session id; payment re-verified with Stripe on every request; 300-second signed storage URL; every download logged with a hashed IP |
+
+Worker `mccluster` routes reachable without a session are listed here too.
+
+| Route | Why it is public | Compensating control |
+|---|---|---|
+| `GET /v1/mnet/public-feed` | Human Uprise World screen for signed-out visitors (owner's role matrix: guests read permitted public material) | read-only; only `visibility=public` posts outside any group, not deleted, not replies, by members whose own profile is public; projection drops internal ids, viewer state and media addresses; page capped at 20; `cache-control: public, max-age=30`; every other `/v1/mnet/*` route still requires a session (`workers/mccluster/test/mnet-public-feed.test.mjs`) |
 
 ## Internal signing and nonces
 

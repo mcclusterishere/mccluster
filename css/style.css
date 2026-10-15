@@ -1822,6 +1822,12 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
 .app-crumb{position:fixed;top:calc(0.8rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:210;padding:0.45em 1.1em;border-radius:100px;text-decoration:none;background:rgba(10,8,7,0.75);backdrop-filter:blur(8px);border:1px solid rgba(229,56,59,0.5);color:var(--cream);font-size:0.78rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
 .app-crumb:hover{background:rgba(193,18,31,0.4)}
 .appbar__m{width:1.75rem;height:1.75rem;object-fit:contain;display:block}
+/* A CREATOR IN THE MIDDLE. A creator's front page puts that creator in the
+   bar's middle cell for the session (js/tabbar.js, the perspective): their
+   own avatar, round, or the initial of their name. Never a mark drawn for
+   them (AGENTS.md, the logos). */
+.appbar__m--creator{border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px rgba(244,239,230,0.3)}
+.appbar__m--initial{display:grid;place-items:center;border-radius:50%;background:rgba(244,239,230,0.14);box-shadow:0 0 0 1px rgba(244,239,230,0.3);font:800 0.82rem/1 var(--ui,system-ui,sans-serif);text-transform:uppercase;color:inherit}
 /* THE HM RIDES ON ITS HEIGHT, not on a square. The mark is 1.4:1 and the
    bar already carries a wide icon (the EQ glyph is nearly 2:1), so matching
    the other tabs' height and letting the width follow keeps every tab's
@@ -1849,6 +1855,10 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
 html[data-theme="light"] .appbar__we { content: url("../assets/img/we-icon-bar.png"); }
 
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
+/* the creator's own picture or initial is never swapped for the M; the
+   house slot of the held wing takes the dark M on the light coat */
+html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m--creator,html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m--initial{content:normal}
+html[data-theme="light"] .appbar__tab--slot .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M
    coin (baked-in transparent margin) and a dark pill under it on the light
    coat so the white halo did not vanish. It is a drawn cup now and takes
@@ -5032,7 +5042,7 @@ html[data-theme="light"] .felband__veil {
 
 /* ============================================================
    MCCLUSTER POLISH SYSTEM
-   Shared interaction language extracted from the Action Network.
+   Shared interaction language extracted from Human Uprise.
    It intentionally styles semantic controls/surfaces without flattening
    art-directed rooms into one visual template.
    ============================================================ */

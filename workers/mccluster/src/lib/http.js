@@ -3,6 +3,8 @@ const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const DEFAULT_ORIGINS = [
   'https://matthew.mccluster.org',
   'https://mccluster.org',
+  'https://humanuprise.com',
+  'https://www.humanuprise.com',
   'https://api.mccluster.org',
   'https://esmer.mccluster.org',
   'https://mcclusterishere.github.io',
