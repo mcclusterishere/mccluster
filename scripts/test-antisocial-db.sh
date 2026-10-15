@@ -16,10 +16,12 @@ apply() { psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$1" >/dev/null; echo "applied 
 apply supabase/tests/supabase_api_roles.stub.sql
 apply supabase/tests/mnet_network_tables.stub.sql
 apply supabase/migrations/20261002061056_action_network_gamification_v1.sql
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "alter table public.action_missions add column if not exists kind text not null default 'civic'" >/dev/null
 apply supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql
 apply supabase/migrations/20261002135458_action_network_feed_shares_v1.sql
 apply supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql
 apply supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql
+apply supabase/migrations/20261015001022_antisocial_action_record_civic_scope.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/antisocial_connections.behaviour.sql
 if [ -f supabase/tests/antisocial_levels.behaviour.sql ]; then
   psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/antisocial_levels.behaviour.sql
