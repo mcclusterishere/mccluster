@@ -1,4 +1,5 @@
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
+import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_PROVIDER_ROWS = 2000;
@@ -92,9 +93,10 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
+    // Workers' fetch rejects redirect: 'error'. The provider may only redirect
+    // to its own host over https; anything else fails as upstream_redirect.
+    const response = await fetchNoCrossHostRedirect(url, {
       ...init,
-      redirect: 'error',
       signal: controller.signal,
       headers: {
         accept: 'application/json',
@@ -114,6 +116,9 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
     return response;
   } catch (error) {
     if (error instanceof GeoAdapterError) throw error;
+    if (error instanceof UpstreamError) {
+      throw new GeoAdapterError('Provider redirected outside its own host', 502, error.code, { provider_status: error.providerStatus });
+    }
     if (error?.name === 'AbortError') throw new GeoAdapterError('Provider request timed out', 504, 'provider_timeout');
     throw new GeoAdapterError('Provider request failed', 502, 'provider_network_error');
   } finally {
