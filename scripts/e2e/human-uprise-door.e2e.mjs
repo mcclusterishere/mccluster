@@ -377,14 +377,12 @@ const settleWorld = async (page) => {
   const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
   await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
+  await settleWorld(page);
   const seen = await page.evaluate(() => ({ signedIn: document.body.classList.contains('mcc-auth-in'), app: !document.getElementById('mnApp').hidden, gate: !document.getElementById('mnProfileGate').hidden, world: document.getElementById('mnWorld').getBoundingClientRect().height, frame: !!document.querySelector('#mnWorldFrame'), card: !document.getElementById('mnFinishCard').hidden, cardText: document.getElementById('mnFinishCard').textContent.replace(/\s+/g, ' ').trim(), composer: document.getElementById('mnComposer').hidden, posts: document.querySelectorAll('#mnFeed [data-post-id]').length }));
   check(S, 'signed in with an unfinished profile, the World is on screen: the Earth, the strip, the posts', seen.signedIn && seen.app && !seen.gate && seen.world > 200 && seen.frame && seen.posts > 0, seen);
   check(S, 'the step waits in a card where the composer would be', seen.card && /Finish your profile\./.test(seen.cardText) && seen.composer, { card: seen.card, composer: seen.composer, text: seen.cardText });
   const reads = apiReads.filter((r) => /\/v1\/mnet\/(public-feed|feed)$/.test(r.path));
   check(S, 'the feed read is the public one until the profile exists', reads.length > 0 && reads.every((r) => r.path === '/v1/mnet/public-feed' && !r.auth), reads);
-  const globe = page.frame({ url: /action-globe\.html/ });
-  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
-  await page.waitForTimeout(1000);
   await page.screenshot({ path: join(OUT, 'finish-profile-iphone.png') });
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   /* the join on the mission card asks to finish, with the reason, and the way back is the World */
