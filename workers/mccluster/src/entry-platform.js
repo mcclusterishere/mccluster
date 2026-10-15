@@ -9,6 +9,7 @@ import { fail, reply } from './lib/http.js';
 import { companySiteResponse } from './company-site/router.js';
 import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
+import { preflightResponse } from './preflight.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
@@ -56,6 +57,10 @@ export default {
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
         return healthResponse(request, env);
       }
+      /* a browser's preflight for a member route is answered before any sign-in gate (./preflight.js);
+         without this, every signed-in member's World call was refused by the browser */
+      const preflight = preflightResponse(request, env);
+      if (preflight) return preflight;
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
