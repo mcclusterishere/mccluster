@@ -352,7 +352,7 @@ alter table public.action_member_verifications add constraint action_member_veri
 
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_requirement_kind_check;
 alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check check (requirement_kind in
- ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists','identity_verified'));
+ ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','identity_verified'));
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_identity_purpose_check;
 alter table public.action_unlock_rules add constraint action_unlock_rules_identity_purpose_check
  check (requirement_kind <> 'identity_verified' or params->>'purpose' in ('referral_signup','halo_full'));
@@ -426,8 +426,6 @@ begin
      v_have := public.action_member_verified_mission_count(p_user);
      if v_have < v_need then v_met := false; v_reason := 'missions'; end if;
    end if;
- elsif r.requirement_kind = 'registration_assists' then
-   v_need := r.min_count; v_reason := 'counting_source_pending_counsel';
  end if;
  if v_met and coalesce((r.params->>'requires_fellow')::boolean, false) and not exists (
    select 1 from public.action_fellowship_applications f where f.user_id = p_user and f.status = 'accepted') then

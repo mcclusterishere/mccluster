@@ -38,7 +38,7 @@ delete from public.action_unlock_rules where rule_key = 'halo_full';
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_identity_purpose_check;
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_requirement_kind_check;
 alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check check (requirement_kind in
- ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists'));
+ ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals'));
 
 -- 4. action_member_verifications back to one row per user (referral_signup only)
 delete from public.action_member_verifications where purpose <> 'referral_signup';
