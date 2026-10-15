@@ -199,13 +199,14 @@ test("the desk and the fellow surfaces are wired to the same rules", async () =>
   assert.doesNotMatch(desk, /scholar\.google/i, "the fellow desk never fetches Google Scholar");
 });
 
-test("every unlock is a row; counsel-gated rules ship disabled and cannot be enabled unsigned", async () => {
+test("every unlock is a row; counsel-gated rules ship disabled; Whip is open to any signed-in member; no voter rule", async () => {
   const sql = await read(SQL_PATH);
   assert.match(sql, /check \(not enabled or not requires_counsel_signoff or counsel_signoff_at is not null\)/);
   assert.match(sql, /\('equity_uprise_activation',[^\n]*\n[^\n]*null, 3, '[^']*', false, false, true\)/);
-  assert.match(sql, /\('whip_transport_partner',[^\n]*'registration_assists',\n[^\n]*null, 10, '[^']*', false, false, true\)/);
+  assert.match(sql, /\('whip_transport_partner',[^\n]*'signed_in',\n[^\n]*null, null, '\{\}', false, true, false\)/);
+  // owner, 2026-10-15: the voter-registration unlock is removed entirely, not just disabled
+  assert.doesNotMatch(sql, /registration_assists|counting_source_pending_counsel|voter registration/i);
   assert.match(sql, /'public_free_layer'[^\n]*array\['globe_layer:flights'\], 'none'/);
-  assert.match(sql, /v_reason := 'counting_source_pending_counsel'/);
   assert.match(sql, /if r\.requires_counsel_signoff and r\.counsel_signoff_at is null then v_met := false/);
   const ver = sql.slice(sql.indexOf("create table if not exists public.action_member_verifications"), sql.indexOf("alter table public.action_member_verifications enable"));
   assert.doesNotMatch(ver, /image|photo|selfie|template|document_number|date_of_birth|dob|ssn/i);
@@ -219,9 +220,9 @@ test("every unlock is a row; counsel-gated rules ship disabled and cannot be ena
   assert.equal(L.evaluateLadder({ required_kinds: ["a"], enabled: false }, ["a"]).blocked_reason, "disabled");
 });
 
-test("the doc carries the unlock model and the Whip / voter / biometric boundaries", async () => {
+test("the doc carries the unlock model and the Whip / election / biometric boundaries", async () => {
   const doc = await read("docs/control-plane/POLICY-FELLOWSHIP-LADDER.md");
   for (const re of [/Whip Equipped LLC is Matthew's separate company/i, /never a McCluster Corp brand/i, /background check/i, /eligibility to apply/i,
-    /requires_counsel_signoff/, /nonpartisan/i, /never (collect|store)[^.]*how anyone votes/i, /voter-file/i, /BIPA/, /retention/i,
+    /requires_counsel_signoff/, /nonpartisan/i, /voter-registration unlock is cancelled/i, /Anyone signed in qualifies/i, /never (collect|store)[^.]*how anyone votes/i, /voter-file/i, /BIPA/, /retention/i,
     /never[^.]*(face image|biometric template)/i, /Stripe Identity/, /Persona/, /0037_whip_mobility/, /read-only/i, /fund/i]) assert.match(doc, re);
 });

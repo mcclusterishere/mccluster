@@ -340,13 +340,30 @@ select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
 do $$ begin perform pg_temp.ok((pg_temp.unlock('member_layers')->>'met')::boolean, 'member layers open when signed in'); end $$;
 reset role;
 
--- the counsel-gated rules ship disabled and cannot be enabled without sign-off
+-- the counsel-gated rule ships disabled and cannot be enabled without sign-off
 do $$ begin
   perform pg_temp.ok((select not enabled and requires_counsel_signoff and min_count = 3 from public.action_unlock_rules where rule_key = 'equity_uprise_activation'), 'E=Up activation ships disabled');
-  perform pg_temp.ok((select not enabled and requires_counsel_signoff and min_count = 10 and requirement_kind = 'registration_assists' from public.action_unlock_rules where rule_key = 'whip_transport_partner'), 'Whip partner rule ships disabled');
+  -- Whip Equipped (owner, 2026-10-15): open to any signed-in member, no counsel gate, no voter rule
+  perform pg_temp.ok((select enabled and not requires_counsel_signoff and min_count is null and requirement_kind = 'signed_in' and params = '{}'::jsonb
+    from public.action_unlock_rules where rule_key = 'whip_transport_partner'), 'Whip rule: any signed-in member');
 end $$;
-select pg_temp.must_fail($q$update public.action_unlock_rules set enabled = true where rule_key = 'whip_transport_partner'$q$, '%check constraint%');
 select pg_temp.must_fail($q$update public.action_unlock_rules set enabled = true where rule_key = 'equity_uprise_activation'$q$, '%check constraint%');
+-- the voter-registration requirement no longer exists, not even as a disabled option
+select pg_temp.must_fail($q$update public.action_unlock_rules set requirement_kind = 'registration_assists', min_count = 10 where rule_key = 'whip_transport_partner'$q$, '%check constraint%');
+do $$ begin
+  perform pg_temp.ok(position('registration_assists' in pg_get_functiondef('public.action_unlock_progress(uuid,text)'::regprocedure)) = 0, 'no voter counting branch in the evaluator');
+end $$;
+-- Whip: a guest is asked to sign in; any signed-in member qualifies
+select pg_temp.as_anon();
+do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
+  perform pg_temp.ok(not (u->>'met')::boolean, 'whip locked for a guest: ' || u::text);
+end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
+  perform pg_temp.ok((u->>'met')::boolean, 'whip open to a signed-in member with no missions: ' || u::text);
+end $$;
+reset role;
 
 -- strict verification is status only, and server-written
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
@@ -382,16 +399,6 @@ reset role;
 update public.action_member_verifications set status = 'revoked' where user_id = '00000000-0000-4000-8000-0000000000f2';
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 do $$ begin perform pg_temp.ok(not (pg_temp.unlock('equity_uprise_activation')->>'met')::boolean, 'revoked verification does not count'); end $$;
--- the Whip rule never counts anything until counsel designs the source
-do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
-  perform pg_temp.ok(not (u->>'met')::boolean and u->>'reason' = 'requires_counsel_signoff', 'whip gated: ' || u::text);
-end $$;
-reset role;
-update public.action_unlock_rules set counsel_signoff_at = now(), enabled = true where rule_key = 'whip_transport_partner';
-select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
-do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
-  perform pg_temp.ok(not (u->>'met')::boolean and u->>'reason' = 'counting_source_pending_counsel', 'no counting source yet: ' || u::text);
-end $$;
 reset role;
 -- a disabled rule is never met, even the ladder
 update public.action_unlock_rules set enabled = false where rule_key = 'policy_fellowship';
