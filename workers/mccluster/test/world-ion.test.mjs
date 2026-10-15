@@ -95,7 +95,7 @@ test('ion is asked with the token in a header; the page\'s query never travels; 
   assert.equal(calls[0].url, 'https://api.cesium.com/v1/assets/1/endpoint');
   assert.equal(calls[0].headers.authorization, `Bearer ${TOKEN}`);
   assert.equal(calls[0].headers.origin, ORIGIN);
-  assert.equal(calls[0].redirect, 'error');
+  assert.equal(calls[0].redirect, 'manual', "workerd throws on redirect: 'error'");
   assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
   assert.equal(res.headers.get('cache-control'), 'public, max-age=300');
 });
@@ -158,4 +158,19 @@ test('the dispatch sits beside the data layers, ahead of the Supabase gate', asy
   assert.ok(ionAt < src.indexOf('if (!configured(env))'));
   const seek = await readFile(new URL('../src/seek-first/index.js', import.meta.url), 'utf8');
   assert.match(seek, /const ion = cesiumIonToken\(env\);/);
+});
+
+test("no World fetch asks for redirect: 'error' (workerd throws on it, so every call would fail in production)", async () => {
+  for (const f of ['world-ion.js', 'world-layers.js']) {
+    const src = await readFile(new URL(`../src/${f}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /redirect:\s*'error'/, f);
+    assert.match(src, /redirect:\s*'manual'/, f);
+  }
+});
+
+test('the spatial console reads the ion token the same way the World does', async () => {
+  const { sourceConfigured, sourceByKey } = await import('../src/seek-first/source-registry.js');
+  assert.equal(sourceConfigured(sourceByKey('cesium_ion'), { CESIUM_ION_KEY: 'k' }), true);
+  assert.equal(sourceConfigured(sourceByKey('cesium_ion'), { CESIUM_ION_TOKEN: 'k' }), true);
+  assert.equal(sourceConfigured(sourceByKey('cesium_ion'), {}), false);
 });

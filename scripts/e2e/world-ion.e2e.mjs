@@ -79,8 +79,8 @@ const check = (scope, ok, label, detail = '') => { if (!ok) failures++; console.
 const browser = await chromium.launch();
 await mkdir(OUT, { recursive: true });
 
-async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile = true) {
-  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, geolocation: { latitude: 40.7484, longitude: -73.9857 }, permissions: ['geolocation'] });
+async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile = true, { statusDelay = 0, geo = { latitude: 40.7484, longitude: -73.9857 } } = {}) {
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, geolocation: geo, permissions: ['geolocation'] });
   await ctx.addInitScript(() => localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() })));
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => json(route, route.request().url().includes('action_globe_public_region_missions') ? MISSIONS : []));
@@ -88,7 +88,7 @@ async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile 
   await ctx.route('https://api.mccluster.org/**', async (route) => {
     const u = new URL(route.request().url());
     asked.push({ path: u.pathname, search: u.search, auth: route.request().headers().authorization || '' });
-    if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: mode !== 'off', binding: mode === 'off' ? null : 'CESIUM_ION_TOKEN', assets: ASSETS });
+    if (u.pathname === '/v1/world/ion') { if (statusDelay) await new Promise((r) => setTimeout(r, statusDelay)); return json(route, { ok: true, available: mode !== 'off', binding: mode === 'off' ? null : 'CESIUM_ION_TOKEN', assets: ASSETS }).catch(() => {}); }
     const m = u.pathname.match(/^\/v1\/world\/ion\/v1\/assets\/(\d+)\/endpoint$/);
     if (m) {
       const id = Number(m[1]);
@@ -108,10 +108,11 @@ async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile 
   page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
   page.on('request', (r) => { const h = new URL(r.url()).host; if (/(^|\.)cesium\.com$/.test(h) && !r.url().includes('/downloads/cesiumjs/')) outside.push(r.url()); });
   await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.__huIon && window.__huGlobeSettled, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__huIon, null, { timeout: 30000 });
   return { ctx, page, errors, outside, asked };
 }
 const ionState = (page) => page.evaluate(() => window.__huIon());
+const earth = (page) => page.waitForFunction(() => window.__huGlobeSettled, null, { timeout: 30000 });
 /* the Earth has every visible tile; on a timeout, say what was still loading */
 const settle = (page, ms = 60000) => page.waitForFunction(() => window.__huGlobeSettled(), null, { timeout: ms }).then(() => true, async () => {
   const left = [...page.__pending.values()].map((u) => u.replace(/^https?:\/\/[^/]+/, (h) => h.split('/')[2])).slice(0, 6);
@@ -126,7 +127,13 @@ async function zoomIn(page, n) { for (let k = 0; k < n; k++) { await page.click(
 /* ---------- off: no token in the Worker ---------- */
 {
   const scope = 'off';
-  const { ctx, page, errors, outside, asked } = await open(scope, 'off');
+  const { ctx, page, errors, outside, asked } = await open(scope, 'off', undefined, true, { statusDelay: 1400 });
+  /* the status takes 1.4 s here: the bar, the sheet and the credit line are laid out before it answers */
+  await page.waitForSelector('.appbar', { timeout: 10000 });
+  await page.waitForTimeout(250);
+  const early = await page.evaluate(() => ({ earth: !!window.__huGlobeSettled, bar: getComputedStyle(document.documentElement).getPropertyValue('--hu-bar-h').trim(), deckBottom: Math.round(document.getElementById('deck').getBoundingClientRect().bottom), barTop: Math.round(document.querySelector('.appbar').getBoundingClientRect().top) }));
+  check(scope, !early.earth && early.bar !== '0px' && early.bar !== '' && early.deckBottom <= early.barTop + 1, 'while the status is pending the sheet already sits above the bar', JSON.stringify(early));
+  await earth(page);
   check(scope, await settle(page), 'the Earth settles as it always has');
   const s = await ionState(page);
   check(scope, !s.on && !s.terrain && !s.imagery, 'no ion at all', JSON.stringify(s));
@@ -144,6 +151,7 @@ async function zoomIn(page, n) { for (let k = 0; k < n; k++) { await page.click(
 for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 }, true], ['desktop', { width: 1440, height: 900 }, false]]) {
   const scope = 'on-' + device;
   const { ctx, page, errors, outside, asked } = await open(scope, 'on', viewport, mobile);
+  await earth(page);
   await page.waitForFunction(() => window.__huIon().terrain, null, { timeout: 15000 }).catch(() => {});
   /* this sandbox draws without a GPU: at desktop size it manages a frame or two a second, and Cesium loads tiles between
      frames, so a desktop "settled" here measures the software renderer, not the page. The phone must settle; the desktop says
@@ -153,7 +161,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   else console.log(`note [${scope}] the Earth ${settled ? 'settled' : 'had not settled in 60 s under software rendering'}`);
   let s = await ionState(page);
   check(scope, s.on && s.ground && s.terrain, 'terrain is in before the Earth is drawn', JSON.stringify(s));
-  check(scope, !s.imagery && !s.imageryShown && s.clouds === 1, 'far out the Earth is NASA\'s: no aerial imagery, the cloud whole', JSON.stringify(s));
+  check(scope, !s.imagery && !s.imageryShown && s.clouds === 1 && s.nightLights === 1, 'far out the Earth is NASA\'s: no aerial imagery, the cloud and the night lights whole', JSON.stringify(s));
   check(scope, !assetAsks(asked).some((a) => /\/assets\/(3|2|3954)\//.test(a.path)), 'imagery is not even asked for far out');
   check(scope, assetAsks(asked).every((a) => a.search === '' && !a.auth), 'the page sends no ion token and no session to the Worker', JSON.stringify(assetAsks(asked)));
   const credit = await page.evaluate(() => { const c = document.getElementById('ionCredits'); const b = c.getBoundingClientRect(); return { shown: getComputedStyle(c).display !== 'none' && b.width > 0, text: c.textContent, logo: !!c.querySelector('img') }; });
@@ -164,7 +172,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   await page.waitForFunction(() => window.__huIon().imagery, null, { timeout: 15000 }).catch(() => {});
   s = await ionState(page);
   check(scope, s.imagery && s.imageryShown, 'near: the aerial imagery is in', JSON.stringify(s));
-  check(scope, s.clouds === 0, 'near: the cloud has eased out', JSON.stringify(s));
+  check(scope, s.clouds === 0 && s.nightLights === 0, 'near: the cloud and the night lights have eased out', JSON.stringify(s));
   check(scope, !s.street, 'near: the street map yields to the aerial imagery', JSON.stringify(s));
   check(scope, hostSeen.some((h) => h.path.startsWith('/__ion/terrain/') && h.auth === 'Bearer asset-token-1' && h.client === 'CesiumJS'), 'the asset token rides only to the asset host');
   await settle(page);
@@ -188,7 +196,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
 
   await page.click('#ctlWorld'); await page.waitForTimeout(2600);
   s = await ionState(page);
-  check(scope, !s.imageryShown && !s.buildingsShown && s.clouds === 1, 'home again: NASA\'s Earth, the cloud back', JSON.stringify(s));
+  check(scope, !s.imageryShown && !s.buildingsShown && s.clouds === 1 && s.nightLights === 1, 'home again: NASA\'s Earth, the cloud and the night lights back', JSON.stringify(s));
   check(scope, assetAsks(asked).filter((a) => /\/assets\/3\//.test(a.path)).length === 1, 'each asset is asked for once a page', JSON.stringify(assetAsks(asked).map((a) => a.path)));
   check(scope, !assetAsks(asked).some((a) => /\/assets\/(2|3954)\//.test(a.path)), 'the first imagery asset worked, so no fallback was tried');
   check(scope, outside.length === 0, 'nothing reaches api.cesium.com', outside.slice(0, 3).join(' '));
@@ -211,6 +219,32 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   check(scope, await noSideways(page), '390px: no sideways scroll');
   await page.waitForTimeout(2500);
   await page.screenshot({ path: join(OUT, 'world-page.png') });
+  /* a phone's credits panel fills the frame and its close button can sit under the World page's header: any tap closes it */
+  await frame.click('.cesium-credit-expand-link');
+  const opened = await frame.evaluate(() => getComputedStyle(document.querySelector('.cesium-credit-lightbox-overlay')).display !== 'none');
+  await page.screenshot({ path: join(OUT, 'world-page-credits.png') });
+  const box = await (await frame.$('.cesium-credit-lightbox')).boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.6);
+  await page.waitForTimeout(300);
+  const closed = await frame.evaluate(() => getComputedStyle(document.querySelector('.cesium-credit-lightbox-overlay')).display === 'none');
+  check(scope, opened && closed, '"Data attribution" opens the credits, and a tap on them closes them', JSON.stringify({ opened, closed }));
+  await ctx.close();
+}
+
+/* ---------- night: Near me where it is night right now; the aerial imagery must not hide under the night lights ---------- */
+{
+  const scope = 'night';
+  const now = new Date(), utc = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const lon = ((((12 - utc) * 15 + 180) + 540) % 360) - 180;
+  const { ctx, page, errors } = await open(scope, 'on', undefined, true, { geo: { latitude: 30, longitude: Math.round(lon * 100) / 100 } });
+  await earth(page);
+  await locate(page);
+  await page.waitForFunction(() => window.__huIon().imagery, null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const s = await ionState(page);
+  check(scope, s.imageryShown && s.nightLights === 0 && !s.street, 'at local midnight, 350 km up: the aerial imagery shows, the night lights have given way', JSON.stringify({ lon, ...s }));
+  check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
+  await page.screenshot({ path: join(OUT, 'night-near.png') });
   await ctx.close();
 }
 
@@ -218,6 +252,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
 {
   const scope = 'failing';
   const { ctx, page, errors, outside, asked } = await open(scope, 'failing');
+  await earth(page);
   check(scope, await settle(page), 'the Earth still settles');
   let s = await ionState(page);
   check(scope, s.on && !s.terrain, 'terrain fell back to the flat ellipsoid', JSON.stringify(s));
@@ -237,7 +272,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
 {
   const scope = 'slow';
   const t0 = Date.now();
-  const { ctx, page, errors } = await open(scope, 'slow');
+  const { ctx, page, errors, asked } = await open(scope, 'slow');
   await page.waitForFunction(() => window.__huIon().on, null, { timeout: 30000 }).catch(() => {});
   const t1 = Date.now();
   const grounded = await page.waitForFunction(() => window.__huIon().ground, null, { timeout: 4000 }).then(() => true, () => false);
@@ -247,6 +282,9 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   await page.waitForTimeout(Math.max(0, 9500 - (Date.now() - t0)));
   const s = await ionState(page);
   check(scope, !s.terrain, 'the late terrain is not swapped in under the visitor', JSON.stringify(s));
+  await locate(page); await zoomIn(page, 4); await page.waitForTimeout(1500);
+  const low = await ionState(page);
+  check(scope, low.height < 50000 && low.imagery && !low.buildings && !asked.some((a) => /\/assets\/96188\//.test(a.path)), 'on the flat fallback the buildings are never asked for (they would float or sink)', JSON.stringify(low));
   check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
   await ctx.close();
 }

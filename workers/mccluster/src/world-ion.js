@@ -60,7 +60,9 @@ async function askIon(id, token, origin, fetchImpl) {
   try {
     const res = await fetchImpl(`${ION_API}/v1/assets/${id}/endpoint`, {
       headers: { authorization: `Bearer ${token}`, accept: 'application/json', origin, referer: `${origin}/` },
-      redirect: 'error',
+      /* workerd takes only 'follow' or 'manual' ('error' throws); 'manual' hands back a 3xx, which !res.ok turns into a
+         502, so the token never follows a redirect */
+      redirect: 'manual',
       signal: controller.signal
     });
     if (!res.ok) return { ok: false, status: res.status };

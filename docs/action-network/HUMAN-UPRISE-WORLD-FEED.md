@@ -396,19 +396,27 @@ token, the same Earth draws from ion as the camera comes down
   stay off: with them Cesium switches off the day and night blend and the
   night lights would cover the day side.
 - **Aerial imagery.** From 3,000 km down, Bing Maps Aerial with Labels
-  (asset 3) eases in under the night lights and over NASA's day, whole by
-  1,200 km, while the cloud eases out. If an asset fails, the next is
+  (asset 3) eases in over NASA's day, whole by 1,200 km, while the cloud and
+  the night lights ease out (Black Marble is opaque and Cesium's day and
+  night blend does not fade with height, so on the night side it would
+  otherwise cover the ground at every height). If an asset fails, the next is
   tried once: Bing Maps Aerial (2), then Sentinel-2 (3954); if all fail,
   the Earth is NASA's and the street map takes over below 900 km as
   before. While the aerial imagery is there, the street map no longer
   takes over on its own; it stays one tap away on the Layers button.
 - **Buildings.** Cesium OSM Buildings (96188) below 50 km, only on the
-  Earth look; the Night and Street looks hide ion's layers, and the way
+  Earth look and only when Cesium World Terrain is under them (their
+  heights are the terrain's; on the flat fallback they would float over
+  high cities and sink into low ones); the Night and Street looks hide ion's layers, and the way
   home (the World button) hides them again.
 - **Credit.** Cesium's own credit display moves onto the imagery line
   (`creditContainer`): the Cesium ion logo, then "Data attribution", which
   opens the full list (Bing, the terrain's sources, NASA). It shows only
-  while the World draws from ion.
+  while the World draws from ion. On a phone that list fills the frame and
+  its close button can sit under the World page's header, so a tap anywhere
+  on it closes it.
+- **Nothing else waits.** The layout, the data toggles and the mission data
+  start before the status answers; only the Earth itself waits for it.
 
 **The token never reaches a browser.** CesiumJS asks
 `${Ion.defaultServer}v1/assets/{id}/endpoint` for every ion asset. The page
@@ -437,11 +445,22 @@ the browser; when the asset token runs out, CesiumJS asks the Worker again.
   spatial console (`/v1/seek-first/viewer/config`, owner-only) reads the
   token the same way.
 
+**`redirect: 'manual'`, not `'error'`.** The Workers runtime accepts only
+`follow` or `manual` and throws on `error`, so a fetch written with
+`redirect: 'error'` never leaves the Worker. The ion route uses `manual`
+(a 3xx becomes a 502, and the token never follows a redirect). The same
+fix lands in `workers/mccluster/src/world-layers.js`: the World's flights,
+satellites and launches had answered "unavailable" in production since
+they shipped, because every provider fetch threw before it was sent.
+Verified in workerd itself (the route answers ion's JSON, a redirect is a
+502 with the token kept, flights load).
+
 Verified by `workers/mccluster/test/world-ion.test.mjs`,
 `scripts/test/world-ion-globe.test.mjs` and, in a real browser with CesiumJS
-1.131, `scripts/e2e/world-ion.e2e.mjs` (ion off; ion on at phone and desktop
-width; every asset failing; a terrain that answers late; the World page's
-frame), with stand-ins for ion's tile hosts. The other World e2e fakes
+1.131, `scripts/e2e/world-ion.e2e.mjs` (ion off with a slow status; ion on
+at phone and desktop width; the night side; every asset failing; a terrain
+that answers late, with no buildings on the flat fallback; the World page's
+frame and its credits panel), with stand-ins for ion's tile hosts. The other World e2e fakes
 answer the status with ion off.
 
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)

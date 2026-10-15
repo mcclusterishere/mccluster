@@ -30,7 +30,7 @@ test('terrain never blanks the Earth and never breaks day and night', async () =
   assert.doesNotMatch(js, /setTerrain\(/, 'Scene.setTerrain leaves the globe blank if the terrain fails');
   assert.doesNotMatch(js, /requestVertexNormals\s*:\s*true/, 'vertex normals switch off dayAlpha and nightAlpha');
   assert.match(js, /setTimeout\(\(\)=>land\(null\),TERRAIN_WAIT\)/, 'a slow terrain gives way to the flat Earth');
-  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;g\.terrainProvider=p\|\|flat\}/, 'and a late one is never swapped in');
+  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!p;g\.terrainProvider=p\|\|flat\}/, 'and a late one is never swapped in');
 });
 
 test('ion\'s imagery falls through its assets; any failure leaves the Earth as it was', async () => {
@@ -59,4 +59,15 @@ test('the Worker route, its tests and the browser drive exist', async () => {
   for (const e2e of ['scripts/e2e/world-screen.e2e.mjs', 'scripts/e2e/human-uprise-door.e2e.mjs', 'scripts/e2e/anti-social.e2e.mjs']) {
     assert.match(await read(e2e), /if \(u\.pathname === '\/v1\/world\/ion'\) return json\(route, \{ ok: true, available: false, binding: null \}\);/, e2e);
   }
+});
+
+test('the review\'s fixes hold: night lights give way, buildings wait for real ground, the credits close on a tap, nothing waits that need not', async () => {
+  const js = await read('js/action-globe.js');
+  assert.match(js, /if\(nightLayer\)\{const n=ionImagery\.ready&&on\?1-a:1;if\(nightLayer\.nightAlpha!==n\)nightLayer\.nightAlpha=n\}/, 'Black Marble is opaque over the aerial imagery; it fades out as the imagery fades in');
+  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!p;/);
+  assert.match(js, /if\(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF\*2\)/, 'OSM Buildings only on Cesium World Terrain');
+  assert.match(js, /box\.addEventListener\('click',e=>\{if\(!\(e\.target\.closest&&e\.target\.closest\('a\[href\]'\)\)\)viewer\.creditDisplay\.hideLightbox\(\)\}\)/, 'a phone\'s credits panel closes on any tap');
+  assert.match(js, /wireDataLayers\(\);const ionP=ionStatus\(\),dataP=Promise\.all\(\[rpc\('action_globe_public_region_missions'\),rpc\('action_globe_public_regions'\)\]\);/, 'the layout and the mission data start before the ion status answers');
+  assert.match(js, /\[missions,cities\]=await dataP;/);
+  assert.doesNotMatch(js, /function wireControls\(\)\{const on=\(id,f\)=>\{const b=\$\(id\);if\(b\)b\.onclick=f\};wireDataLayers\(\);/, 'wired once');
 });
