@@ -42,8 +42,15 @@ function check(scope, name, ok, detail) {
 const FRAME = await readFile(join(ROOT, 'assets/frames/church_0001.jpg'));
 const SOURCES = { ok: true, sources: [
   { id: 'cam-1', name: 'Lamar & 5th', city: 'Austin', provider: 'City of Austin', lat: 30.27, lon: -97.75, feedType: 'image', license: 'public' },
-  { id: 'cam-2', name: 'I-405 at Sunset', city: 'Los Angeles', provider: 'Caltrans', lat: 34.07, lon: -118.47, feedType: 'image' }
-], upstream_total: 2, dropped_without_position: 0 };
+  { id: 'cam-2', name: 'I-405 at Sunset', city: 'Los Angeles', provider: 'Caltrans', lat: 34.07, lon: -118.47, feedType: 'image' },
+  /* the coordinate bug: a camera with no latitude used to land on the equator (Number(null) is 0) */
+  { id: 'cam-3', name: 'No latitude', city: 'Austin', provider: 'X', lat: null, lon: -97.75, feedType: 'image' }
+], upstream_total: 3, dropped_without_position: 0 };
+/* one real 10° cell (g10:3:-12 = 30..40°N, 120..110°W, around Las Vegas) and one with no centre or edges */
+const INTEL = { ok: true, schema: 'mccluster-intel-geo/v1', totals: { records: 9, located: 9, unknown_location: 0, suppressed_records: 0 }, layer: { attribution: ['fixture'] }, buckets: [
+  { cell: 'g10:3:-12', cell_center: { lat: 35, lon: -115 }, cell_bounds: [-120, 30, -110, 40], bucket_start: '2026-10-15T00:00:00Z', count: 7 },
+  { cell: 'g10:0:-8', cell_center: { lat: null, lon: -75 }, cell_bounds: [null, null, -70, 10], bucket_start: '2026-10-15T00:00:00Z', count: 2 }
+] };
 const json = (route, body, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': '*', ...headers }, body: JSON.stringify(body) });
 const FAN_LOCKED = (cctvReason) => [
   { id: 'cctv', reason: cctvReason, next_step: cctvReason === 'privacy_acknowledgement_required' ? 'acknowledge_privacy' : 'complete_a_mission' },
@@ -51,7 +58,7 @@ const FAN_LOCKED = (cctvReason) => [
 ];
 const WHIP_LAYER = { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: 'https://matthew.mccluster.org/whip/driver/' };
 
-async function context(viewport, { member = false, eligible = false, owner = false } = {}) {
+async function context(viewport, { member = false, eligible = false, owner = false, intel = false } = {}) {
   const mobile = viewport.width < 600;
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile });
   await ctx.addInitScript((m) => {
@@ -69,7 +76,7 @@ async function context(viewport, { member = false, eligible = false, owner = fal
     if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, privacy_acknowledged: eligible, mission_completed: eligible }, reason: eligible ? null : 'privacy_acknowledgement_required', privacy_version: '2026-09-26' } : { eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false }, reason: 'sign_in_required' });
     if (p === '/v1/world/cctv/sources') return eligible && auth ? json(route, SOURCES) : json(route, { error: 'no' }, 403);
     if (p.startsWith('/v1/world/cctv/frame/')) return eligible && auth ? route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': '*', 'x-cctv-source': 'upstream-image', 'x-cctv-provider': 'City of Austin', 'last-modified': new Date(Date.now() - 40000).toUTCString(), 'x-cctv-retrieved-at': new Date().toISOString(), 'x-cctv-license': 'public' }, body: FRAME }) : json(route, { error: 'no' }, 403);
-    if (p === '/v1/intel/geo') return json(route, { code: 'intel_schema_not_ready' }, 503);
+    if (p === '/v1/intel/geo') return intel ? json(route, INTEL) : json(route, { code: 'intel_schema_not_ready' }, 503);
     if (p === '/v1/world/layers/flights') return json(route, { ok: true, layer: 'flights', attribution: 'OpenSky Network', count: 2, aircraft: [['a', 'UAL1', -73.9, 40.7, 10000, 250, 90], ['b', 'BAW2', -0.4, 51.5, 11000, 240, 180]] });
     if (p === '/v1/status') return json(route, owner ? { ok: true } : { error: 'no' }, owner ? 200 : 403);
     if (p.startsWith('/v1/analytics/identity')) return json(route, { coverage: { accounts: 9 }, journeys: [...Array(6)].map((_, i) => ({ source: 'x.com', country: 'US', created_at: new Date().toISOString(), email: `a${i}@test` })).concat([{ source: 'direct', country: 'GB' }, { source: 'x.com', country: null }]), tracks: [] });
@@ -198,6 +205,19 @@ for (const size of SIZES) {
     check(`member-${size.name}`, 'no page errors', errors.length === 0, errors);
     await ctx.close();
   }
+  /* 3b. Intel events: one 10° cell drawn exactly where its bounds say; a cell with no centre or edges is never drawn */
+  if (runs('intel')) {
+    const { ctx, page, errors } = await context(size.viewport, { member: true, intel: true });
+    await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.__huAccess && window.__huAccess(), null, { timeout: 60000 });
+    await settle(page);
+    await page.click('#ctlIntel', { force: true });
+    await page.waitForFunction(() => window.__huIntel && window.__huIntel().on, null, { timeout: 15000 }).catch(() => {});
+    const cells = (await page.evaluate(() => window.__huPlaced())).intel;
+    check(`intel-${size.name}`, 'coordinates: g10:3:-12 is the rectangle 120°W..110°W, 30°N..40°N; the null cell is not drawn', cells.length === 1 && JSON.stringify(cells[0].rect) === JSON.stringify([-120, 30, -110, 40]), cells);
+    check(`intel-${size.name}`, 'no page errors', errors.length === 0, errors);
+    await ctx.close();
+  }
   /* 4. an eligible member: cameras on the Earth and a live snapshot with its provenance */
   if (runs('eligible')) {
     const { ctx, page, calls, errors } = await context(size.viewport, { member: true, eligible: true });
@@ -207,6 +227,9 @@ for (const size of SIZES) {
     await page.click('#ctlCctv', { force: true });
     await page.waitForFunction(() => window.__huCctv().on, null, { timeout: 10000 }).catch(() => {});
     check(`eligible-${size.name}`, 'the cameras are on the Earth', (await page.evaluate(() => window.__huCctv().count)) === 2);
+    const placed = (await page.evaluate(() => window.__huPlaced())).cctv;
+    const cam1 = placed.find((c) => c.cam === 'cam-1');
+    check(`eligible-${size.name}`, 'coordinates: Lamar & 5th is at 30.27°N 97.75°W; the camera with no latitude is not drawn', !!cam1 && Math.abs(cam1.lat - 30.27) < 0.001 && Math.abs(cam1.lon + 97.75) < 0.001 && !placed.some((c) => c.cam === 'cam-3'), placed);
     await page.evaluate(() => window.__huOpenCamera('cam-1'));
     await page.waitForSelector('#cctvBody .cctv-frame img', { timeout: 10000 }).catch(() => {});
     const f = await page.evaluate(() => { const i = document.querySelector('#cctvBody .cctv-frame img'); return { src: i ? i.src.slice(0, 5) : null, w: i ? i.naturalWidth : 0, facts: (document.querySelector('#cctvBody .cctv-facts') || {}).textContent || '' }; });
@@ -233,6 +256,12 @@ for (const size of SIZES) {
     if (frame) { await frame.waitForFunction(() => window.__huAnalyticsCount && window.__huAnalyticsCount() > 0, null, { timeout: 45000 }).catch(() => {}); await settle(frame); }
     const drawn = frame ? await frame.evaluate(() => window.__huAnalyticsCount()) : 0;
     check(`analytics-${size.name}`, 'the globe draws US, GB and DE (France, under five, is folded)', drawn === 3, drawn);
+    if (frame) {
+      const at = (await frame.evaluate(() => window.__huPlaced())).analytics.filter((x) => x.lon !== undefined);
+      const us = at.find((x) => x.code === 'US'), gb = at.find((x) => x.code === 'GB');
+      /* Natural Earth label points, data/geo/country-label-points.json: US [-97.48, 39.54], GB [-2.12, 54.4] as [lon, lat] */
+      check(`analytics-${size.name}`, 'coordinates: the US dot is at 39.54°N 97.48°W and the UK at 54.4°N 2.12°W (lon/lat not swapped)', !!us && Math.abs(us.lat - 39.54) < 0.01 && Math.abs(us.lon + 97.48) < 0.01 && !!gb && Math.abs(gb.lat - 54.4) < 0.01 && Math.abs(gb.lon + 2.12) < 0.01, at);
+    }
     const panel = await page.textContent('#craPanel');
     check(`analytics-${size.name}`, 'located, under five and no-country totals are on screen', /On the globe/.test(panel) && /Under 5/.test(panel) && /No country/.test(panel), panel.slice(0, 200));
     const geom = await page.evaluate(() => { const g = document.querySelector('.cra-globe').getBoundingClientRect(), p = document.querySelector('.cra-side').getBoundingClientRect(); return { gw: g.width, pw: p.width, gTop: g.top, pTop: p.top }; });

@@ -111,7 +111,7 @@ export function privacyAcknowledged(user) {
 /* IP-derived, approximate, never stored: what Cloudflare attaches to this request (request.cf) */
 export function approximateLocation(request) {
   const cf = (request && request.cf) || {};
-  const num = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.round(n * 10) / 10 : null; };
+  const num = (v) => { const n = degree(v); return n === null ? null : Math.round(n * 10) / 10; };
   const lat = num(cf.latitude), lon = num(cf.longitude);
   const out = { source: 'ip_approximate', country: cf.country || null, region: cf.region || null, city: cf.city || null };
   /* a coordinate only when Cloudflare gave one: never 0,0 in its place */
@@ -182,12 +182,14 @@ async function halo(env, path, fetchImpl, accept) {
   }
 }
 
-const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+/* a degree is a real number or nothing: Number(null) and Number('') are 0, which would put a camera with no latitude on the
+   equator (or no longitude on the prime meridian) */
+export const degree = (v) => (v === null || v === undefined || v === '' || typeof v === 'boolean' || Array.isArray(v) ? null : (Number.isFinite(Number(v)) ? Number(v) : null));
 /* a camera with no real position is dropped, never put at 0,0 */
 export function cleanSource(s) {
   if (!s || typeof s !== 'object') return null;
-  const lat = Number(s.lat), lon = Number(s.lon);
-  if (!finite(lat) || !finite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180 || (lat === 0 && lon === 0)) return null;
+  const lat = degree(s.lat), lon = degree(s.lon);
+  if (lat === null || lon === null || Math.abs(lat) > 90 || Math.abs(lon) > 180 || (lat === 0 && lon === 0)) return null;
   if (!CAMERA_ID.test(String(s.id || ''))) return null;
   const out = {};
   for (const k of SOURCE_FIELDS) if (s[k] !== undefined && s[k] !== null) out[k] = typeof s[k] === 'string' ? s[k].slice(0, 200) : s[k];

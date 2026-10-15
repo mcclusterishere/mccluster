@@ -20,6 +20,12 @@ let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentF
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
 const VAUNT_LEAD='https://vauntapi.flyvaunt.com/referral/nuao1K';const exploreLayers={};
+/* A DEGREE IS A REAL NUMBER OR NOTHING. Number(null), Number('') and Number(false) are all 0, and isFinite(null) is true, so a
+   missing latitude used to become the equator (and a missing cell edge the prime meridian). deg() never turns "nothing" into 0. */
+function deg(v){if(v===null||v===undefined||v===''||typeof v==='boolean'||Array.isArray(v))return null;const n=Number(v);return Number.isFinite(n)?n:null}
+function lonLat(lon,lat){const x=deg(lon),y=deg(lat);return x===null||y===null||Math.abs(y)>90||Math.abs(x)>180||(x===0&&y===0)?null:[x,y]}
+/* [west, south, east, north], the order /v1/intel/geo's cell_bounds and Cesium.Rectangle.fromDegrees both use */
+function cellBounds(bd){if(!Array.isArray(bd)||bd.length!==4)return null;const b=bd.map(deg);if(b.some(v=>v===null))return null;const[w,s_,e,n]=b;return w<e&&s_<n&&w>=-180&&e<=180&&s_>=-90&&n<=90?b:null}
 function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmtCount(n){n=Number(n)||0;try{return n.toLocaleString('en-US')}catch(e){return String(n)}}
 function exploreTell(d){const box=$('exploreLine');if(!box||!d)return;
@@ -107,7 +113,7 @@ let audiencePins=[];
 /* a hook for the browser test, like __huGlobeSettled: how many audience points are drawn */
 window.__huAudienceCount=()=>audiencePins.length;
 function drawAudience(points){if(!viewer)return;audiencePins.forEach(e=>viewer.entities.remove(e));audiencePins=[];
- points.forEach(p=>{const lon=Number(p.lon),lat=Number(p.lat),views=Math.max(0,Math.floor(Number(p.views)||0));if(!isFinite(lon)||!isFinite(lat)||Math.abs(lat)>90||Math.abs(lon)>180||!views)return;
+ points.forEach(p=>{const ll=lonLat(p.lon,p.lat),views=Math.max(0,Math.floor(Number(p.views)||0));if(!ll||!views)return;const[lon,lat]=ll;
   audiencePins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(lon,lat,2000),point:{pixelSize:Math.min(28,8+Math.sqrt(views)*2),color:Cesium.Color.fromCssColorString('#4fd1ff').withAlpha(.78),outlineColor:Cesium.Color.WHITE.withAlpha(.9),outlineWidth:1.5},
    label:{text:String(p.name||'').slice(0,40)+' · '+views.toLocaleString()+(views===1?' view':' views'),font:'600 12px Inter, system-ui, sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,1.8e7)}}))})}
 /* ---------- THE WORLD'S DATA LAYERS (owner, 2026-10-15: "let's populate it … flights … satellites and space missions, that only logged in users can see") ----------
@@ -185,11 +191,14 @@ function showMusic(){if(explainLock('music'))return;sheet('Music','<p>Music on t
    (503 intel_schema_not_ready): then the line says so and nothing is drawn. */
 const intel={on:false,entities:[]};
 window.__huIntel=()=>({on:intel.on,cells:intel.entities.length});
+/* hooks for the coordinate test: where each drawn thing really is, read back from Cesium in degrees */
+function entityDegrees(e){const now=Cesium.JulianDate.now();if(e.rectangle){const r=e.rectangle.coordinates.getValue(now);return{rect:[r.west,r.south,r.east,r.north].map(x=>Math.round(Cesium.Math.toDegrees(x)*1000)/1000)}}const c=e.position&&e.position.getValue(now);if(!c)return null;const g=Cesium.Cartographic.fromCartesian(c);return{lon:Math.round(Cesium.Math.toDegrees(g.longitude)*1000)/1000,lat:Math.round(Cesium.Math.toDegrees(g.latitude)*1000)/1000}}
+window.__huPlaced=()=>({intel:intel.entities.map(entityDegrees),analytics:analytics.entities.map(e=>Object.assign({code:e.properties&&e.properties.analyticsCode&&e.properties.analyticsCode.getValue()},entityDegrees(e))),cctv:cctv.points?Array.from({length:cctv.points.length},(_,n)=>{const p=cctv.points.get(n),g=Cesium.Cartographic.fromCartesian(p.position);return{cam:p.id&&p.id.cam,lon:Math.round(Cesium.Math.toDegrees(g.longitude)*1000)/1000,lat:Math.round(Cesium.Math.toDegrees(g.latitude)*1000)/1000}}):[]});
 function intelOff(){intel.entities.forEach(e=>viewer.entities.remove(e));intel.entities=[];intel.on=false;const b=$('ctlIntel');if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:'intel',on:false,creditHeight:creditHeight()})}
 async function toggleIntel(){const b=$('ctlIntel');if(!viewer||!b)return;if(intel.on){intelOff();return}if(lockOf('intel')&&explainLock('intel'))return;
  b.setAttribute('aria-busy','true');try{const t=sessionToken(),r=await fetch(API+'/v1/intel/geo?cell=10&bucket=day',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});const d=await r.json().catch(()=>({}));
   if(!r.ok){tell({type:'hu:layer',layer:'intel',on:false,failed:true});sheet('Intel events','<p>'+(r.status===503?'Intel events are not switched on yet.':'Intel events could not load right now.')+' Nothing is drawn.</p>');return}
-  const cells={};(d.buckets||[]).forEach(x=>{const c=x&&x.cell_center||{},bd=x&&x.cell_bounds;if(!Array.isArray(bd)||bd.length!==4||!bd.every(isFinite)||!isFinite(c.lat)||!isFinite(c.lon))return;const k=String(x.cell);(cells[k]||(cells[k]={bd:bd.map(Number),lat:+c.lat,lon:+c.lon,n:0})).n+=Number(x.count)||0});
+  const cells={};(d.buckets||[]).forEach(x=>{const c=x&&x.cell_center||{},bd=cellBounds(x&&x.cell_bounds),ll=lonLat(c.lon,c.lat);if(!bd||!ll)return;const k=String(x.cell);(cells[k]||(cells[k]={bd,lat:ll[1],lon:ll[0],n:0})).n+=Number(x.count)||0});
   const list=Object.values(cells),max=Math.max(1,...list.map(c=>c.n));list.forEach(c=>{intel.entities.push(viewer.entities.add({rectangle:{coordinates:Cesium.Rectangle.fromDegrees(c.bd[0],c.bd[1],c.bd[2],c.bd[3]),material:Cesium.Color.fromCssColorString('#ffb347').withAlpha(.15+.45*Math.sqrt(c.n/max)),outline:true,outlineColor:Cesium.Color.WHITE.withAlpha(.5),height:0}}))});
   intel.on=true;b.setAttribute('aria-pressed','true');const tt=d.totals||{};
   tell({type:'hu:layer',layer:'intel',on:true,count:Number(tt.located)||0,unknown:Number(tt.unknown_location)||0,suppressed:Number(tt.suppressed_records)||0,attribution:((d.layer&&d.layer.attribution)||[]).join(' · '),creditHeight:creditHeight()})}
@@ -230,7 +239,7 @@ function cctvOff(){cctv.on=false;if(cctv.points&&viewer){viewer.scene.primitives
 async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.on){cctvOff();return}if(!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  const d=await cctvEligibility();if(!d||!d.eligible){cctvGate(d);return}
  b.setAttribute('aria-busy','true');try{const r=await cctvFetch('/v1/world/cctv/sources');if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}const data=await r.json();if(!r.ok)throw Error(data&&data.error||'cctv '+r.status);
-  const col=new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>isFinite(s.lat)&&isFinite(s.lon));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5,id:{layer:'cctv',cam:String(s.id)}}));
+  const col=new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>lonLat(s.lon,s.lat)).map(s=>Object.assign({},s,{lon:deg(s.lon),lat:deg(s.lat)}));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5,id:{layer:'cctv',cam:String(s.id)}}));
   viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'cctv',on:false,failed:true});sheet('CCTV','<p>'+escHtml(String(e&&e.message||'CCTV could not load right now.'))+'</p>')}finally{b.removeAttribute('aria-busy')}}
 function fmtTime(v){const d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):null}
@@ -250,9 +259,9 @@ const analytics={points:[],selected:null,entities:[]};
 window.__huAnalyticsCount=()=>analytics.entities.length;
 function drawAnalytics(){if(!viewer)return;analytics.entities.forEach(e=>viewer.entities.remove(e));analytics.entities=[];
  const max=Math.max(1,...analytics.points.map(p=>Number(p.value)||0));
- analytics.points.forEach(p=>{const lon=Number(p.lon),lat=Number(p.lat),v=Math.max(0,Number(p.value)||0),on=p.code===analytics.selected;if(!isFinite(lon)||!isFinite(lat)||Math.abs(lat)>90||Math.abs(lon)>180||(lat===0&&lon===0)||!v)return;
+ analytics.points.forEach(p=>{const ll=lonLat(p.lon,p.lat),v=Math.max(0,Number(p.value)||0),on=p.code===analytics.selected;if(!ll||!v)return;const[lon,lat]=ll;
   /* a grid cell (intel events) is drawn as its cell, never as a point */
-  const bd=Array.isArray(p.bounds)&&p.bounds.length===4&&p.bounds.every(isFinite)?p.bounds.map(Number):null;
+  const bd=cellBounds(p.bounds);
   if(bd){analytics.entities.push(viewer.entities.add({rectangle:{coordinates:Cesium.Rectangle.fromDegrees(bd[0],bd[1],bd[2],bd[3]),material:Cesium.Color.fromCssColorString(on?'#ff3d5e':'#ffb347').withAlpha(.2+.45*Math.sqrt(v/max)),outline:true,outlineColor:Cesium.Color.WHITE.withAlpha(.6),height:0},properties:{analyticsCode:p.code}}));
    analytics.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(lon,lat,2000),label:{text:v.toLocaleString(),font:'600 12px Inter, system-ui, sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE},properties:{analyticsCode:p.code}}));return}
   analytics.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(lon,lat,2000),point:{pixelSize:Math.round(8+22*Math.sqrt(v/max))*(on?1.25:1),color:Cesium.Color.fromCssColorString(on?'#ff3d5e':'#4fd1ff').withAlpha(on?.95:.75),outlineColor:Cesium.Color.WHITE.withAlpha(.9),outlineWidth:on?2.5:1.2},

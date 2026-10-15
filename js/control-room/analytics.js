@@ -252,7 +252,9 @@
     {id:"intel",label:"Intel events (10° cells)",status:"live",source:"/v1/intel/geo: accepted evidence records aggregated to 10° grid cells by the intel plane"}
   ];
   S.geo={layer:"pageviews",region:null,source:"",eventType:"",places:null,open:true,frameReady:false};
-  function placeOf(code){var p=S.geo.places&&S.geo.places[code];return p&&isFinite(p[0])&&isFinite(p[1])&&!(p[0]===0&&p[1]===0)?p:null;}
+  /* a degree is a real number or nothing (Number(null) is 0, isFinite(null) is true: a missing centre would sit on the equator) */
+  function deg(v){if(v===null||v===undefined||v===""||typeof v==="boolean"||Array.isArray(v))return null;var x=Number(v);return isFinite(x)?x:null;}
+  function placeOf(code){var p=S.geo.places&&S.geo.places[code];return p&&deg(p[0])!==null&&deg(p[1])!==null&&!(p[0]===0&&p[1]===0)?p:null;}
   function geoCountry(v){var c=String(v||"").trim().toUpperCase();return/^[A-Z]{2}$/.test(c)&&!BAD_CC[c]?c:null;}
   function journeys(){
     var js=(S.data.identity&&S.data.identity.journeys)||[],src=S.geo.source,reg=S.geo.region;
@@ -271,7 +273,7 @@
       var ig=S.data.intel;
       if(!ig||!ig.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.intel?(S.errors.intel.status===503?"The intel plane is not switched on yet (its migration is not applied).":"Intel events did not load: "+(S.errors.intel.message||S.errors.intel)):"Loading intel events…"};
       var cells={},it=ig.totals||{},isup=Number(it.suppressed_records)||0,ilocated=0;
-      (ig.buckets||[]).forEach(function(b){var c=String(b.cell||""),ctr=b.cell_center||{},bd=Array.isArray(b.cell_bounds)?b.cell_bounds:null;if(!/^g\d+:-?\d+:-?\d+$/.test(c)||!isFinite(ctr.lat)||!isFinite(ctr.lon))return;var x=cells[c]||(cells[c]={code:c,name:Math.abs(ctr.lat)+(ctr.lat<0?"°S ":"°N ")+Math.abs(ctr.lon)+(ctr.lon<0?"°W":"°E"),lat:Number(ctr.lat),lon:Number(ctr.lon),bounds:bd,value:0});x.value+=Number(b.count)||0;});
+      (ig.buckets||[]).forEach(function(b){var c=String(b.cell||""),ctr=b.cell_center||{},bd=Array.isArray(b.cell_bounds)?b.cell_bounds:null;var la=deg(ctr.lat),lo=deg(ctr.lon);if(!/^g\d+:-?\d+:-?\d+$/.test(c)||la===null||lo===null||Math.abs(la)>90||Math.abs(lo)>180)return;var x=cells[c]||(cells[c]={code:c,name:Math.abs(la)+(la<0?"°S ":"°N ")+Math.abs(lo)+(lo<0?"°W":"°E"),lat:la,lon:lo,bounds:bd,value:0});x.value+=Number(b.count)||0;});
       var ipts=[];Object.keys(cells).forEach(function(k){var x=cells[k];if(x.value<GEO_MIN){isup+=x.value;return;}ilocated+=x.value;ipts.push(x);});
       ipts.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
       return{points:ipts,located:ilocated,suppressed:isup,unknown:Number(it.unknown_location)||0,total:it.records==null?null:Number(it.records),attribution:(ig.layer&&ig.layer.attribution)||[]};

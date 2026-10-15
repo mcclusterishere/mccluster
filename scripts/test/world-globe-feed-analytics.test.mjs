@@ -171,3 +171,20 @@ test('Whip Equipped: any signed-in member opens it; it says rides are not live a
   assert.doesNotMatch(whip.replace(/https:\/\/matthew\.mccluster\.org\/whip\/driver\//g, ''), /McCluster|\/api\/rides|voter|registration/i, 'Whip attribution only; no ride request; no voter rule');
   assert.match(html, /id="ctlTransport"[^>]*aria-label="Whip Equipped \(by Whip Equipped LLC\): rides not live yet, driver sign-up"/);
 });
+
+test('coordinates: a missing degree is never 0 (the coordinate bug), lon/lat order pinned', async () => {
+  const [js, an] = await Promise.all([read('js/action-globe.js'), read('js/control-room/analytics.js')]);
+  const src = js.slice(js.indexOf('function deg(v)'), js.indexOf('function escHtml('));
+  const deg = new Function(src + ';return {deg,lonLat,cellBounds}')();
+  for (const v of [null, undefined, '', false, true, [], 'x', NaN, Infinity]) assert.equal(deg.deg(v), null, String(v));
+  assert.equal(deg.deg('-97.75'), -97.75);
+  assert.deepEqual(deg.lonLat(-97.48, 39.54), [-97.48, 39.54], '[lon, lat] in, [lon, lat] out');
+  assert.equal(deg.lonLat(-97.75, null), null, 'no latitude is not the equator');
+  assert.equal(deg.lonLat(0, 0), null, 'never 0,0');
+  assert.equal(deg.lonLat(39.54, -97.48), null, 'a swapped pair is out of range and dropped');
+  assert.deepEqual(deg.cellBounds([-120, 30, -110, 40]), [-120, 30, -110, 40]);
+  assert.equal(deg.cellBounds([null, null, -70, 10]), null);
+  assert.equal(deg.cellBounds([30, -120, 40, -110]), null, 'west,south,east,north or nothing');
+  assert.doesNotMatch(js, /isFinite\(s\.lat\)|isFinite\(c\.lat\)|bd\.every\(isFinite\)|p\.bounds\.every\(isFinite\)/);
+  assert.match(an, /var la=deg\(ctr\.lat\),lo=deg\(ctr\.lon\)/);
+});

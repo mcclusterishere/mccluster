@@ -224,6 +224,12 @@ test('cleanSource never invents a position', () => {
   assert.equal(cleanSource({ id: 'a', lat: 91, lon: 0 }), null);
   assert.equal(cleanSource({ id: 'bad id', lat: 1, lon: 1 }), null);
   assert.deepEqual(cleanSource({ id: 'a', lat: '1.5', lon: '2.5', upstream: 'https://x' }), { id: 'a', lat: 1.5, lon: 2.5 });
+  /* the coordinate bug: a missing latitude (or longitude) used to become 0 and put the camera on the equator */
+  assert.equal(cleanSource({ id: 'a', lat: null, lon: -97.75 }), null);
+  assert.equal(cleanSource({ id: 'a', lat: 30.27, lon: null }), null);
+  assert.equal(cleanSource({ id: 'a', lat: '', lon: -97.75 }), null);
+  assert.equal(cleanSource({ id: 'a', lat: false, lon: -97.75 }), null);
+  assert.deepEqual(cleanSource({ id: 'austin', lat: 30.27, lon: -97.75 }), { id: 'austin', lat: 30.27, lon: -97.75 }, 'lat stays lat, lon stays lon');
 });
 
 test('the Worker routes /v1/world/cctv/* through this module (index.js answers every preflight first)', async () => {
