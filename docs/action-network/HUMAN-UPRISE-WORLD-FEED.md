@@ -463,6 +463,82 @@ that answers late, with no buildings on the flat fallback; the World page's
 frame and its credits panel), with stand-ins for ion's tile hosts. The other World e2e fakes
 answer the status with ion off.
 
+### World news from GDELT, ingested by us (owner, 2026-10-15)
+
+"GDELT news as the feed ... And our shit is sprinkled into that. At a ratio
+to like one news shit from them. But like, we gotta ingest it so it's still
+from us." Then: "I want you to ingest the GDELT immediately ... we need a
+database change ... why not fix them both."
+
+**What GDELT is and allows.** The GDELT Project indexes the world's online
+news. Its terms allow unlimited commercial use and rehosting of its data,
+with one condition: every use cites GDELT and links to
+https://www.gdeltproject.org/. The articles stay their publishers': we keep
+metadata only (title, link, publisher, time, the place an article mentions),
+every headline links out, and no article text or publisher image is shown.
+
+**Ingest** (`workers/mccluster/src/world-news.js`, the Worker's five-minute
+cron). GDELT's search API is throttled hard and its map API is retired;
+GDELT tells heavy users to read its 15-minute Global Knowledge Graph files
+instead, and those carry each article's places with coordinates.
+
+- Each tick reads `lastupdate.txt` and takes at most two files it has not
+  read (the newest, then the hour before it, so a gap fills itself), each
+  claimed in `media_gdelt_files` so it is read once. GDELT's own host
+  answers 404 for its newest files for up to an hour; the file then comes
+  from GDELT's Cloud Storage mirror. A failed file is released for the next
+  tick; at most three are tried a tick.
+- The file is inflated as a stream: about 0.2 to 0.5 s of CPU and 11 MB of
+  memory a file (the Worker allows 30 s and 128 MB). A kept field is copied
+  out of its record, because V8 keeps a whole multi-kilobyte record alive
+  behind a slice of it; without the copy a file held about 60 MB.
+- Screened: web articles only, untranslated, a real headline, English, no
+  press-release wires, stock-ticker mills or digests, nothing graphic (an
+  always-out set of GDELT themes, plus violent themes only when the headline
+  is graphic too), at most 72 hours old, one copy of a syndicated story,
+  three per publisher, about 100 a file, cities before states before
+  countries. On real files 1,100 to 1,700 rows give 100, every one with a
+  place.
+- One place per article: the place it mentions most, narrowed to the city
+  it mentions most inside that country or state. That is where an article
+  mentions a place, never a verified event location. A country's name is
+  often an adjective in GDELT ("Australian"), so a country keeps its
+  centroid but no label.
+- Written through `media_ingest_gdelt_gkg` as the service role; a week is
+  kept (`media_news_prune`, hourly).
+
+**Serve.** Both routes read only our tables, as the service role, and answer
+200 with nothing (`unavailable: true`) when the database cannot:
+
+- `GET /v1/world/news?limit=20&before=` is the news stream, newest first,
+  with an opaque cursor (a whole file shares one time, so the cursor is time
+  and id), kept a minute per data centre, GDELT credited in every answer.
+- `GET /v1/world/layers/news` is the globe's layer: the cities and states in
+  the news over the last day, counted, with the latest headline, kept five
+  minutes.
+
+**The database change** (`supabase/migrations/*_world_gdelt_gkg_news.sql`):
+five columns on `media_news_articles` (the file, the place's type and
+country, tone, the sharing image, kept for later and not shown), a feed
+index, `media_gdelt_files`, and six service-role functions (claim, release,
+ingest, the news page, the places, prune). The headline-country trigger
+cleared every row's location before it looked at the title; GKG rows now
+keep their own. Nothing is granted to `anon` or `authenticated`: the World
+reads news only through the Worker. The four earlier GDELT migrations and
+the `public-gdelt-news` Edge Function are unchanged.
+
+**Also:** a World data layer that is unavailable now says why
+(`reason`: the provider's status or a timeout), so the live flights layer,
+which has answered "unavailable" since it shipped, can show its cause
+without the Worker's logs.
+
+Verified by `workers/mccluster/test/world-news.test.mjs` (17), the migration
+applied twice to a local Postgres 16 with production's tables (claims,
+release, the cursor's tie-break, places, prune, the old headline rule left
+intact, every function refused to anything but the service role), and a real
+GDELT file parsed and written through the real function: 100 of 100 saved,
+all with coordinates.
+
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
 "Let's populate it with shit, man. Let's get it interesting." Three toggles

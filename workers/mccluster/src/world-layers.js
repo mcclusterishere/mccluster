@@ -158,7 +158,9 @@ async function cached(layer, env, fetchImpl, cacheImpl) {
     return { body, stale: false };
   } catch (error) {
     if (hit) return { body: hit, stale: true, error };
-    return { body: { ok: true, layer, fetched_at: null, attribution: spec.attribution, unavailable: true, count: 0, [layer === 'flights' ? 'aircraft' : layer]: [] }, stale: false, error };
+    /* the provider's own answer ("provider 403", a timeout) rides along, so a dead layer says why without the Worker's logs */
+    const reason = String(error && error.name === 'AbortError' ? 'timeout' : (error && error.message) || 'unavailable').replace(/[^\w .:/-]/g, '').slice(0, 80);
+    return { body: { ok: true, layer, fetched_at: null, attribution: spec.attribution, unavailable: true, reason, count: 0, [layer === 'flights' ? 'aircraft' : layer]: [] }, stale: false, error };
   }
 }
 

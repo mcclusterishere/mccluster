@@ -125,7 +125,14 @@ Three policies, set per source in the registry and enforced in `store.js`:
 
 - `persistent` — normalized records may be retained in PostGIS.
 - `transient` — brokered and returned, never archived (TomTom, OpenSky, AIS,
-  Nominatim, GDELT, CCTV catalogues, Mapbox).
+  Nominatim, GDELT, CCTV catalogues, Mapbox). One exception, by the owner's
+  decision (2026-10-15: "we gotta ingest it so it's still from us"): the
+  Human Uprise World's news reads GDELT's 15-minute GKG files in the
+  `mccluster` Worker's cron (`workers/mccluster/src/world-news.js`) and keeps
+  about 100 articles a file for a week in `media_news_articles`
+  (`ingestion_provider = 'gdelt_gkg_v2'`): metadata only (title, URL,
+  publisher, time, the place an article mentions), credited to GDELT as its
+  terms require. The Seek First GDELT adapter here stays `transient`.
 - `none` — provider content is never written at all (Google Maps, Cesium ion).
 
 AIS is cached only in the Durable Object, bounded by row count and a one-hour

@@ -10,6 +10,7 @@ import { companySiteResponse } from './company-site/router.js';
 import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
 import { preflightResponse } from './preflight.js';
+import { ingestGdeltNews } from './world-news.js';
 import { handleCreatorCheckout } from './creator-billing.js';
 import { handleActionConnect } from './action-connect.js';
 import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
@@ -102,6 +103,12 @@ export default {
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    /* the World's news: GDELT's newest 15-minute file, read once, kept a week (./world-news.js) */
+    ctx.waitUntil(ingestGdeltNews(env, { scheduledTime: controller?.scheduledTime }).then((report) => {
+      if (report && (report.files?.length || report.error || report.skipped)) console.log(JSON.stringify({ event: 'world_news_ingest', ...report }));
+    }).catch((error) => {
+      console.error(JSON.stringify({ event: 'world_news_ingest_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     if (existing.scheduled) return existing.scheduled(controller, env, ctx);
   }

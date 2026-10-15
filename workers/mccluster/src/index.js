@@ -6,6 +6,7 @@ import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
+import { handleWorldNews, NEWS_PATH, NEWS_LAYER_PATH } from './world-news.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -142,6 +143,12 @@ export default {
 
       /* the World's data layers: flights for everyone, satellites and
          launches for members (./world-layers.js) */
+      /* the World's news from GDELT, read from our own tables (./world-news.js) */
+      if (path === NEWS_PATH || path === NEWS_LAYER_PATH) {
+        const news = await handleWorldNews(request, env);
+        if (news) return news;
+      }
+
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
