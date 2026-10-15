@@ -389,8 +389,12 @@ message requests on the avatar); a creator's analytics door and audience
 layer, and their absence for a member who is not a creator; signing out to
 the guest World; and the guest path (Explore the world, Member posts live
 here, the chips, no session sent, public posts only, actions open sign-in and
-send nothing). It does not touch production; Worker authorization is
-covered by the Worker test suite.
+send nothing). Since the mark stopped being written out (2026-10-15) the
+run also reads the rendered join back on the feed card and on the mission
+card: no text, one image, square, the pill at least 44px wide and tall in
+the feed, and the whole screen's text free of the mark (121/121 on an
+iPhone, an iPad and a desktop). It does not touch production; Worker
+authorization is covered by the Worker test suite.
 
 `node scripts/e2e/human-uprise-door.e2e.mjs [outDir]` puts the real host
 router (`workers/mccluster/src/human-uprise/router.js`) in front of the same
