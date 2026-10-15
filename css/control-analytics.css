@@ -66,8 +66,10 @@
 .cra-card .cra-form__msg{margin:0;color:#ffb7bb;font-size:12px}.cra-form__msg:empty{display:none}
 .cra-card .cr-btn{min-height:40px;font-size:13px}
 .cra-error{padding:9px;border:1px solid rgba(239,90,99,.38);border-radius:9px;background:rgba(239,90,99,.06);color:#ffb7bb;font-size:10px;line-height:1.5}
-@media (min-width:36rem){.cra-head{grid-template-columns:minmax(0,1fr) minmax(12rem,16rem);align-items:end}.cra-custom{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.cra-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-reach__facts{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-facts,.cra-dns{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (min-width:54rem){.cra-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cra-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.cra-axis{font-size:10px}.cra-form{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}.cra-form__msg{grid-column:1/-1}}
+/* The panel is ~40% of a wide screen beside the globe, so its columns follow the PANEL's width (a container query),
+   not the window's: mobile first, min-width only, the same steps as before. */
+@container cra (min-width:36rem){.cra-head{grid-template-columns:minmax(0,1fr) minmax(12rem,16rem);align-items:end}.cra-custom{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.cra-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-reach__facts{grid-template-columns:repeat(4,minmax(0,1fr))}.cra-facts,.cra-dns{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container cra (min-width:54rem){.cra-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cra-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.cra-axis{font-size:10px}.cra-form{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}.cra-form__msg{grid-column:1/-1}}
 /* ---------- Identity: source → song → account ----------
    Phone first: one column of paths and account cards; wider screens only
    give the table and cards more room. */
@@ -159,3 +161,26 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-page-row__detail{padding:4px 14px 15px;border-top:1px solid rgba(130,145,165,.18)}
 .cra-page-row__detail .cra-kpis{margin:12px 0}
 @media(min-width:36rem){.cra-page-row__summary{grid-template-columns:28px minmax(0,1fr) 74px 72px;gap:12px;padding:13px}.cra-page-row__traffic{display:grid}.cra-page-row__score b{font-size:1.35em}}
+
+/* ---------- THE 60/40 GLOBE (owner, 2026-10-15) ----------
+   Phone first: the globe on top, the panel stacked under it with a fold. From 64rem: about 60% globe, 40% panel,
+   the globe held in view while the panel scrolls. Only the layout changed; every card keeps its data. */
+.cra-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+.cra-globe{position:relative;min-width:0;height:min(48vh,26rem);min-height:240px;border:1px solid var(--cr-line);border-radius:12px;overflow:hidden;background:#03060c}
+.cra-globe__frame{display:block;width:100%;height:100%;border:0}
+.cra-globe__caption{position:absolute;left:8px;right:8px;top:8px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(5,9,18,.78);color:#e7ecf4;font-size:12px;line-height:1.4;pointer-events:none}
+.cra-side{display:grid;gap:10px;min-width:0}
+.cra-side__toggle{justify-self:start;min-height:40px;padding:0 14px;border:1px solid var(--cr-line);border-radius:999px;background:var(--cr-panel);color:inherit;font:inherit;font-size:max(16px,1rem);cursor:pointer}
+.cra-side__body{container-type:inline-size;container-name:cra;min-width:0}
+.cra-side__body[hidden]{display:none}
+.cra-filters{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px;border:1px solid var(--cr-line);border-radius:12px;background:var(--cr-panel)}
+.cra-filters label{display:grid;gap:4px;font-size:11px;color:var(--cr-dim);min-width:0}
+.cra-filter-select{width:100%;min-width:0;min-height:40px;padding:6px 10px;border:1px solid var(--cr-line);border-radius:10px;background:#0d1117;color:#f4f5f7;font:inherit;font-size:max(16px,1rem)}
+.cra-filter-select:disabled{opacity:.55}
+.cra-filters__note{grid-column:1/-1;margin:0;color:var(--cr-faint);font-size:10px;line-height:1.45}
+.cra-rank__row.is-on{outline:2px solid #ff3d5e;outline-offset:-2px}
+@container cra (min-width:30rem){.cra-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:64rem){
+  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start}
+  .cra-globe{position:sticky;top:12px;height:calc(100dvh - 96px);max-height:none}
+}
