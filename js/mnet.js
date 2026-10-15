@@ -2790,6 +2790,12 @@
   }
   function sizeWorld() {
     var view = $("mnFeedView"), root = document.documentElement, app = $("mnApp");
+    /* GLOBE FIRST (owner, 2026-10-15: "for logged-in users, remove all the
+       other tabs ... the globe experience IS the whole product"). A signed-in
+       member's World has no bar: the header's search, bell and avatar menu
+       (profile, messages, settings, Music, sign out) are the chrome. Guests
+       keep the bar; the globe is already their public front door. */
+    root.classList.toggle("mn-globe-only", !!app && !app.hidden && !state.guest);
     var clear = barClearance();
     if (!view) return;
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
@@ -3092,6 +3098,10 @@
         rows.push("<span>" + (l.unavailable ? "Launches are unavailable right now." : esc(fmtCount(l.count)) + " launches coming up" +
           (nx ? " \u00b7 next: " + esc(String(nx.name || "").split("|")[0].trim()) + (nx.net && !isNaN(new Date(nx.net)) ? " \u00b7 " + esc(new Date(nx.net).toLocaleDateString("en-US", { month: "short", day: "numeric" })) : "") + (nx.where ? " \u00b7 " + esc(nx.where) : "") : "") + ".") + "</span>");
       }
+      /* CCTV: the frame already checked eligibility with the Worker; this only words the count */
+      var ii = state.world.layers.intel;
+      if (ii) rows.push("<span>Intel events: " + esc(fmtCount(ii.count)) + " located, " + esc(fmtCount(ii.unknown)) + " without a place, " + esc(fmtCount(ii.suppressed)) + " in cells under five." + (ii.attribution ? " Sources: " + esc(ii.attribution) + "." : "") + "</span>");
+      if (state.world.layers.cctv) rows.push("<span>" + esc(fmtCount(state.world.layers.cctv.count)) + " public cameras. Tap one for its live snapshot.</span>");
       if (d.failed && !d.on) rows.push("<span>" + esc(d.layer.charAt(0).toUpperCase() + d.layer.slice(1)) + " could not load right now.</span>");
       box.innerHTML = rows.join("<br>");
       box.hidden = !rows.length;

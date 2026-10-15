@@ -186,7 +186,7 @@ const split = (page) => page.evaluate(() => {
   const g = r('mnWorld'), c = r('mnWorldContext'), f = r('mnWorldFeed');
   const bar = document.querySelector('.appbar'), fe = document.getElementById('mnWorldFeed');
   return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
-    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
+    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, barHidden: !bar || getComputedStyle(bar).display === 'none', feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
     ctxBottom: Math.round(c.bottom), ctxPad: Math.round(parseFloat(getComputedStyle(document.getElementById('mnWorldContext')).paddingBottom)) };
 });
 
@@ -241,9 +241,10 @@ for (const device of DEVICES) {
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
   /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
+  /* globe first (owner, 2026-10-15): a signed-in member's World has no bar; the feed runs to the bottom edge and nothing is reserved for a bar */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'globe first: no bar for a member, the feed runs to the bottom of the screen with no bar clearance', s.feedBottom >= s.vh - 1 && s.barHidden && parseFloat(s.clear || '0') === 0, s);
   /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
-  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
+  if (device.name === 'desktop') check(device.name, 'globe first on desktop: no bar for a member, the strip and the feed run to the bottom edge', s.ctxBottom >= s.vh - 1 && s.barHidden && s.feedBottom >= s.vh - 1, s);
   /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
   if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
@@ -578,7 +579,8 @@ for (const member of [false, true]) {
   check(scope, 'the Earth is edge to edge: the globe fills the viewport', r.globe && r.globe.top === 0 && r.globe.left === 0 && r.globe.w === r.vw && r.globe.h === r.vh, { globe: r.globe, vw: r.vw, vh: r.vh });
   check(scope, 'the old 45/15/35 chrome stays home: no Map/Missions switch, no tool row, no story feed, no banner', (!r.mode || !r.mode.shown) && (!r.tools || !r.tools.shown) && (!r.feed || !r.feed.shown) && (!r.strong || !r.strong.shown), { mode: r.mode, tools: r.tools, feed: r.feed, strong: r.strong });
   check(scope, 'the way back is the World, top left', r.back && r.back.shown && r.back.top < 60 && r.back.left < 30 && (await page.$eval('#worldBack', (a) => a.textContent.trim() + ' ' + a.getAttribute('href'))) === '← World mnet.html?view=feed', r.back);
-  check(scope, 'the bar is measured where its top is and the sheet sits on it', r.bar && r.bar.shown && Math.abs(parseFloat(r.vars.bar) - (r.vh - r.bar.top)) <= 1 && r.deck && r.deck.shown && Math.abs(r.deck.bottom - r.bar.top) <= 1, { bar: r.bar, deck: r.deck, vars: r.vars, vh: r.vh });
+  if (member) check(scope, 'globe first: no bar for a member on the Full world, nothing reserved for it, the sheet on the bottom edge', (!r.bar || !r.bar.shown) && parseFloat(r.vars.bar) === 0 && r.deck && r.deck.shown && Math.abs(r.deck.bottom - r.vh) <= 1, { bar: r.bar, deck: r.deck, vars: r.vars, vh: r.vh });
+  else check(scope, 'the bar is measured where its top is and the sheet sits on it', r.bar && r.bar.shown && Math.abs(parseFloat(r.vars.bar) - (r.vh - r.bar.top)) <= 1 && r.deck && r.deck.shown && Math.abs(r.deck.bottom - r.bar.top) <= 1, { bar: r.bar, deck: r.deck, vars: r.vars, vh: r.vh });
   check(scope, 'the sheet is compact until a pin is chosen: a hint, under a third of the screen', r.deck.h < r.vh / 3 && /Tap a pin/.test(await page.$eval('#worldFilters p', (p) => p.textContent)), { deck: r.deck, vh: r.vh });
   const stacked = (r) => r.data && r.controls && r.credit && r.deck && r.data.shown && r.controls.shown && r.credit.shown && r.data.bottom <= r.credit.top + 1 && r.controls.bottom <= r.credit.top + 1 && r.credit.bottom <= r.deck.top + 1 && r.data.left >= 0 && r.controls.right <= r.vw;
   check(scope, 'the toggles and the controls float above the credit, the credit above the sheet, all on screen', stacked(r), { data: r.data, controls: r.controls, credit: r.credit, deck: r.deck });
