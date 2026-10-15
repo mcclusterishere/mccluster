@@ -161,7 +161,7 @@ function lockOf(id){if(access)return(access.locked_layers||[]).find(x=>x.id===id
  if(id==='flights')return null;if(!sessionToken())return{id,reason:'sign_in_required',next_step:'sign_in'};if(id==='transport')return{id,reason:'pending_counsel'};
  if(id==='cctv')return cctv.state&&cctv.state.eligible?null:{id,reason:'cctv'};return null}
 function paintAccess(){Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;if(ANALYTICS){b.hidden=true;return}const l=lockOf(k);b.hidden=false;b.classList.toggle('is-locked',!!l);b.setAttribute('aria-disabled',l?'true':'false');if(l)b.setAttribute('data-lock',l.reason);else b.removeAttribute('data-lock')})}
-async function loadAccess(){try{const t=sessionToken(),r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error('access '+r.status);access=await r.json()}catch(e){access=null}paintAccess();return access}
+async function loadAccess(){try{const t=sessionToken(),r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error('access '+r.status);const d=await r.json();/* only a well-formed map counts; anything else falls back to the session rule */access=d&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){access=null}paintAccess();return access}
 /* a locked layer explains itself: a guest is asked to sign in; a member is told what unlocks it */
 function explainLock(id){const l=lockOf(id);if(!l)return false;
  if(l.reason==='sign_in_required'||!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return true}

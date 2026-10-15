@@ -450,7 +450,9 @@ if (runs('layers-member')) {
   const scope = 'layers-member';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a member sees three toggles, none locked', locks.length === 3 && locks.every((l) => !l.locked && l.disabled === 'false'), locks);
+  /* the access map (owner, 2026-10-15): seven toggles on screen; a member has the data layers, CCTV waits on its three checks, transport on counsel */
+  const lockedIds = locks.filter((l) => l.locked).map((l) => l.id).sort();
+  check(scope, 'a member sees every toggle; only CCTV and transport locked', locks.length === 7 && JSON.stringify(lockedIds) === JSON.stringify(['ctlCctv', 'ctlTransport']) && ['ctlFlights', 'ctlSats', 'ctlLaunch'].every((id) => locks.some((l) => l.id === id && !l.locked && l.disabled === 'false')), locks);
   await globe.click('#ctlFlights');
   await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
   await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });
@@ -528,7 +530,8 @@ if (runs('layers-guest')) {
   const scope = 'layers-guest';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a guest sees Flights open and Satellites and Launches locked', locks.length === 3 && !locks[0].locked && locks[1].locked && locks[2].locked, locks);
+  /* one free layer (owner, 2026-10-15): every other toggle on screen, shaded */
+  check(scope, 'a guest sees Flights open and every other layer locked', locks.length === 7 && !locks[0].locked && locks.slice(1).every((l) => l.locked), locks);
   await globe.$eval('#ctlSats', (b) => b.click());   /* aria-disabled, so Playwright's own click would wait forever; a tap does this */
   await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 10000 });
   check(scope, 'a locked layer opens sign-in with the reason, and sends nothing', /Sign in to see satellites and space missions/.test(await page.textContent('#mnGuestWhy')) && req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0, await page.textContent('#mnGuestWhy'));
