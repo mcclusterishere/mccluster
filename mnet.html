@@ -288,7 +288,7 @@
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-        <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
+        <div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">
         <!-- the feed is the feed: no filter row over it (owner, 2026-10-15: "shouldn't even be a toggle. Just let the screen be.") -->
         <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
              they are a door at the top of the feed, shown only while
@@ -356,6 +356,9 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
+        <!-- WORLD NEWS (owner, 2026-10-15): one member post to one news item, ingested from GDELT into the McCluster plane
+             and served by the Worker. GDELT's licence asks for this credit; it shows whenever a news card does. -->
+        <p class="mn__news-credit" id="mnNewsCredit" hidden>World news from <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener noreferrer">The GDELT Project</a></p>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
