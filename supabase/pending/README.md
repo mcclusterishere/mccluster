@@ -58,3 +58,15 @@ three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
 every open mission in one by its campaign, published. Idempotent; apply as the
 service role, then promote with the steps above. Regional impact totals still
 need five consenting members per region and are not seeded.
+
+Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
+(owner, 2026-10-15): starter missions (help a person, write a song, attend a
+rally) as data rules, state Policy Fellowship cohorts and policy teams on
+`action_cohorts`, the memo review loop (immutable versions with diffs, an
+immutable review log, notifications) and a per-memo research collection of
+unverified leads. It replaces `admit_fellow_to_cohort()` (production hash
+matches `20261005054040`) with the same function plus the ladder check for
+policy cohorts. Behaviour tests: `supabase/tests/policy_fellowship_ladder.behaviour.sql`,
+run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
+decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
+Promote using the steps above after the owner approves it.
