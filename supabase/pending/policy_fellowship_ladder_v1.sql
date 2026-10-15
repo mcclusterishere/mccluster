@@ -23,8 +23,8 @@
 --      with a line diff against its parent and a sha256), immutable
 --      action_policy_memo_reviews (the audit log of every transition), and
 --      action_policy_memo_research_items (a per-memo research collection of
---      LEADS with provenance; never verified evidence; pending
---      reconciliation with the canonical evidence/claim source ids, see
+--      LEADS with provenance; never verified evidence; a thin link to the
+--      canon's intel_evidence / ops_ingest_records ids, pending its apply, see
 --      docs/control-plane/POLICY-FELLOWSHIP-LADDER.md).
 --   1b. action_member_verifications: STATUS-ONLY strict verification for
 --      referral signups (vendor reference, consent and attestation dates; never
@@ -520,9 +520,15 @@ create table if not exists public.action_policy_memo_research_items (
  -- A search result is a LEAD, never verified evidence. Only the canonical
  -- evidence/claim review can verify; this column widens when that lands.
  evidence_status text not null default 'unverified_lead' check (evidence_status in ('unverified_lead')),
- -- PENDING RECONCILIATION: the canonical source/snapshot id once the
- -- intel-to-mission canon schema is applied. Deliberately no FK yet.
- canon_source_id uuid,
+ -- PENDING RECONCILIATION with the evidence canon (PR #438,
+ -- supabase/pending/20261015210000_intel_mission_canon_v1.sql, also unapplied):
+ -- canon_evidence_id -> intel_evidence.id, canon_source_record_id ->
+ -- ops_ingest_records.id. Verification lives ONLY on the canon row
+ -- (intel_evidence.review_status); this table never copies it. No FK until
+ -- the canon is applied: the follow-up adds (id, org_id) FKs with the
+ -- fellowship's org id. Purpose on the canon side: public_interest_research.
+ canon_evidence_id uuid,
+ canon_source_record_id uuid,
  created_at timestamptz not null default now(),
  check (provider = 'manual' or url is not null),
  check (provider = 'manual' or retrieved_at is not null)

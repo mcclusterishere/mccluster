@@ -48,7 +48,14 @@ Production counts come from SELECT-only aggregate queries against Supabase
   (mission curation; production still shows the retired missions open).
 - `supabase/pending/20261011190000_decision_intelligence_evidence_v1.sql`
   (private `decision_intelligence.sources/claims/evidence_links`; schema not
-  present in production).
+  present in production). Superseded by the evidence canon below; do not
+  apply both.
+- `supabase/pending/20261015210000_intel_mission_canon_v1.sql` and
+  `docs/control-plane/INTEL-TO-MISSION-CANON.md` (PR #438, branch
+  `docs/halo-intel-mission-canon`): the canonical evidence/claim schema
+  (`intel_evidence`, `intel_claims`, `intel_claim_evidence`, append-only
+  `intel_reviews`, briefings, decision basis, mission decisions, outcomes and
+  proofs; sources and snapshots reuse `ops_ingest_records`).
 - **This change:** `supabase/pending/policy_fellowship_ladder_v1.sql`.
 
 ### Wired today (UI and server)
@@ -124,6 +131,15 @@ pushed** when this was written (`git fetch origin feat/world-globe-feed-analytic
 found no ref). Whichever lands second must reconcile to one shared predicate,
 ideally one SQL function (`action_member_has_verified_mission(uid)`), so the
 two gates cannot drift.
+
+The evidence canon (PR #438) states "approved proof = `action_proofs.status =
+'verified'`". `review_action_proof()` sets the proof and its assignment to
+`verified` in the same transaction, so the two read the same for ordinary
+missions. They can differ where another path verifies an assignment (for
+example the Anti-Social level review or the completion automation), so the
+shared predicate must be chosen once, by the owner, and used by the ladder,
+the CCTV gate and the canon alike. This ladder uses the assignment status
+because that is what the fellowship already counts.
 
 ### The rule is data
 
@@ -322,17 +338,19 @@ provider id, title, https URL, publisher, `retrieved_at`, license/terms note,
 `content_sha256`, the fellow's note.
 
 **A search result is not verified evidence.** Every item is an unverified lead,
-stored as
-`unverified_lead` (the CHECK allows nothing else). Verification belongs to the
-canonical evidence/claim schema being written on `docs/halo-intel-mission-canon`
-(`docs/control-plane/INTEL-TO-MISSION-CANON.md`), which was **not yet pushed**
-when this was written. Until it lands, the research collection is a thin link
-table with a nullable `canon_source_id` (deliberately no foreign key) and is
-**pending reconciliation**: when the canon's source/snapshot table is applied,
-a follow-up migration adds the FK, backfills `canon_source_id` by URL/content
-hash, and widens `evidence_status` to the canon's review states. No competing
-evidence store is created here; `decision_intelligence.sources` (pending) and
-the canon are the candidates.
+stored as `unverified_lead` (the CHECK allows nothing else), and that never
+changes on this table. Verification belongs to the evidence canon (PR #438,
+`docs/control-plane/INTEL-TO-MISSION-CANON.md`): a lead becomes evidence only
+when the desk ingests it as an `ops_ingest_records` snapshot and an
+`intel_evidence` row (publisher, URL, `retrieved_at`, license, `content_sha256`)
+whose `review_status` the canon's append-only `intel_reviews` moves to
+`accepted`. The research table is the **thin link**: `canon_source_record_id`
+(→ `ops_ingest_records.id`) and `canon_evidence_id` (→ `intel_evidence.id`).
+Their foreign keys are added when the canon is applied (both files are
+pending), using the canon's `(id, org_id)` keys with the fellowship's org.
+Shown status is read from the canon row, never copied. Memo citations to
+claims go through `intel_claims` with purpose `public_interest_research`. No
+competing evidence store is created here.
 
 ### Providers (no scraping)
 
@@ -406,6 +424,17 @@ service-only candidate workspace. Nothing in production yet.
   (`out_*` / `comms_*`), never a second CRM. The officials/campaign CRM at the
   top is the separate workspace above, not this one.
 
+**Relation to the evidence canon.** The canon (PR #438) enforces in the
+database that claims cannot target a person and that there is **no electoral
+purpose** lane. That is the same line this design draws: nonpartisan memos to
+officials on issues may cite canon evidence (purpose
+`public_interest_research` / `nonprofit_program`); the campaign workspace
+gets **no access** to the canon or to fellowship research, and if it ever
+needs research it keeps its own store inside its own entity's boundary.
+Politician coordination for nonpartisan policy (who receives a memo) uses
+verified `action_policy_official_profiles`, which is office-holder public
+information, not campaign data.
+
 These are **owner and legal decisions**; the design does not block on them,
 and nothing in this change touches candidates, campaigns, money, or contact
 data.
@@ -477,7 +506,9 @@ Supabase table editor as the owner); policy team management beyond
    enable either: counsel signs off (`counsel_signoff_at`, `counsel_signoff_ref`),
    the vendor/consent work (E=Up) or the counting source (Whip) is built and
    reviewed, then `enabled = true`.
-8. Later, separately: reconcile `canon_source_id` with the evidence canon;
+8. Later, separately: after the canon (PR #438) is applied, add the FKs for
+   `canon_evidence_id` / `canon_source_record_id` and the ingest path from a
+   lead to `intel_evidence`;
    unify the CCTV "completed mission" predicate; enable a legislation source
    after its terms are reviewed.
 

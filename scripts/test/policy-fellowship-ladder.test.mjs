@@ -154,7 +154,8 @@ test("memos are private: RLS on, no anon grant, own rows or the desk", async () 
 test("research items are leads with provenance, never scraped Scholar results", async () => {
   const sql = await read(SQL_PATH);
   assert.match(sql, /evidence_status text not null default 'unverified_lead' check \(evidence_status in \('unverified_lead'\)\)/);
-  assert.match(sql, /canon_source_id uuid,/);
+  assert.match(sql, /canon_evidence_id uuid,\n canon_source_record_id uuid,/);
+  assert.doesNotMatch(sql, /create table[^;]*(intel_evidence|evidence_store|_sources) \(/i, "no competing evidence store");
   assert.match(sql, /check \(provider = 'manual' or retrieved_at is not null\)/);
   const providers = sql.match(/provider text not null check \(provider in \(([^)]*)\)\)/)[1];
   assert.doesNotMatch(providers, /google|'scholar'/i);
