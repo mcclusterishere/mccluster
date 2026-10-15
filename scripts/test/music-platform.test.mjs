@@ -20,12 +20,12 @@ test('gated single is one logical track: public preview, master only for an enti
      row; albums.json and the Worker name the same row. */
   assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
   assert.equal(track.gated.unlock_rule,'gated_track_niggy_nigg');
-  assert.deepEqual(track.gated.requires,{verified_missions:3,identity_verified:true});
+  assert.deepEqual(track.gated.requires,{verified_missions:3,identity_verified:true,identity_purpose:'referral_signup'});
   assert.equal(track.gated.listen_gate,undefined,'listens no longer unlock the closer');
   const router=await read('workers/mccluster/src/music/router.js');
   assert.match(router,/'niggy-nigg':\s*\{[^}]*?rule:\s*'gated_track_niggy_nigg'/,'the Worker gates niggy-nigg by the data rule');
   const sql=await read('supabase/pending/gated_track_mission_identity_v1.sql');
-  assert.match(sql,/'gated_track_niggy_nigg'[\s\S]*'verified_missions_and_identity', null, 3/,'the rule row: 3 missions + identity');
+  assert.match(sql,/'gated_track_niggy_nigg'[\s\S]*'identity_verified', null, null,\s*'\{"purpose": "referral_signup", "min_verified_missions": 3/,'the rule row: 3 missions + identity');
   assert.equal(album.tracks.filter(t=>t.gated).length,1,'the other two tracks stay freely playable');
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');

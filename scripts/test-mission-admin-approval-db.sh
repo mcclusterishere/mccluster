@@ -43,8 +43,15 @@ fresh() {
 }
 
 # The whole chain the two pending files sit on (production order).
+# PR #443 (identity verification levels). Defaults are where its files land
+# once merged; override to test against its branch before that.
+IDENTITY_SQL="${IDENTITY_SQL:-supabase/pending/20261015230000_identity_verification_levels_v1.sql}"
+IDENTITY_STORAGE_STUB="${IDENTITY_STORAGE_STUB:-supabase/tests/supabase_storage.stub.sql}"
+IDENTITY_TEST="${IDENTITY_TEST:-supabase/tests/identity_verification_levels.behaviour.sql}"
+
 full_chain() {
   fresh "$1"
+  [ -f "$IDENTITY_STORAGE_STUB" ] && apply "$IDENTITY_STORAGE_STUB"
   sql "alter table public.action_missions add column if not exists kind text not null default 'civic'"
   apply supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql
   apply supabase/migrations/20261002135458_action_network_feed_shares_v1.sql
@@ -115,7 +122,34 @@ echo "2. every former automatic path"
 full_chain guards; pending
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/mission_admin_approval.behaviour.sql
 
-echo "3. the gated track rule"
-full_chain gate; pending
+echo "3. the gated track rule, in every apply order with the identity PR (#443)"
+gated_mine_last() { psql -q -d postgres -c "alter database $DB set mcc.test_progress_owner = 'gated'" >/dev/null; }
+full_chain gate_a; pending; gated_mine_last
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/gated_track_mission_identity.behaviour.sql
+echo "  3a. #440 -> approval -> gated (no #443): ok"
+if [ -f "$IDENTITY_SQL" ]; then
+  full_chain gate_b
+  apply supabase/pending/mission_admin_approval_v1.sql
+  apply "$IDENTITY_SQL"
+  apply supabase/pending/gated_track_mission_identity_v1.sql
+  apply supabase/pending/gated_track_mission_identity_v1.sql
+  gated_mine_last
+  psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/gated_track_mission_identity.behaviour.sql
+  echo "  3b. #440 -> approval -> #443 -> gated: ok"
+  if [ -f "$IDENTITY_TEST" ]; then
+    full_chain gate_b2
+    apply supabase/pending/mission_admin_approval_v1.sql
+    apply "$IDENTITY_SQL"
+    apply supabase/pending/gated_track_mission_identity_v1.sql
+    psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$IDENTITY_TEST" >/dev/null
+    echo "  3b'. #443's own behaviour suite with the gated file applied after it: ok"
+  fi
+  full_chain gate_c; pending
+  apply "$IDENTITY_SQL"
+  apply "$IDENTITY_SQL"
+  psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/gated_track_mission_identity.behaviour.sql
+  echo "  3c. #440 -> approval -> gated -> #443 (applies cleanly; the gate is still right): ok"
+else
+  echo "  3b/3c skipped: $IDENTITY_SQL not present (PR #443 not merged; set IDENTITY_SQL to test against its branch)"
+fi
 echo "mission admin approval + gated track: ok"

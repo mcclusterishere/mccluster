@@ -85,8 +85,8 @@ and no money without an approved clip, and a mission opens only after an admin
 approved it for publication. Apply after `policy_fellowship_ladder_v1.sql`.
 Pending: `gated_track_mission_identity_v1.sql` (rollback alongside) is the
 CIA Mind Control gated-track rule as an `action_unlock_rules` row (three
-admin-verified missions and `member_identity_verified(uid)`), the Worker's
+admin-verified missions and `member_identity_verified(uid, purpose)`, purpose from the rule's params), the Worker's
 `music_gate_rule_state` / `music_gate_claim_rule`, and the taxonomy rows for
-`music_preview_play` / `music_full_play`. Apply after the approval file.
+`music_preview_play` / `music_full_play`. Apply after the approval file and, preferably, after PR #443's identity file (both orders apply cleanly).
 Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
 and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.

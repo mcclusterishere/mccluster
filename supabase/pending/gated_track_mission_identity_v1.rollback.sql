@@ -6,12 +6,16 @@
 
 drop function if exists public.music_gate_claim_rule(uuid, text, text, text, integer), public.music_gate_rule_state(uuid, text, text);
 delete from public.action_unlock_rules where rule_key = 'gated_track_niggy_nigg';
-alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_missions_identity_count_check;
-alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_requirement_kind_v2_check;
-alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check
-  check (requirement_kind in ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists'));
--- Restore action_unlock_progress(uuid, text): re-run its block from
--- supabase/pending/policy_fellowship_ladder_v1.sql (section 1b).
-drop function if exists public.member_identity_verified(uuid);
+-- action_unlock_progress: restore the version of whichever file owns it now:
+--   with PR #443 applied, re-run its action_unlock_progress block
+--   (supabase/pending/20261015230000_identity_verification_levels_v1.sql);
+--   without it, re-run section 1b of supabase/pending/policy_fellowship_ladder_v1.sql.
+-- The requirement-kind list and the identity purpose check are #443's own;
+-- without #443, restore #440's list:
+--   alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_identity_purpose_check;
+--   alter table public.action_unlock_rules drop constraint action_unlock_rules_requirement_kind_check;
+--   alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check
+--     check (requirement_kind in ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists'));
+drop function if exists public.member_identity_verified(uuid, text);
 -- The two event_taxonomy rows (music_preview_play, music_full_play) are harmless; to remove:
 -- delete from public.event_taxonomy where event_name in ('music_preview_play','music_full_play');

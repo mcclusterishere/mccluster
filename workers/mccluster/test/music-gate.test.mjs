@@ -47,7 +47,7 @@ function ruleState(user, { have = 0, identity = false } = {}) {
   return {
     mode: 'rule', rule: 'gated_track_niggy_nigg', track: 'niggy-nigg', allowed, signed_in: !!user,
     missions: { have, need: 3 }, identity_verified: identity, missing,
-    links: { missions: 'mnet.html?view=missions', identity: 'account.html#identity' }
+    links: { missions: 'mnet.html?view=missions', identity: 'identity-verify.html' }
   };
 }
 

@@ -53,20 +53,28 @@ from verification, points, bounties or clips.
 
 ## 2. The gated track
 
-- **Rule (data):** `action_unlock_rules` row `gated_track_niggy_nigg`,
-  `requirement_kind = 'verified_missions_and_identity'`, `min_count = 3`,
-  `unlock_keys = {music_full_track:niggy-nigg}`, `params` carry the links.
-  Missions = `action_member_verified_mission_count(uid)`: distinct missions
-  with an admin-verified assignment (clip missions excluded). One predicate,
-  also exposed as `action_member_has_verified_mission(uid)` for the World's
-  CCTV gate and the ladder.
-- **Identity, by contract:** `public.member_identity_verified(uid)` is the one
-  place it is read. The identity work (`feat/identity-verification-levels`)
-  writes a row in `action_member_verifications` with `level = 'v1_live_intro'`,
-  `status = 'verified'` (owner-approved), not expired or revoked. That branch
-  adds the `level` column; until then the helper returns **false for everyone**
-  (fail closed). The identity PR may `create or replace` the helper; every
-  gate follows.
+- **Rule (data):** `action_unlock_rules` row `gated_track_niggy_nigg`, on PR
+  #443's requirement kind `identity_verified`, with `params = {"purpose":
+  "referral_signup", "min_verified_missions": 3, ...links}` and
+  `unlock_keys = {music_full_track:niggy-nigg}`. Missions =
+  `action_member_verified_mission_count(uid)`: distinct missions with an
+  admin-verified assignment (clip missions excluded). One predicate, also
+  exposed as `action_member_has_verified_mission(uid)` for the World's CCTV
+  gate and the ladder.
+- **Identity, by contract with PR #443:** `public.member_identity_verified(uid,
+  purpose)` is the one place it is read: a row in `action_member_verifications`
+  for that `purpose`, `status = 'verified'`, not expired. `referral_signup` =
+  an owner-approved V1 live introduction; `halo_full` = an owner-approved V2
+  plus Persona (#443 adds it). **Which purpose the full track needs is data**
+  (`params.purpose`, default `referral_signup`).
+- **Apply order with #443:** preferred #440 → approval → #443 → gated. The
+  gated file sets the same requirement-kind list and purpose check #443 sets,
+  so both orders apply cleanly, and the track gate evaluates the rule itself
+  (never through `action_unlock_progress`), so it is right in either order.
+  The gated file's `action_unlock_progress` is #443's plus a
+  `params.min_verified_missions` clause; if #443 is applied after the gated
+  file, re-run the gated file (idempotent) so `action_unlock_status()` also
+  counts the missions, or have #443 carry that clause.
 - **Server-side:** the Worker (`workers/mccluster/src/music/router.js`) asks
   `music_gate_claim_rule()`, which evaluates the rule and writes the play row
   in one transaction; only a `claimed` answer gets a stream token for the
@@ -99,16 +107,20 @@ from verification, points, bounties or clips.
    so the owner can hear the catalogue. Keep, or remove?
 2. **Clip approvals:** the campaign owner (the paying creator) or an admin
    approves a clip. Should paid clips also need a platform admin?
-3. **Identity page link:** `account.html#identity` is a placeholder until the
-   identity PR names its page; it is a `params` field on the rule row.
+3. **Which identity the full song needs.** Default `referral_signup` (the
+   approved V1 live intro). The owner said "we need all the information on
+   you" for the full song, which reads as `halo_full` (V2 + Persona). Switching
+   is one UPDATE after #443 is applied:
+   `update action_unlock_rules set params = params || '{"purpose":"halo_full"}' where rule_key = 'gated_track_niggy_nigg';`
+   The identity link (`identity-verify.html`, #443's page) is also a `params` field.
 4. Missions already open in production are recorded as approved for
    publication when the file is applied.
 
 ## 4. Apply (owner approval required)
 
 1. Apply `supabase/pending/policy_fellowship_ladder_v1.sql` first (PR #440).
-2. Apply `supabase/pending/mission_admin_approval_v1.sql`, then
-   `supabase/pending/gated_track_mission_identity_v1.sql`, with the Supabase
+2. Apply `supabase/pending/mission_admin_approval_v1.sql`, then PR #443's
+   identity file, then `supabase/pending/gated_track_mission_identity_v1.sql`, with the Supabase
    MCP `apply_migration` under those names. Before applying, re-check the
    hashes in section 1; if one changed, merge.
 3. Only then deploy the Worker. Deployed before the SQL, the rule RPC is

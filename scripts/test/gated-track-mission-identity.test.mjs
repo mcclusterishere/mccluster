@@ -36,7 +36,7 @@ function gate(have, identity, signedIn = true) {
   return {
     mode: 'rule', allowed: signedIn && have >= 3 && identity, signed_in: signedIn,
     missions: { have, need: 3 }, identity_verified: identity, missing,
-    links: { missions: 'mnet.html?view=missions', identity: 'account.html#identity' }
+    links: { missions: 'mnet.html?view=missions', identity: 'identity-verify.html' }
   };
 }
 
@@ -65,7 +65,7 @@ test('the locked row reflects the server: 0-3 missions x identity verified or no
       }
       if (!identity) {
         assert.match(why.text, /a verified identity/, label);
-        assert.ok(why.links.some((l) => l.href === 'account.html#identity'), `${label}: links to identity verification`);
+        assert.ok(why.links.some((l) => l.href === 'identity-verify.html'), `${label}: links to identity verification`);
       } else {
         assert.doesNotMatch(why.text, /identity/, `${label}: identity is done, so it is not named`);
       }
@@ -107,10 +107,15 @@ test('preview plays and full plays are distinct events; a full play only after t
 
 test('the gated rule is a data row, read server-side, and the identity helper is the one contract', () => {
   const sql = read('supabase/pending/gated_track_mission_identity_v1.sql');
-  assert.match(sql, /create or replace function public\.member_identity_verified\(p_user uuid\)/);
-  assert.match(sql, /v\.level = ''v1_live_intro'' and v\.status = ''verified''/);
-  assert.match(sql, /return false;  -- the live-intro level does not exist yet: fail closed/);
-  assert.match(sql, /'gated_track_niggy_nigg'[\s\S]*?array\['music_full_track:niggy-nigg'\], 'verified_missions_and_identity', null, 3/);
+  assert.match(sql, /create or replace function public\.member_identity_verified\(p_user uuid, p_purpose text default 'referral_signup'\)/);
+  assert.match(sql, /v\.purpose = coalesce\(p_purpose, 'referral_signup'\) and v\.status = 'verified'/);
+  assert.doesNotMatch(sql, /information_schema|v1_live_intro|v\.level/, 'identity is keyed by purpose (PR #443), never a level column');
+  assert.match(sql, /array\['music_full_track:niggy-nigg'\], 'identity_verified', null, null,\s*'\{"purpose": "referral_signup", "min_verified_missions": 3/);
+  // the same requirement-kind list and purpose check PR #443 sets, so either apply order is clean
+  assert.match(sql, /'registration_assists','identity_verified'\)\);/);
+  assert.match(sql, /check \(requirement_kind <> 'identity_verified' or params->>'purpose' in \('referral_signup','halo_full'\)\)/);
+  const gate = sql.slice(sql.indexOf('create or replace function public.music_gate_rule_state'));
+  assert.doesNotMatch(gate.slice(0, gate.indexOf('$$;')), /action_unlock_progress/, 'the gate evaluates the rule itself, whatever order #443 was applied in');
   const claim = sql.slice(sql.indexOf('create or replace function public.music_gate_claim_rule'));
   assert.ok(claim.indexOf("if not coalesce((v_state->>'allowed')::boolean, false) then") < claim.indexOf('insert into public.music_gated_plays'),
     'the play row (the stream token) is written only after the rule allowed it');

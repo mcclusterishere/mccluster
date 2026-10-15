@@ -67,45 +67,41 @@ select pg_temp.as_service();
 select pg_temp.ok(public.action_member_verified_mission_count(pg_temp.id('U3')) = 3 and public.action_member_verified_mission_count(pg_temp.id('U0')) = 0,
   'fixtures: U0..U3 hold 0..3 admin-verified missions');
 
--- the rule is a data row
-select pg_temp.ok((select requirement_kind = 'verified_missions_and_identity' and min_count = 3 and enabled
+-- the rule is a data row, on #443's requirement kind
+select pg_temp.ok((select requirement_kind = 'identity_verified' and enabled and params->>'purpose' = 'referral_signup'
+                     and (params->>'min_verified_missions')::int = 3
                      and unlock_keys = array['music_full_track:niggy-nigg'] from public.action_unlock_rules where rule_key = 'gated_track_niggy_nigg'),
-  'the rule is action_unlock_rules.gated_track_niggy_nigg: 3 missions + identity');
+  'the rule is action_unlock_rules.gated_track_niggy_nigg: identity (purpose referral_signup) + 3 missions');
 
 -- signed out
 do $$ declare s jsonb := pg_temp.state(null); c jsonb := pg_temp.claim(null); begin
   perform pg_temp.ok(not (s->>'allowed')::boolean and s->'missing' ? 'sign_in' and s->'missing' ? 'missions'
     and s->'missing' ? 'identity_verification' and (s->'missions'->>'need')::int = 3
-    and s->'links'->>'missions' = 'mnet.html?view=missions' and s->'links'->>'identity' is not null,
+    and s->'links'->>'missions' = 'mnet.html?view=missions' and s->'links'->>'identity' = 'identity-verify.html',
     'signed out: locked, says sign in + 0/3 missions + identity, with links: ' || s::text);
   perform pg_temp.ok(not (c->>'claimed')::boolean and pg_temp.plays(null) = 0, 'signed out: no play row, no token');
 end $$;
 
--- before the identity PR (no level column): nobody is identity-verified, even with 3 missions
--- and a vendor 'verified' referral-signup row
+-- matrix, identity NOT verified: no verification row at all, or a pending one
 select pg_temp.as_db();
-insert into public.action_member_verifications(user_id, status, provider, provider_reference, location_consent_at, location_precision,
-  attestation_version, attestation_signed_at, biometric_consent_version, biometric_consent_at, verified_at)
-values (pg_temp.id('U3'), 'verified', 'vendor_x', 'ref_u3', now(), 'region', 'v1', now(), 'v1', now(), now());
+insert into public.action_member_verifications(user_id, purpose, status) values (pg_temp.id('U3'), 'referral_signup', 'pending');
 select pg_temp.as_service();
 do $$ declare u int; s jsonb; c jsonb; begin
   for u in 0..3 loop
     s := pg_temp.state(pg_temp.id('U' || u)); c := pg_temp.claim(pg_temp.id('U' || u));
     perform pg_temp.ok(not (s->>'allowed')::boolean and (s->'missions'->>'have')::int = u and not (s->>'identity_verified')::boolean
-      and not (c->>'claimed')::boolean and pg_temp.plays(pg_temp.id('U' || u)) = 0,
-      format('matrix %s/3 missions x identity NOT verified (no level column yet, fail closed): locked, no play row', u));
+      and s->'missing' ? 'identity_verification' and not (c->>'claimed')::boolean and pg_temp.plays(pg_temp.id('U' || u)) = 0,
+      format('matrix %s/3 missions x identity NOT verified: locked, no play row', u));
   end loop;
 end $$;
-select pg_temp.ok(not public.member_identity_verified(pg_temp.id('U3')), 'member_identity_verified fails closed until the live-intro level exists');
 
--- the identity PR's contract: action_member_verifications.level = 'v1_live_intro', status verified, owner-approved
+-- matrix, identity verified: an owner-approved 'referral_signup' (V1 live intro) row for everyone
 select pg_temp.as_db();
-alter table public.action_member_verifications add column if not exists level text;  -- fixture standing in for feat/identity-verification-levels
-update public.action_member_verifications set level = 'v1_live_intro' where user_id = pg_temp.id('U3');
-insert into public.action_member_verifications(user_id, status, provider, provider_reference, location_consent_at, location_precision,
-  attestation_version, attestation_signed_at, biometric_consent_version, biometric_consent_at, verified_at, level)
-select pg_temp.id('U' || u), 'verified', 'owner_review', 'ref_u' || u, now(), 'region', 'v1', now(), 'v1', now(), now(), 'v1_live_intro'
-  from generate_series(0, 2) u;
+delete from public.action_member_verifications;
+insert into public.action_member_verifications(user_id, purpose, status, provider, provider_reference, location_consent_at, location_precision,
+  attestation_version, attestation_signed_at, biometric_consent_version, biometric_consent_at, verified_at)
+select pg_temp.id('U' || u), 'referral_signup', 'verified', 'owner_review', 'ref_u' || u, now(), 'region', 'v1', now(), 'v1', now(), now()
+  from generate_series(0, 3) u;
 select pg_temp.as_service();
 do $$ declare u int; s jsonb; c jsonb; begin
   for u in 0..2 loop
@@ -122,7 +118,7 @@ do $$ declare u int; s jsonb; c jsonb; begin
   perform pg_temp.ok((c->>'claimed')::boolean and pg_temp.plays(pg_temp.id('U3')) = 2, 'entitled: every play is its own short-lived token (not spent like the listen gate)');
 end $$;
 
--- 3 missions, identity revoked / expired / another level: locked again
+-- 3 missions, identity revoked / expired: locked again
 select pg_temp.as_db();
 update public.action_member_verifications set status = 'revoked' where user_id = pg_temp.id('U3');
 select pg_temp.as_service();
@@ -136,17 +132,31 @@ update public.action_member_verifications set status = 'verified', expires_at = 
 select pg_temp.as_service();
 select pg_temp.ok(not (pg_temp.state(pg_temp.id('U3'))->>'allowed')::boolean, 'expired identity: locked');
 select pg_temp.as_db();
-update public.action_member_verifications set expires_at = null, level = 'referral_vendor' where user_id = pg_temp.id('U3');
+update public.action_member_verifications set expires_at = null where user_id = pg_temp.id('U3');
+
+-- the purpose is data (owner decision: 'halo_full' = V2 + Persona). Only with #443 applied,
+-- whose purpose check allows 'halo_full'.
+do $$
+declare v_halo boolean := pg_get_constraintdef((select oid from pg_constraint where conname = 'action_member_verifications_purpose_check')) like '%halo_full%';
+begin
+  if not v_halo then raise notice 'skip: halo_full purpose needs PR #443'; return; end if;
+  update public.action_unlock_rules set params = params || '{"purpose": "halo_full"}' where rule_key = 'gated_track_niggy_nigg';
+  perform pg_temp.ok(not (pg_temp.state(pg_temp.id('U3'))->>'allowed')::boolean
+    and pg_temp.state(pg_temp.id('U3'))->>'identity_purpose' = 'halo_full',
+    'rule switched to halo_full: a referral_signup verification no longer unlocks');
+  insert into public.action_member_verifications(user_id, purpose, status, provider, provider_reference, location_consent_at, location_precision,
+    attestation_version, attestation_signed_at, biometric_consent_version, biometric_consent_at, verified_at)
+  values (pg_temp.id('U3'), 'halo_full', 'verified', 'persona', 'inq_u3', now(), 'region', 'v1', now(), 'v1', now(), now());
+  perform pg_temp.ok((pg_temp.state(pg_temp.id('U3'))->>'allowed')::boolean, 'rule on halo_full: a verified halo_full row + 3 missions unlocks');
+  update public.action_unlock_rules set params = params || '{"purpose": "referral_signup"}' where rule_key = 'gated_track_niggy_nigg';
+end $$;
 select pg_temp.as_service();
-select pg_temp.ok(not (pg_temp.state(pg_temp.id('U3'))->>'allowed')::boolean, 'a verification of another level does not count');
-select pg_temp.as_db();
-update public.action_member_verifications set level = 'v1_live_intro' where user_id = pg_temp.id('U3');
 
 -- the same mission twice counts once; a clip mission never counts
 select pg_temp.as_service();
 select pg_temp.ok(public.action_member_verified_mission_count(pg_temp.id('U2')) = 2, 'the count is per distinct admin-verified mission (U2: 2)');
 
--- the rule is data: disabling it locks everyone, the owner included in the DB answer
+-- the rule is data: disabling it locks everyone
 select pg_temp.as_db();
 update public.action_unlock_rules set enabled = false where rule_key = 'gated_track_niggy_nigg';
 select pg_temp.as_service();
@@ -155,11 +165,11 @@ do $$ declare c jsonb := pg_temp.claim(pg_temp.id('U3')); begin
     'rule disabled: locked, no play row');
 end $$;
 select pg_temp.as_db();
-update public.action_unlock_rules set enabled = true, min_count = 2 where rule_key = 'gated_track_niggy_nigg';
+update public.action_unlock_rules set enabled = true, params = params || '{"min_verified_missions": 2}' where rule_key = 'gated_track_niggy_nigg';
 select pg_temp.as_service();
-select pg_temp.ok((pg_temp.state(pg_temp.id('U2'))->>'allowed')::boolean, 'min_count is data: at 2, U2 (2 missions + identity) unlocks');
+select pg_temp.ok((pg_temp.state(pg_temp.id('U2'))->>'allowed')::boolean, 'min_verified_missions is data: at 2, U2 (2 missions + identity) unlocks');
 select pg_temp.as_db();
-update public.action_unlock_rules set min_count = 3 where rule_key = 'gated_track_niggy_nigg';
+update public.action_unlock_rules set params = params || '{"min_verified_missions": 3}' where rule_key = 'gated_track_niggy_nigg';
 
 -- a rule for another track cannot be used for this one
 select pg_temp.as_service();
@@ -169,13 +179,20 @@ select pg_temp.ok((public.music_gate_rule_state(pg_temp.id('U3'), 'niggy-nigg', 
 -- nobody but the service role (the Worker) can ask or claim
 select pg_temp.as_user(pg_temp.id('U3'));
 select pg_temp.must_fail($q$select public.music_gate_claim_rule(pg_temp.id('U3'), 'niggy-nigg', 'gated_track_niggy_nigg', repeat('a', 64), 300)$q$, '%permission denied%');
-select pg_temp.must_fail($q$select public.member_identity_verified(pg_temp.id('U3'))$q$, '%permission denied%');
+select pg_temp.must_fail($q$select public.member_identity_verified(pg_temp.id('U3'), 'referral_signup')$q$, '%permission denied%');
 select pg_temp.must_fail($q$insert into public.music_gated_plays(user_id, track_key) values (pg_temp.id('U3'), 'niggy-nigg')$q$, '%row-level security%');  -- the stub grants tables by default, so RLS is the wall
 select pg_temp.ok(true, 'members cannot call the claim, read identity, or write a play');
 
--- the ladder's own rules answer as before (no identity_verified key leaks onto them)
+-- the generic evaluator tells the truth about this rule too (when this file's action_unlock_progress is the live one)
 select pg_temp.as_service();
-select pg_temp.ok(not (public.action_unlock_progress(pg_temp.id('U3'), 'policy_fellowship') ? 'identity_verified'), 'other rules unchanged');
+do $$ declare p jsonb; begin
+  if current_setting('mcc.test_progress_owner', true) is distinct from 'gated' then raise notice 'skip: #443 applied after this file owns action_unlock_progress'; return; end if;
+  p := public.action_unlock_progress(pg_temp.id('U2'), 'gated_track_niggy_nigg');
+  perform pg_temp.ok(not (p->>'met')::boolean and (p->>'have')::int = 2 and (p->>'need')::int = 3 and p->>'reason' = 'missions',
+    'action_unlock_progress: identity alone does not meet the rule (2/3 missions): ' || p::text);
+  p := public.action_unlock_progress(pg_temp.id('U3'), 'gated_track_niggy_nigg');
+  perform pg_temp.ok((p->>'met')::boolean, 'action_unlock_progress: 3/3 missions + identity meets it');
+end $$;
 
 -- taxonomy
 select pg_temp.as_db();

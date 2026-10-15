@@ -407,7 +407,8 @@
       "unlock_rule": "gated_track_niggy_nigg",
       "requires": {
        "verified_missions": 3,
-       "identity_verified": true
+       "identity_verified": true,
+       "identity_purpose": "referral_signup"
       }
      }
     }
