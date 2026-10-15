@@ -517,6 +517,86 @@ if (runs('layers-guest')) {
   await ctx.close();
 }
 
+/* ---------- THE FULL WORLD (owner, 2026-10-15: "if they click the world, it'll allow them to see that in a full pane … without
+   the whole 30, 40 rule"): "Full world ↗" opens action-globe.html?explore=1 on its own, the Earth edge to edge ---------- */
+async function openExplore(device, { member }) {
+  const world = freshWorld();
+  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  await ctx.addInitScript((m) => {
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+  }, member);
+  await routeBackends(ctx, world, { member, creator: false, verified: false });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+  await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 60000 }).catch(() => {});
+  await page.waitForSelector('.appbar', { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  return { ctx, page, world, errors };
+}
+const rects = (page) => page.evaluate(() => {
+  const r = (sel) => { const el = document.querySelector(sel); if (!el) return null; const b = el.getBoundingClientRect(); const cs = getComputedStyle(el); return { top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right), h: Math.round(b.height), w: Math.round(b.width), shown: cs.display !== 'none' && cs.visibility !== 'hidden' && b.width > 0 && b.height > 0 }; };
+  return { vw: innerWidth, vh: innerHeight, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, globe: r('#globe'), back: r('#worldBack'), strong: r('header strong'), mode: r('.world-mode'), tools: r('.world-tools'), feed: r('#worldFeed'), deck: r('#deck'), data: r('.globe-data'), controls: r('.globe-controls'), credit: r('.osm-credit'), bar: r('.appbar'), line: r('#exploreLine'), vars: { bar: getComputedStyle(document.documentElement).getPropertyValue('--hu-bar-h').trim(), sheet: getComputedStyle(document.documentElement).getPropertyValue('--hu-sheet-h').trim() } };
+});
+/* a swipe up on the sheet steps to the next mission, as the deck always has; this is how a pin is chosen without aiming at Cesium */
+const swipeSheet = (page) => page.evaluate(() => { const d = document.getElementById('deck'); const t = (y) => new Touch({ identifier: 1, target: d, clientX: 180, clientY: y }); d.dispatchEvent(new TouchEvent('touchstart', { touches: [t(600)], bubbles: true })); d.dispatchEvent(new TouchEvent('touchend', { changedTouches: [t(500)], bubbles: true })); });
+for (const member of [false, true]) {
+  const scope = 'explore-' + (member ? 'member' : 'guest');
+  if (!runs(scope)) continue;
+  const { ctx, page, world, errors } = await openExplore(DEVICES[0], { member });
+  check(scope, 'the page stays its own: no hand-over to the World screen', /action-globe\.html\?explore=1$/.test(page.url()), page.url());
+  let r = await rects(page);
+  check(scope, 'the Earth is edge to edge: the globe fills the viewport', r.globe && r.globe.top === 0 && r.globe.left === 0 && r.globe.w === r.vw && r.globe.h === r.vh, { globe: r.globe, vw: r.vw, vh: r.vh });
+  check(scope, 'the old 45/15/35 chrome stays home: no Map/Missions switch, no tool row, no story feed, no banner', (!r.mode || !r.mode.shown) && (!r.tools || !r.tools.shown) && (!r.feed || !r.feed.shown) && (!r.strong || !r.strong.shown), { mode: r.mode, tools: r.tools, feed: r.feed, strong: r.strong });
+  check(scope, 'the way back is the World, top left', r.back && r.back.shown && r.back.top < 60 && r.back.left < 30 && (await page.$eval('#worldBack', (a) => a.textContent.trim() + ' ' + a.getAttribute('href'))) === '← World mnet.html?view=feed', r.back);
+  check(scope, 'the bar is measured where its top is and the sheet sits on it', r.bar && r.bar.shown && Math.abs(parseFloat(r.vars.bar) - (r.vh - r.bar.top)) <= 1 && r.deck && r.deck.shown && Math.abs(r.deck.bottom - r.bar.top) <= 1, { bar: r.bar, deck: r.deck, vars: r.vars, vh: r.vh });
+  check(scope, 'the sheet is compact until a pin is chosen: a hint, under a third of the screen', r.deck.h < r.vh / 3 && /Tap a pin/.test(await page.$eval('#worldFilters p', (p) => p.textContent)), { deck: r.deck, vh: r.vh });
+  const stacked = (r) => r.data && r.controls && r.credit && r.deck && r.data.shown && r.controls.shown && r.credit.shown && r.data.bottom <= r.credit.top + 1 && r.controls.bottom <= r.credit.top + 1 && r.credit.bottom <= r.deck.top + 1 && r.data.left >= 0 && r.controls.right <= r.vw;
+  check(scope, 'the toggles and the controls float above the credit, the credit above the sheet, all on screen', stacked(r), { data: r.data, controls: r.controls, credit: r.credit, deck: r.deck });
+  /* choose a pin: the sheet grows with the mission and everything above it lifts */
+  await swipeSheet(page);
+  await page.waitForSelector('#mission:not([hidden])', { timeout: 10000 });
+  await page.waitForTimeout(600);
+  r = await rects(page);
+  const mission = await page.evaluate(() => ({ title: document.getElementById('title').textContent, join: document.getElementById('missionLink').getAttribute('href'), read: getComputedStyle(document.getElementById('openFeed')).display }));
+  check(scope, 'a chosen pin opens its mission in the sheet, with the join leading into the World and no "Read below"', MISSIONS.some((m) => m.title === mission.title && mission.join === 'mnet.html?mission=' + m.mission_id) && mission.read === 'none', mission);
+  const row = await page.evaluate(() => { const d = document.getElementById('deck').getBoundingClientRect(), j = document.getElementById('missionLink').getBoundingClientRect(); return { sheetBottom: Math.round(d.bottom), joinBottom: Math.round(j.bottom), joinTop: Math.round(j.top), scrolled: document.getElementById('deck').scrollHeight - document.getElementById('deck').clientHeight }; });
+  check(scope, 'the sheet grew to the mission: the join and the prev/next row are inside it, nothing clipped or scrolled', r.deck.h > 160 && r.vars.sheet === r.deck.h + 'px' && stacked(r) && row.joinBottom <= row.sheetBottom && row.joinTop > 0 && row.scrolled === 0, { deck: r.deck, vars: r.vars, row });
+  /* the data layers, on their own page */
+  await page.click('#ctlFlights');
+  await page.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
+  await page.waitForSelector('#exploreLine:not([hidden])', { timeout: 5000 });
+  const line = await page.$eval('#exploreLine', (p) => ({ text: p.textContent, lead: p.querySelector('a.explore-lead') && p.querySelector('a.explore-lead').href }));
+  check(scope, 'Flights on: the line over the Earth counts the aircraft and carries the Vaunt lead, with no parent page to do it', /3 aircraft in the air right now/.test(line.text) && line.lead === 'https://vauntapi.flyvaunt.com/referral/nuao1K', line);
+  r = await rects(page);
+  check(scope, 'the line sits above the toggles, on screen', r.line && r.line.shown && r.line.bottom <= r.data.top + 1 && r.line.top > 40, { line: r.line, data: r.data });
+  await page.$eval('#ctlSats', (b) => b.click());
+  if (member) {
+    await page.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('satellites'), null, { timeout: 15000 });
+    const both = await page.$eval('#exploreLine', (p) => p.textContent);
+    check(scope, 'a member turns Satellites on too, and the line says both', /3 aircraft/.test(both) && /2 satellites overhead, moving live/.test(both), both);
+  } else {
+    await page.waitForFunction(() => /Sign in to see satellites/.test(document.getElementById('exploreLine').textContent), null, { timeout: 5000 });
+    check(scope, 'a guest\'s locked layer says so on the line, offers sign-in, and sends nothing', req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0 && (await page.$eval('#exploreLine a', (a) => a.getAttribute('href'))) === 'account.html?stay=1');
+  }
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: join(OUT, scope + '-iphone.png') });
+  r = await rects(page);
+  check(scope, 'nothing scrolls sideways at 390', r.sw === r.cw, { sw: r.sw, cw: r.cw });
+  if (member) {
+    await page.setViewportSize(DEVICES[4].viewport);
+    await page.waitForTimeout(1200);
+    r = await rects(page);
+    check(scope, 'on a desktop the Earth still fills the pane, the sheet narrows and centres, and the stack holds', r.globe.w === r.vw && r.globe.h === r.vh && r.deck.w <= 620 && Math.abs((r.deck.left + r.deck.right) / 2 - r.vw / 2) <= 2 && stacked(r), { globe: r.globe, deck: r.deck, vw: r.vw });
+    await page.screenshot({ path: join(OUT, scope + '-desktop.png') });
+  }
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
 /* ---------- member, no creator profile: no analytics door ---------- */
 if (runs('member-not-creator')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, creator: false, verified: false });

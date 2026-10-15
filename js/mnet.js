@@ -178,8 +178,16 @@
     }).catch(function () { state.creatorChecked = false; });
   }
 
+  /* THE ONBOARDING, THREE PAGES (owner, 2026-10-15: "three pages that look
+     all sexy … you put in this, that, that, boom, it all verifies").
+     One form, three steps, each saved on its own: 1 the handle (checked
+     live) and the name, the public profile; 2 the legal name and mailing
+     address, private (fan_profiles, the contact step); 3 phone, email and
+     password. Editing an existing profile is the same form on one page. */
+  var onboard = { step: 1, editing: false, contact: null, handleTimer: 0, handleOk: "" };
   function fillProfileForm(editing) {
     var p = profile(), id = identity();
+    onboard.editing = !!editing;
     $("mnHandle").value = id.mccluster_id || "";
     $("mnDisplay").value = p.display_name || (state.user && state.user.user_metadata && (state.user.user_metadata.name || state.user.user_metadata.full_name)) || "";
     $("mnHeadline").value = p.headline || "";
@@ -188,10 +196,83 @@
     $("mnWebsite").value = p.website_url || "";
     $("mnNewPassword").value = "";
     $("mnNewPassword2").value = "";
+    $("mnEmailShow").value = state.user && state.user.email || "";
     setStatus($("mnPasswordChangeStatus"), "");
-    $("mnProfileSecurity").hidden = !editing;
-    $("mnProfileTitle").textContent = "Profile";
+    setStatus($("mnProfileStatus"), "");
+    paintHandleState(id.mccluster_id ? "ok" : "");
+    $("mnProfileTitle").innerHTML = editing ? "Edit your profile<em>.</em>" : "Make it yours<em>.</em>";
+    $("mnProfileLede").textContent = editing ? "Your public profile, and the password for your M Account." : "Your name. Your place in the movement.";
     $("mnProfileBack").hidden = !editing;
+    $("mnPasswordChange").hidden = !editing;
+    showStep(editing ? 0 : 1);
+    prefillContact();
+  }
+  /* step 0 is the editing page: step 1's fields, the public details and the password, together */
+  function showStep(n) {
+    onboard.step = n;
+    var editing = n === 0;
+    $("mnStep1").hidden = !(editing || n === 1);
+    $("mnStep2").hidden = n !== 2;
+    $("mnStep3").hidden = !(editing || n === 3);
+    $("mnStepEdit").hidden = !editing;
+    $("mnStepsRow").hidden = editing;
+    $("mnStepBack").hidden = editing || n <= 1;
+    $("mnCtaLabel").textContent = editing ? "Save changes" : n === 3 ? "Enter the World" : "Save & continue";
+    Array.prototype.forEach.call(document.querySelectorAll("#mnSteps li"), function (li) {
+      var k = Number(li.getAttribute("data-step"));
+      li.classList.toggle("is-done", !editing && k < n);
+      li.classList.toggle("is-current", !editing && k === n);
+    });
+    $("mnStepsCount").textContent = n + " / 3";
+    if (!editing) { try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); } }
+  }
+  function prefillContact() {
+    if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") return;
+    MCC_FAN.load().then(function (row) {
+      onboard.contact = row || null;
+      if (!row) return;
+      var put = function (id, v) { var el = $(id); if (el && !el.value) el.value = v || ""; };
+      put("mnLegalName", row.legal_name); put("mnAddr1", row.address_line1); put("mnAddr2", row.address_line2);
+      put("mnCity", row.city); put("mnRegion", row.region); put("mnPostal", row.postal_code);
+      if (row.country) $("mnCountry").value = row.country;
+      put("mnPhone", row.phone_e164);
+    }).catch(function () {});
+  }
+  /* the handle, checked as it is typed: the pattern here, the name at the API (a person nobody can find is free) */
+  var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/i;
+  function paintHandleState(kind, text) {
+    var st = $("mnHandleState"), hint = $("mnHandleHint"), field = $("mnHandle") && $("mnHandle").closest(".mn__field");
+    if (!st) return;
+    st.className = "mn__field-state" + (kind ? " is-" + kind : "");
+    st.textContent = kind === "bad" ? "taken" : "";
+    if (field) field.classList.toggle("is-bad", kind === "bad");
+    if (hint) hint.textContent = text || "Your handle across Human Uprise.";
+  }
+  function checkHandle() {
+    var v = $("mnHandle").value.trim();
+    onboard.handleOk = "";
+    if (!v) { paintHandleState(""); return; }
+    if (!HANDLE_RE.test(v)) { paintHandleState("bad", "3 to 32 characters: letters, numbers, dot, underscore and hyphen."); return; }
+    if (identity().mccluster_id && v.toLowerCase() === String(identity().mccluster_id).toLowerCase()) { onboard.handleOk = v; paintHandleState("ok", "That is your handle."); return; }
+    paintHandleState("busy", "Checking…");
+    var mine = v;
+    api("/v1/mnet/people/" + encodeURIComponent(v)).then(function () {
+      if ($("mnHandle").value.trim() !== mine) return;
+      paintHandleState("bad", "@" + mine + " is taken. Try another.");
+    }).catch(function (e) {
+      if ($("mnHandle").value.trim() !== mine) return;
+      if (e && e.status === 404) { onboard.handleOk = mine; paintHandleState("ok", "@" + mine + " is yours."); }
+      else paintHandleState("", "We could not check that yet; saving will.");
+    });
+  }
+  function normalizePhone(raw) {
+    var s = String(raw || "").trim();
+    if (!s) return "";
+    var digits = s.replace(/[^0-9]/g, "");
+    if (/^\+/.test(s) && digits.length >= 8 && digits.length <= 15) return "+" + digits;
+    if (digits.length === 10) return "+1" + digits;
+    if (digits.length === 11 && digits.charAt(0) === "1") return "+" + digits;
+    return null;
   }
 
   function showGate(which) {
@@ -263,22 +344,21 @@
     if ($("mnComposer")) $("mnComposer").hidden = !!step;
     if (!step) return;
     var contact = step === "contact";
-    $("mnFinishTitle").textContent = contact ? "Complete your contact details." : "Finish your profile.";
+    $("mnFinishTitle").textContent = contact ? "Complete your details." : "Finish your profile.";
     $("mnFinishWhy").textContent = contact
-      ? "Your private mailing address is part of entering Human Uprise. It is never shown on your profile."
+      ? "Three quick pages: your name, where to reach you, and how you get back in. Your address is private, never on your profile."
       : "Pick a username so people can find and mention you. Then post, connect and join missions.";
-    $("mnFinishGo").textContent = contact ? "Complete contact details \u2192" : "Finish your profile \u2192";
+    $("mnFinishGo").textContent = contact ? "Complete your details \u2192" : "Finish your profile \u2192";
   }
   function askToFinish(why) {
     var step = needsStep();
     if (!step) return false;
     track("finish_step_prompt", { step: step, reason: String(why || "act").slice(0, 24) });
-    if (step === "contact") { location.assign("account.html?complete=contact"); return true; }
     fillProfileForm(false);
     var back = $("mnProfileBack"); if (back) { back.hidden = false; back.textContent = "\u2190 Back to the World"; }
     setStatus($("mnProfileStatus"), { post: "Finish your profile to post.", mission: "Finish your profile to join a mission.", connect: "Finish your profile to connect with members.",
       profile: "Finish your profile to open it.", messages: "Finish your profile to message members.", groups: "Finish your profile to join groups.", discover: "Finish your profile to find people.",
-      live: "Finish your profile to watch live rooms.", clips: "Finish your profile to clip songs." }[why] || "Finish your profile to do that.");
+      live: "Finish your profile to watch live rooms.", clips: "Finish your profile to clip songs." }[why] || (why === "act" ? "" : "Finish your profile to do that."));
     showGate("profile");
     window.scrollTo(0, 0);
     return true;
@@ -442,12 +522,8 @@
     return Promise.resolve();
   }
 
-  function saveProfile(event) {
-    event.preventDefault();
-    var button = $("mnProfileSave");
-    button.disabled = true;
-    setStatus($("mnProfileStatus"), "Saving…");
-    saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
+  function savePublicProfile() {
+    return saveDemographics().then(function () { return api("/v1/mnet/profile?app_key=" + encodeURIComponent(APP), {
       method: "PATCH",
       body: {
         mccluster_id: $("mnHandle").value.trim(),
@@ -457,7 +533,36 @@
         avatar_url: $("mnAvatarUrl").value.trim(),
         website_url: $("mnWebsite").value.trim()
       }
-    }); }).then(function (boot) {
+    }); }).then(function (boot) { state.boot = boot; paintSelf(); return boot; });
+  }
+  function saveContact() {
+    var v = function (id) { return $(id).value.trim(); };
+    var values = { legal_name: v("mnLegalName"), address_line1: v("mnAddr1"), address_line2: v("mnAddr2"), city: v("mnCity"), region: v("mnRegion"), postal_code: v("mnPostal"), country: v("mnCountry") };
+    var missing = ["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"].filter(function (id) { return !v(id); });
+    Array.prototype.forEach.call(document.querySelectorAll("#mnStep2 .mn__field"), function (f) { var i = f.querySelector("input"); f.classList.toggle("is-bad", !!(i && missing.indexOf(i.id) !== -1)); });
+    if (missing.length) { $(missing[0]).focus(); return Promise.reject(new Error("Fill in your legal name and the whole address.")); }
+    if (!window.MCC_FAN) return Promise.reject(new Error("Could not save your details right now."));
+    if (onboard.contact) { values.marketing_consent = !!onboard.contact.marketing_consent; values.share_consent = !!onboard.contact.share_consent; if (onboard.contact.phone_e164) values.phone_e164 = onboard.contact.phone_e164; }
+    return MCC_FAN.save(values).then(function (row) { onboard.contact = row || onboard.contact; return row; });
+  }
+  function saveReach() {
+    var phone = normalizePhone($("mnPhone").value), p1 = $("mnNewPassword").value, p2 = $("mnNewPassword2").value;
+    if (phone === null) { $("mnPhone").focus(); return Promise.reject(new Error("Use a full phone number with the country code, like +1 203 555 0100.")); }
+    if (p1 || p2) {
+      if (p1.length < 8) { $("mnNewPassword").focus(); return Promise.reject(new Error("Use at least 8 characters for the password.")); }
+      if (p1 !== p2) { $("mnNewPassword2").focus(); return Promise.reject(new Error("Those passwords do not match.")); }
+    }
+    var steps = Promise.resolve();
+    if (phone && window.MCC_FAN) steps = steps.then(function () {
+      var values = { phone_e164: phone };
+      if (onboard.contact) { values.marketing_consent = !!onboard.contact.marketing_consent; values.share_consent = !!onboard.contact.share_consent; }
+      return MCC_FAN.save(values);
+    });
+    if (p1) steps = steps.then(function () { return MCC.updatePassword(p1); });
+    return steps;
+  }
+  function enterTheWorld() {
+    return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
       paintFinishCard();
       var back = $("mnProfileBack"); if (back) back.hidden = true;
@@ -469,15 +574,43 @@
         openDeepLinkedMission();
       }else{
         /* the World first: a finished profile lands back on the feed, not on a profile page */
-        setView(needsStep() ? "feed" : "profile");
+        setView("feed");
       }
+      track("onboarding_done", { step: String(boot && boot.next_step || "feed") });
       return loadFeed(true).then(function () {
         var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
         if (first) { first.classList.add("is-just-posted"); setTimeout(function () { first.classList.remove("is-just-posted"); }, 1600); }
       });
-    }).catch(function (e) {
-      var m = e.message || "Could not save your profile.";
-      if (/mccluster_id_taken/.test(m)) m = "That McCluster ID is already taken.";
+    });
+  }
+  function saveProfile(event) {
+    event.preventDefault();
+    var button = $("mnProfileSave"), step = onboard.step;
+    button.disabled = true;
+    setStatus($("mnProfileStatus"), "Saving…");
+    var work;
+    if (step === 0) {
+      /* editing: the public profile, and the password if one was typed */
+      var p1 = $("mnNewPassword").value, p2 = $("mnNewPassword2").value;
+      work = savePublicProfile().then(function () {
+        if (!p1 && !p2) return;
+        if (p1.length < 8) throw new Error("Use at least 8 characters for the password.");
+        if (p1 !== p2) throw new Error("Those passwords do not match.");
+        return MCC.updatePassword(p1);
+      }).then(function () { showGate("app"); setView("profile"); });
+    } else if (step === 1) {
+      var h = $("mnHandle").value.trim();
+      if (!HANDLE_RE.test(h)) { work = Promise.reject(new Error("Use 3–32 letters, numbers, dots, underscores or hyphens for your username.")); $("mnHandle").focus(); }
+      else if (!$("mnDisplay").value.trim()) { work = Promise.reject(new Error("Add a display name.")); $("mnDisplay").focus(); }
+      else work = savePublicProfile().then(function () { track("onboarding_step", { step: "1" }); setStatus($("mnProfileStatus"), ""); showStep(2); });
+    } else if (step === 2) {
+      work = saveContact().then(function () { track("onboarding_step", { step: "2" }); setStatus($("mnProfileStatus"), ""); showStep(3); });
+    } else {
+      work = saveReach().then(function () { track("onboarding_step", { step: "3" }); setStatus($("mnProfileStatus"), ""); return enterTheWorld(); });
+    }
+    work.catch(function (e) {
+      var m = e && e.message || "Could not save that.";
+      if (/mccluster_id_taken/.test(m)) { m = "That username is already taken."; paintHandleState("bad", "@" + $("mnHandle").value.trim() + " is taken. Try another."); }
       if (/invalid_mccluster_id/.test(m)) m = "Use 3–32 letters, numbers, dots, underscores or hyphens.";
       setStatus($("mnProfileStatus"), m, "error");
     }).finally(function () { button.disabled = false; });
@@ -1674,6 +1807,10 @@
     wireTrackPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView(needsStep() ? "feed" : "profile"); };
     $("mnFinishGo").onclick = function () { askToFinish("act"); };
+    $("mnStepBack").onclick = function () { if (onboard.step > 1) { setStatus($("mnProfileStatus"), ""); showStep(onboard.step - 1); } };
+    $("mnHandle").addEventListener("input", function () { clearTimeout(onboard.handleTimer); onboard.handleTimer = setTimeout(checkHandle, 420); });
+    /* a field marked bad clears as soon as it is typed in, and so does the reason line */
+    $("mnProfileForm").addEventListener("input", function (e) { var f = e.target && e.target.closest && e.target.closest(".mn__field"); if (f && e.target.id !== "mnHandle") f.classList.remove("is-bad"); if (e.target && e.target.id !== "mnHandle") setStatus($("mnProfileStatus"), ""); });
     $("mnPost").onclick = createPost;
     $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };
     $("mnDiscoverGo").onclick = loadDiscover;
@@ -1704,7 +1841,14 @@
     window.addEventListener("resize", function () { moveThumb(false); });
     /* the header settles into a slimmer bar once the page moves */
     var top = document.querySelector(".mn__top");
-    window.addEventListener("scroll", function () { if (top) top.classList.toggle("is-scrolled", window.scrollY > 8); }, { passive: true });
+    /* the header shrinks on scroll, with hysteresis: shrinking it shortens the page, which moves the scroll, which
+       on a page only a little taller than the screen (the onboarding's last page on a phone) grew it back, and so on,
+       a jitter at the bottom. Once shrunk it stays until the top; it shrinks only past 24px with room to scroll. */
+    window.addEventListener("scroll", function () {
+      if (!top) return;
+      var y = window.scrollY, on = top.classList.contains("is-scrolled");
+      top.classList.toggle("is-scrolled", on ? y > 0 : (y > 24 && document.documentElement.scrollHeight - window.innerHeight > 120));
+    }, { passive: true });
     /* the composer is one line until it is used */
     var composer = $("mnComposer"), body = $("mnPostBody");
     if (composer && body) {

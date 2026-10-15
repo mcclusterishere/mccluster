@@ -1,12 +1,31 @@
 (function(){'use strict';
 const SB='https://zmnhbrjyhxzhkxmhkexs.supabase.co',KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
 const $=id=>document.getElementById(id);const embedded=new URLSearchParams(location.search).has('embedded');if(embedded){document.documentElement.classList.add('globe-embedded');/* inside another page the host owns navigation: no second bar or auth chip (tabbar.js honours data-no-appbar) */document.body.setAttribute('data-no-appbar','')}
+/* THE FULL WORLD (owner, 2026-10-15: "if they click the world, it'll allow them to see that in a full pane … without the whole 30, 40 rule"):
+   ?explore=1 is this page on its own, the Earth edge to edge (css: .globe-explore). The World's chrome stays home; what floats is the
+   way back, the controls, the data toggles, the credit, and the mission in a sheet above the bar. */
+const EXPLORE=!embedded&&new URLSearchParams(location.search).has('explore');if(EXPLORE)document.documentElement.classList.add('globe-explore');
 /* Network surface: the globe inside the Human Uprise World tab. The parent page owns the feed and the mission context,
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 /* the network band is short, so its Earth starts closer and fills the frame */
-function homeAltitude(){return document.documentElement.classList.contains('globe-surface-network')?12500000:19000000}
-let readyMessage=null;function tell(msg){if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
+function homeAltitude(){return document.documentElement.classList.contains('globe-surface-network')||EXPLORE?12500000:19000000}
+let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
+/* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
+   (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
+const VAUNT_LEAD='https://vauntapi.flyvaunt.com/referral/nuao1K';const exploreLayers={};
+function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtCount(n){n=Number(n)||0;try{return n.toLocaleString('en-US')}catch(e){return String(n)}}
+function exploreTell(d){const box=$('exploreLine');if(!box||!d)return;
+ if(d.type==='hu:ask-sign-in'){box.innerHTML='<span>Sign in to see satellites and space missions on the Earth.</span> <a class="explore-lead" href="account.html?stay=1">Sign in \u2192</a>';box.hidden=false;return}
+ if(d.type!=='hu:layer')return;
+ if(d.on)exploreLayers[d.layer]=d;else delete exploreLayers[d.layer];
+ const rows=[],f=exploreLayers.flights,s=exploreLayers.satellites,l=exploreLayers.launches;
+ if(f)rows.push(f.unavailable?'<span>Flights are unavailable right now.</span>':'<span>'+escHtml(fmtCount(f.count))+' aircraft in the air right now'+(f.stale?' (last snapshot)':'')+'.</span> <a class="explore-lead" href="'+VAUNT_LEAD+'" target="_blank" rel="noopener sponsored">Fly Vaunt \u2192</a>');
+ if(s)rows.push('<span>'+(s.unavailable?'Satellites are unavailable right now.':escHtml(fmtCount(s.count))+' satellites overhead, moving live.')+'</span>');
+ if(l){const nx=l.next&&l.next[0];rows.push('<span>'+(l.unavailable?'Launches are unavailable right now.':escHtml(fmtCount(l.count))+' launches coming up'+(nx?' \u00b7 next: '+escHtml(String(nx.name||'').split('|')[0].trim())+(nx.net&&!isNaN(new Date(nx.net))?' \u00b7 '+escHtml(new Date(nx.net).toLocaleDateString('en-US',{month:'short',day:'numeric'})):'')+(nx.where?' \u00b7 '+escHtml(nx.where):''):'')+'.')+'</span>')}
+ if(d.failed&&!d.on)rows.push('<span>'+escHtml(d.layer.charAt(0).toUpperCase()+d.layer.slice(1))+' could not load right now.</span>');
+ box.innerHTML=rows.join('<br>');box.hidden=!rows.length}
 function publicMission(m){return {mission_id:m.mission_id,title:m.title,description:String(m.description||'').slice(0,280),region_label:m.region_label,action_path:m.action_path}}
 function announce(){const m=missions[i];if(m)tell({type:'hu:mission-selected',mission:publicMission(m)})}
 function focusMission(id){let n=missions.findIndex(m=>m.mission_id===id);if(n<0&&allMissions.some(m=>m.mission_id===id)){$('worldSearch').value='';filterMissions();n=missions.findIndex(m=>m.mission_id===id)}if(n<0)return false;show(n);announce();return true}
@@ -105,14 +124,19 @@ async function drawSatellites(data){await loadSatelliteLib();const L=layerState.
 function drawLaunches(data){const L=layerState.launches;clearLayer('launches');(data.launches||[]).forEach((l,n)=>{const pad=l&&l.pad||{};if(!isFinite(pad.lon)||!isFinite(pad.lat))return;const when=l.net?new Date(l.net):null,day=when&&!isNaN(when)?when.toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';L.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(pad.lon,pad.lat,4000),billboard:{image:glowPin(DATA_LAYERS.launches.color),width:22,height:22},label:{text:String(l.name||'Launch').split('|')[0].trim().slice(0,40)+(day?' · '+day:''),font:'11px sans-serif',fillColor:Cesium.Color.WHITE,style:Cesium.LabelStyle.FILL_AND_OUTLINE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,pixelOffset:new Cesium.Cartesian2(0,-16),verticalOrigin:Cesium.VerticalOrigin.BOTTOM,distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2.6e7)},id:'hu-launch-'+n+'-'+String(l.id||'').slice(0,40)}))});L.count=L.entities.length}
 /* the credit line grows when layers are on; the toggles and the controls stay above it, and the page is told how tall it is */
 function creditHeight(){const el=document.querySelector('.osm-credit');return el?Math.ceil(el.getBoundingClientRect().height):0}
-function liftAboveCredit(){const h=creditHeight();document.documentElement.style.setProperty('--hu-credit-h',h+'px');return h}
+function liftAboveCredit(){const h=creditHeight();document.documentElement.style.setProperty('--hu-credit-h',h+'px');
+ /* the bar floats a little off the bottom, so what matters is where its top is, not how tall it is */
+ if(EXPLORE){const bar=document.querySelector('.appbar'),deck=$('deck'),px=el=>el&&!el.hidden?Math.ceil(el.getBoundingClientRect().height):0,barH=bar?Math.max(0,Math.ceil(innerHeight-bar.getBoundingClientRect().top)):0;document.documentElement.style.setProperty('--hu-bar-h',barH+'px');document.documentElement.style.setProperty('--hu-sheet-h',px(deck)+'px')}
+ return h}
 function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
 async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerState[k];if(!viewer||!b)return;if(spec.members&&!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  if(L.on){L.on=false;b.setAttribute('aria-pressed','false');clearLayer(k);paintLayerCredits();tell({type:'hu:layer',layer:k,on:false,creditHeight:creditHeight()});return}
  b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
-function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);liftAboveCredit();window.addEventListener('resize',liftAboveCredit)}
+function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);liftAboveCredit();window.addEventListener('resize',liftAboveCredit);
+ /* the full pane: the bar arrives after this script (js/tabbar.js), and the sheet grows when a mission is chosen */
+ if(EXPLORE){new MutationObserver(liftAboveCredit).observe(document.body,{childList:true});if(window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe($('deck'));window.addEventListener('load',liftAboveCredit);const hint=document.querySelector('#worldFilters p');if(hint)hint.textContent='Tap a pin to open its mission. Drag to turn the Earth, pinch to zoom.'}}
 function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};wireDataLayers();
  on('ctlAudience',()=>{const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
  on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude()),duration:1.4});tell({type:'hu:selection-cleared'})});

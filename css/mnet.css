@@ -552,7 +552,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__post{padding-inline:16px}
 @media(min-width:700px){.mn__manifesto{padding:30px}.mn__manifesto h1{font-size:4.8rem}}
 
-.mn__brand-plate{display:grid;place-items:center;width:38px;height:38px;padding:4px;border-radius:10px;background:#eef3f7}.mn__brand-plate .mn__brand-mark{width:100%;height:100%;object-fit:contain}
+/* the brand mark is the supplied artwork alone (no plate; CLAUDE.md rule 10) */
 .mn__actionboard,.mn__understand{margin:0 0 20px;padding:20px;border:1px solid var(--mn-rule-2);border-radius:22px;background:var(--mn-panel)}
 .mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
 .mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
@@ -995,7 +995,7 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 /* header: HUMAN UPRISE, and only that (owner, 2026-10-14), in chrome type
    with a red rule under it (no drawn mark), the search bar, and round glass
    buttons. The name is set in type; a mark is the owner's to supply. */
-.mn-world-on .mn__brand-plate, .mn-world-on .mn__brand small { display: none; }
+.mn-world-on .mn__brand-mark, .mn-world-on .mn__brand small { display: none; }
 .mn-world-on .mn__top .mn__brand strong { display: block; font-family: var(--mn-display); font-weight: 400; font-size: 1.45rem; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: linear-gradient(180deg, #ffffff 0%, #dfe2e7 55%, #9ba1ab 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .mn-world-on .mn__top .mn__brand strong::after { content: ""; display: block; width: 34px; height: 3px; margin-top: 5px; border-radius: 2px; background: var(--mn-hot); box-shadow: 0 0 12px rgba(255, 42, 77, 0.85); }
 .mn-world-on .mn__brand { flex: none; margin-right: 0; }
@@ -1235,4 +1235,81 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
   .mn__world-idle-h { font-size: 1.2rem; }
   .mn-world-on .mn__world-caption { white-space: normal; }
   .mn__world-chips { flex-wrap: wrap; overflow: visible; margin: 10px 0 0; padding: 0; }
+}
+
+/* ============================================================
+   THE ONBOARDING, THREE PAGES (owner, 2026-10-15; the reference: dark
+   brushed steel, one red, big sentence-case headline with a red period,
+   tall rounded fields with an icon cell and a state at the right, one
+   red pill with the arrow in a darker circle, a lock note under it).
+   Mobile first; wider screens centre the column. The mark is the supplied
+   artwork, never a drawn one.
+   ============================================================ */
+.mn__onboard { position: relative; isolation: isolate; padding: 18px 0 32px; }
+.mn__onboard::before { content: ""; position: absolute; z-index: -1; inset: -40px -24px 0; pointer-events: none;
+  background:
+    radial-gradient(70% 36% at 88% -4%, rgba(255, 42, 77, 0.42), transparent 65%),
+    radial-gradient(60% 30% at 50% 108%, rgba(196, 16, 44, 0.45), transparent 62%),
+    linear-gradient(165deg, #17181c 0%, #0c0c0f 42%, #09090b 100%);
+  background-color: #0b0b0d; }
+.mn__onboard::after { content: ""; position: absolute; z-index: -1; left: -30%; right: -30%; top: 58px; height: 2px; pointer-events: none; transform: rotate(-14deg);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 42, 77, 0.0) 30%, rgba(255, 72, 100, 0.9) 60%, rgba(255, 42, 77, 0.0) 100%); filter: blur(0.6px); }
+.mn__steps-row { display: flex; align-items: center; gap: 14px; margin: 6px 0 26px; }
+.mn__steps { display: flex; flex: 1 1 auto; gap: 10px; max-width: 260px; margin: 0; padding: 0; list-style: none; }
+.mn__steps li { flex: 1 1 0; height: 5px; border-radius: 999px; background: rgba(244, 239, 230, 0.16); transition: background 0.3s var(--mn-ease); }
+.mn__steps li.is-done { background: rgba(255, 42, 77, 0.55); }
+.mn__steps li.is-current { background: var(--mn-hot); box-shadow: 0 0 14px -2px rgba(255, 42, 77, 0.9); }
+.mn__steps-count { margin-left: auto; color: var(--mn-dim); font-weight: 800; font-size: 0.9rem; letter-spacing: 0.04em; }
+.mn__onboard-h { max-width: 12ch; margin: 0; font-family: var(--mn-ui); font-weight: 900; font-size: clamp(2.5rem, 11.5vw, 4.4rem); line-height: 0.98; letter-spacing: -0.035em; text-transform: none; overflow-wrap: anywhere; }
+.mn__onboard-h em { font-style: normal; color: var(--mn-hot); }
+.mn__onboard .mn__lede { margin-top: 10px; font-size: 1.05rem; }
+.mn__onboard .mn__label { margin-top: 22px; letter-spacing: 0.14em; }
+.mn__onboard .mn__label span { color: var(--mn-faint); }
+.mn__field { position: relative; display: flex; align-items: stretch; min-height: 62px; margin-top: 2px; border-radius: 18px; background: rgba(8, 8, 10, 0.82); box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14), 0 10px 30px -22px rgba(0, 0, 0, 0.9); transition: box-shadow 0.2s var(--mn-ease); }
+.mn__field:focus-within { box-shadow: inset 0 0 0 1.5px rgba(255, 77, 61, 0.85), 0 0 0 4px rgba(255, 42, 77, 0.14); }
+.mn__field .mn__input { min-height: 62px; margin: 0; padding: 0 16px; border-radius: 18px; background: transparent; box-shadow: none; font-weight: 600; font-size: max(16px, 1.1rem); }
+.mn__field .mn__input:focus { box-shadow: none; }
+.mn__field--plain .mn__input { padding: 0 18px; }
+.mn__field .mn__textarea { min-height: 8rem; padding: 14px 16px; }
+.mn__field-ico, .mn__field-at { display: grid; place-items: center; flex: none; width: 56px; color: var(--mn-dim); border-right: 1px solid rgba(244, 239, 230, 0.1); font-weight: 800; font-size: 1.15rem; }
+.mn__field-ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mn__field-state { display: none; place-items: center; flex: none; width: 56px; color: var(--mn-dim); font-weight: 800; font-size: 0.8rem; }
+.mn__field-state.is-ok, .mn__field-state.is-bad, .mn__field-state.is-busy { display: grid; }
+.mn__field-state.is-ok::before { content: ""; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px #38d996; background: linear-gradient(135deg, transparent 0, transparent 100%); position: relative; }
+.mn__field-state.is-ok::after { content: ""; position: absolute; width: 11px; height: 6px; border-left: 2.5px solid #38d996; border-bottom: 2.5px solid #38d996; transform: translateY(-2px) rotate(-45deg); }
+.mn__field-state.is-bad { color: var(--mn-hot); }
+.mn__field-state.is-busy::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(244, 239, 230, 0.2); border-top-color: var(--mn-ink); animation: mnspin 0.8s linear infinite; }
+@keyframes mnspin { to { transform: rotate(360deg); } }
+.mn__field.is-locked .mn__input { color: var(--mn-dim); }
+.mn__field.is-bad { box-shadow: inset 0 0 0 1.5px rgba(255, 77, 61, 0.8); }
+.mn__grid2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; }
+.mn__about { margin-top: 22px; border-radius: 18px; background: rgba(8, 8, 10, 0.82); box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.14); }
+.mn__about summary { display: flex; align-items: center; min-height: 64px; cursor: pointer; list-style: none; }
+.mn__about summary::-webkit-details-marker { display: none; }
+.mn__about summary .mn__field-ico { align-self: stretch; }
+.mn__about-t { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; min-width: 0; }
+.mn__about-t strong { font-size: 1.05rem; }
+.mn__about-t small { color: var(--mn-faint); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.mn__about-chev { margin-left: auto; margin-right: 20px; width: 10px; height: 10px; border-right: 2px solid var(--mn-dim); border-bottom: 2px solid var(--mn-dim); transform: rotate(-45deg); transition: transform 0.25s var(--mn-ease); }
+.mn__about[open] .mn__about-chev { transform: rotate(45deg); }
+.mn__about .mn__demographics { margin: 0 14px 14px; }
+.mn__onboard-actions { margin-top: 26px; }
+.mn__cta { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 66px; padding: 0 76px 0 20px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, #ff3d5e 0%, #c4102c 100%); color: #fff; font-family: inherit; font-weight: 800; font-size: max(16px, 1.15rem);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 18px 44px -16px rgba(255, 42, 77, 0.95), 0 0 0 1px rgba(255, 77, 100, 0.35); }
+.mn__cta:disabled { opacity: 0.6; cursor: progress; }
+.mn__cta-arrow { position: absolute; right: 7px; top: 7px; bottom: 7px; display: grid; place-items: center; width: 52px; border-radius: 50%; background: rgba(0, 0, 0, 0.38); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.mn__cta-arrow svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mn__onboard .mn__text-button { font-weight: 800; }
+.mn__onboard-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; color: var(--mn-dim); font-weight: 600; font-size: 0.9rem; }
+.mn__onboard-note svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mn__onboard .mn__profile-security { margin-top: 0; padding: 0; border: 0; }
+.mn__onboard .mn__profile-security h2 { margin-top: 22px; }
+.mn__onboard .mn__secondary { margin-top: 12px; }
+.mn__onboard .mn__hint { margin-top: 8px; }
+@media (min-width: 600px) {
+  .mn__onboard { padding: 32px 0 40px; }
+  .mn__onboard-form { max-width: 560px; }
+  .mn__grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .mn__onboard-h { font-size: clamp(3rem, 6vw, 4.6rem); }
 }

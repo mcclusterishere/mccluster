@@ -27,8 +27,8 @@ Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`. One
 World for everyone at `mnet.html?view=feed`: the Globe column of the app
 bar, `action-globe.html` (which hands over, keeping `?song=`) and the music
 player's "See this song's impact" all land there. `action-globe.html?explore=1`
-stays as the optional full-screen explorer ("Full world ↗"); `?embedded=1`
-stays as a frame.
+is the Full world ("Full world ↗"): the Earth edge to edge, on its own page
+(see below); `?embedded=1` stays as a frame.
 
 1. **Globe** (top): `action-globe.html?embedded=1&surface=network`, the
    Earth, public admin-approved pins, region outlines and Near me only.
@@ -155,10 +155,20 @@ same two:
 ### Standalone `action-globe.html`
 
 Hands over to the World screen (see above). With `?explore=1` it is the
-full-screen explorer, now with the house stylesheet (its app bar used to
-render as raw links and a giant mark), toolbar rules scoped to
-`.world-tools`, a 15dvh context strip and one column of mission cards on a
-phone.
+**Full world** (owner, 2026-10-15: "if they click the world, it'll allow them
+to see that in a full pane, right? Without the whole 30, 40, whatever rule"):
+`html.globe-explore`, the Earth filling the viewport, the World's chrome at
+home (no Map/Missions switch, no tool row, no story feed, no banner). What
+floats: "← World" top left (`mnet.html?view=feed`), the controls on the
+right, the data toggles on the left, the credit, and the chosen mission in a
+sheet on the app bar (`#deck`, compact until a pin is chosen; the join leads
+into the World's mission dialog, where the sign-in and finish gates live).
+The script measures the bar and the sheet (`--hu-bar-h`, `--hu-sheet-h`) so
+the toggles, the controls and the credit lift above both. There is no parent
+page to tell, so `tell()` also paints the layer line on the page itself
+(`#exploreLine`, the World's own words, the same Vaunt lead) and a guest's
+locked layer says so there with a way to sign in. Mobile first; wider screens
+only narrow and centre the sheet.
 
 ## Navigation (owner's binding decision, 2026-10-14)
 
@@ -254,9 +264,43 @@ like anyone's: the Earth, the strip, every pin and layer, the public posts.
 The step waits in a card where the composer would be (`#mnFinishCard`), and
 the actions that need it (post, join a mission, connect, the member rooms)
 open the form with the reason and a "← Back to the World". A finished
-profile lands back on the feed. The contact step still lives on the account
-page, opened on purpose from its card, never by a redirect at boot. The
-server refuses those actions anyway until the step is done.
+profile lands back on the feed. The server refuses those actions anyway until
+the step is done.
+
+### The onboarding, three pages (owner, 2026-10-15)
+
+"That user flow needs to be easier and more beautiful … three pages that look
+all sexy … you put in this, that, that, boom, it all verifies." The form in
+`#mnProfileGate` is now one form in three steps, each saved on its own, in
+the reference's look (dark brushed steel, one red, a big sentence-case
+headline with a red period, tall rounded fields with an icon cell and a
+state at the right, one red pill with the arrow in a darker circle, a lock
+note under it):
+
+1. **Make it yours.** Username (checked as it is typed: the pattern here,
+   the name at `GET /v1/mnet/people/<handle>`, where a person nobody can find
+   is free and gets the green check) and display name; "About you" rides
+   along collapsed, optional and private. Saves the public profile
+   (`PATCH /v1/mnet/profile`).
+2. **Where to reach you.** Full legal name and mailing address, private,
+   written through `js/fan-intake.js` to `fan_profiles` (the only writer of
+   that table). This is the `contact` step the bootstrap requires; it used
+   to live on the account page and open from the card by a redirect.
+3. **Lock it in.** Phone (normalised to E.164), the account email read-only,
+   and a password (optional, at least 8 characters). "Enter the World"
+   re-reads the bootstrap and lands on the feed with the card gone and the
+   composer back.
+
+A steps bar (`#mnSteps`, 1 / 3) and "← Back a step" carry the member through;
+"You can update this anytime." sits under the pill. Editing an existing
+profile is the same form on one page (`showStep(0)`: the public details and
+the password together). The header's mark is the supplied Equity Uprise
+artwork alone, the plate it sat on removed (CLAUDE.md rule 10). Evidence:
+`scripts/e2e/human-uprise-door.e2e.mjs` walks the three pages in a real
+Chromium (`onboarding-{1,2,3}-iphone.png`): a taken name told as typed, a
+free one checked green, an empty address refused, the address saved to
+`fan_profiles`, the phone saved as `+12035550100`, the password set, the feed
+now the member's own, nothing scrolling sideways at 390.
 
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
