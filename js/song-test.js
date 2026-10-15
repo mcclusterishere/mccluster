@@ -76,8 +76,7 @@
       box.classList.add("stq");
       if (!stored()) {
         var p = el("p", "stq-out");
-        p.appendChild(doc.createTextNode("Sign in, hear each song all the way through, then answer. "));
-        var a = el("a", null, "Sign in");
+        var a = el("a", null, "Sign in to answer");
         a.href = opts.signin || "/account.html";
         p.appendChild(a);
         box.appendChild(p);

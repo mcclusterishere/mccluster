@@ -238,7 +238,7 @@
   function paintFeatured(c) {
     var facts = $("gwFacts");
     facts.textContent = "";
-    (Array.isArray(c.facts) ? c.facts : []).slice(0, 3).forEach(function (f) {
+    (Array.isArray(c.facts) ? c.facts : []).slice(0, Math.min(3, Math.max(1, Number(CFG.facts) || 3))).forEach(function (f) {
       if (!f || !f.text) return;
       var li = el("li");
       li.appendChild(el("p", null, f.text));
