@@ -146,7 +146,8 @@ header strong{display:none}
 .globe-ctl.is-locked{opacity:.62}
 .globe-ctl.is-locked::after{content:"";position:absolute;right:-1px;top:-1px;width:10px;height:10px;border-radius:50%;background:#ff3d5e;box-shadow:0 0 0 2px #0d0e12}
 .globe-ctl[aria-busy="true"]{opacity:.55;cursor:progress}
-.globe-surface-network .globe-data{bottom:34px}
+.globe-surface-network .globe-data{bottom:calc(var(--hu-credit-h,26px) + 8px)}
+.globe-surface-network .globe-controls{bottom:calc(var(--hu-credit-h,26px) + 8px)}
 .globe-ctl--audience{position:absolute;right:calc(100% + 8px);bottom:0}
 .globe-ctl--audience[aria-pressed="true"]{background:rgba(79,209,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(79,209,255,.7),0 0 16px -6px rgba(79,209,255,.7)}
 /* a faint instrument scale down the left edge of the frame (owner's mockups): decoration only, under nothing a hand needs */

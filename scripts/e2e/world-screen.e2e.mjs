@@ -223,8 +223,13 @@ async function open(device, { member, creator = true, verified = true }) {
 }
 const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(r.path));
 
+/* E2E_ONLY=layers (or any scope prefix) reruns one family of scenarios alone; the full run is the evidence */
+const ONLY = process.env.E2E_ONLY || '';
+const runs = (scope) => !ONLY || scope.startsWith(ONLY);
+
 /* ---------- member, every device: composition and navigation ---------- */
 for (const device of DEVICES) {
+  if (!runs(device.name)) continue;
   const { ctx, page, world, errors } = await open(device, { member: true });
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
@@ -246,7 +251,7 @@ for (const device of DEVICES) {
 }
 
 /* ---------- member, iPhone: the actual interactions ---------- */
-{
+if (runs('member-interactions')) {
   const device = DEVICES[0];
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
@@ -451,7 +456,7 @@ for (const device of DEVICES) {
 }
 
 /* ---------- the data layers (owner, 2026-10-15): flights for everyone with the Vaunt lead; satellites and launches for members ---------- */
-{
+if (runs('layers-member')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
   const scope = 'layers-member';
   const globe = page.frame({ url: /action-globe\.html/ });
@@ -489,13 +494,13 @@ for (const device of DEVICES) {
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
-{
+if (runs('layers-guest')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: false });
   const scope = 'layers-guest';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
   check(scope, 'a guest sees Flights open and Satellites and Launches locked', locks.length === 3 && !locks[0].locked && locks[1].locked && locks[2].locked, locks);
-  await globe.click('#ctlSats');
+  await globe.$eval('#ctlSats', (b) => b.click());   /* aria-disabled, so Playwright's own click would wait forever; a tap does this */
   await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 10000 });
   check(scope, 'a locked layer opens sign-in with the reason, and sends nothing', /Sign in to see satellites and space missions/.test(await page.textContent('#mnGuestWhy')) && req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0, await page.textContent('#mnGuestWhy'));
   await page.click('#mnSignedOutBack');
@@ -512,7 +517,7 @@ for (const device of DEVICES) {
 }
 
 /* ---------- member, no creator profile: no analytics door ---------- */
-{
+if (runs('member-not-creator')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, creator: false, verified: false });
   const scope = 'member-not-creator';
   void world;
@@ -529,6 +534,7 @@ for (const device of DEVICES) {
 
 /* ---------- guest, iPhone and iPad: the same World, read-only ---------- */
 for (const device of [DEVICES[0], DEVICES[2]]) {
+  if (!runs('guest-')) continue;
   const { ctx, page, world, errors } = await open(device, { member: false });
   const scope = 'guest-' + device.name;
   const reads = req(world, 'GET', /^\/v1\/mnet\/public-feed$/);

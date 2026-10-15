@@ -2888,6 +2888,9 @@
       if (d.failed && !d.on) rows.push("<span>" + esc(d.layer.charAt(0).toUpperCase() + d.layer.slice(1)) + " could not load right now.</span>");
       box.innerHTML = rows.join("<br>");
       box.hidden = !rows.length;
+      /* above the frame's toggles, which sit above its credit line */
+      var credit = Number(d.creditHeight) || 26;
+      box.style.bottom = (credit + 8 + 36 + 10) + "px";
       track("world_layer", { layer: String(d.layer).slice(0, 16), on: !!d.on, count: Number(d.count) || 0 });
     }
     /* the Explore chips: Missions steps through the pins, Regional impact
