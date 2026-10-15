@@ -406,7 +406,8 @@ if (runs('member-interactions')) {
   check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '1');
   await page.click('#mnBell');
   await page.waitForSelector('#mnNotificationsView:not([hidden])');
-  await page.waitForTimeout(400);
+  /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */
+  await page.waitForFunction(() => /Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent) && document.getElementById('mnNotifBadge').hidden, null, { timeout: 10000 }).catch(() => {});
   check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
   await page.click('#mnToWorld');
   await page.waitForSelector('#mnFeedView:not([hidden])');
