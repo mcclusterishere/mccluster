@@ -51,7 +51,7 @@ function ruleState(user, { have = 0, identity = false } = {}) {
   };
 }
 
-function fakeSupabase({ operator = false, claim = { claimed: false }, signStatus = 200, streamKey = 'niggy-nigg', state = {} } = {}) {
+function fakeSupabase({ operator = false, claim = { claimed: false }, signStatus = 200, streamKey = 'niggy-nigg', state = {}, ruleRpcMissing = false } = {}) {
   const calls = [];
   globalThis.fetch = async (input, init = {}) => {
     const url = String(input);
@@ -72,6 +72,9 @@ function fakeSupabase({ operator = false, claim = { claimed: false }, signStatus
     if (url.startsWith(`${SB}/storage/v1/object/authenticated/`)) {
       return new Response('AUDIO', { status: init.headers?.range ? 206 : 200, headers: {
         'content-type': 'audio/mpeg', 'content-range': 'bytes 0-4/5', 'accept-ranges': 'bytes', 'x-secret': 'no' } });
+    }
+    if (ruleRpcMissing && (url === `${SB}/rest/v1/rpc/music_gate_rule_state` || url === `${SB}/rest/v1/rpc/music_gate_claim_rule`)) {
+      return json({ code: 'PGRST202', message: 'Could not find the function public.music_gate_rule_state in the schema cache' }, 404);
     }
     if (url === `${SB}/rest/v1/rpc/music_gate_rule_state`) return json(ruleState(body.p_user, state));
     if (url === `${SB}/rest/v1/rpc/music_gate_claim_rule`) {
@@ -284,4 +287,42 @@ test('music preflight is answered before the sign-in gate', async () => {
   }), env, {});
   assert.equal(res.status, 204);
   assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
+});
+
+/* The Worker deployed before gated_track_mission_identity_v1.sql: the rule RPCs answer PGRST202. */
+test('Worker before its SQL: the rule-gated track fails closed (preview only); every other track keeps working', async () => {
+  let calls = fakeSupabase({ ruleRpcMissing: true });
+  /* other tracks: a listen starts and finishes; finishing reads every gate and must not 502 */
+  const start = await call('/v1/music/listens', { method: 'POST', body: { track: 'here' } });
+  assert.equal(start.status, 200);
+  const fin = await call('/v1/music/listens/11111111-1111-4111-8111-111111111111/finish', { method: 'POST' });
+  assert.equal(fin.status, 200, 'finishing a listen on any other track still works');
+  const fb = await fin.json();
+  assert.equal(fb.counted, true);
+  assert.equal(fb.gates['niggy-nigg'].allowed, false);
+  assert.equal(fb.gates['niggy-nigg'].preview_only, true);
+  assert.equal(fb.gates['niggy-nigg'].reason, 'gate_not_ready');
+  /* the gate state answers (signed in and out), closed */
+  for (const token of ['good', null]) {
+    const g = await call('/v1/music/gates/niggy-nigg', { token });
+    assert.equal(g.status, 200);
+    const gb = await g.json();
+    assert.equal(gb.gate.allowed, false); assert.equal(gb.gate.reason, 'gate_not_ready');
+  }
+  /* a play is refused: no stream token, no signed URL */
+  calls = fakeSupabase({ ruleRpcMissing: true });
+  const play = await call('/v1/music/gates/niggy-nigg/play', { method: 'POST' });
+  assert.equal(play.status, 403);
+  const pb = await play.json();
+  assert.equal(pb.locked, true); assert.equal(pb.url, undefined); assert.equal(pb.gate.preview_only, true);
+  assert.ok(!calls.some((c) => c.url.includes('/storage/v1/object/')), 'nothing is signed or streamed');
+});
+
+test('any other RPC failure is still an error, not a silent unlock or a silent lock', async () => {
+  const { missingRpc } = await import('../src/music/router.js');
+  assert.equal(missingRpc({ code: 'PGRST202' }), true);
+  assert.equal(missingRpc({ code: '42883' }), true);
+  assert.equal(missingRpc({ upstream: 404 }), true);
+  assert.equal(missingRpc({ upstream: 500, code: 'XX000' }), false);
+  assert.equal(missingRpc(null), false);
 });

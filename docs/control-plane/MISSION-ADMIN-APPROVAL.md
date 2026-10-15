@@ -123,9 +123,17 @@ from verification, points, bounties or clips.
    identity file, then `supabase/pending/gated_track_mission_identity_v1.sql`, with the Supabase
    MCP `apply_migration` under those names. Before applying, re-check the
    hashes in section 1; if one changed, merge.
-3. Only then deploy the Worker. Deployed before the SQL, the rule RPC is
-   missing, the gate answers 502, and the row shows "Unavailable" and plays
-   only the preview (it fails closed, but deploy in this order).
+3. Only then deploy the Worker (still the preferred order). If the Worker
+   is deployed before the SQL, the rule RPCs (`music_gate_rule_state`,
+   `music_gate_claim_rule`) are missing and PostgREST answers `PGRST202`
+   (404). The Worker detects that (`missingRpc` in
+   `workers/mccluster/src/music/router.js`) and fails closed for the
+   rule-gated track ALONE: its gate answers `{allowed:false, preview_only:true,
+   reason:"gate_not_ready"}`, a play is `403 locked`, no stream token or
+   signed URL is made. Every other track keeps its pre-#444 behaviour:
+   listens start, beat and finish (finishing reads every gate and no longer
+   502s). Any other RPC error is still an error. Test: `music-gate.test.mjs`,
+   "Worker before its SQL".
 4. Verify: as the desk, verify a test proof in `control.html`; `select
    public.music_gate_rule_state(null, 'niggy-nigg', 'gated_track_niggy_nigg')`
    says `sign_in`, `missions`, `identity_verification`.

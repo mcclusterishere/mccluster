@@ -89,9 +89,26 @@ async function rpc(env, name, body) {
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
   if (!res.ok) {
-    throw Object.assign(new Error(`${name} failed`), { status: 502, detail: data?.message || text.slice(0, 200) });
+    throw Object.assign(new Error(`${name} failed`), { status: 502, detail: data?.message || text.slice(0, 200), code: data?.code || null, upstream: res.status });
   }
   return data;
+}
+
+/* PostgREST says the function does not exist: the Worker is live before its SQL
+   (PGRST202 "Could not find the function", or 42883 from Postgres, or a bare 404). */
+export function missingRpc(error) {
+  return !!error && (error.code === 'PGRST202' || error.code === '42883' || error.upstream === 404);
+}
+
+/* DEPLOY ORDER. Preferred: apply supabase/pending/gated_track_mission_identity_v1.sql (and
+   mission_admin_approval_v1.sql) BEFORE this Worker ships. If the Worker lands first, the rule
+   gate's functions (music_gate_rule_state / music_gate_claim_rule) are missing. Then the rule-gated
+   track fails CLOSED, alone: preview only, with the reason, never a stream token; every other
+   track, listen and gate keeps its pre-#444 behaviour (finishing a listen does not 502). */
+function gateNotReady(key) {
+  const gate = GATES[key];
+  return { mode: 'rule', rule: gate && gate.rule, track: key, allowed: false, claimed: false, preview_only: true,
+    reason: 'gate_not_ready', missing: ['gate_not_ready'] };
 }
 
 async function signObject(env, bucket, object, seconds) {
@@ -145,7 +162,13 @@ async function readGate(env, userId, key, claim) {
     : gate.sequence
       ? (claim ? 'music_gate_claim_sequence' : 'music_gate_sequence_state')
       : (claim ? 'music_gate_claim' : 'music_gate_state');
-  const state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
+  let state;
+  try {
+    state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
+  } catch (error) {
+    if (gate.rule && missingRpc(error)) return gateNotReady(key);
+    throw error;
+  }
   if (state && gate.any_of) {
     state.titles = gate.any_of.map((k) => TRACKS[k]?.title || k);
   } else if (state && gate.sequence) {
