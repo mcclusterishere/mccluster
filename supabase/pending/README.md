@@ -58,3 +58,20 @@ three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
 every open mission in one by its campaign, published. Idempotent; apply as the
 service role, then promote with the steps above. Regional impact totals still
 need five consenting members per region and are not seeded.
+
+Pending: `music_creator_one_click_v1.sql` makes creator onboarding one click
+(owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
+for Creator Studio (a member with a `music_creator_profiles` row never sees the
+onboarding again); `music_become_creator(p_handle, p_artist_name,
+p_accept_terms)` builds the profile from data the member already gave (public
+name, M handle, bio, https site), asks only for a missing name or handle, and
+inserts the profile and links `identity_presentations.music_enabled` in one
+transaction. Idempotent; overwrites nothing. Signed-in members only (not anon).
+Until it is applied, Creator Studio builds the same answer in the browser
+(`js/creator-onboarding.js`). Behaviour tests:
+`supabase/tests/music_creator_one_click.behaviour.sql`, run by
+`scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
+file header. Apply it together with (or after) `anon_policy_scope_v1.sql`:
+that one is what lets a signed-out visitor, and the artist pages and the
+listen.html directory, read creator profiles at all. Promote with the steps
+above.

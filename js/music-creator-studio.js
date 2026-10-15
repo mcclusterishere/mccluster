@@ -779,14 +779,197 @@ $("trackForm").addEventListener("submit", async (e) => {
   }
 });
 
+/* ---------- onboarding: one click, shown only until the server says creator ---------- */
+
+const ONBOARD = window.MCC_CREATOR_ONBOARD;
+let onboardState = null;
+
+async function rpc(name, body = {}) {
+  const res = await fetch(SB + "/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
+  if (ONBOARD.rpcMissing(res.status, data)) return { missingRpc: true };
+  if (!res.ok) throw new Error(data?.message || data?.error || ("Request failed " + res.status));
+  return { data };
+}
+/* The member's own rows, for the browser-built answer while the RPC is not
+   deployed (js/creator-onboarding.js, fallbackState). */
+async function ownRows(extra = {}) {
+  const userId = session?.user?.id || "";
+  const one = (p) => rest(p).then((r) => (Array.isArray(r) ? r[0] || null : null)).catch(() => null);
+  const [creator, network, platform, presentation] = await Promise.all([
+    one("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=handle,artist_name,status,verification_state,avatar_url,banner_url&limit=1"),
+    one("network_profiles?m_uid=eq." + encodeURIComponent(mUid) + "&select=display_name,bio,website_url&limit=1"),
+    userId ? one("platform_profiles?user_id=eq." + encodeURIComponent(userId) + "&select=mccluster_id,display_name&limit=1") : null,
+    one("identity_presentations?m_uid=eq." + encodeURIComponent(mUid) + "&select=music_enabled&limit=1")
+  ]);
+  return Object.assign({ creator, network, platform, linked: !!presentation?.music_enabled }, extra);
+}
+async function creatorState() {
+  const out = await rpc("music_creator_state");
+  if (!out.missingRpc) return out.data;
+  return ONBOARD.fallbackState(await ownRows());
+}
+async function becomeCreator(input) {
+  const out = await rpc("music_become_creator", {
+    p_handle: input.handle || null, p_artist_name: input.artist_name || null, p_accept_terms: true
+  });
+  if (!out.missingRpc) return out.data;
+  /* fallback: the same rules in the browser, then the same two writes */
+  const plan = ONBOARD.fallbackState(await ownRows({ input }));
+  if (plan.creator || !plan.insert) return plan;
+  try {
+    await rest("music_creator_profiles", {
+      method: "POST", headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(Object.assign({ m_uid: mUid, terms_accepted_at: new Date().toISOString() }, plan.insert))
+    });
+  } catch (err) {
+    if (/duplicate|unique|409/i.test(String(err.message))) {
+      return ONBOARD.fallbackState(await ownRows({ input, takenHandle: plan.insert.handle }));
+    }
+    throw err;
+  }
+  try {
+    await rest("identity_presentations?on_conflict=m_uid", {
+      method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ m_uid: mUid, music_enabled: true })
+    });
+  } catch (_) { /* the presentation link is repaired by the server function once deployed */ }
+  const after = ONBOARD.fallbackState(await ownRows());
+  after.created = after.creator;
+  return after;
+}
+
+function paintAvatar(el, url, name) {
+  el.replaceChildren();
+  const safe = PAGE.safeArtwork(url);
+  if (safe) {
+    const img = document.createElement("img");
+    img.src = safe; img.alt = ""; img.decoding = "async";
+    el.append(img);
+  } else {
+    el.textContent = (String(name || "").trim().charAt(0) || "♪").toUpperCase();
+  }
+}
+function paintOnboard(state) {
+  onboardState = state;
+  const pre = state.prefill || {};
+  const ask = ONBOARD.askFor(state);
+  const name = pre.artist_name || "";
+  const handle = pre.handle || "";
+  paintAvatar($("cobAvatar"), "", name || handle);
+  $("cobName").textContent = name || "Your artist page";
+  $("cobHandle").textContent = handle ? "@" + handle : "";
+  const nameField = $("cobNameField");
+  nameField.hidden = ask.indexOf("artist_name") < 0;
+  const handleField = $("cobHandleField");
+  handleField.hidden = ask.indexOf("handle") < 0;
+  if (!handleField.hidden) {
+    const problem = state.problems && state.problems.handle;
+    if (problem) handleField.dataset.problem = problem; else delete handleField.dataset.problem;
+    if (!$("cobHandleInput").value || problem === "taken") $("cobHandleInput").value = pre.handle_suggestion || "";
+    $("cobHandleHelp").textContent = ONBOARD.handleHelp(state);
+    if (!handle && $("cobHandleInput").value) $("cobHandle").textContent = "@" + ONBOARD.normalizeHandle($("cobHandleInput").value);
+  }
+}
+function paintSummary() {
+  const box = $("creatorSummary");
+  if (!profile) { box.hidden = true; return; }
+  box.hidden = false;
+  paintAvatar($("cmeAvatar"), profile.avatar_url, profile.artist_name);
+  $("cmeName").textContent = profile.artist_name || "";
+  $("cmeHandle").textContent = "@" + (profile.handle || "") + (profile.status && profile.status !== "active" ? " · " + profile.status : "");
+  $("cmePage").href = "music-creator.html?handle=" + encodeURIComponent(profile.handle || "");
+  $("cmeEdit").href = ONBOARD.EDIT_URL;
+}
+async function showStudio(editing) {
+  $("creatorOnboard").hidden = true;
+  $("creatorApp").hidden = false;
+  /* the profile form is the EDIT screen now: shown only when asked for */
+  $("creatorIdentity").hidden = !editing;
+  await loadProfile();
+  paintSummary();
+  if (editing) {
+    $("creatorSummary").hidden = true;
+    $("creatorIdentity").scrollIntoView({ block: "start" });
+  }
+  await loadTracks();
+}
+
+$("cobForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("cobGo");
+  const say = (msg, tone) => { $("cobStatus").textContent = msg || ""; if (tone) $("cobStatus").dataset.tone = tone; else delete $("cobStatus").dataset.tone; };
+  const ask = ONBOARD.askFor(onboardState);
+  const input = {};
+  if (ask.indexOf("artist_name") >= 0) {
+    input.artist_name = $("cobNameInput").value.trim();
+    if (!input.artist_name) { say("Add your artist name.", "bad"); $("cobNameInput").focus(); return; }
+  }
+  if (ask.indexOf("handle") >= 0) {
+    input.handle = ONBOARD.normalizeHandle($("cobHandleInput").value);
+    if (!ONBOARD.validHandle(input.handle)) {
+      $("cobHandleField").dataset.problem = "invalid";
+      $("cobHandleHelp").textContent = ONBOARD.handleHelp({ problems: { handle: "invalid" } });
+      $("cobHandleInput").focus(); return;
+    }
+  }
+  go.disabled = true;
+  say("Making your page…");
+  try {
+    const state = await becomeCreator(input);
+    if (state && state.creator) {
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_onboarded", { created: !!state.created });
+      say("");
+      await showStudio(false);
+      /* the analytics card asked before this member was a creator */
+      if ($("selfMusicRefresh")) $("selfMusicRefresh").click();
+      return;
+    }
+    paintOnboard(Object.assign({}, state, {
+      prefill: Object.assign({}, onboardState.prefill, state.prefill, input.artist_name ? { artist_name: input.artist_name } : {})
+    }));
+    say(state && state.problems && state.problems.handle === "taken" ? "That handle is taken. Pick another." : "Add what's missing, then try again.", "bad");
+  } catch (err) {
+    say(err.message || "Could not make your page. Try again.", "bad");
+  } finally {
+    go.disabled = false;
+  }
+});
+
+/* the card is a live preview: what they type is what their page will say */
+$("cobNameInput").addEventListener("input", () => {
+  const v = $("cobNameInput").value.trim();
+  $("cobName").textContent = v || onboardState?.prefill?.artist_name || "Your artist page";
+  paintAvatar($("cobAvatar"), "", v);
+});
+$("cobHandleInput").addEventListener("input", () => {
+  /* the @ is drawn in the field; a typed one is dropped */
+  if ($("cobHandleInput").value.charAt(0) === "@") $("cobHandleInput").value = $("cobHandleInput").value.replace(/^@+/, "");
+  const v = ONBOARD.normalizeHandle($("cobHandleInput").value);
+  $("cobHandle").textContent = v ? "@" + v : "";
+  delete $("cobHandleField").dataset.problem;
+  $("cobHandleHelp").textContent = ONBOARD.handleHelp({});
+});
+
 (async function boot() {
   try {
     const ok = await authed();
-    if (!ok) return;
+    const state = ok ? await creatorState() : null;
+    const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
+    if (v === "signin") return;
     $("creatorGate").hidden = true;
-    $("creatorApp").hidden = false;
-    await loadProfile();
-    await loadTracks();
+    if (v === "onboard") {
+      paintOnboard(state);
+      $("creatorOnboard").hidden = false;
+      return;
+    }
+    await showStudio(v === "edit");
   } catch (err) {
     $("creatorGate").hidden = false;
     $("creatorGate").querySelector("p").textContent = err.message || "Could not open Creator Studio.";
