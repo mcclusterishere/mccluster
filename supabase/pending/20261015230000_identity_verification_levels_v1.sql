@@ -418,6 +418,14 @@ begin
      where v.user_id = p_user and v.purpose = r.params->>'purpose' and v.status = 'verified'
        and (v.expires_at is null or v.expires_at > now()));
    v_have := case when v_met then 1 else 0 end;
+   -- A rule may also need N admin-verified missions (params.min_verified_missions,
+   -- e.g. the gated track in gated_track_mission_identity_v1). Kept here too so the
+   -- result is the same whichever of those files is applied last.
+   if r.params ? 'min_verified_missions' then
+     v_need := (r.params->>'min_verified_missions')::integer;
+     v_have := public.action_member_verified_mission_count(p_user);
+     if v_have < v_need then v_met := false; v_reason := 'missions'; end if;
+   end if;
  elsif r.requirement_kind = 'registration_assists' then
    v_need := r.min_count; v_reason := 'counting_source_pending_counsel';
  end if;
