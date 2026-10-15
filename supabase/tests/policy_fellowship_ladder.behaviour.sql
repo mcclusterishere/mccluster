@@ -38,16 +38,16 @@ insert into public.action_missions(id, title, status, skills) values
 
 -- the seeded rule is data: all three kinds, not creator-exclusive
 do $$ begin
-  perform pg_temp.ok((select required_kinds = array['help_person','write_song','attend_rally'] and min_kinds is null and not creator_exclusive
-    from public.action_ladder_rules where rule_key = 'policy_fellowship'), 'seeded rule');
+  perform pg_temp.ok((select required_kinds = array['help_person','write_song','attend_rally'] and min_count is null and not creator_exclusive and enabled
+    from public.action_unlock_rules where rule_key = 'policy_fellowship'), 'seeded rule');
   perform pg_temp.ok((select count(*) = 3 from public.action_ladder_starter_kinds), 'three starter kinds');
 end $$;
 
 -- only the desk maps missions to kinds
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 select pg_temp.must_fail($q$insert into public.action_ladder_mission_kinds(mission_id, kind) values ('20000000-0000-4000-8000-0000000000e1','help_person')$q$, '%row-level security%');
-update public.action_ladder_rules set min_kinds = 1; -- RLS: matches no row for a member
-do $$ begin perform pg_temp.ok((select min_kinds from public.action_ladder_rules where rule_key='policy_fellowship') is null, 'member cannot loosen the rule'); end $$;
+update public.action_unlock_rules set min_count = 1; -- RLS: matches no row for a member
+do $$ begin perform pg_temp.ok((select min_count from public.action_unlock_rules where rule_key='policy_fellowship') is null, 'member cannot loosen the rule'); end $$;
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
 insert into public.action_ladder_mission_kinds(mission_id, kind) values
@@ -116,24 +116,24 @@ select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
 do $$ begin perform pg_temp.ok(not (public.policy_ladder_status()->>'eligible')::boolean, 'G not eligible under all-three'); end $$;
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
-update public.action_ladder_rules set min_kinds = 1 where rule_key = 'policy_fellowship';
+update public.action_unlock_rules set min_count = 1 where rule_key = 'policy_fellowship';
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
 do $$ begin perform pg_temp.ok((public.policy_ladder_status()->>'eligible')::boolean, 'G eligible under any-one'); end $$;
 reset role;
-update public.action_ladder_rules set min_kinds = null where rule_key = 'policy_fellowship';
-select pg_temp.must_fail($q$update public.action_ladder_rules set min_kinds = 4 where rule_key = 'policy_fellowship'$q$, '%check constraint%');
+update public.action_unlock_rules set min_count = null where rule_key = 'policy_fellowship';
+select pg_temp.must_fail($q$update public.action_unlock_rules set min_count = 4 where rule_key = 'policy_fellowship'$q$, '%check constraint%');
 
 -- creator exclusivity is a switch, off by default
 insert into public.creator_billing_subscriptions values ('sub_test_f', '00000000-0000-4000-8000-0000000000f1', 'active', now() + interval '30 days');
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 do $$ begin perform pg_temp.ok((public.policy_ladder_status()->>'eligible')::boolean, 'a creator account does not block by default'); end $$;
 reset role;
-update public.action_ladder_rules set creator_exclusive = true where rule_key = 'policy_fellowship';
+update public.action_unlock_rules set creator_exclusive = true where rule_key = 'policy_fellowship';
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 do $$ begin perform pg_temp.ok(not (public.policy_ladder_status()->>'eligible')::boolean, 'creator_exclusive=true blocks a creator'); end $$;
 reset role;
-update public.action_ladder_rules set creator_exclusive = false where rule_key = 'policy_fellowship';
+update public.action_unlock_rules set creator_exclusive = false where rule_key = 'policy_fellowship';
 delete from public.creator_billing_subscriptions;
 
 -- F applies (existing fellowship path), the desk accepts
@@ -323,5 +323,81 @@ end $$;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 select pg_temp.must_fail($q$select public.policy_ladder_eligible('00000000-0000-4000-8000-0000000000f2')$q$, '%permission denied%');
 reset role;
+
+-- ===================== THE UNLOCK RULES (every unlock is a row) =====================
+create or replace function pg_temp.unlock(p_key text) returns jsonb language sql as $$
+  select x from jsonb_array_elements(public.action_unlock_status()) x where x->>'rule_key' = p_key $$;
+grant execute on function pg_temp.unlock(text) to anon, authenticated;
+
+select pg_temp.as_anon();
+do $$ begin
+  perform pg_temp.ok((pg_temp.unlock('public_free_layer')->>'met')::boolean, 'the free public layer is open to anyone');
+  perform pg_temp.ok(not (pg_temp.unlock('member_layers')->>'met')::boolean, 'member layers are locked when logged out');
+  perform pg_temp.ok(pg_temp.unlock('policy_fellowship')->>'reason' = 'sign_in', 'anon is asked to sign in');
+end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+do $$ begin perform pg_temp.ok((pg_temp.unlock('member_layers')->>'met')::boolean, 'member layers open when signed in'); end $$;
+reset role;
+
+-- the counsel-gated rules ship disabled and cannot be enabled without sign-off
+do $$ begin
+  perform pg_temp.ok((select not enabled and requires_counsel_signoff and min_count = 3 from public.action_unlock_rules where rule_key = 'equity_uprise_activation'), 'E=Up activation ships disabled');
+  perform pg_temp.ok((select not enabled and requires_counsel_signoff and min_count = 10 and requirement_kind = 'registration_assists' from public.action_unlock_rules where rule_key = 'whip_transport_partner'), 'Whip partner rule ships disabled');
+end $$;
+select pg_temp.must_fail($q$update public.action_unlock_rules set enabled = true where rule_key = 'whip_transport_partner'$q$, '%check constraint%');
+select pg_temp.must_fail($q$update public.action_unlock_rules set enabled = true where rule_key = 'equity_uprise_activation'$q$, '%check constraint%');
+
+-- strict verification is status only, and server-written
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+select pg_temp.must_fail($q$insert into public.action_member_verifications(user_id, status) values ('00000000-0000-4000-8000-0000000000f2','verified')$q$, '%permission denied%');
+reset role;
+select pg_temp.must_fail($q$insert into public.action_member_verifications(user_id, status, provider, provider_reference) values ('00000000-0000-4000-8000-0000000000f2','verified','vendor_x','ref_1')$q$, '%check constraint%');
+do $$ begin
+  perform pg_temp.ok(not exists (select 1 from information_schema.columns where table_name = 'action_member_verifications'
+    and column_name ~ '(image|photo|selfie|face|template|document|dob|birth|ssn)'), 'no biometric or document columns');
+end $$;
+
+-- verified referrals: only referred people who passed strict verification count
+insert into auth.users(id, email) values ('00000000-0000-4000-8000-0000000000f3','h@test');
+insert into public.action_participants(campaign_id, user_id, referral_code, referred_by) values
+ ('c', '00000000-0000-4000-8000-0000000000f1', 'FCODE', null),
+ ('c', '00000000-0000-4000-8000-0000000000f2', 'GCODE', 'FCODE'),
+ ('c', '00000000-0000-4000-8000-0000000000f3', 'HCODE', 'FCODE');
+insert into public.action_member_verifications(user_id, status, provider, provider_reference, location_consent_at, location_precision,
+  attestation_version, attestation_signed_at, biometric_consent_version, biometric_consent_at, verified_at)
+values ('00000000-0000-4000-8000-0000000000f2', 'verified', 'vendor_x', 'ref_g', now(), 'region', 'v1', now(), 'v1', now(), now()),
+       ('00000000-0000-4000-8000-0000000000f3', 'pending', null, null, now(), 'region', null, null, null, null, null);
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
+do $$ declare u jsonb := pg_temp.unlock('equity_uprise_activation'); begin
+  perform pg_temp.ok((u->>'have')::int = 1 and (u->>'need')::int = 3 and not (u->>'met')::boolean and u->>'reason' = 'requires_counsel_signoff', 'one verified referral of three; gated: ' || u::text);
+end $$;
+reset role;
+-- after counsel signs off and the owner enables it with a lower test threshold, it is met
+update public.action_unlock_rules set counsel_signoff_at = now(), counsel_signoff_ref = 'fixture', enabled = true, min_count = 1 where rule_key = 'equity_uprise_activation';
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
+do $$ begin perform pg_temp.ok((pg_temp.unlock('equity_uprise_activation')->>'met')::boolean, 'met after sign-off'); end $$;
+reset role;
+-- revoked verification stops counting
+update public.action_member_verifications set status = 'revoked' where user_id = '00000000-0000-4000-8000-0000000000f2';
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
+do $$ begin perform pg_temp.ok(not (pg_temp.unlock('equity_uprise_activation')->>'met')::boolean, 'revoked verification does not count'); end $$;
+-- the Whip rule never counts anything until counsel designs the source
+do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
+  perform pg_temp.ok(not (u->>'met')::boolean and u->>'reason' = 'requires_counsel_signoff', 'whip gated: ' || u::text);
+end $$;
+reset role;
+update public.action_unlock_rules set counsel_signoff_at = now(), enabled = true where rule_key = 'whip_transport_partner';
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
+do $$ declare u jsonb := pg_temp.unlock('whip_transport_partner'); begin
+  perform pg_temp.ok(not (u->>'met')::boolean and u->>'reason' = 'counting_source_pending_counsel', 'no counting source yet: ' || u::text);
+end $$;
+reset role;
+-- a disabled rule is never met, even the ladder
+update public.action_unlock_rules set enabled = false where rule_key = 'policy_fellowship';
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
+do $$ begin perform pg_temp.ok(not (pg_temp.unlock('policy_fellowship')->>'met')::boolean and pg_temp.unlock('policy_fellowship')->>'reason' = 'disabled', 'disabled ladder'); end $$;
+reset role;
+update public.action_unlock_rules set enabled = true where rule_key = 'policy_fellowship';
 
 select 'policy fellowship ladder behaviour: all assertions passed' as result;

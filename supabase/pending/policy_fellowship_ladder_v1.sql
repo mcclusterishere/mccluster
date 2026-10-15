@@ -8,7 +8,7 @@
 --
 -- What this adds, and only this (everything else is reused):
 --   1. action_ladder_starter_kinds / action_ladder_mission_kinds /
---      action_ladder_rules: the ladder as DATA. A starter kind is complete
+--      action_unlock_rules: the ladder, and every other unlock, as DATA. A starter kind is complete
 --      when a mission mapped to it has a VERIFIED assignment (the proof was
 --      reviewed and approved by review_action_proof: the same "completed a
 --      mission" definition the World's CCTV gate uses). The rule says which
@@ -26,7 +26,13 @@
 --      LEADS with provenance; never verified evidence; pending
 --      reconciliation with the canonical evidence/claim source ids, see
 --      docs/control-plane/POLICY-FELLOWSHIP-LADDER.md).
---   4. RPCs: policy_ladder_status, create_policy_memo, save_policy_memo_draft,
+--   1b. action_member_verifications: STATUS-ONLY strict verification for
+--      referral signups (vendor reference, consent and attestation dates; never
+--      images or biometric templates), and the generic evaluator
+--      action_unlock_progress() / action_unlock_status(). The Equity Uprise
+--      activation and Whip Equipped partner rules ship DISABLED and need
+--      counsel sign-off before they can be enabled (CHECK).
+--   4. RPCs: action_unlock_status, policy_ladder_status, create_policy_memo, save_policy_memo_draft,
 --      submit_policy_memo, withdraw_policy_memo, review_policy_memo,
 --      policy_memo_history, add/remove_policy_memo_research_item.
 --
@@ -45,6 +51,7 @@
 --   1. drop table if exists public.action_policy_memo_research_items, public.action_policy_memo_reviews,
 --        public.action_policy_memo_versions, public.action_policy_memos cascade;
 --   2. drop function if exists public.policy_ladder_status(), public.policy_ladder_eligible(uuid),
+--        public.action_unlock_status(), public.action_unlock_progress(uuid,text),
 --        public.create_policy_memo(uuid,text,text,uuid,uuid), public.save_policy_memo_draft(uuid,text,text),
 --        public.submit_policy_memo(uuid,text), public.withdraw_policy_memo(uuid,text),
 --        public.review_policy_memo(uuid,text,text,text,text), public.policy_memo_history(uuid),
@@ -54,7 +61,7 @@
 --      (action_policy_memo_write_version goes with the memos table in step 1, via cascade.)
 --   3. re-run supabase/migrations/20261005054040_action_cohort_admission_v1.sql to restore
 --      admit_fellow_to_cohort() without the ladder check.
---   4. drop table if exists public.action_ladder_rules, public.action_ladder_mission_kinds,
+--   4. drop table if exists public.action_member_verifications, public.action_unlock_rules, public.action_ladder_mission_kinds,
 --        public.action_ladder_starter_kinds;
 --   5. alter table public.action_cohorts drop constraint if exists action_cohorts_policy_region_check,
 --        drop column if exists parent_cohort_id, drop column if exists region_key, drop column if exists program;
@@ -78,18 +85,37 @@ create table if not exists public.action_ladder_mission_kinds (
 );
 create index if not exists action_ladder_mission_kinds_kind_idx on public.action_ladder_mission_kinds(kind);
 
-create table if not exists public.action_ladder_rules (
+-- EVERY UNLOCK IS A ROW (owner, 2026-10-15). One table says what each
+-- level unlocks and what it takes: the free public layer, the member layers,
+-- the policy fellowship, Equity Uprise activation, the Whip Equipped
+-- partner hand-off. A rule that needs counsel cannot be enabled until
+-- counsel has signed off (CHECK below). A disabled rule is never met.
+create table if not exists public.action_unlock_rules (
  rule_key text primary key check (rule_key ~ '^[a-z][a-z0-9_]{1,60}$'),
  label text not null,
- required_kinds text[] not null check (cardinality(required_kinds) between 1 and 12),
- -- null = every required kind; n = any n of them
- min_kinds smallint check (min_kinds is null or min_kinds >= 1),
+ -- what it unlocks, e.g. 'globe_layer:flights', 'cohort_program:policy_fellowship',
+ -- 'program:equity_uprise_activation', 'partner_eligibility:whip_driver_application'
+ unlock_keys text[] not null check (cardinality(unlock_keys) between 1 and 12),
+ requirement_kind text not null check (requirement_kind in
+   ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists')),
+ -- starter_kinds: which kinds count
+ required_kinds text[] check (required_kinds is null or cardinality(required_kinds) between 1 and 12),
+ -- starter_kinds: null = every required kind, n = any n of them;
+ -- verified_referrals / registration_assists: how many
+ min_count integer check (min_count is null or min_count >= 1),
+ params jsonb not null default '{}'::jsonb check (jsonb_typeof(params) = 'object'),
  -- OPEN QUESTION for the owner. false = a creator/business account does not
- -- stop anyone from climbing the policy ladder.
+ -- stop anyone from meeting this rule.
  creator_exclusive boolean not null default false,
- active boolean not null default true,
+ enabled boolean not null default true,
+ requires_counsel_signoff boolean not null default false,
+ counsel_signoff_at timestamptz,
+ counsel_signoff_ref text,
  updated_at timestamptz not null default now(),
- check (min_kinds is null or min_kinds <= cardinality(required_kinds))
+ check (requirement_kind <> 'starter_kinds' or required_kinds is not null),
+ check (requirement_kind <> 'starter_kinds' or min_count is null or min_count <= cardinality(required_kinds)),
+ check (requirement_kind not in ('verified_referrals','registration_assists') or min_count is not null),
+ check (not enabled or not requires_counsel_signoff or counsel_signoff_at is not null)
 );
 
 insert into public.action_ladder_starter_kinds(kind, label, description, sort) values
@@ -98,9 +124,24 @@ insert into public.action_ladder_starter_kinds(kind, label, description, sort) v
  ('attend_rally', 'Go to a rally', 'Attend a lawful public rally or gathering, with proof you were there.', 3)
 on conflict (kind) do nothing;
 
-insert into public.action_ladder_rules(rule_key, label, required_kinds, min_kinds, creator_exclusive)
-values ('policy_fellowship', 'Policy Fellowship: starter missions',
-        array['help_person','write_song','attend_rally'], null, false)
+insert into public.action_unlock_rules(rule_key, label, unlock_keys, requirement_kind, required_kinds, min_count, params, creator_exclusive, enabled, requires_counsel_signoff) values
+ -- what the World already does (workers/mccluster/src/world-layers.js): flights are public,
+ -- satellites and launches are for signed-in members. The Worker still enforces these
+ -- in code; reading them from here is a follow-up.
+ ('public_free_layer', 'Public: the globe and one free layer', array['globe_layer:flights'], 'none', null, null, '{}', false, true, false),
+ ('member_layers', 'Signed in: member layers', array['globe_layer:satellites','globe_layer:launches'], 'signed_in', null, null, '{}', false, true, false),
+ -- the ladder: three starter missions open the state Policy Fellowship seat
+ ('policy_fellowship', 'Policy Fellowship: starter missions', array['cohort_program:policy_fellowship'], 'starter_kinds',
+   array['help_person','write_song','attend_rally'], null, '{}', false, true, false),
+ -- Equity Uprise activation: three VERIFIED joins through my referral link. Disabled until the
+ -- identity vendor is chosen and counsel approves the biometric consent and retention schedule.
+ ('equity_uprise_activation', 'Equity Uprise activation: three verified referrals', array['program:equity_uprise_activation'], 'verified_referrals',
+   null, 3, '{"shares_required": null, "note": "shares requirement is an open owner question"}', false, false, true),
+ -- Whip Equipped (Matthew's separate company): eligibility to APPLY as a driver and the transport
+ -- layer, after 10 nonpartisan registration-assistance actions. Ships DISABLED: paying or rewarding
+ -- per voter registration is restricted; counsel must sign off and the counting source must be designed with counsel.
+ ('whip_transport_partner', 'Whip Equipped transport: partner hand-off', array['globe_layer:whip_transport','partner_eligibility:whip_driver_application'], 'registration_assists',
+   null, 10, '{"requires_fellow": true, "counting_source": "pending counsel"}', false, false, true)
 on conflict (rule_key) do nothing;
 
 -- The only starter mission that exists today. Skipped if it is absent.
@@ -111,24 +152,24 @@ on conflict (mission_id) do nothing;
 
 alter table public.action_ladder_starter_kinds enable row level security;
 alter table public.action_ladder_mission_kinds enable row level security;
-alter table public.action_ladder_rules enable row level security;
-revoke all on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_ladder_rules from public, anon, authenticated;
-grant all on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_ladder_rules to service_role;
+alter table public.action_unlock_rules enable row level security;
+revoke all on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_unlock_rules from public, anon, authenticated;
+grant all on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_unlock_rules to service_role;
 -- The ladder is public by design: it tells anyone what the next step is.
-grant select on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_ladder_rules to anon, authenticated;
-grant insert, update, delete on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_ladder_rules to authenticated; -- desk only, by policy
+grant select on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_unlock_rules to anon, authenticated;
+grant insert, update, delete on public.action_ladder_starter_kinds, public.action_ladder_mission_kinds, public.action_unlock_rules to authenticated; -- desk only, by policy
 drop policy if exists "public reads ladder kinds" on public.action_ladder_starter_kinds;
 create policy "public reads ladder kinds" on public.action_ladder_starter_kinds for select to anon, authenticated using (true);
 drop policy if exists "public reads ladder mission kinds" on public.action_ladder_mission_kinds;
 create policy "public reads ladder mission kinds" on public.action_ladder_mission_kinds for select to anon, authenticated using (true);
-drop policy if exists "public reads ladder rules" on public.action_ladder_rules;
-create policy "public reads ladder rules" on public.action_ladder_rules for select to anon, authenticated using (true);
+drop policy if exists "public reads unlock rules" on public.action_unlock_rules;
+create policy "public reads unlock rules" on public.action_unlock_rules for select to anon, authenticated using (true);
 drop policy if exists "desk manages ladder kinds" on public.action_ladder_starter_kinds;
 create policy "desk manages ladder kinds" on public.action_ladder_starter_kinds for all to authenticated using ((select public.eu_is_admin())) with check ((select public.eu_is_admin()));
 drop policy if exists "desk manages ladder mission kinds" on public.action_ladder_mission_kinds;
 create policy "desk manages ladder mission kinds" on public.action_ladder_mission_kinds for all to authenticated using ((select public.eu_is_admin())) with check ((select public.eu_is_admin()));
-drop policy if exists "desk manages ladder rules" on public.action_ladder_rules;
-create policy "desk manages ladder rules" on public.action_ladder_rules for all to authenticated using ((select public.eu_is_admin())) with check ((select public.eu_is_admin()));
+drop policy if exists "desk manages unlock rules" on public.action_unlock_rules;
+create policy "desk manages unlock rules" on public.action_unlock_rules for all to authenticated using ((select public.eu_is_admin())) with check ((select public.eu_is_admin()));
 
 -- ---------------------------------------------------------------------------
 -- 2. STATE COHORTS AND POLICY TEAMS ARE COHORTS
@@ -151,26 +192,138 @@ stable
 security definer
 set search_path = ''
 as $$
-declare
- v_rule public.action_ladder_rules%rowtype;
- v_done integer;
 begin
  if p_user is null then return false; end if;
- select * into v_rule from public.action_ladder_rules where rule_key = 'policy_fellowship' and active;
- if not found then return false; end if;
- if v_rule.creator_exclusive and exists (
-   select 1 from public.creator_billing_subscriptions s
-   where s.owner_user_id = p_user and s.status = 'active' and s.current_period_end > now()
- ) then return false; end if;
- select count(distinct k.kind) into v_done
- from public.action_mission_assignments a
- join public.action_ladder_mission_kinds k on k.mission_id = a.mission_id
- where a.user_id = p_user and a.status = 'verified' and k.kind = any(v_rule.required_kinds);
- return v_done >= coalesce(v_rule.min_kinds, cardinality(v_rule.required_kinds));
+ return coalesce((public.action_unlock_progress(p_user, 'policy_fellowship')->>'met')::boolean, false);
 end;
 $$;
 revoke all on function public.policy_ladder_eligible(uuid) from public, anon, authenticated;
 grant execute on function public.policy_ladder_eligible(uuid) to service_role;
+
+-- Strict verification for people who join through a referral link (owner,
+-- 2026-10-15): location consent at signup, identity/face verification by a
+-- THIRD-PARTY vendor, a signed consent/attestation. STATUS ONLY: this table
+-- never holds a face image, a biometric template, an ID document, a document
+-- number or a date of birth. The vendor holds those under its own retention;
+-- we keep the vendor's reference and the dates. Written only by the server
+-- (the vendor webhook, service role); a member reads their own row.
+create table if not exists public.action_member_verifications (
+ user_id uuid primary key references auth.users(id) on delete cascade,
+ purpose text not null default 'referral_signup' check (purpose in ('referral_signup')),
+ status text not null default 'pending' check (status in ('pending','verified','rejected','revoked','expired')),
+ provider text check (provider is null or provider ~ '^[a-z][a-z0-9_]{1,40}$'),
+ provider_reference text check (provider_reference is null or char_length(provider_reference) <= 200),
+ location_consent_at timestamptz,
+ location_precision text check (location_precision in ('region','precise')),
+ attestation_version text,
+ attestation_signed_at timestamptz,
+ biometric_consent_version text,
+ biometric_consent_at timestamptz,
+ verified_at timestamptz,
+ expires_at timestamptz,
+ -- when the vendor must have deleted its biometric data (retention schedule; counsel sets it)
+ vendor_data_delete_by timestamptz,
+ updated_at timestamptz not null default now(),
+ check (status <> 'verified' or (provider is not null and provider_reference is not null and verified_at is not null
+   and location_consent_at is not null and attestation_signed_at is not null and biometric_consent_at is not null))
+);
+alter table public.action_member_verifications enable row level security;
+alter table public.action_member_verifications force row level security;
+revoke all on public.action_member_verifications from public, anon, authenticated;
+grant all on public.action_member_verifications to service_role;
+grant select on public.action_member_verifications to authenticated;
+drop policy if exists "members read own verification" on public.action_member_verifications;
+create policy "members read own verification" on public.action_member_verifications for select to authenticated
+ using (user_id = (select auth.uid()) or (select public.eu_is_admin()));
+
+-- How far is this user on one rule? {met, have, need, reason}. A disabled
+-- rule is never met; neither is a rule awaiting counsel.
+create or replace function public.action_unlock_progress(p_user uuid, p_rule_key text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+ r public.action_unlock_rules%rowtype;
+ v_have integer := 0;
+ v_need integer := 1;
+ v_met boolean := false;
+ v_reason text := null;
+begin
+ select * into r from public.action_unlock_rules where rule_key = p_rule_key;
+ if not found then return jsonb_build_object('met', false, 'reason', 'no_rule'); end if;
+ if r.requirement_kind = 'none' then
+   v_have := 1; v_met := true;
+ elsif r.requirement_kind = 'signed_in' then
+   v_have := case when p_user is null then 0 else 1 end; v_met := p_user is not null;
+ elsif p_user is null then
+   v_reason := 'sign_in';
+ elsif r.requirement_kind = 'creator_account' then
+   v_met := exists (select 1 from public.creator_billing_subscriptions s
+     where s.owner_user_id = p_user and s.status = 'active' and s.current_period_end > now());
+   v_have := case when v_met then 1 else 0 end;
+ elsif r.requirement_kind = 'fellow' then
+   v_met := exists (select 1 from public.action_fellowship_applications f where f.user_id = p_user and f.status = 'accepted');
+   v_have := case when v_met then 1 else 0 end;
+ elsif r.requirement_kind = 'starter_kinds' then
+   v_need := coalesce(r.min_count, cardinality(r.required_kinds));
+   select count(distinct k.kind) into v_have
+   from public.action_mission_assignments a
+   join public.action_ladder_mission_kinds k on k.mission_id = a.mission_id
+   where a.user_id = p_user and a.status = 'verified' and k.kind = any(r.required_kinds);
+   v_met := v_have >= v_need;
+ elsif r.requirement_kind = 'verified_referrals' then
+   v_need := r.min_count;
+   -- distinct people who joined through one of MY referral codes and passed strict verification
+   select count(distinct p.user_id) into v_have
+   from public.action_participants p
+   join public.action_member_verifications v on v.user_id = p.user_id
+   where p.referred_by in (select mine.referral_code from public.action_participants mine where mine.user_id = p_user)
+     and p.user_id <> p_user
+     and v.status = 'verified' and (v.expires_at is null or v.expires_at > now());
+   v_met := v_have >= v_need;
+ elsif r.requirement_kind = 'registration_assists' then
+   -- No counting source exists on purpose: it is designed with counsel
+   -- (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md, section 2b).
+   v_need := r.min_count; v_reason := 'counting_source_pending_counsel';
+ end if;
+ if v_met and coalesce((r.params->>'requires_fellow')::boolean, false) and not exists (
+   select 1 from public.action_fellowship_applications f where f.user_id = p_user and f.status = 'accepted') then
+   v_met := false; v_reason := coalesce(v_reason, 'requires_fellow');
+ end if;
+ if v_met and r.creator_exclusive and exists (select 1 from public.creator_billing_subscriptions s
+   where s.owner_user_id = p_user and s.status = 'active' and s.current_period_end > now()) then
+   v_met := false; v_reason := 'creator_exclusive';
+ end if;
+ if r.requires_counsel_signoff and r.counsel_signoff_at is null then v_met := false; v_reason := 'requires_counsel_signoff';
+ elsif not r.enabled then v_met := false; v_reason := coalesce(v_reason, 'disabled');
+ end if;
+ return jsonb_strip_nulls(jsonb_build_object('met', v_met, 'have', v_have, 'need', v_need, 'reason', v_reason));
+end;
+$$;
+revoke all on function public.action_unlock_progress(uuid, text) from public, anon, authenticated;
+grant execute on function public.action_unlock_progress(uuid, text) to service_role;
+
+-- Everything the World can unlock, and where I stand on each. Anyone may
+-- ask; a signed-out caller gets only the public answers.
+create or replace function public.action_unlock_status()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'rule_key', r.rule_key, 'label', r.label, 'unlock_keys', to_jsonb(r.unlock_keys),
+   'requirement_kind', r.requirement_kind, 'enabled', r.enabled,
+   'requires_counsel_signoff', r.requires_counsel_signoff and r.counsel_signoff_at is null)
+   || public.action_unlock_progress((select auth.uid()), r.rule_key) order by r.rule_key), '[]'::jsonb)
+ from public.action_unlock_rules r
+$$;
+revoke all on function public.action_unlock_status() from public;
+grant execute on function public.action_unlock_status() to anon, authenticated, service_role;
 
 -- admit_fellow_to_cohort, as applied (20261005054040), plus: a policy cohort
 -- seat needs the ladder, and a policy team seat needs a seat in its parent.
@@ -227,7 +380,7 @@ as $$
 declare
  v_user uuid := (select auth.uid());
  v_m_uid uuid := public.current_m_uid();
- v_rule public.action_ladder_rules%rowtype;
+ v_rule public.action_unlock_rules%rowtype;
  v_steps jsonb;
  v_done integer;
  v_need integer;
@@ -236,11 +389,11 @@ declare
  v_seats jsonb;
  v_next text;
 begin
- select * into v_rule from public.action_ladder_rules where rule_key = 'policy_fellowship' and active;
+ select * into v_rule from public.action_unlock_rules where rule_key = 'policy_fellowship' and enabled;
  if not found then
    return jsonb_build_object('signed_in', v_user is not null, 'rule', null, 'eligible', false, 'next_step', 'ladder_closed');
  end if;
- v_need := coalesce(v_rule.min_kinds, cardinality(v_rule.required_kinds));
+ v_need := coalesce(v_rule.min_count, cardinality(v_rule.required_kinds));
  select coalesce(jsonb_agg(jsonb_build_object(
    'kind', k.kind, 'label', k.label, 'description', k.description,
    'done', v_user is not null and exists (
@@ -259,7 +412,7 @@ begin
 
  if v_user is null then
    return jsonb_build_object('signed_in', false,
-     'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_kinds', v_rule.min_kinds, 'creator_exclusive', v_rule.creator_exclusive),
+     'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
      'steps', v_steps, 'completed', 0, 'needed', v_need, 'eligible', false, 'next_step', 'sign_in');
  end if;
 
@@ -283,7 +436,7 @@ begin
    else 'apply_for_fellowship' end;
 
  return jsonb_build_object('signed_in', true,
-   'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_kinds', v_rule.min_kinds, 'creator_exclusive', v_rule.creator_exclusive),
+   'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
    'steps', v_steps, 'completed', v_done, 'needed', v_need, 'eligible', v_eligible,
    'fellowship_application', v_app, 'policy_seats', v_seats, 'next_step', v_next);
 end;

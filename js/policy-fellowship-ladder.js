@@ -7,8 +7,10 @@
      rally) -> the Policy Fellowship cohort for your state -> policy teams.
      A starter kind counts only when a mission mapped to it has a VERIFIED
      assignment (its proof was reviewed and approved). The rule is data
-     (action_ladder_rules), not code: which kinds, how many, and whether a
-     creator account excludes a member (default: it does not).
+     (action_unlock_rules), not code: which kinds, how many, and whether a
+     creator account excludes a member (default: it does not). Every other
+     unlock (public layer, member layers, Equity Uprise activation, the Whip
+     Equipped partner hand-off) is a row in the same table.
    - The memo: draft -> submitted -> in_review -> approved | declined |
      changes_requested | owner_edited, and back to submitted. Every
      submission and every owner edit is an immutable version; an owner edit
@@ -71,7 +73,13 @@
     return { ok: true, to: to };
   }
 
-  /* rule = {required_kinds:[...], min_kinds:null|n, creator_exclusive:bool}
+  /* A rule can be met only when it is enabled and, if it needs counsel,
+     counsel has signed off. Mirrors action_unlock_progress(). */
+  function ruleLive(rule) {
+    return !!(rule && rule.enabled !== false && (!rule.requires_counsel_signoff || rule.counsel_signoff_at));
+  }
+
+  /* rule = {required_kinds:[...], min_count:null|n, creator_exclusive:bool}
      completed = array of kinds with a verified assignment. */
   function evaluateLadder(rule, completed, opts) {
     var required = (rule && rule.required_kinds) || [];
@@ -79,10 +87,11 @@
     (completed || []).forEach(function (k) { have[k] = true; });
     var done = required.filter(function (k) { return have[k]; });
     var remaining = required.filter(function (k) { return !have[k]; });
-    var need = rule && rule.min_kinds != null ? Math.min(Number(rule.min_kinds), required.length) : required.length;
+    var need = rule && rule.min_count != null ? Math.min(Number(rule.min_count), required.length) : required.length;
     var blocked = null;
     if (rule && rule.creator_exclusive && opts && opts.isCreator) blocked = "creator_exclusive";
     if (!required.length) blocked = blocked || "no_rule";
+    if (rule && !ruleLive(rule)) blocked = rule.enabled === false ? "disabled" : "requires_counsel_signoff";
     return {
       done: done, remaining: remaining, needed: need, completed: done.length,
       eligible: !blocked && done.length >= need, blocked_reason: blocked
@@ -127,7 +136,7 @@
   var api = {
     STATUSES: STATUSES, TERMINAL: TERMINAL, EDITABLE: EDITABLE, TRANSITIONS: TRANSITIONS,
     NOTE_REQUIRED: NOTE_REQUIRED, nextStatus: nextStatus, checkAction: checkAction,
-    evaluateLadder: evaluateLadder, nextStep: nextStep, lineDiff: lineDiff
+    evaluateLadder: evaluateLadder, ruleLive: ruleLive, nextStep: nextStep, lineDiff: lineDiff
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MCC_POLICY_LADDER = api;

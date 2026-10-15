@@ -73,13 +73,13 @@ test("the SQL enforces the same note and change rules", async () => {
 });
 
 test("ladder eligibility is data: all kinds, any n, creator switch", () => {
-  const all = { required_kinds: ["help_person", "write_song", "attend_rally"], min_kinds: null, creator_exclusive: false };
+  const all = { required_kinds: ["help_person", "write_song", "attend_rally"], min_count: null, creator_exclusive: false };
   assert.equal(L.evaluateLadder(all, []).eligible, false);
   assert.deepEqual(L.evaluateLadder(all, ["help_person", "write_song"]).remaining, ["attend_rally"]);
   assert.equal(L.evaluateLadder(all, ["help_person", "write_song", "attend_rally"]).eligible, true);
   assert.equal(L.evaluateLadder(all, ["help_person", "help_person", "write_song"]).eligible, false, "two missions of one kind are one kind");
   assert.equal(L.evaluateLadder(all, ["help_person", "write_song", "unrelated"]).eligible, false);
-  const any1 = { ...all, min_kinds: 1 };
+  const any1 = { ...all, min_count: 1 };
   assert.equal(L.evaluateLadder(any1, ["write_song"]).eligible, true);
   assert.equal(L.evaluateLadder(all, ["help_person", "write_song", "attend_rally"], { isCreator: true }).eligible, true, "non-exclusive by default");
   const excl = { ...all, creator_exclusive: true };
@@ -91,11 +91,12 @@ test("ladder eligibility is data: all kinds, any n, creator switch", () => {
 
 test("the seeded rule is all three starter kinds and non-exclusive; completion means a verified assignment", async () => {
   const sql = await read(SQL_PATH);
-  assert.match(sql, /array\['help_person','write_song','attend_rally'\], null, false/);
+  assert.match(sql, /'starter_kinds',\n   array\['help_person','write_song','attend_rally'\], null, '\{\}', false, true, false\)/);
   assert.match(sql, /creator_exclusive boolean not null default false/);
-  const elig = sql.slice(sql.indexOf("function public.policy_ladder_eligible"), sql.indexOf("revoke all on function public.policy_ladder_eligible"));
+  const elig = sql.slice(sql.indexOf("function public.action_unlock_progress"), sql.indexOf("revoke all on function public.action_unlock_progress"));
   assert.match(elig, /a\.status = 'verified'/);
-  assert.match(elig, /coalesce\(v_rule\.min_kinds, cardinality\(v_rule\.required_kinds\)\)/);
+  assert.match(elig, /coalesce\(r\.min_count, cardinality\(r\.required_kinds\)\)/);
+  assert.match(sql, /public\.action_unlock_progress\(p_user, 'policy_fellowship'\)/);
   assert.match(sql, /if v_cohort\.program = 'policy_fellowship' and not public\.policy_ladder_eligible\(v_app\.user_id\)/);
 });
 
@@ -127,7 +128,7 @@ test("the line diff matches the SQL fixtures byte for byte", async () => {
 
 test("memos are private: RLS on, no anon grant, own rows or the desk", async () => {
   const sql = await read(SQL_PATH);
-  for (const t of ["action_policy_memos", "action_policy_memo_versions", "action_policy_memo_reviews", "action_policy_memo_research_items", "action_ladder_rules", "action_ladder_mission_kinds", "action_ladder_starter_kinds"]) {
+  for (const t of ["action_policy_memos", "action_policy_memo_versions", "action_policy_memo_reviews", "action_policy_memo_research_items", "action_unlock_rules", "action_member_verifications", "action_ladder_mission_kinds", "action_ladder_starter_kinds"]) {
     assert.match(sql, new RegExp(`alter table public\\.${t} enable row level security`), t);
   }
   const memoGrants = sql.match(/grant select on public\.action_policy_memos[^;]*;/)[0];
@@ -195,4 +196,31 @@ test("the desk and the fellow surfaces are wired to the same rules", async () =>
   assert.doesNotMatch(page, /max-width:\s*\d+px\)/, "no max-width media queries");
   for (const fn of ["policy_ladder_status", "create_policy_memo", "save_policy_memo_draft", "submit_policy_memo", "withdraw_policy_memo", "policy_memo_history", "add_policy_memo_research_item", "remove_policy_memo_research_item"]) assert.match(desk, new RegExp(`"${fn}"`), fn);
   assert.doesNotMatch(desk, /scholar\.google/i, "the fellow desk never fetches Google Scholar");
+});
+
+test("every unlock is a row; counsel-gated rules ship disabled and cannot be enabled unsigned", async () => {
+  const sql = await read(SQL_PATH);
+  assert.match(sql, /check \(not enabled or not requires_counsel_signoff or counsel_signoff_at is not null\)/);
+  assert.match(sql, /\('equity_uprise_activation',[^\n]*\n[^\n]*null, 3, '[^']*', false, false, true\)/);
+  assert.match(sql, /\('whip_transport_partner',[^\n]*'registration_assists',\n[^\n]*null, 10, '[^']*', false, false, true\)/);
+  assert.match(sql, /'public_free_layer'[^\n]*array\['globe_layer:flights'\], 'none'/);
+  assert.match(sql, /v_reason := 'counting_source_pending_counsel'/);
+  assert.match(sql, /if r\.requires_counsel_signoff and r\.counsel_signoff_at is null then v_met := false/);
+  const ver = sql.slice(sql.indexOf("create table if not exists public.action_member_verifications"), sql.indexOf("alter table public.action_member_verifications enable"));
+  assert.doesNotMatch(ver, /image|photo|selfie|template|document_number|date_of_birth|dob|ssn/i);
+  assert.match(sql, /alter table public\.action_member_verifications force row level security/);
+  assert.doesNotMatch(sql, /grant (insert|update|all)[^;]*action_member_verifications[^;]*to (anon|authenticated)/);
+  // no voter data anywhere
+  assert.doesNotMatch(sql.replace(/--[^\n]*/g, ""), /voter_file|party_affiliation|vote_choice|voted_for/i);
+  assert.equal(L.ruleLive({ enabled: false }), false);
+  assert.equal(L.ruleLive({ enabled: true, requires_counsel_signoff: true }), false);
+  assert.equal(L.ruleLive({ enabled: true, requires_counsel_signoff: true, counsel_signoff_at: "2026-10-15" }), true);
+  assert.equal(L.evaluateLadder({ required_kinds: ["a"], enabled: false }, ["a"]).blocked_reason, "disabled");
+});
+
+test("the doc carries the unlock model and the Whip / voter / biometric boundaries", async () => {
+  const doc = await read("docs/control-plane/POLICY-FELLOWSHIP-LADDER.md");
+  for (const re of [/Whip Equipped LLC is Matthew's separate company/i, /never a McCluster Corp brand/i, /background check/i, /eligibility to apply/i,
+    /requires_counsel_signoff/, /nonpartisan/i, /never (collect|store)[^.]*how anyone votes/i, /voter-file/i, /BIPA/, /retention/i,
+    /never[^.]*(face image|biometric template)/i, /Stripe Identity/, /Persona/, /0037_whip_mobility/, /read-only/i, /fund/i]) assert.match(doc, re);
 });

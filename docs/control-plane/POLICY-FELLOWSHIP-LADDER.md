@@ -106,7 +106,7 @@ Owner / super-admin          eu_is_admin(): reviews memos, seats fellows, coordi
 account and a fellowship seat can sit on the same person. Whether an artist
 can also be a fellow is an **open question** for the owner ("an artist can't
 be a fellow… that's not the right way to think about it"); the default is
-non-exclusive, and the switch is data: `action_ladder_rules.creator_exclusive`
+non-exclusive, and the switch is data: `action_unlock_rules.creator_exclusive`
 (default `false`).
 
 ### What "completed a mission" means
@@ -131,9 +131,10 @@ two gates cannot drift.
   `write_song`, `attend_rally`).
 - `action_ladder_mission_kinds` — which missions count for which kind. The
   desk maps them (RLS: `eu_is_admin`). Public can read the mapping.
-- `action_ladder_rules` — row `policy_fellowship`: `required_kinds`,
-  `min_kinds` (`null` = all of them; `1` = any one), `creator_exclusive`,
-  `active`.
+- `action_unlock_rules` — row `policy_fellowship`: `requirement_kind =
+  'starter_kinds'`, `required_kinds`, `min_count` (`null` = all of them;
+  `1` = any one), `creator_exclusive`, `enabled`. The same table holds every
+  other unlock (section 2a).
 
 Default: all three kinds. Changing to "any one" or "any two" is an UPDATE, not
 a deploy.
@@ -166,6 +167,102 @@ eligibility, my latest fellowship application, my policy seats, and
 `apply_for_fellowship` → `await_fellowship_review` →
 `await_policy_cohort_seat` → `write_memo`. The JS mirror is
 `nextStep()` in `js/policy-fellowship-ladder.js`.
+
+## 2a. Access and unlock model (owner, 2026-10-15)
+
+Every unlock is a row in `action_unlock_rules` (`unlock_keys`,
+`requirement_kind`, `min_count`, `params`, `enabled`,
+`requires_counsel_signoff`, `counsel_signoff_at`). The evaluator is one
+server function, `action_unlock_progress(user, rule)` → `{met, have, need,
+reason}`, and members (or anyone) read the whole picture with
+`action_unlock_status()`. A disabled rule is never met. A rule with
+`requires_counsel_signoff = true` **cannot be enabled** until
+`counsel_signoff_at` is set (table CHECK), and is never met before then.
+Client-side shading is presentation only; the Worker or the RPC enforces.
+
+| Level | Sees / can do | Rule row (seeded) | State |
+| --- | --- | --- | --- |
+| Public (logged out) | The globe plus **one free layer**; everything else is visible but shaded/locked, and clicking it prompts sign-in | `public_free_layer` → `globe_layer:flights`, `none` | enabled; matches what `workers/mccluster/src/world-layers.js` already serves publicly |
+| L1 Fan | Follow/engage; music layer and music news on the globe; **watch** the Action Network **read-only** (not a poster); **fund** creators/businesses | `member_layers` → satellites, launches (`signed_in`) | enabled; matches the Worker's current member-only layers. A music layer does not exist yet; it gets its own row when it does |
+| L1 Creator / business | Post and act in the Action Network; the CRM lives here | (future row `action_network_post`, `creator_account`) | **gap:** in the code inspected, posting is not gated on a creator capability; the post path must read this rule before fans become read-only |
+| Starter missions → Policy Fellowship | three verified starter kinds → state cohort seat | `policy_fellowship` (`starter_kinds`) | enabled; unchanged |
+| Equity Uprise (E=Up) activation | activates E=Up for the member | `equity_uprise_activation` (`verified_referrals`, 3) | **disabled**, `requires_counsel_signoff` |
+| Fellow + 10 registration assists → Whip Equipped hand-off | the "Whip Equipped transport" globe layer and **eligibility to apply** as a driver in Whip's app | `whip_transport_partner` (`registration_assists`, 10, `requires_fellow`) | **disabled**, `requires_counsel_signoff`, no counting source |
+
+**Funding (fans → creators/businesses).** Only through the existing payment
+processor (Stripe) and the existing ledgers: `creator_billing_subscriptions`
+(creator workspaces), `action_creator_funding` / payout reservations (no live
+payout execution today), `creator_fan_purchase_evidence` (pending). No new
+payment path is designed here; money switches stay with the owner.
+
+### E=Up activation and strict referral verification
+
+- **Rule:** three **verified** joins through the member's personal referral
+  link. A join is a row in `action_participants` whose `referred_by` is one of
+  the member's referral codes (that table already issues per-campaign codes;
+  production has 3 participants, 0 referred). It counts only when the joined
+  person has `action_member_verifications.status = 'verified'` (not expired,
+  not revoked). "Plus shares" is an **open question**: the rule carries
+  `params.shares_required = null` until the owner defines which shares count.
+- **Strict verification for anyone who signs up through a referral link:**
+  location sharing at signup, identity/face verification, and a signed
+  consent/attestation. Design:
+  - A **third-party identity-verification vendor** does the identity and face
+    check. Candidates by name only: **Stripe Identity** (already used by the
+    Whip routes, `workers/mccluster/src/whip/identity-gateway.js`) or
+    **Persona**. The owner picks; no keys or integration are added here.
+  - `action_member_verifications` stores **status only**: vendor name, vendor
+    reference, consent/attestation versions and dates, location consent date
+    and precision, verified/expiry dates, and the date by which the vendor must
+    have deleted biometric data. It **never** stores a face image, a biometric
+    template, an ID document, a document number or a date of birth (the
+    `at_night_verifications` pattern). RLS forced; written only by the server
+    (vendor webhook); a member reads their own row.
+  - **Biometric consent** needs explicit, written, purpose-specific consent text
+    before capture, a published **retention schedule**, and deletion when the
+    purpose ends or within the statutory limit, under Illinois **BIPA** and the
+    similar Texas (CUBI) and Washington (RCW 19.375 / My Health My Data)
+    regimes; no sale or profit from biometric data. **Owner/legal decision:**
+    counsel approves the consent text, retention period and vendor terms
+    before the rule can be signed off.
+  - **Location** is consented, minimized and stored coarse (the existing
+    `action_globe_member_regions` region key) unless a precise location is
+    strictly needed; precise GPS stays opt-in and separate.
+
+## 2b. The Whip Equipped hand-off and the voter-registration rule
+
+- **Whip Equipped LLC is Matthew's separate company,
+  never a McCluster Corp brand** (`docs/control-plane/DOMAINS-AND-ENTITIES.md`). The unlock is a
+  **cross-entity partner hand-off** with its own data boundary and consent:
+  McCluster passes only "this member is eligible to apply" (and only with the
+  member's consent), never their mission, memo or verification records.
+- Reuse what exists: Whip's schema (`supabase/replay_migrations/0037_whip_mobility.sql`:
+  `drivers`, `rides`, `identity_verifications` via Stripe Identity,
+  `partner_referrals`; production: 1 driver, 0 identity verifications) and its
+  routes on the one Worker (`workers/mccluster/src/whip/`). Nothing is
+  duplicated.
+- **Eligibility to apply, never driver status.** Drivers still pass Whip's own
+  flow: identity verification, background check, insurance, and the TNC
+  licensing their jurisdiction requires. The McCluster unlock grants only the
+  right to start that application and to see the transport layer.
+- **The voter-registration rule ships DISABLED with `requires_counsel_signoff =
+  true`.** Paying or rewarding people per voter registration is restricted:
+  federal law makes it a crime to pay or offer to pay anyone *for registering*
+  to vote in a federal election (52 U.S.C. § 10307(c)), so the registrant may
+  never receive anything; and many states restrict paying registration-drive
+  workers per registration or by quota. Whether a non-cash unlock for the
+  *assister* falls under those state rules is exactly the question for counsel.
+  A nonprofit's registration work must
+  be **nonpartisan**. Before it can be enabled, counsel must approve whether a
+  non-monetary unlock tied to registration assistance is permissible at all,
+  and in which states.
+- **What may count, if counsel approves:** only verifiable, nonpartisan
+  registration-assistance actions (for example a completed hand-off to the
+  official state portal or vote.gov, reviewed like a mission proof).
+  **Never collect or store how anyone votes**, their party, or any **voter-file** data.
+  No counting source is built: `action_unlock_progress` answers
+  `counting_source_pending_counsel` for this rule even if someone enables it.
+- These are **owner/legal decisions**.
 
 ## 3. The memo review loop
 
@@ -338,7 +435,7 @@ Supabase table editor as the owner); policy team management beyond
 1. **Artist ↔ fellow:** may a creator/business account also be a fellow?
    Default here: yes (`creator_exclusive = false`).
 2. **All three starter missions, or any of them?** Default: all three
-   (`min_kinds = null`); one UPDATE changes it.
+   (`min_count = null`); one UPDATE changes it.
 3. **Which legal entity runs the fellowship, and which runs the campaign
    workspace?** Default assumption: McCluster Corp (charity) runs the
    nonpartisan fellowship; campaign software waits for a separate entity and
@@ -352,6 +449,12 @@ Supabase table editor as the owner); policy team management beyond
    its Connecticut `region_key`)?
 6. Who besides the owner may review memos? Today the check is
    `eu_is_admin()`.
+7. **E=Up "plus shares":** which shares count, and how many?
+8. **Identity vendor:** Stripe Identity (already in the Whip routes) or Persona,
+   and the biometric consent text and retention period (counsel).
+9. **Voter-registration unlock:** counsel's answer on whether any unlock may be
+   tied to registration assistance, and in which states.
+10. **Which free layer** do logged-out visitors get (today: flights)?
 
 ## 9. Production apply checklist (owner approval required)
 
@@ -370,7 +473,11 @@ Supabase table editor as the owner); policy team management beyond
    production ledger, drift contract).
 6. Create the first state cohort(s) with `program = 'policy_fellowship'` and a
    `region_key`.
-7. Later, separately: reconcile `canon_source_id` with the evidence canon;
+7. Leave `equity_uprise_activation` and `whip_transport_partner` disabled. To
+   enable either: counsel signs off (`counsel_signoff_at`, `counsel_signoff_ref`),
+   the vendor/consent work (E=Up) or the counting source (Whip) is built and
+   reviewed, then `enabled = true`.
+8. Later, separately: reconcile `canon_source_id` with the evidence canon;
    unify the CCTV "completed mission" predicate; enable a legislation source
    after its terms are reviewed.
 

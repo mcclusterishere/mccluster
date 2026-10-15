@@ -25,6 +25,8 @@ apply supabase/migrations/20261014013557_action_globe_regions.sql
 apply supabase/migrations/20261014020454_action_policy_memo_bounties.sql
 # creator accounts: only the columns the ladder's creator_exclusive switch reads
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "create table if not exists public.creator_billing_subscriptions(stripe_subscription_id text primary key, owner_user_id uuid, status text, current_period_end timestamptz)" >/dev/null
+# referral codes: only the columns the verified-referral rule reads (20260930235851_uprise_action_network)
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "create table if not exists public.action_participants(campaign_id text not null, user_id uuid not null, referral_code text not null unique, referred_by text, primary key (campaign_id, user_id))" >/dev/null
 apply supabase/pending/policy_fellowship_ladder_v1.sql
 # applying twice must be harmless
 apply supabase/pending/policy_fellowship_ladder_v1.sql
