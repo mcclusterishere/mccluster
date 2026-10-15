@@ -10,7 +10,7 @@
      (action_unlock_rules), not code: which kinds, how many, and whether a
      creator account excludes a member (default: it does not). Every other
      unlock (public layer, member layers, Equity Uprise activation, the Whip
-     Equipped partner hand-off) is a row in the same table.
+     Equipped sign-up hand-off) is a row in the same table.
    - The memo: draft -> submitted -> in_review -> approved | declined |
      changes_requested | owner_edited, and back to submitted. Every
      submission and every owner edit is an immutable version; an owner edit

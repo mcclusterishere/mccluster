@@ -208,7 +208,7 @@ Client-side shading is presentation only; the Worker or the RPC enforces.
 | L1 Creator / business | Post and act in the Action Network; the CRM lives here | (future row `action_network_post`, `creator_account`) | **gap:** in the code inspected, posting is not gated on a creator capability; the post path must read this rule before fans become read-only |
 | Starter missions → Policy Fellowship | three verified starter kinds → state cohort seat | `policy_fellowship` (`starter_kinds`) | enabled; unchanged |
 | Equity Uprise (E=Up) activation | activates E=Up for the member | `equity_uprise_activation` (`verified_referrals`, 3) | **disabled**, `requires_counsel_signoff` |
-| Fellow + 10 registration assists → Whip Equipped hand-off | the "Whip Equipped transport" globe layer and **eligibility to apply** as a driver in Whip's app | `whip_transport_partner` (`registration_assists`, 10, `requires_fellow`) | **disabled**, `requires_counsel_signoff`, no counting source |
+| Signed in → Whip Equipped hand-off | the "Whip Equipped transport" globe layer and **eligibility to apply** as a driver in Whip's app (rides not live yet) | `whip_transport_partner` (`signed_in`) | enabled; no fellowship, mission or voter gate (owner, 2026-10-15) |
 
 **Funding (fans → creators/businesses).** Only through the existing payment
 processor (Stripe) and the existing ledgers: `creator_billing_subscriptions`
@@ -250,13 +250,21 @@ payment path is designed here; money switches stay with the owner.
     `action_globe_member_regions` region key) unless a precise location is
     strictly needed; precise GPS stays opt-in and separate.
 
-## 2b. The Whip Equipped hand-off and the voter-registration rule
+## 2b. The Whip Equipped hand-off (owner, 2026-10-15: no voter rule)
 
+- **The voter-registration unlock is cancelled** (owner, 2026-10-15: "I'm not
+  gonna do the voter rule"). There is no rule row, no requirement kind and no
+  counting source for it, and nothing counts registrations anywhere.
 - **Whip Equipped LLC is Matthew's separate company,
   never a McCluster Corp brand** (`docs/control-plane/DOMAINS-AND-ENTITIES.md`). The unlock is a
-  **cross-entity partner hand-off** with its own data boundary and consent:
-  McCluster passes only "this member is eligible to apply" (and only with the
-  member's consent), never their mission, memo or verification records.
+  **cross-entity hand-off** with its own data boundary and consent:
+  McCluster passes only "this member is signed in and wants to sign up" (and
+  only with the member's consent), never their mission, memo or verification
+  records.
+- **Anyone signed in qualifies.** `whip_transport_partner` is `signed_in`,
+  enabled, with no fellowship or mission gate: people should be able to sign up
+  to Whip Equipped quickly. Rides are not live yet; trying to use the service
+  says so and asks drivers (or people who know one) to sign up today.
 - Reuse what exists: Whip's schema (`supabase/replay_migrations/0037_whip_mobility.sql`:
   `drivers`, `rides`, `identity_verifications` via Stripe Identity,
   `partner_referrals`; production: 1 driver, 0 identity verifications) and its
@@ -266,24 +274,8 @@ payment path is designed here; money switches stay with the owner.
   flow: identity verification, background check, insurance, and the TNC
   licensing their jurisdiction requires. The McCluster unlock grants only the
   right to start that application and to see the transport layer.
-- **The voter-registration rule ships DISABLED with `requires_counsel_signoff =
-  true`.** Paying or rewarding people per voter registration is restricted:
-  federal law makes it a crime to pay or offer to pay anyone *for registering*
-  to vote in a federal election (52 U.S.C. § 10307(c)), so the registrant may
-  never receive anything; and many states restrict paying registration-drive
-  workers per registration or by quota. Whether a non-cash unlock for the
-  *assister* falls under those state rules is exactly the question for counsel.
-  A nonprofit's registration work must
-  be **nonpartisan**. Before it can be enabled, counsel must approve whether a
-  non-monetary unlock tied to registration assistance is permissible at all,
-  and in which states.
-- **What may count, if counsel approves:** only verifiable, nonpartisan
-  registration-assistance actions (for example a completed hand-off to the
-  official state portal or vote.gov, reviewed like a mission proof).
-  **Never collect or store how anyone votes**, their party, or any **voter-file** data.
-  No counting source is built: `action_unlock_progress` answers
-  `counting_source_pending_counsel` for this rule even if someone enables it.
-- These are **owner/legal decisions**.
+- **Never collect or store how anyone votes**, their party, or any **voter-file** data
+  (section 6 keeps the election line for everything else).
 
 ## 3. The memo review loop
 
@@ -486,9 +478,7 @@ Supabase table editor as the owner); policy team management beyond
 7. **E=Up "plus shares":** which shares count, and how many?
 8. **Identity vendor:** Stripe Identity (already in the Whip routes) or Persona,
    and the biometric consent text and retention period (counsel).
-9. **Voter-registration unlock:** counsel's answer on whether any unlock may be
-   tied to registration assistance, and in which states.
-10. **Which free layer** do logged-out visitors get (today: flights)?
+9. **Which free layer** do logged-out visitors get (today: flights)?
 
 ## 9. Production apply checklist (owner approval required)
 
@@ -507,10 +497,10 @@ Supabase table editor as the owner); policy team management beyond
    production ledger, drift contract).
 6. Create the first state cohort(s) with `program = 'policy_fellowship'` and a
    `region_key`.
-7. Leave `equity_uprise_activation` and `whip_transport_partner` disabled. To
-   enable either: counsel signs off (`counsel_signoff_at`, `counsel_signoff_ref`),
-   the vendor/consent work (E=Up) or the counting source (Whip) is built and
-   reviewed, then `enabled = true`.
+7. Leave `equity_uprise_activation` disabled. To enable it: counsel signs off
+   (`counsel_signoff_at`, `counsel_signoff_ref`), the vendor/consent work is
+   built and reviewed, then `enabled = true`. `whip_transport_partner` ships
+   enabled for any signed-in member.
 8. Later, separately: after the canon (PR #438) is applied, add the FKs for
    `canon_evidence_id` / `canon_source_record_id` and the ingest path from a
    lead to `intel_evidence`;

@@ -61,8 +61,9 @@ need five consenting members per region and are not seeded.
 
 Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
 (owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
-public layer, member layers, the policy ladder, and the Equity Uprise and
-Whip Equipped rules, which ship disabled pending counsel), status-only strict
+public layer, member layers, the policy ladder, the Equity Uprise rule, which
+ships disabled pending counsel, and the Whip Equipped hand-off, open to any
+signed-in member; there is no voter-registration rule), status-only strict
 referral verification, starter missions (help a person, write a song, attend a
 rally), state Policy Fellowship cohorts and policy teams on
 `action_cohorts`, the memo review loop (immutable versions with diffs, an
