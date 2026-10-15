@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 360,
+  "candidate_count": 363,
   "capability_source_count": 99,
-  "support_only_count": 261,
-  "checks_total": 1343,
-  "checks_passed": 1343,
+  "support_only_count": 264,
+  "checks_total": 1355,
+  "checks_passed": 1355,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -303,6 +303,7 @@
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/README.md",
+    "supabase/pending/action_globe_demo_pins_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
@@ -362,19 +363,21 @@
     "workers/mccluster/src/platform-api.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+    "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/human-uprise-site.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
+    "workers/mccluster/test/world-layers.test.mjs",
     "world-news.html"
   ],
   "checks": [
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "360 entries"
+      "detail": "363 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6833,6 +6836,66 @@
     },
     {
       "name": "workers/mccluster/src/entry.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-layers.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-layers.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-layers.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-layers.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

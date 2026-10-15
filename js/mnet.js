@@ -245,6 +245,44 @@
     setView("feed");
     loadFeed(true);
   }
+  /* THE WORLD FIRST (owner, 2026-10-15: "me as a signed in user … I see no
+     globe"). A member whose profile, or whose private contact details, is
+     not finished used to get the form instead of the World. Now the World
+     is theirs like anyone's (public posts, every pin, every layer), the
+     step waits in a card where the composer would be, and the actions that
+     need it (post, join, connect, the member rooms) open it with the
+     reason. The server refuses those actions anyway until it is done. */
+  function needsStep() {
+    var s = state.boot && state.boot.next_step;
+    return s === "profile" || s === "contact" ? s : "";
+  }
+  function paintFinishCard() {
+    var card = $("mnFinishCard"), step = needsStep();
+    if (!card) return;
+    card.hidden = !step;
+    if ($("mnComposer")) $("mnComposer").hidden = !!step;
+    if (!step) return;
+    var contact = step === "contact";
+    $("mnFinishTitle").textContent = contact ? "Complete your contact details." : "Finish your profile.";
+    $("mnFinishWhy").textContent = contact
+      ? "Your private mailing address is part of entering Human Uprise. It is never shown on your profile."
+      : "Pick a username so people can find and mention you. Then post, connect and join missions.";
+    $("mnFinishGo").textContent = contact ? "Complete contact details \u2192" : "Finish your profile \u2192";
+  }
+  function askToFinish(why) {
+    var step = needsStep();
+    if (!step) return false;
+    track("finish_step_prompt", { step: step, reason: String(why || "act").slice(0, 24) });
+    if (step === "contact") { location.assign("account.html?complete=contact"); return true; }
+    fillProfileForm(false);
+    var back = $("mnProfileBack"); if (back) { back.hidden = false; back.textContent = "\u2190 Back to the World"; }
+    setStatus($("mnProfileStatus"), { post: "Finish your profile to post.", mission: "Finish your profile to join a mission.", connect: "Finish your profile to connect with members.",
+      profile: "Finish your profile to open it.", messages: "Finish your profile to message members.", groups: "Finish your profile to join groups.", discover: "Finish your profile to find people.",
+      live: "Finish your profile to watch live rooms.", clips: "Finish your profile to clip songs." }[why] || "Finish your profile to do that.");
+    showGate("profile");
+    window.scrollTo(0, 0);
+    return true;
+  }
   /* the sign-in panel, opened from the World: the reason and the way back
      sit at the top, so neither ends up under the keyboard or the bar */
   function openSignIn(mode, why) {
@@ -265,7 +303,8 @@
   function askToSignIn(why) {
     var line = { save:"Sign in to save posts.",
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
-      groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views." }[why] || "Sign in to do that.";
+      groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
+      layers:"Sign in to see satellites and space missions on the Earth." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
   }
@@ -273,18 +312,21 @@
   function bootstrap() {
     return api("/v1/mnet/bootstrap?app_key=" + encodeURIComponent(APP)).then(function (boot) {
       state.boot = boot;
-      if (boot.next_step === "contact") {
-        /* Private contact completion is a prerequisite for entering the
-           Human Uprise. The mailing address lives in fan_profiles, never
-           network_profiles, so it is not exposed on the social profile. */
-        location.replace("account.html?complete=contact");
-        return;
+      if (needsStep()) {
+        /* the World first (needsStep, above): the public posts, every pin,
+           and the step in a card where the composer would be. The private
+           mailing address lives in fan_profiles, never network_profiles. */
+        if (needsStep() === "profile") fillProfileForm(false);
+        showGate("app");
+        setView("feed");
+        paintSelf();
+        paintFinishCard();
+        $("mnBell").hidden = false;
+        loadRail();
+        requestAnimationFrame(function () { moveThumb(false); });
+        return loadFeed(true);
       }
-      if (boot.next_step === "profile") {
-        fillProfileForm(false);
-        showGate("profile");
-        return;
-      }
+      paintFinishCard();
       showGate("app");
       setView("feed");
       paintSelf();
@@ -417,6 +459,8 @@
       }
     }); }).then(function (boot) {
       state.boot = boot;
+      paintFinishCard();
+      var back = $("mnProfileBack"); if (back) back.hidden = true;
       showGate("app");
       paintSelf();
       var missionDeepLink=/[?&](mission=|view=missions(?:&|$))/.test(location.search);
@@ -424,7 +468,8 @@
         setView("missions");
         openDeepLinkedMission();
       }else{
-        setView("profile");
+        /* the World first: a finished profile lands back on the feed, not on a profile page */
+        setView(needsStep() ? "feed" : "profile");
       }
       return loadFeed(true).then(function () {
         var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
@@ -718,6 +763,7 @@
     root.querySelectorAll("[data-take-mission]").forEach(function (a) {
       a.onclick = function (e) {
         e.preventDefault();
+        if (askToFinish("mission")) return;
         var content = a.getAttribute("data-content"), source = a.getAttribute("data-source"), missionId = a.getAttribute("data-take-mission");
         if (content && /^[0-9a-f-]{36}$/i.test(content)) {
           missions.content = content;
@@ -847,11 +893,12 @@
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
-    var path = (state.guest ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
+    var publicRead = state.guest || !!needsStep();
+    var path = (publicRead ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
     /* Time rewind: the first page starts before the chosen moment; later pages follow the server's cursor as usual */
     else if (reset && state.world.rewind) path += "&before=" + encodeURIComponent(new Date(Date.now() - state.world.rewind * 3600e3).toISOString());
-    var read = state.guest ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
+    var read = publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
     return read.then(function (data) {
       var incoming = data.items || [];
       state.feed = reset ? incoming : state.feed.concat(incoming);
@@ -1411,6 +1458,7 @@
 
   function setView(name) {
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
+    if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
     state.currentView = name;
     track("mnet_view", { view:name });
     ["live","clips","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
@@ -1624,7 +1672,8 @@
     });
     wireAvatarPicker();
     wireTrackPicker();
-    $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
+    $("mnProfileBack").onclick = function () { showGate("app"); setView(needsStep() ? "feed" : "profile"); };
+    $("mnFinishGo").onclick = function () { askToFinish("act"); };
     $("mnPost").onclick = createPost;
     $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };
     $("mnDiscoverGo").onclick = loadDiscover;
@@ -2803,11 +2852,44 @@
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
+      } else if (d.type === "hu:ask-sign-in") {
+        /* a guest tapped a members-only layer: the reason, and the way back */
+        askToSignIn(d.reason === "layers" ? "layers" : "act");
+      } else if (d.type === "hu:layer" && typeof d.layer === "string") {
+        paintLayerLine(d);
       } else if (d.type === "hu:status" && typeof d.text === "string") {
         if (caption) caption.textContent = d.text.slice(0, 200);
         if (state.world.focus && state.world.focus.latest) setWorldFocus(null);
       }
     });
+    /* THE DATA LAYERS' LINE (owner, 2026-10-15). What the Earth shows besides
+       missions, written over it from the globe's hu:layer messages, and the
+       one lead that rides with Flights: "don't want to fly commercial, fly
+       private with Vaunt", the owner's own referral link, as on the front
+       page's VR wall. Counts come from the Worker's snapshot; nothing here
+       is invented, and a layer that could not load says so. */
+    var VAUNT_LEAD = "https://vauntapi.flyvaunt.com/referral/nuao1K";
+    state.world.layers = {};
+    function fmtCount(n) { n = Number(n) || 0; try { return n.toLocaleString("en-US"); } catch (e) { return String(n); } }
+    function paintLayerLine(d) {
+      var box = $("mnWorldLayers");
+      if (!box) return;
+      if (d.on) state.world.layers[d.layer] = d; else delete state.world.layers[d.layer];
+      var rows = [], f = state.world.layers.flights, s = state.world.layers.satellites, l = state.world.layers.launches;
+      if (f) rows.push(f.unavailable ? "<span>Flights are unavailable right now.</span>"
+        : "<span>" + esc(fmtCount(f.count)) + " aircraft in the air right now" + (f.stale ? " (last snapshot)" : "") + ".</span> " +
+          '<a class="mn__world-lead" href="' + VAUNT_LEAD + '" target="_blank" rel="noopener sponsored">Don\u2019t want to fly commercial? Fly private with Vaunt \u2192</a>');
+      if (s) rows.push("<span>" + (s.unavailable ? "Satellites are unavailable right now." : esc(fmtCount(s.count)) + " satellites overhead, moving live.") + "</span>");
+      if (l) {
+        var nx = l.next && l.next[0];
+        rows.push("<span>" + (l.unavailable ? "Launches are unavailable right now." : esc(fmtCount(l.count)) + " launches coming up" +
+          (nx ? " \u00b7 next: " + esc(String(nx.name || "").split("|")[0].trim()) + (nx.net && !isNaN(new Date(nx.net)) ? " \u00b7 " + esc(new Date(nx.net).toLocaleDateString("en-US", { month: "short", day: "numeric" })) : "") + (nx.where ? " \u00b7 " + esc(nx.where) : "") : "") + ".") + "</span>");
+      }
+      if (d.failed && !d.on) rows.push("<span>" + esc(d.layer.charAt(0).toUpperCase() + d.layer.slice(1)) + " could not load right now.</span>");
+      box.innerHTML = rows.join("<br>");
+      box.hidden = !rows.length;
+      track("world_layer", { layer: String(d.layer).slice(0, 16), on: !!d.on, count: Number(d.count) || 0 });
+    }
     /* the Explore chips: Missions steps through the pins, Regional impact
        shows or hides the counted regions, Near me asks the globe to locate */
     var chipAt = -1;
@@ -2922,6 +3004,7 @@
       if (!f) return;
       /* the emblem as a guest: the reason is this mission, not the whole list */
       if (state.guest) { askToSignIn("mission"); return; }
+      if (askToFinish("mission")) return;
       missions.content = ""; missions.source = ""; missions.attributedMission = "";
       setView("missions");
       openMission(f.mission_id);

@@ -2679,6 +2679,27 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
+      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/world-layers.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/world-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World's data-layer routes: trimming, caching, stale answers and member gating. Not a building capability."
+    },
+    {
       "path": "workers/mccluster/src/human-uprise/router.js",
       "classification": "runtime_support",
       "capability_ids": [],

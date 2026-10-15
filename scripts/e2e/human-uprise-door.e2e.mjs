@@ -75,6 +75,8 @@ const SESSION = { token: jwt('house'), fresh: jwt('world') };
 const ME = { m_uid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', mccluster_id: 'fixture.you', display_name: 'Fixture You' };
 const carried = { handoff: [], verify: [], bootstrap: [] };
 
+const apiReads = [];
+let nextStep = null;   // the bootstrap's next_step for the scenario that needs one
 async function routeBackends(ctx) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
@@ -108,6 +110,7 @@ async function routeBackends(ctx) {
   await ctx.route('https://api.mccluster.org/**', async (route) => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    apiReads.push({ path: u.pathname, auth: !!(await req.allHeaders()).authorization });
     if (u.pathname === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });
     /* the sign-in handoff: the arriving page's bearer and Origin, answered with a token hash */
     if (u.pathname === '/v1/auth/handoff' && req.method() === 'POST') {
@@ -118,7 +121,7 @@ async function routeBackends(ctx) {
     }
     if (u.pathname === '/v1/mnet/bootstrap') {
       carried.bootstrap.push({ origin: (await req.allHeaders()).origin || '', authorization: (await req.allHeaders()).authorization || '' });
-      return json(route, { identity: ME, profile: ME, next_step: null, tour_done_at: new Date().toISOString() });
+      return json(route, { identity: ME, profile: nextStep ? null : ME, next_step: nextStep, tour_done_at: new Date().toISOString() });
     }
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: POSTS.map((p) => ({ ...p, post: { ...p.post, author_m_uid: ME.m_uid, media: [] } })), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: [] });
@@ -365,6 +368,40 @@ const settleWorld = async (page) => {
   check(S, 'only the root forwards: another page with a view query stays put', page.url() === `${BASE}/listen.html?view=feed`, page.url());
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
+}
+
+/* ---------- 3d. the World first (owner, 2026-10-15: "me as a signed in user … I see no globe"): a member whose profile is unfinished ---------- */
+{
+  const S = 'finish-profile';
+  nextStep = 'profile';
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
+  await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
+  const seen = await page.evaluate(() => ({ signedIn: document.body.classList.contains('mcc-auth-in'), app: !document.getElementById('mnApp').hidden, gate: !document.getElementById('mnProfileGate').hidden, world: document.getElementById('mnWorld').getBoundingClientRect().height, frame: !!document.querySelector('#mnWorldFrame'), card: !document.getElementById('mnFinishCard').hidden, cardText: document.getElementById('mnFinishCard').textContent.replace(/\s+/g, ' ').trim(), composer: document.getElementById('mnComposer').hidden, posts: document.querySelectorAll('#mnFeed [data-post-id]').length }));
+  check(S, 'signed in with an unfinished profile, the World is on screen: the Earth, the strip, the posts', seen.signedIn && seen.app && !seen.gate && seen.world > 200 && seen.frame && seen.posts > 0, seen);
+  check(S, 'the step waits in a card where the composer would be', seen.card && /Finish your profile\./.test(seen.cardText) && seen.composer, { card: seen.card, composer: seen.composer, text: seen.cardText });
+  const reads = apiReads.filter((r) => /\/v1\/mnet\/(public-feed|feed)$/.test(r.path));
+  check(S, 'the feed read is the public one until the profile exists', reads.length > 0 && reads.every((r) => r.path === '/v1/mnet/public-feed' && !r.auth), reads);
+  const globe = page.frame({ url: /action-globe\.html/ });
+  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: join(OUT, 'finish-profile-iphone.png') });
+  check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  /* the join on the mission card asks to finish, with the reason, and the way back is the World */
+  await page.waitForSelector('#mnWorldFocusJoin', { timeout: 15000 });
+  await page.click('#mnWorldFocusJoin');
+  await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
+  const gate = await page.evaluate(() => ({ status: document.getElementById('mnProfileStatus').textContent, back: document.getElementById('mnProfileBack').hidden ? null : document.getElementById('mnProfileBack').textContent, app: !document.getElementById('mnApp').hidden }));
+  check(S, 'joining a mission opens the profile form with the reason and a way back to the World', /Finish your profile to join a mission\./.test(gate.status) && gate.back === '← Back to the World' && !gate.app, gate);
+  await page.click('#mnProfileBack');
+  await page.waitForSelector('#mnApp:not([hidden])', { timeout: 10000 });
+  check(S, 'Back returns to the World, not to a profile page', (await page.evaluate(() => !document.getElementById('mnFeedView').hidden && document.getElementById('mnWorld').getBoundingClientRect().height > 200)));
+  await page.click('#mnFinishGo');
+  await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
+  check(S, 'the card opens the same form', await page.evaluate(() => !document.getElementById('mnProfileGate').hidden));
+  check(S, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+  nextStep = null;
 }
 
 /* ---------- 4. one M Account, every host: a member taps the Globe, crosses to the World's door and comes back ---------- */

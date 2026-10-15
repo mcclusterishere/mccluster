@@ -139,6 +139,14 @@ header strong{display:none}
 @media(prefers-reduced-motion:reduce){.globe-ctl{transition:none}}
 /* the creator-only audience layer switch: hidden unless the World says this member is a creator */
 .globe-ctl[hidden]{display:none}
+/* THE DATA LAYERS (owner, 2026-10-15): flights for everyone; satellites and launches for members, locked with a red dot until they sign in */
+.globe-data{position:absolute;z-index:6;left:10px;bottom:34px;display:flex;gap:8px}
+.globe-data .globe-ctl{position:relative;width:36px;height:36px}
+.globe-data .globe-ctl svg{width:17px;height:17px}
+.globe-ctl.is-locked{opacity:.62}
+.globe-ctl.is-locked::after{content:"";position:absolute;right:-1px;top:-1px;width:10px;height:10px;border-radius:50%;background:#ff3d5e;box-shadow:0 0 0 2px #0d0e12}
+.globe-ctl[aria-busy="true"]{opacity:.55;cursor:progress}
+.globe-surface-network .globe-data{bottom:34px}
 .globe-ctl--audience{position:absolute;right:calc(100% + 8px);bottom:0}
 .globe-ctl--audience[aria-pressed="true"]{background:rgba(79,209,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(79,209,255,.7),0 0 16px -6px rgba(79,209,255,.7)}
 /* a faint instrument scale down the left edge of the frame (owner's mockups): decoration only, under nothing a hand needs */

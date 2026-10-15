@@ -217,6 +217,9 @@
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
           <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
           <p class="mn__world-tag" aria-hidden="true"><i></i>Global missions <b id="mnWorldTagCount"></b></p>
+          <!-- THE DATA LAYERS (owner, 2026-10-15): what the Earth is showing besides missions, and the one lead
+               that rides with Flights: the owner's Vaunt referral. Written by the globe's hu:layer messages. -->
+          <p class="mn__world-layers" id="mnWorldLayers" aria-live="polite" hidden></p>
         </section>
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
@@ -283,6 +286,13 @@
         <aside class="mn__guest-card" id="mnGuestCard">
           <p><strong>Member posts live here.</strong> These are the public ones. Sign in to see your network, to post, and to join or fund a mission.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
+        </aside>
+        <!-- THE WORLD FIRST (owner, 2026-10-15: a signed-in member saw no globe). A member who has not finished
+             their profile, or their private contact details, still gets the whole World: this card sits where
+             the composer would, and posting or joining asks them to finish. Nothing is hidden behind the form. -->
+        <aside class="mn__guest-card mn__finish-card" id="mnFinishCard" hidden>
+          <p><strong id="mnFinishTitle">Finish your profile.</strong> <span id="mnFinishWhy">Pick a username so people can find and mention you. Then post, connect and join missions.</span></p>
+          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" id="mnFinishGo">Finish your profile →</button></div>
         </aside>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
