@@ -23,7 +23,8 @@ and distribution briefs. It is not applied in production. API Economic Core CI
 applies it only to its isolated rebuilt database before the clipping regression.
 Promote it using the steps above after production application is verified.
 
-Pending: `antisocial_get_social_completion_v1.sql` completes the three-level
+Promoted: `antisocial_get_social_completion_v1.sql` is
+`supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql` (applied, mission open). It completes the three-level
 Anti-Social mission on top of the applied draft
 (`20261014185154_antisocial_get_social_three_levels_draft.sql`): the writers
 for `network_connections` (request, answer, withdraw, the pair's state, my

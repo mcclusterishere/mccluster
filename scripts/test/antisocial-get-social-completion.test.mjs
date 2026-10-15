@@ -17,7 +17,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
-const SQL = 'supabase/pending/antisocial_get_social_completion_v1.sql';
+const SQL = 'supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql';
 
 test('connect through the platform: the server writes network_connections, members only call', async () => {
   const sql = await read(SQL);
@@ -36,7 +36,7 @@ test('connect through the platform: the server writes network_connections, membe
   assert.doesNotMatch(sql, /grant (insert|update|delete) on public\.network_connections to authenticated/, 'no direct table writes for members');
   /* the chain is proven on a real database */
   const runner = await read('scripts/test-antisocial-db.sh');
-  assert.match(runner, /apply supabase\/migrations\/20261014185154_antisocial_get_social_three_levels_draft\.sql\napply supabase\/pending\/antisocial_get_social_completion_v1\.sql/);
+  assert.match(runner, /apply supabase\/migrations\/20261014185154_antisocial_get_social_three_levels_draft\.sql\napply supabase\/migrations\/20261015000455_antisocial_get_social_completion_v1\.sql/);
   assert.match(runner, /antisocial_connections\.behaviour\.sql/);
   await access(join(ROOT, 'supabase/tests/antisocial_connections.behaviour.sql'));
   await access(join(ROOT, 'supabase/tests/mnet_network_tables.stub.sql'));

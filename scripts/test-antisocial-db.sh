@@ -19,7 +19,7 @@ apply supabase/migrations/20261002061056_action_network_gamification_v1.sql
 apply supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql
 apply supabase/migrations/20261002135458_action_network_feed_shares_v1.sql
 apply supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql
-apply supabase/pending/antisocial_get_social_completion_v1.sql
+apply supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/antisocial_connections.behaviour.sql
 if [ -f supabase/tests/antisocial_levels.behaviour.sql ]; then
   psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/antisocial_levels.behaviour.sql

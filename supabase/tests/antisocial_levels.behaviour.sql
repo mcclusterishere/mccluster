@@ -1,5 +1,5 @@
 -- Behaviour tests for the three-level Anti-Social mission as completed by
--- supabase/pending/antisocial_get_social_completion_v1.sql: levels 1 and 2
+-- supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql: levels 1 and 2
 -- through the draft's own RPCs, then Connect → Collaborate → Publish for
 -- level 3, one review settling both members, the awards, the record and the
 -- public card. Runs after antisocial_connections.behaviour.sql in the same

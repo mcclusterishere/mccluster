@@ -14,6 +14,15 @@
 -- production applies it (supabase/pending/README.md). Every statement is
 -- idempotent.
 
+-- The original production connection table uses a composite primary key and
+-- predates the UUID column in the later CREATE TABLE IF NOT EXISTS migration.
+-- Add the stable UI/notification identifier without replacing that primary key.
+alter table public.network_connections
+  add column if not exists id uuid not null default gen_random_uuid();
+create unique index if not exists network_connections_id_key on public.network_connections(id);
+create unique index if not exists network_connections_pair_idx on public.network_connections
+  (least(requester_m_uid, addressee_m_uid), greatest(requester_m_uid, addressee_m_uid));
+
 -- ---------------------------------------------------------------------------
 -- A. CONNECT THROUGH THE PLATFORM.
 -- network_connections (requester, addressee, pending|accepted|declined, one

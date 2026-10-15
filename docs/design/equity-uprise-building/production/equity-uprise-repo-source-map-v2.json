@@ -1514,7 +1514,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -2232,6 +2232,13 @@
       "rationale": "Unapplied verified memo application eligibility."
     },
     {
+      "path": "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2251,13 +2258,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": "supabase/pending/antisocial_get_social_completion_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",

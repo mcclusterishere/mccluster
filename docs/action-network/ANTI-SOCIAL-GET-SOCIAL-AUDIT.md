@@ -222,7 +222,7 @@ F. **Open the mission** once A–E pass, in the same migration, with the
 
 ## Built on the audit (same day)
 
-- A: `supabase/pending/antisocial_get_social_completion_v1.sql` (connect
+- A: `supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql` (connect
   RPCs), the Worker's person route, Connect on the person view, the bell.
 - B: `publish_antisocial_collaboration`, `action_collaboration_posts`,
   `antisocial_collaborations_for_me`, `action_collaboration_cards`; Level 3

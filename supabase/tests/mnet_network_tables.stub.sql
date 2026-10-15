@@ -28,12 +28,12 @@ create table public.network_blocks(
   primary key(blocker_m_uid, blocked_m_uid)
 );
 create table public.network_connections(
-  id uuid primary key default gen_random_uuid(),
   requester_m_uid uuid not null references public.m_people(id) on delete cascade,
   addressee_m_uid uuid not null references public.m_people(id) on delete cascade,
-  status text not null default 'pending' check (status in ('pending','accepted','declined')),
+  status text not null default 'pending' check (status in ('pending','accepted','declined','cancelled')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  primary key (requester_m_uid, addressee_m_uid),
   check (requester_m_uid <> addressee_m_uid)
 );
 create unique index network_connections_pair_idx on public.network_connections(least(requester_m_uid, addressee_m_uid), greatest(requester_m_uid, addressee_m_uid));

@@ -257,7 +257,7 @@ How it works (audit and build record:
 - The mission is one row (`a17050c1-…`), with a level table and RPCs from
   the draft migration applied earlier today
   (`supabase/migrations/20261014185154_antisocial_get_social_three_levels_draft.sql`);
-  `supabase/pending/antisocial_get_social_completion_v1.sql` completes it
+  `supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql` completes it
   and opens it, and waits for production to apply it.
 - **Connect through the platform.** Connect on any member's profile (Connect
   → Requested → Connected; Accept / Decline when they asked first), answered
