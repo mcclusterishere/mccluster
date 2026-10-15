@@ -362,6 +362,13 @@
       "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
     },
     {
+      "path": "assets/img/equity-uprise-mark-white.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The owner-authorized white variant of the approved identity artwork (owner, 2026-10-15: paint it white): the tile-less mark's own shape and alpha, every visible pixel white, for the World's dark grounds. Branding asset, not a capability."
+    },
+    {
       "path": "assets/img/eu-favicon.png",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -1580,6 +1587,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World screen's navigation and emblem/Fund contract; names the Equity Uprise emblem path. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-first-and-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
     },
     {
       "path": "scripts/test/action-network.test.mjs",

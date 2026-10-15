@@ -22,11 +22,11 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.match(js, /if \(needsStep\(\)\) \{[\s\S]{0,400}showGate\("app"\);\n        setView\("feed"\);\n        paintSelf\(\);\n        paintFinishCard\(\);/, 'the World, not the form');
   assert.doesNotMatch(js, /location\.replace\("account\.html\?complete=contact"\)/, 'no redirect away from the World at boot');
   assert.doesNotMatch(js, /if \(boot\.next_step === "profile"\) \{\n        fillProfileForm\(false\);\n        showGate\("profile"\);/, 'the old gate is gone');
-  assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\);/, 'public posts until the step is done');
+  assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'public posts until the step is done');
   assert.match(js, /if \(askToFinish\("mission"\)\) return;/, 'joining a mission asks to finish');
   assert.match(js, /\$\("mnMissionJoin"\)\.addEventListener\("click",function\(e\)\{if\(askToFinish\("mission"\)\)return;joinMission\(e\);\}\);/, 'the dialog\'s join too: missions may be browsed, the join itself asks');
   assert.match(js, /if \(name !== "feed" && name !== "missions" && askToFinish\(name\)\) return;/, 'the member rooms ask to finish; the feed and the missions stay open');
-  assert.match(js, /\$\("mnFinishGo"\)\.onclick = function \(\) \{ askToFinish\("act"\); \};/);
+  assert.match(js, /\$\("mnFinishGo"\)\.onclick = function \(\) \{\n      if \(state\.stall === "signin"\) \{ openSignIn\("signin", "Your sign-in ended\. Sign in again\."\); return; \}\n      if \(state\.stall === "retry"\) \{ retryStall\(\); return; \}\n      askToFinish\("act"\);\n    \};/, 'the card\'s one button: sign in again, try again, or finish the step');
   assert.match(js, /setView\(needsStep\(\) \? "feed" : "profile"\)/, 'a finished profile lands back on the feed');
   assert.doesNotMatch(js, /location\.assign\("account\.html\?complete=contact"\)/, 'the contact step is page 2 of the onboarding in the World, not a redirect to the account page');
   assert.match(js, /\$\("mnFinishTitle"\)\.textContent = contact \? "Complete your details\." : "Finish your profile\.";/);
@@ -149,4 +149,26 @@ test('Full world is a full pane: the Earth edge to edge, the World\'s chrome at 
   assert.doesNotMatch(explore, /max-width\s*:\s*\d+px\)/, 'mobile first: min-width queries only');
   assert.match(explore, /@media\(min-width:700px\)\{\.globe-explore\{--hu-sheet-gap:12px\}\.globe-explore #deck\{left:50%;right:auto;width:min\(620px,calc\(100% - 32px\)\)/, 'wider screens only narrow and centre the sheet');
   assert.match(css, /\.globe-explore #deck\{position:fixed;inset:auto 0 var\(--hu-bar-h\) 0;z-index:6;height:auto;/, 'the sheet grows to the mission, not the old 15dvh strip');
+});
+
+test('a member whose World did not load still gets the World (owner, 2026-10-15: "logged in as Benji Chase … not seeing the globe")', async () => {
+  const html = await read('mnet.html'), js = await read('js/mnet.js'), css = await read('css/mnet.css');
+  const fn = js.slice(js.indexOf('function showSignedInLoadError(error)'), js.indexOf('function letSessionGo()'));
+  assert.match(fn, /if \(error && error\.status === 401\) return letSessionGo\(\);/, 'a session the API refuses is let go');
+  assert.match(fn, /state\.stall = "retry";\n    showGate\("app"\);\n    setView\("feed"\);/, 'anything else opens the World: the feed view, the Earth');
+  assert.doesNotMatch(fn, /You are signed in\. Human Uprise could not load the feed/, 'no message hidden inside a hidden view');
+  assert.match(js, /function letSessionGo\(\) \{\n    var done = function \(\) \{ state\.stall = "signin"; enterGuestWorld\(\); paintFinishCard\(\); \};/);
+  assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'the public posts while the member\'s own feed is not there');
+  assert.match(js, /\$\("mnFinishTitle"\)\.textContent = stall === "signin" \? "Your sign-in ended\." : "Your feed didn\\u2019t load\.";/);
+  assert.match(js, /if \(state\.stall === "retry"\) \{\n      var card = \$\("mnFinishCard"\);/, 'what needs the member\'s World waits on the card');
+  assert.match(js, /leaveGuestWorld\(\);\n      state\.stall = null;/, 'signing in again clears it');
+  assert.match(html, /<button class="mn__world-filter" type="button" id="mnStallSignIn" hidden>Sign in again<\/button>/);
+  assert.match(css, /\.mn-stall-signin #mnGuestCard \{ display: none; \}/);
+});
+
+test('the mark is white on the World\'s dark grounds, made from the supplied artwork\'s own shape (owner, 2026-10-15: "just paint it white")', async () => {
+  const html = await read('mnet.html'), js = await read('js/mnet.js'), agents = await read('AGENTS.md');
+  assert.match(html, /<img class="mn__brand-mark" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="36" height="36">/);
+  assert.match(js, /var EUP_MARK = '<img class="mn__eup" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="28" height="28">';/);
+  assert.match(agents, /Variants the owner has asked for\n  by name are theirs, not ours, and stay/, 'recorded where the logo rule lives, so nobody reverts it');
 });

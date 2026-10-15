@@ -94,7 +94,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
-    if (u.includes('/auth/v1/user')) return member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
+    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
@@ -137,6 +137,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
         { id: 'L2', name: 'Ariane 6 | Galileo L14', net: '2026-10-20T08:00:00Z', status: 'TBC', provider: 'Arianespace', pad: { name: 'ELA-4', location: 'Kourou, French Guiana', lat: 5.26, lon: -52.79 }, mission: { name: 'Galileo L14', type: 'Navigation' }, url: null }] });
     }
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
+    /* a bootstrap that fails: the World must still open (owner, 2026-10-15: "logged in as Benji Chase … not seeing the globe") */
+    if (u.pathname === '/v1/mnet/bootstrap' && world.bootFail && world.bootFail.length) { const st = world.bootFail.shift(); return json(route, { error: st === 401 ? 'sign in first' : 'upstream failed' }, st); }
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: asOf(world.posts).map(item), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
@@ -199,8 +201,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-async function open(device, { member, creator = true, verified = true }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0 }) {
   const world = freshWorld();
+  world.bootFail = bootFail.slice(); world.userCheck = userCheck;
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
@@ -281,7 +284,7 @@ if (runs('member-interactions')) {
   await page.waitForFunction((sel) => /12 joined/.test(document.querySelector(sel + ' .mn__actcard')?.textContent || ''), card, { timeout: 8000 }).catch(() => {});
   const banner = await page.textContent(`${card} .mn__actcard`);
   const eupJoin = await page.$eval(`${card} .mn__primary--eup`, (a) => ({ text: a.textContent.trim(), label: a.getAttribute('aria-label'), imgs: a.querySelectorAll('img').length, box: a.getBoundingClientRect().toJSON(), img: a.querySelector('img') && a.querySelector('img').getBoundingClientRect().toJSON(), natural: a.querySelector('img') ? [a.querySelector('img').naturalWidth, a.querySelector('img').naturalHeight] : null })).catch(() => null);
-  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-mark\.png$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
+  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-mark-white\.png$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
   check(scope, 'nothing on the screen writes the mark out', !/E\s*=\s*Up/i.test(await page.evaluate(() => document.body.innerText)));
   const plain = world.posts.find((p) => !p.content_id && p.visibility === 'public');
   check(scope, 'a post with no mission has no join emblem, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
@@ -478,6 +481,46 @@ if (runs('layers-member')) {
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
+/* ---------- A MEMBER WHOSE WORLD DID NOT LOAD STILL GETS THE WORLD (owner, 2026-10-15: "when I'm logged in as Benji Chase … not seeing
+   the globe"). On the live site every member's bootstrap was refused by the browser (the API answered its preflight 401); the page then
+   showed a shell with no globe. Whatever fails, the Earth opens. ---------- */
+const worldState = (page) => page.evaluate(() => {
+  const q = (s) => document.querySelector(s), shown = (s) => { const el = q(s); return !!el && !el.hidden && getComputedStyle(el).display !== 'none'; };
+  return { feedView: shown('#mnFeedView'), world: q('#mnWorld') ? Math.round(q('#mnWorld').getBoundingClientRect().height) : 0, frame: !!q('#mnWorldFrame'), card: shown('#mnFinishCard'), title: (q('#mnFinishTitle') || {}).textContent, go: (q('#mnFinishGo') || {}).textContent, alt: shown('#mnStallSignIn'), composer: shown('#mnComposer'), guestCard: shown('#mnGuestCard'), guest: document.documentElement.classList.contains('mn-guest'), stored: !!localStorage.getItem('mccdb_session'), posts: document.querySelectorAll('#mnFeed [data-post-id]').length, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth };
+});
+for (const variant of [{ scope: 'stall-retry', bootFail: [500] }, { scope: 'stall-signin', bootFail: [401] }, { scope: 'stall-unverified', userCheck: 403 }]) {
+  if (!runs(variant.scope)) continue;
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, bootFail: variant.bootFail || [], userCheck: variant.userCheck || 0 });
+  const scope = variant.scope;
+  const globe = page.frame({ url: /action-globe\.html/ });
+  const canvas = globe ? await globe.evaluate(() => { const c = document.querySelector('canvas'); return c ? Math.round(c.getBoundingClientRect().height) : 0; }) : 0;
+  let st = await worldState(page);
+  check(scope, 'the World opens anyway: the feed view, the Earth in its frame, the public posts', st.feedView && st.world > 200 && st.frame && canvas > 200 && st.posts > 0, { ...st, canvas });
+  const reads = req(world, 'GET', /^\/v1\/mnet\/(public-feed|feed)$/);
+  check(scope, 'the posts are the public ones, read without the session', reads.length > 0 && reads.every((r) => r.path === '/v1/mnet/public-feed' && !r.auth), reads.map((r) => r.path + (r.auth ? '+auth' : '')));
+  if (scope === 'stall-signin') {
+    check(scope, 'the session the API refused is let go: a guest, one card to sign in again, not the guest card beside it', !st.stored && st.guest && st.card && st.title === 'Your sign-in ended.' && /Sign in again/.test(st.go) && !st.alt && !st.guestCard && !st.composer, st);
+    await page.screenshot({ path: join(OUT, 'stall-signin-iphone.png') });
+    await page.click('#mnFinishGo');
+    await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 8000 });
+    check(scope, 'the card opens sign-in with the reason', /Your sign-in ended\. Sign in again\./.test(await page.textContent('#mnGuestWhy')));
+  } else {
+    check(scope, 'the session stays; the card says the feed did not load, with Try again and Sign in again; the composer waits', st.stored && !st.guest && st.card && st.title === 'Your feed didn’t load.' && /Try again/.test(st.go) && st.alt && !st.composer, st);
+    await page.screenshot({ path: join(OUT, scope + '-iphone.png') });
+    if (scope === 'stall-retry') {
+      await page.click('#mnFinishGo');
+      await page.waitForFunction(() => document.getElementById('mnFinishCard').hidden, null, { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(800);
+      st = await worldState(page);
+      const memberRead = req(world, 'GET', /^\/v1\/mnet\/feed$/).some((r) => r.auth);
+      check(scope, 'Try again: the bootstrap answers, the card goes, the composer is back, the feed is the member\'s own, the Earth never left', !st.card && st.composer && memberRead && st.world > 200, { st, memberRead });
+    }
+  }
+  check(scope, 'nothing scrolls sideways at 390', st.sw === st.cw, { sw: st.sw, cw: st.cw });
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
 if (runs('layers-guest')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: false });
   const scope = 'layers-guest';

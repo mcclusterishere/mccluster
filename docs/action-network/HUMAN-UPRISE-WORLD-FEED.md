@@ -305,6 +305,43 @@ After seeing the iteration's renders the owner asked for five changes:
 5. **No filter row.** The All · Missions · Music · Photos & video tabs are
    gone (above); the Clips door shows on its own while campaigns are open.
 
+### Benji Chase and the missing globe (owner, 2026-10-15)
+
+"When I'm logged in as Benji Chase … I'm still having the issue of not
+seeing the globe." Proven on the live site: the API answered the browser's
+CORS preflight for every `/v1/mnet` route with 401 (the handler checked the
+session before the method, and a preflight never carries the session), so
+the browser refused every signed-in member's World call ("Failed to
+fetch"). The World page then fell back to `showSignedInLoadError`, which
+showed the app shell without ever opening the feed view: no Earth, and its
+own message hidden inside the hidden view. Guests were untouched (no
+session, no preflight). The browser tests fake the API at the network
+layer, which skips real preflights, so they never saw it. The Worker fix is
+its own PR (`workers/mccluster/src/preflight.js`, #436). This page now
+never goes globe-less whatever fails:
+
+- **The API refuses the session (401):** the session is let go
+  (`letSessionGo`), the member is a guest, and one card where the composer
+  would be says "Your sign-in ended." with "Sign in again →" (the guest card
+  beside it steps aside).
+- **Anything else** (the network, a server error, a session that could not
+  be checked): the session stays, the World opens with the Earth and the
+  public posts, and the card says "Your feed didn't load." with "Try again →"
+  and "Sign in again". Posting, joining and the member rooms wait on the
+  card; Try again re-runs the bootstrap and the member's own feed returns.
+
+`scripts/e2e/world-screen.e2e.mjs` drives all three (a bootstrap that fails
+once, a 401, an unverifiable session) and checks the Earth is up in each.
+
+### The mark, white (owner, 2026-10-15)
+
+"Make the actual … sign white. Just paint it white for me."
+`assets/img/equity-uprise-mark-white.png` is the tile-less mark's own shape
+and alpha with every visible pixel white; nothing traced, cropped or added.
+It is the join on the strip and on mission posts, and the header mark, on
+the World's dark grounds. The owner's request is recorded with the logo
+rule in `AGENTS.md`, so it stays.
+
 ### The onboarding, three pages (owner, 2026-10-15)
 
 "That user flow needs to be easier and more beautiful … three pages that look

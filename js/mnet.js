@@ -389,8 +389,20 @@
     return s === "profile" || s === "contact" ? s : "";
   }
   function paintFinishCard() {
-    var card = $("mnFinishCard"), step = needsStep();
+    var card = $("mnFinishCard"), step = needsStep(), stall = state.stall;
     if (!card) return;
+    document.documentElement.classList.toggle("mn-stall-signin", stall === "signin");
+    if ($("mnStallSignIn")) $("mnStallSignIn").hidden = stall !== "retry";
+    if (stall) {
+      card.hidden = false;
+      if ($("mnComposer")) $("mnComposer").hidden = true;
+      $("mnFinishTitle").textContent = stall === "signin" ? "Your sign-in ended." : "Your feed didn\u2019t load.";
+      $("mnFinishWhy").textContent = stall === "signin"
+        ? "Sign in again to post, join missions and connect. The Earth and the public posts are right here."
+        : "The Earth and the public posts are live. Try again, or sign in again if it keeps happening.";
+      $("mnFinishGo").textContent = stall === "signin" ? "Sign in again \u2192" : "Try again \u2192";
+      return;
+    }
     card.hidden = !step;
     if ($("mnComposer")) $("mnComposer").hidden = !!step;
     if (!step) return;
@@ -402,6 +414,13 @@
     $("mnFinishGo").textContent = contact ? "Complete your details \u2192" : "Finish your profile \u2192";
   }
   function askToFinish(why) {
+    /* while the member's own World has not loaded, what needs it waits on the card that says so */
+    if (state.stall === "retry") {
+      var card = $("mnFinishCard");
+      if (card) { card.classList.remove("is-nudged"); void card.offsetWidth; card.classList.add("is-nudged"); try { card.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
+      setStatus($("mnFeedStatus"), "Your feed hasn\u2019t loaded yet. Try again above.", "error");
+      return true;
+    }
     var step = needsStep();
     if (!step) return false;
     track("finish_step_prompt", { step: step, reason: String(why || "act").slice(0, 24) });
@@ -477,25 +496,31 @@
 
   /* Authentication and Mnet availability are different states. A network/API
      failure must never throw a signed-in member back at the login form. */
+  /* A MEMBER WHOSE WORLD DID NOT LOAD STILL GETS THE WORLD (owner, 2026-10-15: "when I'm logged in as Benji Chase
+     … not seeing the globe"). This used to show the app shell without ever opening the feed view: no Earth, and the
+     message itself was inside the hidden view. Now the World opens either way. A session the API refuses outright
+     (401) is let go: the member is a guest, with one card to sign in again. Anything else (the network, a server
+     error, a session that could not be checked) keeps the session and shows the Earth and the public posts, with a
+     card to try again or to sign in again. Posting, joining and the member rooms wait on the card. */
   function showSignedInLoadError(error) {
-    showGate("app");
-    var host = $("mnFeed");
-    host.innerHTML = '<div class="mn__empty">You are signed in. Human Uprise could not load the feed right now.</div>';
-    var retry = document.createElement("button");
-    retry.type = "button";
-    retry.className = "mn__more";
-    retry.textContent = "Try again";
-    retry.onclick = function () {
-      retry.disabled = true;
-      setStatus($("mnFeedStatus"), "Loading the feed…");
-      bootstrap().catch(function (e) {
-        retry.disabled = false;
-        showSignedInLoadError(e);
-      });
-    };
-    host.appendChild(retry);
-    setStatus($("mnFeedStatus"), "Your M Account is still signed in.", "error");
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
+    if (error && error.status === 401) return letSessionGo();
+    state.stall = "retry";
+    showGate("app");
+    setView("feed");
+    paintFinishCard();
+    setStatus($("mnFeedStatus"), "");
+    return loadFeed(true).catch(function () {});
+  }
+  function letSessionGo() {
+    var done = function () { state.stall = "signin"; enterGuestWorld(); paintFinishCard(); };
+    return (window.MCC && MCC.signOut ? MCC.signOut().catch(function () {}) : Promise.resolve()).then(done, done);
+  }
+  function retryStall() {
+    var go = $("mnFinishGo");
+    if (go) go.disabled = true;
+    state.stall = null;
+    return bootstrap().catch(function (e) { return showSignedInLoadError(e); }).then(function () { if (go) go.disabled = false; });
   }
 
   /* THE PROFILE PICTURE.
@@ -757,9 +782,10 @@
      the campaign's governed support rail, and only says so when that
      campaign has money enabled (action_bounty_public). Never a payment
      endpoint of its own. */
-  /* the owner's artwork with its white tile made transparent (assets/img/equity-uprise-mark.png, every dark pixel as supplied):
-     "cut the white part out so it's its own logo … keep the dark part" (owner, 2026-10-15) */
-  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-mark.png" alt="" width="28" height="28">';
+  /* the owner's mark, white, on the World's dark glass (assets/img/equity-uprise-mark-white.png): the supplied artwork's own
+     shape, its tile cut away ("keep the dark part") and the mark painted white at the owner's word (owner, 2026-10-15:
+     "make the actual … sign white. Just paint it white for me") */
+  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-mark-white.png" alt="" width="28" height="28">';
   function fundButtonHtml(c) {
     return '<button class="mn__fund" type="button" data-fund-mission="' + esc(c.mission_id) + '"' + (c.campaign_id ? ' data-campaign="' + esc(c.campaign_id) + '"' : '') + ' aria-label="Fund this mission">' + ICON.fund + '<span>Fund</span></button>';
   }
@@ -1069,7 +1095,7 @@
       setStatus($("mnFeedStatus"), "");
       if (!$("mnFeed").children.length) $("mnFeed").innerHTML = skeleton(3);
     }
-    var publicRead = state.guest || !!needsStep();
+    var publicRead = state.guest || !!needsStep() || !!state.stall;
     var path = (publicRead ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
     var read = publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
@@ -1759,6 +1785,7 @@
       state.user = user;
       if (!user) throw new Error("Your session did not open.");
       leaveGuestWorld();
+      state.stall = null;
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
       return MCC.autoTouch().catch(function () {}).then(function () {
         startPoll();
@@ -1847,7 +1874,12 @@
     wireAvatarPicker();
     wireTrackPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView(needsStep() ? "feed" : "profile"); };
-    $("mnFinishGo").onclick = function () { askToFinish("act"); };
+    $("mnFinishGo").onclick = function () {
+      if (state.stall === "signin") { openSignIn("signin", "Your sign-in ended. Sign in again."); return; }
+      if (state.stall === "retry") { retryStall(); return; }
+      askToFinish("act");
+    };
+    $("mnStallSignIn").onclick = function () { letSessionGo().then(function () { openSignIn("signin", "Sign in again to load your feed."); }); };
     $("mnStepBack").onclick = function () { if (onboard.step > 1) { setStatus($("mnProfileStatus"), ""); showStep(onboard.step - 1); } };
     $("mnHandle").addEventListener("input", function () { clearTimeout(onboard.handleTimer); onboard.handleTimer = setTimeout(checkHandle, 420); });
     /* a field marked bad clears as soon as it is typed in, and so does the reason line */
