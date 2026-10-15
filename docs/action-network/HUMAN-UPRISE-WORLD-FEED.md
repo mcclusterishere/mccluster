@@ -98,7 +98,8 @@ same two:
   opens, so the day/night line is the real one. The layers button cycles
   three looks: **Earth** (that lit one), **Night** (the city lights
   everywhere, the owner's World mockups), **Street** (OpenStreetMap, which
-  also fades in on its own below ~900 km). All NASA imagery is public
+  also fades in on its own below ~900 km unless Cesium ion's aerial imagery
+  is there; see "The Earth up close" below). All NASA imagery is public
   domain; the clouds are served from `assets/img/globe/`. In 3D Cesium
   measures the lighting fade distances from the Earth's centre, so they
   carry the radius. Pins are glowing red markers; continent labels count
@@ -377,6 +378,72 @@ free one checked green, an empty address refused, the address saved to
 `fan_profiles`, the phone saved as `+12035550100`, the password set, the feed
 now the member's own, nothing scrolling sideways at 390.
 
+### The Earth up close: Cesium ion (owner, 2026-10-15)
+
+"So the cesium globe itself isn't available?" Then: "I added an ion, cesium
+ion key to the McCluster worker." The World's Earth was CesiumJS already,
+drawing NASA's imagery with no ion. Now, when the Worker holds a Cesium ion
+token, the same Earth draws from ion as the camera comes down
+(`js/action-globe.js`, "THE EARTH UP CLOSE"):
+
+- **Far out, nothing changes.** NASA's lit Earth, the night lights and the
+  cloud, exactly as before. No aerial imagery is even asked for above
+  3,000 km.
+- **Terrain.** Cesium World Terrain (ion asset 1) is under everything. It
+  is built before it is used, so the Earth appears once, with its ground;
+  if it has not arrived within 2.5 s the Earth draws on the flat ellipsoid
+  and stays flat for that visit (no swap under the visitor). Vertex normals
+  stay off: with them Cesium switches off the day and night blend and the
+  night lights would cover the day side.
+- **Aerial imagery.** From 3,000 km down, Bing Maps Aerial with Labels
+  (asset 3) eases in under the night lights and over NASA's day, whole by
+  1,200 km, while the cloud eases out. If an asset fails, the next is
+  tried once: Bing Maps Aerial (2), then Sentinel-2 (3954); if all fail,
+  the Earth is NASA's and the street map takes over below 900 km as
+  before. While the aerial imagery is there, the street map no longer
+  takes over on its own; it stays one tap away on the Layers button.
+- **Buildings.** Cesium OSM Buildings (96188) below 50 km, only on the
+  Earth look; the Night and Street looks hide ion's layers, and the way
+  home (the World button) hides them again.
+- **Credit.** Cesium's own credit display moves onto the imagery line
+  (`creditContainer`): the Cesium ion logo, then "Data attribution", which
+  opens the full list (Bing, the terrain's sources, NASA). It shows only
+  while the World draws from ion.
+
+**The token never reaches a browser.** CesiumJS asks
+`${Ion.defaultServer}v1/assets/{id}/endpoint` for every ion asset. The page
+clears Cesium's built-in token (expired anyway) and points
+`Ion.defaultServer` at the Worker,
+`https://api.mccluster.org/v1/world/ion/`
+(`workers/mccluster/src/world-ion.js`). The Worker asks ion for that
+endpoint with the account's token in a header and passes ion's answer
+through: it carries a token for that one asset that ion lets live about an
+hour, the only token a browser ever holds. Tiles go straight from ion to
+the browser; when the asset token runs out, CesiumJS asks the Worker again.
+
+- `GET /v1/world/ion` says whether the World has ion (`available`), which
+  binding holds the token (`binding`) and the asset ids. The page asks this
+  first and does nothing with ion when it is off.
+- `GET /v1/world/ion/v1/assets/{id}/endpoint` serves only the five assets
+  above, only to the ecosystem's own origins (the CORS allowlist, checked
+  on `Origin`). Each answer is kept per data centre for 20 minutes, so ion's
+  API sees a few calls an hour whatever the traffic; while ion is down a
+  kept answer under 45 minutes old still serves. Anything else is a plain
+  404, 403, 503 (no token) or 502 (ion refused), never the token.
+- The binding is `CESIUM_ION_TOKEN`, the name the spatial console and
+  Hitman's Halo use. `CESIUM_ION_ACCESS_TOKEN`, `CESIUM_ION_KEY`,
+  `CESIUM_ION_API_KEY` and `CESIUM_TOKEN` are read too, so a token saved
+  under a near name works; the status says which one was found. The
+  spatial console (`/v1/seek-first/viewer/config`, owner-only) reads the
+  token the same way.
+
+Verified by `workers/mccluster/test/world-ion.test.mjs`,
+`scripts/test/world-ion-globe.test.mjs` and, in a real browser with CesiumJS
+1.131, `scripts/e2e/world-ion.e2e.mjs` (ion off; ion on at phone and desktop
+width; every asset failing; a terrain that answers late; the World page's
+frame), with stand-ins for ion's tile hosts. The other World e2e fakes
+answer the status with ion off.
+
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
 "Let's populate it with shit, man. Let's get it interesting." Three toggles
@@ -649,5 +716,8 @@ affiliation, the mission participation and funding journeys, and staging
 end-to-end tests. Also: OpenStreetMap's public tile server is not meant for
 app-scale traffic. Choose a tile provider with an agreement before launch.
 NASA GIBS has no SLA and sends `no-store`; caching its tiles would belong
-in the `mccluster` Worker. The creator audience is sampled like the rest of
+in the `mccluster` Worker. Cesium ion's Community plan is for eligible
+personal and non-commercial use and has quotas; a public World draws on the
+account's streaming quota for every visitor who zooms in, so the ion plan
+should match the World's use before launch. The creator audience is sampled like the rest of
 `my-creator`; an aggregate in the database would make it exact.

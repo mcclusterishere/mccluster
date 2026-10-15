@@ -76,8 +76,8 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
  window.__huGlobeSettled=()=>!!(viewer&&viewer.scene.globe.tilesLoaded);viewer.camera.percentageChanged=0.08;
  /* labels draw over the limb instead of being cut by it, so only those on the near side of the Earth show */
  viewer.camera.changed.addEventListener(cullLabels);
- /* past street level the night tiles run out of detail, so the map takes over unless someone chose a style */
- viewer.camera.changed.addEventListener(()=>{if(layerMode==='auto'&&mapLayer)mapLayer.show=viewer.camera.positionCartographic.height<900000});}
+ /* past street level the night tiles run out of detail, so the map takes over unless someone chose a style or Cesium ion's aerial imagery is there (streetAuto) */
+ viewer.camera.changed.addEventListener(()=>{if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)});}
 const CONTINENTS=[['North America',-100,46],['South America',-60,-16],['Europe',14,53],['Africa',19,4],['Asia',92,38],['Oceania',138,-26]];
 /* rough boxes, only to word a label; never used for eligibility or anything a member does */
 function continentOf(lat,lon){if(lat<-8&&(lon>110||lon<-150))return 'Oceania';if(lon<-25)return lat>8||lon<-82?'North America':'South America';if(lon>34&&lat>12&&lat<42)return 'Asia';if(lat>35&&lon<45)return 'Europe';if(lat<=37&&lon<52)return 'Africa';return lat>-11?'Asia':'Oceania'}
@@ -89,7 +89,7 @@ function drawContinents(){clear(continentLabels);if(!showMissions)return;const c
 function cullLabels(){if(!viewer||!continentLabels.length)return;const occ=new Cesium.EllipsoidalOccluder(Cesium.Ellipsoid.WGS84,viewer.camera.positionWC),now=viewer.clock.currentTime;continentLabels.forEach(e=>{e.show=occ.isPointVisible(e.position.getValue(now))})}
 function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCase();missions=allMissions.filter(m=>!t||[m.title,m.description,m.region_label,m.action_path].some(v=>String(v||'').toLocaleLowerCase().includes(t)));i=0;selectionShown=false;draw();renderFeed()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
-function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&viewer.camera.positionCartographic.height<900000);
+function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=!night;if(cloudLayer)cloudLayer.show=!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
  g.enableLighting=!night;g.atmosphereBrightnessShift=night?-0.35:-0.05;
  const b=$('ctlLayers');if(b){b.setAttribute('aria-pressed',mode==='auto'?'false':'true');b.title={auto:'The Earth (tap for night)',night:'Night Earth (tap for street map)',map:'Street map (tap for the Earth)'}[mode]}}
@@ -144,7 +144,47 @@ function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};wireDa
  on('ctlLocate',()=>{const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
  const zoom=f=>{const h=viewer.camera.positionCartographic.height;f?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)};on('ctlZoomIn',()=>zoom(true));on('ctlZoomOut',()=>zoom(false));
  on('ctlLayers',()=>setLayer({auto:'night',night:'map',map:'auto'}[layerMode]||'auto'));}
-async function boot(){paintMembersDoor();viewer=new Cesium.Viewer('globe',{baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude())});
+/* ---------- THE EARTH UP CLOSE: Cesium ion (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker") ----------
+   From far out the Earth stays NASA's, exactly as above. Coming down, Cesium ion takes over: Cesium World Terrain under everything,
+   aerial imagery (Bing Aerial with Labels, else Bing Aerial, else Sentinel-2) easing in from 3,000 km and whole by 1,200 km while
+   the cloud still eases out, and Cesium OSM Buildings below 50 km. The street map stays one tap away on the Layers button.
+   The account's token never comes to the page: Ion.defaultServer is the Worker (workers/mccluster/src/world-ion.js), which asks ion
+   for each asset and hands back a token for that one asset that lives about an hour. GET /v1/world/ion says first whether there
+   is ion at all; with none, or when any part of it fails, the Earth is what it was. Terrain is built before it is used, so the
+   ground never blanks while it loads; vertex normals stay off, because with them the night lights would cover the day side. */
+const ION_HI=3000000,ION_FULL=1200000,ION_OFF=3400000,BUILD_ON=50000,BUILD_OFF=60000,ION_WAIT=1500,TERRAIN_WAIT=2500;
+let ion=null,ionImagery=null,ionImageryTried=false,ionBuildings=null,ionBuildingsTried=false;
+/* hooks for the browser test, like __huGlobeSettled */
+window.__huIon=()=>({on:!!ion,ground:!!(viewer&&viewer.scene.globe.terrainProvider),terrain:!!(viewer&&viewer.scene.globe.terrainProvider&&!(viewer.scene.globe.terrainProvider instanceof Cesium.EllipsoidTerrainProvider)),imagery:!!(ionImagery&&ionImagery.ready),imageryShown:!!(ionImagery&&ionImagery.show),buildings:!!ionBuildings,buildingsShown:!!(ionBuildings&&ionBuildings.show),street:!!(mapLayer&&mapLayer.show),clouds:cloudLayer?Math.round(cloudLayer.alpha*100)/100:null,height:viewer?Math.round(viewer.camera.positionCartographic.height):null});
+function ionWarn(what,e){try{console.warn('[world ion] '+what+': '+(e&&e.message||e))}catch(_){}}
+/* the automatic street map below 900 km, unless ion's aerial imagery is there to show the ground instead */
+function streetAuto(h){return h<900000&&!(ionImagery&&ionImagery.ready)}
+function ionStatus(){const late=new Promise(r=>setTimeout(()=>r(null),ION_WAIT));
+ const ask=fetch(API+'/v1/world/ion',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(s=>s&&s.available===true&&s.assets&&Number.isInteger(s.assets.terrain)?s.assets:null).catch(()=>null);
+ return Promise.race([ask,late])}
+function startIon(){if(!ion||!viewer)return;Cesium.Ion.defaultAccessToken=undefined;Cesium.Ion.defaultServer=API+'/v1/world/ion/';
+ document.documentElement.classList.add('globe-ion');const line=document.querySelector('.osm-credit');if(line&&window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe(line);liftAboveCredit();
+ /* nothing is drawn until the terrain is in hand (or TERRAIN_WAIT passes), so the Earth appears once, with its ground */
+ const g=viewer.scene.globe,flat=g.terrainProvider;let landed=false;const land=p=>{if(landed)return;landed=true;g.terrainProvider=p||flat};
+ g.terrainProvider=undefined;Cesium.CesiumTerrainProvider.fromIonAssetId(ion.terrain).then(p=>land(p),e=>{land(null);ionWarn('terrain',e)});setTimeout(()=>land(null),TERRAIN_WAIT);
+ viewer.scene.preRender.addEventListener(ionFrame)}
+function addIonImagery(k){const id=ion&&Array.isArray(ion.imagery)?ion.imagery[k]:undefined;if(!Number.isInteger(id)||!viewer)return;
+ const layer=Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(id),{alpha:0});ionImagery=layer;
+ layer.readyEvent.addEventListener(()=>{if(ionImagery===layer&&layerMode==='auto'&&mapLayer)mapLayer.show=false});
+ layer.errorEvent.addEventListener(e=>{ionWarn('imagery '+id,e);if(viewer.imageryLayers.contains(layer))viewer.imageryLayers.remove(layer,true);
+  if(ionImagery===layer){ionImagery=null;if(cloudLayer)cloudLayer.alpha=1;if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}addIonImagery(k+1)});
+ viewer.imageryLayers.add(layer,viewer.imageryLayers.indexOf(dayLayer)+1)}
+function addIonBuildings(){if(!ion||!Number.isInteger(ion.buildings)||!viewer)return;
+ const coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
+ Cesium.Cesium3DTileset.fromIonAssetId(ion.buildings,{maximumScreenSpaceError:coarse?24:16}).then(ts=>{ts.show=false;ts.style=new Cesium.Cesium3DTileStyle({color:"color('#e4e8ee')"});ionBuildings=viewer.scene.primitives.add(ts)},e=>ionWarn('buildings',e))}
+/* every frame: what ion shows at this height, with a little hysteresis so nothing flickers on the line */
+function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartographic.height,auto=layerMode==='auto';
+ if(!ionImageryTried&&auto&&h<ION_HI){ionImageryTried=true;addIonImagery(0)}
+ if(ionImagery){const on=auto&&h<(ionImagery.show?ION_OFF:ION_HI);if(ionImagery.show!==on)ionImagery.show=on;const a=Math.min(1,Math.max(0,(ION_HI-h)/(ION_HI-ION_FULL)));if(ionImagery.alpha!==a)ionImagery.alpha=a;
+  if(cloudLayer){const c=ionImagery.ready&&on?1-a:1;if(cloudLayer.alpha!==c)cloudLayer.alpha=c}}
+ if(!ionBuildingsTried&&auto&&h<BUILD_OFF*2){ionBuildingsTried=true;addIonBuildings()}
+ if(ionBuildings){const on=auto&&h<(ionBuildings.show?BUILD_OFF:BUILD_ON);if(ionBuildings.show!==on)ionBuildings.show=on}}
+async function boot(){paintMembersDoor();ion=await ionStatus();viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude())});
 viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 $('nearMe').onclick=()=>{if(!navigator.geolocation){$('status').hidden=false;$('status').textContent='Location is unavailable on this device.';return;}navigator.geolocation.getCurrentPosition(position=>{const {latitude,longitude}=position.coords;viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(longitude,latitude,350000),duration:1.5});$('nearMe').textContent='Nearby ✓';$('status').hidden=false;$('status').textContent='Nearby view enabled for this session. Precise location is not uploaded. Regional locking awaits verified state/province boundary data.';},()=>{$('status').hidden=false;$('status').textContent='Location denied. Worldwide missions remain available.';},{enableHighAccuracy:false,timeout:12000,maximumAge:300000});};
 $('globeMode').onclick=()=>setMode('globe');$('feedMode').onclick=()=>setMode('feed');$('openFeed').onclick=()=>openDetail(i);$('feedBack').onclick=closeDetail;$('detailLocate').onclick=()=>{closeDetail();show(i)};$('clearSelection').onclick=()=>{setSelection(false);closeDetail()};$('filterBack').onclick=()=>setSelection(false);$('worldSearch').addEventListener('input',filterMissions);
