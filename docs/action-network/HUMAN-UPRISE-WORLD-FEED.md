@@ -209,14 +209,38 @@ The bar is the same Music | M | Globe on either host (`js/tabbar.js`):
 - on `humanuprise.com`, Music and the M link to Matthew's site outright and
   the Globe is the root of this host (`/?view=feed`), which lights the Globe
   coin, not the M;
-- on Matthew's site the Globe stays on his origin until the owner flips
-  `WORLD_ORIGIN` to `https://humanuprise.com/` after routing;
+- on Matthew's site the Globe goes to `WORLD_ORIGIN`, the company's root
+  (below); to make it `https://humanuprise.com/` later, flip that one line
+  after routing;
 - a session is per origin, and the bar carries a member's sign-in across
   (`/v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`): the token
   rides in the link's fragment, the arriving page scrubs it, exchanges it
   from its own origin for a one-time magic-link token, and Supabase mints a
   session of that origin's own. One M Account, every host; no refresh token
   ever crosses.
+
+### The World's door today: `mccluster.org` (owner, 2026-10-15)
+
+"We don't need humanuprise.com live right now … we need mccluster.org to
+actually show the World." The company host's root serves the World by the
+same mechanics (`workers/mccluster/src/company-site/router.js` on the shared
+`workers/mccluster/src/world-host.js`): `/` is `mnet.html` passed through
+with the company's head (canonical `https://mccluster.org/`, site name
+McCluster Corp, a WebPage node of the company WebSite about the
+Organization); `/mnet.html` is a 301 to `/`; the rooms and files ride along
+(noindex); `/company` is the company page, which opens the World from its
+header; everything else is a 301 to Matthew's site. The bar's
+`WORLD_ORIGIN` is `https://mccluster.org/`, so the Globe on Matthew's site
+goes to `https://mccluster.org/?view=feed`, carrying a member's sign-in
+across. Until the owner routes `mccluster.org/*` to the Worker and narrows
+the zone redirect rule (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
+Activation), that rule bounces the link to Matthew's root with the World's
+query, and the bar there forwards it on to `mnet.html?view=feed` on his
+origin (query and fragment intact), so nothing breaks on the way. Proof:
+`workers/mccluster/test/company-site.test.mjs`, and the browser run below
+opens `https://mccluster.org/` through the real router, reads the bar and
+the head back, walks the 301s, opens `/company`, forwards the bounced link,
+and taps the Globe as a signed-in member to arrive signed in.
 
 ### A creator's perspective (owner, 2026-10-14)
 

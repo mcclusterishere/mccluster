@@ -8,17 +8,19 @@
       "host": "mccluster.org",
       "origin": "https://mccluster.org",
       "entity": "https://matthew.mccluster.org/#mccluster-corp",
-      "answers": "What is McCluster Corp?",
-      "share_preview": "Identifies McCluster Corp and explains the company. Never the album, never Matthew's personal portfolio.",
+      "answers": "At its root, the Human Uprise World (the company's platform): where is the movement, what can I do today? At /company: what is McCluster Corp?",
+      "share_preview": "The root shares as Human Uprise · McCluster, site name McCluster Corp. /company identifies McCluster Corp and explains the company. Never the album, never Matthew's personal portfolio.",
       "website_id": "https://mccluster.org/#website",
       "source": "data/seo/company-site.json -> tools/build-company-site.mjs -> workers/mccluster/src/company-site/pages.generated.js",
-      "served_by": "Worker mccluster, host-routed (workers/mccluster/src/company-site/router.js) once the owner routes mccluster.org/* to it",
+      "served_by": "Worker mccluster, host-routed (workers/mccluster/src/company-site/router.js) once the owner routes mccluster.org/* to it; the World at /, the company page at /company, everything else a 301 to matthew.mccluster.org",
       "journeys": [
         "business or institution: understand McCluster Corp -> capabilities/products -> engage, buy, partner, contact",
         "participant: initiative -> campaign -> Human Uprise -> mission -> proof -> verified action",
         "client: service or product -> scope -> booking / relationship",
         "researcher or media: company -> projects -> public evidence -> press / contact"
-      ]
+      ],
+      "root": "the Human Uprise World (mnet.html) passed through from the personal property with this host's head (owner, 2026-10-15); workers/mccluster/src/world-host.js",
+      "company_page": "/company"
     },
     "personal": {
       "host": "matthew.mccluster.org",
@@ -64,7 +66,8 @@
         "sw.js and /js/, /css/, /assets/, /data/"
       ],
       "everything_else": "301 to the same path on https://matthew.mccluster.org: Music, the M, creators, records, checkout",
-      "sessions": "per origin; the bar carries a member's sign-in across hosts (js/tabbar.js -> POST /v1/auth/handoff, workers/mccluster/src/auth-handoff.js: bearer checked live, Origin on the CORS allowlist, Supabase admin generate_link magiclink) and the arriving host earns its own session; no refresh token crosses"
+      "sessions": "per origin; the bar carries a member's sign-in across hosts (js/tabbar.js -> POST /v1/auth/handoff, workers/mccluster/src/auth-handoff.js: bearer checked live, Origin on the CORS allowlist, Supabase admin generate_link magiclink) and the arriving host earns its own session; no refresh token crosses",
+      "door_today": "https://mccluster.org/ serves the World until the owner routes humanuprise.com (owner, 2026-10-15)"
     }
   },
   "entities": {

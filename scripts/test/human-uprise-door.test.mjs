@@ -29,13 +29,16 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
 
 test('the bar knows the World\'s own host and keeps today\'s behaviour until the owner flips it', async () => {
   const bar = await read('js/tabbar.js');
-  assert.match(bar, /var HU_HOSTS = \["humanuprise\.com", "www\.humanuprise\.com"\];/);
-  assert.match(bar, /var ON_HU = HU_HOSTS\.indexOf\(String\(location\.hostname\)\.toLowerCase\(\)\) !== -1;/);
+  assert.match(bar, /var WORLD_HOSTS = \["mccluster\.org", "www\.mccluster\.org", "humanuprise\.com", "www\.humanuprise\.com"\];/, 'the World\'s hosts: the company\'s today, Human Uprise\'s own door later');
+  assert.match(bar, /var ON_WORLD_HOST = WORLD_HOSTS\.indexOf\(String\(location\.hostname\)\.toLowerCase\(\)\) !== -1;/);
   assert.match(bar, /var HOUSE_ORIGIN = "https:\/\/matthew\.mccluster\.org\/";/);
-  assert.match(bar, /var WORLD_ORIGIN = "";/, 'empty keeps the World on this origin: the live site today');
-  assert.match(bar, /var HOUSE = ON_HU \? HOUSE_ORIGIN : ROOT;/, 'standing on the World\'s host, Matthew\'s rooms are his site');
-  assert.match(bar, /var WORLD = ON_HU \? ROOT : \(WORLD_ORIGIN \|\| ROOT\);/);
-  assert.match(bar, /function worldAt\(query\) \{ return \(ON_HU \|\| WORLD_ORIGIN \? WORLD : WORLD \+ "mnet\.html"\) \+ \(query \|\| ""\); \}/,
+  assert.match(bar, /var WORLD_ORIGIN = "https:\/\/mccluster\.org\/";/, 'from Matthew\'s site the Globe goes to the company\'s root (owner, 2026-10-15)');
+  assert.match(bar, /var HOUSE = ON_WORLD_HOST \? HOUSE_ORIGIN : ROOT;/, 'standing on the World\'s host, Matthew\'s rooms are his site');
+  assert.match(bar, /var WORLD = ON_WORLD_HOST \? ROOT : \(WORLD_ORIGIN \|\| ROOT\);/);
+  /* until the owner routes mccluster.org/* to the Worker, the zone rule lands the Globe's link on the house root: it goes on to the World here */
+  assert.match(bar, /if \(!ON_WORLD_HOST && \/\(\?:\^\\\?\|&\)view=\/\.test\(location\.search\)\) \{/);
+  assert.match(bar, /if \(atRoot\) \{ location\.replace\(ROOT \+ "mnet\.html" \+ location\.search \+ location\.hash\); return; \}/, 'query and a carried sign-in intact');
+  assert.match(bar, /function worldAt\(query\) \{ return \(ON_WORLD_HOST \|\| WORLD_ORIGIN \? WORLD : WORLD \+ "mnet\.html"\) \+ \(query \|\| ""\); \}/,
     'the World is the root of its own host, mnet.html elsewhere');
   /* the three cells: Music and the M against the house, the Globe against the World */
   assert.match(bar, /href="' \+ HOUSE \+ 'listen\.html" data-appnav="music"/);
@@ -45,9 +48,10 @@ test('the bar knows the World\'s own host and keeps today\'s behaviour until the
   assert.match(bar, /worldTab\.href = worldAt\("\?view=feed"\);/);
   /* the wings resolve the same way; the account stays on the page's own host */
   assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return \(wing === "world" \? ROOT : HOUSE\) \+ path;\n  \}/);
-  assert.doesNotMatch(bar, /ROOT \+ "mnet\.html/, 'no World door bypasses worldAt');
+  assert.equal((bar.match(/ROOT \+ "mnet\.html/g) || []).length, 1, 'the one World door that bypasses worldAt is the forward from the house root, which must stay on this origin (worldAt would send it back out)');
   /* on the World's host, the root lights the Globe, not the M */
-  assert.match(bar, /if \(ON_HU && \(PAGE_KEY === "" \|\| PAGE_KEY === "index\.html"\)\) PAGE_KEY = "mnet\.html";/);
+  assert.match(bar, /if \(ON_WORLD_HOST && \(PAGE_KEY === "" \|\| PAGE_KEY === "index\.html"\)\) PAGE_KEY = "mnet\.html";/);
+  assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/mccluster\.org", "https:\/\/www\.mccluster\.org", "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'the sign-in crosses to the company host too');
 });
 
 test('a creator\'s front page puts the creator in the middle of the bar, with their own picture or initial', async () => {
@@ -143,7 +147,6 @@ test('the authorities name the host: three hosts, still two entities, one Worker
 
 test('one M Account, every host: the bar carries the sign-in across and the arriving page earns its own session', async () => {
   const bar = await read('js/tabbar.js');
-  assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'only the ecosystem\'s own origins are carried to');
   assert.match(bar, /var HANDOFF = "mcc_handoff";/);
   assert.match(bar, /return url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && ECOSYSTEM\.indexOf\(url\.origin\) !== -1;/);
   /* leaving: the token rides in the fragment, never a query */

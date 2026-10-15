@@ -18,26 +18,41 @@
   })();
 
   /* ---------- THREE HOSTS, ONE BAR ----------
-     The World is served on Human Uprise's own host as well
-     (workers/mccluster/src/human-uprise/router.js; owner, 2026-10-14: "the
-     globe experience as its own solo experience ... interconnected with all
-     the systems"). Standing there, Music and the M are Matthew's site and
-     link to it outright; the Globe stays home. Standing on Matthew's site,
-     the Globe goes to WORLD_ORIGIN once the owner has routed the host and
-     flipped it (docs/control-plane/DOMAINS-AND-ENTITIES.md, Activation);
-     empty keeps the World on this origin, which is the live site today.
-     A session is per origin (localStorage), so flipping it means a member
-     signs in once more, on the World's own host. */
-  var HU_HOSTS = ["humanuprise.com", "www.humanuprise.com"];
-  var ON_HU = HU_HOSTS.indexOf(String(location.hostname).toLowerCase()) !== -1;
+     The World is served on a host of its own as well: the company's,
+     mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
+     show the World"; workers/mccluster/src/company-site/router.js), and
+     Human Uprise's own door, humanuprise.com, when the owner routes it
+     (owner, 2026-10-14: "the globe experience as its own solo experience
+     ... interconnected with all the systems"; workers/mccluster/src/
+     human-uprise/router.js). Standing on either, Music and the M are
+     Matthew's site and link to it outright; the Globe stays home. Standing
+     on Matthew's site, the Globe goes to WORLD_ORIGIN, the company's root.
+     A session is per origin (localStorage), and the bar carries a member's
+     sign-in across (the handoff, below), so nobody signs in twice.
+
+     UNTIL THE OWNER ROUTES mccluster.org/* TO THE WORKER, the zone's
+     redirect rule sends https://mccluster.org/?view=feed to this house's
+     root with the World's query; the house forwards it on to the World
+     here (below), so the Globe tab works today and is direct the day the
+     route lands (docs/control-plane/DOMAINS-AND-ENTITIES.md, Activation). */
+  var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
+  var ON_WORLD_HOST = WORLD_HOSTS.indexOf(String(location.hostname).toLowerCase()) !== -1;
   var HOUSE_ORIGIN = "https://matthew.mccluster.org/";
-  var WORLD_ORIGIN = "";
+  var WORLD_ORIGIN = "https://mccluster.org/";
   /* where Matthew's rooms are, and where the World is, seen from here;
      static files always come from ROOT (the World's host carries them) */
-  var HOUSE = ON_HU ? HOUSE_ORIGIN : ROOT;
-  var WORLD = ON_HU ? ROOT : (WORLD_ORIGIN || ROOT);
+  var HOUSE = ON_WORLD_HOST ? HOUSE_ORIGIN : ROOT;
+  var WORLD = ON_WORLD_HOST ? ROOT : (WORLD_ORIGIN || ROOT);
   /* the World's address: the root of its own host, mnet.html elsewhere */
-  function worldAt(query) { return (ON_HU || WORLD_ORIGIN ? WORLD : WORLD + "mnet.html") + (query || ""); }
+  function worldAt(query) { return (ON_WORLD_HOST || WORLD_ORIGIN ? WORLD : WORLD + "mnet.html") + (query || ""); }
+  /* the house's root with the World's query is the World, sent here by the
+     zone rule above: on to mnet.html on this origin, query and fragment
+     (a carried sign-in) intact */
+  if (!ON_WORLD_HOST && /(?:^\?|&)view=/.test(location.search)) {
+    var atRoot = false;
+    try { atRoot = location.pathname.replace(/index\.html$/, "") === new URL(ROOT || "./", location.href).pathname; } catch (e) {}
+    if (atRoot) { location.replace(ROOT + "mnet.html" + location.search + location.hash); return; }
+  }
 
   /* ---------- THE BAR EXISTS WHEREVER THIS SCRIPT DOES ----------
 
@@ -284,7 +299,7 @@
   };
   var PAGE_KEY = location.pathname.split("/").pop();
   /* on the World's own host the root is the World, not the house */
-  if (ON_HU && (PAGE_KEY === "" || PAGE_KEY === "index.html")) PAGE_KEY = "mnet.html";
+  if (ON_WORLD_HOST && (PAGE_KEY === "" || PAGE_KEY === "index.html")) PAGE_KEY = "mnet.html";
   var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[PAGE_KEY] || "") + '"]');
   if (hereTab) hereTab.classList.add("is-here");
   /* The tab you are already on: a tap used to reload the same page (slow in
@@ -342,7 +357,7 @@
   function storePerspective(p) {
     try { if (p) sessionStorage.setItem(PERSPECTIVE_KEY, JSON.stringify(p)); else sessionStorage.removeItem(PERSPECTIVE_KEY); } catch (e) {}
   }
-  var AT_HOUSE = !ON_HU && (function () {
+  var AT_HOUSE = !ON_WORLD_HOST && (function () {
     try { return samePath(location.pathname) === samePath(new URL(HOUSE + "index.html", location.href).pathname); } catch (e) { return false; }
   })();
   var PERSPECTIVE = AT_HOUSE ? null : readPerspective();
@@ -546,7 +561,7 @@
   var API_ORIGIN = "https://api.mccluster.org";
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://humanuprise.com", "https://www.humanuprise.com"];
+  var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://mccluster.org", "https://www.mccluster.org", "https://humanuprise.com", "https://www.humanuprise.com"];
   var HANDOFF = "mcc_handoff";
   function crossesHouse(url) {
     return url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && ECOSYSTEM.indexOf(url.origin) !== -1;

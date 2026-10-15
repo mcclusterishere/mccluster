@@ -162,7 +162,7 @@ test('the upstream is PUBLIC_ORIGIN when the Worker names one', async () => {
 
 test('the platform entry consults the Human Uprise router after the company router and before the API', async () => {
   const src = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
-  const i = src.indexOf('companySiteResponse(request)');
+  const i = src.indexOf('await companySiteResponse(request, env)');
   const j = src.indexOf('await humanUpriseResponse(request, env)');
   const k = src.indexOf('enforceApiRateLimit(request, env)');
   assert.ok(i > 0 && j > i && k > j, 'host routing runs first and only for its own hosts');
