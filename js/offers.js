@@ -355,7 +355,7 @@
         line = pr.display + " " + pr.per;
       } else if (opt.price_from === "runway") {
         var r = (((L.offers || []).filter(function (o) { return o.id === "runway"; })[0] || {}).pricing || {});
-        if (r.recurring) line = dollars(r.recurring.amount) + " per " + r.recurring.cadence;
+        if (r.recurring && r.recurring.amount != null && r.recurring.cadence) line = dollars(r.recurring.amount) + " per " + r.recurring.cadence;
       }
       /* no approved number is not a blank: the slot says how the thing is
          bought instead, which is the truth and never a placeholder price */
