@@ -128,12 +128,15 @@ test('CCTV on the globe: shaded for guests (tap asks to sign in), locked with th
   assert.match(js, /'\/v1\/world\/cctv\/sources'/);
   assert.match(js, /'\/v1\/world\/cctv\/frame\/'\+encodeURIComponent\(id\)/);
   assert.doesNotMatch(js, /prime\.mccluster\.org|\/api\/cctv\//, 'the page never talks to Halo directly');
-  for (const words of ['Signed in', 'Location shared', 'A mission completed', 'Find a mission']) assert.ok(js.includes(words), words);
+  for (const words of ['Signed in', 'Privacy Policy agreed', 'A mission completed', 'Find a mission', 'I agree to the Privacy Policy']) assert.ok(js.includes(words), words);
   assert.match(js, /mnet\.html\?view=missions/);
   assert.match(js, /No live frame from this camera right now\. Nothing is shown in its place\./);
-  assert.match(js, /browser_permission:'granted'/);
-  assert.match(js, /navigator\.geolocation\.getCurrentPosition\(\(\)=>\{cctvFetch\('\/v1\/world\/location-consent'/, 'consent is recorded only after the browser grants it, from a tap');
-  assert.doesNotMatch(js, /location-consent'[^)]*latitude|coords\.latitude[^;]*location-consent/, 'no position is sent with consent');
+  /* location consent IS the privacy acknowledgement (owner, 2026-10-15): no separate consent route, no position sent */
+  assert.doesNotMatch(js, /location-consent|location_consent|consent_store/);
+  assert.match(js, /fetch\(SB\+'\/auth\/v1\/user',\{method:'PUT'[^\n]*privacy_policy_version:version,privacy_acknowledged_at:/, 'the member records the same two fields the join flow writes');
+  assert.doesNotMatch(js.slice(js.indexOf('async function recordPrivacyAck'), js.indexOf('async function recordPrivacyAck') + 800), /coords|latitude/);
+  /* near me: the approximate place first; the precise one only through the browser's own prompt */
+  assert.match(js, /const ap=access&&access\.approximate_location/);
 });
 
 test('new CSS is mobile first: min-width only, no max-width queries, controls at 16px+', async () => {
@@ -150,7 +153,21 @@ test('access map: one free layer for guests, every other layer visible but shade
   assert.match(js, /if\(id==='flights'\)return null;if\(!sessionToken\(\)\)return\{id,reason:'sign_in_required'/, 'the fallback keeps Flights as the one free layer');
   assert.match(js, /b\.hidden=false;b\.classList\.toggle\('is-locked',!!l\)/, 'locked layers are shaded, not hidden');
   assert.match(js, /if\(l\.reason==='sign_in_required'\|\|!sessionToken\(\)\)\{tell\(\{type:'hu:ask-sign-in'/);
-  assert.match(js, /Transport is operated by Whip Equipped LLC, a separate company/);
   assert.doesNotMatch(html, /ctlTransport[^>]*McCluster/);
   assert.match(js, /Music on the Earth needs a real place/);
+});
+
+test('Whip Equipped: any signed-in member opens it; it says rides are not live and asks drivers to sign up with Whip', async () => {
+  const [js, html] = await Promise.all([read('js/action-globe.js'), read('action-globe.html')]);
+  assert.match(js, /const tb=\$\('ctlTransport'\);if\(tb\)tb\.onclick=\(\)=>openWhip\(\)/);
+  assert.match(js, /function openWhip\(\)\{if\(lockOf\('transport'\)&&explainLock\('transport'\)\)return;/, 'a guest is asked to sign in first');
+  assert.doesNotMatch(js, /if\(id==='transport'\)return\{id,reason:'pending_counsel'\}/, 'no longer locked for everyone');
+  const whip = js.slice(js.indexOf('function openWhip'), js.indexOf('function openWhip') + 1200);
+  assert.match(whip, /Whip Equipped rides aren’t live yet/);
+  assert.match(whip, /Are you a driver, or know one\? Have them sign up today\./);
+  assert.match(whip, /By Whip Equipped LLC, a separate company\./);
+  assert.match(whip, /not approval/);
+  assert.match(js, /const WHIP_DRIVER_SIGNUP='https:\/\/matthew\.mccluster\.org\/whip\/driver\/'/);
+  assert.doesNotMatch(whip.replace(/https:\/\/matthew\.mccluster\.org\/whip\/driver\//g, ''), /McCluster|\/api\/rides|voter|registration/i, 'Whip attribution only; no ride request; no voter rule');
+  assert.match(html, /id="ctlTransport"[^>]*aria-label="Whip Equipped \(by Whip Equipped LLC\): rides not live yet, driver sign-up"/);
 });

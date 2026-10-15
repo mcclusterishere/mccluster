@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Runs the World CCTV eligibility behaviour tests against a throwaway local
 # Postgres (16+), as the real API roles: the role and member-network stubs, the gamification and
-# proof-review migrations, the clip-mission kind column, then the pending
-# location-consent SQL, then supabase/tests/world_cctv_eligibility.behaviour.sql.
+# proof-review migrations, the clip-mission kind column, then
+# supabase/tests/world_cctv_eligibility.behaviour.sql (no pending SQL: location
+# consent is the privacy acknowledgement on the member's auth record).
 # Usage:
 #   PGHOST=/tmp/pg PGPORT=5499 PGUSER=pg scripts/test-world-cctv-db.sh
 set -euo pipefail
@@ -16,6 +17,5 @@ apply supabase/tests/mnet_network_tables.stub.sql
 apply supabase/migrations/20261002061056_action_network_gamification_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "alter table public.action_missions add column if not exists kind text not null default 'civic'" >/dev/null
 apply supabase/migrations/20261004015451_action_proof_retry_and_review_notifications_v1.sql
-apply supabase/pending/world_location_consent_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/world_cctv_eligibility.behaviour.sql
 echo "world cctv eligibility chain: ok"

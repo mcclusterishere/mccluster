@@ -451,9 +451,9 @@ if (runs('layers-member')) {
   const scope = 'layers-member';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  /* the access map (owner, 2026-10-15): seven toggles on screen; a member has the data layers, CCTV waits on its three checks, transport on counsel */
+  /* the access map (owner, 2026-10-15): seven toggles on screen; a member has the data layers and Whip Equipped; CCTV waits on its three checks */
   const lockedIds = locks.filter((l) => l.locked).map((l) => l.id).sort();
-  check(scope, 'a member sees every toggle; only CCTV and transport locked', locks.length === 7 && JSON.stringify(lockedIds) === JSON.stringify(['ctlCctv', 'ctlTransport']) && ['ctlFlights', 'ctlSats', 'ctlLaunch'].every((id) => locks.some((l) => l.id === id && !l.locked && l.disabled === 'false')), locks);
+  check(scope, 'a member sees every toggle; only CCTV locked', locks.length === 7 && JSON.stringify(lockedIds) === JSON.stringify(['ctlCctv']) && ['ctlFlights', 'ctlSats', 'ctlLaunch'].every((id) => locks.some((l) => l.id === id && !l.locked && l.disabled === 'false')), locks);
   await globe.click('#ctlFlights');
   await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
   await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });

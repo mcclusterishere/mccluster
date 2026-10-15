@@ -2,9 +2,10 @@
    visitor gets the globe and exactly ONE free layer; every other layer stays
    visible but shaded, and tapping it asks them to sign in. Access is
    data-driven per level: public / fan / creator-business / E=Up / fellow /
-   fellow+transport / owner.
+   owner.
 
-     GET /v1/world/access  ->  { level, levels, unlocked_layers[], locked_layers[{id, reason, next_step}], layers{} }
+     GET /v1/world/access  ->  { level, levels, unlocked_layers[], locked_layers[{id, reason, next_step}], layers{},
+                                 approximate_location }
 
    The ladder's own rules are being written on another branch
    (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md, feat/policy-fellowship-ladder).
@@ -16,11 +17,19 @@
                       TODO(ladder): business accounts, once the ladder names the record that proves one
      eup              TODO(ladder): E=Up membership rule. Never granted here until the ladder defines it.
      fellow           TODO(ladder): fellowship rule. Never granted here.
-     fellow_transport TODO(ladder): fellow + the voter-registration rule; ships DISABLED pending counsel.
      owner            McCluster house owner (orgs slug mccluster, org_members role owner)
 
+   Whip Equipped transport (owner, 2026-10-15: "People should be able to sign
+   up to Whip Equipped real quick"): open to every signed-in member, like the
+   ladder's whip_transport_partner rule (signed_in). There is no voter rule.
+   Rides are not live; the layer says so and points drivers to Whip's own
+   sign-up. Whip Equipped LLC is Matthew McCluster's separate company.
+
    CCTV is not a level: it is the three checks in ./world-cctv.js (signed in,
-   location consent, a completed mission), reported here as the same reason.
+   privacy acknowledged, a completed mission), reported here as the same reason.
+
+   approximate_location is the IP-derived place Cloudflare attaches to this
+   request (country/region/city, coarse coordinates); it is not stored.
 
    The access map is a convenience for the page; every member-only layer is
    still enforced by its own route (world-layers.js, world-cctv.js). Nothing
@@ -28,9 +37,12 @@
    that does not exist yet. */
 import { reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
-import { service, uuid, locationConsent, missionCompleted } from './world-cctv.js';
+import { service, uuid, privacyAcknowledged, missionCompleted, approximateLocation } from './world-cctv.js';
 
-export const LEVELS = Object.freeze(['public', 'fan', 'creator_business', 'eup', 'fellow', 'fellow_transport', 'owner']);
+export const LEVELS = Object.freeze(['public', 'fan', 'creator_business', 'eup', 'fellow', 'owner']);
+
+/* Whip Equipped LLC's own driver sign-up (the Driver app on Matthew's property, whip/driver/) */
+export const WHIP_DRIVER_SIGNUP_URL = 'https://matthew.mccluster.org/whip/driver/';
 
 /* the one free layer: Flights (OpenSky's open snapshot, already public on the Worker) */
 export const LAYER_RULES = Object.freeze({
@@ -42,9 +54,9 @@ export const LAYER_RULES = Object.freeze({
   music: { min: 'fan', label: 'Music' },
   cctv: { min: 'fan', cctv: true, label: 'CCTV' },
   audience: { min: 'creator_business', label: 'Your audience' },
-  /* Whip Equipped LLC is Matthew McCluster's separate company, not a McCluster Corp brand. Listed so the shape is
-     right; locked for everyone until the ladder's fellow + voter-registration rule exists and counsel clears it. */
-  transport: { min: 'fellow_transport', disabled: 'pending_counsel', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC' }
+  /* Whip Equipped LLC is Matthew McCluster's separate company, not a McCluster Corp brand. Any signed-in member may
+     open it; rides are not live yet, so opening it says so and asks drivers (or people who know one) to sign up. */
+  transport: { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: WHIP_DRIVER_SIGNUP_URL }
 });
 
 const rank = (level) => LEVELS.indexOf(level);
@@ -67,39 +79,36 @@ async function isHouseOwner(env, userId, fetchImpl) {
 /* TODO(ladder) hooks: each returns false until docs/control-plane/POLICY-FELLOWSHIP-LADDER.md defines a verifiable rule */
 export const LADDER_HOOKS = {
   eup: async () => false,
-  fellow: async () => false,
-  fellowTransport: async () => false
+  fellow: async () => false
 };
 
 export async function worldAccess(request, env, fetchImpl = fetch) {
   const user = await bearerUser(request, env, fetchImpl);
-  let level = 'public', cctv = { signed_in: false, location_consent: false, mission_completed: false };
+  let level = 'public', cctv = { signed_in: false, privacy_acknowledged: false, mission_completed: false };
   if (user && uuid(user.id)) {
     level = 'fan';
-    const [creator, owner, consent, completed, eup, fellow, transport] = await Promise.all([
+    const [creator, owner, completed, eup, fellow] = await Promise.all([
       isCreator(env, user.id, fetchImpl), isHouseOwner(env, user.id, fetchImpl),
-      locationConsent(env, user.id, fetchImpl).catch(() => ({ ok: false })), missionCompleted(env, user.id, fetchImpl).catch(() => false),
-      LADDER_HOOKS.eup(env, user, fetchImpl), LADDER_HOOKS.fellow(env, user, fetchImpl), LADDER_HOOKS.fellowTransport(env, user, fetchImpl)
+      missionCompleted(env, user.id, fetchImpl).catch(() => false),
+      LADDER_HOOKS.eup(env, user, fetchImpl), LADDER_HOOKS.fellow(env, user, fetchImpl)
     ]);
     if (creator) level = 'creator_business';
     if (eup) level = 'eup';
     if (fellow) level = 'fellow';
-    if (transport) level = 'fellow_transport';
     if (owner) level = 'owner';
-    cctv = { signed_in: true, location_consent: !!consent.ok, mission_completed: !!completed };
+    cctv = { signed_in: true, privacy_acknowledged: privacyAcknowledged(user), mission_completed: !!completed };
   }
   const unlocked = [], locked = [];
   for (const [id, rule] of Object.entries(LAYER_RULES)) {
     let reason = null, next = null;
-    if (rule.disabled) { reason = rule.disabled; next = 'not_available'; }
-    else if (rank(level) < rank(rule.min)) { reason = rule.min === 'fan' ? 'sign_in_required' : `${rule.min}_required`; next = rule.min === 'fan' ? 'sign_in' : rule.min === 'creator_business' ? 'become_a_creator' : 'see_the_ladder'; }
-    else if (rule.cctv && !(cctv.signed_in && cctv.location_consent && cctv.mission_completed)) {
-      reason = !cctv.location_consent ? 'location_consent_required' : 'mission_required';
-      next = !cctv.location_consent ? 'share_location' : 'complete_a_mission';
+    if (rank(level) < rank(rule.min)) { reason = rule.min === 'fan' ? 'sign_in_required' : `${rule.min}_required`; next = rule.min === 'fan' ? 'sign_in' : rule.min === 'creator_business' ? 'become_a_creator' : 'see_the_ladder'; }
+    else if (rule.cctv && !(cctv.signed_in && cctv.privacy_acknowledged && cctv.mission_completed)) {
+      reason = !cctv.privacy_acknowledged ? 'privacy_acknowledgement_required' : 'mission_required';
+      next = !cctv.privacy_acknowledged ? 'acknowledge_privacy' : 'complete_a_mission';
     }
     if (reason) locked.push({ id, reason, next_step: next }); else unlocked.push(id);
   }
-  return { level, levels: LEVELS, unlocked_layers: unlocked, locked_layers: locked, layers: LAYER_RULES, ladder: 'docs/control-plane/POLICY-FELLOWSHIP-LADDER.md (pending)' };
+  return { level, levels: LEVELS, unlocked_layers: unlocked, locked_layers: locked, layers: LAYER_RULES, approximate_location: approximateLocation(request), ladder: 'docs/control-plane/POLICY-FELLOWSHIP-LADDER.md (pending)' };
 }
 
 export async function handleWorldAccess(request, env, { fetchImpl = fetch } = {}) {

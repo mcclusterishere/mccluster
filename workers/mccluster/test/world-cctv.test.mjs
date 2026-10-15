@@ -1,12 +1,14 @@
 /* MISSION-GATED CCTV (owner, 2026-10-15): only a signed-in member who
-   shared their location and completed a mission gets the camera list or a
-   frame. Each check failing on its own; the proxy's server-to-server
+   acknowledged the current Privacy Policy (location consent IS that
+   acknowledgement) and completed an admin-verified, non-clip mission gets the
+   camera list or a frame. Each check failing on its own; the proxy's server-to-server
    header; nothing leaks to anyone not eligible; never a fallback frame
    presented as live. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleWorldCctv, resetRateLimits, cleanSource, LIMITS, HALO_DEFAULT_BASE } from '../src/world-cctv.js';
-import { readFile } from 'node:fs/promises';
+import { handleWorldCctv, resetRateLimits, cleanSource, LIMITS, HALO_DEFAULT_BASE, PRIVACY_VERSION, privacyAcknowledged } from '../src/world-cctv.js';
+import { readFile, readdir } from 'node:fs/promises';
+import { workersFetch } from './support/workers-fetch-semantics.mjs';
 
 const UID = '11111111-1111-4111-8111-111111111111';
 const ASSIGN = '22222222-2222-4222-8222-222222222222';
@@ -27,27 +29,29 @@ const SOURCES = { sources: [
 ] };
 
 /* one world: who the user is, what the database holds, and what Halo answers */
-function world({ user = true, consent = 'granted', assignment = 'verified', halo = {} } = {}) {
+const ACK = { privacy_policy_version: '2026-09-26', privacy_acknowledged_at: '2026-10-01T00:00:00Z' };
+function world({ user = true, privacy = 'current', assignment = 'verified', halo = {} } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const u = String(url instanceof Request ? url.url : url);
     const headers = new Headers(init.headers || {});
     calls.push({ url: u, method: init.method || 'GET', headers, body: init.body });
-    if (u === 'https://sb.test/auth/v1/user') return user && headers.get('authorization') === 'Bearer member-token' ? json({ id: UID }) : json({ msg: 'bad jwt' }, 401);
-    if (u.startsWith('https://sb.test/rest/v1/world_location_consents')) {
-      if (consent === 'missing-table') return json({ code: 'PGRST205', message: 'Could not find the table' }, 404);
-      if ((init.method || 'GET') !== 'GET') return new Response(null, { status: 201 });
-      if (consent === 'none') return json([]);
-      if (consent === 'revoked') return json([{ scope: 'precise_gps', granted_at: '2026-10-01T00:00:00Z', revoked_at: '2026-10-02T00:00:00Z' }]);
-      return json([{ scope: 'precise_gps', granted_at: '2026-10-01T00:00:00Z', revoked_at: null }]);
+    if (u === 'https://sb.test/auth/v1/user') {
+      const meta = privacy === 'current' ? ACK : privacy === 'old' ? { ...ACK, privacy_policy_version: '2026-01-01' } : privacy === 'no-date' ? { privacy_policy_version: PRIVACY_VERSION } : {};
+      return user && headers.get('authorization') === 'Bearer member-token' ? json({ id: UID, user_metadata: meta }) : json({ msg: 'bad jwt' }, 401);
     }
+    if (u.includes('world_location_consents') || u.includes('location-consent')) throw new Error('no location-consent table or route any more: ' + u);
     if (u.startsWith('https://sb.test/rest/v1/action_proofs') || u.startsWith('https://sb.test/rest/v1/action_missions')) throw new Error('the canonical definition reads assignments only: ' + u);
     if (u.startsWith('https://sb.test/rest/v1/action_mission_assignments')) {
-      /* canonical (fellowship ladder PR #440): >= 1 of the member's own assignments with status 'verified' */
+      /* THE predicate (PR #444, action_member_verified_mission_count): a verified assignment on a non-clip mission */
       assert.match(u, /status=eq\.verified/); assert.match(u, new RegExp(`user_id=eq\\.${UID}`));
+      assert.match(u, /select=id,action_missions!inner\(kind\)&action_missions\.or=\(kind\.is\.null,kind\.neq\.clip\)/);
       return json(assignment === 'verified' ? [{ id: ASSIGN }] : []);
     }
-    if (u.startsWith('https://prime.mccluster.org/api/cctv/sources')) return halo.sourcesStatus ? json({ error: 'x' }, halo.sourcesStatus) : json(SOURCES);
+    if (u.startsWith('https://prime.mccluster.org/api/cctv/sources')) {
+      if (halo.redirect) return new Response(null, { status: 302, headers: { location: 'https://elsewhere.example/api/cctv/sources' } });
+      return halo.sourcesStatus ? json({ error: 'x' }, halo.sourcesStatus) : json(SOURCES);
+    }
     if (u.startsWith('https://prime.mccluster.org/api/cctv/frame/')) {
       const id = decodeURIComponent(u.split('/').pop());
       if (id === 'streetview-cam') return new Response('jpeg', { headers: { 'content-type': 'image/jpeg', 'x-cctv-source': 'streetview' } });
@@ -68,23 +72,26 @@ test('only its own routes; everything else is null', async () => {
   assert.equal(HALO_DEFAULT_BASE, 'https://prime.mccluster.org');
 });
 
-test('eligibility: all three checks pass for a consenting member with a verified assignment', async () => {
+test('eligibility: all three checks pass for a member who acknowledged the privacy policy and has a verified mission', async () => {
   const { fetchImpl } = world();
   const r = await handleWorldCctv(req('/v1/world/cctv/eligibility'), ENV, { fetchImpl });
   assert.equal(r.status, 200);
   assert.equal(r.headers.get('cache-control'), 'private, no-store');
   assert.match(r.headers.get('vary'), /authorization/);
   const body = await r.json();
-  assert.deepEqual(body.checks, { signed_in: true, location_consent: true, mission_completed: true });
+  assert.deepEqual(body.checks, { signed_in: true, privacy_acknowledged: true, mission_completed: true });
   assert.equal(body.eligible, true); assert.equal(body.reason, null);
+  assert.equal(body.privacy_version, PRIVACY_VERSION);
+  assert.equal(body.approximate_location.source, 'ip_approximate');
+  assert.equal(body.consent_store, undefined);
 });
 
 const MATRIX = [
-  ['signed out', { user: false }, { signed_in: false, location_consent: false, mission_completed: false }, 'sign_in_required', 401],
-  ['no location consent', { consent: 'none' }, { signed_in: true, location_consent: false, mission_completed: true }, 'location_consent_required', 403],
-  ['consent withdrawn', { consent: 'revoked' }, { signed_in: true, location_consent: false, mission_completed: true }, 'location_consent_required', 403],
-  ['consent store not applied yet', { consent: 'missing-table' }, { signed_in: true, location_consent: false, mission_completed: true }, 'location_consent_required', 403],
-  ['no verified assignment (joined, submitted or rejected only; production on 2026-10-15)', { assignment: 'submitted' }, { signed_in: true, location_consent: true, mission_completed: false }, 'mission_required', 403]
+  ['signed out', { user: false }, { signed_in: false, privacy_acknowledged: false, mission_completed: false }, 'sign_in_required', 401],
+  ['no privacy acknowledgement on record', { privacy: 'none' }, { signed_in: true, privacy_acknowledged: false, mission_completed: true }, 'privacy_acknowledgement_required', 403],
+  ['an older privacy version', { privacy: 'old' }, { signed_in: true, privacy_acknowledged: false, mission_completed: true }, 'privacy_acknowledgement_required', 403],
+  ['a version but no acknowledgement time', { privacy: 'no-date' }, { signed_in: true, privacy_acknowledged: false, mission_completed: true }, 'privacy_acknowledgement_required', 403],
+  ['no verified non-clip mission (joined, submitted, rejected or clip only)', { assignment: 'submitted' }, { signed_in: true, privacy_acknowledged: true, mission_completed: false }, 'mission_required', 403]
 ];
 
 for (const [name, opts, checks, reason, status] of MATRIX) {
@@ -94,7 +101,6 @@ for (const [name, opts, checks, reason, status] of MATRIX) {
     const e = await handleWorldCctv(req('/v1/world/cctv/eligibility', { token: tokenless ? null : 'member-token' }), ENV, { fetchImpl: w.fetchImpl });
     const body = await e.json();
     assert.deepEqual(body.checks, checks); assert.equal(body.eligible, false); assert.equal(body.reason, reason);
-    if (opts.consent === 'missing-table') assert.equal(body.consent_store, 'pending');
 
     /* and nothing leaks: no list, no frame, no call to Halo */
     resetRateLimits();
@@ -192,27 +198,24 @@ test('rate limits per member: the sources list refuses past its window with retr
   assert.equal(last.headers.get('cache-control'), 'private, no-store');
 });
 
-test('location consent: only from a member, only with the browser permission granted, and it can be withdrawn', async () => {
-  const w = world({ consent: 'none' });
-  assert.equal((await handleWorldCctv(req('/v1/world/location-consent', { token: null, method: 'POST', body: { browser_permission: 'granted' } }), ENV, { fetchImpl: w.fetchImpl })).status, 401);
-  assert.equal((await handleWorldCctv(req('/v1/world/location-consent', { method: 'POST', body: {} }), ENV, { fetchImpl: w.fetchImpl })).status, 400);
-  const ok = await handleWorldCctv(req('/v1/world/location-consent', { method: 'POST', body: { browser_permission: 'granted', lat: 40.1, lon: -73.2 } }), ENV, { fetchImpl: w.fetchImpl });
-  assert.equal(ok.status, 200);
-  const write = w.calls.find((c) => c.url.startsWith('https://sb.test/rest/v1/world_location_consents') && c.method === 'POST');
-  const row = JSON.parse(write.body);
-  assert.equal(row.user_id, UID); assert.equal(row.scope, 'precise_gps'); assert.equal(row.revoked_at, null);
-  assert.equal(row.lat, undefined, 'a decision is stored, never a position'); assert.equal(row.lon, undefined);
-  const del = await handleWorldCctv(req('/v1/world/location-consent', { method: 'DELETE' }), ENV, { fetchImpl: w.fetchImpl });
-  assert.equal(del.status, 200);
-  const patch = w.calls.find((c) => c.method === 'PATCH');
-  assert.ok(JSON.parse(patch.body).revoked_at);
-  assert.equal((await handleWorldCctv(req('/v1/world/location-consent'), ENV, { fetchImpl: w.fetchImpl })).status, 405);
+test('there is no location-consent route or table: the privacy acknowledgement is the consent', async () => {
+  const w = world();
+  for (const m of ['POST', 'DELETE', 'GET']) assert.equal(await handleWorldCctv(req('/v1/world/location-consent', { method: m }), ENV, { fetchImpl: w.fetchImpl }), null);
+  const src = await readFile(new URL('../src/world-cctv.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /world_location_consents/);
+  assert.equal(privacyAcknowledged({ user_metadata: ACK }), true);
+  assert.equal(privacyAcknowledged({ user_metadata: { ...ACK, privacy_acknowledged_at: 'not a date' } }), false);
+  assert.equal(privacyAcknowledged(null), false);
 });
 
-test('location consent before the table is applied says so (503), never pretends', async () => {
-  const w = world({ consent: 'missing-table' });
-  const r = await handleWorldCctv(req('/v1/world/location-consent', { method: 'POST', body: { browser_permission: 'granted' } }), ENV, { fetchImpl: w.fetchImpl });
-  assert.equal(r.status, 503); assert.equal((await r.json()).detail.reason, 'consent_store_pending');
+test("PRIVACY_VERSION is the site gate's version (js/live-content.js, js/analytics.js, js/action.js)", async () => {
+  const gate = await readFile(new URL('../../../js/live-content.js', import.meta.url), 'utf8');
+  const analytics = await readFile(new URL('../../../js/analytics.js', import.meta.url), 'utf8');
+  const join = await readFile(new URL('../../../js/action.js', import.meta.url), 'utf8');
+  assert.match(gate, new RegExp(`var VERSION = "${PRIVACY_VERSION}"`));
+  assert.match(analytics, new RegExp(`MCC_PRIVACY_REQUIRED_VERSION = "${PRIVACY_VERSION}"`));
+  assert.match(join, new RegExp(`privacy_policy_version: "${PRIVACY_VERSION}"`));
+  assert.match(join, /privacy_acknowledged_at: new Date\(\)\.toISOString\(\)/);
 });
 
 test('cleanSource never invents a position', () => {
@@ -223,25 +226,46 @@ test('cleanSource never invents a position', () => {
   assert.deepEqual(cleanSource({ id: 'a', lat: '1.5', lon: '2.5', upstream: 'https://x' }), { id: 'a', lat: 1.5, lon: 2.5 });
 });
 
-test('the Worker routes /v1/world/cctv/* and the consent route through this module (index.js answers every preflight first)', async () => {
+test('the Worker routes /v1/world/cctv/* through this module (index.js answers every preflight first)', async () => {
   const src = await readFile(new URL('../src/index.js', import.meta.url), 'utf8');
   assert.match(src, /import \{ handleWorldCctv \} from '\.\/world-cctv\.js'/);
-  assert.match(src, /path\.startsWith\('\/v1\/world\/cctv\/'\) \|\| path === '\/v1\/world\/location-consent'/);
+  assert.match(src, /if \(path\.startsWith\('\/v1\/world\/cctv\/'\)\) \{/);
+  assert.doesNotMatch(src, /location-consent/);
   assert.ok(src.indexOf("request.method === 'OPTIONS'") < src.indexOf('handleWorldCctv(request'), 'the preflight is answered before the gate');
 });
 
-test('eligibility is re-checked on every request: withdrawing consent stops the very next frame', async () => {
-  let consent = 'granted';
+test('eligibility is re-checked on every request: a revoked proof stops the very next frame', async () => {
+  let assignment = 'verified';
   const base = world();
   const fetchImpl = async (url, init) => {
-    if (String(url).startsWith('https://sb.test/rest/v1/world_location_consents')) return world({ consent }).fetchImpl(url, init);
+    if (String(url).startsWith('https://sb.test/rest/v1/action_mission_assignments')) return world({ assignment }).fetchImpl(url, init);
     return base.fetchImpl(url, init);
   };
   assert.equal((await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl })).status, 200);
-  consent = 'revoked';
+  assignment = 'rejected';
   const r = await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl });
   assert.equal(r.status, 403);
-  assert.equal((await r.json()).detail.reason, 'location_consent_required');
+  assert.equal((await r.json()).detail.reason, 'mission_required');
+});
+
+test("under Workers fetch semantics an eligible member gets the list and a frame (redirect: 'manual', never 'error')", async () => {
+  const w = world();
+  const fetchImpl = workersFetch((url, init) => w.fetchImpl(url.toString(), init));
+  const s = await handleWorldCctv(req('/v1/world/cctv/sources'), ENV, { fetchImpl });
+  assert.equal(s.status, 200, 'workerd would throw on redirect: error and this would be a 502');
+  const f = await handleWorldCctv(req('/v1/world/cctv/frame/austin-1'), ENV, { fetchImpl });
+  assert.equal(f.status, 200);
+  const haloInits = fetchImpl.calls.filter((c) => c.url.startsWith('https://prime.mccluster.org')).map((c) => c.init.redirect);
+  assert.ok(haloInits.length >= 2 && haloInits.every((r) => r === 'manual'), JSON.stringify(haloInits));
+});
+
+test('a Halo redirect is a typed failure and is never followed', async () => {
+  const w = world({ halo: { redirect: true } });
+  const fetchImpl = workersFetch((url, init) => w.fetchImpl(url.toString(), init));
+  const r = await handleWorldCctv(req('/v1/world/cctv/sources'), ENV, { fetchImpl });
+  assert.equal(r.status, 502);
+  assert.equal((await r.json()).detail.reason, 'halo_redirect');
+  assert.equal(fetchImpl.calls.filter((c) => c.url.startsWith('https://elsewhere.example')).length, 0);
 });
 
 test('Halo refusing the internal header (401) is a 502 to the member, with nothing of Halo\'s passed on', async () => {

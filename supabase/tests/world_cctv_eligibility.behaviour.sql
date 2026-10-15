@@ -1,7 +1,10 @@
--- Behaviour tests for supabase/pending/world_location_consent_v1.sql and
--- the CCTV "completed a mission" definition the Worker queries
--- (workers/mccluster/src/world-cctv.js), on a scratch database
--- (scripts/test-world-cctv-db.sh). Every check raises on failure.
+-- Behaviour tests for the CCTV "completed a mission" definition the Worker
+-- queries (workers/mccluster/src/world-cctv.js MISSION_COMPLETED_QUERY), on a
+-- scratch database (scripts/test-world-cctv-db.sh). It is THE predicate of
+-- PR #444 (action_member_verified_mission_count): a verified assignment on a
+-- mission whose kind is not 'clip'. Location consent is the Privacy Policy
+-- acknowledgement on the member's auth record (no table; nothing here).
+-- Every check raises on failure.
 \set ON_ERROR_STOP 1
 set client_min_messages = warning;
 
@@ -23,13 +26,14 @@ begin
   end;
   raise exception 'expected failure (%), but it succeeded: %', p_like, p_sql;
 end $$;
--- the Worker's read, as one boolean (service role): THE canonical definition shared with the fellowship ladder
--- (PR #440): >= 1 of the member's own action_mission_assignments rows with status 'verified'
+-- the Worker's read, as one boolean (service role): the WHERE clause copied from PR #444's
+-- supabase/pending/mission_admin_approval_v1.sql action_member_verified_mission_count()
 create or replace function pg_temp.mission_completed(p_user uuid) returns boolean language sql as $$
-  select exists (select 1 from public.action_mission_assignments a where a.user_id = p_user and a.status = 'verified')
-$$;
-create or replace function pg_temp.consented(p_user uuid) returns boolean language sql as $$
-  select exists (select 1 from public.world_location_consents c where c.user_id = p_user and c.granted_at is not null and c.revoked_at is null)
+  select exists (select 1
+    from public.action_mission_assignments a
+    join public.action_missions m on m.id = a.mission_id
+   where p_user is not null and a.user_id = p_user and a.status = 'verified'
+     and coalesce(m.kind, 'civic') <> 'clip')
 $$;
 
 select pg_temp.as_service();
@@ -79,38 +83,16 @@ do $$ begin
   if pg_temp.mission_completed('00000000-0000-4000-8000-0000000000b2') then raise exception 'a rejected proof must not count'; end if;
 end $$;
 
--- consent: written by the service role only; members read their own; nobody else
-insert into public.world_location_consents(user_id, granted_at) values ('00000000-0000-4000-8000-0000000000a1', now());
+-- a verified CLIP mission never counts (PR #444: clips are paid distribution work, not a completed mission)
+insert into public.action_mission_assignments(id, mission_id, user_id, m_uid, status) values
+  ('00000000-0000-4000-8000-00000000e004', '00000000-0000-4000-8000-00000000f002', '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-00000000aa01', 'verified');
+update public.action_mission_assignments set status = 'verified' where id = '00000000-0000-4000-8000-00000000e002';
 do $$ begin
-  if not pg_temp.consented('00000000-0000-4000-8000-0000000000a1') then raise exception 'granted consent must count'; end if;
-  if pg_temp.consented('00000000-0000-4000-8000-0000000000b2') then raise exception 'no row means no consent'; end if;
+  if pg_temp.mission_completed('00000000-0000-4000-8000-0000000000b2') then raise exception 'a verified clip assignment must not count'; end if;
+  if not pg_temp.mission_completed('00000000-0000-4000-8000-0000000000a1') then raise exception 'Ana still has her civic mission'; end if;
 end $$;
-select pg_temp.must_fail($$insert into public.world_location_consents(user_id, granted_at) values ('00000000-0000-4000-8000-0000000000b2', null)$$, '%check%');
-select pg_temp.must_fail($$insert into public.world_location_consents(user_id, granted_at, scope) values ('00000000-0000-4000-8000-0000000000b2', now(), 'city')$$, '%check%');
-
-select pg_temp.as_user('00000000-0000-4000-8000-0000000000b2');
+-- no location-consent table exists any more: location consent is the privacy acknowledgement
 do $$ begin
-  if (select count(*) from public.world_location_consents) <> 0 then raise exception 'Ben must not read Ana''s consent'; end if;
-end $$;
-select pg_temp.must_fail($$insert into public.world_location_consents(user_id, granted_at) values ('00000000-0000-4000-8000-0000000000b2', now())$$, '%permission denied%');
-select pg_temp.as_user('00000000-0000-4000-8000-0000000000a1');
-do $$ begin
-  if (select count(*) from public.world_location_consents) <> 1 then raise exception 'Ana reads her own consent'; end if;
-end $$;
-select pg_temp.must_fail($$update public.world_location_consents set revoked_at = null$$, '%permission denied%');
-select pg_temp.as_anon();
-select pg_temp.must_fail($$select count(*) from public.world_location_consents$$, '%permission denied%');
-
--- withdrawal ends it
-select pg_temp.as_service();
-update public.world_location_consents set revoked_at = now() where user_id = '00000000-0000-4000-8000-0000000000a1';
-do $$ begin
-  if pg_temp.consented('00000000-0000-4000-8000-0000000000a1') then raise exception 'withdrawn consent must not count'; end if;
-end $$;
--- no coordinate column exists
-do $$ begin
-  if exists (select 1 from information_schema.columns where table_name = 'world_location_consents' and column_name ~ '(lat|lon|lng|accuracy|address|geom)') then
-    raise exception 'the consent table must never hold a position';
-  end if;
+  if to_regclass('public.world_location_consents') is not null then raise exception 'world_location_consents must not exist'; end if;
 end $$;
 select 'world cctv eligibility: ok';

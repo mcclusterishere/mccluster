@@ -46,10 +46,10 @@ const SOURCES = { ok: true, sources: [
 ], upstream_total: 2, dropped_without_position: 0 };
 const json = (route, body, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': '*', ...headers }, body: JSON.stringify(body) });
 const FAN_LOCKED = (cctvReason) => [
-  { id: 'cctv', reason: cctvReason, next_step: cctvReason === 'location_consent_required' ? 'share_location' : 'complete_a_mission' },
-  { id: 'audience', reason: 'creator_business_required', next_step: 'become_a_creator' },
-  { id: 'transport', reason: 'pending_counsel', next_step: 'not_available' }
+  { id: 'cctv', reason: cctvReason, next_step: cctvReason === 'privacy_acknowledgement_required' ? 'acknowledge_privacy' : 'complete_a_mission' },
+  { id: 'audience', reason: 'creator_business_required', next_step: 'become_a_creator' }
 ];
+const WHIP_LAYER = { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: 'https://matthew.mccluster.org/whip/driver/' };
 
 async function context(viewport, { member = false, eligible = false, owner = false } = {}) {
   const mobile = viewport.width < 600;
@@ -64,9 +64,9 @@ async function context(viewport, { member = false, eligible = false, owner = fal
     calls.push({ m: req.method(), p, auth: !!auth });
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
     if (p === '/v1/world/access') return json(route, auth
-      ? { level: owner ? 'owner' : 'fan', unlocked_layers: ['flights', 'satellites', 'launches', 'intel', 'music'].concat(eligible ? ['cctv'] : []), locked_layers: FAN_LOCKED('location_consent_required').filter((l) => !(eligible && l.id === 'cctv')) }
-      : { level: 'public', unlocked_layers: ['flights'], locked_layers: ['satellites', 'launches', 'intel', 'music', 'cctv', 'audience'].map((id) => ({ id, reason: 'sign_in_required', next_step: 'sign_in' })).concat([{ id: 'transport', reason: 'pending_counsel', next_step: 'not_available' }]) });
-    if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, location_consent: eligible, mission_completed: eligible }, reason: eligible ? null : 'location_consent_required', consent_store: 'applied' } : { eligible: false, checks: { signed_in: false, location_consent: false, mission_completed: false }, reason: 'sign_in_required' });
+      ? { level: owner ? 'owner' : 'fan', unlocked_layers: ['flights', 'satellites', 'launches', 'intel', 'music', 'transport'].concat(eligible ? ['cctv'] : []), locked_layers: FAN_LOCKED('privacy_acknowledgement_required').filter((l) => !(eligible && l.id === 'cctv')), layers: { transport: WHIP_LAYER }, approximate_location: { source: 'ip_approximate', country: 'US', region: 'Connecticut', city: 'New Haven', lat: 41.3, lon: -72.9 } }
+      : { level: 'public', unlocked_layers: ['flights'], locked_layers: ['satellites', 'launches', 'intel', 'music', 'cctv', 'audience', 'transport'].map((id) => ({ id, reason: 'sign_in_required', next_step: 'sign_in' })), layers: { transport: WHIP_LAYER } });
+    if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, privacy_acknowledged: eligible, mission_completed: eligible }, reason: eligible ? null : 'privacy_acknowledgement_required', privacy_version: '2026-09-26' } : { eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false }, reason: 'sign_in_required' });
     if (p === '/v1/world/cctv/sources') return eligible && auth ? json(route, SOURCES) : json(route, { error: 'no' }, 403);
     if (p.startsWith('/v1/world/cctv/frame/')) return eligible && auth ? route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': '*', 'x-cctv-source': 'upstream-image', 'x-cctv-provider': 'City of Austin', 'last-modified': new Date(Date.now() - 40000).toUTCString(), 'x-cctv-retrieved-at': new Date().toISOString(), 'x-cctv-license': 'public' }, body: FRAME }) : json(route, { error: 'no' }, 403);
     if (p === '/v1/intel/geo') return json(route, { code: 'intel_schema_not_ready' }, 503);
@@ -164,13 +164,33 @@ for (const size of SIZES) {
     await page.click('#ctlCctv', { force: true });
     await page.waitForSelector('#cctvSheet:not([hidden])', { timeout: 30000 });
     const txt = await page.textContent('#cctvBody');
-    check(`member-${size.name}`, 'the lock names all three requirements and a way to meet each', /Signed in/.test(txt) && /Location shared/.test(txt) && /A mission completed/.test(txt) && /Share my location/.test(txt) && /Find a mission/.test(txt) && /no verified mission yet/.test(txt), txt.slice(0, 300));
+    check(`member-${size.name}`, 'the lock names all three requirements and a way to meet each', /Signed in/.test(txt) && /Privacy Policy agreed/.test(txt) && /A mission completed/.test(txt) && /I agree to the Privacy Policy/.test(txt) && /Find a mission/.test(txt) && /no verified mission yet/.test(txt), txt.slice(0, 300));
     check(`member-${size.name}`, 'no camera list or frame was requested', !calls.some((c) => /cctv\/(sources|frame)/.test(c.p)));
     const w = await widths(page);
     check(`member-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
     const mb = await barClear(page);
     check(`member-${size.name}`, 'a signed-in member keeps the app bar on the Full world, clear of the controls', mb.bar && mb.covered.length === 0, mb);
     await page.screenshot({ path: join(OUT, `cctv-locked-${size.name}.png`) });
+    /* location consent IS the privacy acknowledgement: one tap records it on the member's own auth record */
+    const sbCalls = [];
+    page.on('request', (r) => { if (r.url().startsWith('https://zmnhbrjyhxzhkxmhkexs.supabase.co/auth/v1/user') && r.method() === 'PUT') sbCalls.push(r.postData()); });
+    await page.click('[data-cctv-privacy]');
+    await page.waitForTimeout(800);
+    const put = sbCalls[0] ? JSON.parse(sbCalls[0]) : null;
+    check(`member-${size.name}`, "agreeing records the privacy version and time on the member's own record, and no position", !!put && put.data && put.data.privacy_policy_version === '2026-09-26' && !!Date.parse(put.data.privacy_acknowledged_at) && !/lat|lon|coords/i.test(sbCalls[0]), sbCalls);
+    check(`member-${size.name}`, 'no location-consent route is ever called', !calls.some((c) => /location-consent/.test(c.p)));
+    await page.click('#cctvClose');
+    /* Whip Equipped: open to a member; rides are not live; drivers are asked to sign up with Whip */
+    check(`member-${size.name}`, 'Whip Equipped is open to a signed-in member', !(await page.evaluate(() => document.getElementById('ctlTransport').classList.contains('is-locked'))));
+    await page.click('#ctlTransport', { force: true });
+    await page.waitForFunction(() => window.__huWhip && window.__huWhip().open, null, { timeout: 10000 }).catch(() => {});
+    const whip = await page.textContent('#cctvBody');
+    const href = await page.getAttribute('[data-whip-signup]', 'href').catch(() => null);
+    check(`member-${size.name}`, 'opening it says rides are not live and offers the driver sign-up', /rides aren’t live yet/.test(whip) && /Are you a driver, or know one\? Have them sign up today/.test(whip) && /Whip Equipped LLC/.test(whip) && !/McCluster/.test(whip) && href === 'https://matthew.mccluster.org/whip/driver/', { whip: whip.slice(0, 300), href });
+    check(`member-${size.name}`, 'no ride is requested from anywhere', !calls.some((c) => /\/api\/rides/.test(c.p)));
+    const ww = await widths(page);
+    check(`member-${size.name}`, 'no sideways overflow with the Whip sheet open', ww.scrollW === ww.clientW, ww);
+    await page.screenshot({ path: join(OUT, `whip-not-live-${size.name}.png`) });
     await page.click('#cctvClose');
     await page.click('#ctlIntel', { force: true });
     await page.waitForFunction(() => /Intel events/.test(document.getElementById('cctvTitle').textContent) && !document.getElementById('cctvSheet').hidden, null, { timeout: 15000 }).catch(() => {});

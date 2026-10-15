@@ -149,15 +149,15 @@ export default {
         if (layer) return layer;
       }
 
-      /* mission-gated CCTV: signed in, location consent, a completed
-         mission; proxied from Halo server to server (./world-cctv.js) */
       /* which World layers this viewer may open, by level (./world-access.js) */
       if (path === '/v1/world/access') {
         const access = await handleWorldAccess(request, env);
         if (access) return access;
       }
 
-      if (path.startsWith('/v1/world/cctv/') || path === '/v1/world/location-consent') {
+      /* mission-gated CCTV: signed in, privacy acknowledged, a completed
+         mission; proxied from Halo server to server (./world-cctv.js) */
+      if (path.startsWith('/v1/world/cctv/')) {
         const cctv = await handleWorldCctv(request, env);
         if (cctv) return cctv;
       }

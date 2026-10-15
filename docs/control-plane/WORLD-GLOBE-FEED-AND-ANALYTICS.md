@@ -11,7 +11,12 @@ experience is the whole product, "the new feed", and login, profile,
 notifications and the rest are reached from the globe. The globe should also
 exist on its own, chrome-less: "just zoom in and click on things". The Halo
 globe goes into the analytics dashboard. CCTV is for members only after they
-are signed in, have given location consent, and have completed a mission.
+are signed in, have given location consent, and have completed a mission;
+then (owner correction, same day): "When they come to the website they agree
+to the privacy agreement. We get their location. Period." So location consent
+is the Privacy Policy acknowledgement (section D). Whip Equipped (owner, same
+day): no voter rule; anyone signed in can open it and sign up; rides are not
+live yet (section B2).
 
 ## A. Inventory (main at 8be51f5, before this change)
 
@@ -112,7 +117,8 @@ self-service numbers (above).
 "Logged-out public: the globe and exactly one free layer. All other layers
 and controls stay visible but shaded; clicking a locked one opens the login
 prompt." Access is data-driven per level: public / fan / creator-business /
-E=Up / fellow / fellow + transport / owner.
+E=Up / fellow / owner. (The "fellow + transport" level and its voter rule
+are cancelled, owner 2026-10-15.)
 
 - **The one free layer is Flights.** It is the most open source the World
   already serves without a session (OpenSky's anonymous snapshot through
@@ -124,11 +130,15 @@ E=Up / fellow / fellow + transport / owner.
   layers}`, `private, no-store`. Levels come only from what can be verified
   today: *public* (no session), *fan* (a Supabase user), *creator_business*
   (an active `music_creator_profiles` row via `m_auth_user_links`; business
-  accounts are a TODO), *owner* (house `org_members` role owner). *eup*,
-  *fellow* and *fellow_transport* are named `LADDER_HOOKS` that return false
+  accounts are a TODO), *owner* (house `org_members` role owner). *eup* and
+  *fellow* are named `LADDER_HOOKS` that return false
   until `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`
   (feat/policy-fellowship-ladder) defines a verifiable rule: no fake grants.
-  CCTV is reported with the three checks above, not as a level.
+  CCTV is reported with the three checks above, not as a level. The answer
+  also carries `approximate_location` (`source: "ip_approximate"`, country,
+  region, city and coordinates rounded to 0.1°, from Cloudflare's
+  `request.cf`; omitted rather than 0,0; never stored), which "Near me" flies
+  to first.
 
 | Layer | Opens at | Today |
 |---|---|---|
@@ -136,16 +146,17 @@ E=Up / fellow / fellow + transport / owner.
 | Satellites, Space missions | fan | As before (Worker checks the bearer) |
 | Intel events | fan | `GET /v1/intel/geo` with the member's session (members audience, k=5). The API also serves the public, but only one layer is free. Cells drawn as cells; located / unknown / suppressed and sources on the layer line; switched off today, said honestly. |
 | Music | fan | **No source with a real place exists yet** (creator profiles hold no location; the GDELT news ingester has no music topic and its RPCs allow only world, policy, climate, health, technology; listener geography is the owner's private analytics). The toggle says so and draws nothing. Unblocking it needs either a `music` topic added to `public-gdelt-news` and the three media RPC / table allowlists (headline-country pins, coarse and labelled as such), or a creator-supplied, consented home city. |
-| CCTV | fan + location consent + a completed mission | Section D |
+| CCTV | fan + privacy acknowledged (= location consent) + a completed mission | Section D |
 | Your audience | creator_business | As before (the creator's own country counts) |
-| Transport | fellow + transport | **Whip Equipped LLC**, Matthew's separate company, not a McCluster Corp brand: labelled as that company's, no McCluster branding, no mark drawn. Locked for everyone, owner included: the fellow + voter-registration rule ships disabled pending counsel. |
+| Whip Equipped transport | fan (any signed-in member) | **Whip Equipped LLC**, Matthew's separate company, not a McCluster Corp brand: labelled as that company's, no McCluster branding, no mark drawn. Guests see it shaded and are asked to sign in. Opening it says "Whip Equipped rides aren't live yet", offers no ride request, and asks "Are you a driver, or know one? Have them sign up today" with a link to Whip's own Driver app (`https://matthew.mccluster.org/whip/driver/`), noting that signing up is an application and Whip's own checks (licence, insurance, background check, local rideshare rules) decide who drives. Same rule as the ladder's `whip_transport_partner` (`signed_in`, PR #440). The access map carries `service_live: false` and `driver_signup_url`. |
 
 - **The page** (`js/action-globe.js`): every layer toggle is on screen for
   everyone except on the analytics surface; a locked one is shaded with a
   red dot (`is-locked`, `aria-disabled`, `data-lock` = the reason). A guest's
   tap sends `hu:ask-sign-in` (the World's sign-in prompt with the reason and
   a way back; on the Full world, the sign-in line); a member's tap explains
-  what unlocks it (the CCTV checklist, the transport note). If the access map
+  what unlocks it (the CCTV checklist); Whip Equipped opens its not-live
+  sheet. If the access map
   cannot be read, the page applies the same rule from the session alone.
 - **Fans and the Action Network:** a signed-in fan already reads the World
   feed and mission activity; joining, posting and proving keep their own
@@ -210,33 +221,47 @@ first, as for every core route).
 
 | Route | Who | Answer |
 |---|---|---|
-| `GET /v1/world/cctv/eligibility` | anyone | `{eligible, checks:{signed_in, location_consent, mission_completed}, reason, consent_store, missions_url}` |
-| `POST /v1/world/location-consent` | member | Records an opt-in. Body must say `browser_permission: "granted"` (the page sends it only after the browser granted geolocation from the member's own tap). Stores the decision, never a position. |
-| `DELETE /v1/world/location-consent` | member | Withdraws it (`revoked_at`). |
+| `GET /v1/world/cctv/eligibility` | anyone | `{eligible, checks:{signed_in, privacy_acknowledged, mission_completed}, reason, privacy_version, privacy_url, approximate_location, missions_url}` |
 | `GET /v1/world/cctv/sources` | eligible | Halo's camera records, trimmed to public fields; positionless or 0,0 cameras dropped and counted. |
 | `GET /v1/world/cctv/frame/:id` | eligible | One live snapshot, only if Halo marks it `x-cctv-source: upstream-image` and it is a raster image. Street View and synthetic fallbacks: `502 no_live_frame`. Passes `content-type`, `x-cctv-source`, `x-cctv-provider` (from the record if Halo omits it), `x-cctv-captured-at`, `last-modified`, adds `x-cctv-retrieved-at`, `x-cctv-upstream-date`, `x-cctv-license`. |
 
 - **The three checks, on every request** (no per-member cache; Halo's
   contract, `docs/AUTH-BOUNDARY.md` on hitmans-halo PR #23):
   1. *signed_in*: Supabase `auth/v1/user` accepts the bearer.
-  2. *location_consent*: `public.world_location_consents` row granted and
-     not revoked. **No server-side consent record existed before**: the
-     browser permission was only an analytics event (`location_permission`).
-     The table is defined minimally in
-     `supabase/pending/world_location_consent_v1.sql` (decision only, no
-     coordinate column; service role writes; members read their own) and is
-     **not applied**. Until it is, the check is false for everyone and the
-     answer says `consent_store: "pending"`.
-  3. *mission_completed*: **the one canonical definition, shared with the
-     fellowship ladder (PR #440):** the member has at least one
-     `public.action_mission_assignments` row with `status = 'verified'`. An
-     assignment becomes `verified` exactly when its `action_proofs` row is
-     reviewed `verified` (`review_action_proof`: admin-only, never one's own
-     proof); `action_network_fellowship_v1` counts completions the same
-     way. **Production had 0 verified assignments (and 0 action_proofs rows)
-     on 2026-10-15, so no member qualifies today.** The rule is not loosened;
-     the lock says "You have no verified mission yet. Join one, send its
-     proof, and it counts once a reviewer verifies it."
+  2. *privacy_acknowledged* (**location consent is the privacy
+     acknowledgement**, owner 2026-10-15). The member's own Supabase auth
+     record (`user_metadata`) has `privacy_policy_version` equal to the
+     current version (`2026-09-26`: `PRIVACY_VERSION` in `world-cctv.js`,
+     `VERSION` in `js/live-content.js`, `MCC_PRIVACY_REQUIRED_VERSION` in
+     `js/analytics.js`; a test pins all three) and a parseable
+     `privacy_acknowledged_at`. Where it lives: the join flow writes both
+     fields at sign-up (`js/action.js`). Production on 2026-10-15: 110 auth
+     users, 33 with the current version on record. The site-entry gate
+     (`js/live-content.js`, `mcc_privacy_ack`) is browser storage the Worker
+     cannot read, so the other members record theirs with one tap on the
+     CCTV lock ("I agree to the Privacy Policy"), which writes the same two
+     fields to their own record with their own session (`PUT
+     /auth/v1/user`). `privacy.html` already discloses the automatic
+     IP-derived country/region/city and that precise device location is read
+     only when the browser permission is granted. The separate
+     `world_location_consents` table, its pending SQL and the
+     `POST`/`DELETE /v1/world/location-consent` routes are removed.
+     **Which location:** the IP-derived approximate location Cloudflare
+     attaches to the request (`request.cf`), never stored; precise GPS only
+     through the browser's own permission prompt, which browsers enforce and
+     this code does not try to get around.
+  3. *mission_completed*: **the one predicate, identical to PR #444's
+     `public.action_member_verified_mission_count()`** in
+     `supabase/pending/mission_admin_approval_v1.sql`: a verified assignment
+     on a mission that is not a clip,
+     `where a.user_id = p_user and a.status = 'verified' and coalesce(m.kind, 'civic') <> 'clip'`.
+     The Worker reads it through PostgREST as an inner join
+     (`select=id,action_missions!inner(kind)&action_missions.or=(kind.is.null,kind.neq.clip)`);
+     `world_cctv_eligibility.behaviour.sql` copies the same WHERE clause and
+     proves a verified clip does not count. An assignment becomes `verified`
+     only when an admin reviews its proof (`review_action_proof`; never one's
+     own proof; no auto-verify path). **Production had 0 verified
+     assignments on 2026-10-15, so no member qualifies today.**
 - **Nothing for anyone not eligible:** 401 / 403 with the reason and the
   checks; Halo is never called on their behalf. Every response is
   `cache-control: private, no-store`, `vary: origin, authorization`.
@@ -246,20 +271,27 @@ first, as for every core route).
   member's bearer is never forwarded. No secret: 503 `halo_not_configured`
   after the eligibility check. A Cloudflare service binding was not used: it
   needs the Halo Worker's service name and a deploy-time config change.
+  Halo is fetched with `redirect: 'manual'` (workerd rejects the `error`
+  mode, which would have made every eligible request a 502); any 3xx is a
+  typed failure, `502 halo_redirect`, and is never followed. A test runs the
+  route under Workers fetch semantics (`test/support/workers-fetch-semantics.mjs`),
+  and `test/world-ion.test.mjs` scans every Worker source file for the
+  `error` mode (the two Seek First adapters are listed as pending PR #441).
 - **Frames in the browser:** an `<img>` cannot send `Authorization`, so the
   page reads the frame with `fetch()` and the bearer and shows it from a
   `blob:` object URL, revoked when the sheet closes. No token or signed
   parameter ever rides in a URL.
 - **Rate limits:** per member, per isolate, sliding minute: eligibility 30,
-  sources 6, frames 60, consent writes 10 (`429` with `retry-after`). Best
+  sources 6, frames 60 (`429` with `retry-after`). Best
   effort: Workers spread load across isolates. The camera catalogue (not
   per-member data) is held in isolate memory for 60 s.
 - **Globe UI** (`js/action-globe.js`, `ctlCctv`): shaded for guests (a tap
   asks them to sign in; nothing is fetched), hidden only on the analytics
   surface, locked (red dot) for a member who is not eligible.
   The lock opens a sheet with the three requirements, ✓ / ✕ each, and a way
-  to meet each: Sign in, Share my location (browser prompt, then the consent
-  write; withdraw link once given), Find a mission (`mnet.html?view=missions`).
+  to meet each: Sign in, "I agree to the Privacy Policy" (records the
+  acknowledgement on the member's own record; no position is sent), Find a
+  mission (`mnet.html?view=missions`).
   Unlocked, the cameras are green points; a tap opens the live snapshot with
   provider, captured, retrieved, media type and licence, labelled "Live
   snapshot", or "No live frame from this camera right now. Nothing is shown
@@ -268,21 +300,24 @@ first, as for every core route).
 ## Tests
 
 - `workers/mccluster/test/world-cctv.test.mjs`: the eligibility matrix (each
-  check failing alone, consent withdrawn, consent store not applied, pending
-  or rejected proof, proof approved but assignment not verified, clip-only),
+  check failing alone: no privacy record, an older version, no time, no
+  verified non-clip mission), no location-consent route, the privacy
+  version pinned to the site gate, Workers fetch semantics and a Halo
+  redirect refused,
   no leak (no list, no frame, no Halo call) for every failing case, the
   internal header and no forwarded bearer, `HALO_API_BASE`, missing secret,
   live frame headers, Street View and synthetic refused, unknown and
-  malformed ids, rate limit, consent write and withdrawal (no position
-  stored), eligibility re-checked on every request, Halo 401 mapped without
+  malformed ids, rate limit, eligibility re-checked on every request, Halo 401 mapped without
   leaking, blob-URL rendering.
 - `supabase/tests/world_cctv_eligibility.behaviour.sql` via
   `scripts/test-world-cctv-db.sh` on a scratch Postgres: the mission
-  definition through the real `review_action_proof`, consent RLS.
+  definition through the real `review_action_proof`, the clip exclusion,
+  and that no `world_location_consents` table exists.
 - `workers/mccluster/test/world-access.test.mjs`: one free layer for a
   guest, every other layer listed locked with a reason and next step, fan /
   creator / owner from records, CCTV reasons, the ladder hooks grant nothing,
-  transport locked even for the owner.
+  Whip Equipped open to any member (not live, driver sign-up link, Whip
+  Equipped LLC only, no voter rule), the approximate location (never 0,0).
 - `scripts/test/world-globe-feed-analytics.test.mjs`: the geo aggregate
   (suppression, unknown, totals add up, no 0,0), the sign-up layer with the
   source filter, Intel events by contract (cells, switched-off state), the 60/40 shell and filters, globe
@@ -292,11 +327,12 @@ first, as for every core route).
 
 1. Set the secret `HALO_INTERNAL_TOKEN` (the same 32+ character value) on the
    `mccluster` Worker and on Halo's Worker; optionally `HALO_API_BASE`.
-2. Apply `supabase/pending/world_location_consent_v1.sql` (then promote per
-   `supabase/pending/README.md`). Until then no member can unlock CCTV.
+2. Nothing to apply for location consent: it is the privacy acknowledgement
+   already on members' auth records. CCTV still needs an admin-verified,
+   non-clip mission (none in production on 2026-10-15).
 3. Deploy the Worker and Pages; route the apex (`DOMAINS-AND-ENTITIES.md`).
 4. Approve or replace the tagline candidate "Get Your Hu Up!" before any
-   copy ships; supply the ladder rules (E=Up, fellow, transport) and pick
+   copy ships; supply the ladder rules (E=Up, fellow) and pick
    the Music layer's geo source (above).
 5. Decide: should the Control Room carry the shared bottom app bar on a
    phone, where it already has its own bottom navigation? Should Anti-Social level
