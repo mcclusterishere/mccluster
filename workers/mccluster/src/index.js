@@ -6,6 +6,7 @@ import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleIntelRequest } from './intel/router.js';
+import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -145,6 +146,13 @@ export default {
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
+      }
+
+      /* the World's Cesium ion: terrain, aerial imagery and buildings,
+         with the account's token kept here (./world-ion.js) */
+      if (path === WORLD_ION_PATH || path.startsWith(`${WORLD_ION_PATH}/`)) {
+        const ion = await handleWorldIon(request, env);
+        if (ion) return ion;
       }
 
       if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {

@@ -183,3 +183,15 @@ header strong{display:none}
 .globe-explore .explore-line[hidden]{display:none}
 .globe-explore .explore-lead{color:#ffb347;font-weight:800;text-decoration:none}
 @media(min-width:700px){.globe-explore{--hu-sheet-gap:12px}.globe-explore #deck{left:50%;right:auto;width:min(620px,calc(100% - 32px));transform:translateX(-50%);border-radius:20px;bottom:calc(var(--hu-bar-h) + var(--hu-sheet-gap))}.globe-explore .explore-line{right:auto;max-width:440px}}
+
+/* Cesium ion's credits, a condition of drawing from ion: the ion logo on the imagery line and everything else (Bing, the
+   terrain's sources, NASA) behind "Data attribution", in Cesium's own credit display moved here (js/action-globe.js,
+   creditContainer). Shown only while the World draws from ion. */
+.ion-credits{display:none}
+.globe-ion .ion-credits{display:inline}
+.globe-ion .ion-credits::before{content:" \00b7 "}
+.ion-credits .cesium-widget-credits{position:static!important;display:inline!important;padding:0!important;font-size:inherit!important;color:inherit!important;text-shadow:none!important}
+.ion-credits .cesium-credit-logoContainer,.ion-credits .cesium-credit-textContainer{display:inline!important}
+.ion-credits .cesium-credit-textContainer:empty{display:none!important}
+.ion-credits img{height:12px!important;width:auto!important;vertical-align:-2px!important}
+.ion-credits .cesium-credit-expand-link{margin-left:4px;color:inherit;text-decoration:underline;cursor:pointer}
