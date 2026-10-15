@@ -100,8 +100,9 @@ L1a Fan                      signed-in member (m_people + auth user)
 L1b Creator / business       + an active creator workspace (creator_billing_subscriptions);
                              the Action Network is where the artist goes; the CRM lives HERE,
                              purpose-limited to that business's own contacts
-Starter missions (3 kinds)   help_person, write_song, attend_rally — each complete when a mission
-                             mapped to that kind has a VERIFIED assignment
+Three verified missions      ANY three distinct missions with a VERIFIED assignment (an admin
+                             reviewed the proof), clips excluded (owner, 2026-10-15). help a person,
+                             write a song, show up to a rally are SUGGESTED first missions
 Policy Fellowship (state)    an action_cohorts row: program 'policy_fellowship', region_key = state;
                              seat = accepted fellowship application + ladder rule satisfied
 Policy teams                 action_cohorts: program 'policy_team', parent_cohort_id = state cohort;
@@ -116,58 +117,50 @@ be a fellow… that's not the right way to think about it"); the default is
 non-exclusive, and the switch is data: `action_unlock_rules.creator_exclusive`
 (default `false`).
 
-### What "completed a mission" means
+### What "completed a mission" means (owner change, 2026-10-15)
 
-A starter kind is complete when the member has an `action_mission_assignments`
-row with `status = 'verified'` for a mission mapped to that kind. That status is
-set only by `review_action_proof()` when the desk verifies the proof. A
-submitted, pending or rejected proof does not count.
+**Any three distinct admin-verified missions**, not three specific starter
+kinds. A mission counts when the member has an `action_mission_assignments`
+row with `status = 'verified'` for it (set only by `review_action_proof()`
+when an admin verifies the proof; no auto-verify path), and the mission is
+not a clip. This is exactly PR #444's predicate,
+`public.action_member_verified_mission_count(uid)` in
+`supabase/pending/mission_admin_approval_v1.sql`:
 
-This must be the **same definition** the World's CCTV gate uses for "has
-completed a mission" (owner: logged in + location consent + completed mission).
-That gate is being written on `feat/world-globe-feed-analytics`
-(`docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md`), which was **not yet
-pushed** when this was written (`git fetch origin feat/world-globe-feed-analytics`
-found no ref). Whichever lands second must reconcile to one shared predicate,
-ideally one SQL function (`action_member_has_verified_mission(uid)`), so the
-two gates cannot drift.
-That function now exists, pending, in
-`supabase/pending/mission_admin_approval_v1.sql` (with
-`action_member_verified_mission_count(uid)`), and that file makes `verified`
-reachable only through an admin's recorded review
+```sql
+where p_user is not null and a.user_id = p_user and a.status = 'verified'
+  and coalesce(m.kind, 'civic') <> 'clip'   -- count(distinct a.mission_id)
+```
+
+`action_member_verified_mission_count(uid)` and
+`action_member_has_verified_mission(uid)` exist, pending, in
+`supabase/pending/mission_admin_approval_v1.sql`, and that file makes
+`verified` reachable only through an admin's recorded review
 (`docs/control-plane/MISSION-ADMIN-APPROVAL.md`).
 
-The evidence canon (PR #438) states "approved proof = `action_proofs.status =
-'verified'`". `review_action_proof()` sets the proof and its assignment to
-`verified` in the same transaction, so the two read the same for ordinary
-missions. They can differ where another path verifies an assignment (for
-example the Anti-Social level review or the completion automation), so the
-shared predicate must be chosen once, by the owner, and used by the ladder,
-the CCTV gate and the canon alike. This ladder uses the assignment status
-because that is what the fellowship already counts.
+This file carries the same WHERE clause inline (it applies before #444), the
+World's CCTV gate reads the same predicate (PR #442), and #444 replaces the
+inline copy with its function. A submitted, pending or rejected proof does not
+count; a verified clip does not count; one mission twice is one mission.
 
 ### The rule is data
 
-- `action_ladder_starter_kinds` — the kinds (seeded: `help_person`,
-  `write_song`, `attend_rally`).
-- `action_ladder_mission_kinds` — which missions count for which kind. The
-  desk maps them (RLS: `eu_is_admin`). Public can read the mapping.
 - `action_unlock_rules` — row `policy_fellowship`: `requirement_kind =
-  'starter_kinds'`, `required_kinds`, `min_count` (`null` = all of them;
-  `1` = any one), `creator_exclusive`, `enabled`. The same table holds every
-  other unlock (section 2a).
+  'verified_missions'`, `min_count = 3`, `creator_exclusive`, `enabled`.
+  "Four" or "two" is an UPDATE, not a deploy. (`starter_kinds` remains a
+  requirement kind other rules may use.) The same table holds every other
+  unlock (section 2a).
+- `action_ladder_starter_kinds` — SUGGESTED first missions shown on the
+  ladder (seeded: `help_person`, `write_song`, `attend_rally`). They do not
+  gate anything.
+- `action_ladder_mission_kinds` — which open missions are suggested for each
+  kind. The desk maps them (RLS: `eu_is_admin`). Public can read the mapping.
 
-Default: all three kinds. Changing to "any one" or "any two" is an UPDATE, not
-a deploy.
-
-**Missions that exist today.** Only `help_person` has a real mission:
-"Help someone reach a real service" (`51000000-…-0003`, open), which the pending
-file maps. "Feed two people" and "Build and hand out two care kits" are
-candidates the owner may also map. **There is no "write a song" mission and no
-"go to a rally" mission in production.** The owner (or the desk, through the
-existing "Create as draft" mission form) must create them, with proof rules
-that do not require photographing strangers, then map them. Until then the
-ladder correctly shows those steps with no open mission.
+**Missions that exist today.** The owner opened three missions on
+2026-10-15 (control_audit 59): "Help a person" (`302dcb4e…`), "Write a song"
+(`053cbd0d…`) and "Show up to a rally" (`ba803367…`). The pending file maps
+them as the suggestions (each skipped if absent). The old "Help someone reach
+a real service" (`51000000-…-0003`) is closed and no longer mapped.
 
 ### Relationship to the existing fellowship application
 
@@ -182,7 +175,8 @@ production function plus those two checks).
 ### "What's my next step"
 
 `policy_ladder_status()` (anon and authenticated) returns the rule, each
-starter step with its open missions and my status on them, completed/needed,
+suggested step with its open missions and my status on them, completed (my
+verified non-clip missions) / needed (the rule's `min_count`),
 eligibility, my latest fellowship application, my policy seats, and
 `next_step`: `sign_in` → `complete_starter_missions` →
 `apply_for_fellowship` → `await_fellowship_review` →
@@ -206,7 +200,7 @@ Client-side shading is presentation only; the Worker or the RPC enforces.
 | Public (logged out) | The globe plus **one free layer**; everything else is visible but shaded/locked, and clicking it prompts sign-in | `public_free_layer` → `globe_layer:flights`, `none` | enabled; matches what `workers/mccluster/src/world-layers.js` already serves publicly |
 | L1 Fan | Follow/engage; music layer and music news on the globe; **watch** the Action Network **read-only** (not a poster); **fund** creators/businesses | `member_layers` → satellites, launches (`signed_in`) | enabled; matches the Worker's current member-only layers. A music layer does not exist yet; it gets its own row when it does |
 | L1 Creator / business | Post and act in the Action Network; the CRM lives here | (future row `action_network_post`, `creator_account`) | **gap:** in the code inspected, posting is not gated on a creator capability; the post path must read this rule before fans become read-only |
-| Starter missions → Policy Fellowship | three verified starter kinds → state cohort seat | `policy_fellowship` (`starter_kinds`) | enabled; unchanged |
+| Three verified missions → Policy Fellowship | any three distinct admin-verified, non-clip missions → state cohort seat | `policy_fellowship` (`verified_missions`, 3) | enabled |
 | Equity Uprise (E=Up) activation | activates E=Up for the member | `equity_uprise_activation` (`verified_referrals`, 3) | **disabled**, `requires_counsel_signoff` |
 | Signed in → Whip Equipped hand-off | the "Whip Equipped transport" globe layer and **eligibility to apply** as a driver in Whip's app (rides not live yet) | `whip_transport_partner` (`signed_in`) | enabled; no fellowship, mission or voter gate (owner, 2026-10-15) |
 
@@ -445,7 +439,8 @@ data.
   Start review, Approve, Request changes, Pass, and Edit (prefilled text plus
   a required note). If the pending migration is not applied it says so.
 - **Fellow:** `action-policy.html` gains a signed-in **Your policy ladder**
-  section (`js/policy-fellowship-desk.js`): the three starter steps and the
+  section (`js/policy-fellowship-desk.js`): the three suggested missions, my
+  verified count of three, and the
   next step; with a seat, the memo list, a new-memo form, the editor (save
   draft, submit), owner notes and diffs, and the research form (manual leads
   with provenance). Phone width first; inputs at `max(16px, 1rem)`.
@@ -460,8 +455,8 @@ Supabase table editor as the owner); policy team management beyond
 
 1. **Artist ↔ fellow:** may a creator/business account also be a fellow?
    Default here: yes (`creator_exclusive = false`).
-2. **All three starter missions, or any of them?** Default: all three
-   (`min_count = null`); one UPDATE changes it.
+2. ~~All three starter missions, or any of them?~~ Answered 2026-10-15: any
+   three distinct admin-verified missions (`verified_missions`, 3).
 3. **Which legal entity runs the fellowship, and which runs the campaign
    workspace?** Default assumption: McCluster Corp (charity) runs the
    nonpartisan fellowship; campaign software waits for a separate entity and
@@ -482,10 +477,9 @@ Supabase table editor as the owner); policy team management beyond
 
 ## 9. Production apply checklist (owner approval required)
 
-1. Owner approves the design and answers questions 1, 2 and 5.
-2. Create the "write a song" and "go to a rally" missions (draft → review →
-   open) and map them, plus any extra `help_person` missions, in
-   `action_ladder_mission_kinds`.
+1. Owner approves the design and answers questions 1 and 5.
+2. The three suggested missions exist (opened 2026-10-15); the pending file
+   maps them. Map any further suggestions in `action_ladder_mission_kinds`.
 3. Apply `supabase/pending/policy_fellowship_ladder_v1.sql` with the Supabase
    MCP `apply_migration` under the name `policy_fellowship_ladder_v1`, as the
    service role. Before applying, confirm `admit_fellow_to_cohort` still hashes

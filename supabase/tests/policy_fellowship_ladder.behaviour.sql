@@ -34,12 +34,17 @@ values ('test-region', 'US', 'US-ZZ', 'Test State', 41.6, -72.7);
 insert into public.action_missions(id, title, status, skills) values
  ('20000000-0000-4000-8000-0000000000e1','Fixture: help one person','open','{field}'),
  ('20000000-0000-4000-8000-0000000000e2','Fixture: write a song','open','{creative}'),
- ('20000000-0000-4000-8000-0000000000e3','Fixture: go to a rally','open','{civic}');
+ ('20000000-0000-4000-8000-0000000000e3','Fixture: go to a rally','open','{civic}'),
+ ('20000000-0000-4000-8000-0000000000e4','Fixture: any other mission','open','{civic}'),
+ ('20000000-0000-4000-8000-0000000000e5','Fixture: one more mission','open','{civic}'),
+ ('20000000-0000-4000-8000-0000000000e6','Fixture: a clip job','open','{creative}');
+update public.action_missions set kind = 'clip' where id = '20000000-0000-4000-8000-0000000000e6';
 
--- the seeded rule is data: all three kinds, not creator-exclusive
+-- the seeded rule is data (owner, 2026-10-15): ANY three verified missions, not specific kinds, not creator-exclusive
 do $$ begin
-  perform pg_temp.ok((select required_kinds = array['help_person','write_song','attend_rally'] and min_count is null and not creator_exclusive and enabled
+  perform pg_temp.ok((select requirement_kind = 'verified_missions' and required_kinds is null and min_count = 3 and not creator_exclusive and enabled
     from public.action_unlock_rules where rule_key = 'policy_fellowship'), 'seeded rule');
+  perform pg_temp.ok(not exists (select 1 from public.action_ladder_mission_kinds where mission_id = '51000000-0000-4000-8000-000000000003'), 'the closed mission is not mapped');
   perform pg_temp.ok((select count(*) = 3 from public.action_ladder_starter_kinds), 'three starter kinds');
 end $$;
 
@@ -47,7 +52,7 @@ end $$;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 select pg_temp.must_fail($q$insert into public.action_ladder_mission_kinds(mission_id, kind) values ('20000000-0000-4000-8000-0000000000e1','help_person')$q$, '%row-level security%');
 update public.action_unlock_rules set min_count = 1; -- RLS: matches no row for a member
-do $$ begin perform pg_temp.ok((select min_count from public.action_unlock_rules where rule_key='policy_fellowship') is null, 'member cannot loosen the rule'); end $$;
+do $$ begin perform pg_temp.ok((select min_count from public.action_unlock_rules where rule_key='policy_fellowship') = 3, 'member cannot loosen the rule'); end $$;
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
 insert into public.action_ladder_mission_kinds(mission_id, kind) values
@@ -81,7 +86,7 @@ do $$ declare s jsonb := public.policy_ladder_status(); begin
 end $$;
 reset role;
 
--- G: one starter kind only
+-- G: one mission only (more below)
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
 insert into ids select 'g1', (public.join_action_mission('20000000-0000-4000-8000-0000000000e1')->>'assignment_id')::uuid;
 insert into ids select 'gp1', (public.submit_action_proof(pg_temp.id('g1'),'text',null,'Drove an elderly neighbour to a clinic.')->>'proof_id')::uuid;
@@ -97,7 +102,7 @@ reset role;
 
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f1');
 do $$ declare s jsonb := public.policy_ladder_status(); begin
-  perform pg_temp.ok((s->>'completed')::int = 2 and not (s->>'eligible')::boolean, 'two of three, rejected rally does not count: ' || s::text);
+  perform pg_temp.ok((s->>'completed')::int = 2 and (s->>'needed')::int = 3 and not (s->>'eligible')::boolean, 'two of three, rejected rally does not count: ' || s::text);
   perform pg_temp.ok((select count(*) from jsonb_array_elements(s->'steps') x where (x->>'done')::boolean) = 2, 'steps done flags');
 end $$;
 insert into ids select 'p3b', (public.submit_action_proof(pg_temp.id('a3'),'link','https://example.org/rally-photo','Here is the photo from the rally.')->>'proof_id')::uuid;
@@ -111,9 +116,36 @@ do $$ declare s jsonb := public.policy_ladder_status(); begin
 end $$;
 reset role;
 
--- the rule is configurable: "any one kind" makes G eligible, then back
+-- ANY three: G's two unmapped missions plus help count; a verified CLIP never does
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
-do $$ begin perform pg_temp.ok(not (public.policy_ladder_status()->>'eligible')::boolean, 'G not eligible under all-three'); end $$;
+do $$ begin perform pg_temp.ok(not (public.policy_ladder_status()->>'eligible')::boolean, 'G not eligible with one'); end $$;
+insert into ids select 'g4', (public.join_action_mission('20000000-0000-4000-8000-0000000000e4')->>'assignment_id')::uuid;
+insert into ids select 'g6', (public.join_action_mission('20000000-0000-4000-8000-0000000000e6')->>'assignment_id')::uuid;
+insert into ids select 'gp4', (public.submit_action_proof(pg_temp.id('g4'),'text',null,'Cleaned up the park with neighbours.')->>'proof_id')::uuid;
+insert into ids select 'gp6', (public.submit_action_proof(pg_temp.id('g6'),'link','https://example.org/clip','Posted the clip.')->>'proof_id')::uuid;
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
+select public.review_action_proof(pg_temp.id('gp4'),'verified',null);
+select public.review_action_proof(pg_temp.id('gp6'),'verified',null);
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+do $$ declare s jsonb := public.policy_ladder_status(); begin
+  perform pg_temp.ok((s->>'completed')::int = 2 and not (s->>'eligible')::boolean, 'two verified non-clip missions; the verified clip does not count: ' || s::text);
+end $$;
+insert into ids select 'g5', (public.join_action_mission('20000000-0000-4000-8000-0000000000e5')->>'assignment_id')::uuid;
+insert into ids select 'gp5', (public.submit_action_proof(pg_temp.id('g5'),'text',null,'Ran the food drive table.')->>'proof_id')::uuid;
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
+select public.review_action_proof(pg_temp.id('gp5'),'verified',null);
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+do $$ declare s jsonb := public.policy_ladder_status(); begin
+  perform pg_temp.ok((s->>'completed')::int = 3 and (s->>'eligible')::boolean, 'any three verified missions, only one of them a suggested kind: ' || s::text);
+end $$;
+reset role;
+update public.action_unlock_rules set min_count = 4 where rule_key = 'policy_fellowship';
+select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
+do $$ begin perform pg_temp.ok(not (public.policy_ladder_status()->>'eligible')::boolean, 'G not eligible under four'); end $$;
 reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000ad', 'matthew@mccluster.org');
 update public.action_unlock_rules set min_count = 1 where rule_key = 'policy_fellowship';
@@ -121,8 +153,8 @@ reset role;
 select pg_temp.as_user('00000000-0000-4000-8000-0000000000f2');
 do $$ begin perform pg_temp.ok((public.policy_ladder_status()->>'eligible')::boolean, 'G eligible under any-one'); end $$;
 reset role;
-update public.action_unlock_rules set min_count = null where rule_key = 'policy_fellowship';
-select pg_temp.must_fail($q$update public.action_unlock_rules set min_count = 4 where rule_key = 'policy_fellowship'$q$, '%check constraint%');
+update public.action_unlock_rules set min_count = 3 where rule_key = 'policy_fellowship';
+select pg_temp.must_fail($q$update public.action_unlock_rules set min_count = null where rule_key = 'policy_fellowship'$q$, '%check constraint%');
 
 -- creator exclusivity is a switch, off by default
 insert into public.creator_billing_subscriptions values ('sub_test_f', '00000000-0000-4000-8000-0000000000f1', 'active', now() + interval '30 days');
@@ -156,7 +188,10 @@ insert into public.action_cohorts(id, name, program, region_key, parent_cohort_i
 insert into public.action_cohorts(id, name) values ('40000000-0000-4000-8000-0000000000c0', 'Plain cohort');
 select public.admit_fellow_to_cohort(pg_temp.id('gapp'), '40000000-0000-4000-8000-0000000000c0');
 -- the ladder gates the policy seat; a team seat needs the state seat
-select pg_temp.must_fail($q$select public.admit_fellow_to_cohort(pg_temp.id('gapp'), '40000000-0000-4000-8000-0000000000c1')$q$, '%not completed the starter missions%');
+-- G has three verified missions now, so the desk raises the bar to four for this check (data, not code), then puts it back
+update public.action_unlock_rules set min_count = 4 where rule_key = 'policy_fellowship';
+select pg_temp.must_fail($q$select public.admit_fellow_to_cohort(pg_temp.id('gapp'), '40000000-0000-4000-8000-0000000000c1')$q$, '%not completed the verified missions%');
+update public.action_unlock_rules set min_count = 3 where rule_key = 'policy_fellowship';
 select pg_temp.must_fail($q$select public.admit_fellow_to_cohort(pg_temp.id('app'), '40000000-0000-4000-8000-0000000000c2')$q$, '%needs a seat in its state cohort%');
 select public.admit_fellow_to_cohort(pg_temp.id('app'), '40000000-0000-4000-8000-0000000000c1');
 select public.admit_fellow_to_cohort(pg_temp.id('app'), '40000000-0000-4000-8000-0000000000c2');

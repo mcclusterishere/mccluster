@@ -1,15 +1,21 @@
 -- POLICY FELLOWSHIP LADDER v1 (PENDING: not applied in production).
 --
--- Owner direction, 2026-10-15: a member starts with three starter missions
--- (help a person, write a song, attend a rally), then can join the cohort
+-- Owner direction, 2026-10-15: a member completes ANY three distinct
+-- admin-verified missions (not clips; owner change, same day: not specific
+-- starter kinds), then can join the cohort
 -- that writes policy memorandums for STATE-level officials. Fellows write a
 -- memo and submit it up the line; the owner approves, passes (declines),
 -- asks for changes, or edits it and tells the fellow what changed.
 --
 -- What this adds, and only this (everything else is reused):
 --   1. action_ladder_starter_kinds / action_ladder_mission_kinds /
---      action_unlock_rules: the ladder, and every other unlock, as DATA. A starter kind is complete
---      when a mission mapped to it has a VERIFIED assignment (the proof was
+--      action_unlock_rules: the ladder, and every other unlock, as DATA. The
+--      policy_fellowship rule is 'verified_missions', min_count 3: three
+--      distinct non-clip missions with a VERIFIED assignment, the same
+--      predicate as PR #444's action_member_verified_mission_count(). The
+--      starter kinds are SUGGESTED first missions shown on the ladder; they
+--      no longer gate it. (Before the owner change a starter kind was complete
+--      when a mission mapped to it had a VERIFIED assignment (the proof was
 --      reviewed and approved by review_action_proof: the same "completed a
 --      mission" definition the World's CCTV gate uses). The rule says which
 --      kinds, how many (null = all), and whether a creator account excludes
@@ -42,11 +48,11 @@
 -- Nobody writes these tables directly: every write is a security definer
 -- function that decides who you are and what state the memo is in.
 --
--- Seeds: three starter kinds, one rule (all three kinds), and ONE mission
--- mapping that already exists in production ("Help someone reach a real
--- service" -> help_person). No mission exists yet for write_song or
--- attend_rally: the owner creates and maps those (see the doc). No
--- politicians, memos or people are seeded.
+-- Seeds: three suggested starter kinds, one rule (three verified missions),
+-- and the three open missions the owner created on 2026-10-15 mapped as the
+-- suggestions ("Help a person", "Write a song", "Show up to a rally"; each
+-- skipped if absent). The closed "Help someone reach a real service" is not
+-- mapped. No politicians, memos or people are seeded.
 --
 -- ROLLBACK (run as the service role, in this order; export memos first):
 --   1. drop table if exists public.action_policy_memo_research_items, public.action_policy_memo_reviews,
@@ -98,11 +104,11 @@ create table if not exists public.action_unlock_rules (
  -- 'program:equity_uprise_activation', 'partner_eligibility:whip_driver_application'
  unlock_keys text[] not null check (cardinality(unlock_keys) between 1 and 12),
  requirement_kind text not null check (requirement_kind in
-   ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals')),
+   ('none','signed_in','creator_account','fellow','starter_kinds','verified_missions','verified_referrals')),
  -- starter_kinds: which kinds count
  required_kinds text[] check (required_kinds is null or cardinality(required_kinds) between 1 and 12),
  -- starter_kinds: null = every required kind, n = any n of them;
- -- verified_referrals: how many
+ -- verified_missions / verified_referrals: how many
  min_count integer check (min_count is null or min_count >= 1),
  params jsonb not null default '{}'::jsonb check (jsonb_typeof(params) = 'object'),
  -- OPEN QUESTION for the owner. false = a creator/business account does not
@@ -115,7 +121,7 @@ create table if not exists public.action_unlock_rules (
  updated_at timestamptz not null default now(),
  check (requirement_kind <> 'starter_kinds' or required_kinds is not null),
  check (requirement_kind <> 'starter_kinds' or min_count is null or min_count <= cardinality(required_kinds)),
- check (requirement_kind <> 'verified_referrals' or min_count is not null),
+ check (requirement_kind not in ('verified_missions','verified_referrals') or min_count is not null),
  check (not enabled or not requires_counsel_signoff or counsel_signoff_at is not null)
 );
 
@@ -131,9 +137,9 @@ insert into public.action_unlock_rules(rule_key, label, unlock_keys, requirement
  -- in code; reading them from here is a follow-up.
  ('public_free_layer', 'Public: the globe and one free layer', array['globe_layer:flights'], 'none', null, null, '{}', false, true, false),
  ('member_layers', 'Signed in: member layers', array['globe_layer:satellites','globe_layer:launches'], 'signed_in', null, null, '{}', false, true, false),
- -- the ladder: three starter missions open the state Policy Fellowship seat
- ('policy_fellowship', 'Policy Fellowship: starter missions', array['cohort_program:policy_fellowship'], 'starter_kinds',
-   array['help_person','write_song','attend_rally'], null, '{}', false, true, false),
+ -- the ladder (owner, 2026-10-15): ANY three distinct admin-verified, non-clip missions open the state Policy Fellowship seat
+ ('policy_fellowship', 'Policy Fellowship: three verified missions', array['cohort_program:policy_fellowship'], 'verified_missions',
+   null, 3, '{}', false, true, false),
  -- Equity Uprise activation: three VERIFIED joins through my referral link. Disabled until the
  -- identity vendor is chosen and counsel approves the biometric consent and retention schedule.
  ('equity_uprise_activation', 'Equity Uprise activation: three verified referrals', array['program:equity_uprise_activation'], 'verified_referrals',
@@ -145,10 +151,13 @@ insert into public.action_unlock_rules(rule_key, label, unlock_keys, requirement
    null, null, '{}', false, true, false)
 on conflict (rule_key) do nothing;
 
--- The only starter mission that exists today. Skipped if it is absent.
+-- The suggested first missions the owner opened on 2026-10-15 (control_audit 59). Each is skipped if it is absent.
 insert into public.action_ladder_mission_kinds(mission_id, kind)
-select m.id, 'help_person' from public.action_missions m
-where m.id = '51000000-0000-4000-8000-000000000003'::uuid
+select m.id, x.kind from (values
+  ('302dcb4e-ca21-4289-b633-9c397985fb9d'::uuid, 'help_person'),
+  ('053cbd0d-6bdb-49c6-bd80-8c5b8be36068'::uuid, 'write_song'),
+  ('ba803367-057b-4664-902d-58a0cfd62068'::uuid, 'attend_rally')) as x(mission_id, kind)
+join public.action_missions m on m.id = x.mission_id
 on conflict (mission_id) do nothing;
 
 alter table public.action_ladder_starter_kinds enable row level security;
@@ -275,6 +284,16 @@ begin
    join public.action_ladder_mission_kinds k on k.mission_id = a.mission_id
    where a.user_id = p_user and a.status = 'verified' and k.kind = any(r.required_kinds);
    v_met := v_have >= v_need;
+ elsif r.requirement_kind = 'verified_missions' then
+   -- THE predicate, identical to PR #444's action_member_verified_mission_count(): distinct missions with a
+   -- verified assignment (an admin reviewed the proof), clips excluded
+   v_need := r.min_count;
+   select count(distinct a.mission_id)::integer into v_have
+     from public.action_mission_assignments a
+     join public.action_missions m on m.id = a.mission_id
+    where p_user is not null and a.user_id = p_user and a.status = 'verified'
+      and coalesce(m.kind, 'civic') <> 'clip';
+   v_met := v_have >= v_need;
  elsif r.requirement_kind = 'verified_referrals' then
    v_need := r.min_count;
    -- distinct people who joined through one of MY referral codes and passed strict verification
@@ -346,7 +365,7 @@ begin
  if not found then raise exception 'cohort not found'; end if;
  if v_cohort.status <> 'active' then raise exception 'that cohort is not admitting (it is %)', v_cohort.status; end if;
  if v_cohort.program = 'policy_fellowship' and not public.policy_ladder_eligible(v_app.user_id) then
-   raise exception 'this fellow has not completed the starter missions for the policy fellowship';
+   raise exception 'this fellow has not completed the verified missions the policy fellowship needs';
  end if;
  if v_cohort.program = 'policy_team' and v_cohort.parent_cohort_id is not null and not exists (
    select 1 from public.action_cohort_members cm where cm.cohort_id = v_cohort.parent_cohort_id and cm.m_uid = v_app.m_uid
@@ -391,6 +410,7 @@ begin
    return jsonb_build_object('signed_in', v_user is not null, 'rule', null, 'eligible', false, 'next_step', 'ladder_closed');
  end if;
  v_need := coalesce(v_rule.min_count, cardinality(v_rule.required_kinds));
+ -- the steps are SUGGESTED first missions (every starter kind when the rule names none); completion is the rule's own count
  select coalesce(jsonb_agg(jsonb_build_object(
    'kind', k.kind, 'label', k.label, 'description', k.description,
    'done', v_user is not null and exists (
@@ -405,15 +425,15 @@ begin
      where mk.kind = k.kind and m.status = 'open'), '[]'::jsonb)
  ) order by k.sort, k.kind), '[]'::jsonb)
  into v_steps
- from public.action_ladder_starter_kinds k where k.kind = any(v_rule.required_kinds);
+ from public.action_ladder_starter_kinds k where v_rule.required_kinds is null or k.kind = any(v_rule.required_kinds);
 
  if v_user is null then
    return jsonb_build_object('signed_in', false,
-     'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
+     'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'requirement_kind', v_rule.requirement_kind, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
      'steps', v_steps, 'completed', 0, 'needed', v_need, 'eligible', false, 'next_step', 'sign_in');
  end if;
 
- select count(*) into v_done from jsonb_array_elements(v_steps) s where (s->>'done')::boolean;
+ v_done := coalesce((public.action_unlock_progress(v_user, 'policy_fellowship')->>'have')::integer, 0);
  v_eligible := public.policy_ladder_eligible(v_user);
  select to_jsonb(x) into v_app from (
    select f.id, f.status, f.review_note, f.created_at, f.reviewed_at
@@ -433,7 +453,7 @@ begin
    else 'apply_for_fellowship' end;
 
  return jsonb_build_object('signed_in', true,
-   'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
+   'rule', jsonb_build_object('key', v_rule.rule_key, 'label', v_rule.label, 'requirement_kind', v_rule.requirement_kind, 'required_kinds', to_jsonb(v_rule.required_kinds), 'min_count', v_rule.min_count, 'creator_exclusive', v_rule.creator_exclusive),
    'steps', v_steps, 'completed', v_done, 'needed', v_need, 'eligible', v_eligible,
    'fellowship_application', v_app, 'policy_seats', v_seats, 'next_step', v_next);
 end;
