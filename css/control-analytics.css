@@ -181,6 +181,7 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-rank__row.is-on{outline:2px solid #ff3d5e;outline-offset:-2px}
 @container cra (min-width:30rem){.cra-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:64rem){
-  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start}
-  .cra-globe{position:sticky;top:12px;height:calc(100dvh - 96px);max-height:none}
+  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);height:calc(100dvh - var(--cr-top,0px) - 40px);min-height:32rem}
+  .cra-globe{height:auto;min-height:0;max-height:none}
+  .cra-side{min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain}
 }

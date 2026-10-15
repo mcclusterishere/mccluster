@@ -99,11 +99,14 @@ async function settle(frameOrPage) { await frameOrPage.waitForFunction(() => win
 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
+/* E2E_ONLY=analytics (or guest, bare, member, eligible) reruns one family; the full run is the evidence */
+const ONLY = process.env.E2E_ONLY || '';
+const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 const SIZES = [{ name: '390', viewport: { width: 390, height: 844 } }, { name: '1280', viewport: { width: 1280, height: 800 } }];
 
 for (const size of SIZES) {
   /* 1. guest, Full world: Flights free, every other layer on screen and shaded; a locked tap asks to sign in */
-  {
+  if (runs('guest')) {
     const { ctx, page, calls, errors } = await context(size.viewport);
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huAccess && window.__huAccess(), null, { timeout: 60000 });
@@ -125,7 +128,7 @@ for (const size of SIZES) {
     await ctx.close();
   }
   /* 2. just the globe: no bar, no controls, the credit and one way back */
-  {
+  if (runs('bare')) {
     const { ctx, page, errors } = await context(size.viewport);
     await page.goto(BASE + '/action-globe.html?explore=1&chrome=0', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.documentElement.classList.contains('globe-bare'), null, { timeout: 30000 });
@@ -142,7 +145,7 @@ for (const size of SIZES) {
     await ctx.close();
   }
   /* 3. a member who is not eligible: the lock explains the three requirements */
-  {
+  if (runs('member')) {
     const { ctx, page, calls, errors } = await context(size.viewport, { member: true });
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huCctv && window.__huCctv().state, null, { timeout: 60000 });
@@ -164,7 +167,7 @@ for (const size of SIZES) {
     await ctx.close();
   }
   /* 4. an eligible member: cameras on the Earth and a live snapshot with its provenance */
-  {
+  if (runs('eligible')) {
     const { ctx, page, calls, errors } = await context(size.viewport, { member: true, eligible: true });
     await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__huCctv && window.__huCctv().state && window.__huCctv().state.eligible, null, { timeout: 60000 });
@@ -187,6 +190,7 @@ for (const size of SIZES) {
 
 /* 5. Control Room Analytics, 60/40: the globe draws only countries with 5+, the panel discloses the rest, selection both ways */
 for (const size of SIZES) {
+  if (!runs('analytics')) continue;
   const { ctx, page, errors } = await context(size.viewport, { member: true, owner: true });
   await page.goto(BASE + '/control.html#analytics', { waitUntil: 'domcontentloaded' });
   const opened = await page.waitForSelector('#craGlobe', { timeout: 45000 }).then(() => true).catch(() => false);
@@ -202,6 +206,10 @@ for (const size of SIZES) {
     const geom = await page.evaluate(() => { const g = document.querySelector('.cra-globe').getBoundingClientRect(), p = document.querySelector('.cra-side').getBoundingClientRect(); return { gw: g.width, pw: p.width, gTop: g.top, pTop: p.top }; });
     if (size.viewport.width >= 1024) check(`analytics-${size.name}`, 'about 60% globe / 40% panel side by side', Math.abs(geom.gw / (geom.gw + geom.pw) - 0.6) < 0.04 && Math.abs(geom.gTop - geom.pTop) < 2, geom);
     else check(`analytics-${size.name}`, 'phone: the globe first, the panel stacked under it', geom.pTop > geom.gTop, geom);
+    if (size.viewport.width >= 1024) {
+      const stick = await page.evaluate(async () => { const g = document.querySelector('.cra-globe'), side = document.querySelector('.cra-side'); const before = Math.round(g.getBoundingClientRect().top); side.scrollTop = side.scrollHeight; await new Promise((r) => setTimeout(r, 300)); const r = g.getBoundingClientRect(); const out = { before, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, panelScrolled: side.scrollTop }; side.scrollTop = 0; return out; });
+      check(`analytics-${size.name}`, 'the globe stays in view while the panel scrolls', stick.panelScrolled > 0 && stick.top === stick.before && stick.top >= 0 && stick.bottom <= stick.vh, stick);
+    }
     await page.click('[data-cra-region="GB"]');
     await page.waitForTimeout(500);
     check(`analytics-${size.name}`, 'a row picks the region in the shared filter', (await page.$eval('#craRegion', (s) => s.value)) === 'GB');

@@ -224,3 +224,6 @@ header strong{display:none}
 .globe-surface-analytics #globe{inset:0;height:100%}
 .globe-surface-analytics .globe-controls{top:auto;bottom:34px}
 .globe-surface-analytics .osm-credit{top:auto;bottom:8px}
+/* seven data toggles: the row keeps clear of the controls column on the right and wraps upward on a narrow phone */
+.globe-data{right:58px;flex-wrap:wrap-reverse;align-content:flex-start;pointer-events:none}
+.globe-data>*{pointer-events:auto}

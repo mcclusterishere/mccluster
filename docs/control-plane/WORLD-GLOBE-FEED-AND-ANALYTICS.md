@@ -164,7 +164,7 @@ E=Up / fellow / fellow + transport / owner.
 (`action-globe.html?embedded=1&surface=analytics`, same origin) and the
 panel. Phone first: the globe on top (about half the screen), the panel
 stacked under it with a "Hide the panel" fold. From 64rem: about 60% globe /
-40% panel, the globe sticky while the panel scrolls. The panel's columns now
+40% panel, the split one screen tall: the panel scrolls beside the globe, which stays put. The panel's columns now
 follow the panel's own width (`@container cra`, the same 36rem / 54rem
 steps), so cards stay readable at 40%. The Control Room keeps the analytics
 mount between its own repaints (`js/control-room-v2.js`), so the Earth does
