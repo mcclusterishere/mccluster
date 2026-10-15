@@ -112,7 +112,7 @@ test('the gated rule is a data row, read server-side, and the identity helper is
   assert.doesNotMatch(sql, /information_schema|v1_live_intro|v\.level/, 'identity is keyed by purpose (PR #443), never a level column');
   assert.match(sql, /array\['music_full_track:niggy-nigg'\], 'identity_verified', null, null,\s*'\{"purpose": "referral_signup", "min_verified_missions": 3/);
   // the same requirement-kind list and purpose check PR #443 sets, so either apply order is clean
-  assert.match(sql, /'registration_assists','identity_verified'\)\);/);
+  assert.match(sql, /'verified_referrals','identity_verified'\)\);/);
   assert.match(sql, /check \(requirement_kind <> 'identity_verified' or params->>'purpose' in \('referral_signup','halo_full'\)\)/);
   const gate = sql.slice(sql.indexOf('create or replace function public.music_gate_rule_state'));
   assert.doesNotMatch(gate.slice(0, gate.indexOf('$$;')), /action_unlock_progress/, 'the gate evaluates the rule itself, whatever order #443 was applied in');
