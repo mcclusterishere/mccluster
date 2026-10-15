@@ -75,3 +75,11 @@ file header. Apply it together with (or after) `anon_policy_scope_v1.sql`:
 that one is what lets a signed-out visitor, and the artist pages and the
 listen.html directory, read creator profiles at all. Promote with the steps
 above.
+
+Pending: `action_bounty_claim_existing_row_guard_v1.sql` preserves the result of
+claim-row lookup before aggregate SELECT statements overwrite PL/pgSQL FOUND.
+It salvages the focused fix from PR #428 without its older migration history.
+Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
+first claims insert, repeats are idempotent, cancelled/expired claims reuse the
+row, and rejected/unfunded claims remain blocked. Promote only after applying
+through the production ledger workflow above.
