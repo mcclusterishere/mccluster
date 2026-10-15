@@ -30,8 +30,9 @@
 --      referral signups (vendor reference, consent and attestation dates; never
 --      images or biometric templates), and the generic evaluator
 --      action_unlock_progress() / action_unlock_status(). The Equity Uprise
---      activation and Whip Equipped partner rules ship DISABLED and need
---      counsel sign-off before they can be enabled (CHECK).
+--      activation rule ships DISABLED and needs counsel sign-off before it
+--      can be enabled (CHECK). The Whip Equipped rule is open to every
+--      signed-in member (owner, 2026-10-15: no voter rule, quick sign-up).
 --   4. RPCs: action_unlock_status, policy_ladder_status, create_policy_memo, save_policy_memo_draft,
 --      submit_policy_memo, withdraw_policy_memo, review_policy_memo,
 --      policy_memo_history, add/remove_policy_memo_research_item.
@@ -88,7 +89,7 @@ create index if not exists action_ladder_mission_kinds_kind_idx on public.action
 -- EVERY UNLOCK IS A ROW (owner, 2026-10-15). One table says what each
 -- level unlocks and what it takes: the free public layer, the member layers,
 -- the policy fellowship, Equity Uprise activation, the Whip Equipped
--- partner hand-off. A rule that needs counsel cannot be enabled until
+-- hand-off. A rule that needs counsel cannot be enabled until
 -- counsel has signed off (CHECK below). A disabled rule is never met.
 create table if not exists public.action_unlock_rules (
  rule_key text primary key check (rule_key ~ '^[a-z][a-z0-9_]{1,60}$'),
@@ -97,11 +98,11 @@ create table if not exists public.action_unlock_rules (
  -- 'program:equity_uprise_activation', 'partner_eligibility:whip_driver_application'
  unlock_keys text[] not null check (cardinality(unlock_keys) between 1 and 12),
  requirement_kind text not null check (requirement_kind in
-   ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','registration_assists')),
+   ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals')),
  -- starter_kinds: which kinds count
  required_kinds text[] check (required_kinds is null or cardinality(required_kinds) between 1 and 12),
  -- starter_kinds: null = every required kind, n = any n of them;
- -- verified_referrals / registration_assists: how many
+ -- verified_referrals: how many
  min_count integer check (min_count is null or min_count >= 1),
  params jsonb not null default '{}'::jsonb check (jsonb_typeof(params) = 'object'),
  -- OPEN QUESTION for the owner. false = a creator/business account does not
@@ -114,7 +115,7 @@ create table if not exists public.action_unlock_rules (
  updated_at timestamptz not null default now(),
  check (requirement_kind <> 'starter_kinds' or required_kinds is not null),
  check (requirement_kind <> 'starter_kinds' or min_count is null or min_count <= cardinality(required_kinds)),
- check (requirement_kind not in ('verified_referrals','registration_assists') or min_count is not null),
+ check (requirement_kind <> 'verified_referrals' or min_count is not null),
  check (not enabled or not requires_counsel_signoff or counsel_signoff_at is not null)
 );
 
@@ -137,11 +138,11 @@ insert into public.action_unlock_rules(rule_key, label, unlock_keys, requirement
  -- identity vendor is chosen and counsel approves the biometric consent and retention schedule.
  ('equity_uprise_activation', 'Equity Uprise activation: three verified referrals', array['program:equity_uprise_activation'], 'verified_referrals',
    null, 3, '{"shares_required": null, "note": "shares requirement is an open owner question"}', false, false, true),
- -- Whip Equipped (Matthew's separate company): eligibility to APPLY as a driver and the transport
- -- layer, after 10 nonpartisan registration-assistance actions. Ships DISABLED: paying or rewarding
- -- per voter registration is restricted; counsel must sign off and the counting source must be designed with counsel.
- ('whip_transport_partner', 'Whip Equipped transport: partner hand-off', array['globe_layer:whip_transport','partner_eligibility:whip_driver_application'], 'registration_assists',
-   null, 10, '{"requires_fellow": true, "counting_source": "pending counsel"}', false, false, true)
+ -- Whip Equipped (Matthew's separate company, Whip Equipped LLC): the transport layer and the
+ -- hand-off to Whip's own driver sign-up, for any signed-in member (owner, 2026-10-15). Rides are
+ -- not live; Whip's own checks (license, insurance, background check) decide who drives.
+ ('whip_transport_partner', 'Whip Equipped transport: sign-up hand-off', array['globe_layer:whip_transport','partner_eligibility:whip_driver_application'], 'signed_in',
+   null, null, '{}', false, true, false)
 on conflict (rule_key) do nothing;
 
 -- The only starter mission that exists today. Skipped if it is absent.
@@ -284,10 +285,6 @@ begin
      and p.user_id <> p_user
      and v.status = 'verified' and (v.expires_at is null or v.expires_at > now());
    v_met := v_have >= v_need;
- elsif r.requirement_kind = 'registration_assists' then
-   -- No counting source exists on purpose: it is designed with counsel
-   -- (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md, section 2b).
-   v_need := r.min_count; v_reason := 'counting_source_pending_counsel';
  end if;
  if v_met and coalesce((r.params->>'requires_fellow')::boolean, false) and not exists (
    select 1 from public.action_fellowship_applications f where f.user_id = p_user and f.status = 'accepted') then
