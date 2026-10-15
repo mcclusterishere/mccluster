@@ -9,6 +9,8 @@ const PAGE = window.MCC_CREATOR_PAGE;
 let session = null;
 let mUid = null;
 let profile = null;
+let accountHandle = "";
+let networkProfile = null;
 let tracksCache = [];
 let editingAlbum = null;
 let editingService = null;
@@ -168,15 +170,35 @@ function durationMs(file) {
   });
 }
 async function loadProfile() {
+  // Artist capability belongs to the existing M Account, never a second handle.
+  const links = await rest("m_auth_user_links?m_uid=eq." + encodeURIComponent(mUid) +
+    "&select=auth_user_id,is_primary&order=is_primary.desc&limit=1");
+  const authUserId = links?.[0]?.auth_user_id || session.user?.id;
+  const accounts = await rest("platform_profiles?user_id=eq." + encodeURIComponent(authUserId) +
+    "&select=mccluster_id,display_name&limit=1");
+  accountHandle = accounts?.[0]?.mccluster_id || "";
+  if (!accountHandle) throw new Error("Set your M Account username in Profile before activating artist tools.");
+  const networks = await rest("network_profiles?m_uid=eq." + encodeURIComponent(mUid) +
+    "&select=display_name,bio,website_url&limit=1");
+  networkProfile = networks?.[0] || {};
+
   const rows = await rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(mUid) +
     "&select=m_uid,handle,artist_name,bio,website_url,avatar_url,banner_url,status,verification_state,payout_state,settings&limit=1");
   profile = rows?.[0] || null;
   renderAlbums();
   renderServices();
-  if (!profile) return;
+  $("creatorHandle").value = accountHandle;
+  $("creatorHandle").readOnly = true;
+  $("creatorHandle").title = "Your artist handle is your existing M Account username. Change it in Profile.";
+  if (!profile) {
+    $("creatorName").value = networkProfile.display_name || accounts?.[0]?.display_name || "";
+    $("creatorBio").value = networkProfile.bio || "";
+    $("creatorWebsite").value = networkProfile.website_url || "";
+    return;
+  }
   $("creatorAvatarNow").textContent = profile.avatar_url ? "Photo set. Choose a file to replace it." : "Square works best. Shown on your page and beside your tracks.";
   $("creatorBannerNow").textContent = profile.banner_url ? "Front-page photo set. Choose a file to replace it." : "Wide and dark works best. It sits behind your name at the top of your page.";
-  $("creatorHandle").value = profile.handle || "";
+  $("creatorHandle").value = accountHandle;
   $("creatorName").value = profile.artist_name || "";
   $("creatorBio").value = profile.bio || "";
   $("creatorWebsite").value = profile.website_url || "";
@@ -546,7 +568,7 @@ $("profileForm").addEventListener("submit", async (e) => {
     status("profileStatus", "Saving…");
     const body = {
       m_uid: mUid,
-      handle: $("creatorHandle").value.trim().toLowerCase(),
+      handle: accountHandle.toLowerCase(),
       artist_name: $("creatorName").value.trim(),
       bio: $("creatorBio").value.trim(),
       website_url: $("creatorWebsite").value.trim(),
