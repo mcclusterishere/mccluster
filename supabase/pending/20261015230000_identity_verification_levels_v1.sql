@@ -352,7 +352,7 @@ alter table public.action_member_verifications add constraint action_member_veri
 
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_requirement_kind_check;
 alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check check (requirement_kind in
- ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals','identity_verified'));
+ ('none','signed_in','creator_account','fellow','starter_kinds','verified_missions','verified_referrals','identity_verified'));
 alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_identity_purpose_check;
 alter table public.action_unlock_rules add constraint action_unlock_rules_identity_purpose_check
  check (requirement_kind <> 'identity_verified' or params->>'purpose' in ('referral_signup','halo_full'));
@@ -403,6 +403,15 @@ begin
    from public.action_mission_assignments a
    join public.action_ladder_mission_kinds k on k.mission_id = a.mission_id
    where a.user_id = p_user and a.status = 'verified' and k.kind = any(r.required_kinds);
+   v_met := v_have >= v_need;
+ elsif r.requirement_kind = 'verified_missions' then
+   -- THE predicate, identical to PR #444's action_member_verified_mission_count() (inline here: #444 may apply later)
+   v_need := r.min_count;
+   select count(distinct a.mission_id)::integer into v_have
+     from public.action_mission_assignments a
+     join public.action_missions m on m.id = a.mission_id
+    where p_user is not null and a.user_id = p_user and a.status = 'verified'
+      and coalesce(m.kind, 'civic') <> 'clip';
    v_met := v_have >= v_need;
  elsif r.requirement_kind = 'verified_referrals' then
    v_need := r.min_count;
