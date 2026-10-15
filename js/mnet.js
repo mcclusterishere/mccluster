@@ -2534,7 +2534,7 @@
     }
     $("mnRefreshMissions").addEventListener("click",loadMissions);
     $("mnMissionClose").addEventListener("click",closeMission);
-    $("mnMissionJoin").addEventListener("click",joinMission);
+    $("mnMissionJoin").addEventListener("click",function(e){if(askToFinish("mission"))return;joinMission(e);});
     if($("mnAntisocialForm"))$("mnAntisocialForm").addEventListener("submit",antisocialSubmit);
     $("mnMissionProof").addEventListener("submit",submitMissionProof);
     if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
@@ -2864,9 +2864,9 @@
     });
     /* THE DATA LAYERS' LINE (owner, 2026-10-15). What the Earth shows besides
        missions, written over it from the globe's hu:layer messages, and the
-       one lead that rides with Flights: "don't want to fly commercial, fly
-       private with Vaunt", the owner's own referral link, as on the front
-       page's VR wall. Counts come from the Worker's snapshot; nothing here
+       one lead that rides with Flights: "Fly Vaunt" (owner, 2026-10-15:
+       "make it simple and shorter"), the owner's own referral link, as on
+       the front page's VR wall. Counts come from the Worker's snapshot; nothing here
        is invented, and a layer that could not load says so. */
     var VAUNT_LEAD = "https://vauntapi.flyvaunt.com/referral/nuao1K";
     state.world.layers = {};
@@ -2878,7 +2878,7 @@
       var rows = [], f = state.world.layers.flights, s = state.world.layers.satellites, l = state.world.layers.launches;
       if (f) rows.push(f.unavailable ? "<span>Flights are unavailable right now.</span>"
         : "<span>" + esc(fmtCount(f.count)) + " aircraft in the air right now" + (f.stale ? " (last snapshot)" : "") + ".</span> " +
-          '<a class="mn__world-lead" href="' + VAUNT_LEAD + '" target="_blank" rel="noopener sponsored">Don\u2019t want to fly commercial? Fly private with Vaunt \u2192</a>');
+          '<a class="mn__world-lead" href="' + VAUNT_LEAD + '" target="_blank" rel="noopener sponsored">Fly Vaunt \u2192</a>');
       if (s) rows.push("<span>" + (s.unavailable ? "Satellites are unavailable right now." : esc(fmtCount(s.count)) + " satellites overhead, moving live.") + "</span>");
       if (l) {
         var nx = l.next && l.next[0];

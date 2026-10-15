@@ -610,6 +610,15 @@
       })
       .catch(function () { emit("mcc:handoff", { ok: false }); return false; });
   }
+  /* ON THE WORLD'S HOST, A LINK TO ONE OF MATTHEW'S ROOMS LOOKS SAME-ORIGIN
+     (album.html, creator.html, a receipt), and the Worker would 301 it to his
+     site without the sign-in. The paths the host serves are listed here as the
+     Worker lists them (workers/mccluster/src/world-host.js); every other path
+     is the house's, so it goes there outright, carrying the sign-in. */
+  var WORLD_HOST_PATHS = /^\/(?:$|mnet\.html$|action-globe\.html$|action-policy\.html$|world-news\.html$|create\.html$|give\.html$|privacy\.html$|account\.html$|login\.html$|forgot-password\.html$|reset-password\.html$|onboard\.html$|sw\.js$|company$|robots\.txt$|sitemap\.xml$|llms\.txt$|action-network-|action\/|auth\/|js\/|css\/|assets\/|data\/|vendor\/)/;
+  function houseBound(url) {
+    return ON_WORLD_HOST && url.origin === location.origin && !WORLD_HOST_PATHS.test(url.pathname);
+  }
   /* any link on the page that crosses to another of the houses carries the sign-in */
   document.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -617,9 +626,10 @@
     if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".appbar")) return;
     var url;
     try { url = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
-    if (!crossesHouse(url)) return;
+    if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, HOUSE_ORIGIN);
+    else if (!crossesHouse(url)) return;
     var stored = readAuthSession();
-    if (!stored || !stored.access_token) return;
+    if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); location.href = url.href; } return; }
     e.preventDefault();
     handoffHref(url.href).then(function (h) { location.href = h; }, function () { location.href = url.href; });
   });

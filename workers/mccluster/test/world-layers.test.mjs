@@ -22,16 +22,19 @@ const STATES = { time: 1760500000, states: [
 const TLES = 'ISS (ZARYA)\n1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000\n2 25544  51.6400 208.9163 0006703  32.5223 327.6271 15.49580730400000\nHST\n1 20580U 90037B   24001.50000000  .00001000  00000-0  50000-4 0  9001\n2 20580  28.4700 100.0000 0002500  90.0000 270.0000 15.09000000100000\n';
 const LAUNCHES = { results: [
   { id: 'L1', name: 'Falcon 9 Block 5 | Starlink Group 10-1', net: '2026-10-16T12:00:00Z', status: { abbrev: 'Go' }, launch_service_provider: { name: 'SpaceX' }, pad: { name: 'SLC-40', latitude: '28.56', longitude: '-80.57', location: { name: 'Cape Canaveral, FL, USA' } }, mission: { name: 'Starlink Group 10-1', type: 'Communications' }, url: 'https://ll.thespacedevs.com/2.3.0/launches/L1/' },
-  { id: 'L2', name: 'No pad coordinates', net: '2026-10-17T00:00:00Z', status: { abbrev: 'TBD' }, pad: { name: 'Unknown' }, mission: null }
+  { id: 'L2', name: 'No pad coordinates', net: '2026-10-17T00:00:00Z', status: { abbrev: 'TBD' }, pad: { name: 'Unknown' }, mission: null },
+  { id: 'L3', name: 'Explicit null coordinates', net: '2026-10-18T00:00:00Z', status: { abbrev: 'TBD' }, pad: { name: 'TBD', latitude: null, longitude: null }, mission: null },
+  { id: 'L4', name: 'No pad at all', net: '2026-10-19T00:00:00Z', status: { abbrev: 'TBD' }, pad: null, mission: null },
+  { id: 'L5', name: 'One axis null', net: '2026-10-20T00:00:00Z', status: { abbrev: 'TBD' }, pad: { name: 'Half', latitude: '5.26', longitude: null }, mission: null }
 ] };
 
-function provider({ flightsFail = false } = {}) {
+function provider({ flightsFail = false, celestrakFail = false } = {}) {
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     const u = String(url instanceof Request ? url.url : url);
     calls.push({ url: u, auth: init.headers && init.headers.authorization || '' });
     if (u.startsWith('https://opensky-network.org/api/states/all')) return flightsFail ? text('nope', 503, 'text/plain') : json(STATES);
-    if (u.startsWith('https://celestrak.org/NORAD/elements/gp.php')) return text(u.includes('GROUP=stations') ? TLES : '', 200, 'text/plain');
+    if (u.startsWith('https://celestrak.org/NORAD/elements/gp.php')) return celestrakFail ? text('down', 503, 'text/plain') : text(u.includes('GROUP=stations') ? TLES : '', 200, 'text/plain');
     if (u.startsWith('https://ll.thespacedevs.com/2.3.0/launches/upcoming/')) return json(LAUNCHES);
     if (u === 'https://sb.test/auth/v1/user') return init.headers.authorization === 'Bearer member-token' ? json({ id: 'auth-member' }) : json({ msg: 'no' }, 401);
     throw new Error('unexpected ' + u);
@@ -102,10 +105,24 @@ test('satellites and launches are for members: the bearer is checked with Supaba
   const launches = await handleWorldLayers(req('/v1/world/layers/launches', { authorization: 'Bearer member-token' }), ENV, { fetchImpl, cacheImpl: cache });
   const lb = await launches.json();
   assert.equal(lb.attribution, 'Launch Library 2 — The Space Devs');
-  assert.equal(lb.count, 1, 'a launch without pad coordinates cannot be pinned');
+  assert.equal(lb.count, 1, 'a launch without pad coordinates, with null ones, with no pad, or with one axis missing cannot be pinned: null never becomes 0°');
   assert.deepEqual(lb.launches[0].pad, { name: 'SLC-40', location: 'Cape Canaveral, FL, USA', lat: 28.56, lon: -80.57 });
   assert.equal(lb.launches[0].provider, 'SpaceX');
   assert.equal(calls.find((c) => c.url.includes('thespacedevs')).auth, '', 'anonymous without LL2_API_TOKEN');
+});
+
+test('CelesTrak down on every group is the provider down, never zero satellites cached as the truth', async () => {
+  const down = provider({ celestrakFail: true });
+  await assert.rejects(() => fetchSatellites({}, down.fetchImpl), /celestrak unavailable/);
+  const r = await handleWorldLayers(req('/v1/world/layers/satellites', { authorization: 'Bearer member-token' }), ENV, { fetchImpl: down.fetchImpl, cacheImpl: memoryCache() });
+  const body = await r.json();
+  assert.equal(body.unavailable, true); assert.equal(body.count, 0); assert.deepEqual(body.satellites, []);
+  /* one group down while the other answers is tolerated */
+  const half = { fetchImpl: async (url, init = {}) => { const u = String(url); if (u.includes('GROUP=visual')) return text('down', 503, 'text/plain'); return down.fetchImpl(url, init); } };
+  const okFetch = provider().fetchImpl;
+  const partial = await fetchSatellites({}, async (url, init = {}) => (String(url).includes('GROUP=visual') ? text('down', 503, 'text/plain') : okFetch(url, init)));
+  assert.equal(partial.count, 2);
+  void half;
 });
 
 test('the fetchers trim what the Earth needs and nothing more', async () => {

@@ -430,6 +430,16 @@ const settleWorld = async (page) => {
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
   const back = page.url();
   check(S, 'tapping Music from the World\'s host carries the sign-in back in the fragment', back.startsWith(`${HOUSE}/listen.html#mcc_handoff=`) && decodeURIComponent(back.split('mcc_handoff=')[1]) === SESSION.fresh && landed.includes(`${HOUSE}/listen.html`), back.replace(SESSION.fresh, '<fresh token>'));
+  /* a page link to one of Matthew's rooms (a relative album.html, a /receipt.html) looks same-origin on the
+     World's host; the bar sends it to his site outright, carrying the sign-in, instead of letting the Worker
+     301 it there signed out (Codex, PR #434) */
+  await page.goto(`${CO}/?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 30000 }).catch(() => {});
+  await page.evaluate(() => { const a = document.createElement('a'); a.id = 'roomLink'; a.href = '/receipt.html?a=11111111-1111-4111-8111-111111111111'; a.textContent = 'Receipt'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); });
+  await page.click('#roomLink');
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  const room = page.url();
+  check(S, 'a page link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', room.startsWith(`${HOUSE}/receipt.html?a=11111111-1111-4111-8111-111111111111#mcc_handoff=`) && decodeURIComponent(room.split('mcc_handoff=')[1]) === SESSION.fresh && !served.some((x) => x.url.startsWith(`${CO}/receipt.html`)), room.replace(SESSION.fresh, '<fresh token>'));
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

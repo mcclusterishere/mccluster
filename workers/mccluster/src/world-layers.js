@@ -68,6 +68,8 @@ export async function bearerUser(request, env, fetchImpl = fetch) {
 
 /* ---------- the three fetches, trimmed to what the Earth draws ---------- */
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null);
+/* a coordinate the provider gives as a string or a number; absent, null or empty is absent, never zero */
+const coord = (v) => (v === null || v === undefined || v === '' ? null : num(Number(v)));
 
 async function openSkyToken(env, fetchImpl) {
   if (!env.OPENSKY_CLIENT_ID || !env.OPENSKY_CLIENT_SECRET) return null;
@@ -97,9 +99,11 @@ export async function fetchFlights(env, fetchImpl = fetch) {
 
 export async function fetchSatellites(env, fetchImpl = fetch) {
   const seen = new Map();
+  let failed = 0;
   for (const group of SATELLITE_GROUPS) {
-    /* CelesTrak's TLE format: three lines per object, name then the two element lines */
-    const text = await upstream(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=TLE`, {}, fetchImpl, 'text').catch(() => '');
+    /* CelesTrak's TLE format: three lines per object, name then the two element lines.
+       One group down is tolerated when another answers; every group down is the provider down. */
+    const text = await upstream(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=TLE`, {}, fetchImpl, 'text').catch(() => { failed += 1; return ''; });
     const lines = text.split(/\r?\n/).map((l) => l.trimEnd()).filter(Boolean);
     for (let i = 0; i + 2 < lines.length; i += 3) {
       const name = lines[i].trim(), l1 = lines[i + 1], l2 = lines[i + 2];
@@ -110,6 +114,7 @@ export async function fetchSatellites(env, fetchImpl = fetch) {
     }
   }
   const satellites = [...seen.values()];
+  if (!satellites.length && failed === SATELLITE_GROUPS.length) throw new Error('celestrak unavailable');
   return { source: 'celestrak', groups: SATELLITE_GROUPS, count: satellites.length, satellites };
 }
 
@@ -122,7 +127,7 @@ export async function fetchLaunches(env, fetchImpl = fetch) {
     net: l.net || null,
     status: l.status && (l.status.abbrev || l.status.name) || null,
     provider: l.launch_service_provider && l.launch_service_provider.name || null,
-    pad: { name: l.pad && l.pad.name || null, location: l.pad && l.pad.location && l.pad.location.name || null, lat: num(Number(l.pad && l.pad.latitude)), lon: num(Number(l.pad && l.pad.longitude)) },
+    pad: { name: l.pad && l.pad.name || null, location: l.pad && l.pad.location && l.pad.location.name || null, lat: coord(l.pad && l.pad.latitude), lon: coord(l.pad && l.pad.longitude) },
     mission: { name: l.mission && l.mission.name || null, type: l.mission && l.mission.type || null },
     url: l.url || null
   })).filter((l) => l.pad.lat !== null && l.pad.lon !== null);

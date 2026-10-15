@@ -267,9 +267,9 @@ and credited on the imagery line while it is on:
 
 - **Flights**, for everyone: OpenSky's snapshot of aircraft in the air (up to
   five thousand points, ten-minute window). While it is on, the line over the
-  Earth counts them and carries the owner's one lead, "Don't want to fly
-  commercial? Fly private with Vaunt →", the same referral link the front
-  page's VR wall carries (`https://vauntapi.flyvaunt.com/referral/nuao1K`).
+  Earth counts them and carries the owner's one lead, "Fly Vaunt →" (owner:
+  "make it simple and shorter"), the same referral link the front page's VR
+  wall carries (`https://vauntapi.flyvaunt.com/referral/nuao1K`).
 - **Satellites**, for members: CelesTrak's `stations` and `visual` groups
   (about 170 bright, named objects), propagated in the frame with SGP4
   (`vendor/satellite.min.js`, satellite.js 5.0.0, MIT, loaded on first use)

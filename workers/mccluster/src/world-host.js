@@ -25,7 +25,7 @@ export const WORLD_ROOMS = new Set([
 ]);
 /* ...and by prefix: the action rooms, the campaign funnel, the sign-in
    callback, and the static files every page loads. */
-export const WORLD_PREFIXES = ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/'];
+export const WORLD_PREFIXES = ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/', '/vendor/'];
 
 const NOINDEX_META = /<meta name="robots" content="noindex">/;
 
