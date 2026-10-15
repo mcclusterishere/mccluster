@@ -13,6 +13,16 @@
 - Admin-only publishing, moderation, analytics, and source management must be authorized on the server. Do not infer admin from client-side session flags.
 
 ## Production domain: `humanuprise.com` (built; inert until the owner routes it)
+
+**The World's door today is `https://mccluster.org/`** (owner, 2026-10-15:
+"we don't need humanuprise.com live right now … we need mccluster.org to
+actually show the World"). The company host's router serves the World at its
+root by the same mechanics (`workers/mccluster/src/company-site/router.js`,
+`workers/mccluster/src/world-host.js`); activation is the company host's
+(`docs/control-plane/DOMAINS-AND-ENTITIES.md` → Activation: the Workers
+Route, the narrowed redirect rule, the Supabase redirect allowlist). Nothing
+below changes for `humanuprise.com`; routing it later is the same two
+Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
 - Owner, 2026-10-14: the World is Human Uprise's own solo experience at its own address, interconnected with the rest. The bar's Music and M go to Matthew's site; the Globe stays home.
 - Served by the one Worker `mccluster`, by host (`workers/mccluster/src/human-uprise/router.js`), the way the company property is. `/` is the World: `mnet.html` from `matthew.mccluster.org`, passed through with this host's own canonical and `og:url`; the `noindex` that belongs to Matthew's site does not follow it. The World's rooms (`action-globe.html`, `action-network-*.html`, `/action/`, `give.html`, `create.html`, `action-policy.html`, `world-news.html`, `privacy.html`), the sign-in pages (`account.html`, `login.html`, `forgot-password.html`, `reset-password.html`, `onboard.html`, `/auth/`), `sw.js` and the static files (`/js/`, `/css/`, `/assets/`, `/data/`) ride the same way, with `x-robots-tag: noindex` on documents. Every other path is a 301 to the same path on `matthew.mccluster.org` (Music, the M, creators, records, checkout). `www` is a 301 to the apex; `/mnet.html` is a 301 to `/` with its query. `robots.txt` and a one-URL `sitemap.xml` are the host's own. Nothing is rewritten beyond the World's head: no base tag, no link rewriting.
 - The API allows the origin (`workers/mccluster/src/lib/http.js` `DEFAULT_ORIGINS`; `workers/mccluster/wrangler.toml` `ALLOWED_ORIGINS`).

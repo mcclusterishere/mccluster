@@ -9,10 +9,12 @@
 
    ONE WORKER, BY HOST. GitHub Pages holds one custom domain per repository
    (matthew.mccluster.org), so this host rides the one Worker the way the
-   company property does: this answers only requests whose host is
-   humanuprise.com or www.humanuprise.com and returns null for every other
-   host, so the API is untouched. INERT UNTIL ROUTED: until the owner adds
-   the Workers Route for humanuprise.com/* this code never runs.
+   company property does (the mechanics are shared: ../world-host.js): this
+   answers only requests whose host is humanuprise.com or www.humanuprise.com
+   and returns null for every other host, so the API is untouched. INERT
+   UNTIL ROUTED: until the owner adds the Workers Route for humanuprise.com/*
+   this code never runs. Until then the World's door is mccluster.org
+   (owner, 2026-10-15; ../company-site/router.js).
 
    WHAT THE HOST SERVES. `/` is the World: mnet.html, fetched from the
    personal origin and passed through with this host's own canonical in
@@ -29,21 +31,11 @@
    base tag, no link rewriting. Relative links resolve on this host and the
    rules above decide where each one lands. */
 import { PERSONAL_ORIGIN } from '../company-site/pages.generated.js';
+import { worldHeadFor, moved, own, isWorldRoom, isDocument, methodNotAllowed, upstreamOrigin, passThrough } from '../world-host.js';
 
 export const HUMAN_UPRISE_ORIGIN = 'https://humanuprise.com';
 const APEX = 'humanuprise.com';
 const WWW = 'www.humanuprise.com';
-
-/* The World's own rooms, by exact path... */
-const WORLD_ROOMS = new Set([
-  '/action-globe.html', // the Earth in the World's frame: same origin, for the postMessage bridge
-  '/action-policy.html', '/world-news.html', '/create.html', '/give.html', '/privacy.html',
-  '/account.html', '/login.html', '/forgot-password.html', '/reset-password.html', '/onboard.html',
-  '/sw.js'
-]);
-/* ...and by prefix: the action rooms, the campaign funnel, the sign-in
-   callback, and the static files every page loads. */
-const WORLD_PREFIXES = ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/'];
 
 const ROBOTS = `User-agent: *\nAllow: /\nSitemap: ${HUMAN_UPRISE_ORIGIN}/sitemap.xml\n`;
 const SITEMAP = '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -51,65 +43,11 @@ const SITEMAP = '<?xml version="1.0" encoding="UTF-8"?>\n' +
   `  <url><loc>${HUMAN_UPRISE_ORIGIN}/</loc></url>\n` +
   '</urlset>\n';
 
-/* The World's head on this host. On Matthew's site mnet.html is noindex
-   (the member network is not a search landing there); here it is Human
-   Uprise's front door, so the noindex gives way to this host's canonical. */
-const ROOT_HEAD = [
-  `<link rel="canonical" href="${HUMAN_UPRISE_ORIGIN}/">`,
-  `<meta property="og:url" content="${HUMAN_UPRISE_ORIGIN}/">`,
-  '<meta property="og:site_name" content="Human Uprise">'
-].join('\n  ');
-const NOINDEX_META = /<meta name="robots" content="noindex">/;
-
+/* The World's head on this host: Human Uprise's front door, so the noindex
+   gives way to this host's canonical (../world-host.js). */
+const HEAD = { origin: HUMAN_UPRISE_ORIGIN, siteName: 'Human Uprise' };
 export function worldHead(html) {
-  if (NOINDEX_META.test(html)) return html.replace(NOINDEX_META, ROOT_HEAD);
-  return html.replace('</title>', '</title>\n  ' + ROOT_HEAD);
-}
-
-const SECURITY = {
-  'x-content-type-options': 'nosniff',
-  'referrer-policy': 'strict-origin-when-cross-origin',
-  'strict-transport-security': 'max-age=31536000'
-};
-/* headers the client may send upstream, and headers upstream may send back.
-   content-encoding and content-length never pass: the runtime decodes the
-   upstream body and sizes the one it sends. */
-const UPSTREAM_REQUEST = ['accept', 'accept-language', 'if-none-match', 'if-modified-since', 'range'];
-const UPSTREAM_RESPONSE = ['content-type', 'cache-control', 'etag', 'last-modified', 'vary', 'accept-ranges', 'content-range'];
-
-function moved(location) {
-  return new Response(null, { status: 301, headers: { location, 'cache-control': 'public, max-age=3600' } });
-}
-function own(body, type) {
-  return new Response(body, { status: 200, headers: { 'content-type': type, 'cache-control': 'public, max-age=3600', ...SECURITY } });
-}
-function isWorldRoom(path) {
-  return WORLD_ROOMS.has(path) || WORLD_PREFIXES.some((p) => path.startsWith(p));
-}
-function isDocument(path) {
-  return path.endsWith('.html') || path.endsWith('/');
-}
-
-async function passThrough(request, upstream, fetchImpl, { root, noindex }) {
-  const headers = new Headers();
-  for (const h of UPSTREAM_REQUEST) {
-    const v = request.headers.get(h);
-    if (v) headers.set(h, v);
-  }
-  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'follow' }));
-  const out = new Headers(SECURITY);
-  for (const h of UPSTREAM_RESPONSE) {
-    const v = res.headers.get(h);
-    if (v) out.set(h, v);
-  }
-  if (noindex) out.set('x-robots-tag', 'noindex');
-  if (root && res.status === 200) {
-    /* the body changes here, so the upstream validator does not describe it */
-    out.delete('etag');
-    out.set('cache-control', 'public, max-age=300');
-    return new Response(request.method === 'HEAD' ? null : worldHead(await res.text()), { status: 200, headers: out });
-  }
-  return new Response(request.method === 'HEAD' ? null : res.body, { status: res.status, headers: out });
+  return worldHeadFor(html, HEAD);
 }
 
 /* The World's files are fetched from PUBLIC_ORIGIN, the personal origin the
@@ -128,14 +66,13 @@ export async function humanUpriseResponse(request, env = {}, fetchImpl = fetch) 
   /* the World's document name is the root here, query and all */
   if (path === '/mnet.html') return moved(`${HUMAN_UPRISE_ORIGIN}/${url.search}`);
 
-  const origin = String(env.PUBLIC_ORIGIN || PERSONAL_ORIGIN).replace(/\/$/, '');
+  const origin = upstreamOrigin(env, PERSONAL_ORIGIN);
   const root = path === '/';
   if (!root && !isWorldRoom(path)) return moved(`${PERSONAL_ORIGIN}${path}${url.search}`);
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response('Method Not Allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
-  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') return methodNotAllowed();
   return passThrough(request, `${origin}${root ? '/mnet.html' : path}${url.search}`, fetchImpl, {
     root,
-    noindex: !root && isDocument(path)
+    noindex: !root && isDocument(path),
+    head: HEAD
   });
 }

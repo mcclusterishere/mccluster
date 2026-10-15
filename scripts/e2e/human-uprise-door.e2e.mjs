@@ -1,10 +1,12 @@
 /* HUMAN UPRISE'S OWN DOOR, IN A REAL BROWSER.
    ============================================================
-   Two hosts, one bar. The Worker's host router
-   (workers/mccluster/src/human-uprise/router.js) answers
-   https://humanuprise.com in front of this checkout, so the World is
-   opened at its own address by a real Chromium, and every link the bar
-   writes is read back as the browser sees it. Matthew's site is a stub
+   Three hosts, one bar. The Worker's host routers
+   (workers/mccluster/src/company-site/router.js for https://mccluster.org,
+   the World's door today; workers/mccluster/src/human-uprise/router.js for
+   https://humanuprise.com, its own door when routed) answer in front of
+   this checkout, so the World is opened at its own addresses by a real
+   Chromium, and every link the bar writes is read back as the browser
+   sees it. Matthew's site is a stub
    that records where a cross-site tap lands. On this checkout's own
    origin, a creator's front page is opened and the bar is watched taking
    that creator's perspective, keeping it on Music, and letting it go at
@@ -22,6 +24,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { humanUpriseResponse } from '../../workers/mccluster/src/human-uprise/router.js';
+import { companySiteResponse } from '../../workers/mccluster/src/company-site/router.js';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out-door');
@@ -34,14 +37,16 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
+  const file = path === '/' ? 'index.html' : path.endsWith('/') ? path + 'index.html' : path;
   try {
-    const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path.endsWith('/') ? path + 'index.html' : path));
-    res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream', 'cache-control': 'max-age=600' }); res.end(body);
+    const body = await readFile(join(ROOT, file));
+    res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'max-age=600' }); res.end(body);
   } catch { res.writeHead(404, { 'content-type': 'text/html' }); res.end('<!doctype html><title>404</title>not found'); }
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 const HU = 'https://humanuprise.com';
+const CO = 'https://mccluster.org';
 const HOUSE = 'https://matthew.mccluster.org';
 
 /* ---------- fixtures ---------- */
@@ -70,6 +75,8 @@ const SESSION = { token: jwt('house'), fresh: jwt('world') };
 const ME = { m_uid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', mccluster_id: 'fixture.you', display_name: 'Fixture You' };
 const carried = { handoff: [], verify: [], bootstrap: [] };
 
+const apiReads = [];
+let nextStep = null;   // the bootstrap's next_step for the scenario that needs one
 async function routeBackends(ctx) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
@@ -103,6 +110,7 @@ async function routeBackends(ctx) {
   await ctx.route('https://api.mccluster.org/**', async (route) => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    apiReads.push({ path: u.pathname, auth: !!(await req.allHeaders()).authorization });
     if (u.pathname === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });
     /* the sign-in handoff: the arriving page's bearer and Origin, answered with a token hash */
     if (u.pathname === '/v1/auth/handoff' && req.method() === 'POST') {
@@ -113,7 +121,7 @@ async function routeBackends(ctx) {
     }
     if (u.pathname === '/v1/mnet/bootstrap') {
       carried.bootstrap.push({ origin: (await req.allHeaders()).origin || '', authorization: (await req.allHeaders()).authorization || '' });
-      return json(route, { identity: ME, profile: ME, next_step: null, tour_done_at: new Date().toISOString() });
+      return json(route, { identity: ME, profile: nextStep ? null : ME, next_step: nextStep, tour_done_at: new Date().toISOString() });
     }
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: POSTS.map((p) => ({ ...p, post: { ...p.post, author_m_uid: ME.m_uid, media: [] } })), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: [] });
@@ -125,13 +133,15 @@ async function routeBackends(ctx) {
     landed.push(route.request().url());
     return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: `<!doctype html><title>Matthew's site (stub)</title><p id="house">${route.request().url()}</p>` });
   });
-  /* the Human Uprise host: the real Worker router, in front of this checkout */
-  for (const host of [HU, 'https://www.humanuprise.com']) {
+  /* the World's hosts: the real Worker routers, in front of this checkout.
+     The company host (mccluster.org) serves the World at its root today;
+     Human Uprise's own door (humanuprise.com) does the same when routed. */
+  for (const [host, respond] of [[HU, humanUpriseResponse], ['https://www.humanuprise.com', humanUpriseResponse], [CO, companySiteResponse], ['https://www.mccluster.org', companySiteResponse]]) {
     await ctx.route(`${host}/**`, async (route) => {
       const r = route.request();
       const headers = {};
       for (const [k, v] of Object.entries(await r.allHeaders())) if (!/^(:|host$|content-length$)/.test(k)) headers[k] = v;
-      const res = await humanUpriseResponse(new Request(r.url(), { method: r.method(), headers }), { PUBLIC_ORIGIN: BASE });
+      const res = await respond(new Request(r.url(), { method: r.method(), headers }), { PUBLIC_ORIGIN: BASE });
       served.push({ url: r.url(), status: res.status, location: res.headers.get('location'), robots: res.headers.get('x-robots-tag') });
       /* a fulfilled redirect is followed by Chromium's own network stack,
          outside interception, so the router's 301 is recorded above and
@@ -247,7 +257,7 @@ const settleWorld = async (page) => {
   check(S, 'on Fixture Ana\'s front page the middle cell is Ana', b.perspective === 'fixture-ana' && b.home === `${BASE}/music-creator.html?handle=fixture-ana`, { perspective: b.perspective, home: b.home });
   check(S, 'the coin is her own picture, round', b.coin && b.coin.tag === 'IMG' && /appbar__m--creator/.test(b.coin.cls) && b.coin.src === ANA.avatar_url, b.coin);
   check(S, 'the label is her name; her page lights her coin', b.label === 'Fixture' && b.lit.join(',') === 'home', { label: b.label, lit: b.lit });
-  check(S, 'Music and the Globe are unchanged', b.music === `${BASE}/listen.html` && b.world === `${BASE}/mnet.html?view=feed`, { music: b.music, world: b.world });
+  check(S, 'Music is unchanged and the Globe goes to the World at the company\'s root', b.music === `${BASE}/listen.html` && b.world === `${CO}/?view=feed`, { music: b.music, world: b.world });
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'perspective-creator-iphone.png') });
 
@@ -300,7 +310,99 @@ const settleWorld = async (page) => {
   await ctx.close();
 }
 
-/* ---------- 4. one M Account, every host: a member crosses to the World's own door and back ---------- */
+/* ---------- 3b. the company's door: mccluster.org is the World today (owner, 2026-10-15) ---------- */
+{
+  const S = 'company-host';
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
+  await page.goto(`${CO}/`, { waitUntil: 'domcontentloaded' });
+  const globe = await settleWorld(page);
+  check(S, 'https://mccluster.org/ is the World', page.url() === `${CO}/` && !!(await page.$('#mnWorld')), page.url());
+  const head = await page.evaluate(() => ({ canonical: document.querySelector('link[rel=canonical]') && document.querySelector('link[rel=canonical]').href, robots: document.querySelector('meta[name=robots]') && document.querySelector('meta[name=robots]').content, og: document.querySelector('meta[property="og:url"]') && document.querySelector('meta[property="og:url"]').content, site: document.querySelector('meta[property="og:site_name"]') && document.querySelector('meta[property="og:site_name"]').content, ld: [...document.querySelectorAll('script[type="application/ld+json"]')].map((n) => { try { return JSON.parse(n.textContent); } catch { return null; } }) }));
+  check(S, 'the page carries the company host\'s canonical, McCluster Corp as the site, and no noindex', head.canonical === `${CO}/` && head.robots === null && head.og === `${CO}/` && head.site === 'McCluster Corp', head);
+  check(S, 'the root belongs to the company WebSite and is about the Organization, stable @ids', head.ld.some((n) => n && n['@id'] === `${CO}/` && n.isPartOf && n.isPartOf['@id'] === `${CO}/#website` && n.about && n.about['@id'] === 'https://matthew.mccluster.org/#mccluster-corp'), head.ld);
+  check(S, 'the Earth is in a frame on the same host, so the bridge is same-origin', !!globe && globe.url().startsWith(`${CO}/action-globe.html`), globe && globe.url());
+  const b = await bar(page);
+  check(S, 'the bar is Music | M | Globe', b.columns.join('|') === 'music|home|world', b.columns);
+  check(S, 'Music and the M go to Matthew\'s site outright', b.music === `${HOUSE}/listen.html` && b.home === `${HOUSE}/index.html`, { music: b.music, home: b.home });
+  check(S, 'the Globe stays home, at the root of this host', b.world === `${CO}/?view=feed`, b.world);
+  check(S, 'the Globe coin is lit at the root, not the M', b.lit.join(',') === 'world', b.lit);
+  const files = served.filter((x) => x.url.startsWith(CO)).map((x) => new URL(x.url).pathname);
+  check(S, 'the World\'s files came through this host', files.includes('/js/mnet.js') && files.includes('/css/mnet.css') && files.some((p) => p.startsWith('/assets/')), files.length);
+  check(S, 'rooms carry noindex; the front door does not', served.some((x) => x.url === `${CO}/` && x.robots === null) && served.some((x) => x.url.startsWith(`${CO}/action-globe.html`) && x.robots === 'noindex'));
+  check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  await page.screenshot({ path: join(OUT, 'company-host-guest-iphone.png') });
+  check(S, 'no page errors', errors.length === 0, errors);
+  const moved = (u) => served.find((x) => x.url === u && x.status === 301);
+  await page.goto(`${CO}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => u.pathname === '/' && u.searchParams.get('view') === 'missions', { timeout: 15000 });
+  check(S, '/mnet.html?view=missions is a 301 to /?view=missions', page.url() === `${CO}/?view=missions` && !!moved(`${CO}/mnet.html?view=missions`) && moved(`${CO}/mnet.html?view=missions`).location === `${CO}/?view=missions`, { url: page.url(), served: moved(`${CO}/mnet.html?view=missions`) });
+  await page.goto('https://www.mccluster.org/?view=feed', { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => u.hostname === 'mccluster.org', { timeout: 15000 });
+  check(S, 'www is a 301 to the apex', page.url() === `${CO}/?view=feed` && !!moved('https://www.mccluster.org/?view=feed'), { url: page.url(), served: moved('https://www.mccluster.org/?view=feed') });
+  /* the company page, "What is McCluster Corp?", at /company */
+  await page.goto(`${CO}/company`, { waitUntil: 'domcontentloaded' });
+  const company = await page.evaluate(() => ({ title: document.title, canonical: document.querySelector('link[rel=canonical]') && document.querySelector('link[rel=canonical]').href, world: document.querySelector('header a.go') && document.querySelector('header a.go').href, scripts: [...document.scripts].filter((x) => x.type !== 'application/ld+json').length }));
+  check(S, '/company is McCluster Corp\'s page, with its own canonical, no executable scripts, and a door to the World at the root', /^McCluster Corp/.test(company.title) && company.canonical === `${CO}/company` && company.world === `${CO}/` && company.scripts === 0, company);
+  check(S, 'nothing scrolls sideways at 390 on the company page', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  await page.screenshot({ path: join(OUT, 'company-page-iphone.png') });
+  /* everything else is Matthew's */
+  await page.goto(`${CO}/album.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  check(S, '/album.html on this host is a 301 to Matthew\'s site', page.url() === `${HOUSE}/album.html` && !!moved(`${CO}/album.html`) && moved(`${CO}/album.html`).location === `${HOUSE}/album.html`, { url: page.url(), served: moved(`${CO}/album.html`) });
+  await ctx.close();
+}
+
+/* ---------- 3c. until the owner routes mccluster.org/*: the zone rule lands the Globe's link on the house root, and the house forwards it to the World ---------- */
+{
+  const S = 'before-the-route';
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
+  /* the checkout's own root stands in for Matthew's root: index.html with the house bar */
+  await page.goto(`${BASE}/?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 15000 }).catch(() => {});
+  check(S, 'the house root with the World\'s query goes on to the World on this origin, query intact', page.url() === `${BASE}/mnet.html?view=feed`, page.url());
+  await page.goto(`${BASE}/index.html?view=missions#mcc_handoff=carried`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => /mnet\.html$/.test(u.pathname), { timeout: 15000 }).catch(() => {});
+  check(S, 'index.html too, and a carried sign-in rides along in the fragment', page.url() === `${BASE}/mnet.html?view=missions` || page.url() === `${BASE}/mnet.html?view=missions#mcc_handoff=carried`, page.url());
+  await page.goto(`${BASE}/listen.html?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+  check(S, 'only the root forwards: another page with a view query stays put', page.url() === `${BASE}/listen.html?view=feed`, page.url());
+  check(S, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
+/* ---------- 3d. the World first (owner, 2026-10-15: "me as a signed in user … I see no globe"): a member whose profile is unfinished ---------- */
+{
+  const S = 'finish-profile';
+  nextStep = 'profile';
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
+  await page.goto(`${BASE}/mnet.html?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
+  await settleWorld(page);
+  const seen = await page.evaluate(() => ({ signedIn: document.body.classList.contains('mcc-auth-in'), app: !document.getElementById('mnApp').hidden, gate: !document.getElementById('mnProfileGate').hidden, world: document.getElementById('mnWorld').getBoundingClientRect().height, frame: !!document.querySelector('#mnWorldFrame'), card: !document.getElementById('mnFinishCard').hidden, cardText: document.getElementById('mnFinishCard').textContent.replace(/\s+/g, ' ').trim(), composer: document.getElementById('mnComposer').hidden, posts: document.querySelectorAll('#mnFeed [data-post-id]').length }));
+  check(S, 'signed in with an unfinished profile, the World is on screen: the Earth, the strip, the posts', seen.signedIn && seen.app && !seen.gate && seen.world > 200 && seen.frame && seen.posts > 0, seen);
+  check(S, 'the step waits in a card where the composer would be', seen.card && /Finish your profile\./.test(seen.cardText) && seen.composer, { card: seen.card, composer: seen.composer, text: seen.cardText });
+  const reads = apiReads.filter((r) => /\/v1\/mnet\/(public-feed|feed)$/.test(r.path));
+  check(S, 'the feed read is the public one until the profile exists', reads.length > 0 && reads.every((r) => r.path === '/v1/mnet/public-feed' && !r.auth), reads);
+  await page.screenshot({ path: join(OUT, 'finish-profile-iphone.png') });
+  check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  /* the join on the mission card asks to finish, with the reason, and the way back is the World */
+  await page.waitForSelector('#mnWorldFocusJoin', { timeout: 15000 });
+  await page.click('#mnWorldFocusJoin');
+  await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
+  const gate = await page.evaluate(() => ({ status: document.getElementById('mnProfileStatus').textContent, back: document.getElementById('mnProfileBack').hidden ? null : document.getElementById('mnProfileBack').textContent, app: !document.getElementById('mnApp').hidden }));
+  check(S, 'joining a mission opens the profile form with the reason and a way back to the World', /Finish your profile to join a mission\./.test(gate.status) && gate.back === '← Back to the World' && !gate.app, gate);
+  await page.click('#mnProfileBack');
+  await page.waitForSelector('#mnApp:not([hidden])', { timeout: 10000 });
+  check(S, 'Back returns to the World, not to a profile page', (await page.evaluate(() => !document.getElementById('mnFeedView').hidden && document.getElementById('mnWorld').getBoundingClientRect().height > 200)));
+  await page.click('#mnFinishGo');
+  await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
+  check(S, 'the card opens the same form', await page.evaluate(() => !document.getElementById('mnProfileGate').hidden));
+  check(S, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+  nextStep = null;
+}
+
+/* ---------- 4. one M Account, every host: a member taps the Globe, crosses to the World's door and comes back ---------- */
 {
   const S = 'sign-in-handoff';
   const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
@@ -308,17 +410,19 @@ const settleWorld = async (page) => {
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
   const signedIn = await page.evaluate(() => document.body.classList.contains('mcc-auth-in'));
   check(S, 'signed in on Matthew\'s site', signedIn);
-  /* a link to the World's own host, as any page might carry one */
-  await page.evaluate((href) => { const a = document.createElement('a'); a.id = 'crossing'; a.href = href; a.textContent = 'Open the World'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); }, `${HU}/?view=feed`);
-  await page.click('#crossing');
-  await page.waitForURL((u) => u.origin === HU && !u.hash, { timeout: 30000 });
+  /* the Globe tab itself: from Matthew's site it goes to the World at the company's root */
+  const globeHref = await page.evaluate(() => document.querySelector('.appbar [data-appnav="world"]').href);
+  check(S, 'the Globe tab goes to the World at the company\'s root', globeHref === `${CO}/?view=feed`, globeHref);
+  await page.click('.appbar [data-appnav="world"]');
+  await page.waitForURL((u) => u.origin === CO && !u.hash, { timeout: 30000 });
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
   const arrived = await page.evaluate(() => ({ url: location.href, hash: location.hash, signedIn: document.body.classList.contains('mcc-auth-in'), session: JSON.parse(localStorage.getItem('mccdb_session') || 'null'), composer: !!document.querySelector('.mn__create'), guestCard: !!document.querySelector('[data-guest-ask]') }));
-  check(S, 'the World\'s host received the sign-in: the fragment is gone from the address', arrived.url === `${HU}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
-  check(S, 'the arriving page exchanged the carried token from its own origin', carried.handoff.length >= 1 && carried.handoff[0].origin === HU && carried.handoff[0].authorization === 'Bearer ' + SESSION.token, carried.handoff);
+  check(S, 'the World\'s host received the sign-in: the fragment is gone from the address', arrived.url === `${CO}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
+  /* (an earlier scenario forwarded a bogus fragment on the house, which a guest page tries to exchange and is refused; this is the member's) */
+  check(S, 'the arriving page exchanged the carried token from its own origin', carried.handoff.some((h) => h.origin === CO && h.authorization === 'Bearer ' + SESSION.token), carried.handoff);
   check(S, 'Supabase turned the one-time token into a session of this origin\'s own', carried.verify.length >= 1 && carried.verify[0].body && carried.verify[0].body.type === 'magiclink' && carried.verify[0].body.token_hash === 'th-fixture', carried.verify);
   check(S, 'the session stored on the World\'s host is the fresh one, not the house\'s', arrived.session && arrived.session.access_token === SESSION.fresh && arrived.session.refresh_token === 'refresh-world', arrived.session);
-  check(S, 'the World booted as a member: the composer, the member feed, the bar signed in', arrived.signedIn && arrived.composer && carried.bootstrap.some((b) => b.authorization === 'Bearer ' + SESSION.fresh && b.origin === HU), { signedIn: arrived.signedIn, composer: arrived.composer, bootstrap: carried.bootstrap });
+  check(S, 'the World booted as a member: the composer, the member feed, the bar signed in', arrived.signedIn && arrived.composer && carried.bootstrap.some((b) => b.authorization === 'Bearer ' + SESSION.fresh && b.origin === CO), { signedIn: arrived.signedIn, composer: arrived.composer, bootstrap: carried.bootstrap });
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'handoff-member-iphone.png') });
   /* and back: the Music tab carries the World host's own fresh token to Matthew's site */
@@ -326,6 +430,16 @@ const settleWorld = async (page) => {
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
   const back = page.url();
   check(S, 'tapping Music from the World\'s host carries the sign-in back in the fragment', back.startsWith(`${HOUSE}/listen.html#mcc_handoff=`) && decodeURIComponent(back.split('mcc_handoff=')[1]) === SESSION.fresh && landed.includes(`${HOUSE}/listen.html`), back.replace(SESSION.fresh, '<fresh token>'));
+  /* a page link to one of Matthew's rooms (a relative album.html, a /receipt.html) looks same-origin on the
+     World's host; the bar sends it to his site outright, carrying the sign-in, instead of letting the Worker
+     301 it there signed out (Codex, PR #434) */
+  await page.goto(`${CO}/?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 30000 }).catch(() => {});
+  await page.evaluate(() => { const a = document.createElement('a'); a.id = 'roomLink'; a.href = '/receipt.html?a=11111111-1111-4111-8111-111111111111'; a.textContent = 'Receipt'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); });
+  await page.click('#roomLink');
+  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 15000 });
+  const room = page.url();
+  check(S, 'a page link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', room.startsWith(`${HOUSE}/receipt.html?a=11111111-1111-4111-8111-111111111111#mcc_handoff=`) && decodeURIComponent(room.split('mcc_handoff=')[1]) === SESSION.fresh && !served.some((x) => x.url.startsWith(`${CO}/receipt.html`)), room.replace(SESSION.fresh, '<fresh token>'));
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

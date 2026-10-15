@@ -40,10 +40,11 @@ function healthResponse(request, env) {
 
 export default {
   async fetch(request, env, ctx) {
-    /* McCluster Corp's property (mccluster.org, www.mccluster.org). Null for
-       every other host, so the API below is untouched. Inert until the
-       owner routes the apex to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
-    const company = companySiteResponse(request);
+    /* McCluster Corp's property (mccluster.org, www.mccluster.org): the World
+       at its root, the company page at /company. Null for every other host,
+       so the API below is untouched. Inert until the owner routes the apex
+       to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
+    const company = await companySiteResponse(request, env);
     if (company) return company;
     /* Human Uprise's own door (humanuprise.com, www): the World by host, the
        same way. Null for every other host; inert until the owner routes it:

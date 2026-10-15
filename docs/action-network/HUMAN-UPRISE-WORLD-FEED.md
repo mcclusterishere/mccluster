@@ -211,14 +211,88 @@ The bar is the same Music | M | Globe on either host (`js/tabbar.js`):
 - on `humanuprise.com`, Music and the M link to Matthew's site outright and
   the Globe is the root of this host (`/?view=feed`), which lights the Globe
   coin, not the M;
-- on Matthew's site the Globe stays on his origin until the owner flips
-  `WORLD_ORIGIN` to `https://humanuprise.com/` after routing;
+- on Matthew's site the Globe goes to `WORLD_ORIGIN`, the company's root
+  (below); to make it `https://humanuprise.com/` later, flip that one line
+  after routing;
 - a session is per origin, and the bar carries a member's sign-in across
   (`/v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`): the token
   rides in the link's fragment, the arriving page scrubs it, exchanges it
   from its own origin for a one-time magic-link token, and Supabase mints a
   session of that origin's own. One M Account, every host; no refresh token
   ever crosses.
+
+### The World's door today: `mccluster.org` (owner, 2026-10-15)
+
+"We don't need humanuprise.com live right now … we need mccluster.org to
+actually show the World." The company host's root serves the World by the
+same mechanics (`workers/mccluster/src/company-site/router.js` on the shared
+`workers/mccluster/src/world-host.js`): `/` is `mnet.html` passed through
+with the company's head (canonical `https://mccluster.org/`, site name
+McCluster Corp, a WebPage node of the company WebSite about the
+Organization); `/mnet.html` is a 301 to `/`; the rooms and files ride along
+(noindex); `/company` is the company page, which opens the World from its
+header; everything else is a 301 to Matthew's site. The bar's
+`WORLD_ORIGIN` is `https://mccluster.org/`, so the Globe on Matthew's site
+goes to `https://mccluster.org/?view=feed`, carrying a member's sign-in
+across. Until the owner routes `mccluster.org/*` to the Worker and narrows
+the zone redirect rule (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
+Activation), that rule bounces the link to Matthew's root with the World's
+query, and the bar there forwards it on to `mnet.html?view=feed` on his
+origin (query and fragment intact), so nothing breaks on the way. Proof:
+`workers/mccluster/test/company-site.test.mjs`, and the browser run below
+opens `https://mccluster.org/` through the real router, reads the bar and
+the head back, walks the 301s, opens `/company`, forwards the bounced link,
+and taps the Globe as a signed-in member to arrive signed in.
+
+### The World first, for every member (owner, 2026-10-15)
+
+"Me as a signed in user … I see no globe in the globe section." Reproduced
+against the live site: a member whose profile was unfinished (the bootstrap's
+`next_step` of `profile`, or `contact`) got the "Finish your profile" form
+instead of the World, and the Globe tab led there. Now the World is theirs
+like anyone's: the Earth, the strip, every pin and layer, the public posts.
+The step waits in a card where the composer would be (`#mnFinishCard`), and
+the actions that need it (post, join a mission, connect, the member rooms)
+open the form with the reason and a "← Back to the World". A finished
+profile lands back on the feed. The contact step still lives on the account
+page, opened on purpose from its card, never by a redirect at boot. The
+server refuses those actions anyway until the step is done.
+
+### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
+
+"Let's populate it with shit, man. Let's get it interesting." Three toggles
+at the bottom-left of the Earth (`js/action-globe.js`), each a source
+Hitman's Halo already uses, served by the one Worker
+(`workers/mccluster/src/world-layers.js`), trimmed to what the Earth draws,
+cached so a provider sees one request per window however many people look,
+and credited on the imagery line while it is on:
+
+- **Flights**, for everyone: OpenSky's snapshot of aircraft in the air (up to
+  five thousand points, ten-minute window). While it is on, the line over the
+  Earth counts them and carries the owner's one lead, "Fly Vaunt →" (owner:
+  "make it simple and shorter"), the same referral link the front page's VR
+  wall carries (`https://vauntapi.flyvaunt.com/referral/nuao1K`).
+- **Satellites**, for members: CelesTrak's `stations` and `visual` groups
+  (about 170 bright, named objects), propagated in the frame with SGP4
+  (`vendor/satellite.min.js`, satellite.js 5.0.0, MIT, loaded on first use)
+  so they move; the ISS, the Chinese station and Hubble are labelled.
+- **Launches**, for members: Launch Library 2's upcoming launches, pinned at
+  their pads with a name and a date; the line names the next one.
+
+Members only means the Worker checks the bearer with Supabase (401 without
+it); a guest's toggle is locked with a red dot and opens sign-in with the
+reason, sending nothing. A provider that is down gives the last good answer,
+marked stale, then an honest "unavailable". Licences, for the owner: OpenSky
+is non-commercial research data and a live product can need their written
+agreement (the seek-first research credentials, when set on the Worker, raise
+the budget); CelesTrak asks for citation; The Space Devs allow use with
+credit. Proof: `workers/mccluster/test/world-layers.test.mjs`,
+`scripts/test/world-first-and-layers.test.mjs`, and the browser run below.
+
+**The missions themselves** are already on production (27 open), but the
+Earth pins only the ones a region places: `supabase/pending/
+action_globe_demo_pins_v1.sql` inserts three regions and places every open
+mission by its campaign, published. It waits for the owner to apply it.
 
 ### A creator's perspective (owner, 2026-10-14)
 
@@ -391,7 +465,16 @@ message requests on the avatar); a creator's analytics door and audience
 layer, and their absence for a member who is not a creator; signing out to
 the guest World; and the guest path (Explore the world, Member posts live
 here, the chips, no session sent, public posts only, actions open sign-in and
-send nothing). Since the mark stopped being written out (2026-10-15) the
+send nothing). Since 2026-10-15 the run also drives the data layers: a member turns
+Flights, Satellites and Launches on, the points and pins are counted, the
+line over the Earth reads the counts, the next launch and the Vaunt lead, the
+members-only reads carried the session and the public one did not, each
+source is credited, and Flights off clears its own; a guest finds Satellites
+and Launches locked, a tap opens sign-in with the reason and sends nothing,
+and Flights with the Vaunt lead works for them. The door run adds a member
+whose profile is unfinished: the World on screen, the step in its card, the
+public feed read, the join opening the form with the reason, Back returning
+to the World. Since the mark stopped being written out (2026-10-15) the
 run also reads the rendered join back on the feed card and on the mission
 card: no text, one image, square, the pill at least 44px wide and tall in
 the feed, and the whole screen's text free of the mark (121/121 on an
@@ -399,9 +482,20 @@ iPhone, an iPad and a desktop). It does not touch production; Worker
 authorization is covered by the Worker test suite.
 
 `node scripts/e2e/human-uprise-door.e2e.mjs [outDir]` puts the real host
-router (`workers/mccluster/src/human-uprise/router.js`) in front of the same
-checkout at `https://humanuprise.com` in a real Chromium, with Matthew's site
-as a stub that records where a cross-site tap lands, and drives: the World
+routers (`workers/mccluster/src/company-site/router.js` for
+`https://mccluster.org`, the World's door today; `workers/mccluster/src/
+human-uprise/router.js` for `https://humanuprise.com`) in front of the same
+checkout in a real Chromium, with Matthew's site as a stub that records
+where a cross-site tap lands, and drives, on the company host (2026-10-15):
+the World at `https://mccluster.org/` on an iPhone with the company's
+canonical, site name and WebPage node, the bar Music | M | Globe with the
+Globe lit, the World's files through the host, noindex on the rooms and not
+on the root, `/mnet.html` → `/`, `www` → the apex, `/company` as the company
+page with its door to the World, `/album.html` → Matthew's site; the house
+root forwarding `?view=` to the World on its own origin (query and a carried
+fragment intact) while any other page with that query stays put; and the
+Globe tab tapped as a signed-in member on Matthew's site landing signed in
+on the company host. And on Human Uprise's host: the World
 at its own root on an iPhone (this host's canonical and `og:url`, no
 `noindex`, the Earth's frame on the same host, the World's files through
 this host, `noindex` on the rooms and not on the front door, no sideways

@@ -4,6 +4,7 @@ import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
+import { handleWorldLayers } from './world-layers.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -136,6 +137,13 @@ export default {
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
+      }
+
+      /* the World's data layers: flights for everyone, satellites and
+         launches for members (./world-layers.js) */
+      if (path.startsWith('/v1/world/layers/')) {
+        const layer = await handleWorldLayers(request, env);
+        if (layer) return layer;
       }
 
       if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {

@@ -34,8 +34,8 @@ test("World screen follows the owner's contract: 45-50% globe, ~15% context, 30-
 test('guests get the same World, read-only, through the public projection',()=>{
  const js=read('js/mnet.js'), html=read('mnet.html'), css=read('css/mnet.css');
  assert.match(js,/else enterGuestWorld\(\);/,'a signed-out visitor lands on the World, not a wall');
- assert.match(js,/state\.guest \? "\/v1\/mnet\/public-feed\?limit=20"/);
- assert.match(js,/state\.guest \? fetch\("https:\/\/api\.mccluster\.org" \+ path\)\.then\(parse\) : api\(path\)/,'guests send no session; members keep the authenticated feed');
+ assert.match(js,/publicRead \? "\/v1\/mnet\/public-feed\?limit=20"/,"a guest, or a member whose profile is unfinished, reads the public projection");
+ assert.match(js,/publicRead \? fetch\("https:\/\/api\.mccluster\.org" \+ path\)\.then\(parse\) : api\(path\)/,'a public read sends no session; a member with a profile keeps the authenticated feed');
  assert.match(js,/if \(state\.guest && name !== "feed"\) \{ askToSignIn\(name\); return; \}/);
  assert.match(js,/\[data-take-mission\],\[data-action=save\],\[data-person\],\[data-guest-ask\]/,'every member action is a door to sign in for a guest');
  assert.match(html,/id="mnGuestBar" hidden/);

@@ -112,7 +112,8 @@
       "entity": "https://matthew.mccluster.org/#mccluster-corp",
       "served_by": "worker:mccluster",
       "source": "workers/mccluster/src/company-site",
-      "state": "inert until the owner routes mccluster.org/* to the Worker"
+      "state": "inert until the owner routes mccluster.org/* to the Worker and narrows the zone redirect rule",
+      "serves": "the World (mnet.html) at / passed through from the personal property with the company's head; the company page at /company; every other path 301s to matthew.mccluster.org (owner, 2026-10-15)"
     },
     "human_uprise": {
       "host": "humanuprise.com",

@@ -125,6 +125,17 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       const pub = asOf(world.posts.filter((p) => p.visibility === 'public')).map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
       return json(route, { items: pub, scope: 'public', next_before: null });
     }
+    /* THE WORLD'S DATA LAYERS (owner, 2026-10-15): flights for everyone; satellites and launches for members, refused without a bearer */
+    if (u.pathname === '/v1/world/layers/flights') return json(route, { ok: true, layer: 'flights', fetched_at: new Date().toISOString(), attribution: 'OpenSky Network', stale: false, count: 3, total: 3, aircraft: [['ab1644', 'UAL2405', -92.49, 32.99, 11567, 220, 188], ['4ca7b3', 'RYR12', -3.2, 51.5, 10900, 230, 95], ['7c6b2d', 'QFA1', 151.2, -33.9, 8000, 210, 10]] });
+    if (u.pathname === '/v1/world/layers/satellites' || u.pathname === '/v1/world/layers/launches') {
+      if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Sign in to see ' + u.pathname.split('/').pop(), detail: { members_only: true } }, 401);
+      if (u.pathname.endsWith('satellites')) return json(route, { ok: true, layer: 'satellites', fetched_at: new Date().toISOString(), attribution: 'CelesTrak (celestrak.org), Dr. T.S. Kelso', stale: false, count: 2, satellites: [
+        { id: '25544', name: 'ISS (ZARYA)', group: 'stations', tle1: '1 25544U 98067A   26286.82178372  .00006592  00000+0  12831-3 0  9991', tle2: '2 25544  51.6325  76.5471 0003201 125.0532 235.0866 15.49721212537052' },
+        { id: '20580', name: 'HST', group: 'visual', tle1: '1 20580U 90037B   26286.50000000  .00001000  00000+0  50000-4 0  9991', tle2: '2 20580  28.4700 100.0000 0002500  90.0000 270.0000 15.09000000100000' }] });
+      return json(route, { ok: true, layer: 'launches', fetched_at: new Date().toISOString(), attribution: 'Launch Library 2 — The Space Devs', stale: false, count: 2, launches: [
+        { id: 'L1', name: 'Falcon 9 Block 5 | Starlink Group 10-1', net: '2026-10-16T12:00:00Z', status: 'Go', provider: 'SpaceX', pad: { name: 'SLC-40', location: 'Cape Canaveral, FL, USA', lat: 28.56, lon: -80.57 }, mission: { name: 'Starlink Group 10-1', type: 'Communications' }, url: null },
+        { id: 'L2', name: 'Ariane 6 | Galileo L14', net: '2026-10-20T08:00:00Z', status: 'TBC', provider: 'Arianespace', pad: { name: 'ELA-4', location: 'Kourou, French Guiana', lat: 5.26, lon: -52.79 }, mission: { name: 'Galileo L14', type: 'Navigation' }, url: null }] });
+    }
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: asOf(world.posts).map(item), next_before: null });
@@ -212,8 +223,13 @@ async function open(device, { member, creator = true, verified = true }) {
 }
 const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(r.path));
 
+/* E2E_ONLY=layers (or any scope prefix) reruns one family of scenarios alone; the full run is the evidence */
+const ONLY = process.env.E2E_ONLY || '';
+const runs = (scope) => !ONLY || scope.startsWith(ONLY);
+
 /* ---------- member, every device: composition and navigation ---------- */
 for (const device of DEVICES) {
+  if (!runs(device.name)) continue;
   const { ctx, page, world, errors } = await open(device, { member: true });
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
@@ -235,7 +251,7 @@ for (const device of DEVICES) {
 }
 
 /* ---------- member, iPhone: the actual interactions ---------- */
-{
+if (runs('member-interactions')) {
   const device = DEVICES[0];
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
@@ -390,7 +406,8 @@ for (const device of DEVICES) {
   check(scope, 'Alerts: the bell shows the unread count', (await page.isVisible('#mnNotifBadge')) && (await page.textContent('#mnNotifBadge')).trim() === '1');
   await page.click('#mnBell');
   await page.waitForSelector('#mnNotificationsView:not([hidden])');
-  await page.waitForTimeout(400);
+  /* the list and the read receipt are two round trips; wait for both rather than a fixed beat */
+  await page.waitForFunction(() => /Fixture Ana liked your post/.test(document.getElementById('mnNotifications').textContent) && document.getElementById('mnNotifBadge').hidden, null, { timeout: 10000 }).catch(() => {});
   check(scope, 'Alerts: the bell opens them and clears the count', /Fixture Ana liked your post/.test(await page.textContent('#mnNotifications')) && await page.isHidden('#mnNotifBadge'));
   await page.click('#mnToWorld');
   await page.waitForSelector('#mnFeedView:not([hidden])');
@@ -439,8 +456,69 @@ for (const device of DEVICES) {
   await ctx.close();
 }
 
+/* ---------- the data layers (owner, 2026-10-15): flights for everyone with the Vaunt lead; satellites and launches for members ---------- */
+if (runs('layers-member')) {
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
+  const scope = 'layers-member';
+  const globe = page.frame({ url: /action-globe\.html/ });
+  const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
+  check(scope, 'a member sees three toggles, none locked', locks.length === 3 && locks.every((l) => !l.locked && l.disabled === 'false'), locks);
+  await globe.click('#ctlFlights');
+  await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
+  await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });
+  let line = await page.$eval('#mnWorldLayers', (p) => ({ text: p.textContent, lead: p.querySelector('a.mn__world-lead') && { href: p.querySelector('a.mn__world-lead').href, target: p.querySelector('a.mn__world-lead').target, rel: p.querySelector('a.mn__world-lead').rel, text: p.querySelector('a.mn__world-lead').textContent } }));
+  check(scope, 'Flights draws the aircraft and the line over the Earth counts them', (await globe.evaluate(() => window.__huLayerCounts().flights)) === 3 && /3 aircraft in the air right now/.test(line.text), line.text);
+  check(scope, 'Flights carries the owner\'s Vaunt lead: Fly Vaunt, the referral link, a new tab', !!line.lead && line.lead.href === 'https://vauntapi.flyvaunt.com/referral/nuao1K' && line.lead.target === '_blank' && /noopener/.test(line.lead.rel) && line.lead.text === 'Fly Vaunt →', line.lead);
+  const flightsReq = req(world, 'GET', /^\/v1\/world\/layers\/flights$/);
+  check(scope, 'the flights read is public: no session sent', flightsReq.length === 1 && !flightsReq[0].auth, flightsReq);
+  await globe.click('#ctlSats');
+  await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('satellites'), null, { timeout: 20000 });
+  const sats = await globe.evaluate(() => ({ count: window.__huLayerCounts().satellites, lib: !!window.satellite, labels: [...document.querySelectorAll('canvas')].length > 0 }));
+  check(scope, 'Satellites loads SGP4 on first use and propagates every element set it was given', sats.count === 2 && sats.lib, sats);
+  await globe.click('#ctlLaunch');
+  await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('launches'), null, { timeout: 15000 });
+  check(scope, 'Launches pins every launch with a pad', (await globe.evaluate(() => window.__huLayerCounts().launches)) === 2);
+  const gated = req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/);
+  check(scope, 'the members-only reads carried the session', gated.length === 2 && gated.every((r) => r.auth), gated);
+  line = await page.$eval('#mnWorldLayers', (p) => p.textContent);
+  check(scope, 'the line names all three, with the next launch', /3 aircraft/.test(line) && /2 satellites overhead, moving live/.test(line) && /2 launches coming up · next: Falcon 9 Block 5 · Oct 16 · Cape Canaveral/.test(line), line);
+  const credits = await globe.$eval('#layerCredits', (c) => c.textContent);
+  check(scope, 'each source is credited on the imagery line while it is on', /Flights: OpenSky/.test(credits) && /Satellites: CelesTrak/.test(credits) && /Launches: The Space Devs/.test(credits), credits);
+  await page.waitForTimeout(1800);
+  await page.screenshot({ path: join(OUT, 'member-iphone-layers.png') });
+  const fit = await split(page);
+  check(scope, 'nothing scrolls sideways with the layers on', fit.scrollW === fit.clientW, fit);
+  await globe.click('#ctlFlights');
+  await globe.waitForFunction(() => window.__huLayerOn && !window.__huLayerOn('flights'), null, { timeout: 5000 });
+  line = await page.$eval('#mnWorldLayers', (p) => p.textContent);
+  check(scope, 'switching Flights off clears its points and its line, the others stay', (await globe.evaluate(() => window.__huLayerCounts().flights)) === 0 && !/aircraft/.test(line) && /satellites/.test(line), line);
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+if (runs('layers-guest')) {
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: false });
+  const scope = 'layers-guest';
+  const globe = page.frame({ url: /action-globe\.html/ });
+  const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
+  check(scope, 'a guest sees Flights open and Satellites and Launches locked', locks.length === 3 && !locks[0].locked && locks[1].locked && locks[2].locked, locks);
+  await globe.$eval('#ctlSats', (b) => b.click());   /* aria-disabled, so Playwright's own click would wait forever; a tap does this */
+  await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 10000 });
+  check(scope, 'a locked layer opens sign-in with the reason, and sends nothing', /Sign in to see satellites and space missions/.test(await page.textContent('#mnGuestWhy')) && req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0, await page.textContent('#mnGuestWhy'));
+  await page.click('#mnSignedOutBack');
+  await page.waitForSelector('#mnFeed [data-post-id]');
+  await globe.click('#ctlFlights');
+  await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
+  await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });
+  const line = await page.$eval('#mnWorldLayers', (p) => ({ text: p.textContent, lead: p.querySelector('a.mn__world-lead') && p.querySelector('a.mn__world-lead').href }));
+  check(scope, 'a guest turns Flights on and meets the Vaunt lead', /3 aircraft in the air right now/.test(line.text) && line.lead === 'https://vauntapi.flyvaunt.com/referral/nuao1K', line);
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: join(OUT, 'guest-iphone-layers.png') });
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
 /* ---------- member, no creator profile: no analytics door ---------- */
-{
+if (runs('member-not-creator')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, creator: false, verified: false });
   const scope = 'member-not-creator';
   void world;
@@ -457,6 +535,7 @@ for (const device of DEVICES) {
 
 /* ---------- guest, iPhone and iPad: the same World, read-only ---------- */
 for (const device of [DEVICES[0], DEVICES[2]]) {
+  if (!runs('guest-')) continue;
   const { ctx, page, world, errors } = await open(device, { member: false });
   const scope = 'guest-' + device.name;
   const reads = req(world, 'GET', /^\/v1\/mnet\/public-feed$/);

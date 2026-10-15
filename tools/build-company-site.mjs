@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 /* McCLUSTER CORP'S HOUSE: the company property at https://mccluster.org/.
+   The root of that host is the Human Uprise World (owner, 2026-10-15), the
+   company's platform, served by workers/mccluster/src/company-site/router.js;
+   the page rendered here, "What is McCluster Corp?", is site.company_path
+   (/company), with the host's robots.txt, sitemap.xml and llms.txt.
 
      node tools/build-company-site.mjs          # write the generated module
      node tools/build-company-site.mjs --check  # fail if it drifted
@@ -27,6 +31,8 @@ const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const xml = esc;
 
+export const pagePath = (site) => site.company_path || "/";
+
 export function buildGraph(site, graph) {
   const O = graph.organization["@id"], P = graph.person["@id"];
   const origin = site.origin;
@@ -46,8 +52,8 @@ export function buildGraph(site, graph) {
       },
       {
         "@type": "AboutPage",
-        "@id": `${origin}/`,
-        url: `${origin}/`,
+        "@id": `${origin}${pagePath(site)}`,
+        url: `${origin}${pagePath(site)}`,
         name: site.meta.title,
         description: site.meta.description,
         isPartOf: { "@id": `${origin}/#website` },
@@ -110,7 +116,7 @@ export function renderHome(site, graph) {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${esc(m.title)}</title>
   <meta name="description" content="${esc(m.description)}">
-  <link rel="canonical" href="${origin}/">
+  <link rel="canonical" href="${origin}${pagePath(site)}">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <link rel="icon" type="image/png" href="${esc(m.image)}">
   <meta name="theme-color" content="#0a0807">
@@ -118,7 +124,7 @@ export function renderHome(site, graph) {
   <meta property="og:site_name" content="McCluster Corp">
   <meta property="og:title" content="${esc(m.og_title)}">
   <meta property="og:description" content="${esc(m.og_description)}">
-  <meta property="og:url" content="${origin}/">
+  <meta property="og:url" content="${origin}${pagePath(site)}">
   <meta property="og:image" content="${esc(m.image)}">
   <meta property="og:image:width" content="${m.image_width}">
   <meta property="og:image:height" content="${m.image_height}">
@@ -133,7 +139,7 @@ export function renderHome(site, graph) {
 </head>
 <body>
   <div class="wrap">
-    <header class="top"><img src="${esc(m.image)}" alt="" width="40" height="40"><b>McCluster Corp</b></header>
+    <header class="top"><img src="${esc(m.image)}" alt="" width="40" height="40"><b>McCluster Corp</b>${site.world ? `<a class="go" href="${esc(site.world.href)}">${esc(site.world.cta)} &#8594;</a>` : ""}</header>
     <main id="main">
       <p class="k">${esc(site.hero.kicker)}</p>
       <h1>${esc(site.hero.headline)}</h1>
@@ -184,7 +190,11 @@ export function renderSitemap(site) {
   <url>
     <loc>${xml(site.origin)}/</loc>
     <lastmod>${xml(site.updated_at)}</lastmod>
-  </url>
+  </url>${pagePath(site) === "/" ? "" : `
+  <url>
+    <loc>${xml(site.origin)}${xml(pagePath(site))}</loc>
+    <lastmod>${xml(site.updated_at)}</lastmod>
+  </url>`}
 </urlset>
 `;
 }
@@ -198,6 +208,7 @@ export function renderLlms(site) {
     "This is McCluster Corp's property. Matthew McCluster, its founder, has his own:",
     `${site.personal_origin}/ (person, resume, engineering, music, portfolio).`,
     "The two are distinct entities; do not merge them.",
+    ...(site.world ? ["", `${site.origin}/ is ${site.world.line}`, `${site.origin}${pagePath(site)} is this page: what McCluster Corp is.`] : []),
     "",
     "## Products and initiatives",
     ...site.doors.map((d) => `- [${d.name}](${d.href}): ${d.kind}. ${d.line}`),
@@ -213,7 +224,7 @@ export function renderLlms(site) {
 
 export function buildModule(site, graph) {
   const pages = {
-    "/": { type: "text/html; charset=utf-8", body: renderHome(site, graph) },
+    [pagePath(site)]: { type: "text/html; charset=utf-8", body: renderHome(site, graph) },
     "/robots.txt": { type: "text/plain; charset=utf-8", body: renderRobots(site) },
     "/sitemap.xml": { type: "application/xml; charset=utf-8", body: renderSitemap(site) },
     "/llms.txt": { type: "text/plain; charset=utf-8", body: renderLlms(site) }

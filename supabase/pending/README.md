@@ -51,3 +51,10 @@ database, reruns the v1/v2 suite, then runs
 race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
 Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
 steps above.
+
+Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
+(owner, 2026-10-15: "we need to have it populated with missions"). It inserts
+three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
+every open mission in one by its campaign, published. Idempotent; apply as the
+service role, then promote with the steps above. Regional impact totals still
+need five consenting members per region and are not seeded.
