@@ -279,6 +279,8 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
+    /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
+    document.documentElement.classList.toggle("mn-gate-on", which !== "app");
     sizeWorld();
   }
 

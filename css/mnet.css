@@ -956,7 +956,7 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 
 /* the header already says who you are on the World screen, so the
    house's floating signed-in chip stays off the feed */
-.mn-world-on .mcc-auth-chip { display: none; }
+.mn-world-on .mcc-auth-chip, .mn-gate-on .mcc-auth-chip { display: none; }
 
 /* a guest's header: two short pills that never wrap, and a brand that
    gives way first */
