@@ -64,8 +64,8 @@ Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
 public layer, member layers, the policy ladder, the Equity Uprise rule, which
 ships disabled pending counsel, and the Whip Equipped hand-off, open to any
 signed-in member; there is no voter-registration rule), status-only strict
-referral verification, starter missions (help a person, write a song, attend a
-rally), state Policy Fellowship cohorts and policy teams on
+referral verification, the ladder (any three distinct admin-verified, non-clip
+missions; help a person, write a song and show up to a rally are suggestions), state Policy Fellowship cohorts and policy teams on
 `action_cohorts`, the memo review loop (immutable versions with diffs, an
 immutable review log, notifications) and a per-memo research collection of
 unverified leads. It replaces `admit_fellow_to_cohort()` (production hash
