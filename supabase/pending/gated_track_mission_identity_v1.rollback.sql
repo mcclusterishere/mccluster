@@ -15,7 +15,7 @@ delete from public.action_unlock_rules where rule_key = 'gated_track_niggy_nigg'
 --   alter table public.action_unlock_rules drop constraint if exists action_unlock_rules_identity_purpose_check;
 --   alter table public.action_unlock_rules drop constraint action_unlock_rules_requirement_kind_check;
 --   alter table public.action_unlock_rules add constraint action_unlock_rules_requirement_kind_check
---     check (requirement_kind in ('none','signed_in','creator_account','fellow','starter_kinds','verified_referrals'));
+--     check (requirement_kind in ('none','signed_in','creator_account','fellow','starter_kinds','verified_missions','verified_referrals'));
 drop function if exists public.member_identity_verified(uuid, text);
 -- The two event_taxonomy rows (music_preview_play, music_full_play) are harmless; to remove:
 -- delete from public.event_taxonomy where event_name in ('music_preview_play','music_full_play');
