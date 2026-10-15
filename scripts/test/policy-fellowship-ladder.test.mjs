@@ -181,3 +181,18 @@ test("the ladder doc carries the compliance boundary and the open questions", as
     assert.match(doc, re);
   }
 });
+
+test("the desk and the fellow surfaces are wired to the same rules", async () => {
+  const [control, mod, page, desk] = await Promise.all([read("control.html"), read("js/control-room/action-network.js"), read("action-policy.html"), read("js/policy-fellowship-desk.js")]);
+  assert.ok(control.indexOf("js/policy-fellowship-ladder.js") < control.indexOf("js/control-room/action-network.js"), "rules load before the desk");
+  assert.match(mod, /\["memos","Policy memos"\]/);
+  assert.match(mod, /rpc\/review_policy_memo/);
+  assert.match(mod, /L\.TRANSITIONS\.filter\(function\(t\)\{return t\[0\]===status&&t\[2\]==="owner";\}\)/);
+  assert.match(mod, /L\.checkAction\(/);
+  assert.match(page, /<section id="ladder"/);
+  assert.ok(page.indexOf("js/policy-fellowship-ladder.js") < page.indexOf("js/policy-fellowship-desk.js"));
+  assert.match(page, /font-size:max\(16px,1rem\)/);
+  assert.doesNotMatch(page, /max-width:\s*\d+px\)/, "no max-width media queries");
+  for (const fn of ["policy_ladder_status", "create_policy_memo", "save_policy_memo_draft", "submit_policy_memo", "withdraw_policy_memo", "policy_memo_history", "add_policy_memo_research_item", "remove_policy_memo_research_item"]) assert.match(desk, new RegExp(`"${fn}"`), fn);
+  assert.doesNotMatch(desk, /scholar\.google/i, "the fellow desk never fetches Google Scholar");
+});
