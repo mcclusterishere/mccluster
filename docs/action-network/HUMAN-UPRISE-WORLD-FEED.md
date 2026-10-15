@@ -421,9 +421,20 @@ iPhone, an iPad and a desktop). It does not touch production; Worker
 authorization is covered by the Worker test suite.
 
 `node scripts/e2e/human-uprise-door.e2e.mjs [outDir]` puts the real host
-router (`workers/mccluster/src/human-uprise/router.js`) in front of the same
-checkout at `https://humanuprise.com` in a real Chromium, with Matthew's site
-as a stub that records where a cross-site tap lands, and drives: the World
+routers (`workers/mccluster/src/company-site/router.js` for
+`https://mccluster.org`, the World's door today; `workers/mccluster/src/
+human-uprise/router.js` for `https://humanuprise.com`) in front of the same
+checkout in a real Chromium, with Matthew's site as a stub that records
+where a cross-site tap lands, and drives, on the company host (2026-10-15):
+the World at `https://mccluster.org/` on an iPhone with the company's
+canonical, site name and WebPage node, the bar Music | M | Globe with the
+Globe lit, the World's files through the host, noindex on the rooms and not
+on the root, `/mnet.html` → `/`, `www` → the apex, `/company` as the company
+page with its door to the World, `/album.html` → Matthew's site; the house
+root forwarding `?view=` to the World on its own origin (query and a carried
+fragment intact) while any other page with that query stays put; and the
+Globe tab tapped as a signed-in member on Matthew's site landing signed in
+on the company host. And on Human Uprise's host: the World
 at its own root on an iPhone (this host's canonical and `og:url`, no
 `noindex`, the Earth's frame on the same host, the World's files through
 this host, `noindex` on the rooms and not on the front door, no sideways
