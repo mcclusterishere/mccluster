@@ -44,7 +44,7 @@ async function upstream(url, init = {}, fetchImpl = fetch, as = 'json') {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetchImpl(url, { ...init, redirect: 'error', signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } });
+    const res = await fetchImpl(url, { ...init, redirect: 'manual', signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } });
     if (!res.ok) throw new Error(`provider ${res.status}`);
     return as === 'text' ? res.text() : res.json();
   } finally {

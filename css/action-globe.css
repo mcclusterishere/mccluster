@@ -228,3 +228,15 @@ header strong{display:none}
 /* seven data toggles: the row keeps clear of the controls column on the right and wraps upward on a narrow phone */
 .globe-data{right:58px;flex-wrap:wrap-reverse;align-content:flex-start;pointer-events:none}
 .globe-data>*{pointer-events:auto}
+
+/* Cesium ion's credits, a condition of drawing from ion: the ion logo on the imagery line and everything else (Bing, the
+   terrain's sources, NASA) behind "Data attribution", in Cesium's own credit display moved here (js/action-globe.js,
+   creditContainer). Shown only while the World draws from ion. */
+.ion-credits{display:none}
+.globe-ion .ion-credits{display:inline}
+.globe-ion .ion-credits::before{content:" \00b7 "}
+.ion-credits .cesium-widget-credits{position:static!important;display:inline!important;padding:0!important;font-size:inherit!important;color:inherit!important;text-shadow:none!important}
+.ion-credits .cesium-credit-logoContainer,.ion-credits .cesium-credit-textContainer{display:inline!important}
+.ion-credits .cesium-credit-textContainer:empty{display:none!important}
+.ion-credits img{height:12px!important;width:auto!important;vertical-align:-2px!important}
+.ion-credits .cesium-credit-expand-link{margin-left:4px;color:inherit;text-decoration:underline;cursor:pointer}

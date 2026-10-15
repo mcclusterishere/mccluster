@@ -7,6 +7,7 @@ import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo
 import { handleWorldLayers } from './world-layers.js';
 import { handleWorldCctv } from './world-cctv.js';
 import { handleWorldAccess } from './world-access.js';
+import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -159,6 +160,13 @@ export default {
       if (path.startsWith('/v1/world/cctv/') || path === '/v1/world/location-consent') {
         const cctv = await handleWorldCctv(request, env);
         if (cctv) return cctv;
+      }
+
+      /* the World's Cesium ion: terrain, aerial imagery and buildings,
+         with the account's token kept here (./world-ion.js) */
+      if (path === WORLD_ION_PATH || path.startsWith(`${WORLD_ION_PATH}/`)) {
+        const ion = await handleWorldIon(request, env);
+        if (ion) return ion;
       }
 
       if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {

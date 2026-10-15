@@ -120,6 +120,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const before = u.searchParams.get('before');
     if (before && Number.isNaN(Date.parse(before))) return json(route, { error: 'bad cursor' }, 400);
     const asOf = (list) => before ? list.filter((p) => p.created_at < before) : list;
+    /* the World's Cesium ion (scripts/e2e/world-ion.e2e.mjs drives it): off here, so this Earth is NASA's alone */
+    if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: false, binding: null });
     if (u.pathname === '/v1/mnet/public-feed') {
       if (auth) return json(route, { error: 'a guest read carries no session' }, 400);
       const pub = asOf(world.posts.filter((p) => p.visibility === 'public')).map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
