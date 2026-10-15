@@ -27,8 +27,8 @@ Built to the owner's contract in `WORLD-SCREEN-UX-HANDOFF-20261014.md`. One
 World for everyone at `mnet.html?view=feed`: the Globe column of the app
 bar, `action-globe.html` (which hands over, keeping `?song=`) and the music
 player's "See this song's impact" all land there. `action-globe.html?explore=1`
-stays as the optional full-screen explorer ("Full world ↗"); `?embedded=1`
-stays as a frame.
+is the Full world ("Full world ↗"): the Earth edge to edge, on its own page
+(see below); `?embedded=1` stays as a frame.
 
 1. **Globe** (top): `action-globe.html?embedded=1&surface=network`, the
    Earth, public admin-approved pins, region outlines and Near me only.
@@ -118,18 +118,17 @@ same two:
   kind, public joined/verified counts (`action_mission_stats`, anon-granted),
   title, description from 600px, and **the emblem · Fund · Locate · Posts ·
   All missions**. No Fund button: there is no verified funding flow yet.
-- **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
-  a post carries; no invented topics or locations), steel cards, picture as
-  a right-hand thumbnail with a 1/n badge that opens all of them on tap,
-  share, save. A post that carries a mission shows it as a red **Mission
+- **Feed:** the feed is the feed (owner, 2026-10-15: the All · Missions ·
+  Music · Photos & video row "shouldn't even be a toggle. Just let the
+  screen be."), steel cards, picture as a right-hand thumbnail with a 1/n
+  badge that opens all of them on tap, share, save. A post that carries a mission shows it as a red **Mission
   attached** banner with the emblem, Fund, its public counts and Locate on globe
   (server-vouched, as before).
-- **Time rewind** (owner's desktop mockup): Live · −24h · −7d · −30d under
-  the composer. It reads the feed from before that moment through the same
-  `before=` paging the server already does (member and public feeds alike);
-  nothing is reconstructed. Posts only: the Earth and its pins stay live,
-  and the line under the control says so. One glass row on a phone, the
-  description joins it from 600px.
+- **Time rewind** is tucked away (owner, 2026-10-15: "that button is
+  taking up too much space … it doesn't have anything to do with
+  anything"). The panel, its script and styles are gone; the server's
+  `before=` paging still exists for the feed's own cursor. Git history
+  (PR #434 and before) keeps the control if it is ever wanted back.
 - Graphite and one red, on the World screen only; the other rooms keep the
   house look. The bottom bar stays the house bar (Music | M | Globe, the
   contract's order), not the mockup's Home | Music | Globe.
@@ -155,10 +154,20 @@ same two:
 ### Standalone `action-globe.html`
 
 Hands over to the World screen (see above). With `?explore=1` it is the
-full-screen explorer, now with the house stylesheet (its app bar used to
-render as raw links and a giant mark), toolbar rules scoped to
-`.world-tools`, a 15dvh context strip and one column of mission cards on a
-phone.
+**Full world** (owner, 2026-10-15: "if they click the world, it'll allow them
+to see that in a full pane, right? Without the whole 30, 40, whatever rule"):
+`html.globe-explore`, the Earth filling the viewport, the World's chrome at
+home (no Map/Missions switch, no tool row, no story feed, no banner). What
+floats: "← World" top left (`mnet.html?view=feed`), the controls on the
+right, the data toggles on the left, the credit, and the chosen mission in a
+sheet on the app bar (`#deck`, compact until a pin is chosen; the join leads
+into the World's mission dialog, where the sign-in and finish gates live).
+The script measures the bar and the sheet (`--hu-bar-h`, `--hu-sheet-h`) so
+the toggles, the controls and the credit lift above both. There is no parent
+page to tell, so `tell()` also paints the layer line on the page itself
+(`#exploreLine`, the World's own words, the same Vaunt lead) and a guest's
+locked layer says so there with a way to sign in. Mobile first; wider screens
+only narrow and centre the sheet.
 
 ## Navigation (owner's binding decision, 2026-10-14)
 
@@ -184,7 +193,7 @@ everywhere else." Navigation entries were removed; no capability was.
 | Missions & campaigns | Globe pins and the mission card (**All missions**), search, the Missions tab, the profile's **Action Record**, the Globe wing |
 | People | World search (matches as you type; **Search people**); the block list is on the profile |
 | Groups | World search (groups that match; **Groups about …** filters the directory) |
-| Clips | A door under the Music and Photos & video tabs, with the real terms from `clip_campaigns_open`, shown only while campaigns are open. Clips are paid work, not posts, so they are not a feed filter |
+| Clips | A door at the top of the feed with the real terms from `clip_campaigns_open`, shown only while campaigns are open (the tabs it used to sit under are gone). Clips are paid work, not posts, so they are not a feed filter |
 | Live | A LIVE badge over the globe while anything is on air (opens the live rooms); **Go live** in the composer for a granted host once live video is on |
 | Record or create | The composer: a visible + when folded, Record / Create when open (`create.html`) |
 | Your analytics | For a member with a music creator profile: **Your audience** on the globe (below) and **Your analytics** on their profile (`creator.html`). The old `creator-landing-analytics.html` measured nothing and is no longer linked |
@@ -254,9 +263,119 @@ like anyone's: the Earth, the strip, every pin and layer, the public posts.
 The step waits in a card where the composer would be (`#mnFinishCard`), and
 the actions that need it (post, join a mission, connect, the member rooms)
 open the form with the reason and a "← Back to the World". A finished
-profile lands back on the feed. The contact step still lives on the account
-page, opened on purpose from its card, never by a redirect at boot. The
-server refuses those actions anyway until the step is done.
+profile lands back on the feed. The server refuses those actions anyway until
+the step is done.
+
+### The owner's five, on the screenshots (owner, 2026-10-15)
+
+After seeing the iteration's renders the owner asked for five changes:
+
+1. **The whole screen.** "It's blacked out instead of allowing the feed to
+   go all the way down to the bottom of the screen … the bar should have
+   shit behind it." `sizeWorld()` used to stop the World at the bar's top,
+   leaving a band of page background under the feed with the bar floating
+   in it. Now `barClearance()` measures the bar (its layout bottom plus
+   height plus 10px, as `--mn-bar-clear`) and the World takes the full
+   viewport: the feed runs to the bottom edge under the floating bar and
+   carries that clearance as its own bottom padding so the last post still
+   scrolls clear. The desktop grid's context strip and the onboarding
+   (`.mn__onboard`, now `min-height` to the viewport, the page's reserved
+   padding dropped while a gate is up) get the same treatment.
+2. **Phones from anywhere.** "The phone saved as plus one only is bad
+   because we're gonna have users from all over the world." The phone field
+   is a country-code cell (`#mnDial`) and the number: the code is filled
+   from the country given on page 2 (`DIAL_CODES` / `dialFor`, about a
+   hundred names) and is the member's to change; `normalizePhone(dial, raw)`
+   never assumes +1: a number typed with its own `+` stands as typed, the
+   trunk 0 most countries drop is dropped (Italy keeps it), E.164 is 8 to 15
+   digits, and without a code nothing is saved.
+3. **Time rewind tucked away.** The panel is gone (above).
+4. **The mark without its white tile.** "Cut the white part out so it's its
+   own logo instead of that white part looking different from Fund, Locate
+   and Post … keep the dark part." `assets/img/equity-uprise-mark.png` is the
+   supplied artwork with every white pixel made transparent and every dark
+   pixel exactly as supplied (the anti-aliased rim keeps the mark's own
+   navy at partial alpha); same 160×160 canvas, nothing cropped, nothing
+   drawn, nothing recoloured. The join button (`.mn__world-go--eup`,
+   `.mn__primary--eup`) is now the same glass as its neighbours instead of
+   white; the header mark uses the same file. The original webp stays for
+   the pages that use it on light ground. Note for the owner: navy on dark
+   glass reads darker than the white icons beside it; a lighter variant is
+   the owner's to supply (rule 10: never recolour).
+5. **No filter row.** The All · Missions · Music · Photos & video tabs are
+   gone (above); the Clips door shows on its own while campaigns are open.
+
+### Benji Chase and the missing globe (owner, 2026-10-15)
+
+"When I'm logged in as Benji Chase … I'm still having the issue of not
+seeing the globe." Proven on the live site: the API answered the browser's
+CORS preflight for every `/v1/mnet` route with 401 (the handler checked the
+session before the method, and a preflight never carries the session), so
+the browser refused every signed-in member's World call ("Failed to
+fetch"). The World page then fell back to `showSignedInLoadError`, which
+showed the app shell without ever opening the feed view: no Earth, and its
+own message hidden inside the hidden view. Guests were untouched (no
+session, no preflight). The browser tests fake the API at the network
+layer, which skips real preflights, so they never saw it. The Worker fix is
+its own PR (`workers/mccluster/src/preflight.js`, #436). This page now
+never goes globe-less whatever fails:
+
+- **The API refuses the session (401):** the session is let go
+  (`letSessionGo`), the member is a guest, and one card where the composer
+  would be says "Your sign-in ended." with "Sign in again →" (the guest card
+  beside it steps aside).
+- **Anything else** (the network, a server error, a session that could not
+  be checked): the session stays, the World opens with the Earth and the
+  public posts, and the card says "Your feed didn't load." with "Try again →"
+  and "Sign in again". Posting, joining and the member rooms wait on the
+  card; Try again re-runs the bootstrap and the member's own feed returns.
+
+`scripts/e2e/world-screen.e2e.mjs` drives all three (a bootstrap that fails
+once, a 401, an unverifiable session) and checks the Earth is up in each.
+
+### The mark, white (owner, 2026-10-15)
+
+"Make the actual … sign white. Just paint it white for me."
+`assets/img/equity-uprise-mark-white.png` is the tile-less mark's own shape
+and alpha with every visible pixel white; nothing traced, cropped or added.
+It is the join on the strip and on mission posts, and the header mark, on
+the World's dark grounds. The owner's request is recorded with the logo
+rule in `AGENTS.md`, so it stays.
+
+### The onboarding, three pages (owner, 2026-10-15)
+
+"That user flow needs to be easier and more beautiful … three pages that look
+all sexy … you put in this, that, that, boom, it all verifies." The form in
+`#mnProfileGate` is now one form in three steps, each saved on its own, in
+the reference's look (dark brushed steel, one red, a big sentence-case
+headline with a red period, tall rounded fields with an icon cell and a
+state at the right, one red pill with the arrow in a darker circle, a lock
+note under it):
+
+1. **Make it yours.** Username (checked as it is typed: the pattern here,
+   the name at `GET /v1/mnet/people/<handle>`, where a person nobody can find
+   is free and gets the green check) and display name; "About you" rides
+   along collapsed, optional and private. Saves the public profile
+   (`PATCH /v1/mnet/profile`).
+2. **Where to reach you.** Full legal name and mailing address, private,
+   written through `js/fan-intake.js` to `fan_profiles` (the only writer of
+   that table). This is the `contact` step the bootstrap requires; it used
+   to live on the account page and open from the card by a redirect.
+3. **Lock it in.** Phone (normalised to E.164), the account email read-only,
+   and a password (optional, at least 8 characters). "Enter the World"
+   re-reads the bootstrap and lands on the feed with the card gone and the
+   composer back.
+
+A steps bar (`#mnSteps`, 1 / 3) and "← Back a step" carry the member through;
+"You can update this anytime." sits under the pill. Editing an existing
+profile is the same form on one page (`showStep(0)`: the public details and
+the password together). The header's mark is the supplied Equity Uprise
+artwork alone, the plate it sat on removed (CLAUDE.md rule 10). Evidence:
+`scripts/e2e/human-uprise-door.e2e.mjs` walks the three pages in a real
+Chromium (`onboarding-{1,2,3}-iphone.png`): a taken name told as typed, a
+free one checked green, an empty address refused, the address saved to
+`fan_profiles`, the phone saved as `+12035550100`, the password set, the feed
+now the member's own, nothing scrolling sideways at 390.
 
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
@@ -456,8 +575,8 @@ checked) and drives: the composition on iPhone portrait/landscape, iPad
 portrait/landscape and desktop; Post and Share round trips with the exact
 requests; the emblem (alone, no words, the complete artwork) and Fund on a mission post and on the mission card, for a
 member and a guest, with the funding truth from the campaign's board; pin → strip and narrowed feed; post → globe
-without narrowing; Time rewind (the request carries before= a day ago, the
-honest empty state, Live brings the feed back); the layers cycle; search
+without narrowing; no Time rewind panel and no filter row on the screen
+(since 2026-10-15); the layers cycle; search
 suggestions (pinned and unpinned missions, never a clip job; people;
 groups; the full lists); the Clips door; the Live badge;
 the bell's count; the account menu (exactly four entries, whose account,

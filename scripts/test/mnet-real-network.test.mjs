@@ -156,11 +156,11 @@ test('Edit Profile exposes secure M Account password changes without creating a 
   const html=await read('mnet.html');
   const js=await read('js/mnet.js');
   const auth=await read('js/mcc-auth.js');
-  assert.match(html,/id="mnProfileSecurity"[^>]*hidden/);
+  assert.match(html,/id="mnProfileSecurity"/);
   assert.match(html,/id="mnNewPassword"[^>]*autocomplete="new-password"/);
   assert.match(html,/id="mnNewPassword2"[^>]*autocomplete="new-password"/);
   assert.match(html,/id="mnPasswordChange"/);
-  assert.match(js,/\$\("mnProfileSecurity"\)\.hidden = !editing/);
+  assert.match(js,/\$\("mnPasswordChange"\)\.hidden = !editing/);
   assert.match(js,/MCC\.updatePassword\(password\)/);
   assert.match(js,/e\.preventDefault\(\); changePassword\(\)/);
   assert.match(auth,/body: \{ password: password \}/);

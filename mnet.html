@@ -17,7 +17,8 @@
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Human Uprise home">
-        <span class="mn__brand-plate"><img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" width="36" height="36"></span>
+        <!-- the supplied Equity Uprise artwork, scaled only: no plate, and never written out -->
+        <img class="mn__brand-mark" src="assets/img/equity-uprise-mark-white.png" alt="" width="36" height="36">
         <span><strong>Human Uprise</strong><small>A McCluster Corp program</small></span>
       </a>
       <!-- search the World: places and causes on the globe, words in the feed,
@@ -113,60 +114,89 @@
       </div>
     </section>
 
-    <section class="mn__gate" id="mnProfileGate" hidden>
+    <!-- THE ONBOARDING, THREE PAGES (owner, 2026-10-15: "three pages that look all sexy … you put in this,
+         that, that, boom, it all verifies"). One form, three steps, each saved on its own: 1 the handle and
+         the name (the public profile), 2 the legal name and mailing address (private, fan_profiles, the
+         contact step), 3 phone, email and password (private). The mark in the header is the supplied
+         Equity Uprise artwork, scaled only. Editing an existing profile uses the same form in one page. -->
+    <section class="mn__gate mn__onboard" id="mnProfileGate" hidden>
       <button class="mn__back" id="mnProfileBack" type="button" hidden>← Back to feed</button>
-      <p class="mn__eyebrow">Hu=Up</p>
-      <h1 id="mnProfileTitle">Profile</h1>
-      <p class="mn__lede">Your handle across Human Uprise.</p>
-      <form class="mn__panel mn__profile-form" id="mnProfileForm">
-        <label class="mn__label" for="mnHandle">Username</label>
-        <div class="mn__handle-row"><span>@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" placeholder="yourname" required></div>
-        <p class="mn__hint">3–32 characters: letters, numbers, dots, underscores or hyphens.</p>
-
-        <label class="mn__label" for="mnDisplay">Display name</label>
-        <input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required>
-
-        <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Human Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
-
-        <label class="mn__label" for="mnHeadline">Headline</label>
-        <input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?">
-
-        <label class="mn__label" for="mnBio">Bio</label>
-        <textarea class="mn__input mn__textarea" id="mnBio" maxlength="1200" rows="5" placeholder="Tell the network about yourself."></textarea>
-
-        <label class="mn__label" for="mnAvatarUrl">Profile picture <span>optional</span></label>
-        <!-- THE FIELD WAS A URL BOX AND NOTHING ELSE, which meant a member
-             could only have a face if they already hosted one somewhere.
-             The file picker uploads to the public mnet-avatars bucket and
-             writes the resulting address into the box below it, so the URL
-             remains valid for anyone who already has one. -->
-        <div class="mn__avatar-pick">
-          <button class="mn__ghost" id="mnAvatarPick" type="button">Upload a photo</button>
-          <input id="mnAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-          <img id="mnAvatarPreview" alt="" hidden>
-        </div>
-        <p class="mn__status" id="mnAvatarStatus" role="status"></p>
-        <input class="mn__input" id="mnAvatarUrl" type="url" inputmode="url" placeholder="https://… or upload above">
-
-        <label class="mn__label" for="mnWebsite">Website <span>optional</span></label>
-        <input class="mn__input" id="mnWebsite" type="url" inputmode="url" placeholder="https://…">
-
-        <section class="mn__profile-security" id="mnProfileSecurity" aria-labelledby="mnSecurityTitle" hidden>
-          <h2 id="mnSecurityTitle">Security</h2>
-          <p class="mn__hint">Change the password for this M Account. The new password works everywhere you use this McCluster identity.</p>
-
-          <label class="mn__label" for="mnNewPassword">New password</label>
-          <input class="mn__input" id="mnNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
-
-          <label class="mn__label" for="mnNewPassword2">Confirm new password</label>
-          <input class="mn__input" id="mnNewPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
-
-          <button class="mn__secondary" id="mnPasswordChange" type="button">Change password</button>
-          <p class="mn__status" id="mnPasswordChangeStatus" role="status"></p>
+      <div class="mn__steps-row" id="mnStepsRow">
+        <ol class="mn__steps" id="mnSteps" aria-label="Three steps"><li data-step="1" class="is-current"></li><li data-step="2"></li><li data-step="3"></li></ol>
+        <span class="mn__steps-count" id="mnStepsCount">1 / 3</span>
+      </div>
+      <form class="mn__profile-form mn__onboard-form" id="mnProfileForm" novalidate>
+        <section class="mn__step" id="mnStep1" data-step="1">
+          <h1 class="mn__onboard-h" id="mnProfileTitle">Make it yours<em>.</em></h1>
+          <p class="mn__lede" id="mnProfileLede">Your name. Your place in the movement.</p>
+          <label class="mn__label" for="mnHandle">Username</label>
+          <div class="mn__field mn__field--handle"><span class="mn__field-at" aria-hidden="true">@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname" required><span class="mn__field-state" id="mnHandleState" aria-live="polite"></span></div>
+          <p class="mn__hint" id="mnHandleHint">Your handle across Human Uprise.</p>
+          <label class="mn__label" for="mnDisplay">Display name</label>
+          <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required></div>
+          <details class="mn__about" id="mnAbout">
+            <summary><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19a6.5 6.5 0 0 1 13 0M15.5 5.2a3.2 3.2 0 0 1 0 6.1M17.5 13.2A6.5 6.5 0 0 1 21.5 19"/></svg></span><span class="mn__about-t"><strong>About you</strong><small>Optional · Private</small></span><i class="mn__about-chev" aria-hidden="true"></i></summary>
+            <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Human Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
+          </details>
         </section>
-
-        <button class="mn__primary" id="mnProfileSave" type="submit">Save and enter the network</button>
-        <p class="mn__status" id="mnProfileStatus" role="status"></p>
+        <section class="mn__step" id="mnStep2" data-step="2" hidden>
+          <h1 class="mn__onboard-h">Where to reach you<em>.</em></h1>
+          <p class="mn__lede">Your legal name and mailing address. Private, never on your profile.</p>
+          <label class="mn__label" for="mnLegalName">Full legal name</label>
+          <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnLegalName" maxlength="160" autocomplete="name" placeholder="First and last name" required></div>
+          <label class="mn__label" for="mnAddr1">Street address</label>
+          <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/></svg></span><input class="mn__input" id="mnAddr1" maxlength="160" autocomplete="address-line1" placeholder="Street and number" required></div>
+          <div class="mn__field mn__field--plain"><input class="mn__input" id="mnAddr2" maxlength="80" autocomplete="address-line2" placeholder="Apt, suite (optional)"></div>
+          <div class="mn__grid2">
+            <div><label class="mn__label" for="mnCity">City</label><div class="mn__field mn__field--plain"><input class="mn__input" id="mnCity" maxlength="80" autocomplete="address-level2" required></div></div>
+            <div><label class="mn__label" for="mnRegion">State / region</label><div class="mn__field mn__field--plain"><input class="mn__input" id="mnRegion" maxlength="80" autocomplete="address-level1" required></div></div>
+          </div>
+          <div class="mn__grid2">
+            <div><label class="mn__label" for="mnPostal">ZIP / postal code</label><div class="mn__field mn__field--plain"><input class="mn__input" id="mnPostal" maxlength="20" autocomplete="postal-code" required></div></div>
+            <div><label class="mn__label" for="mnCountry">Country</label><div class="mn__field mn__field--plain"><input class="mn__input" id="mnCountry" maxlength="80" autocomplete="country-name" value="United States" required></div></div>
+          </div>
+          <p class="mn__hint">A complete address also makes the account eligible for McCluster's monthly swag selections.</p>
+        </section>
+        <section class="mn__step" id="mnStep3" data-step="3" hidden>
+          <h1 class="mn__onboard-h">Lock it in<em>.</em></h1>
+          <p class="mn__lede">How we reach you, and how you get back in.</p>
+          <label class="mn__label" for="mnPhone">Phone <span>optional</span></label>
+          <div class="mn__field mn__field--phone"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number"></div>
+          <p class="mn__hint" id="mnPhoneHint">With your country code first, so we can reach you anywhere in the world.</p>
+          <label class="mn__label" for="mnEmailShow">Email</label>
+          <div class="mn__field is-locked"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></span><input class="mn__input" id="mnEmailShow" type="email" readonly tabindex="-1"><span class="mn__field-state is-ok" aria-hidden="true"></span></div>
+          <p class="mn__hint">Your M Account's email. Change it from Settings &amp; account.</p>
+          <section class="mn__profile-security" id="mnProfileSecurity" aria-labelledby="mnSecurityTitle">
+            <h2 class="mn__label" id="mnSecurityTitle">Password <span id="mnPasswordNote">optional · at least 8 characters</span></h2>
+            <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><input class="mn__input" id="mnNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="New password"></div>
+            <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><input class="mn__input" id="mnNewPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again"></div>
+            <button class="mn__secondary" id="mnPasswordChange" type="button" hidden>Change password</button>
+            <p class="mn__status" id="mnPasswordChangeStatus" role="status"></p>
+          </section>
+        </section>
+        <!-- editing an existing profile: the public details, on the same page as step 1 -->
+        <section class="mn__step mn__step--edit" id="mnStepEdit" hidden>
+          <label class="mn__label" for="mnHeadline">Headline</label>
+          <div class="mn__field mn__field--plain"><input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?"></div>
+          <label class="mn__label" for="mnBio">Bio</label>
+          <textarea class="mn__input mn__textarea" id="mnBio" maxlength="1200" rows="5" placeholder="Tell the network about yourself."></textarea>
+          <label class="mn__label" for="mnAvatarUrl">Profile picture <span>optional</span></label>
+          <div class="mn__avatar-pick">
+            <button class="mn__ghost" id="mnAvatarPick" type="button">Upload a photo</button>
+            <input id="mnAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+            <img id="mnAvatarPreview" alt="" hidden>
+          </div>
+          <p class="mn__status" id="mnAvatarStatus" role="status"></p>
+          <div class="mn__field mn__field--plain"><input class="mn__input" id="mnAvatarUrl" type="url" inputmode="url" placeholder="https://… or upload above"></div>
+          <label class="mn__label" for="mnWebsite">Website <span>optional</span></label>
+          <div class="mn__field mn__field--plain"><input class="mn__input" id="mnWebsite" type="url" inputmode="url" placeholder="https://…"></div>
+        </section>
+        <div class="mn__onboard-actions">
+          <button class="mn__cta" id="mnProfileSave" type="submit"><span id="mnCtaLabel">Save &amp; continue</span><i class="mn__cta-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M12.5 6.5 18 12l-5.5 5.5"/></svg></i></button>
+          <button class="mn__text-button" id="mnStepBack" type="button" hidden>← Back a step</button>
+          <p class="mn__status" id="mnProfileStatus" role="status"></p>
+          <p class="mn__onboard-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg><span>You can update this anytime.</span></p>
+        </div>
       </form>
     </section>
 
@@ -248,7 +278,7 @@
             </div>
             <div class="mn__mission-actions">
               <!-- THE EMBLEM OR FUND IT (owner, 2026-10-14): the owner's emblem, complete, scaled only and never written out, is the join; Fund opens the campaign's governed support rail -->
-              <button class="mn__world-go mn__world-go--eup" id="mnWorldFocusJoin" type="button" aria-label="Join this mission and do it"><img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28"></button>
+              <button class="mn__world-go mn__world-go--eup" id="mnWorldFocusJoin" type="button" aria-label="Join this mission and do it"><img class="mn__eup" src="assets/img/equity-uprise-mark-white.png" alt="" width="28" height="28"></button>
               <button class="mn__world-locate" id="mnWorldFocusFund" type="button" aria-label="Fund this mission"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg><span>Fund</span></button>
               <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
               <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
@@ -259,20 +289,13 @@
           </article>
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
-        <!-- filters over what is loaded, by what a post actually carries;
-             no invented categories or locations -->
-        <nav class="mn__feed-tabs" id="mnFeedTabs" aria-label="Filter the feed">
-          <button type="button" class="is-on" data-feed-tab="all" aria-pressed="true">All posts</button>
-          <button type="button" data-feed-tab="missions" aria-pressed="false">Missions</button>
-          <button type="button" data-feed-tab="music" aria-pressed="false">Music</button>
-          <button type="button" data-feed-tab="media" aria-pressed="false">Photos &amp; video</button>
-        </nav>
+        <!-- the feed is the feed: no filter row over it (owner, 2026-10-15: "shouldn't even be a toggle. Just let the screen be.") -->
         <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
-             they are a door from the Music and Photos & video tabs, shown only
-             while campaigns are open, with their real terms -->
+             they are a door at the top of the feed, shown only while
+             campaigns are open, with their real terms -->
         <aside class="mn__clipdoor" id="mnClipDoor" hidden>
           <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
-          <button class="mn__world-go" type="button" data-mn-view="clips">See clipping campaigns</button>
+          <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
         </aside>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
@@ -292,7 +315,7 @@
              the composer would, and posting or joining asks them to finish. Nothing is hidden behind the form. -->
         <aside class="mn__guest-card mn__finish-card" id="mnFinishCard" hidden>
           <p><strong id="mnFinishTitle">Finish your profile.</strong> <span id="mnFinishWhy">Pick a username so people can find and mention you. Then post, connect and join missions.</span></p>
-          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" id="mnFinishGo">Finish your profile →</button></div>
+          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" id="mnFinishGo">Finish your profile →</button><button class="mn__world-filter" type="button" id="mnStallSignIn" hidden>Sign in again</button></div>
         </aside>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
@@ -333,18 +356,6 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
-        <!-- TIME REWIND (owner's desktop mockup, 2026-10-14): the feed as it
-             stood a day, a week or a month ago, read from the same server
-             pages (before=). Posts only: the Earth and its pins stay live. -->
-        <section class="mn__rewind" id="mnRewind" aria-label="Time rewind">
-          <div class="mn__rewind-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg><div><b>Time rewind</b><small id="mnRewindLine">Live. Rewind the feed a day, a week or a month.</small></div></div>
-          <div class="mn__rewind-row" role="group" aria-label="Feed time">
-            <button type="button" class="is-on" data-rewind="0" aria-pressed="true"><i aria-hidden="true"></i>Live</button>
-            <button type="button" data-rewind="24" aria-pressed="false">−24h</button>
-            <button type="button" data-rewind="168" aria-pressed="false">−7d</button>
-            <button type="button" data-rewind="720" aria-pressed="false">−30d</button>
-          </div>
-        </section>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
@@ -608,6 +619,7 @@
 
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>

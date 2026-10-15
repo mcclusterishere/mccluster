@@ -71,7 +71,14 @@ Rules, no exceptions:
 - **Do not composite one.** Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape
   the supplied file does not contain is drawing.
 - **If the variant you need does not exist, ask for it.** A missing asset is a
-  question for the owner, not a gap to fill.
+  question for the owner, not a gap to fill. Variants the owner has asked for
+  by name are theirs, not ours, and stay: the Equity Uprise emblem without its
+  white tile (`assets/img/equity-uprise-mark.png`, owner 2026-10-15: "cut the
+  white part out … keep the dark part") and the same shape painted white for
+  the World's dark grounds (`assets/img/equity-uprise-mark-white.png`, owner
+  2026-10-15: "make the actual … sign white. Just paint it white for me").
+  Both are made from the supplied file's own pixels: nothing traced, cropped
+  or added.
 - **Do not write a mark out in words where the mark is the control.** The
   Equity Uprise emblem (`assets/img/equity-uprise-logo.webp`) is the join
   on the Human Uprise World screen, and it stands alone: no caption, no

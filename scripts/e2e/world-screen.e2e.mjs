@@ -94,7 +94,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
-    if (u.includes('/auth/v1/user')) return member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
+    if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
@@ -137,6 +137,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
         { id: 'L2', name: 'Ariane 6 | Galileo L14', net: '2026-10-20T08:00:00Z', status: 'TBC', provider: 'Arianespace', pad: { name: 'ELA-4', location: 'Kourou, French Guiana', lat: 5.26, lon: -52.79 }, mission: { name: 'Galileo L14', type: 'Navigation' }, url: null }] });
     }
     if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Authentication required' }, 401);
+    /* a bootstrap that fails: the World must still open (owner, 2026-10-15: "logged in as Benji Chase … not seeing the globe") */
+    if (u.pathname === '/v1/mnet/bootstrap' && world.bootFail && world.bootFail.length) { const st = world.bootFail.shift(); return json(route, { error: st === 401 ? 'sign in first' : 'upstream failed' }, st); }
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: asOf(world.posts).map(item), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
@@ -182,7 +184,10 @@ function check(scope, name, ok, detail) { results.push({ scope, name, ok: !!ok, 
 const split = (page) => page.evaluate(() => {
   const h = innerHeight, r = (id) => document.getElementById(id).getBoundingClientRect(), pct = (x) => Math.round(x / h * 100);
   const g = r('mnWorld'), c = r('mnWorldContext'), f = r('mnWorldFeed');
-  return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth };
+  const bar = document.querySelector('.appbar'), fe = document.getElementById('mnWorldFeed');
+  return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
+    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
+    ctxBottom: Math.round(c.bottom), ctxPad: Math.round(parseFloat(getComputedStyle(document.getElementById('mnWorldContext')).paddingBottom)) };
 });
 
 const DEVICES = [
@@ -196,8 +201,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-async function open(device, { member, creator = true, verified = true }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0 }) {
   const world = freshWorld();
+  world.bootFail = bootFail.slice(); world.userCheck = userCheck;
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
@@ -234,6 +240,10 @@ for (const device of DEVICES) {
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
+  /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
+  /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
+  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
   /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
   if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
@@ -274,7 +284,7 @@ if (runs('member-interactions')) {
   await page.waitForFunction((sel) => /12 joined/.test(document.querySelector(sel + ' .mn__actcard')?.textContent || ''), card, { timeout: 8000 }).catch(() => {});
   const banner = await page.textContent(`${card} .mn__actcard`);
   const eupJoin = await page.$eval(`${card} .mn__primary--eup`, (a) => ({ text: a.textContent.trim(), label: a.getAttribute('aria-label'), imgs: a.querySelectorAll('img').length, box: a.getBoundingClientRect().toJSON(), img: a.querySelector('img') && a.querySelector('img').getBoundingClientRect().toJSON(), natural: a.querySelector('img') ? [a.querySelector('img').naturalWidth, a.querySelector('img').naturalHeight] : null })).catch(() => null);
-  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-logo\.webp$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
+  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-mark-white\.png$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
   check(scope, 'nothing on the screen writes the mark out', !/E\s*=\s*Up/i.test(await page.evaluate(() => document.body.innerText)));
   const plain = world.posts.find((p) => !p.content_id && p.visibility === 'public');
   check(scope, 'a post with no mission has no join emblem, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
@@ -321,12 +331,7 @@ if (runs('member-interactions')) {
   await page.click(`${thumb} .mn__post-media-item`);
   check(scope, 'tapping the thumbnail opens all three across the card', (await page.$$eval(`${thumb} .mn__post-media-item img`, (a) => a.filter((x) => x.offsetParent).length)) === 3);
   await page.click(`${thumb} .mn__post-media-item`);
-  await page.click('[data-feed-tab="media"]');
-  const mediaPosts = await page.$$eval('#mnFeed [data-post-id]', (a) => a.length);
-  await page.click('[data-feed-tab="music"]');
-  const musicEmpty = await page.textContent('#mnFeed');
-  await page.click('[data-feed-tab="all"]');
-  check(scope, 'feed tabs filter by what posts carry (2 with photos; no tracks -> honest empty state)', mediaPosts === 2 && /No posts with a track/.test(musicEmpty), { mediaPosts });
+  check(scope, 'the feed is the feed: no filter row (owner, 2026-10-15)', (await page.$$('[data-feed-tab], #mnFeedTabs')).length === 0);
   await page.fill('#mnSearchInput', 'river');
   await page.waitForTimeout(500);
   await page.waitForFunction(() => /River Keepers/.test(document.getElementById('mnSuggest')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
@@ -363,31 +368,12 @@ if (runs('member-interactions')) {
   check(scope, 'turning it off clears the points', (await globeFrame.evaluate(() => window.__huAudienceCount())) === 0);
   await page.screenshot({ path: join(OUT, 'member-iphone-mission-card.png') });
 
-  // Time rewind: the feed from before a day ago, from the same server pages; Live brings it back
-  const seenBefore = world.requests.length;
-  await page.click('[data-rewind="24"]');
-  await page.waitForFunction(() => /No posts from before 24 hours ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
-  const rewound = world.requests.slice(seenBefore).find((r) => r.m === 'GET' && r.path === '/v1/mnet/feed');
-  const rewoundAt = rewound && new URL('http://x' + (rewound.search || '')).searchParams.get('before');
-  check(scope, 'Time rewind −24h asks the server for posts before a day ago and says so when there are none', !!rewoundAt && Math.abs(Date.now() - 24 * 3600e3 - Date.parse(rewoundAt)) < 60e3 && /No posts from before 24 hours ago/.test(await page.textContent('#mnFeed')) && (await page.getAttribute('[data-rewind="24"]', 'aria-pressed')) === 'true', { rewoundAt });
-  await page.screenshot({ path: join(OUT, 'member-iphone-rewind.png') });
-  await page.click('[data-rewind="0"]');
-  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 8000 });
-  const liveAgain = world.requests.slice(seenBefore).filter((r) => r.m === 'GET' && r.path === '/v1/mnet/feed').at(-1);
-  check(scope, 'Live brings the feed back without a cursor', liveAgain && !/before=/.test(liveAgain.search || '') && (await page.$$eval('#mnFeed [data-post-id]', (a) => a.length)) > 1, liveAgain);
-  await page.click('[data-rewind="168"]');
-  await page.waitForFunction(() => /No posts from before 7 days ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
-  await page.fill('#mnPostBody', 'E2E: posted while rewound');
-  await page.click('#mnPost');
-  await page.waitForFunction(() => /E2E: posted while rewound/.test(document.querySelector('#mnFeed [data-post-id]')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
-  check(scope, 'posting while rewound brings the feed back to Live with the post on top', (await page.getAttribute('[data-rewind="0"]', 'aria-pressed')) === 'true' && /E2E: posted while rewound/.test(await page.$eval('#mnFeed [data-post-id]', (n) => n.textContent)));
+  check(scope, 'Time rewind is tucked away: no panel on the screen', (await page.$$('[data-rewind], #mnRewind')).length === 0);
 
-  // Clips: a door under the Music and Photos & video tabs, with the real terms
-  await page.click('[data-feed-tab="music"]');
+  // Clips: a door at the top of the feed while campaigns are open, with the real terms
   await page.waitForSelector('#mnClipDoor:not([hidden])', { timeout: 8000 }).catch(() => {});
   const clipLine = await page.textContent('#mnClipDoor');
-  await page.click('[data-feed-tab="all"]');
-  check(scope, 'Clips: the Music tab shows the clipping door with real terms; All hides it', /1 campaign open · from \$3\.00 per 1,000 views/.test(clipLine) && await page.isHidden('#mnClipDoor'), clipLine);
+  check(scope, 'Clips: the door shows the clipping campaigns with real terms, without a tab to find it under', /1 campaign open · from \$3\.00 per 1,000 views/.test(clipLine) && await page.isVisible('#mnClipDoor'), clipLine);
 
   // Live: a badge over the globe while something is on air, opening the live rooms
   await page.waitForSelector('#mnWorldLive:not([hidden])', { timeout: 8000 }).catch(() => {});
@@ -495,6 +481,46 @@ if (runs('layers-member')) {
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
+/* ---------- A MEMBER WHOSE WORLD DID NOT LOAD STILL GETS THE WORLD (owner, 2026-10-15: "when I'm logged in as Benji Chase … not seeing
+   the globe"). On the live site every member's bootstrap was refused by the browser (the API answered its preflight 401); the page then
+   showed a shell with no globe. Whatever fails, the Earth opens. ---------- */
+const worldState = (page) => page.evaluate(() => {
+  const q = (s) => document.querySelector(s), shown = (s) => { const el = q(s); return !!el && !el.hidden && getComputedStyle(el).display !== 'none'; };
+  return { feedView: shown('#mnFeedView'), world: q('#mnWorld') ? Math.round(q('#mnWorld').getBoundingClientRect().height) : 0, frame: !!q('#mnWorldFrame'), card: shown('#mnFinishCard'), title: (q('#mnFinishTitle') || {}).textContent, go: (q('#mnFinishGo') || {}).textContent, alt: shown('#mnStallSignIn'), composer: shown('#mnComposer'), guestCard: shown('#mnGuestCard'), guest: document.documentElement.classList.contains('mn-guest'), stored: !!localStorage.getItem('mccdb_session'), posts: document.querySelectorAll('#mnFeed [data-post-id]').length, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth };
+});
+for (const variant of [{ scope: 'stall-retry', bootFail: [500] }, { scope: 'stall-signin', bootFail: [401] }, { scope: 'stall-unverified', userCheck: 403 }]) {
+  if (!runs(variant.scope)) continue;
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true, bootFail: variant.bootFail || [], userCheck: variant.userCheck || 0 });
+  const scope = variant.scope;
+  const globe = page.frame({ url: /action-globe\.html/ });
+  const canvas = globe ? await globe.evaluate(() => { const c = document.querySelector('canvas'); return c ? Math.round(c.getBoundingClientRect().height) : 0; }) : 0;
+  let st = await worldState(page);
+  check(scope, 'the World opens anyway: the feed view, the Earth in its frame, the public posts', st.feedView && st.world > 200 && st.frame && canvas > 200 && st.posts > 0, { ...st, canvas });
+  const reads = req(world, 'GET', /^\/v1\/mnet\/(public-feed|feed)$/);
+  check(scope, 'the posts are the public ones, read without the session', reads.length > 0 && reads.every((r) => r.path === '/v1/mnet/public-feed' && !r.auth), reads.map((r) => r.path + (r.auth ? '+auth' : '')));
+  if (scope === 'stall-signin') {
+    check(scope, 'the session the API refused is let go: a guest, one card to sign in again, not the guest card beside it', !st.stored && st.guest && st.card && st.title === 'Your sign-in ended.' && /Sign in again/.test(st.go) && !st.alt && !st.guestCard && !st.composer, st);
+    await page.screenshot({ path: join(OUT, 'stall-signin-iphone.png') });
+    await page.click('#mnFinishGo');
+    await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 8000 });
+    check(scope, 'the card opens sign-in with the reason', /Your sign-in ended\. Sign in again\./.test(await page.textContent('#mnGuestWhy')));
+  } else {
+    check(scope, 'the session stays; the card says the feed did not load, with Try again and Sign in again; the composer waits', st.stored && !st.guest && st.card && st.title === 'Your feed didn’t load.' && /Try again/.test(st.go) && st.alt && !st.composer, st);
+    await page.screenshot({ path: join(OUT, scope + '-iphone.png') });
+    if (scope === 'stall-retry') {
+      await page.click('#mnFinishGo');
+      await page.waitForFunction(() => document.getElementById('mnFinishCard').hidden, null, { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(800);
+      st = await worldState(page);
+      const memberRead = req(world, 'GET', /^\/v1\/mnet\/feed$/).some((r) => r.auth);
+      check(scope, 'Try again: the bootstrap answers, the card goes, the composer is back, the feed is the member\'s own, the Earth never left', !st.card && st.composer && memberRead && st.world > 200, { st, memberRead });
+    }
+  }
+  check(scope, 'nothing scrolls sideways at 390', st.sw === st.cw, { sw: st.sw, cw: st.cw });
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
 if (runs('layers-guest')) {
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: false });
   const scope = 'layers-guest';
@@ -513,6 +539,86 @@ if (runs('layers-guest')) {
   check(scope, 'a guest turns Flights on and meets the Vaunt lead', /3 aircraft in the air right now/.test(line.text) && line.lead === 'https://vauntapi.flyvaunt.com/referral/nuao1K', line);
   await page.waitForTimeout(1200);
   await page.screenshot({ path: join(OUT, 'guest-iphone-layers.png') });
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
+/* ---------- THE FULL WORLD (owner, 2026-10-15: "if they click the world, it'll allow them to see that in a full pane … without
+   the whole 30, 40 rule"): "Full world ↗" opens action-globe.html?explore=1 on its own, the Earth edge to edge ---------- */
+async function openExplore(device, { member }) {
+  const world = freshWorld();
+  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  await ctx.addInitScript((m) => {
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+  }, member);
+  await routeBackends(ctx, world, { member, creator: false, verified: false });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+  await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 60000 }).catch(() => {});
+  await page.waitForSelector('.appbar', { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  return { ctx, page, world, errors };
+}
+const rects = (page) => page.evaluate(() => {
+  const r = (sel) => { const el = document.querySelector(sel); if (!el) return null; const b = el.getBoundingClientRect(); const cs = getComputedStyle(el); return { top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right), h: Math.round(b.height), w: Math.round(b.width), shown: cs.display !== 'none' && cs.visibility !== 'hidden' && b.width > 0 && b.height > 0 }; };
+  return { vw: innerWidth, vh: innerHeight, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, globe: r('#globe'), back: r('#worldBack'), strong: r('header strong'), mode: r('.world-mode'), tools: r('.world-tools'), feed: r('#worldFeed'), deck: r('#deck'), data: r('.globe-data'), controls: r('.globe-controls'), credit: r('.osm-credit'), bar: r('.appbar'), line: r('#exploreLine'), vars: { bar: getComputedStyle(document.documentElement).getPropertyValue('--hu-bar-h').trim(), sheet: getComputedStyle(document.documentElement).getPropertyValue('--hu-sheet-h').trim() } };
+});
+/* a swipe up on the sheet steps to the next mission, as the deck always has; this is how a pin is chosen without aiming at Cesium */
+const swipeSheet = (page) => page.evaluate(() => { const d = document.getElementById('deck'); const t = (y) => new Touch({ identifier: 1, target: d, clientX: 180, clientY: y }); d.dispatchEvent(new TouchEvent('touchstart', { touches: [t(600)], bubbles: true })); d.dispatchEvent(new TouchEvent('touchend', { changedTouches: [t(500)], bubbles: true })); });
+for (const member of [false, true]) {
+  const scope = 'explore-' + (member ? 'member' : 'guest');
+  if (!runs(scope)) continue;
+  const { ctx, page, world, errors } = await openExplore(DEVICES[0], { member });
+  check(scope, 'the page stays its own: no hand-over to the World screen', /action-globe\.html\?explore=1$/.test(page.url()), page.url());
+  let r = await rects(page);
+  check(scope, 'the Earth is edge to edge: the globe fills the viewport', r.globe && r.globe.top === 0 && r.globe.left === 0 && r.globe.w === r.vw && r.globe.h === r.vh, { globe: r.globe, vw: r.vw, vh: r.vh });
+  check(scope, 'the old 45/15/35 chrome stays home: no Map/Missions switch, no tool row, no story feed, no banner', (!r.mode || !r.mode.shown) && (!r.tools || !r.tools.shown) && (!r.feed || !r.feed.shown) && (!r.strong || !r.strong.shown), { mode: r.mode, tools: r.tools, feed: r.feed, strong: r.strong });
+  check(scope, 'the way back is the World, top left', r.back && r.back.shown && r.back.top < 60 && r.back.left < 30 && (await page.$eval('#worldBack', (a) => a.textContent.trim() + ' ' + a.getAttribute('href'))) === '← World mnet.html?view=feed', r.back);
+  check(scope, 'the bar is measured where its top is and the sheet sits on it', r.bar && r.bar.shown && Math.abs(parseFloat(r.vars.bar) - (r.vh - r.bar.top)) <= 1 && r.deck && r.deck.shown && Math.abs(r.deck.bottom - r.bar.top) <= 1, { bar: r.bar, deck: r.deck, vars: r.vars, vh: r.vh });
+  check(scope, 'the sheet is compact until a pin is chosen: a hint, under a third of the screen', r.deck.h < r.vh / 3 && /Tap a pin/.test(await page.$eval('#worldFilters p', (p) => p.textContent)), { deck: r.deck, vh: r.vh });
+  const stacked = (r) => r.data && r.controls && r.credit && r.deck && r.data.shown && r.controls.shown && r.credit.shown && r.data.bottom <= r.credit.top + 1 && r.controls.bottom <= r.credit.top + 1 && r.credit.bottom <= r.deck.top + 1 && r.data.left >= 0 && r.controls.right <= r.vw;
+  check(scope, 'the toggles and the controls float above the credit, the credit above the sheet, all on screen', stacked(r), { data: r.data, controls: r.controls, credit: r.credit, deck: r.deck });
+  /* choose a pin: the sheet grows with the mission and everything above it lifts */
+  await swipeSheet(page);
+  await page.waitForSelector('#mission:not([hidden])', { timeout: 10000 });
+  await page.waitForTimeout(600);
+  r = await rects(page);
+  const mission = await page.evaluate(() => ({ title: document.getElementById('title').textContent, join: document.getElementById('missionLink').getAttribute('href'), read: getComputedStyle(document.getElementById('openFeed')).display }));
+  check(scope, 'a chosen pin opens its mission in the sheet, with the join leading into the World and no "Read below"', MISSIONS.some((m) => m.title === mission.title && mission.join === 'mnet.html?mission=' + m.mission_id) && mission.read === 'none', mission);
+  const row = await page.evaluate(() => { const d = document.getElementById('deck').getBoundingClientRect(), j = document.getElementById('missionLink').getBoundingClientRect(); return { sheetBottom: Math.round(d.bottom), joinBottom: Math.round(j.bottom), joinTop: Math.round(j.top), scrolled: document.getElementById('deck').scrollHeight - document.getElementById('deck').clientHeight }; });
+  check(scope, 'the sheet grew to the mission: the join and the prev/next row are inside it, nothing clipped or scrolled', r.deck.h > 160 && r.vars.sheet === r.deck.h + 'px' && stacked(r) && row.joinBottom <= row.sheetBottom && row.joinTop > 0 && row.scrolled === 0, { deck: r.deck, vars: r.vars, row });
+  /* the data layers, on their own page */
+  await page.click('#ctlFlights');
+  await page.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
+  await page.waitForSelector('#exploreLine:not([hidden])', { timeout: 5000 });
+  const line = await page.$eval('#exploreLine', (p) => ({ text: p.textContent, lead: p.querySelector('a.explore-lead') && p.querySelector('a.explore-lead').href }));
+  check(scope, 'Flights on: the line over the Earth counts the aircraft and carries the Vaunt lead, with no parent page to do it', /3 aircraft in the air right now/.test(line.text) && line.lead === 'https://vauntapi.flyvaunt.com/referral/nuao1K', line);
+  r = await rects(page);
+  check(scope, 'the line sits above the toggles, on screen', r.line && r.line.shown && r.line.bottom <= r.data.top + 1 && r.line.top > 40, { line: r.line, data: r.data });
+  await page.$eval('#ctlSats', (b) => b.click());
+  if (member) {
+    await page.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('satellites'), null, { timeout: 15000 });
+    const both = await page.$eval('#exploreLine', (p) => p.textContent);
+    check(scope, 'a member turns Satellites on too, and the line says both', /3 aircraft/.test(both) && /2 satellites overhead, moving live/.test(both), both);
+  } else {
+    await page.waitForFunction(() => /Sign in to see satellites/.test(document.getElementById('exploreLine').textContent), null, { timeout: 5000 });
+    check(scope, 'a guest\'s locked layer says so on the line, offers sign-in, and sends nothing', req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0 && (await page.$eval('#exploreLine a', (a) => a.getAttribute('href'))) === 'account.html?stay=1');
+  }
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: join(OUT, scope + '-iphone.png') });
+  r = await rects(page);
+  check(scope, 'nothing scrolls sideways at 390', r.sw === r.cw, { sw: r.sw, cw: r.cw });
+  if (member) {
+    await page.setViewportSize(DEVICES[4].viewport);
+    await page.waitForTimeout(1200);
+    r = await rects(page);
+    check(scope, 'on a desktop the Earth still fills the pane, the sheet narrows and centres, and the stack holds', r.globe.w === r.vw && r.globe.h === r.vh && r.deck.w <= 620 && Math.abs((r.deck.left + r.deck.right) / 2 - r.vw / 2) <= 2 && stacked(r), { globe: r.globe, deck: r.deck, vw: r.vw });
+    await page.screenshot({ path: join(OUT, scope + '-desktop.png') });
+  }
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

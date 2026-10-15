@@ -77,6 +77,7 @@ const carried = { handoff: [], verify: [], bootstrap: [] };
 
 const apiReads = [];
 let nextStep = null;   // the bootstrap's next_step for the scenario that needs one
+const onboarded = { checks: [], profile: null, contact: null, password: null };   // what the three pages wrote
 async function routeBackends(ctx) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
@@ -84,6 +85,8 @@ async function routeBackends(ctx) {
     /* a creator's picture, where Creator Studio stores it */
     if (u.includes('/storage/v1/object/public/creator-artwork/')) return route.fulfill({ status: 200, contentType: 'image/jpeg', body: await readFile(join(ROOT, 'assets/img/peaceful-places.jpg')) });
     if (r.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,apikey,content-type', 'access-control-allow-methods': 'GET,POST' } });
+    /* the onboarding's last page changes the password: PUT /auth/v1/user with the session's bearer */
+    if (u.includes('/auth/v1/user') && r.method() === 'PUT') { onboarded.password = (r.postDataJSON() || {}).password || null; return json(route, { id: 'auth-you', email: 'you@example.org' }); }
     if (u.includes('/auth/v1/user')) {
       const auth = (await r.allHeaders()).authorization || '';
       return [SESSION.token, SESSION.fresh].map((t) => 'Bearer ' + t).includes(auth) ? json(route, { id: 'auth-you', email: 'you@example.org' }) : json(route, { msg: 'no' }, 401);
@@ -99,6 +102,8 @@ async function routeBackends(ctx) {
       carried.verify.push({ origin: (await r.allHeaders()).origin || '', body: r.postDataJSON() });
       return json(route, { access_token: SESSION.fresh, refresh_token: 'refresh-world', token_type: 'bearer', expires_in: 3600, user: { id: 'auth-you' } });
     }
+    if (u.includes('/rest/v1/fan_profiles') && r.method() === 'GET') return json(route, onboarded.contact ? [onboarded.contact] : []);
+    if (u.includes('/rest/v1/fan_profiles') && r.method() === 'POST') { const row = (r.postDataJSON() || [])[0] || {}; onboarded.contact = { ...(onboarded.contact || {}), ...row }; return json(route, [onboarded.contact], 201); }
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('/rest/v1/music_creator_profiles?handle=eq.fixture-ana')) return json(route, [ANA]);
     if (u.includes('/rest/v1/music_creator_profiles?handle=eq.fixture-dev')) return json(route, [DEV]);
@@ -121,7 +126,18 @@ async function routeBackends(ctx) {
     }
     if (u.pathname === '/v1/mnet/bootstrap') {
       carried.bootstrap.push({ origin: (await req.allHeaders()).origin || '', authorization: (await req.allHeaders()).authorization || '' });
-      return json(route, { identity: ME, profile: nextStep ? null : ME, next_step: nextStep, tour_done_at: new Date().toISOString() });
+      return json(route, { identity: onboarded.profile ? { ...ME, mccluster_id: onboarded.profile.mccluster_id } : ME, profile: nextStep && !onboarded.profile ? null : (onboarded.profile || ME), next_step: nextStep && !(onboarded.profile && onboarded.contact) ? nextStep : null, tour_done_at: new Date().toISOString() });
+    }
+    /* the onboarding's writers: the handle check (nobody found = free), the public profile, the password */
+    if (/^\/v1\/mnet\/people\/[^/]+$/.test(u.pathname) && req.method() === 'GET') {
+      const handle = decodeURIComponent(u.pathname.split('/').pop());
+      onboarded.checks.push(handle);
+      return handle === 'taken.name' ? json(route, { person: { mccluster_id: handle } }) : json(route, { error: 'Person not found' }, 404);
+    }
+    if (u.pathname === '/v1/mnet/profile' && req.method() === 'PATCH') {
+      const b = req.postDataJSON() || {};
+      onboarded.profile = { mccluster_id: b.mccluster_id, display_name: b.display_name, headline: b.headline || '', bio: b.bio || '' };
+      return json(route, { identity: { ...ME, mccluster_id: b.mccluster_id }, profile: onboarded.profile, next_step: nextStep === 'contact' || !onboarded.contact ? 'contact' : null, tour_done_at: null });
     }
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: POSTS.map((p) => ({ ...p, post: { ...p.post, author_m_uid: ME.m_uid, media: [] } })), next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: [] });
@@ -397,6 +413,59 @@ const settleWorld = async (page) => {
   await page.click('#mnFinishGo');
   await page.waitForSelector('#mnProfileGate:not([hidden])', { timeout: 10000 });
   check(S, 'the card opens the same form', await page.evaluate(() => !document.getElementById('mnProfileGate').hidden));
+  /* THE THREE PAGES (owner, 2026-10-15): this, that, that, boom */
+  const stepState = () => page.evaluate(() => ({ count: document.getElementById('mnStepsCount').textContent, current: document.querySelector('#mnSteps li.is-current') && document.querySelector('#mnSteps li.is-current').getAttribute('data-step'), done: [...document.querySelectorAll('#mnSteps li.is-done')].map((l) => l.getAttribute('data-step')), h1: document.querySelector('#mnProfileGate .mn__step:not([hidden]) h1') && document.querySelector('#mnProfileGate .mn__step:not([hidden]) h1').textContent, cta: document.getElementById('mnCtaLabel').textContent, back: !document.getElementById('mnStepBack').hidden }));
+  let st = await stepState();
+  check(S, 'page 1 of 3: Make it yours, with Save & continue and no way back yet', st.count === '1 / 3' && st.current === '1' && /Make it yours\./.test(st.h1) && /Save & continue/.test(st.cta) && !st.back, st);
+  await page.fill('#mnHandle', 'taken.name');
+  await page.waitForFunction(() => /is taken/.test(document.getElementById('mnHandleHint').textContent), null, { timeout: 8000 });
+  check(S, 'a taken username is told as it is typed', (await page.evaluate(() => document.getElementById('mnHandleState').className)) === 'mn__field-state is-bad' && onboarded.checks.includes('taken.name'));
+  await page.fill('#mnHandle', 'benji.chase');
+  await page.waitForFunction(() => /is yours/.test(document.getElementById('mnHandleHint').textContent), null, { timeout: 8000 });
+  check(S, 'a free username gets the green check', (await page.evaluate(() => document.getElementById('mnHandleState').className)) === 'mn__field-state is-ok');
+  await page.fill('#mnDisplay', 'Benji Chase');
+  await page.screenshot({ path: join(OUT, 'onboarding-1-iphone.png') });
+  const under = await page.evaluate(() => { const gate = document.getElementById('mnProfileGate'), g = gate.getBoundingClientRect(), bar = document.querySelector('.appbar'), b = bar && bar.getBoundingClientRect(), de = document.documentElement;
+    const wide = [...document.querySelectorAll('body *')].filter((el) => !el.closest('.appbar') && el.getBoundingClientRect().right > de.clientWidth + 1).slice(0, 6).map((el) => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '') + '@' + Math.round(el.getBoundingClientRect().right));
+    return { gateTop: Math.round(g.top + scrollY), gateBottom: Math.round(g.bottom + scrollY), vh: innerHeight, vw: innerWidth, cw: de.clientWidth, sw: de.scrollWidth, scale: visualViewport ? visualViewport.scale : null, barTop: b ? Math.round(b.top) : null, pad: Math.round(parseFloat(getComputedStyle(gate).paddingBottom)), docH: de.scrollHeight, wide }; });
+  /* the gate is the last thing on the page and reaches the page's bottom edge: nothing reserved under it for the bar, which floats over it; the gate's own padding clears the bar */
+  check(S, 'the page runs to the bottom of the screen under the bar: no black band (owner, 2026-10-15)', under.docH - under.gateBottom <= 1 && under.gateBottom >= under.vh - 1 && under.barTop !== null && under.pad >= (under.vh - under.barTop) + 8 && under.cw === 390 && under.wide.length === 0, under);
+  await page.click('#mnProfileSave');
+  await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 10000 });
+  st = await stepState();
+  check(S, 'Save & continue saved the public profile and opened page 2: Where to reach you', onboarded.profile && onboarded.profile.mccluster_id === 'benji.chase' && onboarded.profile.display_name === 'Benji Chase' && st.count === '2 / 3' && st.done.join() === '1' && /Where to reach you\./.test(st.h1) && st.back, { profile: onboarded.profile, st });
+  await page.click('#mnProfileSave');
+  await page.waitForFunction(() => /legal name and the whole address/.test(document.getElementById('mnProfileStatus').textContent), null, { timeout: 5000 });
+  check(S, 'page 2 refuses an empty address and says so', await page.evaluate(() => document.querySelectorAll('#mnStep2 .mn__field.is-bad').length) >= 5);
+  await page.fill('#mnLegalName', 'Benjamin Chase'); await page.fill('#mnAddr1', '1 Main Street'); await page.fill('#mnCity', 'Bridgeport'); await page.fill('#mnRegion', 'CT'); await page.fill('#mnPostal', '06604');
+  await page.screenshot({ path: join(OUT, 'onboarding-2-iphone.png') });
+  await page.click('#mnProfileSave');
+  await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 10000 });
+  st = await stepState();
+  check(S, 'page 2 saved the private contact details to fan_profiles and opened page 3: Lock it in', onboarded.contact && onboarded.contact.legal_name === 'Benjamin Chase' && onboarded.contact.address_line1 === '1 Main Street' && onboarded.contact.city === 'Bridgeport' && onboarded.contact.region === 'CT' && onboarded.contact.postal_code === '06604' && onboarded.contact.country === 'United States' && st.count === '3 / 3' && st.done.join() === '1,2' && /Lock it in\./.test(st.h1) && /Enter the World/.test(st.cta), { contact: onboarded.contact, st });
+  check(S, 'page 3 shows the account email, read-only', (await page.getAttribute('#mnEmailShow', 'readonly')) !== null && (await page.inputValue('#mnEmailShow')) === 'you@example.org');
+  /* phones from anywhere (owner, 2026-10-15): the code follows the country on page 2 and is the member's to change */
+  check(S, 'the country code is filled from the address country and sits in its own cell', (await page.inputValue('#mnDial')) === '+1');
+  const phones = await page.evaluate(() => [['+1', '203 555 0100'], ['+44', '020 7946 0958'], ['', '+33 1 42 68 53 00'], ['+39', '06 1234 5678'], ['+234', '0803 123 4567'], ['+1', '1 203 555 0100'], ['+44', '44 20 7946 0958'], ['+7', '8 912 345 67 89'], ['+1', '555'], ['', '2035550100'], ['001', '2035550100'], ['+1876', '876 555 0100'], ['', '']].map(([d, n]) => window.__mnPhone(d, n)));
+  check(S, 'the rule: the code rules; a typed code, a trunk 0 (Italy keeps it), a trunk 1 or 8 drop; a number with its own + stands; no impossible code; +1 is never assumed', JSON.stringify(phones) === JSON.stringify(['+12035550100', '+442079460958', '+33142685300', '+390612345678', '+2348031234567', '+12035550100', '+442079460958', '+79123456789', null, null, null, null, '']), phones);
+  /* going back to change the country re-fills the code; a code the member typed stays */
+  await page.click('#mnStepBack'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 5000 });
+  await page.fill('#mnCountry', 'United Kingdom'); await page.click('#mnProfileSave'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 10000 });
+  check(S, 'back a step, a new country: the code follows it', (await page.inputValue('#mnDial')) === '+44');
+  await page.fill('#mnDial', '+353'); await page.click('#mnStepBack'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 5000 });
+  await page.fill('#mnCountry', 'United States'); await page.click('#mnProfileSave'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 10000 });
+  check(S, 'a code the member typed is theirs: the country changing again does not overwrite it', (await page.inputValue('#mnDial')) === '+353');
+  const splits = await page.evaluate(() => ['+12035550100', '+442079460958', '+2348031234567', '+99912345'].map((p) => window.__mnSplitPhone(p)));
+  check(S, 'a stored number comes back as its code and its number', JSON.stringify(splits) === JSON.stringify([['+1', '2035550100'], ['+44', '2079460958'], ['+234', '8031234567'], ['', '+99912345']]), splits);
+  await page.fill('#mnDial', '+44'); await page.fill('#mnPhone', '020 7946 0958'); await page.fill('#mnNewPassword', 'correct horse'); await page.fill('#mnNewPassword2', 'correct horse');
+  await page.screenshot({ path: join(OUT, 'onboarding-3-iphone.png') });
+  await page.click('#mnProfileSave');
+  await page.waitForSelector('#mnApp:not([hidden])', { timeout: 20000 });
+  await page.waitForFunction(() => document.getElementById('mnFinishCard').hidden, null, { timeout: 10000 }).catch(() => {});
+  const landed = await page.evaluate(() => ({ app: !document.getElementById('mnApp').hidden, feed: !document.getElementById('mnFeedView').hidden, card: document.getElementById('mnFinishCard').hidden, composer: !document.getElementById('mnComposer').hidden, world: document.getElementById('mnWorld').getBoundingClientRect().height }));
+  check(S, 'page 3 saved a London number as E.164 and the password, and Enter the World lands on the feed with the card gone and the composer back', onboarded.contact.phone_e164 === '+442079460958' && onboarded.password === 'correct horse' && landed.app && landed.feed && landed.card && landed.composer && landed.world > 200, { phone: onboarded.contact.phone_e164, password: !!onboarded.password, landed });
+  check(S, 'the feed is now the member\'s own', apiReads.some((r) => r.path === '/v1/mnet/feed' && r.auth));
+  check(S, 'nothing scrolls sideways at 390 on any page', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
   nextStep = null;
