@@ -59,8 +59,7 @@ function paintMembersDoor(){const card=$('worldMembers');if(!card)return;let mem
    A lit NASA Earth (below), the street map one tap away, an atmosphere
    rim, glowing pins, and continent labels that count public pins only. */
 /* THE EARTH (owner's signed-out reference, 2026-10-14): NASA imagery only, all public domain. Day: Blue Marble Next Generation.
-   Night: Black Marble city lights. Clouds: the Visible Earth composite, a still, not today's weather. The sun is where it really
-   is when the page opens, so the line between day and night follows the real Sun in real time. */
+   Night: Black Marble city lights. Clouds: the Visible Earth composite, a still, not today's weather. The globe's Sun position and day/night line track real time. */
 const DAY_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg';
 const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
