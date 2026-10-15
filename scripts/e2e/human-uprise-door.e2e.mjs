@@ -425,6 +425,11 @@ const settleWorld = async (page) => {
   check(S, 'a free username gets the green check', (await page.evaluate(() => document.getElementById('mnHandleState').className)) === 'mn__field-state is-ok');
   await page.fill('#mnDisplay', 'Benji Chase');
   await page.screenshot({ path: join(OUT, 'onboarding-1-iphone.png') });
+  const under = await page.evaluate(() => { const gate = document.getElementById('mnProfileGate'), g = gate.getBoundingClientRect(), bar = document.querySelector('.appbar'), b = bar && bar.getBoundingClientRect(), de = document.documentElement;
+    const wide = [...document.querySelectorAll('body *')].filter((el) => !el.closest('.appbar') && el.getBoundingClientRect().right > de.clientWidth + 1).slice(0, 6).map((el) => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '') + '@' + Math.round(el.getBoundingClientRect().right));
+    return { gateTop: Math.round(g.top + scrollY), gateBottom: Math.round(g.bottom + scrollY), vh: innerHeight, vw: innerWidth, cw: de.clientWidth, sw: de.scrollWidth, scale: visualViewport ? visualViewport.scale : null, barTop: b ? Math.round(b.top) : null, pad: Math.round(parseFloat(getComputedStyle(gate).paddingBottom)), docH: de.scrollHeight, wide }; });
+  /* the gate is the last thing on the page and reaches the page's bottom edge: nothing reserved under it for the bar, which floats over it; the gate's own padding clears the bar */
+  check(S, 'the page runs to the bottom of the screen under the bar: no black band (owner, 2026-10-15)', under.docH - under.gateBottom <= 1 && under.gateBottom >= under.vh - 1 && under.barTop !== null && under.pad >= (under.vh - under.barTop) + 8 && under.cw === 390 && under.wide.length === 0, under);
   await page.click('#mnProfileSave');
   await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 10000 });
   st = await stepState();
@@ -439,13 +444,26 @@ const settleWorld = async (page) => {
   st = await stepState();
   check(S, 'page 2 saved the private contact details to fan_profiles and opened page 3: Lock it in', onboarded.contact && onboarded.contact.legal_name === 'Benjamin Chase' && onboarded.contact.address_line1 === '1 Main Street' && onboarded.contact.city === 'Bridgeport' && onboarded.contact.region === 'CT' && onboarded.contact.postal_code === '06604' && onboarded.contact.country === 'United States' && st.count === '3 / 3' && st.done.join() === '1,2' && /Lock it in\./.test(st.h1) && /Enter the World/.test(st.cta), { contact: onboarded.contact, st });
   check(S, 'page 3 shows the account email, read-only', (await page.getAttribute('#mnEmailShow', 'readonly')) !== null && (await page.inputValue('#mnEmailShow')) === 'you@example.org');
-  await page.fill('#mnPhone', '203 555 0100'); await page.fill('#mnNewPassword', 'correct horse'); await page.fill('#mnNewPassword2', 'correct horse');
+  /* phones from anywhere (owner, 2026-10-15): the code follows the country on page 2 and is the member's to change */
+  check(S, 'the country code is filled from the address country and sits in its own cell', (await page.inputValue('#mnDial')) === '+1');
+  const phones = await page.evaluate(() => [['+1', '203 555 0100'], ['+44', '020 7946 0958'], ['', '+33 1 42 68 53 00'], ['+39', '06 1234 5678'], ['+234', '0803 123 4567'], ['+1', '1 203 555 0100'], ['+44', '44 20 7946 0958'], ['+7', '8 912 345 67 89'], ['+1', '555'], ['', '2035550100'], ['001', '2035550100'], ['+1876', '876 555 0100'], ['', '']].map(([d, n]) => window.__mnPhone(d, n)));
+  check(S, 'the rule: the code rules; a typed code, a trunk 0 (Italy keeps it), a trunk 1 or 8 drop; a number with its own + stands; no impossible code; +1 is never assumed', JSON.stringify(phones) === JSON.stringify(['+12035550100', '+442079460958', '+33142685300', '+390612345678', '+2348031234567', '+12035550100', '+442079460958', '+79123456789', null, null, null, null, '']), phones);
+  /* going back to change the country re-fills the code; a code the member typed stays */
+  await page.click('#mnStepBack'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 5000 });
+  await page.fill('#mnCountry', 'United Kingdom'); await page.click('#mnProfileSave'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 10000 });
+  check(S, 'back a step, a new country: the code follows it', (await page.inputValue('#mnDial')) === '+44');
+  await page.fill('#mnDial', '+353'); await page.click('#mnStepBack'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '2 / 3', null, { timeout: 5000 });
+  await page.fill('#mnCountry', 'United States'); await page.click('#mnProfileSave'); await page.waitForFunction(() => document.getElementById('mnStepsCount').textContent === '3 / 3', null, { timeout: 10000 });
+  check(S, 'a code the member typed is theirs: the country changing again does not overwrite it', (await page.inputValue('#mnDial')) === '+353');
+  const splits = await page.evaluate(() => ['+12035550100', '+442079460958', '+2348031234567', '+99912345'].map((p) => window.__mnSplitPhone(p)));
+  check(S, 'a stored number comes back as its code and its number', JSON.stringify(splits) === JSON.stringify([['+1', '2035550100'], ['+44', '2079460958'], ['+234', '8031234567'], ['', '+99912345']]), splits);
+  await page.fill('#mnDial', '+44'); await page.fill('#mnPhone', '020 7946 0958'); await page.fill('#mnNewPassword', 'correct horse'); await page.fill('#mnNewPassword2', 'correct horse');
   await page.screenshot({ path: join(OUT, 'onboarding-3-iphone.png') });
   await page.click('#mnProfileSave');
   await page.waitForSelector('#mnApp:not([hidden])', { timeout: 20000 });
   await page.waitForFunction(() => document.getElementById('mnFinishCard').hidden, null, { timeout: 10000 }).catch(() => {});
   const landed = await page.evaluate(() => ({ app: !document.getElementById('mnApp').hidden, feed: !document.getElementById('mnFeedView').hidden, card: document.getElementById('mnFinishCard').hidden, composer: !document.getElementById('mnComposer').hidden, world: document.getElementById('mnWorld').getBoundingClientRect().height }));
-  check(S, 'page 3 saved the phone in E.164 and the password, and Enter the World lands on the feed with the card gone and the composer back', onboarded.contact.phone_e164 === '+12035550100' && onboarded.password === 'correct horse' && landed.app && landed.feed && landed.card && landed.composer && landed.world > 200, { phone: onboarded.contact.phone_e164, password: !!onboarded.password, landed });
+  check(S, 'page 3 saved a London number as E.164 and the password, and Enter the World lands on the feed with the card gone and the composer back', onboarded.contact.phone_e164 === '+442079460958' && onboarded.password === 'correct horse' && landed.app && landed.feed && landed.card && landed.composer && landed.world > 200, { phone: onboarded.contact.phone_e164, password: !!onboarded.password, landed });
   check(S, 'the feed is now the member\'s own', apiReads.some((r) => r.path === '/v1/mnet/feed' && r.auth));
   check(S, 'nothing scrolls sideways at 390 on any page', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   check(S, 'no page errors', errors.length === 0, errors);

@@ -355,6 +355,13 @@
       "rationale": "Approved identity artwork; branding asset, not an independent program capability."
     },
     {
+      "path": "assets/img/equity-uprise-mark.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
+    },
+    {
       "path": "assets/img/eu-favicon.png",
       "classification": "presentation_support",
       "capability_ids": [],

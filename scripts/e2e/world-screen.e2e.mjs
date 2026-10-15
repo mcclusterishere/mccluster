@@ -182,7 +182,10 @@ function check(scope, name, ok, detail) { results.push({ scope, name, ok: !!ok, 
 const split = (page) => page.evaluate(() => {
   const h = innerHeight, r = (id) => document.getElementById(id).getBoundingClientRect(), pct = (x) => Math.round(x / h * 100);
   const g = r('mnWorld'), c = r('mnWorldContext'), f = r('mnWorldFeed');
-  return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth };
+  const bar = document.querySelector('.appbar'), fe = document.getElementById('mnWorldFeed');
+  return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
+    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
+    ctxBottom: Math.round(c.bottom), ctxPad: Math.round(parseFloat(getComputedStyle(document.getElementById('mnWorldContext')).paddingBottom)) };
 });
 
 const DEVICES = [
@@ -234,6 +237,10 @@ for (const device of DEVICES) {
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
+  /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
+  /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
+  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
   /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
   if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
@@ -274,7 +281,7 @@ if (runs('member-interactions')) {
   await page.waitForFunction((sel) => /12 joined/.test(document.querySelector(sel + ' .mn__actcard')?.textContent || ''), card, { timeout: 8000 }).catch(() => {});
   const banner = await page.textContent(`${card} .mn__actcard`);
   const eupJoin = await page.$eval(`${card} .mn__primary--eup`, (a) => ({ text: a.textContent.trim(), label: a.getAttribute('aria-label'), imgs: a.querySelectorAll('img').length, box: a.getBoundingClientRect().toJSON(), img: a.querySelector('img') && a.querySelector('img').getBoundingClientRect().toJSON(), natural: a.querySelector('img') ? [a.querySelector('img').naturalWidth, a.querySelector('img').naturalHeight] : null })).catch(() => null);
-  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-logo\.webp$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
+  check(scope, 'a mission post offers the join as the owner\'s emblem alone (no words, the complete artwork scaled only) and Fund, with the mission\'s public counts', !!eupJoin && eupJoin.text === '' && eupJoin.label === 'Join this mission and do it' && eupJoin.imgs === 1 && Math.abs(eupJoin.img.width - eupJoin.img.height) < 1 && eupJoin.box.height >= 44 && eupJoin.box.width >= 44 && /12 joined · 9 verified/.test(banner) && !!(await page.$(`${card} [data-fund-mission]`)) && /assets\/img\/equity-uprise-mark\.png$/.test(await page.getAttribute(`${card} .mn__eup`, 'src')), { eupJoin, banner });
   check(scope, 'nothing on the screen writes the mark out', !/E\s*=\s*Up/i.test(await page.evaluate(() => document.body.innerText)));
   const plain = world.posts.find((p) => !p.content_id && p.visibility === 'public');
   check(scope, 'a post with no mission has no join emblem, Fund, like, comment or reaction', !(await page.$(`#mnFeed [data-post-id="${plain.id}"] [data-take-mission], #mnFeed [data-post-id="${plain.id}"] [data-fund-mission], #mnFeed [data-action=like], #mnFeed [data-action=comments], #mnFeed [data-action=uprise]`)));
@@ -321,12 +328,7 @@ if (runs('member-interactions')) {
   await page.click(`${thumb} .mn__post-media-item`);
   check(scope, 'tapping the thumbnail opens all three across the card', (await page.$$eval(`${thumb} .mn__post-media-item img`, (a) => a.filter((x) => x.offsetParent).length)) === 3);
   await page.click(`${thumb} .mn__post-media-item`);
-  await page.click('[data-feed-tab="media"]');
-  const mediaPosts = await page.$$eval('#mnFeed [data-post-id]', (a) => a.length);
-  await page.click('[data-feed-tab="music"]');
-  const musicEmpty = await page.textContent('#mnFeed');
-  await page.click('[data-feed-tab="all"]');
-  check(scope, 'feed tabs filter by what posts carry (2 with photos; no tracks -> honest empty state)', mediaPosts === 2 && /No posts with a track/.test(musicEmpty), { mediaPosts });
+  check(scope, 'the feed is the feed: no filter row (owner, 2026-10-15)', (await page.$$('[data-feed-tab], #mnFeedTabs')).length === 0);
   await page.fill('#mnSearchInput', 'river');
   await page.waitForTimeout(500);
   await page.waitForFunction(() => /River Keepers/.test(document.getElementById('mnSuggest')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
@@ -363,31 +365,12 @@ if (runs('member-interactions')) {
   check(scope, 'turning it off clears the points', (await globeFrame.evaluate(() => window.__huAudienceCount())) === 0);
   await page.screenshot({ path: join(OUT, 'member-iphone-mission-card.png') });
 
-  // Time rewind: the feed from before a day ago, from the same server pages; Live brings it back
-  const seenBefore = world.requests.length;
-  await page.click('[data-rewind="24"]');
-  await page.waitForFunction(() => /No posts from before 24 hours ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
-  const rewound = world.requests.slice(seenBefore).find((r) => r.m === 'GET' && r.path === '/v1/mnet/feed');
-  const rewoundAt = rewound && new URL('http://x' + (rewound.search || '')).searchParams.get('before');
-  check(scope, 'Time rewind −24h asks the server for posts before a day ago and says so when there are none', !!rewoundAt && Math.abs(Date.now() - 24 * 3600e3 - Date.parse(rewoundAt)) < 60e3 && /No posts from before 24 hours ago/.test(await page.textContent('#mnFeed')) && (await page.getAttribute('[data-rewind="24"]', 'aria-pressed')) === 'true', { rewoundAt });
-  await page.screenshot({ path: join(OUT, 'member-iphone-rewind.png') });
-  await page.click('[data-rewind="0"]');
-  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 8000 });
-  const liveAgain = world.requests.slice(seenBefore).filter((r) => r.m === 'GET' && r.path === '/v1/mnet/feed').at(-1);
-  check(scope, 'Live brings the feed back without a cursor', liveAgain && !/before=/.test(liveAgain.search || '') && (await page.$$eval('#mnFeed [data-post-id]', (a) => a.length)) > 1, liveAgain);
-  await page.click('[data-rewind="168"]');
-  await page.waitForFunction(() => /No posts from before 7 days ago/.test(document.getElementById('mnFeed').textContent), null, { timeout: 8000 }).catch(() => {});
-  await page.fill('#mnPostBody', 'E2E: posted while rewound');
-  await page.click('#mnPost');
-  await page.waitForFunction(() => /E2E: posted while rewound/.test(document.querySelector('#mnFeed [data-post-id]')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
-  check(scope, 'posting while rewound brings the feed back to Live with the post on top', (await page.getAttribute('[data-rewind="0"]', 'aria-pressed')) === 'true' && /E2E: posted while rewound/.test(await page.$eval('#mnFeed [data-post-id]', (n) => n.textContent)));
+  check(scope, 'Time rewind is tucked away: no panel on the screen', (await page.$$('[data-rewind], #mnRewind')).length === 0);
 
-  // Clips: a door under the Music and Photos & video tabs, with the real terms
-  await page.click('[data-feed-tab="music"]');
+  // Clips: a door at the top of the feed while campaigns are open, with the real terms
   await page.waitForSelector('#mnClipDoor:not([hidden])', { timeout: 8000 }).catch(() => {});
   const clipLine = await page.textContent('#mnClipDoor');
-  await page.click('[data-feed-tab="all"]');
-  check(scope, 'Clips: the Music tab shows the clipping door with real terms; All hides it', /1 campaign open · from \$3\.00 per 1,000 views/.test(clipLine) && await page.isHidden('#mnClipDoor'), clipLine);
+  check(scope, 'Clips: the door shows the clipping campaigns with real terms, without a tab to find it under', /1 campaign open · from \$3\.00 per 1,000 views/.test(clipLine) && await page.isVisible('#mnClipDoor'), clipLine);
 
   // Live: a badge over the globe while something is on air, opening the live rooms
   await page.waitForSelector('#mnWorldLive:not([hidden])', { timeout: 8000 }).catch(() => {});

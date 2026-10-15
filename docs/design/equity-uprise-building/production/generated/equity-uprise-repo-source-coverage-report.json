@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 363,
+  "candidate_count": 364,
   "capability_source_count": 99,
-  "support_only_count": 264,
-  "checks_total": 1355,
-  "checks_passed": 1355,
+  "support_only_count": 265,
+  "checks_total": 1359,
+  "checks_passed": 1359,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -51,6 +51,7 @@
     "_unfinished/uprise-world/uprise-world.json",
     "action/index.html",
     "assets/img/equity-uprise-logo.webp",
+    "assets/img/equity-uprise-mark.png",
     "assets/img/eu-favicon.png",
     "audit/2026-09-13-p0-supabase-containment.md",
     "catalogue.html",
@@ -377,7 +378,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "363 entries"
+      "detail": "364 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1156,6 +1157,26 @@
     },
     {
       "name": "assets/img/equity-uprise-logo.webp support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png support rationale present",
       "passed": true,
       "detail": ""
     },

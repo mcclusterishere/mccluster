@@ -118,18 +118,17 @@ same two:
   kind, public joined/verified counts (`action_mission_stats`, anon-granted),
   title, description from 600px, and **the emblem · Fund · Locate · Posts ·
   All missions**. No Fund button: there is no verified funding flow yet.
-- **Feed:** tabs All posts · Missions · Music · Photos & video (filters by what
-  a post carries; no invented topics or locations), steel cards, picture as
-  a right-hand thumbnail with a 1/n badge that opens all of them on tap,
-  share, save. A post that carries a mission shows it as a red **Mission
+- **Feed:** the feed is the feed (owner, 2026-10-15: the All · Missions ·
+  Music · Photos & video row "shouldn't even be a toggle. Just let the
+  screen be."), steel cards, picture as a right-hand thumbnail with a 1/n
+  badge that opens all of them on tap, share, save. A post that carries a mission shows it as a red **Mission
   attached** banner with the emblem, Fund, its public counts and Locate on globe
   (server-vouched, as before).
-- **Time rewind** (owner's desktop mockup): Live · −24h · −7d · −30d under
-  the composer. It reads the feed from before that moment through the same
-  `before=` paging the server already does (member and public feeds alike);
-  nothing is reconstructed. Posts only: the Earth and its pins stay live,
-  and the line under the control says so. One glass row on a phone, the
-  description joins it from 600px.
+- **Time rewind** is tucked away (owner, 2026-10-15: "that button is
+  taking up too much space … it doesn't have anything to do with
+  anything"). The panel, its script and styles are gone; the server's
+  `before=` paging still exists for the feed's own cursor. Git history
+  (PR #434 and before) keeps the control if it is ever wanted back.
 - Graphite and one red, on the World screen only; the other rooms keep the
   house look. The bottom bar stays the house bar (Music | M | Globe, the
   contract's order), not the mockup's Home | Music | Globe.
@@ -194,7 +193,7 @@ everywhere else." Navigation entries were removed; no capability was.
 | Missions & campaigns | Globe pins and the mission card (**All missions**), search, the Missions tab, the profile's **Action Record**, the Globe wing |
 | People | World search (matches as you type; **Search people**); the block list is on the profile |
 | Groups | World search (groups that match; **Groups about …** filters the directory) |
-| Clips | A door under the Music and Photos & video tabs, with the real terms from `clip_campaigns_open`, shown only while campaigns are open. Clips are paid work, not posts, so they are not a feed filter |
+| Clips | A door at the top of the feed with the real terms from `clip_campaigns_open`, shown only while campaigns are open (the tabs it used to sit under are gone). Clips are paid work, not posts, so they are not a feed filter |
 | Live | A LIVE badge over the globe while anything is on air (opens the live rooms); **Go live** in the composer for a granted host once live video is on |
 | Record or create | The composer: a visible + when folded, Record / Create when open (`create.html`) |
 | Your analytics | For a member with a music creator profile: **Your audience** on the globe (below) and **Your analytics** on their profile (`creator.html`). The old `creator-landing-analytics.html` measured nothing and is no longer linked |
@@ -266,6 +265,45 @@ the actions that need it (post, join a mission, connect, the member rooms)
 open the form with the reason and a "← Back to the World". A finished
 profile lands back on the feed. The server refuses those actions anyway until
 the step is done.
+
+### The owner's five, on the screenshots (owner, 2026-10-15)
+
+After seeing the iteration's renders the owner asked for five changes:
+
+1. **The whole screen.** "It's blacked out instead of allowing the feed to
+   go all the way down to the bottom of the screen … the bar should have
+   shit behind it." `sizeWorld()` used to stop the World at the bar's top,
+   leaving a band of page background under the feed with the bar floating
+   in it. Now `barClearance()` measures the bar (its layout bottom plus
+   height plus 10px, as `--mn-bar-clear`) and the World takes the full
+   viewport: the feed runs to the bottom edge under the floating bar and
+   carries that clearance as its own bottom padding so the last post still
+   scrolls clear. The desktop grid's context strip and the onboarding
+   (`.mn__onboard`, now `min-height` to the viewport, the page's reserved
+   padding dropped while a gate is up) get the same treatment.
+2. **Phones from anywhere.** "The phone saved as plus one only is bad
+   because we're gonna have users from all over the world." The phone field
+   is a country-code cell (`#mnDial`) and the number: the code is filled
+   from the country given on page 2 (`DIAL_CODES` / `dialFor`, about a
+   hundred names) and is the member's to change; `normalizePhone(dial, raw)`
+   never assumes +1: a number typed with its own `+` stands as typed, the
+   trunk 0 most countries drop is dropped (Italy keeps it), E.164 is 8 to 15
+   digits, and without a code nothing is saved.
+3. **Time rewind tucked away.** The panel is gone (above).
+4. **The mark without its white tile.** "Cut the white part out so it's its
+   own logo instead of that white part looking different from Fund, Locate
+   and Post … keep the dark part." `assets/img/equity-uprise-mark.png` is the
+   supplied artwork with every white pixel made transparent and every dark
+   pixel exactly as supplied (the anti-aliased rim keeps the mark's own
+   navy at partial alpha); same 160×160 canvas, nothing cropped, nothing
+   drawn, nothing recoloured. The join button (`.mn__world-go--eup`,
+   `.mn__primary--eup`) is now the same glass as its neighbours instead of
+   white; the header mark uses the same file. The original webp stays for
+   the pages that use it on light ground. Note for the owner: navy on dark
+   glass reads darker than the white icons beside it; a lighter variant is
+   the owner's to supply (rule 10: never recolour).
+5. **No filter row.** The All · Missions · Music · Photos & video tabs are
+   gone (above); the Clips door shows on its own while campaigns are open.
 
 ### The onboarding, three pages (owner, 2026-10-15)
 
@@ -500,8 +538,8 @@ checked) and drives: the composition on iPhone portrait/landscape, iPad
 portrait/landscape and desktop; Post and Share round trips with the exact
 requests; the emblem (alone, no words, the complete artwork) and Fund on a mission post and on the mission card, for a
 member and a guest, with the funding truth from the campaign's board; pin → strip and narrowed feed; post → globe
-without narrowing; Time rewind (the request carries before= a day ago, the
-honest empty state, Live brings the feed back); the layers cycle; search
+without narrowing; no Time rewind panel and no filter row on the screen
+(since 2026-10-15); the layers cycle; search
 suggestions (pinned and unpinned missions, never a clip job; people;
 groups; the full lists); the Clips door; the Live badge;
 the bell's count; the account menu (exactly four entries, whose account,

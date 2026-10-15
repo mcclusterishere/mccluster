@@ -112,13 +112,20 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
   assert.match(js, /api\("\/v1\/mnet\/people\/" \+ encodeURIComponent\(v\)\)/, 'the handle is checked live: a person nobody can find is free');
   assert.match(js, /if \(e && e\.status === 404\) \{ onboard\.handleOk = mine; paintHandleState\("ok"/);
   assert.match(js, /function saveContact\(\)/); assert.match(js, /return MCC_FAN\.save\(values\)/);
-  assert.match(js, /function normalizePhone\(raw\)/); assert.match(js, /if \(digits\.length === 10\) return "\+1" \+ digits;/);
+  assert.match(js, /function normalizePhone\(dial, raw\)/); assert.doesNotMatch(js, /"\+1" \+ digits/, 'no country is assumed: people come from anywhere (owner, 2026-10-15)');
+  assert.match(html, /<input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="\+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number">/);
+  assert.match(js, /if \(n === 3\) fillDial\(\);/, 'the code follows the country on page 2'); assert.match(js, /if \(!cur \|\| cur === onboard\.dialAuto\) \{ onboard\.dialAuto = dialFor/, 'until the member types a code of their own');
+  assert.match(js, /if \(!\/\^\[1-9\]\[0-9\]\{0,2\}\$\/\.test\(code\)\) return null;/, 'no impossible country codes (00, 011, four digits)');
+  assert.match(js, /function splitE164\(phone\)/, 'a stored number comes back as its code and its number');
   assert.match(js, /function enterTheWorld\(\)/); assert.match(js, /return api\("\/v1\/mnet\/bootstrap\?app_key=" \+ encodeURIComponent\(APP\)\)\.then\(function \(boot\) \{\n      state\.boot = boot;/);
   assert.match(js, /\$\("mnCtaLabel"\)\.textContent = editing \? "Save changes" : n === 3 \? "Enter the World" : "Save & continue";/);
   assert.doesNotMatch(js, /location\.assign\("account\.html\?complete=contact"\)/, 'the contact step is page 2, not a redirect');
   assert.match(css, /\.mn__onboard-h \{ max-width: 12ch; margin: 0; font-family: var\(--mn-ui\); font-weight: 900;/);
   assert.match(css, /\.mn__cta \{ position: relative; display: flex;[^}]*border-radius: 999px;/);
-  assert.match(css, /@media \(min-width: 600px\) \{\n  \.mn__onboard \{ padding: 32px 0 40px; \}/, 'mobile first; wider screens only add room');
+  assert.match(css, /@media \(min-width: 600px\) \{\n  \.mn__onboard \{ padding-top: 32px; \}\n  \.mn__onboard::before \{ inset: -40px -24px 0; \}/, 'mobile first; wider screens only add room');
+  assert.match(css, /\.mn__onboard \{ position: relative; isolation: isolate; padding: 18px 0 calc\(var\(--mn-bar-clear, 96px\) \+ 16px\); \}/, 'the gate carries the bar\'s clearance itself');
+  assert.match(css, /\.mn-gate-on \.mn, \.mn-gate-on body \{ padding-bottom: 0; \}\n\.mn-gate-on \.mn \{ display: flex; flex-direction: column; min-height: 100dvh; \}\n\.mn-gate-on \.mn__gate:not\(\[hidden\]\) \{ flex: 1 0 auto; \}/, 'the page runs to the bottom of the screen, under the bar');
+  assert.match(css, /\.mn__onboard::after \{[^}]*left: 0; right: 0;/, 'nothing wider than the phone: the slanted line stays inside');
   assert.doesNotMatch(css.slice(css.indexOf('THE ONBOARDING, THREE PAGES')), /max-width\s*:\s*\d+px\)/, 'no max-width queries');
 });
 

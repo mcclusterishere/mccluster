@@ -35,7 +35,7 @@
   width: 100%;
   max-width: 44rem;
   margin: 0 auto;
-  padding: 0 16px calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0 16px calc(var(--mn-bar-clear, 96px) + 24px);
   color: var(--mn-ink);
   font-family: var(--mn-ui);
 }
@@ -273,7 +273,8 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
    beside it; the pill is the tap target. Fund is a plain pill; the fund line
    says whether the campaign's support rail is open. */
 .mn__eup { width: 28px; height: 28px; object-fit: contain; flex: none; }
-.mn__primary--eup, .mn__world-go--eup { display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px; background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.8); }
+/* the join is the mark alone on the same material as its neighbours: no white plate (owner, 2026-10-15) */
+.mn__primary--eup, .mn__world-go--eup { display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px; }
 .mn__fund { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid var(--mn-rule-2); border-radius: 999px; background: transparent; color: var(--mn-ink); font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
 .mn__fund svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mn__actcard-stats { margin: 6px 0 0; color: var(--mn-dim); font-size: 0.78rem; font-weight: 700; }
@@ -863,7 +864,8 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 .mn-world-fit #mnFeedView:not([hidden]) { display: flex; flex-direction: column; height: var(--mn-world-h, 70dvh); }
 .mn-world-fit .mn__world-home { flex: 49 1 0; min-height: 0; height: auto; }
 .mn-world-fit .mn__world-context { flex: none; min-height: clamp(92px, 14dvh, 150px); }
-.mn-world-fit .mn__world-feed { flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 12px; }
+/* the feed runs to the bottom of the screen, under the floating bar; its own padding keeps the last post reachable (owner, 2026-10-15) */
+.mn-world-fit .mn__world-feed { flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--mn-bar-clear, 96px) + 4px); }
 @media (min-width: 600px) {
   .mn__world-home { margin: 0; border: 1px solid var(--mn-rule); border-radius: 22px; }
 }
@@ -1047,33 +1049,15 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .mn__world-go svg, .mn__world-locate svg, .mn__world-filter svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mn__world-go { border: 0; background: linear-gradient(180deg, #ff3d5e, #c4102c); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 26px -10px rgba(255, 42, 77, 0.95); }
-.mn__world-go--eup, .mn-world-on .mn__world-go--eup { background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.9); }
+.mn__world-go--eup, .mn-world-on .mn__world-go--eup { background: var(--w-glass); color: var(--mn-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); }
 .mn__mission-card .mn__fund-line { grid-column: 1 / -1; margin-top: 2px; }
 .mn__world-locate, .mn__mission-card .mn__world-filter { border: 0; background: var(--w-glass); color: var(--mn-ink); box-shadow: var(--w-edge); }
 .mn__mission-card .mn__world-filter[aria-pressed="true"] { background: rgba(255, 42, 77, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 42, 77, 0.6); }
 .mn__mission-card .mn__world-close { position: absolute; top: 8px; right: 8px; width: 30px; min-height: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--w-glass); box-shadow: var(--w-edge); font-size: 0.8rem; }
 
-/* feed tabs: sticky at the top of the feed band, a red underline */
-.mn__feed-tabs { display: none; }
-.mn-world-on .mn__feed-tabs { position: sticky; top: 0; z-index: 3; display: flex; gap: 4px; margin: 0 -2px 10px; padding: 2px 0 0; overflow-x: auto; scrollbar-width: none; background: var(--mn-bg); box-shadow: inset 0 -1px 0 var(--mn-rule); }
-.mn__feed-tabs::-webkit-scrollbar { display: none; }
-.mn__feed-tabs button { flex: none; min-height: 40px; padding: 0 12px; border: 0; background: transparent; color: var(--mn-dim); font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; box-shadow: inset 0 -2px 0 transparent; }
-.mn__feed-tabs button.is-on { color: var(--mn-ink); box-shadow: inset 0 -2px 0 var(--mn-hot); text-shadow: 0 0 14px rgba(255, 42, 77, 0.35); }
-.mn-world-on .mn__world-feed { padding-top: 0; }
+/* the feed band starts a breath below the strip (the tab row that used to make that room is gone) */
+.mn-world-on .mn__world-feed { padding-top: 10px; }
 
-/* TIME REWIND: one glass row on a phone; the description joins it from
-   600px. The line under it appears once the feed is rewound. */
-.mn__rewind { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; padding: 6px 8px; border-radius: 22px; background: var(--w-glass); box-shadow: var(--w-edge); }
-.mn__rewind-head { display: flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; padding-left: 4px; }
-.mn__rewind-head svg { flex: none; width: 16px; height: 16px; fill: var(--mn-hot); filter: drop-shadow(0 0 6px rgba(255, 42, 77, 0.8)); }
-.mn__rewind-head b { display: block; color: var(--mn-dim); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
-.mn__rewind-head small { display: none; color: var(--mn-dim); font-size: 0.78rem; line-height: 1.3; }
-.mn__rewind.is-rewound .mn__rewind-head small { display: block; flex-basis: 100%; order: 3; padding: 4px 4px 2px; }
-.mn__rewind-row { display: flex; flex: none; gap: 4px; }
-.mn__rewind-row button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--mn-dim); font: inherit; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
-.mn__rewind-row button i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.mn__rewind-row button.is-on { color: var(--mn-ink); background: rgba(255, 42, 77, 0.12); box-shadow: 0 0 0 1px rgba(255, 42, 77, 0.55); }
-.mn__rewind-row button.is-on i { background: var(--mn-hot); box-shadow: 0 0 8px rgba(255, 42, 77, 0.9); }
 
 /* posts on the World: steel cards, picture on the right, heart and counts */
 .mn-world-on #mnFeed .mn__post-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 14px; padding: 14px; border-radius: 18px; background: var(--w-steel); box-shadow: var(--w-edge), var(--w-shadow); }
@@ -1104,7 +1088,7 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn-world-on #mnFeed .mn__actcard-eyebrow { color: #ffb3c0; }
 .mn-world-on #mnFeed .mn__actcard-title { font-size: clamp(1.3rem, 5.5vw, 1.7rem); color: #fff; }
 .mn-world-on #mnFeed .mn__actcard-foot { color: #f3d7dc; }
-.mn-world-on #mnFeed .mn__actcard-row .mn__primary { min-height: 40px; border-radius: 999px; background: #fff; color: #0b2d52; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 26px -12px rgba(0, 0, 0, 0.9); }
+.mn-world-on #mnFeed .mn__actcard-row .mn__primary { min-height: 40px; border-radius: 999px; background: var(--w-glass); color: var(--mn-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--w-rim); }
 .mn-world-on #mnFeed .mn__actcard-row .mn__primary::after { content: "\203A"; margin-left: 4px; font-size: 1.1em; line-height: 1; }
   .mn-world-on #mnFeed .mn__actcard-row .mn__primary--eup::after { content: none; } /* the emblem stands alone */
 .mn-world-on #mnFeed .mn__globe-chip { border: 0; background: var(--w-glass); box-shadow: var(--w-edge); }
@@ -1137,14 +1121,8 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
   .mn__mission-card .mn__fund-line { grid-column: 1 / -1; grid-row: 2; }
   .mn-world-on #mnFeed .mn__post-card:has(> .mn__post-media), .mn-world-on #mnFeed .mn__post-card:has(> .mn__media-locked) { grid-template-columns: minmax(0, 1fr) 180px; }
   .mn-world-on #mnFeed .mn__post-card { padding: 16px 18px; }
-  .mn__rewind { gap: 8px 12px; padding: 10px 12px; border-radius: 18px; background: var(--w-steel); }
-  .mn__rewind-head { gap: 10px; }
-  .mn__rewind-head svg { width: 20px; height: 20px; }
-  .mn__rewind-head b { color: var(--mn-ink); font-size: 0.9rem; letter-spacing: 0; text-transform: none; }
-  .mn__rewind-head small, .mn__rewind.is-rewound .mn__rewind-head small { display: block; flex-basis: auto; order: 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mn__rewind-row button { min-height: 36px; padding: 0 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .mn__mission-card, .mn__feed-tabs button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mn__mission-card { transition: none; } }
 
 /* a phone on its side: the strip keeps to one tight card so the feed keeps
    its half of the right column */
@@ -1190,12 +1168,12 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn-world-overlay .mn__world-live { top: calc(64px + env(safe-area-inset-top, 0px)); }
 @media (prefers-reduced-motion: reduce) { .mn__world-live i { animation: none; } }
 .mn__attach[hidden] { display: none; }
-.mn__clipdoor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 0 0 12px; padding: 14px 16px; border-radius: 18px; background: linear-gradient(120deg, rgba(196, 16, 44, 0.3), rgba(16, 11, 13, 0.9)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 0 0 1px rgba(255, 42, 77, 0.35); }
+/* the Clips door, one quiet line at the top of the feed while campaigns are open (it used to be a card under the Music tab; the tabs are gone) */
+.mn__clipdoor { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 10px; padding: 8px 12px; border-radius: 14px; background: var(--w-glass); box-shadow: var(--w-edge); }
 .mn__clipdoor[hidden] { display: none; }
-.mn__clipdoor p { margin: 0; color: var(--mn-dim); font-size: 0.9rem; line-height: 1.45; }
+.mn__clipdoor p { flex: 1 1 200px; min-width: 0; margin: 0; color: var(--mn-dim); font-size: 0.82rem; line-height: 1.4; }
 .mn__clipdoor b { color: var(--mn-ink); }
-.mn__clipdoor .mn__world-go { justify-self: start; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; }
-@media (min-width: 600px) { .mn__clipdoor { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+.mn__clipdoor .mn__world-go { flex: none; display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; font-size: 0.78rem; white-space: nowrap; }
 
 /* the search suggestions: under the field, never wider than it, rows a
    thumb tall, its own scroll so the keyboard never pushes it off screen */
@@ -1245,14 +1223,20 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
    Mobile first; wider screens centre the column. The mark is the supplied
    artwork, never a drawn one.
    ============================================================ */
-.mn__onboard { position: relative; isolation: isolate; padding: 18px 0 32px; }
-.mn__onboard::before { content: ""; position: absolute; z-index: -1; inset: -40px -24px 0; pointer-events: none;
+.mn__onboard { position: relative; isolation: isolate; padding: 18px 0 calc(var(--mn-bar-clear, 96px) + 16px); }
+/* while a gate is up the page reserves nothing for the bar (the body's padding was the black band the owner saw): the page is a
+   column the gate fills to the bottom edge, and the gate carries the bar's clearance itself */
+.mn-gate-on .mn, .mn-gate-on body { padding-bottom: 0; }
+.mn-gate-on .mn { display: flex; flex-direction: column; min-height: 100dvh; }
+.mn-gate-on .mn__gate:not([hidden]) { flex: 1 0 auto; }
+.mn__onboard::before { content: ""; position: absolute; z-index: -1; inset: -40px -16px 0; pointer-events: none;
   background:
     radial-gradient(70% 36% at 88% -4%, rgba(255, 42, 77, 0.42), transparent 65%),
     radial-gradient(60% 30% at 50% 108%, rgba(196, 16, 44, 0.45), transparent 62%),
     linear-gradient(165deg, #17181c 0%, #0c0c0f 42%, #09090b 100%);
   background-color: #0b0b0d; }
-.mn__onboard::after { content: ""; position: absolute; z-index: -1; left: -30%; right: -30%; top: 58px; height: 2px; pointer-events: none; transform: rotate(-14deg);
+/* the bleed stops at the screen's edge and the slanted line stays inside the box: anything wider than the phone makes mobile Chromium zoom the whole page out (found by the door run) */
+.mn__onboard::after { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 58px; height: 2px; pointer-events: none; transform: rotate(-14deg);
   background: linear-gradient(90deg, transparent 0%, rgba(255, 42, 77, 0.0) 30%, rgba(255, 72, 100, 0.9) 60%, rgba(255, 42, 77, 0.0) 100%); filter: blur(0.6px); }
 .mn__steps-row { display: flex; align-items: center; gap: 14px; margin: 6px 0 26px; }
 .mn__steps { display: flex; flex: 1 1 auto; gap: 10px; max-width: 260px; margin: 0; padding: 0; list-style: none; }
@@ -1271,6 +1255,8 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn__field .mn__input:focus { box-shadow: none; }
 .mn__field--plain .mn__input { padding: 0 18px; }
 .mn__field .mn__textarea { min-height: 8rem; padding: 14px 16px; }
+/* the phone: the country code in its own cell, then the number (people from anywhere, owner 2026-10-15) */
+.mn__field--phone .mn__dial { flex: none; width: 84px; padding: 0 8px; text-align: center; border-right: 1px solid rgba(244, 239, 230, 0.1); border-radius: 0; }
 .mn__field-ico, .mn__field-at { display: grid; place-items: center; flex: none; width: 56px; color: var(--mn-dim); border-right: 1px solid rgba(244, 239, 230, 0.1); font-weight: 800; font-size: 1.15rem; }
 .mn__field-ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .mn__field-state { display: none; place-items: center; flex: none; width: 56px; color: var(--mn-dim); font-weight: 800; font-size: 0.8rem; }
@@ -1308,8 +1294,20 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 .mn__onboard .mn__secondary { margin-top: 12px; }
 .mn__onboard .mn__hint { margin-top: 8px; }
 @media (min-width: 600px) {
-  .mn__onboard { padding: 32px 0 40px; }
+  .mn__onboard { padding-top: 32px; }
+  .mn__onboard::before { inset: -40px -24px 0; }
   .mn__onboard-form { max-width: 560px; }
   .mn__grid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .mn__onboard-h { font-size: clamp(3rem, 6vw, 4.6rem); }
+}
+
+/* ============================================================
+   THE SCREEN IS THE WHOLE SCREEN (owner, 2026-10-15): the bar floats over
+   the page; whatever is last carries the bar's clearance itself. Last in
+   the sheet so nothing above overrides it.
+   ============================================================ */
+body.has-appbar { padding-bottom: 0; }
+.mn-gate-on .mn__gate:not([hidden]) { padding-bottom: calc(var(--mn-bar-clear, 96px) + 16px); }
+@media (min-width: 1100px) {
+  .mn-world-fit.mn-world-on .mn__world-context { padding-bottom: var(--mn-bar-clear, 96px); }
 }

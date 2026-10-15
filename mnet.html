@@ -18,7 +18,7 @@
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Human Uprise home">
         <!-- the supplied Equity Uprise artwork, scaled only: no plate, and never written out -->
-        <img class="mn__brand-mark" src="assets/img/equity-uprise-logo.webp" alt="" width="36" height="36">
+        <img class="mn__brand-mark" src="assets/img/equity-uprise-mark.png" alt="" width="36" height="36">
         <span><strong>Human Uprise</strong><small>A McCluster Corp program</small></span>
       </a>
       <!-- search the World: places and causes on the globe, words in the feed,
@@ -161,7 +161,8 @@
           <h1 class="mn__onboard-h">Lock it in<em>.</em></h1>
           <p class="mn__lede">How we reach you, and how you get back in.</p>
           <label class="mn__label" for="mnPhone">Phone <span>optional</span></label>
-          <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 203 555 0100"></div>
+          <div class="mn__field mn__field--phone"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number"></div>
+          <p class="mn__hint" id="mnPhoneHint">With your country code first, so we can reach you anywhere in the world.</p>
           <label class="mn__label" for="mnEmailShow">Email</label>
           <div class="mn__field is-locked"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></span><input class="mn__input" id="mnEmailShow" type="email" readonly tabindex="-1"><span class="mn__field-state is-ok" aria-hidden="true"></span></div>
           <p class="mn__hint">Your M Account's email. Change it from Settings &amp; account.</p>
@@ -277,7 +278,7 @@
             </div>
             <div class="mn__mission-actions">
               <!-- THE EMBLEM OR FUND IT (owner, 2026-10-14): the owner's emblem, complete, scaled only and never written out, is the join; Fund opens the campaign's governed support rail -->
-              <button class="mn__world-go mn__world-go--eup" id="mnWorldFocusJoin" type="button" aria-label="Join this mission and do it"><img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28"></button>
+              <button class="mn__world-go mn__world-go--eup" id="mnWorldFocusJoin" type="button" aria-label="Join this mission and do it"><img class="mn__eup" src="assets/img/equity-uprise-mark.png" alt="" width="28" height="28"></button>
               <button class="mn__world-locate" id="mnWorldFocusFund" type="button" aria-label="Fund this mission"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg><span>Fund</span></button>
               <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
               <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
@@ -288,20 +289,13 @@
           </article>
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
-        <!-- filters over what is loaded, by what a post actually carries;
-             no invented categories or locations -->
-        <nav class="mn__feed-tabs" id="mnFeedTabs" aria-label="Filter the feed">
-          <button type="button" class="is-on" data-feed-tab="all" aria-pressed="true">All posts</button>
-          <button type="button" data-feed-tab="missions" aria-pressed="false">Missions</button>
-          <button type="button" data-feed-tab="music" aria-pressed="false">Music</button>
-          <button type="button" data-feed-tab="media" aria-pressed="false">Photos &amp; video</button>
-        </nav>
+        <!-- the feed is the feed: no filter row over it (owner, 2026-10-15: "shouldn't even be a toggle. Just let the screen be.") -->
         <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
-             they are a door from the Music and Photos & video tabs, shown only
-             while campaigns are open, with their real terms -->
+             they are a door at the top of the feed, shown only while
+             campaigns are open, with their real terms -->
         <aside class="mn__clipdoor" id="mnClipDoor" hidden>
           <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
-          <button class="mn__world-go" type="button" data-mn-view="clips">See clipping campaigns</button>
+          <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
         </aside>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
@@ -362,18 +356,6 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
-        <!-- TIME REWIND (owner's desktop mockup, 2026-10-14): the feed as it
-             stood a day, a week or a month ago, read from the same server
-             pages (before=). Posts only: the Earth and its pins stay live. -->
-        <section class="mn__rewind" id="mnRewind" aria-label="Time rewind">
-          <div class="mn__rewind-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg><div><b>Time rewind</b><small id="mnRewindLine">Live. Rewind the feed a day, a week or a month.</small></div></div>
-          <div class="mn__rewind-row" role="group" aria-label="Feed time">
-            <button type="button" class="is-on" data-rewind="0" aria-pressed="true"><i aria-hidden="true"></i>Live</button>
-            <button type="button" data-rewind="24" aria-pressed="false">−24h</button>
-            <button type="button" data-rewind="168" aria-pressed="false">−7d</button>
-            <button type="button" data-rewind="720" aria-pressed="false">−30d</button>
-          </div>
-        </section>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>

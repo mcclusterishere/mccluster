@@ -19,7 +19,7 @@
     actionOffers: {},
     /* the globe in the World tab: which missions have a public pin, and
        the one the member picked on the Earth (it narrows the feed) */
-    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "", tab: "all", rewind: 0 },
+    world: { pins: {}, focus: null, fromFeed: "", missions: {}, latest: null, stats: {}, query: "" },
     /* a signed-out visitor on the World screen: public feed, no actions */
     guest: false
   };
@@ -184,7 +184,7 @@
      live) and the name, the public profile; 2 the legal name and mailing
      address, private (fan_profiles, the contact step); 3 phone, email and
      password. Editing an existing profile is the same form on one page. */
-  var onboard = { step: 1, editing: false, contact: null, handleTimer: 0, handleOk: "" };
+  var onboard = { step: 1, editing: false, contact: null, handleTimer: 0, handleOk: "", dialAuto: "" };
   function fillProfileForm(editing) {
     var p = profile(), id = identity();
     onboard.editing = !!editing;
@@ -224,18 +224,21 @@
       li.classList.toggle("is-current", !editing && k === n);
     });
     $("mnStepsCount").textContent = n + " / 3";
+    /* page 3: the country code from the country on page 2 (the edit page fills it once the stored row is read) */
+    if (n === 3) fillDial();
     if (!editing) { try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); } }
   }
   function prefillContact() {
     if (!window.MCC_FAN || typeof MCC_FAN.load !== "function") return;
     MCC_FAN.load().then(function (row) {
       onboard.contact = row || null;
-      if (!row) return;
+      if (!row) { if (onboard.editing) fillDial(); return; }
       var put = function (id, v) { var el = $(id); if (el && !el.value) el.value = v || ""; };
       put("mnLegalName", row.legal_name); put("mnAddr1", row.address_line1); put("mnAddr2", row.address_line2);
       put("mnCity", row.city); put("mnRegion", row.region); put("mnPostal", row.postal_code);
       if (row.country) $("mnCountry").value = row.country;
-      put("mnPhone", row.phone_e164);
+      if (row.phone_e164 && !$("mnPhone").value) { var parts = splitE164(row.phone_e164); $("mnDial").value = parts[0]; $("mnPhone").value = parts[1]; onboard.dialAuto = ""; }
+      else if (onboard.editing) fillDial();
     }).catch(function () {});
   }
   /* the handle, checked as it is typed: the pattern here, the name at the API (a person nobody can find is free) */
@@ -265,15 +268,61 @@
       else paintHandleState("", "We could not check that yet; saving will.");
     });
   }
-  function normalizePhone(raw) {
+  /* PHONES FROM ANYWHERE (owner, 2026-10-15: "the phone saved as plus one only is bad"). The country code is
+     its own cell, filled from the country given on page 2 and always editable; a number typed with its own
+     "+" rules. Nothing is assumed: no code, no save. E.164 is the country code and the number, 8 to 15 digits,
+     without the trunk 0 most countries drop (Italy keeps it). */
+  var DIAL_CODES = { "united states": "1", "usa": "1", "us": "1", "united states of america": "1", "canada": "1", "puerto rico": "1", "jamaica": "1", "trinidad and tobago": "1", "bahamas": "1", "barbados": "1", "dominican republic": "1",
+    "united kingdom": "44", "uk": "44", "england": "44", "scotland": "44", "wales": "44", "northern ireland": "44", "great britain": "44", "ireland": "353", "france": "33", "germany": "49", "spain": "34", "italy": "39", "portugal": "351",
+    "netherlands": "31", "belgium": "32", "switzerland": "41", "austria": "43", "sweden": "46", "norway": "47", "denmark": "45", "finland": "358", "iceland": "354", "poland": "48", "czech republic": "420", "czechia": "420", "hungary": "36",
+    "greece": "30", "turkey": "90", "ukraine": "380", "russia": "7", "romania": "40", "bulgaria": "359", "croatia": "385", "serbia": "381", "israel": "972", "united arab emirates": "971", "uae": "971", "saudi arabia": "966", "qatar": "974", "jordan": "962", "lebanon": "961",
+    "egypt": "20", "morocco": "212", "algeria": "213", "tunisia": "216", "nigeria": "234", "ghana": "233", "kenya": "254", "ethiopia": "251", "tanzania": "255", "uganda": "256", "rwanda": "250", "south africa": "27", "senegal": "221", "cameroon": "237",
+    "democratic republic of the congo": "243", "dr congo": "243", "congo": "242", "haiti": "509", "mexico": "52", "guatemala": "502", "honduras": "504", "el salvador": "503", "costa rica": "506", "panama": "507", "cuba": "53",
+    "colombia": "57", "venezuela": "58", "ecuador": "593", "peru": "51", "bolivia": "591", "chile": "56", "argentina": "54", "uruguay": "598", "paraguay": "595", "brazil": "55",
+    "india": "91", "pakistan": "92", "bangladesh": "880", "sri lanka": "94", "nepal": "977", "china": "86", "hong kong": "852", "taiwan": "886", "japan": "81", "south korea": "82", "korea": "82", "singapore": "65", "malaysia": "60", "indonesia": "62", "philippines": "63", "thailand": "66", "vietnam": "84",
+    "australia": "61", "new zealand": "64",
+    "britain": "44", "deutschland": "49", "espana": "34", "brasil": "55", "nederland": "31", "viet nam": "84", "korea republic of": "82", "republic of korea": "82",
+    "afghanistan": "93", "iran": "98", "iraq": "964", "syria": "963", "kuwait": "965", "oman": "968", "bahrain": "973", "yemen": "967", "somalia": "252", "sudan": "249", "south sudan": "211",
+    "zimbabwe": "263", "zambia": "260", "mozambique": "258", "angola": "244", "ivory coast": "225", "cote d ivoire": "225", "mali": "223", "burkina faso": "226", "niger": "227", "chad": "235", "libya": "218", "sierra leone": "232", "liberia": "231", "togo": "228", "benin": "229", "gambia": "220", "guinea": "224", "malawi": "265", "botswana": "267", "namibia": "264", "madagascar": "261", "mauritius": "230",
+    "myanmar": "95", "cambodia": "855", "laos": "856", "mongolia": "976", "kazakhstan": "7", "uzbekistan": "998", "georgia": "995", "armenia": "374", "azerbaijan": "994", "belarus": "375", "lithuania": "370", "latvia": "371", "estonia": "372", "slovakia": "421", "slovenia": "386", "bosnia and herzegovina": "387", "albania": "355", "north macedonia": "389", "montenegro": "382", "kosovo": "383", "moldova": "373", "malta": "356", "cyprus": "357", "luxembourg": "352",
+    "guyana": "592", "suriname": "597", "belize": "501", "nicaragua": "505", "fiji": "679", "papua new guinea": "675", "samoa": "685", "tonga": "676" };
+  /* the code cell follows the country until the member types a code of their own (going back to change the country re-fills it) */
+  function fillDial() {
+    var d = $("mnDial"); if (!d) return;
+    var cur = d.value.trim();
+    if (!cur || cur === onboard.dialAuto) { onboard.dialAuto = dialFor($("mnCountry").value); d.value = onboard.dialAuto; }
+  }
+  function dialFor(country) {
+    var k = String(country || "").toLowerCase();
+    try { k = k.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    k = k.replace(/^the\s+/, "").replace(/[.,'()]/g, " ").replace(/\s+/g, " ").trim();
+    return DIAL_CODES[k] ? "+" + DIAL_CODES[k] : "";
+  }
+  /* a stored E.164 number, back into its code and its number (the longest known code that starts it) */
+  function splitE164(phone) {
+    var digits = String(phone || "").replace(/[^0-9]/g, "");
+    var codes = Object.keys(DIAL_CODES).map(function (k) { return DIAL_CODES[k]; }).filter(function (c, i, a) { return a.indexOf(c) === i; }).sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < codes.length; i++) if (digits.indexOf(codes[i]) === 0 && digits.length > codes[i].length) return ["+" + codes[i], digits.slice(codes[i].length)];
+    return ["", digits ? "+" + digits : ""];
+  }
+  function normalizePhone(dial, raw) {
     var s = String(raw || "").trim();
     if (!s) return "";
     var digits = s.replace(/[^0-9]/g, "");
-    if (/^\+/.test(s) && digits.length >= 8 && digits.length <= 15) return "+" + digits;
-    if (digits.length === 10) return "+1" + digits;
-    if (digits.length === 11 && digits.charAt(0) === "1") return "+" + digits;
-    return null;
+    if (/^\+/.test(s)) return digits.length >= 8 && digits.length <= 15 ? "+" + digits : null;
+    var code = String(dial || "").replace(/[^0-9]/g, "");
+    if (!/^[1-9][0-9]{0,2}$/.test(code)) return null;
+    /* the number as people type it: the country code again without its + (dropped), the trunk digit most
+       countries dial at home (0 almost everywhere, Italy keeps it; 1 in North America; 8 in Russia) */
+    if (digits.indexOf(code) === 0 && digits.length - code.length >= 7) digits = digits.slice(code.length);
+    else if (code === "1" && digits.length === 11 && digits.charAt(0) === "1") digits = digits.slice(1);
+    else if (code === "7" && digits.length === 11 && digits.charAt(0) === "8") digits = digits.slice(1);
+    else if (code !== "39" && digits.length > 1 && digits.charAt(0) === "0") digits = digits.slice(1);
+    var all = code + digits;
+    return digits.length >= 4 && all.length >= 8 && all.length <= 15 ? "+" + all : null;
   }
+  /* a hook for the browser test: the rule above, called with a country code and a number */
+  window.__mnPhone = normalizePhone; window.__mnSplitPhone = splitE164;
 
   function showGate(which) {
     $("mnSignedOut").hidden = which !== "signedout";
@@ -548,8 +597,8 @@
     return MCC_FAN.save(values).then(function (row) { onboard.contact = row || onboard.contact; return row; });
   }
   function saveReach() {
-    var phone = normalizePhone($("mnPhone").value), p1 = $("mnNewPassword").value, p2 = $("mnNewPassword2").value;
-    if (phone === null) { $("mnPhone").focus(); return Promise.reject(new Error("Use a full phone number with the country code, like +1 203 555 0100.")); }
+    var phone = normalizePhone($("mnDial").value, $("mnPhone").value), p1 = $("mnNewPassword").value, p2 = $("mnNewPassword2").value;
+    if (phone === null) { var code = $("mnDial").value.replace(/[^0-9]/g, ""); $(code && code.length <= 3 && !/^\+/.test($("mnPhone").value.trim()) ? "mnPhone" : "mnDial").focus(); return Promise.reject(new Error("Add your country code (like +44) and then the number.")); }
     if (p1 || p2) {
       if (p1.length < 8) { $("mnNewPassword").focus(); return Promise.reject(new Error("Use at least 8 characters for the password.")); }
       if (p1 !== p2) { $("mnNewPassword2").focus(); return Promise.reject(new Error("Those passwords do not match.")); }
@@ -708,7 +757,9 @@
      the campaign's governed support rail, and only says so when that
      campaign has money enabled (action_bounty_public). Never a payment
      endpoint of its own. */
-  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28">';
+  /* the owner's artwork with its white tile made transparent (assets/img/equity-uprise-mark.png, every dark pixel as supplied):
+     "cut the white part out so it's its own logo … keep the dark part" (owner, 2026-10-15) */
+  var EUP_MARK = '<img class="mn__eup" src="assets/img/equity-uprise-mark.png" alt="" width="28" height="28">';
   function fundButtonHtml(c) {
     return '<button class="mn__fund" type="button" data-fund-mission="' + esc(c.mission_id) + '"' + (c.campaign_id ? ' data-campaign="' + esc(c.campaign_id) + '"' : '') + ' aria-label="Fund this mission">' + ICON.fund + '<span>Fund</span></button>';
   }
@@ -861,13 +912,6 @@
     });
   }
   /* what a post actually carries, for the feed tabs; no invented topics */
-  function feedHas(item, tab) {
-    var post = item && (item.post || item) || {}, meta = post.metadata || {};
-    if (tab === "missions") return !!(postMissionId(item) || meta.action);
-    if (tab === "music") return !!((item.payload && item.payload.track) || meta.track);
-    if (tab === "media") return !!((Array.isArray(post.media) && post.media.length) || post.media_locked);
-    return true;
-  }
   function feedMatches(item, query) {
     var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
     return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
@@ -954,14 +998,12 @@
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
     if (!state.feed.length) {
-      host.innerHTML = state.world.rewind
-        ? '<div class="mn__empty">No posts from before ' + esc(rewindLabel(state.world.rewind)) + ' ago in ' + (state.guest ? 'the public feed' : 'your feed') + ' yet.</div>'
-        : state.guest
+      host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed, focus = state.world.focus, tab = state.world.tab, query = state.world.query;
+    var items = state.feed, focus = state.world.focus, query = state.world.query;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -973,10 +1015,9 @@
         return;
       }
     }
-    if (tab !== "all") items = items.filter(function (item) { return feedHas(item, tab); });
     if (query) items = items.filter(function (item) { return feedMatches(item, query); });
     if (!items.length) {
-      host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : { missions:"No posts tied to a mission in your feed yet.", music:"No posts with a track in your feed yet.", media:"No photos or video in your feed yet." }[tab] || "Nothing here yet.") + '</div>';
+      host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
@@ -1031,8 +1072,6 @@
     var publicRead = state.guest || !!needsStep();
     var path = (publicRead ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
-    /* Time rewind: the first page starts before the chosen moment; later pages follow the server's cursor as usual */
-    else if (reset && state.world.rewind) path += "&before=" + encodeURIComponent(new Date(Date.now() - state.world.rewind * 3600e3).toISOString());
     var read = publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
     return read.then(function (data) {
       var incoming = data.items || [];
@@ -1122,7 +1161,7 @@
       if (focused && composerBox && composerBox.contains(focused) && focused.blur) focused.blur();
       if (composerBox) composerBox.classList.remove("is-open");
       /* a post lands now, so a rewound feed comes back to Live to show it */
-      return state.world.rewind ? setRewind(0) : loadFeed(true);
+      return loadFeed(true);
     }).catch(function (e) {
       setStatus($("mnPostStatus"), e.message || "Could not post.", "error");
     }).finally(function () { button.disabled = false; });
@@ -2703,8 +2742,23 @@
   function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
   function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
   function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
+  /* THE SCREEN IS THE WHOLE SCREEN (owner, 2026-10-15: "it's blacked out instead of allowing the feed to go all the
+     way down to the bottom … the bar should have shit behind it"). Nothing stops at the bar: the World fills the
+     viewport and the feed (the onboarding too) runs under the floating bar, with --mn-bar-clear of bottom padding
+     so the last thing can still scroll above it. The clearance comes from the bar's layout, not its rect, so an
+     entrance animation (a transform) cannot skew it. */
+  function barClearance() {
+    var bar = document.querySelector(".appbar"), clear = 0;
+    if (bar && bar.offsetHeight) {
+      var cs = getComputedStyle(bar);
+      if (cs.position === "fixed" && cs.display !== "none") clear = Math.ceil((parseFloat(cs.bottom) || 0) + bar.offsetHeight + 10);
+    }
+    document.documentElement.style.setProperty("--mn-bar-clear", clear + "px");
+    return clear;
+  }
   function sizeWorld() {
     var view = $("mnFeedView"), root = document.documentElement, app = $("mnApp");
+    var clear = barClearance();
     if (!view) return;
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
     root.classList.toggle("mn-world-on", on);
@@ -2712,21 +2766,15 @@
     root.classList.add("mn-world-fit");
     root.classList.toggle("mn-world-overlay", window.innerWidth < 600);
     window.scrollTo(0, 0);
-    /* the bar's resting top, from layout rather than its rect, so an
-       entrance animation (a transform) cannot skew the measurement */
-    var bottom = window.innerHeight, bar = document.querySelector(".appbar");
-    if (bar && bar.offsetHeight) {
-      var cs = getComputedStyle(bar);
-      if (cs.position === "fixed" && cs.display !== "none") bottom = Math.min(bottom, window.innerHeight - (parseFloat(cs.bottom) || 0) - bar.offsetHeight);
-    }
-    var room = Math.floor(bottom - view.getBoundingClientRect().top - 8);
+    var room = Math.floor(window.innerHeight - view.getBoundingClientRect().top), usable = room - clear;
     /* upright: one stacked screen from a small phone up. On its side a phone
        has too little height to stack, so the Earth takes the left and the
        strip and feed the right, still one screen. */
     var portrait = window.innerHeight > window.innerWidth;
-    var side = !portrait && room < WORLD_FIT_MIN && room >= WORLD_FIT_MIN_SIDE;
+    /* the thresholds were tuned to the room above the bar, so that is what they judge; the screen itself is the whole viewport */
+    var side = !portrait && usable < WORLD_FIT_MIN && usable >= WORLD_FIT_MIN_SIDE;
     root.classList.toggle("mn-world-side", side);
-    if (!side && room < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
+    if (!side && usable < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
     view.style.setProperty("--mn-world-h", room + "px");
   }
   /* the mission card's art is its kind, as an icon: missions carry no photo
@@ -2911,30 +2959,11 @@
         : "No recorded views of your creator page in the last 30 days.";
     }).catch(function () { if (seq === audience.seq && caption) caption.textContent = "Your audience could not load right now."; });
   }
-  /* TIME REWIND: the feed as it stood a day, a week or a month ago. The
-     server pages by time already (before=), so this is the same read from
-     an earlier point; nothing is reconstructed. Posts only: the Earth and
-     its pins stay live, and the line says so. */
-  function rewindLabel(hours) { return hours >= 720 ? "30 days" : hours >= 168 ? "7 days" : hours + " hours"; }
-  function setRewind(hours) {
-    state.world.rewind = hours;
-    Array.prototype.forEach.call(document.querySelectorAll("[data-rewind]"), function (b) {
-      var on = Number(b.getAttribute("data-rewind")) === hours;
-      b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
-    });
-    var line = $("mnRewindLine"), panel = $("mnRewind");
-    if (line) line.textContent = hours ? "Posts from before " + rewindLabel(hours) + " ago. The Earth stays live." : "Live. Rewind the feed a day, a week or a month.";
-    if (panel) panel.classList.toggle("is-rewound", !!hours);
-    track("world_rewind", { hours: hours });
-    var feed = $("mnWorldFeed"); if (feed) feed.scrollTop = 0;
-    return loadFeed(true);
-  }
-  /* the Clips door under the tabs: asked for once, on the first Music or
-     Photos & video tap, and only real terms from the campaigns are shown */
+  /* the Clips door at the top of the feed: asked for once, and only real
+     terms from the campaigns are shown; hidden while none are open */
   function paintClipDoor() {
-    var door = $("mnClipDoor"), tab = state.world.tab;
+    var door = $("mnClipDoor");
     if (!door) return;
-    if (tab !== "music" && tab !== "media") { door.hidden = true; return; }
     if (!state.clipOpen) {
       state.clipOpen = [];
       sbRpc("clip_campaigns_open", { p_song: null }).then(function (rows) {
@@ -3074,21 +3103,8 @@
       var f = state.world.focus;
       if (f) toggleFundLine($("mnWorldFocus"), f.mission_id, "");
     });
-    Array.prototype.forEach.call(document.querySelectorAll("[data-rewind]"), function (b) {
-      b.addEventListener("click", function () { if (!state.loadingFeed) setRewind(Number(b.getAttribute("data-rewind")) || 0); });
-    });
-    /* the feed tabs: what a post carries */
-    Array.prototype.forEach.call(document.querySelectorAll("[data-feed-tab]"), function (b) {
-      b.addEventListener("click", function () {
-        state.world.tab = b.getAttribute("data-feed-tab");
-        Array.prototype.forEach.call(document.querySelectorAll("[data-feed-tab]"), function (x) {
-          var on = x === b; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on ? "true" : "false");
-        });
-        if (!state.loadingFeed) renderFeed(false);
-        paintClipDoor();
-        var feed = $("mnWorldFeed"); if (feed) feed.scrollTop = 0;
-      });
-    });
+    /* the Clips door at the top of the feed, painted once the open campaigns are known (no tab to find it under any more) */
+    paintClipDoor();
     /* SEARCH: as you type, the feed narrows to posts that say it and the
        Earth to pins that match; Enter flies to the first matching mission,
        or, for a member, looks the words up among people. */
@@ -3164,6 +3180,15 @@
     window.addEventListener("orientationchange", resize);
     window.addEventListener("load", resize);
     window.addEventListener("mcc:auth-state", resize);
+    /* the header animates its padding and the bar arrives on its own time, so the World is measured again whenever
+       either changes size; a measurement taken mid-transition left the feed a few pixels short of the bottom */
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(resize), top = document.querySelector(".mn__top");
+      if (top) ro.observe(top);
+      var seen = document.querySelector(".appbar"); if (seen) ro.observe(seen);
+      new MutationObserver(function () { var bar = document.querySelector(".appbar"); if (bar && bar !== seen) { seen = bar; ro.observe(bar); resize(); } }).observe(document.body, { childList: true });
+    }
+    if (top) top.addEventListener("transitionend", resize);
   })();
 
 })();
