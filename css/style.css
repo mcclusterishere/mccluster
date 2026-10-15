@@ -5152,9 +5152,3 @@ html[data-theme="light"] .felband__veil {
   }
   :where(button, [role="button"], .button, .btn):active { transform:none !important; }
 }
-
-/* GLOBE FIRST (owner, 2026-10-15: "for logged-in users, remove all the other tabs ... the globe experience IS the whole
-   product"). On the World a signed-in member has no bar: the World's own header (search, bell, avatar menu with profile,
-   messages, settings, Music, sign out) is the chrome. js/mnet.js sizeWorld sets .mn-globe-only; guests keep the bar.
-   display:none also takes the bar out of the accessibility tree and the tab order. */
-.mn-globe-only .appbar,.mn-globe-only .mcc-auth-chip{display:none!important}

@@ -6,11 +6,10 @@ const $=id=>document.getElementById(id);const embedded=new URLSearchParams(locat
    way back, the controls, the data toggles, the credit, and the mission in a sheet above the bar. */
 const EXPLORE=!embedded&&new URLSearchParams(location.search).has('explore');if(EXPLORE)document.documentElement.classList.add('globe-explore');
 /* JUST THE GLOBE (owner, 2026-10-15: the globe "as its own chrome-less experience: just zoom in and click on things"): ?explore=1&chrome=0.
-   No bar, no toggles, no controls, no way-back pill: the Earth, the pins, and what a tap opens. The imagery credit stays (the
-   licences ask for it), and one small corner control (and Escape) brings the chrome back. */
-const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(BARE){document.documentElement.classList.add('globe-bare');document.body.setAttribute('data-no-appbar','')}
-/* GLOBE FIRST on the Full world too: a signed-in member has no bar here either (the house rule .mn-globe-only, css/style.css) */
-if(EXPLORE){try{const ss=JSON.parse(localStorage.getItem('mccdb_session')||'null');if(ss&&ss.access_token)document.documentElement.classList.add('mn-globe-only')}catch(e){}}
+   No toggles, no controls, no way-back pill: the Earth, the pins, and what a tap opens. THE BOTTOM APP BAR NEVER LEAVES
+   (owner, 2026-10-15): it stays here as on every other experience. The imagery credit stays (the licences ask for it), and
+   one small corner control (and Escape) brings the chrome back. */
+const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(BARE)document.documentElement.classList.add('globe-bare');
 /* Network surface: the globe inside the Human Uprise World tab. The parent page owns the feed and the mission context,
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');

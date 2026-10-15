@@ -87,24 +87,25 @@ self-service numbers (above).
 - **Logged out:** unchanged. The globe is already the public front door at
   `https://mccluster.org/` (once the apex is routed) and the World screen at
   `mnet.html?view=feed`; the bar's Globe leads there.
-- **Logged in:** on the World (`mnet.html`, every view), a signed-in member
-  has **no bar**. `js/mnet.js sizeWorld()` sets `html.mn-globe-only`; the
-  house stylesheet (`css/style.css`) hides `.appbar` and the auth chip under
-  it, so the house still styles its own bar. The World's header is the
-  chrome: search, the bell (notifications), the avatar menu (View profile,
-  Messages = inbox, Settings & account = login and the M Account, **Music**,
-  Sign out). Music was a bar column, so its door moves into the menu rather
-  than disappearing. The bar's clearance is measured after the class is set,
-  so the feed runs to the bottom edge. Guests keep the bar.
-- **Just the globe:** `action-globe.html?explore=1&chrome=0`. No bar, no
-  toggles, no controls, no "← World": the Earth, the pins, and the mission
-  sheet only once a pin is tapped. The imagery credit stays (the licences ask
-  for it) at a smaller size. One small corner control and Escape bring the
-  chrome back. Reached from the Full world's "Just the globe" pill.
-- Not changed: `index.html`; the bar on Matthew's other pages (Music | M |
-  Globe for everyone). Whether a signed-in member should lose Music and M on
-  every page of Matthew's property is a product decision for the owner
-  (below).
+- **The bottom app bar never leaves** (owner correction, 2026-10-15). An
+  earlier draft of this change hid the bar for signed-in members on the World
+  and the Full world and moved Music into the avatar menu; that is reverted.
+  The bar (Music | M | Globe) is on every experience: the World, the Full
+  world, just the globe, and the analytics globe's host. Music stays in the
+  bar. The World's header (search, bell, avatar menu: View profile, Messages,
+  Settings & account, Sign out) is the member's chrome above it.
+- **Just the globe:** `action-globe.html?explore=1&chrome=0`. No toggles, no
+  controls, no "← World": the Earth, the pins, the mission sheet only once a
+  pin is tapped, and the bottom app bar. The imagery credit stays (the
+  licences ask for it) at a smaller size. One small corner control and Escape
+  bring the chrome back. Reached from the Full world's "Just the globe" pill.
+- **Control Room (`control.html`) is not changed.** It opts out of the shared
+  bar on purpose (`data-no-appbar`) and, under 760px, reserves the bottom
+  64px for its own phone navigation (`css/control-room.css`), so adding the
+  shared bar there would stack two bottom bars. That needs a layout decision
+  (which bar wins on a phone) before anyone adds it; reported to the owner,
+  not done here. The 60/40 analytics globe lives inside the Control Room.
+- Not changed: `index.html`; the bar on Matthew's other pages.
 
 ### B2. Layers by level (owner, 2026-10-15, second direction)
 
@@ -297,8 +298,8 @@ first, as for every core route).
 4. Approve or replace the tagline candidate "Get Your Hu Up!" before any
    copy ships; supply the ladder rules (E=Up, fellow, transport) and pick
    the Music layer's geo source (above).
-5. Decide: should a signed-in member lose the bar on every page of
-   Matthew's property, not only on the World? Should Anti-Social level
+5. Decide: should the Control Room carry the shared bottom app bar on a
+   phone, where it already has its own bottom navigation? Should Anti-Social level
    completions (no proof row) count as a completed mission for CCTV?
 6. Licences for live camera feeds stay as recorded in Halo's
    `DATA_SOURCES.md`; restricted feeds (NYC DOT) must stay off.

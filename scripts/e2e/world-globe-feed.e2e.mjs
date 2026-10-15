@@ -94,6 +94,14 @@ async function context(viewport, { member = false, eligible = false, owner = fal
   page.on('pageerror', (e) => errors.push(e.message));
   return { ctx, page, calls, errors };
 }
+/* the bottom app bar is on screen and no globe control sits under it (owner, 2026-10-15: the bar never leaves) */
+const barClear = (page) => page.evaluate(() => {
+  const bar = document.querySelector('.appbar'); if (!bar) return { bar: false };
+  const b = bar.getBoundingClientRect(), cs = getComputedStyle(bar);
+  const shown = cs.display !== 'none' && cs.visibility !== 'hidden' && b.height > 0;
+  const hits = [...document.querySelectorAll('.globe-controls button, .globe-data button')].filter((n) => { const r = n.getBoundingClientRect(); return r.width > 0 && getComputedStyle(n).display !== 'none' && r.bottom > b.top + 1 && r.top < b.bottom && r.right > b.left && r.left < b.right; }).map((n) => n.id);
+  return { bar: shown, top: Math.round(b.top), covered: hits };
+});
 const widths = (page) => page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
 async function settle(frameOrPage) { await frameOrPage.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {}); }
 
@@ -123,18 +131,20 @@ for (const size of SIZES) {
     check(`guest-${size.name}`, 'the free layer opens', await page.evaluate(() => window.__huLayerOn('flights')));
     const w = await widths(page);
     check(`guest-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
+    const gb = await barClear(page);
+    check(`guest-${size.name}`, 'the app bar is there and covers no globe control', gb.bar && gb.covered.length === 0, gb);
     await page.screenshot({ path: join(OUT, `guest-full-world-${size.name}.png`) });
     check(`guest-${size.name}`, 'no page errors', errors.length === 0, errors);
     await ctx.close();
   }
-  /* 2. just the globe: no bar, no controls, the credit and one way back */
+  /* 2. just the globe: no controls, the credit, one way back, and the bottom app bar (it never leaves) */
   if (runs('bare')) {
     const { ctx, page, errors } = await context(size.viewport);
     await page.goto(BASE + '/action-globe.html?explore=1&chrome=0', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.documentElement.classList.contains('globe-bare'), null, { timeout: 30000 });
     await settle(page); await page.waitForTimeout(800);
     const v = await page.evaluate(() => { const vis = (s) => { const n = document.querySelector(s); if (!n) return false; const r = n.getBoundingClientRect(), cs = getComputedStyle(n); return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0; }; return { bar: vis('.appbar'), controls: vis('.globe-controls'), data: vis('.globe-data'), header: vis('header'), deck: vis('#deck'), exit: vis('#bareExit'), credit: vis('.osm-credit') }; });
-    check(`bare-${size.name}`, 'only the Earth, the credit and the way back', !v.bar && !v.controls && !v.data && !v.header && !v.deck && v.exit && v.credit, v);
+    check(`bare-${size.name}`, 'the Earth, the credit, the way back and the app bar', v.bar && !v.controls && !v.data && !v.header && !v.deck && v.exit && v.credit, v);
     const w = await widths(page);
     check(`bare-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
     await page.screenshot({ path: join(OUT, `just-the-globe-${size.name}.png`) });
@@ -158,6 +168,8 @@ for (const size of SIZES) {
     check(`member-${size.name}`, 'no camera list or frame was requested', !calls.some((c) => /cctv\/(sources|frame)/.test(c.p)));
     const w = await widths(page);
     check(`member-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
+    const mb = await barClear(page);
+    check(`member-${size.name}`, 'a signed-in member keeps the app bar on the Full world, clear of the controls', mb.bar && mb.covered.length === 0, mb);
     await page.screenshot({ path: join(OUT, `cctv-locked-${size.name}.png`) });
     await page.click('#cctvClose');
     await page.click('#ctlIntel', { force: true });

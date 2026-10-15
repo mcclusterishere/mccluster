@@ -2790,12 +2790,6 @@
   }
   function sizeWorld() {
     var view = $("mnFeedView"), root = document.documentElement, app = $("mnApp");
-    /* GLOBE FIRST (owner, 2026-10-15: "for logged-in users, remove all the
-       other tabs ... the globe experience IS the whole product"). A signed-in
-       member's World has no bar: the header's search, bell and avatar menu
-       (profile, messages, settings, Music, sign out) are the chrome. Guests
-       keep the bar; the globe is already their public front door. */
-    root.classList.toggle("mn-globe-only", !!app && !app.hidden && !state.guest);
     var clear = barClearance();
     if (!view) return;
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;

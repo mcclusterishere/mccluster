@@ -102,18 +102,18 @@ test('analytics: 60/40 shell, shared filters, both-way selection, and every exis
   assert.match(globe, /if\(ANALYTICS\)\{showMissions=false;showCities=false\}/);
 });
 
-test('globe first: a signed-in member has no bar on the World; guests keep it; Music moves into the account menu', async () => {
-  const [js, css, html] = await Promise.all([read('js/mnet.js'), read('css/style.css'), read('mnet.html')]);
-  assert.match(js, /root\.classList\.toggle\("mn-globe-only", !!app && !app\.hidden && !state\.guest\)/);
-  assert.ok(js.indexOf('classList.toggle("mn-globe-only"') < js.indexOf('var clear = barClearance();'), 'the bar is hidden before its clearance is measured');
-  assert.match(css, /\.mn-globe-only \.appbar,\.mn-globe-only \.mcc-auth-chip\{display:none!important\}/);
-  assert.match(html, /<a href="listen\.html" id="mnMenuMusic">Music<\/a>/);
+test('the bottom app bar never leaves: no experience hides it; Music stays in the bar, not the account menu', async () => {
+  const [js, css, html, globe, gcss] = await Promise.all([read('js/mnet.js'), read('css/style.css'), read('mnet.html'), read('js/action-globe.js'), read('css/action-globe.css')]);
+  assert.doesNotMatch(js + css + globe, /mn-globe-only/, 'no signed-in "no bar" mode');
+  assert.doesNotMatch(html, /id="mnMenuMusic"/, 'Music is a bar column again, not a menu item');
+  // just the globe keeps the bar: no data-no-appbar and no CSS that hides it
+  assert.doesNotMatch(globe.slice(globe.indexOf('const BARE='), globe.indexOf('const BARE=') + 200), /data-no-appbar/);
+  assert.doesNotMatch(gcss, /\.globe-bare[^{]*\.appbar/);
 });
 
 test('just the globe: ?explore=1&chrome=0 drops every control but keeps the credit and a way back', async () => {
   const [js, css, html] = await Promise.all([read('js/action-globe.js'), read('css/action-globe.css'), read('action-globe.html')]);
   assert.match(js, /const BARE=EXPLORE&&new URLSearchParams\(location\.search\)\.get\('chrome'\)==='0'/);
-  assert.match(js, /document\.body\.setAttribute\('data-no-appbar',''\)/);
   assert.match(css, /\.globe-bare header,\.globe-bare \.globe-controls,\.globe-bare \.globe-data/);
   assert.doesNotMatch(css, /\.globe-bare[^{]*\.osm-credit\{display:none/);
   assert.match(html, /id="bareExit"[^>]*aria-label="Show the controls again"/);

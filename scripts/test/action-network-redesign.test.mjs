@@ -19,10 +19,9 @@ test('the avatar opens a compact account menu, not a directory',()=>{
  assert.match(menu,/id="mnMenuName"/);
  assert.match(menu,/id="mnMenuHandle"/);
  assert.deepEqual([...menu.matchAll(/data-mn-view="([^"]+)"/g)].map(x=>x[1]),['profile','messages']);
- /* globe first (owner, 2026-10-15): a signed-in member's World has no bar, so Music, a bar column, is reached here */
- assert.deepEqual([...menu.matchAll(/href="([^"]+)"/g)].map(x=>x[1]),['account.html?stay=1','listen.html']);
+ assert.deepEqual([...menu.matchAll(/href="([^"]+)"/g)].map(x=>x[1]),['account.html?stay=1']);
  assert.deepEqual([...menu.matchAll(/<(?:button|a)\b[^>]*>([^<]*)/g)].map(x=>x[1].replace(/&amp;/g,'&').trim()),
-  ['View profile','Messages','Settings & account','Music','Sign out']);
+  ['View profile','Messages','Settings & account','Sign out']);
  assert.match(menu,/id="mnMessageBadge"/);
  assert.match(page,/id="mnMe"[^>]*aria-controls="mnMenu"/);
  assert.match(page,/id="mnToWorld"[^>]*data-mn-view="feed"/);
