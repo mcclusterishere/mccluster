@@ -58,3 +58,20 @@ three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
 every open mission in one by its campaign, published. Idempotent; apply as the
 service role, then promote with the steps above. Regional impact totals still
 need five consenting members per region and are not seeded.
+
+Pending: `20261015210000_intel_mission_canon_v1.sql` is the one evidence ->
+claim -> briefing -> decision -> mission -> outcome schema for Halo and the
+plane (design: `docs/control-plane/INTEL-TO-MISSION-CANON.md`). It reuses
+`ops_ingest_*`, `ai_context.decisions`, `action_missions` and `action_proofs`
+and adds the `intel_*` tables and service-role-only functions. Rollback:
+`20261015210000_intel_mission_canon_v1.rollback.sql`. Behaviour test:
+`supabase/tests/intel_mission_canon.behaviour.sql`, run with the dependent
+tables, the rollback and a re-apply by `scripts/test-intel-canon-db.sh` on a
+scratch Postgres 16. Apply as `intel_mission_canon_v1`, then promote using the
+steps above. The Worker's intel routes answer `intel_schema_not_ready` until
+then, and its USGS collector stays off until `INTEL_USGS_COLLECTOR_ENABLED`
+is `"true"`.
+
+Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
+(a private schema with no grants that nothing can reach, and a second source
+registry beside `ops_ingest_*`). The intel canon replaces it.
