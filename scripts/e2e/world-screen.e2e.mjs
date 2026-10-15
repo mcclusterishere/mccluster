@@ -482,7 +482,7 @@ if (runs('layers-member')) {
   line = await page.$eval('#mnWorldLayers', (p) => p.textContent);
   check(scope, 'the line names all three, with the next launch', /3 aircraft/.test(line) && /2 satellites overhead, moving live/.test(line) && /2 launches coming up · next: Falcon 9 Block 5 · Oct 16 · Cape Canaveral/.test(line), line);
   const credits = await globe.$eval('#layerCredits', (c) => c.textContent);
-  check(scope, 'each source is credited on the imagery line while it is on', /Flights: OpenSky Network/.test(credits) && /Satellites: CelesTrak/.test(credits) && /Launches: Launch Library 2/.test(credits), credits);
+  check(scope, 'each source is credited on the imagery line while it is on', /Flights: OpenSky/.test(credits) && /Satellites: CelesTrak/.test(credits) && /Launches: The Space Devs/.test(credits), credits);
   await page.waitForTimeout(1800);
   await page.screenshot({ path: join(OUT, 'member-iphone-layers.png') });
   const fit = await split(page);
