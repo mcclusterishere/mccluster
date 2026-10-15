@@ -793,6 +793,13 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
       "path": "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1603,6 +1610,13 @@
       "rationale": "Unit test of the World screen's navigation and emblem/Fund contract; names the Equity Uprise emblem path. Not a building capability."
     },
     {
+      "path": "scripts/test/identity-verification-levels.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
       "path": "scripts/test/policy-fellowship-ladder.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -2295,6 +2309,13 @@
       "rationale": "Unapplied mission curation and resource registry."
     },
     {
+      "path": "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
       "path": "supabase/pending/README.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2632,6 +2653,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Automated policy/platform assertions; validates mapped features but is not itself a building capability."
+    },
+    {
+      "path": "supabase/tests/identity_verification_levels.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
       "path": "supabase/tests/policy_fellowship_ladder.behaviour.sql",
