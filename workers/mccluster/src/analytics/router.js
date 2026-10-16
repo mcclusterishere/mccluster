@@ -869,7 +869,7 @@ async function handleUserExplorer(request, env, user, url) {
   for (let offset = 0; offset < ids.length; offset += EVENT_QUERY_CONCURRENCY) {
     const batches = await Promise.all(ids.slice(offset, offset + EVENT_QUERY_CONCURRENCY).map(id =>
       sbRows(env, 'events?site_id=is.null&uid=eq.' + encodeURIComponent(id) +
-        '&select=uid,at,name,path,session_id,referrer&order=at.desc&limit=100')
+        '&select=uid,at,name,path,session_id,referrer,props&order=at.desc&limit=100')
     ));
     for (const rows of batches) allEvents.push(...rows);
   }
@@ -887,7 +887,9 @@ async function handleUserExplorer(request, env, user, url) {
       attributes:{created_at:u.created_at||null,email_confirmed_at:u.email_confirmed_at||null,
         first_name:meta.first_name||null,last_name:meta.last_name||null,
         observed_events_sample:events.length,observed_sessions_sample:activity.sessions},
-      events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer})),
+      events:events.map(e=>({at:e.at,name:e.name,path:e.path,source:e.referrer,
+        track_id:String(e.props?.creator_track_id||'').slice(0,64),
+        track:String(e.props?.track||e.props?.song||'').slice(0,120)})),
       scores:{engagement:{value:activity.value,window_days:30,
         explanation:'4 points per meaningful event plus 3 per observed session, capped at 100; based on latest 100 authenticated events.'}}
     });
@@ -995,6 +997,30 @@ export async function handleAnalyticsRequest(request, env, user) {
 
   if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
     return handleSelfMusicAnalytics(request,env,user,url,path);
+  if (path === '/v1/analytics/artist-rankings') {
+    if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
+    await requireHouseOwner(env,user);
+    const days = Number(url.searchParams.get('days')||30);
+    if (![7,30,90].includes(days)) return json({ok:false,error:'Invalid time window'},400);
+    const since = new Date(Date.now()-days*86400000).toISOString();
+    const rows = await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+      '&name=in.(music_play,song_start,music_complete,track_share)&select=name,props,uid,session_id&order=at.desc&limit=10000');
+    const tracks = new Map();
+    for (const e of rows) {
+      const id=String(e.props?.creator_track_id||'').trim();
+      if (!/^[a-f0-9-]{36}$/i.test(id)) continue;
+      const t=tracks.get(id)||{track_id:id,starts:0,completions:0,shares:0,identified_listeners:new Set()};
+      if (e.name==='music_play'||e.name==='song_start') {t.starts++;if(e.uid)t.identified_listeners.add(String(e.uid));}
+      if(e.name==='music_complete')t.completions++;
+      if(e.name==='track_share')t.shares++;
+      tracks.set(id,t);
+    }
+    const result=[...tracks.values()].map(t=>({track_id:t.track_id,starts:t.starts,completions:t.completions,
+      shares:t.shares,identified_listeners:t.identified_listeners.size}))
+      .sort((a,b)=>b.starts-a.starts).slice(0,100);
+    return json({ok:true,days,sample_limited:rows.length===10000,rankings:result,
+      note:'Observed event totals. Identified listeners include signed-in accounts only. No unverified artist attribution.'});
+  }
   if (path === '/v1/analytics/users') return handleUserExplorer(request, env, user, url);
   if (path === '/v1/analytics/business') {
     return handleBusinessSnapshot(request, env, user, url);

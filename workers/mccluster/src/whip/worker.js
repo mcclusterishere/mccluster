@@ -77,9 +77,6 @@ async function authUser(req, env) {
     const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: auth } });
     if (res.ok) return res.json();
   }
-  if (env.ALLOW_DEMO_IDENTITIES === 'true') {
-    return { id: req.headers.get('x-we-user-id') || 'demo-user', email: 'demo@whipequipped.local', demo: true };
-  }
   return null;
 }
 async function requireUser(req, env) {
@@ -89,13 +86,11 @@ async function requireUser(req, env) {
 }
 async function requireOperator(req, env, tenantId) {
   const user = await requireUser(req, env);
-  if (user.demo && req.headers.get('x-we-role') === 'operator') return user;
   let rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
-  if (!rows?.length && user.email) rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&email=eq.${encodeURIComponent(user.email)}&select=*`);
   if (!rows?.length) throw Object.assign(new Error('Operator access required'), { status: 403 });
   return user;
 }
-function requestIdentity(req, user, fallback) { return user?.id || req.headers.get('x-we-user-id') || fallback; }
+function requestIdentity(req, user, fallback) { return user?.id || null; }
 function safeSlug(value) { return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60); }
 function appUrl(env, path = '') { return `${String(env.PUBLIC_APP_URL || 'https://example.com').replace(/\/$/, '')}${path}`; }
 

@@ -251,6 +251,20 @@
       --cs-ruby:#e5383b;--cs-warn:#d9a441;--cs-1:#12161c}
   </style>
   <script src="js/live-content.js?v=__STAMP__"></script>
+<style>
+/* Mobile-first artist intelligence; cards scale up without horizontal tables. */
+.artist-mobile-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px}
+.artist-rank-card{min-width:0;padding:14px;border:1px solid var(--bd-edge,#303743);border-radius:14px;background:var(--bd-card,#161c24)}
+.artist-rank-card__title{display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:12px}
+.artist-rank-card__title code{overflow-wrap:anywhere;font-size:11px;min-width:0}
+.artist-rank-card__metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.artist-rank-card__metrics span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.artist-rank-card__metrics b{font-size:20px;font-variant-numeric:tabular-nums}
+.artist-rank-card__metrics small{font-size:11px;opacity:.75}
+#artistIntelligence .row{display:flex;flex-wrap:wrap;gap:10px}
+#artistIntelligence select{min-height:44px;max-width:100%}
+@media(min-width:720px){.artist-mobile-list{grid-template-columns:repeat(2,minmax(0,1fr))}.artist-rank-card__metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <main class="wrap">
@@ -410,6 +424,7 @@
           completions, shares, album rollups and the underlying media-event mix — all
           scoped to the same date range selected above.</p>
         <div id="insContent"></div>
+        <section aria-label="Artist performance rankings" style="margin-top:24px"><h3>Artist performance</h3><p class="bd-sub">Rank real creator tracks by recorded starts and completions. These are sampled observations, not unique listeners.</p><div id="artistIntelligence" aria-live="polite">Checking owner access…</div></section>
       </section>
     </section>
 
@@ -478,6 +493,7 @@
 <script src="js/analytics-product.js"></script>
 <script src="js/analytics-suite.js?v=__STAMP__"></script>
 <script src="js/analytics-users.js?v=__STAMP__" defer></script>
+<script src="js/analytics-artists.js?v=__STAMP__" defer></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
