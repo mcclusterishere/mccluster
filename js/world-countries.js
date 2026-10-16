@@ -4,7 +4,7 @@
    go away automatically (they could keep it on if they want)."
 
    - Borders: Natural Earth 1:110m Admin 0 (public domain), data/geo/world-countries-110m.json (tools/build-world-countries.mjs).
-     One ground-clamped polyline primitive for every border; colour per country is a per-instance attribute, so a fade is a
+     One polyline primitive for every border; colour per country is a per-instance attribute, so a fade is a
      few typed-array writes, never a rebuild.
    - Flags: flag-icons (MIT), whole flags scaled into one atlas (assets/flags/flag-sprite-4x3.webp, tools/build-flag-sprite.mjs),
      one billboard per country at Natural Earth's label point. A flag is a nation's own artwork: it is scaled, never redrawn.
@@ -167,46 +167,48 @@
     function polygonInstances(f, color) {
       return polygonsOf(f).map((poly, k) => new C.GeometryInstance({
         id: 'hu-country-fill-' + (f.properties.a3 || '') + '-' + k,
-        geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat()), poly.slice(1).map((h) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(h.slice(0, -1).flat())))), vertexFormat: C.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT, arcType: C.ArcType.GEODESIC }),
+        geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat()), poly.slice(1).map((h) => new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(h.slice(0, -1).flat())))), height: 3000, vertexFormat: C.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT, arcType: C.ArcType.GEODESIC }),
         attributes: color ? { color: C.ColorGeometryInstanceAttribute.fromColor(color) } : undefined,
       }));
     }
     function polygonPrimitive(f, color) {
       const instances = polygonInstances(f, color), appearance = new C.PerInstanceColorAppearance({ flat: true, translucent: true });
-      return C.GroundPrimitive.isSupported(viewer.scene) ? new C.GroundPrimitive({ geometryInstances: instances, appearance, asynchronous: false }) : new C.Primitive({ geometryInstances: instances, appearance, asynchronous: false });
+      return new C.Primitive({ geometryInstances: instances, appearance, asynchronous: false });
     }
     function ringInstances(f, id, width, color) {
       return polygonsOf(f).flatMap((poly, k) => poly.map((ring, r) => new C.GeometryInstance({
         id: id + '-' + k + '-' + r,
-        geometry: ground ? new C.GroundPolylineGeometry({ positions: C.Cartesian3.fromDegreesArray(ring.flat()), width, arcType: C.ArcType.GEODESIC }) : new C.PolylineGeometry({ positions: C.Cartesian3.fromDegreesArrayHeights(ring.flatMap((p) => [p[0], p[1], 3000])), width, arcType: C.ArcType.GEODESIC, vertexFormat: C.PolylineColorAppearance.VERTEX_FORMAT }),
+        geometry: ground ? new C.GroundPolylineGeometry({ positions: C.Cartesian3.fromDegreesArray(ring.flat()), width, arcType: C.ArcType.GEODESIC }) : new C.PolylineGeometry({ positions: C.Cartesian3.fromDegreesArrayHeights(ring.flatMap((p) => [p[0], p[1], 3000])), width, arcType: C.ArcType.GEODESIC, vertexFormat: color ? C.PolylineColorAppearance.VERTEX_FORMAT : C.PolylineMaterialAppearance.VERTEX_FORMAT }),
         attributes: color ? { color: C.ColorGeometryInstanceAttribute.fromColor(color) } : undefined,
       })));
     }
     let ground = false;
     function build(data, sprite) {
-      ground = !!(C.GroundPolylinePrimitive && C.GroundPolylinePrimitive.isSupported(viewer.scene));
+      /* lines on the ellipsoid, 3 km up, not ground-clamped: measured in Chromium's software GL, ground-clamped polylines
+         (a shadow volume per segment) doubled the frame time; from where the decoration shows, 3 km is invisible, and with
+         depthTestAgainstTerrain off (Cesium's default) mountains do not cut the lines. */
+      ground = false;
       const Line = ground ? C.GroundPolylinePrimitive : C.Primitive;
       st.features = (data.features || []).filter((f) => f && f.properties && Array.isArray(f.properties.label));
       const plain = [], usInst = [];
       st.items = st.features.map((f) => {
         const p = f.properties, us = p.a2 === 'US';
         const id = 'hu-country-' + (p.a2 || p.a3);
-        const inst = us ? ringInstances(f, id, 6, null) : ringInstances(f, id, 1.4, outlineBase.withAlpha(0.5));
+        const inst = us ? ringInstances(f, id, 9, null) : ringInstances(f, id, 1.4, outlineBase.withAlpha(0.5));
         (us ? usInst : plain).push(...inst);
         return { f, code: p.a2 || p.a3, us, box: p.main_bbox || p.bbox, ids: inst.map((x) => x.id), attrs: null, alpha: 1, applied: -1, flag: null, label: null };
       });
       st.outline = viewer.scene.primitives.add(new Line({ geometryInstances: plain, appearance: new C.PolylineColorAppearance({ translucent: true }), asynchronous: true }));
       /* the United States' ribbon: red down the middle, white, then blue at both edges (Old Glory red, white, Old Glory blue) */
-      const rwb = new C.Material({ translucent: true, fabric: { type: 'HuRedWhiteBlue', uniforms: { alpha: 1 }, source: 'czm_material czm_getMaterial(czm_materialInput materialInput){czm_material m=czm_getDefaultMaterial(materialInput);float t=abs(materialInput.st.t-0.5)*2.0;vec3 c=t<0.34?vec3(0.698,0.133,0.204):(t<0.68?vec3(1.0):vec3(0.235,0.231,0.431));m.diffuse=c;m.emission=c*0.35;m.alpha=alpha;return m;}' } });
+      const rwb = new C.Material({ translucent: true, fabric: { type: 'HuRedWhiteBlue', uniforms: { alpha: 1 }, source: 'czm_material czm_getMaterial(czm_materialInput materialInput){czm_material m=czm_getDefaultMaterial(materialInput);float t=abs(materialInput.st.t-0.5)*2.0;vec3 c=t<0.34?vec3(0.698,0.133,0.204):(t<0.68?vec3(1.0):vec3(0.235,0.231,0.431));m.diffuse=c;m.alpha=alpha;return m;}' } });
       if (usInst.length) st.rwb = viewer.scene.primitives.add(new Line({ geometryInstances: usInst, appearance: new C.PolylineMaterialAppearance({ material: rwb, translucent: true }), asynchronous: true }));
       const usF = st.features.find((f) => f.properties.a2 === 'US');
       if (usF) {
         /* thirteen stripes, faint, over the land (Stripe repeats in pairs: 6.5 pairs = 13 stripes) */
         const stripes = C.Material.fromType('Stripe', { horizontal: true, evenColor: new C.Color(0.698, 0.133, 0.204, 0.2), oddColor: new C.Color(1, 1, 1, 0.1), repeat: 6.5, offset: 0 });
         const appearance = new C.MaterialAppearance({ material: stripes, flat: true, translucent: true, materialSupport: C.MaterialAppearance.MaterialSupport.TEXTURED });
-        const inst = polygonsOf(usF).map((poly, k) => new C.GeometryInstance({ id: 'hu-country-us-wash-' + k, geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat())), vertexFormat: C.MaterialAppearance.MaterialSupport.TEXTURED.vertexFormat, arcType: C.ArcType.GEODESIC }) }));
-        const groundMat = C.GroundPrimitive.isSupported(viewer.scene) && C.GroundPrimitive.supportsMaterials(viewer.scene);
-        st.wash = viewer.scene.primitives.add(groundMat ? new C.GroundPrimitive({ geometryInstances: inst, appearance, asynchronous: true }) : new C.Primitive({ geometryInstances: inst, appearance, asynchronous: true }));
+        const inst = polygonsOf(usF).map((poly, k) => new C.GeometryInstance({ id: 'hu-country-us-wash-' + k, geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(C.Cartesian3.fromDegreesArray(poly[0].slice(0, -1).flat())), height: 3000, vertexFormat: C.MaterialAppearance.MaterialSupport.TEXTURED.vertexFormat, arcType: C.ArcType.GEODESIC }) }));
+        st.wash = viewer.scene.primitives.add(new C.Primitive({ geometryInstances: inst, appearance, asynchronous: true }));
         st.washMat = stripes; st.washBase = [0.2, 0.1];
       }
       st.rwbMat = rwb;
@@ -220,12 +222,19 @@
           const c = document.createElement('canvas'); c.width = cell[0]; c.height = cell[1];
           c.getContext('2d').drawImage(sprite.img, (n % sprite.index.cols) * cell[0], Math.floor(n / sprite.index.cols) * cell[1], cell[0], cell[1], 0, 0, cell[0], cell[1]);
           const w = it.us ? 30 : 20;
-          it.flag = st.flags.add({ position: pos, image: c, width: w, height: w * 0.75, scaleByDistance: new C.NearFarScalar(4e6, 1.15, 2.2e7, 0.75), id: { layer: 'countries', code: it.code } });
+          it.flag = st.flags.add({ position: pos, image: c, width: w, height: w * 0.75, scaleByDistance: new C.NearFarScalar(4e6, 1.15, 2.2e7, 0.75), distanceDisplayCondition: new C.DistanceDisplayCondition(0, flagReach(p.rank, it.us)), id: { layer: 'countries', code: it.code } });
         }
         if (p.rank <= 2) it.label = st.labels.add({ position: pos, text: p.a2 === 'US' ? 'United States' : p.name, font: '600 11px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.fromCssColorString('#03060c'), outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, verticalOrigin: C.VerticalOrigin.TOP, pixelOffset: new C.Cartesian2(0, it.flag ? (it.us ? 13 : 10) : 0), horizontalOrigin: C.HorizontalOrigin.CENTER, scaleByDistance: new C.NearFarScalar(4e6, 1.05, 2.2e7, 0.8), id: { layer: 'countries', code: it.code } });
       });
       st.ready = true;
       viewer.scene.preRender.addEventListener(frame);
+    }
+    /* how far out a flag still shows: the big countries always, smaller ones as the camera comes closer, scaled to the
+       screen so a phone's smaller Earth is not a wall of flags (Natural Earth's LABELRANK: 2 = largest) */
+    function flagReach(rank, us) {
+      if (us || rank <= 2) return Number.POSITIVE_INFINITY;
+      const k = Math.max(0.5, Math.min(1.2, (window.innerWidth || 1000) / 1000));
+      return k * (rank <= 3 ? 1.6e7 : rank <= 4 ? 1.15e7 : rank <= 5 ? 8.5e6 : 6e6);
     }
     function cacheAttrs() {
       let all = true;
@@ -245,7 +254,7 @@
     }
     function frame() {
       if (!st.ready) return;
-      const now = performance.now(), dt = st.lastT ? Math.min(100, now - st.lastT) : 0;
+      const now = performance.now(), dt = st.lastT ? Math.min(1000, now - st.lastT) : 0;
       st.lastT = now;
       const cam = viewer.camera, pw = cam.positionWC, dw = cam.directionWC;
       const key = st.mode + (pw.x | 0) + ',' + (pw.y | 0) + ',' + (pw.z | 0) + ',' + Math.round(dw.x * 1e3) + ',' + Math.round(dw.y * 1e3);

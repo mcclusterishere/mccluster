@@ -212,7 +212,8 @@ test("no Worker source file asks for redirect: 'error'", async () => {
   assert.ok(files.length > 20);
   const offenders = [];
   for (const f of files) {
-    const src = await readFile(new URL(f, root), 'utf8');
+    /* comments may name the forbidden value (main's world-layers.js and lib/safe-fetch.js explain it); only code counts */
+    const src = (await readFile(new URL(f, root), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
     if (/redirect:\s*['"]error['"]/.test(src) && !REDIRECT_ERROR_PENDING_441.has(f.split('\\').join('/'))) offenders.push(f);
   }
   assert.deepEqual(offenders, []);
