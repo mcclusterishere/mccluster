@@ -5,7 +5,11 @@ on:
     paths:
       - 'control.html'
       - 'js/control-room/workspace*.js'
-      - 'js/control-room/analytics-globe.js'
+      - 'js/control-room/analytics*.js'
+      - 'css/control-analytics*.css'
+      - 'workers/mccluster/src/analytics/**'
+      - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
+      - 'scripts/e2e/analytics-unified.e2e.mjs'
       - 'css/control-workspace.css'
       - 'scripts/e2e/control-workspace.e2e.mjs'
       - 'scripts/test/control-workspace.test.mjs'
@@ -44,7 +48,9 @@ jobs:
           CONTROL_QA_OUTPUT: /tmp/control-proof/screenshots
         run: |
           node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-surface.test.mjs
+          node --test workers/mccluster/test/analytics-*.test.mjs
           node scripts/e2e/control-workspace.e2e.mjs
+          node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

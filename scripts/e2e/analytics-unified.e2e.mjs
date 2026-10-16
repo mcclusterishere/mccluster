@@ -84,7 +84,9 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/health') return json(route, { ok: true });
     if (p === '/v1/status') return owner ? json(route, { ok: true, operator: { email: 'owner@test' } }) : json(route, { error: 'Forbidden' }, 403);
     if (!owner) return json(route, { error: 'Forbidden' }, 403);
-    if (p === '/v1/workspaces/me') return json(route, { default_org_id: 'o1', workspaces: [{ org_id: 'o1', slug: 'mccluster', kind: 'studio', name: 'McCluster', role: 'owner', enabled: true }] });
+    if (p === '/v1/workspaces/me') return json(route, { profile:{id:'11111111-1111-4111-8111-111111111111'}, default_org_id: 'o1', workspaces: [{ org_id: 'o1', slug: 'mccluster', kind: 'studio', name: 'McCluster', role: 'owner', enabled: true }] });
+    if(p==='/v1/analytics/cameras')return json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))});
+    if(p==='/v1/analytics/cameras/check')return json(route,{ok:true,checks:[{id:'1',status:'image_received',checked_at:new Date().toISOString(),image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqoAAAAASUVORK5CYII='},{id:'2',status:'unavailable',checked_at:new Date().toISOString()},{id:'3',status:'image_received',image:'data:image/png;base64,YmFk',checked_at:new Date().toISOString()}]});
     if (p === '/v1/analytics/business') return json(route, {ok:true,snapshot:FIX.business});
     if (p === '/v1/analytics/audience-science') return json(route, {version:'fixture',totals:{music_listeners:18,returning_listeners:7},profiles:[],signals:[],track_affinity:[]});
     if (p === '/v1/analytics/identity') return json(route, FIX.identity);
@@ -119,17 +121,20 @@ const settle = (page) => page.waitForFunction(() => window.__craGlobe && window.
 const widths = (page) => page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
 
 
-for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,height:1000}]){
+for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,height:1000},{width:390,height:844,workspace:true},{width:1180,height:820,workspace:true}]){
  const {ctx,page,errors,calls}=await context(size);
- await page.goto(BASE+'/control.html#analytics',{waitUntil:'domcontentloaded'});
+ await page.goto(BASE+'/control.html'+(size.workspace?'?workspace=1':'')+'#analytics',{waitUntil:'domcontentloaded'});
+ if(size.workspace)await page.waitForSelector('body[data-control-workspace=owner]');
  const ready=await settle(page);check(size.width,'geographic globe renders',ready);
  await page.waitForSelector('.cu-metrics');await page.waitForFunction(()=>window.CR.analytics.state.loaded);
  const w=await widths(page);check(size.width,'no horizontal overflow',w.scrollW===w.clientW,w);
  const targets=await page.locator('.cu-card button,.cu-card a').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({text:n.textContent,height:n.getBoundingClientRect().height})));
  check(size.width,'card controls retain 40px touch targets',targets.length>0&&targets.every(n=>n.height>=40),targets.filter(n=>n.height<40));
- const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe section about 30% viewport',dimensions.height<=Math.max(265,size.height*.33),dimensions);
+ const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe stays inside viewport',dimensions.height>150&&dimensions.y+dimensions.height<=size.height,dimensions);
+ check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
+ const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
  const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','world']),tabs);
- await page.screenshot({path:OUT+'/unified-'+size.width+'.png',fullPage:false});
+ await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
  await page.locator('[data-cra-sec="intelligence"]').first().click();await page.waitForSelector('[data-cu-source="cctv"]');
  check(size.width,'missing archive shown',await page.locator('[data-cu-details]').innerText().then(x=>x.includes('not provisioned')));
  await page.locator('[data-cu-source="cctv"]').click();
@@ -138,6 +143,33 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'snapshot displayed',await page.locator('.cu-records').innerText().then(x=>x.includes('Fixture camera')));
  await page.locator('[data-cu-source="usgs"]').click();await page.locator('#cuSnapshot button[type=submit]').click();await page.waitForFunction(()=>!window.CR.analyticsUnified.state.reading);
  check(size.width,'failed source read remains visible',await page.locator('[data-cu-details] [role=alert]').innerText().then(x=>x.includes('unavailable')));
+ check(size.width,'globe survives chapter navigation',await page.locator('[data-cra-globe]').getAttribute('data-test-identity')==='same-earth');
+ await page.locator('[data-cra-sec="cameras"]').first().click();
+ check(size.width,'camera count starts unmeasured',!(await page.locator('[data-cu-details]').innerText()).includes('10,000'));
+ await page.locator('[data-camera-load]').click();await page.waitForSelector('[data-camera-check]:not([disabled])');
+ check(size.width,'catalog count is measured independently',await page.locator('.cu-metrics').innerText().then(t=>t.includes('3')&&t.includes('Run feed verification')));
+ await page.locator('[data-camera-check]').click();await page.waitForFunction(()=>Object.keys(window.CR.analyticsCameras.state.checks).length===3&&!window.CR.analyticsCameras.state.running);
+ const measured=await page.evaluate(()=>window.CR.analyticsCameras.totals(window.CR.analyticsCameras.state.catalog.cameras));
+ check(size.width,'only decoded images count as verified',measured.verified===1&&measured.failed===2&&measured.unchecked===0,measured);
+ await page.locator('[role=tab][data-cra-sec="cameras"]').press('ArrowRight');
+ check(size.width,'keyboard and tab state agree',await page.locator('[role=tab][aria-selected=true]').innerText()==='Adaptive');
+ if(size.width<600){
+  await page.locator('[role=tab][data-cra-sec="overview"]').click();
+  const metricBox=await page.locator('.cu-metrics').first().boundingBox(),railSession=await ctx.newCDPSession(page);
+  const ry=metricBox.y+Math.min(metricBox.height/2,40),rx=metricBox.x+metricBox.width-20;
+  await railSession.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:rx,y:ry}]});
+  for(const delta of [40,100,180,260]){await railSession.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:rx-delta,y:ry}]});await page.waitForTimeout(20);}
+  await railSession.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(300);
+  check(size.width,'KPI rail swipes without changing chapter',await page.locator('.cu-metrics').first().evaluate(el=>el.scrollLeft>30)&&await page.locator('[role=tab][aria-selected=true]').innerText()==='Overview');
+  const box=await page.locator('.cad-chapter').boundingBox();
+  const bodyBox=await page.locator('.cad-chapter>div:first-child').boundingBox();
+  const session=await ctx.newCDPSession(page), y=bodyBox.y+bodyBox.height-8;
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bodyBox.x+bodyBox.width-25,y}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:bodyBox.x+25,y}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await page.waitForTimeout(200);
+  check(size.width,'touch swipe changes the whole chapter',await page.locator('[role=tab][aria-selected=true]').innerText()==='Audience');
+ }
  await page.locator('[data-cra-sec="inventory"]').first().click();await page.waitForSelector('#cuFieldSearch');
  await page.locator('#cuFieldSearch').fill('analytics_site_daily');await page.locator('#cuFieldSearch').press('Tab');
  check(size.width,'field directory searches audited schema',await page.locator('[data-cu-details] .cu-records').innerText().then(x=>x.includes('analytics_site_daily')));
