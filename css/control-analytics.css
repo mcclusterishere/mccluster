@@ -168,11 +168,11 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-app{--k-bg:#0a0a0b;--k-card:#141416;--k-line:rgba(255,255,255,.09);--k-line2:rgba(255,255,255,.16);--k-text:#f2f2f3;--k-dim:#a1a1a8;--k-faint:#6f6f77;--k-red:#e11d2e;--k-red-hot:#ff2b3c;--k-live:#22c55e;--k-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"DejaVu Serif","Liberation Serif",serif}
 .cra-split{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;background:var(--k-bg);color:var(--k-text)}
 .cra-lead-col{display:grid;min-width:0}
-.cra-top{display:grid;gap:12px;padding:16px 16px 6px}
+.cra-top{display:grid;gap:10px;padding:12px 16px 4px}
 .cra-top__row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.cra-top__eyebrow{margin:0;font:600 20px/1.1 var(--k-serif);letter-spacing:-.01em;color:var(--k-text)}
-.cra-top__title{display:flex;align-items:center;gap:12px;margin:4px 0 0;font:500 clamp(34px,10vw,44px)/1.05 var(--k-serif);letter-spacing:-.02em}
-.cra-live{display:inline-flex;align-items:center;gap:7px;font:500 15px/1 var(--ui,system-ui,sans-serif);letter-spacing:0;color:var(--k-dim)}
+.cra-top__eyebrow{margin:0;font:600 18px/1.1 var(--k-serif);letter-spacing:-.01em;color:var(--k-text)}
+.cra-top__title{display:flex;align-items:center;gap:12px;margin:4px 0 0;font:500 clamp(32px,9vw,44px)/1.05 var(--k-serif);letter-spacing:-.02em}
+.cra-live{display:inline-flex;align-items:center;gap:7px;margin:0;padding:0;border:0;background:none;font:500 15px/1 var(--ui,system-ui,sans-serif);letter-spacing:0;color:var(--k-dim)}
 .cra-live i{width:9px;height:9px;border-radius:50%;background:var(--k-faint)}
 .cra-live.is-live i{background:var(--k-live);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
 .cra-live.is-loading i{background:#f0b44d;animation:craPulse 1s ease-in-out infinite}
@@ -190,21 +190,21 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-cal{flex:none;display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--k-line2);border-radius:12px;background:#111113;color:var(--k-text);cursor:pointer}
 .cra-cal.is-on{border-color:var(--k-red);color:#fff}
 .cra-more{display:grid;gap:8px;padding:10px;border:1px solid var(--k-line);border-radius:12px;background:var(--k-card)}
-.cra-stage{position:relative;min-width:0;height:clamp(320px,47svh,560px);border:0;border-bottom:1px solid var(--k-line);border-radius:0;overflow:hidden;background:radial-gradient(circle at 50% 46%,rgba(150,150,165,.16) 0,rgba(60,60,70,.07) 33%,transparent 52%),var(--k-bg)}
-.cra-globe__host{position:absolute;inset:0}
+.cra-stage{position:relative;min-width:0;height:clamp(360px,50svh,600px);border:0;border-bottom:1px solid var(--k-line);border-radius:0;overflow:hidden;background:radial-gradient(circle at 50% 46%,rgba(150,150,165,.16) 0,rgba(60,60,70,.07) 33%,transparent 52%),var(--k-bg)}
+.cra-globe__host{position:absolute;inset:0 0 84px 0}
 .crg-canvas,.crg-canvas .cesium-widget,.crg-canvas canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .crg-canvas .cesium-widget-credits{display:none}
-.crg-msg{position:absolute;left:16px;right:16px;top:44%;margin:0;color:var(--k-dim);font-size:13px;text-align:center}
+.crg-msg{position:absolute;left:16px;right:16px;top:40%;margin:0;color:var(--k-dim);font-size:13px;text-align:center}
 .crg-msg[hidden]{display:none}
 .crg-tip{position:absolute;left:0;top:0;z-index:3;display:grid;gap:2px;padding:9px 13px;border:1px solid var(--k-line2);border-radius:10px;background:rgba(18,18,20,.92);box-shadow:0 10px 30px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap}
 .crg-tip[hidden]{display:none}
 .crg-tip b{font:600 15px/1.2 var(--ui,system-ui,sans-serif);color:#fff}.crg-tip span{font-size:13px;color:var(--k-dim)}
-.cra-globe__caption{position:absolute;left:12px;right:auto;top:8px;max-width:70%;margin:0;padding:0;background:none;color:var(--k-faint);font-size:11px;line-height:1.35;pointer-events:none}
-.cra-legend-geo{position:absolute;right:12px;top:42%;z-index:2;display:grid;gap:6px;color:var(--k-text);font-size:12px;pointer-events:none}
+.cra-globe__caption{position:absolute;left:12px;right:auto;top:4px;z-index:1;max-width:70%;margin:0;padding:0;background:none;color:var(--k-faint);font-size:11px;line-height:1.35;pointer-events:none}
+.cra-legend-geo{position:absolute;right:10px;top:auto;bottom:100px;z-index:1;display:grid;gap:5px;color:var(--k-text);font-size:11px;pointer-events:none}
 .cra-legend-geo b{font-weight:500;font-size:12px}
 .cra-key{display:flex;gap:8px}
 .cra-key__bar{width:7px;border-radius:4px;background:linear-gradient(#ff2b3c,#a3222f 45%,#5b1d24 80%,#26282d)}
-.cra-key__steps{display:grid;gap:8px;color:var(--k-dim)}
+.cra-key__steps{display:grid;gap:6px;color:var(--k-dim)}
 .cra-key__fold{font-size:10px;color:var(--k-faint);max-width:5.5rem;white-space:normal}
 .cra-pill{position:absolute;left:50%;bottom:38px;z-index:2;display:flex;align-items:center;transform:translateX(-50%);max-width:calc(100% - 32px);border:1px solid var(--k-line2);border-radius:999px;background:rgba(17,17,19,.88);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 .cra-pill__filters{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 16px;border:0;border-right:1px solid var(--k-line2);background:transparent;color:var(--k-text);font:500 15px/1 var(--ui,system-ui,sans-serif);cursor:pointer;white-space:nowrap}
@@ -292,7 +292,7 @@ body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}
   .cra-car__next{position:absolute;right:-12px;top:50%;display:grid;place-items:center;width:36px;height:36px;transform:translateY(-50%);border:1px solid var(--k-line2);border-radius:50%;background:#18181b;color:#fff;cursor:pointer}
 }
 @media (min-width:64rem){
-  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);height:100dvh;min-height:36rem}
+  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);height:calc(100dvh - var(--appbar-h,4.6rem) - 1.4rem - env(safe-area-inset-bottom));min-height:34rem}
   .cra-lead-col{grid-template-rows:auto minmax(0,1fr);min-height:0;border-right:1px solid var(--k-line)}
   .cra-stage{height:auto;min-height:0;border-bottom:0}
   .cra-side{min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain}

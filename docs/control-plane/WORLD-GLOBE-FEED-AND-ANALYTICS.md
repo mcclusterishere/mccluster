@@ -104,12 +104,11 @@ self-service numbers (above).
   pin is tapped, and the bottom app bar. The imagery credit stays (the
   licences ask for it) at a smaller size. One small corner control and Escape
   bring the chrome back. Reached from the Full world's "Just the globe" pill.
-- **Control Room (`control.html`) is not changed.** It opts out of the shared
-  bar on purpose (`data-no-appbar`) and, under 760px, reserves the bottom
-  64px for its own phone navigation (`css/control-room.css`), so adding the
-  shared bar there would stack two bottom bars. That needs a layout decision
-  (which bar wins on a phone) before anyone adds it; reported to the owner,
-  not done here. The 60/40 analytics globe lives inside the Control Room.
+- **Control Room (`control.html`) carries the shared bar now** (owner,
+  2026-10-15, section C3: admin first). The shared bar wins on a phone; the
+  Control Room's own bottom row becomes a row of rooms under its topbar
+  (Home, Work, Create, Analytics, System), hidden on the Analytics surface,
+  and from 761px the rail is the navigation as before.
 - Not changed: `index.html`; the bar on Matthew's other pages.
 
 ### B2. Layers by level (owner, 2026-10-15, second direction)
@@ -212,6 +211,76 @@ Every existing card, query and meaning is unchanged. New, in the panel:
   then says "The intel plane is not switched on yet" and draws nothing.
   Program / mission stays a disabled filter: none of the current reads can
   be sliced by mission.
+
+### C2. The charcoal analytics screen (owner, 2026-10-15, second pass)
+
+Owner: "This is what analytics should aspire to look like, exactly, on
+vertical phone. A custom globe of exactly the real globe, segmented like this
+(country borders). Charcoal interface. Select the globe, select locations, go
+there on the globe to see what analytics exist there; filter everything …
+Also repair backend capabilities that aren't seen and get them visualized.
+Admin first; push features down to other users later."
+
+- **One globe, drawn in the page.** The iframe of the World's globe is
+  replaced by one Cesium widget (`js/control-room/analytics-globe.js`): the
+  same Cesium release as the World, but no imagery, no terrain, no ion and so
+  no paid map: a charcoal ellipsoid, the Natural Earth 1:110m country
+  polygons (`data/geo/country-boundaries-110m.json`, public domain,
+  natural-earth-vector v5.1.2, built by `tools/build-country-boundaries.mjs`;
+  a neutral file the World can share) with lighter borders and a faint
+  graticule. `requestRenderMode` draws only on change; the canvas renders at
+  most two device pixels per CSS pixel. The World's `surface=analytics`
+  handlers in `js/action-globe.js` are left in place and unused.
+- **What it draws** is the layer aggregate from section C and nothing finer:
+  country fill by value (legend 5–10 / 10–100 / 100+; under 5 is never
+  drawn and the legend says so), a glow at each drawn country's Natural Earth
+  label point, great-circle arcs from the house country (McCluster Corp is a
+  Connecticut public charity; drawn at the US label point) to each drawn
+  country, intel cells as cells. No point without a label point, never 0,0.
+- **One selection.** A tap on a country, the country menu in the floating
+  pill, a row in "On the globe", and Clear all set the same state: the globe
+  colours and flies (no flight under reduced motion), the tooltip reads
+  "United States · 61 page views", the pill counts filters, the summary line
+  reads "24 hours · Page views · All sources  Clear", and the cards narrow.
+- **Cards** (swipeable, dots; two at a time from 48rem): Reach (page views,
+  with Views / Sources / Returning), Sign-ups, Music; Audience (Visitors with
+  New vs Returning, Locations with located / under 5 / no country, Networks),
+  Journeys, Site health; Action (Missions, Community). Every earlier card,
+  query and tab is under **Details**, unchanged.
+- **Reads that existed and no screen showed**, now visualized (owner only):
+
+  | Read | What it adds |
+  |---|---|
+  | `GET /v1/analytics/visitors?limit=1` (`analytics_visitor_list` counts) | returning visitors (more than one session) and new vs returning |
+  | `GET /v1/analytics/flows` | sessions, bounce rate, pages per session, top way in |
+  | `GET /v1/analytics/errors` | script errors (site vs injected), dead / rage clicks, blocked journeys (incl. `gated_preview_end`) |
+  | `rpc/action_mission_stats` | mission joins, in progress, proof submitted, admin-verified, rejected (all time) |
+  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Human Uprise posts / reactions / follows / profiles |
+
+- **Pending, not applied:** `supabase/pending/analytics_country_v1.sql`
+  (`analytics_country_totals`, `analytics_country_series`; security invoker
+  over `events_lean`, country only, bots excluded, anon revoked; behaviour
+  test `scripts/test-analytics-country-db.sh`). Until it is applied the
+  screen shows a country's page views (from `analytics_top`) and says
+  "Visitors by country need analytics_country_v1 (written, not applied)";
+  the trend stays worldwide and is labelled so.
+
+### C3. The owner's five-tab bar (admin first)
+
+For the house owner only (`GET /v1/status`, the Control Room's own owner
+check, remembered for ten minutes in this tab's `sessionStorage`, tied to the
+signed-in user), `js/tabbar.js` widens the bar to Play (the player), Home
+(`control.html#home`: the Control Room is the admin back end), the M
+(`assets/img/m-mark.png` as supplied, scaled, no plate), Analytics
+(`control.html#analytics`) and Globe. Everyone else keeps Music | M | Globe.
+Wings (held press) do not open on the five-tab bar.
+
+**Integration point** for other bar add-ons (the member Desk tab, PR #457):
+the dock carries `appbar--admin` and body `data-appbar-admin`; an add-on that
+would add a sixth column checks
+`if (dock.classList.contains("appbar--admin")) return null;` and lives under
+Home instead (the Control Room's account menu links the Desk:
+`mnet.html?view=feed&desk`). The `mcc:appbar-admin` event fires on change.
 
 ## D. Mission-gated CCTV
 
@@ -337,5 +406,8 @@ first, as for every core route).
 5. Decide: should the Control Room carry the shared bottom app bar on a
    phone, where it already has its own bottom navigation? Should Anti-Social level
    completions (no proof row) count as a completed mission for CCTV?
-6. Licences for live camera feeds stay as recorded in Halo's
+6. Apply `supabase/pending/analytics_country_v1.sql` (visitors and trend by
+   country on the analytics screen); until then the screen says it is not
+   applied.
+7. Licences for live camera feeds stay as recorded in Halo's
    `DATA_SOURCES.md`; restricted feeds (NYC DOT) must stay off.

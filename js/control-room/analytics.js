@@ -518,13 +518,16 @@
     root.querySelectorAll("[data-cra-seg]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-seg");S.ui[k]=b.getAttribute("data-v");paint();};});
     root.querySelectorAll("[data-cra-car]").forEach(function(car){
       var id=car.getAttribute("data-cra-car"),track=car.querySelector(".cra-car__track"),dots=root.querySelectorAll('[data-cra-dot="'+id+'"]');
-      if(!track)return;
-      var w=function(){return track.clientWidth||1;};
-      if(S.car[id])track.scrollLeft=S.car[id]*w();
-      var tm=0;track.addEventListener("scroll",function(){if(tm)return;tm=requestAnimationFrame(function(){tm=0;var i=Math.round(track.scrollLeft/w());if(i!==S.car[id]){S.car[id]=i;dots.forEach(function(d,k){d.classList.toggle("is-on",k===i);d.setAttribute("aria-selected",k===i?"true":"false");});}});},{passive:true});
-      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);track.scrollTo({left:i*w(),behavior:smooth?"smooth":"auto"});};
+      if(!track||!track.children.length)return;
+      /* a card's place is its own offset (two cards show at once on a tablet), not a multiple of the track's width */
+      var at=function(i){var c=track.children[Math.max(0,Math.min(track.children.length-1,i))];return c.offsetLeft-track.children[0].offsetLeft;};
+      var nearest=function(){var best=0,d=Infinity;for(var k=0;k<track.children.length;k++){var x=Math.abs(at(k)-track.scrollLeft);if(x<d){d=x;best=k;}}return best;};
+      var mark=function(i){S.car[id]=i;dots.forEach(function(d,k){d.classList.toggle("is-on",k===i);d.setAttribute("aria-selected",k===i?"true":"false");});};
+      if(S.car[id])track.scrollLeft=at(S.car[id]);
+      var tm=0,steering=0;track.addEventListener("scroll",function(){if(tm||steering)return;tm=requestAnimationFrame(function(){tm=0;var i=nearest();if(i!==S.car[id])mark(i);});},{passive:true});
+      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);mark(i);steering=1;clearTimeout(track._craT);track._craT=setTimeout(function(){steering=0;},smooth?700:50);track.scrollTo({left:Math.min(at(i),track.scrollWidth-track.clientWidth),behavior:smooth?"smooth":"auto"});};
       dots.forEach(function(d){d.onclick=function(){go(Number(d.getAttribute("data-i")));};});
-      var nx=car.querySelector("[data-cra-next]");if(nx)nx.onclick=function(){var count=track.children.length,i=(Math.round(track.scrollLeft/w())+1)%count;go(i);};
+      var nx=car.querySelector("[data-cra-next]");if(nx)nx.onclick=function(){go((nearest()+1)%track.children.length);};
     });
   }
   /* a country's own trend, from the pending read when it exists (supabase/pending/analytics_country_v1.sql) */

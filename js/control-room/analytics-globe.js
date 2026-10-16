@@ -28,7 +28,7 @@
   var BOUNDARIES = "data/geo/country-boundaries-110m.json";
   var C = {
     space: "#0b0b0d", earth: "#121316", land: "#26282d", border: "#5d626c", graticule: "#ffffff",
-    lo: "#7a1f29", mid: "#d42032", hi: "#ff2b3c", sel: "#ff5a66", arc: "#ff3347"
+    lo: "#7a1f29", mid: "#d42032", hi: "#ff2b3c", sel: "#ff3346", arc: "#ff3347"
   };
   var cesiumPromise = null, boundaryPromise = null;
 
@@ -220,12 +220,12 @@
       if (!api.ready) return;
       var dur = reducedMotion() ? 0 : 1.2, p = valueOf(code), ll = p && lonLat(p.lon, p.lat);
       if (!code) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(opts.home ? opts.home[0] : -60, opts.home ? opts.home[1] : 22, homeAltitude()), duration: dur }); return; }
-      if (ll) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(ll[0], ll[1] - 4, Math.max(9e6, homeAltitude() * 0.62)), duration: dur }); return; }
+      if (ll) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(ll[0], ll[1] - 6, homeAltitude() * 0.92), duration: dur }); return; }
       var bx = bboxByCode[code];
-      if (bx) camera.flyTo({ destination: Cs.Cartesian3.fromDegrees((bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2, Math.max(9e6, homeAltitude() * 0.62)), duration: dur });
+      if (bx) camera.flyTo({ destination: Cs.Cartesian3.fromDegrees((bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2, homeAltitude() * 0.92), duration: dur });
     }
     /* the whole Earth fits the stage: farther out on a narrow, tall stage */
-    function homeAltitude() { var w = host.clientWidth || 390, h = host.clientHeight || 420, r = Math.min(w, h) / Math.max(1, h); return 1.12e7 / Math.max(0.6, r); }
+    function homeAltitude() { var w = host.clientWidth || 390, h = host.clientHeight || 420, r = Math.min(w, h) / Math.max(1, h); return 1.5e7 / Math.max(0.6, r); }
 
     api.setData = function (d) {
       api.data = { mode: d.mode === "cells" ? "cells" : "countries", points: (d.points || []).slice(0, 300), cells: (d.cells || []).slice(0, 2000), selected: d.selected || null, origin: d.origin || null };
