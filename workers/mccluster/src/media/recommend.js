@@ -16,6 +16,12 @@ async function db(env, path) {
 
 const tierScore = { premium: 40, high: 32, standard: 22, utility: 12 };
 
+function verifiedAt(model) {
+  const raw = model?.cost_hint?.verified_at || model?.updated_at || '';
+  const at = Date.parse(String(raw));
+  return Number.isFinite(at) ? at : 0;
+}
+
 export async function recommendModels(request, env) {
   let body;
   try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
@@ -47,10 +53,15 @@ export async function recommendModels(request, env) {
       rationale: {
         tier,
         strength: m.quality_profile?.strength || null,
+        verified_at: m.cost_hint?.verified_at || m.updated_at || null,
         matched_requirements: Object.keys(required).filter((key) => Boolean(required[key]))
       }
     };
-  }).sort((a, b) => b.score - a.score).slice(0, topK);
+  }).sort((a, b) =>
+    b.score - a.score ||
+    verifiedAt(b.model) - verifiedAt(a.model) ||
+    String(a.model?.provider_model_id || a.model?.id || '').localeCompare(String(b.model?.provider_model_id || b.model?.id || ''))
+  ).slice(0, topK);
 
   return { capability: body.capability, preference: body.preference || 'balanced', candidates: ranked };
 }
