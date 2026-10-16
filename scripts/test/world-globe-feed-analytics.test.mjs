@@ -172,7 +172,7 @@ test('Whip Equipped: any signed-in member opens it; it says rides are not live a
   assert.match(whip, /not approval/);
   assert.match(js, /const WHIP_DRIVER_SIGNUP='https:\/\/matthew\.mccluster\.org\/whip\/driver\/'/);
   assert.doesNotMatch(whip.replace(/https:\/\/matthew\.mccluster\.org\/whip\/driver\//g, ''), /McCluster|\/api\/rides|voter|registration/i, 'Whip attribution only; no ride request; no voter rule');
-  assert.match(html, /id="ctlTransport"[^>]*aria-label="Whip Equipped \(by Whip Equipped LLC\): rides not live yet, driver sign-up"/);
+  assert.match(html, /id="ctlTransport"[^>]*aria-label="Transport: directions and Whip Equipped driver sign-up"/);
 });
 
 test('coordinates: a missing degree is never 0 (the coordinate bug), lon/lat order pinned', async () => {
