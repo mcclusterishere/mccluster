@@ -170,7 +170,7 @@ ${site.facts.map(fact).join("\n")}
     </main>
     <footer>
 ${site.footer_links.map((l) => `      <a href="${esc(l.href)}">${esc(l.label)}</a>`).join("\n")}
-      <p>© ${esc(String(site.updated_at).slice(0, 4))} McCluster Corp.</p>
+${site.tagline ? `      <p><b>${esc(site.tagline)}</b></p>\n` : ""}      <p>© ${esc(String(site.updated_at).slice(0, 4))} McCluster Corp.</p>
     </footer>
   </div>
 </body>

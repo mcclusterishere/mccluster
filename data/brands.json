@@ -5,31 +5,31 @@
       "key": "house",
       "title": "The House",
       "label": "Owned & Controlled",
-      "blurb": "Two companies, both founded and owned by Matthew McCluster. McCluster Corp is the operating organization; its own divisions run inside it. Whip Equipped LLC is a separate company, not a McCluster Corp brand."
+      "blurb": "Whip Equipped LLC is a separate company, not a McCluster Corp brand."
     },
     {
       "key": "projects",
       "title": "McCluster Corp Projects & Products",
       "label": "Run by McCluster Corp",
-      "blurb": "Initiatives and products McCluster Corp builds and operates. They belong to the company, not to any one person."
+      "blurb": ""
     },
     {
       "key": "names",
       "title": "Names & Catalogue",
       "label": "What the House Makes",
-      "blurb": "Not companies — the records, releases and catalogue made inside the ecosystem."
+      "blurb": ""
     },
     {
       "key": "vendors",
       "title": "Vendors & Production Partners",
       "label": "Who We Build With",
-      "blurb": "Independent producers and studios that supply craft into the ecosystem — hired in, credited out."
+      "blurb": ""
     },
     {
       "key": "affiliates",
       "title": "Affiliates & Outside Providers",
       "label": "Partners Beyond the House",
-      "blurb": "Outside brands McCluster represents, promotes, or has served — related but independently owned."
+      "blurb": "Independently owned."
     }
   ],
   "brands": [

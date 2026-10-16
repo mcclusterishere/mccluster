@@ -4,8 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { handleWorldLayers, LAYERS, fetchFlights, fetchSatellites, fetchLaunches } from '../src/world-layers.js';
-import { workersFetch } from './support/workers-fetch-semantics.mjs';
+import { handleWorldLayers, LAYERS, fetchFlights, fetchOpenSky, fetchAdsbLol, normalizeAdsbAircraft, FLIGHT_REGIONS, fetchSatellites, fetchLaunches } from '../src/world-layers.js';
+import { workersFetch, hangingResponse } from './support/workers-fetch-semantics.mjs';
 
 const ENV = { SUPABASE_URL: 'https://sb.test', SUPABASE_SERVICE_ROLE_KEY: 'service', ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
 const req = (path, headers = {}) => new Request(`https://api.mccluster.org${path}`, { headers: { origin: 'https://matthew.mccluster.org', ...headers } });
@@ -20,6 +20,15 @@ const STATES = { time: 1760500000, states: [
   ['nopos', 'NOPOS', 'Spain', 1, 2, null, null, null, false, null, null],
   ['d4e5f6', 'BAW9', 'United Kingdom', 1, 2, -0.45, 51.47, 11000, false, 240, 180]
 ] };
+/* adsb.lol's /v2/point answer, the shape probed live 2026-10-16T02:31Z: feet, knots, 'ground', dbFlags */
+const ADSB = { msg: 'No error', now: 1792117865501, total: 6, ac: [
+  { hex: 'a1440c', flight: 'SWA4592 ', alt_baro: 37000, alt_geom: 38900, gs: 543.2, track: 88.31, lat: 41.284103, lon: -79.408508, seen_pos: 0.4, dbFlags: 0 },
+  { hex: 'gnd001', flight: 'TAXI1', alt_baro: 'ground', gs: 10, track: 0, lat: 40.64, lon: -73.78 },
+  { hex: 'nopos1', flight: 'NOPOS', alt_baro: 30000, gs: 400, track: 0 },
+  { hex: 'ladd01', flight: 'N1LADD', alt_baro: 20000, gs: 300, track: 10, lat: 40.1, lon: -74.2, dbFlags: 8 },
+  { hex: 'old001', flight: 'OLD', alt_baro: 20000, gs: 300, track: 10, lat: 40.2, lon: -74.3, seen_pos: 300 },
+  { hex: 'mil001', flight: 'RCH1', alt_geom: 25000, gs: 420, track: 45, lat: '40.5', lon: '-73.5', dbFlags: 1 }
+] };
 const TLES = 'ISS (ZARYA)\n1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000\n2 25544  51.6400 208.9163 0006703  32.5223 327.6271 15.49580730400000\nHST\n1 20580U 90037B   24001.50000000  .00001000  00000-0  50000-4 0  9001\n2 20580  28.4700 100.0000 0002500  90.0000 270.0000 15.09000000100000\n';
 const LAUNCHES = { results: [
   { id: 'L1', name: 'Falcon 9 Block 5 | Starlink Group 10-1', net: '2026-10-16T12:00:00Z', status: { abbrev: 'Go' }, launch_service_provider: { name: 'SpaceX' }, pad: { name: 'SLC-40', latitude: '28.56', longitude: '-80.57', location: { name: 'Cape Canaveral, FL, USA' } }, mission: { name: 'Starlink Group 10-1', type: 'Communications' }, url: 'https://ll.thespacedevs.com/2.3.0/launches/L1/' },
@@ -30,12 +39,14 @@ const LAUNCHES = { results: [
 ] };
 
 function provider({ flightsFail = false, celestrakFail = false } = {}) {
+  /* flightsFail: every flights provider down */
   const calls = [];
   /* every provider call is validated the way workerd validates fetch init */
   const fetchImpl = workersFetch(async (url, init = {}) => {
     const u = String(url instanceof Request ? url.url : url);
     calls.push({ url: u, auth: init.headers && init.headers.authorization || '' });
     if (u.startsWith('https://opensky-network.org/api/states/all')) return flightsFail ? text('nope', 503, 'text/plain') : json(STATES);
+    if (u.startsWith('https://api.adsb.lol/v2/point/')) return flightsFail ? text('nope', 503, 'text/plain') : json(ADSB);
     if (u.startsWith('https://celestrak.org/NORAD/elements/gp.php')) return celestrakFail ? text('down', 503, 'text/plain') : text(u.includes('GROUP=stations') ? TLES : '', 200, 'text/plain');
     if (u.startsWith('https://ll.thespacedevs.com/2.3.0/launches/upcoming/')) return json(LAUNCHES);
     if (u === 'https://sb.test/auth/v1/user') return init.headers.authorization === 'Bearer member-token' ? json({ id: 'auth-member' }) : json({ msg: 'no' }, 401);
@@ -58,21 +69,33 @@ test('flights are public: trimmed to airborne, positioned aircraft, cached for t
   assert.equal(r.headers.get('cache-control'), 'public, max-age=300');
   assert.equal(r.headers.get('access-control-allow-origin'), 'https://matthew.mccluster.org');
   const body = await r.json();
-  assert.equal(body.layer, 'flights'); assert.equal(body.attribution, 'OpenSky Network'); assert.equal(body.stale, false); assert.equal(body.authenticated, false, 'anonymous without the research credentials');
-  assert.equal(body.total, 4); assert.equal(body.count, 2, 'the one on the ground and the one without a position are dropped');
-  assert.deepEqual(body.aircraft[0], ['a1b2c3', 'UAL123', -73.9, 40.7, 10668, 250.1, 270]);
-  assert.equal(calls.filter((c) => c.url.includes('opensky')).length, 1);
+  assert.equal(body.layer, 'flights'); assert.equal(body.provider, 'adsb_lol', 'without the OpenSky credentials the World asks adsb.lol');
+  assert.equal(body.attribution, 'adsb.lol, Open Database License (ODbL) 1.0'); assert.equal(body.license, 'ODbL-1.0'); assert.equal(body.credit, 'Flights: adsb.lol (ODbL)');
+  assert.equal(body.stale, false); assert.equal(body.authenticated, false);
+  assert.equal(calls.filter((c) => c.url.includes('opensky')).length, 0, 'anonymous OpenSky is never attempted');
+  assert.deepEqual(body.providers.map((p) => [p.provider, p.status]), [['opensky', 'skipped'], ['adsb_lol', 'ok']]);
+  assert.equal(body.coverage.kind, 'regional_sample'); assert.match(body.coverage.note, /^a sample of 2 aircraft .* not every flight/);
+  assert.equal(body.count, 2, 'one airborne row plus the military one; ground, no position, LADD and stale positions are not drawn');
+  assert.equal(body.withheld, 1, 'the LADD airframe is withheld and counted');
+  assert.deepEqual(body.aircraft[0], ['a1440c', 'SWA4592', -79.409, 41.284, 11277.6, 279.446, 88.31]);
+  const adsbCalls = () => calls.filter((c) => c.url.startsWith('https://api.adsb.lol/')).length;
+  assert.equal(adsbCalls(), FLIGHT_REGIONS.length, 'one request per region circle');
+  assert.ok(calls.filter((c) => c.url.startsWith('https://api.adsb.lol/')).every((c) => /\/v2\/point\/-?[\d.]+\/-?[\d.]+\/250$/.test(c.url)));
   const again = await (await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl, cacheImpl: cache })).json();
   assert.equal(again.count, 2);
-  assert.equal(calls.filter((c) => c.url.includes('opensky')).length, 1, 'the second look hits the cache, OpenSky is not asked again');
+  assert.equal(adsbCalls(), FLIGHT_REGIONS.length, 'the second look hits the cache, adsb.lol is not asked again');
 });
 
 test('with the research credentials the Worker asks OpenSky with a token', async () => {
   const calls = [];
   const fetchImpl = workersFetch(async (url, init = {}) => { const u = String(url); calls.push({ u, auth: init.headers && init.headers.authorization }); if (u.includes('openid-connect/token')) return json({ access_token: 'osk' }); return json(STATES); });
   const body = await fetchFlights({ OPENSKY_CLIENT_ID: 'id', OPENSKY_CLIENT_SECRET: 'secret' }, fetchImpl);
-  assert.equal(body.authenticated, true);
+  assert.equal(body.authenticated, true); assert.equal(body.provider, 'opensky'); assert.equal(body.attribution, 'OpenSky Network'); assert.equal(body.coverage.kind, 'global');
+  assert.equal(body.total, 4); assert.equal(body.count, 2, 'the one on the ground and the one without a position are dropped');
+  assert.deepEqual(body.aircraft[0], ['a1b2c3', 'UAL123', -73.9, 40.7, 10668, 250.1, 270]);
+  assert.deepEqual(body.providers, [{ provider: 'opensky', status: 'ok', authenticated: true, count: 2 }]);
   assert.equal(calls.find((c) => c.u.includes('states/all')).auth, 'Bearer osk');
+  assert.equal(calls.filter((c) => c.u.includes('adsb.lol')).length, 0, 'adsb.lol is not asked when OpenSky answers');
 });
 
 test('a provider that is down: the last good answer is served as stale, and with nothing cached the layer says unavailable', async () => {
@@ -86,6 +109,79 @@ test('a provider that is down: the last good answer is served as stale, and with
   assert.equal(stale.stale, true); assert.equal(stale.count, 2, 'the last good snapshot, marked stale');
   const empty = await (await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl: down.fetchImpl, cacheImpl: memoryCache() })).json();
   assert.equal(empty.unavailable, true); assert.deepEqual(empty.aircraft, []); assert.equal(empty.count, 0);
+  assert.equal(empty.upstream_error, 'upstream_http');
+  assert.deepEqual(empty.providers.map((p) => [p.provider, p.status]), [['opensky', 'skipped'], ['adsb_lol', 'failed']]);
+  assert.equal(stale.refresh_providers.at(-1).status, 'failed', 'the stale answer says why it was not refreshed');
+});
+
+/* ---------- the flights provider chain (2026-10-16: anonymous OpenSky timed out from Cloudflare egress) ---------- */
+const CREDS = { OPENSKY_CLIENT_ID: 'id', OPENSKY_CLIENT_SECRET: 'secret' };
+
+test('OpenSky configured but timing out: adsb.lol answers, and both attempts are reported', { timeout: 30000 }, async () => {
+  const fetchImpl = workersFetch(async (url, init) => {
+    if (url.hostname === 'auth.opensky-network.org') return json({ access_token: 'osk' });
+    if (url.hostname === 'opensky-network.org') return hangingResponse(init);
+    if (url.hostname === 'api.adsb.lol') return json(ADSB);
+    throw new Error('unexpected ' + url);
+  });
+  const r = await handleWorldLayers(req('/v1/world/layers/flights'), { ...ENV, ...CREDS }, { fetchImpl, cacheImpl: memoryCache() });
+  const body = await r.json();
+  assert.equal(body.unavailable, undefined);
+  assert.equal(body.provider, 'adsb_lol'); assert.equal(body.count, 2);
+  assert.deepEqual(body.providers[0], { provider: 'opensky', status: 'failed', error: 'upstream_timeout', provider_status: null });
+  assert.equal(body.providers[1].provider, 'adsb_lol'); assert.equal(body.providers[1].status, 'ok');
+  for (const call of fetchImpl.calls) assert.equal(call.init.redirect, 'manual');
+});
+
+test('every flights provider down: unavailable, typed per provider and per region, never success-with-zero, never cached', async () => {
+  const fetchImpl = workersFetch(async (url) => {
+    if (url.hostname === 'auth.opensky-network.org') return json({ access_token: 'osk' });
+    if (url.hostname === 'opensky-network.org') return text('busy', 503, 'text/plain');
+    if (url.hostname === 'api.adsb.lol') return text('slow down', 429, 'text/plain');
+    throw new Error('unexpected ' + url);
+  });
+  await assert.rejects(() => fetchFlights(CREDS, fetchImpl), (e) => e.code === 'upstream_rate_limited' && e.providers.length === 2);
+  const cache = memoryCache();
+  const body = await (await handleWorldLayers(req('/v1/world/layers/flights'), { ...ENV, ...CREDS }, { fetchImpl, cacheImpl: cache })).json();
+  assert.equal(body.unavailable, true); assert.equal(body.count, 0); assert.deepEqual(body.aircraft, []);
+  assert.equal(body.upstream_error, 'upstream_rate_limited');
+  assert.deepEqual(body.providers.map((p) => [p.provider, p.status, p.error]), [['opensky', 'failed', 'upstream_http'], ['adsb_lol', 'failed', 'upstream_rate_limited']]);
+  assert.equal(body.providers[0].provider_status, 503); assert.equal(body.providers[1].provider_status, 429);
+  assert.equal(body.providers[1].regions.length, FLIGHT_REGIONS.length);
+  assert.ok(body.providers[1].regions.every((r) => r.status === 'failed' && r.error === 'upstream_rate_limited'));
+  assert.equal(cache.raw.size, 0, 'a failure is never stored as the answer');
+});
+
+test('adsb.lol with some regions down is a partial sample, said so; deduplicated across overlapping circles', async () => {
+  let n = 0;
+  const fetchImpl = workersFetch(async (url) => {
+    n += 1;
+    if (url.pathname.startsWith('/v2/point/1.35/')) return text('down', 502, 'text/plain');
+    if (url.pathname.startsWith('/v2/point/35.6/')) throw new TypeError('fetch failed');
+    return json(ADSB);
+  });
+  const body = await fetchAdsbLol({}, fetchImpl);
+  assert.equal(n, FLIGHT_REGIONS.length);
+  assert.equal(body.partial, true);
+  assert.equal(body.coverage.regions_ok, FLIGHT_REGIONS.length - 2); assert.equal(body.coverage.regions_failed, 2);
+  assert.equal(body.count, 2, 'the same transponder seen by six circles is one aircraft');
+  assert.equal(body.total, 6); assert.equal(body.reported, 6 * (FLIGHT_REGIONS.length - 2));
+  assert.deepEqual(body.region_status.filter((r) => r.status === 'failed').map((r) => [r.region, r.error]), [['singapore', 'upstream_http'], ['tokyo', 'upstream_network']]);
+  const chain = await fetchFlights({}, fetchImpl);
+  assert.equal(chain.providers.at(-1).status, 'partial');
+  /* an answer without an aircraft list is a failure, not zero */
+  await assert.rejects(() => fetchAdsbLol({}, workersFetch(async () => json({ msg: 'error' }))), (e) => e.code === 'upstream_invalid_json');
+});
+
+test('adsb.lol normalisation: feet to metres, knots to m/s, string coordinates, and nothing drawn at 0,0', () => {
+  assert.deepEqual(normalizeAdsbAircraft({ hex: 'abc', flight: 'X1 ', alt_baro: 1000, gs: 100, track: 90, lat: 10, lon: 20 }), ['abc', 'X1', 20, 10, 304.8, 51.444, 90]);
+  assert.deepEqual(normalizeAdsbAircraft({ hex: 'abc', alt_geom: 1000, lat: '10.5', lon: '-20.25' }), ['abc', '', -20.25, 10.5, 304.8, null, null]);
+  assert.equal(normalizeAdsbAircraft({ hex: 'g', alt_baro: 'ground', lat: 1, lon: 1 }), null);
+  assert.equal(normalizeAdsbAircraft({ hex: 'n', alt_baro: 1000, lat: null, lon: null }), null);
+  assert.equal(normalizeAdsbAircraft({ hex: 'n', alt_baro: 1000, lat: '', lon: 5 }), null);
+  assert.equal(normalizeAdsbAircraft({ hex: 'n', alt_baro: 1000, lat: 95, lon: 5 }), null);
+  assert.equal(normalizeAdsbAircraft({ hex: 's', alt_baro: 1000, lat: 1, lon: 1, seen_pos: 61 }), null);
+  assert.equal(normalizeAdsbAircraft(null), null);
 });
 
 test('satellites and launches are for members: the bearer is checked with Supabase, never a page flag', async () => {
@@ -163,7 +259,7 @@ test('a same-host https redirect is followed (bounded); the data arrives', async
     if (url.pathname === '/api/v2/states/all') return json(STATES);
     throw new Error('unexpected ' + url);
   });
-  const body = await fetchFlights({}, fetchImpl);
+  const body = await fetchOpenSky({}, fetchImpl);
   assert.equal(body.count, 2);
   assert.deepEqual(fetchImpl.calls.map((c) => c.url), ['https://opensky-network.org/api/states/all', 'https://opensky-network.org/api/v2/states/all']);
 });
@@ -178,14 +274,16 @@ test('a provider redirect off its host, to http, with userinfo, to another port,
   ];
   for (const [name, make] of cases) {
     const fetchImpl = workersFetch(async () => make());
-    await assert.rejects(() => fetchFlights({}, fetchImpl), (e) => e.code === 'upstream_redirect', name);
+    await assert.rejects(() => fetchOpenSky({}, fetchImpl), (e) => e.code === 'upstream_redirect', name);
     assert.equal(fetchImpl.calls.length, 1, `${name}: the redirect target is never requested`);
+    /* the whole chain (adsb.lol redirected the same way) */
     const body = await (await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl, cacheImpl: memoryCache() })).json();
     assert.equal(body.unavailable, true, name); assert.equal(body.upstream_error, 'upstream_redirect', name);
+    assert.ok(fetchImpl.calls.every((c) => ['opensky-network.org', 'api.adsb.lol'].includes(new URL(c.url).hostname)), `${name}: never followed off the provider's host`);
   }
   let n = 0;
   const loop = workersFetch(async () => redirect(`https://opensky-network.org/hop${(n += 1)}`));
-  await assert.rejects(() => fetchFlights({}, loop), (e) => e.code === 'upstream_redirect' && /exceeded 2 redirects/.test(e.message));
+  await assert.rejects(() => fetchOpenSky({}, loop), (e) => e.code === 'upstream_redirect' && /exceeded 2 redirects/.test(e.message));
   assert.equal(loop.calls.length, 3, 'the first request plus two followed hops, no more');
 });
 

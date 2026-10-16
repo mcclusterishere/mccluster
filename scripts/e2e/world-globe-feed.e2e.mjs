@@ -186,7 +186,7 @@ for (const size of SIZES) {
     const put = sbCalls[0] ? JSON.parse(sbCalls[0]) : null;
     check(`member-${size.name}`, "agreeing records the privacy version and time on the member's own record, and no position", !!put && put.data && put.data.privacy_policy_version === '2026-09-26' && !!Date.parse(put.data.privacy_acknowledged_at) && !/lat|lon|coords/i.test(sbCalls[0]), sbCalls);
     check(`member-${size.name}`, 'no location-consent route is ever called', !calls.some((c) => /location-consent/.test(c.p)));
-    await page.click('#cctvClose');
+    await page.$eval('#cctvClose', (b) => b.click());
     /* Whip Equipped: open to a member; rides are not live; drivers are asked to sign up with Whip */
     check(`member-${size.name}`, 'Whip Equipped is open to a signed-in member', !(await page.evaluate(() => document.getElementById('ctlTransport').classList.contains('is-locked'))));
     await page.click('#ctlTransport', { force: true });
@@ -198,7 +198,8 @@ for (const size of SIZES) {
     const ww = await widths(page);
     check(`member-${size.name}`, 'no sideways overflow with the Whip sheet open', ww.scrollW === ww.clientW, ww);
     await page.screenshot({ path: join(OUT, `whip-not-live-${size.name}.png`) });
-    await page.click('#cctvClose');
+    /* a DOM click: Playwright's own click sometimes waits on a navigation the ion tiles schedule, and times out */
+    await page.$eval('#cctvClose', (b) => b.click());
     await page.click('#ctlIntel', { force: true });
     await page.waitForFunction(() => /Intel events/.test(document.getElementById('cctvTitle').textContent) && !document.getElementById('cctvSheet').hidden, null, { timeout: 15000 }).catch(() => {});
     check(`member-${size.name}`, 'Intel events say honestly they are switched off; nothing drawn', /not switched on yet/.test(await page.textContent('#cctvBody')) && (await page.evaluate(() => window.__huIntel().cells)) === 0);
