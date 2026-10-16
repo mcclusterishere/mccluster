@@ -3054,6 +3054,19 @@
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;
         state.world.fromFeed = "";
         setWorldFocus({ mission_id: id, title: String(m.title || ""), description: String(m.description || ""), region_label: String(m.region_label || ""), action_path: String(m.action_path || ""), filter: !fromFeed });
+      } else if (d.type === "hu:partner-selected" && d.id === "ct-health-foundation") {
+        /* The office is a verified public address, not a mission claim, funder
+           endorsement, or approved visit. Never trust a URL supplied by a frame
+           message; this one is an audited constant. */
+        if (state.world.focus) setWorldFocus(null);
+        if (caption) {
+          caption.replaceChildren(document.createTextNode("Connecticut Health Foundation office · 100 Pearl Street, 6th Floor, Hartford. Information only; no claim or check-in here. "));
+          var route = document.createElement("a");
+          route.href = "https://www.google.com/maps/dir/?api=1&destination=100%20Pearl%20Street%2C%20Hartford%2C%20CT%2006103&dir_action=navigate";
+          route.target = "_blank"; route.rel = "noopener noreferrer";
+          route.textContent = "Get directions ↗";
+          caption.appendChild(route);
+        }
       } else if (d.type === "hu:selection-cleared") {
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
@@ -3115,6 +3128,13 @@
           var on = b.getAttribute("aria-pressed") !== "true";
           b.setAttribute("aria-pressed", on ? "true" : "false");
           tellWorld({ type: "hu:regional", on: on });
+        } else if (kind === "navigate") {
+          var enabled = b.getAttribute("aria-pressed") !== "true";
+          b.setAttribute("aria-pressed", enabled ? "true" : "false");
+          if (!enabled && state.world.caption) {
+            var c = $("mnWorldCaption"); if (c) c.textContent = state.world.caption;
+          }
+          tellWorld({ type: "hu:partner-navigate", on: enabled });
         } else if (kind === "near") tellWorld({ type: "hu:near-me" });
       });
     });
