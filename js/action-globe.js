@@ -102,10 +102,10 @@ function drawAudience(points){if(!viewer)return;audiencePins.forEach(e=>viewer.e
 /* ---------- THE WORLD'S DATA LAYERS (owner, 2026-10-15: "let's populate it … flights … satellites and space missions, that only logged in users can see") ----------
    Three toggles at the bottom-left. Flights is for everyone; Satellites and Launches are for members: the Worker checks the
    bearer with Supabase (workers/mccluster/src/world-layers.js), and here a guest's lock only says so and opens sign-in.
-   Each source is credited on the imagery line while it is on. Satellites are propagated here from CelesTrak's elements
+   Each source is credited on the imagery line while it is on, by the provider that answered (flights: adsb.lol or OpenSky). Satellites are propagated here from CelesTrak's elements
    (vendor/satellite.min.js, loaded on first use) so they move; flights are the last snapshot the Worker holds. */
 const API='https://api.mccluster.org';
-const DATA_LAYERS={flights:{id:'ctlFlights',members:false,color:'#ffb347',credit:'Flights: OpenSky'},satellites:{id:'ctlSats',members:true,color:'#4fd1ff',credit:'Satellites: CelesTrak'},launches:{id:'ctlLaunch',members:true,color:'#ffffff',credit:'Launches: The Space Devs'}};
+const DATA_LAYERS={flights:{id:'ctlFlights',members:false,color:'#ffb347',credit:'Flights: adsb.lol (ODbL)'},satellites:{id:'ctlSats',members:true,color:'#4fd1ff',credit:'Satellites: CelesTrak'},launches:{id:'ctlLaunch',members:true,color:'#ffffff',credit:'Launches: The Space Devs'}};
 const layerState={flights:{on:false,points:null,count:0},satellites:{on:false,points:null,sats:[],labels:[],timer:0,count:0},launches:{on:false,entities:[],count:0}};
 /* hooks for the browser test, like __huGlobeSettled */
 window.__huLayerCounts=()=>({flights:layerState.flights.count,satellites:layerState.satellites.count,launches:layerState.launches.count});
@@ -127,10 +127,10 @@ function liftAboveCredit(){const h=creditHeight();document.documentElement.style
  /* the bar floats a little off the bottom, so what matters is where its top is, not how tall it is */
  if(EXPLORE){const bar=document.querySelector('.appbar'),deck=$('deck'),px=el=>el&&!el.hidden?Math.ceil(el.getBoundingClientRect().height):0,barH=bar?Math.max(0,Math.ceil(innerHeight-bar.getBoundingClientRect().top)):0;document.documentElement.style.setProperty('--hu-bar-h',barH+'px');document.documentElement.style.setProperty('--hu-sheet-h',px(deck)+'px')}
  return h}
-function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
+function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>layerState[k].credit||DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
 async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerState[k];if(!viewer||!b)return;if(spec.members&&!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  if(L.on){L.on=false;b.setAttribute('aria-pressed','false');clearLayer(k);paintLayerCredits();tell({type:'hu:layer',layer:k,on:false,creditHeight:creditHeight()});return}
- b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
+ b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
 function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);liftAboveCredit();window.addEventListener('resize',liftAboveCredit);
