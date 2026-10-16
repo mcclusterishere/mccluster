@@ -56,7 +56,9 @@ test('every navigable page carries the app bar', async () => {
 test('every tab destination has the bar it was reached from', async () => {
   /* The specific bug. whip.html is where the fourth tab goes and it had
      no bar — tap it, and the navigation you tapped is gone. */
-  const bar = await read('js/tabbar.js');
+  const all = await read('js/tabbar.js');
+  /* the canonical bar is buildBar(); the owner's five-tab bar (adminBar) is checked below */
+  const bar = all.slice(all.indexOf('function buildBar()'), all.indexOf('return nav;', all.indexOf('function buildBar()')));
   /* Music and the M resolve against the house, the Globe against the World's
      own door, so the bar reads the same from either host (js/tabbar.js) */
   const hrefs = [...bar.matchAll(/href="'\s*\+\s*(?:ROOT|HOUSE|WORLD)\s*\+\s*'([a-z0-9-]+\.html)(?:\?[a-z=&]*)?"/g)].map((m) => m[1]);
@@ -67,6 +69,16 @@ test('every tab destination has the bar it was reached from', async () => {
     const html = await read(href);
     assert.match(html, /js\/tabbar\.js/,
       `${href} is a tab destination but has no app bar — tapping that tab loses the navigation`);
+  }
+  /* the owner's five tabs (admin first, owner 2026-10-15): Play, Home (Control Room), M, Analytics, Globe; every
+     destination carries the bar, the Control Room included (it no longer opts out) */
+  const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
+  const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
+  assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'index.html', 'control.html']);
+  for (const href of new Set(adminHrefs)) {
+    const html = await read(href);
+    assert.match(html, /js\/tabbar\.js/, `${href} is an owner tab destination but has no app bar`);
+    assert.doesNotMatch(html, /<body[^>]*data-no-appbar/, `${href} opts out of the bar`);
   }
 });
 

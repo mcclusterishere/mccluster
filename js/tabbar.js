@@ -499,11 +499,86 @@
     }
     chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
     chip.querySelector(".mcc-auth-chip__text").textContent =
-      signedIn ? ("Signed in · " + name) : "Guest · Sign in";
+      signedIn ? (ADMIN_ON ? "Admin" : ("Signed in · " + name)) : "Guest · Sign in";
     window.MCC_AUTH_STATE = AUTH_STATE;
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
     if (!wingOn) HOME_BAR = dock.innerHTML;
   }
+  /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
+     For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
+     under Home now), the M (as supplied, assets/img/m-mark.png: scaled, never redrawn, no plate added), Analytics (its
+     own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
+     Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
+     and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
+     session only (sessionStorage, ten minutes, tied to the signed-in user), so a page view does not re-run the owner's
+     status counts; a stale "yes" opens nothing by itself, because every Control Room read is checked again by the Worker.
+
+     INTEGRATION POINT for other bar add-ons (e.g. the member Desk tab, PR #457): when this bar is on, the dock carries
+     class "appbar--admin" and body carries data-appbar-admin; an add-on that would add a sixth column checks
+       if (dock.classList.contains("appbar--admin")) return null;
+     and lives under Home instead (the Control Room's account menu links the Desk: mnet.html?view=feed&desk). The
+     "mcc:appbar-admin" event fires whenever this changes. */
+  var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 600000, ADMIN_ON = false, BASE_BAR = null;
+  var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
+  var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
+  var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
+  function adminHere() {
+    if (!/control\.html$/.test(location.pathname)) return null;
+    return /^#analytics/i.test(location.hash) ? "analytics" : "admin-home";
+  }
+  function adminBar() {
+    return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: the Control Room">' + HOME_SVG + '<span>Home</span></a>' +
+      '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
+      '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
+      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world" aria-label="Open the World globe">' + WORLD_SVG + '<span class="appbar__sr">Globe</span></a>';
+  }
+  function markAdminHere() {
+    if (!ADMIN_ON) return;
+    var here = adminHere();
+    Array.prototype.forEach.call(dock.querySelectorAll("[data-appnav]"), function (t) {
+      var k = t.getAttribute("data-appnav"), on = here ? k === here : (k === (PAGE_WING[PAGE_KEY] || ""));
+      t.classList.toggle("is-here", on);
+      if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+    });
+  }
+  function paintAdmin(on) {
+    on = !!on;
+    if (on === ADMIN_ON) { markAdminHere(); return; }
+    if (wingOn) revert();
+    if (on) { BASE_BAR = dock.innerHTML; dock.innerHTML = adminBar(); }
+    else if (BASE_BAR !== null) { dock.innerHTML = BASE_BAR; BASE_BAR = null; }
+    ADMIN_ON = on;
+    dock.classList.toggle("appbar--admin", on);
+    if (on) document.body.setAttribute("data-appbar-admin", ""); else document.body.removeAttribute("data-appbar-admin");
+    paintPerspective();
+    markAdminHere();
+    var chipText = document.querySelector("#mccAuthChip .mcc-auth-chip__text");
+    if (chipText && AUTH_STATE.signed_in) chipText.textContent = on ? "Admin" : "Signed in · " + authDisplay(AUTH_STATE.user, {});
+    HOME_BAR = dock.innerHTML;
+    try { paintSound(); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent("mcc:appbar-admin", { detail: { admin: on } })); } catch (e) {}
+  }
+  function readAdminMemo(sub) {
+    try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.sub === sub && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
+  }
+  function checkAdmin() {
+    var session = readAuthSession();
+    var token = session && session.access_token, sub = token ? jwtPayload(token).sub : null;
+    if (!AUTH_STATE.signed_in || !token || !sub) { try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    var memo = readAdminMemo(sub);
+    if (memo) { paintAdmin(memo.admin); return Promise.resolve(memo.admin); }
+    return fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store" })
+      .then(function (r) {
+        /* only a definite answer is remembered: 200 is the owner, 401/403 is not; anything else changes nothing */
+        if (r.ok || r.status === 401 || r.status === 403) {
+          try { sessionStorage.setItem(ADMIN_KEY, JSON.stringify({ sub: sub, at: Date.now(), admin: r.ok })); } catch (e) {}
+          paintAdmin(r.ok);
+        }
+        return r.ok;
+      }).catch(function () { return ADMIN_ON; });
+  }
+  window.addEventListener("hashchange", markAdminHere);
   function loadCanonicalAuth() {
     if (window.MCC && typeof window.MCC.user === "function") return Promise.resolve(window.MCC);
     return new Promise(function (resolve, reject) {
@@ -526,6 +601,7 @@
     var session = readAuthSession();
     if (!session || !session.access_token) {
       paintAuthState(false, null, true);
+      paintAdmin(false);
       return Promise.resolve(AUTH_STATE);
     }
     var payload = jwtPayload(session.access_token);
@@ -536,9 +612,11 @@
       return mcc.user();
     }).then(function (user) {
       paintAuthState(!!user, user, true);
+      checkAdmin();
       return AUTH_STATE;
     }).catch(function () {
       paintAuthState(false, null, true);
+      paintAdmin(false);
       return AUTH_STATE;
     });
   }
@@ -824,7 +902,8 @@
 
   function morph(key) {
     var w = WINGS[key];
-    if (!w || wingOn === key) return;
+    /* the owner's five-tab bar does not open wings: five columns cannot keep the anchor law with two-room wings */
+    if (!w || wingOn === key || ADMIN_ON) return;
     veilOff();
     unpeek();
     wingOn = key;
@@ -958,7 +1037,8 @@
     refreshAuth: refreshAuthState,
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
-    clearPerspective: clearPerspective
+    clearPerspective: clearPerspective,
+    admin: function () { return ADMIN_ON; }
   };
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 

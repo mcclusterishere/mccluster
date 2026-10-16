@@ -2,7 +2,7 @@
    the Full world and the chrome-less "just the globe" mode, the layer access
    map (one free layer for a guest, every other layer shaded), the CCTV lock
    and a live snapshot through the mission gate, the Intel events layer while
-   its API is switched off, and the Control Room's 60/40 analytics globe.
+   its API is switched off (the Control Room's analytics globe has its own run: scripts/e2e/analytics-globe.e2e.mjs).
 
    Serves this checkout and fakes api.mccluster.org and Supabase in memory
    (no production call). Renders at 390 and 1280 wide, checks
@@ -244,47 +244,8 @@ for (const size of SIZES) {
   }
 }
 
-/* 5. Control Room Analytics, 60/40: the globe draws only countries with 5+, the panel discloses the rest, selection both ways */
-for (const size of SIZES) {
-  if (!runs('analytics')) continue;
-  const { ctx, page, errors } = await context(size.viewport, { member: true, owner: true });
-  await page.goto(BASE + '/control.html#analytics', { waitUntil: 'domcontentloaded' });
-  const opened = await page.waitForSelector('#craGlobe', { timeout: 45000 }).then(() => true).catch(() => false);
-  check(`analytics-${size.name}`, 'the Analytics tab mounts the globe and the panel', opened);
-  if (opened) {
-    const frame = page.frame({ url: /surface=analytics/ });
-    await page.waitForFunction(() => /On the globe/.test(document.body.textContent) && /United States/.test((document.getElementById('craPanel') || {}).textContent || ''), null, { timeout: 45000 }).catch(() => {});
-    if (frame) { await frame.waitForFunction(() => window.__huAnalyticsCount && window.__huAnalyticsCount() > 0, null, { timeout: 45000 }).catch(() => {}); await settle(frame); }
-    const drawn = frame ? await frame.evaluate(() => window.__huAnalyticsCount()) : 0;
-    check(`analytics-${size.name}`, 'the globe draws US, GB and DE (France, under five, is folded)', drawn === 3, drawn);
-    if (frame) {
-      /* the analytics frame can be re-created while the panel paints; read it from the live frame, once more if it was replaced */
-      const placedNow = async () => { const f = page.frame({ url: /surface=analytics/ }) || frame; await f.waitForFunction(() => window.__huAnalyticsCount && window.__huAnalyticsCount() > 0, null, { timeout: 30000 }).catch(() => {}); return f.evaluate(() => window.__huPlaced()); };
-      const at = (await placedNow().catch(() => placedNow())).analytics.filter((x) => x.lon !== undefined);
-      const us = at.find((x) => x.code === 'US'), gb = at.find((x) => x.code === 'GB');
-      /* Natural Earth label points, data/geo/country-label-points.json: US [-97.48, 39.54], GB [-2.12, 54.4] as [lon, lat] */
-      check(`analytics-${size.name}`, 'coordinates: the US dot is at 39.54°N 97.48°W and the UK at 54.4°N 2.12°W (lon/lat not swapped)', !!us && Math.abs(us.lat - 39.54) < 0.01 && Math.abs(us.lon + 97.48) < 0.01 && !!gb && Math.abs(gb.lat - 54.4) < 0.01 && Math.abs(gb.lon + 2.12) < 0.01, at);
-    }
-    const panel = await page.textContent('#craPanel');
-    check(`analytics-${size.name}`, 'located, under five and no-country totals are on screen', /On the globe/.test(panel) && /Under 5/.test(panel) && /No country/.test(panel), panel.slice(0, 200));
-    const geom = await page.evaluate(() => { const g = document.querySelector('.cra-globe').getBoundingClientRect(), p = document.querySelector('.cra-side').getBoundingClientRect(); return { gw: g.width, pw: p.width, gTop: g.top, pTop: p.top }; });
-    if (size.viewport.width >= 1024) check(`analytics-${size.name}`, 'about 60% globe / 40% panel side by side', Math.abs(geom.gw / (geom.gw + geom.pw) - 0.6) < 0.04 && Math.abs(geom.gTop - geom.pTop) < 2, geom);
-    else check(`analytics-${size.name}`, 'phone: the globe first, the panel stacked under it', geom.pTop > geom.gTop, geom);
-    if (size.viewport.width >= 1024) {
-      const stick = await page.evaluate(async () => { const g = document.querySelector('.cra-globe'), side = document.querySelector('.cra-side'); const before = Math.round(g.getBoundingClientRect().top); side.scrollTop = side.scrollHeight; await new Promise((r) => setTimeout(r, 300)); const r = g.getBoundingClientRect(); const out = { before, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, panelScrolled: side.scrollTop }; side.scrollTop = 0; return out; });
-      check(`analytics-${size.name}`, 'the globe stays in view while the panel scrolls', stick.panelScrolled > 0 && stick.top === stick.before && stick.top >= 0 && stick.bottom <= stick.vh, stick);
-    }
-    await page.click('[data-cra-region="GB"]');
-    await page.waitForTimeout(500);
-    check(`analytics-${size.name}`, 'a row picks the region in the shared filter', (await page.$eval('#craRegion', (s) => s.value)) === 'GB');
-    const w = await widths(page);
-    check(`analytics-${size.name}`, 'no sideways overflow', w.scrollW === w.clientW, w);
-    await page.waitForTimeout(1500);
-    await page.screenshot({ path: join(OUT, `analytics-60-40-${size.name}.png`) });
-  }
-  check(`analytics-${size.name}`, 'no page errors', errors.length === 0, errors);
-  await ctx.close();
-}
+/* 5. Control Room Analytics: the charcoal globe is drawn in the page now (no frame); its end-to-end checks live in
+   scripts/e2e/analytics-globe.e2e.mjs (globe, selection both ways, privacy folding, cards, the owner's five-tab bar). */
 
 await browser.close();
 server.close();

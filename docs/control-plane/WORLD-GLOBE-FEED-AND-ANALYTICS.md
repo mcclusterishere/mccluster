@@ -104,12 +104,11 @@ self-service numbers (above).
   pin is tapped, and the bottom app bar. The imagery credit stays (the
   licences ask for it) at a smaller size. One small corner control and Escape
   bring the chrome back. Reached from the Full world's "Just the globe" pill.
-- **Control Room (`control.html`) is not changed.** It opts out of the shared
-  bar on purpose (`data-no-appbar`) and, under 760px, reserves the bottom
-  64px for its own phone navigation (`css/control-room.css`), so adding the
-  shared bar there would stack two bottom bars. That needs a layout decision
-  (which bar wins on a phone) before anyone adds it; reported to the owner,
-  not done here. The 60/40 analytics globe lives inside the Control Room.
+- **Control Room (`control.html`) carries the shared bar now** (owner,
+  2026-10-15, section C3: admin first). The shared bar wins on a phone; the
+  Control Room's own bottom row becomes a row of rooms under its topbar
+  (Home, Work, Create, Analytics, System), hidden on the Analytics surface,
+  and from 761px the rail is the navigation as before.
 - Not changed: `index.html`; the bar on Matthew's other pages.
 
 ### B2. Layers by level (owner, 2026-10-15, second direction)
@@ -212,6 +211,152 @@ Every existing card, query and meaning is unchanged. New, in the panel:
   then says "The intel plane is not switched on yet" and draws nothing.
   Program / mission stays a disabled filter: none of the current reads can
   be sliced by mission.
+
+### C2. The charcoal analytics screen (owner, 2026-10-15, second pass)
+
+Owner: "This is what analytics should aspire to look like, exactly, on
+vertical phone. A custom globe of exactly the real globe, segmented like this
+(country borders). Charcoal interface. Select the globe, select locations, go
+there on the globe to see what analytics exist there; filter everything …
+Also repair backend capabilities that aren't seen and get them visualized.
+Admin first; push features down to other users later."
+
+- **One globe, drawn in the page.** The iframe of the World's globe is
+  replaced by one Cesium widget (`js/control-room/analytics-globe.js`): the
+  same Cesium release as the World, but no imagery, no terrain, no ion and so
+  no paid map: a charcoal ellipsoid, the Natural Earth 1:110m country
+  polygons (`data/geo/country-boundaries-110m.json`, public domain,
+  natural-earth-vector v5.1.2, built by `tools/build-country-boundaries.mjs`;
+  a neutral file the World can share) with lighter borders and a faint
+  graticule. `requestRenderMode` draws only on change; the canvas renders at
+  most two device pixels per CSS pixel. The World's `surface=analytics`
+  handlers in `js/action-globe.js` are left in place and unused.
+- **What it draws** (superseded by C4 on 2026-10-16: no choropleth, no
+  glows, no arcs, no legend) was the layer aggregate from section C and
+  nothing finer. No point without a label point, never 0,0.
+- **One selection.** A tap on a country, the country menu in the floating
+  pill, a row in "On the globe", and Clear all set the same state: the globe
+  colours and flies (no flight under reduced motion), the tooltip reads
+  "United States · 61 page views", the pill counts filters, the summary line
+  reads "24 hours · Page views · All sources  Clear", and the cards narrow.
+- **Cards** (swipeable, dots; two at a time from 48rem): Reach (page views,
+  with Views / Sources / Returning), Sign-ups, Music; Audience (Visitors with
+  New vs Returning, Locations with located / under 5 / no country, Networks),
+  Journeys, Site health; Action (Missions, Community). Every earlier card,
+  query and tab is under **Details**, unchanged.
+- **Reads that existed and no screen showed**, now visualized (owner only):
+
+  | Read | What it adds |
+  |---|---|
+  | `GET /v1/analytics/visitors?limit=1` (`analytics_visitor_list` counts) | returning visitors (more than one session) and new vs returning |
+  | `GET /v1/analytics/flows` | sessions, bounce rate, pages per session, top way in |
+  | `GET /v1/analytics/errors` | script errors (site vs injected), dead / rage clicks, blocked journeys (incl. `gated_preview_end`) |
+  | `rpc/action_mission_stats` | mission joins, in progress, proof submitted, admin-verified, rejected (all time) |
+  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Human Uprise posts / reactions / follows / profiles |
+
+- **Pending, not applied:** `supabase/pending/analytics_country_v1.sql`
+  (`analytics_country_totals`, `analytics_country_series`; security invoker
+  over `events_lean`, country only, bots excluded, anon revoked; behaviour
+  test `scripts/test-analytics-country-db.sh`). Until it is applied the
+  screen shows a country's page views (from `analytics_top`) and says
+  "Visitors by country need analytics_country_v1 (written, not applied)";
+  the trend stays worldwide and is labelled so.
+
+### C4. Every country and every state, one selection (owner, 2026-10-16)
+
+Owner: "each selected country to be mapped accordingly and each state mapped
+accordingly across the countries so that when I'm looking at that individual
+place it can show me where on the planet it is when it's selected either from
+the console or the globe itself." Then: "a little glow outline of the globe
+… I just don't need arcs and other stuff, just modern selection"; "a grey
+sphere that only lights up when selected boundaries are selected"; the
+boundaries "realistically drawn and proper". State granularity is approved
+for the ADMIN analytics view only.
+
+- **A grey sphere.** One soft light from just above-left of the viewer shades
+  the sphere toward its limb at every zoom; the glow rim is CSS
+  (`--an-rim`). Land is one grey, slightly lighter than the sphere, with
+  hairline borders. Nothing unselected is coloured: no choropleth, no dots,
+  no arcs, no legend. Values feed only the selected place's label.
+- **Accurate geography.** The world is Natural Earth 1:50m Admin 0 Countries
+  (242, small islands included) with the large 1:50m lakes cut out of the land
+  (`data/geo/country-boundaries-50m.json`, delta-encoded hundredths of a
+  degree, `node tools/build-country-boundaries.mjs --scale 50m`). The
+  selected country is redrawn at 1:10m: the dissolve of its own 1:10m states,
+  so the country edge and its state edges are one line
+  (`data/geo/admin1/<CC>.json`, `tools/build-admin1-boundaries.mjs`; the
+  10m source is simplified once with mapshaper, topology-preserving, 10%,
+  keep-shapes). The 1:110m file stays for the World globe.
+- **States and provinces for every country** (Natural Earth 1:10m Admin 1,
+  239 country files): fetched only when that country is selected, cached,
+  and their lines drawn for that country only. Only `control.html` loads
+  `js/control-room/analytics-globe.js`; the public and member globes never
+  load a state file or the region read.
+- **One selection** `{country, state}`: the location menu (all countries;
+  the selected country's states listed under it as "US/US-CT"), the rows,
+  Clear and a tap on the globe all go through `pickPlace()`, and the globe is
+  told `select({country, state}, fly)`. The selected shape fills with a soft
+  `--an-accent` and one crisp bright edge (no wide glow line: it spikes on a
+  jagged coast; no pulse); inner state lines are a faint darkened-accent
+  hairline; a selected state's country keeps a medium accent edge. The camera
+  (0.8 s, eased; a jump under reduced motion) turns a country to face the
+  viewer and keeps the WHOLE sphere floating in the stage; only a state that
+  would be under about 40 px across is approached, from a 40° angle, so the
+  curve of the Earth stays in the top of the view. A small dark-glass label
+  shows the name, the parent country for a state, and the page views; a white
+  dot marks the label point. A tap on a state of the selected country selects
+  the state (again: back to the country); the selected country again clears.
+  Clear returns to the world view.
+- **State counts, admin only.** Nothing new is collected: `public.events`
+  already stores Cloudflare's `region` (name) and, in `edge`, `cf-region-code`
+  (both nulled for a Global Privacy Control / Do Not Track visitor).
+  `supabase/pending/analytics_region_v1.sql` (written, NOT applied) adds
+  `analytics_region_totals(country, since, until, site)`: service_role only,
+  regions under 5 page views folded into one row inside the database, no city,
+  postal, coordinates or IP. `GET /v1/analytics/regions` (house owner only)
+  calls it and folds again. Rows match shapes by code, then name, then Natural
+  Earth's grouping (a UK nation over its councils, a French region over its
+  departements); a row that matches nothing is counted as unmatched, never
+  placed. Until the read is applied the route answers `pending: true` and the
+  label and caption say "State counts not collected yet"; the shapes stay
+  selectable. Behaviour test: `scripts/test-analytics-region-db.sh`.
+- **One accent.** `--an-accent` (css/control-analytics.css) drives every red
+  on this screen: the selection, the chart line and area, the bars, the
+  active segment (`--an-accent-ruby`), the filter count, Clear and the
+  current card dot. The globe reads the same tokens through the browser, so
+  the accent swaps from one place.
+- **Polish (2026-10-16, second pass).** Land a clear step lighter than the
+  sphere; coast and border hairlines a small step lighter than the land, with
+  MSAA and FXAA; a smaller header on a phone; the shared bar's "Admin" chip sits
+  in the header row on this screen so it never covers a card. The Japan
+  sawtooth in the screenshots was the e2e fixture (it alternated 0/1/2 for every
+  country but the US), not the chart or the bucketing; the fixture now scales
+  the hourly shape to each country's total.
+- **Payloads** (bytes, raw / gzip -9): world 1:50m 602,872 / 189,291; a state
+  file: US 100,552 / 26,655, Japan 36,784 / 8,539, Germany 15,379 / 4,225,
+  Russia (largest) 228,452; all 239 state files together 3.57 MB / 0.91 MB,
+  never downloaded together.
+- **Attribution.** Made with Natural Earth. Free vector and raster map data
+  @ naturalearthdata.com. Public domain ("No permission is needed to use
+  Natural Earth"); natural-earth-vector v5.1.2. Recorded in each data file and
+  in `data/geo/admin1/index.json`.
+
+### C3. The owner's five-tab bar (admin first)
+
+For the house owner only (`GET /v1/status`, the Control Room's own owner
+check, remembered for ten minutes in this tab's `sessionStorage`, tied to the
+signed-in user), `js/tabbar.js` widens the bar to Play (the player), Home
+(`control.html#home`: the Control Room is the admin back end), the M
+(`assets/img/m-mark.png` as supplied, scaled, no plate), Analytics
+(`control.html#analytics`) and Globe. Everyone else keeps Music | M | Globe.
+Wings (held press) do not open on the five-tab bar.
+
+**Integration point** for other bar add-ons (the member Desk tab, PR #457):
+the dock carries `appbar--admin` and body `data-appbar-admin`; an add-on that
+would add a sixth column checks
+`if (dock.classList.contains("appbar--admin")) return null;` and lives under
+Home instead (the Control Room's account menu links the Desk:
+`mnet.html?view=feed&desk`). The `mcc:appbar-admin` event fires on change.
 
 ## D. Mission-gated CCTV
 
@@ -337,5 +482,11 @@ first, as for every core route).
 5. Decide: should the Control Room carry the shared bottom app bar on a
    phone, where it already has its own bottom navigation? Should Anti-Social level
    completions (no proof row) count as a completed mission for CCTV?
-6. Licences for live camera feeds stay as recorded in Halo's
+6. Apply `supabase/pending/analytics_country_v1.sql` (visitors and trend by
+   country on the analytics screen); until then the screen says it is not
+   applied.
+7. Apply `supabase/pending/analytics_region_v1.sql` (page views by state
+   on the admin analytics globe); until then the globe says "State counts
+   not collected yet" and states stay selectable.
+8. Licences for live camera feeds stay as recorded in Halo's
    `DATA_SOURCES.md`; restricted feeds (NYC DOT) must stay off.

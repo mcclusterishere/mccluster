@@ -162,26 +162,157 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-page-row__detail .cra-kpis{margin:12px 0}
 @media(min-width:36rem){.cra-page-row__summary{grid-template-columns:28px minmax(0,1fr) 74px 72px;gap:12px;padding:13px}.cra-page-row__traffic{display:grid}.cra-page-row__score b{font-size:1.35em}}
 
-/* ---------- THE 60/40 GLOBE (owner, 2026-10-15) ----------
-   Phone first: the globe on top, the panel stacked under it with a fold. From 64rem: about 60% globe, 40% panel,
-   the globe held in view while the panel scrolls. Only the layout changed; every card keeps its data. */
-.cra-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
-.cra-globe{position:relative;min-width:0;height:min(48vh,26rem);min-height:240px;border:1px solid var(--cr-line);border-radius:12px;overflow:hidden;background:#03060c}
-.cra-globe__frame{display:block;width:100%;height:100%;border:0}
-.cra-globe__caption{position:absolute;left:8px;right:8px;top:8px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(5,9,18,.78);color:#e7ecf4;font-size:12px;line-height:1.4;pointer-events:none}
-.cra-side{display:grid;gap:10px;min-width:0}
-.cra-side__toggle{justify-self:start;min-height:40px;padding:0 14px;border:1px solid var(--cr-line);border-radius:999px;background:var(--cr-panel);color:inherit;font:inherit;font-size:max(16px,1rem);cursor:pointer}
+/* ---------- THE CHARCOAL ANALYTICS (owner, 2026-10-15: "this is what analytics should aspire to look like … on vertical phone") ----------
+   Phone first: header, the globe stage (legend, filter pill, summary), then swipeable cards; the detail tabs follow.
+   From 64rem: about 60% globe / 40% panel, one screen tall, the panel scrolling beside the globe. Breakpoints only add. */
+/* THE ACCENT (owner, 2026-10-16: red "all over the place" is out). One token, --an-accent, and everything red on this
+   screen derives from it: the data (choropleth, chart line and area, bars, the legend), the ONE selected place, the active
+   segment, the filter count, Clear, the current card dot. Swap the accent here and the whole screen follows; the globe
+   reads the same tokens (js/control-room/analytics-globe.js). Nothing else on this screen is red. */
+.cra-app{--an-accent:#e11d2e;--an-accent-ruby:color-mix(in srgb,var(--an-accent) 26%,#141416);--an-accent-line:color-mix(in srgb,var(--an-accent) 78%,transparent);--an-accent-muted:color-mix(in srgb,var(--an-accent) 38%,#2a2a2e);
+  --an-rim:rgba(175,182,205,.26);--an-space:#0b0b0d;--an-earth:#131417;--an-land:#3b3e44;--an-land-context:#464950;--an-border:#80858f;--an-graticule:#ffffff;
+  --k-bg:#0a0a0b;--k-card:#111113;--k-line:rgba(255,255,255,.08);--k-line2:rgba(255,255,255,.15);--k-text:#f2f2f3;--k-dim:#a1a1a8;--k-faint:#6f6f77;--k-red:var(--an-accent);--k-red-hot:var(--an-accent);--k-live:#22c55e;--k-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"DejaVu Serif","Liberation Serif",serif}
+.cra-split{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;background:var(--k-bg);color:var(--k-text)}
+.cra-lead-col{display:grid;min-width:0}
+.cra-top{display:grid;gap:8px;padding:8px 16px 0}
+.cra-top__row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cra-top__eyebrow{margin:0;font:600 14px/1.1 var(--k-serif);letter-spacing:0;color:var(--k-text)}
+.cra-top__title{display:flex;align-items:center;gap:10px;margin:2px 0 0;font:500 clamp(27px,7.2vw,44px)/1.05 var(--k-serif);letter-spacing:-.015em}
+.cra-live{display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;border:0;background:none;font:500 13px/1 var(--ui,system-ui,sans-serif);letter-spacing:0;color:var(--k-dim)}
+.cra-live i{width:8px;height:8px;border-radius:50%;background:var(--k-faint)}
+.cra-live.is-live i{background:var(--k-live);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+.cra-live.is-loading i{background:#f0b44d;animation:craPulse 1s ease-in-out infinite}
+.cra-live.is-error i{background:var(--k-red)}
+.cra-top__me{flex:none;display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--k-line2);border-radius:50%;background:#111113;color:var(--k-text);cursor:pointer}
+.cra-top__me svg,.cra-cal svg,.cra-pill__filters svg,.cra-car__next svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.cra-top__controls{display:flex;align-items:center;gap:8px;min-width:0}
+.cra-top__prop{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;min-height:44px;padding:0 34px 0 14px;border:1px solid var(--k-line2);border-radius:12px;background:#111113 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f2f2f3' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center/16px;color:var(--k-text)}
+.cra-prop__face{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 15px/1 var(--ui,system-ui,sans-serif)}
+.cra-prop__full{display:none}
+.cra-top__prop:focus-within{outline:2px solid #fff;outline-offset:2px}
+.cra-app .cra-property{position:absolute;inset:0;width:100%;min-height:44px;opacity:0;border:0;cursor:pointer;font-size:max(16px,1rem)}
+.cra-seg{display:inline-flex;flex:none;border:1px solid var(--k-line2);border-radius:12px;overflow:hidden;background:#111113}
+.cra-seg__b{min-height:42px;padding:0 9px;border:0;border-left:1px solid var(--k-line);background:transparent;color:var(--k-dim);font:500 13px/1 var(--ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.cra-seg__b:first-child{border-left:0}
+.cra-seg__b.is-on{background:var(--an-accent-ruby);color:#fff;box-shadow:inset 0 0 0 1px var(--an-accent-line);border-radius:11px}
+.cra-seg__b:focus-visible,.cra-cal:focus-visible,.cra-pill button:focus-visible,.cra-dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.cra-cal{flex:none;display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--k-line2);border-radius:12px;background:#111113;color:var(--k-text);cursor:pointer}
+.cra-cal.is-on{border-color:var(--an-accent-line);background:var(--an-accent-ruby);color:#fff}
+.cra-more{display:grid;gap:8px;padding:10px;border:1px solid var(--k-line);border-radius:12px;background:var(--k-card)}
+.cra-stage{position:relative;min-width:0;height:clamp(400px,49svh,640px);border:0;border-bottom:1px solid var(--k-line);border-radius:0;overflow:hidden;background:var(--k-bg)}
+.cra-globe__host{position:absolute;inset:0 0 120px 0;isolation:isolate}
+/* the atmosphere: a soft rim just outside the Earth (the globe fills about 82% of the host's short side, js/control-room/analytics-globe.js) */
+.cra-globe__host::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle closest-side at 50% 50%,transparent 0,transparent 79%,var(--an-rim) 82.5%,color-mix(in srgb,var(--an-rim) 35%,transparent) 88%,transparent 96%)}
+.crg-canvas,.crg-canvas .cesium-widget,.crg-canvas canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.crg-canvas .cesium-widget-credits{display:none}
+.crg-msg{position:absolute;left:16px;right:16px;top:40%;margin:0;color:var(--k-dim);font-size:13px;text-align:center}
+.crg-msg[hidden]{display:none}
+.crg-tip{position:absolute;left:0;top:0;z-index:3;display:grid;gap:2px;padding:8px 12px;border:1px solid var(--k-line2);border-radius:10px;background:rgba(16,16,18,.74);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;white-space:nowrap}
+.crg-tip[hidden]{display:none}
+.crg-tip b{font:500 15px/1.2 var(--ui,system-ui,sans-serif);color:#fff}.crg-tip span{font-size:13px;color:var(--k-text)}.crg-tip small{font-size:11px;letter-spacing:.02em;color:var(--k-dim)}.crg-tip small[hidden]{display:none}
+.cra-globe__caption{position:absolute;left:12px;right:12px;bottom:6px;margin:0;padding:0;background:none;color:var(--k-faint);font-size:11px;line-height:1.35;text-align:center;pointer-events:none}
+.cra-pill{position:absolute;left:50%;bottom:48px;z-index:2;display:flex;align-items:center;transform:translateX(-50%);max-width:calc(100% - 32px);border:1px solid var(--k-line2);border-radius:999px;background:rgba(17,17,19,.88);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.cra-pill__filters{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 16px;border:0;border-right:1px solid var(--k-line2);background:transparent;color:var(--k-text);font:500 15px/1 var(--ui,system-ui,sans-serif);cursor:pointer;white-space:nowrap}
+.cra-pill__n{display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--k-red);color:#fff;font-style:normal;font-size:13px;font-weight:700}
+.cra-pill__country{min-width:0}
+.cra-pill__select{min-width:0;max-width:11rem;min-height:44px;padding:0 34px 0 14px;border:0;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f2f2f3' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/16px;color:var(--k-text);font:500 max(16px,1rem)/1 var(--ui,system-ui,sans-serif);text-overflow:ellipsis;appearance:none;-webkit-appearance:none;cursor:pointer}
+.cra-pill__select option{background:#141416;color:#f2f2f3}
+.cra-summary{position:absolute;left:12px;right:12px;bottom:22px;z-index:2;margin:0;color:var(--k-dim);font-size:13px;text-align:center}
+.cra-clear{margin-left:10px;padding:4px 2px;border:0;background:none;color:var(--k-red-hot);font:inherit;font-weight:600;cursor:pointer}
+.cra-sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:4;max-height:calc(100% - 16px);overflow-y:auto;padding:12px;border:1px solid var(--k-line2);border-radius:16px;background:rgba(17,17,19,.97);box-shadow:0 20px 50px rgba(0,0,0,.55)}
+.cra-sheet[hidden]{display:none}
+.cra-sheet__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cra-sheet__x{width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.07);color:#fff;font-size:22px;cursor:pointer}
+.cra-sheet .cra-filters{border:0;padding:0;background:transparent}
+.cra-side{display:grid;gap:10px;min-width:0;padding:6px 16px 24px;background:var(--k-bg)}
 .cra-side__body{container-type:inline-size;container-name:cra;min-width:0}
-.cra-side__body[hidden]{display:none}
+.cra-h{width:fit-content;margin:12px 0 8px;font:500 30px/1.1 var(--k-serif);letter-spacing:-.015em;color:var(--k-text)}
+.cra-carsec{min-width:0}
+.cra-car{position:relative;min-width:0}
+.cra-car__track{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cra-car__track::-webkit-scrollbar{display:none}
+.cra-car__next{display:none}
+.cra-slide{scroll-snap-align:start;min-width:0;display:grid;gap:12px;align-content:start;padding:16px;border:1px solid var(--k-line);border-radius:16px;background:var(--k-card)}
+.cra-slide__head{display:flex;justify-content:flex-end;min-width:0}
+.cra-slide:has(> .cra-reach-main){grid-template-columns:minmax(0,.8fr) minmax(0,1.35fr);column-gap:12px;row-gap:10px}
+.cra-slide:has(> .cra-reach-main) > .cra-slide__head{grid-column:2;grid-row:1}
+.cra-slide:has(> .cra-reach-main) > .cra-reach-main{display:contents}
+.cra-slide:has(> .cra-reach-main) .cra-big{grid-column:1;grid-row:1 / span 2;align-self:end}
+.cra-slide:has(> .cra-reach-main) .cra-reach-chart{grid-column:2;grid-row:2;align-self:end}
+.cra-slide:not(:has(> .cra-slide__head)) .cra-reach-chart{grid-row:1 / span 2}
+.cra-slide .cra-seg{max-width:100%}
+.cra-slide .cra-seg__b{padding:0 8px;font-size:12.5px;min-height:36px}
+.cra-reach-main{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr);gap:12px;align-items:end;min-width:0}
+.cra-big{display:grid;gap:2px;min-width:0}
+.cra-big strong{font:500 clamp(44px,13vw,64px)/1 var(--k-serif);letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#fff}
+.cra-big__l{font-size:18px;color:var(--k-text)}
+.cra-big__s{font-size:13px;line-height:1.35;color:var(--k-dim)}
+.cra-reach-chart{min-width:0}
+.cra-area-chart{display:block;width:100%;height:auto}
+.cra-ac__grid{stroke:rgba(255,255,255,.07);stroke-width:1}
+.cra-ac__line{fill:none;stroke:var(--an-accent);stroke-width:2.2;stroke-linejoin:round}
+.cra-ac__s0{stop-color:var(--an-accent);stop-opacity:.6}.cra-ac__s1{stop-color:var(--an-accent);stop-opacity:0}
+.cra-ac__x{fill:var(--k-dim);font-size:13px;font-variant-numeric:tabular-nums}
+.cra-c__empty,.cra-c__note{margin:0;color:var(--k-dim);font-size:12px;line-height:1.4}
+.cra-hbars{display:grid;gap:8px;min-width:0}
+.cra-hbar{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding-bottom:7px;font-size:13px}
+.cra-hbar__l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--k-dim)}
+.cra-hbar b{font-weight:600;font-variant-numeric:tabular-nums}
+.cra-hbar i{position:absolute;left:0;bottom:0;height:3px;width:var(--pct);border-radius:3px;background:var(--k-red-hot)}
+.cra-split2{display:grid;gap:10px;min-width:0}
+.cra-split2__bar{display:flex;gap:3px;height:14px}
+.cra-split2__bar i{flex:1;border-radius:999px;background:var(--an-accent-muted)}
+.cra-split2__bar i:first-child{flex:0 0 var(--pct);background:var(--k-red-hot)}
+.cra-split2__k{display:flex;justify-content:space-between;gap:10px;color:var(--k-text);font-size:14px}
+.cra-split2__k span{display:grid;gap:2px}.cra-split2__k span:last-child{text-align:right}
+.cra-split2__k b{font:500 22px/1.1 var(--ui,system-ui,sans-serif);font-variant-numeric:tabular-nums}
+.cra-dots{display:flex;justify-content:center;gap:4px;margin-top:8px}
+.cra-dot{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;background:transparent;cursor:pointer}
+.cra-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);transition:background-color .2s ease}
+.cra-dot.is-on::before{background:var(--k-red-hot)}
+.cra-app .cra-state{color:var(--k-faint)}
+.cra-app .cra-card{background:var(--k-card);border-color:var(--k-line)}
 .cra-filters{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px;border:1px solid var(--cr-line);border-radius:12px;background:var(--cr-panel)}
 .cra-filters label{display:grid;gap:4px;font-size:11px;color:var(--cr-dim);min-width:0}
 .cra-filter-select{width:100%;min-width:0;min-height:40px;padding:6px 10px;border:1px solid var(--cr-line);border-radius:10px;background:#0d1117;color:#f4f5f7;font:inherit;font-size:max(16px,1rem)}
 .cra-filter-select:disabled{opacity:.55}
 .cra-filters__note{grid-column:1/-1;margin:0;color:var(--cr-faint);font-size:10px;line-height:1.45}
-.cra-rank__row.is-on{outline:2px solid #ff3d5e;outline-offset:-2px}
+.cra-rank__row.is-on{outline:2px solid var(--an-accent);outline-offset:-2px}
 @container cra (min-width:30rem){.cra-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:64rem){
-  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);height:calc(100dvh - var(--cr-top,0px) - 40px);min-height:32rem}
-  .cra-globe{height:auto;min-height:0;max-height:none}
-  .cra-side{min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain}
+@media (prefers-reduced-motion:reduce){.cra-car__track{scroll-behavior:auto}.cra-seg__b,.cra-dot::before{transition:none}.cra-live.is-loading i{animation:none}}
+/* the Control Room around it: on the Analytics surface the page is the screen (no topbar, no padding) */
+body.cr[data-cr-surface="analytics"]{background:#0a0a0b}
+body.cr[data-cr-surface="analytics"] .cr-topbar{display:none}
+/* the shared bar's "Admin" chip (js/tabbar.js) sits in the header row here, beside the account button, so it never
+   covers a card or a chart; it scrolls away with the header */
+body.cr[data-cr-surface="analytics"] .mcc-auth-chip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:72px;bottom:auto;z-index:20}
+body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-rows:minmax(0,1fr);grid-template-areas:"main"}
+body.cr[data-cr-surface="analytics"] .cr-main{padding:0;min-height:0}
+body.cr[data-cr-surface="analytics"] .cr-surface{max-width:none}
+/* the shared bottom bar carries the owner's five tabs here (js/tabbar.js); the Control Room's own bottom row becomes a
+   row of rooms under its topbar instead of a second bar at the bottom */
+body.cr.has-appbar{padding-bottom:calc(var(--appbar-h,64px) + 1.4rem + env(safe-area-inset-bottom))}
+body.cr.has-appbar .cr-bottom{grid-area:main;align-self:start;position:sticky;top:var(--cr-top);bottom:auto;z-index:30;display:flex;gap:4px;height:auto;padding:6px 10px;overflow-x:auto;scrollbar-width:none;border-top:0;border-bottom:1px solid var(--cr-line);background:rgba(10,11,13,.96)}
+body.cr.has-appbar .cr-bottom::-webkit-scrollbar{display:none}
+body.cr.has-appbar .cr-bottom .cr-nav__item{flex:none;flex-direction:row;gap:6px;min-height:36px;padding:0 12px;border-radius:999px}
+body.cr.has-appbar .cr-bottom .cr-nav__item.is-active::before{display:none}
+body.cr.has-appbar .cr-bottom .cr-nav__item.is-active{background:rgba(229,56,59,.14)}
+body.cr.has-appbar .cr-main{padding-top:62px}
+body.cr.has-appbar[data-cr-surface="analytics"] .cr-bottom{display:none}
+body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}
+@media (min-width:30rem){.cra-prop__short{display:none}.cra-prop__full{display:inline}}
+@media (min-width:48rem){
+  .cra-top{padding:20px 24px 8px}
+        .cra-stage{height:clamp(420px,56svh,680px)}
+  .cra-side{padding:8px 24px 28px}
+  .cra-car__track{grid-auto-columns:calc(50% - 6px)}
+  .cra-car__next{position:absolute;right:-12px;top:50%;display:grid;place-items:center;width:36px;height:36px;transform:translateY(-50%);border:1px solid var(--k-line2);border-radius:50%;background:#18181b;color:#fff;cursor:pointer}
 }
+@media (min-width:64rem){
+  .cra-split{grid-template-columns:minmax(0,3fr) minmax(0,2fr);height:calc(100dvh - var(--appbar-h,4.6rem) - 1.4rem - env(safe-area-inset-bottom));min-height:34rem}
+  .cra-lead-col{grid-template-rows:auto minmax(0,1fr);min-height:0;border-right:1px solid var(--k-line)}
+  .cra-stage{height:auto;min-height:0;border-bottom:0}
+  .cra-side{min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain}
+  .cra-car__track{grid-auto-columns:100%}
+}
+@media (min-width:761px){body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-areas:"rail main"}body.cr.has-appbar .cr-bottom{display:none}body.cr.has-appbar .cr-main{padding-top:18px}body.cr.has-appbar[data-cr-surface="analytics"] .cr-main{padding-top:0}}

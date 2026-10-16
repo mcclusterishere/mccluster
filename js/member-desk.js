@@ -72,6 +72,7 @@
   function ensureTab() {
     var dock = document.querySelector(".appbar");
     if (!dock) return null;
+    if (dock.classList.contains("appbar--admin")) return null;
     var tab = dock.querySelector("[data-hu-desk]");
     if (!tab) {
       tab = document.createElement("button");

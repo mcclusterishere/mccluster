@@ -15,7 +15,9 @@ test('Control Analytics cold render is safe before the first network load',async
     supa:()=>Promise.resolve([])
   });
   assert.doesNotThrow(()=>context.window.CR.analytics.render());
-  assert.match(context.window.CR.analytics.render(),/>Analytics</);
+  /* the header (title, Live, property, range) is painted around the globe; the panel opens on the Reach cards */
+  assert.match(context.window.CR.analytics.top(),/>Analytics </);
+  assert.match(context.window.CR.analytics.render(),/>Reach</);
 });
 
 test('Control Analytics mount paints immediately and fails visibly instead of going blank',async()=>{
@@ -34,7 +36,7 @@ test('Control Analytics mount paints immediately and fails visibly instead of go
     querySelectorAll:()=>[]
   };
   assert.doesNotThrow(()=>A.mount(host));
-  assert.match(host.innerHTML,/>Analytics</);
+  assert.match(host.innerHTML,/>Reach</);
   await new Promise((resolve)=>setTimeout(resolve,0));
   assert.match(host.innerHTML,/Analytics load failed/);
   assert.match(host.innerHTML,/did not load/);
@@ -70,7 +72,8 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
   A.mount(host);
   await new Promise((resolve)=>setTimeout(resolve,120));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
-  assert.ok(peak<=3,'analytics opened '+peak+' concurrent reads');
+  /* four at a time: the suite gained the reads no screen used to show (visitors, journeys, health, missions, country) */
+  assert.ok(peak<=4,'analytics opened '+peak+' concurrent reads');
   assert.ok(paints>4,'completed reads should repaint progressively');
   assert.equal(A.state.loading,false);
 });
@@ -90,15 +93,15 @@ test('custom range edits survive progressive Analytics repaints',async()=>{
   };
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
   A.mount(host);
-  A.state.rangeId='custom';
+  A.state.rangeId='custom';A.state.ui.more=true;
   from.value='2026-09-01';through.value='2026-09-27';
   assert.equal(typeof from.oninput,'function');
   assert.equal(typeof through.oninput,'function');
   from.oninput();through.oninput();
   assert.equal(A.state.from,'2026-09-01');
   assert.equal(A.state.through,'2026-09-27');
-  assert.match(A.render(),/value="2026-09-01"/);
-  assert.match(A.render(),/value="2026-09-27"/);
+  assert.match(A.top(),/value="2026-09-01"/);
+  assert.match(A.top(),/value="2026-09-27"/);
   from.value='';from.oninput();
   assert.equal(A.state.from,'');
   assert.equal(typeof apply.onclick,'function');
@@ -158,11 +161,16 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   const forensics=await read('js/control-room/forensics.js');
   assert.match(forensics,/"\/v1\/analytics\/" \+ \(F\.mode === "visitors" \? "visitors" : "sessions"\)/);
   assert.match(forensics,/"\/v1\/analytics\/sessions\/" \+ encodeURIComponent\(t\.id\)/);
-  /* no second analytics page in a frame; the one frame is the World globe's analytics surface (60/40 layout) */
+  /* no second analytics page in a frame, and no frame at all: the charcoal globe is drawn in this page by one Cesium
+     widget (js/control-room/analytics-globe.js), mounted once into a host the panel never repaints */
   assert.doesNotMatch(js,/analytics\.html\?control_embed/);
-  const frames=js.match(/<iframe[^>]*>/g)||[];
-  assert.equal(frames.length,1);
-  assert.match(frames[0],/src="action-globe\.html\?embedded=1&amp;surface=analytics"/);
+  assert.doesNotMatch(js,/<iframe/);
+  assert.match(js,/S\.globe=window\.CR\.analyticsGlobe\.mount\(gh,/);
+  /* the reads no screen used to show, now visualized */
+  for(const route of ['/v1/analytics/visitors?since=','/v1/analytics/flows?since=','/v1/analytics/errors?since=']) assert.ok(js.includes(route),route);
+  assert.match(js,/rpc\("action_mission_stats",\{p_campaign:null\}\)/);
+  assert.match(js,/rpc\("analytics_country_totals",args\)/);
+  assert.match(js,/rpc\("analytics_country_series",/);
 });
 
 test('one range controls all analytics panels and stale requests cannot repaint',async()=>{
@@ -231,6 +239,8 @@ test('Control Analytics is mobile-first',async()=>{
   assert.match(css,/@container cra \(min-width:36rem\)/);
   assert.match(css,/@container cra \(min-width:54rem\)/);
   assert.match(css,/@media \(min-width:64rem\)\{\s*\.cra-split\{grid-template-columns:minmax\(0,3fr\) minmax\(0,2fr\)/);
+  /* the one exception is the Control Room's own 760px line, restated as min-width: from 761px the rail is the navigation */
+  assert.doesNotMatch(css.replace(/@media \(min-width:761px\)/g,''),/@media \(min-width:7\d\dpx\)/);
   assert.doesNotMatch(css,/@container[^{]*max-width/);
   assert.doesNotMatch(css,/@media\s*\(max-width:/);
   assert.match(css,/font-size:max\(16px,1rem\)/);
