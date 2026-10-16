@@ -1,3 +1,4 @@
+import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 import {handleAtNight} from './at-night.js';
@@ -264,6 +265,16 @@ export default {
         const id = env.HereTenantAgent.idFromName('health');
         const stub = env.HereTenantAgent.get(id);
         return stub.fetch(request);
+      }
+
+      /* Funding Intelligence is a private Control route. Authentication and
+         house-owner authorization run before even reading catalog state or
+         contacting external grant providers. Never publish partner proposals. */
+      if (path === FUNDING_PREFIX || path.startsWith(FUNDING_PREFIX + '/')) {
+        await requireHouseOwner(request, env);
+        return await handleFundingIntelligence(request, env, {
+          read: p => sb(env, p)
+        });
       }
 
       if (path === '/v1/me' && request.method === 'GET') {
