@@ -452,7 +452,7 @@
           + '<span class="pn__kind">' + e.k + "</span>"
           + "<h3>" + mark(e.t, toks) + "</h3>"
           + '<span class="pn__url">matthew.mccluster.org/' + esc(e.u) + "</span>"
-          + "<p>" + mark(e.d, toks) + "</p></a>";
+          + (toks.length ? "<p>" + mark(e.d, toks) + "</p>" : "") + "</a>";
       }).join("");
       var ms = Math.max(1, Math.round(performance.now() - t0));
       count.innerHTML = "<b>" + rows.length + "</b> result" + (rows.length === 1 ? "" : "s")

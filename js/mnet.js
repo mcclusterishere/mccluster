@@ -8,6 +8,10 @@
     boot: null,
     feed: [],
     nextBefore: null,
+    /* the World's news (GET /v1/world/news): the page read so far, and its cursor (undefined: not read yet; null: no more) */
+    news: [],
+    newsBefore: undefined,
+    newsSeq: 0,
     loadingFeed: false,
     threadPost: null,
     currentView: "feed",
@@ -206,6 +210,8 @@
     $("mnPasswordChange").hidden = !editing;
     showStep(editing ? 0 : 1);
     prefillContact();
+    /* locked details (the profile edit gate, js/profile-edit-gate.js) read as locked; the database refuses the write anyway */
+    if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.lockForm();
   }
   /* step 0 is the editing page: step 1's fields, the public details and the password, together */
   function showStep(n) {
@@ -654,7 +660,7 @@
       }
       track("onboarding_done", { step: String(boot && boot.next_step || "feed") });
       return loadFeed(true).then(function () {
-        var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
+        var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card[data-post-id]");
         if (first) { first.classList.add("is-just-posted"); setTimeout(function () { first.classList.remove("is-just-posted"); }, 1600); }
       });
     });
@@ -688,6 +694,7 @@
       var m = e && e.message || "Could not save that.";
       if (/mccluster_id_taken/.test(m)) { m = "That username is already taken."; paintHandleState("bad", "@" + $("mnHandle").value.trim() + " is taken. Try another."); }
       if (/invalid_mccluster_id/.test(m)) m = "Use 3–32 letters, numbers, dots, underscores or hyphens.";
+      if (/profile_field_locked/.test(m)) m = "That detail is locked. Ask for the change from your desk.";
       setStatus($("mnProfileStatus"), m, "error");
     }).finally(function () { button.disabled = false; });
   }
@@ -939,6 +946,8 @@
   }
   /* what a post actually carries, for the feed tabs; no invented topics */
   function feedMatches(item, query) {
+    /* a news card answers to its headline, its publisher and the place it mentions */
+    if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
     var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
     return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
   }
@@ -1023,13 +1032,18 @@
   function renderFeed(append) {
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
-    if (!state.feed.length) {
+    paintMore();
+    var focus = state.world.focus, query = state.world.query;
+    /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
+    var news = focus && focus.filter ? [] : state.news;
+    paintNewsCredit(false);
+    if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed, focus = state.world.focus, query = state.world.query;
+    var items = state.feed;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -1041,13 +1055,24 @@
         return;
       }
     }
-    if (query) items = items.filter(function (item) { return feedMatches(item, query); });
-    if (!items.length) {
+    if (query) {
+      items = items.filter(function (item) { return feedMatches(item, query); });
+      news = news.filter(function (n) { return feedMatches(n, query); });
+    }
+    if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = items.map(function (item) {
+    host.innerHTML = interleaveFeed(items, news).map(function (item) {
+      if (item.news) {
+        var card = newsCard(item), nkey = "news:" + item.id;
+        if (!seen[nkey]) {
+          seen[nkey] = true;
+          card = card.replace('<article class="mn__post-card', '<article style="--i:' + (order++ % 8) + '" class="mn__post-card is-new');
+        }
+        return card;
+      }
       if (item.item_type === "activity") {
         var p = item.payload || {};
         return '<article class="mn__post-card"><div class="mn__post-head">' + authorHtml(item.actor) + '<span class="mn__author-sub">' + esc(timeAgo(item.occurred_at)) + '</span></div><p class="mn__post-body">' + esc(p.summary || p.text || "Activity on McCluster") + '</p></article>';
@@ -1060,7 +1085,10 @@
       }
       return html;
     }).join("");
+    /* the licence's credit rides with the news: shown whenever a news card is */
+    paintNewsCredit(news.length > 0);
     bindFeedActions(host);
+    bindNewsActions(host);
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -1086,6 +1114,93 @@
     return new Array(n + 1).join(one);
   }
 
+  /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
+     one … from them. But like, we gotta ingest it so it's still from us."). The Worker ingests
+     GDELT into the McCluster plane and serves it back (GET /v1/world/news); this page reads that, never GDELT. News is
+     free for everyone, so the read is a bare public GET with no session, for a guest and a member alike, beside the
+     posts' read. A news read that fails, or answers anything but a page of items, leaves the posts as they were. A
+     story's place is where the article MENTIONS somewhere (GDELT's extraction), never where something happened. */
+  var FEED_NEWS_PER_POST = 1, NEWS_API = "https://api.mccluster.org/v1/world/news", NEWS_WAIT = 4000;
+  function cleanNews(n) {
+    if (!n || typeof n !== "object" || !/^https?:\/\//i.test(String(n.url || ""))) return null;
+    var id = String(n.id || "").slice(0, 64), title = String(n.title || "").replace(/\s+/g, " ").trim().slice(0, 300), url = safeHttpUrl(n.url);
+    if (!id || !title || !url) return null;
+    var lat = Number(n.lat), lon = Number(n.lon), located = typeof n.lat === "number" && typeof n.lon === "number" && isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+    var domain = String(n.domain || "").trim();
+    if (!domain) try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
+    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null };
+  }
+  /* never rejects, nor throws (even building the address): { ok, items, next } for a page, { ok: false, status } for anything else */
+  function fetchNews(before) {
+    return Promise.resolve().then(function () {
+      return fetch(NEWS_API + "?limit=20" + (before ? "&before=" + encodeURIComponent(before) : ""));
+    }).then(function (r) {
+      if (!r.ok) return { ok: false, status: r.status };
+      return r.json().then(function (d) {
+        if (!d || d.ok !== true || !Array.isArray(d.items) || d.unavailable) return { ok: false, status: 0 };
+        return { ok: true, items: d.items.map(cleanNews).filter(Boolean), next: typeof d.next_before === "string" && d.next_before ? d.next_before : null };
+      });
+    }).catch(function () { return { ok: false, status: 0 }; });
+  }
+  function applyNews(res, before) {
+    if (res && res.ok) {
+      var list = before ? state.news.slice() : [], have = {};
+      list.forEach(function (n) { have[n.id] = true; });
+      res.items.forEach(function (n) { if (!have[n.id]) { have[n.id] = true; list.push(n); } });
+      state.news = list;
+      state.newsBefore = res.next;
+    } else if (before && res && res.status === 400) state.newsBefore = null;
+    /* anything else keeps what was there: a first page that did not come is asked for again with the next Load more,
+       and a later page that did not come is asked for again from the same cursor */
+  }
+  /* a pinned post first, then one member post to FEED_NEWS_PER_POST news items; when one runs out, the other carries on */
+  function interleaveFeed(posts, news) {
+    var out = [], rest = [], p = 0, n = 0, k;
+    posts.forEach(function (item) { (item && item.payload && item.payload.pinned ? out : rest).push(item); });
+    while (p < rest.length || n < news.length) {
+      if (p < rest.length) out.push(rest[p++]);
+      for (k = 0; k < FEED_NEWS_PER_POST && n < news.length; k++) out.push(news[n++]);
+    }
+    return out;
+  }
+  /* a news card wears the World's card, keyed data-news-id (data-post-id is a member's post): the publisher, when it was
+     seen and the place it mentions, the headline out to the publisher, and the place on the Earth. No pictures and no
+     publisher marks: the words only. */
+  function newsCard(n) {
+    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
+    return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
+      '<p class="mn__news-meta"><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
+        (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
+        (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
+      '<a class="mn__news-title" href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer">' + esc(n.title) +
+        '<span class="sr-only"> (opens ' + esc(n.domain || "the publisher") + ' in a new tab)</span></a>' +
+      (n.lat !== null && n.lon !== null
+        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
+        : '') +
+    '</article>';
+  }
+  function paintNewsCredit(on) { var c = $("mnNewsCredit"); if (c) c.hidden = !on; }
+  /* Load more while either stream has another page (the news only counts while it is shown) */
+  function paintMore() {
+    var more = $("mnMore"), focus = state.world.focus;
+    if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
+  }
+  function bindNewsActions(root) {
+    root.querySelectorAll("[data-news-place]").forEach(function (b) {
+      b.onclick = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var lat = Number(b.getAttribute("data-lat")), lon = Number(b.getAttribute("data-lon")), label = String(b.getAttribute("data-label") || "").slice(0, 120);
+        if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+        /* the Earth turns to the story's place, so a mission on the strip would be the wrong one: let it go */
+        if (state.world.focus) setWorldFocus(null);
+        var caption = $("mnWorldCaption");
+        if (caption) caption.textContent = label ? label + " \u00b7 mentioned in this story." : "A place this story mentions.";
+        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label });
+        track("world_news_place", {});
+      };
+    });
+  }
+
   function loadFeed(reset) {
     if (state.loadingFeed) return Promise.resolve();
     state.loadingFeed = true;
@@ -1098,11 +1213,25 @@
     var publicRead = state.guest || !!needsStep() || !!state.stall;
     var path = (publicRead ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
-    var read = publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
-    return read.then(function (data) {
-      var incoming = data.items || [];
-      state.feed = reset ? incoming : state.feed.concat(incoming);
-      state.nextBefore = data.next_before || null;
+    /* Load more reads the posts only while they have another page */
+    var read = !reset && !state.nextBefore ? Promise.resolve(null) : publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
+    /* the news, beside it: the first page on a reset, else the next one, unless there is none */
+    var newsFrom = reset ? undefined : state.newsBefore, wantNews = newsFrom !== null, seq = wantNews ? ++state.newsSeq : state.newsSeq, drawn = false;
+    var news = !wantNews ? Promise.resolve() : fetchNews(newsFrom).then(function (res) {
+      if (seq !== state.newsSeq) return;
+      applyNews(res, newsFrom);
+      /* it came after the posts were drawn: draw again */
+      if (drawn && !state.loadingFeed) renderFeed(false);
+    });
+    /* the posts wait a moment for the news, so both arrive in one draw, but never on it */
+    var settled = Promise.race([news, new Promise(function (r) { setTimeout(r, NEWS_WAIT); })]);
+    return Promise.all([read, settled]).then(function (out) {
+      var data = out[0], incoming = data && data.items || [];
+      if (data) {
+        state.feed = reset ? incoming : state.feed.concat(incoming);
+        state.nextBefore = data.next_before || null;
+      }
+      drawn = true;
       renderFeed(false);
       try {
         var linkedPost = new URLSearchParams(location.search).get("post");
@@ -1115,7 +1244,7 @@
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
       if (reset && !state.guest) paintFeedMissions();
-      $("mnMore").hidden = !state.nextBefore;
+      paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
@@ -2322,6 +2451,9 @@
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
     identity: function () { return identity(); },
+    /* the member desk (js/member-desk.js) reads the profile and opens the editor */
+    profile: function () { return profile(); },
+    editProfile: function () { return editProfile(); },
     refreshFeed: function () { return loadFeed(true); },
     setView: setView,
     openMissionFromLive: function (sessionId, missionId) {
@@ -2395,7 +2527,15 @@
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
     var mine=missions.levelsByMission&&missions.levelsByMission[m.id];
     if(m.id===ANTISOCIAL_ID)activity="One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"")+" · "+activity;
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
+    /* where it started, what comes next, how far it reaches, its own call to action:
+       action_mission_card_extras() (pending SQL); absent until applied, so nothing shows */
+    var x=missions.extras&&missions.extras[m.id]||{};
+    var extra=(x.origin_label?'<p class="mn__hint">'+esc(x.origin_label)+' · open to everyone</p>':"")+
+      (x.country_count>1?'<p class="mn__hint">On the World in '+esc(x.country_count)+' countries</p>':"")+
+      (x.next_mission_title?'<p class="mn__hint">Next in this arc: '+esc(x.next_mission_title)+'</p>':"")+
+      (x.previous_mission_title?'<p class="mn__hint">Opens once your \u201c'+esc(x.previous_mission_title)+'\u201d is verified</p>':"");
+    var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
@@ -2407,9 +2547,11 @@
     return Promise.all([
       /* select=* carries kind, so clip campaigns can be left to the Clips tab */
       sbRest("action_missions?status=eq.open"+campaignFilter+"&select=*&order=created_at.desc"),
-      sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
+      sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];}),
+      sbRpc("action_mission_card_extras",{}).catch(function(){return [];})
     ]).then(function(out){
       if(version!==missionListVersion)return;
+      missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
@@ -2626,6 +2768,42 @@
       .catch(function(e){setStatus($("mnAntisocialStatus"),e.message||"Submission failed.","error");})
       .then(function(){btn.disabled=false;});
   }
+  /* PUT YOUR BLACK BUSINESS ON THE MAP. A listing is its own review, separate from the
+     mission's proof: submit_action_business_listing() only ever files it as 'submitted';
+     the desk approves (review_action_business_listing), which makes the business profile
+     and, once the desk places it, a coarse pin unless the business chose its exact address. */
+  var BUSINESS_CONSENT_VERSION="2026-10-15";
+  function businessListingForm(focus){
+    var f=document.createElement("form");f.className="mn__business-listing";f.id="mnBusinessListing";
+    f.innerHTML='<p class="mn__eyebrow">Put your Black business on the map</p>'+
+      '<label class="mn__label" for="mnBizName">Business name</label><input class="mn__input" id="mnBizName" maxlength="120" required>'+
+      '<label class="mn__label" for="mnBizArea">Town or city, state</label><input class="mn__input" id="mnBizArea" maxlength="120" placeholder="Hartford, CT" required>'+
+      '<label class="mn__label" for="mnBizCountry">Country code</label><input class="mn__input" id="mnBizCountry" maxlength="2" value="US" autocapitalize="characters" required>'+
+      '<label class="mn__label" for="mnBizUrl">Public link (site, Google or Yelp page)</label><input class="mn__input" id="mnBizUrl" type="url" maxlength="500" placeholder="https://…" required>'+
+      '<label class="mn__check" for="mnBizExact"><input id="mnBizExact" type="checkbox"><span><b>Show the exact address</b>Off: the pin sits about 11 km from it, at town level.</span></label>'+
+      '<input class="mn__input" id="mnBizStreet" maxlength="200" placeholder="Street address (only with an exact pin)" hidden>'+
+      '<label class="mn__check" for="mnBizOwned"><input id="mnBizOwned" type="checkbox" required><span><b>This business is Black-owned</b>and I own it or may list it.</span></label>'+
+      '<label class="mn__check" for="mnBizConsent"><input id="mnBizConsent" type="checkbox" required><span><b>Show it on the World</b>Its name, town and link, after review. You can withdraw it any time.</span></label>'+
+      '<button class="mn__primary" type="submit">Send for review</button><p class="mn__status" id="mnBizStatus" role="status"></p>';
+    var exact=f.querySelector("#mnBizExact"),street=f.querySelector("#mnBizStreet");
+    exact.addEventListener("change",function(){street.hidden=!exact.checked;street.required=exact.checked;});
+    f.addEventListener("submit",function(ev){
+      ev.preventDefault();var st=f.querySelector("#mnBizStatus");
+      if(!sessionToken()){setStatus(st,"Sign in to list your business.","error");return;}
+      var btn=f.querySelector("button[type=submit]");btn.disabled=true;
+      sbRpc("submit_action_business_listing",{
+        p_business_name:f.querySelector("#mnBizName").value,p_area_label:f.querySelector("#mnBizArea").value,
+        p_country_code:f.querySelector("#mnBizCountry").value.toUpperCase(),p_public_url:f.querySelector("#mnBizUrl").value,
+        p_street_address:exact.checked?street.value:null,p_exact_location_opt_in:exact.checked,
+        p_attest_black_owned:f.querySelector("#mnBizOwned").checked,p_attest_authorized:f.querySelector("#mnBizOwned").checked,
+        p_consent_public_listing:f.querySelector("#mnBizConsent").checked,p_consent_version:BUSINESS_CONSENT_VERSION
+      }).then(function(){f.reset();street.hidden=true;setStatus(st,"Sent. A reviewer checks it before it goes on the map.","ok");track("business_listing_submitted",{});})
+        .catch(function(e){setStatus(st,e.message||"Could not send that.","error");})
+        .then(function(){btn.disabled=false;});
+    });
+    if(focus)setTimeout(function(){var n=f.querySelector("#mnBizName");if(n){f.scrollIntoView({block:"start"});n.focus();}},60);
+    return f;
+  }
   function openMission(id){
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
@@ -2640,7 +2818,7 @@
       if(m.id==="368fd75a-77d2-4de0-9722-17020674a914"){
         $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/mnet.html?view=missions#mnRecord">Policy team application → Action Record</a></p>';
       }
-      if(m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"||m.id==="ba66d4a3-cb62-4403-9b56-7ee00af059d8"){
+      if(m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"||m.id==="ba66d4a3-cb62-4403-9b56-7ee00af059d8"||m.id==="d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c"){
         var category=m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"?"recycling":"black_business";
         var sources=document.createElement("section");sources.className="mn__resource-sources";sources.textContent="Loading official directories…";
         $("mnMissionDetail").appendChild(sources);
@@ -2651,6 +2829,9 @@
               '<p class="mn__hint">External directories only. In-app directions require licensed, verified individual places.</p>';
           }).catch(function(){sources.textContent="Directories unavailable. Try again later.";});
       }
+      var mx=missions.extras&&missions.extras[m.id]||{};
+      if(mx.cta_key==="business_listing")$("mnMissionDetail").appendChild(businessListingForm(missions.focus==="business"));
+      missions.focus="";
       fundState(m.id,m.campaign_id||"").then(function(st){var line=$("mnMissionFund");if(line&&missions.current&&missions.current.id===m.id)line.innerHTML=fundLineHtml(st);});
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
@@ -2737,7 +2918,7 @@
   }
   (function wireMissions(){
     var host=$("mnMissionList");if(!host)return;
-    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}openMission(id);}}
+    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");missions.focus=b.getAttribute("data-focus")||"";if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}openMission(id);}}
     host.addEventListener("click",onOpen);
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){
