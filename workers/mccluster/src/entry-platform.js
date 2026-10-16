@@ -6,6 +6,8 @@ import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
+import { observeScheduled } from './lib/observability.js';
+import { ingestGdeltNews } from './world-news.js';
 import { companySiteResponse } from './company-site/router.js';
 import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
@@ -16,6 +18,7 @@ import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
+import { handleIdentity } from './identity/router.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -64,6 +67,11 @@ export default {
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
+      /* identity verification levels: the Persona ID check (flagged off by
+         PERSONA_ENABLED) and the entitlement answer Halo reads
+         (./identity/router.js, docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md) */
+      const identity = await handleIdentity(request, env);
+      if (identity) return identity;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
@@ -102,6 +110,17 @@ export default {
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    /* the World's news: GDELT's newest 15-minute file, read once, kept a week; off until
+       WORLD_NEWS_INGEST_ENABLED is "true" (./world-news.js) */
+    ctx.waitUntil(observeScheduled(env, ctx, 'world.news_ingest', () => ingestGdeltNews(env, { scheduledTime: controller?.scheduledTime })).then((report) => {
+      if (report && report.skipped === 'disabled') return;
+      if (report && (report.files?.length || report.error || report.skipped || report.pruned !== null || report.prune_error)) {
+        const failed = report.error || report.prune_error || report.files?.some((f) => !f.ingested);
+        (failed ? console.error : console.log)(JSON.stringify({ event: 'world_news_ingest', ...report }));
+      }
+    }).catch((error) => {
+      console.error(JSON.stringify({ event: 'world_news_ingest_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     if (existing.scheduled) return existing.scheduled(controller, env, ctx);
   }

@@ -129,6 +129,7 @@ Worker `mccluster` routes reachable without a session are listed here too.
 | Route | Why it is public | Compensating control |
 |---|---|---|
 | `GET /v1/mnet/public-feed` | Human Uprise World screen for signed-out visitors (owner's role matrix: guests read permitted public material) | read-only; only `visibility=public` posts outside any group, not deleted, not replies, by members whose own profile is public; projection drops internal ids, viewer state and media addresses; page capped at 20; `cache-control: public, max-age=30`; every other `/v1/mnet/*` route still requires a session (`workers/mccluster/test/mnet-public-feed.test.mjs`) |
+| `GET /v1/world/news` | the World feed's news for everyone, guests included (owner, 2026-10-15: GDELT news free with every layer) | read-only; reads only `gdelt_gkg_v2` rows through the service-role `media_world_news` (nothing granted to anon or authenticated); metadata only (title, publisher link, domain, time, the place an article mentions); `limit` 1-50, an opaque cursor checked to a real date and uuid (400 otherwise); `cache-control: public, max-age=60`; 200 `unavailable` when the database cannot (`workers/mccluster/test/world-news.test.mjs`) |
 
 ## Internal signing and nonces
 

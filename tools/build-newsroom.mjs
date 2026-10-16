@@ -120,7 +120,6 @@ export function renderPage(ledger) {
     return `      <li id="${esc(e.id)}">
         <time datetime="${esc(e.date)}">${esc(human(e.date))}</time>
         <h3>${esc(e.title)}</h3>
-        <p>${esc(e.summary)}</p>
         <p class="rec__note">Evidence: ${links}${pub}</p>
       </li>`;
   }).join("\n");
@@ -169,10 +168,7 @@ ${json}
     <h1>The dated record</h1>
     <p class="rec__role">Matthew McCluster · McCluster Corp · Equity Uprise</p>
 
-    <p class="rec__lede">Milestones for <b>Matthew McCluster</b>, <b>McCluster Corp</b> and the <b>Equity Uprise</b>
-      fellowship, newest first. Every entry links the primary document behind it, and an entry is added only once
-      that document has been checked. Nothing is backdated: each entry carries the date it happened and, where
-      different, the date it was published here.</p>
+    <p class="rec__lede">Newest first. Every entry links its primary document.</p>
 
     <div class="rec__card">
       <dl>
