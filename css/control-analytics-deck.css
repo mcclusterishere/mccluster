@@ -4,7 +4,6 @@ body.cr[data-cr-surface="analytics"]{padding-bottom:0!important}
 body.cr[data-cr-surface="analytics"] .cr-shell{min-height:0!important}
 body.cr[data-cr-surface="analytics"] .cr-main{padding-bottom:0!important;min-height:0!important}
 body.cr[data-cr-surface="analytics"][data-control-workspace] #crMain{padding:0!important;min-height:0!important;height:auto!important}
-body.cr[data-cr-surface="analytics"] #mccAuthChip{display:none!important}
 body.cr[data-cr-surface="analytics"] .cr-surface{margin-bottom:0}
 .cra-app.cad-app,.cr[data-control-workspace] .cra-app.cad-app{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:var(--cad-height,calc(100dvh - 100px));min-height:0;max-width:none;overflow:hidden;background:#0b0b0d;gap:0}
 .cad-app .cra-lead-col,.cr[data-control-workspace] .cad-app .cra-lead-col{display:flex;flex-direction:column;min-height:0;padding:0;border:0}

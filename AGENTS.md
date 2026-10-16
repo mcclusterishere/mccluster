@@ -110,6 +110,16 @@ anywhere: it is the drawn one. Delete it, do not reference it.
 
 ## Files every agent must honor
 
+### Shared website navigation
+
+Owner direction, 2026-10-16: all admin destinations are reachable from the shared
+bottom control bar; profile/account stay at the top right. Do not add another
+global admin sidebar, header tab strip or floating destination menu. Add native
+Control routes to the existing workspace route inventory so the bottom navigator
+inherits them. Keep local filters, chapter tabs and editor tools within their
+destination. Embedded frames retain host-owned navigation. See
+`docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
+
 On the control repo:
 
 - `AGENTS.md` (this law + local product gates)
