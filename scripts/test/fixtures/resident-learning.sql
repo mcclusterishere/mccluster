@@ -85,7 +85,7 @@ begin
  result=ops_ai_learning_turn(o,t,z);perform pg_temp.ok('reflection only returns matching completed job',result->>'status'='reflect' and result#>>'{job,id}'=j::text);
  result=ops_ai_learning_reflection(o,t,z,'Check test evidence before declaring success.',repeat('a',64));
  proposal=(result->>'id')::uuid;perform pg_temp.ok('model reflection stays proposed',result->>'status'='proposed');
- perform pg_temp.ok('reflection cannot reuse another source',ops_ai_learning_reflection(o,t,q,'invented lesson',repeat('a',64))->>'status'='rejected');
+ perform pg_temp.ok('reflection cannot reuse another source',ops_ai_learning_reflection(o,t3,q,'invented lesson',repeat('a',64))->>'status'='rejected');
  repeated=ops_ai_learning_reflection(o,t,z,'Different model output on retry.',repeat('a',64));
  perform pg_temp.ok('reflection replay retains the first proposal',repeated->>'id'=proposal::text and repeated->>'content'='Check test evidence before declaring success.');
  a=gen_random_uuid();perform pg_temp.source(o,t,a,'/learn approve '||proposal);perform ops_ai_learning_turn(o,t,a);
