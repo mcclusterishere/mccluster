@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 368,
+  "candidate_count": 370,
   "capability_source_count": 99,
-  "support_only_count": 269,
-  "checks_total": 1375,
-  "checks_passed": 1375,
+  "support_only_count": 271,
+  "checks_total": 1383,
+  "checks_passed": 1383,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -308,6 +308,7 @@
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/README.md",
+    "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/production-ledger.json",
@@ -348,6 +349,7 @@
     "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql",
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
+    "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/run-eu-tests.sh",
     "supabase/tests/supabase_api_roles.stub.sql",
@@ -382,7 +384,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "368 entries"
+      "detail": "370 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7251,6 +7253,46 @@
     },
     {
       "name": "world-news.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     }

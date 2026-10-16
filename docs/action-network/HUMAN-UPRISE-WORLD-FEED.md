@@ -98,7 +98,8 @@ same two:
   opens, so the day/night line is the real one. The layers button cycles
   three looks: **Earth** (that lit one), **Night** (the city lights
   everywhere, the owner's World mockups), **Street** (OpenStreetMap, which
-  also fades in on its own below ~900 km). All NASA imagery is public
+  also fades in on its own below ~900 km unless Cesium ion's aerial imagery
+  is there; see "The Earth up close" below). All NASA imagery is public
   domain; the clouds are served from `assets/img/globe/`. In 3D Cesium
   measures the lighting fade distances from the Earth's centre, so they
   carry the radius. Pins are glowing red markers; continent labels count
@@ -377,6 +378,130 @@ free one checked green, an empty address refused, the address saved to
 `fan_profiles`, the phone saved as `+12035550100`, the password set, the feed
 now the member's own, nothing scrolling sideways at 390.
 
+### The Earth up close: Cesium ion (owner, 2026-10-15)
+
+"So the cesium globe itself isn't available?" Then: "I added an ion, cesium
+ion key to the McCluster worker." The World's Earth was CesiumJS already,
+drawing NASA's imagery with no ion. Now, when the Worker holds a Cesium ion
+token, the same Earth draws from ion as the camera comes down, **for
+signed-in members only** (`js/action-globe.js`, "THE EARTH UP CLOSE"):
+
+- **Members only.** ion's assets are account-backed (metered, and paid
+  beyond the plan's quota), and the owner's rule for the public is the globe
+  plus one free layer, with the paid map data for signed-in members. A
+  logged-out page never asks the Worker's ion route (not even the status)
+  and never reaches Cesium ion: its Earth is NASA's (GIBS), with the
+  OpenStreetMap street map below 900 km. Everything below is a member's
+  Earth.
+
+- **Far out, nothing changes.** NASA's lit Earth, the night lights and the
+  cloud, exactly as before. No aerial imagery is even asked for above
+  3,000 km.
+- **Terrain.** Cesium World Terrain (ion asset 1) is under everything. It
+  is built before it is used, so the Earth appears once, with its ground;
+  if it has not arrived within 2.5 s the Earth draws on the flat ellipsoid
+  and stays flat for that visit (no swap under the visitor). Vertex normals
+  stay off: with them Cesium switches off the day and night blend and the
+  night lights would cover the day side.
+- **Aerial imagery.** From 3,000 km down, Bing Maps Aerial with Labels
+  (asset 3) eases in over NASA's day, whole by 1,200 km, while the cloud and
+  the night lights ease out (Black Marble is opaque and Cesium's day and
+  night blend does not fade with height, so on the night side it would
+  otherwise cover the ground at every height). If an asset fails, the next is
+  tried once: Bing Maps Aerial (2), then Sentinel-2 (3954); if all fail,
+  the Earth is NASA's and the street map takes over below 900 km as
+  before. While the aerial imagery is there, the street map no longer
+  takes over on its own; it stays one tap away on the Layers button.
+- **Buildings.** Cesium OSM Buildings (96188) below 50 km, only on the
+  Earth look and only when Cesium World Terrain is under them (their
+  heights are the terrain's; on the flat fallback they would float over
+  high cities and sink into low ones); the Night and Street looks hide ion's layers, and the way
+  home (the World button) hides them again.
+- **Credit.** Cesium's own credit display moves onto the imagery line
+  (`creditContainer`): the Cesium ion logo, then "Data attribution", which
+  opens the full list (Bing, the terrain's sources, NASA). It shows only
+  while the World draws from ion. On a phone that list fills the frame and
+  its close button can sit under the World page's header, so a tap anywhere
+  on it closes it.
+- **Nothing else waits.** The layout, the data toggles and the mission data
+  start before the status answers; only the Earth itself waits for it.
+
+**The token never reaches a browser.** CesiumJS asks
+`${Ion.defaultServer}v1/assets/{id}/endpoint` for every ion asset. A
+member's page clears Cesium's built-in token (expired anyway) and points
+`Ion.defaultServer` at the Worker,
+`https://api.mccluster.org/v1/world/ion/`
+(`workers/mccluster/src/world-ion.js`), as a `Cesium.Resource` carrying the
+member's Supabase session in an `Authorization` header, never in a URL.
+In CesiumJS 1.131 `CesiumTerrainProvider.fromIonAssetId` and
+`Cesium3DTileset.fromIonAssetId` take no `server` option, so the header has
+to ride on `Ion.defaultServer`: every asset-endpoint request is derived from
+it and copies its headers and its `retryCallback`. The session rotates; when
+the Worker refuses a stale one (401) the request is retried with the newest
+session in the browser, once per change. With none, or on a 403, 429 or 503,
+ion steps aside for the page and the Earth is NASA's again, with one console
+line and no request loop. Signing out in another tab does the same; signing
+in brings ion on the next load. The asset tokens ion hands back ride only to
+ion's asset host; the member's session never does. The Worker asks ion for that
+endpoint with the account's token in a header and passes ion's answer
+through: it carries a token for that one asset that ion lets live about an
+hour, the only token a browser ever holds. Tiles go straight from ion to
+the browser; when the asset token runs out, CesiumJS asks the Worker again.
+
+- `GET /v1/world/ion` is public and says whether the World has ion
+  (`available`, with `members_only: true`), which binding holds the token
+  (`binding`) and the asset ids. A member's page asks this first and does
+  nothing with ion when it is off; a logged-out page does not ask.
+- `GET /v1/world/ion/v1/assets/{id}/endpoint` is **members only**. In order:
+  only the five assets above (any other id is a 404); only the ecosystem's
+  own origins (the CORS allowlist, checked on `Origin`, a 403 otherwise);
+  a per-IP brake; then a signed-in member, the bearer checked with Supabase
+  exactly as the members' data layers check it (`bearerUser`,
+  `world-layers.js`), a 401 without one; then a per-member brake. `Origin`
+  is set at will by any non-browser client, so it is an extra check, never
+  the gate. The brakes (120 requests per IP and 60 per member in 10
+  minutes, a 429 with `retry-after`) live in the isolate's memory: per data
+  centre and per isolate, reset with the isolate, a brake on scripted abuse
+  rather than an exact quota; the IP brake runs before the Supabase check so
+  a flood of bad bearers is not a flood of Supabase calls. Each ion answer
+  is kept per data centre for 20 minutes, so ion's API sees a few calls an
+  hour whatever the traffic; while ion is down a kept answer under 45
+  minutes old still serves, and only to members. Answers go back `private`,
+  varying on `Origin` and `Authorization`. Anything else is a plain 404,
+  403, 401, 429, 503 (no token) or 502 (ion refused), never the token.
+- **Owner actions, not done by this code:** restrict the ion token's scope
+  to exactly these five assets (1, 3, 2, 3954, 96188) in the Cesium ion
+  dashboard, so a leaked token reaches nothing else; turn on ion usage
+  alerts; confirm the ion plan permits this use (the free Community plan is
+  for personal and non-commercial use).
+- The binding is `CESIUM_ION_TOKEN`, the name the spatial console and
+  Hitman's Halo use. `CESIUM_ION_ACCESS_TOKEN`, `CESIUM_ION_KEY`,
+  `CESIUM_ION_API_KEY` and `CESIUM_TOKEN` are read too, so a token saved
+  under a near name works; the status says which one was found. The
+  spatial console (`/v1/seek-first/viewer/config`, owner-only) reads the
+  token the same way.
+
+**`redirect: 'manual'`, not `'error'`.** The Workers runtime accepts only
+`follow` or `manual` and throws on `error`, so a fetch written with
+`redirect: 'error'` never leaves the Worker. The ion route uses `manual`
+(a 3xx becomes a 502, and the token never follows a redirect). The same
+fix lands in `workers/mccluster/src/world-layers.js`: the World's flights,
+satellites and launches had answered "unavailable" in production since
+they shipped, because every provider fetch threw before it was sent.
+Verified in workerd itself (the route answers ion's JSON, a redirect is a
+502 with the token kept, flights load).
+
+Verified by `workers/mccluster/test/world-ion.test.mjs`,
+`scripts/test/world-ion-globe.test.mjs` and, in a real browser with CesiumJS
+1.131, `scripts/e2e/world-ion.e2e.mjs` (logged out: zero requests to the
+ion route, `api.cesium.com` or `assets.ion.cesium.com`; a member whose
+session the Worker refuses: ion steps aside once, no loop; a session
+rotating mid-visit; ion off with a slow status; ion on
+at phone and desktop width; the night side; every asset failing; a terrain
+that answers late, with no buildings on the flat fallback; the World page's
+frame and its credits panel), with stand-ins for ion's tile hosts. The other World e2e fakes
+answer the status with ion off.
+
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
 "Let's populate it with shit, man. Let's get it interesting." Three toggles
@@ -649,5 +774,10 @@ affiliation, the mission participation and funding journeys, and staging
 end-to-end tests. Also: OpenStreetMap's public tile server is not meant for
 app-scale traffic. Choose a tile provider with an agreement before launch.
 NASA GIBS has no SLA and sends `no-store`; caching its tiles would belong
-in the `mccluster` Worker. The creator audience is sampled like the rest of
+in the `mccluster` Worker. Cesium ion's Community plan is for eligible
+personal and non-commercial use and has quotas; a public World draws on the
+account's streaming quota for every visitor who zooms in, so the ion plan
+should match the World's use before launch. The ion layers are now for
+signed-in members only, which bounds that draw to members; the plan,
+the token's asset scope and usage alerts are still the owner's to set. The creator audience is sampled like the rest of
 `my-creator`; an aggregate in the database would make it exact.
