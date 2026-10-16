@@ -68,7 +68,7 @@ const TICKER_TITLE = [/\((NASDAQ|NYSE|NYSEARCA|NYSEAMERICAN|NYSEMKT|OTCMKTS|OTC|
 /* always out, whatever the title says */
 export const ALWAYS_DROP_THEMES = Object.freeze(new Set(['RAPE', 'SEXUAL_ASSAULT', 'CHILD_ABUSE', 'TORTURE', 'SELF_IDENTIFIED_ATROCITY', 'GENOCIDE', 'SOC_SUICIDE', 'SUICIDE_ATTACK', 'MASS_MURDER', 'WB_2443_RAPE_AND_SEXUAL_VIOLENCE', 'WB_2512_TORTURE', 'WB_2509_GENOCIDE', 'TAX_WEAPONS_SUICIDE_BOMB']));
 /* out only when the title itself is graphic too */
-const HARD_THEMES = new Set(['KILL', 'CRISISLEX_T03_DEAD', 'CRISISLEX_T02_INJURED', 'WOUND', 'TERROR', 'KIDNAP', 'ARMEDCONFLICT']);
+const HARD_THEMES = new Set(['KILL', 'CRISISLEX_T03_DEAD', 'CRISISLEX_T02_INJURED', 'WOUND', 'TERROR', 'KIDNAP', 'ARMEDCONFLICT', 'TAX_FNCACT_KILLER', 'SOC_GENERALCRIME', 'GENDER_VIOLENCE', 'WB_2441_DOMESTIC_VIOLENCE', 'UNGP_CRIME_VIOLENCE']);
 const GRAPHIC_TITLE = /\b(kill(ed|ing|ings|s)?|murder(ed|s|er|ers)?|massacre[ds]?|behead(ed|ing)?|decapitat\w*|stab(bed|bing|bings)?|shot dead|gunned down|corpses?|dismember\w*|rap(e|ed|es|ist)|tortur\w*|mutilat\w*|slaughter\w*|bloodbath|lynch\w*|bod(y|ies) found|execut(ed|ion)s?)\b/i;
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
@@ -85,7 +85,9 @@ export function decodeEntities(s) {
 /* the headline as a reader should see it: entities decoded, stray tags gone, a "| Site Name" tail dropped */
 export function cleanTitle(raw) {
   let t = decodeEntities(raw).replace(/<[^>]*>/g, ' ').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-  t = t.replace(/\s+\|\s+[^|]{1,60}$/, '').trim();
+  /* a "| Site Name" tail goes only when it is the shorter side: "Site | The actual headline" keeps the headline */
+  const m = /^(.+?)\s+\|\s+([^|]{1,60})$/.exec(t);
+  if (m && m[1].length >= m[2].length) t = m[1].trim();
   return t;
 }
 
@@ -150,7 +152,7 @@ export function bestPlace(v2loc) {
     if (inside.length) pick = inside.sort(rank)[0];
   }
   return {
-    place: pick.type === 1 ? null : String(pick.name).slice(0, 200),
+    place: pick.type === 1 ? null : Array.from(String(pick.name)).slice(0, 200).join(''),
     lat: Math.round(pick.lat * 1e5) / 1e5,
     lon: Math.round(pick.lon * 1e5) / 1e5,
     type: pick.type,
@@ -231,7 +233,7 @@ export function selectArticles(recs, cap = PER_FILE) {
 export function toPayload(r) {
   const hard = r.hard === true || (Array.isArray(r.themes) && r.themes.some((t) => HARD_THEMES.has(t)));
   return {
-    url: r.url, title: r.title.slice(0, 250), domain: r.domain, seen_at: r.seen_at,
+    url: r.url, title: Array.from(r.title).slice(0, 250).join(''), domain: r.domain, seen_at: r.seen_at, story_key: storyKey(r.title).slice(0, 300),
     place: r.place ? r.place.place : null, lat: r.place ? r.place.lat : null, lon: r.place ? r.place.lon : null,
     location_type: r.place ? r.place.type : null, country: r.place ? r.place.country : null,
     tone: r.tone, image: hard ? null : r.image
@@ -294,12 +296,14 @@ export async function parseGkgFile(u8) {
 }
 
 /* ---------- fetching, with a deadline ---------- */
-async function timed(fetchImpl, url, init = {}) {
+/* the deadline covers the body too: a host that sends headers and then stalls is cut off like one that never answers */
+async function timed(fetchImpl, url, init = {}, read = (r) => r.text()) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     /* workerd takes only 'follow' or 'manual'; GDELT's own host redirects http to https */
-    return await fetchImpl(url, { ...init, redirect: 'follow', signal: controller.signal, headers: { 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } });
+    const res = await fetchImpl(url, { ...init, redirect: 'follow', signal: controller.signal, headers: { 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } });
+    return { res, body: await read(res) };
   } finally {
     clearTimeout(timer);
   }
@@ -330,13 +334,20 @@ export function earlierSlots(name, n) {
 export async function downloadGkg(name, size, fetchImpl = fetch) {
   let last = 'no host answered';
   for (const host of GDELT_HOSTS) {
-    let res;
-    try { res = await timed(fetchImpl, host + name); }
-    catch (e) { last = `${host} ${e && e.name === 'AbortError' ? 'timeout' : 'unreachable'}`; continue; }
+    let res, buf;
+    try {
+      ({ res, body: buf } = await timed(fetchImpl, host + name, {}, async (r) => {
+        if (!r.ok) return null;
+        const declared = Number(r.headers.get('content-length'));
+        if (declared > MAX_ZIP_BYTES) throw Object.assign(new Error(`file too large (${declared})`), { tooLarge: true });
+        return new Uint8Array(await r.arrayBuffer());
+      }));
+    } catch (e) {
+      if (e && e.tooLarge) throw e;
+      last = `${new URL(host).host} ${e && e.name === 'AbortError' ? 'timeout' : 'unreachable'}`;
+      continue;
+    }
     if (!res.ok) { last = `${new URL(host).host} ${res.status}`; continue; }
-    const declared = Number(res.headers.get('content-length'));
-    if (declared > MAX_ZIP_BYTES) throw new Error(`file too large (${declared})`);
-    const buf = new Uint8Array(await res.arrayBuffer());
     if (buf.byteLength > MAX_ZIP_BYTES) throw new Error(`file too large (${buf.byteLength})`);
     if (size && buf.byteLength !== size) { last = `${new URL(host).host} size ${buf.byteLength} != ${size}`; continue; }
     return buf;
@@ -346,12 +357,11 @@ export async function downloadGkg(name, size, fetchImpl = fetch) {
 
 /* ---------- Supabase, as the service role ---------- */
 export async function serviceRpc(env, name, args, fetchImpl = fetch) {
-  const res = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/rpc/${name}`, {
+  const { res, body: text } = await timed(fetchImpl, `${env.SUPABASE_URL}/rest/v1/rpc/${name}`, {
     method: 'POST',
     headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify(args || {})
   });
-  const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) throw Object.assign(new Error((data && data.message) || `${name} ${res.status}`), { status: res.status, code: data && data.code });
@@ -371,9 +381,9 @@ export async function ingestGdeltNews(env, { fetchImpl = fetch, scheduledTime = 
   }
   let latest;
   try {
-    const res = await timed(fetchImpl, GDELT_LASTUPDATE);
+    const { res, body } = await timed(fetchImpl, GDELT_LASTUPDATE);
     if (!res.ok) throw new Error(`lastupdate ${res.status}`);
-    latest = parseLastUpdate(await res.text());
+    latest = parseLastUpdate(body);
   } catch (e) {
     return { ...report, error: String(e.message || e).slice(0, 200) };
   }
@@ -458,7 +468,9 @@ export async function handleWorldNews(request, env, { fetchImpl = fetch, cacheIm
   let cursor = null;
   if (before !== null && before !== '') {
     const m = CURSOR_RE.exec(before);
-    if (!m || !Number.isFinite(Date.parse(m[1]))) return fail(request, env, 'bad cursor', 400);
+    const t = m ? Date.parse(m[1]) : NaN;
+    /* a real date only: February 30 parses in some engines and fails in Postgres */
+    if (!m || !Number.isFinite(t) || t < 0 || new Date(t).toISOString().slice(0, 19) !== m[1].slice(0, 19)) return fail(request, env, 'bad cursor', 400);
     cursor = { at: m[1], id: m[2] };
   }
   const key = `https://cache.mccluster.internal/world/news?limit=${limit}&before=${encodeURIComponent(before || '')}`;

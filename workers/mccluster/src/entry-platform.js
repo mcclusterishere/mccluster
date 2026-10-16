@@ -106,7 +106,10 @@ export default {
     }));
     /* the World's news: GDELT's newest 15-minute file, read once, kept a week (./world-news.js) */
     ctx.waitUntil(ingestGdeltNews(env, { scheduledTime: controller?.scheduledTime }).then((report) => {
-      if (report && (report.files?.length || report.error || report.skipped)) console.log(JSON.stringify({ event: 'world_news_ingest', ...report }));
+      if (report && (report.files?.length || report.error || report.skipped || report.pruned !== null || report.prune_error)) {
+        const failed = report.error || report.prune_error || report.files?.some((f) => !f.ingested);
+        (failed ? console.error : console.log)(JSON.stringify({ event: 'world_news_ingest', ...report }));
+      }
     }).catch((error) => {
       console.error(JSON.stringify({ event: 'world_news_ingest_failed', message: error instanceof Error ? error.message : String(error) }));
     }));

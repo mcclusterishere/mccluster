@@ -9,10 +9,16 @@ alter table public.media_news_articles
   add column if not exists location_type smallint,
   add column if not exists location_country text,
   add column if not exists tone real,
-  add column if not exists image_url text;
+  add column if not exists image_url text,
+  add column if not exists story_key text;
 
 create index if not exists media_news_articles_gkg_feed_idx
   on public.media_news_articles (published_at desc, id desc)
+  where ingestion_provider = 'gdelt_gkg_v2';
+
+-- One copy of a syndicated story: the same headline on another station's URL within 72 hours is the same story.
+create index if not exists media_news_articles_gkg_story_idx
+  on public.media_news_articles (story_key, published_at desc)
   where ingestion_provider = 'gdelt_gkg_v2';
 
 -- The headline-country rule clears every location before it looks at the title; GKG rows carry their own.
@@ -96,6 +102,13 @@ begin
        or coalesce(a->>'seen_at', '') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' then
       continue;
     end if;
+    if nullif(a->>'story_key', '') is not null and exists (
+         select 1 from public.media_news_articles x
+          where x.ingestion_provider = 'gdelt_gkg_v2'
+            and x.story_key = left(a->>'story_key', 300)
+            and x.published_at > (a->>'seen_at')::timestamptz - interval '72 hours') then
+      continue;
+    end if;
     lat := case when coalesce(a->>'lat', '') ~ '^-?[0-9]+(\.[0-9]+)?$' then (a->>'lat')::double precision end;
     lon := case when coalesce(a->>'lon', '') ~ '^-?[0-9]+(\.[0-9]+)?$' then (a->>'lon')::double precision end;
     if lat is null or lon is null or abs(lat) > 90 or abs(lon) > 180 then lat := null; lon := null; end if;
@@ -105,7 +118,7 @@ begin
     insert into public.media_news_articles (
       source_id, canonical_url, title, published_at, language_code, topic_keys, ingestion_provider,
       headline_location_label, headline_latitude, headline_longitude, location_basis,
-      gdelt_file, location_type, location_country, tone, image_url)
+      gdelt_file, location_type, location_country, tone, image_url, story_key)
     values (
       src, a->>'url', left(btrim(a->>'title'), 250), (a->>'seen_at')::timestamptz, 'English', '{}', 'gdelt_gkg_v2',
       case when lat is not null then nullif(left(btrim(coalesce(a->>'place', '')), 200), '') end, lat, lon,
@@ -114,7 +127,8 @@ begin
       case when coalesce(a->>'location_type', '') ~ '^[1-5]$' then (a->>'location_type')::smallint end,
       nullif(left(coalesce(a->>'country', ''), 8), ''),
       case when coalesce(a->>'tone', '') ~ '^-?[0-9]+(\.[0-9]+)?$' then (a->>'tone')::real end,
-      case when coalesce(a->>'image', '') ~ '^https://' and length(a->>'image') <= 2000 then a->>'image' end)
+      case when coalesce(a->>'image', '') ~ '^https://' and length(a->>'image') <= 2000 then a->>'image' end,
+      nullif(left(coalesce(a->>'story_key', ''), 300), ''))
     on conflict (canonical_url) do nothing;
     get diagnostics n = row_count;
     saved := saved + n;

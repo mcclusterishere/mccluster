@@ -108,6 +108,16 @@ test('titles: entities, tags and a site tail; storyKey ignores punctuation and t
   assert.equal(decodeEntities('&#xD800; &bogus;'), '&#xD800; &bogus;');
   assert.equal(cleanTitle('Canaletto <em>Capriccio </em> sells | The Art Newspaper'), 'Canaletto Capriccio sells');
   assert.equal(cleanTitle('Policy A | B | C'), 'Policy A | B');
+  assert.equal(cleanTitle('KFOR | Oklahoma City council approves a new park budget'), 'KFOR | Oklahoma City council approves a new park budget', 'a leading site name keeps the headline');
+  const astral = 'a'.repeat(249) + '\u{1F4F0}' + 'tail';
+  const cut = toPayload({ ...parseRecord(gkg()).rec, title: astral }).title;
+  assert.equal(Array.from(cut).length, 250);
+  assert.doesNotThrow(() => encodeURIComponent(cut), 'never a lone surrogate, which jsonb would refuse for the whole file');
+});
+
+test('a hard crime theme with a graphic headline is out', () => {
+  assert.equal(parseRecord(gkg({ themes: 'SOC_GENERALCRIME;TAX_FNCACT_KILLER', title: 'Man killed in late-night shooting downtown, police say' })).skip, 'graphic');
+  assert.ok(parseRecord(gkg({ themes: 'SOC_GENERALCRIME', title: 'Council votes to fund more crossing guards near schools' })).rec);
 });
 
 test('the file: a GDELT zip inflates as a stream, records with a raw newline are joined, and ~100 survive', async () => {
@@ -119,7 +129,8 @@ test('the file: a GDELT zip inflates as a stream, records with a raw newline are
     assert.equal(stats.skipped.not_web, 1);
     assert.equal(articles.length, 2);
     assert.equal(articles[1].title, 'Second headline with a broken line inside it');
-    assert.deepEqual(Object.keys(articles[0]).sort(), ['country', 'domain', 'image', 'lat', 'location_type', 'lon', 'place', 'seen_at', 'title', 'tone', 'url']);
+    assert.deepEqual(Object.keys(articles[0]).sort(), ['country', 'domain', 'image', 'lat', 'location_type', 'lon', 'place', 'seen_at', 'story_key', 'title', 'tone', 'url']);
+    assert.equal(articles[0].story_key, storyKey(articles[0].title), 'the database dedupes syndicated copies across files on this key');
   }
   let n = 0;
   for await (const r of gkgRecords(inflateZipText(zip(text)))) { n++; assert.match(r, /^20261015220000-\d\t/); }
@@ -244,7 +255,7 @@ test('GET /v1/world/news: newest first from our tables, an opaque cursor, GDELT 
 
 test('GET /v1/world/news: limits and cursors are checked; a database problem is an empty, honest 200', async () => {
   const d = db();
-  for (const q of ['limit=0', 'limit=51', 'limit=abc', 'before=2026-10-15', 'before=nope~x', 'before=2026-13-45T99:00:00Z~11111111-1111-4111-8111-111111111111']) {
+  for (const q of ['limit=0', 'limit=51', 'limit=abc', 'before=2026-10-15', 'before=nope~x', 'before=2026-13-45T99:00:00Z~11111111-1111-4111-8111-111111111111', 'before=2026-02-30T00:00:00Z~11111111-1111-4111-8111-111111111111', 'before=0000-01-01T00:00:00Z~11111111-1111-4111-8111-111111111111']) {
     assert.equal((await handleWorldNews(get(`/v1/world/news?${q}`), ENV, { fetchImpl: d.fetchImpl, cacheImpl: memoryCache() })).status, 400, q);
   }
   assert.equal(d.calls.length, 0);
