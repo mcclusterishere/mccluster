@@ -92,18 +92,23 @@
     return null;
   }
   const A2 = /^[A-Z]{2}$/;
-  /* a mission row's country: its own country_code, else its region's; never guessed from a region key's spelling */
-  function missionCountry(m, regionCountry) {
+  /* a mission row's country: its own country_code, else its region's, else the country its own published pin sits in;
+     never guessed from a region key's spelling. The pin matters in production: the public regions read is k>=5 suppressed
+     and can return no rows while the missions read returns every pin. */
+  function missionCountry(m, regionCountry, features) {
     const own = m && typeof m.country_code === 'string' ? m.country_code.toUpperCase() : '';
     if (A2.test(own)) return own;
     const r = m && regionCountry && regionCountry[m.region_key];
-    return typeof r === 'string' && A2.test(r.toUpperCase()) ? r.toUpperCase() : null;
+    if (typeof r === 'string' && A2.test(r.toUpperCase())) return r.toUpperCase();
+    if (!m || !features || m.longitude == null || m.latitude == null) return null;
+    const f = countryAt(features, Number(m.longitude), Number(m.latitude)), a2 = f && f.properties && f.properties.a2;
+    return typeof a2 === 'string' && A2.test(a2) ? a2 : null;
   }
   function regionCountryIndex(regions) { const out = {}; (regions || []).forEach((r) => { if (r && r.region_key && typeof r.country_code === 'string') out[r.region_key] = r.country_code; }); return out; }
   /* distinct published missions per country; a mission pinned twice in one country counts once */
-  function missionCounts(missions, regions) {
+  function missionCounts(missions, regions, features) {
     const idx = regionCountryIndex(regions), seen = {}, out = {};
-    (missions || []).forEach((m) => { const c = missionCountry(m, idx); if (!c || !m.mission_id) return; const k = c + '|' + m.mission_id; if (seen[k]) return; seen[k] = 1; out[c] = (out[c] || 0) + 1; });
+    (missions || []).forEach((m) => { const c = missionCountry(m, idx, features); if (!c || !m.mission_id) return; const k = c + '|' + m.mission_id; if (seen[k]) return; seen[k] = 1; out[c] = (out[c] || 0) + 1; });
     return out;
   }
   function countText(n) { return n > 0 ? n + (n === 1 ? ' mission' : ' missions') + ' pinned here' : 'No missions here yet'; }
@@ -147,7 +152,7 @@
     }
     function paintCard(f) {
       if (!f) { card.hidden = true; card.innerHTML = ''; return; }
-      const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : []);
+      const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features);
       const n = p.a2 ? counts[p.a2] || 0 : 0;
       card.innerHTML = (p.flag ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
         '<span class="country-card__text"><b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small></span>' +
@@ -311,7 +316,7 @@
     /* the mission filter the page applies while a country is selected */
     function keep(m) {
       if (!st.selected) return true;
-      return missionCountry(m, regionCountryIndex(o.regions ? o.regions() : [])) === st.selected;
+      return missionCountry(m, regionCountryIndex(o.regions ? o.regions() : []), st.features) === st.selected;
     }
     function loadSprite() {
       return Promise.all([fetch(SPRITE_INDEX).then((r) => (r.ok ? r.json() : null)), new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = SPRITE_URL; })])
@@ -321,6 +326,8 @@
       .then(([data, sprite]) => build(data, sprite))
       .catch((e) => { st.failed = true; try { console.warn('[world countries] ' + (e && e.message || e)); } catch (_) {} });
     const api = {
+      /* the page calls this when the missions arrive: a country picked before then is applied again (card count, pin filter) */
+      refresh: () => { if (st.selected) select(st.features.find((f) => (f.properties.a2 || f.properties.a3) === st.selected) || null); },
       click, keep, select: (code) => select(code ? st.features.find((f) => f.properties.a2 === code || f.properties.a3 === code) || null : null), setMode,
       state: () => ({ ready: st.ready, failed: st.failed, mode: st.mode, selected: st.selected, ground, count: st.items.length, flags: st.flags ? st.flags.length : 0, labels: st.labels ? st.labels.length : 0, height: Math.round(st.height || 0), wash: Math.round(st.washAlpha * 100) / 100, alpha: Object.fromEntries(st.items.filter((x) => ['US', 'CA', 'MX', 'BR', 'RU', 'FR', 'GB', 'CU'].includes(x.code)).map((x) => [x.code, Math.round(x.alpha * 100) / 100])), card: card.hidden ? null : card.textContent }),
     };

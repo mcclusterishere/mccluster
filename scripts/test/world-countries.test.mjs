@@ -139,6 +139,25 @@ test('mission counts come from the rows, never guessed', () => {
   assert.equal(C.countText(3), '3 missions pinned here');
 });
 
+test('a mission with no country code or region row is counted where its own pin sits (the regions read can be empty)', () => {
+  /* production: action_globe_public_regions() is k>=5 suppressed and returns no rows while every mission pin is published */
+  const missions = [
+    { mission_id: 'p', region_key: 'US-CT', longitude: -72.7, latitude: 41.6 },
+    { mission_id: 'q', region_key: 'FR-IDF', longitude: '2.35', latitude: '46.8' },
+    { mission_id: 'r', region_key: 'XX', longitude: -30, latitude: 30 }, /* open sea: not counted */
+    { mission_id: 's', region_key: 'YY' }, /* no pin: not counted */
+  ];
+  assert.deepEqual(C.missionCounts(missions, [], feats), { US: 1, FR: 1 });
+  assert.equal(C.missionCountry(missions[0], {}, feats), 'US');
+  assert.equal(C.missionCountry(missions[0], {}), null, 'without the boundaries nothing is inferred');
+  assert.equal(C.missionCountry({ ...missions[0], country_code: 'GB' }, {}, feats), 'GB', 'the row\'s own code wins');
+});
+
+test('a country picked before the missions load is applied again when they arrive', () => {
+  assert.match(read('js/world-countries.js'), /refresh: \(\) => \{ if \(st\.selected\) select\(/);
+  assert.match(read('js/action-globe.js'), /renderFeed\(\);if\(countries&&countries\.refresh\)countries\.refresh\(\);/);
+});
+
 test('the page hook stays small and the module mounts only off the analytics surface', () => {
   const g = read('js/action-globe.js');
   assert.match(g, /function mountCountries\(\)\{if\(!window\.HuCountries\|\|ANALYTICS\|\|!viewer\)return;/);
