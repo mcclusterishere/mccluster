@@ -29,6 +29,7 @@
    allow use and sharing with value added and encourage credit; an
    LL2_API_TOKEN raises their limit (15 calls an hour anonymous). */
 import { fail, reply } from './lib/http.js';
+import { fetchNoCrossHostRedirect, UpstreamError } from './lib/safe-fetch.js';
 
 export const LAYERS = Object.freeze({
   flights: { public: true, ttl: 600, attribution: 'OpenSky Network', max: 5000 },
@@ -40,13 +41,24 @@ const TIMEOUT_MS = 12000;
 /* the bright, named objects a person can relate to, not the whole catalogue */
 const SATELLITE_GROUPS = ['stations', 'visual'];
 
+/* Workers' fetch rejects redirect: 'error'; the provider is fetched with
+   redirect: 'manual' and may only redirect to its own host over https
+   (lib/safe-fetch.js). Every failure is typed, so "unavailable" says why. */
 async function upstream(url, init = {}, fetchImpl = fetch, as = 'json') {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  let res;
   try {
-    const res = await fetchImpl(url, { ...init, redirect: 'manual', signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } });
-    if (!res.ok) throw new Error(`provider ${res.status}`);
-    return as === 'text' ? res.text() : res.json();
+    try {
+      res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } }, { fetchImpl });
+    } catch (error) {
+      if (error instanceof UpstreamError) throw error;
+      if (controller.signal.aborted || error?.name === 'AbortError') throw new UpstreamError('upstream_timeout', `provider timed out after ${TIMEOUT_MS} ms`);
+      throw new UpstreamError('upstream_network', 'provider fetch failed');
+    }
+    if (!res.ok) throw new UpstreamError(res.status === 429 ? 'upstream_rate_limited' : 'upstream_http', `provider ${res.status}`, { providerStatus: res.status });
+    if (as === 'text') return await res.text();
+    try { return await res.json(); } catch { throw new UpstreamError('upstream_invalid_json', 'provider returned invalid JSON', { providerStatus: res.status }); }
   } finally {
     clearTimeout(timer);
   }
@@ -99,11 +111,11 @@ export async function fetchFlights(env, fetchImpl = fetch) {
 
 export async function fetchSatellites(env, fetchImpl = fetch) {
   const seen = new Map();
-  let failed = 0;
+  let failed = 0, lastError = null;
   for (const group of SATELLITE_GROUPS) {
     /* CelesTrak's TLE format: three lines per object, name then the two element lines.
        One group down is tolerated when another answers; every group down is the provider down. */
-    const text = await upstream(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=TLE`, {}, fetchImpl, 'text').catch(() => { failed += 1; return ''; });
+    const text = await upstream(`https://celestrak.org/NORAD/elements/gp.php?GROUP=${group}&FORMAT=TLE`, {}, fetchImpl, 'text').catch((error) => { failed += 1; lastError = error; return ''; });
     const lines = text.split(/\r?\n/).map((l) => l.trimEnd()).filter(Boolean);
     for (let i = 0; i + 2 < lines.length; i += 3) {
       const name = lines[i].trim(), l1 = lines[i + 1], l2 = lines[i + 2];
@@ -114,7 +126,7 @@ export async function fetchSatellites(env, fetchImpl = fetch) {
     }
   }
   const satellites = [...seen.values()];
-  if (!satellites.length && failed === SATELLITE_GROUPS.length) throw new Error('celestrak unavailable');
+  if (!satellites.length && failed === SATELLITE_GROUPS.length) throw new UpstreamError((lastError && lastError.code) || 'upstream_error', 'celestrak unavailable', { providerStatus: lastError ? lastError.providerStatus : null });
   return { source: 'celestrak', groups: SATELLITE_GROUPS, count: satellites.length, satellites };
 }
 
@@ -157,8 +169,9 @@ async function cached(layer, env, fetchImpl, cacheImpl) {
     if (store) await store.put(key, new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${spec.ttl + STALE_GRACE}` } })).catch(() => {});
     return { body, stale: false };
   } catch (error) {
-    if (hit) return { body: hit, stale: true, error };
-    return { body: { ok: true, layer, fetched_at: null, attribution: spec.attribution, unavailable: true, count: 0, [layer === 'flights' ? 'aircraft' : layer]: [] }, stale: false, error };
+    const reason = (error && error.code) || 'upstream_error';
+    if (hit) return { body: { ...hit, upstream_error: reason }, stale: true, error };
+    return { body: { ok: true, layer, fetched_at: null, attribution: spec.attribution, unavailable: true, upstream_error: reason, count: 0, [layer === 'flights' ? 'aircraft' : layer]: [] }, stale: false, error };
   }
 }
 

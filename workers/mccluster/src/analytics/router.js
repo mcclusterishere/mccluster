@@ -922,13 +922,24 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  const counts={};
  const profiles=await sbRows(env,'music_creator_profiles?m_uid=eq.'+encodeURIComponent(mUid)+
    '&select=handle&limit=1');
- const handle=String(profiles[0]?.handle||'');
+ const candidateHandle=String(profiles[0]?.handle||'');
+ const handle=/^[a-z0-9][a-z0-9._-]{2,39}$/.test(candidateHandle)?candidateHandle:'';
+ const pageScope='(props->>creator_handle.eq.'+handle+',props->>url.like.*music-creator.html?*handle='+handle+'*,path.like.music-creator.html?*handle='+handle+'*)';
  const trafficRows=handle?await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
+   '&or='+encodeURIComponent(pageScope)+
    '&name=in.(page_view,pageview)&select=at,path,referrer,session_id,props,country&order=at.desc&limit=1000'):[];
  const traffic=trafficRows.filter(e=>{
    const raw=String(e.path||'');
-   const query=raw.includes('?')?raw.slice(raw.indexOf('?')+1):'';
-   try{return raw.startsWith('music-creator.html')&&new URLSearchParams(query).get('handle')===handle;}catch{return false;}
+   if(raw==='music-creator.html'&&e.props?.creator_handle===handle)return true;
+   // Older page views retained the creator URL in props while path lost its query.
+   for(const value of [e.props?.url,raw]){
+     try{
+       if(typeof value!=='string')continue;
+       const u=new URL(value,'https://matthew.mccluster.org/');
+       if(u.pathname==='/music-creator.html'&&u.searchParams.get('handle')===handle)return true;
+     }catch{}
+   }
+   return false;
  });
  const daily={};const sources={};const sessions=new Set();
  for(const e of traffic){
@@ -957,10 +968,11 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
  const perTrack=new Map(tracks.map(t=>[String(t.id),{id:t.id,title:t.title,status:t.status,
    plays:0,completions:0,shares:0}]));
  if(ids.size){
-   // Catalog-specific event filtering occurs in memory only after a bounded
-   // 30-day query. Do not return individual listener identities to creators.
+   // Scope to owned catalog IDs in the database before limiting the sample.
+   // Keep the in-memory ownership check as well.
    const rows=await sbRows(env,'events?site_id=is.null&at=gte.'+encodeURIComponent(since)+
      '&name=in.(music_play,music_full_play,music_preview_play,music_complete,song_start,track_share)'+
+     '&props->>creator_track_id=in.('+[...ids].map(encodeURIComponent).join(',')+')'+
      '&select=name,props&order=at.desc&limit=1000');
    for(const e of rows){
      const id=String(e.props?.creator_track_id||'');
