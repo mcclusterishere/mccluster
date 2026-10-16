@@ -587,9 +587,9 @@
   function loadCountry(){
     var code=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,r=S.range;
     if(!code||!r||(S.data.countryTotals&&S.data.countryTotals.missing)){return;}
-    var key=code+"|"+r.since+"|"+S.site;if(S.country&&S.country.key===key)return;
+    var key=code+"|"+r.since+"|"+r.until+"|"+S.site+"|"+tz(),seq=S.seq;if(S.country&&S.country.key===key)return;
     S.country={key:key,code:code,rows:null};
-    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(S.country&&S.country.key===key){S.country.rows=rows||[];paint();}},function(x){if(S.country&&S.country.key===key)S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
+    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.rows=rows||[];paint();},function(x){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
   }
   function filters(){
     var t=S.data.traffic||{},sources=(t.sources||[]).map(function(x){return x.source;}).filter(Boolean),agg=geoAggregate();
@@ -957,7 +957,7 @@
   }
   function load(){
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
-    S.range=r;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.completed={};S.data=blankData();paint();
+    S.range=r;S.country=null;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.completed={};S.data=blankData();paint();
     var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
     /* One Control open used to throw every analytics primitive at PostgREST at
        once. On production data that turned one dashboard view into a dozen

@@ -81,7 +81,7 @@
     var source=H.sources&&H.sources.find(function(s){return s.key===H.source;});if(!source||H.reading)return;
     var seq=++H.seq;H.reading=true;H.records=null;H.result=null;H.runs=null;H.recordError=null;paint();
     try{
-      if(snapshot){var body=Object.assign({},parameters,{lane:'INTERNAL',persist:false,include_raw:false,limit:Math.min(500,Math.max(1,Number(parameters.limit)||100))});var d=await request('/v1/seek-first/fetch/'+encodeURIComponent(source.key),{method:'POST',body:body});if(!d.result||!Array.isArray(d.result.records))throw Error('Invalid snapshot response');if(seq!==H.seq)return;H.result=d.result;H.records=d.result.records;}
+      if(snapshot){var body=Object.assign({},parameters,{lane:'INTERNAL',persist:false,include_raw:false});var d=await request('/v1/seek-first/fetch/'+encodeURIComponent(source.key),{method:'POST',body:body});if(!d.result||!Array.isArray(d.result.records))throw Error('Invalid snapshot response');if(seq!==H.seq)return;H.result=d.result;H.records=d.result.records;}
       else {var results=await Promise.allSettled([request('/v1/seek-first/entities?source='+encodeURIComponent(source.key)+'&limit=50'),request('/v1/seek-first/ingestion-runs?source='+encodeURIComponent(source.key)+'&limit=5')]);if(seq!==H.seq)return;if(results[0].status!=='fulfilled'||!Array.isArray(results[0].value.entities))throw results[0].reason||Error('Archive response unavailable');H.records=results[0].value.entities;if(results[1].status==='fulfilled')H.runs=results[1].value.runs;}
     }catch(e){if(seq===H.seq)H.recordError=e.message||'Source read failed';}finally{if(seq===H.seq){H.reading=false;paint();}}
   }

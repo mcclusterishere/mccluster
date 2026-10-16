@@ -125,6 +125,8 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  const ready=await settle(page);check(size.width,'geographic globe renders',ready);
  await page.waitForSelector('.cu-metrics');await page.waitForFunction(()=>window.CR.analytics.state.loaded);
  const w=await widths(page);check(size.width,'no horizontal overflow',w.scrollW===w.clientW,w);
+ const targets=await page.locator('.cu-card button,.cu-card a').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>({text:n.textContent,height:n.getBoundingClientRect().height})));
+ check(size.width,'card controls retain 40px touch targets',targets.length>0&&targets.every(n=>n.height>=40),targets.filter(n=>n.height<40));
  const dimensions=await page.locator('.cu-geography').boundingBox();check(size.width,'globe section about 30% viewport',dimensions.height<=Math.max(265,size.height*.33),dimensions);
  const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','world']),tabs);
  await page.screenshot({path:OUT+'/unified-'+size.width+'.png',fullPage:false});

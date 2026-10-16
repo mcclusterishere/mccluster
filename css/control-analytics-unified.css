@@ -111,7 +111,7 @@
  .cu-metrics>.cu-fact{padding:10px 12px}.cu-metrics strong{font-size:32px}
  .cu-card{padding:12px}.cu-card h2{font-size:23px}
  .cu-card .cra-area-chart{height:88px;width:100%}
- .cu-card button,.cu-card a{min-height:32px}
+ .cu-card button,.cu-card a{min-height:40px}
  .cu-funnel{margin-top:6px;padding-top:6px}.cu-funnel div{gap:4px;padding-bottom:5px}
  .cu-note{margin:5px 0 8px}
  .cu-workspace{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 18px}
