@@ -1,5 +1,6 @@
-/* THE EARTH UP CLOSE (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker"): the World's Earth draws
-   Cesium ion through the Worker and never holds the account's token; NASA's Earth far out is untouched; ion is credited.
+/* THE EARTH UP CLOSE (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker"): for a signed-in member the
+   World's Earth draws Cesium ion through the Worker, sending the member's session as a bearer header, and never holds the
+   account's token; a logged-out page never touches ion; NASA's Earth far out is untouched; ion is credited.
    The behaviour is driven in a real browser by scripts/e2e/world-ion.e2e.mjs; these pin the contract in the source. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ const read = (p) => readFile(new URL('../../' + p, import.meta.url), 'utf8');
 
 test('the page asks the Worker, with a trailing slash, and clears Cesium\'s built-in token', async () => {
   const js = await read('js/action-globe.js');
-  assert.match(js, /Cesium\.Ion\.defaultAccessToken=undefined;Cesium\.Ion\.defaultServer=API\+'\/v1\/world\/ion\/';/);
+  assert.match(js, /Cesium\.Ion\.defaultAccessToken=undefined;ionServer=new Cesium\.Resource\(\{url:API\+'\/v1\/world\/ion\/',headers:\{Authorization:bearer\},retryAttempts:1e9,retryCallback:ionRetry\}\);Cesium\.Ion\.defaultServer=ionServer;/);
   assert.match(js, /fetch\(API\+'\/v1\/world\/ion',\{headers:\{accept:'application\/json'\}\}\)/, 'the status comes first');
   assert.doesNotMatch(js, /defaultAccessToken\s*=\s*['"`]/, 'no token is ever written into the page');
   assert.doesNotMatch(js, /eyJhbGciOi/, 'no JWT in the page');
@@ -30,7 +31,7 @@ test('terrain never blanks the Earth and never breaks day and night', async () =
   assert.doesNotMatch(js, /setTerrain\(/, 'Scene.setTerrain leaves the globe blank if the terrain fails');
   assert.doesNotMatch(js, /requestVertexNormals\s*:\s*true/, 'vertex normals switch off dayAlpha and nightAlpha');
   assert.match(js, /setTimeout\(\(\)=>land\(null\),TERRAIN_WAIT\)/, 'a slow terrain gives way to the flat Earth');
-  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!p;g\.terrainProvider=p\|\|flat\}/, 'and a late one is never swapped in');
+  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!\(p&&ion\);g\.terrainProvider=ionGround\?p:flat\}/, 'and a late one is never swapped in, nor one that lands after ion stepped aside');
 });
 
 test('ion\'s imagery falls through its assets; any failure leaves the Earth as it was', async () => {
@@ -39,7 +40,7 @@ test('ion\'s imagery falls through its assets; any failure leaves the Earth as i
   assert.match(js, /addIonImagery\(k\+1\)\}\);/);
   assert.match(js, /viewer\.imageryLayers\.add\(layer,viewer\.imageryLayers\.indexOf\(dayLayer\)\+1\)/, 'under the night lights, over the day');
   assert.match(js, /function streetAuto\(h\)\{return h<900000&&!\(ionImagery&&ionImagery\.ready\)\}/, 'the street map yields only to imagery that loaded');
-  assert.match(js, /\.then\(ts=>\{ts\.show=false;/, 'buildings start hidden');
+  assert.match(js, /\.then\(ts=>\{if\(!ion\)\{ts\.destroy\(\);return\}ts\.show=false;/, 'buildings start hidden, and are dropped if ion stepped aside meanwhile');
   assert.match(js, /,e=>ionWarn\('buildings',e\)\)/);
 });
 
@@ -64,10 +65,36 @@ test('the Worker route, its tests and the browser drive exist', async () => {
 test('the review\'s fixes hold: night lights give way, buildings wait for real ground, the credits close on a tap, nothing waits that need not', async () => {
   const js = await read('js/action-globe.js');
   assert.match(js, /if\(nightLayer\)\{const n=ionImagery\.ready&&on\?1-a:1;if\(nightLayer\.nightAlpha!==n\)nightLayer\.nightAlpha=n\}/, 'Black Marble is opaque over the aerial imagery; it fades out as the imagery fades in');
-  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!p;/);
+  assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!\(p&&ion\);/);
   assert.match(js, /if\(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF\*2\)/, 'OSM Buildings only on Cesium World Terrain');
   assert.match(js, /box\.addEventListener\('click',e=>\{if\(!\(e\.target\.closest&&e\.target\.closest\('a\[href\]'\)\)\)viewer\.creditDisplay\.hideLightbox\(\)\}\)/, 'a phone\'s credits panel closes on any tap');
   assert.match(js, /wireDataLayers\(\);const ionP=ionStatus\(\),dataP=Promise\.all\(\[rpc\('action_globe_public_region_missions'\),rpc\('action_globe_public_regions'\)\]\);/, 'the layout and the mission data start before the ion status answers');
   assert.match(js, /\[missions,cities\]=await dataP;/);
   assert.doesNotMatch(js, /function wireControls\(\)\{const on=\(id,f\)=>\{const b=\$\(id\);if\(b\)b\.onclick=f\};wireDataLayers\(\);/, 'wired once');
+});
+
+test('members only: a logged-out page never asks the ion route, not even its status, and never reaches ion', async () => {
+  const js = await read('js/action-globe.js');
+  assert.match(js, /function ionBearer\(\)\{const t=sessionToken\(\);return t\?'Bearer '\+t:''\}/);
+  assert.match(js, /function ionStatus\(\)\{if\(!ionBearer\(\)\)return Promise\.resolve\(null\);/, 'no session: no status request');
+  assert.match(js, /function startIon\(\)\{if\(!ion\|\|!viewer\)return;const bearer=ionBearer\(\);if\(!bearer\)\{ion=null;return\}/, 'no session: no ion server, no asset request');
+  assert.equal((js.match(/API\+'\/v1\/world\/ion/g) || []).length, 2, 'the status and the server are the only two places the route is named');
+});
+
+test('the member\'s session rides in a header, never in a URL; it rotates; a refusal hands the Earth back to NASA once', async () => {
+  const js = await read('js/action-globe.js');
+  assert.doesNotMatch(js, /access_token=|[?&]token=|queryParameters/, 'no credential in any URL');
+  assert.doesNotMatch(js, /Ion\.defaultServer=API/, 'never a bare URL server, which would drop the header');
+  assert.match(js, /if\(code===401\)\{const b=ionBearer\(\);if\(b&&resource\.headers\.Authorization!==b\)\{resource\.headers\.Authorization=b;if\(ionServer\)ionServer\.headers\.Authorization=b;return true\}\}/, 'a stale session is swapped for the newest one, once per change');
+  assert.match(js, /if\(code===401\|\|code===403\|\|code===429\|\|code===503\)ionOff\(/, 'refused: ion steps aside');
+  assert.match(js, /function ionOff\(why\)\{if\(!ion\)return;ionWarn\('off',why\);ion=null;document\.documentElement\.classList\.remove\('globe-ion'\);/, 'once, then quiet');
+  assert.match(js, /function ionWarn\(what,e\)\{if\(!ion\)return;/, 'no console noise after ion stepped aside');
+  assert.match(js, /if\(ionGround\)\{ionGround=false;viewer\.scene\.globe\.terrainProvider=new Cesium\.EllipsoidTerrainProvider\(\)\}/);
+  assert.match(js, /window\.addEventListener\('storage',e=>\{if\(e&&e\.key&&e\.key!=='mccdb_session'\)return;if\(!ion\)return;const b=ionBearer\(\);if\(!b\)ionOff\('signed out'\);else ionServer\.headers\.Authorization=b\}\);/, 'signing out elsewhere switches ion off; a new session is used from then on');
+});
+
+test('the Worker gates the asset endpoint on a signed-in member, not on Origin alone', async () => {
+  const worker = await read('workers/mccluster/src/world-ion.js');
+  assert.match(worker, /const user = await bearerUser\(request, env, fetchImpl\);\n  if \(!user\) \{/);
+  assert.match(worker, /members_only: true/);
 });

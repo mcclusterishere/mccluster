@@ -1,0 +1,81 @@
+/* Creator onboarding, one click, and the creator's own summary card in
+   Creator Studio. Phone first: one column, full-width controls; the
+   min-width queries only give it room. Inputs are 16px or more (iOS zooms
+   into anything smaller). Colours are the music system's own tokens
+   (css/music-system-v2.css), with fallbacks for a page without them. */
+.cob{
+  --cob-text:var(--music-text,#f7f7f8);
+  --cob-muted:var(--music-muted,#a1a1a7);
+  --cob-surface:var(--music-surface,#17171a);
+  --cob-accent:var(--music-accent,#e5383b);
+  box-sizing:border-box;width:100%;max-width:520px;margin:6px auto 0;
+  padding:26px 20px 22px;border-radius:18px;
+  background:
+    radial-gradient(120% 70% at 50% 0%,rgba(229,56,59,.16),transparent 62%),
+    var(--cob-surface);
+  color:var(--cob-text);text-align:center
+}
+/* the music system gives .creator-grid / .creator-form a display, which
+   beats the hidden attribute: hidden means hidden on this page */
+.creator-shell [hidden],.cob[hidden],.cme[hidden],.cob__field[hidden]{display:none!important}
+.cob__id{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.cob__avatar{
+  flex:none;width:72px;height:72px;border-radius:50%;
+  display:grid;place-items:center;overflow:hidden;
+  background:rgba(255,255,255,.08);color:var(--music-text,#f7f7f8);
+  font:800 28px/1 var(--ui,system-ui);letter-spacing:-.02em
+}
+.cob__avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.cob__who{display:grid;gap:3px;min-width:0;max-width:100%}
+.cob__who b{font-size:20px;line-height:1.15;letter-spacing:-.02em;overflow-wrap:anywhere}
+.cob__who span{color:var(--music-muted,#a1a1a7);font-size:14px;overflow-wrap:anywhere}
+.cob__who span:empty{display:none}
+.cob__title{margin:22px 0 4px;font-size:clamp(28px,8.5vw,40px);line-height:1;letter-spacing:-.045em}
+.cob__lede{margin:0 0 20px;color:var(--cob-muted);font-size:14px;line-height:1.45}
+.cob__form{display:grid;gap:14px;text-align:left}
+.cob__field{display:grid;gap:6px;min-width:0}
+.cob__field label{color:var(--cob-muted);font-size:12px;font-weight:700;letter-spacing:.02em}
+.cob__field input{
+  box-sizing:border-box;width:100%;min-width:0;
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  background:#0d0d10;color:var(--cob-text);
+  padding:13px 14px;font:600 max(16px,1rem)/1.25 var(--ui,system-ui);outline:none
+}
+.cob__field input:focus{border-color:rgba(229,56,59,.7);box-shadow:0 0 0 3px rgba(229,56,59,.18)}
+.cob__field[data-problem] input{border-color:rgba(255,143,145,.8)}
+.cob__handle{position:relative;display:block}
+.cob__handle span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--cob-muted);font:600 max(16px,1rem)/1 var(--ui,system-ui);pointer-events:none}
+.cob__handle input{padding-left:32px}
+.cob__field small{color:var(--cob-muted);font-size:12px;line-height:1.4}
+.cob__field[data-problem] small{color:#ff8f91}
+.cob__go{
+  appearance:none;border:0;border-radius:999px;cursor:pointer;
+  min-height:52px;width:100%;margin-top:4px;
+  background:var(--cob-accent);color:#fff;
+  font:800 max(16px,1rem)/1 var(--ui,system-ui);letter-spacing:-.01em;
+  box-shadow:0 12px 30px rgba(229,56,59,.28);
+  transition:transform .15s ease,box-shadow .15s ease,opacity .15s ease
+}
+.cob__go:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(229,56,59,.34)}
+.cob__go:focus-visible{outline:3px solid rgba(255,255,255,.7);outline-offset:3px}
+.cob__go:disabled{opacity:.55;cursor:progress;transform:none}
+.cob__terms{margin:0;text-align:center;color:var(--cob-muted);font-size:12px;line-height:1.45}
+.cob__terms a{color:var(--cob-text)}
+.cob__status{margin:0;min-height:18px;text-align:center;color:var(--cob-muted);font-size:13px}
+.cob__status:empty{display:none}
+.cob__status[data-tone="bad"]{color:#ff8f91}
+
+/* the creator's own card in the studio: who they are, their page, edit */
+.cme{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px 14px;align-items:center}
+.cme .cob__avatar{width:56px;height:56px;font-size:22px}
+.cme .cob__who b{font-size:18px}
+.cme__actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.cme__actions .creator-btn{min-height:44px;padding:0 18px;font-size:13px}
+
+@media (min-width:700px){
+  .cob{margin-top:18px;padding:40px 44px 32px}
+  .cob__avatar{width:84px;height:84px;font-size:32px}
+  .cme{grid-template-columns:auto minmax(0,1fr) auto}
+  .cme__actions{grid-column:auto;justify-content:flex-end}
+}
+@media (prefers-reduced-motion:reduce){.cob__go{transition:none}.cob__go:hover{transform:none}}
