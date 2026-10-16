@@ -35,6 +35,8 @@ if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,8
 if(d.type==='hu:focus-mission'&&typeof d.missionId==='string'){if(!viewer||!focusMission(d.missionId))tell({type:'hu:selection-cleared'});return}
 if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:status',text:!showCities?'Regional impact is hidden.':cities.length?cities.length+(cities.length===1?' region shows its':' regions show their')+' totals: members who agreed to be counted, and verified actions.':'No region has five members who agreed to be counted yet.'});return}
 if(d.type==='hu:near-me'){const b=$('ctlLocate');if(b)b.click();return}
+/* a news card's "On the Earth" (js/mnet.js): the place a story MENTIONS. Anything can post a message, so the numbers are checked here too */
+if(d.type==='hu:focus-place'){if(viewer)focusPlace(d);return}
 /* the creator-only audience layer: the page says who may see the switch, and sends the points it fetched with the creator's own session */
 if(d.type==='hu:creator-mode'){const b=$('ctlAudience');if(b){b.hidden=!d.on;if(!d.on){b.setAttribute('aria-pressed','false');drawAudience([])}}return}
 if(d.type==='hu:audience-points'&&Array.isArray(d.points)&&viewer){drawAudience(d.points.slice(0,250));return}
@@ -102,10 +104,10 @@ function drawAudience(points){if(!viewer)return;audiencePins.forEach(e=>viewer.e
 /* ---------- THE WORLD'S DATA LAYERS (owner, 2026-10-15: "let's populate it … flights … satellites and space missions, that only logged in users can see") ----------
    Three toggles at the bottom-left. Flights is for everyone; Satellites and Launches are for members: the Worker checks the
    bearer with Supabase (workers/mccluster/src/world-layers.js), and here a guest's lock only says so and opens sign-in.
-   Each source is credited on the imagery line while it is on. Satellites are propagated here from CelesTrak's elements
+   Each source is credited on the imagery line while it is on, by the provider that answered (flights: adsb.lol or OpenSky). Satellites are propagated here from CelesTrak's elements
    (vendor/satellite.min.js, loaded on first use) so they move; flights are the last snapshot the Worker holds. */
 const API='https://api.mccluster.org';
-const DATA_LAYERS={flights:{id:'ctlFlights',members:false,color:'#ffb347',credit:'Flights: OpenSky'},satellites:{id:'ctlSats',members:true,color:'#4fd1ff',credit:'Satellites: CelesTrak'},launches:{id:'ctlLaunch',members:true,color:'#ffffff',credit:'Launches: The Space Devs'}};
+const DATA_LAYERS={flights:{id:'ctlFlights',members:false,color:'#ffb347',credit:'Flights: adsb.lol (ODbL)'},satellites:{id:'ctlSats',members:true,color:'#4fd1ff',credit:'Satellites: CelesTrak'},launches:{id:'ctlLaunch',members:true,color:'#ffffff',credit:'Launches: The Space Devs'}};
 const layerState={flights:{on:false,points:null,count:0},satellites:{on:false,points:null,sats:[],labels:[],timer:0,count:0},launches:{on:false,entities:[],count:0}};
 /* hooks for the browser test, like __huGlobeSettled */
 window.__huLayerCounts=()=>({flights:layerState.flights.count,satellites:layerState.satellites.count,launches:layerState.launches.count});
@@ -121,16 +123,24 @@ function loadSatelliteLib(){if(window.satellite)return Promise.resolve();return 
 const NAMED_SATS=/^(ISS \(ZARYA\)|CSS \(TIANHE\)|HST|TIANGONG)/;
 async function drawSatellites(data){await loadSatelliteLib();const L=layerState.satellites;clearLayer('satellites');const col=new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString(DATA_LAYERS.satellites.color),now=new Date();(data.satellites||[]).forEach(s=>{let rec;try{rec=satellite.twoline2satrec(String(s.tle1),String(s.tle2))}catch(e){return}const sat={rec,name:String(s.name||'')};const p=satPos(sat,now);if(!p)return;const named=NAMED_SATS.test(sat.name);sat.point=col.add({position:p,pixelSize:named?6:4,color:c,outlineColor:Cesium.Color.WHITE.withAlpha(.7),outlineWidth:named?1.5:0,id:{layer:'satellites',name:sat.name}});if(named){sat.label=viewer.entities.add({position:p,label:{text:sat.name.replace(/ \(.*\)$/,''),font:'12px sans-serif',fillColor:Cesium.Color.fromCssColorString('#dff6ff'),style:Cesium.LabelStyle.FILL_AND_OUTLINE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,pixelOffset:new Cesium.Cartesian2(0,-12),verticalOrigin:Cesium.VerticalOrigin.BOTTOM}});L.labels.push(sat.label)}L.sats.push(sat)});viewer.scene.primitives.add(col);L.points=col;L.count=L.sats.length;L.timer=setInterval(stepSatellites,1500)}
 function drawLaunches(data){const L=layerState.launches;clearLayer('launches');(data.launches||[]).forEach((l,n)=>{const pad=l&&l.pad||{};if(!isFinite(pad.lon)||!isFinite(pad.lat))return;const when=l.net?new Date(l.net):null,day=when&&!isNaN(when)?when.toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';L.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(pad.lon,pad.lat,4000),billboard:{image:glowPin(DATA_LAYERS.launches.color),width:22,height:22},label:{text:String(l.name||'Launch').split('|')[0].trim().slice(0,40)+(day?' · '+day:''),font:'11px sans-serif',fillColor:Cesium.Color.WHITE,style:Cesium.LabelStyle.FILL_AND_OUTLINE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,pixelOffset:new Cesium.Cartesian2(0,-16),verticalOrigin:Cesium.VerticalOrigin.BOTTOM,distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2.6e7)},id:'hu-launch-'+n+'-'+String(l.id||'').slice(0,40)}))});L.count=L.entities.length}
+/* the place a news story MENTIONS (GDELT's extraction; js/mnet.js sends it from a news card), never where something happened.
+   The Earth turns to it from above the region; a mission that was picked lets go, since the strip would describe the wrong place. */
+let lastPlace=null;
+/* a hook for the browser test, like __huGlobeSettled: the last place a news card sent */
+window.__huFocusPlace=()=>lastPlace;
+function focusPlace(d){const lat=d.lat,lon=d.lon;if(typeof lat!=='number'||typeof lon!=='number'||!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return false;
+ lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
+ viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,900000),duration:1.4});return true}
 /* the credit line grows when layers are on; the toggles and the controls stay above it, and the page is told how tall it is */
 function creditHeight(){const el=document.querySelector('.osm-credit');return el?Math.ceil(el.getBoundingClientRect().height):0}
 function liftAboveCredit(){const h=creditHeight();document.documentElement.style.setProperty('--hu-credit-h',h+'px');
  /* the bar floats a little off the bottom, so what matters is where its top is, not how tall it is */
  if(EXPLORE){const bar=document.querySelector('.appbar'),deck=$('deck'),px=el=>el&&!el.hidden?Math.ceil(el.getBoundingClientRect().height):0,barH=bar?Math.max(0,Math.ceil(innerHeight-bar.getBoundingClientRect().top)):0;document.documentElement.style.setProperty('--hu-bar-h',barH+'px');document.documentElement.style.setProperty('--hu-sheet-h',px(deck)+'px')}
  return h}
-function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
+function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>layerState[k].credit||DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
 async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerState[k];if(!viewer||!b)return;if(spec.members&&!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  if(L.on){L.on=false;b.setAttribute('aria-pressed','false');clearLayer(k);paintLayerCredits();tell({type:'hu:layer',layer:k,on:false,creditHeight:creditHeight()});return}
- b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
+ b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
 function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);liftAboveCredit();window.addEventListener('resize',liftAboveCredit);

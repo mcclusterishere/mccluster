@@ -52,6 +52,14 @@ race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
 Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
 steps above.
 
+Pending: `world_gdelt_gkg_news_v1.sql` gives the World its news (owner,
+2026-10-15: "ingest the GDELT immediately"). It adds GDELT GKG rows
+(`gdelt_gkg_v2`) beside #432's dormant DOC path in the same `media_news_*`
+store: six columns, a per-file claim table, and service-role functions to
+ingest, page, map and prune; nothing is granted to anon. Tested by
+`scripts/test-world-news-db.sh`. After promoting it, set
+`WORLD_NEWS_INGEST_ENABLED = "true"` in `workers/mccluster/wrangler.toml`.
+
 Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
 (owner, 2026-10-15: "we need to have it populated with missions"). It inserts
 three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
@@ -132,3 +140,33 @@ the owner and counsel approve), an append-only review log, and the
 `supabase/tests/identity_verification_levels.behaviour.sql`, run by
 `scripts/test-identity-verification-db.sh`. Design and apply checklist:
 `docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md`.
+
+Pending: `mission_admin_approval_v1.sql` (rollback `mission_admin_approval_v1.rollback.sql`)
+makes "only an admin completes a mission" a database invariant (owner,
+2026-10-15): proofs are born pending, a proof or assignment becomes `verified`
+only under an admin token that is not the submitter's with a same-transaction
+review in `action_proof_review_history` (Anti-Social levels now archived there
+too), points are minted only by that review, bounties are approved only behind
+a verified mission and paid only by an admin, clips have no automatic approval
+and no money without an approved clip, and a mission opens only after an admin
+approved it for publication. Apply after `policy_fellowship_ladder_v1.sql`.
+Pending: `gated_track_mission_identity_v1.sql` (rollback alongside) is the
+CIA Mind Control gated-track rule as an `action_unlock_rules` row (three
+admin-verified missions and `member_identity_verified(uid, purpose)`, purpose from the rule's params), the Worker's
+`music_gate_rule_state` / `music_gate_claim_rule`, and the taxonomy rows for
+`music_preview_play` / `music_full_play`. Apply after the approval file and, preferably, after PR #443's identity file (both orders apply cleanly).
+Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
+and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.
+
+Pending: `20261016010000_profile_edit_gate_v1.sql` (with
+`…_profile_edit_gate_v1.rollback.sql`) is the profile edit gate (owner,
+2026-10-15): profile details on a data-driven list (`profile_protected_fields`)
+lock once set; a signed-in member's write that would change one is refused by
+a trigger, directly or through any RPC. A change is asked for with a live
+video (a new submission level, `profile_edit`, on the identity levels' own
+tables, bucket and finish function) and the Persona ID check, and is applied
+only by `profile_edit_review_decide()`, once, with an append-only audit.
+Apply after the ladder and the identity levels. Behaviour tests:
+`supabase/tests/profile_edit_gate.behaviour.sql`, run by
+`scripts/test-profile-edit-gate-db.sh` (which also reruns the identity and
+ladder behaviour tests on top). Design: `docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md`.

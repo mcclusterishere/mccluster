@@ -196,3 +196,10 @@ test('a failed music distribution save identifies the saved draft rather than in
   assert.equal(ui.state.bad, true);
   assert.match(ui.state.msg, /Draft saved.*brief could not be saved/);
 });
+
+test('no clip auto-release in the campaign form: every release needs an admin review (mission_admin_approval_v1)', async () => {
+  const ui = await read('js/control-room/clipping.js');
+  assert.doesNotMatch(ui, /Auto-release|value="auto"/);
+  assert.match(ui, /<select id="clApproval" disabled><option value="creator" selected>Admin review before payout<\/option><\/select>/);
+  assert.match(ui, /approval_mode:"creator",assets:assets/);
+});

@@ -8,6 +8,7 @@ import { handleWorldLayers } from './world-layers.js';
 import { handleIntelRequest } from './intel/router.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
+import { handleWorldNews, NEWS_PATH } from './world-news.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -139,6 +140,12 @@ export default {
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
+      }
+
+      /* the World's news from GDELT, read from our own tables (./world-news.js) */
+      if (path === NEWS_PATH) {
+        const news = await handleWorldNews(request, env);
+        if (news) return news;
       }
 
       /* the World's data layers: flights for everyone, satellites and

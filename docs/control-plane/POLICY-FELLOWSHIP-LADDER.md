@@ -132,6 +132,12 @@ where p_user is not null and a.user_id = p_user and a.status = 'verified'
   and coalesce(m.kind, 'civic') <> 'clip'   -- count(distinct a.mission_id)
 ```
 
+`action_member_verified_mission_count(uid)` and
+`action_member_has_verified_mission(uid)` exist, pending, in
+`supabase/pending/mission_admin_approval_v1.sql`, and that file makes
+`verified` reachable only through an admin's recorded review
+(`docs/control-plane/MISSION-ADMIN-APPROVAL.md`).
+
 This file carries the same WHERE clause inline (it applies before #444), the
 World's CCTV gate reads the same predicate (PR #442), and #444 replaces the
 inline copy with its function. A submitted, pending or rejected proof does not

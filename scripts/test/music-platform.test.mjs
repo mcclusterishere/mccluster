@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 const json=async(p)=>JSON.parse(await read(p));
 
-test('gated single is one logical track: public preview, master only as an earned play', async()=>{
+test('gated single is one logical track: public preview, master only for an entitled member', async()=>{
   const albums=await json('data/albums.json');
   const album=albums.albums.find(a=>a.slug==='cia-mind-control');
   const track=album.tracks.find(t=>t.title==='Niggy Nigg Niggr');
@@ -13,20 +13,20 @@ test('gated single is one logical track: public preview, master only as an earne
   assert.equal(track.gated.bucket,'mcc-gated-audio');
   assert.equal(track.gated.object,'niggy-nigg/niggy-nigg.mp3');
   assert.equal(track.gated.access_mode,'account');
-  assert.equal(track.gated.preview_visibility,'until_earned');
-  assert.equal(track.gated.full_visibility,'earned_play');
-  /* The closer stays last, but one completed listen to either earlier CIA
-     Mind Control song unlocks one earned play. */
+  assert.equal(track.gated.preview_visibility,'until_entitled');
+  assert.equal(track.gated.full_visibility,'entitled_play');
+  /* Owner, 2026-10-15: full audio only with three admin-verified missions
+     and a verified identity. The numbers live in the action_unlock_rules
+     row; albums.json and the Worker name the same row. */
   assert.equal(album.tracks[album.tracks.length-1],track,'the gated record closes the album');
+  assert.equal(track.gated.unlock_rule,'gated_track_niggy_nigg');
+  assert.deepEqual(track.gated.requires,{verified_missions:3,identity_verified:true,identity_purpose:'referral_signup'});
+  assert.equal(track.gated.listen_gate,undefined,'listens no longer unlock the closer');
   const router=await read('workers/mccluster/src/music/router.js');
-  const gate=router.match(/'niggy-nigg':\s*\{[^}]*?any_of:\s*\[([^\]]*)\]/);
-  assert.ok(gate,'the Worker must gate niggy-nigg by eligible album tracks');
-  const eligible=gate[1].split(',').map(x=>x.trim().replace(/'/g,''));
-  const before=album.tracks.slice(0,-1).map(t=>t.src.split('/').pop().replace(/\.[^.]+$/,''));
-  assert.deepEqual(eligible,before,'only the other CIA Mind Control songs may unlock the closer');
-  assert.deepEqual(track.gated.listen_gate.any_of,eligible);
-  assert.equal(track.gated.listen_gate.minimum_completed,1);
-  assert.equal(track.gated.listen_gate.each_play_needs_a_fresh_listen,true);
+  assert.match(router,/'niggy-nigg':\s*\{[^}]*?rule:\s*'gated_track_niggy_nigg'/,'the Worker gates niggy-nigg by the data rule');
+  const sql=await read('supabase/pending/gated_track_mission_identity_v1.sql');
+  assert.match(sql,/'gated_track_niggy_nigg'[\s\S]*'identity_verified', null, null,\s*'\{"purpose": "referral_signup", "min_verified_missions": 3/,'the rule row: 3 missions + identity');
+  assert.equal(album.tracks.filter(t=>t.gated).length,1,'the other two tracks stay freely playable');
   assert.deepEqual(track.gated.formats.map(f=>f.ext),['mp3','m4r']);
   assert.equal(track.gated.formats.find(f=>f.ext==='m4r').object,'niggy-nigg/niggy-nigg.m4r');
 });
