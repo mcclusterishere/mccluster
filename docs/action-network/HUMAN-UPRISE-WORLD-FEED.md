@@ -534,8 +534,9 @@ instead, and those carry each article's places with coordinates.
 - Screened: web articles only, untranslated, a real headline, English, no
   press-release wires, stock-ticker mills or digests, nothing graphic (an
   always-out set of GDELT themes, plus violent themes only when the headline
-  is graphic too), at most 72 hours old, one copy of a syndicated story,
-  three per publisher, about 100 a file, cities before states before
+  is graphic too), at most 72 hours old, one copy of a syndicated story
+  (the same headline from another station, in the same file or within 72
+  hours of one already kept), three per publisher, about 100 a file, cities before states before
   countries. On real files 1,100 to 1,700 rows give 100, every one with a
   place.
 - One place per article: the place it mentions most, narrowed to the city
@@ -557,30 +558,60 @@ instead, and those carry each article's places with coordinates.
   minutes.
 
 **The database change** (`supabase/migrations/*_world_gdelt_gkg_news.sql`):
-five columns on `media_news_articles` (the file, the place's type and
-country, tone, the sharing image, kept for later and not shown), a feed
-index, `media_gdelt_files`, and six service-role functions (claim, release,
+six columns on `media_news_articles` (the file, the place's type and
+country, tone, the sharing image, kept for later and not shown, and the
+story key that finds a syndicated copy), a feed index and a story index, `media_gdelt_files`, and six service-role functions (claim, release,
 ingest, the news page, the places, prune). The headline-country trigger
 cleared every row's location before it looked at the title; GKG rows now
 keep their own. Nothing is granted to `anon` or `authenticated`: the World
 reads news only through the Worker. The four earlier GDELT migrations and
 the `public-gdelt-news` Edge Function are unchanged.
 
-**Also:** a World data layer that is unavailable now says why
-(`reason`: the provider's status or a timeout), so the live flights layer,
-which has answered "unavailable" since it shipped, can show its cause
-without the Worker's logs.
+**In the feed** (`js/mnet.js`). The World feed reads the news beside the
+posts, for a guest and a member alike, as a bare public GET with no session:
+news is free for everyone. A pinned post comes first, then one member post
+to one news item (`FEED_NEWS_PER_POST = 1`, the owner's ratio); when one
+runs out the other carries on, and Load more pages whichever has more. A
+news card wears the World's card (`data-news-id`, never `data-post-id`): the
+publisher, how long ago, the place it mentions, and the headline out to the
+publisher in a new tab. Words only: no pictures and no publisher marks. A
+card with a place has "On the Earth", which turns the globe to it
+(`hu:focus-place`, checked again in the frame). "World news from The GDELT
+Project", linked, sits over the feed whenever a news card is shown: that is
+GDELT's condition. A mission picked on the Earth narrows the feed to its
+posts and the news steps aside; search matches headlines, publishers and
+places. A news read that fails leaves the posts as they were.
 
-Verified by `workers/mccluster/test/world-news.test.mjs` (17), the migration
+**On the Earth** (`js/action-globe.js`). A fourth toggle, News, free like
+Flights: one gold point per city or state in the last day's news, sized by
+how many stories mention it, its count shown up close, drawn through the
+terrain so a mountain never hides it. A tap says how many stories mention
+the place and the latest headline. The line over the Earth counts the
+places, and "News: GDELT" joins the credits while it is on.
+
+**Also: the feed's paging.** Both feeds read three rows for every one they
+return, because rows drop out after the read, but the next page began after
+the last row read, so up to forty posts that survived were never shown. The
+next page now begins after the last post shown when more survived than fit
+(`feedCursor`, `workers/mccluster/src/platform-api.js`).
+
+Verified by `workers/mccluster/test/world-news.test.mjs` (18),
+`workers/mccluster/test/mnet-public-feed.test.mjs` (posts 21 to 40 are
+reached), `scripts/test/world-news-feed.test.mjs`, the migration
 applied twice to a local Postgres 16 with production's tables (claims,
 release, the cursor's tie-break, places, prune, the old headline rule left
 intact, every function refused to anything but the service role), and a real
 GDELT file parsed and written through the real function: 100 of 100 saved,
-all with coordinates.
+all with coordinates; a syndicated copy in the next file is skipped. The
+World's e2e (`scripts/e2e/world-screen.e2e.mjs`) checks the one-for-one
+interleave for a guest and a member, the credit, the link-outs, "On the
+Earth", Load more on both streams, a failing news read leaving the posts
+intact, the News layer for a guest, and 390 px with no sideways scroll.
 
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
 "Let's populate it with shit, man. Let's get it interesting." Three toggles
+(a fourth, News, is above)
 at the bottom-left of the Earth (`js/action-globe.js`), each a source
 Hitman's Halo already uses, served by the one Worker
 (`workers/mccluster/src/world-layers.js`), trimmed to what the Earth draws,
