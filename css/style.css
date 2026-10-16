@@ -2084,18 +2084,14 @@ a,button,input,select,textarea,summary,label,[role="button"]{touch-action:manipu
 html{scroll-behavior:smooth}
 *{-webkit-tap-highlight-color:transparent}
 img,video{image-rendering:auto}
-.btn{position:relative;isolation:isolate}
-.btn:active{transform:translateY(1px) scale(0.985)}
-.btn--ruby{background:linear-gradient(180deg,var(--ruby-hot),var(--ruby) 62%);box-shadow:0 1px 0 rgba(255,255,255,0.14) inset,0 10px 30px rgba(193,18,31,0.32)}
-.btn--ruby:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,0.18) inset,0 16px 44px rgba(229,56,59,0.5)}
+/* .btn motion, press and hover moved to THE BUTTON SYSTEM at the end of this file */
 .btn--ghost{backdrop-filter:blur(6px)}
 input,select,textarea{border-radius:12px;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s}
 input:focus,select:focus,textarea:focus,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:rgba(229,56,59,0.7);box-shadow:0 0 0 3px rgba(229,56,59,0.18)}
 .mp__card{transition:transform 0.28s cubic-bezier(0.22,1,0.36,1),border-color 0.28s,box-shadow 0.28s}
-.mp__card:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,0.4)}
-.appbar__tab:hover{transform:translateY(-2px)}
+@media (hover:hover){.mp__card:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,0.4)}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}
-.btn:active,.btn--ruby:hover,.mp__card:hover,.appbar__tab:hover{transform:none}
+.mp__card:hover{transform:none}
 }
 @keyframes mccCardCall{0%,100%{box-shadow:0 0 0 0 rgba(232,200,119,0)}
 50%{box-shadow:0 0 24px rgba(232,200,119,0.85);border-color:#e5383b}
@@ -5151,4 +5147,256 @@ html[data-theme="light"] .felband__veil {
     scroll-behavior:auto !important;
   }
   :where(button, [role="button"], .button, .btn):active { transform:none !important; }
+}
+
+
+/* ============================================================
+   THE BUTTON SYSTEM — one hierarchy, one motion language
+   (owner, 2026-10-15: "These buttons look like shit. There's no
+   animations." This is the answer, inside the flat house system:
+   the same ruby, cream, ink and type, refined, never re-skinned.)
+
+   Hierarchy, on the house .btn:
+     .btn--primary / .btn--ruby   the one thing to press (ruby fill)
+     .btn--secondary / .btn--ghost  an outline on glass
+     .btn--tertiary / .btn--quiet  text weight only, no box
+     .btn--danger                  destructive: outline, fills on hover
+     .btn--icon                    a 44px round control (needs aria-label)
+   Sizes: .btn--sm 44px · default 52px · .btn--lg 60px. Every size
+   keeps a 44px touch target. .btn--block fills its row.
+   States: :hover (pointer devices only), :active press, :focus-visible
+   ring, :disabled / [aria-disabled="true"], .is-loading /
+   [aria-busy="true"] (a spinner; the label stays for screen readers),
+   .btn--shine (a slow light sweep, for the ONE primary CTA on a page).
+
+   The same hover / press / focus / disabled grammar is lent to the
+   page-level button classes that already exist (Human Uprise, Action
+   Network, the account door, the Control room, the music transport), so
+   they behave as one family without renaming anything in their markup.
+
+   Motion: transform and opacity only, 150-250ms, ease-out. Everything
+   here stands still under prefers-reduced-motion.
+   ============================================================ */
+:root {
+  --mcc-dur-press: 120ms;
+  --mcc-dur-1: 150ms;
+  --mcc-dur-2: 200ms;
+  --mcc-dur-3: 250ms;
+  --mcc-ease-out: cubic-bezier(.22,1,.36,1);
+  --mcc-ease-press: cubic-bezier(.3,.7,.4,1);
+  --mcc-press: .97;
+  --mcc-lift: -2px;
+  /* the focus ring: gold on the night coat (12:1 on ink), ruby in daylight */
+  --mcc-ring: #e8c877;
+  --mcc-ring-gap: 3px;
+  /* the action fill. --ruby-hot alone carries white type at 4.2:1, under
+     AA for a 16px label, so the fill leans toward --ruby and every stop
+     clears 4.5:1 against the label. Same hue, a deeper press. */
+  --mcc-action: linear-gradient(180deg,#e0263a 0%,var(--ruby,#c1121f) 100%);
+  --mcc-action-ink: #fff;
+  --mcc-action-glow: 0 1px 0 rgba(255,255,255,.16) inset, 0 10px 28px -10px rgba(193,18,31,.7);
+  --mcc-action-glow-hi: 0 1px 0 rgba(255,255,255,.2) inset, 0 16px 40px -12px rgba(229,56,59,.8);
+}
+html[data-theme="light"] { --mcc-ring: #a30d18; }
+
+/* ---------- the house button ---------- */
+.btn {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center; gap: .6em;
+  min-height: 52px; will-change: auto;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  transition:
+    transform var(--mcc-dur-2) var(--mcc-ease-out),
+    box-shadow var(--mcc-dur-3) var(--mcc-ease-out),
+    background-color var(--mcc-dur-2) var(--mcc-ease-out),
+    border-color var(--mcc-dur-2) var(--mcc-ease-out),
+    color var(--mcc-dur-2) var(--mcc-ease-out),
+    opacity var(--mcc-dur-2) var(--mcc-ease-out);
+}
+.btn svg { width: 1.15em; height: 1.15em; flex: none; }
+.btn--sm { min-height: 44px; }
+.btn--lg { min-height: 60px; font-size: 1rem; padding: 1.2em 2.8em; }
+.btn--block { display: flex; width: 100%; }
+
+.btn--ruby, .btn--primary {
+  background: var(--mcc-action); color: var(--mcc-action-ink);
+  border-color: transparent; box-shadow: var(--mcc-action-glow);
+}
+.btn--ghost, .btn--secondary {
+  border: 1px solid rgba(244,239,230,.5); background: rgba(244,239,230,.06); color: var(--cream);
+}
+html[data-theme="light"] .btn--secondary { border-color: rgba(26,20,13,.42); background: rgba(26,20,13,.05); }
+.btn--tertiary, .btn--quiet {
+  background: transparent; border-color: transparent; box-shadow: none;
+  padding-inline: 1.1em; color: var(--cream);
+  text-decoration: underline; text-decoration-color: transparent;
+  text-decoration-thickness: 1px; text-underline-offset: .35em;
+}
+.btn--danger { border: 1px solid rgba(229,56,59,.7); background: transparent; color: #ff8f95; }
+html[data-theme="light"] .btn--danger { color: #a30d18; border-color: rgba(163,13,24,.6); }
+.btn--icon {
+  width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0;
+  border-radius: 50%; letter-spacing: 0;
+}
+.btn--icon.btn--lg { width: 56px; height: 56px; }
+
+/* press: a fast, physical give */
+.btn:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(var(--mcc-press));
+  transition-duration: var(--mcc-dur-press);
+  transition-timing-function: var(--mcc-ease-press);
+}
+
+/* hover: only where a pointer can hover, so a tap never leaves a lift behind */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled):not([aria-disabled="true"]) { transform: translateY(var(--mcc-lift)); }
+  .btn--ruby:hover, .btn--primary:hover { box-shadow: var(--mcc-action-glow-hi); }
+  .btn--ghost:hover, .btn--secondary:hover { border-color: var(--cream); background: rgba(244,239,230,.14); }
+  html[data-theme="light"] .btn--secondary:hover { background: rgba(26,20,13,.1); }
+  .btn--tertiary:hover, .btn--quiet:hover { transform: none; text-decoration-color: currentColor; }
+  .btn--danger:hover { background: #c1121f; border-color: #c1121f; color: #fff; }
+}
+
+/* disabled: legible, still, and plainly not a target */
+.btn:disabled, .btn[aria-disabled="true"] {
+  opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.55);
+}
+
+/* loading: a spinner over a hushed label; the label is still read out */
+.btn.is-loading, .btn[aria-busy="true"] { color: transparent !important; pointer-events: none; cursor: progress; }
+.btn.is-loading::after, .btn[aria-busy="true"]::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 1.15em; height: 1.15em; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+  animation: mcc-spin .7s linear infinite;
+}
+.btn--secondary.is-loading::after, .btn--ghost.is-loading::after,
+.btn--secondary[aria-busy="true"]::after, .btn--ghost[aria-busy="true"]::after {
+  border-color: rgba(244,239,230,.3); border-top-color: var(--cream);
+}
+
+/* the shine: one slow sweep of light every few seconds, for the page's
+   single primary CTA. A light, not a material: no chrome, no glass skin. */
+.btn--shine::before {
+  content: ""; position: absolute; z-index: -1; inset: 0;
+  background: linear-gradient(105deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);
+  transform: translateX(-120%);
+  animation: mcc-shine 5.5s var(--mcc-ease-out) 1.2s infinite;
+  pointer-events: none;
+}
+
+/* ---------- one focus ring for every control ----------
+   Keyboard focus only (:focus-visible), offset so it never sits on a
+   fill, gold on the night coat and ruby in daylight. Page sheets that
+   draw their own visible ring keep it. */
+:where(a, button, summary, [role="button"], [role="tab"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--mcc-ring);
+  outline-offset: var(--mcc-ring-gap);
+}
+.btn:focus-visible { outline: 2px solid var(--mcc-ring); outline-offset: var(--mcc-ring-gap); }
+
+/* ---------- the family: existing page buttons, same grammar ----------
+   No markup changes: these are the classes the pages already render.
+   Primary = a fill you press; secondary = an outline or tint. */
+:where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .ac__prov, .creator-btn, .eui-btn, .we-cta, .getapp__btn, .head-cta, .mh__cta, .vrgate__btn) {
+  touch-action: manipulation;
+  transition:
+    transform var(--mcc-dur-2) var(--mcc-ease-out),
+    box-shadow var(--mcc-dur-3) var(--mcc-ease-out),
+    background-color var(--mcc-dur-2) var(--mcc-ease-out),
+    border-color var(--mcc-dur-2) var(--mcc-ease-out),
+    color var(--mcc-dur-2) var(--mcc-ease-out),
+    filter var(--mcc-dur-2) var(--mcc-ease-out),
+    opacity var(--mcc-dur-2) var(--mcc-ease-out);
+}
+:where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .ac__prov, .creator-btn, .eui-btn, .we-cta, .getapp__btn, .head-cta, .mh__cta, .vrgate__btn):active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(var(--mcc-press));
+  transition-duration: var(--mcc-dur-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(.an-btn, .ac__btn, .ac__ghost, .ac__prov, .creator-btn, .eui-btn, .we-cta, .getapp__btn, .head-cta, .mh__cta, .vrgate__btn):hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(var(--mcc-lift));
+  }
+  :where(.an-btn--hot, .an-btn--gold, .ac__btn, .cr-btn--primary):hover:not(:disabled) { filter: brightness(1.07); }
+}
+:where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .creator-btn, .eui-btn, .we-cta):is(.is-loading, [aria-busy="true"]) {
+  position: relative; color: transparent !important; pointer-events: none;
+}
+:where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .creator-btn, .eui-btn, .we-cta):is(.is-loading, [aria-busy="true"])::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: mcc-spin .7s linear infinite;
+}
+/* the account door's Sign in carried white on --ruby-hot (4.2:1): the action fill clears AA */
+/* :root lifts it over account.html's own sheet, which loads after this one */
+:root .ac__btn { background: var(--mcc-action); color: var(--mcc-action-ink); }
+
+/* ---------- the bottom app bar ----------
+   The bar never leaves (owner, addendum 6), so it is the most-seen
+   control on the property. The held tab settles in with a little spring
+   on arrival; hover lifts only on pointer devices; press gives. */
+.appbar__tab {
+  transition:
+    transform var(--mcc-dur-2) var(--mcc-ease-out),
+    color var(--mcc-dur-2) var(--mcc-ease-out),
+    background-color var(--mcc-dur-3) var(--mcc-ease-out),
+    box-shadow var(--mcc-dur-3) var(--mcc-ease-out);
+}
+.appbar__tab:active { transform: scale(.9); transition-duration: var(--mcc-dur-press); }
+.appbar__tab.is-here, .appbar__tab.is-active { animation: mcc-tab-settle .42s var(--mcc-spring) both; }
+.appbar__tab:focus-visible { outline: 2px solid var(--mcc-ring); outline-offset: 2px; }
+.appbar { animation: mcc-bar-in .45s var(--mcc-ease-out) both; }
+@media (hover: hover) and (pointer: fine) {
+  .appbar__tab:hover { transform: translateY(-2px); }
+}
+
+/* ---------- the music transport ---------- */
+.music-mini__play, .music-now__play, .music-inline-play {
+  transition: transform var(--mcc-dur-2) var(--mcc-ease-out), background-color var(--mcc-dur-2) var(--mcc-ease-out), box-shadow var(--mcc-dur-3) var(--mcc-ease-out);
+}
+.music-mini__play { width: 44px; height: 44px; }
+.music-mini__play:active, .music-now__play:active, .music-inline-play:active { transform: scale(.92); }
+.music-inline-play:active { transform: translateY(-50%) scale(.92); }
+/* a 30px circle in a track row, with a 44px reach */
+.music-inline-play::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; }
+@media (hover: hover) and (pointer: fine) {
+  .music-mini__play:hover, .music-now__play:hover { transform: scale(1.06); box-shadow: 0 8px 22px -8px rgba(244,239,230,.45); }
+}
+
+/* ---------- cards: a lift that says "this opens" ---------- */
+@media (hover: hover) and (pointer: fine) {
+  :where(.an-bounty, .an-lane, .an-intake-choice) {
+    transition: transform var(--mcc-dur-3) var(--mcc-ease-out), box-shadow var(--mcc-dur-3) var(--mcc-ease-out);
+  }
+  :where(.an-bounty, .an-lane, .an-intake-choice):hover { transform: translateY(-2px); box-shadow: 0 18px 40px -26px rgba(0,0,0,.9); }
+}
+
+@keyframes mcc-spin { to { transform: rotate(360deg); } }
+@keyframes mcc-shine {
+  0% { transform: translateX(-120%); }
+  28%, 100% { transform: translateX(120%); }
+}
+@keyframes mcc-tab-settle {
+  0% { transform: scale(.82); }
+  100% { transform: none; }
+}
+@keyframes mcc-bar-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn::before, .btn::after, .appbar, .appbar__tab,
+  .music-mini__play, .music-now__play, .music-inline-play,
+  :where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .ac__prov, .creator-btn, .eui-btn, .we-cta, .getapp__btn, .head-cta, .mh__cta, .vrgate__btn, .an-bounty, .an-lane, .an-intake-choice) {
+    animation: none !important; transition: none !important;
+  }
+  .btn:hover, .btn:active, .appbar__tab:hover, .appbar__tab:active,
+  .music-mini__play:hover, .music-mini__play:active, .music-now__play:hover, .music-now__play:active,
+  :where(.an-btn, .cr-btn, .ac__btn, .ac__ghost, .ac__prov, .creator-btn, .eui-btn, .we-cta, .getapp__btn, .head-cta, .mh__cta, .vrgate__btn, .an-bounty, .an-lane, .an-intake-choice):is(:hover, :active) {
+    transform: none !important;
+  }
+  .music-inline-play:active { transform: translateY(-50%) !important; }
+  .btn--shine::before { display: none; }
+  /* a spinner that cannot spin still says "working" */
+  .btn.is-loading::after, .btn[aria-busy="true"]::after { border-top-color: rgba(255,255,255,.35); border-right-color: #fff; }
 }

@@ -62,7 +62,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   border-radius: 10px;
   background: var(--cr-panel-2);
   color: var(--cr-text);
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 13px;
   cursor: pointer;
   font-weight: 700;
