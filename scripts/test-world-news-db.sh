@@ -3,7 +3,7 @@
 # local Postgres (16+), as the real API roles:
 #   the API role stub (plus auth.role() and the two civic tables #432's media
 #   graph references), ChatGPT's #432 media namespace (the five 20261014
-#   migrations, unchanged), then the pending world_gdelt_gkg_news_v1.sql,
+#   migrations, unchanged), then world_gdelt_gkg_news_v1 (20261016151123),
 #   then the behaviour tests.
 # Usage:
 #   PGHOST=/tmp/pg PGPORT=5499 PGUSER=pg scripts/test-world-news-db.sh
@@ -25,8 +25,8 @@ apply supabase/migrations/20261014023302_media_geo_ingestion.sql
 apply supabase/migrations/20261014023317_media_ingest_rpc.sql
 apply supabase/migrations/20261014023548_media_news_namespace.sql
 apply supabase/migrations/20261014023813_gdelt_backoff_cache.sql
-apply supabase/pending/world_gdelt_gkg_news_v1.sql
+apply supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql
 # applied twice: the file is safe to re-run
-apply supabase/pending/world_gdelt_gkg_news_v1.sql
+apply supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -o /dev/null -f supabase/tests/world_gdelt_gkg_news.behaviour.sql
 echo "world news chain: ok"

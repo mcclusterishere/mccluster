@@ -228,7 +228,7 @@ test('the ingest is off until WORLD_NEWS_INGEST_ENABLED is "true": no GDELT requ
     assert.equal(calls.length, 0);
   }
   const toml = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
-  assert.match(toml, /^WORLD_NEWS_INGEST_ENABLED = "false"$/m, 'deployed off until the SQL is applied');
+  assert.match(toml, /^WORLD_NEWS_INGEST_ENABLED = "true"$/m, 'deployed on: the SQL is applied in production (20261016151123)');
 });
 
 test("every fetch is one workerd accepts, and a redirect is followed only between GDELT's two hosts", async () => {

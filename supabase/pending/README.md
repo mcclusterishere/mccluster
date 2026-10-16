@@ -52,13 +52,13 @@ race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
 Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
 steps above.
 
-Pending: `world_gdelt_gkg_news_v1.sql` gives the World its news (owner,
-2026-10-15: "ingest the GDELT immediately"). It adds GDELT GKG rows
-(`gdelt_gkg_v2`) beside #432's dormant DOC path in the same `media_news_*`
-store: six columns, a per-file claim table, and service-role functions to
-ingest, page, map and prune; nothing is granted to anon. Tested by
-`scripts/test-world-news-db.sh`. After promoting it, set
-`WORLD_NEWS_INGEST_ENABLED = "true"` in `workers/mccluster/wrangler.toml`.
+Promoted: `world_gdelt_gkg_news_v1.sql` is
+`supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql` (applied
+2026-10-16). The World has its news: GDELT GKG rows (`gdelt_gkg_v2`) beside
+#432's dormant DOC path in the same `media_news_*` store, read through the
+Worker only. `WORLD_NEWS_INGEST_ENABLED = "true"` in
+`workers/mccluster/wrangler.toml`; `"false"` stops the ingest. Tested by
+`scripts/test-world-news-db.sh`.
 
 Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
 (owner, 2026-10-15: "we need to have it populated with missions"). It inserts

@@ -1,4 +1,4 @@
--- Behaviour tests for supabase/pending/world_gdelt_gkg_news_v1.sql on top of
+-- Behaviour tests for supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql on top of
 -- ChatGPT's #432 media namespace, as the real API roles with the JWT claims
 -- Supabase would set. Runs against a scratch database
 -- (scripts/test-world-news-db.sh). Every check raises on failure.

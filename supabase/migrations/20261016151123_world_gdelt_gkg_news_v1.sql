@@ -1,6 +1,6 @@
 -- World news from GDELT's 15-minute GKG files (owner, 2026-10-15: "I want you to ingest the GDELT immediately ...
--- we need a database change"). PENDING: written and tested, not applied in production. Promote with the steps in
--- supabase/pending/README.md, then set WORLD_NEWS_INGEST_ENABLED = "true" (workers/mccluster/wrangler.toml).
+-- we need a database change"). Applied in production under this name; the Worker's cron ingests while
+-- WORLD_NEWS_INGEST_ENABLED = "true" (workers/mccluster/wrangler.toml).
 --
 -- Whose store: ChatGPT's #432 raw-discovery namespace (20261014023548: media_news_articles, media_news_sources,
 -- media_ingestion_runs, the headline-country trigger), which has never held a row because its DOC 2.0 path has no
