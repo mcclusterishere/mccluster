@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 378,
+  "candidate_count": 382,
   "capability_source_count": 99,
-  "support_only_count": 279,
-  "checks_total": 1415,
-  "checks_passed": 1415,
+  "support_only_count": 283,
+  "checks_total": 1431,
+  "checks_passed": 1431,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -109,6 +109,7 @@
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
+    "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
     "docs/control-plane/INTEL-TO-MISSION-CANON.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
@@ -224,6 +225,7 @@
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
+    "scripts/test/identity-verification-levels.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
@@ -311,6 +313,7 @@
     "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
+    "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
@@ -357,6 +360,7 @@
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/eu_platform_test.sql",
+    "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/run-eu-tests.sh",
@@ -392,7 +396,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "378 entries"
+      "detail": "382 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2241,6 +2245,26 @@
     },
     {
       "name": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4280,6 +4304,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/identity-verification-levels.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/policy-fellowship-ladder.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -6060,6 +6104,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/README.md capability ids known",
       "passed": true,
       "detail": ""
@@ -6821,6 +6885,26 @@
     },
     {
       "name": "supabase/tests/eu_platform_test.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/identity_verification_levels.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/identity_verification_levels.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/identity_verification_levels.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/identity_verification_levels.behaviour.sql support rationale present",
       "passed": true,
       "detail": ""
     },

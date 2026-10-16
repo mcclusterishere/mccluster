@@ -119,6 +119,20 @@ first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
 
+Pending: `20261015230000_identity_verification_levels_v1.sql` (with
+`…_identity_verification_levels_v1.rollback.sql`) is the identity
+verification levels (owner, 2026-10-15): a live camera video introduction
+reviewed by the owner (V1), and full Hitman's Halo access (V2: a second live
+video compared with the first plus a Persona government-ID check). It needs
+`policy_fellowship_ladder_v1.sql` first and extends its
+`action_member_verifications` / `action_unlock_rules` / `action_unlock_progress()`.
+Private bucket `identity-verification-videos`, versioned consent (drafts until
+the owner and counsel approve), an append-only review log, and the
+`halo_full` rule shipped disabled. Behaviour tests:
+`supabase/tests/identity_verification_levels.behaviour.sql`, run by
+`scripts/test-identity-verification-db.sh`. Design and apply checklist:
+`docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md`.
+
 Pending: `mission_admin_approval_v1.sql` (rollback `mission_admin_approval_v1.rollback.sql`)
 makes "only an admin completes a mission" a database invariant (owner,
 2026-10-15): proofs are born pending, a proof or assignment becomes `verified`

@@ -376,9 +376,9 @@
     var head=(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
-    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
+    var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
     var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
-      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="memos"?memoDesk():A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
+      (A.tab==="reviews"?reviews():A.tab==="missions"?missionDesk(c):A.tab==="fellows"?fellowDesk():A.tab==="memos"?memoDesk():A.tab==="identity"?(window.CR.identityReview?window.CR.identityReview.render():note("The identity review module did not load (js/control-room/identity-review.js).",true)):A.tab==="state"?controls(c):A.tab==="content"?editor(c):A.tab==="ledger"?ledger(c,d):overview(c,d));
     return'<div class="cro">'+chips+head+tabs+body+'</div>';
   }
 
@@ -421,6 +421,7 @@
     });
   }
   function bind(root){
+    if(window.CR.identityReview&&A.tab==="identity")window.CR.identityReview.bind(root);
     if(!root)return;
     loadUploads(root);
     root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
@@ -559,5 +560,5 @@
       if(!title){alert("A title, please.");return;}
       run(cr,function(){return A.supa("action_campaigns",{method:"POST",body:{id:id,slug:slug,title:title,status:"draft"}}).then(function(){A.sel=id;A.tab="content";});},"Draft created. Write its content, facts and sources, then set it live.");};
   }
-  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;},render:render,bind:bind,load:load,state:A};
+  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;if(window.CR.identityReview)window.CR.identityReview.init(opts);},render:render,bind:bind,load:load,state:A};
 })();

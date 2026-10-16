@@ -16,6 +16,7 @@ import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
+import { handleIdentity } from './identity/router.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -64,6 +65,11 @@ export default {
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
+      /* identity verification levels: the Persona ID check (flagged off by
+         PERSONA_ENABLED) and the entitlement answer Halo reads
+         (./identity/router.js, docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md) */
+      const identity = await handleIdentity(request, env);
+      if (identity) return identity;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
