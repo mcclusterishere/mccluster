@@ -3,7 +3,7 @@
   "use strict";
   window.CR=window.CR||{};
   var FIRST="__first_party__", palette=["#e5383b","#3f93d2","#d9a441","#75b798","#9c7ae8","#e27d60"];
-  var S={host:null,request:null,supa:null,section:"overview",rangeId:"7d",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0};
+  var S={host:null,request:null,supa:null,section:"overview",usersState:null,usersQuery:"",rangeId:"7d",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function n(v){v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
   function money(v){v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
@@ -233,7 +233,7 @@
     }).join("")+'</div>';
   }
   function mins(v){v=Number(v);if(!isFinite(v))return"—";if(v<1)return"under a minute";if(v<60)return v+" min";if(v<1440)return Math.round(v/60)+" h";return Math.round(v/1440)+" days";}
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["users","Users"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
@@ -489,7 +489,31 @@
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function usersView(){
+    if(S.site!==FIRST)return card("Users · Intelligence","First-party account intelligence only.","<p>Select McCluster first-party in the property selector to inspect authorized user records.</p>",true);
+    var state=S.usersState;
+    if(!state)return card("Users · Intelligence","Owner-only account explorer.","<p>Loading authorized user records…</p>",true);
+    if(state.error)return card("Users · Intelligence","Authorization and API status are shown explicitly.",'<p role="alert">'+e(state.error)+'</p><button type="button" class="cr-btn" data-cra-users-retry>Retry</button>',true);
+    var rows=state.rows||[],query=(S.usersQuery||"").toLowerCase();
+    var filtered=rows.filter(function(u){return [u.id,u.display_name,u.email,u.segment].some(function(v){return String(v||"").toLowerCase().includes(query);});}).slice(0,100);
+    var list=filtered.map(function(u){return '<tr><td>'+e(u.display_name||u.id)+'</td><td>'+e(u.segment||"—")+'</td><td><button type="button" class="cr-btn" data-cra-user="'+e(u.id)+'">Inspect</button></td></tr>';}).join("");
+    var selected=rows.find(function(u){return u.id===S.selectedUser;});
+    var details=selected?'<h3>Verified profile</h3><pre>'+e(JSON.stringify(selected.attributes||{},null,2))+'</pre><h3>Activity scores</h3><pre>'+e(JSON.stringify(selected.scores||{},null,2))+'</pre><h3>Observed events</h3><pre>'+e(JSON.stringify((selected.events||[]).slice(0,100),null,2))+'</pre>':'<p>Select an account to inspect authorized attributes and observed events. No inferred traits or fabricated scores.</p>';
+    return card("Users · Intelligence","Owner-authorized first-party user explorer. Only records returned by the secured API are shown.",
+      '<label>Search users <input type="search" data-cra-users-search value="'+e(S.usersQuery)+'" placeholder="Name, account or segment"></label><button type="button" class="cr-btn" data-cra-users-retry>Refresh</button><p>'+e(rows.length)+' accounts on this authorized page; not a total-user count.</p><div class="cra-scroll"><table class="cra-table"><thead><tr><th>Account</th><th>Segment</th><th>Detail</th></tr></thead><tbody>'+list+'</tbody></table></div>'+details,true);
+  }
+  function loadUsers(){
+    if(S.usersLoading||!S.request)return;
+    S.usersLoading=true;S.usersState=null;paint();
+    S.request("/v1/analytics/users?limit=100").then(function(result){
+      if(!result||result.ok===false||!Array.isArray(result.users))throw Error("Invalid Users API response: expected an authorized users array");
+      S.usersState={rows:result.users};
+    }).catch(function(error){
+      var message=String(error&&error.message||error||"Unknown API failure");
+      S.usersState={error:"User intelligence could not load: "+message+". Check your owner permissions, login session, and API deployment."};
+    }).then(function(){S.usersLoading=false;if(S.section==="users")paint();});
+  }
+  function body(){return S.section==="users"?usersView():S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
     var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
     return'<div class="cra"><div class="cra-head"><div class="cra-head__copy"><h1>Analytics</h1><p>Traffic, audience, adaptive experience, experiments, content, identity, commerce and diagnostics. One range controls the whole panel.</p></div><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></div>'+ranges()+'<div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div>'+tabs()+body()+'</div>';
@@ -618,7 +642,11 @@
     bindChartPoints(root);
     var p=root.querySelector("#craProperty");if(p)p.onchange=function(){S.site=p.value;load();};
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
-    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
+    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();if(S.section==="users"&&!S.usersState)loadUsers();};});
+    var search=root.querySelector("[data-cra-users-search]");
+    if(search)search.oninput=function(){S.usersQuery=search.value;var pos=search.selectionStart;paint();var next=S.host.querySelector("[data-cra-users-search]");if(next){next.focus();try{next.setSelectionRange(pos,pos);}catch(_){}};};
+    root.querySelectorAll("[data-cra-users-retry]").forEach(function(b){b.onclick=function(){S.usersState=null;loadUsers();};});
+    root.querySelectorAll("[data-cra-user]").forEach(function(b){b.onclick=function(){S.selectedUser=b.getAttribute("data-cra-user");paint();};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
