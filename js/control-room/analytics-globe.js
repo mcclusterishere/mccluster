@@ -128,11 +128,12 @@
       '<p class="crg-msg" data-crg-msg>Loading the globe…</p>';
     var canvasBox = host.querySelector("[data-crg-canvas]"), tip = host.querySelector("[data-crg-tip]"), msg = host.querySelector("[data-crg-msg]");
     var Cs, widget, scene, camera, C = {}, fills = null, instancesByCode = {}, countries = [], polysByCode = {};
+    var destroyed = false, active = true, resizeObserver = null, inputHandler = null, hoverFrame = 0;
     var cellLayer = null, outlineLayer = null, dotLayer = null, occluder = null, scratch2 = null;
     var st = { cc: null, file: null, fills: null, lines: null, byKey: {}, ids: {}, out: [] }, hoverSel = null, tipSel = null, tipCart = null;
 
     function say(t) { if (!msg) return; msg.textContent = t || ""; msg.hidden = !t; }
-    /* each token resolved by the browser (so a token may be any CSS colour, color-mix included) */
+    /* each token resolved by the browser (so a token may any CSS colour, color-mix included) */
     function tokens() {
       var probe = document.createElement("i"); probe.style.display = "none"; host.appendChild(probe);
       Object.keys(FALLBACK).forEach(function (k) {
@@ -289,6 +290,7 @@
       }
     }
     function drawOverlays() {
+      if (destroyed) return;
       if (!api.ready) return;
       if (cellLayer) { scene.primitives.remove(cellLayer); cellLayer = null; }
       var d = api.data;
@@ -415,22 +417,24 @@
       if (st.cc === cc) return Promise.resolve(st.file);
       if (st.cc) dropStates();
       var my = ++seq;
-      return loadAdmin1(cc).then(function (file) { if (my !== seq || api.sel.country !== cc) return null; buildStates(cc, file); drawOverlays(); return file; },
+      return loadAdmin1(cc).then(function (file) { if (destroyed || my !== seq || api.sel.country !== cc) return null; buildStates(cc, file); drawOverlays(); return file; },
         function () { return null; });
     }
 
     api.setData = function (d) {
+      if (destroyed) return;
       api.data = { mode: d.mode === "cells" ? "cells" : "countries", points: (d.points || []).slice(0, 300), cells: (d.cells || []).slice(0, 2000), states: d.states || null };
       drawOverlays();
     };
     /* the one way in: the panel's dropdown, its rows, Clear and a tap here all end in select({country, state}, fly) */
     api.select = function (sel, fly) {
+      if (destroyed) return Promise.resolve(null);
       sel = sel || {}; var cc = /^[A-Z]{2}$/.test(sel.country || "") ? sel.country : (/^g\d+:/.test(sel.country || "") ? sel.country : null);
       api.sel = { country: cc, state: cc && sel.state ? String(sel.state) : null };
       hoverSel = null;
       if (!api.ready) return Promise.resolve();
       drawOverlays();
-      var go = function () { if (fly) flyToSel(); };
+      var go = function () { if (!destroyed && fly) flyToSel(); };
       if (cc && /^[A-Z]{2}$/.test(cc)) {
         if (st.cc === cc) { go(); return Promise.resolve(st.file); }
         /* fly to the country at once; a state waits for its shape */
@@ -440,10 +444,26 @@
       ensureStates(null); go(); return Promise.resolve(null);
     };
     api.flyTo = flyToSel;
-    api.resize = function () { if (widget) { widget.resize(); scene.requestRender(); } };
-    api.destroy = function () { try { if (widget) widget.destroy(); } catch (e) {} widget = null; api.ready = false; };
+    api.resize = function () { if (!destroyed && active && widget) { widget.resize(); scene.requestRender(); } };
+    /* One active scene in the owner workspace. Keep selection/camera in memory
+       while another page or the full Halo scene is in front; no hidden loop. */
+    api.setActive = function (on) {
+      active = on === true; api.active = active;
+      if (!destroyed && widget) { widget.useDefaultRenderLoop = active; if (active) api.resize(); }
+    };
+    api.active = true;
+    api.destroy = function () {
+      if (destroyed) return;
+      destroyed = true; ++seq; api.active = false; api.ready = false;
+      if (resizeObserver) resizeObserver.disconnect();
+      if (hoverFrame) cancelAnimationFrame(hoverFrame);
+      try { if (inputHandler) inputHandler.destroy(); } catch (_) {}
+      try { if (widget) widget.destroy(); } catch (_) {}
+      widget = null;
+    };
 
     Promise.all([loadCesium(), loadBoundaries()]).then(function (r) {
+      if (destroyed) return;
       Cs = r[0];
       try {
         widget = new Cs.CesiumWidget(canvasBox, {
@@ -478,7 +498,7 @@
       buildCountries(r[1]);
       homeView(0);
       scene.postRender.addEventListener(function () { if (needRecolor && fills && fills.ready && (!st.fills || st.fills.ready) && (!borders || borders.ready)) { recolor(); scene.requestRender(); } if (tipSel) positionTip(); });
-      var h = new Cs.ScreenSpaceEventHandler(scene.canvas);
+      var h = inputHandler = new Cs.ScreenSpaceEventHandler(scene.canvas);
       h.setInputAction(function (e) {
         var hit = pickAt(e.position); hoverSel = null;
         if (!hit) return;
@@ -490,17 +510,17 @@
       h.setInputAction(function (e) {
         if (!(window.matchMedia && matchMedia("(hover: hover)").matches)) return;
         pending = e.endPosition; if (raf) return;
-        raf = requestAnimationFrame(function () {
-          raf = 0; var hit = pending ? pickAt(pending) : null, c = hit && !hit.state && hit.country !== api.sel.country && valueOf(hit.country) ? { country: hit.country, state: null } : null;
+        raf = hoverFrame = requestAnimationFrame(function () {
+          raf = hoverFrame = 0; if (destroyed || !active) return; var hit = pending ? pickAt(pending) : null, c = hit && !hit.state && hit.country !== api.sel.country && valueOf(hit.country) ? { country: hit.country, state: null } : null;
           if ((c && c.country) !== (hoverSel && hoverSel.country)) { hoverSel = c; placeTip(); scene.requestRender(); }
         });
       }, Cs.ScreenSpaceEventType.MOUSE_MOVE);
-      if (window.ResizeObserver) new ResizeObserver(function () { api.resize(); }).observe(host);
-      api.ready = true; say("");
+      if (window.ResizeObserver) { resizeObserver = new ResizeObserver(function () { api.resize(); }); resizeObserver.observe(host); }
+      api.ready = true; api.setActive(active); say("");
       var first = api.sel; drawOverlays();
       if (first.country) api.select(first, false).then(flyToSel);
       if (opts.onReady) opts.onReady(api);
-    }).catch(function (e) { api.failed = e; say("The globe did not load (" + (e && e.message || e) + "). Every number is still in the cards below."); if (opts.onReady) opts.onReady(api); });
+    }).catch(function (e) { if (destroyed) return; api.failed = e; say("The globe did not load (" + (e && e.message || e) + "). Every number is still in the cards below."); if (opts.onReady) opts.onReady(api); });
     return api;
   }
   window.CR.analyticsGlobe = { mount: mount, lonLat: lonLat, deg: deg, loadAdmin1: loadAdmin1, matchRegions: matchRegions, fitBox: fitBox, norm: norm };
