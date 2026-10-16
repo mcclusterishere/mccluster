@@ -75,7 +75,7 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   assert.equal((await read('index.html')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
   assert.match(js, /aircraft in the air right now/);
   assert.match(js, /<a class="mn__world-lead" href="' \+ VAUNT_LEAD \+ '" target="_blank" rel="noopener sponsored">Fly Vaunt \\u2192<\/a>/, 'simple and shorter (owner, 2026-10-15)');
-  assert.match(js, /satellites overhead, moving live/);
+  assert.match(js, /satellites · calculated positions/);
   assert.match(js, /launches coming up/);
   assert.match(js, /d\.type === "hu:ask-sign-in"/); assert.match(js, /d\.type === "hu:layer" && typeof d\.layer === "string"/);
   assert.match(js, /layers:"Sign in to see satellites and space missions on the Earth\."/);
