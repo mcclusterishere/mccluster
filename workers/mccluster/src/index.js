@@ -5,6 +5,8 @@ import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
+import { handleWorldCctv } from './world-cctv.js';
+import { handleWorldAccess } from './world-access.js';
 import { handleIntelRequest } from './intel/router.js';
 import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
@@ -154,6 +156,19 @@ export default {
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
+      }
+
+      /* which World layers this viewer may open, by level (./world-access.js) */
+      if (path === '/v1/world/access') {
+        const access = await handleWorldAccess(request, env);
+        if (access) return access;
+      }
+
+      /* mission-gated CCTV: signed in, privacy acknowledged, a completed
+         mission; proxied from Halo server to server (./world-cctv.js) */
+      if (path.startsWith('/v1/world/cctv/')) {
+        const cctv = await handleWorldCctv(request, env);
+        if (cctv) return cctv;
       }
 
       /* File a public comment: open federal comment periods, read only, behind

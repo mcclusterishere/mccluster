@@ -188,7 +188,7 @@ test('the dispatch sits beside the data layers, ahead of the Supabase gate', asy
 test("no World fetch asks for redirect: 'error' (workerd throws on it, so every call would fail in production)", async () => {
   // Comments may name the forbidden value; only code counts.
   const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  for (const f of ['world-ion.js', 'world-layers.js']) {
+  for (const f of ['world-ion.js', 'world-layers.js', 'world-cctv.js']) {
     const src = code(await readFile(new URL(`../src/${f}`, import.meta.url), 'utf8'));
     assert.doesNotMatch(src, /redirect:\s*'error'/, f);
     assert.match(src, /redirect:\s*'manual'|fetchNoCrossHostRedirect\(/, f);
@@ -201,6 +201,7 @@ test("no World fetch asks for redirect: 'error' (workerd throws on it, so every 
     assert.doesNotMatch(src, /redirect:\s*['"]error['"]/, f);
   }
 });
+
 
 test('the spatial console reads the ion token the same way the World does', async () => {
   const { sourceConfigured, sourceByKey } = await import('../src/seek-first/source-registry.js');

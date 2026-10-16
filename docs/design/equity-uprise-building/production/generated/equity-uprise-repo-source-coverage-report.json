@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 389,
+  "candidate_count": 390,
   "capability_source_count": 99,
-  "support_only_count": 290,
-  "checks_total": 1459,
-  "checks_passed": 1459,
+  "support_only_count": 291,
+  "checks_total": 1463,
+  "checks_passed": 1463,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -120,6 +120,7 @@
     "docs/control-plane/SECURITY-POSTURE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
+    "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
     "docs/control-plane/branch-reconciliation-2026-09-26.json",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
@@ -403,7 +404,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "389 entries"
+      "detail": "390 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2467,6 +2468,26 @@
     },
     {
       "name": "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md support rationale present",
       "passed": true,
       "detail": ""
     },

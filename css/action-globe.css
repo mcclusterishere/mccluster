@@ -184,6 +184,51 @@ header strong{display:none}
 .globe-explore .explore-lead{color:#ffb347;font-weight:800;text-decoration:none}
 @media(min-width:700px){.globe-explore{--hu-sheet-gap:12px}.globe-explore #deck{left:50%;right:auto;width:min(620px,calc(100% - 32px));transform:translateX(-50%);border-radius:20px;bottom:calc(var(--hu-bar-h) + var(--hu-sheet-gap))}.globe-explore .explore-line{right:auto;max-width:440px}}
 
+/* ---------- JUST THE GLOBE (?explore=1&chrome=0, owner 2026-10-15) ----------
+   The Earth and what a tap opens. The credit stays (licences); one small corner control brings the chrome back. */
+.bare-enter{margin-left:8px}
+.bare-exit{display:none}
+/* the bottom app bar is never hidden here (owner, 2026-10-15: it is present in every experience) */
+.globe-bare header,.globe-bare .globe-controls,.globe-bare .globe-data,.globe-bare .explore-line{display:none!important}
+.globe-bare #deck:not(:has(#mission:not([hidden]))){display:none!important}
+.globe-bare .bare-exit:not([hidden]){display:inline-flex;position:fixed;z-index:8;top:calc(10px + env(safe-area-inset-top,0px));right:10px;width:36px;height:36px;align-items:center;justify-content:center;border-radius:50%;background:rgba(13,14,18,.55);color:#eef0f4;opacity:.7}
+.globe-bare .bare-exit svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.globe-bare .bare-exit:focus-visible,.globe-bare .bare-exit:hover{opacity:1}
+.globe-bare .osm-credit{font-size:9px;opacity:.75}
+
+/* ---------- CCTV sheet: the lock that explains, and a camera's live snapshot ---------- */
+.cctv-sheet{position:absolute;z-index:9;left:8px;right:8px;top:8px;max-height:calc(100% - 16px);overflow-y:auto;padding:14px 14px 12px;border-radius:16px;background:rgba(13,14,18,.94);color:#eef0f4;font:500 13px/1.45 Inter,system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,42,77,.3),0 12px 30px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.cctv-sheet[hidden]{display:none}
+.globe-explore .cctv-sheet{position:fixed;top:calc(56px + env(safe-area-inset-top,0px));max-height:calc(100dvh - 120px)}
+.cctv-sheet h2{margin:0 32px 8px 0;font-size:16px;line-height:1.25}
+.cctv-sheet p{margin:6px 0}
+.cctv-close{position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#eef0f4;font-size:18px;cursor:pointer}
+.cctv-checks{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px}
+.cctv-check{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.cctv-check__mark{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:50%;background:#3a1a22;color:#ff8da0;font-weight:800}
+.cctv-check.is-ok .cctv-check__mark{background:#173523;color:#7cfc9a}
+.cctv-check b{display:block}.cctv-check small{display:block;color:#c3ccdb}
+.cctv-act{display:inline-flex;align-items:center;min-height:36px;margin-top:6px;padding:0 12px;border:0;border-radius:999px;background:linear-gradient(180deg,#ff3d5e,#c4102c);color:#fff;font:700 13px/1 Inter,system-ui,sans-serif;text-decoration:none;cursor:pointer}
+.cctv-act:disabled{opacity:.6}
+.cctv-link{border:0;background:none;color:#c3ccdb;text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+.cctv-note,.cctv-meta{color:#c3ccdb;font-size:12px}
+.cctv-msg:empty{display:none}
+.cctv-frame{margin:8px 0;position:relative}
+.cctv-frame img{display:block;width:100%;height:auto;border-radius:10px;background:#000}
+.cctv-frame figcaption{position:absolute;left:8px;top:8px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.65);color:#7cfc9a;font-size:11px;font-weight:700}
+.cctv-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px;margin:0}
+.cctv-facts div{min-width:0}.cctv-facts dt{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#8d96a8}.cctv-facts dd{margin:0;overflow-wrap:anywhere}
+@media(min-width:700px){.cctv-sheet{left:auto;width:min(380px,calc(100% - 16px))}}
+
+/* ---------- THE ANALYTICS SURFACE (Control Room → Analytics): only the Earth and the owner's aggregates ---------- */
+.globe-surface-analytics header,.globe-surface-analytics .world-mode,.globe-surface-analytics .world-tools,.globe-surface-analytics #deck,.globe-surface-analytics #worldFeed,.globe-surface-analytics .globe-data,.globe-surface-analytics #ctlLocate,.globe-surface-analytics #ctlAudience,.globe-surface-analytics .explore-line{display:none!important}
+.globe-surface-analytics #globe{inset:0;height:100%}
+.globe-surface-analytics .globe-controls{top:auto;bottom:34px}
+.globe-surface-analytics .osm-credit{top:auto;bottom:8px}
+/* seven data toggles: the row keeps clear of the controls column on the right and wraps upward on a narrow phone */
+.globe-data{right:58px;flex-wrap:wrap-reverse;align-content:flex-start;pointer-events:none}
+.globe-data>*{pointer-events:auto}
+
 /* Cesium ion's credits, a condition of drawing from ion: the ion logo on the imagery line and everything else (Bing, the
    terrain's sources, NASA) behind "Data attribution", in Cesium's own credit display moved here (js/action-globe.js,
    creditContainer). Shown only while the World draws from ion. */
