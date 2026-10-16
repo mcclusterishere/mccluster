@@ -1,9 +1,16 @@
 /* THE LISTEN LEDGER, AND A RECORD YOU EARN.
 
-   A gated album closer can require one completed listen from an explicit
-   set of eligible songs on that album. The closer cannot be opened cold;
-   after each earned play, another eligible completed listen is required. The preview stays public; the master never leaves the
-   private bucket except as a URL this file signs for one granted play.
+   A gated record plays in full only for a member the database says is
+   entitled to it. For the CIA Mind Control closer (owner, 2026-10-15) that
+   is a DATA ROW, action_unlock_rules 'gated_track_niggy_nigg': at least
+   three distinct missions an admin verified AND a verified identity
+   (public.member_identity_verified). Everyone else, signed in or not, hears
+   the public preview, and the page is told exactly what is missing
+   (missions x/3, identity verification) with links. The rule is evaluated
+   and the play row written in ONE database call (music_gate_claim_rule);
+   only when that call says claimed does this file hand out a stream token.
+   The master never leaves the private bucket except through that token.
+   SQL: supabase/pending/gated_track_mission_identity_v1.sql.
 
    Nothing here trusts the browser about time. A listen counts only when
    the player's beats (one every ~15 seconds while the song is actually
@@ -12,21 +19,23 @@
    one, capped at 20 seconds, so pausing, skipping to the end or playing
    at double speed does not count. One listen is open per listener at a
    time (a lock and a unique index in the database), so songs cannot be
-   "heard" in parallel.
+   "heard" in parallel. (Listens no longer unlock the closer; they still
+   feed the ledger, the song test and the other gate modes below.)
 
-   An earned play is not a storage URL. It is a token for
+   A full play is not a storage URL. It is a token for
    /v1/music/stream/:token, which this Worker serves from the private
    bucket for a few minutes and a handful of requests, then refuses.
 
      POST /v1/music/listens                 { track }  → { listen_id }
      POST /v1/music/listens/:id/beat                    → { heard_seconds }
      POST /v1/music/listens/:id/finish                  → { counted, gates }
-     GET  /v1/music/gates/:track                        → { gate }
+     GET  /v1/music/gates/:track                        → { gate } (signed out too: what is missing)
      POST /v1/music/gates/:track/play                   → { url } or 403 locked
      GET  /v1/music/stream/:token                       → the audio, while the token holds
 
-   House operators (ops.use) play gated records without spending anything,
-   so the owner can always hear their own catalogue. */
+   House operators (ops.use) play gated records without the rule, so the
+   owner can always hear their own catalogue (an owner decision to keep or
+   remove: docs/control-plane/MISSION-ADMIN-APPROVAL.md). */
 
 import { corsHeaders, fail, reply } from '../lib/http.js';
 import { requireCapability } from '../lib/capabilities.js';
@@ -35,8 +44,9 @@ import { TRACKS } from './tracks.js';
 
 export const GATES = {
   'niggy-nigg': {
-    /* CIA Mind Control closer: hear either other album song first. */
-    any_of: ['you-the-feds', 'pull-up'],
+    /* CIA Mind Control closer: three admin-verified missions and a verified
+       identity. The rule's numbers live in its action_unlock_rules row. */
+    rule: 'gated_track_niggy_nigg',
     bucket: 'mcc-gated-audio',
     object: 'niggy-nigg/niggy-nigg.mp3',
     /* the owner's own playback: a signed storage URL, no gate */
@@ -79,9 +89,26 @@ async function rpc(env, name, body) {
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
   if (!res.ok) {
-    throw Object.assign(new Error(`${name} failed`), { status: 502, detail: data?.message || text.slice(0, 200) });
+    throw Object.assign(new Error(`${name} failed`), { status: 502, detail: data?.message || text.slice(0, 200), code: data?.code || null, upstream: res.status });
   }
   return data;
+}
+
+/* PostgREST says the function does not exist: the Worker is live before its SQL
+   (PGRST202 "Could not find the function", or 42883 from Postgres, or a bare 404). */
+export function missingRpc(error) {
+  return !!error && (error.code === 'PGRST202' || error.code === '42883' || error.upstream === 404);
+}
+
+/* DEPLOY ORDER. Preferred: apply supabase/pending/gated_track_mission_identity_v1.sql (and
+   mission_admin_approval_v1.sql) BEFORE this Worker ships. If the Worker lands first, the rule
+   gate's functions (music_gate_rule_state / music_gate_claim_rule) are missing. Then the rule-gated
+   track fails CLOSED, alone: preview only, with the reason, never a stream token; every other
+   track, listen and gate keeps its pre-#444 behaviour (finishing a listen does not 502). */
+function gateNotReady(key) {
+  const gate = GATES[key];
+  return { mode: 'rule', rule: gate && gate.rule, track: key, allowed: false, claimed: false, preview_only: true,
+    reason: 'gate_not_ready', missing: ['gate_not_ready'] };
 }
 
 async function signObject(env, bucket, object, seconds) {
@@ -118,6 +145,7 @@ async function isHouseOperator(env, user) {
 
 function gateArgs(userId, key) {
   const gate = GATES[key];
+  if (gate.rule) return { p_user: userId || null, p_track: key, p_rule: gate.rule };
   if (gate.any_of) return { p_user: userId, p_track: key, p_eligible: gate.any_of };
   if (gate.sequence) return { p_user: userId, p_track: key, p_sequence: gate.sequence, p_window_minutes: gate.window_minutes };
   return { p_user: userId, p_track: key, p_first: gate.first, p_each: gate.each };
@@ -127,12 +155,20 @@ function gateArgs(userId, key) {
    "play You the Feds next" without knowing the rule. */
 async function readGate(env, userId, key, claim) {
   const gate = GATES[key];
-  const name = gate.any_of
+  const name = gate.rule
+    ? (claim ? 'music_gate_claim_rule' : 'music_gate_rule_state')
+    : gate.any_of
     ? (claim ? 'music_gate_claim_any' : 'music_gate_any_state')
     : gate.sequence
       ? (claim ? 'music_gate_claim_sequence' : 'music_gate_sequence_state')
       : (claim ? 'music_gate_claim' : 'music_gate_state');
-  const state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
+  let state;
+  try {
+    state = await rpc(env, name, { ...gateArgs(userId, key), ...(claim || {}) });
+  } catch (error) {
+    if (gate.rule && missingRpc(error)) return gateNotReady(key);
+    throw error;
+  }
   if (state && gate.any_of) {
     state.titles = gate.any_of.map((k) => TRACKS[k]?.title || k);
   } else if (state && gate.sequence) {
@@ -176,8 +212,12 @@ async function finishListen(request, env, user, listenId) {
 }
 
 async function gateState(request, env, user, key) {
+  const gate = GATES[key];
+  if (!gate) return fail(request, env, 'Unknown gated track', 404);
+  /* A rule gate answers signed-out visitors too, so the page can say what
+     the full track takes before anyone makes an account. */
+  if (!user?.id && gate.rule) return reply(request, env, { ok: true, gate: await readGate(env, null, key) });
   const userId = need(user);
-  if (!GATES[key]) return fail(request, env, 'Unknown gated track', 404);
   if (await isHouseOperator(env, user)) return reply(request, env, { ok: true, gate: { allowed: true, operator: true } });
   return reply(request, env, { ok: true, gate: await readGate(env, userId, key) });
 }
