@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 395,
+  "candidate_count": 397,
   "capability_source_count": 99,
-  "support_only_count": 296,
-  "checks_total": 1483,
-  "checks_passed": 1483,
+  "support_only_count": 298,
+  "checks_total": 1491,
+  "checks_passed": 1491,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -204,6 +204,7 @@
     "native/src/RoomScreen.tsx",
     "native/src/content.ts",
     "newsroom.html",
+    "packages/release-policy/globe.mjs",
     "platform/sql/001_init.sql",
     "platform/src/server.mjs",
     "policy-memo-dna.html",
@@ -403,13 +404,14 @@
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
+    "workers/mccluster/test/world-release.test.mjs",
     "world-news.html"
   ],
   "checks": [
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "395 entries"
+      "detail": "397 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7818,6 +7820,46 @@
     },
     {
       "name": "docs/analytics/application-schema-inventory.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "packages/release-policy/globe.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "packages/release-policy/globe.mjs classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "packages/release-policy/globe.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "packages/release-policy/globe.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-release.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-release.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-release.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-release.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     }

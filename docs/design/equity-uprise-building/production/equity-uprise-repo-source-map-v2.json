@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 368,
+  "candidate_count": 397,
   "capability_source_count": 99,
-  "support_only_count": 269,
+  "support_only_count": 298,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3017,6 +3017,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only application schema metadata for the unified owner analytics field directory. Includes existing program relation names but defines no physical building capability or new program authority."
+    },
+    {
+      "path": "packages/release-policy/globe.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared optional-globe release policy, including the existing Halo projection route. Adds no building geometry or program capability."
+    },
+    {
+      "path": "workers/mccluster/test/world-release.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the shared admin-preview and withdrawal boundary around existing globe routes. Adds no building geometry or program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
