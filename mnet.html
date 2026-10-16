@@ -243,6 +243,8 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
+          <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
+          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Do something about it"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button>
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
           <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
