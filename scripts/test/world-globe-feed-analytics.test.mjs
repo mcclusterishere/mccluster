@@ -84,7 +84,7 @@ test('analytics globe: Intel events by the /v1/intel/geo contract: cells not poi
   assert.match(globe, /Intel events are not switched on yet\./);
 });
 
-test('analytics: 60/40 shell, shared filters, both-way selection, and every existing metric still rendered', async () => {
+test('analytics: compact shell, shared filters, both-way selection, and every existing metric still rendered', async () => {
   const js = await read('js/control-room/analytics.js');
   const A = analyticsModule(js);
   const html = A.render(), sheet = A.filters();
