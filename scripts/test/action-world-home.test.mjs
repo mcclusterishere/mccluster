@@ -74,6 +74,8 @@ test('the Earth has three looks from one button: lit by the real sun, night with
   assert.match(js,/const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_Black_Marble\//);
   assert.match(js,/const CLOUDS='assets\/img\/globe\/nasa-clouds-2048\.webp'/);
   assert.match(js,/sc\.globe\.enableLighting=true/,'the real sun lights the default Earth');
+  assert.match(js,/viewer\.clock\.clockStep=Cesium\.ClockStep\.SYSTEM_CLOCK/,'real-time clock keeps the Sun and day/night boundary current');
+  assert.match(js,/sc\.globe\.dynamicAtmosphereLightingFromSun=true/,'the atmosphere uses the same real Sun');
   assert.match(js,/lightingFadeOutDistance=R\+1\.2e6/,'fade distances carry the radius: Cesium measures them from the centre');
   assert.match(js,/on\('ctlLayers',\(\)=>setLayer\(\{auto:'night',night:'map',map:'auto'\}\[layerMode\]\|\|'auto'\)\)/,'Earth -> night -> street -> Earth');
   assert.match(js,/nightLayer\.dayAlpha=night\?1:0/,'night mode shows the city lights everywhere');
@@ -88,6 +90,7 @@ test('embedded globe remains interactive and has a full-screen exit',()=>{
  assert.match(js,/globe-embedded/);
  assert.match(js,/ScreenSpaceEventType\.LEFT_CLICK/);
  assert.match(js,/getCurrentPosition/);
+ assert.match(js,/fromDegrees\(longitude,latitude,homeAltitude\(\)\)/,'Near me centers the orbital view without dropping to ground level');
 });
 
 test('world event card opens filtered, scrollable mission feed',()=>{const html=read('action-globe.html');const js=read('js/action-globe.js');const css=read('css/action-globe.css');assert.match(html,/id="globeMode"/);assert.match(html,/id="feedMode"/);assert.match(html,/id="openFeed"/);assert.match(html,/id="worldSearch"/);assert.match(js,/function setMode\(mode\)/);assert.match(js,/function filterMissions\(\)/);assert.match(js,/function openDetail\(n\)/);assert.match(js,/document\.createElement\('article'\)/);assert.match(css,/#worldFeed\{position:fixed/);});

@@ -75,8 +75,7 @@ function paintMembersDoor(){const card=$('worldMembers');if(!card)return;let mem
    A lit NASA Earth (below), the street map one tap away, an atmosphere
    rim, glowing pins, and continent labels that count public pins only. */
 /* THE EARTH (owner's signed-out reference, 2026-10-14): NASA imagery only, all public domain. Day: Blue Marble Next Generation.
-   Night: Black Marble city lights. Clouds: the Visible Earth composite, a still, not today's weather. The sun is where it really
-   is when the page opens, so the line between day and night is the real one. */
+   Night: Black Marble city lights. Clouds: the Visible Earth composite, a still, not today's weather. The globe's Sun position and day/night line track real time. */
 const DAY_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg';
 const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
@@ -86,7 +85,7 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
  /* day and night by the real sun. In 3D these fade distances are measured from the Earth's CENTRE, so each carries the radius:
     shading eases off between ~3,000 and ~1,200 km up (the street map takes over at 900 km), and the ground atmosphere's night
     darkness is pushed out of reach so it never paints over the city lights. */
- const R=Cesium.Ellipsoid.WGS84.maximumRadius;viewer.clock.shouldAnimate=false;sc.globe.enableLighting=true;sc.globe.dynamicAtmosphereLighting=true;sc.globe.dynamicAtmosphereLightingFromSun=false;
+ const R=Cesium.Ellipsoid.WGS84.maximumRadius;viewer.clock.clockStep=Cesium.ClockStep.SYSTEM_CLOCK;sc.globe.enableLighting=true;sc.globe.dynamicAtmosphereLighting=true;sc.globe.dynamicAtmosphereLightingFromSun=true;
  sc.globe.lightingFadeOutDistance=R+1.2e6;sc.globe.lightingFadeInDistance=R+3e6;sc.globe.nightFadeOutDistance=R+1.2e6;sc.globe.nightFadeInDistance=1e9;sc.globe.atmosphereLightIntensity=8;if(sc.skyAtmosphere)sc.skyAtmosphere.show=true;sc.globe.showGroundAtmosphere=true;sc.globe.atmosphereBrightnessShift=-0.05;sc.globe.atmosphereSaturationShift=0.1;sc.globe.atmosphereHueShift=-0.04;if(sc.skyAtmosphere){sc.skyAtmosphere.brightnessShift=0.15;sc.skyAtmosphere.saturationShift=0.1}
  /* a hook for the browser test: the evidence shots wait for the tiles */
  window.__huGlobeSettled=()=>!!(viewer&&viewer.scene.globe.tilesLoaded);viewer.camera.percentageChanged=0.08;
@@ -278,28 +277,52 @@ function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};
  on('ctlLocate',()=>{const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
  const zoom=f=>{const h=viewer.camera.positionCartographic.height;f?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)};on('ctlZoomIn',()=>zoom(true));on('ctlZoomOut',()=>zoom(false));
  on('ctlLayers',()=>setLayer({auto:'night',night:'map',map:'auto'}[layerMode]||'auto'));}
-/* ---------- THE EARTH UP CLOSE: Cesium ion (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker") ----------
+/* ---------- THE EARTH UP CLOSE: Cesium ion, for signed-in members (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker";
+   the public gets the globe and its free layers, the paid map data is for members) ----------
    From far out the Earth stays NASA's, exactly as above. Coming down, Cesium ion takes over: Cesium World Terrain under everything,
    aerial imagery (Bing Aerial with Labels, else Bing Aerial, else Sentinel-2) easing in from 3,000 km and whole by 1,200 km while
    the cloud still eases out, and Cesium OSM Buildings below 50 km. The street map stays one tap away on the Layers button.
    The account's token never comes to the page: Ion.defaultServer is the Worker (workers/mccluster/src/world-ion.js), which asks ion
    for each asset and hands back a token for that one asset that lives about an hour. GET /v1/world/ion says first whether there
    is ion at all; with none, or when any part of it fails, the Earth is what it was. Terrain is built before it is used, so the
-   ground never blanks while it loads; vertex normals stay off, because with them the night lights would cover the day side. */
+   ground never blanks while it loads; vertex normals stay off, because with them the night lights would cover the day side.
+   MEMBERS ONLY. A logged-out page never asks the Worker's ion route (not even its status) and never reaches Cesium ion: its Earth
+   is NASA's, with the street map below 900 km. A member's page sends its Supabase session to the Worker's ion route in an
+   Authorization header, never in a URL: Ion.defaultServer is a Cesium.Resource carrying it, and CesiumJS 1.131 derives every
+   asset-endpoint request from Ion.defaultServer (CesiumTerrainProvider and Cesium3DTileset.fromIonAssetId take no server option),
+   copying its headers and its retryCallback. The session rotates: when the Worker refuses a stale one (401) the request is retried
+   with the newest session in this browser, once per change; with none, or on a 403, 429 or 503, ion steps aside for the page
+   (ionOff) and the Earth is NASA's again, quietly. Signing out in another tab does the same; signing in brings ion on the next load. */
 const ION_HI=3000000,ION_FULL=1200000,ION_OFF=3400000,BUILD_ON=50000,BUILD_OFF=60000,ION_WAIT=1500,TERRAIN_WAIT=2500;
-let ion=null,ionGround=false,ionImagery=null,ionImageryTried=false,ionBuildings=null,ionBuildingsTried=false;
+let ion=null,ionGround=false,ionImagery=null,ionImageryTried=false,ionBuildings=null,ionBuildingsTried=false,ionServer=null;
 /* hooks for the browser test, like __huGlobeSettled */
 window.__huIon=()=>({on:!!ion,ground:!!(viewer&&viewer.scene.globe.terrainProvider),terrain:!!(viewer&&viewer.scene.globe.terrainProvider&&!(viewer.scene.globe.terrainProvider instanceof Cesium.EllipsoidTerrainProvider)),imagery:!!(ionImagery&&ionImagery.ready),imageryShown:!!(ionImagery&&ionImagery.show),buildings:!!ionBuildings,buildingsShown:!!(ionBuildings&&ionBuildings.show),street:!!(mapLayer&&mapLayer.show),clouds:cloudLayer?Math.round(cloudLayer.alpha*100)/100:null,nightLights:nightLayer?Math.round(nightLayer.nightAlpha*100)/100:null,groundIsIon:ionGround,height:viewer?Math.round(viewer.camera.positionCartographic.height):null});
-function ionWarn(what,e){try{console.warn('[world ion] '+what+': '+(e&&e.message||e))}catch(_){}}
+function ionWarn(what,e){if(!ion)return;try{console.warn('[world ion] '+what+': '+(e&&e.message||e))}catch(_){}}
 /* the automatic street map below 900 km, unless ion's aerial imagery is there to show the ground instead */
 function streetAuto(h){return h<900000&&!(ionImagery&&ionImagery.ready)}
-function ionStatus(){const late=new Promise(r=>setTimeout(()=>r(null),ION_WAIT));
+function ionBearer(){const t=sessionToken();return t?'Bearer '+t:''}
+function ionStatus(){if(!ionBearer())return Promise.resolve(null);const late=new Promise(r=>setTimeout(()=>r(null),ION_WAIT));
  const ask=fetch(API+'/v1/world/ion',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(s=>s&&s.available===true&&s.assets&&Number.isInteger(s.assets.terrain)?s.assets:null).catch(()=>null);
  return Promise.race([ask,late])}
-function startIon(){if(!ion||!viewer)return;Cesium.Ion.defaultAccessToken=undefined;Cesium.Ion.defaultServer=API+'/v1/world/ion/';
+/* the Worker refused an asset endpoint: a rotated session is tried again; otherwise ion steps aside. Retries happen only when the
+   session actually changed, so the high retryAttempts (Cesium counts them for the life of the resource) is never a loop. */
+function ionRetry(resource,error){const code=error&&error.statusCode;
+ if(code===401){const b=ionBearer();if(b&&resource.headers.Authorization!==b){resource.headers.Authorization=b;if(ionServer)ionServer.headers.Authorization=b;return true}}
+ if(code===401||code===403||code===429||code===503)ionOff('the map data answered '+code);
+ return false}
+/* back to NASA's Earth and the street map, with nothing more asked of ion on this page */
+function ionOff(why){if(!ion)return;ionWarn('off',why);ion=null;document.documentElement.classList.remove('globe-ion');if(!viewer)return;
+ if(ionImagery){if(viewer.imageryLayers.contains(ionImagery))viewer.imageryLayers.remove(ionImagery,true);ionImagery=null}
+ if(cloudLayer)cloudLayer.alpha=1;if(nightLayer)nightLayer.nightAlpha=1;
+ if(ionBuildings){viewer.scene.primitives.remove(ionBuildings);ionBuildings=null}
+ if(ionGround){ionGround=false;viewer.scene.globe.terrainProvider=new Cesium.EllipsoidTerrainProvider()}
+ if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}
+function startIon(){if(!ion||!viewer)return;const bearer=ionBearer();if(!bearer){ion=null;return}
+ Cesium.Ion.defaultAccessToken=undefined;ionServer=new Cesium.Resource({url:API+'/v1/world/ion/',headers:{Authorization:bearer},retryAttempts:1e9,retryCallback:ionRetry});Cesium.Ion.defaultServer=ionServer;
+ window.addEventListener('storage',e=>{if(e&&e.key&&e.key!=='mccdb_session')return;if(!ion)return;const b=ionBearer();if(!b)ionOff('signed out');else ionServer.headers.Authorization=b});
  document.documentElement.classList.add('globe-ion');const line=document.querySelector('.osm-credit');if(line&&window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe(line);liftAboveCredit();
  /* nothing is drawn until the terrain is in hand (or TERRAIN_WAIT passes), so the Earth appears once, with its ground */
- const g=viewer.scene.globe,flat=g.terrainProvider;let landed=false;const land=p=>{if(landed)return;landed=true;ionGround=!!p;g.terrainProvider=p||flat};
+ const g=viewer.scene.globe,flat=g.terrainProvider;let landed=false;const land=p=>{if(landed)return;landed=true;ionGround=!!(p&&ion);g.terrainProvider=ionGround?p:flat};
  g.terrainProvider=undefined;Cesium.CesiumTerrainProvider.fromIonAssetId(ion.terrain).then(p=>land(p),e=>{land(null);ionWarn('terrain',e)});setTimeout(()=>land(null),TERRAIN_WAIT);
  viewer.scene.preRender.addEventListener(ionFrame)}
 function addIonImagery(k){const id=ion&&Array.isArray(ion.imagery)?ion.imagery[k]:undefined;if(!Number.isInteger(id)||!viewer)return;
@@ -310,7 +333,7 @@ function addIonImagery(k){const id=ion&&Array.isArray(ion.imagery)?ion.imagery[k
  viewer.imageryLayers.add(layer,viewer.imageryLayers.indexOf(dayLayer)+1)}
 function addIonBuildings(){if(!ion||!Number.isInteger(ion.buildings)||!viewer)return;
  const coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
- Cesium.Cesium3DTileset.fromIonAssetId(ion.buildings,{maximumScreenSpaceError:coarse?24:16}).then(ts=>{ts.show=false;ts.style=new Cesium.Cesium3DTileStyle({color:"color('#e4e8ee')"});ionBuildings=viewer.scene.primitives.add(ts)},e=>ionWarn('buildings',e))}
+ Cesium.Cesium3DTileset.fromIonAssetId(ion.buildings,{maximumScreenSpaceError:coarse?24:16}).then(ts=>{if(!ion){ts.destroy();return}ts.show=false;ts.style=new Cesium.Cesium3DTileStyle({color:"color('#e4e8ee')"});ionBuildings=viewer.scene.primitives.add(ts)},e=>ionWarn('buildings',e))}
 /* every frame: what ion shows at this height, with a little hysteresis so nothing flickers on the line */
 function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartographic.height,auto=layerMode==='auto';
  if(!ionImageryTried&&auto&&h<ION_HI){ionImageryTried=true;addIonImagery(0)}
