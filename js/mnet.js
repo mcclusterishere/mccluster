@@ -3267,7 +3267,7 @@
       if (f) rows.push(f.unavailable ? "<span>Flights are unavailable right now.</span>"
         : "<span>" + esc(fmtCount(f.count)) + " aircraft in the air right now" + (f.stale ? " (last snapshot)" : "") + ".</span> " +
           '<a class="mn__world-lead" href="' + VAUNT_LEAD + '" target="_blank" rel="noopener sponsored">Fly Vaunt \u2192</a>');
-      if (s) rows.push("<span>" + (s.unavailable ? "Satellites are unavailable right now." : esc(fmtCount(s.count)) + " satellites overhead, moving live.") + "</span>");
+      if (s) rows.push("<span>" + (s.unavailable ? "Satellites are unavailable right now." : esc(fmtCount(s.count)) + " satellites · calculated positions.") + "</span>");
       if (l) {
         var nx = l.next && l.next[0];
         rows.push("<span>" + (l.unavailable ? "Launches are unavailable right now." : esc(fmtCount(l.count)) + " launches coming up" +

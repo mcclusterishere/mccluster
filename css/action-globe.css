@@ -210,6 +210,24 @@ header strong{display:none}
 .cctv-check b{display:block}.cctv-check small{display:block;color:#c3ccdb}
 .cctv-act{display:inline-flex;align-items:center;min-height:36px;margin-top:6px;padding:0 12px;border:0;border-radius:999px;background:linear-gradient(180deg,#ff3d5e,#c4102c);color:#fff;font:700 13px/1 Inter,system-ui,sans-serif;text-decoration:none;cursor:pointer}
 .cctv-act:disabled{opacity:.6}
+.world-transport{padding-bottom:16px;margin-bottom:14px;border-bottom:1px solid #ffffff26}
+.world-transport h3{font-size:20px;margin:0 0 6px}
+.world-transport label{display:block;margin:12px 0 5px;font-weight:600}
+.world-transport label span{font-weight:400;color:#b9bec9}
+.world-transport input{display:block;box-sizing:border-box;width:100%;min-width:0;border:1px solid #ffffff30;border-radius:10px;padding:11px;background:#ffffff09;color:#fff;font:400 max(16px,1rem)/1.3 system-ui}
+.world-transport fieldset{min-width:0;border:0;padding:0;margin:14px 0 8px}
+.world-transport legend{margin-bottom:7px}
+.transport-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.transport-modes button{min-height:44px;border:1px solid #ffffff24;border-radius:9px;background:#ffffff08;color:#dce1e9;font:600 14px system-ui;cursor:pointer}
+.transport-modes button[aria-pressed="true"]{background:#ff3d5e25;border-color:#ff3d5e;color:#fff}
+.transport-go{min-height:44px}
+.transport-go[aria-disabled="true"]{opacity:.5;cursor:default}
+.transport-region{color:#f0c986;font-size:12px}
+.flight-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.flight-facts div{padding:10px;border:1px solid #ffffff20;border-radius:10px;min-width:0}
+.flight-facts dt{color:#adb7c9;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.flight-facts dd{font-size:17px;margin:5px 0 0;overflow-wrap:anywhere}
+@media(min-width:700px){.transport-modes{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .cctv-link{border:0;background:none;color:#c3ccdb;text-decoration:underline;font:inherit;cursor:pointer;padding:0}
 .cctv-note,.cctv-meta{color:#c3ccdb;font-size:12px}
 .cctv-msg:empty{display:none}
