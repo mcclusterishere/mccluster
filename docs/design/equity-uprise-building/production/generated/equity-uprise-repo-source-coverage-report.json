@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 375,
+  "candidate_count": 378,
   "capability_source_count": 99,
-  "support_only_count": 276,
-  "checks_total": 1403,
-  "checks_passed": 1403,
+  "support_only_count": 279,
+  "checks_total": 1415,
+  "checks_passed": 1415,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -109,6 +109,7 @@
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
+    "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
@@ -174,6 +175,7 @@
     "js/insights.js",
     "js/lockroom.js",
     "js/masthead.js",
+    "js/member-desk-core.js",
     "js/mnet-clips.js",
     "js/mnet-live.js",
     "js/mnet.js",
@@ -223,6 +225,7 @@
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
+    "scripts/test/member-desk.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
@@ -389,7 +392,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "375 entries"
+      "detail": "378 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2242,6 +2245,26 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md capability ids known",
       "passed": true,
       "detail": ""
@@ -3477,6 +3500,26 @@
       "detail": ""
     },
     {
+      "name": "js/member-desk-core.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/member-desk-core.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/member-desk-core.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/member-desk-core.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/mnet-clips.js capability ids known",
       "passed": true,
       "detail": ""
@@ -4253,6 +4296,26 @@
     },
     {
       "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

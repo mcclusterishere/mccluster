@@ -800,6 +800,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
       "path": "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1293,6 +1300,13 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/member-desk-core.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
+    },
+    {
       "path": "js/mnet-clips.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1611,6 +1625,13 @@
     },
     {
       "path": "scripts/test/identity-verification-levels.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/member-desk.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,

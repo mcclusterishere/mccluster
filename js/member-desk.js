@@ -128,7 +128,14 @@
     if (!signedIn()) { S.caps = C.capabilities({ signedIn: false }); return Promise.resolve(S.caps); }
     return waitForIdentity(3000).then(function (id) {
     if (seq !== S.seq) return S.caps;
-    var creator = id.m_uid ? rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(id.m_uid) + "&select=handle,artist_name&limit=1").catch(function () { return []; }) : Promise.resolve([]);
+    /* creator: the one-click onboarding's own server answer (music_creator_state(), #447) when it is
+       applied; until then the member's own music_creator_profiles row, which is what that answer reads */
+    var creator = rpc("music_creator_state").then(function (st) {
+      if (st && st.creator === true) return [{ handle: st.handle || (st.profile && st.profile.handle) || "", artist_name: st.artist_name || (st.profile && st.profile.artist_name) || "" }];
+      return [];
+    }).catch(function () {
+      return id.m_uid ? rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(id.m_uid) + "&select=handle,artist_name&limit=1").catch(function () { return []; }) : [];
+    });
     var ent = api("/v1/creator-billing/entitlement").catch(function () { return null; });
     var sites = rest("analytics_sites?select=id,name,status&order=created_at.desc&limit=20").catch(function () { return []; });
     var ladder = rpc("policy_ladder_status").catch(function (e) { return missing(e) ? { closed: true } : null; });
@@ -176,7 +183,8 @@
         "<div><h3>" + esc(name) + "</h3>" + (id.mccluster_id ? '<p class="hu-desk__meta">@' + esc(id.mccluster_id) + "</p>" : "") +
         (p.headline ? "<p>" + esc(p.headline) + "</p>" : "") + "</div>" +
         '<div class="hu-desk__row"><button type="button" class="hu-desk__btn" data-hu-desk-view="profile">View profile</button>' +
-        '<button type="button" class="hu-desk__btn" data-hu-desk-edit>Edit profile</button></div></section>' +
+        '<button type="button" class="hu-desk__btn" data-hu-desk-edit>Edit profile</button>' +
+        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html">Become a creator</a>' : "") + "</div></section>" +
         '<section class="hu-desk__card" id="huDeskEditGate" aria-live="polite"><h3>Locked details</h3>' + note("Loading…") + "</section>";
       if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.mount($("huDeskEditGate"));
       else $("huDeskEditGate").innerHTML = "<h3>Locked details</h3>" + note("The profile edit module did not load.", true);
@@ -216,7 +224,8 @@
           '<section class="hu-desk__card"><h3>Where, by country</h3>' + (countries.length ? '<ul class="hu-desk__list">' + countries.map(function (c) { return "<li>" + esc(c.country) + " <small>" + esc(c.views) + " views</small></li>"; }).join("") + "</ul>" : "<p>No country has " + esc(a.min_views || 5) + " or more views yet.</p>") +
           (more ? '<p class="hu-desk__meta">' + esc(more) + " more from countries under " + esc(a.min_views || 5) + " views, or unknown.</p>" : "") +
           '<p class="hu-desk__meta">Country only, and only where at least ' + esc(a.min_views || 5) + " views were recorded. Never a listener's identity or address. The audience switch on the globe draws the same numbers.</p></section>" +
-          '<p class="hu-desk__meta">' + esc(d.disclaimer || "Only recorded events are counted.") + "</p>";
+          '<p class="hu-desk__meta">' + esc(d.disclaimer || "Only recorded events are counted.") + "</p>" +
+          '<a class="hu-desk__btn" href="creator.html">Open Creator Studio</a>';
       }).catch(function () { body.innerHTML = note("Your audience could not load right now.", true); });
     },
     business: function (body) {
@@ -283,9 +292,9 @@
     document.documentElement.classList.add("hu-desk-on");
     ensureTab();
     $("huDeskBody").innerHTML = note("Opening your desk…");
-    paintTabs();
-    loadCaps().then(function () { if (!S.open) return; paintTabs(); paintBody(); });
+    $("huDeskTabs").innerHTML = "";
     setParam(S.section || "1");
+    loadCaps().then(function () { if (!S.open) return; paintTabs(); setParam(S.section); paintBody(); });
     try { if (window.MCC_TRACK) window.MCC_TRACK("desk_open", { section: S.section || "" }); } catch (e) { /* analytics never breaks the desk */ }
   }
   function close() {
