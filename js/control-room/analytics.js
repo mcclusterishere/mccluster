@@ -356,7 +356,10 @@
     var lv=liveState(),quick=[["24h","24h"],["7d","7 days"],["30d","30 days"]],more=["90d","all","custom"].indexOf(S.rangeId)>=0;
     return'<div class="cra-top__row"><div class="cra-top__titles"><p class="cra-top__eyebrow">McCluster</p><h1 class="cra-top__title">Analytics <span class="cra-live '+lv.cls+'" role="status"><i aria-hidden="true"></i>'+e(lv.label)+'</span></h1></div>'+
       '<button type="button" class="cra-top__me" data-cra-me aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.2-3.4 4-5 7-5s5.8 1.6 7 5"/></svg></button></div>'+
-      '<div class="cra-top__controls"><label class="cra-top__prop"><span class="sr-only">Property</span><select class="cra-property" id="craProperty">'+[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]).map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></label>'+
+      (function(){var all=[{id:FIRST,name:"McCluster first-party"}].concat(S.sites||[]),cur=all.filter(function(x){return String(x.id)===String(S.site);})[0]||all[0],full=String(cur.name||cur.id),short=cur.id===FIRST?"First-party":full;
+        /* the face shows the property; the native select over it (16px, invisible) is what is tapped, so iOS never zooms.
+           A phone shows the short name ("McCluster" is the line above); from 30rem the full one */
+        return'<div class="cra-top__controls"><label class="cra-top__prop"><span class="cra-prop__face" aria-hidden="true"><span class="cra-prop__short">'+e(short)+'</span><span class="cra-prop__full">'+e(full)+'</span></span><select class="cra-property" id="craProperty" aria-label="Property: '+e(full)+'">'+all.map(function(x){return'<option value="'+e(x.id)+'"'+(String(x.id)===String(S.site)?" selected":"")+'>'+e(x.name||x.id)+'</option>';}).join("")+'</select></label>';})()+
       '<div class="cra-seg cra-seg--range" role="group" aria-label="Range">'+quick.map(function(x){return'<button type="button" class="cra-seg__b'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'" aria-pressed="'+(S.rangeId===x[0])+'">'+x[1]+'</button>';}).join("")+'</div>'+
       '<button type="button" class="cra-cal'+(more?" is-on":"")+'" data-cra-more aria-expanded="'+(S.ui.more?"true":"false")+'" aria-label="More ranges and custom dates"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></button></div>'+
       (S.ui.more?'<div class="cra-more">'+ranges()+'</div>':"");
@@ -524,8 +527,8 @@
       var nearest=function(){var best=0,d=Infinity;for(var k=0;k<track.children.length;k++){var x=Math.abs(at(k)-track.scrollLeft);if(x<d){d=x;best=k;}}return best;};
       var mark=function(i){S.car[id]=i;dots.forEach(function(d,k){d.classList.toggle("is-on",k===i);d.setAttribute("aria-selected",k===i?"true":"false");});};
       if(S.car[id])track.scrollLeft=at(S.car[id]);
-      var tm=0,steering=0;track.addEventListener("scroll",function(){if(tm||steering)return;tm=requestAnimationFrame(function(){tm=0;var i=nearest();if(i!==S.car[id])mark(i);});},{passive:true});
-      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);mark(i);steering=1;clearTimeout(track._craT);track._craT=setTimeout(function(){steering=0;},smooth?700:50);track.scrollTo({left:Math.min(at(i),track.scrollWidth-track.clientWidth),behavior:smooth?"smooth":"auto"});};
+      var tm=0,steering=0;track.addEventListener("scrollend",function(){steering=0;});track.addEventListener("scroll",function(){if(tm||steering)return;tm=requestAnimationFrame(function(){tm=0;var i=nearest();if(i!==S.car[id])mark(i);});},{passive:true});
+      var go=function(i){var smooth=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);mark(i);steering=1;clearTimeout(track._craT);track._craT=setTimeout(function(){steering=0;},smooth?1600:50);track.scrollTo({left:Math.min(at(i),track.scrollWidth-track.clientWidth),behavior:smooth?"smooth":"auto"});};
       dots.forEach(function(d){d.onclick=function(){go(Number(d.getAttribute("data-i")));};});
       var nx=car.querySelector("[data-cra-next]");if(nx)nx.onclick=function(){go((nearest()+1)%track.children.length);};
     });

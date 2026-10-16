@@ -180,7 +180,7 @@ for (const size of SIZES) {
 
   /* swipe the Reach carousel to the second card */
   await page.click('[data-cra-dot="reach"][data-i="1"]');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
   const car = await page.evaluate(() => { const t = document.querySelector('[data-cra-car="reach"] .cra-car__track'); return { left: t.scrollLeft, target: t.children[1].offsetLeft - t.children[0].offsetLeft, w: t.clientWidth, on: [...document.querySelectorAll('[data-cra-dot="reach"]')].findIndex((d) => d.classList.contains('is-on')) }; });
   check(S, 'a dot moves the Reach carousel to its second card', car.on === 1 && Math.abs(car.left - car.target) < 3, car);
   w = await widths(page);

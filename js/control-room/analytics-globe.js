@@ -135,7 +135,7 @@
     }
     function arcPositions(a, b) {
       var g = new Cs.EllipsoidGeodesic(Cs.Cartographic.fromDegrees(a[0], a[1]), Cs.Cartographic.fromDegrees(b[0], b[1]));
-      var dist = g.surfaceDistance, top = Math.min(1.1e6, Math.max(1.5e5, dist * 0.07)), out = [], N = 48, c = new Cs.Cartographic();
+      var dist = g.surfaceDistance, top = Math.min(1.9e6, Math.max(1.5e5, dist * 0.11)), out = [], N = 48, c = new Cs.Cartographic();
       for (var i = 0; i <= N; i++) { var t = i / N; g.interpolateUsingFraction(t, c); out.push(Cs.Cartesian3.fromRadians(c.longitude, c.latitude, 8000 + Math.sin(Math.PI * t) * top)); }
       return out;
     }
@@ -169,7 +169,7 @@
           });
           api.arcs = arcs.length;
           if (arcs.length) arcLayer = scene.primitives.add(new Cs.Primitive({ asynchronous: false, geometryInstances: arcs,
-            appearance: new Cs.PolylineMaterialAppearance({ material: Cs.Material.fromType("PolylineGlow", { color: Cs.Color.fromCssColorString(C.arc).withAlpha(0.9), glowPower: 0.22, taperPower: 1 }) }) }));
+            appearance: new Cs.PolylineMaterialAppearance({ material: Cs.Material.fromType("PolylineGlow", { color: Cs.Color.fromCssColorString(C.arc).withAlpha(0.9), glowPower: 0.25, taperPower: 0.45 }) }) }));
         }
       }
       recolor(); placeTip(); scene.requestRender();
@@ -220,12 +220,12 @@
       if (!api.ready) return;
       var dur = reducedMotion() ? 0 : 1.2, p = valueOf(code), ll = p && lonLat(p.lon, p.lat);
       if (!code) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(opts.home ? opts.home[0] : -60, opts.home ? opts.home[1] : 22, homeAltitude()), duration: dur }); return; }
-      if (ll) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(ll[0], ll[1] - 6, homeAltitude() * 0.92), duration: dur }); return; }
+      if (ll) { camera.flyTo({ destination: Cs.Cartesian3.fromDegrees(ll[0], ll[1] - 6, homeAltitude()), duration: dur }); return; }
       var bx = bboxByCode[code];
-      if (bx) camera.flyTo({ destination: Cs.Cartesian3.fromDegrees((bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2, homeAltitude() * 0.92), duration: dur });
+      if (bx) camera.flyTo({ destination: Cs.Cartesian3.fromDegrees((bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2, homeAltitude()), duration: dur });
     }
-    /* the whole Earth fits the stage: farther out on a narrow, tall stage */
-    function homeAltitude() { var w = host.clientWidth || 390, h = host.clientHeight || 420, r = Math.min(w, h) / Math.max(1, h); return 1.5e7 / Math.max(0.6, r); }
+    /* the whole Earth fits the stage: Cesium's field of view spans the longer side, so the altitude follows the aspect */
+    function homeAltitude() { var w = host.clientWidth || 390, h = host.clientHeight || 300; return 8.6e6 * Math.max(w, h) / Math.max(1, Math.min(w, h)); }
 
     api.setData = function (d) {
       api.data = { mode: d.mode === "cells" ? "cells" : "countries", points: (d.points || []).slice(0, 300), cells: (d.cells || []).slice(0, 2000), selected: d.selected || null, origin: d.origin || null };
