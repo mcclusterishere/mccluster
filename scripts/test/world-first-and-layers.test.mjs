@@ -3,9 +3,9 @@
    "Me as a signed in user … I see no globe in the globe section": a member
    whose profile was unfinished got the form instead of the World. Now the
    World is theirs, the step waits in a card, and the actions that need it
-   ask. And the Earth carries demo data: flights for everyone (with the
-   owner's Vaunt lead), satellites and launches for members, gated by the
-   Worker. The behaviour is proven in a browser by scripts/e2e; these pin
+   ask. And the Earth carries demo data: flights and the news for everyone
+   (flights with the owner's Vaunt lead), satellites and launches for
+   members, gated by the Worker. The behaviour is proven in a browser by scripts/e2e; these pin
    the contract in the source. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,12 +48,14 @@ test('on the World\'s host, a link to one of Matthew\'s rooms goes to his site o
   }
 });
 
-test('the globe carries three data layers: flights for everyone, satellites and launches for members', async () => {
+test('the globe carries four data layers: flights and news for everyone, satellites and launches for members', async () => {
   const globe = await read('js/action-globe.js'), page = await read('action-globe.html'), css = await read('css/action-globe.css');
-  assert.match(page, /<div class="globe-data" role="group" aria-label="Data layers"><button id="ctlFlights"[^>]*aria-pressed="false">[\s\S]*?<button id="ctlSats"[^>]*data-members="1">[\s\S]*?<button id="ctlLaunch"[^>]*data-members="1">/);
+  assert.match(page, /<div class="globe-data" role="group" aria-label="Data layers"><button id="ctlFlights"[^>]*aria-pressed="false">[\s\S]*?<button id="ctlSats"[^>]*data-members="1">[\s\S]*?<button id="ctlLaunch"[^>]*data-members="1">[\s\S]*?<button id="ctlNews"[^>]*aria-pressed="false">[\s\S]*?<\/button><\/div>/);
+  assert.equal((page.match(/<div class="globe-data"[\s\S]*?<\/div>/)[0].match(/<button /g) || []).length, 4, 'four toggles, and no more');
+  assert.doesNotMatch(page.match(/<button id="ctlNews"[^>]*>/)[0], /data-members/, 'the news is free: no lock');
   assert.match(page, /<span id="layerCredits"><\/span>Imagery: /, 'each source is credited on the imagery line while it is on');
   assert.match(globe, /const API='https:\/\/api\.mccluster\.org';/);
-  assert.match(globe, /flights:\{id:'ctlFlights',members:false/); assert.match(globe, /satellites:\{id:'ctlSats',members:true/); assert.match(globe, /launches:\{id:'ctlLaunch',members:true/);
+  assert.match(globe, /flights:\{id:'ctlFlights',members:false/); assert.match(globe, /satellites:\{id:'ctlSats',members:true/); assert.match(globe, /launches:\{id:'ctlLaunch',members:true/); assert.match(globe, /news:\{id:'ctlNews',members:false,color:'#ffd166',credit:'News: GDELT'\}/);
   assert.match(globe, /if\(spec\.members&&!sessionToken\(\)\)\{tell\(\{type:'hu:ask-sign-in',reason:'layers'\}\);return\}/, 'a guest\'s lock opens sign-in and sends nothing');
   assert.match(globe, /if\(r\.status===401\)throw Error\('members'\)/, 'the Worker\'s refusal, not the page\'s flag, is the gate');
   assert.match(globe, /headers\.authorization='Bearer '\+t/);
