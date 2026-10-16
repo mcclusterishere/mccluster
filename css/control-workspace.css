@@ -77,3 +77,19 @@ body[data-control-workspace] .cw-actions .cr-org{max-width:140px;min-width:0}
 body[data-control-workspace] .cw-actions .cr-org__label{display:none}
 body[data-control-workspace] .cw-actions .cr-org__select{max-width:140px;min-width:0;min-height:44px;font-size:16px}
 @media(min-width:960px){body[data-control-workspace][data-cw-page="intelligence"] #crSurface,body[data-control-workspace][data-cw-page="intelligence"] #crAnalyticsMount{height:100%;min-height:0}}
+
+/* The owner identity is already stated in the new header. Avoid the old
+   floating auth chip covering its Account control; the shared dock is intact. */
+body[data-control-workspace] #mccAuthChip{display:none!important}
+body[data-cw-blocked="true"] #crPalette,body[data-cw-blocked="true"] #crAccountMenu{display:none!important}
+.cw-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.cw-header{padding:12px 16px;gap:8px}
+.cw-brand img{width:56px;height:32px}.cw-brand{gap:9px}.cw-brand>span{font-size:9px}.cw-brand b{font-size:8px;letter-spacing:0}
+.cw-halo-long{display:none}
+.cw-location strong{font-size:23px}
+.cw-tools{gap:10px;padding:12px 16px}
+.cw-intelligence-tools{gap:6px}
+.cw-intelligence-tools>button{padding:8px 10px}
+body[data-control-workspace] .cra-stage{height:clamp(320px,39dvh,540px);min-height:320px}
+@media(min-width:600px){.cw-header{padding:16px 24px;gap:12px}.cw-brand img{width:86px;height:38px}.cw-brand>span{font-size:10px}.cw-brand b{font-size:9px}.cw-halo-long{display:inline}.cw-tools{padding:14px 24px}.cw-location strong{font-size:28px}}
+@media(min-width:960px){body[data-control-workspace][data-cw-page="intelligence"] #crMain{height:calc(100dvh - 226px)}body[data-control-workspace] .cra-stage{height:auto;min-height:300px}}

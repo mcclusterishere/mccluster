@@ -56,9 +56,9 @@
     tools = element('div','cw-tools'); tools.id='cwTools';
     tools.innerHTML='<div class="cw-location"><span class="cw-eyebrow" id="cwEyebrow">PRIVATE WORKSPACE</span><strong id="cwPlace">Worldwide</strong></div>'+
       '<div class="cw-tools__choices"><label id="cwRouteWrap" hidden>Workspace section<select id="cwRoute" aria-label="Workspace section"></select></label>'+
-      '<div class="cw-intelligence-tools"><div class="cw-segment" aria-label="Intelligence scene" role="group"><button type="button" data-cw-scene="black" aria-pressed="true">Black globe</button><button type="button" data-cw-scene="halo" aria-pressed="false">Hitman’s Halo</button></div>'+
+      '<div class="cw-intelligence-tools"><div class="cw-segment" aria-label="Intelligence scene" role="group"><button type="button" data-cw-scene="black" aria-pressed="true">Black globe</button><button type="button" data-cw-scene="halo" aria-pressed="false" aria-label="Hitman’s Halo"><span class="cw-halo-long">Hitman’s </span>Halo</button></div>'+
       '<button type="button" id="cwSources" aria-expanded="false" aria-controls="cwSourcePanel">Sources</button>'+
-      '<button type="button" id="cwLayout" aria-label="Expand the inspector" aria-pressed="false">Focus details</button></div></div>';
+      '<button type="button" id="cwLayout" aria-label="Expand the inspector" aria-pressed="false">Details</button></div></div>';
     const status = element('p','cw-status'); status.id='cwStatus'; status.setAttribute('role','status'); status.setAttribute('aria-live','polite');
     header.appendChild(status);
     const panel=element('section','cw-source-panel'); panel.id='cwSourcePanel'; panel.hidden=true;
@@ -68,7 +68,7 @@
       '<div id="cwSourceRows"></div><p>Country and state analytics use approximate geography and existing aggregation thresholds. Nothing here identifies a visitor’s physical route.</p>';
     const app=get('crApp'); app.prepend(header,tools,panel);
     get('cwAsk').onclick=()=>get('crCommandOpen').click();
-    get('cwAccount').onclick=()=>get('crAccount').click();
+    get('cwAccount').onclick=event=>{event.stopPropagation();get('crAccount').click();};
     header.querySelectorAll('[data-cw-page]').forEach(button=>button.onclick=()=>go(lastPages[button.dataset.cwPage]));
     tools.querySelectorAll('[data-cw-scene]').forEach(button=>button.onclick=()=>setScene(button.dataset.cwScene));
     get('cwRoute').onchange=e=>go(e.target.value);
@@ -81,7 +81,7 @@
       const full=document.body.dataset.cwLayout!=='details';
       if(full && frame)closeHalo();
       document.body.dataset.cwLayout=full?'details':'balanced';
-      get('cwLayout').textContent=full?'Show globe':'Focus details';
+      get('cwLayout').textContent=full?'Show globe':'Details';
       get('cwLayout').setAttribute('aria-label',full?'Show the globe':'Expand the inspector');
       get('cwLayout').setAttribute('aria-pressed',String(full));
       A?.state.globe?.setActive(!full && scene==='black' && !document.hidden);
@@ -134,7 +134,7 @@
     const selected=ctx.country?(names?.[ctx.country]?.[2]||ctx.country)+(ctx.state?' / '+ctx.state:''):'Worldwide';
     const place=isIntel?selected:route.label;
     if(get('cwPlace').textContent!==place)get('cwPlace').textContent=place;
-    get('cwEyebrow').textContent=isIntel?'INTELLIGENCE · '+(scene==='halo'?'HALO SCENE':'FIRST-PARTY + WORLD EVIDENCE'):route.page.toUpperCase()+' · EXISTING CONTROL WORKFLOWS';
+    get('cwEyebrow').textContent=isIntel?(scene==='halo'?'PRIVATE HALO SCENE':'PRIVATE INTELLIGENCE'):route.page.toUpperCase()+' · EXISTING CONTROL WORKFLOWS';
     // Correct the misleading product door in the preview, not the legacy API paths.
     get('crSurface').querySelectorAll('a[href="auth/seek-first-handoff.html"]').forEach(a=>{
       a.href=C.HALO_ORIGIN+'/';a.target='_blank';a.rel='noopener noreferrer';a.dataset.cwHaloLink='true';
@@ -180,7 +180,7 @@
     if(!(await verify()))return;
     const stage=get('crSurface').querySelector('[data-cra-stage]');if(!stage)return;
     scene='halo';document.body.dataset.cwScene='halo';
-    document.body.dataset.cwLayout='balanced';get('cwLayout').textContent='Focus details';get('cwLayout').setAttribute('aria-pressed','false');
+    document.body.dataset.cwLayout='balanced';get('cwLayout').textContent='Details';get('cwLayout').setAttribute('aria-pressed','false');
     A?.state.globe?.setActive(false);
     const holder=element('section','cw-halo');holder.id='cwHaloPanel';
     const note=element('div','cw-halo-note','Opening the full Halo product…');note.id='cwHaloNote';
@@ -203,6 +203,10 @@
     cachedHost?.replaceChildren();cachedHost=null;
     // Remove any private mounted view on loss of verified owner authority.
     get('crSurface')?.replaceChildren();if(get('crApp'))get('crApp').hidden=true;
+    get('crPalette')?.classList.remove('is-open');get('crPalette')?.setAttribute('aria-hidden','true');
+    if(get('crPaletteInput'))get('crPaletteInput').value='';get('crPaletteResults')?.replaceChildren();
+    get('crAccountMenu')?.classList.remove('is-open');if(get('crAccountEmail'))get('crAccountEmail').textContent='signed out';
+    get('crInspectorBody')?.replaceChildren();
     if(get('cpGate'))get('cpGate').hidden=false;
     const org=get('crOrgWrap');if(org)get('crOrgSelect')&&document.querySelector('.cr-topbar__meta')?.prepend(org);
     header?.remove();tools?.remove();get('cwSourcePanel')?.remove();header=tools=null;
@@ -256,6 +260,7 @@
     if(url.origin===location.origin&&url.pathname===location.pathname&&url.hash&&!url.search){event.preventDefault();go(url.hash);}
   });
   document.addEventListener('keydown',event=>{
+    if(blocked&&(event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){event.preventDefault();event.stopImmediatePropagation();return;}
     if(event.key==='Escape'&&active&&!get('cwSourcePanel').hidden){get('cwSourcesClose').click();}
   });
   const timer=setInterval(()=>{if(!document.hidden&&(!active||Date.now()-lastVerified>60000))verify();},15000);

@@ -101,7 +101,7 @@ async function setup(viewport,{owner=true,loggedIn=true,reduced=false}={}){
   return{ctx,page,auth,calls,errors};
 }
 async function overflow(page){return page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));}
-async function shot(page,name){await page.evaluate(()=>{const tag=document.querySelector('.cw-brand b');if(tag)tag.textContent='OWNER PREVIEW · SYNTHETIC TEST DATA';});await page.screenshot({path:join(OUT,name+'.png')});}
+async function shot(page,name){await page.evaluate(()=>{const tag=document.querySelector('.cw-brand b');if(tag)tag.textContent='SYNTHETIC TEST DATA';});await page.screenshot({path:join(OUT,name+'.png')});}
 try{
   for(const size of [{width:1180,height:820},{width:820,height:1180},{width:390,height:844}]){
     const key=size.width+'x'+size.height;const {ctx,page,calls,errors}=await setup(size,{reduced:true});
@@ -114,6 +114,12 @@ try{
     check(key+' default makes no Halo request',!calls.some(c=>c.host==='prime.mccluster.org'));
     await page.waitForTimeout(600);let dimensions=await overflow(page);check(key+' no horizontal page overflow',dimensions.width===dimensions.scroll,dimensions);
     await shot(page,'intelligence-'+key);
+    await page.click('#cwAccount');
+    check(key+' Account remains open after a touch click',await page.locator('#crAccountMenu').evaluate(e=>e.classList.contains('is-open')));
+    await page.click('#cwPlace');
+    await page.click('#cwAsk');
+    check(key+' contextual command palette opens',await page.locator('#crPalette').evaluate(e=>e.classList.contains('is-open')));
+    await page.keyboard.press('Escape');
     await page.selectOption('#craCountry','US');
     await page.waitForFunction(()=>window.__craGlobe().statesFor==='US',null,{timeout:15000});
     await page.selectOption('#craCountry','US/US-CT');
@@ -145,7 +151,9 @@ try{
     await hf.waitForFunction(()=>window.received>0);
     check(key+' explicit Halo scene uses existing secure bridge',true);
     check(key+' black render loop stops behind Halo',await page.evaluate(()=>window.__keptGlobe.active===false));
-    await page.click('[data-cw-scene="black"]');
+    await page.click('#cwLayout');
+    check(key+' focusing details unloads the Halo frame',await page.locator('#cwHaloPanel iframe').count()===0);
+    await page.click('#cwLayout');
     check(key+' Halo is unloaded on return to black',await page.locator('#cwHaloPanel iframe').count()===0);
     check(key+' black globe is restored with selection',await page.evaluate(()=>window.__keptGlobe.active&&window.__keptGlobe.sel.state==='US-CT'));
     dimensions=await overflow(page);check(key+' no overflow after all navigation',dimensions.width===dimensions.scroll,dimensions);
@@ -154,6 +162,18 @@ try{
     await page.evaluate(()=>window.MCC_AUTH.signOut());
     await page.waitForSelector('body[data-cw-blocked="true"]');
     check(key+' sign out removes Halo and destroys private globe',await page.evaluate(()=>!document.querySelector('#cwHaloPanel iframe')&&!window.CR.analytics.state.globe&&document.getElementById('crApp').hidden));
+    await ctx.close();
+  }
+  {
+    const {ctx,page,auth}=await setup({width:1180,height:820},{reduced:true});
+    await page.goto(BASE+'/control.html?workspace=1#analytics',{waitUntil:'domcontentloaded'});
+    await page.waitForSelector('body[data-control-workspace="owner"]');
+    auth.owner=false;
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mcc:auth-changed',{detail:{signed_in:true}})));
+    await page.waitForSelector('body[data-cw-blocked="true"]');
+    check('server-side role revocation closes an active owner preview',await page.locator('#crApp').evaluate(e=>getComputedStyle(e).display==='none'));
+    await page.keyboard.press('Control+k');
+    check('revoked owner cannot reopen the command overlay',await page.locator('#crPalette').evaluate(e=>getComputedStyle(e).display==='none'));
     await ctx.close();
   }
   for(const scenario of [{name:'member',owner:false,loggedIn:true},{name:'guest',owner:false,loggedIn:false}]){
