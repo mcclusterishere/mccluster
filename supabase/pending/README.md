@@ -83,3 +83,19 @@ Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
 first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
+
+Pending: `live_missions_v1.sql` (rollback `live_missions_v1.rollback.sql`) adds
+live missions (owner, 2026-10-15): a per-mission live policy (`required` on
+every mission, owner decision), live runs with Stream input ids kept
+column-private, connected segments from Cloudflare webhooks or heartbeats, a
+replay ledger, hashed recording-chunk receipts, reports, the 12 publishing
+opt-ins, live coverage bounties beside `action_bounties`, the public city-cell
+"Live now" read, the desk's event log and kill switch, and two guards: a
+coverage-bounty claim is approved or paid only behind continuous coverage of
+the event window, and (once `action_live_controls.enforce_live_required` is
+turned on; it ships off) a required mission takes proof only from a completed
+live run. Nothing in it verifies a mission or pays a claim. Behaviour tests:
+`scripts/test-live-missions-db.sh` (also with PR #444's
+`mission_admin_approval_v1.sql` via `EXTRA_SQL`). Design and enable checklist:
+`docs/control-plane/LIVE-MISSIONS.md`. Apply as `live_missions_v1`, then
+promote using the steps above.
