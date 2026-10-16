@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 379,
+  "candidate_count": 382,
   "capability_source_count": 99,
-  "support_only_count": 280,
-  "checks_total": 1419,
-  "checks_passed": 1419,
+  "support_only_count": 283,
+  "checks_total": 1431,
+  "checks_passed": 1431,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -111,6 +111,7 @@
     "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
     "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
     "docs/control-plane/INTEL-TO-MISSION-CANON.md",
+    "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
@@ -317,6 +318,7 @@
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
+    "supabase/pending/mission_admin_approval_v1.sql",
     "supabase/pending/policy_fellowship_ladder_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
@@ -359,6 +361,7 @@
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
+    "supabase/tests/mission_admin_approval.behaviour.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/run-eu-tests.sh",
     "supabase/tests/supabase_api_roles.stub.sql",
@@ -393,7 +396,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "379 entries"
+      "detail": "382 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2282,6 +2285,26 @@
     },
     {
       "name": "docs/control-plane/INTEL-TO-MISSION-CANON.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6141,6 +6164,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/mission_admin_approval_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/mission_admin_approval_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/mission_admin_approval_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/mission_admin_approval_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/policy_fellowship_ladder_v1.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -6862,6 +6905,26 @@
     },
     {
       "name": "supabase/tests/identity_verification_levels.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/mission_admin_approval.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/mission_admin_approval.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/mission_admin_approval.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/mission_admin_approval.behaviour.sql support rationale present",
       "passed": true,
       "detail": ""
     },

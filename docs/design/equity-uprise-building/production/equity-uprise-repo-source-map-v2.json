@@ -814,6 +814,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
       "path": "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2344,6 +2351,13 @@
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
     },
     {
+      "path": "supabase/pending/mission_admin_approval_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
       "path": "supabase/pending/policy_fellowship_ladder_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2670,6 +2684,13 @@
     },
     {
       "path": "supabase/tests/identity_verification_levels.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "supabase/tests/mission_admin_approval.behaviour.sql",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,

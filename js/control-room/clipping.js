@@ -100,7 +100,8 @@
       '<label>Max per clipper<input id="clClipperCap" type="number" min="1" step="1" placeholder="No cap"></label>'+
       '<label>Max paid views per clip<input id="clMaxViews" type="number" min="1" step="1000" placeholder="No cap"></label>'+
       '<label>Clips per clipper<input id="clMaxClips" type="number" min="1" max="100" value="10"></label>'+
-      '<label>Approval<select id="clApproval"><option value="creator">Review before payout</option><option value="auto">Auto-release verified clips</option></select></label>'+
+      /* every release needs an admin's review (mission_admin_approval_v1.sql removed clip auto-approval): no auto option */
+      '<label>Approval<select id="clApproval" disabled><option value="creator" selected>Admin review before payout</option></select><small class="cro-meta">Every clip release needs an admin review; there is no auto-release.</small></label>'+
       (!action?'<label>Bonus · new verified fan<input id="clBonusAcct" type="number" min="0" step="0.25" value="0"></label><label>Bonus · full listen<input id="clBonusListen" type="number" min="0" step="0.05" value="0"></label>':'<input id="clBonusAcct" type="hidden" value="0"><input id="clBonusListen" type="hidden" value="0">')+
       '<label>Starts<input id="clStarts" type="date"></label><label>Last day to post<input id="clEnds" type="date"></label>'+
       '<label>Earns for days<input id="clWindow" type="number" min="1" max="365" value="30"></label>'+
@@ -131,7 +132,7 @@
       max_clips_per_clipper:int("clMaxClips"),starts_at:val("clStarts")?new Date(val("clStarts")+"T00:00:00").toISOString():null,
       ends_at:val("clEnds")?new Date(val("clEnds")+"T23:59:59").toISOString():null,earning_window_days:int("clWindow"),
       keep_live_days:int("clKeep"),hold_days:int("clHold"),bonus_account_cents:cents("clBonusAcct")||0,
-      bonus_listen_cents:cents("clBonusListen")||0,approval_mode:val("clApproval")||"creator",assets:assets};
+      bonus_listen_cents:cents("clBonusListen")||0,approval_mode:"creator",assets:assets};
   }
 
   /* ---------- dashboard ---------- */
