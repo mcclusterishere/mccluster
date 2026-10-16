@@ -6,6 +6,7 @@ import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
+import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -225,6 +226,16 @@ export default {
         const id = env.HereTenantAgent.idFromName('health');
         const stub = env.HereTenantAgent.get(id);
         return stub.fetch(request);
+      }
+
+      /* Funding Intelligence is a private Control route. Authentication and
+         house-owner authorization run before even reading catalog state or
+         contacting external grant providers. Never publish partner proposals. */
+      if (path === FUNDING_PREFIX || path.startsWith(FUNDING_PREFIX + '/')) {
+        await requireHouseOwner(request, env);
+        return await handleFundingIntelligence(request, env, {
+          read: p => sb(env, p)
+        });
       }
 
       if (path === '/v1/me' && request.method === 'GET') {
