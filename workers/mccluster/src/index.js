@@ -1,5 +1,6 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import { whipLaunchGate } from './whip/launch-gate.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
@@ -329,6 +330,11 @@ export default {
          identity gates, then ownership checks, then driver and ride
          transitions, then the auth proxy, then rides and rentals. */
       if (path === '/api' || path.startsWith('/api/')) {
+        /* Whip Equipped (owner, 2026-10-15): open sign-up, rides not live yet. A McCluster-side wrapper in
+           front of the lifted handlers: GET /api/service-status, ride requests answer 503 service_not_live,
+           POST /api/drivers/me is the consented driver application (./whip/launch-gate.js). */
+        const gated = await whipLaunchGate(request, env);
+        if (gated) return applyCors(request, env, gated);
         const response = await whip.fetch(request, env);
         return applyCors(request, env, response);
       }
