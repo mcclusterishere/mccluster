@@ -195,3 +195,15 @@ header strong{display:none}
 .ion-credits .cesium-credit-textContainer:empty{display:none!important}
 .ion-credits img{height:12px!important;width:auto!important;vertical-align:-2px!important}
 .ion-credits .cesium-credit-expand-link{margin-left:4px;color:inherit;text-decoration:underline;cursor:pointer}
+
+
+/* Organization-directory and route handoff (WIP). Not a bounty checkout. */
+.world-mode #navigationMode.is-active {border-color:rgba(79,209,255,.75);color:#a8eaff}
+.world-partner-place {border-top:1px solid rgba(79,209,255,.2);padding:8px 0;color:#eef0f4}
+.world-partner-place[hidden]{display:none!important}
+.world-partner-place small {display:block;font-size:10px;letter-spacing:.06em;color:#8eddf8}
+.world-partner-place h2{font-size:17px;line-height:1.2;margin:5px 0}
+.world-partner-place p{font-size:12px;line-height:1.4;color:#d4dce8;margin:6px 0}
+.world-partner-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.world-partner-actions a{display:inline-flex;align-items:center;min-height:36px;padding:8px 11px;border:1px solid rgba(79,209,255,.45);border-radius:8px;text-decoration:none;color:#aee9ff;background:rgba(12,28,42,.82);font-size:12px}
+.world-partner-actions a:focus-visible{outline:2px solid #aee9ff;outline-offset:2px}
