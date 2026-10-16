@@ -14,94 +14,10 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 368,
+  "candidate_count": 369,
   "capability_source_count": 99,
-  "support_only_count": 269,
+  "support_only_count": 270,
   "entries": [
-    {
-      "path": ".cursorrules",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": ".github/copilot-instructions.md",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": ".github/workflows/api-economic-core-ci.yml",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
-    },
-    {
-      "path": ".github/workflows/equity-uprise-core-v2-ci.yml",
-      "classification": "build_validation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Single coordinated read-only-by-default Core V2 validation pipeline; generated repository writes are manual, serialized, and non-main only."
-    },
-    {
-      "path": ".github/workflows/reconciliation-ci.yml",
-      "classification": "workflow_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
-    },
-    {
-      "path": "AGENTS.md",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "CLAUDE.md",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "CODEX.md",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "GEMINI.md",
-      "classification": "governance_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
-    },
-    {
-      "path": "LICENSE",
-      "classification": "incidental_text_match",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "License text triggered a broad semantic marker but is not Equity Uprise program material."
-    },
-    {
-      "path": "README.md",
-      "classification": "shared_site_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
-    },
-    {
-      "path": "_unfinished/README.md",
-      "classification": "unrelated_experimental_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
-    },
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
       "classification": "capability_source",
@@ -270,6 +186,13 @@
       "rationale": "Shelved from the public root under _unfinished/equity-uprise/; semantic classification is preserved while it is off the shipping surface."
     },
     {
+      "path": "_unfinished/README.md",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
       "path": "_unfinished/shake-shop/shake-desk.html",
       "classification": "unrelated_experimental_support",
       "capability_ids": [],
@@ -341,11 +264,53 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": ".cursorrules",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": ".github/workflows/api-economic-core-ci.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-core-v2-ci.yml",
+      "classification": "build_validation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Single coordinated read-only-by-default Core V2 validation pipeline; generated repository writes are manual, serialized, and non-main only."
+    },
+    {
+      "path": ".github/workflows/reconciliation-ci.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
       "path": "action/index.html",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Uprise Action Network campaign landing (/action/?c=<slug>) on the McCluster site, backed by the action_* tables; names Equity Uprise in its brand line. A mobilization surface, not a building program capability; mapping it into the building program is an owner decision."
+    },
+    {
+      "path": "AGENTS.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
       "path": "assets/img/equity-uprise-logo.webp",
@@ -355,18 +320,18 @@
       "rationale": "Approved identity artwork; branding asset, not an independent program capability."
     },
     {
-      "path": "assets/img/equity-uprise-mark.png",
-      "classification": "presentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
-    },
-    {
       "path": "assets/img/equity-uprise-mark-white.png",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "The owner-authorized white variant of the approved identity artwork (owner, 2026-10-15: paint it white): the tile-less mark's own shape and alpha, every visible pixel white, for the World's dark grounds. Branding asset, not a capability."
+    },
+    {
+      "path": "assets/img/equity-uprise-mark.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
     },
     {
       "path": "assets/img/eu-favicon.png",
@@ -390,6 +355,20 @@
       ],
       "support_only": false,
       "rationale": "Static registry and MusicRecording markup generated from data/catalogue.json and data/albums.json; the same music-catalogue capability listen.html and the catalogue data already carry."
+    },
+    {
+      "path": "CLAUDE.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "CODEX.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
       "path": "crm.html",
@@ -685,27 +664,6 @@
       "rationale": "Action Network creator-economy release-risk audit; references Equity Uprise-related platform boundaries but does not add a building capability."
     },
     {
-      "path": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Cross-product architecture and productization canon describes Equity Uprise, Action Network and Control boundaries but does not define building program, geometry or runtime capability."
-    },
-    {
-      "path": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
-      "classification": "commercial_context_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Commercial catalog reconciliation references Equity Uprise contractual terms but does not implement a building capability."
-    },
-    {
-      "path": "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "SEO/AEO system documentation; describes Equity Uprise only as public identity and record context."
-    },
-    {
       "path": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -765,6 +723,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/control-plane/branch-reconciliation-2026-09-26.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine-readable branch-governance ledger mentions Equity Uprise donor/history branches but does not define building program, geometry, capability, or runtime authority."
+    },
+    {
       "path": "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -800,6 +765,13 @@
       "rationale": "Program status ledger for the 19-item McCluster program; it names the playable Equity Uprise building only as a status row and defines no building geometry, program or capability."
     },
     {
+      "path": "docs/control-plane/registry.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
       "path": "docs/control-plane/REPOSITORY-GOVERNANCE.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -830,34 +802,6 @@
       "rationale": "Stripe reconciler handoff names Equity Uprise only in a list of CI workflows and the portfolio scope; commerce documentation, not a building capability."
     },
     {
-      "path": "docs/control-plane/branch-reconciliation-2026-09-26.json",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Machine-readable branch-governance ledger mentions Equity Uprise donor/history branches but does not define building program, geometry, capability, or runtime authority."
-    },
-    {
-      "path": "docs/control-plane/registry.json",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
-    },
-    {
-      "path": "docs/design/HERE-BRAND-LIBRARY.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
-    },
-    {
-      "path": "docs/design/HERE-CURRENT-STATE-AUDIT.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
-    },
-    {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
       "classification": "development_program_authority_pre_building_rewrite",
       "capability_ids": [],
@@ -866,6 +810,20 @@
     },
     {
       "path": "docs/design/equity-uprise-development/COMPETENCY-ARCHITECTURE.md",
+      "classification": "development_program_authority_pre_building_rewrite",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical Equity Uprise lifetime-development authority preserved before physical-building reconciliation. Intentionally not mapped to the current building capability set until the planned program/physical-design audit decides which building capabilities and spaces change."
+    },
+    {
+      "path": "docs/design/equity-uprise-development/competency-catalog.json",
+      "classification": "development_program_authority_pre_building_rewrite",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical Equity Uprise lifetime-development authority preserved before physical-building reconciliation. Intentionally not mapped to the current building capability set until the planned program/physical-design audit decides which building capabilities and spaces change."
+    },
+    {
+      "path": "docs/design/equity-uprise-development/competency-rubrics.json",
       "classification": "development_program_authority_pre_building_rewrite",
       "capability_ids": [],
       "support_only": true,
@@ -921,20 +879,6 @@
       "rationale": "Canonical Equity Uprise lifetime-development authority preserved before physical-building reconciliation. Intentionally not mapped to the current building capability set until the planned program/physical-design audit decides which building capabilities and spaces change."
     },
     {
-      "path": "docs/design/equity-uprise-development/competency-catalog.json",
-      "classification": "development_program_authority_pre_building_rewrite",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Canonical Equity Uprise lifetime-development authority preserved before physical-building reconciliation. Intentionally not mapped to the current building capability set until the planned program/physical-design audit decides which building capabilities and spaces change."
-    },
-    {
-      "path": "docs/design/equity-uprise-development/competency-rubrics.json",
-      "classification": "development_program_authority_pre_building_rewrite",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Canonical Equity Uprise lifetime-development authority preserved before physical-building reconciliation. Intentionally not mapped to the current building capability set until the planned program/physical-design audit decides which building capabilities and spaces change."
-    },
-    {
       "path": "docs/design/equity-uprise-development/stage-competency-map.json",
       "classification": "development_program_authority_pre_building_rewrite",
       "capability_ids": [],
@@ -947,6 +891,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Canonical federal training/evidence authority that binds issuer-grounded training to existing Equity Uprise competencies, building scenarios and labs without defining a new standalone product capability or granting live-system control."
+    },
+    {
+      "path": "docs/design/HERE-BRAND-LIBRARY.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/HERE-CURRENT-STATE-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
       "path": "docs/design/redesign-before-after.html",
@@ -1023,6 +981,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Cross-product architecture and productization canon describes Equity Uprise, Action Network and Control boundaries but does not define building program, geometry or runtime capability."
+    },
+    {
       "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1042,6 +1007,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
+      "classification": "commercial_context_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Commercial catalog reconciliation references Equity Uprise contractual terms but does not implement a building capability."
+    },
+    {
+      "path": "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SEO/AEO system documentation; describes Equity Uprise only as public identity and record context."
     },
     {
       "path": "docs/seo-matthew-mccluster.md",
@@ -1147,6 +1126,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "GEMINI.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
     },
     {
       "path": "heal-the-3rd-world.html",
@@ -1348,6 +1334,13 @@
       "rationale": "Current music distribution operator surface references Equity Uprise context but does not define an independent program capability."
     },
     {
+      "path": "LICENSE",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "License text triggered a broad semantic marker but is not Equity Uprise program material."
+    },
+    {
       "path": "listen.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -1420,14 +1413,14 @@
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
     },
     {
-      "path": "native/src/RoomScreen.tsx",
+      "path": "native/src/content.ts",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
     },
     {
-      "path": "native/src/content.ts",
+      "path": "native/src/RoomScreen.tsx",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
@@ -1510,6 +1503,13 @@
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
+      "path": "README.md",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
       "path": "redirects/equity-uprise.html",
       "classification": "redirect_support",
       "capability_ids": [],
@@ -1528,7 +1528,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1587,13 +1587,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World screen's navigation and emblem/Fund contract; names the Equity Uprise emblem path. Not a building capability."
-    },
-    {
-      "path": "scripts/test/world-first-and-layers.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
     },
     {
       "path": "scripts/test/action-network.test.mjs",
@@ -1692,6 +1685,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Edge Function deploy-pipeline regression coverage; it names Equity Uprise functions only as deploy targets that import shared code. Test support, not a physical building capability."
+    },
+    {
+      "path": "scripts/test/world-first-and-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
     },
     {
       "path": "services.html",
@@ -2260,6 +2260,13 @@
       "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
     },
     {
+      "path": "supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network's source-backed grant/opportunity and private partner mission draft schema. It uses eu_is_admin for RLS but creates no physical Equity Uprise building capability. All drafts remain unpublished and uncompensated."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2274,15 +2281,29 @@
       "rationale": "Unapplied mission curation and resource registry."
     },
     {
-      "path": "supabase/pending/README.md",
-      "classification": "documentation_support",
+      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
+    },
+    {
+      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
+      "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
     },
     {
-      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
-      "classification": "shared_backend_support",
+      "path": "supabase/pending/README.md",
+      "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
@@ -2599,6 +2620,13 @@
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
     },
     {
+      "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database dependency fixture for bounty first-claim and reclaim behavior. Defines a test-only eu_is_admin stand-in; never applied to a real project and not a building capability."
+    },
+    {
       "path": "supabase/tests/eu_platform_test.sql",
       "classification": "test_support",
       "capability_ids": [],
@@ -2700,27 +2728,6 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
-      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
-    },
-    {
-      "path": "workers/mccluster/src/world-layers.js",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
-    },
-    {
-      "path": "workers/mccluster/test/world-layers.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unit test of the World's data-layer routes: trimming, caching, stale answers and member gating. Not a building capability."
-    },
-    {
       "path": "workers/mccluster/src/human-uprise/router.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2767,6 +2774,13 @@
       "rationale": "Implements the read-only, entitlement-filtered Halo Globe projection contract."
     },
     {
+      "path": "workers/mccluster/src/world-layers.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
+    },
+    {
       "path": "workers/mccluster/test/fbi.test.mjs",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2809,25 +2823,18 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
+      "path": "workers/mccluster/test/world-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World's data-layer routes: trimming, caching, stale answers and member gating. Not a building capability."
+    },
+    {
       "path": "world-news.html",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
-    },
-    {
-      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
-      "classification": "runtime_security_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
-    },
-    {
-      "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Scratch-database dependency fixture for bounty first-claim and reclaim behavior. Defines a test-only eu_is_admin stand-in; never applied to a real project and not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
