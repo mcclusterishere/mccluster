@@ -83,3 +83,19 @@ Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
 first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
+
+
+Pending: `action_partner_opportunity_drafts_v1.sql` adds two **admin-readable only**
+prospecting tables (`action_funding_opportunities`,
+`action_partner_mission_drafts`) containing four sourced funding programs and ten
+partner-specific proposal missions. Every record is irrevocably `draft`,
+`admin_only`, non-claimable and has **no compensation or authorized partner**.
+This is a planning catalogue, not a signed grant or mission deployment. It must
+NOT be treated as an applied production migration or published via the public
+globe RPC. Prior to applying: run the SQL on an isolated scratch database with
+the existing `eu_is_admin()` function; test anon and authenticated non-admin
+SELECT denial, admin visibility, idempotence and every draft guard. Review all
+funding details against sources, then apply/promote using the version-accurate
+production-ledger workflow above. Publishing any individual proposal requires
+separate partner authorization, eligible budget, risk review, proof policy and
+promotion into the existing `action_missions`/`action_bounties` stack.
