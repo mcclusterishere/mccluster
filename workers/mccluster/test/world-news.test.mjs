@@ -315,7 +315,7 @@ test('the dispatch and the cron hook are wired', async () => {
   assert.ok(at < index.indexOf('if (!configured(env))'));
   const entry = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
   assert.match(entry, /ctx\.waitUntil\(observeScheduled\(env, ctx, 'world\.news_ingest', \(\) => ingestGdeltNews\(env, \{ scheduledTime: controller\?\.scheduledTime \}\)\)/);
-  const src = await readFile(new URL('../src/world-news.js', import.meta.url), 'utf8');
+  const src = await readFile(new URL('../src/world-news-discovery.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /redirect:\s*'(error|follow)'/, "redirects go through lib/safe-fetch.js");
   assert.match(src, /fetchNoCrossHostRedirect\(/);
 });
