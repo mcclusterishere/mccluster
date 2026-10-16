@@ -33,7 +33,7 @@ test('Control owns native Work Create Analytics and System navigation',async()=>
   }
   assert.match(js,/SURFACES = \["home", "ai", "work", "create", "analytics", "system", "apps"\]/);
   assert.match(js,/WORK_VIEWS = \["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"\]/);
-  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "song-test"\]/);
+  assert.match(js,/CREATE_VIEWS = \["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test"\]/);
 });
 
 test('the old admin room iframe strategy is dead',async()=>{
@@ -434,4 +434,16 @@ test('Home surfaces retained errors from the owner-gated event stream', async()=
   assert.match(js,/action === "observe-errors"\) \{ state\.observabilityFilters\.level = "error";/);
   /* a refused read (non-owner) shows nothing rather than a false alarm */
   assert.match(js,/if \(!result\.ok\) return;\s*var events = pickRows\(result, "events"\);/);
+});
+
+test('Funding Intelligence is a native owner-gated Control workspace',async()=>{
+  const [html,core,ui,worker]=await Promise.all([
+    read('control.html'),read('js/control-room-v2.js'),
+    read('js/control-room/funding-intelligence.js'),
+    read('workers/mccluster/src/index.js')
+  ]);
+  assert.match(core,/window\.CR\.fundingIntelligence\.render/);
+  assert.match(html,/js\/control-room\/funding-intelligence\.js/);
+  assert.match(ui,/\/v1\/control\/funding\/catalog/);
+  assert.match(worker,/await requireHouseOwner\(request, env\);[\s\S]*handleFundingIntelligence/);
 });
