@@ -157,3 +157,16 @@ admin-verified missions and `member_identity_verified(uid, purpose)`, purpose fr
 `music_preview_play` / `music_full_play`. Apply after the approval file and, preferably, after PR #443's identity file (both orders apply cleanly).
 Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
 and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.
+
+Pending: `20261016010000_profile_edit_gate_v1.sql` (with
+`…_profile_edit_gate_v1.rollback.sql`) is the profile edit gate (owner,
+2026-10-15): profile details on a data-driven list (`profile_protected_fields`)
+lock once set; a signed-in member's write that would change one is refused by
+a trigger, directly or through any RPC. A change is asked for with a live
+video (a new submission level, `profile_edit`, on the identity levels' own
+tables, bucket and finish function) and the Persona ID check, and is applied
+only by `profile_edit_review_decide()`, once, with an append-only audit.
+Apply after the ladder and the identity levels. Behaviour tests:
+`supabase/tests/profile_edit_gate.behaviour.sql`, run by
+`scripts/test-profile-edit-gate-db.sh` (which also reruns the identity and
+ladder behaviour tests on top). Design: `docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md`.

@@ -1,4 +1,4 @@
-/* YOUR POLICY LADDER, on the Policy room (action-policy.html).
+/* YOUR POLICY LADDER, inside the member desk over the World globe (js/member-desk.js; it was the Policy room, action-policy.html, which now opens the desk).
 
    The member's side of the Policy Fellowship ladder
    (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md): any three verified

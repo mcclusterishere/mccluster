@@ -19,7 +19,9 @@
   "use strict";
   window.CR = window.CR || {};
   var R = { supa: null, rerender: null, queue: null, busy: false, err: null, open: null, urls: {}, msg: "" };
-  var LABEL = { v1_live_intro: "Live introduction", v2_halo_full: "Full Halo access" };
+  var LABEL = { v1_live_intro: "Live introduction", v2_halo_full: "Full Halo access", profile_edit: "Profile edit" };
+  /* a "Profile edit" submission: its requested changes and its own decision call (js/control-room/profile-edit-review.js) */
+  function PE() { return window.CR && window.CR.profileEditReview; }
   function e(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function note(t, bad) { return '<div class="cro-note' + (bad ? " cro-note--bad" : "") + '">' + e(t) + "</div>"; }
   function redraw() { if (R.rerender) R.rerender(); }
@@ -47,7 +49,8 @@
   function load() {
     R.busy = true; R.err = null; redraw();
     return R.supa("rpc/identity_review_queue", { method: "POST", body: {} })
-      .then(function (q) { R.queue = q || { pending: [], recent: [] }; })
+      .then(function (q) { R.queue = q || { pending: [], recent: [] };
+        if (PE() && (R.queue.pending || []).some(function (p) { return p.level === "profile_edit"; })) return PE().load(R.supa); })
       .catch(function (err) { R.queue = null; R.err = String(err && err.message || err); })
       .then(function () { R.busy = false; redraw(); });
   }
@@ -75,7 +78,7 @@
   }
 
   function personaLine(p) {
-    if (p.level !== "v2_halo_full") return "";
+    if (p.level !== "v2_halo_full" && p.level !== "profile_edit") return "";
     var ok = p.persona_status === "approved";
     return '<p class="cro-meta">ID check (Persona): <span class="cro-pill">' + e(p.persona_status || "not started") + "</span>" +
       (p.persona_inquiry_id ? " · inquiry " + e(p.persona_inquiry_id) : "") +
@@ -95,12 +98,13 @@
           videoCell("Approved live introduction" + (p.v1 ? " · said “" + p.v1.challenge_phrase + "”" : ""), expired ? null : u.v1,
             p.v1 ? '<p class="cro-meta">Name then: <b>' + e(p.v1.stated_name) + "</b></p>" : note("No approved introduction found.", true)) + main + "</div>"
       : main;
+    if (p.level === "profile_edit" && PE()) grid += PE().changesHtml(p.id);
     return (expired ? note("The five-minute links expired. Close and open again.") : "") + grid + personaLine(p) +
       '<label>Note to the person (required to reject or ask for a retake)<textarea data-idr-note="' + e(p.id) + '" rows="3"></textarea></label>' +
       '<div class="cro-actions">' +
-        '<button class="cr-btn cr-btn--primary" type="button" data-idr-decide="' + e(p.id) + '" data-decision="approve"' + (p.is_mine ? " disabled" : "") + ">Approve</button>" +
-        '<button class="cr-btn" type="button" data-idr-decide="' + e(p.id) + '" data-decision="request_retake"' + (p.is_mine ? " disabled" : "") + ">Ask for a retake</button>" +
-        '<button class="cr-btn" type="button" data-idr-decide="' + e(p.id) + '" data-decision="reject"' + (p.is_mine ? " disabled" : "") + ">Reject</button>" +
+        '<button class="cr-btn cr-btn--primary" type="button" data-idr-decide="' + e(p.id) + '" data-level="' + e(p.level) + '" data-decision="approve"' + (p.is_mine ? " disabled" : "") + ">Approve</button>" +
+        '<button class="cr-btn" type="button" data-idr-decide="' + e(p.id) + '" data-level="' + e(p.level) + '" data-decision="request_retake"' + (p.is_mine ? " disabled" : "") + ">Ask for a retake</button>" +
+        '<button class="cr-btn" type="button" data-idr-decide="' + e(p.id) + '" data-level="' + e(p.level) + '" data-decision="reject"' + (p.is_mine ? " disabled" : "") + ">Reject</button>" +
       "</div>" + (p.is_mine ? note("This is your own submission; another reviewer must decide it.") : "");
   }
 
@@ -120,7 +124,7 @@
       return '<article class="cro-card" style="margin-bottom:12px"><div class="cro-item__head"><div><p class="cro-meta">' + e(LABEL[p.level] || p.level) +
         " · waiting " + e(age(p.age_hours)) + (p.overdue ? " · <b>over 24 h</b>" : "") + (p.previous_attempts ? " · attempt " + e(p.previous_attempts + 1) : "") +
         (p.location_region_key ? " · " + e(p.location_region_key) : "") + "</p><b>" + e(p.stated_name) + "</b></div>" +
-        '<span class="cro-pill">' + (p.level === "v2_halo_full" ? "ID: " + e(p.persona_status || "none") : "submitted") + "</span></div>" +
+        '<span class="cro-pill">' + (p.level === "v2_halo_full" || p.level === "profile_edit" ? "ID: " + e(p.persona_status || "none") : "submitted") + "</span></div>" +
         '<div class="cro-actions"><button class="cr-btn" type="button" data-idr-open="' + e(p.id) + '">' + (open ? "Close" : "Open and review") + "</button></div>" +
         (open ? detail(p) : "") + "</article>";
     }).join("") : note("No identity videos are waiting.");
@@ -156,7 +160,8 @@
       var label = decision === "approve" ? "Approve this person" : decision === "reject" ? "Reject this video" : "Ask for a retake";
       if (!confirm(label + "? They are notified" + (text ? " with your note" : "") + ".")) return;
       b.disabled = true;
-      R.supa("rpc/identity_review_decide", { method: "POST", body: { p_submission_id: id, p_decision: decision, p_note: text || null } })
+      var call = b.getAttribute("data-level") === "profile_edit" && PE() ? PE().decideRpc : "rpc/identity_review_decide";
+      R.supa(call, { method: "POST", body: { p_submission_id: id, p_decision: decision, p_note: text || null } })
         .then(function (r) { R.msg = "Decision saved: " + (r && r.status || decision) + "."; R.open = null; delete R.urls[id]; return load(); })
         .catch(function (err) { b.disabled = false; alert(err.message || "The decision did not save."); });
     }; });
