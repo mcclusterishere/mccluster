@@ -1,28 +1,54 @@
-/* THE WORLD'S CESIUM ION, WITHOUT HANDING OUT THE KEY.
+/* THE WORLD'S CESIUM ION, FOR SIGNED-IN MEMBERS, WITHOUT HANDING OUT THE KEY.
 
    Owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster
    worker." The World's Earth (js/action-globe.js) keeps NASA's imagery from
-   far out and, as the camera comes down, takes Cesium World Terrain, aerial
-   imagery and 3D buildings from Cesium ion.
+   far out and, for a signed-in member, as the camera comes down, takes Cesium
+   World Terrain, aerial imagery and 3D buildings from Cesium ion. Logged-out
+   visitors get the globe and its free layers (NASA GIBS, OpenStreetMap) and
+   never touch ion: the ion assets are account-backed (metered/paid), and the
+   owner's rule for the public is the globe plus one free layer, with the
+   paid map data for signed-in members.
 
    HOW THE KEY STAYS HERE. CesiumJS asks `${Ion.defaultServer}v1/assets/{id}/
-   endpoint` for every ion asset. The page points Ion.defaultServer at this
-   route (https://api.mccluster.org/v1/world/ion/) and clears Cesium's built-in
-   token, so the browser sends nothing secret. This route asks ion for the same
-   endpoint with the account's token and passes ion's answer through. That
-   answer carries a token for that one asset that ion lets live about an hour;
-   it is the only token a browser ever holds. Tiles then go straight from ion
-   to the browser, and when the asset token runs out CesiumJS asks this route
-   again.
+   endpoint` for every ion asset. A member's page points Ion.defaultServer at
+   this route (https://api.mccluster.org/v1/world/ion/) with the member's
+   Supabase session in an Authorization header (never in the URL) and clears
+   Cesium's built-in token. This route asks ion for the same endpoint with the
+   account's token and passes ion's answer through. That answer carries a token
+   for that one asset that ion lets live about an hour; it is the only ion token
+   a browser ever holds. Tiles then go straight from ion to the browser, and
+   when the asset token runs out CesiumJS asks this route again.
 
-   WHAT IT SERVES. Only the assets the World draws (ION_ASSETS), only to the
-   ecosystem's own pages (the CORS allowlist, checked on the Origin header).
-   Each answer is kept per data centre for 20 minutes, well inside the asset
-   token's hour, so ion's API sees a handful of calls an hour whatever the
-   traffic; while ion is down a kept answer up to 45 minutes old still serves.
-   GET /v1/world/ion says whether the World has ion at all, so a page without
-   it never asks for an asset. */
+   WHO IS SERVED, IN ORDER. Only the assets the World draws (ION_ASSETS; any
+   other id is a 404). Only requests whose Origin is one of the ecosystem's own
+   pages (the CORS allowlist; a 403 otherwise). The Origin header is trivially
+   set by any non-browser client, so it is an extra check, never the gate: the
+   gate is a signed-in member, verified with Supabase exactly as the members'
+   data layers are (bearerUser, ./world-layers.js); no bearer, or one Supabase
+   does not recognise, is a 401. Requests are rate limited per client IP
+   (before the Supabase check, so a flood of bad bearers does not become a
+   flood of Supabase calls) and per member (RATE_LIMITS; a 429 with
+   retry-after). The limiter lives in the isolate's memory: it is per data
+   centre and per isolate, resets when the isolate does, and is a brake on
+   scripted abuse, not an exact quota. The hard ceiling on spend is the ion
+   account itself (token scope and usage alerts, set in the ion dashboard).
+
+   CACHING. Each ion answer is kept per data centre for 20 minutes, well inside
+   the asset token's hour, so ion's API sees a handful of calls an hour
+   whatever the traffic; while ion is down a kept answer up to 45 minutes old
+   still serves. Answers go back `private`, varying on Origin and Authorization,
+   so no shared cache hands a member's answer to anyone else.
+
+   GET /v1/world/ion stays public: it says whether the World has ion at all
+   ({ available, members_only: true }), so a page never asks for an asset
+   it cannot have. The page itself only asks it for a signed-in member.
+
+   OWNER ACTIONS THIS CODE CANNOT DO (not done by this change): restrict the
+   ion token's scope to exactly these five assets in the Cesium ion dashboard;
+   turn on ion usage alerts; confirm the ion plan permits this commercial use
+   (the free Community plan is for non-commercial use). */
 import { reply, fail, corsHeaders, allowedOrigins } from './lib/http.js';
+import { bearerUser } from './world-layers.js';
 
 export const WORLD_ION_PATH = '/v1/world/ion';
 export const ION_API = 'https://api.cesium.com';
@@ -49,6 +75,43 @@ const FRESH_MS = 20 * 60 * 1000;
 const STALE_MS = 45 * 60 * 1000;
 const TIMEOUT_MS = 10000;
 const BROWSER_MAX_AGE = 300;
+
+/* in-isolate sliding counters: a member may open the World on a few devices and
+   each page asks for at most five assets, then about once an hour per asset */
+export const RATE_LIMITS = Object.freeze({ windowMs: 10 * 60 * 1000, perIp: 120, perMember: 60 });
+const MAX_KEYS = 5000;
+
+export function createLimiter({ windowMs = RATE_LIMITS.windowMs, max }) {
+  const hits = new Map();
+  return {
+    /* counts this hit; says whether it is within the limit and, if not, how long until the window frees a slot */
+    take(key, at) {
+      const since = at - windowMs;
+      const list = (hits.get(key) || []).filter((t) => t > since);
+      if (list.length >= max) {
+        hits.set(key, list);
+        return { ok: false, retryAfter: Math.max(1, Math.ceil((list[0] + windowMs - at) / 1000)) };
+      }
+      list.push(at);
+      hits.delete(key);
+      hits.set(key, list);
+      /* the oldest keys go first when the map grows past its bound */
+      while (hits.size > MAX_KEYS) hits.delete(hits.keys().next().value);
+      return { ok: true };
+    },
+    reset() { hits.clear(); }
+  };
+}
+
+const LIMITS = { ip: createLimiter({ max: RATE_LIMITS.perIp }), member: createLimiter({ max: RATE_LIMITS.perMember }) };
+export function resetWorldIonLimits() { LIMITS.ip.reset(); LIMITS.member.reset(); }
+
+function limited(request, env, retryAfter) {
+  const res = fail(request, env, 'Too many map requests; try again shortly', 429, { retry_after: retryAfter });
+  res.headers.set('retry-after', String(retryAfter));
+  res.headers.set('cache-control', 'no-store');
+  return res;
+}
 
 function cacheKey(id) {
   return new Request(`https://cache.mccluster.internal/world/ion/${id}`);
@@ -78,12 +141,12 @@ async function askIon(id, token, origin, fetchImpl) {
 
 function answer(request, env, body, maxAge = BROWSER_MAX_AGE) {
   const res = reply(request, env, body);
-  res.headers.set('cache-control', `public, max-age=${maxAge}`);
-  res.headers.set('vary', 'Origin');
+  res.headers.set('cache-control', `private, max-age=${maxAge}`);
+  res.headers.set('vary', 'Origin, Authorization');
   return res;
 }
 
-export async function handleWorldIon(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now() } = {}) {
+export async function handleWorldIon(request, env, { fetchImpl = fetch, cacheImpl = null, now = () => Date.now(), limits = LIMITS } = {}) {
   const path = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
   if (path !== WORLD_ION_PATH && !path.startsWith(`${WORLD_ION_PATH}/`)) return null;
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(request, env) });
@@ -91,7 +154,10 @@ export async function handleWorldIon(request, env, { fetchImpl = fetch, cacheImp
 
   const ion = cesiumIonToken(env);
   if (path === WORLD_ION_PATH) {
-    return answer(request, env, { ok: true, available: Boolean(ion), binding: ion ? ion.name : null, assets: ION_ASSETS });
+    const res = reply(request, env, { ok: true, available: Boolean(ion), members_only: true, binding: ion ? ion.name : null, assets: ION_ASSETS });
+    res.headers.set('cache-control', `public, max-age=${BROWSER_MAX_AGE}`);
+    res.headers.set('vary', 'Origin');
+    return res;
   }
 
   const match = path.match(/^\/v1\/world\/ion\/v1\/assets\/(\d{1,9})\/endpoint$/);
@@ -100,6 +166,20 @@ export async function handleWorldIon(request, env, { fetchImpl = fetch, cacheImp
   if (!SERVED.has(id)) return fail(request, env, 'This asset is not part of the World', 404, { asset: id });
   const origin = request.headers.get('origin') || '';
   if (!origin || !allowedOrigins(env).includes(origin)) return fail(request, env, "Only the ecosystem's own pages can draw the World's map data", 403);
+
+  /* the IP brake comes before the Supabase check; the member gate is the real one */
+  const at = now();
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  const byIp = limits.ip.take(ip, at);
+  if (!byIp.ok) return limited(request, env, byIp.retryAfter);
+  const user = await bearerUser(request, env, fetchImpl);
+  if (!user) {
+    const res = fail(request, env, "Sign in to see the World's terrain, aerial imagery and 3D buildings", 401, { members_only: true });
+    res.headers.set('cache-control', 'no-store');
+    return res;
+  }
+  const byMember = limits.member.take(String(user.id), at);
+  if (!byMember.ok) return limited(request, env, byMember.retryAfter);
   if (!ion) return fail(request, env, "The World's Cesium ion is not configured", 503, { binding: ION_TOKEN_BINDINGS[0] });
 
   const store = cacheImpl || (globalThis.caches && globalThis.caches.default) || null;
