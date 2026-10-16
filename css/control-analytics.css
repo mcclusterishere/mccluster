@@ -170,16 +170,16 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
    segment, the filter count, Clear, the current card dot. Swap the accent here and the whole screen follows; the globe
    reads the same tokens (js/control-room/analytics-globe.js). Nothing else on this screen is red. */
 .cra-app{--an-accent:#e11d2e;--an-accent-ruby:color-mix(in srgb,var(--an-accent) 26%,#141416);--an-accent-line:color-mix(in srgb,var(--an-accent) 78%,transparent);--an-accent-muted:color-mix(in srgb,var(--an-accent) 38%,#2a2a2e);
-  --an-rim:rgba(175,182,205,.26);--an-space:#0b0b0d;--an-earth:#121316;--an-land:#303237;--an-land-context:#3a3d44;--an-border:#6a6f79;--an-graticule:#ffffff;
+  --an-rim:rgba(175,182,205,.26);--an-space:#0b0b0d;--an-earth:#131417;--an-land:#3b3e44;--an-land-context:#464950;--an-border:#80858f;--an-graticule:#ffffff;
   --k-bg:#0a0a0b;--k-card:#111113;--k-line:rgba(255,255,255,.08);--k-line2:rgba(255,255,255,.15);--k-text:#f2f2f3;--k-dim:#a1a1a8;--k-faint:#6f6f77;--k-red:var(--an-accent);--k-red-hot:var(--an-accent);--k-live:#22c55e;--k-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"DejaVu Serif","Liberation Serif",serif}
 .cra-split{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;background:var(--k-bg);color:var(--k-text)}
 .cra-lead-col{display:grid;min-width:0}
-.cra-top{display:grid;gap:10px;padding:10px 16px 2px}
+.cra-top{display:grid;gap:8px;padding:8px 16px 0}
 .cra-top__row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.cra-top__eyebrow{margin:0;font:600 18px/1.1 var(--k-serif);letter-spacing:-.01em;color:var(--k-text)}
-.cra-top__title{display:flex;align-items:center;gap:12px;margin:4px 0 0;font:500 clamp(32px,9vw,44px)/1 var(--k-serif);letter-spacing:-.02em}
-.cra-live{display:inline-flex;align-items:center;gap:7px;margin:0;padding:0;border:0;background:none;font:500 15px/1 var(--ui,system-ui,sans-serif);letter-spacing:0;color:var(--k-dim)}
-.cra-live i{width:9px;height:9px;border-radius:50%;background:var(--k-faint)}
+.cra-top__eyebrow{margin:0;font:600 14px/1.1 var(--k-serif);letter-spacing:0;color:var(--k-text)}
+.cra-top__title{display:flex;align-items:center;gap:10px;margin:2px 0 0;font:500 clamp(27px,7.2vw,44px)/1.05 var(--k-serif);letter-spacing:-.015em}
+.cra-live{display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;border:0;background:none;font:500 13px/1 var(--ui,system-ui,sans-serif);letter-spacing:0;color:var(--k-dim)}
+.cra-live i{width:8px;height:8px;border-radius:50%;background:var(--k-faint)}
 .cra-live.is-live i{background:var(--k-live);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
 .cra-live.is-loading i{background:#f0b44d;animation:craPulse 1s ease-in-out infinite}
 .cra-live.is-error i{background:var(--k-red)}
@@ -192,7 +192,7 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-top__prop:focus-within{outline:2px solid #fff;outline-offset:2px}
 .cra-app .cra-property{position:absolute;inset:0;width:100%;min-height:44px;opacity:0;border:0;cursor:pointer;font-size:max(16px,1rem)}
 .cra-seg{display:inline-flex;flex:none;border:1px solid var(--k-line2);border-radius:12px;overflow:hidden;background:#111113}
-.cra-seg__b{min-height:40px;padding:0 9px;border:0;border-left:1px solid var(--k-line);background:transparent;color:var(--k-dim);font:500 13px/1 var(--ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.cra-seg__b{min-height:42px;padding:0 9px;border:0;border-left:1px solid var(--k-line);background:transparent;color:var(--k-dim);font:500 13px/1 var(--ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;transition:background-color .16s ease,color .16s ease}
 .cra-seg__b:first-child{border-left:0}
 .cra-seg__b.is-on{background:var(--an-accent-ruby);color:#fff;box-shadow:inset 0 0 0 1px var(--an-accent-line);border-radius:11px}
 .cra-seg__b:focus-visible,.cra-cal:focus-visible,.cra-pill button:focus-visible,.cra-dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
@@ -226,7 +226,7 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 .cra-sheet .cra-filters{border:0;padding:0;background:transparent}
 .cra-side{display:grid;gap:10px;min-width:0;padding:6px 16px 24px;background:var(--k-bg)}
 .cra-side__body{container-type:inline-size;container-name:cra;min-width:0}
-.cra-h{margin:12px 0 8px;font:500 30px/1.1 var(--k-serif);letter-spacing:-.015em;color:var(--k-text)}
+.cra-h{width:fit-content;margin:12px 0 8px;font:500 30px/1.1 var(--k-serif);letter-spacing:-.015em;color:var(--k-text)}
 .cra-carsec{min-width:0}
 .cra-car{position:relative;min-width:0}
 .cra-car__track{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -283,6 +283,9 @@ ul.cra-sites{margin:0;padding:0;list-style:none}
 /* the Control Room around it: on the Analytics surface the page is the screen (no topbar, no padding) */
 body.cr[data-cr-surface="analytics"]{background:#0a0a0b}
 body.cr[data-cr-surface="analytics"] .cr-topbar{display:none}
+/* the shared bar's "Admin" chip (js/tabbar.js) sits in the header row here, beside the account button, so it never
+   covers a card or a chart; it scrolls away with the header */
+body.cr[data-cr-surface="analytics"] .mcc-auth-chip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:72px;bottom:auto;z-index:20}
 body.cr[data-cr-surface="analytics"] .cr-shell{grid-template-rows:minmax(0,1fr);grid-template-areas:"main"}
 body.cr[data-cr-surface="analytics"] .cr-main{padding:0;min-height:0}
 body.cr[data-cr-surface="analytics"] .cr-surface{max-width:none}

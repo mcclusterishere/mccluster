@@ -295,10 +295,14 @@ for the ADMIN analytics view only.
 - **One selection** `{country, state}`: the location menu (all countries;
   the selected country's states listed under it as "US/US-CT"), the rows,
   Clear and a tap on the globe all go through `pickPlace()`, and the globe is
-  told `select({country, state}, fly)`. The selected shape fills with
-  `--an-accent` and gets a bright outline with a soft glow (no pulse); the
-  camera flies to fit it (0.8 s, eased; a jump under reduced motion; never so
-  close that the planet or the neighbours are lost); a small dark-glass label
+  told `select({country, state}, fly)`. The selected shape fills with a soft
+  `--an-accent` and one crisp bright edge (no wide glow line: it spikes on a
+  jagged coast; no pulse); inner state lines are a faint darkened-accent
+  hairline; a selected state's country keeps a medium accent edge. The camera
+  (0.8 s, eased; a jump under reduced motion) turns a country to face the
+  viewer and keeps the WHOLE sphere floating in the stage; only a state that
+  would be under about 40 px across is approached, from a 40° angle, so the
+  curve of the Earth stays in the top of the view. A small dark-glass label
   shows the name, the parent country for a state, and the page views; a white
   dot marks the label point. A tap on a state of the selected country selects
   the state (again: back to the country); the selected country again clears.
@@ -321,6 +325,13 @@ for the ADMIN analytics view only.
   active segment (`--an-accent-ruby`), the filter count, Clear and the
   current card dot. The globe reads the same tokens through the browser, so
   the accent swaps from one place.
+- **Polish (2026-10-16, second pass).** Land a clear step lighter than the
+  sphere; coast and border hairlines a small step lighter than the land, with
+  MSAA and FXAA; a smaller header on a phone; the shared bar's "Admin" chip sits
+  in the header row on this screen so it never covers a card. The Japan
+  sawtooth in the screenshots was the e2e fixture (it alternated 0/1/2 for every
+  country but the US), not the chart or the bucketing; the fixture now scales
+  the hourly shape to each country's total.
 - **Payloads** (bytes, raw / gzip -9): world 1:50m 602,872 / 189,291; a state
   file: US 100,552 / 26,655, Japan 36,784 / 8,539, Germany 15,379 / 4,225,
   Russia (largest) 228,452; all 239 state files together 3.57 MB / 0.91 MB,

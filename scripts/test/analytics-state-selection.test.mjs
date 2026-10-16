@@ -154,3 +154,17 @@ test('one accent token: --an-accent drives every red on the analytics screen', a
   const js = await read('js/control-room/analytics.js');
   assert.doesNotMatch(js.slice(js.indexOf('function area(')), /#ff2b3c/);
 });
+
+test('polish: quiet inner lines, one crisp edge, whole sphere for a country, the Admin chip out of the content', async () => {
+  const globe = await read('js/control-room/analytics-globe.js');
+  assert.doesNotMatch(globe, /PolylineGlow/, 'no wide glow line: it spikes at every miter of a jagged coast');
+  assert.match(globe, /var faint = Cs\.Color\.lerp\(C\.accent, C\.earth, 0\.55, new Cs\.Color\(\)\)\.withAlpha\(0\.55\);/);
+  assert.match(globe, /edge\(main, 9000, C\.outline, 1\.5\);/);
+  assert.match(globe, /homeAltitude\(0\.9\)/, 'a country is turned to face the viewer, the sphere stays whole');
+  assert.match(globe, /spanDeg \* pxPerDeg >= 40/, 'only a state under about 40 px is approached');
+  assert.match(globe, /HeadingPitchRange\(0, Cs\.Math\.toRadians\(-40\), range\)/, 'approached at an angle so the limb stays in view');
+  assert.match(globe, /msaaSamples: 4/);
+  const css = await read('css/control-analytics.css');
+  assert.match(css, /body\.cr\[data-cr-surface="analytics"\] \.mcc-auth-chip\{position:absolute;top:/);
+  assert.doesNotMatch(css, /@media[^{]*max-width/);
+});

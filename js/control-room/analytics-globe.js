@@ -147,13 +147,13 @@
     function valueOf(code) { if (!code) return null; for (var i = 0; i < api.data.points.length; i++) if (api.data.points[i].code === code) return api.data.points[i]; return null; }
     function countryColor(code) {
       var sel = api.sel;
-      if (code && code === sel.country) return sel.state ? C["land-context"] : C.accent.withAlpha(0.78);
+      if (code && code === sel.country) return sel.state ? C["land-context"] : C.accent.withAlpha(0.62);
       return C.land;
     }
     function stateColor(k) {
       var sel = api.sel;
       if (!sel.state) return C.land.withAlpha(0.012); /* invisible but still tappable over the country's fill */
-      if (k === sel.state) return C.accent.withAlpha(0.8);
+      if (k === sel.state) return C.accent.withAlpha(0.66);
       return C["land-context"];
     }
     var needRecolor = false;
@@ -191,6 +191,8 @@
     var borders = null, lineIdsByCode = {}, lakeCount = 0, scaleNote = null;
     function buildCountries(geo) {
       var inst = [], lines = [], seq = 0;
+      /* hairlines a small step lighter than the land, so a 1:50m coast reads as an edge, not as fuzz */
+      var hair = Cs.Color.lerp(C.land, C.border, 0.45, new Cs.Color()).withAlpha(0.85);
       countries = geo.countries || []; scaleNote = geo.source || null; lakeCount = (geo.lakes || []).length;
       countries.forEach(function (c) {
         var code = c.c || ("_" + (seq++));
@@ -200,7 +202,7 @@
           var id = "c|" + code + "|" + pi;
           /* Antarctica's ring runs along the pole; it is drawn as borders only */
           if (code !== "AQ") { inst.push(polygonInstance(id, poly, 1200, C.land)); (instancesByCode[code] = instancesByCode[code] || []).push(id); }
-          poly.forEach(function (ring, ri) { var lid = "b|" + code + "|" + pi + "." + ri; lines.push(ringLine(ring, 6000, C.border.withAlpha(0.8), 1, lid)); (lineIdsByCode[code] = lineIdsByCode[code] || []).push(lid); });
+          poly.forEach(function (ring, ri) { var lid = "b|" + code + "|" + pi + "." + ri; lines.push(ringLine(ring, 6000, hair, 1, lid)); (lineIdsByCode[code] = lineIdsByCode[code] || []).push(lid); });
         });
       });
       /* the 1:50m lakes are cut out of the land: the sphere's own grey, above every land fill, with a fine shore */
@@ -208,7 +210,7 @@
       (geo.lakes || []).forEach(function (poly, li) {
         if (!poly[0] || poly[0].length < 6) return;
         lakes.push(polygonInstance("l|" + li + "|", poly, 3600, C.earth));
-        shores.push(ringLine(poly[0], 6000, C.border.withAlpha(0.5), 1));
+        shores.push(ringLine(poly[0], 6000, hair, 1));
       });
       /* a faint graticule every 30 degrees */
       for (var lon = -180; lon < 180; lon += 30) { var mer = []; for (var la = -80; la <= 80; la += 5) mer.push(lon, la, 4000); lines.push(gline(mer)); }
@@ -230,18 +232,19 @@
       dropStates(); if (!file || !file.states) return;
       var inst = [], lines = [];
       st.cc = cc; st.file = file;
+      /* inner lines are quiet: a hairline of the accent darkened toward the land, never a bright white */
+      var faint = Cs.Color.lerp(C.accent, C.earth, 0.55, new Cs.Color()).withAlpha(0.55);
       /* the country itself at 1:10m (the dissolve of its own states, so the edges agree), under its states */
       (file.outline || []).forEach(function (poly, pi) {
         if (!poly[0] || poly[0].length < 6) return;
         var id = "c|" + cc + "|o" + pi; inst.push(polygonInstance(id, poly, 2000, countryColor(cc))); st.out.push(id);
-        poly.forEach(function (ring) { lines.push(ringLine(ring, 6600, C.border.withAlpha(0.85), 1)); });
       });
       file.states.forEach(function (s) {
         st.byKey[s.k] = s; st.ids[s.k] = [];
         (s.p || []).forEach(function (poly, pi) {
           if (!poly[0] || poly[0].length < 6) return;
           var id = "s|" + s.k + "|" + pi; inst.push(polygonInstance(id, poly, 3000, C.land.withAlpha(0.012))); st.ids[s.k].push(id);
-          lines.push(ringLine(poly[0], 6500, C.border.withAlpha(0.4), 1));
+          lines.push(ringLine(poly[0], 6500, faint, 1));
         });
       });
       if (!inst.length) return;
@@ -264,12 +267,14 @@
     function drawSelection() {
       [outlineLayer, dotLayer].forEach(function (l) { if (l) scene.primitives.remove(l); });
       outlineLayer = dotLayer = null;
-      var polys = selectedPolys(), rings = [];
-      polys.forEach(function (poly) { if (poly[0] && poly[0].length >= 6) rings.push(poly[0]); });
-      if (rings.length) outlineLayer = scene.primitives.add(new Cs.Primitive({ asynchronous: false,
-        geometryInstances: rings.map(function (ring) { var h = []; for (var k = 0; k < ring.length; k += 2) h.push(ring[k], ring[k + 1], 9000); h.push(ring[0], ring[1], 9000);
-          return new Cs.GeometryInstance({ geometry: new Cs.PolylineGeometry({ positions: Cs.Cartesian3.fromDegreesArrayHeights(h), width: 5, arcType: Cs.ArcType.RHUMB, vertexFormat: Cs.PolylineMaterialAppearance.VERTEX_FORMAT }) }); }),
-        appearance: new Cs.PolylineMaterialAppearance({ material: Cs.Material.fromType("PolylineGlow", { color: C.outline, glowPower: 0.22, taperPower: 1 }) }) }));
+      /* the selected edge: one crisp bright hairline (a wide glow line spikes at every miter of a jagged coast); a
+         selected state's country keeps a medium accent edge for context */
+      var inst = [], ringsOf = function (polys) { var r = []; (polys || []).forEach(function (poly) { if (poly[0] && poly[0].length >= 6) r.push(poly[0]); }); return r; };
+      var edge = function (rings, h, col, w) { rings.forEach(function (ring) { inst.push(ringLine(ring, h, col, w)); }); };
+      var main = ringsOf(selectedPolys());
+      if (api.sel.state && api.sel.country) edge(ringsOf(st.cc === api.sel.country && st.file && st.file.outline && st.file.outline.length ? st.file.outline : polysByCode[api.sel.country]), 8800, C.accent.withAlpha(0.55), 1.2);
+      edge(main, 9000, C.outline, 1.5);
+      if (inst.length) outlineLayer = scene.primitives.add(new Cs.Primitive({ asynchronous: false, geometryInstances: inst, appearance: new Cs.PolylineColorAppearance({ translucent: true }) }));
       /* a state's parent country is its context: the country's other states stay drawn (lines and shading) and the
          label names the country; the coarse 1:110m country outline is not redrawn over the finer state edges */
       var ll = (api.sel.country || api.sel.state) ? labelPoint() : null;
@@ -318,7 +323,12 @@
         fill: function (code) { if (code === st.cc && st.out.length && st.fills && st.fills.ready) { var o = st.fills.getGeometryInstanceAttributes(st.out[0]); return o ? Array.prototype.slice.call(o.color) : null; } var ids = instancesByCode[code]; if (!ids || !fills || !fills.ready) return null; var a = fills.getGeometryInstanceAttributes(ids[0]); return a ? Array.prototype.slice.call(a.color) : null; },
         lakes: lakeCount, scale: scaleNote,
         stateFill: function (k) { var ids = st.ids[k]; if (!ids || !ids.length || !st.fills || !st.fills.ready) return null; var a = st.fills.getGeometryInstanceAttributes(ids[0]); return a ? Array.prototype.slice.call(a.color) : null; },
-        camera: c ? { lon: Cs.Math.toDegrees(c.longitude), lat: Cs.Math.toDegrees(c.latitude), height: c.height } : null, tip: tip.hidden ? null : tip.textContent };
+        camera: c ? { lon: Cs.Math.toDegrees(c.longitude), lat: Cs.Math.toDegrees(c.latitude), height: c.height, pitch: Cs.Math.toDegrees(camera.pitch) } : null,
+        look: (function () { if (!api.ready) return null; var p = camera.pickEllipsoid(new Cs.Cartesian2(scene.canvas.clientWidth / 2, scene.canvas.clientHeight / 2)); if (!p) return null; var g = Cs.Cartographic.fromCartesian(p); return { lon: Cs.Math.toDegrees(g.longitude), lat: Cs.Math.toDegrees(g.latitude) }; })(),
+        sphere: (function () { if (!api.ready) return null; /* the Earth's disc on the canvas: is it whole? */
+          var r = Cs.Ellipsoid.WGS84.maximumRadius, d = Cs.Cartesian3.magnitude(camera.positionWC), ang = Math.asin(Math.min(1, r / d)), f = camera.frustum, fov = f.fovy || f.fov, H = scene.canvas.clientHeight, W = scene.canvas.clientWidth;
+          var px = Math.tan(ang) / Math.tan(fov / 2) * (H / 2); return { radiusPx: px, fits: camera.pitch < -1.5 && px * 2 <= Math.min(W, H) + 1 }; })(),
+        tip: tip.hidden ? null : tip.textContent };
     };
     /* the label: the selected place (or, with a mouse, the hovered one), pinned to its label point */
     function placeTip() {
@@ -365,24 +375,40 @@
     }
     function homeView(dur) {
       var dest = Cs.Cartesian3.fromDegrees(opts.home ? opts.home[0] : -60, opts.home ? opts.home[1] : 22, homeAltitude());
-      if (dur) camera.flyTo({ destination: dest, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT }); else { camera.cancelFlight(); camera.setView({ destination: dest }); scene.requestRender(); }
+      if (dur) camera.flyTo({ destination: dest, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT }); else { camera.cancelFlight(); camera.setView({ destination: dest, orientation: { heading: 0, pitch: -Cs.Math.PI_OVER_TWO, roll: 0 } }); scene.requestRender(); }
     }
     function flyToSel() {
       if (!api.ready) return;
       var dur = reducedMotion() ? 0 : 0.8;
       if (!api.sel.country) { homeView(dur); return; }
-      var box = fitBox(selectedPolys(), api.sel.state ? 2.2 : 6);
-      if (!box) { var ll = labelPoint(); if (!ll) return; box = [ll[0] - 8, ll[1] - 6, ll[0] + 8, ll[1] + 6]; }
-      /* fit the shape, but never so close that the planet is lost: a country keeps the curve of the Earth in view,
-         a state its neighbours (owner: "show me where on the planet it is") */
-      var rect = Cs.Rectangle.fromDegrees(box[0], box[1], box[2], box[3]);
-      var at = Cs.Cartographic.fromCartesian(camera.getRectangleCameraCoordinates(rect));
-      var dest = Cs.Cartesian3.fromRadians(at.longitude, at.latitude, Math.max(at.height, api.sel.state ? 7e5 : 6.5e6));
-      if (dur) camera.flyTo({ destination: dest, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT });
-      else { camera.cancelFlight(); camera.setView({ destination: dest }); scene.requestRender(); }
+      var box = fitBox(selectedPolys(), 0), ll = labelPoint();
+      if (!box) { if (!ll) return; box = [ll[0] - 1, ll[1] - 1, ll[0] + 1, ll[1] + 1]; }
+      var cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+      /* "show me where on the planet it is": the whole sphere stays in view, turned so the place faces the viewer.
+         Only a state that would be under about 40 px across at that distance is approached, from an angle, so the
+         curve of the Earth stays in the top of the view. */
+      var spanDeg = Math.max((box[2] - box[0]) * Math.cos(cy * Math.PI / 180), box[3] - box[1]) / 1.3;
+      var pxPerDeg = Math.min(host.clientWidth || 390, host.clientHeight || 300) * 0.41 * Math.PI / 180;
+      if (!api.sel.state || spanDeg * pxPerDeg >= 40) {
+        var dest = Cs.Cartesian3.fromDegrees(cx, cy, homeAltitude(0.9));
+        if (dur) camera.flyTo({ destination: dest, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT });
+        else { camera.cancelFlight(); camera.setView({ destination: dest }); scene.requestRender(); }
+        return;
+      }
+      var radius = Math.max(25000, spanDeg / 2 * 111000), range = Math.min(1.6e6, Math.max(6e5, radius * 10));
+      var sphere = new Cs.BoundingSphere(Cs.Cartesian3.fromDegrees(cx, cy, 0), radius);
+      var offset = new Cs.HeadingPitchRange(0, Cs.Math.toRadians(-40), range);
+      if (dur) camera.flyToBoundingSphere(sphere, { offset: offset, duration: dur, easingFunction: Cs.EasingFunction.CUBIC_IN_OUT });
+      else { camera.cancelFlight(); camera.flyToBoundingSphere(sphere, { offset: offset, duration: 0 }); scene.requestRender(); }
     }
-    /* the whole Earth fits the stage: Cesium's field of view spans the longer side, so the altitude follows the aspect */
-    function homeAltitude() { var w = host.clientWidth || 390, h = host.clientHeight || 300; return 8.6e6 * Math.max(w, h) / Math.max(1, Math.min(w, h)); }
+    /* the whole Earth floats in the stage: the altitude at which its disc is `share` of the stage's shorter side,
+       solved from the camera's own vertical field of view (so it holds at any aspect) */
+    function homeAltitude(share) {
+      var w = (scene && scene.canvas.clientWidth) || host.clientWidth || 390, h = (scene && scene.canvas.clientHeight) || host.clientHeight || 300;
+      var f = camera && camera.frustum, fovy = f && (f.fovy || f.fov) || Math.PI / 3, R = 6378137;
+      var px = (share || 0.82) * Math.min(w, h) / 2, a = Math.atan(px * Math.tan(fovy / 2) / (h / 2));
+      return R / Math.sin(a) - R;
+    }
     var seq = 0;
     function ensureStates(cc) {
       if (!cc) { if (st.cc) { dropStates(); scene.requestRender(); } return Promise.resolve(null); }
@@ -422,7 +448,7 @@
       try {
         widget = new Cs.CesiumWidget(canvasBox, {
           baseLayer: false, skyBox: false, skyAtmosphere: false, scene3DOnly: true, shadows: false,
-          requestRenderMode: true, maximumRenderTimeChange: Infinity, useBrowserRecommendedResolution: false,
+          requestRenderMode: true, maximumRenderTimeChange: Infinity, useBrowserRecommendedResolution: false, msaaSamples: 4,
           creditContainer: host.querySelector("[data-crg-credit]"),
           contextOptions: { webgl: { alpha: true, antialias: true, powerPreference: "low-power" } }
         });
@@ -445,6 +471,7 @@
       g.showSkirts = false; g.depthTestAgainstTerrain = false;
       if (scene.sun) scene.sun.show = false; if (scene.moon) scene.moon.show = false;
       scene.fog.enabled = false;
+      if (scene.postProcessStages && scene.postProcessStages.fxaa) scene.postProcessStages.fxaa.enabled = true;
       var ctl = scene.screenSpaceCameraController; ctl.enableTilt = false; ctl.enableLook = false;
       ctl.minimumZoomDistance = 1.2e5; ctl.maximumZoomDistance = 4.5e7;
       occluder = new Cs.EllipsoidalOccluder(Cs.Ellipsoid.WGS84, camera.positionWC); scratch2 = new Cs.Cartesian2();
