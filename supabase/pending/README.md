@@ -83,3 +83,13 @@ Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
 first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
+
+Pending: `20261015230000_action_mission_pins_arcs_black_business.sql` (owner mission curation,
+2026-10-15; owner approval required). Missions get many pins (country regions from Natural Earth
+v5.1.2 references; a "first world" list from the World Bank FY27 high-income classification, as
+data), a display-only origin ("Started by the Connecticut cohort"), the policy arc (memo → reform
+paper, unlocked by an admin-verified memo), and Black business listings reviewed by the desk. It
+also makes existing pins display-only (`join_scope` 'anywhere'): today every pinned open mission is
+unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
+applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
+`docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
