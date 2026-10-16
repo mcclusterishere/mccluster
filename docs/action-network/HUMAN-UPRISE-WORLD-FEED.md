@@ -383,8 +383,16 @@ now the member's own, nothing scrolling sideways at 390.
 "So the cesium globe itself isn't available?" Then: "I added an ion, cesium
 ion key to the McCluster worker." The World's Earth was CesiumJS already,
 drawing NASA's imagery with no ion. Now, when the Worker holds a Cesium ion
-token, the same Earth draws from ion as the camera comes down
-(`js/action-globe.js`, "THE EARTH UP CLOSE"):
+token, the same Earth draws from ion as the camera comes down, **for
+signed-in members only** (`js/action-globe.js`, "THE EARTH UP CLOSE"):
+
+- **Members only.** ion's assets are account-backed (metered, and paid
+  beyond the plan's quota), and the owner's rule for the public is the globe
+  plus one free layer, with the paid map data for signed-in members. A
+  logged-out page never asks the Worker's ion route (not even the status)
+  and never reaches Cesium ion: its Earth is NASA's (GIBS), with the
+  OpenStreetMap street map below 900 km. Everything below is a member's
+  Earth.
 
 - **Far out, nothing changes.** NASA's lit Earth, the night lights and the
   cloud, exactly as before. No aerial imagery is even asked for above
@@ -419,25 +427,53 @@ token, the same Earth draws from ion as the camera comes down
   start before the status answers; only the Earth itself waits for it.
 
 **The token never reaches a browser.** CesiumJS asks
-`${Ion.defaultServer}v1/assets/{id}/endpoint` for every ion asset. The page
-clears Cesium's built-in token (expired anyway) and points
+`${Ion.defaultServer}v1/assets/{id}/endpoint` for every ion asset. A
+member's page clears Cesium's built-in token (expired anyway) and points
 `Ion.defaultServer` at the Worker,
 `https://api.mccluster.org/v1/world/ion/`
-(`workers/mccluster/src/world-ion.js`). The Worker asks ion for that
+(`workers/mccluster/src/world-ion.js`), as a `Cesium.Resource` carrying the
+member's Supabase session in an `Authorization` header, never in a URL.
+In CesiumJS 1.131 `CesiumTerrainProvider.fromIonAssetId` and
+`Cesium3DTileset.fromIonAssetId` take no `server` option, so the header has
+to ride on `Ion.defaultServer`: every asset-endpoint request is derived from
+it and copies its headers and its `retryCallback`. The session rotates; when
+the Worker refuses a stale one (401) the request is retried with the newest
+session in the browser, once per change. With none, or on a 403, 429 or 503,
+ion steps aside for the page and the Earth is NASA's again, with one console
+line and no request loop. Signing out in another tab does the same; signing
+in brings ion on the next load. The asset tokens ion hands back ride only to
+ion's asset host; the member's session never does. The Worker asks ion for that
 endpoint with the account's token in a header and passes ion's answer
 through: it carries a token for that one asset that ion lets live about an
 hour, the only token a browser ever holds. Tiles go straight from ion to
 the browser; when the asset token runs out, CesiumJS asks the Worker again.
 
-- `GET /v1/world/ion` says whether the World has ion (`available`), which
-  binding holds the token (`binding`) and the asset ids. The page asks this
-  first and does nothing with ion when it is off.
-- `GET /v1/world/ion/v1/assets/{id}/endpoint` serves only the five assets
-  above, only to the ecosystem's own origins (the CORS allowlist, checked
-  on `Origin`). Each answer is kept per data centre for 20 minutes, so ion's
-  API sees a few calls an hour whatever the traffic; while ion is down a
-  kept answer under 45 minutes old still serves. Anything else is a plain
-  404, 403, 503 (no token) or 502 (ion refused), never the token.
+- `GET /v1/world/ion` is public and says whether the World has ion
+  (`available`, with `members_only: true`), which binding holds the token
+  (`binding`) and the asset ids. A member's page asks this first and does
+  nothing with ion when it is off; a logged-out page does not ask.
+- `GET /v1/world/ion/v1/assets/{id}/endpoint` is **members only**. In order:
+  only the five assets above (any other id is a 404); only the ecosystem's
+  own origins (the CORS allowlist, checked on `Origin`, a 403 otherwise);
+  a per-IP brake; then a signed-in member, the bearer checked with Supabase
+  exactly as the members' data layers check it (`bearerUser`,
+  `world-layers.js`), a 401 without one; then a per-member brake. `Origin`
+  is set at will by any non-browser client, so it is an extra check, never
+  the gate. The brakes (120 requests per IP and 60 per member in 10
+  minutes, a 429 with `retry-after`) live in the isolate's memory: per data
+  centre and per isolate, reset with the isolate, a brake on scripted abuse
+  rather than an exact quota; the IP brake runs before the Supabase check so
+  a flood of bad bearers is not a flood of Supabase calls. Each ion answer
+  is kept per data centre for 20 minutes, so ion's API sees a few calls an
+  hour whatever the traffic; while ion is down a kept answer under 45
+  minutes old still serves, and only to members. Answers go back `private`,
+  varying on `Origin` and `Authorization`. Anything else is a plain 404,
+  403, 401, 429, 503 (no token) or 502 (ion refused), never the token.
+- **Owner actions, not done by this code:** restrict the ion token's scope
+  to exactly these five assets (1, 3, 2, 3954, 96188) in the Cesium ion
+  dashboard, so a leaked token reaches nothing else; turn on ion usage
+  alerts; confirm the ion plan permits this use (the free Community plan is
+  for personal and non-commercial use).
 - The binding is `CESIUM_ION_TOKEN`, the name the spatial console and
   Hitman's Halo use. `CESIUM_ION_ACCESS_TOKEN`, `CESIUM_ION_KEY`,
   `CESIUM_ION_API_KEY` and `CESIUM_TOKEN` are read too, so a token saved
@@ -457,7 +493,10 @@ Verified in workerd itself (the route answers ion's JSON, a redirect is a
 
 Verified by `workers/mccluster/test/world-ion.test.mjs`,
 `scripts/test/world-ion-globe.test.mjs` and, in a real browser with CesiumJS
-1.131, `scripts/e2e/world-ion.e2e.mjs` (ion off with a slow status; ion on
+1.131, `scripts/e2e/world-ion.e2e.mjs` (logged out: zero requests to the
+ion route, `api.cesium.com` or `assets.ion.cesium.com`; a member whose
+session the Worker refuses: ion steps aside once, no loop; a session
+rotating mid-visit; ion off with a slow status; ion on
 at phone and desktop width; the night side; every asset failing; a terrain
 that answers late, with no buildings on the flat fallback; the World page's
 frame and its credits panel), with stand-ins for ion's tile hosts. The other World e2e fakes
@@ -814,5 +853,7 @@ NASA GIBS has no SLA and sends `no-store`; caching its tiles would belong
 in the `mccluster` Worker. Cesium ion's Community plan is for eligible
 personal and non-commercial use and has quotas; a public World draws on the
 account's streaming quota for every visitor who zooms in, so the ion plan
-should match the World's use before launch. The creator audience is sampled like the rest of
+should match the World's use before launch. The ion layers are now for
+signed-in members only, which bounds that draw to members; the plan,
+the token's asset scope and usage alerts are still the owner's to set. The creator audience is sampled like the rest of
 `my-creator`; an aggregate in the database would make it exact.
