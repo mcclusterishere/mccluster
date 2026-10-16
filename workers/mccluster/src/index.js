@@ -6,6 +6,7 @@ import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleIntelRequest } from './intel/router.js';
+import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import { handleWorldNews, NEWS_PATH } from './world-news.js';
@@ -153,6 +154,13 @@ export default {
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
+      }
+
+      /* File a public comment: open federal comment periods, read only, behind
+         PUBLIC_COMMENT_LISTING_ENABLED (./public-comment.js). Never files a comment. */
+      if (path.startsWith('/v1/public-comment/')) {
+        const comment = await handlePublicComment(request, env);
+        if (comment) return comment;
       }
 
       /* the World's Cesium ion: terrain, aerial imagery and buildings,

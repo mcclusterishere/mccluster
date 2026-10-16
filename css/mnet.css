@@ -1447,3 +1447,8 @@ body.has-appbar { padding-bottom: 0; }
   .mn__world-eup:hover img, .mn__world-eup:active img { transform: none !important; }
   .mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):is(:hover, :active) { transform: none !important; }
 }
+
+/* Put your Black business on the map: the listing form inside the mission dialog (js/mnet.js businessListingForm) */
+.mn__business-listing { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mn-rule-2); min-width: 0; }
+.mn__business-listing .mn__primary { margin-top: 14px; }
+.mn__panel [data-focus="business"] { margin-top: 8px; max-width: 100%; white-space: normal; }

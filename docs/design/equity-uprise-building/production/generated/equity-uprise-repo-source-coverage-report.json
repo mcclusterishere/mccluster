@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 385,
+  "candidate_count": 389,
   "capability_source_count": 99,
-  "support_only_count": 286,
-  "checks_total": 1443,
-  "checks_passed": 1443,
+  "support_only_count": 290,
+  "checks_total": 1459,
+  "checks_passed": 1459,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -102,6 +102,7 @@
     "docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md",
     "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
     "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
+    "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md",
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
     "docs/agent-web.md",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
@@ -229,6 +230,7 @@
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
     "scripts/test/member-desk.test.mjs",
+    "scripts/test/mission-pins-arcs-business.test.mjs",
     "scripts/test/policy-fellowship-ladder.test.mjs",
     "scripts/test/product-context.test.mjs",
     "scripts/test/security-reaudit.test.mjs",
@@ -316,6 +318,7 @@
     "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
+    "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
@@ -362,6 +365,7 @@
     "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
+    "supabase/tests/action_mission_pins.stub.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
@@ -399,7 +403,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "385 entries"
+      "detail": "389 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2113,6 +2117,26 @@
     },
     {
       "name": "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4387,6 +4411,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/policy-fellowship-ladder.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -6167,6 +6211,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -6928,6 +6992,26 @@
     },
     {
       "name": "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_pins.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_pins.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/action_mission_pins.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/action_mission_pins.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     },

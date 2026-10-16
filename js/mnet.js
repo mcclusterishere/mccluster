@@ -2527,7 +2527,15 @@
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
     var mine=missions.levelsByMission&&missions.levelsByMission[m.id];
     if(m.id===ANTISOCIAL_ID)activity="One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"")+" · "+activity;
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p><div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button></div></article>';
+    /* where it started, what comes next, how far it reaches, its own call to action:
+       action_mission_card_extras() (pending SQL); absent until applied, so nothing shows */
+    var x=missions.extras&&missions.extras[m.id]||{};
+    var extra=(x.origin_label?'<p class="mn__hint">'+esc(x.origin_label)+' · open to everyone</p>':"")+
+      (x.country_count>1?'<p class="mn__hint">On the World in '+esc(x.country_count)+' countries</p>':"")+
+      (x.next_mission_title?'<p class="mn__hint">Next in this arc: '+esc(x.next_mission_title)+'</p>':"")+
+      (x.previous_mission_title?'<p class="mn__hint">Opens once your \u201c'+esc(x.previous_mission_title)+'\u201d is verified</p>':"");
+    var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
@@ -2539,9 +2547,11 @@
     return Promise.all([
       /* select=* carries kind, so clip campaigns can be left to the Clips tab */
       sbRest("action_missions?status=eq.open"+campaignFilter+"&select=*&order=created_at.desc"),
-      sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];})
+      sbRpc("action_mission_stats",{p_campaign:missions.campaign||null}).catch(function(){return [];}),
+      sbRpc("action_mission_card_extras",{}).catch(function(){return [];})
     ]).then(function(out){
       if(version!==missionListVersion)return;
+      missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
       missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
@@ -2758,6 +2768,42 @@
       .catch(function(e){setStatus($("mnAntisocialStatus"),e.message||"Submission failed.","error");})
       .then(function(){btn.disabled=false;});
   }
+  /* PUT YOUR BLACK BUSINESS ON THE MAP. A listing is its own review, separate from the
+     mission's proof: submit_action_business_listing() only ever files it as 'submitted';
+     the desk approves (review_action_business_listing), which makes the business profile
+     and, once the desk places it, a coarse pin unless the business chose its exact address. */
+  var BUSINESS_CONSENT_VERSION="2026-10-15";
+  function businessListingForm(focus){
+    var f=document.createElement("form");f.className="mn__business-listing";f.id="mnBusinessListing";
+    f.innerHTML='<p class="mn__eyebrow">Put your Black business on the map</p>'+
+      '<label class="mn__label" for="mnBizName">Business name</label><input class="mn__input" id="mnBizName" maxlength="120" required>'+
+      '<label class="mn__label" for="mnBizArea">Town or city, state</label><input class="mn__input" id="mnBizArea" maxlength="120" placeholder="Hartford, CT" required>'+
+      '<label class="mn__label" for="mnBizCountry">Country code</label><input class="mn__input" id="mnBizCountry" maxlength="2" value="US" autocapitalize="characters" required>'+
+      '<label class="mn__label" for="mnBizUrl">Public link (site, Google or Yelp page)</label><input class="mn__input" id="mnBizUrl" type="url" maxlength="500" placeholder="https://…" required>'+
+      '<label class="mn__check" for="mnBizExact"><input id="mnBizExact" type="checkbox"><span><b>Show the exact address</b>Off: the pin sits about 11 km from it, at town level.</span></label>'+
+      '<input class="mn__input" id="mnBizStreet" maxlength="200" placeholder="Street address (only with an exact pin)" hidden>'+
+      '<label class="mn__check" for="mnBizOwned"><input id="mnBizOwned" type="checkbox" required><span><b>This business is Black-owned</b>and I own it or may list it.</span></label>'+
+      '<label class="mn__check" for="mnBizConsent"><input id="mnBizConsent" type="checkbox" required><span><b>Show it on the World</b>Its name, town and link, after review. You can withdraw it any time.</span></label>'+
+      '<button class="mn__primary" type="submit">Send for review</button><p class="mn__status" id="mnBizStatus" role="status"></p>';
+    var exact=f.querySelector("#mnBizExact"),street=f.querySelector("#mnBizStreet");
+    exact.addEventListener("change",function(){street.hidden=!exact.checked;street.required=exact.checked;});
+    f.addEventListener("submit",function(ev){
+      ev.preventDefault();var st=f.querySelector("#mnBizStatus");
+      if(!sessionToken()){setStatus(st,"Sign in to list your business.","error");return;}
+      var btn=f.querySelector("button[type=submit]");btn.disabled=true;
+      sbRpc("submit_action_business_listing",{
+        p_business_name:f.querySelector("#mnBizName").value,p_area_label:f.querySelector("#mnBizArea").value,
+        p_country_code:f.querySelector("#mnBizCountry").value.toUpperCase(),p_public_url:f.querySelector("#mnBizUrl").value,
+        p_street_address:exact.checked?street.value:null,p_exact_location_opt_in:exact.checked,
+        p_attest_black_owned:f.querySelector("#mnBizOwned").checked,p_attest_authorized:f.querySelector("#mnBizOwned").checked,
+        p_consent_public_listing:f.querySelector("#mnBizConsent").checked,p_consent_version:BUSINESS_CONSENT_VERSION
+      }).then(function(){f.reset();street.hidden=true;setStatus(st,"Sent. A reviewer checks it before it goes on the map.","ok");track("business_listing_submitted",{});})
+        .catch(function(e){setStatus(st,e.message||"Could not send that.","error");})
+        .then(function(){btn.disabled=false;});
+    });
+    if(focus)setTimeout(function(){var n=f.querySelector("#mnBizName");if(n){f.scrollIntoView({block:"start"});n.focus();}},60);
+    return f;
+  }
   function openMission(id){
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
@@ -2772,7 +2818,7 @@
       if(m.id==="368fd75a-77d2-4de0-9722-17020674a914"){
         $("mnMissionDetail").innerHTML+='<p><a class="mn__primary" href="/mnet.html?view=missions#mnRecord">Policy team application → Action Record</a></p>';
       }
-      if(m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"||m.id==="ba66d4a3-cb62-4403-9b56-7ee00af059d8"){
+      if(m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"||m.id==="ba66d4a3-cb62-4403-9b56-7ee00af059d8"||m.id==="d7fc0ca4-1e9a-58c7-b6ca-11e04617fb7c"){
         var category=m.id==="49d654e1-dfc8-42aa-a26e-22912ebf8dc6"?"recycling":"black_business";
         var sources=document.createElement("section");sources.className="mn__resource-sources";sources.textContent="Loading official directories…";
         $("mnMissionDetail").appendChild(sources);
@@ -2783,6 +2829,9 @@
               '<p class="mn__hint">External directories only. In-app directions require licensed, verified individual places.</p>';
           }).catch(function(){sources.textContent="Directories unavailable. Try again later.";});
       }
+      var mx=missions.extras&&missions.extras[m.id]||{};
+      if(mx.cta_key==="business_listing")$("mnMissionDetail").appendChild(businessListingForm(missions.focus==="business"));
+      missions.focus="";
       fundState(m.id,m.campaign_id||"").then(function(st){var line=$("mnMissionFund");if(line&&missions.current&&missions.current.id===m.id)line.innerHTML=fundLineHtml(st);});
       var open=m.status==="open";
       $("mnMissionJoin").hidden=!open;$("mnMissionProof").hidden=true;
@@ -2869,7 +2918,7 @@
   }
   (function wireMissions(){
     var host=$("mnMissionList");if(!host)return;
-    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}openMission(id);}}
+    function onOpen(ev){var b=ev.target.closest&&ev.target.closest("[data-open-mission]");if(b){var id=b.getAttribute("data-open-mission");missions.focus=b.getAttribute("data-focus")||"";if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}openMission(id);}}
     host.addEventListener("click",onOpen);
     if($("mnRecord")){
       $("mnRecord").addEventListener("click",function(ev){
