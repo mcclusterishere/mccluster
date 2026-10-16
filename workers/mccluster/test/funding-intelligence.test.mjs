@@ -82,5 +82,7 @@ test('provider failure reports unavailable instead of claiming zero opportunitie
 test('mutating funding API and unrelated paths fail closed',async()=>{
   const r=await handleFundingIntelligence(req('/catalog','POST'),ENV,{read});
   assert.equal(r.status,405);
-  assert.equal(await handleFundingIntelligence(req('/not-here'),ENV,{read}),null);
+  const unknown = await handleFundingIntelligence(req('/not-here'),ENV,{read});
+  assert.equal(unknown.status,404);
+  assert.equal(await handleFundingIntelligence(new Request('https://api.mccluster.org/v1/other'),ENV,{read}),null);
 });
