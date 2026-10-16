@@ -234,7 +234,7 @@ test('the ingest is off until WORLD_NEWS_INGEST_ENABLED is "true": no GDELT requ
 test("every fetch is one workerd accepts, and a redirect is followed only between GDELT's two hosts", async () => {
   const z = zip(gkg() + '\n');
   const w = world();
-  const report = await ingestGdeltNews(ENV, { fetchImpl: workersFetch(w.fetchImpl), scheduledTime: Date.UTC(2026, 9, 15, 22, 10) });
+  const report = await ingestGdeltNews(ENV, { fetchImpl: workersFetch(w.fetchImpl), scheduledTime: Date.UTC(2026, 9, 15, 23, 1) });
   assert.equal(report.files.filter((f) => f.ingested).length, 2, 'the whole tick runs under workerd fetch rules');
   const moved = async (url) => (String(url).startsWith(GDELT_HOSTS[0]) ? new Response('', { status: 302, headers: { location: GDELT_HOSTS[1] + '20261015220000.gkg.csv.zip' } }) : new Response(z));
   assert.equal((await downloadGkg('20261015220000.gkg.csv.zip', z.byteLength, workersFetch(moved))).byteLength, z.byteLength, 'GDELT to its mirror is followed');
