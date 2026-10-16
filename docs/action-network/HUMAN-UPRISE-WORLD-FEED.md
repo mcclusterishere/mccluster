@@ -536,9 +536,9 @@ metadata only (title, link, publisher, time, the place an article mentions),
 every headline links out, and no article text or publisher image is shown.
 
 **Ingest** (`workers/mccluster/src/world-news.js`, the Worker's five-minute
-cron, off until `WORLD_NEWS_INGEST_ENABLED` is `"true"` in
-`workers/mccluster/wrangler.toml`; it stays `"false"` until the SQL below is
-applied, and while it is off the cron makes no request at all). GDELT tells
+cron, on while `WORLD_NEWS_INGEST_ENABLED` is `"true"` in
+`workers/mccluster/wrangler.toml`, which it is since the SQL below was
+applied; set to `"false"`, the cron makes no request at all). GDELT tells
 heavy users to read its 15-minute Global Knowledge Graph files rather than
 search, and those carry each article's places with coordinates.
 
@@ -578,8 +578,9 @@ time and id), read as the service role from our tables only, kept a minute
 per data centre, GDELT credited in every answer, and 200 with nothing
 (`unavailable: true`) when the database cannot.
 
-**The database change** (`supabase/pending/world_gdelt_gkg_news_v1.sql`,
-pending): six columns on `media_news_articles` (the file, the place's type
+**The database change**
+(`supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql`, applied
+2026-10-16): six columns on `media_news_articles` (the file, the place's type
 and FIPS country, tone, the sharing image, kept for later and not shown,
 and the story key that finds a syndicated copy), a feed index and a story
 index, `media_gdelt_files` (the GKG counterpart of #432's
@@ -587,9 +588,7 @@ index, `media_gdelt_files` (the GKG counterpart of #432's
 ingest, the news page, the places for the globe layer to come, prune). The
 headline-country trigger cleared every row's location before it looked at
 the title; GKG rows now keep their own. Nothing is granted to `anon` or
-`authenticated`: the World reads news only through the Worker. To turn the
-news on: promote the file with the steps in `supabase/pending/README.md`,
-then set `WORLD_NEWS_INGEST_ENABLED = "true"`.
+`authenticated`: the World reads news only through the Worker.
 
 **In the feed** (`js/mnet.js`). The World feed reads the news beside the
 posts, for a guest and a member alike, as a bare public GET with no session:
@@ -606,8 +605,8 @@ card with a place has "On the Earth", which turns the globe to it
 Project", linked, sits over the feed whenever a news card is shown: that is
 GDELT's condition. A mission picked on the Earth narrows the feed to its
 posts and the news steps aside; search matches headlines, publishers and
-places. A news read that fails, or answers `unavailable` while the SQL is
-pending, leaves the posts as they were.
+places. A news read that fails, or answers `unavailable`, leaves the posts
+as they were.
 
 **On the Earth, later.** The globe's News layer (the places in the last
 day's news, counted) joins `world-layers.js` and #442's layer access map
@@ -618,7 +617,7 @@ members-only on the globe would be a display rule, not a data one.
 Verified by `workers/mccluster/test/world-news.test.mjs` (20, including the
 off switch and a whole tick under workerd's fetch rules),
 `scripts/test/world-news-feed.test.mjs`, `scripts/test-world-news-db.sh`
-(#432's five migrations and the pending file, applied twice to a scratch
+(#432's five migrations and 20261016151123, applied twice to a scratch
 Postgres 16: #432's headline rule still pins its own rows on both tables,
 GKG rows keep their place and FIPS country with no topic, one copy of a
 syndicated story, claims and release, the cursor reaching every row once,

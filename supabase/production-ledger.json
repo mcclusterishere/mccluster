@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 309,
-  "latest_version": "20261016031123",
-  "latest_name": "anon_policy_scope_v1",
-  "ledger_sha256": "eedaccd85fb1d36cf43bbfee0cc4257c71b71dd2688ff5214de4702c83124245",
+  "migration_count": 311,
+  "latest_version": "20261016151123",
+  "latest_name": "world_gdelt_gkg_news_v1",
+  "ledger_sha256": "67232dfc2b21a1db0e82d5749300de87ae61d691ada171f8edabc4b0f951d45a",
   "migrations": [
     {
       "version": "0001",
@@ -1240,8 +1240,16 @@
       "name": "antisocial_action_record_civic_scope"
     },
     {
+      "version": "20261016020407",
+      "name": "action_partner_opportunity_drafts_v1"
+    },
+    {
       "version": "20261016031123",
       "name": "anon_policy_scope_v1"
+    },
+    {
+      "version": "20261016151123",
+      "name": "world_gdelt_gkg_news_v1"
     }
   ]
 }

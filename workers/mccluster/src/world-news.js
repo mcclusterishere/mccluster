@@ -13,8 +13,8 @@
    beside #432's 'gdelt_doc_v2' and changes nothing of #432's.
 
    INGEST (the five-minute cron, ingestGdeltNews; off until
-   WORLD_NEWS_INGEST_ENABLED is "true", and the SQL in
-   supabase/pending/world_gdelt_gkg_news_v1.sql is applied). GDELT publishes a
+   WORLD_NEWS_INGEST_ENABLED is "true"; its SQL is
+   supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql). GDELT publishes a
    Global Knowledge Graph file every 15 minutes: about 1,000-1,700 English web
    articles, each with its page title and the places it mentions, with
    coordinates. Each tick reads lastupdate.txt, then takes at most two files
