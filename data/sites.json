@@ -73,7 +73,7 @@
       "slug": "shiloh",
       "name": "Shiloh Baptist Church",
       "kind": "The app",
-      "line": "An installable church app: service times, a prayer wall, events with RSVPs, giving, and a live stream.",
+      "line": "Service times, prayer wall, RSVPs, giving, live stream.",
       "url": "demos/shiloh/index.html"
     },
     {
@@ -81,7 +81,7 @@
       "slug": "yohana",
       "name": "Yohana Robertson",
       "kind": "The lead engine",
-      "line": "A Bridgeport real estate agent with no listings yet, so the site is built to win them: rental enquiries, landlords and prospective sellers captured and followed up, with the listings shelf dark until there is something to put on it.",
+      "line": "Rental enquiries, landlords and sellers captured and followed up.",
       "url": "https://mcclusterishere.github.io/Yohana-The-Realtor/"
     }
   ],
