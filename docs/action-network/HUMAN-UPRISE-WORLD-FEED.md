@@ -502,6 +502,134 @@ that answers late, with no buildings on the flat fallback; the World page's
 frame and its credits panel), with stand-ins for ion's tile hosts. The other World e2e fakes
 answer the status with ion off.
 
+### World news from GDELT, ingested by us (owner, 2026-10-15)
+
+"GDELT news as the feed ... And our shit is sprinkled into that. At a ratio
+to like one news shit from them. But like, we gotta ingest it so it's still
+from us." Then: "I want you to ingest the GDELT immediately ... we need a
+database change."
+
+**Whose store, and which news path is live.** ChatGPT built the news store
+in #432: `media_news_articles`, `media_news_sources`, `media_ingestion_runs`
+and the headline-country trigger (`20261014023548` and the migrations before
+it), the `public-gdelt-news` Edge Function, which reads GDELT's DOC 2.0
+search API by topic, and `world-news.html` with `js/world-news.js`, which
+read the anon view `media_public_world_feed`. That path has never held a
+row: it has had no authenticated scheduler since `75937783`, and the DOC API
+answers 429 by source IP (`docs/control-plane/SEEK-FIRST-CLOUDFLARE-HANDOFF.md`).
+The World's news fills the same store from GDELT's GKG files instead, as rows
+marked `ingestion_provider = 'gdelt_gkg_v2'` beside #432's `gdelt_doc_v2`,
+and changes nothing of #432's except one guard line in the trigger. The two
+paths do not see each other's rows: `/v1/world/news` reads only GKG rows,
+and `world-news.html`, the view and `media_public_cached_news` read only DOC
+rows, so they stay empty. Retiring them, or pointing `world-news.html` at
+`/v1/world/news`, is the owner's call. The Candidate Labs importer
+(`media_outlets`, `media_articles`, clusters, assessments;
+`CANDIDATE-LABS-NEWS-TRANSPARENCY.md`) is a different thing and stays
+pending.
+
+**What GDELT is and allows.** The GDELT Project indexes the world's online
+news. Its terms allow unlimited commercial use and rehosting of its data,
+with one condition: every use cites GDELT and links to
+https://www.gdeltproject.org/. The articles stay their publishers': we keep
+metadata only (title, link, publisher, time, the place an article mentions),
+every headline links out, and no article text or publisher image is shown.
+
+**Ingest** (`workers/mccluster/src/world-news.js`, the Worker's five-minute
+cron, off until `WORLD_NEWS_INGEST_ENABLED` is `"true"` in
+`workers/mccluster/wrangler.toml`; it stays `"false"` until the SQL below is
+applied, and while it is off the cron makes no request at all). GDELT tells
+heavy users to read its 15-minute Global Knowledge Graph files rather than
+search, and those carry each article's places with coordinates.
+
+- Each tick reads `lastupdate.txt` and takes at most two files it has not
+  read (the newest, then the hour before it, so a gap fills itself), each
+  claimed in `media_gdelt_files` so it is read once. GDELT's own host
+  answers 404 for its newest files for up to an hour; the file then comes
+  from GDELT's Cloud Storage mirror. Redirects follow `lib/safe-fetch.js`,
+  only between those two hosts. A failed file is released for the next
+  tick; at most three are tried a tick.
+- The file is inflated as a stream: about 0.2 to 0.5 s of CPU and 11 MB of
+  memory a file (the Worker allows 30 s and 128 MB). A kept field is copied
+  out of its record, because V8 keeps a whole multi-kilobyte record alive
+  behind a slice of it; without the copy a file held about 60 MB.
+- Screened: web articles only, untranslated, a real headline, English, no
+  press-release wires, stock-ticker mills or digests, nothing graphic (an
+  always-out set of GDELT themes, plus violent themes only when the headline
+  is graphic too), at most 72 hours old, one copy of a syndicated story (the
+  same headline from another station, in the same file or within 72 hours
+  of one already kept), three per publisher, about 100 a file, cities before
+  states before countries. On real files 1,100 to 1,700 rows give 100, every
+  one with a place.
+- One place per article: the place it mentions most, narrowed to the city
+  it mentions most inside that country or state. That is where an article
+  mentions a place, never a verified event location. A country's name is
+  often an adjective in GDELT ("Australian"), so a country keeps its
+  centroid but no label. Its country code is GDELT's FIPS 10-4 (`UK`, `GM`,
+  `AS`), stored as `location_country_fips`, not ISO 3166.
+- Written through `media_ingest_gdelt_gkg` as the service role; a week is
+  kept (`media_news_prune`, hourly). `topic_keys` stays `{}` on these rows:
+  #432's `media_public_cached_news` is granted to anon and keyed on it, so a
+  tagged row would be published to anon.
+
+**Serve.** `GET /v1/world/news?limit=20&before=` is the news stream, newest
+first, with an opaque cursor (a whole file shares one time, so the cursor is
+time and id), read as the service role from our tables only, kept a minute
+per data centre, GDELT credited in every answer, and 200 with nothing
+(`unavailable: true`) when the database cannot.
+
+**The database change** (`supabase/pending/world_gdelt_gkg_news_v1.sql`,
+pending): six columns on `media_news_articles` (the file, the place's type
+and FIPS country, tone, the sharing image, kept for later and not shown,
+and the story key that finds a syndicated copy), a feed index and a story
+index, `media_gdelt_files` (the GKG counterpart of #432's
+`media_gdelt_state`), and six service-role functions (claim, release,
+ingest, the news page, the places for the globe layer to come, prune). The
+headline-country trigger cleared every row's location before it looked at
+the title; GKG rows now keep their own. Nothing is granted to `anon` or
+`authenticated`: the World reads news only through the Worker. To turn the
+news on: promote the file with the steps in `supabase/pending/README.md`,
+then set `WORLD_NEWS_INGEST_ENABLED = "true"`.
+
+**In the feed** (`js/mnet.js`). The World feed reads the news beside the
+posts, for a guest and a member alike, as a bare public GET with no session:
+news is free for everyone. A pinned post comes first, then one member post
+to one news item (`FEED_NEWS_PER_POST = 1`, the owner's ratio; ChatGPT's
+issue #418 asked for a clipping-first feed, and the owner's later words set
+this ratio, kept as one constant so it can be retuned); when one runs out
+the other carries on, and Load more pages whichever has more. A news card
+wears the World's card (`data-news-id`, never `data-post-id`): the
+publisher, how long ago, the place it mentions, and the headline out to the
+publisher in a new tab. Words only: no pictures and no publisher marks. A
+card with a place has "On the Earth", which turns the globe to it
+(`hu:focus-place`, checked again in the frame). "World news from The GDELT
+Project", linked, sits over the feed whenever a news card is shown: that is
+GDELT's condition. A mission picked on the Earth narrows the feed to its
+posts and the news steps aside; search matches headlines, publishers and
+places. A news read that fails, or answers `unavailable` while the SQL is
+pending, leaves the posts as they were.
+
+**On the Earth, later.** The globe's News layer (the places in the last
+day's news, counted) joins `world-layers.js` and #442's layer access map
+once #442 lands. Whether it is free like Flights or for members is the
+owner's call; since `/v1/world/news` already carries every item's place,
+members-only on the globe would be a display rule, not a data one.
+
+Verified by `workers/mccluster/test/world-news.test.mjs` (20, including the
+off switch and a whole tick under workerd's fetch rules),
+`scripts/test/world-news-feed.test.mjs`, `scripts/test-world-news-db.sh`
+(#432's five migrations and the pending file, applied twice to a scratch
+Postgres 16: #432's headline rule still pins its own rows on both tables,
+GKG rows keep their place and FIPS country with no topic, one copy of a
+syndicated story, claims and release, the cursor reaching every row once,
+prune touching GKG rows only, nothing reachable by anon or authenticated,
+and anon's `media_public_cached_news` still seeing only DOC rows), a real
+GDELT file parsed and written through the real function (100 of 100 saved,
+all with coordinates), and the World's e2e (`scripts/e2e/world-screen.e2e.mjs`:
+the one-for-one interleave for a guest and a member, the credit, the
+link-outs, "On the Earth", Load more on both streams, a failing news read
+leaving the posts intact, and 390 px with no sideways scroll).
+
 ### The data layers: flights for everyone, satellites and launches for members (owner, 2026-10-15)
 
 "Let's populate it with shit, man. Let's get it interesting." Three toggles
@@ -511,8 +639,17 @@ Hitman's Halo already uses, served by the one Worker
 cached so a provider sees one request per window however many people look,
 and credited on the imagery line while it is on:
 
-- **Flights**, for everyone: OpenSky's snapshot of aircraft in the air (up to
-  five thousand points, ten-minute window). While it is on, the line over the
+- **Flights**, for everyone: aircraft in the air (up to five thousand points,
+  ten-minute window) from a provider chain (2026-10-16, after anonymous
+  OpenSky timed out from Cloudflare's egress and left the layer
+  "unavailable"): OpenSky only when the research credentials are set on the
+  Worker, otherwise or on failure adsb.lol (ODbL 1.0). adsb.lol answers a
+  point and a 250 nm radius, so the World shows a **sample** around eight
+  fixed busy airspaces (New York, Chicago, Los Angeles, London, Frankfurt,
+  Dubai, Singapore, Tokyo), deduplicated, with LADD/PIA privacy-flagged
+  airframes withheld; the response's `coverage` says so and `providers`
+  reports every attempt. The credit on the imagery line names whichever
+  provider answered. While it is on, the line over the
   Earth counts them and carries the owner's one lead, "Fly Vaunt →" (owner:
   "make it simple and shorter"), the same referral link the front page's VR
   wall carries (`https://vauntapi.flyvaunt.com/referral/nuao1K`).
@@ -529,7 +666,10 @@ reason, sending nothing. A provider that is down gives the last good answer,
 marked stale, then an honest "unavailable". Licences, for the owner: OpenSky
 is non-commercial research data and a live product can need their written
 agreement (the seek-first research credentials, when set on the Worker, raise
-the budget); CelesTrak asks for citation; The Space Devs allow use with
+the budget); adsb.lol is ODbL 1.0 (credit; share-alike for a derived
+database), free today, says a feeder API key will be required in future and
+asks production users to contact them; airplanes.live is not used (its API
+guide lists non-commercial use); CelesTrak asks for citation; The Space Devs allow use with
 credit. Proof: `workers/mccluster/test/world-layers.test.mjs`,
 `scripts/test/world-first-and-layers.test.mjs`, and the browser run below.
 

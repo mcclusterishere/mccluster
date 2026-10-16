@@ -32,6 +32,7 @@ const INQUIRY = /^inq_[A-Za-z0-9]{6,64}$/;
 const EVENT = /^evt_[A-Za-z0-9]{6,64}$/;
 const STATUSES = new Set(['created', 'pending', 'completed', 'expired', 'failed', 'needs_review', 'approved', 'declined']);
 const encoder = new TextEncoder();
+export const PERSONA_LEVELS = new Set(['v2_halo_full', 'profile_edit']);
 
 function noStore(response) { response.headers.set('cache-control', 'no-store'); return response; }
 
@@ -140,7 +141,8 @@ async function createInquiry(request, env) {
   if (!UUID.test(submissionId)) return fail(request, env, 'submission_id is required', 400);
   const sub = await rpc(env, 'identity_submission_for_persona', { p_user: user.id, p_submission_id: submissionId });
   if (!sub) return fail(request, env, 'Submission not found', 404);
-  if (sub.level !== 'v2_halo_full') return fail(request, env, 'Only a full-access request uses the ID check', 409);
+  /* V2 full access and a profile edit request (supabase/pending/20261016010000_profile_edit_gate_v1.sql) use the ID check */
+  if (!PERSONA_LEVELS.has(sub.level)) return fail(request, env, 'Only a full-access or profile edit request uses the ID check', 409);
   if (sub.status !== 'submitted') return fail(request, env, 'Send your live video first', 409, { code: 'VIDEO_FIRST' });
   if (sub.persona_inquiry_id) return noStore(reply(request, env, { inquiry_id: sub.persona_inquiry_id, status: sub.persona_status, existing: true }));
 
