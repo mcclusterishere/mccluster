@@ -1,0 +1,122 @@
+/* Approved owner overview: geography is a reference, the analytics have the room.
+   All rules are scoped to Analytics; the shared bottom bar is unchanged. */
+.cra-app.cra-split{display:block;height:auto;min-height:0;max-width:1500px;margin:auto}
+.cra-lead-col{display:block;min-width:0;border:0}
+.cra-top{padding:16px 16px 12px}
+.cra-top__title{font-size:clamp(32px,5vw,48px);line-height:1.08}
+.cra-top__controls{margin-top:12px}
+.cra-top__eyebrow{font-size:15px}
+.cu-geography{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin:0 12px 12px;border:1px solid var(--k-line);border-radius:16px;background:#0d0d0f;overflow:hidden;min-width:0}
+.cra-app .cra-stage{height:clamp(240px,30svh,380px);min-height:0;border:0;background:transparent}
+.cra-app .cra-globe__host{inset:0 0 72px}
+.cra-app .cra-globe__host::before,.cra-app .cra-globe__host::after{display:none}
+.cra-app .cra-pill{bottom:43px;max-width:calc(100% - 12px);width:calc(100% - 12px)}
+.cra-app .cra-pill__filters{padding:0 6px;font-size:11px;gap:3px;min-height:36px}
+.cra-app .cra-pill__filters svg{width:14px;height:14px}
+.cra-app .cra-pill__select{width:100%;max-width:none;padding:0 22px 0 6px;background-position:right 4px center;background-size:12px;min-height:36px}
+.cra-app .cra-pill__country{flex:1}
+.cra-app .cra-summary{bottom:20px;font-size:9px;line-height:1.2;left:6px;right:6px}
+.cra-app .cra-globe__caption{font-size:8px;bottom:3px;line-height:1.15;left:5px;right:5px}
+.cra-app .cra-sheet{position:fixed;inset:auto 12px calc(var(--appbar-h,64px) + 24px);max-height:65svh;z-index:50}
+.cu-geo-summary{min-width:0;padding:14px 10px 12px 4px;align-self:center}
+.cu-geo-summary h2{font:400 19px/1.1 var(--k-serif);margin:0 0 6px}
+.cu-geo-summary small{font-size:10px;color:var(--k-dim)}
+.cu-georows{display:grid;gap:6px;margin:10px 0}
+.cu-georows button{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px;background:transparent;border:0;color:var(--k-text);padding:6px 0 7px;text-align:left;font:12px/1.25 var(--ui,system-ui);cursor:pointer;min-width:0}
+.cu-georows button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cu-georows button i{position:absolute;left:0;bottom:0;height:2px;background:#e5383b;border-radius:2px}
+.cu-georows button[aria-pressed=true]{color:#ff7578}
+.cra-app .cra-side{padding:0 12px 28px;overflow:visible;display:block}
+.cu-overview{display:block}
+.cu-overview .cra-h{font-size:26px;margin:20px 0 8px}
+.cu-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.cu-fact{min-width:0;display:grid;gap:4px;align-content:start}
+.cu-metrics>.cu-fact{padding:12px;border:1px solid var(--k-line);border-radius:14px;background:#101012}
+.cu-fact>span{font-size:12px;color:#c6c6ca}
+.cu-fact>strong{font:400 32px/1.1 var(--k-serif);letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cu-fact>small,.cu-note{font-size:11px;line-height:1.4;color:#99999f}
+.cu-note{margin:6px 0 10px}
+.cu-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:10px}
+.cu-card{min-width:0;border:1px solid var(--k-line);border-radius:14px;background:#101012;padding:14px;color:#eeeef0;margin-bottom:10px}
+.cu-grid>.cu-card{margin:0}
+.cu-card h2{font:400 25px/1.1 var(--k-serif);margin:0;letter-spacing:-.015em}
+.cu-card h3{font-size:16px;font-weight:500}
+.cu-card p{font-size:12px;line-height:1.5;color:#aaaab1}
+.cu-card button,.cu-card a{font:400 12px/1.25 var(--ui,system-ui);color:#eeeef0;text-decoration:none;cursor:pointer}
+.cu-card button,.cu-actions a{min-height:40px;background:transparent;border:1px solid #333338;border-radius:9px;padding:8px 12px}
+.cu-card button:hover,.cu-card a:hover{color:#ff7074;border-color:#8e343c}
+.cu-card button:disabled{opacity:.5;cursor:not-allowed}
+.cu-card a{display:inline-flex;align-items:center;min-height:40px}
+.cu-card :focus-visible,.cu-georows button:focus-visible{outline:2px solid #f76168;outline-offset:3px}
+.cu-heading{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.cu-small-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.cu-small-metrics strong{font:500 22px/1.1 var(--ui,system-ui)}
+.cu-funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;border-top:1px solid #27272a;margin-top:10px;padding-top:10px}
+.cu-funnel div{display:grid;gap:6px;border-bottom:3px solid #a52d38;padding-bottom:8px}
+.cu-funnel small{font-size:10px;color:#c2c2c7}
+.cu-funnel b{font-size:18px;font-weight:500}
+.cu-rows{display:grid;gap:8px;margin:12px 0}
+.cu-rows>div{display:flex;justify-content:space-between;gap:14px;min-width:0}
+.cu-rows dt{font-size:12px;color:#aaaab1}
+.cu-rows dd{font-size:14px;margin:0;text-align:right;overflow-wrap:anywhere}
+.cu-workspace nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:12px}
+.cu-workspace nav a{border:1px solid #29292d;border-radius:8px;padding:6px 10px}
+.cu-system{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;border-top:1px solid #29292d;margin-top:10px;padding-top:4px;font-size:11px;color:#b9b9bf}
+.cu-intro{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cu-intro p{margin-bottom:0}
+.cu-warning{border-left:3px solid #df5c60;padding:10px 12px;background:#341c21;color:#f7c4c6!important}
+.cu-badge{display:inline-block;border:1px solid #61313a;color:#f7b5b8;border-radius:999px;padding:4px 10px;font-size:11px}
+.cu-search,.cu-card form label{display:grid;gap:6px;font-size:12px;color:#bdbdc4}
+.cu-card input,.cu-card textarea{width:100%;box-sizing:border-box;min-width:0;background:#09090b;border:1px solid #3a3a40;border-radius:8px;padding:10px;color:#eee;font:16px/1.4 var(--ui,system-ui)}
+.cu-source-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-height:480px;overflow:auto;padding:4px}
+.cu-source{display:grid;gap:7px;text-align:left;min-width:0}
+.cu-source b{font-size:15px;font-weight:500}
+.cu-source span{font-size:12px;line-height:1.4;color:#bbb;overflow-wrap:anywhere}
+.cu-source small{font-size:11px;color:#97979e}
+.cu-source.is-on{border-color:#df515e;background:#27191d}
+.cu-actions{display:flex;gap:8px;margin:12px 0}
+.cu-record-head{display:flex;gap:12px;align-items:center;margin-top:20px;font-size:12px;flex-wrap:wrap}
+.cu-records details{border-top:1px solid #303034;padding:10px 0}
+.cu-records summary{display:flex;gap:10px;justify-content:space-between;cursor:pointer;font-size:13px}
+.cu-records summary span{overflow-wrap:anywhere}
+.cu-records summary small{font-size:11px;color:#aaa}
+.cu-records pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:360px;overflow:auto;background:#09090b;padding:12px;border-radius:8px}
+@media(min-width:40rem){
+ .cu-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cu-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .cu-fact>strong{font-size:36px}
+ .cu-small-metrics strong{font-size:23px}
+ .cu-geography{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)}
+ .cu-geo-summary{padding:20px}
+ .cu-geo-summary h2{font-size:28px}
+ .cu-georows button{font-size:14px;padding:9px 0 10px}
+ .cra-app .cra-pill{width:auto;max-width:calc(100% - 24px)}
+ .cra-app .cra-pill__select{width:140px}
+ .cra-app .cra-pill__filters{font-size:13px;padding:0 10px}
+ .cu-workspace nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .cu-source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cra-app .cra-summary{font-size:11px}
+ .cra-app .cra-globe__caption{font-size:10px}
+}
+@media(min-width:64rem){
+ .cra-top{padding:20px 24px 12px}
+ .cu-geography{margin:0 24px 12px}
+ .cra-app .cra-side{padding:0 24px 28px}
+ .cu-card{padding:16px}
+}
+@media(min-width:40rem){
+ .cra-top__title{font-size:38px}.cra-top__eyebrow{font-size:13px}
+ .cra-app .cra-stage{height:clamp(240px,27svh,320px)}
+ .cu-geo-summary h2{font-size:24px}
+ .cu-metrics>.cu-fact{padding:10px 12px}.cu-metrics strong{font-size:32px}
+ .cu-card{padding:12px}.cu-card h2{font-size:23px}
+ .cu-card .cra-area-chart{height:88px;width:100%}
+ .cu-card button,.cu-card a{min-height:32px}
+ .cu-funnel{margin-top:6px;padding-top:6px}.cu-funnel div{gap:4px;padding-bottom:5px}
+ .cu-note{margin:5px 0 8px}
+ .cu-workspace{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 18px}
+ .cu-workspace nav{margin:0}.cu-system{grid-column:1/-1}
+ .cu-workspace nav a{font-size:11px}
+}
+
+.cu-detail>summary{padding:14px;border:1px solid var(--k-line);border-radius:10px;margin-bottom:10px;cursor:pointer;font-size:14px;color:#c8c8ce}
