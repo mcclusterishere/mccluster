@@ -71,10 +71,12 @@ Until it is applied, Creator Studio builds the same answer in the browser
 (`js/creator-onboarding.js`). Behaviour tests:
 `supabase/tests/music_creator_one_click.behaviour.sql`, run by
 `scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
-file header. Apply it together with (or after) `anon_policy_scope_v1.sql`:
-that one is what lets a signed-out visitor, and the artist pages and the
-listen.html directory, read creator profiles at all. Promote with the steps
-above.
+file header. Promote with the steps above.
+
+Promoted: `anon_policy_scope_v1.sql` is
+`supabase/migrations/20261016031123_anon_policy_scope_v1.sql` (applied
+2026-10-16). Signed-out visitors, artist pages and the listen.html directory
+read published creator profiles, tracks, offers and services again.
 
 Pending: `action_bounty_claim_existing_row_guard_v1.sql` preserves the result of
 claim-row lookup before aggregate SELECT statements overwrite PL/pgSQL FOUND.
