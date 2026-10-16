@@ -200,5 +200,6 @@ applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checkl
 Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):
 `supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql`
 records the private funding opportunities and partner mission drafts. It publishes
-no missions and enables no claims or compensation. The ledger and drift contract
-now cover all 310 production migrations.
+no missions and enables no claims or compensation. With it the ledger and drift
+contract covered all 310 production migrations then (311 since
+20261016151123).

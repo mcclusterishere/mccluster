@@ -605,8 +605,8 @@ card with a place has "On the Earth", which turns the globe to it
 Project", linked, sits over the feed whenever a news card is shown: that is
 GDELT's condition. A mission picked on the Earth narrows the feed to its
 posts and the news steps aside; search matches headlines, publishers and
-places. A news read that fails, or answers `unavailable` while the SQL is
-pending, leaves the posts as they were.
+places. A news read that fails, or answers `unavailable`, leaves the posts
+as they were.
 
 **On the Earth, later.** The globe's News layer (the places in the last
 day's news, counted) joins `world-layers.js` and #442's layer access map
@@ -617,7 +617,7 @@ members-only on the globe would be a display rule, not a data one.
 Verified by `workers/mccluster/test/world-news.test.mjs` (20, including the
 off switch and a whole tick under workerd's fetch rules),
 `scripts/test/world-news-feed.test.mjs`, `scripts/test-world-news-db.sh`
-(#432's five migrations and the pending file, applied twice to a scratch
+(#432's five migrations and 20261016151123, applied twice to a scratch
 Postgres 16: #432's headline rule still pins its own rows on both tables,
 GKG rows keep their place and FIPS country with no topic, one copy of a
 syndicated story, claims and release, the cursor reaching every row once,
