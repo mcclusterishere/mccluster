@@ -1,3 +1,4 @@
+import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 import {handleAtNight} from './at-night.js';
@@ -5,9 +6,13 @@ import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
+import { handleWorldCctv } from './world-cctv.js';
+import { handleWorldAccess } from './world-access.js';
+import { handleIntelRequest } from './intel/router.js';
+import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
-import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
+import { handleWorldNews, NEWS_PATH } from './world-news.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
@@ -141,11 +146,37 @@ export default {
         return prim3.fetch(request, env);
       }
 
+      /* the World's news from GDELT, read from our own tables (./world-news.js) */
+      if (path === NEWS_PATH) {
+        const news = await handleWorldNews(request, env);
+        if (news) return news;
+      }
+
       /* the World's data layers: flights for everyone, satellites and
          launches for members (./world-layers.js) */
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;
+      }
+
+      /* which World layers this viewer may open, by level (./world-access.js) */
+      if (path === '/v1/world/access') {
+        const access = await handleWorldAccess(request, env);
+        if (access) return access;
+      }
+
+      /* mission-gated CCTV: signed in, privacy acknowledged, a completed
+         mission; proxied from Halo server to server (./world-cctv.js) */
+      if (path.startsWith('/v1/world/cctv/')) {
+        const cctv = await handleWorldCctv(request, env);
+        if (cctv) return cctv;
+      }
+
+      /* File a public comment: open federal comment periods, read only, behind
+         PUBLIC_COMMENT_LISTING_ENABLED (./public-comment.js). Never files a comment. */
+      if (path.startsWith('/v1/public-comment/')) {
+        const comment = await handlePublicComment(request, env);
+        if (comment) return comment;
       }
 
       /* the World's Cesium ion: terrain, aerial imagery and buildings,
@@ -159,6 +190,14 @@ export default {
         const viewer = await equityUpriseRole(request, env);
         const projection = await buildEquityUpriseHaloProjection(env, { role: viewer.role });
         return reply(request, env, { ok: true, ...projection });
+      }
+
+      /* the evidence -> claim -> briefing -> decision -> mission -> outcome
+         loop (./intel/router.js, docs/control-plane/INTEL-TO-MISSION-CANON.md).
+         Owner-only except the privacy-safe /v1/intel/geo aggregate. */
+      if (path === '/v1/intel' || path.startsWith('/v1/intel/')) {
+        const intel = await handleIntelRequest(request, env, { requireHouseOwner, authUser });
+        if (intel) return intel;
       }
 
       if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {

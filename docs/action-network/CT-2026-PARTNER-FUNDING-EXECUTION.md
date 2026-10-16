@@ -2,6 +2,10 @@
 
 **Status:** INTERNAL PROPOSAL. No Connecticut Health Foundation, Faith CDC, Grassroots Fund, municipality, or grant recipient has authorized the proposed missions or promised funds. No participant earnings are advertised.
 
+## Release reconciliation — 16 October 2026
+
+The funding catalog, owner-only API and Control Create → Funding view are integrated with the current three-workspace shell. The production migration and current ledger remain unchanged. The older proposed public office pin and Navigate WIP controls below are deferred to the current transportation branch; this release does not replace the newer public globe. External search is on demand with bounded responses, and unknown award amounts remain unknown. Private catalog state is cleared on authentication changes.
+
 ## Outcomes-first rule
 
 Every mission proposal names (1) the **actual funder or grant program**, (2) the **eligible lead or awardee**, (3) an allowable work package, (4) the funder's measurable output, (5) privacy-preserving proof, (6) partner signoff, and (7) the approved expenditure line from which compensation may be paid. If any of these are unknown, the mission remains private draft.

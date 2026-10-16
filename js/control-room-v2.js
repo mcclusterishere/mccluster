@@ -2383,9 +2383,15 @@
     else if (state.surface === "ai") root.innerHTML = renderAi();
     else if (state.surface === "work") root.innerHTML = renderWork();
     else if (state.surface === "create") root.innerHTML = renderCreate();
-    else if (state.surface === "analytics") root.innerHTML = renderAnalytics();
+    /* Analytics keeps its mount between Control Room repaints: it owns its own
+       paint, and its globe frame (the 60/40 layout) would reload the Earth on
+       every unrelated state change if the mount were rebuilt. */
+    else if (state.surface === "analytics") { if (!(root.getAttribute("data-cr-surface") === "analytics" && $("crAnalyticsMount"))) root.innerHTML = renderAnalytics(); }
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
+    root.setAttribute("data-cr-surface", state.surface);
+    /* the page knows its surface: Analytics runs full-bleed on a phone (css/control-analytics.css) */
+    document.body.setAttribute("data-cr-surface", state.surface);
     bindSurfaceControls();
     if (state.surface === "analytics" && window.CR.analytics) {
       var analyticsHost = $("crAnalyticsMount");

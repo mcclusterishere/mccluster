@@ -68,7 +68,7 @@ test('the review\'s fixes hold: night lights give way, buildings wait for real g
   assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!\(p&&ion\);/);
   assert.match(js, /if\(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF\*2\)/, 'OSM Buildings only on Cesium World Terrain');
   assert.match(js, /box\.addEventListener\('click',e=>\{if\(!\(e\.target\.closest&&e\.target\.closest\('a\[href\]'\)\)\)viewer\.creditDisplay\.hideLightbox\(\)\}\)/, 'a phone\'s credits panel closes on any tap');
-  assert.match(js, /wireDataLayers\(\);const ionP=ionStatus\(\),dataP=Promise\.all\(\[rpc\('action_globe_public_region_missions'\),rpc\('action_globe_public_regions'\)\]\);/, 'the layout and the mission data start before the ion status answers');
+  assert.match(js, /wireDataLayers\(\);const ionP=ionStatus\(\),dataP=Promise\.all\(\[rpc\('action_globe_public_region_missions'\)(?:\.then\(groupPins\))?,rpc\('action_globe_public_regions'\)\]\);/, 'the layout and the mission data start before the ion status answers');
   assert.match(js, /\[missions,cities\]=await dataP;/);
   assert.doesNotMatch(js, /function wireControls\(\)\{const on=\(id,f\)=>\{const b=\$\(id\);if\(b\)b\.onclick=f\};wireDataLayers\(\);/, 'wired once');
 });

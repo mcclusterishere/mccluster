@@ -75,7 +75,7 @@ test('the page writes the layers\' line over the Earth, and Flights carries the 
   assert.equal((await read('index.html')).includes('https://vauntapi.flyvaunt.com/referral/nuao1K'), true, 'the same link, not a new one');
   assert.match(js, /aircraft in the air right now/);
   assert.match(js, /<a class="mn__world-lead" href="' \+ VAUNT_LEAD \+ '" target="_blank" rel="noopener sponsored">Fly Vaunt \\u2192<\/a>/, 'simple and shorter (owner, 2026-10-15)');
-  assert.match(js, /satellites overhead, moving live/);
+  assert.match(js, /satellites · calculated positions/);
   assert.match(js, /launches coming up/);
   assert.match(js, /d\.type === "hu:ask-sign-in"/); assert.match(js, /d\.type === "hu:layer" && typeof d\.layer === "string"/);
   assert.match(js, /layers:"Sign in to see satellites and space missions on the Earth\."/);
@@ -139,7 +139,7 @@ test('Full world is a full pane: the Earth edge to edge, the World\'s chrome at 
   assert.match(js, /const VAUNT_LEAD='https:\/\/vauntapi\.flyvaunt\.com\/referral\/nuao1K'/);
   assert.match(js, /' aircraft in the air right now'\+\(f\.stale\?' \(last snapshot\)':''\)\+'\.<\/span> <a class="explore-lead" href="'\+VAUNT_LEAD\+'" target="_blank" rel="noopener sponsored">Fly Vaunt \\u2192<\/a>'/, 'the World\'s own words, and the lead reads Fly Vaunt');
   assert.match(js, /if\(d\.type==='hu:ask-sign-in'\)\{box\.innerHTML='<span>Sign in to see satellites and space missions on the Earth\.<\/span> <a class="explore-lead" href="account\.html\?stay=1">Sign in \\u2192<\/a>';box\.hidden=false;return\}/);
-  assert.match(js, /barH=bar\?Math\.max\(0,Math\.ceil\(innerHeight-bar\.getBoundingClientRect\(\)\.top\)\):0;document\.documentElement\.style\.setProperty\('--hu-bar-h',barH\+'px'\);document\.documentElement\.style\.setProperty\('--hu-sheet-h',px\(deck\)\+'px'\)/, 'the bar (where its top is) and the sheet are measured so nothing stands under anything a hand needs');
+  assert.match(js, /barH=bar&&bar\.offsetHeight\?Math\.max\(0,Math\.ceil\(innerHeight-bar\.getBoundingClientRect\(\)\.top\)\):0;document\.documentElement\.style\.setProperty\('--hu-bar-h',barH\+'px'\);document\.documentElement\.style\.setProperty\('--hu-sheet-h',px\(deck\)\+'px'\)/, 'the bar (where its top is) and the sheet are measured so nothing stands under anything a hand needs');
   assert.match(css, /\.globe-explore #globe\{position:fixed;inset:0;height:auto;z-index:0\}/);
   assert.match(css, /\.globe-explore \.world-mode,\.globe-explore \.world-tools,\.globe-explore #worldFeed,[^}]*display:none!important\}/);
   assert.match(css, /\.globe-explore #deck\{position:fixed;inset:auto 0 var\(--hu-bar-h\) 0;/, 'the mission rides in a sheet on the bar');

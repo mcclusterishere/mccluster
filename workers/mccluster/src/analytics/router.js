@@ -332,6 +332,49 @@ async function handleIdentityAnalytics(request, env, user, url) {
   return json({ok:true,...await identityAnalytics(env,url.searchParams.get('since'),url.searchParams.get('until'))});
 }
 
+/* STATES / PROVINCES inside one country, for the owner's analytics globe
+   (owner, 2026-10-16). House owner only, like identity and forensics. It
+   reads public.analytics_region_totals (supabase/pending/analytics_region_v1.sql,
+   service_role only): country, region code, region name and counts, with any
+   region under 5 page views already folded by the database. Never city,
+   postal code, coordinates or IP. Until that read is applied the route says
+   so (pending: true) and the globe shows "not collected yet". */
+const REGION_MIN_VIEWS = 5;
+async function handleRegionAnalytics(request, env, user, url) {
+  await requireHouseOwner(env, user);
+  if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
+  const country = String(url.searchParams.get('country') || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) return json({ ok: false, error: 'country must be an ISO 3166-1 alpha-2 code' }, 400);
+  const until = finiteDate(url.searchParams.get('until'), new Date());
+  const since = finiteDate(url.searchParams.get('since'), new Date(until.getTime() - 86400000));
+  if (!(since < until)) return json({ ok: false, error: 'Invalid analytics range' }, 400);
+  const siteRaw = String(url.searchParams.get('site') || '').trim();
+  if (siteRaw && !/^[0-9a-f-]{36}$/i.test(siteRaw)) return json({ ok: false, error: 'Invalid site' }, 400);
+  const res = await sb(env, 'rpc/analytics_region_totals', { method: 'POST',
+    body: JSON.stringify({ p_country: country, p_since: since.toISOString(), p_until: until.toISOString(), p_site: siteRaw || null }) });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const missing = res.status === 404 || /PGRST202|could not find the function|does not exist/i.test(JSON.stringify(body || ''));
+    if (missing) return json({ ok: true, pending: true, country, regions: [], folded: 0, unknown: 0,
+      note: 'Region counts need analytics_region_v1 (written, not applied).' });
+    return json({ ok: false, error: 'Region analytics read failed' }, 502);
+  }
+  const rows = Array.isArray(body) ? body : [];
+  const regions = [];
+  let folded = 0, unknown = 0;
+  for (const r of rows) {
+    const pv = Number(r.page_views) || 0;
+    const code = /^[A-Z0-9]{1,4}$/.test(String(r.region_code || '')) ? String(r.region_code) : null;
+    const name = r.region ? String(r.region).slice(0, 80) : null;
+    if (r.folded) { folded += pv; continue; }
+    if (!code && !name) { unknown += pv; continue; }
+    /* the database folds; this is the second wall */
+    if (pv < REGION_MIN_VIEWS) { folded += pv; continue; }
+    regions.push({ code, name, page_views: pv, visitors: r.visitors == null ? null : Number(r.visitors) || 0 });
+  }
+  return json({ ok: true, pending: false, country, range: { since: since.toISOString(), until: until.toISOString() }, min: REGION_MIN_VIEWS, regions, folded, unknown });
+}
+
 async function handleForensics(request, env, user, url) {
   await requireHouseOwner(env, user);
   if (request.method !== 'GET') return json({ok:false,error:'GET only'},405);
@@ -1004,6 +1047,9 @@ export async function handleAnalyticsRequest(request, env, user) {
   }
   if (path === '/v1/analytics/identity') {
     return handleIdentityAnalytics(request, env, user, url);
+  }
+  if (path === '/v1/analytics/regions') {
+    return handleRegionAnalytics(request, env, user, url);
   }
   if (path === '/v1/analytics/forensics') {
     return handleForensics(request, env, user, url);

@@ -48,7 +48,7 @@ function sanitizeAward(row) {
     source: 'usaspending', award_id: text(row['Award ID'], 100),
     title, recipient: text(row['Recipient Name'], 170),
     agency: text(row['Awarding Agency'], 170),
-    obligated_amount: Number.isFinite(Number(row['Award Amount'])) ? Number(row['Award Amount']) : null,
+    obligated_amount: row['Award Amount'] !== null && row['Award Amount'] !== '' && Number.isFinite(Number(row['Award Amount'])) ? Number(row['Award Amount']) : null,
     start_date: text(row['Start Date'], 30), end_date: text(row['End Date'], 30),
     source_url: 'https://www.usaspending.gov/',
     suggested_mission_families: possibleMissionFamilies(title),
@@ -66,7 +66,14 @@ async function jsonPost(url, data, fetchImpl) {
       body: JSON.stringify(data)
     });
     if (!r.ok) throw new Error('Upstream HTTP ' + r.status);
-    const parsed = await r.json();
+    if (Number(r.headers.get('content-length') || 0) > 524288 || !r.body) throw new Error('Response too large or empty');
+    const reader = r.body.getReader(), chunks = []; let size = 0;
+    try { for (;;) { const {done, value} = await reader.read(); if (done) break;
+      size += value.byteLength; if (size > 524288) { await reader.cancel(); throw new Error('Response too large'); } chunks.push(value);
+    }} finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(size); let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const parsed = JSON.parse(new TextDecoder().decode(bytes));
     if (!parsed || typeof parsed !== 'object') throw new Error('Invalid upstream response');
     return parsed;
   } finally { clearTimeout(timeout); }

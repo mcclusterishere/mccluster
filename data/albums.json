@@ -402,15 +402,13 @@
        }
       ],
       "access_mode": "account",
-      "preview_visibility": "until_earned",
-      "full_visibility": "earned_play",
-      "listen_gate": {
-       "any_of": [
-        "you-the-feds",
-        "pull-up"
-       ],
-       "minimum_completed": 1,
-       "each_play_needs_a_fresh_listen": true
+      "preview_visibility": "until_entitled",
+      "full_visibility": "entitled_play",
+      "unlock_rule": "gated_track_niggy_nigg",
+      "requires": {
+       "verified_missions": 3,
+       "identity_verified": true,
+       "identity_purpose": "referral_signup"
       }
      }
     }

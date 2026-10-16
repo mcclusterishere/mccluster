@@ -6,29 +6,30 @@
   window.CR = window.CR || {};
   var F = { request: null, renderHost: null, catalog: null, loading: false,
     keyword: 'community health', partner: 'all', mode: 'opportunities',
-    results: null, resultsError: '', searching: false };
+    results: null, resultsError: '', searching: false, seq:0, catalogSeq:0 };
   function e(s) { return String(s == null ? '' : s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function safeUrl(s){try{var u=new URL(s);return u.protocol==='https:'?u.href:'#';}catch(_){return '#';}}
   function status(s) { return '<span class="cro-pill">'+e(s)+'</span>'; }
   function redraw() { if(F.renderHost) F.renderHost(); }
   function load() {
     if (F.loading) return;
-    F.loading = true;
+    var seq=++F.catalogSeq;F.loading = true;
     return F.request('/v1/control/funding/catalog').then(function(data){
-      F.catalog = data;
+      if(seq===F.catalogSeq)F.catalog = data;
     }).catch(function(err){
-      F.catalog = {ok:false,schema_state:'unavailable',message:err.message,opportunities:[],drafts:[]};
-    }).finally(function(){ F.loading=false;redraw(); });
+      if(seq===F.catalogSeq)F.catalog = {ok:false,schema_state:'unavailable',message:err.message,opportunities:[],drafts:[]};
+    }).finally(function(){ if(seq===F.catalogSeq){F.loading=false;redraw();} });
   }
   function search(kind) {
     if(F.searching)return;
     if (!F.keyword.trim()) { F.resultsError = 'Enter a search topic.';redraw();return; }
-    F.mode=kind;F.results=null;F.resultsError='';F.searching=true;redraw();
+    var seq=++F.seq;F.mode=kind;F.results=null;F.resultsError='';F.searching=true;redraw();
     var route=kind==='past_awards'?'awards':'search';
     F.request('/v1/control/funding/'+route+'?keyword='+encodeURIComponent(F.keyword)).then(function(data){
-      F.results=data;
+      if(seq!==F.seq)return;F.results=data;
       if(!data.ok)F.resultsError=data.message||'Official provider unavailable';
-    }).catch(function(err){ F.resultsError=err.message||'Request failed'; })
-      .finally(function(){F.searching=false;redraw();});
+    }).catch(function(err){ if(seq===F.seq)F.resultsError=err.message||'Request failed'; })
+      .finally(function(){if(seq===F.seq){F.searching=false;redraw();}});
   }
   function partnerChoices(drafts) {
     return Array.from(new Set(drafts.map(function(d){return d.presenting_to;}))).sort();
@@ -69,7 +70,7 @@
         (opportunities.length?opportunities.map(function(o){return '<article class="cro-card" style="margin-bottom:10px">'+
           '<div class="cro-item__head"><div><p class="cro-meta">'+e(o.funder_name)+'</p><h3>'+e(o.program_title)+'</h3></div>'+status(o.availability)+'</div>'+
           '<p>'+e(o.eligibility_note)+'</p>'+
-          '<a href="'+e(o.source_url)+'" target="_blank" rel="noopener noreferrer">Official source ↗</a> <span class="cro-meta">Reviewed '+e(o.reviewed_at)+'</span></article>';}).join(''):
+          '<a href="'+e(safeUrl(o.source_url))+'" target="_blank" rel="noopener noreferrer">Official source ↗</a> <span class="cro-meta">Reviewed '+e(o.reviewed_at)+'</span></article>';}).join(''):
           '<p class="cro-note">No program records loaded. A missing database migration is not an empty funding market.</p>')
       : '<form data-funding-search><label for="crFundingKeyword">Search '+(F.mode==='past_awards'?'USAspending historical federal awards':'Grants.gov currently posted or forecasted opportunities')+'</label>'+
         '<div class="cro-actions"><input class="cr-input" id="crFundingKeyword" maxlength="90" type="search" value="'+e(F.keyword)+'" placeholder="e.g. community health">'+
@@ -82,9 +83,9 @@
             '<p>'+e(v.agency||'Agency not supplied')+(v.recipient?' · Recipient: '+e(v.recipient):'')+'</p>'+
             (v.obligated_amount!==undefined&&v.obligated_amount!==null?'<p class="cro-meta">Reported award: $'+e(Number(v.obligated_amount).toLocaleString())+' (historical, not available to Action Network)</p>':'')+
             '<p class="cro-meta">Possible mission categories: '+e((v.suggested_mission_families||[]).join(', ')||'Requires manual analysis')+'</p>'+
-            '<a href="'+e(v.source_url)+'" target="_blank" rel="noopener noreferrer">Inspect source ↗</a></article>';}).join(''):
+            '<a href="'+e(safeUrl(v.source_url))+'" target="_blank" rel="noopener noreferrer">Inspect source ↗</a></article>';}).join(''):
           '<p class="cro-note">The official provider returned no matches for this search.</p>')+
-          '<a href="'+e(F.results.source_url)+'" target="_blank" rel="noopener noreferrer">API documentation ↗</a>':'')
+          '<a href="'+e(safeUrl(F.results.source_url))+'" target="_blank" rel="noopener noreferrer">API documentation ↗</a>':'')
       )+'</div>';
   }
   function briefing() {
@@ -97,7 +98,7 @@
   function bind(root) {
     if(!root||!root.querySelector('#crFundingIntelligence'))return;
     var btn=root.querySelector('[data-funding-refresh]');if(btn)btn.onclick=load;
-    root.querySelectorAll('[data-funding-view]').forEach(function(el){el.onclick=function(){F.mode=el.getAttribute('data-funding-view');F.resultsError='';redraw();};});
+    root.querySelectorAll('[data-funding-view]').forEach(function(el){el.onclick=function(){++F.seq;F.searching=false;F.results=null;F.mode=el.getAttribute('data-funding-view');F.resultsError='';redraw();};});
     var partner=root.querySelector('#crFundPartner');if(partner)partner.onchange=function(){F.partner=partner.value;redraw();};
     var input=root.querySelector('#crFundingKeyword');if(input)input.oninput=function(){F.keyword=input.value;};
     var form=root.querySelector('[data-funding-search]');if(form)form.onsubmit=function(ev){ev.preventDefault();search(F.mode);};
@@ -108,5 +109,8 @@
         .catch(function(){if(out)out.textContent='Clipboard permission denied.';});
     };
   }
+  function clearPrivate(){++F.seq;++F.catalogSeq;F.catalog=null;F.results=null;F.loading=false;F.searching=false;var node=document.getElementById('crFundingIntelligence');if(node)node.replaceChildren();}
+  window.addEventListener('mcc:auth-changed',clearPrivate);
+  window.addEventListener('storage',function(event){if(event.key==='mccdb_session')clearPrivate();});
   window.CR.fundingIntelligence={init:function(opts){F.request=opts.request;F.renderHost=opts.render;},render:render,bind:bind,load:load,state:F};
 })();

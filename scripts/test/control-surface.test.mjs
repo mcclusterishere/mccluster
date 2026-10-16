@@ -167,7 +167,8 @@ test('review regressions stay fixed in native Control tools',async()=>{
   assert.match(music,/var ai=a\.ai&&typeof a\.ai==="object"\?a\.ai:\{\}/);
   assert.doesNotMatch(music,/a\.ai_json/);
   assert.match(css,/\.cra-axis\{fill:var\(--cr-faint\);font-size:20px\}/);
-  assert.match(css,/@media \(min-width:54rem\)[\s\S]*\.cra-axis\{font-size:10px\}/);
+  /* the panel beside the 60/40 globe steps up by its own width (container query), same 54rem step */
+  assert.match(css,/@container cra \(min-width:54rem\)[\s\S]*\.cra-axis\{font-size:10px\}/);
   /* Reach vs repeat is drawn at the card's pixel width (a 720-wide drawing
      shrunk to a phone lost its numbers), so its text sizes are real sizes. */
   assert.match(css,/\.cra-reach__tick\{[^}]*font-size:11px/);

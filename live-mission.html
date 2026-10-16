@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Go live · Human Uprise</title>
+<meta name="description" content="Do the mission live, on camera, start to finish.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="css/style.css?v=__STAMP__">
+<style>
+:root{--bg:#08090c;--panel:#15161b;--line:#2b2d35;--ink:#f7f4f1;--soft:#b9b4b6;--live:#ff3b47;--ok:#63d39a;--warn:#f2c14e;--btn:#f4d4d4;--btn-ink:#201317}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif;padding-bottom:96px}
+.lm{max-width:720px;margin:0 auto;padding:16px}
+.lm h1{font-size:clamp(2rem,9vw,3.4rem);line-height:.95;letter-spacing:-.04em;margin:8px 0 6px}
+.lm__sub{color:var(--soft);margin:0 0 16px}
+.lm__stage{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;border:1px solid var(--line)}
+.lm__stage video{width:100%;height:100%;object-fit:cover;display:block}
+.lm__badge{position:absolute;top:12px;left:12px;display:none;gap:8px;align-items:center;background:var(--live);color:#fff;font-weight:800;letter-spacing:.08em;border-radius:999px;padding:6px 12px}
+.lm__badge.is-on{display:inline-flex}
+.lm__dot{width:9px;height:9px;border-radius:50%;background:#fff}
+.lm__clock{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);border-radius:999px;padding:6px 12px;font-variant-numeric:tabular-nums}
+.lm__card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0;display:grid;gap:12px}
+.lm__card h2{font-size:1.05rem;margin:0}
+.lm label{display:flex;gap:10px;align-items:flex-start;line-height:1.4}
+.lm input[type=checkbox],.lm input[type=radio]{width:22px;height:22px;flex:0 0 auto;margin:0}
+.lm select,.lm textarea{font-size:max(16px,1rem);background:#0d0e12;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+.lm__row{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.lm__btn{font:inherit;font-size:max(16px,1rem);font-weight:800;border:0;border-radius:14px;padding:15px 18px;background:var(--btn);color:var(--btn-ink);cursor:pointer;transition:transform .15s ease,opacity .15s ease}
+.lm__btn:active{transform:scale(.97)}
+.lm__btn[disabled]{opacity:.45;cursor:not-allowed}
+.lm__btn--live{background:var(--live);color:#fff}
+.lm__btn--ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.lm__status{min-height:1.4em;color:var(--soft);margin:0}
+.lm__status.is-ok{color:var(--ok)}.lm__status.is-warn{color:var(--warn)}.lm__status.is-err{color:var(--live)}
+.lm__meter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.lm__meter b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.lm__meter span{color:var(--soft);font-size:.85rem}
+[hidden]{display:none!important}
+@media (min-width:720px){.lm{padding:32px 24px}.lm__row--2{grid-template-columns:repeat(2,minmax(0,1fr))}.lm__stage{aspect-ratio:16/9}}
+@media (prefers-reduced-motion:reduce){.lm__btn{transition:none}.lm__btn:active{transform:none}}
+</style></head><body>
+<main class="lm" id="lm">
+<p class="lm__sub"><a href="mnet.html?view=missions" style="color:var(--soft)">← Missions</a></p>
+<h1 id="lmTitle">Go live.</h1>
+<p class="lm__sub" id="lmMission">Do it on camera, start to finish.</p>
+
+<div class="lm__stage"><video id="lmVideo" playsinline muted autoplay></video>
+<span class="lm__badge" id="lmBadge"><span class="lm__dot" aria-hidden="true"></span>LIVE</span>
+<span class="lm__clock" id="lmClock" hidden>0:00</span></div>
+<p class="lm__status" id="lmStatus" role="status" aria-live="polite"></p>
+
+<section class="lm__card" id="lmSetup" aria-label="Before you go live">
+  <h2>Before you go live</h2>
+  <label><input type="checkbox" id="lmAdult"> I'm 18 or older.</label>
+  <label><input type="checkbox" id="lmMinors"> No children on camera without their guardian's OK.</label>
+  <label><input type="checkbox" id="lmRules"> Public places, or people who agreed. Never a private conversation without everyone's OK.</label>
+  <div class="lm__row lm__row--2">
+    <label for="lmThird" style="display:grid;gap:6px">Anyone else on this mission?
+      <select id="lmThird">
+        <option value="none_present">Just me</option>
+        <option value="kept_off_camera">Someone I'm helping: I'll keep them off camera</option>
+        <option value="consented_on_camera">Someone who will agree on camera first</option>
+        <option value="audio_only">I'll narrate, camera pointed away</option>
+      </select></label>
+    <label for="lmGlobe" style="display:grid;gap:6px">On the globe
+      <select id="lmGlobe"><option value="city_pin">Show my city</option><option value="hidden">Don't show me</option></select></label>
+  </div>
+  <p class="lm__sub" style="margin:0">The recording goes to review. Nothing is posted unless you choose it afterwards.</p>
+  <button class="lm__btn" id="lmCamera" type="button">Allow camera</button>
+  <button class="lm__btn lm__btn--live" id="lmGo" type="button" disabled>Go live</button>
+</section>
+
+<section class="lm__card" id="lmLive" hidden aria-label="Live">
+  <div class="lm__meter"><div><b id="lmUp">0:00</b><span>on camera</span></div><div><b id="lmGaps">0</b><span>drops</span></div><div><b id="lmState">—</b><span>status</span></div></div>
+  <div class="lm__row lm__row--2" id="lmThirdLive">
+    <button class="lm__btn lm__btn--ghost" type="button" data-third="consented_on_camera">They agreed on camera</button>
+    <button class="lm__btn lm__btn--ghost" type="button" data-third="kept_off_camera">Keeping them off camera</button>
+  </div>
+  <button class="lm__btn" id="lmDone" type="button" disabled>Mission complete</button>
+  <button class="lm__btn lm__btn--ghost" id="lmEnd" type="button">End without finishing</button>
+</section>
+
+<section class="lm__card" id="lmAfter" hidden aria-label="Sent for review">
+  <h2>Sent for review.</h2>
+  <p class="lm__sub" style="margin:0">An admin watches every live run before it counts.</p>
+  <form id="lmPublish" class="lm__row">
+    <p class="lm__sub" style="margin:0">Want it shared? Everything is off until you turn it on.</p>
+    <label><input type="checkbox" name="edit_clip"> Edited clips</label>
+    <label><input type="checkbox" name="repost_own_channels"> McCluster Corp's channels</label>
+    <label><input type="checkbox" name="clipper_share"> Paid clippers (always labelled as paid)</label>
+    <label><input type="checkbox" name="paid_ads"> Paid ads</label>
+    <label><input type="checkbox" name="tag_handles"> Tag my handles</label>
+    <label><input type="checkbox" name="attribution"> Credit me</label>
+    <div class="lm__row lm__row--2">
+      <select name="face" aria-label="My face"><option value="blur">Blur my face</option><option value="show">Show my face</option></select>
+      <select name="voice" aria-label="My voice"><option value="captions_only">Captions only</option><option value="altered">Altered voice</option><option value="use">My voice</option></select>
+      <select name="name_display" aria-label="My name"><option value="none">No name</option><option value="handle">Handle</option><option value="first">First name</option><option value="full">Full name</option></select>
+      <select name="location_display" aria-label="Place shown"><option value="none">No place</option><option value="state">State</option><option value="city">City</option></select>
+      <select name="term" aria-label="For how long"><option value="90d">90 days</option><option value="1y">1 year</option><option value="until_revoked">Until I revoke</option></select>
+    </div>
+    <button class="lm__btn" type="submit">Save my choices</button>
+  </form>
+</section>
+</main>
+<script src="js/backend.js"></script><script src="js/whip-client.js"></script><script src="js/live-mission-capture.js"></script><script src="js/analytics.js"></script><script src="js/tabbar.js"></script>
+</body></html>

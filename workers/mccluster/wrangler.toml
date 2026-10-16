@@ -24,15 +24,38 @@ PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
+# The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
+# production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
+WORLD_NEWS_INGEST_ENABLED = "true"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
+# Intel USGS evidence collector (src/intel/usgs-collector.js). Off by default so a deploy
+# starts no writes; set to "true" only after supabase/pending/20261015210000_intel_mission_canon_v1.sql
+# is applied. wrangler deploy uploads this block, so the switch lives here.
+INTEL_USGS_COLLECTOR_ENABLED = "false"
+# Identity verification levels: the Persona government-ID check stays OFF until the
+# owner approves the consent text, counsel review and Persona's terms. Secrets by name
+# only (wrangler secret put): PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET.
+PERSONA_ENABLED = "false"
+# Owner's choice: keep the ID's name and birth YEAR for side-by-side review (default off).
+PERSONA_STORE_VERIFIED_NAME = "false"
+# File a public comment (src/public-comment.js): read-only listing of open federal comment periods.
+# Off until the owner turns it on. The Regulations.gov half also needs the secret REGULATIONS_GOV_API_KEY (api.data.gov).
+PUBLIC_COMMENT_LISTING_ENABLED = "false"
 # Core remote MCP bridge origin (the Cloudflare Tunnel hostname). Not a secret:
 # Core refuses any request lacking CORE_BROKER_TOKEN plus a valid
 # CORE_EDGE_SIGNING_KEY signature, so the hostname alone grants nothing.
 # Those two are `wrangler secret put` only. /v1/core/mcp fails closed (503)
 # until both secrets exist, so deploying this ahead of the tunnel is safe.
 CORE_BROKER_URL = "https://core.mccluster.org"
+# Live missions (docs/control-plane/LIVE-MISSIONS.md): every /v1/live route
+# answers 503 until this is "true". Turning it on also needs the pending SQL
+# (supabase/pending/live_missions_v1.sql) and these secrets, by name only:
+# CF_ACCOUNT_ID, CF_STREAM_TOKEN (already used by the live rooms),
+# CF_LIVE_NOTIFICATION_SECRET (Notifications webhook cf-webhook-auth) and,
+# optionally, CF_STREAM_WEBHOOK_SECRET (Stream video webhook HMAC).
+LIVE_MISSIONS_ENABLED = "false"
 
 # MCP_EDGE service binding is intentionally absent.
 # Activate only after workers/mccluster-mcp exists in the Cloudflare account

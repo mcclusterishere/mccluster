@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
@@ -83,7 +84,7 @@
       </div>
       <p class="mn__eyebrow">The place for doers.</p>
       <h1>Turn what you care about into action.</h1>
-      <p class="mn__lede">Music. Advocacy. Business. Community. Ideas. Human Uprise is where people show what they are doing, find missions worth joining, and turn attention into proof.</p>
+      <p class="mn__lede">Get Your Hu Up!</p>
       <div class="mn__panel">
         <div class="mn__auth-tabs" role="tablist" aria-label="Human Uprise account">
           <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
@@ -243,6 +244,8 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
+          <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
+          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Do something about it"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button>
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
           <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
@@ -262,8 +265,9 @@
             <nav class="mn__world-chips" aria-label="Explore the globe">
               <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
               <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
-              <a href="action-policy.html">Policy ↗</a>
-              <button type="button" data-world-chip="navigate" aria-pressed="false" title="Show an organization location; turn-by-turn directions open in Google Maps">Navigate · WIP</button><button type="button" data-world-chip="near">Near me</button>
+              <!-- Policy is part of the member desk over the globe, not a page of its own (owner, 2026-10-15) -->
+              <button type="button" data-hu-desk-open="policy">Policy</button>
+              <button type="button" data-world-chip="near">Near me</button>
             </nav>
           </div>
           <!-- THE MISSION CARD: the pin you tapped (or the newest pinned
@@ -288,7 +292,7 @@
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-        <div class="mn__world-feed" id="mnWorldFeed" aria-label="Member feed">
+        <div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">
         <!-- the feed is the feed: no filter row over it (owner, 2026-10-15: "shouldn't even be a toggle. Just let the screen be.") -->
         <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
              they are a door at the top of the feed, shown only while
@@ -356,6 +360,9 @@
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
+        <!-- WORLD NEWS (owner, 2026-10-15): one member post to one news item, ingested from GDELT into the McCluster plane
+             and served by the Worker. GDELT's licence asks for this credit; it shows whenever a news card does. -->
+        <p class="mn__news-credit" id="mnNewsCredit" hidden>World news from <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener noreferrer">The GDELT Project</a></p>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
@@ -625,6 +632,11 @@
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-clips.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <!-- the member desk, opened from the bar over the globe; policy, analytics and the profile edit gate live in it -->
+  <script src="js/member-desk-core.js?v=__STAMP__"></script>
+  <script src="js/identity-capture-core.js?v=__STAMP__"></script>
+  <script src="js/profile-edit-gate.js?v=__STAMP__"></script>
+  <script src="js/member-desk.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

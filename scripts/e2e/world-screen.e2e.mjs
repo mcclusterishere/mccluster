@@ -14,7 +14,12 @@
              creator's analytics on the profile, and signing out;
      guest:  the same World, read-only through /v1/mnet/public-feed with no
              session sent, opening on Explore the world, every member action
-             opening sign-in and sending nothing, Share still working.
+             opening sign-in and sending nothing, Share still working;
+     news:   the World's news (GDELT, ingested by the Worker and read from
+             /v1/world/news with no session) one-for-one with the posts for a
+             guest and a member, the GDELT credit, link-outs in a new tab, a
+             story's place on the Earth, Load more on both streams, a failing
+             news read that leaves the posts whole.
 
    Nothing here touches production. The fixture people and posts exist only
    in this file's memory.
@@ -86,7 +91,20 @@ function freshWorld() {
     { id: id(), author: PEERS[0], body: 'Network-only update for the people I follow.', visibility: 'network', like_count: 0, liked_by_me: false, comments: [] },
     ...Array.from({ length: 6 }, (_, k) => ({ id: id(), author: PEERS[k % 2], body: `Field note ${k + 1}: what we did, what is next, and who can help.`, visibility: 'public', like_count: k, liked_by_me: false, comments: [] })),
   ].map((p, k) => ({ ...p, created_at: new Date(now - (k + 1) * 3600e3).toISOString() }));
-  return { posts, id, requests: [] };
+  return { posts, id, requests: [], news: freshNews(now) };
+}
+/* WORLD NEWS (owner, 2026-10-15): what the Worker serves from its GDELT ingest. A story's place is where it MENTIONS somewhere. */
+const GDELT = { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' };
+const NEWS_PLACES = [{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82 }, { place: 'Lima, Lima, Peru', lat: -12.05, lon: -77.04 }, null, { place: 'Jakarta, Jakarta Raya, Indonesia', lat: -6.21, lon: 106.85 }];
+const LONG_DOMAIN = 'a-very-long-publisher-domain-name-that-never-seems-to-end.example.co.uk';
+function freshNews(now) {
+  return Array.from({ length: 30 }, (_, k) => {
+    const pl = NEWS_PLACES[k % 4];
+    return { id: `ffffffff-ffff-4fff-8fff-${String(k + 1).padStart(12, '0')}`,
+      title: k === 1 ? 'A deliberately long headline about water rights ' + 'that keeps on going '.repeat(10) + 'until a phone has to wrap and clamp it' : `World story ${k + 1}: councils weigh a budget for public transit`,
+      url: `https://news${k % 3}.example/story/${k + 1}`, domain: k === 1 ? LONG_DOMAIN : `news${k % 3}.example`, seen_at: new Date(now - (k + 1) * 600e3).toISOString(),
+      place: pl ? pl.place : null, lat: pl ? pl.lat : null, lon: pl ? pl.lon : null };
+  });
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
 
@@ -117,18 +135,32 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
+    if (u.pathname === '/v1/world/news') {
+      if (world.newsFail === 'abort') return route.abort('failed');
+      if (world.newsFail === 'unavailable') return json(route, { ok: true, items: [], next_before: null, unavailable: true, attribution: GDELT });
+      if (world.newsFail) return json(route, { error: 'upstream failed' }, world.newsFail);
+      if (auth) return json(route, { error: 'the news read carries no session' }, 400);
+      const cur = u.searchParams.get('before'), at = cur === null ? 0 : /^cur\|\d+$/.test(cur) ? Number(cur.slice(4)) : -1;
+      if (at < 0) return json(route, { error: 'Invalid cursor' }, 400);
+      const lim = Math.min(20, Number(u.searchParams.get('limit')) || 20);
+      return json(route, { ok: true, items: world.news.slice(at, at + lim), next_before: at + lim < world.news.length ? 'cur|' + (at + lim) : null, attribution: GDELT });
+    }
     const before = u.searchParams.get('before');
     if (before && Number.isNaN(Date.parse(before))) return json(route, { error: 'bad cursor' }, 400);
     const asOf = (list) => before ? list.filter((p) => p.created_at < before) : list;
+    /* posts come in pages of world.postPage when it is set (the Load more scenario), else all at once */
+    const pageOf = (list) => { if (!world.postPage) return { list, next: null }; const one = list.slice(0, world.postPage); return { list: one, next: list.length > one.length ? one[one.length - 1].created_at : null }; };
     /* the World's Cesium ion (scripts/e2e/world-ion.e2e.mjs drives it): off here, so this Earth is NASA's alone */
     if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: false, binding: null });
     if (u.pathname === '/v1/mnet/public-feed') {
       if (auth) return json(route, { error: 'a guest read carries no session' }, 400);
-      const pub = asOf(world.posts.filter((p) => p.visibility === 'public')).map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
-      return json(route, { items: pub, scope: 'public', next_before: null });
+      const pg = pageOf(asOf(world.posts.filter((p) => p.visibility === 'public')));
+      const pub = pg.list.map((p) => { const x = item(p); delete x.post.author_m_uid; delete x.post.content_id; x.post.media_locked = x.post.media.length; delete x.post.media; return x; });
+      return json(route, { items: pub, scope: 'public', next_before: pg.next });
     }
     /* THE WORLD'S DATA LAYERS (owner, 2026-10-15): flights for everyone; satellites and launches for members, refused without a bearer */
-    if (u.pathname === '/v1/world/layers/flights') return json(route, { ok: true, layer: 'flights', fetched_at: new Date().toISOString(), attribution: 'OpenSky Network', stale: false, count: 3, total: 3, aircraft: [['ab1644', 'UAL2405', -92.49, 32.99, 11567, 220, 188], ['4ca7b3', 'RYR12', -3.2, 51.5, 10900, 230, 95], ['7c6b2d', 'QFA1', 151.2, -33.9, 8000, 210, 10]] });
+    if (u.pathname === '/v1/world/layers/flights') return json(route, { ok: true, layer: 'flights', fetched_at: new Date().toISOString(), attribution: 'OpenSky Network', provider: 'opensky', credit: 'Flights: OpenSky', stale: false, count: 3, total: 3, aircraft: [['ab1644', 'UAL2405', -92.49, 32.99, 11567, 220, 188], ['4ca7b3', 'RYR12', -3.2, 51.5, 10900, 230, 95], ['7c6b2d', 'QFA1', 151.2, -33.9, 8000, 210, 10]] });
     if (u.pathname === '/v1/world/layers/satellites' || u.pathname === '/v1/world/layers/launches') {
       if (!/^Bearer \S+/.test(auth)) return json(route, { error: 'Sign in to see ' + u.pathname.split('/').pop(), detail: { members_only: true } }, 401);
       if (u.pathname.endsWith('satellites')) return json(route, { ok: true, layer: 'satellites', fetched_at: new Date().toISOString(), attribution: 'CelesTrak (celestrak.org), Dr. T.S. Kelso', stale: false, count: 2, satellites: [
@@ -142,7 +174,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* a bootstrap that fails: the World must still open (owner, 2026-10-15: "logged in as Benji Chase … not seeing the globe") */
     if (u.pathname === '/v1/mnet/bootstrap' && world.bootFail && world.bootFail.length) { const st = world.bootFail.shift(); return json(route, { error: st === 401 ? 'sign in first' : 'upstream failed' }, st); }
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: ME.mccluster_id }, profile: { display_name: ME.display_name, mccluster_id: ME.mccluster_id }, next_step: null, tour_done_at: new Date().toISOString() });
-    if (u.pathname === '/v1/mnet/feed') return json(route, { items: asOf(world.posts).map(item), next_before: null });
+    if (u.pathname === '/v1/mnet/feed') { const pg = pageOf(asOf(world.posts)); return json(route, { items: pg.list.map(item), next_before: pg.next }); }
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.alertsRead ? [] : [{ id: 'n1', type: 'like', body: 'Fixture Ana liked your post', created_at: new Date().toISOString(), read_at: null }] });
     if (u.pathname === '/v1/mnet/notifications/read') { world.alertsRead = true; return json(route, {}); }
     if (u.pathname === '/v1/mnet/discover') { const q = (u.searchParams.get('q') || '').toLowerCase(); return json(route, { people: PEERS.filter((p) => (p.display_name + ' ' + p.mccluster_id).toLowerCase().includes(q)).map((p) => ({ ...p, following: false })) }); }
@@ -188,7 +220,7 @@ const split = (page) => page.evaluate(() => {
   const g = r('mnWorld'), c = r('mnWorldContext'), f = r('mnWorldFeed');
   const bar = document.querySelector('.appbar'), fe = document.getElementById('mnWorldFeed');
   return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
-    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
+    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, barHidden: !bar || getComputedStyle(bar).display === 'none', feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
     ctxBottom: Math.round(c.bottom), ctxPad: Math.round(parseFloat(getComputedStyle(document.getElementById('mnWorldContext')).paddingBottom)) };
 });
 
@@ -203,9 +235,9 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0 }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0 }) {
   const world = freshWorld();
-  world.bootFail = bootFail.slice(); world.userCheck = userCheck;
+  world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
@@ -243,9 +275,10 @@ for (const device of DEVICES) {
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
   /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
+  /* the bottom app bar never leaves (owner, 2026-10-15), signed in or not */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
   /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
-  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
+  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
   /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
   if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
@@ -450,7 +483,9 @@ if (runs('layers-member')) {
   const scope = 'layers-member';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a member sees three toggles, none locked', locks.length === 3 && locks.every((l) => !l.locked && l.disabled === 'false'), locks);
+  /* the access map (owner, 2026-10-15): seven toggles on screen; a member has the data layers and Whip Equipped; CCTV waits on its three checks */
+  const lockedIds = locks.filter((l) => l.locked).map((l) => l.id).sort();
+  check(scope, 'a member sees every toggle; only CCTV locked', locks.length === 7 && JSON.stringify(lockedIds) === JSON.stringify(['ctlCctv']) && ['ctlFlights', 'ctlSats', 'ctlLaunch'].every((id) => locks.some((l) => l.id === id && !l.locked && l.disabled === 'false')), locks);
   await globe.click('#ctlFlights');
   await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
   await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });
@@ -528,7 +563,8 @@ if (runs('layers-guest')) {
   const scope = 'layers-guest';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a guest sees Flights open and Satellites and Launches locked', locks.length === 3 && !locks[0].locked && locks[1].locked && locks[2].locked, locks);
+  /* one free layer (owner, 2026-10-15): every other toggle on screen, shaded */
+  check(scope, 'a guest sees Flights open and every other layer locked', locks.length === 7 && !locks[0].locked && locks.slice(1).every((l) => l.locked), locks);
   await globe.$eval('#ctlSats', (b) => b.click());   /* aria-disabled, so Playwright's own click would wait forever; a tap does this */
   await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 10000 });
   check(scope, 'a locked layer opens sign-in with the reason, and sends nothing', /Sign in to see satellites and space missions/.test(await page.textContent('#mnGuestWhy')) && req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0, await page.textContent('#mnGuestWhy'));
@@ -701,6 +737,125 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
   check(scope, 'Share still works for a guest (every guest post is public)', (await page.evaluate(() => window.__shared.at(-1) || '')).includes('post=' + first));
   const bar = await page.$$eval('.appbar [data-appnav]', (a) => a.map((x) => x.getAttribute('data-appnav')));
   check(scope, 'guest app bar is the same Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
+/* ---------- WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like one …
+   from them."). One member post to one news item, for a guest and a member, free and with no session. ---------- */
+const feedSeq = (page) => page.$$eval('#mnFeed > article', (a) => a.map((x) => x.hasAttribute('data-news-id') ? 'n' : x.hasAttribute('data-post-id') ? 'p' : '?').join(''));
+const newsState = (page) => page.evaluate(() => {
+  const credit = document.getElementById('mnNewsCredit'), a = credit && credit.querySelector('a'), more = document.getElementById('mnMore');
+  const cards = [...document.querySelectorAll('#mnFeed [data-news-id]')];
+  return { posts: document.querySelectorAll('#mnFeed [data-post-id]').length, news: cards.length, credit: !!credit && !credit.hidden && credit.getBoundingClientRect().height > 0,
+    creditText: credit ? credit.textContent.trim() : '', href: a && a.getAttribute('href'), target: a && a.target, rel: a && a.rel, more: !!more && !more.hidden,
+    status: (document.getElementById('mnFeedStatus') || {}).textContent || '', sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth,
+    cardsFit: cards.every((c) => c.scrollWidth <= c.clientWidth + 1 && c.getBoundingClientRect().right <= innerWidth + 0.5),
+    /* a short publisher name is shown whole; only a long one is cut, inside its card */
+    domains: cards.slice(0, 2).map((c) => { const d = c.querySelector('.mn__news-domain'); return d ? d.scrollWidth <= d.clientWidth : null; }),
+    links: cards.map((c) => { const l = c.querySelector('a.mn__news-title'); return l && { href: l.getAttribute('href'), target: l.target, rel: l.rel }; }),
+    imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture,svg').length, 0) };
+});
+/* the state without the per-card links, for a readable log line */
+const brief = ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains }) => ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains });
+const urlOf = (world, id) => (world.news.find((n) => n.id === id) || {}).url;
+/* scroll the feed (only the feed: the page stays put) so the credit and the first cards are in view */
+const showCredit = () => { const f = document.getElementById('mnWorldFeed'), c = document.getElementById('mnNewsCredit'); f.scrollTop += c.getBoundingClientRect().top - f.getBoundingClientRect().top - 8; };
+
+if (runs('news-guest')) {
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: false, postPage: 5 });
+  const scope = 'news-guest';
+  await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
+  let st = await newsState(page), seq = await feedSeq(page);
+  check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', seq === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
+  const reads = req(world, 'GET', /^\/v1\/world\/news$/);
+  check(scope, 'the news is read from the Worker with no session, beside the posts', reads.length === 1 && reads.every((r) => !r.auth) && /[?&]limit=20$/.test(reads[0].search), reads);
+  check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
+  const ids = await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((x) => x.getAttribute('data-news-id')));
+  check(scope, 'every headline goes out to its publisher in a new tab, noopener noreferrer; no pictures, no marks', st.links.length === 20 && st.links.every((l, k) => l && l.href === urlOf(world, ids[k]) && l.target === '_blank' && l.rel === 'noopener noreferrer') && st.imgs === 0, st.links.slice(0, 2));
+  const meta = await page.$eval('#mnFeed [data-news-id]', (c) => c.querySelector('.mn__news-meta').textContent);
+  check(scope, 'a card reads publisher · time ago · the place it mentions', /^news0\.example\s*·\s*\d+[mh]\s*·\s*Nairobi, Nairobi Area, Kenya$/.test(meta.trim()), meta);
+  check(scope, 'a card without a place has no "On the Earth"', (await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((c) => !!c.querySelector('[data-news-place]')))).every((has, k) => has === (k % 4 !== 2)));
+  check(scope, 'nothing scrolls sideways at 390 with the news in; the long headline and publisher are cut inside their card, a short publisher is whole', st.sw === st.cw && st.cardsFit && st.domains[0] === true && st.domains[1] === false, { sw: st.sw, cw: st.cw, fit: st.cardsFit, domains: st.domains });
+  /* the evidence: the feed with the news in it */
+  await page.evaluate(showCredit);
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: join(OUT, 'news-feed-iphone.png') });
+  /* search reads the news too: its headlines and its publishers */
+  await page.fill('#mnSearchInput', 'transit'); await page.waitForTimeout(500);
+  const byTitle = await newsState(page);
+  await page.fill('#mnSearchInput', 'news2.example'); await page.waitForTimeout(500);
+  const byDomain = await newsState(page);
+  await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
+  check(scope, 'search matches news headlines and publishers', byTitle.news === 19 && byTitle.posts === 0 && byDomain.news === world.news.slice(0, 20).filter((n) => n.domain === 'news2.example').length && byDomain.posts === 0, { byTitle: byTitle.news, byDomain: byDomain.news });
+  const globe = page.frame({ url: /action-globe\.html/ });
+  /* a story's place on the Earth, from its card */
+  await page.click('#mnFeed [data-news-id] [data-news-place]');
+  await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(2600);
+  const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
+  check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
+  /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
+  await page.evaluate(() => { const w = document.getElementById('mnWorldFrame').contentWindow; [{ type: 'hu:focus-place', lat: '10', lon: 10 }, { type: 'hu:focus-place', lat: 95, lon: 0 }, { type: 'hu:focus-place', lat: 0, lon: 200 }, { type: 'hu:focus-place', lat: NaN, lon: 0 }, { type: 'hu:focus-place' }].forEach((m) => w.postMessage(m, location.origin)); });
+  await page.waitForTimeout(500);
+  const kept = await globe.evaluate(() => window.__huFocusPlace());
+  check(scope, 'the frame refuses a place that is not two finite numbers in range', kept && kept.lat === -1.28 && kept.lon === 36.82, kept);
+  /* a mission picked on the Earth narrows the feed to its posts: the news steps aside, and comes back */
+  await globe.evaluate((id) => window.parent.postMessage({ type: 'hu:mission-selected', mission: { mission_id: id, title: 'Clean up the Mill River', region_label: 'Connecticut', action_path: 'show_up' } }, location.origin), M1);
+  await page.waitForSelector('#mnWorldFocus:not([hidden])');
+  const narrowed = await newsState(page);
+  await page.click('#mnWorldFocusClear');
+  await page.waitForTimeout(300);
+  const back = await newsState(page);
+  check(scope, 'a mission picked on the Earth hides the news and its credit; letting it go brings them back', narrowed.news === 0 && !narrowed.credit && back.news === 20 && back.credit, { narrowed: narrowed.news, back: back.news });
+  /* Load more pages both streams, each from its own cursor, the news cursor passed back verbatim */
+  check(scope, 'Load more shows while either stream has another page', st.more);
+  await page.click('#mnMore');
+  await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-news-id]').length === 30 && document.querySelectorAll('#mnFeed [data-post-id]').length === 8, null, { timeout: 10000 }).catch(() => {});
+  st = await newsState(page); seq = await feedSeq(page);
+  const pageTwo = { posts: req(world, 'GET', /^\/v1\/mnet\/public-feed$/).filter((r) => /[?&]before=/.test(r.search)), news: req(world, 'GET', /^\/v1\/world\/news$/).filter((r) => /[?&]before=/.test(r.search)) };
+  check(scope, 'Load more reads the next page of both: posts from theirs, news from its opaque cursor, sent back verbatim', st.posts === 8 && st.news === 30 && pageTwo.posts.length === 1 && pageTwo.news.length === 1 && /[?&]before=cur%7C20$/.test(pageTwo.news[0].search) && !pageTwo.news[0].auth, { st: { posts: st.posts, news: st.news }, pageTwo });
+  check(scope, 'after the next page the feed is still one for one, and Load more goes when both are done', seq === 'pn'.repeat(8) + 'n'.repeat(22) && !st.more, seq);
+  check(scope, 'no page errors', errors.length === 0, errors);
+  await ctx.close();
+}
+
+if (runs('news-member')) {
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
+  const scope = 'news-member';
+  await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
+  const seq = await feedSeq(page), st = await newsState(page);
+  check(scope, 'a member gets the same: one of their posts, one news item, then the news carries on', seq === 'pn'.repeat(9) + 'n'.repeat(11), seq);
+  const reads = req(world, 'GET', /^\/v1\/world\/news$/), feed = req(world, 'GET', /^\/v1\/mnet\/feed$/);
+  check(scope, 'the member\'s own feed carries the session; the news never does', feed.length > 0 && feed.every((r) => r.auth) && reads.length === 1 && !reads[0].auth, { feed: feed.length, reads });
+  check(scope, 'the credit is there for a member too, and nothing scrolls sideways', st.credit && st.href === 'https://www.gdeltproject.org/' && st.sw === st.cw && st.cardsFit, brief(st));
+  /* a news card is not a post: tapping it does not narrow anything, and its chip clears the latest mission off the strip */
+  check(scope, 'the strip opens on the latest mission', await page.isVisible('#mnWorldFocus'));
+  await page.click('#mnFeed [data-news-id] [data-news-place]');
+  await page.waitForTimeout(400);
+  check(scope, '"On the Earth" lets the latest mission go and says what the place is', (await page.isHidden('#mnWorldFocus')) && /mentioned in this story/.test(await page.textContent('#mnWorldCaption')) && !!(await page.frame({ url: /action-globe\.html/ }).evaluate(() => window.__huFocusPlace())));
+  check(scope, 'no page errors', errors.length === 0, errors);
+  /* the desktop: the same feed, given room */
+  await page.setViewportSize(DEVICES[4].viewport);
+  await page.waitForTimeout(1500);
+  await page.evaluate(showCredit);
+  await page.waitForTimeout(600);
+  const wide = await newsState(page);
+  check(scope, 'on a desktop the news cards hold their place in the feed and nothing scrolls sideways', wide.news === 20 && wide.sw === wide.cw && wide.cardsFit, { news: wide.news, sw: wide.sw, cw: wide.cw });
+  await page.screenshot({ path: join(OUT, 'news-feed-desktop.png') });
+  await ctx.close();
+}
+
+/* a news read that fails, or answers with nothing to show, leaves the posts exactly as they were */
+for (const variant of [{ scope: 'news-fail-500', member: false, newsFail: 500 }, { scope: 'news-fail-abort', member: true, newsFail: 'abort' }, { scope: 'news-unavailable', member: false, newsFail: 'unavailable' }]) {
+  if (!runs(variant.scope)) continue;
+  const { ctx, page, world, errors } = await open(DEVICES[0], { member: variant.member, newsFail: variant.newsFail });
+  const scope = variant.scope;
+  await page.waitForTimeout(800);
+  const st = await newsState(page);
+  check(scope, 'the posts are all there, with no news cards, no credit and no error line', st.posts === (variant.member ? 9 : 8) && st.news === 0 && !st.credit && !st.status && !st.more, brief(st));
+  check(scope, 'the news was asked for, once, with no session', req(world, 'GET', /^\/v1\/world\/news$/).length === 1 && !req(world, 'GET', /^\/v1\/world\/news$/)[0].auth);
+  check(scope, 'nothing scrolls sideways at 390', st.sw === st.cw, { sw: st.sw, cw: st.cw });
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

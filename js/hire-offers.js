@@ -76,9 +76,9 @@
     if (mode === "m") {
       out += '<div class="compare">' +
         '<div class="compare__side is-on"><p class="compare__k">You keep</p>' +
-          '<p class="compare__n">100%</p><p class="compare__sub">Every dollar the business makes stays with the business.</p></div>' +
+          '<p class="compare__n">100%</p></div>' +
         '<div class="compare__side"><p class="compare__k">You share</p>' +
-          '<p class="compare__n">None</p><p class="compare__sub">No revenue share of any kind in M Mode.</p></div>' +
+          '<p class="compare__n">None</p></div>' +
       "</div>";
     } else if (O.priced(pr)) {
       out += '<div class="compare">' +
@@ -230,10 +230,8 @@
 
     calc.innerHTML =
       "<h4>What Equity Uprise actually costs</h4>" +
-      '<p class="calc__lede">Move your own revenue through it. Nothing here is hidden in a footnote: ' +
-        "the monthly price is half the standard, the share is " + eq.share_percent +
-        "% of eligible connected online revenue, and sharing stops at the earlier of " +
-        eq.term_months + " months or the cap.</p>" +
+      '<p class="calc__lede">Half the standard price, plus ' + eq.share_percent +
+        "% of eligible connected online revenue, until " + eq.term_months + " months or the cap.</p>" +
       '<div class="calc__grid">' +
         '<div class="calc__field">' +
           '<label for="calcRev">Your eligible online revenue, per month</label>' +

@@ -250,6 +250,7 @@
       background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
     .tr .reclock .gatechip b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
     .tr .reclock .gatechip span { font-weight: 700; font-size: 0.56rem; color: var(--cream-dim); letter-spacing: 0.02em; }
+    .tr .reclock a.gatechip { text-decoration: none; }
     .tr .reclock .gatechip--on { background: color-mix(in srgb, var(--pulse) 26%, transparent); box-shadow: inset 0 0 0 1px var(--pulse); }
     /* a locked row still says how long the PREVIEW is, so the clock in
        the row is never lying about what this file actually contains */
@@ -1069,10 +1070,12 @@
          full        → the one play, happening now
          unavailable → our fault, not yours
 
-       The rule is the owner's and the Worker enforces it: the gated record
-       closes its album and plays only after the songs before it are heard
-       all the way through, in album order, with nothing in between. Every
-       play needs a fresh run of the album.
+       The rule is the owner's and the database + Worker enforce it
+       (2026-10-15): the full track plays only for a member with three
+       missions an admin verified AND a verified identity. Everyone else
+       hears the preview, and the row says exactly what is missing (missions
+       x/3, identity verification) and links to it. Preview plays and full
+       plays are counted apart (music_preview_play / music_full_play).
        ============================================================ */
     /* The clock on a row is read off whatever that row actually points at,
        which for a gated track changes under it: locked it is the 12-second
@@ -1117,6 +1120,7 @@
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
+      row._gateOut = out;
       var pv = row.getAttribute("data-preview-src");
       row.setAttribute("data-gate", out.state);
       var line = window.MCC_GATED && window.MCC_GATED.progress ? window.MCC_GATED.progress(out) : null;
@@ -1138,7 +1142,13 @@
         slot.innerHTML = chip("unlock", line ? line.b : "PLAY ONCE", line ? line.s : "you earned it");
       } else if (out.state === "locked") {
         row.classList.add("locked");
-        slot.innerHTML = chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "finish more songs to unlock");
+        /* the chip is the way to the first missing step, from the server's answer */
+        var why = window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(out) : null;
+        var step = why && why.links && why.links[0];
+        slot.innerHTML = step
+          ? '<a class="gatechip" href="' + escAttr(step.href) + '" title="' + escAttr(why.text) + '" aria-label="' + escAttr(why.text + " " + step.label) + '">' +
+            '<b>' + esc(line ? line.b : "LOCKED") + '</b><span>' + esc(line ? line.s : step.label) + '</span></a>'
+          : chip("gatechip", line ? line.b : "LOCKED", line ? line.s : "not available yet");
       } else if (out.state === "preview") {
         row.classList.add("locked");
         /* The ask, not the mechanism. Nobody wants "an account" — they came
@@ -1150,8 +1160,9 @@
            more: neither value grants any access, so an edited URL is worth
            nothing. */
         var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
-        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '">' +
-          '<b>FULL SONG</b><span>tap here · free</span></a>';
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '"' +
+          ' aria-label="Sign in. The full song needs three verified missions and a verified identity.">' +
+          '<b>FULL SONG</b><span>sign in · missions + ID</span></a>';
       } else {
         row.classList.add("gone");
         slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
@@ -1488,8 +1499,19 @@
         claimThenPlay(target);
         return;
       }
-      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) previewNotice(row, false);
+      if (row && row.hasAttribute("data-gated-bucket") && !row.hasAttribute("data-granted")) {
+        previewNotice(row, false);
+        gatedPlayEvent(row, false);
+      }
       playNow(i, at);
+    }
+    /* A gated record's preview and its full track are different listens:
+       counted apart, with no more than the analytics model already carries. */
+    function gatedPlayEvent(row, full) {
+      if (!window.MCC_TRACK || !row) return;
+      window.MCC_TRACK(full ? "music_full_play" : "music_preview_play", {
+        track: row.getAttribute("data-title"), album: ALBUM, source: "album", gated: true
+      });
     }
     function playNow(i, at) {
       if (i !== undefined && i !== cur) load(i, at);
@@ -1509,10 +1531,12 @@
       previewTold[key] = true;
       var gate = row.getAttribute("data-gate") || "preview";
       var head = ended ? "That was the preview." : "Playing the preview.";
-      var rest = gate === "earned" ? " Tap the song to play it in full, once."
-        : gate === "locked" ? " Finish more songs to unlock the full track."
+      var why = row._gateOut && window.MCC_GATED && window.MCC_GATED.explain ? window.MCC_GATED.explain(row._gateOut) : null;
+      var rest = gate === "earned" ? " Tap the song to play it in full."
+        : (gate === "locked" || gate === "preview") && why && why.text ? " " + why.text
+        : gate === "locked" ? " The full track needs three verified missions and a verified identity."
         : gate === "gone" || gate === "unavailable" ? " The full track cannot be reached right now."
-        : " The full song is free with an account: tap FULL SONG.";
+        : " The full song needs an account, three verified missions and a verified identity: tap FULL SONG.";
       if (window.MCC_TOAST) window.MCC_TOAST(head + rest);
       var chip = row.querySelector(".unlock");
       if (chip && ended) { chip.classList.remove("unlock--nudge"); void chip.offsetWidth; chip.classList.add("unlock--nudge"); }
@@ -1527,6 +1551,7 @@
           /* not earned after all (another tab spent it, or signed out):
              say where they stand and play the preview */
           paintGate(row, out);
+          gatedPlayEvent(row, false);
           playNow(target);
           return;
         }
@@ -1538,6 +1563,7 @@
         load(target, 0);
         probeDuration(row);
         startDeck(row);
+        gatedPlayEvent(row, true);
         if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: row.getAttribute("data-title"), album: ALBUM });
       });
     }

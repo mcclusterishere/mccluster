@@ -52,12 +52,53 @@ race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
 Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
 steps above.
 
+Promoted: `world_gdelt_gkg_news_v1.sql` is
+`supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql` (applied
+2026-10-16). The World has its news: GDELT GKG rows (`gdelt_gkg_v2`) beside
+#432's dormant DOC path in the same `media_news_*` store, read through the
+Worker only. `WORLD_NEWS_INGEST_ENABLED = "true"` in
+`workers/mccluster/wrangler.toml`; `"false"` stops the ingest. Tested by
+`scripts/test-world-news-db.sh`.
+
 Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
 (owner, 2026-10-15: "we need to have it populated with missions"). It inserts
 three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
 every open mission in one by its campaign, published. Idempotent; apply as the
 service role, then promote with the steps above. Regional impact totals still
 need five consenting members per region and are not seeded.
+
+Pending: `20261015210000_intel_mission_canon_v1.sql` is the one evidence ->
+claim -> briefing -> decision -> mission -> outcome schema for Halo and the
+plane (design: `docs/control-plane/INTEL-TO-MISSION-CANON.md`). It reuses
+`ops_ingest_*`, `ai_context.decisions`, `action_missions` and `action_proofs`
+and adds the `intel_*` tables and service-role-only functions. Rollback:
+`20261015210000_intel_mission_canon_v1.rollback.sql`. Behaviour test:
+`supabase/tests/intel_mission_canon.behaviour.sql`, run with the dependent
+tables, the rollback and a re-apply by `scripts/test-intel-canon-db.sh` on a
+scratch Postgres 16. Apply as `intel_mission_canon_v1`, then promote using the
+steps above. The Worker's intel routes answer `intel_schema_not_ready` until
+then, and its USGS collector stays off until `INTEL_USGS_COLLECTOR_ENABLED`
+is `"true"`.
+
+Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
+(a private schema with no grants that nothing can reach, and a second source
+registry beside `ops_ingest_*`). The intel canon replaces it.
+
+Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
+(owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
+public layer, member layers, the policy ladder, the Equity Uprise rule, which
+ships disabled pending counsel, and the Whip Equipped hand-off, open to any
+signed-in member; there is no voter-registration rule), status-only strict
+referral verification, the ladder (any three distinct admin-verified, non-clip
+missions; help a person, write a song and show up to a rally are suggestions), state Policy Fellowship cohorts and policy teams on
+`action_cohorts`, the memo review loop (immutable versions with diffs, an
+immutable review log, notifications) and a per-memo research collection of
+unverified leads. It replaces `admit_fellow_to_cohort()` (production hash
+matches `20261005054040`) with the same function plus the ladder check for
+policy cohorts. Behaviour tests: `supabase/tests/policy_fellowship_ladder.behaviour.sql`,
+run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
+decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
+Promote using the steps above after the owner approves it.
 
 Pending: `music_creator_one_click_v1.sql` makes creator onboarding one click
 (owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
@@ -71,10 +112,12 @@ Until it is applied, Creator Studio builds the same answer in the browser
 (`js/creator-onboarding.js`). Behaviour tests:
 `supabase/tests/music_creator_one_click.behaviour.sql`, run by
 `scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
-file header. Apply it together with (or after) `anon_policy_scope_v1.sql`:
-that one is what lets a signed-out visitor, and the artist pages and the
-listen.html directory, read creator profiles at all. Promote with the steps
-above.
+file header. Promote with the steps above.
+
+Promoted: `anon_policy_scope_v1.sql` is
+`supabase/migrations/20261016031123_anon_policy_scope_v1.sql` (applied
+2026-10-16). Signed-out visitors, artist pages and the listen.html directory
+read published creator profiles, tracks, offers and services again.
 
 Pending: `action_bounty_claim_existing_row_guard_v1.sql` preserves the result of
 claim-row lookup before aggregate SELECT statements overwrite PL/pgSQL FOUND.
@@ -84,16 +127,79 @@ first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
 
+Pending: `live_missions_v1.sql` (rollback `live_missions_v1.rollback.sql`) adds
+live missions (owner, 2026-10-15): a per-mission live policy (`required` on
+every mission, owner decision), live runs with Stream input ids kept
+column-private, connected segments from Cloudflare webhooks or heartbeats, a
+replay ledger, hashed recording-chunk receipts, reports, the 12 publishing
+opt-ins, live coverage bounties beside `action_bounties`, the public city-cell
+"Live now" read, the desk's event log and kill switch, and two guards: a
+coverage-bounty claim is approved or paid only behind continuous coverage of
+the event window, and (once `action_live_controls.enforce_live_required` is
+turned on; it ships off) a required mission takes proof only from a completed
+live run. Nothing in it verifies a mission or pays a claim. Behaviour tests:
+`scripts/test-live-missions-db.sh` (also with PR #444's
+`mission_admin_approval_v1.sql` via `EXTRA_SQL`). Design and enable checklist:
+`docs/control-plane/LIVE-MISSIONS.md`. Apply as `live_missions_v1`, then
+promote using the steps above.
 
-Promoted: `action_partner_opportunity_drafts_v1.sql` was applied to production as
-`20261016020407_action_partner_opportunity_drafts_v1.sql` and moved to
-`supabase/migrations/`. Four source-backed opportunities and ten partner-only
-mission proposals are now stored privately. RLS was tested in a rollback
-transaction before application and independently verified after application:
-anonymous SELECT absent, non-admin authenticated sees no proposals, all
-ten proposals remain `draft`/`admin_only`/non-claimable/uncompensated.
-The Control Funding Intelligence UI and Worker endpoint are **feature-branch
-changes** awaiting merge and deployment; production tables alone do not
-make the private workspace live. Any later activation requires written
-partner permission, verified restricted funds, proof/privacy review and
-separate bounty approval.
+Pending: `20261015230000_identity_verification_levels_v1.sql` (with
+`…_identity_verification_levels_v1.rollback.sql`) is the identity
+verification levels (owner, 2026-10-15): a live camera video introduction
+reviewed by the owner (V1), and full Hitman's Halo access (V2: a second live
+video compared with the first plus a Persona government-ID check). It needs
+`policy_fellowship_ladder_v1.sql` first and extends its
+`action_member_verifications` / `action_unlock_rules` / `action_unlock_progress()`.
+Private bucket `identity-verification-videos`, versioned consent (drafts until
+the owner and counsel approve), an append-only review log, and the
+`halo_full` rule shipped disabled. Behaviour tests:
+`supabase/tests/identity_verification_levels.behaviour.sql`, run by
+`scripts/test-identity-verification-db.sh`. Design and apply checklist:
+`docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md`.
+
+Pending: `mission_admin_approval_v1.sql` (rollback `mission_admin_approval_v1.rollback.sql`)
+makes "only an admin completes a mission" a database invariant (owner,
+2026-10-15): proofs are born pending, a proof or assignment becomes `verified`
+only under an admin token that is not the submitter's with a same-transaction
+review in `action_proof_review_history` (Anti-Social levels now archived there
+too), points are minted only by that review, bounties are approved only behind
+a verified mission and paid only by an admin, clips have no automatic approval
+and no money without an approved clip, and a mission opens only after an admin
+approved it for publication. Apply after `policy_fellowship_ladder_v1.sql`.
+Pending: `gated_track_mission_identity_v1.sql` (rollback alongside) is the
+CIA Mind Control gated-track rule as an `action_unlock_rules` row (three
+admin-verified missions and `member_identity_verified(uid, purpose)`, purpose from the rule's params), the Worker's
+`music_gate_rule_state` / `music_gate_claim_rule`, and the taxonomy rows for
+`music_preview_play` / `music_full_play`. Apply after the approval file and, preferably, after PR #443's identity file (both orders apply cleanly).
+Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
+and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.
+
+Pending: `20261016010000_profile_edit_gate_v1.sql` (with
+`…_profile_edit_gate_v1.rollback.sql`) is the profile edit gate (owner,
+2026-10-15): profile details on a data-driven list (`profile_protected_fields`)
+lock once set; a signed-in member's write that would change one is refused by
+a trigger, directly or through any RPC. A change is asked for with a live
+video (a new submission level, `profile_edit`, on the identity levels' own
+tables, bucket and finish function) and the Persona ID check, and is applied
+only by `profile_edit_review_decide()`, once, with an append-only audit.
+Apply after the ladder and the identity levels. Behaviour tests:
+`supabase/tests/profile_edit_gate.behaviour.sql`, run by
+`scripts/test-profile-edit-gate-db.sh` (which also reruns the identity and
+ladder behaviour tests on top). Design: `docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md`.
+
+Pending: `20261015230000_action_mission_pins_arcs_black_business.sql` (owner mission curation,
+2026-10-15; owner approval required). Missions get many pins (country regions from Natural Earth
+v5.1.2 references; a "first world" list from the World Bank FY27 high-income classification, as
+data), a display-only origin ("Started by the Connecticut cohort"), the policy arc (memo → reform
+paper, unlocked by an admin-verified memo), and Black business listings reviewed by the desk. It
+also makes existing pins display-only (`join_scope` 'anywhere'): today every pinned open mission is
+unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
+applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
+`docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
+
+Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):
+`supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql`
+records the private funding opportunities and partner mission drafts. It publishes
+no missions and enables no claims or compensation. With it the ledger and drift
+contract covered all 310 production migrations then (311 since
+20261016151123).

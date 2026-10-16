@@ -86,3 +86,9 @@ test('mutating funding API and unrelated paths fail closed',async()=>{
   assert.equal(unknown.status,404);
   assert.equal(await handleFundingIntelligence(new Request('https://api.mccluster.org/v1/other'),ENV,{read}),null);
 });
+test('missing historical amounts stay unknown and oversized providers fail visibly',async()=>{
+  const a=await handleFundingIntelligence(req('/awards?keyword=health'),ENV,{fetchImpl:async()=>json({results:[{'Award ID':'X','Award Amount':null}]})});
+  assert.equal((await a.json()).items[0].obligated_amount,null);
+  const b=await handleFundingIntelligence(req('/search?keyword=health'),ENV,{fetchImpl:async()=>new Response('x'.repeat(524289))});
+  assert.equal((await b.json()).ok,false);
+});
