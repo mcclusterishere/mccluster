@@ -29,4 +29,6 @@ jobs:
         run: |
           sudo systemctl start postgresql
           sudo -u postgres createdb mccluster_learning_test
-          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d mccluster_learning_test -f "$PWD/scripts/test/fixtures/resident-learning.sql"
+          install -D -m 644 scripts/test/fixtures/resident-learning.sql /tmp/mccluster-learning-proof/scripts/test/fixtures/resident-learning.sql
+          install -D -m 644 supabase/pending/20261016_resident_learning_v1.sql /tmp/mccluster-learning-proof/supabase/pending/20261016_resident_learning_v1.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d mccluster_learning_test -f /tmp/mccluster-learning-proof/scripts/test/fixtures/resident-learning.sql
