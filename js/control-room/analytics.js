@@ -5,8 +5,8 @@
   var FIRST="__first_party__", palette=["#e5383b","#3f93d2","#d9a441","#75b798","#9c7ae8","#e27d60"];
   var S={host:null,request:null,supa:null,section:"overview",rangeId:"24h",from:"",through:"",range:null,sites:[],site:FIRST,loading:false,loaded:false,error:null,errors:{},data:{},seq:0};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-  function n(v){v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
-  function money(v){v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
+  function n(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?v.toLocaleString():"—";}
+  function money(v){if(v==null||v==="")return"—";v=Number(v);return Number.isFinite(v)?"$"+(v/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
   function tz(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch(_){return"UTC";}}
   function day(v){var d=new Date(v);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   function inputDate(d){d=new Date(d.getTime()-d.getTimezoneOffset()*60000);return d.toISOString().slice(0,10);}
@@ -434,7 +434,7 @@
     }
   }
   function shell(){
-    return'<div class="cra-app cra-split"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
+    return'<div class="cra-app cra-split cad-app"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
       '<div class="cu-geography"><section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
       '<div class="cra-globe__host" id="craGlobe" data-cra-globe></div>'+
       '<div class="cra-pill" data-cra-pill></div>'+
@@ -633,6 +633,7 @@
     var musicPlays=music.plays&&(b.window?music.plays.in_window:music.plays.total);
     var gross=music.revenue&&(b.window?music.revenue.gross_cents_in_window:music.revenue.gross_cents);
     var accounts=b.window?users.created_in_window:users.total;
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
     var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0);
     var topSong=rows.slice().sort(function(a,z){return Number(z.starts||0)-Number(a.starts||0);})[0];
     var cards='';
@@ -640,7 +641,7 @@
       cards+=section("Audience & accounts","Membership, returning listeners and signup attribution.",
         '<div class="cra-kpis">'+metric("Accounts",S.data.business?accounts:null,b.window?"created in range":"all time")+metric("Music listeners",science.version?audience.music_listeners:null,"distinct in measured audience")+metric("Returning listeners",science.version?audience.returning_listeners:null,"measured")+metric("Song → signup",S.data.identity?coverage.attributed_accounts:null,"attributed accounts")+'</div>',"identity","Explore conversion");
       cards+=section("Music & content","Track engagement and recorded music revenue.",
-        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",S.errors.content?null:starts,"first-party events")+metric("Active tracks",S.errors.content?null:rows.length,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
+        '<div class="cra-kpis">'+metric("Music plays",S.data.business?musicPlays:null,"recorded")+metric("Track starts",contentKnown?starts:null,"first-party events")+metric("Active tracks",contentKnown?rows.length:null,"with recorded activity")+metric("Music gross",S.data.business?gross:null,"recorded sales",money)+'</div>'+(topSong?'<p><b>Top track:</b> '+e(topSong.track||"Unknown")+' · '+n(topSong.starts)+' starts</p>':""),"content","Explore music");
       cards+=section("Campaigns & acquisition","How people arrive and move toward an action.",
         '<div class="cra-kpis">'+metric("Sources",S.errors.sources?null:(t.sources||[]).length,"observed")+metric("Acquisition rows",S.errors.acquisition?null:acq.length,"measured")+metric("Journey paths",S.errors.paths?null:paths.length,"tracked")+metric("Funnel stages",S.errors.funnel?null:funnel.length,"reported")+'</div><p>Campaign outcomes require verified mission or conversion events; source counts are not campaign results.</p>',"identity","Explore journeys");
       /* Stripe sales the reconciler verified, net of refunds, live only.
@@ -722,9 +723,10 @@
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
+    var contentKnown=!!(S.completed&&S.completed.content&&!S.errors.content);
     var table=rows.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Track</th><th>Album</th><th class="n">Starts</th><th class="n">Listeners</th><th class="n">Repeat</th><th class="n">Starts/listener</th><th class="n">Full</th><th class="n">Complete</th><th class="n">Shares</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td><b>'+e(r.track||"—")+'</b></td><td>'+e(r.album||"—")+'</td><td class="n">'+n(r.starts)+'</td><td class="n">'+n(r.listeners)+'</td><td class="n">'+n(r.repeat_listeners)+'</td><td class="n">'+e(r.plays_per_listener==null?"—":r.plays_per_listener)+'</td><td class="n">'+n(r.full_plays)+'</td><td class="n">'+n(r.completions)+'</td><td class="n">'+n(r.shares)+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No content rows.</p>';
     var starts=rows.reduce(function(sum,r){return sum+Number(r.starts||0);},0),listeners=rows.reduce(function(sum,r){return sum+Number(r.listeners||0);},0);
-    var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(starts),"selected range")+kpi("Track listeners",n(listeners),"summed across tracks")+kpi("Tracked songs",n(rows.length),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':'<p>No recorded music activity in this range.</p>'));
+    var musicSummary=card("Music · quick view","The essentials, from recorded first-party track activity.",'<div class="cra-kpis">'+kpi("Track starts",n(contentKnown?starts:null),"selected range")+kpi("Track listeners",n(contentKnown?listeners:null),"summed across tracks")+kpi("Tracked songs",n(contentKnown?rows.length:null),"with activity")+'</div>'+(rows.length?'<p><b>Most played:</b> '+e(rows.slice().sort(function(a,b){return Number(b.starts||0)-Number(a.starts||0);})[0].track||"—")+'</p>':contentKnown?'<p>No recorded music activity in this range.</p>':'<p>Music activity is not available yet.</p>'));
     return'<div class="cra-grid">'+musicSummary+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
@@ -875,21 +877,26 @@
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){if(window.CR.analyticsUnified&&S.section==="intelligence")return window.CR.analyticsUnified.intelligence();if(window.CR.analyticsUnified&&S.section==="inventory")return window.CR.analyticsUnified.inventory();return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function body(){if(S.section==="cameras"&&window.CR.analyticsCameras)return window.CR.analyticsCameras.render();if(S.section==="action"&&window.CR.analyticsUnified)return window.CR.analyticsUnified.operations(S);if(window.CR.analyticsUnified&&S.section==="intelligence")return window.CR.analyticsUnified.intelligence();if(window.CR.analyticsUnified&&S.section==="inventory")return window.CR.analyticsUnified.inventory();return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
     var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Updated · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
     var unified=window.CR.analyticsUnified;
     var country=selCountry(),countrySeries=country&&S.country&&S.country.code===country&&S.country.rows;
     var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
     var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"page_views",pvLabel,"Page views over time, "+trendScope),bars:bars}):carousels();
-    var detail=body();if(S.section==="overview")detail='<details class="cu-detail"><summary>All overview metrics & geographic coverage</summary>'+geoCard()+detail+'</details>';
-    return '<div class="cra cu-overview">'+summary+'<h2 class="cra-h">Explore your data</h2><div class="cra-state"><span>'+e(st)+'</span></div>'+tabs()+'<div data-cu-details>'+detail+'</div></div>';
+    var detail=S.section==="overview"?summary+'<details class="cu-detail"><summary>All measured metrics & geographic coverage</summary>'+geoCard()+overview()+'</details>':body();
+    if(S.error)detail='<p class="cra-error" role="alert">Analytics load failed. '+e(S.error.message||S.error)+' · Refresh to retry.</p>'+detail;
+    return window.CR.analyticsDeck?window.CR.analyticsDeck.render(S,detail):'<div class="cra"><p>'+e(st)+'</p>'+tabs()+detail+'</div>';
   }
+  function selectSection(section){S.section=section;paint();}
   function paint(){
     if(!S.host)return;
-    /* the globe is built once and never repainted (a repaint would rebuild the Earth); the panel repaints around it */
     var panel=S.host.querySelector&&S.host.querySelector("[data-cra-panel]");
-    var root=panel||S.host;root.innerHTML=render();bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory")window.CR.analyticsUnified.loadInventory(paint);if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
+    var root=panel||S.host,deck=window.CR.analyticsDeck,saved=deck?deck.before(root):null;
+    root.innerHTML=render();bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);
+    if(deck){deck.bind(root,S,selectSection,function(){loadSites().then(load);},saved);deck.fit(S.host);}
+    if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory")window.CR.analyticsUnified.loadInventory(paint);if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
+    if(S.section==="cameras"&&window.CR.analyticsCameras)window.CR.analyticsCameras.bind(root,S.request,paint);
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
   }
@@ -930,6 +937,7 @@
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="experience")S.data.experience=v||null;
     else if(x.name==="business")S.data.business=v||null;
+    else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
     limit=Math.max(1,Number(limit)||1);
@@ -991,6 +999,7 @@
       {name:"visitors",run:function(){return site===null?S.request("/v1/analytics/visitors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=1"):Promise.resolve(null);}},
       {name:"flows",run:function(){return site===null?S.request("/v1/analytics/flows?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
       {name:"errors",run:function(){return site===null?S.request("/v1/analytics/errors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
+      {name:"coverage",run:function(){return site===null?S.request("/v1/analytics/coverage"):Promise.resolve(null);}},
       {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
     return runLimited(tasks,4,function(x){
@@ -1000,7 +1009,7 @@
       paint();
     },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
-      S.loading=false;S.loaded=true;S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();loadStates();paint();
+      S.loading=false;S.loaded=true;S.updatedAt=new Date().toISOString();S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();loadStates();paint();
     });
   }
   function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
@@ -1038,7 +1047,7 @@
     root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
     root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
-    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();var detail=S.host&&S.host.querySelector("[data-cu-details]");if(detail&&detail.scrollIntoView)detail.scrollIntoView({block:"start"});};});
+    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){selectSection(b.getAttribute("data-cra-sec"));};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
@@ -1081,7 +1090,8 @@
       if(!S.geo.places&&typeof fetch==="function")fetch("data/geo/country-label-points.json").then(function(r){return r.ok?r.json():null;}).then(function(j){S.geo.places=j&&j.points||{};paint();}).catch(function(){S.geo.places={};});
       /* The reach chart is drawn at the card's pixel width; redraw it when
          that width changes (rotation, window resize). */
-      if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
+      if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
+if(window.ResizeObserver&&!S.deckObserver){S.deckObserver=new ResizeObserver(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);});var shellNode=document.querySelector(".cr-shell");if(shellNode)S.deckObserver.observe(shellNode);}
 if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
     refresh:function(){return loadSites().then(load);},
     render:render,

@@ -4,6 +4,7 @@ import { createForensicRoutes } from './forensics.js';
 import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
+import { createCameraRoutes } from './cameras.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -37,7 +38,7 @@ async function sbJson(env, path, init = {}) {
 function countFromRange(value) {
   const total = String(value || '').split('/').pop();
   const n = Number(total);
-  if (!Number.isFinite(n) || n < 0) throw new Error('Invalid analytics count response');
+  if (!/^\d+$/.test(total) || !Number.isSafeInteger(n) || n < 0) throw new Error('Invalid analytics count response');
   return n;
 }
 
@@ -885,6 +886,7 @@ async function handleBusinessQuestion(request, env, user) {
 const forensics = createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finiteDate, publicDeviceSummary, requireHouseOwner });
 const audienceScience = createAudienceScienceRoutes({ json, sbRowsPaged, finiteDate, requireHouseOwner });
 const experienceAnalytics = createExperienceAnalyticsRoutes({ json, sbRows, sbRowsPaged, finiteDate, requireHouseOwner });
+const cameraAnalytics = createCameraRoutes({ json, requireOwner: requireHouseOwner });
 
 
 /* Bounded owner-only account explorer. Events are matched by authenticated uid
@@ -1035,6 +1037,29 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
 export async function handleAnalyticsRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '');
+
+  const cameraResponse = await cameraAnalytics(request, env, user, url, path);
+  if (cameraResponse) return cameraResponse;
+  if (path === '/v1/analytics/coverage') {
+    if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
+    try {
+      const { org } = await requireHouseOwner(env, user);
+      const definitions = [
+        ['headlines', 'media_news_articles', {}], ['publishers', 'media_news_sources', {}],
+        ['ingest_records', 'ops_ingest_records', { org_id: 'eq.' + org.id }],
+        ['connectors', 'ops_ingest_connectors', { org_id: 'eq.' + org.id }],
+        ['missions', 'action_missions', {}], ['proofs', 'action_proofs', {}],
+        ['observability', 'control_observability_events', { org_id: 'eq.' + org.id }]
+      ];
+      const metrics = {};
+      // Bound fan-out; a missing table never turns into a measured zero.
+      for (let i = 0; i < definitions.length; i += 3) await Promise.all(definitions.slice(i,i+3).map(async ([key,table,filters]) => {
+        try { metrics[key] = { count: await sbCountFiltered(env,table,'id',filters), status: 'measured' }; }
+        catch { metrics[key] = { count: null, status: 'unavailable' }; }
+      }));
+      return json({ ok: true, measured_at: new Date().toISOString(), scope: 'Current stored records · all time', metrics });
+    } catch (error) { return json({ error: error.message }, error.status || 502); }
+  }
 
   if (path === '/v1/analytics/my-listening' || path === '/v1/analytics/my-creator')
     return handleSelfMusicAnalytics(request,env,user,url,path);
