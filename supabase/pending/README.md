@@ -59,6 +59,23 @@ every open mission in one by its campaign, published. Idempotent; apply as the
 service role, then promote with the steps above. Regional impact totals still
 need five consenting members per region and are not seeded.
 
+Pending: `20261015210000_intel_mission_canon_v1.sql` is the one evidence ->
+claim -> briefing -> decision -> mission -> outcome schema for Halo and the
+plane (design: `docs/control-plane/INTEL-TO-MISSION-CANON.md`). It reuses
+`ops_ingest_*`, `ai_context.decisions`, `action_missions` and `action_proofs`
+and adds the `intel_*` tables and service-role-only functions. Rollback:
+`20261015210000_intel_mission_canon_v1.rollback.sql`. Behaviour test:
+`supabase/tests/intel_mission_canon.behaviour.sql`, run with the dependent
+tables, the rollback and a re-apply by `scripts/test-intel-canon-db.sh` on a
+scratch Postgres 16. Apply as `intel_mission_canon_v1`, then promote using the
+steps above. The Worker's intel routes answer `intel_schema_not_ready` until
+then, and its USGS collector stays off until `INTEL_USGS_COLLECTOR_ENABLED`
+is `"true"`.
+
+Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
+(a private schema with no grants that nothing can reach, and a second source
+registry beside `ops_ingest_*`). The intel canon replaces it.
+
 Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
 (owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
 public layer, member layers, the policy ladder, the Equity Uprise rule, which
@@ -74,6 +91,33 @@ policy cohorts. Behaviour tests: `supabase/tests/policy_fellowship_ladder.behavi
 run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
 decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
 Promote using the steps above after the owner approves it.
+
+Pending: `music_creator_one_click_v1.sql` makes creator onboarding one click
+(owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
+for Creator Studio (a member with a `music_creator_profiles` row never sees the
+onboarding again); `music_become_creator(p_handle, p_artist_name,
+p_accept_terms)` builds the profile from data the member already gave (public
+name, M handle, bio, https site), asks only for a missing name or handle, and
+inserts the profile and links `identity_presentations.music_enabled` in one
+transaction. Idempotent; overwrites nothing. Signed-in members only (not anon).
+Until it is applied, Creator Studio builds the same answer in the browser
+(`js/creator-onboarding.js`). Behaviour tests:
+`supabase/tests/music_creator_one_click.behaviour.sql`, run by
+`scripts/test-music-creator-db.sh` on a scratch Postgres. Rollback is in the
+file header. Promote with the steps above.
+
+Promoted: `anon_policy_scope_v1.sql` is
+`supabase/migrations/20261016031123_anon_policy_scope_v1.sql` (applied
+2026-10-16). Signed-out visitors, artist pages and the listen.html directory
+read published creator profiles, tracks, offers and services again.
+
+Pending: `action_bounty_claim_existing_row_guard_v1.sql` preserves the result of
+claim-row lookup before aggregate SELECT statements overwrite PL/pgSQL FOUND.
+It salvages the focused fix from PR #428 without its older migration history.
+Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
+first claims insert, repeats are idempotent, cancelled/expired claims reuse the
+row, and rejected/unfunded claims remain blocked. Promote only after applying
+through the production ledger workflow above.
 
 Pending: `mission_admin_approval_v1.sql` (rollback `mission_admin_approval_v1.rollback.sql`)
 makes "only an admin completes a mission" a database invariant (owner,

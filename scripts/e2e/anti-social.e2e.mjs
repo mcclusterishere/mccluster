@@ -100,6 +100,8 @@ async function routeBackends(ctx) {
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE,PATCH' } });
+    /* the World's Cesium ion (scripts/e2e/world-ion.e2e.mjs drives it): off here, so this Earth is NASA's alone */
+    if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: false, binding: null });
     if (u.pathname === '/v1/mnet/bootstrap') return json(route, { identity: ME, profile: ME, next_step: null, tour_done_at: new Date().toISOString() });
     if (u.pathname === '/v1/mnet/feed') return json(route, { items: posts, next_before: null });
     if (u.pathname === '/v1/mnet/notifications') return json(route, { notifications: world.notifications });

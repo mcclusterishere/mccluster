@@ -1,3 +1,5 @@
+import { cesiumIonToken } from '../world-ion.js';
+
 export const SOURCE_CLASSES = Object.freeze({
   PUBLIC_OPEN: 'PUBLIC_OPEN',
   NONPROFIT: 'NONPROFIT',
@@ -102,6 +104,8 @@ export function sourceByKey(key) {
 }
 
 export function sourceConfigured(item, env) {
+  /* the ion token is read the way the World's route reads it, under CESIUM_ION_TOKEN or a near name (../world-ion.js) */
+  if (item.key === 'cesium_ion') return Boolean(cesiumIonToken(env));
   return item.credentialEnv.every((key) => Boolean(env?.[key]));
 }
 

@@ -38,7 +38,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install deterministic building dependencies
-        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf
+        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf==1.4.4
 
       - name: Audit Equity Uprise building context index
         run: python docs/design/equity-uprise-building/production/audit_building_context.py
@@ -201,7 +201,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install deterministic building dependencies
-        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf
+        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf==1.4.4
 
       - name: Regenerate all derived building outputs
         run: |
