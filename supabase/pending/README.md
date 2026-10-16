@@ -76,6 +76,22 @@ Superseded, do not apply: `20261011190000_decision_intelligence_evidence_v1.sql`
 (a private schema with no grants that nothing can reach, and a second source
 registry beside `ops_ingest_*`). The intel canon replaces it.
 
+Pending: `policy_fellowship_ladder_v1.sql` is the Policy Fellowship ladder
+(owner, 2026-10-15): every unlock as a data row (`action_unlock_rules`: the
+public layer, member layers, the policy ladder, the Equity Uprise rule, which
+ships disabled pending counsel, and the Whip Equipped hand-off, open to any
+signed-in member; there is no voter-registration rule), status-only strict
+referral verification, the ladder (any three distinct admin-verified, non-clip
+missions; help a person, write a song and show up to a rally are suggestions), state Policy Fellowship cohorts and policy teams on
+`action_cohorts`, the memo review loop (immutable versions with diffs, an
+immutable review log, notifications) and a per-memo research collection of
+unverified leads. It replaces `admit_fellow_to_cohort()` (production hash
+matches `20261005054040`) with the same function plus the ladder check for
+policy cohorts. Behaviour tests: `supabase/tests/policy_fellowship_ladder.behaviour.sql`,
+run by `scripts/test-policy-fellowship-db.sh` on a scratch Postgres. Design,
+decisions and the apply checklist: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
+Promote using the steps above after the owner approves it.
+
 Pending: `music_creator_one_click_v1.sql` makes creator onboarding one click
 (owner, 2026-10-15). `music_creator_state()` is the server-truth show-condition
 for Creator Studio (a member with a `music_creator_profiles` row never sees the

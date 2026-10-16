@@ -807,6 +807,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
       "path": "docs/control-plane/PROGRAM-LEDGER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1348,6 +1355,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "js/policy-fellowship-ladder.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
+    },
+    {
       "path": "js/tabbar.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1601,6 +1615,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World screen's navigation and emblem/Fund contract; names the Equity Uprise emblem path. Not a building capability."
+    },
+    {
+      "path": "scripts/test/policy-fellowship-ladder.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
       "path": "scripts/test/world-first-and-layers.test.mjs",
@@ -2302,6 +2323,13 @@
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
     },
     {
+      "path": "supabase/pending/policy_fellowship_ladder_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2618,6 +2646,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Automated policy/platform assertions; validates mapped features but is not itself a building capability."
+    },
+    {
+      "path": "supabase/tests/policy_fellowship_ladder.behaviour.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
       "path": "supabase/tests/run-eu-tests.sh",
