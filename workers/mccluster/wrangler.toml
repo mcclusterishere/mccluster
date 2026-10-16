@@ -27,6 +27,16 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
+# Intel USGS evidence collector (src/intel/usgs-collector.js). Off by default so a deploy
+# starts no writes; set to "true" only after supabase/pending/20261015210000_intel_mission_canon_v1.sql
+# is applied. wrangler deploy uploads this block, so the switch lives here.
+INTEL_USGS_COLLECTOR_ENABLED = "false"
+# Identity verification levels: the Persona government-ID check stays OFF until the
+# owner approves the consent text, counsel review and Persona's terms. Secrets by name
+# only (wrangler secret put): PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET.
+PERSONA_ENABLED = "false"
+# Owner's choice: keep the ID's name and birth YEAR for side-by-side review (default off).
+PERSONA_STORE_VERIFIED_NAME = "false"
 # Core remote MCP bridge origin (the Cloudflare Tunnel hostname). Not a secret:
 # Core refuses any request lacking CORE_BROKER_TOKEN plus a valid
 # CORE_EDGE_SIGNING_KEY signature, so the hostname alone grants nothing.

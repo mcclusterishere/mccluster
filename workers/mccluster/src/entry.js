@@ -23,6 +23,7 @@ import { handleWorkRequest } from './work.js';
 import { checkoutReceipt } from './commerce/receipt.js';
 import { handleClippingRequest } from './clipping/router.js';
 import { runClipping } from './clipping/runner.js';
+import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-collector.js';
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
 
@@ -559,6 +560,11 @@ export default {
       }),
       observeScheduled(env, ctx, 'clipping.settlement', () => runClipping(env, { limit: 25 })).catch((error) => {
         console.error(JSON.stringify({ event: 'clipping_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* USGS evidence collector: off unless INTEL_USGS_COLLECTOR_ENABLED is "true";
+         returns before any network or database call when off. */
+      (collectorEnabled(env) ? observeScheduled(env, ctx, 'intel.usgs_collector', () => runScheduledIntelCollectors(env)) : Promise.resolve(null)).catch((error) => {
+        console.error(JSON.stringify({ event: 'intel_usgs_collector_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }
