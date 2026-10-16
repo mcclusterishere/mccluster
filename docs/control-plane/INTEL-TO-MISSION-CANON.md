@@ -179,3 +179,35 @@ globe should draw buckets as cells (never as points), show
 3. Apply `20261015210000_intel_mission_canon_v1.sql` with Supabase `apply_migration` under the name `intel_mission_canon_v1`, then promote it per `supabase/pending/README.md` (ledger, drift contract).
 4. Do **not** apply `20261011190000_decision_intelligence_evidence_v1.sql`.
 5. Rollback: `20261015210000_intel_mission_canon_v1.rollback.sql` (drops only the canon's objects; see its data note).
+
+## 9. Vertical slice (Worker `mccluster`, `src/intel/`)
+
+Routes. Everything is owner-only (`requireHouseOwner`) except `geo`. Every mutation is audited in `control_audit`.
+
+| Route | Does |
+|---|---|
+| `GET /v1/intel/health` | `schema_ready`, collector flag, stored totals, latest run, last successful run, failures (7 days), each reported separately |
+| `POST /v1/intel/collect/usgs` | one collector run; `409 collector_disabled` while the flag is off |
+| `GET /v1/intel/evidence?review_status=` | the evidence review queue |
+| `POST /v1/intel/evidence/:id/review` | `{status: accepted|rejected, visibility?, note?}` |
+| `POST /v1/intel/claims` | `{statement, subject_kind, purpose, evidence:[{evidence_id, stance, note?}]}` |
+| `POST /v1/intel/claims/:id/review` | `{status, confidence?, visibility?, note?}` |
+| `POST /v1/intel/briefings` | `{title, body, citations:[{claim_id?|evidence_id?, locator?}], drafting?}` |
+| `POST /v1/intel/decisions` | proposes through `context-decision` with the owner's own token, then records the basis |
+| `POST /v1/intel/decisions/:id/approve` | `{status: approved|rejected, note?}` through `context-decision` |
+| `POST /v1/intel/decisions/:id/missions` | `{idempotency_key, title, description?, domain?, objectives?, scope?, region_label?, target_measures?}` creates a draft mission |
+| `POST /v1/intel/missions/:id/outcomes` | `{idempotency_key, summary, occurred_at, measures?, proof_ids:[…]}` |
+| `POST /v1/intel/outcomes/:id/review` | `{status, note?, claim_id?, stance?}`; an accepted outcome becomes evidence |
+| `GET /v1/intel/lineage/claims/:id` | claim → evidence → briefings → decisions → missions → outcomes |
+| `GET /v1/intel/geo` | the globe aggregate (§5) |
+
+### The source: USGS earthquakes
+
+- **Service:** USGS FDSN event web service (`earthquake.usgs.gov/fdsnws/event/1/query`).
+- **Terms:** USGS-authored data are U.S. Government works in the public domain. USGS asks for the credit "U.S. Geological Survey". Commercial use and display are fine.
+- **Bounds:** magnitude 2.5 and above, at most 500 events per run, oldest first. The first run looks back 24 hours. Every later run starts 60 minutes before the checkpoint, because USGS revises recent events.
+- **Cadence:** the Worker's 5-minute cron. The database refuses a new run within 15 minutes of the last one, and refuses while another run is live (a 15-minute lease). That allows at most 96 requests a day.
+- **Rate limits:** none published. The service errors above 20,000 results per query, far above the 500 requested.
+- **Errors:** network failures, timeouts, non-2xx answers, redirects (`redirect: 'manual'`), invalid JSON and the wrong shape each produce a failed run with the reason, and the cursor does not move. A zero is recorded only after an explicit HTTP 204 or an empty FeatureCollection.
+- **Idempotency:** each event is keyed `usgs:<id>:<updated>`. A revised event becomes a new snapshot; an unchanged one deduplicates.
+- **Flag:** `INTEL_USGS_COLLECTOR_ENABLED` is `"false"` in `wrangler.toml`. While it is off, the cron makes no call of any kind.
