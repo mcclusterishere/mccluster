@@ -2,7 +2,14 @@
 
    Serves this checkout, fakes api.mccluster.org (the Worker's /v1/world/ion status and asset endpoints) and Supabase, and stands in
    for Cesium ion's tile hosts on this same server: a flat heightmap terrain, one imagery tile for every z/x/y, an empty 3D tileset.
-   Real CesiumJS 1.131 from the CDN drives it, so the page's ion code runs exactly as it will against the Worker. Four worlds:
+   Real CesiumJS 1.131 from the CDN drives it, so the page's ion code runs exactly as it will against the Worker. The asset endpoint
+   stand-in behaves as the Worker does: members only, so it answers 401 unless the request carries an accepted member session as a
+   bearer header. Every world below except "anon" and "refused" is a signed-in member's page. The worlds:
+
+     anon     logged out, the Worker holding a token: the page asks neither the ion status nor any asset, and nothing reaches
+              api.cesium.com or assets.ion.cesium.com; NASA's Earth and the street map as before;
+     refused  a member whose session the Worker refuses (401): ion steps aside once and the Earth is NASA's, with no request loop;
+     rotate   the member's session rotates in this tab mid-visit: the stale one's 401 is retried with the new one, and ion carries on;
 
      off      the Worker has no token: the page asks for no asset, shows no ion credit, and the street map still takes over below 900 km;
      on       terrain before the Earth is drawn; aerial imagery only below 3,000 km and whole with the cloud gone by 1,200 km; the street
@@ -79,9 +86,13 @@ const check = (scope, ok, label, detail = '') => { if (!ok) failures++; console.
 const browser = await chromium.launch();
 await mkdir(OUT, { recursive: true });
 
-async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile = true, { statusDelay = 0, geo = { latitude: 40.7484, longitude: -73.9857 } } = {}) {
+const MEMBER = 'member-e2e-session';
+async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile = true, { statusDelay = 0, geo = { latitude: 40.7484, longitude: -73.9857 }, session = MEMBER, accepted = new Set([MEMBER]) } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, geolocation: geo, permissions: ['geolocation'] });
-  await ctx.addInitScript(() => localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() })));
+  await ctx.addInitScript((member) => {
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    if (member) localStorage.setItem('mccdb_session', JSON.stringify({ access_token: member, refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600 }));
+  }, session);
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => json(route, route.request().url().includes('action_globe_public_region_missions') ? MISSIONS : []));
   const asked = [];
@@ -92,6 +103,8 @@ async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile 
     const m = u.pathname.match(/^\/v1\/world\/ion\/v1\/assets\/(\d+)\/endpoint$/);
     if (m) {
       const id = Number(m[1]);
+      const bearer = (route.request().headers().authorization || '').replace(/^Bearer /, '');
+      if (!accepted.has(bearer)) return json(route, { error: 'Sign in to see the World\'s terrain, aerial imagery and 3D buildings', detail: { members_only: true } }, 401);
       if (mode === 'failing') return json(route, { error: 'Cesium ion did not answer for this asset' }, 502);
       if (mode === 'slow' && id === 1) { await new Promise((r) => setTimeout(r, 8000)); return json(route, ENDPOINTS[1]).catch(() => {}); }
       return ENDPOINTS[id] ? json(route, ENDPOINTS[id]) : json(route, { error: 'Cesium ion did not answer for this asset' }, 502);
@@ -99,17 +112,17 @@ async function open(scope, mode, viewport = { width: 390, height: 844 }, mobile 
     return json(route, { error: 'not found' }, 404);
   });
   const page = await ctx.newPage();
-  const errors = [], outside = [], pending = new Map();
+  const errors = [], outside = [], warnings = [], pending = new Map();
   page.on('request', (r) => pending.set(r, r.url()));
   page.on('requestfinished', (r) => pending.delete(r));
   page.on('requestfailed', (r) => pending.delete(r));
   page.__pending = pending;
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+  page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); if (m.type() === 'warning' || m.type() === 'error') warnings.push(m.text().slice(0, 200)); });
   page.on('request', (r) => { const h = new URL(r.url()).host; if (/(^|\.)cesium\.com$/.test(h) && !r.url().includes('/downloads/cesiumjs/')) outside.push(r.url()); });
   await page.goto(BASE + '/action-globe.html?explore=1', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__huIon, null, { timeout: 30000 });
-  return { ctx, page, errors, outside, asked };
+  return { ctx, page, errors, outside, asked, warnings, accepted };
 }
 const ionState = (page) => page.evaluate(() => window.__huIon());
 const earth = (page) => page.waitForFunction(() => window.__huGlobeSettled, null, { timeout: 30000 });
@@ -163,7 +176,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   check(scope, s.on && s.ground && s.terrain, 'terrain is in before the Earth is drawn', JSON.stringify(s));
   check(scope, !s.imagery && !s.imageryShown && s.clouds === 1 && s.nightLights === 1, 'far out the Earth is NASA\'s: no aerial imagery, the cloud and the night lights whole', JSON.stringify(s));
   check(scope, !assetAsks(asked).some((a) => /\/assets\/(3|2|3954)\//.test(a.path)), 'imagery is not even asked for far out');
-  check(scope, assetAsks(asked).every((a) => a.search === '' && !a.auth), 'the page sends no ion token and no session to the Worker', JSON.stringify(assetAsks(asked)));
+  check(scope, assetAsks(asked).length > 0 && assetAsks(asked).every((a) => a.search === '' && a.auth === `Bearer ${MEMBER}`), 'the page sends the member\'s session as a bearer header and nothing in the URL', JSON.stringify(assetAsks(asked)));
   const credit = await page.evaluate(() => { const c = document.getElementById('ionCredits'); const b = c.getBoundingClientRect(); return { shown: getComputedStyle(c).display !== 'none' && b.width > 0, text: c.textContent, logo: !!c.querySelector('img') }; });
   check(scope, credit.shown && credit.logo && /Data attribution/.test(credit.text), 'Cesium ion is credited on the imagery line', JSON.stringify(credit));
   await page.screenshot({ path: join(OUT, scope + '-far.png') });
@@ -175,6 +188,7 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   check(scope, s.clouds === 0 && s.nightLights === 0, 'near: the cloud and the night lights have eased out', JSON.stringify(s));
   check(scope, !s.street, 'near: the street map yields to the aerial imagery', JSON.stringify(s));
   check(scope, hostSeen.some((h) => h.path.startsWith('/__ion/terrain/') && h.auth === 'Bearer asset-token-1' && h.client === 'CesiumJS'), 'the asset token rides only to the asset host');
+  check(scope, !hostSeen.some((h) => h.auth.includes(MEMBER)), 'the member\'s session never goes to the asset host');
   await settle(page);
   await page.screenshot({ path: join(OUT, scope + '-near.png') });
 
@@ -265,6 +279,73 @@ for (const [device, viewport, mobile] of [['phone', { width: 390, height: 844 },
   check(scope, outside.length === 0, 'nothing reaches api.cesium.com', outside.slice(0, 3).join(' '));
   check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
   await page.screenshot({ path: join(OUT, 'failing-near.png') });
+  await ctx.close();
+}
+
+/* ---------- anon: logged out while the Worker holds a token ---------- */
+{
+  const scope = 'anon';
+  const hostBefore = hostSeen.length;
+  const { ctx, page, errors, outside, asked } = await open(scope, 'on', undefined, true, { session: null });
+  await earth(page);
+  check(scope, await settle(page), 'the Earth settles');
+  let s = await ionState(page);
+  check(scope, !s.on && !s.terrain && !s.imagery && !s.buildings, 'no ion at all', JSON.stringify(s));
+  await locate(page);
+  await zoomIn(page, 4);
+  await page.waitForTimeout(1500);
+  s = await ionState(page);
+  check(scope, s.street && !s.imagery && !s.buildings, 'near and at street level: the street map, as before', JSON.stringify(s));
+  const ionAsks = asked.filter((a) => a.path === '/v1/world/ion' || a.path.startsWith('/v1/world/ion/'));
+  check(scope, ionAsks.length === 0, 'zero requests to the Worker\'s ion route (status included)', JSON.stringify(ionAsks));
+  check(scope, outside.length === 0, 'zero requests to api.cesium.com or assets.ion.cesium.com', outside.slice(0, 3).join(' '));
+  check(scope, hostSeen.length === hostBefore, 'zero requests to the ion asset stand-in');
+  check(scope, await page.evaluate(() => !document.documentElement.classList.contains('globe-ion')), 'no ion credit');
+  check(scope, await noSideways(page), '390px: no sideways scroll');
+  check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
+  await page.screenshot({ path: join(OUT, 'anon-street.png') });
+  await ctx.close();
+}
+
+/* ---------- refused: a member's session the Worker does not accept ---------- */
+{
+  const scope = 'refused';
+  const { ctx, page, errors, outside, asked, warnings } = await open(scope, 'on', undefined, true, { accepted: new Set() });
+  await earth(page);
+  check(scope, await settle(page), 'the Earth settles');
+  await locate(page);
+  await zoomIn(page, 4);
+  await page.waitForTimeout(2500);
+  const s = await ionState(page);
+  check(scope, !s.on && !s.terrain && !s.imagery && !s.buildings && s.street && s.clouds === 1, 'ion stepped aside: the flat Earth, NASA\'s imagery, the street map below 900 km', JSON.stringify(s));
+  const tried = assetAsks(asked);
+  check(scope, tried.length >= 1 && tried.length <= 2, 'one refusal (terrain; buildings never asked) and no loop', JSON.stringify(tried.map((a) => a.path)));
+  await page.waitForTimeout(3000);
+  check(scope, assetAsks(asked).length === tried.length, 'and nothing more is asked later');
+  const ionWarnings = warnings.filter((w) => w.includes('[world ion]'));
+  check(scope, ionWarnings.length <= 1, 'at most one console line from ion', JSON.stringify(ionWarnings));
+  check(scope, !hostSeen.some((h) => h.auth.includes(MEMBER)), 'the session never reached the asset host');
+  check(scope, outside.length === 0, 'nothing reaches api.cesium.com', outside.slice(0, 3).join(' '));
+  check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
+  await ctx.close();
+}
+
+/* ---------- rotate: the session changes in this tab (no storage event); the stale one's 401 is retried with the new one ---------- */
+{
+  const scope = 'rotate';
+  const { ctx, page, errors, asked, accepted } = await open(scope, 'on');
+  await earth(page);
+  await page.waitForFunction(() => window.__huIon().terrain, null, { timeout: 15000 }).catch(() => {});
+  /* the session rotates: the Worker accepts only the new one, and this tab's storage holds it */
+  accepted.clear(); accepted.add('member-e2e-session-2');
+  await page.evaluate(() => localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'member-e2e-session-2', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600 })));
+  await locate(page);
+  await page.waitForFunction(() => window.__huIon().imagery, null, { timeout: 15000 }).catch(() => {});
+  const s = await ionState(page);
+  check(scope, s.on && s.terrain && s.imagery && s.imageryShown, 'ion carried on with the new session', JSON.stringify(s));
+  const img = assetAsks(asked).filter((a) => /\/assets\/3\//.test(a.path)).map((a) => a.auth);
+  check(scope, img.length === 2 && img[0] === `Bearer ${MEMBER}` && img[1] === 'Bearer member-e2e-session-2', 'the stale session was refused once and the new one retried', JSON.stringify(img));
+  check(scope, errors.length === 0, 'no page errors', errors.join(' | '));
   await ctx.close();
 }
 
