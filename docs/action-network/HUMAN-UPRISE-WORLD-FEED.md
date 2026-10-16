@@ -511,8 +511,17 @@ Hitman's Halo already uses, served by the one Worker
 cached so a provider sees one request per window however many people look,
 and credited on the imagery line while it is on:
 
-- **Flights**, for everyone: OpenSky's snapshot of aircraft in the air (up to
-  five thousand points, ten-minute window). While it is on, the line over the
+- **Flights**, for everyone: aircraft in the air (up to five thousand points,
+  ten-minute window) from a provider chain (2026-10-16, after anonymous
+  OpenSky timed out from Cloudflare's egress and left the layer
+  "unavailable"): OpenSky only when the research credentials are set on the
+  Worker, otherwise or on failure adsb.lol (ODbL 1.0). adsb.lol answers a
+  point and a 250 nm radius, so the World shows a **sample** around eight
+  fixed busy airspaces (New York, Chicago, Los Angeles, London, Frankfurt,
+  Dubai, Singapore, Tokyo), deduplicated, with LADD/PIA privacy-flagged
+  airframes withheld; the response's `coverage` says so and `providers`
+  reports every attempt. The credit on the imagery line names whichever
+  provider answered. While it is on, the line over the
   Earth counts them and carries the owner's one lead, "Fly Vaunt →" (owner:
   "make it simple and shorter"), the same referral link the front page's VR
   wall carries (`https://vauntapi.flyvaunt.com/referral/nuao1K`).
@@ -529,7 +538,10 @@ reason, sending nothing. A provider that is down gives the last good answer,
 marked stale, then an honest "unavailable". Licences, for the owner: OpenSky
 is non-commercial research data and a live product can need their written
 agreement (the seek-first research credentials, when set on the Worker, raise
-the budget); CelesTrak asks for citation; The Space Devs allow use with
+the budget); adsb.lol is ODbL 1.0 (credit; share-alike for a derived
+database), free today, says a feeder API key will be required in future and
+asks production users to contact them; airplanes.live is not used (its API
+guide lists non-commercial use); CelesTrak asks for citation; The Space Devs allow use with
 credit. Proof: `workers/mccluster/test/world-layers.test.mjs`,
 `scripts/test/world-first-and-layers.test.mjs`, and the browser run below.
 
