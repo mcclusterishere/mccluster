@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 373,
+  "candidate_count": 375,
   "capability_source_count": 99,
-  "support_only_count": 274,
-  "checks_total": 1395,
-  "checks_passed": 1395,
+  "support_only_count": 276,
+  "checks_total": 1403,
+  "checks_passed": 1403,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -108,6 +108,8 @@
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
     "docs/control-plane/GMAIL-CONNECT.md",
+    "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
+    "docs/control-plane/INTEL-TO-MISSION-CANON.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
@@ -387,7 +389,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "373 entries"
+      "detail": "375 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2216,6 +2218,46 @@
     },
     {
       "name": "docs/control-plane/GMAIL-CONNECT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/INTEL-TO-MISSION-CANON.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/INTEL-TO-MISSION-CANON.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/INTEL-TO-MISSION-CANON.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/INTEL-TO-MISSION-CANON.md support rationale present",
       "passed": true,
       "detail": ""
     },
