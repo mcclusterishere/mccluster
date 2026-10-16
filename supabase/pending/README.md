@@ -85,17 +85,15 @@ row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
 
 
-Pending: `action_partner_opportunity_drafts_v1.sql` adds two **admin-readable only**
-prospecting tables (`action_funding_opportunities`,
-`action_partner_mission_drafts`) containing four sourced funding programs and ten
-partner-specific proposal missions. Every record is irrevocably `draft`,
-`admin_only`, non-claimable and has **no compensation or authorized partner**.
-This is a planning catalogue, not a signed grant or mission deployment. It must
-NOT be treated as an applied production migration or published via the public
-globe RPC. Prior to applying: run the SQL on an isolated scratch database with
-the existing `eu_is_admin()` function; test anon and authenticated non-admin
-SELECT denial, admin visibility, idempotence and every draft guard. Review all
-funding details against sources, then apply/promote using the version-accurate
-production-ledger workflow above. Publishing any individual proposal requires
-separate partner authorization, eligible budget, risk review, proof policy and
-promotion into the existing `action_missions`/`action_bounties` stack.
+Promoted: `action_partner_opportunity_drafts_v1.sql` was applied to production as
+`20261016020407_action_partner_opportunity_drafts_v1.sql` and moved to
+`supabase/migrations/`. Four source-backed opportunities and ten partner-only
+mission proposals are now stored privately. RLS was tested in a rollback
+transaction before application and independently verified after application:
+anonymous SELECT absent, non-admin authenticated sees no proposals, all
+ten proposals remain `draft`/`admin_only`/non-claimable/uncompensated.
+The Control Funding Intelligence UI and Worker endpoint are **feature-branch
+changes** awaiting merge and deployment; production tables alone do not
+make the private workspace live. Any later activation requires written
+partner permission, verified restricted funds, proof/privacy review and
+separate bounty approval.
