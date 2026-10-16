@@ -1,3 +1,5 @@
+/* Current release policy: world-release.js requires live house-owner preview
+   before dispatch. The original adapter prerequisites below do not release data. */
 /* THE WORLD'S DATA LAYERS (owner, 2026-10-15: "we need some demo data …
    one you can see not logged in, maybe the flights … and then two other
    data sets, like satellites and space missions, that only logged in users
@@ -318,7 +320,7 @@ export async function handleWorldLayers(request, env, { fetchImpl = fetch, cache
   const { body, stale } = await cached(layer, env, fetchImpl, cacheImpl);
   const res = reply(request, env, { ...body, stale: !!stale });
   /* the public layer may sit in browser and edge caches for its window; a member's never leaves their session */
-  res.headers.set('cache-control', spec.public ? `public, max-age=${Math.min(spec.ttl, 300)}` : 'private, no-store');
+  res.headers.set('cache-control', 'private, no-store');
   res.headers.set('vary', 'origin, authorization');
   return res;
 }
