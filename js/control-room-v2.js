@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var SURFACES = ["home", "ai", "work", "create", "analytics", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "relationships", "clients", "tasks", "bookings", "orders", "projects", "deliverables", "payments", "renewals", "outreach", "operations"];
-  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "song-test"];
+  var CREATE_VIEWS = ["projects", "library", "schedule", "channels", "instagram", "music", "clipping", "action-network", "funding", "song-test"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
@@ -823,6 +823,7 @@
     if (["social-agent", "ig", "reels"].indexOf(v) >= 0) return "instagram";
     if (["music-review", "vault", "lanes", "review-desk"].indexOf(v) >= 0) return "music";
     if (["action", "uprise", "mobilize"].indexOf(v) >= 0) return "action-network";
+    if (["grants", "opportunity-intelligence", "bounties-funding"].indexOf(v) >= 0) return "funding";
     return "projects";
   }
   function normalizeSystemView(v) {
@@ -1706,6 +1707,8 @@
         ? (window.CR.clipping ? window.CR.clipping.render() : empty("Clipping unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
         ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Human Uprise unavailable", "The native Control module did not load."))
+      : state.createView === "funding"
+        ? (window.CR.fundingIntelligence ? window.CR.fundingIntelligence.render() : empty("Funding Intelligence unavailable", "The module did not load."))
       : state.createView === "song-test"
         ? (window.CR.songTest ? window.CR.songTest.render() : empty("Song test unavailable", "The native Control module did not load."))
         : renderSchedule();
@@ -2833,6 +2836,7 @@
       ["Create · Schedule", "Distribution and publishing", "create-schedule"],
       ["Create · Channels", "Social destinations and composer", "create-channels"],
       ["Create · Music", "Review, catalogue, rights and distribution", "create-music"],
+      ["Create · Funding", "Grants, award searches and private partner mission proposals", "create-funding"],
       ["Analytics", "Traffic, audience, content, identity and forensics", "analytics"],
       ["System · Command", "Speak to the signed Core capability bus", "system-command"],
       ["System · Overview", "Topology and service health", "system-overview"],
@@ -2879,6 +2883,7 @@
     else if (action === "create-schedule") setSurface("create", "schedule");
     else if (action === "create-channels") setSurface("create", "channels");
     else if (action === "create-music") setSurface("create", "music");
+    else if (action === "create-funding") setSurface("create", "funding");
     else if (action === "connect-account") {
       var platform = $("crAccPlatform") && $("crAccPlatform").value;
       var external = $("crAccExternal") && $("crAccExternal").value.trim();
@@ -3364,6 +3369,7 @@
     if (window.CR.instagram) window.CR.instagram.bind($("crSurface"));
     if (window.CR.musicOps) window.CR.musicOps.bind($("crSurface"));
     if (window.CR.actionNetwork) window.CR.actionNetwork.bind($("crSurface"));
+    if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.bind($("crSurface"));
     if (window.CR.clipping) window.CR.clipping.bind($("crSurface"));
     if (window.CR.songTest) window.CR.songTest.bind($("crSurface"));
     var select = $("crViewSelect");
@@ -3659,6 +3665,7 @@
   if (window.CR.instagram) window.CR.instagram.init({ request: request, render: render, org: function () { return state.org; } });
   if (window.CR.musicOps) window.CR.musicOps.init({ supa: supa, render: render });
   if (window.CR.actionNetwork) window.CR.actionNetwork.init({ supa: supa, request: request, render: render });
+  if (window.CR.fundingIntelligence) window.CR.fundingIntelligence.init({ request: request, render: render });
   if (window.CR.clipping) window.CR.clipping.init({ supa: supa, render: render, org: function () { return state.org; } });
   if (window.CR.work) window.CR.work.init({
     request: request, render: render,
