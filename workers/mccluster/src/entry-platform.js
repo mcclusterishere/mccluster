@@ -18,6 +18,7 @@ import { handleCreatorBillingWebhook } from './creator-billing-webhook.js';
 import { handleCreatorEntitlement } from './creator-entitlement.js';
 import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
+import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -67,6 +68,10 @@ export default {
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
+      /* live missions (./live/index.js): flagged off with LIVE_MISSIONS_ENABLED;
+         its Cloudflare webhooks authenticate themselves, so it sits before the key gate */
+      const live = await handleLiveMissions(request, env);
+      if (live) return live;
       /* identity verification levels: the Persona ID check (flagged off by
          PERSONA_ENABLED) and the entitlement answer Halo reads
          (./identity/router.js, docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md) */
@@ -107,6 +112,9 @@ export default {
     }));
     ctx.waitUntil(reapStaleLiveSessions(env, { limit: 20 }).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_live_reap_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    ctx.waitUntil(runLiveMaintenance(env).catch((error) => {
+      console.error(JSON.stringify({ event: 'live_missions_maintenance_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));

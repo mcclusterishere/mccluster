@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 390,
+  "candidate_count": 393,
   "capability_source_count": 99,
-  "support_only_count": 291,
-  "checks_total": 1463,
-  "checks_passed": 1463,
+  "support_only_count": 294,
+  "checks_total": 1475,
+  "checks_passed": 1475,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -325,6 +325,7 @@
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/action_globe_demo_pins_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
+    "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
     "supabase/pending/policy_fellowship_ladder_v1.sql",
     "supabase/production-ledger.json",
@@ -386,6 +387,7 @@
     "workers/mccluster/src/entry.js",
     "workers/mccluster/src/human-uprise/router.js",
     "workers/mccluster/src/index.js",
+    "workers/mccluster/src/live/index.js",
     "workers/mccluster/src/music/tracks.js",
     "workers/mccluster/src/platform-api.js",
     "workers/mccluster/src/seek-first/catalogs.js",
@@ -394,6 +396,7 @@
     "workers/mccluster/test/fbi.test.mjs",
     "workers/mccluster/test/halo-projection.test.mjs",
     "workers/mccluster/test/human-uprise-site.test.mjs",
+    "workers/mccluster/test/live-missions.test.mjs",
     "workers/mccluster/test/mission-proof-media.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
@@ -404,7 +407,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "390 entries"
+      "detail": "393 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -6312,6 +6315,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/live_missions_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/live_missions_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/live_missions_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/live_missions_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/mission_admin_approval_v1.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -7387,6 +7410,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/live/index.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/world-layers.js capability ids known",
       "passed": true,
       "detail": ""
@@ -7403,6 +7446,26 @@
     },
     {
       "name": "workers/mccluster/src/world-layers.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

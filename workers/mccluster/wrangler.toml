@@ -49,6 +49,13 @@ PUBLIC_COMMENT_LISTING_ENABLED = "false"
 # Those two are `wrangler secret put` only. /v1/core/mcp fails closed (503)
 # until both secrets exist, so deploying this ahead of the tunnel is safe.
 CORE_BROKER_URL = "https://core.mccluster.org"
+# Live missions (docs/control-plane/LIVE-MISSIONS.md): every /v1/live route
+# answers 503 until this is "true". Turning it on also needs the pending SQL
+# (supabase/pending/live_missions_v1.sql) and these secrets, by name only:
+# CF_ACCOUNT_ID, CF_STREAM_TOKEN (already used by the live rooms),
+# CF_LIVE_NOTIFICATION_SECRET (Notifications webhook cf-webhook-auth) and,
+# optionally, CF_STREAM_WEBHOOK_SECRET (Stream video webhook HMAC).
+LIVE_MISSIONS_ENABLED = "false"
 
 # MCP_EDGE service binding is intentionally absent.
 # Activate only after workers/mccluster-mcp exists in the Cloudflare account
