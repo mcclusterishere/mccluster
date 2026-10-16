@@ -196,3 +196,9 @@ also makes existing pins display-only (`join_scope` 'anywhere'): today every pin
 unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
 applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
 `docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
+
+Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):
+`supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql`
+records the private funding opportunities and partner mission drafts. It publishes
+no missions and enables no claims or compensation. The ledger and drift contract
+now cover all 310 production migrations.
