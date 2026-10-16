@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 394,
+  "candidate_count": 395,
   "capability_source_count": 99,
-  "support_only_count": 295,
-  "checks_total": 1479,
-  "checks_passed": 1479,
+  "support_only_count": 296,
+  "checks_total": 1483,
+  "checks_passed": 1483,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -105,6 +105,7 @@
     "docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md",
     "docs/action-network/SEVEN-DAY-GLOBE-RECONCILIATION.md",
     "docs/agent-web.md",
+    "docs/analytics/application-schema-inventory.json",
     "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
     "docs/control-plane/DOMAINS-AND-ENTITIES.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
@@ -408,7 +409,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "394 entries"
+      "detail": "395 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7797,6 +7798,26 @@
     },
     {
       "name": "supabase/tests/action_bounty_claim_guard.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json support rationale present",
       "passed": true,
       "detail": ""
     }

@@ -1,3 +1,4 @@
+import { normalizeAustinCameras } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
 
@@ -891,7 +892,7 @@ async function cctv(input) {
   if (provider !== 'austin') throw new GeoAdapterError('Only the audited Austin CCTV catalog is enabled in this adapter', 400, 'unsupported_provider');
   const url = new URL('https://data.austintexas.gov/api/views/b4k4-adkb/rows.json?accessType=DOWNLOAD');
   const { data } = await jsonFetch(url);
-  return result('cctv', 'catalog', url, [], data, { note: 'Catalog is returned transiently; camera-frame redistribution remains provider-governed.' });
+  return result('cctv', 'catalog', url, normalizeAustinCameras(data, input?.limit), data, { note: 'Catalog metadata only. Stream health has not been checked. Camera-frame redistribution remains provider-governed.' });
 }
 
 async function copernicus(input, env) {

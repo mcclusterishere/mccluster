@@ -18,6 +18,9 @@ import { recordAudit } from '../lib/audit.js';
 import { IntelError, configured, resolveHouseOrg, rpc, select } from './store.js';
 import { USGS_CONNECTOR, USGS_CONNECTOR_KEY, collectorEnabled, runUsgsCollector } from './usgs-collector.js';
 
+import { createIndicatorClient, IndicatorError } from './world-indicators.js';
+const indicatorClient = createIndicatorClient();
+
 const SERVICE = 'mccluster-intel';
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const UUID_RE = new RegExp(`^${UUID}$`, 'i');
@@ -147,6 +150,22 @@ export async function handleIntelRequest(request, env, options = {}) {
     if (path === '/v1/intel/geo' && request.method === 'GET') return await geo(request, env, url, options);
 
     const user = await options.requireHouseOwner(request, env);
+    if (path === '/v1/intel/world-indicators') {
+      if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
+      if ([...url.searchParams.keys()].some(k => !['economy', 'indicators'].includes(k) || url.searchParams.getAll(k).length !== 1)) throw bad('Unsupported or repeated parameter');
+      try {
+        const input = { economy: url.searchParams.get('economy') || 'WLD' };
+        if (url.searchParams.has('indicators')) input.indicators = url.searchParams.get('indicators').split(',');
+        const data = await (options.indicatorClient || indicatorClient)(input);
+        const response = reply(request, env, { ok: true, ...data });
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      } catch (error) {
+        if (!(error instanceof IndicatorError)) throw error;
+        const status = error.code.startsWith('invalid_') && ['invalid_economy', 'invalid_indicators'].includes(error.code) ? 400 : error.code === 'too_many_indicator_requests' ? 429 : error.code === 'provider_timeout' ? 504 : 502;
+        return fail(request, env, 'World indicators unavailable', status, { code: error.code });
+      }
+    }
     const org = await resolveHouseOrg(env);
     const actor = user.id;
 

@@ -376,6 +376,7 @@
     var cap=q("[data-cra-globe-caption]");
     var ss=stateStatus(),rr=regionRead(selCountry()),sd=stateData();
     if(cap)cap.textContent=a.awaiting?L.label+": "+(a.unavailable||"nothing to draw"):ss&&ss.kind==="ok"&&rr?countryName(selCountry())+" by state: "+n(rr.regions.length)+" with "+GEO_MIN+"+ · under "+GEO_MIN+" folded "+n(rr.folded)+" · no region "+n(rr.unknown)+(sd&&sd.unmatched?" · unmatched "+n(sd.unmatched):""):ss&&ss.kind==="pending"?"State counts not collected yet: analytics_region_v1 is written, not applied. State shapes are still selectable.":"On the globe "+n(a.located)+(a.suppressed?" · under "+GEO_MIN+" folded "+n(a.suppressed):"")+" · no country "+(a.unknown==null?"—":n(a.unknown));
+    var geoSummary=q("[data-cu-geography]");if(geoSummary&&window.CR.analyticsUnified){geoSummary.innerHTML=window.CR.analyticsUnified.geography(a,S,{countryName:countryName});geoSummary.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){pickRegion(b.getAttribute("data-cra-region"));};});}
     var pl=q("[data-cra-pill]");if(pl)pl.innerHTML=pillHtml();
     var sm=q("[data-cra-summary]");if(sm)sm.innerHTML=summaryHtml();
     var fs=q("[data-cra-filter-sheet]");if(fs){fs.hidden=!S.ui.filters;if(S.ui.filters)fs.innerHTML='<div class="cra-sheet__head"><b>Filters</b><button type="button" class="cra-sheet__x" data-cra-filters aria-label="Close filters">×</button></div>'+filters();}
@@ -393,7 +394,8 @@
   function liveState(){
     if(S.loading)return{cls:"is-loading",label:"Updating"};
     if(S.error)return{cls:"is-error",label:"Not live"};
-    if(S.loaded&&S.rangeId!=="custom")return{cls:"is-live",label:"Live"};
+    if(S.loaded&&Object.keys(S.errors).length)return{cls:"is-error",label:"Partial data"};
+    if(S.loaded&&S.rangeId!=="custom")return{cls:"is-live",label:"Updated"};
     return{cls:"",label:S.loaded?"Updated":"Ready"};
   }
   function topHtml(){
@@ -433,12 +435,12 @@
   }
   function shell(){
     return'<div class="cra-app cra-split"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
-      '<section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
+      '<div class="cu-geography"><section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
       '<div class="cra-globe__host" id="craGlobe" data-cra-globe></div>'+
       '<div class="cra-pill" data-cra-pill></div>'+
       '<p class="cra-summary" data-cra-summary></p>'+
       '<p class="cra-globe__caption" data-cra-globe-caption aria-live="polite">Loading the globe…</p>'+
-      '<div class="cra-sheet" id="craFilterSheet" data-cra-filter-sheet hidden></div></section></div>'+
+      '<div class="cra-sheet" id="craFilterSheet" data-cra-filter-sheet hidden></div></section><aside class="cu-geo-summary" data-cu-geography></aside></div></div>'+
       '<div class="cra-side"><div class="cra-side__body" id="craPanel" data-cra-panel></div></div></div>';
   }
   /* ---------- the swipeable cards ---------- */
@@ -585,9 +587,9 @@
   function loadCountry(){
     var code=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,r=S.range;
     if(!code||!r||(S.data.countryTotals&&S.data.countryTotals.missing)){return;}
-    var key=code+"|"+r.since+"|"+S.site;if(S.country&&S.country.key===key)return;
+    var key=code+"|"+r.since+"|"+r.until+"|"+S.site+"|"+tz(),seq=S.seq;if(S.country&&S.country.key===key)return;
     S.country={key:key,code:code,rows:null};
-    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(S.country&&S.country.key===key){S.country.rows=rows||[];paint();}},function(x){if(S.country&&S.country.key===key)S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
+    rpc("analytics_country_series",{p_country:code,p_since:r.since,p_until:r.until,p_site:sid(),p_tz:tz()}).then(function(rows){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.rows=rows||[];paint();},function(x){if(seq!==S.seq||!S.country||S.country.key!==key)return;S.country.error=x;if(missingFn(x)&&S.data.countryTotals)S.data.countryTotals.missing=true;});
   }
   function filters(){
     var t=S.data.traffic||{},sources=(t.sources||[]).map(function(x){return x.source;}).filter(Boolean),agg=geoAggregate();
@@ -616,7 +618,7 @@
     var k=S.geo.eventType;if(!k)return"";var r=(S.data.contentEvents||[]).filter(function(x){return x.event_name===k;})[0];
     return'<div class="cra-filter"><span>'+e(k)+': '+(r?n(r.events)+' events · '+n(r.people)+' people · '+n(r.sessions)+' sessions':'none in this range')+'</span><button type="button" class="cra-filter__x" data-cra-event="">All events</button></div>';
   }
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["intelligence","World intelligence"],["inventory","Data coverage"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
@@ -873,16 +875,21 @@
       card("Decision ledger","What was eligible, what policy chose, and what evidence followed.",dec,true)+
       '</div>';
   }
-  function body(){return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
+  function body(){if(window.CR.analyticsUnified&&S.section==="intelligence")return window.CR.analyticsUnified.intelligence();if(window.CR.analyticsUnified&&S.section==="inventory")return window.CR.analyticsUnified.inventory();return S.section==="audience"?audience():S.section==="adaptive"?adaptive():S.section==="content"?content():S.section==="identity"?identity():S.section==="forensics"?forensics():S.section==="setup"?setup():overview();}
   function render(){
-    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Live · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
-    return'<div class="cra">'+carousels()+'<h2 class="cra-h">Details</h2><div class="cra-state '+(S.loading?"is-loading":S.error?"is-error":"")+'"><i></i><span>'+e(st)+'</span></div><div class="cra-grid">'+geoCard()+'</div>'+tabs()+body()+'</div>';
+    var st=S.loading?"Reading "+(S.range&&S.range.label||"analytics")+"…":S.error?"Analytics load failed":S.loaded?"Updated · "+(S.range&&S.range.label||"")+" · "+tz():"Ready";
+    var unified=window.CR.analyticsUnified;
+    var country=selCountry(),countrySeries=country&&S.country&&S.country.code===country&&S.country.rows;
+    var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
+    var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"page_views",pvLabel,"Page views over time, "+trendScope),bars:bars}):carousels();
+    var detail=body();if(S.section==="overview")detail='<details class="cu-detail"><summary>All overview metrics & geographic coverage</summary>'+geoCard()+detail+'</details>';
+    return '<div class="cra cu-overview">'+summary+'<h2 class="cra-h">Explore your data</h2><div class="cra-state"><span>'+e(st)+'</span></div>'+tabs()+'<div data-cu-details>'+detail+'</div></div>';
   }
   function paint(){
     if(!S.host)return;
     /* the globe is built once and never repainted (a repaint would rebuild the Earth); the panel repaints around it */
     var panel=S.host.querySelector&&S.host.querySelector("[data-cra-panel]");
-    var root=panel||S.host;root.innerHTML=render();bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);
+    var root=panel||S.host;root.innerHTML=render();bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory")window.CR.analyticsUnified.loadInventory(paint);if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
   }
@@ -897,6 +904,7 @@
   }
   function applyResult(x){
     if(!x)return;
+    S.completed=S.completed||{};S.completed[x.name]=true;
     if(!x.ok){S.errors[x.name]=x.error;if(x.name==="countryTotals")S.data.countryTotals={ok:false,missing:missingFn(x.error),rows:[]};return;}
     var v=x.value,t=S.data.traffic;
     if(x.name==="hourly")t.byHour=v||[];
@@ -949,7 +957,7 @@
   }
   function load(){
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
-    S.range=r;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.data=blankData();paint();
+    S.range=r;S.country=null;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.completed={};S.data=blankData();paint();
     var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
     /* One Control open used to throw every analytics primitive at PostgREST at
        once. On production data that turned one dashboard view into a dozen
@@ -1030,7 +1038,7 @@
     root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
     root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
     root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
-    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();};});
+    root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){S.section=b.getAttribute("data-cra-sec");paint();var detail=S.host&&S.host.querySelector("[data-cu-details]");if(detail&&detail.scrollIntoView)detail.scrollIntoView({block:"start"});};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");
     if(from)from.oninput=function(){S.from=from.value||"";};
