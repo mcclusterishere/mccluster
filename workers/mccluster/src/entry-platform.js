@@ -6,6 +6,8 @@ import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
+import { observeScheduled } from './lib/observability.js';
+import { ingestGdeltNews } from './world-news.js';
 import { companySiteResponse } from './company-site/router.js';
 import { humanUpriseResponse } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
@@ -102,6 +104,17 @@ export default {
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    /* the World's news: GDELT's newest 15-minute file, read once, kept a week; off until
+       WORLD_NEWS_INGEST_ENABLED is "true" (./world-news.js) */
+    ctx.waitUntil(observeScheduled(env, ctx, 'world.news_ingest', () => ingestGdeltNews(env, { scheduledTime: controller?.scheduledTime })).then((report) => {
+      if (report && report.skipped === 'disabled') return;
+      if (report && (report.files?.length || report.error || report.skipped || report.pruned !== null || report.prune_error)) {
+        const failed = report.error || report.prune_error || report.files?.some((f) => !f.ingested);
+        (failed ? console.error : console.log)(JSON.stringify({ event: 'world_news_ingest', ...report }));
+      }
+    }).catch((error) => {
+      console.error(JSON.stringify({ event: 'world_news_ingest_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     if (existing.scheduled) return existing.scheduled(controller, env, ctx);
   }

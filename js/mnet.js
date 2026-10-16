@@ -8,6 +8,10 @@
     boot: null,
     feed: [],
     nextBefore: null,
+    /* the World's news (GET /v1/world/news): the page read so far, and its cursor (undefined: not read yet; null: no more) */
+    news: [],
+    newsBefore: undefined,
+    newsSeq: 0,
     loadingFeed: false,
     threadPost: null,
     currentView: "feed",
@@ -654,7 +658,7 @@
       }
       track("onboarding_done", { step: String(boot && boot.next_step || "feed") });
       return loadFeed(true).then(function () {
-        var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card");
+        var first = $("mnFeed") && $("mnFeed").querySelector(".mn__post-card[data-post-id]");
         if (first) { first.classList.add("is-just-posted"); setTimeout(function () { first.classList.remove("is-just-posted"); }, 1600); }
       });
     });
@@ -939,6 +943,8 @@
   }
   /* what a post actually carries, for the feed tabs; no invented topics */
   function feedMatches(item, query) {
+    /* a news card answers to its headline, its publisher and the place it mentions */
+    if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
     var post = item && (item.post || item) || {}, actor = item.actor || post.actor || {};
     return [post.body, actor.display_name, actor.mccluster_id].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
   }
@@ -1023,13 +1029,18 @@
   function renderFeed(append) {
     var host = $("mnFeed");
     if (!append) host.innerHTML = "";
-    if (!state.feed.length) {
+    paintMore();
+    var focus = state.world.focus, query = state.world.query;
+    /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
+    var news = focus && focus.filter ? [] : state.news;
+    paintNewsCredit(false);
+    if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed, focus = state.world.focus, query = state.world.query;
+    var items = state.feed;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -1041,13 +1052,24 @@
         return;
       }
     }
-    if (query) items = items.filter(function (item) { return feedMatches(item, query); });
-    if (!items.length) {
+    if (query) {
+      items = items.filter(function (item) { return feedMatches(item, query); });
+      news = news.filter(function (n) { return feedMatches(n, query); });
+    }
+    if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
-    host.innerHTML = items.map(function (item) {
+    host.innerHTML = interleaveFeed(items, news).map(function (item) {
+      if (item.news) {
+        var card = newsCard(item), nkey = "news:" + item.id;
+        if (!seen[nkey]) {
+          seen[nkey] = true;
+          card = card.replace('<article class="mn__post-card', '<article style="--i:' + (order++ % 8) + '" class="mn__post-card is-new');
+        }
+        return card;
+      }
       if (item.item_type === "activity") {
         var p = item.payload || {};
         return '<article class="mn__post-card"><div class="mn__post-head">' + authorHtml(item.actor) + '<span class="mn__author-sub">' + esc(timeAgo(item.occurred_at)) + '</span></div><p class="mn__post-body">' + esc(p.summary || p.text || "Activity on McCluster") + '</p></article>';
@@ -1060,7 +1082,10 @@
       }
       return html;
     }).join("");
+    /* the licence's credit rides with the news: shown whenever a news card is */
+    paintNewsCredit(news.length > 0);
     bindFeedActions(host);
+    bindNewsActions(host);
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -1086,6 +1111,93 @@
     return new Array(n + 1).join(one);
   }
 
+  /* WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like
+     one … from them. But like, we gotta ingest it so it's still from us."). The Worker ingests
+     GDELT into the McCluster plane and serves it back (GET /v1/world/news); this page reads that, never GDELT. News is
+     free for everyone, so the read is a bare public GET with no session, for a guest and a member alike, beside the
+     posts' read. A news read that fails, or answers anything but a page of items, leaves the posts as they were. A
+     story's place is where the article MENTIONS somewhere (GDELT's extraction), never where something happened. */
+  var FEED_NEWS_PER_POST = 1, NEWS_API = "https://api.mccluster.org/v1/world/news", NEWS_WAIT = 4000;
+  function cleanNews(n) {
+    if (!n || typeof n !== "object" || !/^https?:\/\//i.test(String(n.url || ""))) return null;
+    var id = String(n.id || "").slice(0, 64), title = String(n.title || "").replace(/\s+/g, " ").trim().slice(0, 300), url = safeHttpUrl(n.url);
+    if (!id || !title || !url) return null;
+    var lat = Number(n.lat), lon = Number(n.lon), located = typeof n.lat === "number" && typeof n.lon === "number" && isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+    var domain = String(n.domain || "").trim();
+    if (!domain) try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
+    return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null };
+  }
+  /* never rejects, nor throws (even building the address): { ok, items, next } for a page, { ok: false, status } for anything else */
+  function fetchNews(before) {
+    return Promise.resolve().then(function () {
+      return fetch(NEWS_API + "?limit=20" + (before ? "&before=" + encodeURIComponent(before) : ""));
+    }).then(function (r) {
+      if (!r.ok) return { ok: false, status: r.status };
+      return r.json().then(function (d) {
+        if (!d || d.ok !== true || !Array.isArray(d.items) || d.unavailable) return { ok: false, status: 0 };
+        return { ok: true, items: d.items.map(cleanNews).filter(Boolean), next: typeof d.next_before === "string" && d.next_before ? d.next_before : null };
+      });
+    }).catch(function () { return { ok: false, status: 0 }; });
+  }
+  function applyNews(res, before) {
+    if (res && res.ok) {
+      var list = before ? state.news.slice() : [], have = {};
+      list.forEach(function (n) { have[n.id] = true; });
+      res.items.forEach(function (n) { if (!have[n.id]) { have[n.id] = true; list.push(n); } });
+      state.news = list;
+      state.newsBefore = res.next;
+    } else if (before && res && res.status === 400) state.newsBefore = null;
+    /* anything else keeps what was there: a first page that did not come is asked for again with the next Load more,
+       and a later page that did not come is asked for again from the same cursor */
+  }
+  /* a pinned post first, then one member post to FEED_NEWS_PER_POST news items; when one runs out, the other carries on */
+  function interleaveFeed(posts, news) {
+    var out = [], rest = [], p = 0, n = 0, k;
+    posts.forEach(function (item) { (item && item.payload && item.payload.pinned ? out : rest).push(item); });
+    while (p < rest.length || n < news.length) {
+      if (p < rest.length) out.push(rest[p++]);
+      for (k = 0; k < FEED_NEWS_PER_POST && n < news.length; k++) out.push(news[n++]);
+    }
+    return out;
+  }
+  /* a news card wears the World's card, keyed data-news-id (data-post-id is a member's post): the publisher, when it was
+     seen and the place it mentions, the headline out to the publisher, and the place on the Earth. No pictures and no
+     publisher marks: the words only. */
+  function newsCard(n) {
+    var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
+    return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
+      '<p class="mn__news-meta"><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
+        (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
+        (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
+      '<a class="mn__news-title" href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer">' + esc(n.title) +
+        '<span class="sr-only"> (opens ' + esc(n.domain || "the publisher") + ' in a new tab)</span></a>' +
+      (n.lat !== null && n.lon !== null
+        ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
+        : '') +
+    '</article>';
+  }
+  function paintNewsCredit(on) { var c = $("mnNewsCredit"); if (c) c.hidden = !on; }
+  /* Load more while either stream has another page (the news only counts while it is shown) */
+  function paintMore() {
+    var more = $("mnMore"), focus = state.world.focus;
+    if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
+  }
+  function bindNewsActions(root) {
+    root.querySelectorAll("[data-news-place]").forEach(function (b) {
+      b.onclick = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var lat = Number(b.getAttribute("data-lat")), lon = Number(b.getAttribute("data-lon")), label = String(b.getAttribute("data-label") || "").slice(0, 120);
+        if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+        /* the Earth turns to the story's place, so a mission on the strip would be the wrong one: let it go */
+        if (state.world.focus) setWorldFocus(null);
+        var caption = $("mnWorldCaption");
+        if (caption) caption.textContent = label ? label + " \u00b7 mentioned in this story." : "A place this story mentions.";
+        tellWorld({ type: "hu:focus-place", lat: lat, lon: lon, label: label });
+        track("world_news_place", {});
+      };
+    });
+  }
+
   function loadFeed(reset) {
     if (state.loadingFeed) return Promise.resolve();
     state.loadingFeed = true;
@@ -1098,11 +1210,25 @@
     var publicRead = state.guest || !!needsStep() || !!state.stall;
     var path = (publicRead ? "/v1/mnet/public-feed?limit=20" : "/v1/mnet/feed?app_key=" + encodeURIComponent(APP) + "&limit=20");
     if (!reset && state.nextBefore) path += "&before=" + encodeURIComponent(state.nextBefore);
-    var read = publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
-    return read.then(function (data) {
-      var incoming = data.items || [];
-      state.feed = reset ? incoming : state.feed.concat(incoming);
-      state.nextBefore = data.next_before || null;
+    /* Load more reads the posts only while they have another page */
+    var read = !reset && !state.nextBefore ? Promise.resolve(null) : publicRead ? fetch("https://api.mccluster.org" + path).then(parse) : api(path);
+    /* the news, beside it: the first page on a reset, else the next one, unless there is none */
+    var newsFrom = reset ? undefined : state.newsBefore, wantNews = newsFrom !== null, seq = wantNews ? ++state.newsSeq : state.newsSeq, drawn = false;
+    var news = !wantNews ? Promise.resolve() : fetchNews(newsFrom).then(function (res) {
+      if (seq !== state.newsSeq) return;
+      applyNews(res, newsFrom);
+      /* it came after the posts were drawn: draw again */
+      if (drawn && !state.loadingFeed) renderFeed(false);
+    });
+    /* the posts wait a moment for the news, so both arrive in one draw, but never on it */
+    var settled = Promise.race([news, new Promise(function (r) { setTimeout(r, NEWS_WAIT); })]);
+    return Promise.all([read, settled]).then(function (out) {
+      var data = out[0], incoming = data && data.items || [];
+      if (data) {
+        state.feed = reset ? incoming : state.feed.concat(incoming);
+        state.nextBefore = data.next_before || null;
+      }
+      drawn = true;
       renderFeed(false);
       try {
         var linkedPost = new URLSearchParams(location.search).get("post");
@@ -1115,7 +1241,7 @@
         if (flags.some(Boolean)) { loadMissionStats(); renderFeed(false); }
       });
       if (reset && !state.guest) paintFeedMissions();
-      $("mnMore").hidden = !state.nextBefore;
+      paintMore();
       setStatus($("mnFeedStatus"), "");
     }).catch(function (e) {
       setStatus($("mnFeedStatus"), e.message || "Could not load the feed.", "error");
