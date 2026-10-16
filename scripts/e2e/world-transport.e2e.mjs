@@ -29,6 +29,7 @@ try{
    if(url.hostname==='api.mccluster.org'){
     let data={};
     if(url.pathname==='/v1/world/access')data={locked_layers:[],unlocked_layers:['flights','transport'],layers:{}};
+    if(url.pathname==='/v1/world/layers/launches')data={launches:[{id:'fixture',name:'Fixture space mission',net:'2026-11-01T12:00:00Z',status:'Go',pad:{lon:30,lat:10,name:'Fixture launch pad'},mission:{name:'Fixture science mission'}},{id:'invalid',pad:{lon:null,lat:null}}]};
     if(url.pathname==='/v1/world/layers/satellites')data={satellites:[{name:'ISS (ZARYA)',tle1:'1 25544U 98067A   26286.82178372  .00006592  00000+0  12831-3 0  9991',tle2:'2 25544  51.6325  76.5471 0003201 125.0532 235.0866 15.49721212537052'}]};
     if(url.pathname==='/v1/world/layers/flights')data={aircraft:[['abc123','TEST123',0,15,10000,200,90],['bad','INVALID',null,15,0,0,0]],credit:'Fixture flight data'};
     if(url.pathname==='/v1/world/ion')data={available:false};
@@ -49,6 +50,7 @@ try{
   assert.equal(await page.locator('#cctvBody').getByText('Whip Equipped rides aren’t live yet.',{exact:false}).count(),1);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
   assert.equal(await page.locator('#cctvSheet').evaluate(e=>e.scrollWidth===e.clientWidth),true);
+  await page.waitForTimeout(200);
   await mkdir('/tmp/globe-transport-qa',{recursive:true});await page.screenshot({path:'/tmp/globe-transport-qa/transport-'+width+'.png'});
   await page.locator('#cctvClose').click();await page.locator('#ctlFlights').click();
   await page.waitForFunction(()=>window.__huLayerCounts().flights===1);
@@ -70,7 +72,15 @@ try{
   assert.equal(await page.evaluate(()=>window.__testViewer.entities.values.filter(e=>e.polyline&&e.polyline.positions.getValue().length===97).length),1);
   await page.locator('#cctvClose').click();
   assert.equal(await page.evaluate(()=>window.__testViewer.entities.values.filter(e=>e.model).length),0);
+  await page.locator('#ctlLaunch').click();await page.waitForFunction(()=>window.__huLayerCounts().launches===1);
+  await page.evaluate(()=>{const v=window.__testViewer;v.camera.cancelFlight();v.camera.setView({destination:Cesium.Cartesian3.fromDegrees(30,10,3000000)})});
+  await page.waitForTimeout(250);
+  const lp=await page.evaluate(()=>{const p=Cesium.SceneTransforms.worldToWindowCoordinates(window.__testViewer.scene,Cesium.Cartesian3.fromDegrees(30,10,4000));return{x:p.x,y:p.y}});
+  await page.mouse.click(lp.x,lp.y);await page.getByRole('heading',{name:'Fixture space mission',exact:true}).waitFor({timeout:10000});
+  await page.waitForTimeout(2000);await page.screenshot({path:'/tmp/globe-transport-qa/launch-'+width+'.png'});
+  assert.equal(await page.evaluate(()=>window.__testViewer.entities.values.filter(e=>e.model).length),1);
+  await page.locator('#cctvClose').click();assert.equal(await page.evaluate(()=>window.__testViewer.entities.values.filter(e=>e.model).length),0);
   assert.equal(errors.length,0,errors.join('\n'));
-  console.log(JSON.stringify({width,transport:true,flightPick:true,satellitePick:true,orbit:true,cleanup:true,overflow:false,pageErrors:errors.length}));await page.close();
+  console.log(JSON.stringify({width,transport:true,flightPick:true,satellitePick:true,launchPick:true,orbit:true,cleanup:true,overflow:false,pageErrors:errors.length}));await page.close();
  }
 }finally{await browser.close();await new Promise(r=>server.close(r))}

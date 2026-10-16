@@ -16,3 +16,12 @@ test('schematic glTF has complete finite geometry and self-contained buffers',()
  for(const a of gltf.accessors){const v=gltf.bufferViews[a.bufferView];assert.ok(a.byteOffset+a.count*12<=v.byteLength);const data=new Float32Array(bytes.buffer,bytes.byteOffset+v.byteOffset+a.byteOffset,a.count*3);assert.ok([...data].every(Number.isFinite));}
  assert.equal(gltf.meshes[0].primitives.length,3);
 });
+
+test('rocket schematic is a self-contained model with finite positions',()=>{
+ const gltf=JSON.parse(atob(globalThis.HuSpace.rocketModel().split(',')[1]));
+ const bytes=Buffer.from(gltf.buffers[0].uri.split(',')[1],'base64');
+ assert.equal(bytes.length,gltf.buffers[0].byteLength);
+ assert.ok([...new Float32Array(bytes.buffer,bytes.byteOffset,bytes.length/4)].every(Number.isFinite));
+ assert.equal(gltf.accessors[0].count,gltf.accessors[1].count);
+ assert.equal(gltf.accessors[0].count%3,0);
+});
