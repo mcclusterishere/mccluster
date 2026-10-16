@@ -206,6 +206,8 @@
     $("mnPasswordChange").hidden = !editing;
     showStep(editing ? 0 : 1);
     prefillContact();
+    /* locked details (the profile edit gate, js/profile-edit-gate.js) read as locked; the database refuses the write anyway */
+    if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.lockForm();
   }
   /* step 0 is the editing page: step 1's fields, the public details and the password, together */
   function showStep(n) {
@@ -688,6 +690,7 @@
       var m = e && e.message || "Could not save that.";
       if (/mccluster_id_taken/.test(m)) { m = "That username is already taken."; paintHandleState("bad", "@" + $("mnHandle").value.trim() + " is taken. Try another."); }
       if (/invalid_mccluster_id/.test(m)) m = "Use 3–32 letters, numbers, dots, underscores or hyphens.";
+      if (/profile_field_locked/.test(m)) m = "That detail is locked. Ask for the change from your desk.";
       setStatus($("mnProfileStatus"), m, "error");
     }).finally(function () { button.disabled = false; });
   }
@@ -2322,6 +2325,9 @@
     markTourSeen: function () { return sbRpc("mnet_mark_tour_seen", { p_app_key: APP }).catch(function () {}); },
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
     identity: function () { return identity(); },
+    /* the member desk (js/member-desk.js) reads the profile and opens the editor */
+    profile: function () { return profile(); },
+    editProfile: function () { return editProfile(); },
     refreshFeed: function () { return loadFeed(true); },
     setView: setView,
     openMissionFromLive: function (sessionId, missionId) {

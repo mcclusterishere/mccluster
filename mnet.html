@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
@@ -262,7 +263,8 @@
             <nav class="mn__world-chips" aria-label="Explore the globe">
               <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
               <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
-              <a href="action-policy.html">Policy ↗</a>
+              <!-- Policy is part of the member desk over the globe, not a page of its own (owner, 2026-10-15) -->
+              <button type="button" data-hu-desk-open="policy">Policy</button>
               <button type="button" data-world-chip="near">Near me</button>
             </nav>
           </div>
@@ -625,6 +627,11 @@
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-clips.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <!-- the member desk, opened from the bar over the globe; policy, analytics and the profile edit gate live in it -->
+  <script src="js/member-desk-core.js?v=__STAMP__"></script>
+  <script src="js/identity-capture-core.js?v=__STAMP__"></script>
+  <script src="js/profile-edit-gate.js?v=__STAMP__"></script>
+  <script src="js/member-desk.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
