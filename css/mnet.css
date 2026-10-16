@@ -1317,3 +1317,8 @@ body.has-appbar { padding-bottom: 0; }
 @media (min-width: 1100px) {
   .mn-world-fit.mn-world-on .mn__world-context { padding-bottom: var(--mn-bar-clear, 96px); }
 }
+
+/* Put your Black business on the map: the listing form inside the mission dialog (js/mnet.js businessListingForm) */
+.mn__business-listing { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mn-rule-2); min-width: 0; }
+.mn__business-listing .mn__primary { margin-top: 14px; }
+.mn__panel [data-focus="business"] { margin-top: 8px; max-width: 100%; white-space: normal; }
