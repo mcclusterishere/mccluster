@@ -136,6 +136,7 @@
     var musicRows=[
       {key:"All plays",value:music.plays&&music.plays.in_window},
       {key:"Full plays",value:music.full_plays&&music.full_plays.in_window},
+      {key:"Preview plays",value:music.preview_plays&&music.preview_plays.in_window},
       {key:"Completions",value:music.completions&&music.completions.in_window}
     ];
     host.innerHTML=
