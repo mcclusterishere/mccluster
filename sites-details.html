@@ -170,8 +170,6 @@
       <p class="kick"><a href="sites.html" style="color:inherit;text-decoration:none">&#8592; Back to the four</a></p>
       <div class="rule"></div>
       <h1>Everything<br><em>in detail.</em></h1>
-      <p class="buyhero__sub">Nothing here is needed to buy. It is here because somebody always
-        wants to read it first, and because burying a term is not the same as simplifying a page.</p>
     </header>
 
     <!-- What used to sit between the four cards: the drafts, the free
@@ -180,31 +178,12 @@
          same data, same renderers, off the buying path. -->
     <section id="offerDetails" aria-label="The long version"></section>
 
-    <!-- THE MATH -->
-    <section class="math rv" aria-label="How this compares">
-      <div class="them">
-        <h3>Everywhere else</h3>
-        <p>About $30 a month at the big platforms buys a template and a login. Every change is your
-          job, forever. The cheapest service that actually does the work for you starts around
-          <b>$199 a month plus a $2,000 setup fee</b>, and agency care plans run
-          <b>$200 to $500 a month</b> after you already paid thousands for the build.</p>
-      </div>
-      <div class="us">
-        <h3>Here</h3>
-        <p>The build is free with any lane while seats last. Hosting is the bill you already had.
-          Management means you never touch a dashboard again. Social puts the same desk on your
-          feeds. <b>Your site, your code, your way out any time.</b></p>
-      </div>
-    </section>
-
     <!-- THE RECEIPT -->
     <section class="rv" style="margin-top:clamp(3rem,7vh,4.5rem)" aria-label="Proof">
       <h2 style="font-family:var(--sig);text-transform:uppercase;font-size:clamp(1.5rem,5vw,2.4rem);line-height:1;margin:0 0 .7rem">Proof it works</h2>
       <p style="max-width:58ch;color:var(--cream-dim);line-height:1.65;margin:0 0 1rem">
-        Designer Kicks sat dormant for years, averaging <b style="color:var(--cream)">2.9 engagements
-        a day</b> over two hundred days. Fifteen days after the work started it had done
-        <b style="color:var(--cream)">37,123</b>, with exactly one complaint in the whole
-        window. The chart, the method and the raw export are all on the page.
+        Designer Kicks: <b style="color:var(--cream)">2.9</b> engagements a day before;
+        <b style="color:var(--cream)">37,123</b> in the fifteen days after.
       </p>
       <p><a href="case-designer-kicks.html" data-cta="details-case-dk"
         style="color:var(--ruby-hot);font-weight:800;text-decoration:none">Read the Designer Kicks case study &#8594;</a></p>
@@ -219,7 +198,6 @@
     <!-- BACK TO THE BUTTON. No count, no deadline. -->
     <section class="close rv" aria-label="Start">
       <h2>Read enough?</h2>
-      <p>The four ways to start are one tap away.</p>
       <a class="big" href="sites.html" data-cta="details-back">Pick one &#8594;</a>
     </section>
 
@@ -322,16 +300,13 @@
         }
         var rw = O.priceOf(L, "runway");
         var rwo = O.offerOf(L, "runway") || {};
-        if (rw && rw.approved) {
+        if (rw && rw.approved && rw.display && rw.recurring) {
           /* the offer's name comes from the ledger too. It was typed here
              as "Runway" and went stale the day the ledger renamed it. */
           lines.push((rwo.name || "The entry lane") + " is the entry lane: " + rw.display +
             " to go live, then " + rw.recurring + ", with no revenue share.");
           var dep = ((rwo.pricing || {}).deposit) || null;
-          if (dep && dep.approved) {
-            lines.push("A " + O.dollars(dep.amount) + " deposit starts the draft before the domain is " +
-              "bought, and is credited to the first month of hosting rather than charged on top of it.");
-          }
+          if (dep && dep.approved && dep.line) lines.push(dep.line);
         }
       }
       document.getElementById("stTerms").innerHTML =

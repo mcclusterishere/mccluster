@@ -24,6 +24,9 @@ PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
+# The World's GDELT news ingest (src/world-news.js) on the five-minute cron. "true" only once
+# supabase/pending/world_gdelt_gkg_news_v1.sql is applied in production; until then nothing is fetched.
+WORLD_NEWS_INGEST_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
@@ -37,6 +40,9 @@ INTEL_USGS_COLLECTOR_ENABLED = "false"
 PERSONA_ENABLED = "false"
 # Owner's choice: keep the ID's name and birth YEAR for side-by-side review (default off).
 PERSONA_STORE_VERIFIED_NAME = "false"
+# File a public comment (src/public-comment.js): read-only listing of open federal comment periods.
+# Off until the owner turns it on. The Regulations.gov half also needs the secret REGULATIONS_GOV_API_KEY (api.data.gov).
+PUBLIC_COMMENT_LISTING_ENABLED = "false"
 # Core remote MCP bridge origin (the Cloudflare Tunnel hostname). Not a secret:
 # Core refuses any request lacking CORE_BROKER_TOKEN plus a valid
 # CORE_EDGE_SIGNING_KEY signature, so the hostname alone grants nothing.

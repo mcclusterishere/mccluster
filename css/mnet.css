@@ -1308,6 +1308,30 @@ html.mn-world-on, html.mn-world-on body { background: #050507; }
 }
 
 /* ============================================================
+   WORLD NEWS IN THE FEED (owner, 2026-10-15): one member post to one
+   news item, ingested from GDELT into the plane. A news card wears the
+   World's card; it carries words only (no pictures, no publisher marks),
+   and its violet dot is the news colour (the gold is
+   the business pins'). Phone first:
+   one column, every line truncates inside the card.
+   ============================================================ */
+.mn__news-credit { margin: 14px 2px 0; color: var(--mn-faint); font-size: 0.78rem; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.mn__news-credit a { color: var(--mn-dim); text-decoration: underline; text-underline-offset: 2px; }
+.mn__news-credit:not([hidden]) + .mn__feed { margin-top: 8px; }
+.mn__news-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; overflow: hidden; white-space: nowrap; color: var(--mn-faint); font-weight: 600; font-size: 0.82rem; line-height: 1.3; }
+.mn__news-meta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #b49cff; box-shadow: 0 0 0 3px rgba(180, 156, 255, 0.18); }
+.mn__news-meta > span { flex: none; }
+.mn__news-meta > .mn__news-domain { flex: 0 0 auto; min-width: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; color: var(--mn-dim); font-weight: 800; }
+/* the publisher keeps its name up to 60% of the row (a longer one truncates there); the place gives way */
+.mn__news-meta > .mn__news-place { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mn__news-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin: 8px 0 0; color: var(--mn-ink); font-weight: 700; font-size: 1rem; line-height: 1.42; overflow-wrap: anywhere; text-decoration: none; }
+.mn__news-title::after { content: "\00a0\2197"; color: var(--mn-faint); font-weight: 600; }
+.mn__news-title:hover, .mn__news-title:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.mn__news-chip { justify-self: start; max-width: 100%; }
+.mn__news-chip::before { background: #b49cff; box-shadow: 0 0 0 3px rgba(180, 156, 255, 0.22); }
+.mn-world-on #mnFeed .mn__news-title { color: #e9ecf1; font-size: 0.97rem; }
+
+/* ============================================================
    THE SCREEN IS THE WHOLE SCREEN (owner, 2026-10-15): the bar floats over
    the page; whatever is last carries the bar's clearance itself. Last in
    the sheet so nothing above overrides it.
@@ -1317,3 +1341,114 @@ body.has-appbar { padding-bottom: 0; }
 @media (min-width: 1100px) {
   .mn-world-fit.mn-world-on .mn__world-context { padding-bottom: var(--mn-bar-clear, 96px); }
 }
+
+/* ================================================================
+   THE BUTTON SYSTEM ON THE WORLD (owner, 2026-10-15: "These buttons
+   look like shit. There's no animations.")
+   The house grammar from css/style.css (THE BUTTON SYSTEM), applied to
+   the classes js/mnet.js already renders: one press, one hover lift on
+   pointer devices, 44px reach, and fills that carry their labels at AA.
+   Class names stay the contract; nothing here renames markup.
+   ================================================================ */
+/* the World's hot red (#ff2a4d) carries white type at 3.7:1, under AA for
+   a 13-16px label. Filled controls lean to the same red's deeper end so
+   every stop clears 4.5:1; red TEXT keeps --mn-hot, which reads at 5:1 on
+   the night ground. */
+.mn-world-on :is(.mn__primary, .mn__post, .mn__guest-join, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__person-actions .is-primary, .mn__world-go:not(.mn__world-go--eup), .mn__world-live) {
+  background: linear-gradient(180deg, #e01a42, #c4102c); color: #fff;
+}
+
+/* reach: 44px for every pill a thumb is meant to hit. The context strip's
+   chips and mission actions take 40px (WCAG 2.5.8 asks 24): the owner's
+   portrait split gives that strip ~15% of the screen, and 44px rows pushed
+   the globe under its 44% floor on an upright iPad. */
+.mn__world-chips > *, .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { min-height: 40px; }
+.mn__clipdoor .mn__world-go,
+.mn__guest-in, .mn__guest-join, .mn__world-expand, .mn__world-live, .mn__fund, .mng__join,
+.mn__record-receipt, .mn__record-share, .mn__golive { min-height: 44px; }
+
+/* motion: transform/opacity/shadow only, 120-250ms, ease-out */
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live, .mn__clipdoor .mn__world-go),
+.mn__world-expand, .mn__world-live {
+  touch-action: manipulation;
+  transition: transform 0.2s var(--mn-ease), box-shadow 0.25s var(--mn-ease), background-color 0.2s var(--mn-ease), color 0.2s var(--mn-ease), opacity 0.2s var(--mn-ease);
+}
+.mn :is(.mn__post, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):active:not(:disabled) {
+  transform: scale(0.96); transition-duration: 0.12s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .mn :is(.mn__primary, .mn__post, .mn__guest-join, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__world-go:not(.mn__world-go--eup), .mn__world-live):hover:not(:disabled) {
+    transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 16px 34px -14px rgba(255, 42, 77, 0.85);
+  }
+  .mn :is(.mn__secondary, .mn__ghost, .mn__world-locate, .mn__world-filter, .mn__world-chips > *, .mn__guest-in, .mn__fund, .mn__record-share, .mn__world-expand, .mn__world-go--eup):hover:not(:disabled) {
+    transform: translateY(-1px); background-color: rgba(255, 255, 255, 0.1);
+  }
+  .mn .mn__world-close:hover { color: var(--mn-ink); background-color: rgba(255, 255, 255, 0.1); }
+}
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__guest-join, .mng__join):is(.is-loading, [aria-busy="true"]) {
+  position: relative; color: transparent !important; pointer-events: none;
+}
+.mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__guest-join, .mng__join):is(.is-loading, [aria-busy="true"])::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: mn-spin 0.7s linear infinite;
+}
+@keyframes mn-spin { to { transform: rotate(360deg); } }
+
+/* sheets enter instead of snapping: the account menu and search suggestions */
+.mn__menu:not([hidden]), .mn__suggest:not([hidden]) { animation: mn-sheet-in 0.22s var(--mn-ease) both; transform-origin: top right; }
+.mn__suggest:not([hidden]) { transform-origin: top center; }
+@keyframes mn-sheet-in { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* the mission card arrives when a pin is tapped */
+.mn__mission-card:not([hidden]) { animation: mn-card-in 0.3s var(--mn-ease) both; }
+@keyframes mn-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* the emblem on a mission card is the join: give the artwork room */
+.mn__mission-card .mn__eup, #mnWorldFocusJoin .mn__eup { width: 32px; height: 32px; }
+#mnWorldFocusJoin { min-width: 52px; }
+
+/* ================================================================
+   THE EMBLEM OVER THE EARTH: "do something about it" (owner,
+   2026-10-15, addendum 8). The Equity Uprise artwork IS the control
+   (CLAUDE.md rule 10): the supplied white mark, complete and scaled
+   proportionally only. No plate, no tile, no ring, no caption, no name
+   beside it. The button is invisible; what you see is the owner's
+   artwork, a soft shadow so it reads over a bright Earth, and a slow
+   breath. Its accessible name says what it does. It opens missions.
+   ================================================================ */
+.mn__world-eup {
+  position: absolute; z-index: 3; left: 50%; bottom: 14px;
+  display: grid; place-items: center;
+  width: 100px; height: 100px; margin: 0 0 0 -50px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: inherit;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  animation: mn-eup-arrive 0.6s var(--mn-spring) 0.35s both, mn-eup-breathe 3.4s ease-in-out 1.4s infinite;
+}
+.mn__world-eup img {
+  display: block; width: 92px; height: 92px; object-fit: contain; pointer-events: none;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75));
+  transition: transform 0.25s var(--mn-ease);
+}
+.mn__world-eup:active img { transform: scale(0.92); transition-duration: 0.12s; }
+.mn .mn__world-eup:focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .mn__world-eup:hover img { transform: scale(1.1); }
+}
+@media (min-width: 600px) {
+  .mn__world-eup { width: 128px; height: 128px; margin-left: -64px; bottom: 22px; }
+  .mn__world-eup img { width: 120px; height: 120px; }
+}
+@keyframes mn-eup-arrive { from { opacity: 0; transform: translateY(14px) scale(0.8); } to { opacity: 1; transform: none; } }
+@keyframes mn-eup-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mn__world-eup, .mn__world-eup img, .mn__menu, .mn__suggest, .mn__mission-card,
+  .mn__world-expand, .mn__world-live { animation: none !important; transition: none !important; }
+  .mn__world-eup:hover img, .mn__world-eup:active img { transform: none !important; }
+  .mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):is(:hover, :active) { transform: none !important; }
+}
+
+/* Put your Black business on the map: the listing form inside the mission dialog (js/mnet.js businessListingForm) */
+.mn__business-listing { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mn-rule-2); min-width: 0; }
+.mn__business-listing .mn__primary { margin-top: 14px; }
+.mn__panel [data-focus="business"] { margin-top: 8px; max-width: 100%; white-space: normal; }

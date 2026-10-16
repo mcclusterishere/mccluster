@@ -52,6 +52,14 @@ race in `supabase/tests/commerce_stripe_concurrency.sh` (which fails on v2).
 Production has v1 and v2 (20261006021431, 20261006023453); promote v3 with the
 steps above.
 
+Pending: `world_gdelt_gkg_news_v1.sql` gives the World its news (owner,
+2026-10-15: "ingest the GDELT immediately"). It adds GDELT GKG rows
+(`gdelt_gkg_v2`) beside #432's dormant DOC path in the same `media_news_*`
+store: six columns, a per-file claim table, and service-role functions to
+ingest, page, map and prune; nothing is granted to anon. Tested by
+`scripts/test-world-news-db.sh`. After promoting it, set
+`WORLD_NEWS_INGEST_ENABLED = "true"` in `workers/mccluster/wrangler.toml`.
+
 Pending: `action_globe_demo_pins_v1.sql` puts the first pins on the World
 (owner, 2026-10-15: "we need to have it populated with missions"). It inserts
 three regions (Connecticut, Georgia, Haut-Katanga) with centroids and places
@@ -149,3 +157,26 @@ admin-verified missions and `member_identity_verified(uid, purpose)`, purpose fr
 `music_preview_play` / `music_full_play`. Apply after the approval file and, preferably, after PR #443's identity file (both orders apply cleanly).
 Both are tested by `scripts/test-mission-admin-approval-db.sh`; audit, design
 and apply order: `docs/control-plane/MISSION-ADMIN-APPROVAL.md`.
+
+Pending: `20261016010000_profile_edit_gate_v1.sql` (with
+`…_profile_edit_gate_v1.rollback.sql`) is the profile edit gate (owner,
+2026-10-15): profile details on a data-driven list (`profile_protected_fields`)
+lock once set; a signed-in member's write that would change one is refused by
+a trigger, directly or through any RPC. A change is asked for with a live
+video (a new submission level, `profile_edit`, on the identity levels' own
+tables, bucket and finish function) and the Persona ID check, and is applied
+only by `profile_edit_review_decide()`, once, with an append-only audit.
+Apply after the ladder and the identity levels. Behaviour tests:
+`supabase/tests/profile_edit_gate.behaviour.sql`, run by
+`scripts/test-profile-edit-gate-db.sh` (which also reruns the identity and
+ladder behaviour tests on top). Design: `docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md`.
+
+Pending: `20261015230000_action_mission_pins_arcs_black_business.sql` (owner mission curation,
+2026-10-15; owner approval required). Missions get many pins (country regions from Natural Earth
+v5.1.2 references; a "first world" list from the World Bank FY27 high-income classification, as
+data), a display-only origin ("Started by the Connecticut cohort"), the policy arc (memo → reform
+paper, unlocked by an admin-verified memo), and Black business listings reviewed by the desk. It
+also makes existing pins display-only (`join_scope` 'anywhere'): today every pinned open mission is
+unjoinable because no member has a region. Promote `action_globe_demo_pins_v1.sql` (already
+applied) first. Test: `scripts/test-mission-pins-db.sh`. Design and apply checklist:
+`docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.

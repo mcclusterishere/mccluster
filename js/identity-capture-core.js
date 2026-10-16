@@ -17,7 +17,9 @@
 
   var LEVELS = {
     v1_live_intro: { key: "v1_live_intro", label: "Live introduction", maxSeconds: 60 },
-    v2_halo_full: { key: "v2_halo_full", label: "Full Hitman's Halo access", maxSeconds: 120 }
+    v2_halo_full: { key: "v2_halo_full", label: "Full Hitman's Halo access", maxSeconds: 120 },
+    /* asking to change a locked profile detail (js/profile-edit-gate.js) */
+    profile_edit: { key: "profile_edit", label: "Profile change request", maxSeconds: 120 }
   };
   var MIN_SECONDS = 3;
   var MAX_BYTES = 52428800;
