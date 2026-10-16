@@ -79,19 +79,29 @@
     return !!(rule && rule.enabled !== false && (!rule.requires_counsel_signoff || rule.counsel_signoff_at));
   }
 
-  /* rule = {required_kinds:[...], min_count:null|n, creator_exclusive:bool}
-     completed = array of kinds with a verified assignment. */
+  /* rule = {requirement_kind:'verified_missions', min_count:n, creator_exclusive:bool} (the seeded ladder, owner
+     2026-10-15: ANY n distinct admin-verified non-clip missions), with completed = the ids of those missions (or their
+     count); or the older {requirement_kind:'starter_kinds', required_kinds:[...], min_count:null|n}, with completed = the
+     kinds that have a verified assignment. Mirrors action_unlock_progress(). */
   function evaluateLadder(rule, completed, opts) {
+    var blockedOf = function (b) {
+      if (rule && rule.creator_exclusive && opts && opts.isCreator) b = "creator_exclusive";
+      if (rule && !ruleLive(rule)) b = rule.enabled === false ? "disabled" : "requires_counsel_signoff";
+      return b;
+    };
+    if (rule && rule.requirement_kind === "verified_missions") {
+      var seen = {}, n = typeof completed === "number" ? Math.max(0, Math.floor(completed)) : (completed || []).filter(function (id) { if (seen[id]) return false; seen[id] = true; return true; }).length;
+      var needM = Number(rule.min_count);
+      var bm = blockedOf(needM >= 1 ? null : "no_rule");
+      return { done: [], remaining: [], needed: needM, completed: n, eligible: !bm && n >= needM, blocked_reason: bm };
+    }
     var required = (rule && rule.required_kinds) || [];
     var have = {};
     (completed || []).forEach(function (k) { have[k] = true; });
     var done = required.filter(function (k) { return have[k]; });
     var remaining = required.filter(function (k) { return !have[k]; });
     var need = rule && rule.min_count != null ? Math.min(Number(rule.min_count), required.length) : required.length;
-    var blocked = null;
-    if (rule && rule.creator_exclusive && opts && opts.isCreator) blocked = "creator_exclusive";
-    if (!required.length) blocked = blocked || "no_rule";
-    if (rule && !ruleLive(rule)) blocked = rule.enabled === false ? "disabled" : "requires_counsel_signoff";
+    var blocked = blockedOf(required.length ? null : "no_rule");
     return {
       done: done, remaining: remaining, needed: need, completed: done.length,
       eligible: !blocked && done.length >= need, blocked_reason: blocked

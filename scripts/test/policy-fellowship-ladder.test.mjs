@@ -72,7 +72,15 @@ test("the SQL enforces the same note and change rules", async () => {
   assert.deepEqual(L.NOTE_REQUIRED, ["decline", "request_changes", "owner_edit"]);
 });
 
-test("ladder eligibility is data: all kinds, any n, creator switch", () => {
+test("ladder eligibility is data: any three verified missions (owner, 2026-10-15); kinds, any n, creator switch", () => {
+  const three = { requirement_kind: "verified_missions", required_kinds: null, min_count: 3, creator_exclusive: false };
+  assert.equal(L.evaluateLadder(three, []).eligible, false);
+  assert.equal(L.evaluateLadder(three, ["m1", "m2"]).eligible, false);
+  assert.equal(L.evaluateLadder(three, ["m1", "m2", "m3"]).eligible, true, "any three, whatever their kind");
+  assert.equal(L.evaluateLadder(three, ["m1", "m1", "m2"]).eligible, false, "one mission twice is one mission");
+  assert.equal(L.evaluateLadder(three, 3).completed, 3);
+  assert.equal(L.evaluateLadder({ ...three, creator_exclusive: true }, 3, { isCreator: true }).blocked_reason, "creator_exclusive");
+  assert.equal(L.evaluateLadder({ ...three, enabled: false }, 3).blocked_reason, "disabled");
   const all = { required_kinds: ["help_person", "write_song", "attend_rally"], min_count: null, creator_exclusive: false };
   assert.equal(L.evaluateLadder(all, []).eligible, false);
   assert.deepEqual(L.evaluateLadder(all, ["help_person", "write_song"]).remaining, ["attend_rally"]);
@@ -89,9 +97,13 @@ test("ladder eligibility is data: all kinds, any n, creator switch", () => {
   assert.equal(L.evaluateLadder({ required_kinds: [] }, []).eligible, false);
 });
 
-test("the seeded rule is all three starter kinds and non-exclusive; completion means a verified assignment", async () => {
+test("the seeded rule is ANY three verified non-clip missions (PR #444's predicate) and non-exclusive", async () => {
   const sql = await read(SQL_PATH);
-  assert.match(sql, /'starter_kinds',\n   array\['help_person','write_song','attend_rally'\], null, '\{\}', false, true, false\)/);
+  assert.match(sql, /\('policy_fellowship', 'Policy Fellowship: three verified missions', array\['cohort_program:policy_fellowship'\], 'verified_missions',\n   null, 3, '\{\}', false, true, false\)/);
+  assert.match(sql, /select count\(distinct a\.mission_id\)::integer into v_have\n     from public\.action_mission_assignments a\n     join public\.action_missions m on m\.id = a\.mission_id\n    where p_user is not null and a\.user_id = p_user and a\.status = 'verified'\n      and coalesce\(m\.kind, 'civic'\) <> 'clip';/);
+  // the closed "Help someone reach a real service" is no longer mapped; the owner's three open missions are suggestions
+  assert.doesNotMatch(sql.replace(/--[^\n]*/g, ''), /51000000-0000-4000-8000-000000000003/);
+  for (const id of ['302dcb4e-ca21-4289-b633-9c397985fb9d', '053cbd0d-6bdb-49c6-bd80-8c5b8be36068', 'ba803367-057b-4664-902d-58a0cfd62068']) assert.ok(sql.includes(id), id);
   assert.match(sql, /creator_exclusive boolean not null default false/);
   const elig = sql.slice(sql.indexOf("function public.action_unlock_progress"), sql.indexOf("revoke all on function public.action_unlock_progress"));
   assert.match(elig, /a\.status = 'verified'/);

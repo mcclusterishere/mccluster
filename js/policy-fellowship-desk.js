@@ -1,8 +1,8 @@
 /* YOUR POLICY LADDER, inside the member desk over the World globe (js/member-desk.js; it was the Policy room, action-policy.html, which now opens the desk).
 
    The member's side of the Policy Fellowship ladder
-   (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md): the three starter
-   missions and the next step; with a seat in a state Policy Fellowship
+   (docs/control-plane/POLICY-FELLOWSHIP-LADDER.md): any three verified
+   missions (the starter missions are suggestions) and the next step; with a seat in a state Policy Fellowship
    cohort, the memo desk (write, save, submit up the line, read the desk's
    notes and edits, keep research leads with their provenance).
 
@@ -20,8 +20,8 @@
   var S = { status: null, memos: [], open: null, hist: {}, msg: "", busy: false };
   var NEXT = {
     sign_in: "Sign in to start the ladder.",
-    complete_starter_missions: "Finish the starter missions below. Each one counts when its proof is reviewed and verified.",
-    apply_for_fellowship: "You have done the starter missions. Apply for the fellowship from your Action Record.",
+    complete_starter_missions: "Complete any three missions. Each one counts when an admin reviews and verifies its proof. Here are three to start with.",
+    apply_for_fellowship: "You have three verified missions. Apply for the fellowship from your Action Record.",
     await_fellowship_review: "Your fellowship application is in review.",
     await_policy_cohort_seat: "You are a fellow. The desk gives seats in your state's Policy Fellowship cohort.",
     write_memo: "You have a seat. Write a memo for your state and send it up the line.",
@@ -70,7 +70,7 @@
       var ms = (k.missions || []).map(function (m) {
         return '<li><a href="mnet.html?mission=' + encodeURIComponent(m.id) + '">' + esc(m.title) + "</a>" + (m.my_status ? " <small>(" + esc(m.my_status) + ")</small>" : "") + "</li>";
       }).join("");
-      return '<li class="card"><div class="tag">' + (k.done ? "Done" : "Starter mission") + "</div><h3>" + esc(k.label) + "</h3>" +
+      return '<li class="card"><div class="tag">' + (k.done ? "Done" : "Suggested mission") + "</div><h3>" + esc(k.label) + "</h3>" +
         (k.description ? "<p>" + esc(k.description) + "</p>" : "") +
         (ms ? "<ul>" + ms + "</ul>" : "<p><small>No open mission for this step yet.</small></p>") + "</li>";
     }).join("") + "</ol>";
@@ -135,7 +135,7 @@
       var step = s.next_step || L.nextStep(s);
       html = '<p class="ladder-next"><b>Next:</b> ' + esc(NEXT[step] || step) + (step === "sign_in" ? ' <a href="login.html">Sign in</a>' : "") +
         (step === "apply_for_fellowship" ? ' <a href="mnet.html">Open your Action Record</a>' : "") + "</p>" +
-        (s.signed_in ? "<p><small>" + esc(s.completed) + " of " + esc(s.needed) + " starter missions verified.</small></p>" : "") +
+        (s.signed_in ? "<p><small>" + esc(s.completed) + " of " + esc(s.needed) + " missions verified.</small></p>" : "") +
         steps(s) + (step === "write_memo" ? memoDesk(s) : "");
     }
     host.innerHTML = "<h2>Your policy ladder</h2>" + (S.msg ? '<p role="status">' + esc(S.msg) + "</p>" : "") + html;
