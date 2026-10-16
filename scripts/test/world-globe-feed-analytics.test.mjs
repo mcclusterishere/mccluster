@@ -87,19 +87,22 @@ test('analytics globe: Intel events by the /v1/intel/geo contract: cells not poi
 test('analytics: 60/40 shell, shared filters, both-way selection, and every existing metric still rendered', async () => {
   const js = await read('js/control-room/analytics.js');
   const A = analyticsModule(js);
-  const html = A.render();
-  for (const id of ['craLayer', 'craRegion', 'craSource', 'craEvent']) assert.match(html, new RegExp('id="' + id + '"'));
-  assert.match(html, /Program \/ mission<select class="cra-filter-select" disabled>/);
+  const html = A.render(), sheet = A.filters();
+  /* the shared filters live in the Filters sheet over the globe now; the same ids, the same meanings */
+  for (const id of ['craLayer', 'craRegion', 'craSource', 'craEvent']) assert.match(sheet, new RegExp('id="' + id + '"'));
+  assert.match(sheet, /Program \/ mission<select class="cra-filter-select" disabled>/);
   assert.match(html, />On the globe</);
   for (const card of ['Traffic trend', 'Acquisition sources', 'Geography', 'Page performance', 'Networks', 'Music leaderboard', 'Content event mix']) assert.match(html, new RegExp(card));
-  assert.match(js, /type:"hu:analytics-points"/);
-  assert.match(js, /type:"hu:analytics-select"/);
-  assert.match(js, /d\.type==="hu:analytics-region"/);
-  assert.match(js, /ev\.origin!==location\.origin/);
-  const globe = await read('js/action-globe.js');
-  assert.match(globe, /d\.type==='hu:analytics-points'&&ANALYTICS/);
-  assert.match(globe, /tell\(\{type:'hu:analytics-region',code:ac\}\)/);
-  assert.match(globe, /if\(ANALYTICS\)\{showMissions=false;showCities=false\}/);
+  /* both ways, in one page: a tap on the globe selects (onSelect -> pickRegion without a flight); the country pill and
+     the rows select and fly (syncGlobe(true) -> flyTo) */
+  assert.match(js, /onSelect:function\(code\)\{pickRegion\(code,false\);\}/);
+  assert.match(js, /if\(g&&g\.ready\)\{g\.setData\(geoPayload\(\)\);if\(fly\)g\.flyTo\(S\.geo\.region\);\}/);
+  assert.match(js, /var c=root\.querySelector\("#craCountry"\);if\(c\)c\.onchange=function\(\)\{pickRegion\(c\.value\);\}/);
+  const globe = await read('js/control-room/analytics-globe.js');
+  assert.match(globe, /if \(opts\.onSelect\) opts\.onSelect\(next\)/);
+  assert.match(globe, /baseLayer: false/, 'no imagery: no paid map, no ion');
+  assert.match(globe, /requestRenderMode: true/);
+  assert.doesNotMatch(globe, /Ion\.defaultAccessToken\s*=\s*['"]/);
 });
 
 test('the bottom app bar never leaves: no experience hides it; Music stays in the bar, not the account menu', async () => {

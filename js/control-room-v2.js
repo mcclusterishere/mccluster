@@ -2387,6 +2387,8 @@
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
     root.setAttribute("data-cr-surface", state.surface);
+    /* the page knows its surface: Analytics runs full-bleed on a phone (css/control-analytics.css) */
+    document.body.setAttribute("data-cr-surface", state.surface);
     bindSurfaceControls();
     if (state.surface === "analytics" && window.CR.analytics) {
       var analyticsHost = $("crAnalyticsMount");
