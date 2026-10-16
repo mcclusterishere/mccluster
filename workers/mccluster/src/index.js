@@ -5,6 +5,8 @@ import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
+import { handleIntelRequest } from './intel/router.js';
+import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -146,10 +148,25 @@ export default {
         if (layer) return layer;
       }
 
+      /* the World's Cesium ion: terrain, aerial imagery and buildings,
+         with the account's token kept here (./world-ion.js) */
+      if (path === WORLD_ION_PATH || path.startsWith(`${WORLD_ION_PATH}/`)) {
+        const ion = await handleWorldIon(request, env);
+        if (ion) return ion;
+      }
+
       if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {
         const viewer = await equityUpriseRole(request, env);
         const projection = await buildEquityUpriseHaloProjection(env, { role: viewer.role });
         return reply(request, env, { ok: true, ...projection });
+      }
+
+      /* the evidence -> claim -> briefing -> decision -> mission -> outcome
+         loop (./intel/router.js, docs/control-plane/INTEL-TO-MISSION-CANON.md).
+         Owner-only except the privacy-safe /v1/intel/geo aggregate. */
+      if (path === '/v1/intel' || path.startsWith('/v1/intel/')) {
+        const intel = await handleIntelRequest(request, env, { requireHouseOwner, authUser });
+        if (intel) return intel;
       }
 
       if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {

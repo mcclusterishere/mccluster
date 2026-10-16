@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 360,
+  "candidate_count": 368,
   "capability_source_count": 99,
-  "support_only_count": 261,
+  "support_only_count": 269,
   "entries": [
     {
       "path": ".cursorrules",
@@ -793,7 +793,21 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
       "path": "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/INTEL-TO-MISSION-CANON.md",
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
@@ -2898,6 +2912,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database dependency fixture for bounty first-claim and reclaim behavior. Defines a test-only eu_is_admin stand-in; never applied to a real project and not a building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

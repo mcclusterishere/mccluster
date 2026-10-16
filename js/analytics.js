@@ -349,10 +349,16 @@ window.MCC_TRACK = (function () {
   window.addEventListener("pagehide", function () { flush(true); });
 
   function queueEvent(name, params) {
+    var props = Object.assign({}, params || {});
+    // Retain the public creator identity without copying arbitrary URL queries.
+    if ((location.pathname.split("/").pop() || "") === "music-creator.html") {
+      var creatorHandle = new URLSearchParams(location.search).get("handle") || "";
+      if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(creatorHandle)) props.creator_handle = creatorHandle;
+    }
     queue.push({
       name: String(name || "").slice(0, 120),
       path: location.pathname.split("/").pop() || "index.html",
-      props: params || {},
+      props: props,
       referrer: document.referrer || null,
     });
     if (queue.length >= BATCH) flush(false);
