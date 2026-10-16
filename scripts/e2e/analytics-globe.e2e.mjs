@@ -3,11 +3,16 @@
    Serves this checkout and fakes api.mccluster.org and Supabase in memory with FIXTURES (labelled
    as such below; no production call, no production number). Renders control.html#analytics at
    390x844, 768x1024 and 1280x800 as the house owner, checks: the header, Live, the range and
-   property selectors, the globe drawn with every country segmented, the choropleth (US red), arcs
-   only between real label points, a country under five never drawn, the legend, the filter pill
-   and summary, the Reach and Audience cards, tap a country -> the cards follow, the country
-   dropdown -> the globe flies there, Clear resets, the five-tab bar, reduced motion,
-   scrollWidth === clientWidth, no console errors. A member who is not the owner keeps three tabs.
+   property selectors, the globe drawn with every country segmented, a grey sphere with no
+   choropleth, no arcs, no dots and no legend (owner 2026-10-16: "a grey sphere that only lights up
+   when selected boundaries are selected"), a country under five never carried, the filter pill
+   and summary, the Reach and Audience cards. ONE SELECTION, both ways:
+   the dropdown selects a country -> the globe fills and outlines it and flies to fit it; the
+   dropdown selects a state -> the globe loads that country's states and flies to the state;
+   a tap on a state on the globe -> the dropdown shows it; a tap on a country -> the cards
+   follow; Clear -> the world. Region counts pending -> "not collected yet", shapes still
+   selectable. The five-tab bar, reduced motion, scrollWidth === clientWidth, no console errors.
+   A member who is not the owner keeps three tabs.
 
    Run:  node scripts/e2e/analytics-globe.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable) and network access to the Cesium CDN.
@@ -58,6 +63,7 @@ const FIX = {
   business: { window: {}, users: { total: 110, created_in_window: 4, confirmed_in_window: 3, active_in_window: 9, created_by_day: [{ day: '2026-10-14', count: 1 }, { day: '2026-10-15', count: 3 }] },
     music: { plays: { total: 900, in_window: 30 }, preview_plays: { in_window: 21 }, full_plays: { in_window: 9 }, completions: { in_window: 5 }, paid_orders: { in_window: 0 }, revenue: {} },
     mnet: { profiles: { total: 64, created_in_window: 2 }, posts: { created_in_window: 7 }, follows: { created_in_window: 5 }, reactions: { created_in_window: 19 } }, commerce: { available: false, reason: 'fixture' } },
+  regions: { ok: true, pending: false, country: 'US', min: 5, regions: [{ code: 'CT', name: 'Connecticut', page_views: 22, visitors: 9 }, { code: 'NY', name: 'New York', page_views: 14, visitors: 6 }, { code: null, name: 'California', page_views: 9, visitors: 4 }], folded: 7, unknown: 9 },
   identity: { coverage: { accounts: 4 }, journeys: [{ source: 'x.com', country: 'US', created_at: new Date().toISOString() }, { source: 'x.com', country: 'US' }, { source: 'direct', country: 'GB' }, { source: 'x.com', country: null }], tracks: [] }
 };
 const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-expose-headers': '*' }, body: JSON.stringify(body) });
@@ -86,6 +92,7 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/v1/analytics/visitors') return json(route, FIX.visitors);
     if (p === '/v1/analytics/flows') return json(route, FIX.flows);
     if (p === '/v1/analytics/errors') return json(route, FIX.errors);
+    if (p === '/v1/analytics/regions') return json(route, pendingRpc ? (new URL(req.url()).searchParams.get('country') === 'US' ? FIX.regions : { ok: true, pending: false, country: new URL(req.url()).searchParams.get('country'), min: 5, regions: [], folded: 0, unknown: 0 }) : { ok: true, pending: true, country: new URL(req.url()).searchParams.get('country'), regions: [], folded: 0, unknown: 0 });
     if (p === '/v1/intel/geo') return json(route, { code: 'intel_schema_not_ready' }, 503);
     return json(route, { ok: true });
   });
@@ -108,7 +115,8 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) errors.push(m.text()); });
   return { ctx, page, errors, calls };
 }
-const settle = (page) => page.waitForFunction(() => window.__craGlobe && window.__craGlobe().ready && window.__craGlobe().placed.length > 0, null, { timeout: 60000 }).then(() => true).catch(() => false);
+const settle = (page) => page.waitForFunction(() => window.__craGlobe && window.__craGlobe().ready && window.__craGlobe().valued.length > 0, null, { timeout: 60000 }).then(() => true).catch(() => false);
+const SHOTS = process.env.SHOTS_DIR || OUT;
 const widths = (page) => page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
 
 const SIZES = [{ name: '390', viewport: { width: 390, height: 844 } }, { name: '768', viewport: { width: 768, height: 1024 } }, { name: '1280', viewport: { width: 1280, height: 800 } }];
@@ -119,14 +127,12 @@ for (const size of SIZES) {
   const ready = await settle(page);
   check(S, 'the globe is ready and draws countries', ready, await page.evaluate(() => window.__craGlobe && window.__craGlobe()));
   await page.waitForFunction(() => /Page views/.test((document.getElementById('craPanel') || {}).textContent || '') && document.querySelector('.cra-live.is-live'), null, { timeout: 30000 }).catch(() => {});
-  const g = await page.evaluate(() => { const x = window.__craGlobe(); return { countries: x.countries, placed: x.placed, arcs: x.arcs, us: x.fill('US'), fr: x.fill('FR'), ca: x.fill('CA') }; });
-  check(S, 'every Natural Earth country is segmented (177)', g.countries === 177, g.countries);
-  const codes = g.placed.map((p) => p.code).sort();
-  check(S, 'points only for countries with 5+: US, GB, BR, JP (CA under five and XX never drawn)', JSON.stringify(codes) === JSON.stringify(['BR', 'GB', 'JP', 'US']), codes);
-  const us = g.placed.find((p) => p.code === 'US');
-  check(S, 'the US glow sits at its Natural Earth label point (39.54N 97.48W), never 0,0', !!us && Math.abs(us.lat - 39.54) < 0.01 && Math.abs(us.lon + 97.48) < 0.01 && g.placed.every((p) => !(p.lon === 0 && p.lat === 0)), us);
-  check(S, 'arcs from the origin country to each other drawn country (3)', g.arcs === 3, g.arcs);
-  check(S, 'choropleth: the US is filled red, Canada (under five) stays charcoal', !!g.us && g.us[0] > 190 && g.us[1] < 60 && !!g.ca && g.ca[0] < 60, g);
+  const g = await page.evaluate(() => { const x = window.__craGlobe(); return { countries: x.countries, lakes: x.lakes, valued: x.valued, arcs: x.arcs, dots: x.dots, us: x.fill('US'), fr: x.fill('FR'), ca: x.fill('CA') }; });
+  check(S, 'every Natural Earth 1:50m country is segmented (242), with the 1:50m lakes cut out', g.countries === 242 && g.lakes > 30, { countries: g.countries, lakes: g.lakes });
+  const codes = g.valued.slice().sort();
+  check(S, 'values only for countries with 5+: US, GB, BR, JP (CA under five and XX never carried)', JSON.stringify(codes) === JSON.stringify(['BR', 'GB', 'JP', 'US']), codes);
+  check(S, 'no arcs and no dots on the globe at rest', g.arcs === 0 && g.dots === 0, g);
+  check(S, 'no choropleth: the US (61) is the same grey as Canada (3) and France (none)', !!g.us && !!g.ca && !!g.fr && JSON.stringify(g.us) === JSON.stringify(g.ca) && JSON.stringify(g.us) === JSON.stringify(g.fr) && Math.abs(g.us[0] - g.us[1]) < 12, g);
   const ui = await page.evaluate(() => {
     const t = (s) => (document.querySelector(s) || {}).textContent || '';
     const vis = (s) => { const n = document.querySelector(s); if (!n) return false; const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(n).visibility !== 'hidden'; };
@@ -137,7 +143,7 @@ for (const size of SIZES) {
       illustrative: /Illustrative data|Design concept/i.test(document.body.textContent) };
   });
   check(S, 'header: Analytics + Live, McCluster first-party, 24h', /Analytics/.test(ui.title) && ui.live && ui.prop === '__first_party__' && ui.range === '24h', ui);
-  check(S, 'legend Page views 100+ / 10–100 / 5–10, under 5 not drawn', /Page views/.test(ui.legend) && /100\+/.test(ui.legend) && /10–100/.test(ui.legend) && /under 5 not drawn/.test(ui.legend), ui.legend);
+  check(S, 'no globe legend (nothing unselected is coloured)', ui.legend === '', ui.legend);
   check(S, 'filter pill and summary line', /Filters/.test(ui.pill) && /All countries/.test(ui.pill) && /24 hours · Page views · All sources/.test(ui.summary), { pill: ui.pill, summary: ui.summary });
   check(S, 'Reach (133 page views worldwide) and Audience (40 visitors) cards', /133/.test(ui.reach) && /Page views/.test(ui.reach) && /40/.test(ui.audience) && /New/.test(ui.audience) && /Returning/.test(ui.audience), { reach: ui.reach.slice(0, 120), audience: ui.audience.slice(0, 120) });
   check(S, 'Reach, Audience, Action carousels with dots', ['Reach', 'Audience', 'Action'].every((h) => ui.headings.includes(h)) && ui.dots >= 7, ui.headings);
@@ -146,24 +152,58 @@ for (const size of SIZES) {
   let w = await widths(page);
   check(S, 'no sideways overflow (scrollWidth === clientWidth)', w.scrollW === w.clientW, w);
   await page.waitForTimeout(800);
-  await page.screenshot({ path: join(OUT, `analytics-${size.name}.png`) });
+  await page.screenshot({ path: join(SHOTS, `analytics-${size.name}.png`) });
 
   /* select from the dropdown: the globe flies there and the cards follow */
   await page.selectOption('#craCountry', 'US');
-  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.selected === 'US' && x.camera && Math.abs(x.camera.lon + 97.48) < 3; }, null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.selected === 'US' && x.statesFor === 'US' && x.camera && Math.abs(x.camera.lon + 96) < 6 && x.camera.height < 9e6; }, null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(400);
-  const sel = await page.evaluate(() => ({ g: window.__craGlobe(), reach: document.querySelector('[data-cra-slide="reach"]').textContent, aud: document.querySelector('[data-cra-slide="audience"]').textContent, pill: document.querySelector('[data-cra-pill]').textContent }));
-  check(S, 'dropdown -> the globe selects and flies to the US', sel.g.selected === 'US' && !!sel.g.camera && Math.abs(sel.g.camera.lon + 97.48) < 3, sel.g.camera);
+  const sel = await page.evaluate(() => ({ g: window.__craGlobe(), us: window.__craGlobe().fill('US'), reach: document.querySelector('[data-cra-slide="reach"]').textContent, aud: document.querySelector('[data-cra-slide="audience"]').textContent, pill: document.querySelector('[data-cra-pill]').textContent, opts: [...document.querySelectorAll('#craCountry option')].map((o) => o.value) }));
+  check(S, 'dropdown -> the globe selects the US and flies to fit it (centre over the lower 48, zoomed in)', sel.g.selected === 'US' && !!sel.g.camera && Math.abs(sel.g.camera.lon + 96) < 6 && sel.g.camera.height < 9e6, sel.g.camera);
+  check(S, 'the selection is the accent fill, with one white dot, no arcs', !!sel.us && sel.us[0] > 180 && sel.us[1] < 70 && sel.g.dots === 1 && sel.g.arcs === 0, { us: sel.us, dots: sel.g.dots });
+  check(S, 'the US states load for the selected country only (51) and join the dropdown', sel.g.statesFor === 'US' && sel.g.states === 51 && sel.opts.includes('US/US-CT') && sel.opts.includes('US/US-TX'), { statesFor: sel.g.statesFor, states: sel.g.states, n: sel.opts.length });
   check(S, 'dropdown -> Reach says 61 page views · United States, 133 worldwide', /61/.test(sel.reach) && /United States · 24 hours/.test(sel.reach) && /133 worldwide/.test(sel.reach), sel.reach.slice(0, 160));
   check(S, 'dropdown -> Audience says 18 visitors in the United States (pending read fixture)', /18/.test(sel.aud) && /United States/.test(sel.aud), sel.aud.slice(0, 160));
   check(S, 'the tooltip reads "United States 61 page views"', /United States/.test(sel.g.tip || '') && /61 page views/.test(sel.g.tip || ''), sel.g.tip);
   check(S, 'Filters (1) counts the country', /Filters1/.test(sel.pill.replace(/\s+/g, '')), sel.pill);
   await page.waitForTimeout(600);
-  await page.screenshot({ path: join(OUT, `analytics-${size.name}-us.png`) });
+  await page.screenshot({ path: join(SHOTS, `analytics-${size.name}-us.png`) });
 
-  /* tap a country on the globe: Brazil (back to all countries first, so the camera returns home) */
-  await page.selectOption('#craCountry', '');
-  await page.waitForTimeout(1500);
+  /* a state from the dropdown: the globe flies to it and labels it in its country */
+  await page.selectOption('#craCountry', 'US/US-CT');
+  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.state === 'US-CT' && x.camera && Math.abs(x.camera.lon + 72.7) < 2 && Math.abs(x.camera.lat - 41.6) < 3 && x.camera.height < 2.5e6; }, null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const ct = await page.evaluate(() => ({ g: window.__craGlobe(), fill: window.__craGlobe().stateFill('US-CT'), ny: window.__craGlobe().stateFill('US-NY'), us: window.__craGlobe().fill('US'), dd: document.getElementById('craCountry').value, reach: document.querySelector('[data-cra-slide="reach"]').textContent, cap: document.querySelector('[data-cra-globe-caption]').textContent }));
+  check(S, 'dropdown -> Connecticut: the globe flies to fit the state', ct.g.state === 'US-CT' && Math.abs(ct.g.camera.lon + 72.7) < 2 && Math.abs(ct.g.camera.lat - 41.6) < 3 && ct.g.camera.height < 2.5e6, ct.g.camera);
+  check(S, 'Connecticut alone is the accent; New York (14 views) stays grey; the US steps back to context grey', !!ct.fill && ct.fill[0] > 180 && ct.fill[1] < 70 && !!ct.ny && Math.abs(ct.ny[0] - ct.ny[1]) < 12 && !!ct.us && Math.abs(ct.us[0] - ct.us[1]) < 12, { ct: ct.fill, ny: ct.ny, us: ct.us });
+  check(S, 'the label reads "United States / Connecticut / 22 page views"', /United States/.test(ct.g.tip || '') && /Connecticut/.test(ct.g.tip || '') && /22 page views/.test(ct.g.tip || ''), ct.g.tip);
+  check(S, 'Reach follows the state: 22 · Connecticut · 24 hours, with its country (United States: 61)', /22/.test(ct.reach) && /Connecticut · 24 hours/.test(ct.reach) && /United States: 61/.test(ct.reach), ct.reach.slice(0, 160));
+  check(S, 'the caption reports the state fold honestly (3 with 5+, under 5 folded 7, no region 9)', /by state: 3 with 5\+ · under 5 folded 7 · no region 9/.test(ct.cap), ct.cap);
+  await page.screenshot({ path: join(SHOTS, `analytics-${size.name}-us-ct.png`) });
+
+  /* back to the US, then tap Texas on the globe: the dropdown follows */
+  await page.selectOption('#craCountry', 'US');
+  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.state === null && x.camera && x.camera.height > 3e6; }, null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  const txy = await page.evaluate(() => window.__craGlobeProject && window.__craGlobeProject('US-TX'));
+  if (txy) {
+    const r = await page.evaluate(() => { const c = document.querySelector('.crg-canvas canvas').getBoundingClientRect(); return { x: c.left, y: c.top }; });
+    if (size.viewport.width < 600) await page.touchscreen.tap(r.x + txy.x, r.y + txy.y); else await page.mouse.click(r.x + txy.x, r.y + txy.y);
+    await page.waitForFunction(() => window.__craGlobe().state === 'US-TX', null, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(1100);
+  }
+  const tx = await page.evaluate(() => ({ g: window.__craGlobe(), dd: document.getElementById('craCountry').value, label: (document.getElementById('craCountry').selectedOptions[0] || {}).textContent }));
+  check(S, 'tap Texas on the globe -> the dropdown shows Texas (under the United States)', !!txy && tx.g.state === 'US-TX' && tx.dd === 'US/US-TX' && tx.label === 'Texas', { txy, state: tx.g.state, dd: tx.dd, label: tx.label });
+  check(S, 'Texas has no region row: the label says so instead of a number', /Texas/.test(tx.g.tip || '') && /Under 5 or none/.test(tx.g.tip || ''), tx.g.tip);
+  check(S, 'tap -> the camera flies to Texas', !!tx.g.camera && Math.abs(tx.g.camera.lon + 99.5) < 4 && tx.g.camera.height < 4e6, tx.g.camera);
+  await page.screenshot({ path: join(SHOTS, `analytics-${size.name}-us-tx.png`) });
+
+  /* Clear with a state selected -> the world view, nothing selected, no state lines */
+  await page.click('[data-cra-clear]');
+  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.selected === null && x.camera && x.camera.height > 1e7; }, null, { timeout: 8000 }).catch(() => {});
+  const world = await page.evaluate(() => ({ g: window.__craGlobe(), dd: document.getElementById('craCountry').value }));
+  check(S, 'Clear -> the world: nothing selected, the dropdown says All countries, states dropped, camera home', world.g.selected === null && world.g.state === null && world.g.statesFor === null && world.g.dots === 0 && world.dd === '' && world.g.camera.height > 1e7, { sel: world.g.selected, statesFor: world.g.statesFor, cam: world.g.camera, dd: world.dd });
+  await page.waitForTimeout(600);
   /* project Brazil's label point to the screen through the globe's own scene and click there */
   const xy = await page.evaluate(() => window.__craGlobeProject && window.__craGlobeProject('BR'));
   if (xy) {
@@ -177,6 +217,16 @@ for (const size of SIZES) {
   await page.waitForTimeout(500);
   const cleared = await page.evaluate(() => ({ sel: window.__craGlobe().selected, dd: document.getElementById('craCountry').value, summary: document.querySelector('[data-cra-summary]').textContent }));
   check(S, 'Clear resets the country and the filters', cleared.sel === null && cleared.dd === '' && !/Clear/.test(cleared.summary), cleared);
+
+  /* Japan: a country with no traffic is still selectable; drawn at 1:10m with its prefectures */
+  await page.selectOption('#craCountry', 'JP');
+  await page.waitForFunction(() => { const x = window.__craGlobe(); return x.selected === 'JP' && x.statesFor === 'JP' && x.camera && Math.abs(x.camera.lon - 137) < 8 && Math.abs(x.camera.lat - 36) < 8; }, null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  const jp = await page.evaluate(() => ({ g: window.__craGlobe(), fill: window.__craGlobe().fill('JP') }));
+  check(S, 'dropdown -> Japan (no traffic): selected, 47 prefectures loaded, the camera over Japan, accent fill', jp.g.selected === 'JP' && jp.g.states === 47 && Math.abs(jp.g.camera.lon - 137) < 8 && !!jp.fill && jp.fill[0] > 180, { states: jp.g.states, cam: jp.g.camera, fill: jp.fill, tip: jp.g.tip });
+  await page.screenshot({ path: join(SHOTS, `analytics-${size.name}-jp.png`) });
+  await page.click('[data-cra-clear]');
+  await page.waitForTimeout(1200);
 
   /* swipe the Reach carousel to the second card */
   await page.click('[data-cra-dot="reach"][data-i="1"]');
@@ -198,7 +248,15 @@ for (const size of SIZES) {
   await page.selectOption('#craCountry', 'GB');
   await page.waitForTimeout(250);
   const cam = await page.evaluate(() => window.__craGlobe().camera);
-  check('reduced-390', 'reduced motion: the camera is already over the UK (no flight)', !!cam && Math.abs(cam.lon + 2.12) < 3, cam);
+  check('reduced-390', 'reduced motion: the camera is already over the UK (no flight)', !!cam && Math.abs(cam.lon + 2.12) < 4 && cam.height < 8e6, cam);
+  await page.waitForFunction(() => window.__craGlobe().statesFor === 'GB', null, { timeout: 10000 }).catch(() => {});
+  await page.selectOption('#craCountry', 'US');
+  await page.waitForFunction(() => window.__craGlobe().statesFor === 'US', null, { timeout: 10000 }).catch(() => {});
+  await page.selectOption('#craCountry', 'US/US-CA');
+  await page.waitForTimeout(300);
+  const pend = await page.evaluate(() => ({ g: window.__craGlobe(), cap: document.querySelector('[data-cra-globe-caption]').textContent }));
+  check('reduced-390', 'region counts pending: California is still selectable and mapped, its label says "not collected yet"', pend.g.state === 'US-CA' && Math.abs(pend.g.camera.lon + 119.5) < 4 && /not collected yet/.test(pend.g.tip || '') && /not collected yet/.test(pend.cap), { state: pend.g.state, cam: pend.g.camera, tip: pend.g.tip, cap: pend.cap });
+  await page.screenshot({ path: join(SHOTS, 'analytics-390-pending-state.png') });
   const aud = await page.evaluate(() => document.querySelector('[data-cra-slide="audience"]').textContent);
   check('reduced-390', 'pending read absent: Audience says so instead of inventing a number', /analytics_country_v1/.test(aud), aud.slice(0, 200));
   check('reduced-390', 'no console or page errors', errors.length === 0, errors);

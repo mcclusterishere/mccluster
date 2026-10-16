@@ -251,7 +251,7 @@
        and draws nothing. Cells are drawn as cells, never as points; the window is clamped to the API's 92 days. */
     {id:"intel",label:"Intel events (10° cells)",status:"live",source:"/v1/intel/geo: accepted evidence records aggregated to 10° grid cells by the intel plane"}
   ];
-  S.geo={layer:"pageviews",region:null,source:"",eventType:"",places:null};
+  S.geo={layer:"pageviews",region:null,state:null,source:"",eventType:"",places:null,adm:{},rg:{},shown:null};
   S.ui={reach:"views",aud:"visitors",filters:false,more:false};S.car={};S.gid=0;S.country=null;
   /* a degree is a real number or nothing (Number(null) is 0, isFinite(null) is true: a missing centre would sit on the equator) */
   function deg(v){if(v===null||v===undefined||v===""||typeof v==="boolean"||Array.isArray(v))return null;var x=Number(v);return isFinite(x)?x:null;}
@@ -288,10 +288,14 @@
   }
   /* ---------- THE CHARCOAL GLOBE (owner, 2026-10-15: "this is what analytics should aspire to look like") ----------
      One Cesium globe drawn in this page (js/control-room/analytics-globe.js), never repainted: the panel repaints around it.
-     It is handed only the layer's aggregate above (country level, under 5 folded, no place without a Natural Earth label
-     point), so nothing finer than a country ever reaches it. ORIGIN is where the arcs start: McCluster Corp is a Connecticut
-     public charity, so the house's own country, drawn at its Natural Earth label point like every other country. */
-  var ORIGIN="US";
+     It is handed the layer's aggregate above (country level, under 5 folded, no place without a Natural Earth label point)
+     and, for the ONE selected country only, its states' page views from GET /v1/analytics/regions (house owner only; the
+     database folds any region under 5). No arcs, no dots, no decoration (owner, 2026-10-16: "just modern selection").
+
+     ONE SELECTION (owner, 2026-10-16: "when it's selected either from the console or the globe itself"):
+     S.geo.region (an ISO country, or an intel cell) and S.geo.state (an ISO 3166-2 key inside that country, or null).
+     The dropdown, the rows, Clear and a tap on the globe all go through pickPlace(); the globe is told with
+     select({country, state}, fly) and flies to fit the shape. Clear returns to the world. */
   function countryName(code){
     if(!code)return"";var p=S.geo.places&&S.geo.places[code];
     try{if(/^[A-Z]{2}$/.test(code)&&typeof Intl!=="undefined"&&Intl.DisplayNames){var dn=new Intl.DisplayNames(["en"],{type:"region"}).of(code);if(dn&&dn!==code)return dn;}}catch(_){}
@@ -300,30 +304,65 @@
   function layerUnit(id,v){var one=Number(v)===1;return id==="signups"?(one?"sign-up":"sign-ups"):id==="intel"?(one?"record":"records"):(one?"page view":"page views");}
   function layerOf(){return GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];}
   function geoPayload(){
-    var a=geoAggregate(),o=placeOf(ORIGIN);
+    var a=geoAggregate();
     return{mode:S.geo.layer==="intel"?"cells":"countries",
       points:a.points.map(function(p){return{code:p.code,name:p.code&&/^[A-Z]{2}$/.test(p.code)?countryName(p.code):p.name,lon:p.lon,lat:p.lat,value:p.value};}),
       cells:S.geo.layer==="intel"?a.points.map(function(p){return{code:p.code,bounds:p.bounds,value:p.value};}):[],
-      selected:S.geo.region,origin:o?{code:ORIGIN,lon:o[0],lat:o[1]}:null};
+      selected:S.geo.region,state:S.geo.state,states:stateData()};
   }
-  function tooltipFor(code){
+  /* ---------- STATES AND PROVINCES of the selected country (admin analytics only) ---------- */
+  function selCountry(){return S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;}
+  function admFile(cc){var f=cc&&S.geo.adm[cc];return f&&f.states?f:null;}
+  function stateOf(k){var cc=String(k||"").slice(0,2),f=admFile(cc);if(!f)return null;for(var i=0;i<f.states.length;i++)if(f.states[i].k===k)return f.states[i];return null;}
+  function rgKey(cc){var r=S.range;return r?cc+"|"+r.since+"|"+r.until+"|"+S.site:null;}
+  function regionRead(cc){var k=cc&&rgKey(cc);return k?S.geo.rg[k]||null:null;}
+  /* the matched page views per state for the selected country; null when there is nothing to colour */
+  function stateData(){
+    var cc=selCountry(),f=admFile(cc),rr=regionRead(cc);
+    if(!cc||!f||S.geo.layer!=="pageviews"||!rr||!rr.ok||rr.pending||!window.CR.analyticsGlobe)return null;
+    var m=window.CR.analyticsGlobe.matchRegions(f.states,rr.regions||[]);
+    return{country:cc,byKey:m.byKey,unmatched:m.unmatched};
+  }
+  function stateStatus(){
+    var cc=selCountry(),rr=regionRead(cc);
+    if(!cc)return null;
+    if(S.geo.layer!=="pageviews")return{kind:"layer",text:"State counts: page views only"};
+    if(!rr||rr.loading)return{kind:"loading",text:"Reading state counts…"};
+    if(rr.pending)return{kind:"pending",text:"State counts not collected yet"};
+    if(!rr.ok)return{kind:"error",text:"State counts did not load"};
+    return{kind:"ok"};
+  }
+  function loadStates(){
+    var cc=selCountry();if(!cc||!window.CR.analyticsGlobe)return;
+    if(!S.geo.adm[cc])window.CR.analyticsGlobe.loadAdmin1(cc).then(function(f){S.geo.adm[cc]=f||{states:[]};if(selCountry()===cc){paint();syncGlobe(false);}},function(){});
+    var k=rgKey(cc);if(!k||S.geo.rg[k]||!S.request)return;
+    var r=S.range;S.geo.rg[k]={loading:true};
+    S.request("/v1/analytics/regions?country="+cc+"&since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+(sid()?"&site="+encodeURIComponent(sid()):""))
+      .then(function(x){S.geo.rg[k]=x&&x.ok?x:{ok:false};},function(x){S.geo.rg[k]={ok:false,error:x};})
+      .then(function(){if(selCountry()===cc){paint();syncGlobe(false);}});
+  }
+  function tooltipFor(sel){
+    var code=typeof sel==="string"?sel:sel&&sel.country,k=sel&&typeof sel==="object"?sel.state:null;
     var a=geoAggregate(),p=a.points.filter(function(x){return x.code===code;})[0],L=layerOf();
-    var title=/^[A-Z]{2}$/.test(code)?countryName(code):(p&&p.name)||code;
+    var title=/^[A-Z]{2}$/.test(code||"")?countryName(code):(p&&p.name)||code;
+    if(k){
+      var s=stateOf(k),sd=stateData(),v=sd&&sd.byKey[k],ss=stateStatus();
+      return{title:s?s.n:k,context:title,line:v?(v.area?v.area+": ":"")+n(v.value)+" page views":ss&&ss.kind!=="ok"?ss.text:"Under "+GEO_MIN+" or none in this range"};
+    }
     return{title:title,line:p?n(p.value)+" "+layerUnit(L.id,p.value):"Under "+GEO_MIN+" or none in this range"};
   }
-  function legendHtml(){
-    var L=layerOf(),unit=L.id==="signups"?"Sign-ups":L.id==="intel"?"Records per cell":"Page views";
-    return'<b>'+e(unit)+'</b><span class="cra-key"><i class="cra-key__bar" aria-hidden="true"></i><span class="cra-key__steps"><span>100+</span><span>10–100</span><span>'+GEO_MIN+'–10</span><span class="cra-key__fold">under '+GEO_MIN+' not drawn</span></span></span>';
-  }
   function filterCount(){return(S.geo.region?1:0)+(S.geo.source?1:0)+(S.geo.eventType?1:0)+(S.geo.layer!=="pageviews"?1:0);}
+  /* every country (the Natural Earth label points), and, under the selected one, its states: one control, both levels */
   function pillHtml(){
-    var a=geoAggregate(),list=a.points.filter(function(p){return/^[A-Z]{2}$/.test(p.code);}).slice();
-    if(S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)&&!list.some(function(p){return p.code===S.geo.region;}))list.unshift({code:S.geo.region});
+    var a=geoAggregate(),seen={},list=[];
+    Object.keys(S.geo.places||{}).concat(a.points.map(function(p){return p.code;})).concat(selCountry()?[selCountry()]:[]).forEach(function(c){if(/^[A-Z]{2}$/.test(c)&&!seen[c]&&!BAD_CC[c]){seen[c]=1;list.push({code:c});}});
     list.sort(function(x,y){return countryName(x.code).localeCompare(countryName(y.code));});
-    var c=filterCount();
+    var c=filterCount(),cc=selCountry(),f=admFile(cc),sts=f?f.states.slice().sort(function(x,y){return String(x.n).localeCompare(String(y.n));}):[];
+    var opt=function(v,label,on){return'<option value="'+e(v)+'"'+(on?" selected":"")+'>'+e(label)+'</option>';};
+    var states=cc&&sts.length?'<optgroup label="'+e(countryName(cc))+' and its states">'+opt(cc,countryName(cc),!S.geo.state)+sts.map(function(s){return opt(cc+"/"+s.k,s.n,S.geo.state===s.k);}).join("")+'</optgroup>':"";
     return'<button type="button" class="cra-pill__filters" data-cra-filters aria-expanded="'+(S.ui.filters?"true":"false")+'" aria-controls="craFilterSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Filters</span>'+(c?'<i class="cra-pill__n">'+c+'</i>':"")+'</button>'+
       '<label class="cra-pill__country"><span class="sr-only">Country</span><select id="craCountry" class="cra-pill__select" aria-label="Country">'+
-      '<option value=""'+(S.geo.region?"":" selected")+'>All countries</option>'+list.map(function(p){return'<option value="'+e(p.code)+'"'+(p.code===S.geo.region?" selected":"")+'>'+e(countryName(p.code))+'</option>';}).join("")+'</select></label>';
+      '<option value=""'+(S.geo.region?"":" selected")+'>All countries</option>'+states+(states?'<optgroup label="Countries">':"")+list.map(function(p){return states&&p.code===cc?"":opt(p.code,countryName(p.code),p.code===S.geo.region&&!states);}).join("")+(states?'</optgroup>':"")+'</select></label>';
   }
   function summaryHtml(){
     var L=layerOf(),bits=[S.range&&S.range.label||"",L.id==="signups"?"Sign-ups":L.id==="intel"?"Intel events":"Page views",S.geo.source||"All sources"];
@@ -332,11 +371,11 @@
   }
   function syncGlobe(fly){
     var a=geoAggregate(),L=layerOf(),g=S.globe;
-    if(g&&g.ready){g.setData(geoPayload());if(fly)g.flyTo(S.geo.region);}
+    if(g&&g.ready){g.setData(geoPayload());var k=(S.geo.region||"")+"/"+(S.geo.state||"");if(fly||k!==S.geo.shown){S.geo.shown=k;g.select({country:S.geo.region,state:S.geo.state},!!fly);}}
     var q=function(sel){return S.host&&S.host.querySelector&&S.host.querySelector(sel);};
     var cap=q("[data-cra-globe-caption]");
-    if(cap)cap.textContent=a.awaiting?L.label+": "+(a.unavailable||"nothing to draw"):"On the globe "+n(a.located)+(a.suppressed?" · under "+GEO_MIN+" folded "+n(a.suppressed):"")+" · no country "+(a.unknown==null?"—":n(a.unknown));
-    var lg=q("[data-cra-legend]");if(lg)lg.innerHTML=legendHtml();
+    var ss=stateStatus(),rr=regionRead(selCountry()),sd=stateData();
+    if(cap)cap.textContent=a.awaiting?L.label+": "+(a.unavailable||"nothing to draw"):ss&&ss.kind==="ok"&&rr?countryName(selCountry())+" by state: "+n(rr.regions.length)+" with "+GEO_MIN+"+ · under "+GEO_MIN+" folded "+n(rr.folded)+" · no region "+n(rr.unknown)+(sd&&sd.unmatched?" · unmatched "+n(sd.unmatched):""):ss&&ss.kind==="pending"?"State counts not collected yet: analytics_region_v1 is written, not applied. State shapes are still selectable.":"On the globe "+n(a.located)+(a.suppressed?" · under "+GEO_MIN+" folded "+n(a.suppressed):"")+" · no country "+(a.unknown==null?"—":n(a.unknown));
     var pl=q("[data-cra-pill]");if(pl)pl.innerHTML=pillHtml();
     var sm=q("[data-cra-summary]");if(sm)sm.innerHTML=summaryHtml();
     var fs=q("[data-cra-filter-sheet]");if(fs){fs.hidden=!S.ui.filters;if(S.ui.filters)fs.innerHTML='<div class="cra-sheet__head"><b>Filters</b><button type="button" class="cra-sheet__x" data-cra-filters aria-label="Close filters">×</button></div>'+filters();}
@@ -344,7 +383,12 @@
     if(S.host&&S.host.querySelector){bindStage(S.host.querySelector("[data-cra-stage]"));bindTop(top||S.host);}
   }
   function regionKey(c){return geoCountry(c)||(/^g\d+:-?\d+:-?\d+$/.test(String(c||""))?String(c):null);}
-  function pickRegion(code,fly){S.geo.region=code?regionKey(code):null;loadCountry();paint();syncGlobe(fly!==false);}
+  /* the one way to select: {country, state}; a state belongs to the country it names */
+  function pickPlace(sel,fly){
+    sel=sel||{};var c=sel.country?regionKey(sel.country):null,k=c&&/^[A-Z]{2}$/.test(c)&&/^[A-Z]{2}-[A-Z0-9~]{1,5}$/.test(String(sel.state||""))&&String(sel.state).slice(0,2)===c?String(sel.state):null;
+    S.geo.region=c;S.geo.state=k;loadCountry();loadStates();paint();syncGlobe(fly!==false);
+  }
+  function pickRegion(code,fly){var v=String(code||""),i=v.indexOf("/");pickPlace(i>0?{country:v.slice(0,i),state:v.slice(i+1)}:{country:v||null,state:null},fly);}
   /* ---------- the header: wordmark line, title, Live, property, range ---------- */
   function liveState(){
     if(S.loading)return{cls:"is-loading",label:"Updating"};
@@ -379,7 +423,7 @@
     if(!root)return;
     var c=root.querySelector("#craCountry");if(c)c.onchange=function(){pickRegion(c.value);};
     root.querySelectorAll("[data-cra-filters]").forEach(function(b){b.onclick=function(){S.ui.filters=!S.ui.filters;syncGlobe(false);};});
-    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.source="";S.geo.eventType="";S.geo.layer="pageviews";S.idFilter=null;loadCountry();paint();syncGlobe(true);};});
+    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.geo.layer="pageviews";S.idFilter=null;loadCountry();paint();syncGlobe(true);};});
     var sheet=root.querySelector("[data-cra-filter-sheet]");if(sheet&&!sheet.hidden){
       var gl=sheet.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();syncGlobe(false);};
       var gr=sheet.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
@@ -391,7 +435,6 @@
     return'<div class="cra-app cra-split"><div class="cra-lead-col"><header class="cra-top" data-cra-top></header>'+
       '<section class="cra-globe cra-stage" data-cra-stage aria-label="Analytics globe: country aggregates. Drag to turn the Earth, pinch to zoom, tap a country to select it.">'+
       '<div class="cra-globe__host" id="craGlobe" data-cra-globe></div>'+
-      '<div class="cra-legend-geo" data-cra-legend aria-label="Legend"></div>'+
       '<div class="cra-pill" data-cra-pill></div>'+
       '<p class="cra-summary" data-cra-summary></p>'+
       '<p class="cra-globe__caption" data-cra-globe-caption aria-live="polite">Loading the globe…</p>'+
@@ -409,7 +452,7 @@
     var pts=rows.map(function(r,i){return X(i).toFixed(1)+","+Y(r[key]).toFixed(1);}).join(" ");
     var ticks=[0,Math.round((rows.length-1)/3),Math.round(2*(rows.length-1)/3),rows.length-1];
     var gid="craG"+(++S.gid);
-    return'<svg class="cra-area-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(aria)+'"><defs><linearGradient id="'+gid+'" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff2b3c" stop-opacity=".75"/><stop offset="1" stop-color="#ff2b3c" stop-opacity=".04"/></linearGradient></defs>'+
+    return'<svg class="cra-area-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(aria)+'"><defs><linearGradient id="'+gid+'" x1="0" x2="0" y1="0" y2="1"><stop class="cra-ac__s0" offset="0"/><stop class="cra-ac__s1" offset="1"/></linearGradient></defs>'+
       [0.5,1].map(function(q){var y=Y(mx*q).toFixed(1);return'<line class="cra-ac__grid" x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'"/>';}).join("")+
       '<polygon fill="url(#'+gid+')" points="'+P.l+','+(H-P.b)+' '+pts+' '+(W-P.r)+','+(H-P.b)+'"/><polyline class="cra-ac__line" points="'+pts+'"/>'+
       ticks.filter(function(t,i,a){return a.indexOf(t)===i;}).map(function(t,i){return'<text class="cra-ac__x" x="'+X(t).toFixed(1)+'" y="'+(H-5)+'" text-anchor="'+(i===0?"start":t===rows.length-1?"end":"middle")+'">'+e(labelFor(rows[t]))+'</text>';}).join("")+'</svg>';
@@ -434,7 +477,7 @@
       (slides.length>1?'<button type="button" class="cra-car__next" data-cra-next="'+id+'" aria-label="Next '+e(heading)+' card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>':"")+'</div>'+
       (slides.length>1?'<div class="cra-dots" role="tablist" aria-label="'+e(heading)+' cards">'+slides.map(function(_,k){return'<button type="button" class="cra-dot'+(k===i?" is-on":"")+'" data-cra-dot="'+id+'" data-i="'+k+'" aria-label="Card '+(k+1)+' of '+slides.length+'" aria-selected="'+(k===i)+'" role="tab"></button>';}).join("")+'</div>':"")+'</section>';
   }
-  function scopeLabel(){return(S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?countryName(S.geo.region):"Worldwide")+" · "+(S.range&&S.range.label||"");}
+  function scopeLabel(){var cc=selCountry(),s=S.geo.state&&stateOf(S.geo.state);return(cc?(s?s.n:countryName(cc)):"Worldwide")+" · "+(S.range&&S.range.label||"");}
   function pvRows(){var t=S.data.traffic||{};return S.rangeId==="24h"?(t.byHour||[]):(t.byDay||[]);}
   function pvLabel(r){if(r.hour){var d=new Date(r.hour);return String(d.getHours()).padStart(2,"0")+":00";}if(r.bucket){var b=new Date(r.bucket);return S.rangeId==="24h"?String(b.getHours()).padStart(2,"0")+":00":(b.getMonth()+1)+"/"+b.getDate();}return String(r.day||"").slice(5);}
   function countryRow(code){var ct=S.data.countryTotals;if(!ct||!ct.ok)return null;return ct.rows.filter(function(r){return String(r.country||"").toUpperCase()===code;})[0]||{country:code,page_views:0,visitors:0,sessions:0};}
@@ -450,6 +493,10 @@
       body=big(ret,"Returning visitors","Worldwide · "+(S.range&&S.range.label||""),all==null?(sid()===null?"":"first-party only"):"of "+n(all)+" visitors came back for another session")+split("New",all==null?null:Math.max(0,all-ret),"Returning",ret);
     }else{
       var total=t.page_views==null?null:Number(t.page_views),v=sel?geoValue(sel):total,cs=S.country&&S.country.code===sel&&S.country.rows;
+      if(sel&&S.geo.state){var sd=stateData(),sv=sd&&sd.byKey[S.geo.state],ss=stateStatus();
+        return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div><div class="cra-reach-main">'+
+          big(sv?sv.value:null,"Page views",scopeLabel(),(sv?(sv.area?"counted for "+sv.area+" · ":""):ss&&ss.kind!=="ok"?ss.text+" · ":"under "+GEO_MIN+" or none · ")+countryName(sel)+": "+n(v))+
+          '<div class="cra-reach-chart">'+area(cs||pvRows(),"page_views",pvLabel,"Page views over time, "+(cs?countryName(sel):"worldwide"))+'<small class="cra-c__note">Trend: '+e(cs?countryName(sel):"worldwide")+'</small></div></div>',"reach");}
       var rows=sel&&cs?cs:pvRows();
       body='<div class="cra-reach-main">'+big(v,"Page views",scopeLabel(),sel?(total==null?"":n(total)+" worldwide"):"")+
         '<div class="cra-reach-chart">'+area(rows,"page_views",pvLabel,"Page views over time"+(sel&&!cs?" (worldwide)":""))+(sel&&!cs?'<small class="cra-c__note">Trend: worldwide'+(pendingNote()?"; "+pendingNote():"")+'</small>':"")+'</div></div>';
@@ -945,7 +992,7 @@
       paint();
     },function(){return q===S.seq;}).then(function(){
       if(q!==S.seq)return;
-      S.loading=false;S.loaded=true;S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();paint();
+      S.loading=false;S.loaded=true;S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;S.country=null;loadCountry();loadStates();paint();
     });
   }
   function selectText(el){try{var r=document.createRange();r.selectNodeContents(el);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}catch(_){}}
@@ -1017,7 +1064,8 @@
         host.innerHTML=shell();
         var gh=host.querySelector("[data-cra-globe]");
         if(gh&&window.CR.analyticsGlobe)S.globe=window.CR.analyticsGlobe.mount(gh,{
-          onSelect:function(code){pickRegion(code,false);},
+          onSelect:function(sel){pickPlace(sel,true);},
+          labelPoint:function(cc){var p=placeOf(cc);return p?[p[0],p[1]]:null;},
           tooltipFor:tooltipFor,
           onReady:function(){syncGlobe(false);}
         });
@@ -1031,7 +1079,7 @@ if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites(
     render:render,
     top:topHtml,
     filters:filters,
-    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,filterCount:filterCount},
+    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,filterCount:filterCount},
     state:S
   };
 })();

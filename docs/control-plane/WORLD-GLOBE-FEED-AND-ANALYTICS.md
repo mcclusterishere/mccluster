@@ -231,12 +231,9 @@ Admin first; push features down to other users later."
   graticule. `requestRenderMode` draws only on change; the canvas renders at
   most two device pixels per CSS pixel. The World's `surface=analytics`
   handlers in `js/action-globe.js` are left in place and unused.
-- **What it draws** is the layer aggregate from section C and nothing finer:
-  country fill by value (legend 5–10 / 10–100 / 100+; under 5 is never
-  drawn and the legend says so), a glow at each drawn country's Natural Earth
-  label point, great-circle arcs from the house country (McCluster Corp is a
-  Connecticut public charity; drawn at the US label point) to each drawn
-  country, intel cells as cells. No point without a label point, never 0,0.
+- **What it draws** (superseded by C4 on 2026-10-16: no choropleth, no
+  glows, no arcs, no legend) was the layer aggregate from section C and
+  nothing finer. No point without a label point, never 0,0.
 - **One selection.** A tap on a country, the country menu in the floating
   pill, a row in "On the globe", and Clear all set the same state: the globe
   colours and flies (no flight under reduced motion), the tooltip reads
@@ -264,6 +261,74 @@ Admin first; push features down to other users later."
   screen shows a country's page views (from `analytics_top`) and says
   "Visitors by country need analytics_country_v1 (written, not applied)";
   the trend stays worldwide and is labelled so.
+
+### C4. Every country and every state, one selection (owner, 2026-10-16)
+
+Owner: "each selected country to be mapped accordingly and each state mapped
+accordingly across the countries so that when I'm looking at that individual
+place it can show me where on the planet it is when it's selected either from
+the console or the globe itself." Then: "a little glow outline of the globe
+… I just don't need arcs and other stuff, just modern selection"; "a grey
+sphere that only lights up when selected boundaries are selected"; the
+boundaries "realistically drawn and proper". State granularity is approved
+for the ADMIN analytics view only.
+
+- **A grey sphere.** One soft light from just above-left of the viewer shades
+  the sphere toward its limb at every zoom; the glow rim is CSS
+  (`--an-rim`). Land is one grey, slightly lighter than the sphere, with
+  hairline borders. Nothing unselected is coloured: no choropleth, no dots,
+  no arcs, no legend. Values feed only the selected place's label.
+- **Accurate geography.** The world is Natural Earth 1:50m Admin 0 Countries
+  (242, small islands included) with the large 1:50m lakes cut out of the land
+  (`data/geo/country-boundaries-50m.json`, delta-encoded hundredths of a
+  degree, `node tools/build-country-boundaries.mjs --scale 50m`). The
+  selected country is redrawn at 1:10m: the dissolve of its own 1:10m states,
+  so the country edge and its state edges are one line
+  (`data/geo/admin1/<CC>.json`, `tools/build-admin1-boundaries.mjs`; the
+  10m source is simplified once with mapshaper, topology-preserving, 10%,
+  keep-shapes). The 1:110m file stays for the World globe.
+- **States and provinces for every country** (Natural Earth 1:10m Admin 1,
+  239 country files): fetched only when that country is selected, cached,
+  and their lines drawn for that country only. Only `control.html` loads
+  `js/control-room/analytics-globe.js`; the public and member globes never
+  load a state file or the region read.
+- **One selection** `{country, state}`: the location menu (all countries;
+  the selected country's states listed under it as "US/US-CT"), the rows,
+  Clear and a tap on the globe all go through `pickPlace()`, and the globe is
+  told `select({country, state}, fly)`. The selected shape fills with
+  `--an-accent` and gets a bright outline with a soft glow (no pulse); the
+  camera flies to fit it (0.8 s, eased; a jump under reduced motion; never so
+  close that the planet or the neighbours are lost); a small dark-glass label
+  shows the name, the parent country for a state, and the page views; a white
+  dot marks the label point. A tap on a state of the selected country selects
+  the state (again: back to the country); the selected country again clears.
+  Clear returns to the world view.
+- **State counts, admin only.** Nothing new is collected: `public.events`
+  already stores Cloudflare's `region` (name) and, in `edge`, `cf-region-code`
+  (both nulled for a Global Privacy Control / Do Not Track visitor).
+  `supabase/pending/analytics_region_v1.sql` (written, NOT applied) adds
+  `analytics_region_totals(country, since, until, site)`: service_role only,
+  regions under 5 page views folded into one row inside the database, no city,
+  postal, coordinates or IP. `GET /v1/analytics/regions` (house owner only)
+  calls it and folds again. Rows match shapes by code, then name, then Natural
+  Earth's grouping (a UK nation over its councils, a French region over its
+  departements); a row that matches nothing is counted as unmatched, never
+  placed. Until the read is applied the route answers `pending: true` and the
+  label and caption say "State counts not collected yet"; the shapes stay
+  selectable. Behaviour test: `scripts/test-analytics-region-db.sh`.
+- **One accent.** `--an-accent` (css/control-analytics.css) drives every red
+  on this screen: the selection, the chart line and area, the bars, the
+  active segment (`--an-accent-ruby`), the filter count, Clear and the
+  current card dot. The globe reads the same tokens through the browser, so
+  the accent swaps from one place.
+- **Payloads** (bytes, raw / gzip -9): world 1:50m 602,872 / 189,291; a state
+  file: US 100,552 / 26,655, Japan 36,784 / 8,539, Germany 15,379 / 4,225,
+  Russia (largest) 228,452; all 239 state files together 3.57 MB / 0.91 MB,
+  never downloaded together.
+- **Attribution.** Made with Natural Earth. Free vector and raster map data
+  @ naturalearthdata.com. Public domain ("No permission is needed to use
+  Natural Earth"); natural-earth-vector v5.1.2. Recorded in each data file and
+  in `data/geo/admin1/index.json`.
 
 ### C3. The owner's five-tab bar (admin first)
 
@@ -409,5 +474,8 @@ first, as for every core route).
 6. Apply `supabase/pending/analytics_country_v1.sql` (visitors and trend by
    country on the analytics screen); until then the screen says it is not
    applied.
-7. Licences for live camera feeds stay as recorded in Halo's
+7. Apply `supabase/pending/analytics_region_v1.sql` (page views by state
+   on the admin analytics globe); until then the globe says "State counts
+   not collected yet" and states stay selectable.
+8. Licences for live camera feeds stay as recorded in Halo's
    `DATA_SOURCES.md`; restricted feeds (NYC DOT) must stay off.

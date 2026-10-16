@@ -35,10 +35,10 @@ test('privacy: the globe payload carries only countries with 5+, at real label p
   /* page views: 133 total - 112 recorded + XX 2 + NL 9 + ZZ 7 unplaced = 39 without a country on the globe */
   assert.equal(a.unknown, 39);
   assert.equal(a.located + a.suppressed + a.unknown, 133, 'located + under 5 + no country = total');
-  assert.deepEqual(JSON.parse(JSON.stringify(p.origin)), { code: 'US', lon: -97.48, lat: 39.54 }, 'arcs start at the house country, a real label point');
+  assert.equal(p.origin, undefined, 'no arcs: the payload carries no origin (owner, 2026-10-16: "just modern selection")');
 });
 
-test('metric classification: the tooltip and legend speak the layer\'s unit; under 5 says so instead of a number', async () => {
+test('metric classification: the label speaks the layer\'s unit; under 5 says so instead of a number', async () => {
   const A = await analytics(BASE());
   assert.deepEqual(JSON.parse(JSON.stringify(A.geo.tooltip('US'))), { title: 'United States', line: '61 page views' });
   assert.match(A.geo.tooltip('CA').line, /Under 5/);
@@ -50,7 +50,7 @@ test('metric classification: the tooltip and legend speak the layer\'s unit; und
   vm.createContext(ctx);
   vm.runInContext(await read('js/control-room/analytics-globe.js'), ctx);
   const G = ctx.window.CR.analyticsGlobe;
-  assert.deepEqual([4, 5, 9, 10, 99, 100, 5000].map((v) => G.bucket(v)), [1, 1, 1, 2, 2, 3, 3], 'legend: 5-10 / 10-100 / 100+ (a value under 5 never reaches the globe)');
+  assert.equal(G.bucket, undefined, 'no choropleth buckets: every unselected place stays grey');
   assert.equal(G.lonLat(0, 0), null);
   assert.equal(G.lonLat(-97.48, null), null);
   assert.deepEqual(JSON.parse(JSON.stringify(G.lonLat(-97.48, 39.54))), [-97.48, 39.54]);

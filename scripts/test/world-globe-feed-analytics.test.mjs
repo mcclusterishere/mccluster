@@ -93,10 +93,10 @@ test('analytics: 60/40 shell, shared filters, both-way selection, and every exis
   assert.match(sheet, /Program \/ mission<select class="cra-filter-select" disabled>/);
   assert.match(html, />On the globe</);
   for (const card of ['Traffic trend', 'Acquisition sources', 'Geography', 'Page performance', 'Networks', 'Music leaderboard', 'Content event mix']) assert.match(html, new RegExp(card));
-  /* both ways, in one page: a tap on the globe selects (onSelect -> pickRegion without a flight); the country pill and
-     the rows select and fly (syncGlobe(true) -> flyTo) */
-  assert.match(js, /onSelect:function\(code\)\{pickRegion\(code,false\);\}/);
-  assert.match(js, /if\(g&&g\.ready\)\{g\.setData\(geoPayload\(\)\);if\(fly\)g\.flyTo\(S\.geo\.region\);\}/);
+  /* both ways, in one page: a tap on the globe and the country pill, the rows and Clear all end in pickPlace, which
+     tells the globe select({country, state}, fly): one selection, one flight (owner, 2026-10-16) */
+  assert.match(js, /onSelect:function\(sel\)\{pickPlace\(sel,true\);\}/);
+  assert.match(js, /g\.select\(\{country:S\.geo\.region,state:S\.geo\.state\},!!fly\)/);
   assert.match(js, /var c=root\.querySelector\("#craCountry"\);if\(c\)c\.onchange=function\(\)\{pickRegion\(c\.value\);\}/);
   const globe = await read('js/control-room/analytics-globe.js');
   assert.match(globe, /if \(opts\.onSelect\) opts\.onSelect\(next\)/);
