@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { handleWorldLayers, LAYERS, fetchFlights, fetchSatellites, fetchLaunches } from '../src/world-layers.js';
+import { workersFetch } from './support/workers-fetch-semantics.mjs';
 
 const ENV = { SUPABASE_URL: 'https://sb.test', SUPABASE_SERVICE_ROLE_KEY: 'service', ALLOWED_ORIGINS: 'https://matthew.mccluster.org' };
 const req = (path, headers = {}) => new Request(`https://api.mccluster.org${path}`, { headers: { origin: 'https://matthew.mccluster.org', ...headers } });
@@ -30,7 +31,8 @@ const LAUNCHES = { results: [
 
 function provider({ flightsFail = false, celestrakFail = false } = {}) {
   const calls = [];
-  const fetchImpl = async (url, init = {}) => {
+  /* every provider call is validated the way workerd validates fetch init */
+  const fetchImpl = workersFetch(async (url, init = {}) => {
     const u = String(url instanceof Request ? url.url : url);
     calls.push({ url: u, auth: init.headers && init.headers.authorization || '' });
     if (u.startsWith('https://opensky-network.org/api/states/all')) return flightsFail ? text('nope', 503, 'text/plain') : json(STATES);
@@ -38,7 +40,7 @@ function provider({ flightsFail = false, celestrakFail = false } = {}) {
     if (u.startsWith('https://ll.thespacedevs.com/2.3.0/launches/upcoming/')) return json(LAUNCHES);
     if (u === 'https://sb.test/auth/v1/user') return init.headers.authorization === 'Bearer member-token' ? json({ id: 'auth-member' }) : json({ msg: 'no' }, 401);
     throw new Error('unexpected ' + u);
-  };
+  });
   return { fetchImpl, calls };
 }
 
@@ -67,7 +69,7 @@ test('flights are public: trimmed to airborne, positioned aircraft, cached for t
 
 test('with the research credentials the Worker asks OpenSky with a token', async () => {
   const calls = [];
-  const fetchImpl = async (url, init = {}) => { const u = String(url); calls.push({ u, auth: init.headers && init.headers.authorization }); if (u.includes('openid-connect/token')) return json({ access_token: 'osk' }); return json(STATES); };
+  const fetchImpl = workersFetch(async (url, init = {}) => { const u = String(url); calls.push({ u, auth: init.headers && init.headers.authorization }); if (u.includes('openid-connect/token')) return json({ access_token: 'osk' }); return json(STATES); });
   const body = await fetchFlights({ OPENSKY_CLIENT_ID: 'id', OPENSKY_CLIENT_SECRET: 'secret' }, fetchImpl);
   assert.equal(body.authenticated, true);
   assert.equal(calls.find((c) => c.u.includes('states/all')).auth, 'Bearer osk');
@@ -120,7 +122,7 @@ test('CelesTrak down on every group is the provider down, never zero satellites 
   /* one group down while the other answers is tolerated */
   const half = { fetchImpl: async (url, init = {}) => { const u = String(url); if (u.includes('GROUP=visual')) return text('down', 503, 'text/plain'); return down.fetchImpl(url, init); } };
   const okFetch = provider().fetchImpl;
-  const partial = await fetchSatellites({}, async (url, init = {}) => (String(url).includes('GROUP=visual') ? text('down', 503, 'text/plain') : okFetch(url, init)));
+  const partial = await fetchSatellites({}, workersFetch(async (url, init = {}) => (String(url).includes('GROUP=visual') ? text('down', 503, 'text/plain') : okFetch(url, init))));
   assert.equal(partial.count, 2);
   void half;
 });
@@ -136,4 +138,71 @@ test('the API dispatches the three routes before the Halo projection', async () 
   const i = src.indexOf("path.startsWith('/v1/world/layers/')"), j = src.indexOf("path === '/v1/equity-uprise/halo-globe'");
   assert.ok(i > 0 && j > i);
   assert.match(src, /import \{ handleWorldLayers \} from '\.\/world-layers\.js';/);
+});
+
+/* ---------- Workers fetch semantics (workerd rejects redirect: 'error') ---------- */
+const redirect = (location, status = 302) => new Response(null, { status, headers: { location } });
+
+test('regression: every layer fetch uses a fetch init the Workers runtime accepts, so flights are not "unavailable" in production', async () => {
+  const { fetchImpl } = provider();
+  const r = await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl, cacheImpl: memoryCache() });
+  const body = await r.json();
+  assert.equal(body.unavailable, undefined, `flights must not be unavailable (got ${body.upstream_error})`);
+  assert.equal(body.count, 2);
+  for (const call of fetchImpl.calls) assert.equal(call.init.redirect, 'manual');
+  for (const layer of ['satellites', 'launches']) {
+    const m = await (await handleWorldLayers(req(`/v1/world/layers/${layer}`, { authorization: 'Bearer member-token' }), ENV, { fetchImpl, cacheImpl: memoryCache() })).json();
+    assert.equal(m.unavailable, undefined, layer);
+    assert.ok(m.count > 0, layer);
+  }
+});
+
+test('a same-host https redirect is followed (bounded); the data arrives', async () => {
+  const fetchImpl = workersFetch(async (url) => {
+    if (url.pathname === '/api/states/all') return redirect('https://opensky-network.org/api/v2/states/all', 301);
+    if (url.pathname === '/api/v2/states/all') return json(STATES);
+    throw new Error('unexpected ' + url);
+  });
+  const body = await fetchFlights({}, fetchImpl);
+  assert.equal(body.count, 2);
+  assert.deepEqual(fetchImpl.calls.map((c) => c.url), ['https://opensky-network.org/api/states/all', 'https://opensky-network.org/api/v2/states/all']);
+});
+
+test('a provider redirect off its host, to http, with userinfo, to another port, or past two hops is upstream_redirect, never followed and never success-with-zero', async () => {
+  const cases = [
+    ['cross-host', () => redirect('https://evil.example/states')],
+    ['downgrade', () => redirect('http://opensky-network.org/api/states/all')],
+    ['userinfo', () => redirect('https://user:pw@opensky-network.org/x')],
+    ['port', () => redirect('https://opensky-network.org:8443/x')],
+    ['no location', () => new Response(null, { status: 302 })]
+  ];
+  for (const [name, make] of cases) {
+    const fetchImpl = workersFetch(async () => make());
+    await assert.rejects(() => fetchFlights({}, fetchImpl), (e) => e.code === 'upstream_redirect', name);
+    assert.equal(fetchImpl.calls.length, 1, `${name}: the redirect target is never requested`);
+    const body = await (await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl, cacheImpl: memoryCache() })).json();
+    assert.equal(body.unavailable, true, name); assert.equal(body.upstream_error, 'upstream_redirect', name);
+  }
+  let n = 0;
+  const loop = workersFetch(async () => redirect(`https://opensky-network.org/hop${(n += 1)}`));
+  await assert.rejects(() => fetchFlights({}, loop), (e) => e.code === 'upstream_redirect' && /exceeded 2 redirects/.test(e.message));
+  assert.equal(loop.calls.length, 3, 'the first request plus two followed hops, no more');
+});
+
+test('provider failures are typed: http, rate limit, invalid JSON, network', async () => {
+  const run = async (handler) => { try { await fetchLaunches({}, workersFetch(handler)); return null; } catch (e) { return e.code; } };
+  assert.equal(await run(async () => text('no', 503, 'text/plain')), 'upstream_http');
+  assert.equal(await run(async () => text('slow down', 429, 'text/plain')), 'upstream_rate_limited');
+  assert.equal(await run(async () => text('<html>', 200, 'text/html')), 'upstream_invalid_json');
+  assert.equal(await run(async () => { throw new TypeError('fetch failed'); }), 'upstream_network');
+  const down = provider({ celestrakFail: true });
+  await assert.rejects(() => fetchSatellites({}, down.fetchImpl), (e) => e.code === 'upstream_http' && /celestrak unavailable/.test(e.message));
+});
+
+test('the Workers fetch double rejects what workerd rejects', async () => {
+  const f = workersFetch(async () => json({}));
+  await assert.rejects(() => f('https://x.test/', { redirect: 'error' }), /Invalid redirect value/);
+  await assert.rejects(() => f('https://x.test/', { mode: 'cors' }), /not implemented/);
+  await assert.rejects(() => f('https://x.test/', { credentials: 'include' }), /not implemented/);
+  await f('https://x.test/', { redirect: 'manual' });
 });

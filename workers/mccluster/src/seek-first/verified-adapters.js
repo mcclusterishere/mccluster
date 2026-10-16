@@ -1,4 +1,5 @@
 import { GeoAdapterError } from './adapters.js';
+import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
 
 const MAX_ROWS = 2000;
 
@@ -28,10 +29,10 @@ async function jsonFetch(url, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(url, {
+    // Workers' fetch rejects redirect: 'error'; same-host https redirects only.
+    const response = await fetchNoCrossHostRedirect(url, {
       ...init,
       signal: controller.signal,
-      redirect: 'error',
       headers: {
         accept: 'application/json',
         'user-agent': 'McCluster-Spatial/1.0 (https://mccluster.org)',
@@ -52,6 +53,9 @@ async function jsonFetch(url, init = {}) {
     }
   } catch (error) {
     if (error instanceof GeoAdapterError) throw error;
+    if (error instanceof UpstreamError) {
+      throw new GeoAdapterError('Provider redirected outside its own host', 502, error.code, { provider_status: error.providerStatus });
+    }
     if (error?.name === 'AbortError') throw new GeoAdapterError('Provider request timed out', 504, 'provider_timeout');
     throw new GeoAdapterError('Provider request failed', 502, 'provider_network_error');
   } finally {

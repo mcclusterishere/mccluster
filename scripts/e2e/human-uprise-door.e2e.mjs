@@ -116,6 +116,8 @@ async function routeBackends(ctx) {
     const req = route.request(), u = new URL(req.url());
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
     apiReads.push({ path: u.pathname, auth: !!(await req.allHeaders()).authorization });
+    /* the World's Cesium ion (scripts/e2e/world-ion.e2e.mjs drives it): off here, so this Earth is NASA's alone */
+    if (u.pathname === '/v1/world/ion') return json(route, { ok: true, available: false, binding: null });
     if (u.pathname === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });
     /* the sign-in handoff: the arriving page's bearer and Origin, answered with a token hash */
     if (u.pathname === '/v1/auth/handoff' && req.method() === 'POST') {

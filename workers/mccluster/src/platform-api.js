@@ -406,6 +406,15 @@ export async function pruneNetworkRateEvents(env){
    behind a session), a small page and a short shared cache. Liking,
    commenting and posting stay on the authenticated routes below. */
 const PUBLIC_FEED_LIMIT=20;
+/* WHERE THE NEXT PAGE STARTS. A feed page reads three times what it returns, because rows drop out after the read
+   (group posts, replies, deleted posts, closed profiles). The cursor used to be the last row READ, so when more than
+   a page survived, everything between the last item shown and that row was skipped for good. Now: when more survived
+   than fit, the next page starts after the last item RETURNED; when the page came up short but the read was full,
+   after the last row read (nothing past what was shown survived up to there); otherwise there is no next page. */
+function feedCursor(rows,kept,limit,fetchLimit){
+  if(kept.length>limit){const last=kept[limit-1];return last&&(last.occurred_at||last.post&&last.post.created_at)||null;}
+  return (rows||[]).length===fetchLimit?rows[rows.length-1]?.occurred_at||null:null;
+}
 function publicFeedItem(item){
   const p=item.post,a=item.actor||{},meta=p.metadata&&typeof p.metadata==='object'?p.metadata:{};
   const media=(Array.isArray(p.media)?p.media:[]).slice(0,4).map(m=>({type:String(m&&(m.type||m.media_type)||'file').slice(0,16)}));
@@ -425,8 +434,8 @@ async function publicWorldFeed(req,env,url){
   const authors=uniq(items.map(x=>x.post.author_m_uid)).filter(uuidLike);
   const open=authors.length?await service(env,`network_profiles?m_uid=in.(${authors.join(',')})&visibility=eq.public&select=m_uid`):[];
   const publicAuthors=new Set((open||[]).map(x=>x.m_uid));
-  const out=items.filter(x=>publicAuthors.has(x.post.author_m_uid)).slice(0,limit).map(publicFeedItem);
-  const res=reply(req,env,{items:out,scope:'public',next_before:rows.length===fetchLimit?rows[rows.length-1]?.occurred_at||null:null});
+  const kept=items.filter(x=>publicAuthors.has(x.post.author_m_uid)),out=kept.slice(0,limit).map(publicFeedItem);
+  const res=reply(req,env,{items:out,scope:'public',next_before:feedCursor(rows,kept,limit,fetchLimit)});
   res.headers.set('cache-control','public, max-age=30');
   return res;
 }
@@ -457,12 +466,12 @@ async function handleMnet(req,env,path,url){
     if(external){
       const before=url.searchParams.get('before'),beforeFilter=before?`&occurred_at=lt.${encodeURIComponent(before)}`:'';
       const rows=await service(env,`network_feed_items?visibility=eq.public${beforeFilter}&order=occurred_at.desc&limit=${fetchLimit}&select=*`);
-      const hydrated=(await hydrateFeedItems(env,rows||[],null)).slice(0,limit),cursor=(rows||[]).length===fetchLimit?rows[rows.length-1]?.occurred_at||null:null;
+      const kept=await hydrateFeedItems(env,rows||[],null),hydrated=kept.slice(0,limit),cursor=feedCursor(rows,kept,limit,fetchLimit);
       await meter(env,external,'mnet.read',path,req.method,200,null,start); return reply(req,env,{items:hydrated,scope:'public',next_before:cursor});
     }
     const muid=await currentMuid(env,user.id);
     const data=await userRpc(req,env,'mnet_surface_feed',{p_app_key:appKey,p_limit:fetchLimit,p_before:url.searchParams.get('before')||null});
-    const hydrated=(await hydrateFeedItems(env,data||[],muid)).slice(0,limit),cursor=(data||[]).length===fetchLimit?data[data.length-1]?.occurred_at||null:null;
+    const kept=await hydrateFeedItems(env,data||[],muid),hydrated=kept.slice(0,limit),cursor=feedCursor(data,kept,limit,fetchLimit);
     return reply(req,env,{items:hydrated,next_before:cursor});
   }
   const person=path.match(/^\/v1\/mnet\/people\/([^/]+)$/);

@@ -1,7 +1,7 @@
 -- Signed-out reads stop failing on current_m_uid().
 --
 -- The P0 containment (20260913174500) closed EXECUTE on public.current_m_uid()
--- to anon, rightly. Twenty-one row policies still applied to anon (or to
+-- to anon, rightly. Twenty-two row policies still applied to anon (or to
 -- PUBLIC) and called it, so every signed-out read of those tables failed with
 -- a permission error that PostgREST answers as 401: the "From creators" shelf
 -- on listen.html (creator_tracks, music_creator_profiles) has been empty for
@@ -65,3 +65,14 @@ alter policy network_profiles_read on public.network_profiles to authenticated;
 drop policy if exists network_profiles_public_read on public.network_profiles;
 create policy network_profiles_public_read on public.network_profiles
   for select to anon using (visibility = 'public');
+
+-- creator service offers (added after the first draft of this file): visitors
+-- see published offers from public profiles, exactly the public half of
+-- creator_service_read; owners keep their own rows as members.
+alter policy creator_service_read on public.creator_service_offers to authenticated;
+drop policy if exists creator_service_public_read on public.creator_service_offers;
+create policy creator_service_public_read on public.creator_service_offers
+  for select to anon using (
+    status = 'published' and exists (
+      select 1 from public.network_profiles p
+      where p.m_uid = creator_service_offers.m_uid and p.visibility = 'public'));
