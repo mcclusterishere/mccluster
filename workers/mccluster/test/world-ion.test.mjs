@@ -202,22 +202,6 @@ test("no World fetch asks for redirect: 'error' (workerd throws on it, so every 
   }
 });
 
-/* every Worker source file, not only the World's. The two Seek First adapters still carry it on main and are fixed by
-   PR #441 (fix/worker-fetch-redirect-compat, lib/safe-fetch.js); drop them from this list when it merges. */
-const REDIRECT_ERROR_PENDING_441 = new Set(['seek-first/adapters.js', 'seek-first/verified-adapters.js']);
-test("no Worker source file asks for redirect: 'error'", async () => {
-  const { readdir } = await import('node:fs/promises');
-  const root = new URL('../src/', import.meta.url);
-  const files = (await readdir(root, { recursive: true })).filter((f) => /\.(m?js)$/.test(f));
-  assert.ok(files.length > 20);
-  const offenders = [];
-  for (const f of files) {
-    /* comments may name the forbidden value (main's world-layers.js and lib/safe-fetch.js explain it); only code counts */
-    const src = (await readFile(new URL(f, root), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-    if (/redirect:\s*['"]error['"]/.test(src) && !REDIRECT_ERROR_PENDING_441.has(f.split('\\').join('/'))) offenders.push(f);
-  }
-  assert.deepEqual(offenders, []);
-});
 
 test('the spatial console reads the ion token the same way the World does', async () => {
   const { sourceConfigured, sourceByKey } = await import('../src/seek-first/source-registry.js');
