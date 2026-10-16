@@ -1334,8 +1334,12 @@ body.has-appbar { padding-bottom: 0; }
   background: linear-gradient(180deg, #e01a42, #c4102c); color: #fff;
 }
 
-/* reach: 44px for every pill a thumb is meant to hit */
-.mn__world-chips > *, .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter,
+/* reach: 44px for every pill a thumb is meant to hit. The context strip's
+   chips and mission actions take 40px (WCAG 2.5.8 asks 24): the owner's
+   portrait split gives that strip ~15% of the screen, and 44px rows pushed
+   the globe under its 44% floor on an upright iPad. */
+.mn__world-chips > *, .mn__world-go, .mn__world-locate, .mn__mission-card .mn__world-filter { min-height: 40px; }
+.mn__clipdoor .mn__world-go,
 .mn__guest-in, .mn__guest-join, .mn__world-expand, .mn__world-live, .mn__fund, .mng__join,
 .mn__record-receipt, .mn__record-share, .mn__golive { min-height: 44px; }
 
