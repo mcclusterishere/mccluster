@@ -2358,6 +2358,13 @@
       "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
     },
     {
+      "path": "supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied SQL reconciled from production (#465): private Action Network funding opportunities and partner mission drafts, readable only by eu_is_admin() admins. Publishes no mission and funds no bounty; not a building capability."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
