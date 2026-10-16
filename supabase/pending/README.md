@@ -85,3 +85,9 @@ Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
 first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
+
+Reconciled from production on 2026-10-16 (SQL was already applied; not re-executed):
+`supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql`
+records the private funding opportunities and partner mission drafts. It publishes
+no missions and enables no claims or compensation. The ledger and drift contract
+now cover all 310 production migrations.
