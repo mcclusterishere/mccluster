@@ -83,3 +83,11 @@ Run `bash scripts/test-action-bounty-claim-db.sh` against scratch PostgreSQL;
 first claims insert, repeats are idempotent, cancelled/expired claims reuse the
 row, and rejected/unfunded claims remain blocked. Promote only after applying
 through the production ledger workflow above.
+
+Pending: `whip_driver_application_consent_v1.sql` (owner, 2026-10-15: open
+Whip Equipped sign-up) adds two nullable consent columns to Whip's own
+`public.drivers` (`application_consent_at`, `application_consent_version`,
+both or neither). Rollback: `whip_driver_application_consent_v1.rollback.sql`.
+Test: `scripts/test-whip-driver-consent-db.sh` (0037 schema, the file twice,
+behaviour, rollback, re-apply). Not applied in production; until it is, the
+Worker's driver sign-up answers `503 driver_signup_not_ready`.

@@ -8,7 +8,7 @@
   const state={current:'home',destination:null,miles:4.8,minutes:14,selectedRide:null,whiteLabel:false,brand:OFFICIAL_BRAND,accent:OFFICIAL_CORAL,accent2:OFFICIAL_ORANGE,map:null,route:null,destinationMarker:null,pickupMarker:null,driverMarkers:[],activeRide:null,pollTimer:null,stripe:null,paymentElement:null};
   const rideTiers=[{id:'standard',name:'Standard',subtitle:'Reliable ride · 1–4 riders',eta:3,multiplier:1,icon:'sedan'},{id:'comfort',name:'Comfort',subtitle:'Newer car · extra room',eta:5,multiplier:1.28,icon:'comfort'},{id:'xl',name:'XL',subtitle:'Room for the crew · up to 6',eta:7,multiplier:1.58,icon:'suv'},{id:'black',name:'Black',subtitle:'Premium vehicle · top-rated driver',eta:9,multiplier:2.18,icon:'black'}];
   const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v)||0),cents=v=>Math.round((Number(v)||0)*100);
-  async function api(path,options={}){const headers={'content-type':'application/json',...(options.headers||{})};if(session?.access_token)headers.authorization=`Bearer ${session.access_token}`;else{headers['x-we-user-id']=RIDER_ID();headers['x-we-role']='rider'}const res=await fetch(`${API_BASE}${path}`,{...options,headers});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.detail||data.error||`HTTP ${res.status}`);return data}
+  async function api(path,options={}){const headers={'content-type':'application/json',...(options.headers||{})};if(session?.access_token)headers.authorization=`Bearer ${session.access_token}`;else{headers['x-we-user-id']=RIDER_ID();headers['x-we-role']='rider'}const res=await fetch(`${API_BASE}${path}`,{...options,headers});const data=await res.json().catch(()=>({}));if(!res.ok)throw Object.assign(new Error(data.detail||data.error||`HTTP ${res.status}`),{code:data.code||null,signup:data.driver_signup_url||null});return data}
   function tierName(t){if(!state.whiteLabel)return`WE ${t.name}`;const b=state.brand.length>16?state.brand.split(' ')[0]:state.brand;return`${b} ${t.name}`}
   function mixWithWhite(hex,ratio=.35){const n=parseInt(hex.replace('#',''),16),rgb=[(n>>16)&255,(n>>8)&255,n&255].map(c=>Math.round(c+(255-c)*ratio).toString(16).padStart(2,'0'));return`#${rgb.join('')}`}
   function baseMarketFare(miles,minutes){return Math.max(8.5,(2.4+miles*1.62+minutes*.31+2.15)*1.06)}
@@ -41,6 +41,8 @@
     })
   }
 
+  /* Whip Equipped rides are not live yet (owner, 2026-10-15): the API answers 503 service_not_live; say so, and ask drivers to sign up */
+  function notLive(e){const m=modalBase('weNotLive');const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));m.innerHTML=`<div style="width:min(520px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 20px 70px #0006;color:#111"><h2 style="margin:0 0 10px">Rides aren\u2019t live yet</h2><p>${esc(e.message)}</p><p><a href="${esc(e.signup||'https://matthew.mccluster.org/whip/driver/')}" style="display:inline-block;padding:14px 18px;border-radius:13px;background:linear-gradient(135deg,#F6AD62,#F04449);color:#fff;font-weight:900;text-decoration:none">Driver sign-up \u2192</a></p><button type="button" id="weNotLiveClose" style="padding:12px 16px;border:0;border-radius:12px;background:#eee;font-size:max(16px,1rem)">Close</button></div>`;m.querySelector('#weNotLiveClose').onclick=()=>m.remove()}
   async function requestRide(){
     if(!state.selectedRide)return;if(!(await ensureAuth()))return;
     $('#confirmRide').disabled=true;$('#confirmRide').textContent='Preparing secure ride…';
@@ -51,7 +53,7 @@
       const paid=await collectRidePayment(state.activeRide);
       if(!paid){try{await api(`/api/rides/${state.activeRide.id}/status`,{method:'PATCH',body:JSON.stringify({status:'CANCELED'})})}catch{}state.activeRide=null;setState('options');return}
       $('#matchRideType').textContent=state.selectedRide.displayName;$('#matchPrice').textContent=money(state.selectedRide.price);setState('matching');startRidePolling();
-    }catch(e){console.error(e);alert(e.message||'Unable to request ride.');setState('options')}
+    }catch(e){console.error(e);if(e.code==='service_not_live'){notLive(e);setState('options');return}alert(e.message||'Unable to request ride.');setState('options')}
     finally{$('#confirmRide').disabled=false;$('#confirmRide').textContent=state.selectedRide?`Request ${state.selectedRide.displayName} · ${money(state.selectedRide.price)}`:'Choose a ride'}
   }
   function startRidePolling(){clearInterval(state.pollTimer);renderBackendRide(state.activeRide);state.pollTimer=setInterval(async()=>{if(!state.activeRide)return;try{const data=await api(`/api/rides/${state.activeRide.id}`);state.activeRide=data.ride;renderBackendRide(data.ride)}catch(e){console.warn(e)}},1600)}
