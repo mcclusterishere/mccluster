@@ -220,7 +220,7 @@ const split = (page) => page.evaluate(() => {
   const g = r('mnWorld'), c = r('mnWorldContext'), f = r('mnWorldFeed');
   const bar = document.querySelector('.appbar'), fe = document.getElementById('mnWorldFeed');
   return { globe: pct(g.height), context: pct(c.height), feed: pct(f.height), feedTop: Math.round(f.top), feedBottom: Math.round(f.bottom), vh: h, scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
-    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
+    barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null, barHidden: !bar || getComputedStyle(bar).display === 'none', feedPad: Math.round(parseFloat(getComputedStyle(fe).paddingBottom)), feedRoom: Math.round(fe.scrollHeight - fe.clientHeight), clear: getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear').trim(),
     ctxBottom: Math.round(c.bottom), ctxPad: Math.round(parseFloat(getComputedStyle(document.getElementById('mnWorldContext')).paddingBottom)) };
 });
 
@@ -275,9 +275,10 @@ for (const device of DEVICES) {
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
   /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
+  /* the bottom app bar never leaves (owner, 2026-10-15), signed in or not */
+  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
   /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
-  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
+  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
   /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
   if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
   if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
@@ -482,7 +483,9 @@ if (runs('layers-member')) {
   const scope = 'layers-member';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a member sees three toggles, none locked', locks.length === 3 && locks.every((l) => !l.locked && l.disabled === 'false'), locks);
+  /* the access map (owner, 2026-10-15): seven toggles on screen; a member has the data layers and Whip Equipped; CCTV waits on its three checks */
+  const lockedIds = locks.filter((l) => l.locked).map((l) => l.id).sort();
+  check(scope, 'a member sees every toggle; only CCTV locked', locks.length === 7 && JSON.stringify(lockedIds) === JSON.stringify(['ctlCctv']) && ['ctlFlights', 'ctlSats', 'ctlLaunch'].every((id) => locks.some((l) => l.id === id && !l.locked && l.disabled === 'false')), locks);
   await globe.click('#ctlFlights');
   await globe.waitForFunction(() => window.__huLayerOn && window.__huLayerOn('flights'), null, { timeout: 15000 });
   await page.waitForFunction(() => !document.getElementById('mnWorldLayers').hidden, null, { timeout: 5000 });
@@ -560,7 +563,8 @@ if (runs('layers-guest')) {
   const scope = 'layers-guest';
   const globe = page.frame({ url: /action-globe\.html/ });
   const locks = await globe.$$eval('.globe-data .globe-ctl', (a) => a.map((b) => ({ id: b.id, locked: b.classList.contains('is-locked'), disabled: b.getAttribute('aria-disabled') })));
-  check(scope, 'a guest sees Flights open and Satellites and Launches locked', locks.length === 3 && !locks[0].locked && locks[1].locked && locks[2].locked, locks);
+  /* one free layer (owner, 2026-10-15): every other toggle on screen, shaded */
+  check(scope, 'a guest sees Flights open and every other layer locked', locks.length === 7 && !locks[0].locked && locks.slice(1).every((l) => l.locked), locks);
   await globe.$eval('#ctlSats', (b) => b.click());   /* aria-disabled, so Playwright's own click would wait forever; a tap does this */
   await page.waitForSelector('#mnSignedOut:not([hidden])', { timeout: 10000 });
   check(scope, 'a locked layer opens sign-in with the reason, and sends nothing', /Sign in to see satellites and space missions/.test(await page.textContent('#mnGuestWhy')) && req(world, 'GET', /^\/v1\/world\/layers\/(satellites|launches)$/).length === 0, await page.textContent('#mnGuestWhy'));

@@ -158,7 +158,11 @@ test('Control Analytics uses the canonical analytics data plane',async()=>{
   const forensics=await read('js/control-room/forensics.js');
   assert.match(forensics,/"\/v1\/analytics\/" \+ \(F\.mode === "visitors" \? "visitors" : "sessions"\)/);
   assert.match(forensics,/"\/v1\/analytics\/sessions\/" \+ encodeURIComponent\(t\.id\)/);
-  assert.doesNotMatch(js,/<iframe|analytics\.html\?control_embed/);
+  /* no second analytics page in a frame; the one frame is the World globe's analytics surface (60/40 layout) */
+  assert.doesNotMatch(js,/analytics\.html\?control_embed/);
+  const frames=js.match(/<iframe[^>]*>/g)||[];
+  assert.equal(frames.length,1);
+  assert.match(frames[0],/src="action-globe\.html\?embedded=1&amp;surface=analytics"/);
 });
 
 test('one range controls all analytics panels and stale requests cannot repaint',async()=>{
@@ -223,8 +227,11 @@ test('24h analytics retries one transient database statement timeout',async()=>{
 
 test('Control Analytics is mobile-first',async()=>{
   const css=await read('css/control-analytics.css');
-  assert.match(css,/@media \(min-width:36rem\)/);
-  assert.match(css,/@media \(min-width:54rem\)/);
+  /* the panel sits beside the globe (60/40), so its columns follow the panel's own width: container queries, min-width only */
+  assert.match(css,/@container cra \(min-width:36rem\)/);
+  assert.match(css,/@container cra \(min-width:54rem\)/);
+  assert.match(css,/@media \(min-width:64rem\)\{\s*\.cra-split\{grid-template-columns:minmax\(0,3fr\) minmax\(0,2fr\)/);
+  assert.doesNotMatch(css,/@container[^{]*max-width/);
   assert.doesNotMatch(css,/@media\s*\(max-width:/);
   assert.match(css,/font-size:max\(16px,1rem\)/);
   assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
