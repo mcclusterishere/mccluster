@@ -277,7 +277,9 @@ Deno.serve(async (req) => {
   const edge = quiet ? { opted_out: "1" } : edgeFacts(h);
   const ua = str(h.get("user-agent"), MAX_UA);
   const bot = looksLikeBot(ua);
-  const uid = await resolveUid(h.get("authorization"));
+  // GPC/DNT applies to *all* persistent identity, even a valid signed-in
+  // session. Do not resolve or store the user id when the signal is present.
+  const uid = quiet ? null : await resolveUid(h.get("authorization"));
 
   // Client-minted, and labelled as such. See the header note.
   // Nothing that follows a visitor between sittings survives the signal.
@@ -301,11 +303,13 @@ Deno.serve(async (req) => {
       site_id: site.siteId,
       source_host: site.host,
       name,
-      path: str(ev.path, MAX_PATH) ?? "",
-      props: obj(ev.props),
+      // An opt-out is an aggregate event count, not a record of a personal URL
+      // or arbitrary client-supplied metadata (which can contain PII/tokens).
+      path: quiet ? "/" : (str(ev.path, MAX_PATH) ?? ""),
+      props: quiet ? {} : obj(ev.props),
       // The referrer is the browser's own report of where it came from, which
       // is the only place that exists either. It is a claim, and a harmless one.
-      referrer: str(ev.referrer, MAX_REF),
+      referrer: quiet ? null : str(ev.referrer, MAX_REF),
       // Observed. Never read from the body.
       uid,
       ip,
