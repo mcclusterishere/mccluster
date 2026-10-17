@@ -281,7 +281,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   const {ctx,page,world,errors} = await open(device,{member});
   try {
     const globe = page.frame({url:/action-globe\.html/});
-    check(scope,'actual Cesium uses the graphite style and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===0 && !s.stars; }));
+    check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     check(scope,'published missions populate the preview', await page.locator('[data-hu-mission]').count()===2);
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
