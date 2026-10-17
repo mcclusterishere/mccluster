@@ -1,5 +1,7 @@
-/* Owner direction 2026-10-16: optional globe layers remain admin previews.
-   A commercial entitlement or account tier cannot publish a feature. */
+/* Owner direction 2026-10-16: flights, satellites, vehicle telemetry and Halo
+   feeds belong to internal intelligence, not a public or paid globe offering.
+   admin_preview is the existing wire value for operator-only access, not a
+   promise of future public release. Account tiers cannot publish these feeds. */
 export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion']);
 export const GLOBE_RELEASE_VERSION = 'globe-admin-preview/v1';
 export function globeRelease(feature, env = {}) {

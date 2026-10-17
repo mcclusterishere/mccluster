@@ -303,8 +303,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
     check(scope,'search still finds a published mission',/Clean up the Mill River/.test(await page.textContent('#mnSuggestRows')));
     await page.keyboard.press('Escape');
+    // A visitor may browse another country before opening a worldwide preview.
+    // Use the real country picker; a stale country filter must not swallow the choice.
+    await globe.waitForFunction(()=>window.__huCountries?.().ready);
+    await globe.evaluate(()=>window.__huCountriesCam.view(2,47,15000000));
+    await globe.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const canvas=globe.locator('#globe canvas');
+    const box=await canvas.boundingBox();
+    await canvas.click({position:{x:box.width/2,y:box.height/2}});
+    await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
+    check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
     await page.click('[data-hu-mission="'+M1+'"]');
-    await page.waitForSelector('#mnWorldFocus:not([hidden])');
+    await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
+    check(scope,'a mission preview outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
     check(scope,'mission preview selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('[data-hu-feed="community"]');

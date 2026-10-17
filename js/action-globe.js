@@ -49,7 +49,16 @@ function exploreTell(d){const box=$('exploreLine');if(!box||!d)return;
  box.innerHTML=rows.join('<br>');box.hidden=!rows.length}
 function publicMission(m){return {mission_id:m.mission_id,title:m.title,description:String(m.description||'').slice(0,280),region_label:m.region_label,action_path:m.action_path}}
 function announce(){const m=missions[i];if(m)tell({type:'hu:mission-selected',mission:publicMission(m)})}
-function focusMission(id){let n=missions.findIndex(m=>m.mission_id===id);if(n<0&&allMissions.some(m=>m.mission_id===id)){$('worldSearch').value='';filterMissions();n=missions.findIndex(m=>m.mission_id===id)}if(n<0)return false;show(n);announce();return true}
+function focusMission(id){
+ let n=missions.findIndex(m=>m.mission_id===id);
+ if(n<0&&allMissions.some(m=>m.mission_id===id)){
+  // Search and the public mission list can choose a mission beyond the current
+  // country. Release that filter before focusing the explicit choice.
+  $('worldSearch').value='';if(countries)countries.select(null);searchPins('');
+  n=missions.findIndex(m=>m.mission_id===id);
+ }
+ if(n<0)return false;show(n);announce();return true
+}
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,80));return}

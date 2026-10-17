@@ -91,6 +91,10 @@ by the accompanying globe restriction. Those require their own end-to-end build.
 
 `packages/release-policy/globe.mjs` is a pure policy module consumed by the current
 Worker. Optional globe layers are `admin_preview`; unknown features deny access.
+Owner clarification, October 16, 2026: flight/satellite positions, vehicle data,
+CCTV and Hitman's Halo feeds are internal intelligence inputs, not future public
+or paid-user features. `admin_preview` is the existing operator-only wire value.
+General release tooling must not turn these feeds into customer entitlements.
 The canonical router checks live house-owner membership before dispatching flight,
 satellite, launch, CCTV, enhanced ion, intelligence-geography and Halo-projection
 requests. Existing feature authorization, privacy and rate limits still apply.
@@ -120,7 +124,8 @@ analytics outside the globe retains its existing authorization.
    queue, versioned approval and enforcement across API/RPC/native entry points.
 2. Separate agreement/tax onboarding and payout readiness gates.
 3. Persistent release revisions and audit, tenant/cohort/public audiences,
-   dependency checks, Control preview/publish/withdraw controls and rollback.
+   dependency checks, Control preview/publish/withdraw controls and rollback
+   for customer products; internal intelligence feeds remain excluded.
 4. Extract one product behind stable adapters; prove standalone and bundle use.
 5. Add usage metering, SKU mapping, supported commercial editions and maintenance.
 
