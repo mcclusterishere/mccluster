@@ -19,9 +19,24 @@
 
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
-  var worldAudioScript = document.createElement("script");
-  worldAudioScript.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
-  document.head.appendChild(worldAudioScript);
+  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
+  function loadWorldAudio() {
+    if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
+    if (worldAudioReady) return worldAudioReady;
+    worldAudioReady = new Promise(function (resolve) {
+      var script = document.createElement("script");
+      script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.onload = function () {
+        var ready = !!window.MCC_WORLD_AUDIO;
+        if (!ready) worldAudioReady = null;
+        resolve(ready);
+      };
+      script.onerror = function () { worldAudioReady = null; script.remove(); resolve(false); };
+      document.head.appendChild(script);
+    });
+    return worldAudioReady;
+  }
+  loadWorldAudio();
 
   /* ---------- THREE HOSTS, ONE BAR ----------
      The World is served on a host of its own as well: the company's,
@@ -877,10 +892,55 @@
     return false;
   }
 
+  function musicWorldDestination(dest) {
+    if (window.parent !== window || !(window.MCC_MUSIC || document.getElementById("deck"))) return false;
+    try {
+      var u = new URL(dest, location.href);
+      return u.protocol === "https:" &&
+        (WORLD_HOSTS.indexOf(u.hostname) !== -1 && /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname) ||
+         u.origin + "/" === HOUSE_ORIGIN && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
+    } catch (_) { return false; }
+  }
+  function cancelWorldAudio() {
+    worldAudioPending = null;
+    if (worldAudioNotice) worldAudioNotice.remove();
+    worldAudioNotice = null;
+  }
+  function waitForWorldAudio(dest) {
+    if (window.MCC_WORLD_AUDIO || !musicWorldDestination(dest)) return false;
+    cancelWorldAudio(); unpeek(); veilOff(); revert();
+    if (window.MCC_MUSIC) window.MCC_MUSIC.closeNow();
+    var pending = worldAudioPending = {href:dest};
+    var notice = worldAudioNotice = document.createElement("section");
+    notice.id = "mccWorldAudioLoading"; notice.className = "dk-peek";
+    notice.setAttribute("aria-label", "Open World");
+    notice.innerHTML = '<div class="dk-peek__card"><div class="dk-peek__top"><span>' +
+      '<b role="status">Opening World…</b><small>Your music stays available here.</small></span></div>' +
+      '<div class="dk-peek__acts"><button class="dk-peek__go" type="button" data-world-audio-retry hidden>Retry</button>' +
+      '<button class="dk-peek__alt" type="button" data-world-audio-cancel>Stay in Music</button></div></div>';
+    var retry = notice.querySelector("[data-world-audio-retry]");
+    var cancel = notice.querySelector("[data-world-audio-cancel]");
+    retry.style.minHeight = cancel.style.minHeight = "44px";
+    retry.onclick = function () { waitForWorldAudio(pending.href); };
+    cancel.onclick = function () { cancelWorldAudio(); dock.querySelector('[data-appnav="world"]')?.focus(); };
+    document.body.appendChild(notice);
+    loadWorldAudio().then(function (ready) {
+      if (worldAudioPending !== pending) return;
+      // A slow helper must never unload the document that owns live music.
+      // Ready clicks still use the synchronous path in sail() below.
+      if (ready && window.MCC_WORLD_AUDIO.navigate(pending.href)) { cancelWorldAudio(); return; }
+      notice.querySelector('[role="status"]').textContent = "World could not open.";
+      retry.hidden = false;
+    });
+    return true;
+  }
+
   function sail(dest, wait) {
+    cancelWorldAudio();
     if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
     unpeek();
     if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
+    if (waitForWorldAudio(dest)) return;
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
@@ -894,6 +954,16 @@
       handoffHref(dest).then(function (h) { navigateDocument(h); }, function () { navigateDocument(dest); });
     }, wait);
   }
+
+  // Also cover ordinary World links before the dynamically loaded helper can
+  // install its click listener. Other destinations cancel an earlier request.
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+    if (waitForWorldAudio(a.href)) { e.preventDefault(); e.stopPropagation(); }
+    else if (worldAudioPending) cancelWorldAudio();
+  }, true);
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
   var peekEl = null, peekFor = null;

@@ -47,6 +47,13 @@ controls.
 | World reopened | Dispatch `visible:true`; preserve the draft and chosen music without automatically restarting GPS. |
 | World fails to load or complete its handshake | Keep Music available and show Back to Music / Open World directly recovery controls. |
 
+The shared bar also preserves Music when Globe is tapped before the continuity
+script finishes loading. It queues that World destination and shows a small
+Opening World status. Choosing another destination or Stay in Music cancels the
+queued opening. If the script fails, Retry loads it again while the original
+player remains available. Once the helper is ready, ordinary Globe taps keep
+the synchronous gesture path described below.
+
 Attachment and readiness exchange the parent's current visibility, including
 when World was closed before it finished loading. The child stores the validated
 state in `body.dataset.worldAudioVisible`; Travel reads that state when it
@@ -132,6 +139,11 @@ reacquisition, repeated Play during loading, unavailable-source recovery,
 first-gesture theme playback and exact artist destinations. The actual globe
 script's graceful renderer-unavailable path is used here; renderer fidelity,
 GPS permissions and route geometry have separate World/Travel suites.
+
+The delayed-script regression holds the parent helper request while actual
+audio plays, taps Globe, and checks that the same element keeps advancing before
+and after the helper arrives. It also covers load failure, visible phone-sized
+retry controls, successful retry and cancellation before late readiness.
 
 These browser checks run in Chromium. The owning-document design avoids the
 known iOS gesture-transfer mistake, but these results do not claim a physical

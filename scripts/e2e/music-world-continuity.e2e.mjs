@@ -26,7 +26,7 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false){
+async function setup(width=390,member=false,{parentScript}={}){
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
   await context.addInitScript(({HOUSE,member,token})=>{
@@ -55,6 +55,7 @@ async function setup(width=390,member=false){
       return json(r,[]);
     }
     if([HOUSE,WORLD].includes(u.origin)){
+      if(u.origin===HOUSE&&p==='/js/world-audio-continuity.js'&&parentScript&&await parentScript()===false)return r.abort();
       if(p.startsWith('/assets/audio/')){
         const range=/bytes=(\d+)-(\d*)/.exec(req.headers().range||'');
         if(range){const start=Number(range[1]),end=Math.min(Number(range[2]||AUDIO.length-1),AUDIO.length-1);return r.fulfill({status:206,contentType:'audio/wav',headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${AUDIO.length}`},body:AUDIO.subarray(start,end+1)});}
@@ -70,8 +71,8 @@ async function setup(width=390,member=false){
     return r.abort();
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(HOUSE+'/listen.html');
-  await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'));
+  await page.goto(HOUSE+'/listen.html',{waitUntil:parentScript?'domcontentloaded':'load'});
+  await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
   return {context,page,requests,messages,errors};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
@@ -89,6 +90,56 @@ async function world(page){
 }
 async function audioState(page){return page.evaluate(()=>({time:MCC_MUSIC.audio.currentTime,src:MCC_MUSIC.audio.currentSrc,paused:MCC_MUSIC.audio.paused,muted:MCC_MUSIC.audio.muted,playing:__audioObjects.filter(a=>!a.paused).length,unloads:__unloads}));}
 try{
+  {
+    let release;
+    const held=new Promise(resolve=>release=resolve);
+    const {context,page}=await setup(390,false,{parentScript:()=>held});
+    await play(page);
+    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__earlyTransitions=[];for(const type of ['pause','emptied','seeking'])__originalAudio.addEventListener(type,()=>__earlyTransitions.push(type));});
+    const before=await audioState(page);
+    await page.locator('.appbar [data-appnav="world"]').click();
+    await page.locator('#mccWorldAudioLoading').waitFor();
+    await page.waitForTimeout(650);const pending=await audioState(page);
+    check('early Globe tap waits for its helper without unloading or interrupting Music',await page.evaluate(()=>!window.MCC_WORLD_AUDIO&&__unloads===0)&&pending.src===before.src&&!pending.paused&&pending.time>before.time+.4,pending);
+    release(true);
+    await page.waitForFunction(()=>window.MCC_WORLD_AUDIO?.active());
+    await page.locator('.world-audio-status').waitFor({state:'hidden'});
+    check('delayed helper opens World with the exact advancing Audio element and no reset',await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio&&__unloads===0&&__earlyTransitions.length===0)&&!(await audioState(page)).paused&&(await audioState(page)).time>pending.time);
+    check('successful delayed opening removes the loading card',await page.locator('#mccWorldAudioLoading').count()===0);
+    await context.close();
+  }
+  {
+    let release,attempts=0;
+    const held=new Promise(resolve=>release=resolve);
+    const {context,page}=await setup(390,false,{parentScript:()=>++attempts===1?held:Promise.resolve(true)});
+    await play(page);await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
+    const before=await audioState(page);
+    await page.locator('.appbar [data-appnav="world"]').click();
+    release(false);
+    await page.locator('[data-world-audio-retry]:visible').waitFor();
+    check('helper failure keeps playing Music with visible retry and stay controls',await page.locator('#mccWorldAudioLoading [role="status"]').textContent()==='World could not open.'&&await page.locator('[data-world-audio-cancel]').isVisible()&&await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio&&__unloads===0&&!MCC_MUSIC.audio.paused));
+    check('loader recovery fits a phone with usable controls',await page.locator('#mccWorldAudioLoading').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&[...el.querySelectorAll('button')].every(b=>b.getBoundingClientRect().height>=44);}));
+    await page.locator('[data-world-audio-retry]').click();
+    await page.waitForFunction(()=>window.MCC_WORLD_AUDIO?.active());
+    await page.locator('.world-audio-status').waitFor({state:'hidden'});
+    const after=await audioState(page);
+    check('retry loads the helper once more and retains the same track',attempts===2&&after.unloads===0&&after.src===before.src&&after.time>before.time&&!after.paused&&await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio),{attempts,before,after});
+    await context.close();
+  }
+  {
+    let release;
+    const held=new Promise(resolve=>release=resolve);
+    const {context,page}=await setup(390,false,{parentScript:()=>held});
+    await play(page);await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
+    await page.locator('.appbar [data-appnav="world"]').click();
+    await page.locator('[data-world-audio-cancel]').click();
+    check('Stay in Music cancels a pending World opening',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
+    await page.locator('.appbar [data-appnav="world"]').click();
+    await page.locator('.appbar [data-appnav="music"]').click();
+    release(true);await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO);await page.waitForTimeout(100);
+    check('explicit Music destination cancels queued World even when its helper arrives later',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>!MCC_WORLD_AUDIO.active()&&__unloads===0&&__originalAudio===MCC_MUSIC.audio&&!MCC_MUSIC.audio.paused));
+    await context.close();
+  }
   for(const width of [390,1280]){
     const {context,page,errors}=await setup(width);
     await play(page);

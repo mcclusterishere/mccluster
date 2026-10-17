@@ -548,12 +548,31 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.keyboard.press('Escape');
     // A visitor may browse another country before opening a worldwide preview.
     // Use the real country picker; a stale country filter must not swallow the choice.
+    // In phone landscape, the mode pill crosses the canvas center. Keep the
+    // same altitude and frame France above it; do not tap through parent UI.
+    const cameraLatitude=device.name==='iphone-landscape'?30:47;
     await globe.waitForFunction(()=>window.__huCountries?.().ready);
-    await globe.evaluate(()=>window.__huCountriesCam.view(2,47,15000000));
+    await globe.evaluate(lat=>window.__huCountriesCam.view(2,lat,15000000),cameraLatitude);
     await globe.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await globe.waitForFunction(()=>window.__huCountries?.().alpha.FR>=.15);
     const canvas=globe.locator('#globe canvas');
-    const box=await canvas.boundingBox();
-    await canvas.click({position:{x:box.width/2,y:box.height/2}});
+    const tap=await globe.evaluate(lat=>{
+      const C=window.Cesium,canvas=document.querySelector('#globe canvas'),r=canvas.getBoundingClientRect(),frame=window.frameElement,f=frame.getBoundingClientRect();
+      let x=r.width/2,y=r.height/2;
+      if(lat!==47){
+        // Cesium setView defaults to north-up, looking down, with a 60-degree
+        // field of view on the longer axis. Project an interior France point
+        // in that camera's east/north/up frame, then use the real pointer.
+        const camera=C.Cartesian3.fromDegrees(2,lat,15000000),france=C.Cartesian3.fromDegrees(2,47);
+        const inverse=C.Matrix4.inverseTransformation(C.Transforms.eastNorthUpToFixedFrame(camera),new C.Matrix4());
+        const point=C.Matrix4.multiplyByPoint(inverse,france,new C.Cartesian3()),focal=Math.max(r.width,r.height)/(2*Math.tan(Math.PI/6));
+        x+=point.x/-point.z*focal;y-=point.y/-point.z*focal;
+      }
+      const cx=r.left+x,cy=r.top+y;
+      return {x,y,exposed:document.elementFromPoint(cx,cy)===canvas && parent.document.elementFromPoint(f.left+cx,f.top+cy)===frame};
+    },cameraLatitude);
+    check(scope,'country tap reaches the real canvas through both documents',tap.exposed,tap);
+    await canvas.click({position:{x:tap.x,y:tap.y}});
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
     await page.click('.wt-world-modes [data-world-mode=missions]');
