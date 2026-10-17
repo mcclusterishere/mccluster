@@ -25,43 +25,24 @@ function db({ creator = false, owner = false, privacy = false, mission = false }
 }
 const ids = (b) => b.locked_layers.map((l) => l.id);
 
-test('a guest: exactly one free layer (Flights); every other layer listed, locked, with a sign-in next step', async () => {
-  const r = await handleWorldAccess(req(null), ENV, { fetchImpl: db() });
-  assert.equal(r.headers.get('cache-control'), 'private, no-store');
-  const b = await r.json();
-  assert.equal(b.level, 'public');
-  assert.deepEqual(b.unlocked_layers, ['flights']);
-  assert.deepEqual(ids(b).sort(), Object.keys(LAYER_RULES).filter((k) => k !== 'flights').sort());
-  for (const l of b.locked_layers.filter((x) => LAYER_RULES[x.id].min === 'fan')) { assert.equal(l.reason, 'sign_in_required'); assert.equal(l.next_step, 'sign_in'); }
+test('guest, member and creator/business have no optional globe layers', async () => {
+  for (const [token, options] of [[null, {}], ['t', {}], ['t', { creator:true, privacy:true, mission:true }]]) {
+    const r=await handleWorldAccess(req(token), ENV, {fetchImpl:db(options)});
+    assert.equal(r.headers.get('cache-control'),'private, no-store');
+    const b=await r.json();assert.deepEqual(b.unlocked_layers,[]);
+    assert.deepEqual(ids(b).sort(),Object.keys(LAYER_RULES).sort());
+    assert.ok(b.locked_layers.every(x=>x.reason==='admin_preview'&&x.next_step===null));
+    assert.equal(b.release.admin_preview,false);
+  }
 });
-
-test('a fan: satellites, launches, music, Whip transport; CCTV locked until the privacy acknowledgement and a mission; audience needs a creator', async () => {
-  let b = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db() })).json();
-  assert.equal(b.level, 'fan');
-  assert.deepEqual(b.unlocked_layers, ['flights', 'satellites', 'launches', 'intel', 'music', 'transport']);
-  assert.deepEqual(b.locked_layers.find((l) => l.id === 'cctv'), { id: 'cctv', reason: 'privacy_acknowledgement_required', next_step: 'acknowledge_privacy' });
-  assert.equal(b.locked_layers.find((l) => l.id === 'audience').reason, 'creator_business_required');
-  b = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db({ privacy: true }) })).json();
-  assert.equal(b.locked_layers.find((l) => l.id === 'cctv').reason, 'mission_required');
-  b = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db({ privacy: true, mission: true }) })).json();
-  assert.ok(b.unlocked_layers.includes('cctv'));
-});
-
-test('Whip Equipped transport: open to any signed-in member, rides not live, a driver sign-up link, Whip Equipped LLC only', async () => {
-  const guest = await (await handleWorldAccess(req(null), ENV, { fetchImpl: db() })).json();
-  assert.deepEqual(guest.locked_layers.find((l) => l.id === 'transport'), { id: 'transport', reason: 'sign_in_required', next_step: 'sign_in' });
-  const fan = await (await handleWorldAccess(req('t'), ENV, { fetchImpl: db() })).json();
-  assert.ok(fan.unlocked_layers.includes('transport'), 'no fellowship, mission or voter gate');
-  const t = fan.layers.transport;
-  assert.equal(t.operator, 'Whip Equipped LLC');
-  assert.equal(t.service_live, false);
-  assert.equal(t.driver_signup_url, WHIP_DRIVER_SIGNUP_URL);
-  assert.equal(WHIP_DRIVER_SIGNUP_URL, 'https://matthew.mccluster.org/whip/driver/');
-  assert.equal(t.disabled, undefined);
-  /* the Driver app is hosted on Matthew's property (DOMAINS-AND-ENTITIES.md: Whip Equipped LLC at whip.html); no McCluster name in its copy */
-  assert.doesNotMatch(JSON.stringify({ ...t, driver_signup_url: undefined }), /McCluster/i, 'no McCluster branding on the Whip layer');
-  const src = await readFile(new URL('../src/world-access.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(src.replace(/\/\*[\s\S]*?\*\//g, ''), /voter|registration|fellow_transport|pending_counsel/i);
+test('owner preview preserves independent CCTV prerequisites and withdrawal', async () => {
+  let b=await (await handleWorldAccess(req('t'),ENV,{fetchImpl:db({owner:true})})).json();
+  assert.ok(b.unlocked_layers.includes('flights'));assert.ok(!b.unlocked_layers.includes('cctv'));
+  b=await (await handleWorldAccess(req('t'),{...ENV,WORLD_GLOBE_WITHDRAWN:'flights,cctv'},{fetchImpl:db({owner:true,privacy:true,mission:true})})).json();
+  assert.ok(!b.unlocked_layers.includes('flights'));assert.ok(!b.unlocked_layers.includes('cctv'));
+  assert.equal(b.locked_layers.find(x=>x.id==='flights').reason,'feature_withdrawn');
+  assert.equal(b.layers.transport.operator,'Whip Equipped LLC');
+  assert.equal(b.layers.transport.driver_signup_url,WHIP_DRIVER_SIGNUP_URL);
 });
 
 test('the access map carries the IP-derived approximate location, never 0,0', async () => {

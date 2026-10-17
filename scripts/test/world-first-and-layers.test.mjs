@@ -131,7 +131,7 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
 
 test('Full world is a full pane: the Earth edge to edge, the World\'s chrome at home, the layer line painted on its own (owner, 2026-10-15)', async () => {
   const html = await read('action-globe.html'), js = await read('js/action-globe.js'), css = await read('css/action-globe.css'), world = await read('mnet.html');
-  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1">Full world \u2197<\/a>/);
+  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1" aria-label="Expand the globe">/);
   assert.match(html, /<header><a id="worldBack" href="mnet\.html\?view=feed">\u2190 World<\/a>/, 'the way back is the World');
   assert.match(html, /<p class="explore-line" id="exploreLine" aria-live="polite" hidden><\/p>/);
   assert.match(js, /const EXPLORE=!embedded&&new URLSearchParams\(location\.search\)\.has\('explore'\);if\(EXPLORE\)document\.documentElement\.classList\.add\('globe-explore'\);/);

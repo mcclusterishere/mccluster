@@ -81,7 +81,7 @@ test('a news card is the World card keyed data-news-id: words only, out to the p
     assert.ok(n && n.lat === null && n.lon === null, `${lat},${lon} carries no place on the Earth`);
   }
   assert.match(html, /<div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">/);
-  assert.match(html, /<strong>Member posts live here\.<\/strong>/, 'the guest card keeps its words');
+  assert.match(html, /Sign in to share an update and connect\./, 'the guest card explains the sign-in action');
   const news = css.slice(css.indexOf('WORLD NEWS IN THE FEED'), css.indexOf('THE SCREEN IS THE WHOLE SCREEN'));
   assert.match(news, /\.mn__news-meta > \.mn__news-domain \{[^}]*overflow: hidden; text-overflow: ellipsis;/, 'a long publisher name truncates');
   assert.match(news, /\.mn__news-title \{ display: -webkit-box; -webkit-line-clamp: 3;[^}]*overflow-wrap: anywhere;/, 'a long headline wraps and clamps');
@@ -93,7 +93,7 @@ test('the GDELT credit is one quiet line over the feed, shown whenever news is, 
   assert.match(html, /<p class="mn__news-credit" id="mnNewsCredit" hidden>World news from <a href="https:\/\/www\.gdeltproject\.org\/" target="_blank" rel="noopener noreferrer">The GDELT Project<\/a><\/p>\n        <div class="mn__feed" id="mnFeed"/);
   const render = fnSource(js, 'renderFeed');
   assert.match(render, /paintNewsCredit\(news\.length > 0\);/);
-  assert.match(render, /var news = focus && focus\.filter \? \[\] : state\.news;/, 'a mission picked on the Earth narrows the feed to its posts: the news steps aside');
+  assert.match(render, /var news = \(focus && focus\.filter\) \|\| state\.editorialFeed === "community" \? \[\] : state\.news;/, 'a mission picked on the Earth narrows the feed to its posts: the news steps aside');
   assert.match(render, /news = news\.filter\(function \(n\) \{ return feedMatches\(n, query\); \}\);/, 'search reads the news too');
   assert.match(fnSource(js, 'feedMatches'), /if \(item && item\.news\) return \[item\.title, item\.domain, item\.place\]\.join\(" "\)/);
 });

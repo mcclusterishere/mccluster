@@ -121,7 +121,7 @@ test('ion is asked with the token in a header; the page\'s query never travels; 
   assert.equal(calls[0].headers.origin, ORIGIN);
   assert.equal(calls[0].redirect, 'manual', "workerd throws on redirect: 'error'");
   assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
-  assert.equal(res.headers.get('cache-control'), 'private, max-age=300');
+  assert.equal(res.headers.get('cache-control'), 'private, no-store');
   assert.match(res.headers.get('vary'), /Authorization/);
 });
 
@@ -160,7 +160,7 @@ test('while ion is down a kept answer under 45 minutes old still serves; older t
   const kept = await handleWorldIon(req('/v1/world/ion/v1/assets/2/endpoint'), ENV, { fetchImpl: ion({ throwIt: true }).fetchImpl, cacheImpl: cache, now });
   assert.equal(kept.status, 200);
   assert.deepEqual(await kept.json(), BING);
-  assert.equal(kept.headers.get('cache-control'), 'private, max-age=60');
+  assert.equal(kept.headers.get('cache-control'), 'private, no-store');
   t += 20 * 60 * 1000;
   const gone = await handleWorldIon(req('/v1/world/ion/v1/assets/2/endpoint'), ENV, { fetchImpl: ion({ status: 500 }).fetchImpl, cacheImpl: cache, now });
   assert.equal(gone.status, 502);

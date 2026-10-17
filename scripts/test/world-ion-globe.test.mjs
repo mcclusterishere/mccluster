@@ -11,7 +11,7 @@ const read = (p) => readFile(new URL('../../' + p, import.meta.url), 'utf8');
 test('the page asks the Worker, with a trailing slash, and clears Cesium\'s built-in token', async () => {
   const js = await read('js/action-globe.js');
   assert.match(js, /Cesium\.Ion\.defaultAccessToken=undefined;ionServer=new Cesium\.Resource\(\{url:API\+'\/v1\/world\/ion\/',headers:\{Authorization:bearer\},retryAttempts:1e9,retryCallback:ionRetry\}\);Cesium\.Ion\.defaultServer=ionServer;/);
-  assert.match(js, /fetch\(API\+'\/v1\/world\/ion',\{headers:\{accept:'application\/json'\}\}\)/, 'the status comes first');
+  assert.match(js, /fetch\(API\+'\/v1\/world\/ion',\{headers:\{accept:'application\/json',authorization:ionBearer\(\)\}\}\)/, 'the status comes first');
   assert.doesNotMatch(js, /defaultAccessToken\s*=\s*['"`]/, 'no token is ever written into the page');
   assert.doesNotMatch(js, /eyJhbGciOi/, 'no JWT in the page');
   assert.doesNotMatch(js, /api\.cesium\.com/, 'the page never names ion\'s API');
@@ -68,7 +68,7 @@ test('the review\'s fixes hold: night lights give way, buildings wait for real g
   assert.match(js, /const land=p=>\{if\(landed\)return;landed=true;ionGround=!!\(p&&ion\);/);
   assert.match(js, /if\(!ionBuildingsTried&&ionGround&&auto&&h<BUILD_OFF\*2\)/, 'OSM Buildings only on Cesium World Terrain');
   assert.match(js, /box\.addEventListener\('click',e=>\{if\(!\(e\.target\.closest&&e\.target\.closest\('a\[href\]'\)\)\)viewer\.creditDisplay\.hideLightbox\(\)\}\)/, 'a phone\'s credits panel closes on any tap');
-  assert.match(js, /wireDataLayers\(\);const ionP=ionStatus\(\),dataP=Promise\.all\(\[rpc\('action_globe_public_region_missions'\)(?:\.then\(groupPins\))?,rpc\('action_globe_public_regions'\)\]\);/, 'the layout and the mission data start before the ion status answers');
+  assert.ok(js.includes("wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus())")); assert.ok(js.includes("dataP=Promise.all([rpc('action_globe_public_region_missions')"));
   assert.match(js, /\[missions,cities\]=await dataP;/);
   assert.doesNotMatch(js, /function wireControls\(\)\{const on=\(id,f\)=>\{const b=\$\(id\);if\(b\)b\.onclick=f\};wireDataLayers\(\);/, 'wired once');
 });

@@ -62,11 +62,11 @@ test('the routes are only these three, GET only', async () => {
   assert.equal(LAYERS.flights.public, true); assert.equal(LAYERS.satellites.public, false); assert.equal(LAYERS.launches.public, false);
 });
 
-test('flights are public: trimmed to airborne, positioned aircraft, cached for the window, and attributed', async () => {
+test('flight adapter: trimmed to airborne, positioned aircraft, cached for the window, and attributed', async () => {
   const { fetchImpl, calls } = provider(); const cache = memoryCache();
   const r = await handleWorldLayers(req('/v1/world/layers/flights'), ENV, { fetchImpl, cacheImpl: cache });
   assert.equal(r.status, 200);
-  assert.equal(r.headers.get('cache-control'), 'public, max-age=300');
+  assert.equal(r.headers.get('cache-control'), 'private, no-store');
   assert.equal(r.headers.get('access-control-allow-origin'), 'https://matthew.mccluster.org');
   const body = await r.json();
   assert.equal(body.layer, 'flights'); assert.equal(body.provider, 'adsb_lol', 'without the OpenSky credentials the World asks adsb.lol');

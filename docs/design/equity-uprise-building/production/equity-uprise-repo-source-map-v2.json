@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 368,
+  "candidate_count": 398,
   "capability_source_count": 99,
-  "support_only_count": 269,
+  "support_only_count": 299,
   "entries": [
     {
       "path": ".cursorrules",
@@ -711,6 +711,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Audit of the mission, proof, review, record, feed-share and connection models before and after the three-level Anti-Social mission landed; names the Equity Uprise capability map only to say it has no collaboration entry. Not a building capability."
+    },
+    {
+      "path": "docs/action-network/EDITORIAL-WORLD-REFERENCE-20261016.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Approved Human Uprise globe and social presentation standard; preserves the supplied Equity Uprise artwork and does not define building geometry or program capabilities."
     },
     {
       "path": "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
@@ -3017,6 +3024,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only application schema metadata for the unified owner analytics field directory. Includes existing program relation names but defines no physical building capability or new program authority."
+    },
+    {
+      "path": "packages/release-policy/globe.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared optional-globe release policy, including the existing Halo projection route. Adds no building geometry or program capability."
+    },
+    {
+      "path": "workers/mccluster/test/world-release.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the shared admin-preview and withdrawal boundary around existing globe routes. Adds no building geometry or program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
