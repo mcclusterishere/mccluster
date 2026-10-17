@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p /tmp/control-proof
           git rev-parse HEAD > /tmp/control-proof/source-commit.txt
-          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html js css data/geo assets/img scripts/test scripts/e2e docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
+          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html js css data/geo data/analytics assets/img scripts/test scripts/e2e docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
           tar -czf /tmp/control-proof/cesium-1.131.0.tar.gz -C /tmp/control-qa/node_modules/cesium Build/Cesium
       - name: Exercise the actual Control page
         env:
