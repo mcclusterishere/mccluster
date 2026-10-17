@@ -10,6 +10,9 @@ on:
       - 'scripts/e2e/site-navigation.e2e.mjs'
       - 'js/control-room/workspace*.js'
       - 'js/control-room/analytics*.js'
+      - 'js/control-room/news-context.js'
+      - 'css/control-news-context.css'
+      - 'scripts/e2e/news-context.e2e.mjs'
       - 'css/control-analytics*.css'
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
@@ -56,6 +59,7 @@ jobs:
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
+          node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
