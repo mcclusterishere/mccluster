@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex">
+  <title>Policy workspace · Equity Uprise</title>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/news-policy.css?v=__STAMP__">
+</head>
+<body class="np-page np-workspace-page">
+  <a class="np-skip" href="#workspaceTitle">Skip to policy workspace</a>
+  <div class="np-shell np-shell-wide">
+    <header class="np-topbar"><a class="np-back" href="mnet.html?view=feed" data-np-standalone>← World</a><p class="np-kicker">Equity Uprise / Policy fellowship</p></header>
+    <main>
+      <header class="np-page-heading"><h1 id="workspaceTitle" tabindex="-1">Turn evidence into policy.</h1><p>Bring reporting and global data into a shared research project.</p></header>
+      <p id="workspaceStatus" class="np-status" role="status">Loading your policy projects…</p>
+      <details id="createProjectPanel" class="np-composer" hidden><summary>Create a policy project</summary><form id="createProjectForm" class="np-form"><label for="newProjectTitle">Project title</label><input id="newProjectTitle" maxlength="200" required placeholder="Give the research project a clear name"><p id="createProjectStatus" class="np-status" role="status"></p><button id="createProject" class="np-button np-button-primary" type="submit">Create project</button></form></details>
+      <section id="workspaceGate" class="np-notice" hidden><h2 id="workspaceGateTitle">Your policy projects</h2><p id="workspaceGateText"></p><a id="workspaceSignIn" class="np-button np-button-primary" href="login.html" hidden>Sign in</a></section>
+      <div id="policyWorkspace" hidden>
+        <div class="np-project-picker"><div><label for="projectSelect">Policy project</label><select id="projectSelect"></select></div><button id="refreshProject" class="np-button np-button-quiet" type="button">Refresh project</button></div>
+        <header class="np-project-heading"><div><h2 id="projectTitle"></h2><p id="projectDescription" class="np-small"></p></div><span id="projectRole" class="np-badge"></span></header>
+        <details id="projectMembersPanel" class="np-composer" hidden><summary>Manage project access</summary><div id="projectMemberList" aria-label="Project members"></div><form id="projectMemberForm" class="np-form"><p class="np-small">Add or update an existing M identity in this project.</p><label for="memberIdentity">M identity reference ID</label><input id="memberIdentity" maxlength="36" required autocomplete="off" spellcheck="false"><div class="np-form-grid"><div><label for="memberRole">Project role</label><select id="memberRole"><option value="contributor">Contributor</option><option value="researcher">Researcher</option><option value="reviewer">Reviewer</option><option value="editor">Editor</option><option value="principal-investigator">Principal investigator</option><option value="observer">Observer</option></select></div><div><label for="memberActive">Access</label><select id="memberActive"><option value="true">Active</option><option value="false">Inactive</option></select></div></div><p id="memberStatus" class="np-status" role="status"></p><button id="saveProjectMember" class="np-button" type="submit">Save project access</button></form></details>
+        <div class="np-tabs" role="tablist" aria-label="Project workspace">
+          <button id="evidenceTab" role="tab" aria-selected="true" aria-controls="evidencePanel" tabindex="0" type="button">Evidence <span id="claimCount"></span></button>
+          <button id="sourcesTab" role="tab" aria-selected="false" aria-controls="sourcesPanel" tabindex="-1" type="button">Sources <span id="sourceCount"></span></button>
+          <button id="manuscriptTab" role="tab" aria-selected="false" aria-controls="manuscriptPanel" tabindex="-1" type="button">Manuscript</button>
+        </div>
+
+        <section id="evidencePanel" class="np-tab-panel" role="tabpanel" aria-labelledby="evidenceTab" tabindex="0">
+          <details id="evidenceComposer" class="np-composer" hidden><summary>Add evidence</summary>
+            <form id="projectEvidenceForm" class="np-form">
+              <div class="np-form-grid"><div><label for="evidenceKind">Source type</label><select id="evidenceKind"><option value="article">News article</option><option value="intel">Global data</option></select></div><div><label for="evidenceSourceId" id="evidenceSourceLabel">Article reference ID</label><input id="evidenceSourceId" autocomplete="off" spellcheck="false" maxlength="36" required aria-describedby="evidenceSourceHelp"></div></div>
+              <p id="evidenceSourceHelp" class="np-small">Use an existing article reference, or choose “Use as evidence” while reading a report.</p>
+              <label for="evidenceClaim">What claim does this source inform?</label><textarea id="evidenceClaim" rows="3" maxlength="4000" required placeholder="Write one specific claim to test against this source."></textarea>
+              <div class="np-form-grid"><div><label for="evidenceClaimType">Claim type</label><select id="evidenceClaimType"><option value="factual">Observation</option><option value="analytic">Analysis</option><option value="recommendation">Recommendation</option><option value="definition">Definition</option><option value="estimate">Estimate</option></select></div><div><label for="evidenceRelation">This source</label><select id="evidenceRelation"><option value="supports">Supports the claim</option><option value="contradicts">Contradicts the claim</option><option value="context">Provides context</option><option value="method">Informs the method</option></select></div></div>
+              <label for="evidenceLocator">Where in the source? <span class="np-optional">Optional</span></label><input id="evidenceLocator" maxlength="500" placeholder="Section, paragraph, table, or time reference">
+              <label for="evidenceNote">Your research note <span class="np-optional">Optional</span></label><textarea id="evidenceNote" rows="3" maxlength="3000" placeholder="Explain what the source establishes and what needs checking."></textarea>
+              <p id="evidenceStatus" class="np-status" role="status"></p><button id="saveEvidence" class="np-button np-button-primary" type="submit">Add to project</button>
+            </form>
+          </details>
+          <div class="np-section-heading"><h3>Claims and evidence</h3><p class="np-small">Source references stay attached through review.</p></div>
+          <div id="claimsList" class="np-records"></div>
+        </section>
+
+        <section id="sourcesPanel" class="np-tab-panel" role="tabpanel" aria-labelledby="sourcesTab" tabindex="0" hidden><div class="np-section-heading"><h3>Project sources</h3><p class="np-small">Reporting, global observations, and their origins.</p></div><div id="sourcesList" class="np-records"></div></section>
+
+        <section id="manuscriptPanel" class="np-tab-panel" role="tabpanel" aria-labelledby="manuscriptTab" tabindex="0" hidden>
+          <div class="np-section-heading"><div><h3>Policy manuscript</h3><p id="memoVersion" class="np-small"></p></div><span id="memoState" class="np-badge"></span></div>
+          <form id="memoForm" class="np-form">
+            <label for="memoTitle">Title</label><input id="memoTitle" maxlength="200" required>
+            <label for="memoBody">Manuscript</label><textarea id="memoBody" class="np-manuscript" rows="14" maxlength="40000" required placeholder="Frame the problem, connect your evidence, and describe the proposed policy and its tradeoffs." aria-describedby="memoStatus"></textarea>
+            <p id="memoStatus" class="np-status" role="status"></p>
+            <div id="memoActions" class="np-actions"><button id="saveMemo" class="np-button np-button-primary" type="submit" value="draft">Save draft</button><button id="submitMemo" class="np-button" type="submit" value="review">Submit for review</button></div>
+          </form>
+          <section id="memoConflict" class="np-notice np-conflict" aria-labelledby="memoConflictTitle" hidden><h3 id="memoConflictTitle">A newer revision is available</h3><p>Your text is still in the editor. Review the latest saved version before continuing.</p><button id="loadMemoComparison" class="np-button" type="button">Review latest version</button><div id="memoComparison" hidden><h4 id="latestMemoTitle"></h4><p id="latestMemoVersion" class="np-small"></p><pre id="latestMemoBody" class="np-latest-text"></pre><div class="np-actions"><button id="useLatestMemo" class="np-button" type="button">Load latest into editor</button><button id="keepLocalMemo" class="np-button np-button-primary" type="button">Keep my text for the next revision</button></div><p class="np-small">Keeping your text does not save it. Review your edits, then save a new revision.</p></div></section>
+          <details id="memoRecovery" class="np-source-details" hidden><summary>Previous local draft</summary><h4 id="recoveryMemoTitle"></h4><pre id="recoveryMemoBody" class="np-latest-text"></pre><button id="restoreRecoveryMemo" class="np-button" type="button">Restore this draft into the editor</button></details>
+        </section>
+      </div>
+    </main>
+    <noscript><p class="np-notice">JavaScript is needed to load your policy projects.</p></noscript>
+  </div>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/news-policy-client.js?v=__STAMP__"></script>
+  <script src="js/policy-workspace.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
