@@ -10,7 +10,9 @@ import { preflightResponse } from '../../workers/mccluster/src/preflight.js';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out', 'cohort-claim');
-const { chromium } = createRequire(import.meta.url)('playwright');
+let chromium;
+try { ({ chromium } = createRequire(import.meta.url)('playwright')); }
+catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 const INVITE = 'abcdef12'.repeat(8); // Synthetic test token, never submitted outside fixtures.
 const USER = { id: '11111111-1111-4111-8111-111111111111', email: 'cohort-fixture@example.invalid' };
 const MUID = '22222222-2222-4222-8222-222222222222';
