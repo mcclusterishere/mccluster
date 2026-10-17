@@ -33,6 +33,9 @@
    "true". With the flag off the scheduled hook returns before any network or
    database call, so deploying this code starts no writes. */
 
+import { persistAdapterResult, entitlementRows } from '../seek-first/store.js';
+import { effectiveEntitlement, assertConsumable, LANES } from '../seek-first/entitlements.js';
+import { sourceByKey } from '../seek-first/source-registry.js';
 import { IntelError, configured, resolveHouseOrg, rpc } from './store.js';
 
 export const USGS_CONNECTOR_KEY = 'usgs.earthquakes';
@@ -139,8 +142,9 @@ export async function normalizeFeature(feature, retrievedAt) {
   const id = typeof feature?.id === 'string' ? feature.id.trim() : '';
   const p = feature?.properties || {};
   const time = finite(p.time);
-  if (!id || time === null) return null;
-  const updated = finite(p.updated) ?? time;
+  if (!id || time === null || !Number.isFinite(new Date(time).getTime())) return null;
+  const candidateUpdated = finite(p.updated) ?? time;
+  const updated = Number.isFinite(new Date(candidateUpdated).getTime()) ? candidateUpdated : time;
   const coords = Array.isArray(feature?.geometry?.coordinates) ? feature.geometry.coordinates : [];
   const lon = finite(coords[0]);
   const lat = finite(coords[1]);
@@ -220,6 +224,25 @@ export async function runUsgsCollector(env, { now = new Date(), fetchImpl = fetc
   const cursor = newest ? { last_observed_at: newest } : (begin.cursor || {});
 
   try {
+    // Archive first: if it fails the evidence cursor does not advance; the
+    // next attempt safely replays idempotent spatial upserts.
+    let archive = null;
+    if (env.INTEL_USGS_SPATIAL_ARCHIVE_ENABLED === 'true') {
+      const source = sourceByKey('usgs');
+      const grants = await entitlementRows(env, org.id, 'usgs', { strict: true });
+      const entitlement = assertConsumable(effectiveEntitlement(source, grants.get('usgs')), LANES.INTERNAL);
+      archive = await persistAdapterResult(env, org.id, {
+        source: 'usgs', persistence: source.persistence, attribution: source.attribution,
+        fetched_at: retrievedAt, source_url: url.toString(),
+        records: records.filter(r => r.external_id).map(r => ({
+          kind: 'event', external_id: r.external_id, event_type: 'earthquake', name: r.title,
+          point: r.lat !== undefined && r.lon !== undefined ? { lat: r.lat, lon: r.lon } : null,
+          severity: r.measures.magnitude, observed_at: r.observed_at, source_url: r.source_url,
+          properties: { ...r.measures, source_ref: r.source_ref }
+        }))
+      }, { operation: 'scheduled_usgs', requestFingerprint: runId, entitlement });
+      if (!archive.persisted) throw new Error(archive.reason);
+    }
     const committed = await rpc(env, 'intel_collector_commit', {
       p_org: org.id,
       p_run: runId,
@@ -227,7 +250,7 @@ export async function runUsgsCollector(env, { now = new Date(), fetchImpl = fetc
       p_cursor: cursor,
       p_metadata: { query_url: url.toString(), provider_status: page.provider_status, page_full: page.features.length >= PAGE_LIMIT }
     });
-    return { ran: true, ...committed };
+    return { ran: true, ...committed, archive };
   } catch (error) {
     if (error instanceof IntelError && error.code === 'intel_schema_not_ready') throw error;
     return fail('commit_failed', { message: String(error?.message || error).slice(0, 300) });

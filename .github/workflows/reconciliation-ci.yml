@@ -209,6 +209,8 @@ jobs:
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_join_authorization.behaviour.sql
       - name: Exercise withdrawn member rejoin with mission at capacity
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/action_globe_rejoin_capacity.integration.sql
+      - name: Verify ingestion leases, unknown measurements and private spatial storage
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/analytics_ingestion_pipeline.behaviour.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
