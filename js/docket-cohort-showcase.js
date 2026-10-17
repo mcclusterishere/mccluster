@@ -16,7 +16,22 @@
   function participantUrl(slug){var p=current&&current.participants.find(function(x){return x.slug===slug;});return p&&p.provider_page===null?profileUrl(p):pageUrl(slug);}
   function bodyOf(data){return data&&data.archive||data&&data.data||data;}
   function valid(data){return data&&data.project&&Array.isArray(data.participants)&&Array.isArray(data.works)&&data.project.slug===PROJECT;}
-  async function fetchJson(url,timeout){var c=new AbortController(),t=setTimeout(function(){c.abort();},timeout);try{var r=await fetch(url,{signal:c.signal,headers:{accept:'application/json'}});if(!r.ok)throw Object.assign(Error('Archive is unavailable'),{status:r.status});var data;try{data=await r.json();}catch(_){throw Object.assign(Error('Archive is unavailable'),{status:r.status});}return bodyOf(data);}finally{clearTimeout(t);}}
+  async function fetchJson(url,timeout){
+    var c=new AbortController(),t=setTimeout(function(){c.abort();},timeout);
+    try{
+      var r=await fetch(url,{signal:c.signal,headers:{accept:'application/json'}});
+      if(!r.ok)throw Object.assign(Error('Archive is unavailable'),{status:r.status});
+      var data;
+      try{data=await r.json();}
+      catch(e){
+        // Headers may arrive before an aborted or interrupted body read. Keep
+        // those transport errors transient; malformed JSON remains authoritative.
+        if(e&&(e.name==='AbortError'||e.name==='TypeError'))throw e;
+        throw Object.assign(Error('Archive is unavailable'),{status:r.status});
+      }
+      return bodyOf(data);
+    }finally{clearTimeout(t);}
+  }
   function load(){
     if(!promise)promise=(async function(){
       var data;try{data=await fetchJson(API+PROJECT,5000);if(!valid(data))throw Object.assign(Error('Invalid archive'),{status:200});}

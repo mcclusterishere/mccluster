@@ -19,8 +19,8 @@ const BASE=`http://127.0.0.1:${server.address().port}`,results=[];
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
 const user={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',m_uid:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',mccluster_id:'fixture.owner',display_name:'Fixture owner'};
 function check(name,ok,detail){results.push({name,ok:!!ok,...(detail?{detail}:{})});}
-async function scenario({member=false,owner='ocho-great',fallback=false,apiStatus=200,networkFailure=false,unpublished=[],missingEvent=false,manualGlobeReady=false,archiveDelay=0}={}){
- const data=structuredClone(archive),world={saves:[],claims:[],meReads:0,staticReads:0},errors=[];
+async function scenario({member=false,owner='ocho-great',fallback=false,apiStatus=200,networkFailure=false,bodyReadFailure=null,invalidJson=false,malformedPayload=false,unpublished=[],missingEvent=false,manualGlobeReady=false,archiveDelay=0}={}){
+ const data=structuredClone(archive),world={saves:[],claims:[],meReads:0,archiveReads:0,staticReads:0},errors=[];
  data.participants.forEach(p=>{p.claim_status=p.slug===owner?'claimed':'unclaimed';p.owner_m_uid=p.slug===owner?user.m_uid:null;p.provider_page=unpublished.includes(p.slug)?null:{title:p.display_name,headline:p.slug===owner?'An original headline':'',bio:p.slug===owner?'An original biography.':'',website_url:p.slug===owner?'https://example.invalid/original':'',publication_grant:'past_cohort'};});
  if(missingEvent)data.event=null;
  const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});
@@ -28,6 +28,22 @@ async function scenario({member=false,owner='ocho-great',fallback=false,apiStatu
   localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));localStorage.setItem('mnet_tour_seen','1');
   if(member){const t='x.'+btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600,sub:user.id}))+'.y';localStorage.setItem('mccdb_session',JSON.stringify({access_token:t,refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600}));}
  },{member,user});
+ if(bodyReadFailure)await ctx.addInitScript(({name,path})=>{
+  const realFetch=window.fetch;
+  window.__archiveBodyFailures=[];
+  window.fetch=async function(input,init){
+   const response=await realFetch(input,init);
+   if(new URL(typeof input==='string'?input:input.url,location.href).pathname!==path)return response;
+   const record={status:response.status,name:null,aborted:false};window.__archiveBodyFailures.push(record);
+   // A real Response body fails after successful headers. AbortError waits for
+   // the loader's own deadline; TypeError models an interrupted response stream.
+   const body=new ReadableStream({start(controller){
+    const fail=()=>{const error=name==='AbortError'?init.signal.reason:new TypeError('Fixture response stream interrupted');record.name=error.name;record.aborted=init.signal.aborted;controller.error(error);};
+    if(name==='AbortError'&&!init.signal.aborted)init.signal.addEventListener('abort',fail,{once:true});else fail();
+   }});
+   return new Response(body,{status:response.status,headers:response.headers});
+  };
+ },{name:bodyReadFailure,path:'/v1/action-archive/'+archive.project.slug});
  await ctx.route('**/*',async route=>{
   const req=route.request(),u=new URL(req.url());
   const headers={'access-control-allow-origin':BASE,'access-control-allow-credentials':'true','access-control-allow-headers':'authorization,apikey,content-type,prefer','access-control-allow-methods':'GET,POST,PATCH,DELETE'};
@@ -39,7 +55,12 @@ async function scenario({member=false,owner='ocho-great',fallback=false,apiStatu
   }
   if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
   if(u.hostname==='api.mccluster.org'){
-   if(u.pathname==='/v1/action-archive/'+archive.project.slug){if(networkFailure)return route.abort();if(archiveDelay)await new Promise(r=>setTimeout(r,archiveDelay));const status=fallback?503:apiStatus;return json(status===200?data:{error:'fixture unavailable'},status);}
+   if(u.pathname==='/v1/action-archive/'+archive.project.slug){
+    world.archiveReads++;if(networkFailure)return route.abort();if(archiveDelay)await new Promise(r=>setTimeout(r,archiveDelay));const status=fallback?503:apiStatus;
+    if(status!==200)return json({error:'fixture unavailable'},status);
+    if(invalidJson)return route.fulfill({status:200,headers,contentType:'application/json',body:'{"project":'});
+    return json(malformedPayload?{project:data.project,participants:data.participants,works:null}:data);
+   }
    if(u.pathname==='/v1/action-archive/me'){world.meReads++;return json({participant:data.participants.find(p=>p.slug===owner)||null});}
    if(u.pathname.startsWith('/v1/action-archive/pages/')){
     const body=req.postDataJSON();world.saves.push({method:req.method(),path:u.pathname,contentType:req.headers()['content-type'],body});
@@ -75,6 +96,7 @@ try{
  await mkdir(OUT,{recursive:true});
  {
   const s=await make();await archivePage(s);
+  check('successful public archive loads directly without static substitution',s.world.archiveReads===1&&s.world.staticReads===0);
   check('project has exactly nine song panels and ten people',await s.page.locator('.dc-work').count()===9&&await s.page.locator('.dc-person').count()===10);
   check('two Environmental Injustice recordings stay in one mission',await s.page.locator('#docket-516r-environmental-injustice audio').count()===2);
   const players=await s.page.locator('audio,video').evaluateAll(nodes=>nodes.map(n=>({tag:n.tagName,src:n.src})));
@@ -116,6 +138,16 @@ try{
  }
  {
   const s=await make({networkFailure:true});await archivePage(s);check('transient network failure can use the approved static archive',s.world.staticReads===1&&await s.page.locator('.dc-work').count()===9);await close(s);
+ }
+ for(const name of ['AbortError','TypeError']){
+  const s=await make({bodyReadFailure:name});await archivePage(s);
+  const reads=await s.page.evaluate(()=>window.__archiveBodyFailures);
+  check(name+' after HTTP 200 uses the approved static archive',s.world.archiveReads===1&&s.world.staticReads===1&&await s.page.locator('.dc-work').count()===9&&reads.length===1&&reads[0].status===200&&reads[0].name===name&&(name!=='AbortError'||reads[0].aborted),reads);
+  check(name+' fallback does not create browser errors',s.errors.length===0,s.errors);await close(s);
+ }
+ for(const invalid of ['invalidJson','malformedPayload']){
+  const s=await make({[invalid]:true});await s.page.goto(BASE+'/docket-516r-cohort.html');await s.page.getByText('The archive could not load right now.',{exact:true}).waitFor();
+  check(invalid+' in HTTP 200 is not silently replaced by the static archive',s.world.archiveReads===1&&s.world.staticReads===0&&await s.page.locator('.dc-work,.dc-person').count()===0);await close(s);
  }
  {
   const s=await make({member:true,unpublished:['ocho-great']});await archivePage(s);
