@@ -67,3 +67,12 @@ real navigation destinations, mission selection, search and feed filters.
 admin navigation. The Human Uprise responsive workflow preserves screenshots
 and reports. These are browser emulations; physical-device Safari remains a
 release smoke check.
+
+## Natural Earth — owner clarification, October 17, 2026
+
+Keep the graphite interface, but render the public Earth in vibrant natural
+color: NASA Blue Marble oceans and land, soft white cloud cover and a blue
+atmospheric rim. This supersedes the grayscale globe in the supplied reference.
+Preserve the quiet borders, mission pins, fixed globe and independently scrolling
+feed. Clouds are a static NASA composite, not live weather. Internal intelligence
+layers remain restricted; this visual change grants no additional data access.
