@@ -26,8 +26,8 @@ test('unsupported queued jobs are quarantined instead of silently living forever
     }
     if ((init.method || 'GET') === 'GET') {
       return new Response(JSON.stringify([
-        { id: 'legacy-1', job_type: 'legacy_job', created_at: '2026-09-01T00:00:00Z' },
-        { id: 'known-1', job_type: 'lead_rescore', created_at: '2026-09-01T00:00:00Z' },
+        { id: 'legacy-1', org_id: '123e4567-e89b-42d3-a456-426614174000', job_type: 'legacy_job', created_at: '2026-09-01T00:00:00Z' },
+        { id: 'known-1', org_id: '123e4567-e89b-42d3-a456-426614174000', job_type: 'lead_rescore', created_at: '2026-09-01T00:00:00Z' },
       ]), { status: 200, headers: { 'content-type': 'application/json' } });
     }
     const patch = JSON.parse(init.body);
