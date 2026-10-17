@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { preflightResponse } from '../../workers/mccluster/src/preflight.js';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out', 'cohort-claim');
@@ -52,7 +53,18 @@ async function scenario({ member = false, expired = false, errorCode = null, mal
     }
     const headers = { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'authorization,apikey,content-type,prefer', 'access-control-allow-methods': 'GET,POST,OPTIONS,PATCH,DELETE' };
     const json = (body, status = 200) => route.fulfill({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
-    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (req.method() === 'OPTIONS') {
+      if (url.hostname === 'api.mccluster.org' && url.pathname.startsWith('/v1/action-archive/')) {
+        // Exercise the actual Worker preflight contract. A missing prefix must
+        // fail this browser journey instead of a test-fixture-forged 204.
+        const result = preflightResponse(new Request(req.url(), {
+          method: 'OPTIONS', headers: req.headers()
+        }), { ALLOWED_ORIGINS: BASE });
+        if (!result) return route.fulfill({ status: 405, headers });
+        return route.fulfill({ status: result.status, headers: Object.fromEntries(result.headers) });
+      }
+      return route.fulfill({ status: 204, headers });
+    }
     if (url.hostname === 'api.mccluster.org') {
       if (url.pathname === '/v1/action-archive/invitation') {
         state.previews.push(req.postDataJSON());
