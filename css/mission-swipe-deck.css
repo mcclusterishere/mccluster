@@ -1,0 +1,52 @@
+/* A mission at a time, inside the persistent World's scrolling content. */
+.mn-swipe { width:100%; min-width:0; padding-block:4px 14px; color:#f2f1ed; }
+/* Scroll targets stop above the shared floating navigation. Existing feed
+   bottom padding still lets the final action row reach this visible area. */
+.mn-world-on[data-world-mode="missions"] #mnWorldFeed { scroll-padding-block:16px calc(var(--mn-bar-clear,96px) + 16px); }
+.mn-swipe [hidden] { display:none!important; }
+.mn-swipe__filters { display:flex; gap:5px; overflow-x:auto; scrollbar-width:thin; padding-bottom:5px; }
+.mn-swipe button { font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.mn-swipe button:disabled { opacity:.45; cursor:default; }
+.mn-swipe button:focus-visible,.mn-swipe__card:focus-visible { outline:2px solid #f4eee3; outline-offset:3px; }
+.mn-swipe__filters button { flex:0 0 auto; min-height:44px; padding:8px 13px; border:1px solid transparent; border-radius:30px; background:transparent; color:#b8b6b3; font-size:14px; }
+.mn-swipe__filters button[aria-pressed="true"] { background:#f1eee6; color:#151618; border-color:#f1eee6; }
+.mn-swipe__top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.mn-swipe__count { margin:7px 0; font-size:12px; color:#a9a7a2; }
+.mn-swipe__undo { min-height:44px; padding:8px 2px 8px 12px; border:0; background:transparent; color:#ddd8cd; font-size:13px!important; text-decoration:underline; text-underline-offset:3px; }
+.mn-swipe__hint { margin:0 0 4px; font-size:12px; color:#a9a7a2; }
+.mn-swipe__stage { overflow:hidden; padding:10px 4px 15px; min-width:0; }
+.mn-swipe__card { position:relative; display:flex; flex-direction:column; gap:0; min-width:0; padding:24px 20px 18px; border:1px solid #49413d; border-radius:22px; background:linear-gradient(155deg,#29211f 0%,#17191b 60%,#141618 100%); box-shadow:0 8px 0 -3px #252527,0 14px 0 -7px #3b3737; touch-action:pan-y pinch-zoom; transform-origin:50% 90%; transition:transform .18s ease-out; overflow-wrap:anywhere; }
+.mn-swipe__card[data-category="create"] { background:linear-gradient(150deg,#362627,#1b1a20 58%,#16171a); }
+.mn-swipe__card[data-category="help"] { background:linear-gradient(150deg,#263330,#1c2122 58%,#161a1c); }
+.mn-swipe__card[data-category="explore"] { background:linear-gradient(150deg,#25313a,#1a1d24 58%,#16191d); }
+.mn-swipe__card[data-category="earn"] { background:linear-gradient(150deg,#393125,#252019 58%,#1a1816); }
+.mn-swipe__card.is-dragging { transition:none; user-select:none; }
+.mn-swipe__category { margin:0 0 15px; color:#d2c2ae; font-size:11px; font-weight:650; letter-spacing:.14em; text-transform:uppercase; }
+.mn-swipe__card h3 { margin:0; color:#faf4e8; font-family:var(--mn-serif,Georgia,serif); font-size:clamp(27px,7.4vw,36px); font-weight:450; line-height:1.12; letter-spacing:-.035em; }
+.mn-swipe__description { margin:16px 0 0; color:#e1ddd5; font-size:15px; line-height:1.55; }
+.mn-swipe__description p { margin:0 0 10px; }
+.mn-swipe__review { margin:5px 0; font-size:12px; line-height:1.5; color:#b8b7b2; }
+.mn-swipe__tools { display:flex; justify-content:flex-start; margin-top:3px; }
+.mn-swipe__details { min-height:44px; max-width:100%; padding:10px 0; border:0; background:transparent; color:#ece4d5; font-size:13px!important; text-decoration:underline; text-underline-offset:4px; }
+.mn-swipe__actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; scroll-margin-block:16px; }
+.mn-swipe__actions button { min-height:48px; padding:11px 12px; border-radius:100px; font-size:15px; font-weight:650; scroll-margin-block:16px; }
+.mn-swipe__pass { background:#ffffff08; color:#ebe5df; border:1px solid #ffffff38; }
+.mn-swipe__accept { background:#eee6d5; color:#181916; border:1px solid #eee6d5; }
+.mn-swipe__stamps { position:absolute; inset:16px 15px auto; pointer-events:none; }
+.mn-swipe__stamp { position:absolute; padding:6px 10px; border:2px solid currentColor; border-radius:7px; opacity:0; font-size:18px; font-weight:800; letter-spacing:.12em; background:#141719ec; }
+.mn-swipe__stamp--pass { right:0; color:#ffaaa4; transform:rotate(10deg); }
+.mn-swipe__stamp--accept { left:0; color:#a6e1bf; transform:rotate(-10deg); }
+[data-direction="pass"] .mn-swipe__stamp--pass,[data-direction="accept"] .mn-swipe__stamp--accept { opacity:1; }
+.mn-swipe__status { min-height:1.5em; margin:7px 4px 0; color:#c9c6bd; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.mn-swipe__status.is-error { color:#ffbab5; }
+.mn-swipe__empty { padding:26px 20px; border:1px solid #343435; border-radius:20px; background:#18191b; color:#c8c5bf; }
+.mn-swipe__empty h3 { margin:0 0 10px; font-size:20px; color:#f0eade; }
+.mn-swipe__empty p { margin:0 0 10px; font-size:14px; line-height:1.5; }
+@media (min-width:600px) {
+  .mn-swipe { max-width:550px; margin-inline:auto; }
+  .mn-swipe__card { padding:30px 28px 22px; }
+  .mn-swipe__description { font-size:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .mn-swipe__card { transition:none; }
+}
