@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+/**
+ * Real PostgreSQL behavior in a throwaway PGlite database. Never connects to
+ * Supabase, reads project credentials, or writes a production migration ledger.
+ * Install @electric-sql/pglite in a scratch directory and set PGLITE_MODULE to
+ * its package directory, or make the pinned dependency available through normal
+ * Node resolution. Nothing is installed into the repository by this harness.
+ */
+import { readFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+const packageRoot = process.env.PGLITE_MODULE;
+const moduleUrl = packageRoot ? pathToFileURL(resolve(packageRoot, 'dist/index.js')).href : require.resolve('@electric-sql/pglite');
+const extensionUrl = packageRoot ? pathToFileURL(resolve(packageRoot, 'dist/contrib/pgcrypto.js')).href : require.resolve('@electric-sql/pglite/contrib/pgcrypto');
+const { PGlite } = await import(moduleUrl);
+const { pgcrypto } = await import(extensionUrl);
+const db = new PGlite({ extensions: { pgcrypto } });
+const sql = path => readFile(resolve(root, path), 'utf8');
+async function apply(label, text) {
+  try { await db.exec(text); process.stdout.write(`applied ${label}\n`); }
+  catch (error) {
+    process.stderr.write(`${label}: ${error.code || ''} ${error.message}\n${error.where || ''}\n`);
+    throw error;
+  }
+}
+try {
+  await apply('unrelated dependency stubs', await sql('supabase/tests/news_policy_deps.stub.sql'));
+  await apply('actual canonical eu policy graph', await sql('supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql'));
+  await apply('actual media namespace', await sql('supabase/migrations/20261014023548_media_news_namespace.sql'));
+  await apply('actual GKG ingestion and pruning', await sql('supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql'));
+  const intel = await sql('supabase/migrations/20261017030617_intel_mission_canon_v1.sql');
+  const start = intel.indexOf('create or replace function public.intel_is_org_admin');
+  const stop = intel.indexOf('create table public.intel_claims');
+  if (start < 0 || stop <= start) throw new Error('Canonical intel table boundaries moved; update the harness deliberately.');
+  await apply('actual intel identity, outcome and evidence DDL', intel.slice(start, stop));
+  await apply('canonical intel RLS boundary', `
+    alter table public.intel_evidence enable row level security;
+    revoke all on public.intel_evidence from public,anon,authenticated;
+    grant select on public.intel_evidence to authenticated;
+    create policy intel_evidence_org_admin_read on public.intel_evidence for select to authenticated
+      using ((select public.intel_is_org_admin(org_id)));
+  `);
+  await apply('pre-migration fixtures', await sql('supabase/tests/news_policy_seed.stub.sql'));
+  await apply('pending news policy migration', await sql('supabase/pending/news_policy_workspace_v1.sql'));
+  await apply('behavior assertions as real API roles', await sql('supabase/tests/news_policy_workspace.behaviour.sql'));
+  const { rows } = await db.query('select label from news_policy_test.passed order by ordinal');
+  for (const row of rows) process.stdout.write(`ok ${row.label}\n`);
+  process.stdout.write(`news policy database: ${rows.length} behavioral assertions passed\n`);
+} finally { await db.close(); }
