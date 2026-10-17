@@ -1,5 +1,13 @@
 # Human Uprise: approved World and social interface
 
+**October 17 owner correction:** the logged-out World is travel first. Its
+controlling visual reference and default-content direction are now
+[`../travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md`](../travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md).
+That standard supersedes this document's mission/community-first public entry
+and its conflicting visual details. Existing social behavior, shared navigation
+and the internal-intelligence boundary below still apply. The older implementation
+and verification notes below describe what shipped, not completion of the travel UI.
+
 The owner's October 16–17 reference images supersede the old fixed-height
 45/15/35 composition in WORLD-SCREEN-UX-HANDOFF-20261014.md. This is the new
 visual standard for the public-facing World and social feed.
@@ -53,7 +61,8 @@ retain internal access under the existing privacy and authorization checks.
 The policy's `admin_preview` name is retained for wire compatibility; it means
 internal operator access, not an announced public release. General modular
 feature publishing must not make these intelligence feeds customer products.
-The user-facing World remains focused on curated missions and the community.
+The user-facing World leads with public travel, alongside curated missions and
+the community, under the October 17 travel-first standard.
 This boundary does not claim that every provider or learning pipeline is built.
 
 ## Verification
