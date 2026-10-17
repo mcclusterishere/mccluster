@@ -236,11 +236,10 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
-        <!-- Approved graphite reference: a scrolling phone stack and an iPad
+        <!-- Approved graphite reference: a persistent globe, scrolling feed and an iPad
              landscape split. Only a visitor's selection opens mission context.
              The shared navigation and supplied artwork remain authoritative. -->
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
-          <div class="hu-world-heading"><h1>World</h1><p>Discover meaningful work.</p></div>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
@@ -265,6 +264,7 @@
             </div>
           </details>
         </section>
+        <div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed" tabindex="0">
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
                what a guest sees first, and what anyone sees with no mission
@@ -291,7 +291,6 @@
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-        <div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">
           <div class="hu-feed-tabs" role="group" aria-label="Feed content">
             <button type="button" data-hu-feed="all" aria-pressed="true">For you</button>
             <button type="button" data-hu-feed="community" aria-pressed="false">Community</button>

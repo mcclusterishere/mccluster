@@ -7,9 +7,11 @@ visual standard for the public-facing World and social feed.
 - Graphite background, restrained crimson accents, light system typography,
   thin separators and open spacing. No starfield, country flags, continent
   labels, decorative ruler, glowing card borders or raised feed cards.
-- iPhone: a naturally scrolling globe, mission preview and community feed.
-  iPad portrait uses the same stack with more space. From 1000px, use a
-  landscape globe/feed split with independent feed scrolling.
+- October 17 refinement: remove the redundant “World / Discover meaningful work”
+  heading and give that space to the globe. Keep the globe visible while the
+  mission/community panel scrolls independently. Portrait uses a fixed stack;
+  wide screens and landscape phones use a side-by-side split. Mission context
+  lives inside the scrolling panel, and the real bottom navigation remains accessible.
 - Show the published mission records. A visitor explicitly selects one to
   open its context; do not automatically select the newest mission.
 - Compact mission/region disclosure, accessible search, full globe expansion,

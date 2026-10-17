@@ -80,7 +80,7 @@ test('a news card is the World card keyed data-news-id: words only, out to the p
     const n = clean({ id: 'd', title: 't', url: 'https://p.example/', lat, lon });
     assert.ok(n && n.lat === null && n.lon === null, `${lat},${lon} carries no place on the Earth`);
   }
-  assert.match(html, /<div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">/);
+  assert.match(html, /<div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed" tabindex="0">/);
   assert.match(html, /Sign in to share an update and connect\./, 'the guest card explains the sign-in action');
   const news = css.slice(css.indexOf('WORLD NEWS IN THE FEED'), css.indexOf('THE SCREEN IS THE WHOLE SCREEN'));
   assert.match(news, /\.mn__news-meta > \.mn__news-domain \{[^}]*overflow: hidden; text-overflow: ellipsis;/, 'a long publisher name truncates');

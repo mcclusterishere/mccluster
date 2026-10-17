@@ -15,15 +15,14 @@ test('Human Uprise World tab puts the globe over the live feed',()=>{
  assert.doesNotMatch(read('css/mnet.css'),/\.mn__legacy-feed/);
 });
 
-test("World screen follows the owner's contract: 45-50% globe, ~15% context, 30-35% feed that scrolls on its own",()=>{
- const html=read('mnet.html'), css=read('css/mnet.css'), js=read('js/mnet.js');
- assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldContext"[\s\S]*?id="mnWorldFeed"/);
- assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 49 1 0;/);
- assert.match(css,/\.mn-world-fit \.mn__world-context \{ flex: none; min-height: clamp\(92px, 14dvh, 150px\); \}/);
- assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
- assert.match(css,/html\.mn-world-fit, html\.mn-world-fit body \{ overflow: hidden;/,'only the feed scrolls, so the globe never leaves the screen');
+test("World keeps the globe visible while its mission and community panel scrolls",()=>{
+ const html=read('mnet.html'), css=read('css/human-uprise-editorial.css'), js=read('js/mnet.js');
+ assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldFeed"[\s\S]*?id="mnWorldContext"/);
+ assert.doesNotMatch(html,/hu-world-heading|Discover meaningful work/);
+ assert.match(css,/grid-template-rows:minmax\(0,\.48fr\) minmax\(0,\.52fr\)/);
+ assert.match(css,/\.mn__world-feed \{[^}]*min-height:0;overflow-y:auto;overscroll-behavior:contain/);
+ assert.match(css,/html\.hu-editorial\.mn-world-on[^}]*overflow:hidden/);
  assert.match(js,/function sizeWorld\(\)/);
- assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200/,'short screens fall back to a stacked, scrolling page instead of hiding content');
  /* a post shows its mission on the Earth without narrowing the feed being read */
  assert.match(js,/filter: !fromFeed/);
  /* one World for everyone: the Globe column and the standalone route both land on it */
