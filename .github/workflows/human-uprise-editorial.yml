@@ -7,6 +7,13 @@ on:
       - 'action-globe.html'
       - 'css/human-uprise-editorial.css'
       - 'css/globe-editorial.css'
+      - 'css/world-travel.css'
+      - 'js/travel/**'
+      - 'data/travel/**'
+      - 'js/analytics.js'
+      - 'supabase/migrations/*travel_journeys*'
+      - 'supabase/tests/travel_journeys.behaviour.sql'
+      - 'scripts/test/travel-journeys-db.mjs'
       - 'js/mnet.js'
       - 'js/action-globe.js'
       - 'js/world-countries.js'
@@ -21,7 +28,7 @@ concurrency:
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -31,14 +38,17 @@ jobs:
           node-version: '22'
       - name: Prepare browser dependencies outside the repository
         run: |
-          npm install --prefix /tmp/hu-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0
+          npm install --prefix /tmp/hu-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0 @electric-sql/pglite@0.3.14
           /tmp/hu-qa/node_modules/.bin/playwright install --with-deps chromium
       - name: Check phone, tablet, desktop and shared navigation
         env:
           PLAYWRIGHT_DIR: /tmp/hu-qa/node_modules
           CESIUM_DIR: /tmp/hu-qa/node_modules/cesium/Build/Cesium
+          PGLITE_DIR: /tmp/hu-qa/node_modules
         run: |
+          node scripts/test/travel-journeys-db.mjs
           E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world
+          E2E_ONLY=travel node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel
           node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
