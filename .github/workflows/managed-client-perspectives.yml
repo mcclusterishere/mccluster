@@ -1,0 +1,33 @@
+name: Managed client front doors
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'partners/faith-and-results.html'
+      - 'partners/shiloh-church-gpt.html'
+      - 'css/managed-client.css'
+      - 'js/managed-client-perspective.js'
+      - 'js/site-navigation.js'
+      - 'scripts/test/managed-client-perspective.test.mjs'
+      - '.github/workflows/managed-client-perspectives.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: managed-clients-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate client front doors and server-trust boundaries
+        run: |
+          node --check js/managed-client-perspective.js
+          node --test scripts/test/managed-client-perspective.test.mjs
