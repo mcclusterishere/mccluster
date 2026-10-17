@@ -58,3 +58,41 @@ test('a range refresh clears the previous country series before slow reads retur
   assert.equal(s.loading,true);assert.equal(s.country,null);
   const out=A.render();assert.match(out,/country trend unavailable/);assert.doesNotMatch(out,/Page views over time, United States/);
 });
+
+test('journeys and adaptive never report empty results while pending or failed',()=>{
+  const C=context(),s=C.analytics.state;
+  for(const [section,key,loading] of [['identity','identity','Reading signup journeys'],['adaptive','experience','Reading adaptive decisions']]){
+    s.section=section;s.completed={};s.errors={};s.data={};
+    assert.match(C.analytics.render(),new RegExp(loading));
+    assert.doesNotMatch(C.analytics.render(),/No accounts were created|No experience decisions/);
+    s.completed[key]=true;s.errors[key]=Error('Service unavailable');
+    assert.match(C.analytics.render(),/Service unavailable/);
+    assert.doesNotMatch(C.analytics.render(),/No accounts were created|No experience decisions/);
+    s.errors={};assert.doesNotMatch(C.analytics.render(),new RegExp(loading));
+  }
+});
+
+test('external properties never present first-party attention or signup metrics as their own',()=>{
+  const C=context(),s=C.analytics.state;s.site='tenant';s.data={traffic:{totals:{page_views:5,sessions:3}}};
+  const out=C.analyticsUnified.overview(s,{scopeLabel:()=>'',chart:''});
+  assert.doesNotMatch(out,/New accounts|Verified sales|Needs attention|Proof awaiting/);
+  assert.match(out,/Property activity/);
+  s.section='identity';assert.match(C.analytics.render(),/First-party only/);
+});
+
+test('business and community cards read the production snapshot envelope',()=>{
+  const C=context(),s=C.analytics.state;
+  s.data.business={ok:true,snapshot:{window:{},users:{created_in_window:7},music:{plays:{in_window:42}},mnet:{posts:{created_in_window:13},reactions:{created_in_window:19},follows:{created_in_window:5},profiles:{created_in_window:2}}}};
+  const out=C.analyticsUnified.overview(s,{scopeLabel:()=>'',chart:''});
+  assert.match(out,/Music plays<\/span><strong>42/);
+  assert.match(C.analyticsUnified.operations(s),/Posts<\/dt><dd>13/);
+});
+
+test('connection status distinguishes failed, ready-empty, pending and property-inapplicable reads',async()=>{
+  const C=context(),c={window:{CR:C},console};vm.createContext(c);
+  vm.runInContext(await readFile('js/control-room/analytics-deck.js','utf8'),c);
+  const s=C.analytics.state;s.completed={intel:true,content:true};s.errors={intel:Error('<failed>')};
+  let out=C.analyticsDeck.health(s);
+  assert.match(out,/1 of 23 reads ready/);assert.match(out,/&lt;failed&gt;/);assert.match(out,/Waiting/);
+  s.site='tenant';out=C.analyticsDeck.health(s);assert.doesNotMatch(out,/Intelligence evidence|Signup journeys/);
+});
