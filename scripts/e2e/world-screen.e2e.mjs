@@ -42,7 +42,7 @@ try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
 /* ---------- a static server for this checkout ---------- */
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
@@ -112,6 +112,17 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
+    if (u.includes('/rest/v1/travel_journeys')) {
+      const request=route.request(),method=request.method();world.journeys ||= [];
+      world.requests.push({m:method,path:'/travel_journeys',auth:!!request.headers().authorization,body:request.postDataJSON()});
+      if(!member)return json(route,{error:'unauthorized'},401);
+      if(world.journeyFail)return json(route,{error:'unavailable'},503);
+      const id=new URL(u).searchParams.get('id')?.replace('eq.','');
+      if(method==='POST'){const row={id:'99999999-9999-4999-8999-999999999999',plan:request.postDataJSON().plan,updated_at:new Date().toISOString()};world.journeys.push(row);return json(route,[row]);}
+      if(method==='PATCH'){const row=world.journeys.find(x=>x.id===id);if(row)row.plan=request.postDataJSON().plan;return json(route,row?[row]:[]);}
+      if(method==='DELETE'){world.journeys=world.journeys.filter(x=>x.id!==id);return json(route,[]);}
+      return json(route,world.journeys);
+    }
     if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
@@ -135,6 +146,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
+    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
@@ -235,17 +248,18 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0 }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false }) {
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
-    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
-  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
+  if(noGlobe)await ctx.route('https://cesium.com/**',r=>r.abort());
+  else if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
     if (!rel || rel.includes('..')) return route.abort();
     try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
@@ -261,10 +275,12 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   await page.goto(BASE + '/action-globe.html', { waitUntil: 'domcontentloaded' });
   await page.waitForURL(/mnet\.html\?view=feed/, { timeout: 15000 });
   await page.waitForFunction(() => /pinned on the Earth|No missions are pinned|could not load|can.t run/.test((document.getElementById('mnWorldCaption') || {}).textContent || ''), null, { timeout: 90000 });
-  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000 });
+  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000, state:'attached' });
+  await page.waitForFunction(()=>!!window.MCC_WORLD_MODE);
+  if(process.env.E2E_ONLY !== 'travel')await page.evaluate(()=>window.MCC_WORLD_MODE.set('posts'));
   /* evidence shots wait for the Earth's tiles, up to 25s */
   const globe = page.frame({ url: /action-globe\.html/ });
-  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+  if (globe&&!noGlobe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(1500);
   return { ctx, page, world, errors };
 }
@@ -273,6 +289,53 @@ const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(
 /* E2E_ONLY=layers (or any scope prefix) reruns one family of scenarios alone; the full run is the evidence */
 const ONLY = process.env.E2E_ONLY || '';
 const runs = (scope) => !ONLY || scope.startsWith(ONLY);
+
+/* Travel-first acceptance: actual Cesium, independently scrolling planner and private saves. */
+if(runs('travel')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE||d.name===process.env.EDITORIAL_DEVICE)) {
+  const member=device.name==='desktop',scope=`travel-${device.name}`;
+  const {ctx,page,world,errors}=await open(device,{member});
+  try{
+    const globe=page.frame({url:/action-globe\.html/});
+    check(scope,'Travel is the default and the planner is visible',await page.getAttribute('html','data-world-mode')==='travel'&&await page.isVisible('#wtPlanner'));
+    check(scope,'travel scene hides mission pins and keeps visible zoom controls',await globe.evaluate(()=>window.__huJourney().travel)&&await globe.isVisible('#ctlZoomIn'));
+    await page.screenshot({path:join(OUT,scope+'-initial.png')});
+    await page.fill('#wtFrom','New Haven');await page.locator('#wtFromResults button').first().click();
+    await page.fill('#wtTo','Lisbon');await page.locator('#wtToResults button').first().click();
+    await page.fill('#wtDeparture','2026-11-04');await page.click('#wtForm button[type=submit]');
+    await globe.waitForFunction(()=>window.__huJourney().entities===3,{},{timeout:6000}).catch(async()=>{console.log('JOURNEY DEBUG',await globe.evaluate(()=>window.__huJourney()),await page.inputValue('#wtFrom'),await page.inputValue('#wtTo'),await page.textContent('#wtMessage'),errors);});
+    check(scope,'chosen cities draw two points and a planned connection',await globe.evaluate(()=>window.__huJourney().points===2&&window.__huJourney().entities===3));
+    check(scope,'whole trip has four legs without invented fares',await page.locator('.wt-leg').count()===4&&!/\$\d/.test(await page.textContent('#wtItinerary')));
+    await page.click('.wt-leg [data-edit=departureHub]');await page.fill('#wtDepartureHub','JFK Terminal 4');await page.fill('#wtArrivalHub','Lisbon airport');await page.fill('#wtStay','My stay, Lisbon');
+    const href=await page.locator('.wt-leg a').first().getAttribute('href');check(scope,'departure directions use explicit origin and airport',new URL(href).searchParams.get('origin').startsWith('New Haven')&&new URL(href).searchParams.get('destination')==='JFK Terminal 4');
+    await page.locator('#wtDetails').evaluate(e=>e.open=false);
+    await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.waitForTimeout(1500);
+    const dimensions=await page.evaluate(()=>{const r=document.documentElement,f=document.getElementById('mnWorldFeed'),g=document.getElementById('mnWorld'),before=g.getBoundingClientRect().top;f.scrollTop=130;return{sw:r.scrollWidth,cw:r.clientWidth,scroll:f.scrollTop,fixed:before===g.getBoundingClientRect().top,pageY:scrollY,minInput:Math.min(...[...document.querySelectorAll('#wtForm input')].filter(e=>e.offsetParent).map(e=>parseFloat(getComputedStyle(e).fontSize)))}});
+    check(scope,'readable controls, no document overflow and stationary globe',dimensions.sw===dimensions.cw&&dimensions.fixed&&dimensions.pageY===0&&dimensions.minInput>=16,dimensions);
+    await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
+    await page.click('.wt-world-modes [data-world-mode=missions]');check(scope,'Missions opens real published missions',await page.isVisible('[data-hu-mission]')&&await page.isHidden('#wtPlanner'));
+    await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
+    await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the draft',/Lisbon/.test(await page.inputValue('#wtTo')));
+    if(member){
+      await page.click('#wtSave');await page.waitForFunction(()=>document.getElementById('wtDraftStatus').textContent==='Saved');
+      check(scope,'save reaches canonical persistence with a member session',world.journeys?.length===1&&req(world,'POST',/^\/travel_journeys$/)[0]?.auth);
+      await page.click('#wtSaved');await page.waitForSelector('.wt-saved-row');await page.click('#wtNew');check(scope,'new journey clears fields',await page.inputValue('#wtTo')==='');
+      await page.click('#wtSaved');await page.waitForSelector('.wt-saved-row');await page.locator('.wt-saved-row button').first().click();check(scope,'saved journey restores all endpoints',await page.inputValue('#wtDepartureHub')==='JFK Terminal 4'&&await page.inputValue('#wtStay')==='My stay, Lisbon');
+      world.journeyFail=true;await page.click('[data-travel-kind=stay]');await page.fill('#wtStay','Changed stay');await page.click('#wtSave');await page.waitForFunction(()=>/could not/.test(document.getElementById('wtMessage').textContent));check(scope,'failed save stays unsaved',await page.textContent('#wtDraftStatus')==='Unsaved');
+    }else{
+      await page.click('#wtSave');check(scope,'guest save opens same-page sign-in without writing',await page.isVisible('#mnSignedOut')&&req(world,'POST',/^\/travel_journeys$/).length===0);
+    }
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+if(runs('travel-fallback')) {
+  const {ctx,page}=await open(DEVICES[0],{member:false,noGlobe:true});
+  try{
+    await page.evaluate(()=>window.MCC_WORLD_MODE.set('travel'));
+    await page.fill('#wtFrom','My town');await page.fill('#wtTo','Lisbon');await page.click('#wtForm button[type=submit]');
+    check('travel-fallback','a trip remains usable without Cesium/WebGL',await page.locator('.wt-leg').count()===4&&await page.isVisible('#wtSave'));
+  }finally{await ctx.close();}
+}
 
 /* The 2026-10-16 approved reference, including its explicit real-navigation exception.
    E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
@@ -292,7 +355,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
     check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
-    check(scope,'redundant World heading removed and its space reclaimed',await page.locator('.hu-world-heading').count()===0 && await page.evaluate(()=>Math.abs(document.getElementById('mnWorldFrame').getBoundingClientRect().top-document.getElementById('mnWorld').getBoundingClientRect().top)<2));
+    check(scope,'approved travel headline is visible above the globe',await page.locator('.wt-headline').isVisible() && await page.textContent('.wt-headline')==='The world is your feed.');
     check(scope,'feed scrolls while globe and page remain stationary',await page.evaluate(()=>{
       const feed=document.getElementById('mnWorldFeed'),globe=document.getElementById('mnWorld'),before=globe.getBoundingClientRect().toJSON(),pageY=scrollY;
       feed.scrollTop=120;
@@ -321,11 +384,13 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await canvas.click({position:{x:box.width/2,y:box.height/2}});
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
+    await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.click('[data-hu-mission="'+M1+'"]');
     await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
     check(scope,'a mission preview outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
     check(scope,'mission preview selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
+    await page.click('.wt-world-modes [data-world-mode=posts]');
     await page.click('[data-hu-feed="community"]');
     check(scope,'Community keeps member posts and hides the news stream',await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()===0);
     await page.click('[data-hu-feed="all"]');
@@ -333,11 +398,13 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
     if(member){
+      await page.click('.wt-world-modes [data-world-mode=missions]');
       await page.click('#mnWorldEup');
       await page.waitForSelector('#mnMissionsView:not([hidden])');
       check(scope,'leaving World restores normal page scrolling',await page.evaluate(()=>!document.documentElement.classList.contains('mn-world-on') && getComputedStyle(document.documentElement).overflowY!=='hidden'));
       await page.click('#mnToWorld');
       await page.waitForFunction(()=>document.documentElement.classList.contains('mn-world-on'));
+      await page.click('.wt-world-modes [data-world-mode=posts]');
       check(scope,'returning to World restores the scrolling feed',await page.locator('#mnWorldFeed').evaluate(e=>getComputedStyle(e).overflowY==='auto' && e.scrollHeight>e.clientHeight));
     }
     check(scope,'no JavaScript errors',errors.length===0,errors);
@@ -661,7 +728,7 @@ async function openExplore(device, { member }) {
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
-    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
   }, member);
   await routeBackends(ctx, world, { member, creator: false, verified: false });
   const page = await ctx.newPage();

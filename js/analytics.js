@@ -742,19 +742,22 @@ window.MCC_MODEL = (function () {
      the markup, never its contents. */
   function describe(el) {
     if (!el || !el.tagName) return null;
+    // A planned route or saved trip can appear in a button or link. Its text
+    // and URL are visitor data just as much as an input value is.
+    var privateContent = !!(el.closest && el.closest('[data-private]'));
     var id = el.id ? "#" + el.id : "";
     var cls = "";
     if (el.className && typeof el.className === "string") {
       cls = "." + el.className.trim().split(/\s+/).slice(0, 2).join(".");
     }
     var txt = "";
-    if (el.textContent) txt = el.textContent.trim().replace(/\s+/g, " ").slice(0, 60);
+    if (!privateContent && el.textContent) txt = el.textContent.trim().replace(/\s+/g, " ").slice(0, 60);
     return {
       tag: el.tagName.toLowerCase(),
       sel: (el.tagName.toLowerCase() + id + cls).slice(0, 120),
       text: txt || null,
-      href: el.getAttribute ? (el.getAttribute("href") || null) : null,
-      cta: el.getAttribute ? (el.getAttribute("data-cta") || null) : null,
+      href: !privateContent && el.getAttribute ? (el.getAttribute("href") || null) : null,
+      cta: !privateContent && el.getAttribute ? (el.getAttribute("data-cta") || null) : null,
     };
   }
 

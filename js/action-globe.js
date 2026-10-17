@@ -16,6 +16,39 @@ const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentF
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
+let travelMode=false,journeyPoints=[],journeyEntities=[];
+function travelStyle(){
+ if(!viewer||!EDITORIAL)return;
+ dayLayer.saturation=1.1;dayLayer.brightness=1.05;
+ if(nightLayer){nightLayer.show=travelMode;nightLayer.dayAlpha=travelMode?.35:0;nightLayer.nightAlpha=1;nightLayer.brightness=travelMode?2:6;}
+ if(cloudLayer)cloudLayer.alpha=travelMode?.3:EDITORIAL_CLOUD_ALPHA;
+}
+function setTravelMode(on){
+ if(!EDITORIAL||!parentFrame)return;
+ const changed=travelMode!==on;travelMode=on;document.documentElement.classList.toggle('globe-travel',on);
+ if(!viewer)return;travelStyle();
+ if(changed||on){showMissions=!on;showCities=!on;draw();}
+ const rail=document.querySelector('.globe-travel-controls'),nav=document.querySelector('.globe-controls');
+ if(rail&&nav)for(const id of ['ctlLocate','ctlZoomIn','ctlZoomOut']){const b=$(id);if(b){if(on)rail.appendChild(b);else nav.insertBefore(b,$('ctlLayers'));}}
+ journeyEntities.forEach(e=>e.show=on);
+}
+function drawJourney(points,fly){
+ if(!viewer||ANALYTICS)return;
+ clear(journeyEntities);
+ const valid=points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&Array.isArray(p.coordinates)&&p.coordinates.length===2&&p.coordinates.every(v=>typeof v==='number'&&Number.isFinite(v))&&Math.abs(p.coordinates[0])<=180&&Math.abs(p.coordinates[1])<=90);
+ const gold=Cesium.Color.fromCssColorString('#f3ead7');
+ valid.forEach(p=>journeyEntities.push(viewer.entities.add({show:travelMode,position:Cesium.Cartesian3.fromDegrees(...p.coordinates,20000),point:{pixelSize:8,color:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:2},label:{text:p.label.slice(0,80),font:'500 13px system-ui,sans-serif',fillColor:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,20)}})));
+ let center=valid[0]?.coordinates,altitude=6000000;
+ if(valid.length===2){try{
+  const path=new Cesium.EllipsoidGeodesic(Cesium.Cartographic.fromDegrees(...valid[0].coordinates),Cesium.Cartographic.fromDegrees(...valid[1].coordinates));
+  if(path.surfaceDistance>100){const positions=Array.from({length:81},(_,i)=>{const t=i/80,c=path.interpolateUsingFraction(t);return Cesium.Cartesian3.fromRadians(c.longitude,c.latitude,20000+Math.sin(Math.PI*t)*Math.min(1000000,path.surfaceDistance*.08))});
+   journeyEntities.push(viewer.entities.add({show:travelMode,polyline:{positions,width:2,material:new Cesium.PolylineDashMaterialProperty({color:gold,dashLength:12}),arcType:Cesium.ArcType.NONE}}));
+   const mid=path.interpolateUsingFraction(.5);center=[Cesium.Math.toDegrees(mid.longitude),Cesium.Math.toDegrees(mid.latitude)];altitude=Math.max(4000000,Math.min(22000000,path.surfaceDistance*1.3));
+  }
+ }catch(_){/* Near-antipodal cities still get two truthful points, without a guessed path. */}}
+ if(fly&&travelMode&&center){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(...center,Math.max(altitude,homeAltitude())),duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:1.2});}
+}
+window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:journeyEntities.length});
 /* the network band is short, so its Earth starts closer and fills the frame */
 function homeAltitude(){
  if(EDITORIAL&&viewer){const canvas=viewer.scene.canvas,fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.9);return Cesium.Ellipsoid.WGS84.maximumRadius/Math.sin(angle)-Cesium.Ellipsoid.WGS84.maximumRadius}
@@ -61,6 +94,8 @@ function focusMission(id){
 }
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
+if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
+if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){journeyPoints=d.points.slice(0,2);drawJourney(journeyPoints,d.fly===true);return}
 if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,80));return}
 if(d.type==='hu:focus-mission'&&typeof d.missionId==='string'){if(!viewer||!focusMission(d.missionId))tell({type:'hu:selection-cleared'});return}
 if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:status',text:!showCities?'Regional impact is hidden.':cities.length?cities.length+(cities.length===1?' region shows its':' regions show their')+' totals: members who agreed to be counted, and verified actions.':'No region has five members who agreed to be counted yet.'});return}
@@ -132,6 +167,7 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   if(nightLayer)nightLayer.show=false;if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=1.1;cloudLayer.alpha=EDITORIAL_CLOUD_ALPHA}
  }
  window.__huGlobeStyle=()=>({editorial:EDITORIAL,saturation:dayLayer&&dayLayer.saturation,cloudAlpha:cloudLayer&&cloudLayer.alpha,atmosphereSaturation:sc.globe.atmosphereSaturationShift,stars:!!(sc.skyBox&&sc.skyBox.show)});
+ travelStyle();
  /* a hook for the browser test: the evidence shots wait for the tiles */
  window.__huGlobeSettled=()=>!!(viewer&&viewer.scene.globe.tilesLoaded);viewer.camera.percentageChanged=0.08;
  /* labels draw over the limb instead of being cut by it, so only those on the near side of the Earth show */
@@ -369,6 +405,7 @@ function wireEditorialTools(){
  tools.innerHTML='<summary aria-label="Globe controls"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6"/></svg></summary>';
  const panel=document.createElement('div');panel.className='globe-editorial-tools__panel';
  if(nav)panel.appendChild(nav);if(row)panel.appendChild(row);tools.appendChild(panel);document.body.appendChild(tools);
+ const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tools.open){tools.open=false;tools.querySelector('summary').focus()}});
  document.addEventListener('click',e=>{if(!tools.contains(e.target))tools.open=false});
 }
