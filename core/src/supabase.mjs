@@ -58,11 +58,25 @@ export async function rest(path, init = {}) {
   }));
 }
 
-export async function recoverStaleJobs({ now = new Date() } = {}) {
+// Reject work for every organization other than the canonical house. The
+// privileged runner must never trust an organization supplied by a queued job.
+const HOUSE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export async function resolveHouseOrgId() {
+  const { body: rows = [] } = await rest('orgs?slug=eq.mccluster&select=id,enabled&limit=1');
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!HOUSE_UUID.test(row?.id || '') || row?.enabled !== true) {
+    throw new Error('Canonical McCluster house organization unavailable; refusing Core work');
+  }
+  return row.id;
+}
+
+export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } = {}) {
+  const orgId = houseOrgId || await resolveHouseOrgId();
   const nowIso = now.toISOString();
   const cutoff = new Date(now.getTime() - STALE_JOB_MS).toISOString();
 
   const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
     status: 'eq.running',
     locked_at: `lt.${cutoff}`,
     select: 'id,attempts,max_attempts,locked_at,locked_by',
@@ -90,6 +104,7 @@ export async function recoverStaleJobs({ now = new Date() } = {}) {
 
     const match = new URLSearchParams({
       id: `eq.${job.id}`,
+      org_id: `eq.${orgId}`,
       status: 'eq.running',
       locked_at: `eq.${job.locked_at}`,
     });
@@ -104,11 +119,13 @@ export async function recoverStaleJobs({ now = new Date() } = {}) {
   return recovered;
 }
 
-export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date() } = {}) {
+export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date(), houseOrgId = null } = {}) {
+  const orgId = houseOrgId || await resolveHouseOrgId();
   const supported = new Set(supportedTypes || []);
   const cutoff = new Date(now.getTime() - UNSUPPORTED_JOB_GRACE_MS).toISOString();
   const nowIso = now.toISOString();
   const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
     status: 'eq.queued',
     created_at: `lt.${cutoff}`,
     select: 'id,job_type,created_at',
@@ -121,7 +138,7 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
 
   for (const job of rows) {
     if (supported.has(job.job_type)) continue;
-    const match = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+    const match = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued' });
     const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
@@ -142,17 +159,19 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
+  const orgId = await resolveHouseOrgId();
 
   const sweepNow = Date.now();
   if (sweepNow - lastStaleSweepAt >= STALE_SWEEP_MS) {
     lastStaleSweepAt = sweepNow;
     const sweepDate = new Date(sweepNow);
-    await recoverStaleJobs({ now: sweepDate });
-    await quarantineUnsupportedJobs([...supported], { now: sweepDate });
+    await recoverStaleJobs({ now: sweepDate, houseOrgId: orgId });
+    await quarantineUnsupportedJobs([...supported], { now: sweepDate, houseOrgId: orgId });
   }
 
   const now = new Date().toISOString();
   const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
     status: 'eq.queued',
     run_after: `lte.${now}`,
     select: '*',
@@ -164,7 +183,7 @@ export async function claimNext(supportedTypes) {
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
     const attempts = Number(job.attempts || 0) + 1;
-    const patchParams = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+    const patchParams = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued' });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
@@ -185,6 +204,7 @@ export async function claimNext(supportedTypes) {
 function ownedRunningParams(job) {
   return new URLSearchParams({
     id: `eq.${job.id}`,
+    org_id: `eq.${job.org_id}`,
     status: 'eq.running',
     locked_by: `eq.${workerId}`,
   }).toString();
