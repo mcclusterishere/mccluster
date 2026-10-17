@@ -87,6 +87,11 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/v1/workspaces/me') return json(route, { profile:{id:'11111111-1111-4111-8111-111111111111'}, default_org_id: 'o1', workspaces: [{ org_id: 'o1', slug: 'mccluster', kind: 'studio', name: 'McCluster', role: 'owner', enabled: true }] });
     if(p==='/v1/analytics/cameras')return json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))});
     if(p==='/v1/analytics/cameras/check')return json(route,{ok:true,checks:[{id:'1',status:'image_received',checked_at:new Date().toISOString(),image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqoAAAAASUVORK5CYII='},{id:'2',status:'unavailable',checked_at:new Date().toISOString()},{id:'3',status:'image_received',image:'data:image/png;base64,YmFk',checked_at:new Date().toISOString()}]});
+    if(p==='/v1/intel/health')return json(route,{schema_ready:true,collector:{enabled:false},latest_run:null,last_successful_run:null});
+    if(p==='/v1/analytics/coverage')return json(route,{schema:'analytics-coverage/v2',measured_at:new Date().toISOString(),summary:{datasets:3,populated:1,empty:1,quiet:0,unavailable:1},datasets:[
+      {key:'headlines',label:'News headlines',family:'Intelligence',state:'populated',count:4200,window_count:40,window_status:'measured',scope:'News catalog',section:'intelligence',time_field:'imported_at',latest_at:new Date().toISOString(),next_step:'Open analysis'},
+      {key:'evidence',label:'Evidence',family:'Intelligence',state:'empty',count:0,window_count:0,scope:'House',section:'intelligence',time_field:'created_at',next_step:'No stored records'},
+      {key:'spatial',label:'Spatial archive',family:'Intelligence',state:'missing',count:null,window_count:null,scope:'House',section:'intelligence',time_field:'last_seen_at',next_step:'Provision storage'}]});
     if (p === '/v1/analytics/business') return json(route, {ok:true,snapshot:FIX.business});
     if (p === '/v1/analytics/audience-science') return json(route, {version:'fixture',totals:{music_listeners:18,returning_listeners:7},profiles:[],signals:[],track_affinity:[]});
     if (p === '/v1/analytics/identity') return json(route, FIX.identity);
@@ -190,9 +195,18 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   await page.waitForTimeout(200);
   check(size.width,'touch swipe changes the whole chapter',await page.locator('[role=tab][aria-selected=true]').innerText()==='Audience');
  }
- await page.locator('[data-cad-health]').click();await page.waitForSelector('#cuFieldSearch');
+ check(size.width,'dataset counts are not fetched on every dashboard open',!calls.some(x=>x.includes('/analytics/coverage')));
+ await page.locator('[data-cad-health]').click();await page.waitForSelector('[data-cu-dataset="headlines"]');
+ check(size.width,'dataset explorer shows measured empty and missing states',await page.locator('.cu-dataset-list').innerText().then(t=>t.includes('Empty')&&t.includes('Storage missing')));
+ await page.locator('#cuDatasetStatus').selectOption('empty');
+ check(size.width,'dataset health filter narrows the view',await page.locator('[data-cu-dataset]').count()===1);
+ await page.locator('#cuDatasetStatus').selectOption('');await page.locator('[data-cu-dataset="headlines"]').click();
+ check(size.width,'dataset details show time scope and provenance',await page.locator('.cad-body').innerText().then(t=>t.includes('Latest stored activity')&&t.includes('imported_at')));
+ await page.screenshot({path:OUT+'/datasets-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('[data-cu-panel="connections"]').click();
  check(size.width,'data status reaches all applicable connections',await page.locator('.cad-health li').count()===23);
  await page.screenshot({path:OUT+'/connections-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('[data-cu-panel="fields"]').click();await page.waitForSelector('#cuFieldSearch');
  await page.locator('#cuFieldSearch').fill('analytics_site_daily');await page.locator('#cuFieldSearch').press('Tab');
  check(size.width,'field directory searches audited schema',await page.locator('[data-cu-details] .cu-records').innerText().then(x=>x.includes('analytics_site_daily')));
  check(size.width,'no automatic ingestion',!calls.some(x=>x.includes('/ingest/')));

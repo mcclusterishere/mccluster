@@ -38,7 +38,7 @@ test('selected geography never falls back to global cards or a global trend',()=
  assert.match(C.analytics.render(),/Unique visitors<\/small><strong>7/);
  s.geoAudience={error:Error('offline')};assert.match(C.analytics.render(),/offline/);assert.doesNotMatch(C.analytics.render(),/999/);
 });
-test('field directory searches names and columns and escapes metadata',()=>{const U=context().analyticsUnified;U.state.inventory={relations:[{name:'orders',columns:['amount_cents','attribution']},{name:'<unsafe>',columns:['title']}]};U.state.fieldQuery='attribution';let out=U.inventory();assert.match(out,/2 tables and views · 1 matches/);assert.match(out,/<summary>orders/);U.state.fieldQuery='';out=U.inventory();assert.match(out,/&lt;unsafe&gt;/);assert.doesNotMatch(out,/<unsafe>/);});
+test('field directory searches names and columns and escapes metadata',()=>{const U=context().analyticsUnified;U.state.panel='fields';U.state.inventory={relations:[{name:'orders',columns:['amount_cents','attribution']},{name:'<unsafe>',columns:['title']}]};U.state.fieldQuery='attribution';let out=U.inventory();assert.match(out,/2 tables and views · 1 matches/);assert.match(out,/<summary>orders/);U.state.fieldQuery='';out=U.inventory();assert.match(out,/&lt;unsafe&gt;/);assert.doesNotMatch(out,/<unsafe>/);});
 
 test('snapshot submissions preserve provider defaults and explicit limits while enforcing transient reads',()=>{
   for(const parameters of [{query:'New Haven, CT'},{query:'New Haven, CT',limit:5,persist:true,include_raw:true,lane:'PUBLIC'}]){
@@ -127,4 +127,42 @@ test('a department never queries aliases shared by its broader region',async()=>
  const A=context().analytics,s=A.state;s.geo.region='FR';s.geo.adm.FR=JSON.parse(await readFile('data/geo/admin1/FR.json','utf8'));
  const ain=s.geo.adm.FR.states.find(x=>x.k==='FR-01'),f=A.geo.stateFilters(ain);
  assert.ok(f.codes.includes('01'));assert.ok(!f.codes.includes('ARA'));assert.ok(f.names.includes('ain'));assert.ok(!f.names.includes('rhonealpes'));
+});
+
+
+test('dataset explorer filters family and health without treating failed reads as zero',()=>{
+ const C=context(),s=C.analytics.state,U=C.analyticsUnified;
+ s.data.coverage={summary:{datasets:3,empty:1,quiet:0,unavailable:1},datasets:[
+  {key:'posts',label:'Posts',family:'Community',state:'populated',count:12,window_count:4,scope:'First-party'},
+  {key:'evidence',label:'Evidence',family:'Intelligence',state:'empty',count:0,window_count:0,scope:'House'},
+  {key:'spatial',label:'Spatial archive',family:'Intelligence',state:'missing',count:null,window_count:null,scope:'House'}]};
+ U.state.family='Intelligence';let out=U.inventory();assert.doesNotMatch(out,/data-cu-dataset="posts"/);assert.match(out,/Storage missing/);assert.match(out,/<b>—<\/b>/);
+ U.state.datasetStatus='empty';out=U.inventory();assert.match(out,/data-cu-dataset="evidence"/);assert.doesNotMatch(out,/data-cu-dataset="spatial"/);
+ U.state.panel='connections';assert.doesNotMatch(U.inventory(),/data-cu-dataset=/);
+});
+
+test('public field directory is published outside the stripped docs tree',async()=>{
+ const inventory=JSON.parse(await readFile('data/analytics/application-schema-inventory.json','utf8'));
+ assert.ok(inventory.relations.length>400);assert.match(code,/fetch\('data\/analytics\/application-schema-inventory.json'\)/);
+ assert.doesNotMatch(code,/fetch\('docs\//);
+});
+
+test('collector state distinguishes configuration from successful ingestion',async()=>{
+ const U=context().analyticsUnified;
+ await U.load(async path=>path.endsWith('/health')?{schema_ready:true,collector:{enabled:false},latest_run:null,last_successful_run:null}:path.includes('/sources')?{sources:[]}:{database_schema_ready:false},()=>{});
+ const out=U.intelligence();assert.match(out,/Collection is off/);assert.match(out,/No recorded attempts/);assert.match(out,/None recorded/);
+});
+
+ test('operations directs owners to on-demand datasets instead of displaying unloaded counts',()=>{
+ const C=context(),out=C.analyticsUnified.operations(C.analytics.state);
+ assert.match(out,/Open dataset explorer/);assert.doesNotMatch(out,/Current stored records/);
+ });
+
+test('failed-range filters include datasets whose all-time counts succeeded',()=>{
+ const C=context(),s=C.analytics.state,U=C.analyticsUnified;
+ s.data.coverage={datasets:[
+  {key:'failed',label:'Failed range',family:'Community',state:'populated',count:12,window_count:null,window_status:'unavailable',scope:'House'},
+  {key:'missing',label:'Missing range storage',family:'Community',state:'populated',count:9,window_count:null,window_status:'missing',scope:'House'}]};
+ U.state.datasetStatus='unavailable';let out=U.inventory();assert.match(out,/data-cu-dataset="failed"/);assert.doesNotMatch(out,/data-cu-dataset="missing"/);
+ U.state.datasetStatus='missing';out=U.inventory();assert.match(out,/data-cu-dataset="missing"/);assert.doesNotMatch(out,/data-cu-dataset="failed"/);
 });
