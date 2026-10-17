@@ -2,8 +2,9 @@ import { normalizePlace } from './navigation-core.mjs';
 
 // Photon explicitly supports search-as-you-type. Its public service is for
 // modest use: debounce in the UI, bound requests here, and never retry a 429.
-// Search terms go to Photon; GPS stays on-device until a Maps link is opened
-// or the person explicitly saves their private journey.
+// Search terms go to Photon; this service never receives the user's GPS.
+// Street-route requests separately send chosen endpoints to the routing
+// provider after Get directions. Saving a journey remains an explicit action.
 export function addressResults(data) {
   const seen = new Set(), rows = [];
   for (const feature of (Array.isArray(data?.features) ? data.features : []).slice(0, 20)) {
