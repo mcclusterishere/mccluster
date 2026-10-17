@@ -324,14 +324,33 @@ const chooseTravelPlace = async (page, id, query) => {
   await page.fill('#'+id, query); await page.locator('#'+id+'Results button').first().click();
 };
 const showTravelRoute = async page => {
-  await page.click('#wtNavigate'); await page.waitForSelector('#wtRouteCard:not([hidden])');
-  await page.waitForFunction(()=>document.getElementById('wtNavigate').textContent==='Start navigation');
+  const label = await page.textContent('#wtNavigate');
+  if (label === 'Get directions' || label === 'Try route again') await page.click('#wtNavigate');
+  await page.waitForSelector('#wtRouteCard:not([hidden])');
+  await page.waitForFunction(()=>document.getElementById('wtNavigate').textContent==='Go');
 };
 const releaseTravelRoutes = async world => { world.holdRoute=false; await Promise.all((world.heldRoutes||[]).splice(0).map(release=>release())); };
 const waitForHeldTravelRoute = async (world, page) => {
   const deadline = Date.now() + 5000;
   while (!(world.heldRoutes || []).length && Date.now() < deadline) await page.waitForTimeout(25);
   if (!(world.heldRoutes || []).length) throw new Error('The route request did not reach the held provider fixture');
+};
+const panTravelMap = async (page, globe) => {
+  // The mode tabs and transport legitimately move with viewport clearance.
+  // Drag a point that is actually exposed in both documents, so this checks
+  // real map input rather than accidentally clicking a floating control.
+  const point = await globe.evaluate(() => {
+    const canvas = document.querySelector('#globe canvas'), r = canvas.getBoundingClientRect();
+    const frame = window.frameElement, f = frame.getBoundingClientRect();
+    const exposed = (x,y) => document.elementFromPoint(x,y) === canvas && parent.document.elementFromPoint(f.left+x,f.top+y) === frame;
+    for (const fy of [.35,.55,.75,.2,.85]) for (const fx of [.2,.4,.6]) {
+      const x = r.left+r.width*fx, y = r.top+r.height*fy;
+      if (exposed(x,y) && exposed(x+35,y+25)) return {x:f.left+x,y:f.top+y};
+    }
+    return null;
+  });
+  if (!point) throw new Error('No exposed canvas area is available for a navigation pan');
+  await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+35,point.y+25,{steps:4});await page.mouse.up();
 };
 
 if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE||d.name===process.env.EDITORIAL_DEVICE)) {
@@ -355,10 +374,10 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     if(!member)check(scope,'Join clears the shared account control',await page.evaluate(()=>document.getElementById('mnGuestJoin').getBoundingClientRect().right+6<=document.getElementById('mccAuthChip').getBoundingClientRect().left));
     check(scope,'location is requested once, denial keeps manual entry, no navigation watch starts',await page.evaluate(()=>window.__travelGeoRequests===1&&window.__travelWatchStarts===0)&&await page.isEnabled('#wtFrom')&&/Location access is off/.test(await page.textContent('#wtLocationStatus')));
     await chooseTravelPlace(page,'wtTo','350 Fifth Avenue');
-    check(scope,'selected address reveals ground options and waits for an explicit route request',/Empire State Building/.test(await page.inputValue('#wtTo'))&&await page.isVisible('#wtGroundOptions')&&await page.isDisabled('#wtNavigate')&&await page.isHidden('[data-travel-kind=flight]')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
-    await chooseTravelPlace(page,'wtFrom','New Haven');await chooseTravelPlace(page,'wtTo','Union Station');
-    check(scope,'selected endpoints alone do not contact the routing provider',req(world,'POST',/^\/v1\/travel\/route$/).length===0&&await page.textContent('#wtNavigate')==='Get directions');
+    check(scope,'selected address reveals ground options and waits for a selected starting point',/Empire State Building/.test(await page.inputValue('#wtTo'))&&await page.isVisible('#wtGroundOptions')&&await page.isDisabled('#wtNavigate')&&await page.isHidden('[data-travel-kind=flight]')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+    await chooseTravelPlace(page,'wtTo','Union Station');await chooseTravelPlace(page,'wtFrom','New Haven');
     await showTravelRoute(page);
+    check(scope,'selecting both endpoints automatically presents directions and Go',req(world,'POST',/^\/v1\/travel\/route$/).length===1&&await page.textContent('#wtNavigate')==='Go');
     await globe.waitForFunction(points=>window.__huNavigation().routeVisible&&window.__huNavigation().routePoints===points,TRAVEL_ROUTES[0].geometry.length,{timeout:15000});
     await page.waitForTimeout(1400);
     await globe.waitForFunction(()=>window.__huGlobeSettled(),null,{timeout:10000}).catch(()=>{});
@@ -376,10 +395,9 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     await page.waitForFunction(()=>document.documentElement.classList.contains('wt-navigating')&&window.__travelWatchCount()===1);
     await page.evaluate(coordinates=>window.__travelPushFix(coordinates,12,Date.now()+25),TRAVEL_ROUTES[0].geometry[15]);
     await globe.waitForFunction(()=>__huNavigation().following&&__huIon().height<2500);
-    check(scope,'Start navigation runs one live watch and displays the current maneuver',await page.isVisible('#wtNavigation')&&(await page.textContent('#wtNavInstruction')).length>0&&await page.evaluate(()=>window.__travelWatchStarts===1&&window.__travelWatchCount()===1));
+    check(scope,'Go runs one live watch and displays the current maneuver',await page.isVisible('#wtNavigation')&&(await page.textContent('#wtNavInstruction')).length>0&&await page.evaluate(()=>window.__travelWatchStarts===1&&window.__travelWatchCount()===1));
     await page.screenshot({path:join(OUT,scope+'-navigation.png')});
-    const mapBox=await globe.locator('#globe canvas').boundingBox(),panX=mapBox.x+mapBox.width*.4,panY=mapBox.y+mapBox.height*.5;
-    await page.mouse.move(panX,panY);await page.mouse.down();await page.mouse.move(panX+35,panY+25,{steps:4});await page.mouse.up();
+    await panTravelMap(page,globe);
     await page.waitForSelector('#wtRecenter:not([hidden])');
     await page.evaluate(coordinates=>window.__travelPushFix(coordinates,12,Date.now()+50),TRAVEL_ROUTES[0].geometry[16]);
     await globe.waitForFunction(()=>!__huNavigation().following);
@@ -414,7 +432,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await page.click('#wtSaved');await page.waitForSelector('.wt-saved-row');await page.locator('.wt-saved-row button').first().click();check(scope,'saved draft restores endpoints, not a live watch or route',await page.inputValue('#wtDepartureHub')==='JFK Terminal 4'&&await page.inputValue('#wtStay')==='My stay, Lisbon'&&await page.evaluate(()=>__travelWatchCount()===0));
       world.journeyFail=true;await page.locator('#wtOptions').evaluate(e=>e.open=true);await page.click('[data-travel-kind=stay]');await page.fill('#wtStay','Changed stay');await page.click('#wtSave');await page.waitForFunction(()=>/could not/.test(document.getElementById('wtMessage').textContent));check(scope,'failed save remains unsaved',await page.textContent('#wtDraftStatus')==='Unsaved');
     }else{
-      await page.click('#wtSave');check(scope,'guest save opens same-page sign-in without writing',await page.isVisible('#mnSignedOut')&&req(world,'POST',/^\/travel_journeys$/).length===0);
+      check(scope,'guest Travel keeps saving out of the directions flow',await page.isHidden('#wtSaveRow')&&await page.isHidden('#wtSaveFooter')&&await page.isHidden('#wtDraftStatus')&&req(world,'POST',/^\/travel_journeys$/).length===0);
     }
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}
@@ -439,19 +457,19 @@ if(runs('travel-errors')){
   const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'granted',travel:true});
   try{
     const globe=page.frame({url:/action-globe\.html/});await globe.waitForFunction(()=>__huNavigation().locationVisible&&__huIon().height<5000);
-    await chooseTravelPlace(page,'wtTo','Union Station');world.routeFail=true;await page.click('#wtNavigate');
+    world.routeFail=true;await chooseTravelPlace(page,'wtTo','Union Station');
     await page.waitForFunction(()=>document.getElementById('wtNavigate').textContent==='Try route again');
     check('travel-errors','provider failure shows an honest retry and no fabricated route',await page.isHidden('#wtRouteCard')&&/temporarily unavailable/.test(await page.textContent('#wtRouteMessage'))&&await globe.evaluate(()=>__huNavigation().routePoints===0));
     world.routeFail=false;await showTravelRoute(page);await page.click('#wtNavigate');await page.waitForFunction(()=>__travelWatchCount()===1);
     await page.fill('#wtTo','A different address');
     await globe.waitForFunction(()=>__huNavigation().routePoints===0);
     check('travel-errors','editing a destination cancels GPS and removes old maneuvers immediately',await page.evaluate(()=>__travelWatchCount()===0)&&await page.locator('#wtRouteSteps button').count()===0&&await globe.evaluate(()=>__huNavigation().routePoints===0));
-    await chooseTravelPlace(page,'wtTo','Union Station');world.holdRoute=true;await page.click('#wtNavigate');
+    world.holdRoute=true;await chooseTravelPlace(page,'wtTo','Union Station');
     await page.waitForFunction(()=>document.getElementById('wtNavigate').disabled&&/Finding/.test(document.getElementById('wtNavigate').textContent));
     await waitForHeldTravelRoute(world, page);
     await page.fill('#wtTo','350 Fifth Avenue');await releaseTravelRoutes(world);await page.waitForTimeout(250);
     check('travel-errors','a route response arriving after an edit cannot restore stale steps or geometry',await page.isHidden('#wtRouteCard')&&await page.locator('#wtRouteSteps button').count()===0&&await globe.evaluate(()=>__huNavigation().routePoints===0));
-    await chooseTravelPlace(page,'wtTo','Union Station');world.holdRoute=true;await page.click('#wtNavigate');
+    world.holdRoute=true;await chooseTravelPlace(page,'wtTo','Union Station');
     await waitForHeldTravelRoute(world, page);
     await page.click('.wt-world-modes [data-world-mode=posts]');await releaseTravelRoutes(world);await page.waitForTimeout(250);await page.click('.wt-world-modes [data-world-mode=travel]');
     check('travel-errors','leaving Travel cancels an outstanding route request',await page.isHidden('#wtRouteCard')&&await globe.evaluate(()=>__huNavigation().routePoints===0)&&await page.evaluate(()=>__travelWatchCount()===0));
@@ -484,9 +502,10 @@ if(runs('travel-rides')){
     await page.click('#wtRideLocate');await page.waitForSelector('#wtUber:not([hidden])');
     const refreshed=JSON.parse(new URL(await page.getAttribute('#wtUber','href')).searchParams.get('pickup'));
     check('travel-rides','refresh uses the new pickup and leaves the destination and draft in place',refreshed.longitude===freshPickup[0]&&refreshed.latitude===freshPickup[1]&&await page.isVisible('#wtRidePanel')&&await page.inputValue('#wtFrom')==='Current location'&&/Union Station/.test(await page.inputValue('#wtTo')));
-    await chooseTravelPlace(page,'wtFrom','New Haven');if(await page.isHidden('#wtRidePanel'))await page.click('#wtRide');
+    const beforeManual=req(world,'POST',/^\/v1\/travel\/route$/).length;
+    await chooseTravelPlace(page,'wtFrom','New Haven');await showTravelRoute(page);if(await page.isHidden('#wtRidePanel'))await page.click('#wtRide');
     const manual=JSON.parse(new URL(await page.getAttribute('#wtUber','href')).searchParams.get('pickup'));
-    check('travel-rides','a selected manual pickup is preserved even when the blue dot is elsewhere',manual.longitude===TRAVEL_ORIGIN[0]&&manual.latitude===TRAVEL_ORIGIN[1]&&await page.isHidden('#wtRideLocate')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+    check('travel-rides','a selected manual pickup is preserved even when the blue dot is elsewhere',manual.longitude===TRAVEL_ORIGIN[0]&&manual.latitude===TRAVEL_ORIGIN[1]&&await page.isHidden('#wtRideLocate')&&req(world,'POST',/^\/v1\/travel\/route$/).length===beforeManual+1);
   }finally{await ctx.close();}
 }
 

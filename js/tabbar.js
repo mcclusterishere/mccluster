@@ -17,6 +17,12 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  // Loaded on the globe's embedded document too: its first trusted touch can
+  // reach the same-origin World soundtrack without an asynchronous message.
+  var worldAudioScript = document.createElement("script");
+  worldAudioScript.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+  document.head.appendChild(worldAudioScript);
+
   /* ---------- THREE HOSTS, ONE BAR ----------
      The World is served on a host of its own as well: the company's,
      mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
@@ -307,7 +313,7 @@
      It does what every phone app's current tab does: back to the top. */
   dock.addEventListener("click", function (e) {
     var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
-    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
     /* "/" and "/index.html" are the same page (the HERE tab links the
@@ -677,6 +683,10 @@
       return url.href;
     });
   }
+  function navigateDocument(href) {
+    if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.leaveFrame(href)) return;
+    location.href = href;
+  }
   function arriveWithHandoff() {
     var hash = location.hash || "";
     var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
@@ -726,9 +736,9 @@
     if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, HOUSE_ORIGIN);
     else if (!crossesHouse(url)) return;
     var stored = readAuthSession();
-    if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); location.href = url.href; } return; }
+    if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); navigateDocument(url.href); } return; }
     e.preventDefault();
-    handoffHref(url.href).then(function (h) { location.href = h; }, function () { location.href = url.href; });
+    handoffHref(url.href).then(function (h) { navigateDocument(h); }, function () { navigateDocument(url.href); });
   });
 
   arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
@@ -870,6 +880,7 @@
   function sail(dest, wait) {
     if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
     unpeek();
+    if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
@@ -880,7 +891,7 @@
     }
     veilOn();
     setTimeout(function () {
-      handoffHref(dest).then(function (h) { location.href = h; }, function () { location.href = dest; });
+      handoffHref(dest).then(function (h) { navigateDocument(h); }, function () { navigateDocument(dest); });
     }, wait);
   }
 
@@ -1060,7 +1071,10 @@
     clearPerspective: clearPerspective,
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
-    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); }})
+    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
+      // The retained Music document uses the existing, origin-bound sign-in
+      // handoff for its real World frame. Credentials never enter its messages.
+      handoff: handoffHref})
   };
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");

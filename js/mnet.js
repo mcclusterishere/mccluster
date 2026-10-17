@@ -2964,6 +2964,11 @@
       var cs = getComputedStyle(bar);
       if (cs.position === "fixed" && cs.display !== "none") clear = Math.ceil((parseFloat(cs.bottom) || 0) + bar.offsetHeight + 10);
     }
+    // Music can retain this real World document inside its listening session.
+    // Its verified frame bridge measures the parent transport; the local bar
+    // is hidden then, so measuring only that bar would erase the safe area.
+    var audioClear = parseFloat(document.documentElement.style.getPropertyValue("--mcc-world-audio-clear")) || 0;
+    if (audioClear >= 50 && audioClear <= 280) clear = Math.max(clear, audioClear);
     document.documentElement.style.setProperty("--mn-bar-clear", clear + "px");
     return clear;
   }

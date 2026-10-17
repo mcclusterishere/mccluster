@@ -1,0 +1,387 @@
+/* Music -> World keeps the actual playing document alive. A timestamp copied
+   to another origin cannot preserve an Audio element or its user activation.
+   The real World host stays in its own frame/session; this document owns the
+   existing music transport and shared navigation. No audio URL, session token,
+   location or account record crosses the frame message bridge. */
+(function (root) {
+  "use strict";
+  if (root.MCC_WORLD_AUDIO) return;
+  var doc = root.document;
+  var script = doc.currentScript && doc.currentScript.src;
+  var ROOT = script ? script.replace(/js\/world-audio-continuity\.js.*$/, "") : new URL("./", location.href).href;
+  var HOUSE = "https://matthew.mccluster.org";
+  var WORLD_ORIGINS = ["https://mccluster.org", "https://www.mccluster.org", "https://humanuprise.com", "https://www.humanuprise.com"];
+  var TRUSTED = [HOUSE].concat(WORLD_ORIGINS);
+  var CHANNEL = "mcc-world-audio-v1";
+  var PREF = "mcc_world_audio_preference";
+  var IS_WORLD = /\/mnet\.html$/.test(location.pathname) || WORLD_ORIGINS.indexOf(location.origin) !== -1 && /^\/(?:index\.html)?$/.test(location.pathname);
+  var IS_GLOBE_FRAME = /\/action-globe\.html$/.test(location.pathname) && root.parent !== root;
+  var theme = null, controls = null, shell = null, frame = null, status = null;
+  var open = false, attached = false, parentOrigin = "", frameOrigin = "", channelId = "";
+  var worldHref = "", frameReady = false, readyTimer = null, loadGeneration = 0;
+  var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
+  var hiddenNodes = new Map(), observedAudio = new WeakSet();
+  var lastAnnouncement = {}, preference = readPreference();
+
+  function readPreference() {
+    try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
+  }
+  function savePreference() { try { localStorage.setItem(PREF, JSON.stringify(preference)); } catch (_) {} }
+  function event(name, detail) { root.dispatchEvent(new CustomEvent(name, {detail: detail || {}})); }
+  function urlOf(href) { try { return new URL(href, location.href); } catch (_) { return null; } }
+  function cleanHref(href) {
+    var u = urlOf(href); if (!u) return "";
+    // Handoff is consumed by tabbar.js only. Never copy it into history or a message.
+    u.hash = u.hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
+    u.searchParams.delete("mcc_audio");
+    return u.href;
+  }
+  function worldURL(href) {
+    var u = urlOf(href); if (!u || !/^https:$/.test(u.protocol)) return null;
+    if (WORLD_ORIGINS.indexOf(u.origin) !== -1 && /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname)) {
+      // Both World routers canonicalize www before serving the document.
+      u.hostname = u.hostname.replace(/^www\./, ""); return u;
+    }
+    if (u.origin === HOUSE && /\/(?:mnet|action-globe)\.html$/.test(u.pathname)) {
+      var w = new URL("https://mccluster.org/"); w.search = u.search; w.hash = u.hash;
+      w.searchParams.delete("embedded"); w.searchParams.delete("explore");
+      return w;
+    }
+    return null;
+  }
+  function musicURL(href) {
+    var u = urlOf(href);
+    return u && u.origin === HOUSE && u.pathname === "/listen.html" && !u.search && !u.hash;
+  }
+  function musicSurface() { return !!root.MCC_MUSIC || !!doc.getElementById("deck"); }
+  function selected() {
+    var engine = root.MCC_MUSIC;
+    if (engine && engine.current && engine.current()) {
+      var track = engine.current();
+      return {audio:engine.audio, title:track.title, access:engine.access(),
+        play:function () { return engine.resume(); }, pause:function () { engine.pause(); }};
+    }
+    var deck = doc.getElementById("deck");
+    if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
+      return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
+        play:function () { return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
+    }
+    return null;
+  }
+  function player() { return selected() || theme; }
+  function loadStyle() {
+    if (doc.getElementById("mccWorldAudioStyle")) return;
+    var link = doc.createElement("link"); link.id = "mccWorldAudioStyle"; link.rel = "stylesheet";
+    link.href = ROOT + "css/world-audio-continuity.css?v=__STAMP__"; link.onload = layout; doc.head.appendChild(link);
+  }
+  function watch(audio) {
+    if (!audio || observedAudio.has(audio)) return;
+    observedAudio.add(audio);
+    ["play", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
+      audio.addEventListener(name, function () {
+        if (name === "play" && theme && audio !== theme.audio) theme.audio.pause();
+        if (name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
+        if (name === "volumechange") { preference.muted = audio.muted; savePreference(); }
+        paint();
+      });
+    });
+  }
+  function ensureTheme() {
+    if (theme) return theme;
+    var audio = new Audio(); audio.preload = "metadata"; audio.loop = true;
+    audio.setAttribute("playsinline", "");
+    // This is the existing public catalog source (data/albums.json, heal-the-3),
+    // prepared before any play gesture. It is not a gated master or signed URL.
+    audio.src = ROOT + "assets/audio/heal-the-3rd-world.m4a";
+    audio.muted = preference.muted === true;
+    theme = {audio:audio, title:"Heal the 3rd World", access:"full",
+      play:function () { return audio.play(); }, pause:function () { audio.pause(); }};
+    watch(audio);
+    return theme;
+  }
+  function playTheme() {
+    if (selected() || preference.paused || preference.muted || attached) return;
+    var p = ensureTheme();
+    if (!p.audio.paused) return;
+    // Synchronous with the owning document's click/touch. postMessage does not
+    // transfer Safari's media activation and is never used to start this sound.
+    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    ensureControls(); paint();
+  }
+  function touch() {
+    if (IS_WORLD && !attached && root.parent === root) playTheme();
+  }
+  function pause() {
+    var p = player(); if (!p) return;
+    if (p === theme) { preference.paused = true; savePreference(); }
+    p.pause(); paint();
+  }
+  function toggle() {
+    var p = player() || ensureTheme();
+    if (!p.audio.paused && !p.audio.ended) { pause(); return; }
+    preference.paused = false; savePreference();
+    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    paint();
+  }
+  function mute() {
+    var p = player() || ensureTheme();
+    p.audio.muted = !p.audio.muted; preference.muted = p.audio.muted; savePreference(); paint();
+  }
+  function ensureControls() {
+    if (controls) return;
+    loadStyle();
+    controls = doc.createElement("aside"); controls.id = "mccWorldAudioControls";
+    controls.className = "world-audio"; controls.setAttribute("aria-label", "Music controls");
+    controls.innerHTML = '<button class="world-audio__title" type="button" aria-label="Return to Music"><span id="mccWorldAudioTitle"></span><small id="mccWorldAudioState"></small></button>' +
+      '<button class="world-audio__play" type="button" aria-label="Play music"><span aria-hidden="true">▶</span></button>' +
+      '<button class="world-audio__mute" type="button" aria-label="Mute music" aria-pressed="false">Mute</button>';
+    doc.body.appendChild(controls);
+    if (root.ResizeObserver) {
+      var resize = new ResizeObserver(layout); resize.observe(controls);
+      var dock = doc.querySelector(".appbar"); if (dock) resize.observe(dock);
+    }
+    controls.querySelector(".world-audio__title").addEventListener("click", function () {
+      if (open) closeWorld(true);
+      else if (root.MCC_BAR) root.MCC_BAR.navigation.go(HOUSE + "/listen.html");
+    });
+    controls.querySelector(".world-audio__play").addEventListener("click", toggle);
+    controls.querySelector(".world-audio__mute").addEventListener("click", mute);
+  }
+  function paint() {
+    var p = player();
+    if (controls) {
+      controls.hidden = attached || !p || !(open || IS_WORLD || p === theme);
+      if (p) {
+        doc.getElementById("mccWorldAudioTitle").textContent = p.title || "Your music";
+        var error = !!p.audio.error, playing = !p.audio.paused && !p.audio.ended;
+        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" : error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
+        var b = controls.querySelector(".world-audio__play");
+        b.disabled = p.access === "loading";
+        b.setAttribute("aria-label", playing ? "Pause music" : "Play music"); b.firstElementChild.textContent = playing ? "Ⅱ" : "▶";
+        var m = controls.querySelector(".world-audio__mute");
+        m.setAttribute("aria-label", p.audio.muted ? "Unmute music" : "Mute music");
+        m.setAttribute("aria-pressed", String(p.audio.muted)); m.textContent = p.audio.muted ? "Unmute" : "Mute";
+      }
+    }
+    if (open) markWorld();
+    layout();
+  }
+  function markWorld() {
+    doc.querySelectorAll(".appbar [data-appnav]").forEach(function (tab) {
+      var isWorld = tab.dataset.appnav === "world";
+      tab.classList.toggle("is-here", isWorld);
+      if (isWorld) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
+    });
+  }
+  function send(data) {
+    if (!frame || !frame.contentWindow || !frameOrigin) return;
+    frame.contentWindow.postMessage(Object.assign({channel:CHANNEL, id:channelId}, data), frameOrigin);
+  }
+  function layout() {
+    if (attached) return;
+    var dock = doc.querySelector(".appbar"), rect = dock && dock.getBoundingClientRect();
+    var navClear = rect && rect.height ? Math.max(0, root.innerHeight - rect.top) : 88;
+    if (controls) controls.style.setProperty("--world-audio-nav-clear", navClear + "px");
+    var reserve = Math.min(280, Math.ceil(navClear + (controls && !controls.hidden ? controls.getBoundingClientRect().height + 16 : 0)));
+    if (open && frameClearance !== reserve) { frameClearance = reserve; send({type:"layout", clearance:reserve}); }
+    if (IS_WORLD && root.parent === root && controls && !controls.hidden) {
+      doc.documentElement.style.setProperty("--mcc-world-audio-clear", reserve + "px");
+      doc.documentElement.style.setProperty("--mn-bar-clear", reserve + "px");
+      event("mcc:world-audio-layout", {clearance:reserve});
+    }
+  }
+  function frameLayout(clearance) {
+    if (!Number.isFinite(clearance) || clearance < 50 || clearance > 280) return;
+    if (frameClearance === clearance) return;
+    frameClearance = clearance;
+    doc.documentElement.style.setProperty("--mcc-world-audio-clear", clearance + "px");
+    doc.documentElement.style.setProperty("--mn-bar-clear", clearance + "px");
+    root.dispatchEvent(new Event("resize")); event("mcc:world-audio-layout", {clearance:clearance});
+  }
+  function frameVisibility(visible) {
+    if (typeof visible !== "boolean") return;
+    // Persist the validated state for modules that initialize after attachment.
+    doc.body.dataset.worldAudioVisible = String(visible);
+    if (!visible) doc.querySelectorAll("audio,video").forEach(function (media) { media.pause(); });
+    event("mcc:world-audio-visibility", {visible:visible});
+  }
+  function concealMusic() {
+    Array.prototype.forEach.call(doc.body.children, function (node) {
+      if (/^(SCRIPT|LINK|STYLE)$/.test(node.tagName) || node === shell || node === controls || node.classList.contains("appbar") || node.id === "mccDestinations") return;
+      if (!hiddenNodes.has(node)) hiddenNodes.set(node, node.inert);
+      node.inert = true;
+    });
+  }
+  function createShell() {
+    if (shell) return;
+    loadStyle(); shell = doc.createElement("section"); shell.id = "mccWorldAudioShell";
+    shell.setAttribute("aria-label", "World"); shell.hidden = true;
+    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Human Uprise World";
+    frame.allow = "geolocation; autoplay; fullscreen; camera; microphone";
+    frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
+    status = doc.createElement("div"); status.className = "world-audio-status";
+    status.innerHTML = '<p role="status">Opening World…</p><button type="button">Back to Music</button><a>Open World directly</a>';
+    status.querySelector("button").onclick = function () { closeWorld(true); };
+    status.querySelector("a").onclick = function (e) {
+      e.preventDefault();
+      var h = root.MCC_BAR?.navigation.handoff;
+      (h ? h(worldHref) : Promise.resolve(worldHref)).catch(function () { return worldHref; }).then(function (url) { location.assign(url); });
+    };
+    shell.append(frame, status); doc.body.appendChild(shell);
+    frame.addEventListener("load", function () {
+      send({type:"attach", clearance:frameClearance || 152, visible:open});
+    });
+    new MutationObserver(function () { if (open) concealMusic(); }).observe(doc.body, {childList:true});
+  }
+  function openWorld(href, options) {
+    options = options || {};
+    var url = worldURL(href); if (!url) return false;
+    var clean = cleanHref(url.href);
+    if (options.gesture !== false) playTheme();
+    if (root.MCC_MUSIC) root.MCC_MUSIC.closeNow();
+    createShell(); ensureControls();
+    var wasOpen = open; open = true; shell.hidden = false;
+    doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
+    concealMusic(); doc.title = "World · Human Uprise";
+    if (!wasOpen && !options.history) {
+      var address = new URL(baseHref); address.searchParams.set("world", "1");
+      history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);
+    }
+    paint();
+    if (worldHref !== clean || !frame.getAttribute("src")) {
+      worldHref = clean; frameOrigin = url.origin; frameReady = false;
+      channelId = root.crypto && root.crypto.randomUUID ? root.crypto.randomUUID() : String(Date.now()) + Math.random();
+      status.hidden = false; status.querySelector("p").textContent = "Opening World…";
+      status.querySelector("a").href = clean;
+      var generation = ++loadGeneration;
+      var target = new URL(clean); target.searchParams.set("mcc_audio", "1");
+      var handoff = root.MCC_BAR && root.MCC_BAR.navigation.handoff;
+      (handoff ? handoff(target.href) : Promise.resolve(target.href)).catch(function () { return target.href; }).then(function (carried) {
+        if (generation !== loadGeneration) return;
+        frame.src = carried;
+      });
+      clearTimeout(readyTimer);
+      readyTimer = setTimeout(function () {
+        if (!frameReady && open) status.querySelector("p").textContent = "World is taking longer to open. Your music is still available.";
+      }, 12000);
+    } else { send({type:"attach", clearance:frameClearance, visible:open}); send({type:"visibility", visible:open}); }
+    frame.focus({preventScroll:true});
+    return true;
+  }
+  function closeWorld(back) {
+    if (!open) return;
+    send({type:"visibility", visible:false});
+    open = false; shell.hidden = true;
+    delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
+    hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
+    doc.title = baseTitle;
+    doc.querySelectorAll(".appbar [data-appnav]").forEach(function (tab) {
+      var here = tab.dataset.appnav === "music";
+      tab.classList.toggle("is-here", here); tab.removeAttribute("aria-current");
+    });
+    paint();
+    doc.querySelector('.appbar [data-appnav="music"]')?.focus({preventScroll:true});
+    if (back && history.state && history.state.mccWorldAudio) history.back();
+  }
+  function attachToParent(e) {
+    if (root.parent === root || e.source !== root.parent || TRUSTED.indexOf(e.origin) === -1 || TRUSTED.indexOf(location.origin) === -1) return;
+    var data = e.data;
+    if (typeof data.id !== "string" || !data.id || data.id.length > 100) return;
+    attached = true; parentOrigin = e.origin; channelId = data.id;
+    if (theme) theme.audio.pause();
+    loadStyle(); doc.body.dataset.worldAudioChild = "ready";
+    var dock = doc.querySelector(".appbar"); if (dock) { dock.hidden = true; dock.inert = true; }
+    frameLayout(data.clearance);
+    frameVisibility(data.visible);
+    root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
+    paint();
+  }
+  function navigate(href) {
+    if (attached) {
+      if (!musicURL(href)) return false;
+      root.parent.postMessage({channel:CHANNEL, type:"music", id:channelId}, parentOrigin); return true;
+    }
+    if (open && musicURL(href)) { closeWorld(true); return true; }
+    var world = worldURL(href);
+    if (world && musicSurface() && root.parent === root) return openWorld(world.href);
+    return false;
+  }
+  function leaveFrame(href) {
+    var u = urlOf(href);
+    if (!attached || !u || u.origin === location.origin || TRUSTED.indexOf(u.origin) === -1) return false;
+    // Other album/creator/Control links retain their exact destination and the
+    // child's existing sign-in handoff. They leave the listening document; they
+    // must not create a second music page inside the retained World frame.
+    root.top.location.href = u.href;
+    return true;
+  }
+
+  // The Cesium document is same-origin with its World host. Call synchronously
+  // so iOS still sees the first globe touch, then let the globe handle that tap.
+  if (IS_GLOBE_FRAME) {
+    doc.addEventListener("pointerdown", function (e) {
+      if (!e.isTrusted) return;
+      try { if (root.parent.location.origin === location.origin) root.parent.MCC_WORLD_AUDIO?.touch(); } catch (_) {}
+    }, {capture:true, passive:true});
+    return;
+  }
+  root.MCC_WORLD_AUDIO = {navigate:navigate, leaveFrame:leaveFrame, touch:touch, active:function () {return open;}};
+  if (musicSurface()) {
+    ensureTheme(); // metadata only; no automatic playback on Music.
+    watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));
+  }
+  if (IS_WORLD && root.parent === root) { ensureTheme(); ensureControls(); paint(); }
+  root.addEventListener("mcc:nowplaying", function (e) { lastAnnouncement = e.detail || {}; paint(); });
+  root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
+  root.addEventListener("mcc:music-state", paint);
+  root.addEventListener("mcc:appbar-admin", paint);
+  root.addEventListener("resize", layout);
+  root.addEventListener("popstate", function () {
+    var state = history.state && history.state.mccWorldAudio;
+    if (state && musicSurface()) openWorld(state.href, {history:true, gesture:false});
+    else closeWorld(false);
+  });
+  root.addEventListener("message", function (e) {
+    var d = e.data;
+    if (!d || typeof d !== "object" || d.channel !== CHANNEL) return;
+    if (d.type === "attach") { attachToParent(e); return; }
+    if (attached) {
+      if (e.source !== root.parent || e.origin !== parentOrigin || d.id !== channelId) return;
+      if (d.type === "layout") frameLayout(d.clearance);
+      if (d.type === "visibility") frameVisibility(d.visible);
+      return;
+    }
+    if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;
+    if (d.type === "hello") { send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
+    if (d.id !== channelId) return;
+    if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
+    else if (d.type === "music") closeWorld(true);
+    else if (d.type === "pause") pause();
+  });
+  doc.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status")) return;
+    if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  doc.addEventListener("pointerdown", function (e) {
+    if (!e.isTrusted || e.target.closest?.("#mccWorldAudioControls,video,audio")) return;
+    touch();
+  }, {capture:true, passive:true});
+  doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !e.target.closest?.("#mccWorldAudioControls")) touch(); }, true);
+  doc.addEventListener("play", function (e) {
+    if (!attached || e.target.muted || e.target.volume === 0) return;
+    root.parent.postMessage({channel:CHANNEL, type:"pause", id:channelId}, parentOrigin);
+  }, true);
+  if (root.parent !== root && TRUSTED.indexOf(location.origin) !== -1) {
+    var referrer = urlOf(doc.referrer);
+    if (referrer && TRUSTED.indexOf(referrer.origin) !== -1) root.parent.postMessage({channel:CHANNEL, type:"hello"}, referrer.origin);
+  }
+  // Refreshing the World view keeps the destination. Browser refresh naturally
+  // ends the old document/audio; the new document waits for its next gesture.
+  if (musicSurface() && new URLSearchParams(location.search).get("world") === "1") {
+    var initial = new URL(location.href); initial.searchParams.delete("world"); baseHref = initial.href;
+    var saved = history.state && history.state.mccWorldAudio;
+    openWorld(saved && saved.href || "https://mccluster.org/?view=feed", {history:true, gesture:false});
+  }
+})(window);

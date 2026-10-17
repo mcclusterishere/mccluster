@@ -30,7 +30,9 @@ The reference is preserved byte-for-byte from
 4. **“Where are you going?”**: request optional current location after the entry
    privacy notice, show the starting point, and ask for a destination. Manual
    address entry works when location is denied. Reveal Drive, Walk, Bike and Get
-   a ride after a selected destination; getting directions is an explicit action.
+   a ride after a selected destination. The owner's later correction makes that
+   selection request directions immediately once the starting point is known;
+   **Go** starts navigation, including for guests.
 5. Street-following geometry, estimated time and distance, turn instructions,
    and foreground GPS guidance stay in World. “Plan a longer trip” progressively
    reveals flights, trains, dates, travelers and stays, with an ordered itinerary
@@ -127,11 +129,13 @@ verified address. Suggestions are candidates, not an assertion that an address
 was verified.
 
 Travel requests browser location once per tab after the entry privacy notice is
-accepted. Denial leaves manual entry available; the location button retries on
-request. A late response cannot overwrite an edited trip. GPS is not sent to the
+accepted. Denial leaves manual entry available; the location button requests a
+fresh device fix on each retry. A late response cannot overwrite an edited trip. GPS is not sent to the
 autocomplete service. Travel keeps its draft and GPS fixes in memory; explicit
-Save persists a private journey. Get directions sends the chosen endpoints to
-the routing service, and Continue in Uber shares pickup and destination with
+Save persists a private journey for a signed-in member. Selecting a destination
+sends the chosen endpoints to the routing service once both are known; the
+sharing notice appears before selection. Guests get directions and **Go** without
+save controls. Continue in Uber shares pickup and destination with
 Uber. Travel inputs, routes and handoff URLs remain excluded from click capture.
 This is not a statement that the separate, previously approved site analytics
 location feature has been removed.
