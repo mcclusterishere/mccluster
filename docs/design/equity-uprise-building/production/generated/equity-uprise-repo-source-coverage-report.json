@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 404,
+  "candidate_count": 406,
   "capability_source_count": 99,
-  "support_only_count": 305,
-  "checks_total": 1519,
-  "checks_passed": 1519,
+  "support_only_count": 307,
+  "checks_total": 1527,
+  "checks_passed": 1527,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -326,6 +326,8 @@
     "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
     "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
     "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
+    "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
+    "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -418,7 +420,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "404 entries"
+      "detail": "406 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1201,26 +1203,6 @@
       "detail": ""
     },
     {
-      "name": "assets/img/equity-uprise-mark.png capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "assets/img/equity-uprise-mark.png classified",
-      "passed": true,
-      "detail": "classification='presentation_support'"
-    },
-    {
-      "name": "assets/img/equity-uprise-mark.png support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "assets/img/equity-uprise-mark.png support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "assets/img/equity-uprise-mark-white.png capability ids known",
       "passed": true,
       "detail": ""
@@ -1237,6 +1219,26 @@
     },
     {
       "name": "assets/img/equity-uprise-mark-white.png support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "assets/img/equity-uprise-mark.png support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -1489,6 +1491,26 @@
       "name": "data/albums.json support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/analytics/application-schema-inventory.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/analytics/application-schema-inventory.json classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "data/analytics/application-schema-inventory.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/analytics/application-schema-inventory.json support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "data/brands.json capability ids known",
@@ -2209,6 +2231,26 @@
       "name": "docs/agent-web.md support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/analytics/application-schema-inventory.json support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md capability ids known",
@@ -3226,6 +3268,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/uprise-world/AUDIT-REPORT.md capability ids known",
       "passed": true,
       "detail": ""
@@ -4076,6 +4138,26 @@
       "detail": ""
     },
     {
+      "name": "packages/release-policy/globe.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "packages/release-policy/globe.mjs classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "packages/release-policy/globe.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "packages/release-policy/globe.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "platform/sql/001_init.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -4426,106 +4508,6 @@
       "detail": ""
     },
     {
-      "name": "scripts/test/identity-verification-levels.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/identity-verification-levels.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/identity-verification-levels.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/member-desk.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/member-desk.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/member-desk.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/member-desk.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/mission-pins-arcs-business.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/mission-pins-arcs-business.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/mission-pins-arcs-business.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/mission-pins-arcs-business.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/policy-fellowship-ladder.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/policy-fellowship-ladder.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/policy-fellowship-ladder.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/policy-fellowship-ladder.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/world-first-and-layers.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "scripts/test/world-first-and-layers.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "scripts/test/world-first-and-layers.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "scripts/test/world-first-and-layers.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "scripts/test/action-network.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -4666,6 +4648,86 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/identity-verification-levels.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/member-desk.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/mission-pins-arcs-business.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/policy-fellowship-ladder.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/policy-fellowship-ladder.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/policy-fellowship-ladder.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/policy-fellowship-ladder.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/product-context.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -4802,6 +4864,26 @@
     },
     {
       "name": "scripts/test/supabase-functions-deploy.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-first-and-layers.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/world-first-and-layers.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/world-first-and-layers.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/world-first-and-layers.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6246,6 +6328,106 @@
       "detail": ""
     },
     {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -6342,6 +6524,46 @@
     },
     {
       "name": "supabase/pending/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/action_globe_demo_pins_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7091,6 +7313,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/tests/action_mission_pins.stub.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -7107,6 +7349,26 @@
     },
     {
       "name": "supabase/tests/action_mission_pins.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7441,106 +7703,6 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/action_globe_demo_pins_v1.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/action_globe_demo_pins_v1.sql classified",
-      "passed": true,
-      "detail": "classification='runtime_support'"
-    },
-    {
-      "name": "supabase/pending/action_globe_demo_pins_v1.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/action_globe_demo_pins_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/src/live/index.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/src/live/index.js classified",
-      "passed": true,
-      "detail": "classification='shared_frontend_support'"
-    },
-    {
-      "name": "workers/mccluster/src/live/index.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "workers/mccluster/src/live/index.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/src/world-layers.js capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/src/world-layers.js classified",
-      "passed": true,
-      "detail": "classification='runtime_support'"
-    },
-    {
-      "name": "workers/mccluster/src/world-layers.js support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "workers/mccluster/src/world-layers.js support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/test/live-missions.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/test/live-missions.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "workers/mccluster/test/live-missions.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "workers/mccluster/test/live-missions.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/test/world-layers.test.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "workers/mccluster/test/world-layers.test.mjs classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "workers/mccluster/test/world-layers.test.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "workers/mccluster/test/world-layers.test.mjs support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "workers/mccluster/src/human-uprise/router.js capability ids known",
       "passed": true,
       "detail": ""
@@ -7574,6 +7736,26 @@
       "name": "workers/mccluster/src/index.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/live/index.js support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "workers/mccluster/src/music/tracks.js capability ids known",
@@ -7651,6 +7833,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "workers/mccluster/src/world-layers.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/world-layers.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/test/fbi.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -7707,6 +7909,26 @@
     },
     {
       "name": "workers/mccluster/test/human-uprise-site.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/live-missions.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7771,102 +7993,22 @@
       "detail": ""
     },
     {
-      "name": "world-news.html capability ids known",
+      "name": "workers/mccluster/test/world-layers.test.mjs capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "world-news.html classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "world-news.html support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "world-news.html support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql classified",
-      "passed": true,
-      "detail": "classification='runtime_security_support'"
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/tests/action_bounty_claim_guard.stub.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/tests/action_bounty_claim_guard.stub.sql classified",
+      "name": "workers/mccluster/test/world-layers.test.mjs classified",
       "passed": true,
       "detail": "classification='test_support'"
     },
     {
-      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support-only semantics coherent",
+      "name": "workers/mccluster/test/world-layers.test.mjs support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/tests/action_bounty_claim_guard.stub.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/analytics/application-schema-inventory.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/analytics/application-schema-inventory.json classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "docs/analytics/application-schema-inventory.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "docs/analytics/application-schema-inventory.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "packages/release-policy/globe.mjs capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "packages/release-policy/globe.mjs classified",
-      "passed": true,
-      "detail": "classification='runtime_support'"
-    },
-    {
-      "name": "packages/release-policy/globe.mjs support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "packages/release-policy/globe.mjs support rationale present",
+      "name": "workers/mccluster/test/world-layers.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7891,122 +8033,22 @@
       "detail": ""
     },
     {
-      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql capability ids known",
+      "name": "world-news.html capability ids known",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql classified",
+      "name": "world-news.html classified",
       "passed": true,
       "detail": "classification='shared_backend_support'"
     },
     {
-      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support-only semantics coherent",
+      "name": "world-news.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
-      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/tests/analytics_geo_audience.behaviour.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/tests/analytics_geo_audience.behaviour.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md classified",
-      "passed": true,
-      "detail": "classification='documentation_support'"
-    },
-    {
-      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/analytics/application-schema-inventory.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "data/analytics/application-schema-inventory.json classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "data/analytics/application-schema-inventory.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "data/analytics/application-schema-inventory.json support rationale present",
+      "name": "world-news.html support rationale present",
       "passed": true,
       "detail": ""
     }
