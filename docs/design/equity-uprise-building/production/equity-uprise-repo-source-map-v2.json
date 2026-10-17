@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 368,
+  "candidate_count": 396,
   "capability_source_count": 99,
-  "support_only_count": 269,
+  "support_only_count": 297,
   "entries": [
     {
       "path": ".cursorrules",
@@ -711,6 +711,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Audit of the mission, proof, review, record, feed-share and connection models before and after the three-level Anti-Social mission landed; names the Equity Uprise capability map only to say it has no collaboration entry. Not a building capability."
+    },
+    {
+      "path": "docs/action-network/EDITORIAL-WORLD-REFERENCE-20261016.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Approved Human Uprise globe and social presentation standard; preserves the supplied Equity Uprise artwork and does not define building geometry or program capabilities."
     },
     {
       "path": "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
