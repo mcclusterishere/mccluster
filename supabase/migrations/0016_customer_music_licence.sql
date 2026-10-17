@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0016_customer_music_licence.
--- Executable reconstruction SQL: supabase/replay_migrations/0016_customer_music_licence.sql
--- Intentionally no-op in production; this version is already registered live.
