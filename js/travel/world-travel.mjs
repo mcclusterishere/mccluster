@@ -184,13 +184,15 @@ function setMode(mode) {
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.worldMode===mode)));
   document.querySelectorAll('.wt-suggest').forEach(el=>el.hidden=true);
   $('mnWorldFeed').scrollTop=0;renderGlobe();autoLocate();
+  window.dispatchEvent(new CustomEvent('mcc:world-mode',{detail:{mode}}));
 }
 window.MCC_WORLD_MODE={set:setMode,get:()=>currentMode};
 const modeButtons=[...document.querySelectorAll('.wt-world-modes button')];
 modeButtons.forEach(b=>{b.onclick=()=>setMode(b.dataset.worldMode);b.onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();let i=modeButtons.indexOf(b);i=e.key==='Home'?0:e.key==='End'?2:(i+(e.key==='ArrowRight'?1:-1)+3)%3;modeButtons[i].click();modeButtons[i].focus();}};});
 let touchStart=null;
-$('mnWorldFeed').addEventListener('touchstart',e=>{touchStart=e.target.closest('input,select,button,a,summary,.wt-toolbar')?null:{x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+$('mnWorldFeed').addEventListener('touchstart',e=>{touchStart=e.touches.length!==1||e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]')?null:{x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
 $('mnWorldFeed').addEventListener('touchend',e=>{if(!touchStart)return;const dx=e.changedTouches[0].clientX-touchStart.x,dy=e.changedTouches[0].clientY-touchStart.y;touchStart=null;if(Math.abs(dx)>100&&Math.abs(dx)>Math.abs(dy)*2){const modes=['travel','missions','posts'];setMode(modes[(modes.indexOf(currentMode)+(dx<0?1:2))%3]);}},{passive:true});
+$('mnWorldFeed').addEventListener('touchcancel',()=>{touchStart=null;},{passive:true});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;
   if(e.data?.type==='hu:globe-ready')renderGlobe();
   if(e.data?.type==='hu:globe-unavailable')status('The interactive globe is unavailable here. You can still search places and plan your journey.');
@@ -251,7 +253,8 @@ window.addEventListener('storage',sessionChanged);window.addEventListener('mcc:a
 new MutationObserver(sessionChanged).observe(root,{attributes:true,attributeFilter:['class']});
 window.addEventListener('beforeunload',e=>{if(dirty&&draft.from&&draft.to){e.preventDefault();e.returnValue='';}});
 syncInputs();sessionChanged();
-const query=new URLSearchParams(location.search);setMode(query.has('mission')?'missions':query.has('song')?'posts':'travel');
+const query=new URLSearchParams(location.search),requestedMode=query.get('mode');
+setMode(query.has('mission')||query.has('completed')?'missions':query.has('song')?'posts':['travel','missions','posts'].includes(requestedMode)?requestedMode:'travel');
 send({type:'hu:hello'});
 
 autoLocate();
