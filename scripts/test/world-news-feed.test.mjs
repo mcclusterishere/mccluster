@@ -103,6 +103,15 @@ test('a news card flies the Earth to the place it mentions, and the frame checks
   const focus = fnSource(globe, 'focusPlace');
   assert.match(focus, /if\(typeof lat!=='number'\|\|typeof lon!=='number'\|\|!isFinite\(lat\)\|\|!isFinite\(lon\)\|\|Math\.abs\(lat\)>90\|\|Math\.abs\(lon\)>180\)return false;/, 'numbers, finite, in range');
   assert.match(focus, /viewer\.camera\.flyTo\(\{destination:Cesium\.Cartesian3\.fromDegrees\(lon,lat,900000\),duration:1\.4\}\)/);
-  assert.match(globe, /window\.addEventListener\('message',e=>\{if\(!parentFrame\|\|e\.source!==parentFrame\|\|e\.origin!==location\.origin\)return;[\s\S]{0,1400}if\(d\.type==='hu:focus-place'\)\{if\(viewer\)focusPlace\(d\);return\}/, 'only from the World page, same origin');
+  const prefix = "window.addEventListener('message',", start = globe.indexOf(prefix), end = globe.indexOf(');let missions=', start);
+  assert.ok(start >= 0 && end > start, 'the globe registers its parent message handler');
+  const listener = globe.slice(start + prefix.length, end), parentFrame = {}, calls = [];
+  const receive = new Function('parentFrame', 'location', 'viewer', 'focusPlace', 'return (' + listener + ');')(parentFrame, { origin: 'https://mccluster.org' }, {}, d => calls.push(d));
+  const data = { type: 'hu:focus-place', lat: -1.28, lon: 36.81, label: 'Nairobi' };
+  receive({ source: {}, origin: 'https://mccluster.org', data });
+  receive({ source: parentFrame, origin: 'https://untrusted.example', data });
+  assert.equal(calls.length, 0, 'a sibling frame or another origin cannot move the globe');
+  receive({ source: parentFrame, origin: 'https://mccluster.org', data });
+  assert.deepEqual(calls, [data], 'the same-origin parent can focus the place a story mentions');
   for (const src of [globe, js]) assert.doesNotMatch(src, /event here|events? happened|happened here/i, 'a story mentions a place; it does not put an event there');
 });

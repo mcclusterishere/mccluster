@@ -20,6 +20,7 @@ import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
 import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
+import { handleTravelRouting } from './travel-routing.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -65,6 +66,9 @@ export default {
          without this, every signed-in member's World call was refused by the browser */
       const preflight = preflightResponse(request, env);
       if (preflight) return preflight;
+
+      const travel = await handleTravelRouting(request, env);
+      if (travel) return travel;
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;

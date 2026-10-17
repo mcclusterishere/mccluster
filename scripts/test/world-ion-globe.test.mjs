@@ -39,7 +39,17 @@ test('ion\'s imagery falls through its assets; any failure leaves the Earth as i
   assert.match(js, /layer\.errorEvent\.addEventListener\(e=>\{ionWarn\('imagery '\+id,e\);/);
   assert.match(js, /addIonImagery\(k\+1\)\}\);/);
   assert.match(js, /viewer\.imageryLayers\.add\(layer,viewer\.imageryLayers\.indexOf\(dayLayer\)\+1\)/, 'under the night lights, over the day');
-  assert.match(js, /function streetAuto\(h\)\{return h<900000&&!\(ionImagery&&ionImagery\.ready\)\}/, 'the street map yields only to imagery that loaded');
+  const source = js.match(/function streetAuto\(h\)\{[^}]+\}/)?.[0];
+  assert.ok(source, 'street imagery has a single automatic visibility decision');
+  const street = (travelMode, roadRoute, currentLocation, ionImagery, height = 1500) =>
+    new Function('travelMode', 'roadRoute', 'currentLocation', 'ionImagery', source + ';return streetAuto;')(travelMode, roadRoute, currentLocation, ionImagery)(height);
+  assert.equal(street(false, null, null, null), true, 'ordinary World still has a street map while aerial imagery is absent');
+  assert.equal(street(false, null, null, { ready: false }), true, 'loading aerial imagery cannot blank the street map');
+  assert.equal(street(false, {}, {}, { ready: true }), false, 'outside travel, loaded aerial imagery keeps its existing priority');
+  assert.equal(street(true, null, null, { ready: true }), false, 'travel without a local route or location keeps the existing aerial view');
+  assert.equal(street(true, {}, null, { ready: true }), true, 'directions show the street map even when aerial imagery is ready');
+  assert.equal(street(true, null, {}, { ready: true }), true, 'a current location also makes street labels available');
+  assert.equal(street(true, {}, {}, { ready: true }, 900000), false, 'the wide Earth still yields to its NASA and aerial layers');
   assert.match(js, /\.then\(ts=>\{if\(!ion\)\{ts\.destroy\(\);return\}ts\.show=false;/, 'buildings start hidden, and are dropped if ion stepped aside meanwhile');
   assert.match(js, /,e=>ionWarn\('buildings',e\)\)/);
 });
