@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 398,
+  "candidate_count": 402,
   "capability_source_count": 99,
-  "support_only_count": 299,
-  "checks_total": 1495,
-  "checks_passed": 1495,
+  "support_only_count": 303,
+  "checks_total": 1511,
+  "checks_passed": 1511,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -321,6 +321,9 @@
     "supabase/migrations/20261014185932_equity_policy_memo_application_path.sql",
     "supabase/migrations/20261015000455_antisocial_get_social_completion_v1.sql",
     "supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql",
+    "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
+    "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
+    "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -372,6 +375,7 @@
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_mission_pins.stub.sql",
+    "supabase/tests/analytics_geo_audience.behaviour.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
     "supabase/tests/mission_admin_approval.behaviour.sql",
@@ -412,7 +416,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "398 entries"
+      "detail": "402 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7881,6 +7885,86 @@
     },
     {
       "name": "workers/mccluster/test/world-release.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/analytics_geo_audience.behaviour.sql support rationale present",
       "passed": true,
       "detail": ""
     }

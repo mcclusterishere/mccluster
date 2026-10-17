@@ -242,6 +242,7 @@
      docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md is the inventory behind every choice here. */
   var GEO_MIN=5,BAD_CC={XX:1,T1:1,EU:1,AP:1};
   var GEO_LAYERS=[
+    {id:"visitors",label:"Unique visitors by country",status:"live",source:"Distinct devices per IP country in the selected window"},
     {id:"pageviews",label:"Page views by country",status:"live",source:"analytics_top(country): the same page views as the totals, by the country Cloudflare reports for the visitor's IP"},
     {id:"signups",label:"Sign-ups by country",status:"live",source:"/v1/analytics/identity: accounts created in the range, by the country seen at sign-up (IP-derived)"},
     /* INTEL EVENTS, by contract (docs/control-plane/INTEL-TO-MISSION-CANON.md §5, PR #438):
@@ -251,8 +252,8 @@
        and draws nothing. Cells are drawn as cells, never as points; the window is clamped to the API's 92 days. */
     {id:"intel",label:"Intel events (10° cells)",status:"live",source:"/v1/intel/geo: accepted evidence records aggregated to 10° grid cells by the intel plane"}
   ];
-  S.geo={layer:"pageviews",region:null,state:null,source:"",eventType:"",places:null,adm:{},rg:{},shown:null};
-  S.ui={reach:"views",aud:"visitors",filters:false,more:false};S.car={};S.gid=0;S.country=null;
+  S.geo={layer:"visitors",region:null,state:null,source:"",eventType:"",places:null,adm:{},rg:{},shown:null};
+  S.ui={reach:"visitors",aud:"visitors",filters:false,more:false};S.car={};S.gid=0;S.country=null;S.geoAudience=null;
   /* a degree is a real number or nothing (Number(null) is 0, isFinite(null) is true: a missing centre would sit on the equator) */
   function deg(v){if(v===null||v===undefined||v===""||typeof v==="boolean"||Array.isArray(v))return null;var x=Number(v);return isFinite(x)?x:null;}
   function placeOf(code){var p=S.geo.places&&S.geo.places[code];return p&&deg(p[0])!==null&&deg(p[1])!==null&&!(p[0]===0&&p[1]===0)?p:null;}
@@ -264,7 +265,11 @@
   /* the layer's aggregate: what is drawn, what is folded, what has no place */
   function geoAggregate(){
     var layer=S.geo.layer,counts={},recorded=0,total=null,noCountry=0;
-    if(layer==="pageviews"){
+    if(layer==="visitors"){
+      var ct=S.data.countryTotals;if(!ct||!ct.ok)return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true,unavailable:S.errors.countryTotals?"Visitor geography unavailable":"Loading visitor geography…"};
+      ct.rows.forEach(function(r){var c=geoCountry(r.country),v=Number(r.visitors)||0;if(c)counts[c]=v;});
+      total=(S.data.traffic||{}).totals&&S.data.traffic.totals.visitors;
+    }else if(layer==="pageviews"){
       (S.data.geo||[]).forEach(function(r){var c=geoCountry(r.key),v=Number(r.n)||0;recorded+=v;if(c)counts[c]=(counts[c]||0)+v;else noCountry+=v;});
       var tv=S.data.traffic&&S.data.traffic.totals&&S.data.traffic.totals.page_views;total=tv==null?null:Number(tv);
     }else if(layer==="signups"){
@@ -280,10 +285,10 @@
       return{points:ipts,located:ilocated,suppressed:isup,unknown:Number(it.unknown_location)||0,total:it.records==null?null:Number(it.records),attribution:(ig.layer&&ig.layer.attribution)||[]};
     }else return{points:[],located:0,suppressed:0,unknown:null,total:null,awaiting:true};
     var points=[],located=0,suppressed=0,unplaced=0;
-    Object.keys(counts).forEach(function(c){var v=counts[c],p=placeOf(c);if(v<GEO_MIN){suppressed+=v;return;}if(!p){unplaced+=v;return;}located+=v;points.push({code:c,name:p[2]||c,lon:p[0],lat:p[1],value:v});});
+    Object.keys(counts).forEach(function(c){var v=counts[c],p=placeOf(c);if(v<(layer==="visitors"?1:GEO_MIN)){suppressed+=v;return;}if(!p){unplaced+=v;return;}located+=v;points.push({code:c,name:p[2]||c,lon:p[0],lat:p[1],value:v});});
     points.sort(function(a,b){return b.value-a.value||a.code.localeCompare(b.code);});
     /* page views: anything the totals counted that the country list did not carry has no country (or sits past the top 100) */
-    var unknown=layer==="pageviews"?(total==null?null:Math.max(0,total-recorded)+noCountry+unplaced):noCountry+unplaced;
+    var unknown=layer==="visitors"?null:layer==="pageviews"?(total==null?null:Math.max(0,total-recorded)+noCountry+unplaced):noCountry+unplaced;
     return{points:points,located:located,suppressed:suppressed,unknown:unknown,total:total,capped:layer==="pageviews"&&(S.data.geo||[]).length>=100};
   }
   /* ---------- THE CHARCOAL GLOBE (owner, 2026-10-15: "this is what analytics should aspire to look like") ----------
@@ -301,7 +306,7 @@
     try{if(/^[A-Z]{2}$/.test(code)&&typeof Intl!=="undefined"&&Intl.DisplayNames){var dn=new Intl.DisplayNames(["en"],{type:"region"}).of(code);if(dn&&dn!==code)return dn;}}catch(_){}
     return p&&p[2]||code;
   }
-  function layerUnit(id,v){var one=Number(v)===1;return id==="signups"?(one?"sign-up":"sign-ups"):id==="intel"?(one?"record":"records"):(one?"page view":"page views");}
+  function layerUnit(id,v){var one=Number(v)===1;return id==="visitors"?(one?"unique visitor":"unique visitors"):id==="signups"?(one?"sign-up":"sign-ups"):id==="intel"?(one?"record":"records"):(one?"page view":"page views");}
   function layerOf(){return GEO_LAYERS.filter(function(x){return x.id===S.geo.layer;})[0]||GEO_LAYERS[0];}
   function geoPayload(){
     var a=geoAggregate();
@@ -319,14 +324,14 @@
   /* the matched page views per state for the selected country; null when there is nothing to colour */
   function stateData(){
     var cc=selCountry(),f=admFile(cc),rr=regionRead(cc);
-    if(!cc||!f||S.geo.layer!=="pageviews"||!rr||!rr.ok||rr.pending||!window.CR.analyticsGlobe)return null;
-    var m=window.CR.analyticsGlobe.matchRegions(f.states,rr.regions||[]);
+    if(!cc||!f||["visitors","pageviews"].indexOf(S.geo.layer)<0||!rr||!rr.ok||rr.pending||!window.CR.analyticsGlobe)return null;
+    var m=window.CR.analyticsGlobe.matchRegions(f.states,rr.regions||[],S.geo.layer==="visitors"?"visitors":"page_views");
     return{country:cc,byKey:m.byKey,unmatched:m.unmatched};
   }
   function stateStatus(){
     var cc=selCountry(),rr=regionRead(cc);
     if(!cc)return null;
-    if(S.geo.layer!=="pageviews")return{kind:"layer",text:"State counts: page views only"};
+    if(["visitors","pageviews"].indexOf(S.geo.layer)<0)return{kind:"layer",text:"State counts: page views only"};
     if(!rr||rr.loading)return{kind:"loading",text:"Reading state counts…"};
     if(rr.pending)return{kind:"pending",text:"State counts not collected yet"};
     if(!rr.ok)return{kind:"error",text:"State counts did not load"};
@@ -334,7 +339,7 @@
   }
   function loadStates(){
     var cc=selCountry();if(!cc||!window.CR.analyticsGlobe)return;
-    if(!S.geo.adm[cc])window.CR.analyticsGlobe.loadAdmin1(cc).then(function(f){S.geo.adm[cc]=f||{states:[]};if(selCountry()===cc){paint();syncGlobe(false);}},function(){});
+    if(!S.geo.adm[cc])window.CR.analyticsGlobe.loadAdmin1(cc).then(function(f){S.geo.adm[cc]=f||{states:[]};if(selCountry()===cc){loadGeoAudience();paint();syncGlobe(false);}},function(){});
     var k=rgKey(cc);if(!k||S.geo.rg[k]||!S.request)return;
     var r=S.range;S.geo.rg[k]={loading:true};
     S.request("/v1/analytics/regions?country="+cc+"&since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+(sid()?"&site="+encodeURIComponent(sid()):""))
@@ -347,11 +352,12 @@
     var title=/^[A-Z]{2}$/.test(code||"")?countryName(code):(p&&p.name)||code;
     if(k){
       var s=stateOf(k),sd=stateData(),v=sd&&sd.byKey[k],ss=stateStatus();
-      return{title:s?s.n:k,context:title,line:v?(v.area?v.area+": ":"")+n(v.value)+" page views":ss&&ss.kind!=="ok"?ss.text:"Under "+GEO_MIN+" or none in this range"};
+      return{title:s?s.n:k,context:title,line:v?(v.area?v.area+": ":"")+n(v.value)+" "+layerUnit(S.geo.layer,v.value):ss&&ss.kind!=="ok"?ss.text:"Under "+GEO_MIN+" or none in this range"};
     }
+    if(L.id==="visitors"){var cr=countryRow(code);return{title:title,line:a.awaiting?(a.unavailable||"Reading unique visitors…"):n(cr&&cr.visitors)+" unique visitors"};}
     return{title:title,line:p?n(p.value)+" "+layerUnit(L.id,p.value):"Under "+GEO_MIN+" or none in this range"};
   }
-  function filterCount(){return(S.geo.region?1:0)+(S.geo.source?1:0)+(S.geo.eventType?1:0)+(S.geo.layer!=="pageviews"?1:0);}
+  function filterCount(){return(S.geo.region?1:0)+(S.geo.source?1:0)+(S.geo.eventType?1:0)+(S.geo.layer!=="visitors"?1:0);}
   /* every country (the Natural Earth label points), and, under the selected one, its states: one control, both levels */
   function pillHtml(){
     var a=geoAggregate(),seen={},list=[];
@@ -365,7 +371,7 @@
       '<option value=""'+(S.geo.region?"":" selected")+'>All countries</option>'+states+(states?'<optgroup label="Countries">':"")+list.map(function(p){return states&&p.code===cc?"":opt(p.code,countryName(p.code),p.code===S.geo.region&&!states);}).join("")+(states?'</optgroup>':"")+'</select></label>';
   }
   function summaryHtml(){
-    var L=layerOf(),bits=[S.range&&S.range.label||"",L.id==="signups"?"Sign-ups":L.id==="intel"?"Intel events":"Page views",S.geo.source||"All sources"];
+    var L=layerOf(),bits=[S.range&&S.range.label||"",L.id==="visitors"?"Visitors":L.id==="signups"?"Sign-ups":L.id==="intel"?"Intel events":"Page views",S.geo.source||""];
     if(S.geo.eventType)bits.push(S.geo.eventType);
     return e(bits.filter(Boolean).join(" · "))+(filterCount()?' <button type="button" class="cra-clear" data-cra-clear>Clear</button>':"");
   }
@@ -387,7 +393,7 @@
   /* the one way to select: {country, state}; a state belongs to the country it names */
   function pickPlace(sel,fly){
     sel=sel||{};var c=sel.country?regionKey(sel.country):null,k=c&&/^[A-Z]{2}$/.test(c)&&/^[A-Z]{2}-[A-Z0-9~]{1,5}$/.test(String(sel.state||""))&&String(sel.state).slice(0,2)===c?String(sel.state):null;
-    S.geo.region=c;S.geo.state=k;loadCountry();loadStates();paint();syncGlobe(fly!==false);
+    S.geo.region=c;S.geo.state=k;loadCountry();loadStates();loadGeoAudience();paint();syncGlobe(fly!==false);
   }
   function pickRegion(code,fly){var v=String(code||""),i=v.indexOf("/");pickPlace(i>0?{country:v.slice(0,i),state:v.slice(i+1)}:{country:v||null,state:null},fly);}
   /* ---------- the header: wordmark line, title, Live, property, range ---------- */
@@ -425,7 +431,7 @@
     if(!root)return;
     var c=root.querySelector("#craCountry");if(c)c.onchange=function(){pickRegion(c.value);};
     root.querySelectorAll("[data-cra-filters]").forEach(function(b){b.onclick=function(){S.ui.filters=!S.ui.filters;syncGlobe(false);};});
-    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.geo.layer="pageviews";S.idFilter=null;loadCountry();paint();syncGlobe(true);};});
+    root.querySelectorAll("[data-cra-clear]").forEach(function(b){b.onclick=function(){S.geo.region=null;S.geo.state=null;S.geo.source="";S.geo.eventType="";S.geo.layer="visitors";S.idFilter=null;S.geoAudience=null;loadCountry();paint();syncGlobe(true);};});
     var sheet=root.querySelector("[data-cra-filter-sheet]");if(sheet&&!sheet.hidden){
       var gl=sheet.querySelector("#craLayer");if(gl)gl.onchange=function(){S.geo.layer=gl.value;paint();syncGlobe(false);};
       var gr=sheet.querySelector("#craRegion");if(gr)gr.onchange=function(){pickRegion(gr.value);};
@@ -488,7 +494,10 @@
   function pendingNote(){var ct=S.data.countryTotals;return ct&&ct.missing?"Visitors by country need analytics_country_v1 (written, not applied).":"";}
   function reachSlide(){
     var t=(S.data.traffic||{}).totals||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null,mode=S.ui.reach,body="";
-    if(mode==="sources"){
+    if(mode==="visitors"){
+      var cr=sel?countryRow(sel):t,rows=sel?(S.country&&S.country.code===sel&&S.country.rows||[]):pvRows();
+      body=big(cr?cr.visitors:null,"Unique visitors",scopeLabel(),"Distinct devices in this window")+area(rows,"visitors",pvLabel,"Unique visitors over time");
+    }else if(mode==="sources"){
       var src=(S.data.traffic||{}).sources||[];
       body=big(src.length,"Sources","All countries · "+(S.range&&S.range.label||""),"referrers and tagged links (x.com, t.co, …)")+bars(src,"source","count",5);
     }else if(mode==="returning"){
@@ -497,14 +506,14 @@
     }else{
       var total=t.page_views==null?null:Number(t.page_views),v=sel?geoValue(sel):total,cs=S.country&&S.country.code===sel&&S.country.rows;
       if(sel&&S.geo.state){var sd=stateData(),sv=sd&&sd.byKey[S.geo.state],ss=stateStatus();
-        return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div><div class="cra-reach-main">'+
+        return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div><div class="cra-reach-main">'+
           big(sv?sv.value:null,"Page views",scopeLabel(),(sv?(sv.area?"counted for "+sv.area+" · ":""):ss&&ss.kind!=="ok"?ss.text+" · ":"under "+GEO_MIN+" or none · ")+countryName(sel)+": "+n(v))+
           '<div class="cra-reach-chart">'+area(cs||pvRows(),"page_views",pvLabel,"Page views over time, "+(cs?countryName(sel):"worldwide"))+'<small class="cra-c__note">Trend: '+e(cs?countryName(sel):"worldwide")+'</small></div></div>',"reach");}
       var rows=sel&&cs?cs:pvRows();
       body='<div class="cra-reach-main">'+big(v,"Page views",scopeLabel(),sel?(total==null?"":n(total)+" worldwide"):"")+
         '<div class="cra-reach-chart">'+area(rows,"page_views",pvLabel,"Page views over time"+(sel&&!cs?" (worldwide)":""))+(sel&&!cs?'<small class="cra-c__note">Trend: worldwide'+(pendingNote()?"; "+pendingNote():"")+'</small>':"")+'</div></div>';
     }
-    return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div>'+body,"reach");
+    return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["visitors","Visitors"],["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div>'+body,"reach");
   }
   function signupSlide(){
     var b=S.data.business&&S.data.business.snapshot,u=b&&b.users||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;
@@ -715,14 +724,47 @@
       card("Listener feature ledger","Distribution and return features behind every signal.",ledger,true)+
       card("Method","The formulas and inference limits stay visible next to the result.",method,true);
   }
+  function geographicStateFilters(state){
+    var states=(admFile(selCountry())||{}).states||[],others=states.filter(function(s){return s.k!==state.k;});
+    function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+    var codes=(state.codes||[]).filter(function(code){return !others.some(function(s){return(s.codes||[]).indexOf(code)>=0;});}).map(function(v){return String(v).toUpperCase();});
+    var names=[state.n].concat(state.names||[]).filter(Boolean).filter(function(name){var n=norm(name);return !others.some(function(s){return[s.n,s.g,s.u].concat(s.names||[]).some(function(v){return v&&norm(v)===n;});});}).map(function(v){return String(v).trim().toLowerCase();});
+    return{codes:codes,names:names};
+  }
+  function loadGeoAudience(){
+    var cc=selCountry(),r=S.range;if(!cc||!r){S.geoAudience=null;return;}
+    var state=S.geo.state&&stateOf(S.geo.state);
+    if(S.geo.state&&!state){S.geoAudience=null;return;}
+    var key=[cc,S.geo.state||"",r.since,r.until,S.site,tz()].join("|");
+    if(S.geoAudience&&S.geoAudience.key===key)return;
+    var read=S.geoAudience={key:key,data:null,error:null};
+    var filters=state?geographicStateFilters(state):null,codes=filters?filters.codes:null,names=filters?filters.names:null;
+    rpc("analytics_geo_audience",{p_country:cc,p_since:r.since,p_until:r.until,p_site:sid(),p_region_codes:codes,p_region_names:names,p_tz:tz()}).then(function(d){
+      if(S.geoAudience!==read)return;if(!d||d.schema!=="analytics-geo-audience/v1")throw Error("Invalid geographic audience response");read.data=d;paint();
+    }).catch(function(error){if(S.geoAudience!==read)return;read.error=error;paint();});
+  }
+  function geographicAudience(){
+    var read=S.geoAudience,d=read&&read.data,scope=scopeLabel();
+    if(read&&read.error)return card("Audience · "+scope,"",'<p role="alert">'+e(read.error.message||"Geographic audience unavailable")+'</p><button type="button" data-cra-geo-retry>Retry geographic data</button>',true);
+    if(!d)return card("Audience · "+scope,"",'<p role="status">Reading this location…</p>',true);
+    if(d.suppressed)return card("Audience · "+scope,"",'<p>This state has fewer than five page views in this window. Its metrics are folded to protect small groups.</p>',true);
+    var t=d.totals||{};
+    return card("Audience at a glance",scope,'<div class="cra-kpis">'+kpi("Unique visitors",n(t.visitors),"distinct devices")+kpi("Sessions",n(t.sessions))+kpi("Returning visitors",n(t.returning),"2+ sessions here in this window")+kpi("Single-page sessions",t.bounce_rate==null?"—":n(t.bounce_rate)+"%")+kpi("Music plays",n(t.plays))+kpi("Page views",n(t.page_views))+'</div>',true)+
+      '<div class="cra-grid">'+card("Audience trend",scope+" · unique visitors per bucket; do not add buckets for the total",line(d.series,"visitors","sessions","Unique visitors","Sessions",{xKey:"bucket",hourly:true,labelFor:function(r){return String(r.bucket_label||r.bucket||"").replace("T"," ").slice(5,16);}}),true)+
+      card("Acquisition",scope+" · unique visitors by recorded source",donut(d.sources||[],"source","people"))+
+      card("Paths",scope+" · page transitions within this location",rank((d.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+
+      card("Pages",scope+" · unique visitors per page",rank(d.pages||[],"path","visitors"))+
+      card("Engagement stages",scope+" · distinct devices with each event stage; stages may overlap",rank(d.stages||[],"stage","visitors"))+'</div>';
+  }
   function audience(){
+    if(selCountry())return geographicAudience();
     var house=sid()===null;
     var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
     var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
     var trend=trafficTrend(S.data.traffic||{});
     var totals=(S.data.traffic||{}).totals||{},vis=S.data.visitors&&S.data.visitors.counts,flows=S.data.flows&&S.data.flows.flows;
-    var summary=card("Audience at a glance","Selected property · all countries · "+(S.range&&S.range.label||""),'<div class="cra-kpis">'+kpi("Visitors",n(totals.visitors),"distinct devices")+kpi("Sessions",n(totals.sessions))+kpi("Returning visitors",n(vis&&vis.returning),house?"more than one session":"first-party only")+kpi("Single-page sessions",flows?n(flows.bounce_rate)+"%":"—",house?"recorded sessions":"first-party only")+'</div>',true);
-    return summary+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("")+'<div class="cra-grid">'+card("Page performance","Attention, depth and friction · selected property.",pagePerformance((S.data.traffic||{}).pages),true)+'</div>'+(house?'<details class="cu-detail"><summary>Listening behavior & measurement method</summary><div class="cra-grid">'+audienceScience()+'</div></details>':"");
+    var summary=card("Audience at a glance","Selected property · all countries · "+(S.range&&S.range.label||""),'<div class="cra-kpis">'+kpi("Unique visitors",n(totals.visitors),"distinct devices")+kpi("Sessions",n(totals.sessions))+kpi("Returning visitors",n(vis&&vis.returning),house?"more than one session":"first-party only")+kpi("Single-page sessions",flows?n(flows.bounce_rate)+"%":"—",house?"recorded sessions":"first-party only")+'</div>',true);
+    return summary+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"visitors","sessions","Unique visitors","Sessions",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("")+'<div class="cra-grid">'+card("Page performance","Attention, depth and friction · selected property.",pagePerformance((S.data.traffic||{}).pages),true)+'</div>'+(house?'<details class="cu-detail"><summary>Listening behavior & measurement method</summary><div class="cra-grid">'+audienceScience()+'</div></details>':"");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
@@ -890,9 +932,10 @@
     var unified=window.CR.analyticsUnified;
     var country=selCountry(),countrySeries=country&&S.country&&S.country.code===country&&S.country.rows;
     var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
-    var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"page_views",pvLabel,"Page views over time, "+trendScope),bars:bars}):carousels();
+    var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"visitors",pvLabel,"Unique visitors over time, "+trendScope),bars:bars}):carousels();
     var detail=S.section==="overview"?summary+'<details class="cu-detail"><summary>All measured metrics & geographic coverage</summary>'+geoCard()+overview()+'</details>':body();
-    if(S.geo.region)detail='<p class="cad-scope"><b>Globe: '+e(S.geo.state&&stateOf(S.geo.state)?stateOf(S.geo.state).n:country?countryName(country):S.geo.region)+'</b><span>Cards cover all countries unless labeled otherwise. Country selection narrows the reach trend and journey list.</span></p>'+detail;
+    if(country&&S.section==="overview")detail=geographicAudience();
+    if(S.geo.region&&S.section!=="audience"&&S.section!=="overview")detail='<p class="cad-scope"><b>Globe: '+e(S.geo.state&&stateOf(S.geo.state)?stateOf(S.geo.state).n:country?countryName(country):S.geo.region)+'</b><span>Audience and Overview follow this location. Other views show their labeled scope.</span></p>'+detail;
     var failed=Object.keys(S.errors||{});
     if(failed.length&&!S.error&&S.section!=="inventory")detail='<details class="cad-read-warning"><summary>'+failed.length+' data '+(failed.length===1?'source needs':'sources need')+' attention</summary><p>'+failed.map(function(k){return e(k)+': '+e(S.errors[k].message||S.errors[k]);}).join('<br>')+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
     if(S.error)detail='<p class="cra-error" role="alert">Analytics load failed. '+e(S.error.message||S.error)+' · Refresh to retry.</p>'+detail;
@@ -975,7 +1018,7 @@
   }
   function load(){
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
-    S.range=r;S.country=null;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.completed={};S.data=blankData();paint();
+    S.range=r;S.country=null;S.geoAudience=null;var q=++S.seq;S.loading=true;S.loaded=false;S.error=null;S.errors={};S.completed={};S.data=blankData();loadGeoAudience();paint();
     var site=sid(),args={p_since:r.since,p_until:r.until,p_site:site},daily={p_since:r.since,p_until:r.until,p_site:site,p_tz:tz()};
     /* One Control open used to throw every analytics primitive at PostgREST at
        once. On production data that turned one dashboard view into a dozen
@@ -1064,6 +1107,7 @@
     if(through)through.oninput=function(){S.through=through.value||"";};
     var a=root.querySelector("[data-cra-apply]");if(a)a.onclick=function(){S.from=from?from.value:(S.from||"");S.through=through?through.value:(S.through||"");load();};
     root.querySelectorAll("[data-cra-site]").forEach(function(b){b.onclick=function(){S.site=b.getAttribute("data-cra-site");load();};});
+    var retryGeo=root.querySelector("[data-cra-geo-retry]");if(retryGeo)retryGeo.onclick=function(){S.geoAudience=null;loadGeoAudience();paint();};
     root.querySelectorAll("[data-cra-verify]").forEach(function(b){b.onclick=function(){S.request("/v1/analytics/domains/"+encodeURIComponent(b.getAttribute("data-cra-verify"))+"/verify",{method:"POST"}).then(loadSites).then(load).catch(function(x){S.error=x;paint();});};});
     root.querySelectorAll("[data-cra-pulse]").forEach(function(b){b.onclick=function(){loadPulse();paint();};});
     var cp=root.querySelector("[data-cra-copy]"),px=root.querySelector("#craPixel");
@@ -1107,7 +1151,7 @@ if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites(
     render:render,
     top:topHtml,
     filters:filters,
-    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,filterCount:filterCount},
+    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,stateFilters:geographicStateFilters,filterCount:filterCount},
     state:S
   };
 })();

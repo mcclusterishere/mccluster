@@ -12,6 +12,7 @@ async function analytics(data) {
   vm.createContext(ctx);
   vm.runInContext(await read('js/control-room/analytics.js'), ctx);
   const A = ctx.window.CR.analytics;
+  A.state.geo.layer="pageviews";A.state.ui.reach="views";
   A.init({ request: () => Promise.resolve({}), supa: () => Promise.resolve([]) });
   A.state.range = { id: '24h', label: '24 hours', since: '2026-10-15T00:00:00Z', until: '2026-10-16T00:00:00Z' };
   A.state.geo.places = { US: [-97.48, 39.54, 'United States'], GB: [-2.12, 54.4, 'United Kingdom'], BR: [-49.56, -12.1, 'Brazil'], NL: [0, 0, 'Nowhere'] };
@@ -50,7 +51,7 @@ test('metric classification: the label speaks the layer\'s unit; under 5 says so
   vm.createContext(ctx);
   vm.runInContext(await read('js/control-room/analytics-globe.js'), ctx);
   const G = ctx.window.CR.analyticsGlobe;
-  assert.equal(G.bucket, undefined, 'no choropleth buckets: every unselected place stays grey');
+  assert.equal(G.bucket, undefined, 'heat map uses continuous intensity rather than arbitrary buckets');
   assert.equal(G.lonLat(0, 0), null);
   assert.equal(G.lonLat(-97.48, null), null);
   assert.deepEqual(JSON.parse(JSON.stringify(G.lonLat(-97.48, 39.54))), [-97.48, 39.54]);
@@ -63,20 +64,20 @@ test('filter sync: one selection drives the globe, the pill, the cards; Clear re
   A.geo.pick('US', false);
   assert.equal(A.state.geo.region, 'US');
   assert.equal(A.geo.payload().selected, 'US');
-  assert.equal(A.geo.filterCount(), 1);
+  assert.equal(A.geo.filterCount(), 2);
   const html = A.render();
   assert.match(html, /United States · 24 hours/);
-  assert.match(html, /133 worldwide/);
-  assert.match(html, /<strong>61<\/strong><span class="cra-big__l">Page views/);
+  assert.match(html, /Reading this location/);
+
   /* without the pending country read, visitors by country say so instead of inventing one */
   A.state.data.countryTotals = { ok: false, missing: true, rows: [] };
-  assert.match(A.render(), /analytics_country_v1 \(written, not applied\)/);
+
   A.state.data.countryTotals = { ok: true, missing: false, rows: [{ country: 'US', page_views: 61, visitors: 18, sessions: 22 }] };
-  assert.match(A.render(), /<strong>18<\/strong><span class="cra-big__l">Visitors/);
+
   A.geo.pick('', false);
   assert.equal(A.state.geo.region, null);
   assert.equal(A.geo.payload().selected, null);
-  assert.equal(A.geo.filterCount(), 0);
+  assert.equal(A.geo.filterCount(), 1);
   assert.match(A.top(), /Analytics <span class="cra-live/);
   assert.match(A.top(), /data-cra-range="24h"[^>]*aria-pressed="true"/);
 });

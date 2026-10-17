@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 398,
+  "candidate_count": 402,
   "capability_source_count": 99,
-  "support_only_count": 299,
+  "support_only_count": 303,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3038,6 +3038,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests the shared admin-preview and withdrawal boundary around existing globe routes. Adds no building geometry or program capability."
+    },
+    {
+      "path": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/tests/analytics_geo_audience.behaviour.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",

@@ -14,6 +14,7 @@ function analyticsModule(js) {
   vm.createContext(context);
   vm.runInContext(js, context);
   const A = context.window.CR.analytics;
+  A.state.geo.layer="pageviews";A.state.ui.reach="views";
   A.init({ request: () => Promise.resolve({}), supa: () => Promise.resolve([]) });
   return A;
 }
