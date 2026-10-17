@@ -216,6 +216,22 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false;
+function setWorldNewsPins(items,on){
+ if(!parentFrame||ANALYTICS)return;
+ publicNewsOn=on===true;const seen=new Set();
+ publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
+  if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
+  seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
+ });drawWorldNewsPins();
+}
+function drawWorldNewsPins(){
+ if(!viewer)return;clear(publicNewsPins);if(!publicNewsOn||travelMode||ANALYTICS)return;
+ const color=Cesium.Color.fromCssColorString('#e4b866');
+ publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),point:{pixelSize:10,color,outlineColor:Cesium.Color.BLACK,outlineWidth:2},properties:{worldNewsId:x.id}})));
+}
+window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
+
 function sanitizeCompletedEvents(rows){
  const seen=new Set();return (Array.isArray(rows)?rows:[]).slice(0,50).flatMap(e=>{
   if(!e||typeof e.id!=='string'||!/^[A-Za-z0-9][A-Za-z0-9:_-]{0,99}$/.test(e.id)||seen.has(e.id)||typeof e.title!=='string')return [];
@@ -227,7 +243,7 @@ function sanitizeCompletedEvents(rows){
 }
 function completedVisible(){return !!parentFrame&&!ANALYTICS&&!travelMode&&completedOn;}
 function setCompletedEvents(rows,on){
- if(!parentFrame||ANALYTICS)return;completedEvents=sanitizeCompletedEvents(rows);completedOn=on===true;drawCompletedEvents();
+ if(!parentFrame||ANALYTICS)return;completedEvents=sanitizeCompletedEvents(rows);completedOn=on===true;drawCompletedEvents();drawWorldNewsPins();
 }
 function drawCompletedEvents(){
  if(!viewer)return;clear(completedPins);if(!completedVisible())return;
@@ -286,6 +302,7 @@ window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
+if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
  journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
  journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;
@@ -699,7 +716,7 @@ async function boot(){paintMembersDoor();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
-viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
