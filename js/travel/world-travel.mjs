@@ -1,4 +1,6 @@
-import { normalizeJourney, journeyTitle, itinerary, legAction, searchCities } from './journey-core.mjs';
+import { normalizeJourney, journeyTitle, itinerary, legAction, searchCities, asPlace } from './journey-core.mjs';
+import { directionsLink } from './navigation-core.mjs';
+import { createAddressSearch, currentPosition } from './address-search.mjs';
 import { journeyStore } from './journey-store.mjs';
 
 const $ = id => document.getElementById(id), root = document.documentElement;
@@ -15,42 +17,50 @@ const paths = {
   cycle:'M7 8h10l3 10M7 8l-3 9h10L9 5H6M16 5h3M7 18a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm17 0a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
 };
 const icon = name => `<svg class="wt-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.drive}"/></svg>`;
-let draft = normalizeJourney(), savedId = null, dirty = false, busy = false, revision = 0;
+const freshDraft = () => normalizeJourney({ mode:'drive' });
+let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0;
 let catalogPromise, cities = [], currentMode = 'travel';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
+const addressSearch = createAddressSearch();
+let addressController;
 const labels = { flight:'Flights', train:'Trains', drive:'Rides', stay:'Stays', transit:'Transit', walk:'Walking', cycle:'Cycling' };
 
 panel.innerHTML = `
   <header class="wt-planner-head"><h2 id="wtTitle">Your whole journey</h2><span class="wt-status" id="wtDraftStatus">Draft</span></header>
   <form id="wtForm">
     <div class="wt-fields wt-fields--main">
-      <label class="wt-field"><span>From</span><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Where from?" required><span id="wtFromResults" class="wt-suggest" hidden></span></label>
-      <label class="wt-field"><span>To</span><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Where to?" required><span id="wtToResults" class="wt-suggest" hidden></span></label>
-      <label class="wt-field"><span>Departure</span><input id="wtDeparture" name="departure" type="date"></label>
+      <label class="wt-field"><span>From</span><button type="button" id="wtLocate" class="wt-locate" aria-label="Use my current location" title="Use my location">◎</button><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Current location or address"><span id="wtFromResults" class="wt-suggest" hidden></span></label>
+      <label class="wt-field"><span>To</span><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Address, hotel or place" required><span id="wtToResults" class="wt-suggest" hidden></span></label>
+    </div>
+    <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite"></p>
+    <nav class="wt-toolbar" aria-label="Journey transport">
+      ${['drive','transit','walk','flight','train','stay'].map(m => `<button type="button" data-travel-kind="${m}" ${m !== 'stay' ? `aria-pressed="${m === 'drive'}"` : ''}>${icon(m)}${labels[m]}</button>`).join('')}
+      <button type="button" id="wtMore" aria-expanded="false" aria-controls="wtMoreModes">••• More</button>
+    </nav>
+    <nav id="wtMoreModes" class="wt-toolbar" aria-label="More transport" hidden>${['cycle'].map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="false">${icon(m)}${labels[m]}</button>`).join('')}</nav>
+    <div class="wt-directions" id="wtDirections"><a id="wtNavigate" class="wt-primary" target="_blank" rel="noopener noreferrer" aria-disabled="true">Choose a destination →</a><small id="wtDirectionsHint">Turn-by-turn directions open in Google Maps.</small></div>
+    <details id="wtOptions" class="wt-options"><summary>Trip details <span>Dates, travelers &amp; stays</span></summary><div class="wt-fields">      <label class="wt-field"><span>Departure</span><input id="wtDeparture" name="departure" type="date"></label>
       <label class="wt-field"><span>Travelers</span><select id="wtTravelers" name="travelers">${Array.from({ length:16 }, (_,i) => `<option value="${i+1}">${i+1} ${i ? 'travelers':'traveler'}</option>`).join('')}</select></label>
     </div>
     <div class="wt-date-row"><button type="button" id="wtSwap" aria-label="Swap origin and destination">Swap places ⇄</button><button type="button" id="wtAddReturn" aria-expanded="false">Add return date</button><label class="wt-field wt-return" id="wtReturnField" hidden><span>Return</span><input id="wtReturning" type="date" name="returning"></label></div>
-    <nav class="wt-toolbar" aria-label="Journey transport">
-      ${['flight','train','drive','stay'].map(m => `<button type="button" data-travel-kind="${m}" ${m !== 'stay' ? `aria-pressed="${m === 'flight'}"` : ''}>${icon(m)}${labels[m]}</button>`).join('')}
-      <button type="button" id="wtMore" aria-expanded="false" aria-controls="wtMoreModes">••• More</button>
-    </nav>
-    <nav id="wtMoreModes" class="wt-toolbar" aria-label="More transport" hidden>${['transit','walk','cycle'].map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="false">${icon(m)}${labels[m]}</button>`).join('')}</nav>
+    </details>
     <div id="wtItinerary"></div>
     <details class="wt-details" id="wtDetails"><summary>Airports, stations &amp; final address</summary><div class="wt-fields">
       <label class="wt-field"><span>Departure airport or station</span><input id="wtDepartureHub" name="departureHub" maxlength="240" placeholder="Choose your departure point"></label>
       <label class="wt-field"><span>Arrival airport or station</span><input id="wtArrivalHub" name="arrivalHub" maxlength="240" placeholder="Choose your arrival point"></label>
       <label class="wt-field"><span>Your stay or final address</span><input id="wtStay" name="stay" maxlength="240" placeholder="Hotel, address or place name"></label>
     </div></details>
-    <div class="wt-actions"><button class="wt-primary" type="submit">Plan journey <span aria-hidden="true">→</span></button><button id="wtSave" type="button">Save journey</button></div>
+    <div class="wt-actions"><button class="wt-primary" id="wtPlan" type="submit">Plan journey <span aria-hidden="true">→</span></button><button id="wtSave" type="button">Save journey</button></div>
   </form>
   <div class="wt-footer"><p id="wtSaveHint">Sign in to save. Explore freely.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
-  <p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
+  <p class="wt-attribution">Address search: <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">Photon</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></p><p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
 
+$('wtOptions').append($('wtDetails'));
 const search = document.createElement('form');
 search.className = 'wt-search'; search.setAttribute('role','search');search.setAttribute('data-private','');
-search.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input id="wtSearch" type="search" aria-label="Search destinations" placeholder="Search places, routes, stays" maxlength="240" autocomplete="off"><div class="wt-suggest" id="wtSearchResults" hidden></div>';
-$('mnSearch').before(search);
+search.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input id="wtSearch" type="search" aria-label="Search destinations" placeholder="Where do you want to go?" maxlength="240" autocomplete="off"><div class="wt-suggest" id="wtSearchResults" hidden></div>';
+$('mnWorld').append(search);
 
 const dialog = document.createElement('dialog'); dialog.className='wt-saved'; dialog.id='wtSavedDialog'; dialog.setAttribute('aria-labelledby','wtSavedTitle');
 dialog.setAttribute('data-private','');
@@ -79,8 +89,19 @@ function renderGlobe(fly=false) {
   const dest=$('wtDestination');dest.hidden=currentMode!=='travel'||!draft.to;
   if(draft.to){dest.replaceChildren();const title=document.createElement('strong'),sub=document.createElement('small');title.textContent=draft.to.label.split(',')[0];sub.textContent=draft.to.label.split(',').slice(1).join(',').trim()||'Your destination';dest.append(title,sub);}
 }
+function renderDirections() {
+  const ground = ['drive','walk','cycle','transit'].includes(draft.mode);
+  const go = $('wtNavigate'); $('wtDirections').hidden = !ground; $('wtPlan').hidden = ground;
+  $('wtOptions').classList.toggle('wt-options--local',ground);
+  if (!draft.to) { go.removeAttribute('href');go.setAttribute('aria-disabled','true');go.textContent='Choose a destination →';return; }
+  go.href=directionsLink({provider:'google',origin:asPlace(draft.from),destination:asPlace(draft.to),mode:{drive:'driving',walk:'walking',cycle:'cycling',transit:'transit'}[draft.mode]||'driving',navigate:true});
+  go.setAttribute('aria-disabled','false');go.textContent='Start directions ↗';
+  $('wtDirectionsHint').textContent=draft.from?'Directions from your starting point · opens Google Maps.':'Google Maps will ask for your starting point.';
+}
 function renderItinerary() {
+  renderDirections();
   const legs=itinerary(draft), box=$('wtItinerary');
+  if(['drive','walk','cycle','transit'].includes(draft.mode)){box.replaceChildren();return;}
   if(!legs.length){box.innerHTML='<div class="wt-empty"><h3>Where will the world take you?</h3><p>Pick a destination. Bring every part of your trip together, from your front door to your next place to stay.</p><div class="wt-inspiration" aria-label="Explore a destination"><button type="button" data-inspiration="Lisbon">Lisbon ↗</button><button type="button" data-inspiration="Accra">Accra ↗</button><button type="button" data-inspiration="Tokyo">Tokyo ↗</button></div></div>';return;}
   box.innerHTML='<div class="wt-legs">'+legs.map(l=>{
     const a=legAction(draft,l.id), label=a.type==='edit'?'Add details':a.type==='directions'?'Directions ↗':l.kind==='stay'?'Explore stays ↗':`Search ${l.kind==='flight'?'flights':'trains'} ↗`;
@@ -97,20 +118,28 @@ function syncInputs() {
   renderItinerary();renderGlobe();
 }
 function choosePlace(key,row) {
-  draft=read();draft[key]={label:row.label,coordinates:row.coordinates};changed();syncInputs();renderGlobe(true);
+  draft=read();draft[key]=['from','to'].includes(key)?{label:row.label,coordinates:row.coordinates}:row.label;changed();syncInputs();renderGlobe(true);
 }
 function autocomplete(id, resultId, key) {
-  const input=$(id), results=$(resultId);let seq=0;
+  const input=$(id), results=$(resultId);let seq=0,timer;
   input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls',resultId);input.setAttribute('aria-expanded','false');results.setAttribute('role','listbox');
-  const close=()=>{seq++;results.hidden=true;input.setAttribute('aria-expanded','false');};
-  input.addEventListener('input',async()=>{
-    const request=++seq,q=input.value;results.hidden=true;input.setAttribute('aria-expanded','false');
-    if(q.trim().length<2)return;
-    try{const rows=await catalog();if(request!==seq||input.value!==q||currentMode!=='travel')return;
-      const matches=searchCities(rows,q);results.replaceChildren();
-      matches.forEach(row=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','option');b.textContent=row.label;b.onclick=()=>{try{choosePlace(key,row);if(id==='wtSearch')input.value=row.label;close();input.focus();}catch(e){status(e.message);}};results.append(b);});
-      results.hidden=!matches.length;input.setAttribute('aria-expanded',String(!!matches.length));
-    }catch(e){if(request===seq)status(e.message);}
+  const close=()=>{seq++;clearTimeout(timer);results.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-busy');};
+  input.addEventListener('input',()=>{
+    close();addressController?.abort();addressController=new AbortController();const signal=addressController.signal;
+    const request=seq,q=input.value.trim();if(q.length<3)return;
+    timer=setTimeout(async()=>{
+      input.setAttribute('aria-busy','true');
+      try{
+        let matches, fallback=false;
+        try{matches=await addressSearch(q,signal);}catch(e){if(signal.aborted)return;matches=searchCities(await catalog(),q);fallback=true;}
+        if(request!==seq||input.value.trim()!==q||currentMode!=='travel'||signal.aborted)return;
+        results.replaceChildren();
+        for(const row of matches){const b=document.createElement('button');b.type='button';b.setAttribute('role','option');b.textContent=row.label;b.onclick=()=>{try{choosePlace(key,row);if(id==='wtSearch')input.value=row.label;close();input.focus();}catch(e){status(e.message);}};results.append(b);}
+        if(fallback||!matches.length){const note=document.createElement('small');note.className='wt-search-note';note.textContent=fallback?'Address search is unavailable. City matches are shown; you can also enter a full address.':'No matching address yet. Add the city or postal code, or use your typed address for directions.';results.append(note);}
+        results.hidden=false;input.setAttribute('aria-expanded','true');
+      }catch(e){if(request===seq&&!signal.aborted)status('Address suggestions are unavailable. Enter a complete address for directions.');}
+      finally{if(request===seq)input.removeAttribute('aria-busy');}
+    },650);
   });
   input.addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&!results.hidden){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Escape'){e.preventDefault();close();}});
   results.addEventListener('keydown',e=>{const buttons=[...results.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Escape'].includes(e.key)){e.preventDefault();if(e.key==='Escape'){close();input.focus();}else buttons[(i+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();}});
@@ -118,7 +147,33 @@ function autocomplete(id, resultId, key) {
   input.addEventListener('focusout',e=>{if(e.relatedTarget&&!results.contains(e.relatedTarget))close();});
   results.addEventListener('focusout',e=>{if(e.relatedTarget!==input&&!results.contains(e.relatedTarget))close();});
 }
-autocomplete('wtFrom','wtFromResults','from');autocomplete('wtTo','wtToResults','to');autocomplete('wtSearch','wtSearchResults','to');
+for(const [id,key] of [['wtFrom','from'],['wtTo','to'],['wtSearch','to'],['wtDepartureHub','departureHub'],['wtArrivalHub','arrivalHub'],['wtStay','stay']]){
+  let results=$(id+'Results');if(!results){results=document.createElement('span');results.id=id+'Results';results.className='wt-suggest';results.hidden=true;$(id).after(results);$(id).autocomplete='off';}
+  autocomplete(id,results.id,key);
+}
+let locating=false, autoLocated=false;
+async function locate() {
+  if(locating)return;locating=true;autoLocated=true;
+  const initial=$('wtFrom').value,initialId=savedId,initialRevision=revision;
+  $('wtLocate').disabled=true;$('wtLocationStatus').textContent='Finding your starting point…';
+  try{
+    const coordinates=await currentPosition();
+    if($('wtFrom').value!==initial||savedId!==initialId||revision!==initialRevision){$('wtLocationStatus').textContent='Your entered trip was kept. Tap location to use your current position.';return;}
+    choosePlace('from',{label:'Current location',coordinates});
+    $('wtLocationStatus').textContent='Starting from your current location.';
+  }catch(e){$('wtLocationStatus').textContent=e.message;}
+  finally{locating=false;$('wtLocate').disabled=false;}
+}
+function autoLocate(){
+  if(autoLocated||currentMode!=='travel'||!root.classList.contains('mn-world-on')||draft.from||!window.MCC_PRIVACY?.accepted?.())return;
+  autoLocated=true;
+  try{if(sessionStorage.getItem('wt_location_asked'))return;sessionStorage.setItem('wt_location_asked','1');}catch{}
+  void locate();
+}
+$('wtLocate').onclick=()=>void locate();
+$('wtNavigate').onclick=e=>{if(!$('wtNavigate').hasAttribute('href')){e.preventDefault();$('wtTo').focus();}};
+new MutationObserver(autoLocate).observe(root,{attributes:true,attributeFilter:['class']});
+
 search.onsubmit=e=>{e.preventDefault();try{const label=$('wtSearch').value.trim();if(label){choosePlace('to',{label,coordinates:draft.to?.label===label?draft.to.coordinates:null});$('wtSearchResults').hidden=true;$('wtFrom').focus();}}catch(err){status(err.message);}};
 
 function setMode(mode) {
@@ -128,7 +183,7 @@ function setMode(mode) {
   root.classList.remove('hu-search-open');$('huSearchToggle').setAttribute('aria-expanded','false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.worldMode===mode)));
   document.querySelectorAll('.wt-suggest').forEach(el=>el.hidden=true);
-  $('mnWorldFeed').scrollTop=0;renderGlobe();
+  $('mnWorldFeed').scrollTop=0;renderGlobe();autoLocate();
 }
 window.MCC_WORLD_MODE={set:setMode,get:()=>currentMode};
 const modeButtons=[...document.querySelectorAll('.wt-world-modes button')];
@@ -144,15 +199,20 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==
 });
 
 $('wtForm').addEventListener('input',e=>{changed();if(e.target.id==='wtDeparture')$('wtReturning').min=e.target.value;try{draft=read();renderItinerary();renderGlobe();}catch(err){status(err.message);}});
-$('wtForm').onsubmit=e=>{e.preventDefault();try{draft=read();renderItinerary();renderGlobe(true);status('Your draft is ready. Add the airport, station or stay details as you choose them.');$('wtItinerary').scrollIntoView({block:'nearest',behavior:'auto'});}catch(err){status(err.message);}};
+function requireEndpoints(action){
+  const missing=!draft.from?'From':!draft.to?'To':null;
+  if(!missing)return true;
+  status(`Add ${missing==='From'?'a starting point':'a destination'} before ${action}.`);$('wt'+missing).focus();return false;
+}
+$('wtForm').onsubmit=e=>{e.preventDefault();try{draft=read();if(!requireEndpoints('planning this journey'))return;renderItinerary();renderGlobe(true);status('Your draft is ready. Add the airport, station or stay details as you choose them.');$('wtItinerary').scrollIntoView({block:'nearest',behavior:'auto'});}catch(err){status(err.message);}};
 $('wtSwap').onclick=()=>{try{draft=read();[draft.from,draft.to]=[draft.to,draft.from];[draft.departureHub,draft.arrivalHub]=[draft.arrivalHub,draft.departureHub];draft.stay='';changed();syncInputs();renderGlobe(true);}catch(e){status(e.message);}};
 $('wtAddReturn').onclick=()=>{const show=$('wtReturnField').hidden;$('wtReturnField').hidden=!show;$('wtAddReturn').textContent=show?'Remove return':'Add return date';$('wtAddReturn').setAttribute('aria-expanded',String(show));if(show)$('wtReturning').focus();else{$('wtReturning').value='';draft.returning='';changed();renderItinerary();}};
 $('wtMore').onclick=()=>{const show=$('wtMoreModes').hidden;$('wtMoreModes').hidden=!show;$('wtMore').setAttribute('aria-expanded',String(show));};
-function editField(key){const ids={from:'wtFrom',departureHub:'wtDepartureHub',arrivalHub:'wtArrivalHub',stay:'wtStay'};if(key!=='from')$('wtDetails').open=true;$(ids[key]||'wtFrom').focus();}
+function editField(key){const ids={from:'wtFrom',departureHub:'wtDepartureHub',arrivalHub:'wtArrivalHub',stay:'wtStay'};if(key!=='from'){$('wtOptions').open=true;$('wtDetails').open=true;}$(ids[key]||'wtFrom').focus();}
 panel.addEventListener('click',async e=>{
   const mode=e.target.closest('[data-travel-kind]'),edit=e.target.closest('[data-edit]'),inspiration=e.target.closest('[data-inspiration]');
   try{
-    if(mode){if(mode.dataset.travelKind==='stay'){editField('stay');return;}draft=read();draft.mode=mode.dataset.travelKind;changed();syncInputs();}
+    if(mode){if(mode.dataset.travelKind==='stay'){editField('stay');return;}draft=read();draft.mode=mode.dataset.travelKind;$('wtOptions').open=['flight','train'].includes(draft.mode);changed();syncInputs();}
     if(edit)editField(edit.dataset.edit);
     if(inspiration){const rows=await catalog(),row=searchCities(rows,inspiration.dataset.inspiration,1)[0];if(row){choosePlace('to',row);$('wtFrom').focus();}}
   }catch(err){status(err.message);}
@@ -166,7 +226,7 @@ const signIn=()=>{$('mnGuestSignIn').click();};
 const store=()=>journeyStore(window.MCC_SUPA);
 $('wtSave').onclick=async()=>{
   if(busy)return;if(!account()){signIn();return;}
-  try{draft=read();if(!draft.from||!draft.to){$('wtForm').reportValidity();return;}
+  try{draft=read();if(!requireEndpoints('saving your journey')||!$('wtForm').reportValidity())return;
     busy=true;$('wtSave').disabled=true;status('Saving your private draft…');const owner=account(),version=revision;
     const row=await store().save(draft,savedId);if(account()!==owner)return;
     savedId=row.id;dirty=version!==revision;$('wtDraftStatus').textContent=dirty?'Unsaved':'Saved';status(dirty?'Earlier changes saved. Save again to include your latest edits.':'Saved to your account. Your journey is private.');
@@ -184,12 +244,14 @@ $('wtSaved').onclick=async()=>{
   }catch(e){if(n===listRequest)$('wtSavedMessage').textContent=e.message;}
 };
 dialog.addEventListener('close',()=>{listRequest++;$('wtSavedList').replaceChildren();});
-$('wtNew').onclick=()=>{if(dirty&&!window.confirm('Start a new journey and discard your unsaved changes?'))return;draft=normalizeJourney();savedId=null;dirty=false;revision++;syncInputs();$('wtDraftStatus').textContent='Draft';dialog.close();status();};
+$('wtNew').onclick=()=>{if(dirty&&!window.confirm('Start a new journey and discard your unsaved changes?'))return;draft=freshDraft();savedId=null;dirty=false;revision++;syncInputs();$('wtDraftStatus').textContent='Draft';dialog.close();status();};
 let lastOwner=account();
-function sessionChanged(){const owner=account();$('wtSaveHint').textContent=owner?'Your saved journeys are private.':'Sign in to save. Explore freely.';if(lastOwner&&owner!==lastOwner){savedId=null;draft=normalizeJourney();dirty=false;revision++;syncInputs();dialog.close();$('wtDraftStatus').textContent='Draft';status();}lastOwner=owner;}
+function sessionChanged(){const owner=account();$('wtSaveHint').textContent=owner?'Your saved journeys are private.':'Sign in to save. Explore freely.';if(lastOwner&&owner!==lastOwner){savedId=null;draft=freshDraft();dirty=false;revision++;syncInputs();dialog.close();$('wtDraftStatus').textContent='Draft';status();}lastOwner=owner;}
 window.addEventListener('storage',sessionChanged);window.addEventListener('mcc:auth',sessionChanged);
 new MutationObserver(sessionChanged).observe(root,{attributes:true,attributeFilter:['class']});
 window.addEventListener('beforeunload',e=>{if(dirty&&draft.from&&draft.to){e.preventDefault();e.returnValue='';}});
 syncInputs();sessionChanged();
 const query=new URLSearchParams(location.search);setMode(query.has('mission')?'missions':query.has('song')?'posts':'travel');
 send({type:'hu:hello'});
+
+autoLocate();

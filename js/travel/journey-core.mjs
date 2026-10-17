@@ -34,7 +34,7 @@ export function journeyTitle(input) {
   const d = normalizeJourney(input);
   return d.to ? `${d.from?.label || 'Your journey'} → ${d.to.label}` : 'Your next journey';
 }
-const asPlace = p => p?.label ? { query: p.label } : p ? { query: p } : null;
+export const asPlace = p => p?.coordinates ? { coordinates: p.coordinates } : p?.label ? { query: p.label } : p ? { query: p } : null;
 export function itinerary(input) {
   const d = normalizeJourney(input), longDistance = ['flight', 'train'].includes(d.mode);
   const gateway = d.mode === 'flight' ? 'airport' : 'station';
@@ -59,7 +59,7 @@ export function legAction(input, id) {
   // An explicit search handoff, not an inventory, fare or booking API.
   const url = new URL('https://www.google.com/search');
   const q = l.kind === 'stay' ? (d.stay || `places to stay in ${d.to.label}`)
-    : `${l.kind === 'flight' ? 'flights' : 'trains'} from ${l.origin.query} to ${l.destination.query} ${d.departure} ${d.returning} ${d.travelers} travelers`;
+    : `${l.kind === 'flight' ? 'flights' : 'trains'} from ${d.departureHub || d.from.label} to ${d.arrivalHub || d.to.label} ${d.departure} ${d.returning} ${d.travelers} travelers`;
   url.searchParams.set('q', q.trim());
   return { type: 'search', url: url.href };
 }

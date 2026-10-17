@@ -14,7 +14,7 @@ test('a whole trip does not invent airports; only explicit endpoints produce a r
   let d=draft();assert.equal(itinerary(d).length,4);assert.deepEqual(legAction(d,'departure'),{type:'edit',field:'departureHub'});
   assert.equal(legAction(d,'main').type,'search');assert.match(legAction(d,'main').url,/google.com\/search/);
   d=normalizeJourney({...d,departureHub:'JFK Terminal 4',arrivalHub:'Lisbon airport',stay:'My hotel, Lisbon'});
-  const ride=new URL(legAction(d,'departure').url);assert.equal(ride.searchParams.get('origin'),'New Haven');assert.equal(ride.searchParams.get('destination'),'JFK Terminal 4');assert.equal(ride.searchParams.get('travelmode'),'driving');
+  const ride=new URL(legAction(d,'departure').url);assert.equal(ride.searchParams.get('origin'),'41.33,-72.9');assert.equal(ride.searchParams.get('destination'),'JFK Terminal 4');assert.equal(ride.searchParams.get('travelmode'),'driving');
   assert.equal(new URL(legAction(d,'arrival').url).searchParams.get('destination'),'My hotel, Lisbon');
   assert.equal(legAction({...d,mode:'train'},'main').type,'search');
   assert.equal(new URL(legAction({...d,mode:'walk'},'main').url).searchParams.get('travelmode'),'walking');
