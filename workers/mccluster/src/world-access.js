@@ -1,5 +1,6 @@
-/* Supersedes the older account ladder for optional layers: every non-owner
-   receives no optional globe layer until a reviewed release policy enables it. */
+/* Supersedes the older account ladder: optional data stays internal to the
+   intelligence system. Every non-owner receives no optional globe layer;
+   admin_preview is an operator-only wire value, not a future customer unlock. */
 import { globeRelease, GLOBE_RELEASE_VERSION } from '../../../packages/release-policy/globe.mjs';
 import { reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
@@ -16,13 +17,13 @@ export const LAYER_RULES = Object.freeze({
   flights: { min: 'public', label: 'Flights' },
   satellites: { min: 'fan', label: 'Satellites' },
   launches: { min: 'fan', label: 'Space missions' },
-  /* /v1/intel/geo (INTEL-TO-MISSION-CANON.md §5): the API serves a public audience too, but only ONE layer is free */
+  /* The canonical router restricts /v1/intel/geo to internal operator access. */
   intel: { min: 'fan', label: 'Intel events' },
   music: { min: 'fan', label: 'Music' },
   cctv: { min: 'fan', cctv: true, label: 'CCTV' },
   audience: { min: 'creator_business', label: 'Your audience' },
-  /* Whip Equipped LLC is Matthew McCluster's separate company, not a McCluster Corp brand. Any signed-in member may
-     open it; rides are not live yet, so opening it says so and asks drivers (or people who know one) to sign up. */
+  /* Whip Equipped LLC is Matthew McCluster's separate company. This legacy
+     globe adapter is operator-only; rides are not live. */
   transport: { min: 'fan', label: 'Whip Equipped transport', operator: 'Whip Equipped LLC', service_live: false, driver_signup_url: WHIP_DRIVER_SIGNUP_URL }
 });
 

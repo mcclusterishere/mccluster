@@ -38,6 +38,22 @@ Application approval, introduction video, resume, motivation, tax paperwork
 and payout readiness remain the separate mission-application requirements;
 this visual implementation does not claim to implement that backend.
 
+## Internal intelligence boundary — owner clarification, October 16, 2026
+
+Flight and satellite positions, vehicle telemetry, CCTV and Hitman's Halo feeds
+belong to the internal intelligence system for ingestion and analysis. They are
+not public globe features, future membership unlocks or paid customer tiers.
+This supersedes the earlier idea of offering those layers to signed-in users.
+Guests, ordinary members, creators and business accounts must have neither
+controls for these feeds nor access through the globe APIs. Verified operators
+retain internal access under the existing privacy and authorization checks.
+
+The policy's `admin_preview` name is retained for wire compatibility; it means
+internal operator access, not an announced public release. General modular
+feature publishing must not make these intelligence feeds customer products.
+The user-facing World remains focused on curated missions and the community.
+This boundary does not claim that every provider or learning pipeline is built.
+
 ## Verification
 
 Run repository contracts with `node --test scripts/test/*.test.mjs`.
