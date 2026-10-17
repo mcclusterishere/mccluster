@@ -78,9 +78,6 @@ body[data-control-workspace] .cw-actions .cr-org__label{display:none}
 body[data-control-workspace] .cw-actions .cr-org__select{max-width:140px;min-width:0;min-height:44px;font-size:16px}
 @media(min-width:960px){body[data-control-workspace][data-cw-page="intelligence"] #crSurface,body[data-control-workspace][data-cw-page="intelligence"] #crAnalyticsMount{height:100%;min-height:0}}
 
-/* The owner identity is already stated in the new header. Avoid the old
-   floating auth chip covering its Account control; the shared dock is intact. */
-body[data-control-workspace] #mccAuthChip{display:none!important}
 body[data-cw-blocked="true"] #crPalette,body[data-cw-blocked="true"] #crAccountMenu{display:none!important}
 .cw-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .cw-header{padding:12px 16px;gap:8px}

@@ -442,13 +442,12 @@
     var style = document.createElement("style");
     style.id = "mccAuthStateStyle";
     style.textContent =
-      ".mcc-auth-chip{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(5.45rem + env(safe-area-inset-bottom));z-index:999;display:flex;align-items:center;gap:.42rem;max-width:min(72vw,18rem);padding:.42rem .62rem;border:1px solid rgba(244,239,230,.18);border-radius:999px;background:rgba(14,14,15,.88);backdrop-filter:blur(14px);color:rgba(244,239,230,.78);text-decoration:none;font:700 .68rem/1.1 var(--ui,system-ui);box-shadow:0 8px 24px rgba(0,0,0,.2)}"+
+      ".mcc-auth-chip{position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));bottom:auto;z-index:999;display:flex;align-items:center;justify-content:center;gap:.42rem;min-width:44px;min-height:44px;max-width:104px;padding:8px 12px;box-sizing:border-box;border:1px solid rgba(244,239,230,.18);border-radius:999px;background:#161619;color:#f4efe6;text-decoration:none;font:600 12px/1.1 var(--ui,system-ui);box-shadow:0 8px 24px rgba(0,0,0,.2)}"+
       ".mcc-auth-chip__dot{width:.46rem;height:.46rem;border-radius:50%;background:#787878;box-shadow:0 0 0 3px rgba(255,255,255,.04)}"+
       ".mcc-auth-in .mcc-auth-chip{color:var(--cream,#f4efe6);border-color:rgba(229,56,59,.42)}"+
       ".mcc-auth-in .mcc-auth-chip__dot{background:#6fd584;box-shadow:0 0 0 3px rgba(111,213,132,.11)}"+
       ".mcc-auth-in .appbar [data-appnav=profile]{color:var(--cream,#f4efe6)}"+
-      ".mcc-auth-in .appbar [data-appnav=profile]::after{content:'';position:absolute;top:.34rem;right:calc(50% - .9rem);width:.42rem;height:.42rem;border-radius:50%;background:#6fd584;box-shadow:0 0 0 2px rgba(14,14,15,.9)}"+
-      "@media(max-width:420px){.mcc-auth-chip{bottom:calc(5.15rem + env(safe-area-inset-bottom));font-size:.62rem;padding:.38rem .55rem}}";
+      ".mcc-auth-in .appbar [data-appnav=profile]::after{content:'';position:absolute;top:.34rem;right:calc(50% - .9rem);width:.42rem;height:.42rem;border-radius:50%;background:#6fd584;box-shadow:0 0 0 2px rgba(14,14,15,.9)}";
     document.head.appendChild(style);
   }
   function paintAuthState(signedIn, user, verified) {
@@ -498,8 +497,8 @@
       document.body.appendChild(chip);
     }
     chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
-    chip.querySelector(".mcc-auth-chip__text").textContent =
-      signedIn ? (ADMIN_ON ? "Admin" : ("Signed in · " + name)) : "Guest · Sign in";
+    chip.querySelector(".mcc-auth-chip__text").textContent = signedIn ? "Profile" : "Sign in";
+    chip.setAttribute("aria-label", signedIn ? "Profile and account: " + name : "Sign in or create an account");
     window.MCC_AUTH_STATE = AUTH_STATE;
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
     if (!wingOn) HOME_BAR = dock.innerHTML;
@@ -510,15 +509,16 @@
      own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
      Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
      and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
-     session only (sessionStorage, ten minutes, tied to the signed-in user), so a page view does not re-run the owner's
-     status counts; a stale "yes" opens nothing by itself, because every Control Room read is checked again by the Worker.
+     session only for negative answers (sessionStorage, one minute, tied to the user).
+     Owner access is rechecked on each page and whenever the destination panel opens.
 
      INTEGRATION POINT for other bar add-ons (e.g. the member Desk tab, PR #457): when this bar is on, the dock carries
      class "appbar--admin" and body carries data-appbar-admin; an add-on that would add a sixth column checks
        if (dock.classList.contains("appbar--admin")) return null;
      and lives under Home instead (the Control Room's account menu links the Desk: mnet.html?view=feed&desk). The
      "mcc:appbar-admin" event fires whenever this changes. */
-  var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 600000, ADMIN_ON = false, BASE_BAR = null;
+  var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 60000, ADMIN_ON = false, BASE_BAR = null;
+  var adminEpoch = 0, authEpoch = 0, adminSession = null;
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
@@ -554,29 +554,40 @@
     paintPerspective();
     markAdminHere();
     var chipText = document.querySelector("#mccAuthChip .mcc-auth-chip__text");
-    if (chipText && AUTH_STATE.signed_in) chipText.textContent = on ? "Admin" : "Signed in · " + authDisplay(AUTH_STATE.user, {});
+    if (chipText && AUTH_STATE.signed_in) chipText.textContent = "Profile";
     HOME_BAR = dock.innerHTML;
     try { paintSound(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("mcc:appbar-admin", { detail: { admin: on } })); } catch (e) {}
   }
   function readAdminMemo(sub) {
-    try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.sub === sub && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
+    try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.admin === false && m.sub === sub && Date.now() >= m.at && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
   }
-  function checkAdmin() {
+  function checkAdmin(force) {
+    var attempt = ++adminEpoch;
     var session = readAuthSession();
     var token = session && session.access_token, sub = token ? jwtPayload(token).sub : null;
-    if (!AUTH_STATE.signed_in || !token || !sub) { try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
-    var memo = readAdminMemo(sub);
+    if (!AUTH_STATE.signed_in || !token || !sub) { adminSession = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    var memo = !force && readAdminMemo(sub);
     if (memo) { paintAdmin(memo.admin); return Promise.resolve(memo.admin); }
-    return fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store" })
+    var controller = new AbortController(), timeout = setTimeout(function () { controller.abort(); }, 5000);
+    function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && (readAuthSession() || {}).access_token === token; }
+    return fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
       .then(function (r) {
-        /* only a definite answer is remembered: 200 is the owner, 401/403 is not; anything else changes nothing */
+        if (!current()) return false;
+        /* Only definite answers are cached. An unavailable authority closes navigation. */
         if (r.ok || r.status === 401 || r.status === 403) {
-          try { sessionStorage.setItem(ADMIN_KEY, JSON.stringify({ sub: sub, at: Date.now(), admin: r.ok })); } catch (e) {}
-          paintAdmin(r.ok);
+          try {
+            if (r.ok) sessionStorage.removeItem(ADMIN_KEY);
+            else sessionStorage.setItem(ADMIN_KEY, JSON.stringify({ sub: sub, at: Date.now(), admin: r.ok }));
+          } catch (e) {}
+        } else {
+          try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {}
         }
+        adminSession = r.ok ? token : null;
+        paintAdmin(r.ok);
         return r.ok;
-      }).catch(function () { return ADMIN_ON; });
+      }).catch(function () { if (current()) { paintAdmin(false); try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} } return false; })
+      .finally(function () { clearTimeout(timeout); });
   }
   window.addEventListener("hashchange", markAdminHere);
   function loadCanonicalAuth() {
@@ -598,7 +609,10 @@
     });
   }
   function refreshAuthState() {
+    var attempt = ++authEpoch;
+    ++adminEpoch;
     var session = readAuthSession();
+    if (!session || session.access_token !== adminSession) paintAdmin(false);
     if (!session || !session.access_token) {
       paintAuthState(false, null, true);
       paintAdmin(false);
@@ -611,10 +625,15 @@
       if (!mcc || typeof mcc.user !== "function") throw new Error("Auth unavailable");
       return mcc.user();
     }).then(function (user) {
+      if (attempt !== authEpoch) return AUTH_STATE;
+      // Canonical auth may refresh the token while fetching the user. Verify
+      // the new session instead of accepting an old result or leaving it pending.
+      if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
       paintAuthState(!!user, user, true);
       checkAdmin();
       return AUTH_STATE;
     }).catch(function () {
+      if (attempt !== authEpoch) return AUTH_STATE;
       paintAuthState(false, null, true);
       paintAdmin(false);
       return AUTH_STATE;
@@ -832,7 +851,8 @@
   function onPage(dest) {
     if (!dest) return false;
     try {
-      return samePath(new URL(dest, location.href).pathname) === samePath(location.pathname);
+      var target = new URL(dest, location.href);
+      return target.origin === location.origin && samePath(target.pathname) === samePath(location.pathname);
     } catch (e) { return false; }
   }
 
@@ -852,7 +872,7 @@
     unpeek();
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
-    if (url && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
+    if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
       veilOff(); revert();
       if (url.hash) location.hash = url.hash;
       else window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1038,8 +1058,18 @@
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
-    admin: function () { return ADMIN_ON; }
+    admin: function () { return ADMIN_ON; },
+    verifyAdmin: function () { return checkAdmin(true); },
+    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); }})
   };
+  // One shared implementation on every page carrying the bar, including nested rooms.
+  var navigationStyle = document.createElement("link");
+  navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=__STAMP__";
+  navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; };
+  document.head.appendChild(navigationStyle);
+  var navigationScript = document.createElement("script");
+  navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
+  document.head.appendChild(navigationScript);
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 
 })();
