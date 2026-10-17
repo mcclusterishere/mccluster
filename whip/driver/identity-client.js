@@ -1,7 +1,7 @@
 (() => {
   const SESSION_KEY='we-driver-session';
   const getSession=()=>JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
-  const apiBase=()=>((new URLSearchParams(location.search).get('api')||localStorage.getItem('we-api-base')||'https://api.mccluster.org').replace(/\/$/,''));
+  const apiBase=()=> 'https://api.mccluster.org';
   let stripePromise=null;
   function loadStripe(){
     if(window.Stripe)return Promise.resolve(window.Stripe);
