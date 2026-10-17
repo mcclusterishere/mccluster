@@ -302,6 +302,16 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   await routeBackends(ctx, world, { member, creator, verified });
   const page = await ctx.newPage();
   const errors = [];
+  const archiveNetwork = [];
+  const archiveOutcome = (request, outcome, detail = {}) => {
+    const url = new URL(request.url());
+    if (url.pathname !== '/v1/action-archive/docket-516r-2025' && url.pathname !== '/data/action/docket-516r-archive.json') return;
+    archiveNetwork.push({ at: new Date().toISOString(), outcome, method: request.method(), url: url.origin + url.pathname, ...detail });
+  };
+  page.on('request', request => archiveOutcome(request, 'request'));
+  page.on('response', response => archiveOutcome(response.request(), 'response', { status: response.status(), contentType: response.headers()['content-type'] || null }));
+  page.on('requestfinished', request => archiveOutcome(request, 'finished'));
+  page.on('requestfailed', request => archiveOutcome(request, 'failed', { error: request.failure()?.errorText || null }));
   page.on('pageerror', (e) => errors.push(e.message));
   /* the globe catches its own start-up failure and only warns; that is still a failure here */
   page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
@@ -315,7 +325,7 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   const globe = page.frame({ url: /action-globe\.html/ });
   if (globe&&!noGlobe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  return { ctx, page, world, errors };
+  return { ctx, page, world, errors, archiveNetwork };
 }
 const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(r.path));
 
@@ -342,7 +352,7 @@ const waitForHeldTravelRoute = async (world, page) => {
 if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE||d.name===process.env.EDITORIAL_DEVICE)) {
   const member=device.name==='desktop',scope=`travel-${device.name}`;
   if(!runs(scope))continue;
-  const {ctx,page,world,errors}=await open(device,{member,travel:true});
+  const {ctx,page,world,errors,archiveNetwork}=await open(device,{member,travel:true});
   try{
     const globe=page.frame({url:/action-globe\.html/});
     check(scope,'Travel opens with location and destination; flights and extra fields stay tucked away',await page.getAttribute('html','data-world-mode')==='travel'&&await page.isVisible('#wtPlanner')&&await page.isHidden('#wtGroundOptions')&&await page.isHidden('#wtOptions')&&await page.isHidden('[data-travel-kind=flight]')&&await page.isHidden('#wtDirections'));
@@ -410,7 +420,40 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     await globe.waitForFunction(()=>!__huNavigation().travel&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible);
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
     check(scope,'Missions opens published missions and hides private navigation overlays',await page.isVisible('.mn-swipe__card[data-mission="'+M1+'"]')&&await page.isHidden('#wtPlanner')&&await globe.evaluate(()=>!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
-    await globe.waitForFunction(()=>__huCompletedMissions().on&&__huCompletedMissions().pins===1);
+    try {
+      await globe.waitForFunction(()=>__huCompletedMissions().on&&__huCompletedMissions().pins===1);
+    } catch (error) {
+      /* Preserve the original gate and failure. Each diagnostic read is bounded
+         and isolated so a stalled frame cannot erase the other evidence. */
+      const capture = async read => {
+        let timer;
+        try { return await Promise.race([Promise.resolve().then(read), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Diagnostic read timed out')), 5000); })]); }
+        catch (failure) { return { diagnostic_error: failure.message || String(failure) }; }
+        finally { clearTimeout(timer); }
+      };
+      const [parentState, globeState, screenshot] = await Promise.all([
+        capture(() => page.evaluate(() => ({
+          mode: document.documentElement.dataset.worldMode,
+          modeApi: window.MCC_WORLD_MODE?.get?.(),
+          showcaseAvailable: !!window.DocketCohortShowcase,
+          previewText: document.getElementById('mnCompletedMissions')?.innerText ?? null,
+          capstonePresent: !!document.getElementById('dcPreviewCapstone'),
+          caption: document.getElementById('mnWorldCaption')?.textContent ?? null,
+          visibility: document.visibilityState
+        }))),
+        capture(() => globe.evaluate(() => ({
+          completed: window.__huCompletedMissions?.(),
+          navigation: window.__huNavigation?.(),
+          settled: window.__huGlobeSettled?.(),
+          visibility: document.visibilityState
+        }))),
+        capture(async () => { const path = join(OUT, scope + '-completed-marker-failure.png'); await page.screenshot({ path, timeout: 4500 }); return path; })
+      ]);
+      const diagnostic = { scope, failure: error.message, parentState, globeState, archiveNetwork, archiveRequests: world.requests.filter(request => request.path.startsWith('/v1/action-archive/')), errors: errors.slice(), screenshot };
+      console.error('COMPLETED_MARKER_DIAGNOSTIC ' + JSON.stringify(diagnostic));
+      await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
+      throw error;
+    }
     check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('#dcPreviewCapstone')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
