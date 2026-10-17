@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 404,
-  "capability_source_count": 99,
-  "support_only_count": 305,
-  "checks_total": 1519,
-  "checks_passed": 1519,
+  "candidate_count": 412,
+  "capability_source_count": 104,
+  "support_only_count": 308,
+  "checks_total": 1546,
+  "checks_passed": 1546,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -56,6 +56,7 @@
     "assets/img/eu-favicon.png",
     "audit/2026-09-13-p0-supabase-containment.md",
     "catalogue.html",
+    "cohort-profile.html",
     "crm.html",
     "css/equity-uprise-app.css",
     "css/equity-uprise-institutional.css",
@@ -65,6 +66,7 @@
     "css/offers.css",
     "css/onboard.css",
     "css/style.css",
+    "data/action/docket-516r-archive.json",
     "data/albums.json",
     "data/analytics/application-schema-inventory.json",
     "data/brands.json",
@@ -92,6 +94,7 @@
     "demos/shiloh/data/impact.json",
     "desk.html",
     "docket-516.html",
+    "docket-516r-cohort.html",
     "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
     "docs/ACTION-NETWORK-SEVEN-GAP-AUDIT-2026-10-09.md",
     "docs/PRODUCT-ARCHITECTURE-ROADMAP.md",
@@ -173,8 +176,10 @@
     "index.html",
     "js/analytics-product.js",
     "js/chatfirst.js",
+    "js/cohort-profile.js",
     "js/control-room/clipping.js",
     "js/crm.js",
+    "js/docket-cohort-showcase.js",
     "js/equity-uprise-fellowship-live.js",
     "js/equity-uprise-institutional.js",
     "js/eu-api.js",
@@ -326,6 +331,8 @@
     "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
     "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
     "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
+    "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
+    "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -377,6 +384,7 @@
     "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
     "supabase/tests/action_bounty_claim_guard.stub.sql",
     "supabase/tests/action_mission_pins.stub.sql",
+    "supabase/tests/action_mission_reset.stub.sql",
     "supabase/tests/analytics_geo_audience.behaviour.sql",
     "supabase/tests/eu_platform_test.sql",
     "supabase/tests/identity_verification_levels.behaviour.sql",
@@ -418,7 +426,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "404 entries"
+      "detail": "412 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8007,6 +8015,141 @@
     },
     {
       "name": "data/analytics/application-schema-inventory.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "cohort-profile.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "cohort-profile.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "cohort-profile.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "data/action/docket-516r-archive.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "data/action/docket-516r-archive.json classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "data/action/docket-516r-archive.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docket-516r-cohort.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docket-516r-cohort.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "docket-516r-cohort.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/cohort-profile.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/cohort-profile.js classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "js/cohort-profile.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/docket-cohort-showcase.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/docket-cohort-showcase.js classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "js/docket-cohort-showcase.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261017164416_action_mission_reset_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_reset.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/action_mission_reset.stub.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "supabase/tests/action_mission_reset.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/action_mission_reset.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     }

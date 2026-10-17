@@ -65,10 +65,13 @@ const MISSIONS = [
   { mission_id: '33333333-3333-4333-8333-333333333333', title: 'Translate the shelter guide', description: 'Make the guide readable in three languages.', action_path: 'create', region_key: 'JP-13', region_label: 'Tokyo', latitude: 35.7, longitude: 139.7 },
 ];
 const STATS = [{ mission_id: M1, joined: 12, submitted: 3, verified: 9 }];
-/* an open mission with no pin (search must still find it), and a clip job (never a mission) */
+/* The table includes the pinned missions, an open mission without a pin
+   (search must still find it), and a clip job (never a mission card).
+   Public discovery requires an explicitly open status, just like the DB. */
 const OPEN_MISSIONS = [
-  { id: '44444444-4444-4444-8444-444444444441', title: 'Write to the river council', description: 'Ask for a cleanup budget.', domain: 'civic', kind: 'mission' },
-  { id: '44444444-4444-4444-8444-444444444442', title: 'Clip the river song', description: 'Paid clipping.', domain: 'music', kind: 'clip' },
+  ...MISSIONS.map((m) => ({ id: m.mission_id, campaign_id: 'camp-1', title: m.title, description: m.description, domain: m.action_path === 'create' ? 'creative' : 'community', discovery_category: m.action_path === 'create' ? 'create' : 'help', kind: 'mission', difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'desk', skills: ['field'], capacity: null, status: 'open', starts_at: null, ends_at: null })),
+  { id: '44444444-4444-4444-8444-444444444441', title: 'Write to the river council', description: 'Ask for a cleanup budget.', domain: 'advocacy', discovery_category: 'create', kind: 'mission', status: 'open' },
+  { id: '44444444-4444-4444-8444-444444444442', title: 'Clip the river song', description: 'Paid clipping.', domain: 'music', kind: 'clip', status: 'open' },
 ];
 const CLIPS = [{ mission_id: '44444444-4444-4444-8444-444444444442', title: 'Clip Docket 516R', base_cpm_cents: 300, platforms: ['instagram'] }];
 const GROUPS = [{ id: 'g1', slug: 'river-keepers', name: 'River Keepers', purpose: 'Keep the Mill River clean.', visibility: 'open', member_count: 14, joined: false }];
@@ -127,7 +130,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
-    if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = MISSIONS.find((x) => u.includes(x.mission_id)); return json(route, m ? [{ id: m.mission_id, campaign_id: 'camp-1', title: m.title, description: m.description, domain: 'civic', difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'desk', skills: ['field'], capacity: null, status: 'open', starts_at: null, ends_at: null }] : []); }
+    if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = OPEN_MISSIONS.find((x) => u.includes(x.id)); return json(route, m ? [m] : []); }
     if (u.includes('/rest/v1/action_missions?')) return json(route, OPEN_MISSIONS);
     if (u.includes('/rest/v1/action_mission_assignments?')) return json(route, []);
     /* the campaign's governed support rail is open for this fixture */
@@ -325,7 +328,9 @@ if(runs('travel')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_
     const dimensions=await page.evaluate(()=>{const r=document.documentElement,f=document.getElementById('mnWorldFeed'),g=document.getElementById('mnWorld'),before=g.getBoundingClientRect().top;f.scrollTop=130;return{sw:r.scrollWidth,cw:r.clientWidth,scroll:f.scrollTop,fixed:before===g.getBoundingClientRect().top,pageY:scrollY,minInput:Math.min(...[...document.querySelectorAll('#wtForm input')].filter(e=>e.offsetParent).map(e=>parseFloat(getComputedStyle(e).fontSize)))}});
     check(scope,'readable controls, no document overflow and stationary globe',dimensions.sw===dimensions.cw&&dimensions.fixed&&dimensions.pageY===0&&dimensions.minInput>=16,dimensions);
     await page.locator('#wtOptions').evaluate(e=>e.open=false);await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
-    await page.click('.wt-world-modes [data-world-mode=missions]');check(scope,'Missions opens real published missions',await page.isVisible('[data-hu-mission]')&&await page.isHidden('#wtPlanner'));
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    check(scope,'Missions opens real published missions',await page.isVisible('.mn-swipe__card[data-mission="'+M1+'"]')&&await page.isHidden('#wtPlanner'));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the draft',/Lisbon/.test(await page.inputValue('#wtTo')));
     if(member){
@@ -381,7 +386,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
   try {
     const globe = page.frame({url:/action-globe\.html/});
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
-    check(scope,'published missions populate the preview', await page.locator('[data-hu-mission]').count()===2);
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' missions to explore');
+    await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
     check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
@@ -410,7 +418,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
     check(scope,'search still finds a published mission',/Clean up the Mill River/.test(await page.textContent('#mnSuggestRows')));
     await page.keyboard.press('Escape');
-    // A visitor may browse another country before opening a worldwide preview.
+    // A visitor may browse another country before reading a worldwide mission.
     // Use the real country picker; a stale country filter must not swallow the choice.
     await globe.waitForFunction(()=>window.__huCountries?.().ready);
     await globe.evaluate(()=>window.__huCountriesCam.view(2,47,15000000));
@@ -421,10 +429,13 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
     await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.click('[data-hu-mission="'+M1+'"]');
+    await page.locator('.mn-swipe__card[data-mission="'+M1+'"] .mn-swipe__details').click();
+    await page.waitForSelector('#mnMissionDialog[open]');
+    check(scope,'Read full mission opens the canonical mission instructions',await page.textContent('#mnMissionTitle')===MISSIONS[0].title && (await page.textContent('#mnMissionDetail')).includes(MISSIONS[0].description));
+    await page.click('#mnMissionClose');
     await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
-    check(scope,'a mission preview outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
-    check(scope,'mission preview selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
+    check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
+    check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     await page.click('[data-hu-feed="community"]');
