@@ -149,15 +149,14 @@ test('new CSS is mobile first: min-width only, no max-width queries, controls at
   assert.match(ca, /\.cra-split\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
 });
 
-test('access map: one free layer for guests, every other layer visible but shaded, data-driven from /v1/world/access', async () => {
-  const [js, html] = await Promise.all([read('js/action-globe.js'), read('action-globe.html')]);
-  for (const id of ['ctlFlights', 'ctlSats', 'ctlLaunch', 'ctlMusic', 'ctlCctv', 'ctlTransport']) assert.match(html, new RegExp('<button id="' + id + '"(?![^>]*hidden)'), id + ' is on screen');
-  assert.match(js, /fetch\(API\+'\/v1\/world\/access'/);
-  assert.match(js, /if\(id==='flights'\)return null;if\(!sessionToken\(\)\)return\{id,reason:'sign_in_required'/, 'the fallback keeps Flights as the one free layer');
-  assert.match(js, /b\.hidden=false;b\.classList\.toggle\('is-locked',!!l\)/, 'locked layers are shaded, not hidden');
-  assert.match(js, /if\(l\.reason==='sign_in_required'\|\|!sessionToken\(\)\)\{tell\(\{type:'hu:ask-sign-in'/);
-  assert.doesNotMatch(html, /ctlTransport[^>]*McCluster/);
-  assert.match(js, /Music on the Earth needs a real place/);
+test('optional globe controls start hidden and require current server release authorization',async()=>{
+ const [js,html]=await Promise.all([read('js/action-globe.js'),read('action-globe.html')]);
+ for(const id of ['ctlFlights','ctlSats','ctlLaunch','ctlIntel','ctlMusic','ctlCctv','ctlTransport'])assert.ok(html.includes('id="'+id+'" hidden'));
+ assert.ok(js.includes("access.release?.version!=='globe-admin-preview/v1'"));
+ assert.ok(js.includes("accessToken!==sessionToken()"));
+ assert.ok(js.includes('b.hidden=ANALYTICS||!!l'));
+ assert.ok(js.includes("if(lockOf('intel'))return;const cells="));
+ assert.ok(js.includes("if(seq!==cctv.seq||lockOf('cctv'))return;"));
 });
 
 test('Whip Equipped: any signed-in member opens it; it says rides are not live and asks drivers to sign up with Whip', async () => {

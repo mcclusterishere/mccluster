@@ -1,3 +1,4 @@
+import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
@@ -127,6 +128,8 @@ export default {
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
     try {
+      const releaseDenied = await guardWorldRelease(request, env);
+      if (releaseDenied) return releaseDenied;
       if (path === '/health' && request.method === 'GET') {
         return reply(request, env, {
           ok: true,
@@ -152,8 +155,7 @@ export default {
         if (news) return news;
       }
 
-      /* the World's data layers: flights for everyone, satellites and
-         launches for members (./world-layers.js) */
+      /* Optional World layers: release guard above, then provider adapter. */
       if (path.startsWith('/v1/world/layers/')) {
         const layer = await handleWorldLayers(request, env);
         if (layer) return layer;

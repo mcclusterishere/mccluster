@@ -59,8 +59,8 @@ if(d.type==='hu:near-me'){const b=$('ctlLocate');if(b)b.click();return}
 /* a news card's "On the Earth" (js/mnet.js): the place a story MENTIONS. Anything can post a message, so the numbers are checked here too */
 if(d.type==='hu:focus-place'){if(viewer)focusPlace(d);return}
 /* the creator-only audience layer: the page says who may see the switch, and sends the points it fetched with the creator's own session */
-if(d.type==='hu:creator-mode'){const b=$('ctlAudience');if(b){b.hidden=!d.on;if(!d.on){b.setAttribute('aria-pressed','false');drawAudience([])}}return}
-if(d.type==='hu:audience-points'&&Array.isArray(d.points)&&viewer){drawAudience(d.points.slice(0,250));return}
+if(d.type==='hu:creator-mode'){d.on=!!d.on&&!lockOf('audience');const b=$('ctlAudience');if(b){b.hidden=!d.on;if(!d.on){b.setAttribute('aria-pressed','false');drawAudience([])}}return}
+if(d.type==='hu:audience-points'&&Array.isArray(d.points)&&viewer&&!lockOf('audience')){drawAudience(d.points.slice(0,250));return}
 if(d.type==='hu:analytics-points'&&ANALYTICS&&Array.isArray(d.points)){analytics.points=d.points.slice(0,300);analytics.selected=typeof d.selected==='string'?d.selected:null;drawAnalytics();return}
 if(d.type==='hu:analytics-select'&&ANALYTICS){selectAnalytics(typeof d.code==='string'?d.code:null,true);return}
 if(d.type==='hu:clear-selection'&&viewer){selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setSelection(false);closeDetail();viewer.camera.flyTo({destination:homePosition(),duration:1.4})}});let missions=[],allMissions=[],cities=[],regions=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true,activeRegion=null,regionOutlines=[];
@@ -161,7 +161,7 @@ window.__huLayerCounts=()=>({flights:layerState.flights.count,satellites:layerSt
 window.__huLayerOn=k=>!!(layerState[k]&&layerState[k].on);
 function sessionToken(){try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');return s&&s.access_token||''}catch(e){return ''}}
 function paintDataLocks(){if(typeof paintAccess==='function')paintAccess()}
-async function layerFetch(k){const headers={accept:'application/json'};if(DATA_LAYERS[k].members){const t=sessionToken();if(!t)throw Error('members');headers.authorization='Bearer '+t}const r=await fetch(API+'/v1/world/layers/'+k,{headers});if(r.status===401)throw Error('members');if(!r.ok)throw Error('layer '+r.status);return r.json()}
+async function layerFetch(k){const headers={accept:'application/json'};const t=sessionToken();if(t)headers.authorization='Bearer '+t;const r=await fetch(API+'/v1/world/layers/'+k,{headers});if(r.status===401)throw Error('members');if(!r.ok)throw Error('layer '+r.status);return r.json()}
 function clearLayer(k){if(spaceFocus&&spaceFocus.layer===k)clearSpaceFocus();const L=layerState[k];if(L.points){viewer.scene.primitives.remove(L.points);L.points=null}if(L.labels){L.labels.forEach(e=>viewer.entities.remove(e));L.labels=[]}if(L.entities){L.entities.forEach(e=>viewer.entities.remove(e));L.entities=[]}if(L.sats)L.sats=[];if(L.timer){clearInterval(L.timer);L.timer=0}L.count=0}
 /* Aircraft silhouettes identify observed contacts; they are not heading arrows.
    No synthetic movement or inferred itinerary is added to the provider snapshot. */
@@ -215,28 +215,37 @@ function liftAboveCredit(){const h=creditHeight();document.documentElement.style
 function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>layerState[k].credit||DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
 async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerState[k];if(!viewer||!b)return;if(!L.on&&lockOf(k)&&explainLock(k))return;if(spec.members&&!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  if(L.on){L.on=false;b.setAttribute('aria-pressed','false');clearLayer(k);paintLayerCredits();tell({type:'hu:layer',layer:k,on:false,creditHeight:creditHeight()});return}
- b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
+ b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(lockOf(k))return;if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);if(lockOf(k)){clearLayer(k);return}L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
 function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=closeSheet;window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
  if(BARE){const ex=$('bareExit');if(ex)ex.hidden=false;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&($('cctvSheet')||{}).hidden!==false)location.href='action-globe.html?explore=1'})}liftAboveCredit();window.addEventListener('resize',liftAboveCredit);
  /* the full pane: the bar arrives after this script (js/tabbar.js), and the sheet grows when a mission is chosen */
  if(EXPLORE){new MutationObserver(liftAboveCredit).observe(document.body,{childList:true});if(window.ResizeObserver)new ResizeObserver(liftAboveCredit).observe($('deck'));window.addEventListener('load',liftAboveCredit);const hint=document.querySelector('#worldFilters p');if(hint)hint.textContent='Tap a pin to open its mission. Drag to turn the Earth, pinch to zoom.'}}
-/* ---------- WHO MAY OPEN WHICH LAYER (owner, 2026-10-15) ----------
-   A guest gets the globe and ONE free layer, Flights; every other layer stays on screen, shaded, and a tap asks them to
-   sign in (never an error, never hidden). The map comes from the Worker (GET /v1/world/access, ./workers/mccluster/src/
-   world-access.js), by level; each layer's own route still enforces it. If the map cannot be read, the page falls back
-   to the same rule from the session alone: Flights for everyone, the rest for members. */
+/* Optional globe data is admin preview. Server policy and existing feature
+   permissions must both allow it. Missing/old policy never falls back to sign-in. */
 const ACCESS_IDS={flights:'ctlFlights',satellites:'ctlSats',launches:'ctlLaunch',intel:'ctlIntel',music:'ctlMusic',cctv:'ctlCctv',transport:'ctlTransport'};
 let access=null;
 window.__huAccess=()=>access;
-function lockOf(id){if(access)return(access.locked_layers||[]).find(x=>x.id===id)||null;
- if(id==='flights')return null;if(!sessionToken())return{id,reason:'sign_in_required',next_step:'sign_in'};
- if(id==='cctv')return cctv.state&&cctv.state.eligible?null:{id,reason:'cctv'};return null}
-function paintAccess(){Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;if(ANALYTICS){b.hidden=true;return}const l=lockOf(k);b.hidden=false;b.classList.toggle('is-locked',!!l);b.setAttribute('aria-disabled',l?'true':'false');if(l)b.setAttribute('data-lock',l.reason);else b.removeAttribute('data-lock')})}
-async function loadAccess(){try{const t=sessionToken(),r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error('access '+r.status);const d=await r.json();/* only a well-formed map counts; anything else falls back to the session rule */access=d&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){access=null}paintAccess();return access}
+function lockOf(id){
+ if(!sessionToken()||!access||access.release?.version!=='globe-admin-preview/v1'||access.release.admin_preview!==true||accessToken!==sessionToken())return{id,reason:'admin_preview'};
+ if(!access.unlocked_layers.includes(id))return(access.locked_layers||[]).find(x=>x.id===id)||{id,reason:'feature_withdrawn'};
+ return null}
+function paintAccess(){Object.keys(ACCESS_IDS).forEach(k=>{const b=$(ACCESS_IDS[k]);if(!b)return;const l=lockOf(k);b.hidden=ANALYTICS||!!l;b.setAttribute('aria-disabled',l?'true':'false')});
+ const a=$('ctlAudience');if(a&&lockOf('audience'))a.hidden=true;
+ if(!viewer)return;
+ Object.keys(DATA_LAYERS).forEach(k=>{if(lockOf(k)&&layerState[k].on){layerState[k].on=false;clearLayer(k);const b=$(DATA_LAYERS[k].id);if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:k,on:false})}});
+ if(lockOf('intel')&&intel.on)intelOff();if(lockOf('cctv')&&cctv.on)cctvOff();if(lockOf('audience'))drawAudience([]);
+ if(lockOf('ion'))ionOff('release unavailable');paintLayerCredits()}
+let accessToken='',accessSeq=0;
+async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);if(accessToken!==t){access=null;accessToken=t;paintAccess()}
+ try{const r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('access '+r.status);const d=await r.json();if(seq!==accessSeq||t!==sessionToken())return null;access=d&&d.release?.version==='globe-admin-preview/v1'&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){if(seq!==accessSeq)return null;access=null}finally{clearTimeout(timeout)}paintAccess();return access}
+window.addEventListener('storage',e=>{if(!e.key||e.key==='mccdb_session'){access=null;accessSeq++;accessToken='';paintAccess();loadAccess()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadAccess()});
+setInterval(()=>{if(!document.hidden)loadAccess()},60000);
 /* a locked layer explains itself: a guest is asked to sign in; a member is told what unlocks it */
 function explainLock(id){const l=lockOf(id);if(!l)return false;
+ if(l.reason==='admin_preview'||l.reason==='feature_withdrawn'){return true}
  if(l.reason==='sign_in_required'||!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return true}
  if(id==='cctv'){cctvGate();return true}
  sheet('Locked','<p>This layer opens at a later level.</p>');return true}
@@ -266,7 +275,7 @@ function intelOff(){intel.entities.forEach(e=>viewer.entities.remove(e));intel.e
 async function toggleIntel(){const b=$('ctlIntel');if(!viewer||!b)return;if(intel.on){intelOff();return}if(lockOf('intel')&&explainLock('intel'))return;
  b.setAttribute('aria-busy','true');try{const t=sessionToken(),r=await fetch(API+'/v1/intel/geo?cell=10&bucket=day',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});const d=await r.json().catch(()=>({}));
   if(!r.ok){tell({type:'hu:layer',layer:'intel',on:false,failed:true});sheet('Intel events','<p>'+(r.status===503?'Intel events are not switched on yet.':'Intel events could not load right now.')+' Nothing is drawn.</p>');return}
-  const cells={};(d.buckets||[]).forEach(x=>{const c=x&&x.cell_center||{},bd=cellBounds(x&&x.cell_bounds),ll=lonLat(c.lon,c.lat);if(!bd||!ll)return;const k=String(x.cell);(cells[k]||(cells[k]={bd,lat:ll[1],lon:ll[0],n:0})).n+=Number(x.count)||0});
+  if(lockOf('intel'))return;const cells={};(d.buckets||[]).forEach(x=>{const c=x&&x.cell_center||{},bd=cellBounds(x&&x.cell_bounds),ll=lonLat(c.lon,c.lat);if(!bd||!ll)return;const k=String(x.cell);(cells[k]||(cells[k]={bd,lat:ll[1],lon:ll[0],n:0})).n+=Number(x.count)||0});
   const list=Object.values(cells),max=Math.max(1,...list.map(c=>c.n));list.forEach(c=>{intel.entities.push(viewer.entities.add({rectangle:{coordinates:Cesium.Rectangle.fromDegrees(c.bd[0],c.bd[1],c.bd[2],c.bd[3]),material:Cesium.Color.fromCssColorString('#ffb347').withAlpha(.15+.45*Math.sqrt(c.n/max)),outline:true,outlineColor:Cesium.Color.WHITE.withAlpha(.5),height:0}}))});
   intel.on=true;b.setAttribute('aria-pressed','true');const tt=d.totals||{};
   tell({type:'hu:layer',layer:'intel',on:true,count:Number(tt.located)||0,unknown:Number(tt.unknown_location)||0,suppressed:Number(tt.suppressed_records)||0,attribution:((d.layer&&d.layer.attribution)||[]).join(' · '),creditHeight:creditHeight()})}
@@ -281,7 +290,7 @@ window.__huCctv=()=>({state:cctv.state,on:cctv.on,count:cctv.points?cctv.points.
 /* a hook for the browser test, like __huGlobeSettled: open a camera's sheet without aiming at a pixel */
 window.__huOpenCamera=id=>openCamera(String(id));
 function cctvFetch(path,init){const t=sessionToken();if(!t)return Promise.reject(Error('members'));return fetch(API+path,Object.assign({cache:'no-store'},init||{},{headers:Object.assign({authorization:'Bearer '+t,accept:'application/json'},(init&&init.headers)||{})}))}
-async function cctvEligibility(){const b=$('ctlCctv');if(!b)return null;if(!sessionToken()||ANALYTICS){cctv.state=null;if(cctv.on)cctvOff();paintAccess();return null}
+async function cctvEligibility(){const b=$('ctlCctv');if(!b)return null;if(!sessionToken()||ANALYTICS||lockOf('cctv')){cctv.state=null;if(cctv.on)cctvOff();paintAccess();return null}
  try{const r=await cctvFetch('/v1/world/cctv/eligibility');if(!r.ok)throw Error('eligibility '+r.status);const d=await r.json();cctv.state=d;paintAccess();if(!d.eligible&&cctv.on)cctvOff();return d}
  catch(e){cctv.state=null;paintAccess();return null}}
 function sheet(title,html){clearSpaceFocus();const s=$('cctvSheet');if(!s)return;$('cctvTitle').textContent=title;$('cctvBody').innerHTML=html;s.hidden=false}
@@ -304,19 +313,19 @@ async function recordPrivacyAck(version){const t=sessionToken();if(!t)throw Erro
  const r=await fetch(SB+'/auth/v1/user',{method:'PUT',headers:{apikey:KEY,authorization:'Bearer '+t,'content-type':'application/json'},body:JSON.stringify({data:{privacy_policy_version:version,privacy_acknowledged_at:new Date().toISOString()}})});
  if(!r.ok)throw Error('Could not save that right now; try again.');return true}
 function cctvOff(){cctv.on=false;if(cctv.points&&viewer){viewer.scene.primitives.remove(cctv.points)}cctv.points=null;cctv.sources=[];const b=$('ctlCctv');if(b)b.setAttribute('aria-pressed','false');closeSheet();tell({type:'hu:layer',layer:'cctv',on:false,creditHeight:creditHeight()})}
-async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.on){cctvOff();return}if(!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
+async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.on){cctvOff();return}if(lockOf('cctv'))return;if(!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  const d=await cctvEligibility();if(!d||!d.eligible){cctvGate(d);return}
- b.setAttribute('aria-busy','true');try{const r=await cctvFetch('/v1/world/cctv/sources');if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}const data=await r.json();if(!r.ok)throw Error(data&&data.error||'cctv '+r.status);
+ b.setAttribute('aria-busy','true');try{const r=await cctvFetch('/v1/world/cctv/sources');if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}const data=await r.json();if(!r.ok)throw Error(data&&data.error||'cctv '+r.status);if(lockOf('cctv'))return;
   const col=new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>lonLat(s.lon,s.lat)).map(s=>Object.assign({},s,{lon:deg(s.lon),lat:deg(s.lat)}));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5,id:{layer:'cctv',cam:String(s.id)}}));
   viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'cctv',on:false,failed:true});sheet('CCTV','<p>'+escHtml(String(e&&e.message||'CCTV could not load right now.'))+'</p>')}finally{b.removeAttribute('aria-busy')}}
 function fmtTime(v){const d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):null}
-async function openCamera(id){const cam=cctv.sources.find(s=>String(s.id)===id);if(!cam)return;const seq=++cctv.seq;if(cctv.url){URL.revokeObjectURL(cctv.url);cctv.url=null}
+async function openCamera(id){if(lockOf('cctv'))return;const cam=cctv.sources.find(s=>String(s.id)===id);if(!cam)return;const seq=++cctv.seq;if(cctv.url){URL.revokeObjectURL(cctv.url);cctv.url=null}
  const where=[cam.city,cam.provider].filter(Boolean).map(escHtml).join(' · ');sheet(String(cam.name||'Camera'),'<p class="cctv-meta">'+where+'</p><p class="cctv-msg" role="status" aria-live="polite">Loading the live frame…</p>');
  try{const r=await cctvFetch('/v1/world/cctv/frame/'+encodeURIComponent(id),{headers:{accept:'image/*'}});if(seq!==cctv.seq)return;
   if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}
   if(!r.ok){const j=await r.json().catch(()=>({}));$('cctvBody').querySelector('.cctv-msg').textContent=j&&j.detail&&j.detail.reason==='no_live_frame'?'No live frame from this camera right now. Nothing is shown in its place.':(j&&j.error)||'This camera could not load right now.';return}
-  const blob=await r.blob();if(seq!==cctv.seq)return;cctv.url=URL.createObjectURL(blob);const h=k=>r.headers.get(k);
+  const blob=await r.blob();if(seq!==cctv.seq||lockOf('cctv'))return;cctv.url=URL.createObjectURL(blob);const h=k=>r.headers.get(k);
   const facts=[['Provider',h('x-cctv-provider')||cam.provider],['Captured',fmtTime(h('x-cctv-captured-at')||h('last-modified'))],['Retrieved',fmtTime(h('x-cctv-retrieved-at'))],['Media',h('content-type')],['Licence',h('x-cctv-license')||cam.license]].filter(x=>x[1]);
   $('cctvBody').innerHTML='<p class="cctv-meta">'+where+'</p><figure class="cctv-frame"><img alt="'+escHtml('Live snapshot from '+(cam.name||'this camera'))+'" src="'+cctv.url+'"><figcaption>Live snapshot</figcaption></figure><dl class="cctv-facts">'+facts.map(x=>'<div><dt>'+x[0]+'</dt><dd>'+escHtml(String(x[1]).slice(0,120))+'</dd></div>').join('')+'</dl>'}
  catch(e){if(seq===cctv.seq){const m=$('cctvBody').querySelector('.cctv-msg');if(m)m.textContent='This camera could not load right now.'}}}
@@ -348,7 +357,7 @@ function wireEditorialTools(){
  document.addEventListener('click',e=>{if(!tools.contains(e.target))tools.open=false});
 }
 function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};
- on('ctlAudience',()=>{const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
+ on('ctlAudience',()=>{if(lockOf('audience'))return;const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
  on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:homePosition(),duration:1.4});tell({type:'hu:selection-cleared'})});
  /* Near me answers in #status; inside the network that line is hidden, so hand the page that one answer */
  on('ctlLocate',()=>{const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
@@ -379,7 +388,7 @@ function ionWarn(what,e){if(!ion)return;try{console.warn('[world ion] '+what+': 
 function streetAuto(h){return h<900000&&!(ionImagery&&ionImagery.ready)}
 function ionBearer(){const t=sessionToken();return t?'Bearer '+t:''}
 function ionStatus(){if(!ionBearer())return Promise.resolve(null);const late=new Promise(r=>setTimeout(()=>r(null),ION_WAIT));
- const ask=fetch(API+'/v1/world/ion',{headers:{accept:'application/json'}}).then(r=>r.ok?r.json():null).then(s=>s&&s.available===true&&s.assets&&Number.isInteger(s.assets.terrain)?s.assets:null).catch(()=>null);
+ const ask=fetch(API+'/v1/world/ion',{headers:{accept:'application/json',authorization:ionBearer()}}).then(r=>r.ok?r.json():null).then(s=>s&&s.available===true&&s.assets&&Number.isInteger(s.assets.terrain)?s.assets:null).catch(()=>null);
  return Promise.race([ask,late])}
 /* the Worker refused an asset endpoint: a rotated session is tried again; otherwise ion steps aside. Retries happen only when the
    session actually changed, so the high retryAttempts (Cesium counts them for the life of the resource) is never a loop. */
@@ -423,7 +432,7 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
  if(ionBuildings){const on=auto&&h<(ionBuildings.show?BUILD_OFF:BUILD_ON);if(ionBuildings.show!==on)ionBuildings.show=on}}
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
- wireDataLayers();const ionP=ionStatus(),dataP=Promise.all([rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
+ wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
  ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();wireEditorialTools();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});

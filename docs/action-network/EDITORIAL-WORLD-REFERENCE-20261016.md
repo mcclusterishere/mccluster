@@ -31,9 +31,9 @@ visual standard for the public-facing World and social feed.
 Cesium globe. Control/Analytics retains its rendering mode. Shared navigation,
 auth, storage and APIs stay on the canonical McCluster plane.
 
-Optional-layer authorization and withdrawal remain the release-policy work in
-PR #475. Ship that frontend and canonical Worker together before releasing this
-visual redesign publicly. This change does not replace or relax those checks.
+Optional-layer authorization and withdrawal from PR #475 are integrated into
+this branch. Ship the frontend and canonical Worker together; the new design
+preserves that release policy and its server-side checks.
 Application approval, introduction video, resume, motivation, tax paperwork
 and payout readiness remain the separate mission-application requirements;
 this visual implementation does not claim to implement that backend.

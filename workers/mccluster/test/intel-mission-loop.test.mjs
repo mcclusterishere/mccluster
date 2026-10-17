@@ -225,7 +225,7 @@ test('before the migration is applied, routes say intel_schema_not_ready instead
   const evidence = await call('/v1/intel/evidence', { token: 'owner-token' });
   assert.equal(evidence.status, 503);
   assert.equal(evidence.body.detail.code, 'intel_schema_not_ready');
-  const geo = await call('/v1/intel/geo');
+  const geo = await call('/v1/intel/geo', { token: 'owner-token' });
   assert.equal(geo.status, 503);
 });
 
@@ -402,24 +402,17 @@ test('geo aggregate: audience comes from the caller, never from a parameter', as
   const h = harness();
   withFetch(t, h.fetchImpl);
   const anon = await call('/v1/intel/geo?audience=owner&cell=10&bucket=day&since=2026-10-14T00:00:00Z&until=2026-10-17T00:00:00Z');
-  assert.equal(anon.status, 200);
-  assert.equal(anon.body.audience, 'public', 'a query parameter cannot raise the audience');
-  assert.equal(anon.body.k_threshold, 5);
-  assert.equal(anon.body.schema, 'mccluster-intel-geo/v1');
-  assert.deepEqual(anon.body.buckets, []);
-  assert.equal(anon.body.totals.unknown_location, 1, 'unknown locations are disclosed');
-  assert.match(anon.headers.get('cache-control'), /public/);
-  assert.deepEqual(anon.body.layer.attribution, ['U.S. Geological Survey']);
-
+  assert.equal(anon.status, 403);
+  assert.equal(anon.body.code, 'admin_preview', 'a query parameter cannot release a feature');
   const member = await call('/v1/intel/geo', { token: 'member-token' });
-  assert.equal(member.body.audience, 'members');
+  assert.equal(member.status,403);
   assert.match(member.headers.get('cache-control'), /no-store/);
 
   const owner = await call('/v1/intel/geo', { token: 'owner-token' });
   assert.equal(owner.body.audience, 'owner');
   assert.equal(owner.body.buckets[0].cell, 'g10:3:-12');
 
-  assert.equal((await call('/v1/intel/geo?cell=3')).status, 400);
+  assert.equal((await call('/v1/intel/geo?cell=3', {token:'owner-token'})).status, 400);
   const geoCalls = h.calls.filter((c) => c.url.endsWith('/rpc/intel_geo_projection'));
   assert.ok(geoCalls.every((c) => c.body.p_k === 5), 'the Worker always asks for k >= 5; the database floors it too');
 });

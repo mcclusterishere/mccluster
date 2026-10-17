@@ -1,0 +1,47 @@
+name: Curated World release proof
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'action-globe.html'
+      - 'js/action-globe.js'
+      - 'packages/release-policy/**'
+      - 'workers/mccluster/src/world-*.js'
+      - 'workers/mccluster/src/index.js'
+      - 'workers/mccluster/test/world-release.test.mjs'
+      - 'scripts/e2e/world-release.e2e.mjs'
+      - '.github/workflows/world-release-visual.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: world-release-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  world-release-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prepare pinned browser dependencies
+        run: |
+          npm install --prefix /tmp/world-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0
+          /tmp/world-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify release authorization and the actual globe
+        env:
+          PLAYWRIGHT_DIR: /tmp/world-qa/node_modules
+          CESIUM_DIR: /tmp/world-qa/node_modules/cesium/Build/Cesium
+        run: |
+          node --test workers/mccluster/test/world-release.test.mjs workers/mccluster/test/world-access.test.mjs
+          node scripts/e2e/world-release.e2e.mjs /tmp/world-proof
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-release-proof-${{ github.run_id }}
+          path: /tmp/world-proof
+          retention-days: 7
