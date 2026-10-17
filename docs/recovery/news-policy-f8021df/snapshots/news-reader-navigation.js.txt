@@ -1,0 +1,143 @@
+/* Every ingested-news link stays on this origin. The reader is our own page,
+ * layered over World so its globe, filters and scroll position remain alive.
+ * data-news-id is shared by the existing feed and the News globe in PR #494. */
+(function () {
+  'use strict';
+  if (window.MCC_NEWS_READER) return;
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let dialog, frame, title, fullPage, opener, current = null, backgroundScroll;
+  const articlePath = (id) => UUID.test(String(id || '')) ? 'news-article.html?id=' + encodeURIComponent(id) : null;
+  function upgrade(root) {
+    if (!root || !root.querySelectorAll) return;
+    const cards = [...root.querySelectorAll('[data-news-id]')];
+    if (root.matches && root.matches('[data-news-id]')) cards.unshift(root);
+    for (const card of cards) {
+      const href = articlePath(card.dataset.newsId) || 'news-article.html';
+      for (const link of card.querySelectorAll('a')) {
+        if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+        link.removeAttribute('target');
+        link.dataset.newsReader = card.dataset.newsId;
+      }
+    }
+  }
+  function ensure() {
+    if (dialog) return;
+    const css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = 'css/news-reader-dialog.css'; document.head.append(css);
+    dialog = document.createElement('dialog');
+    dialog.className = 'news-reader-dialog';
+    dialog.setAttribute('aria-labelledby', 'newsReaderDialogTitle');
+    const header = document.createElement('header');
+    title = document.createElement('strong'); title.id = 'newsReaderDialogTitle'; title.textContent = 'News';
+    fullPage = document.createElement('a'); fullPage.textContent = 'Full page';
+    const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close';
+    close.setAttribute('aria-label', 'Close reader and return to the globe');
+    close.addEventListener('click', closeReader);
+    header.append(title, fullPage, close);
+    dialog.append(header); document.body.append(dialog);
+    dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeReader(); });
+  }
+  function show(kind, id, push, tab) {
+    if (kind === 'article' && !articlePath(id)) return false;
+    if (kind === 'policy' && id && !UUID.test(id)) return false;
+    const path = kind === 'article' ? articlePath(id) : 'policy-workspace.html' + (id ? '?project=' + encodeURIComponent(id) : '');
+    if (!window.HTMLDialogElement || typeof HTMLDialogElement.prototype.showModal !== 'function') {
+      location.assign(path); return true;
+    }
+    ensure();
+    const target = new URL(path, location.href);
+    target.searchParams.set('embed', '1');
+    if (tab === 'discussion' || tab === 'evidence') target.hash = tab;
+    if (!current) { opener = document.activeElement; backgroundScroll = { x: window.scrollX, y: window.scrollY }; }
+    if (!current || current.kind !== kind || current.id !== id || current.tab !== tab) {
+      // A new child navigable keeps iframe visits out of the host's Back stack.
+      // Reassigning an existing iframe.src creates joint-history entries that
+      // otherwise move the frame without restoring the World reader address.
+      const next = document.createElement('iframe');
+      next.title = 'Article, discussion and policy evidence'; next.referrerPolicy = 'same-origin'; next.src = target.href;
+      if (frame) frame.replaceWith(next); else dialog.append(next);
+      frame = next;
+    }
+    current = { kind, id, tab };
+    title.textContent = kind === 'article' ? 'News' : 'Policy workspace'; fullPage.href = path;
+    if (!dialog.open) dialog.showModal();
+    if (push) {
+      const url = new URL(location.href);
+      url.searchParams.delete('news_project'); url.searchParams.delete('article'); url.searchParams.delete('news_tab');
+      url.searchParams.set(kind === 'article' ? 'article' : 'news_project', id || 'workspace');
+      if (kind === 'article' && (tab === 'discussion' || tab === 'evidence')) url.searchParams.set('news_tab', tab);
+      const depth = history.state && Number.isSafeInteger(history.state.mccNewsReaderDepth) ? history.state.mccNewsReaderDepth : 0;
+      history.pushState({ ...(history.state || {}), mccNewsReader: true, mccNewsReaderDepth: depth + 1 }, '', url);
+    }
+    return true;
+  }
+  function hide() {
+    if (dialog && dialog.open) dialog.close();
+    if (frame) frame.remove();
+    frame = null;
+    current = null;
+    // Traversal restores hash focus and persisted scroll after popstate.
+    // Restore the actual opening control once that browser work has finished.
+    setTimeout(() => {
+      if (current) return;
+      if (backgroundScroll) window.scrollTo(backgroundScroll.x, backgroundScroll.y);
+      if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+    }, 0);
+  }
+  function closeReader() {
+    const depth = history.state && history.state.mccNewsReaderDepth;
+    hide();
+    if (Number.isSafeInteger(depth) && depth > 0 && depth < 100) { history.go(-depth); return; }
+    const url = new URL(location.href);
+    url.searchParams.delete('article'); url.searchParams.delete('news_project'); url.searchParams.delete('news_tab');
+    const state = { ...(history.state || {}) }; delete state.mccNewsReader; delete state.mccNewsReaderDepth;
+    history.replaceState(state, '', url);
+  }
+  function fromAddress() {
+    const params = new URLSearchParams(location.search), id = params.get('article'), project = params.get('news_project');
+    if (id && articlePath(id)) show('article', id, false, params.get('news_tab'));
+    else if (project === 'workspace' || (project && UUID.test(project))) show('policy', project === 'workspace' ? '' : project, false);
+    else hide();
+  }
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest && event.target.closest('a');
+    if (!link) return;
+    if (link.hasAttribute('data-news-policy-workspace')) {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault(); event.stopPropagation(); show('policy', '', true); return;
+    }
+    const card = link.closest('[data-news-id]');
+    if (card) upgrade(card);
+    const id = link.dataset.newsReader;
+    if (!id || !articlePath(id)) return;
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault(); event.stopPropagation();
+    show('article', id, true, link.dataset.newsTab);
+  }, true);
+  window.addEventListener('message', (event) => {
+    if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;
+    const data = event.data || {};
+    if (data.type === 'mcc:news-reader-close') closeReader();
+    if (data.type === 'mcc:news-open-policy') show('policy', String(data.project_id || ''), true);
+    if (data.type === 'mcc:news-open-article') show('article', String(data.article_id || ''), true);
+  });
+  window.addEventListener('popstate', fromAddress);
+  window.MCC_NEWS_READER = Object.freeze({ articlePath, open: (id, options = {}) => show('article', id, true, options.tab), openPolicy: (id = '') => show('policy', id, true) });
+  upgrade(document);
+  if (typeof MutationObserver === 'function') {
+    new MutationObserver((records) => {
+      for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) upgrade(node);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  // A directly shared World reader URL gets a same-document baseline so Close
+  // and Back restore World instead of returning to an unrelated referring site.
+  const initial = new URL(location.href);
+  if ((articlePath(initial.searchParams.get('article')) || initial.searchParams.get('news_project')) && !(history.state && history.state.mccNewsReader)) {
+    const baseline = new URL(initial);
+    baseline.searchParams.delete('article'); baseline.searchParams.delete('news_project'); baseline.searchParams.delete('news_tab');
+    const previous = history.state;
+    history.replaceState(previous, '', baseline);
+    history.pushState({ ...(previous || {}), mccNewsReader: true, mccNewsReaderDepth: 1 }, '', initial);
+  }
+  fromAddress();
+})();
