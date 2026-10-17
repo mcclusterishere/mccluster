@@ -15,11 +15,15 @@ Owner correction: selecting a place must filter Audience, and the initial globe 
 
 `analytics_geo_audience` is SECURITY INVOKER with an explicit existing admin gate, authenticated execute only, and existing table RLS. It returns aggregates, never device/session IDs, IPs, city coordinates or raw events.
 
-Three exact applied migrations preserve the production ledger:
+Four exact applied migrations preserve the production ledger:
 
 1. `20261017040826_analytics_geo_audience_v1.sql`: geographic aggregate contract.
 2. `20261017041311_analytics_geo_audience_hotpath_v2.sql`: move country aggregation onto `events_lean`.
 3. `20261017041532_analytics_geo_audience_regions_v3.sql`: add existing coarse region name/code to that lean copy and preserve its complete insert/update projection, eliminating raw-event joins for state reads.
+
+4. `20261017042608_analytics_geo_audience_region_backfill_v4.sql`: replay-safe historical backfill, also verified against preexisting rows in the SQL behavior test.
+
+State queries discard aliases shared by multiple subdivisions; Ain cannot inherit all Auvergne-Rhône-Alpes traffic through the shared ARA code. The map may still show labeled coarser-region evidence, but selected cards use only state-specific identifiers.
 
 Existing derived rows were backfilled after the schema transaction, avoiding holding a schema lock through the backfill:
 
@@ -33,11 +37,11 @@ where l.id=e.id
     or l.region_code is distinct from nullif(upper(e.edge->>'cf-region-code'),''));
 ```
 
-No new location collection, user permissions or public globe capabilities are introduced. Existing geography privacy behavior remains upstream. Migration count: 317. All three migration files match the stored SQL MD5s. The final 30-day state RPC passed an 8-second statement limit (measured 4.79 seconds). The initial raw-event implementation timed out and is superseded by the two hot-path migrations before frontend release.
+No new location collection, user permissions or public globe capabilities are introduced. Existing geography privacy behavior remains upstream. Migration count: 318. All four migration files match the stored SQL MD5s. The final 30-day state RPC passed an 8-second statement limit (measured 4.79 seconds). The initial raw-event implementation timed out and is superseded by the two hot-path migrations before frontend release.
 
 ## Verification
 
-- 839 root tests passed, including default visitor geography, exact selected values, stale response rejection and clear-to-world behavior.
+- 840 root tests passed, including default visitor geography, exact selected values, stale response rejection and clear-to-world behavior.
 - 139 browser assertions passed across five phone/tablet/desktop/workspace configurations, including actual country fill colors, country/state card filtering and clearing.
 - SQL behavior tests passed in isolated PGlite: country/state/property/bot/time boundaries, unique device deduplication, returning visitors, song starts, page paths, empty countries, small-state suppression, anonymous/member denial, and insert/update trigger preservation.
 - Live admin read matched the direct distinct-device count for the same country/window; 24 trend buckets returned. Anonymous execution is denied. Security advisors did not flag the new RPC or changed projection functions.

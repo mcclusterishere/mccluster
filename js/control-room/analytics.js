@@ -724,6 +724,13 @@
       card("Listener feature ledger","Distribution and return features behind every signal.",ledger,true)+
       card("Method","The formulas and inference limits stay visible next to the result.",method,true);
   }
+  function geographicStateFilters(state){
+    var states=(admFile(selCountry())||{}).states||[],others=states.filter(function(s){return s.k!==state.k;});
+    function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+    var codes=(state.codes||[]).filter(function(code){return !others.some(function(s){return(s.codes||[]).indexOf(code)>=0;});}).map(function(v){return String(v).toUpperCase();});
+    var names=[state.n].concat(state.names||[]).filter(Boolean).filter(function(name){var n=norm(name);return !others.some(function(s){return[s.n,s.g,s.u].concat(s.names||[]).some(function(v){return v&&norm(v)===n;});});}).map(function(v){return String(v).trim().toLowerCase();});
+    return{codes:codes,names:names};
+  }
   function loadGeoAudience(){
     var cc=selCountry(),r=S.range;if(!cc||!r){S.geoAudience=null;return;}
     var state=S.geo.state&&stateOf(S.geo.state);
@@ -731,8 +738,7 @@
     var key=[cc,S.geo.state||"",r.since,r.until,S.site,tz()].join("|");
     if(S.geoAudience&&S.geoAudience.key===key)return;
     var read=S.geoAudience={key:key,data:null,error:null};
-    var codes=state?(state.codes||[]).map(function(v){return String(v).toUpperCase();}):null;
-    var names=state?[state.n].concat(state.names||[]).filter(Boolean).map(function(v){return String(v).trim().toLowerCase();}):null;
+    var filters=state?geographicStateFilters(state):null,codes=filters?filters.codes:null,names=filters?filters.names:null;
     rpc("analytics_geo_audience",{p_country:cc,p_since:r.since,p_until:r.until,p_site:sid(),p_region_codes:codes,p_region_names:names,p_tz:tz()}).then(function(d){
       if(S.geoAudience!==read)return;if(!d||d.schema!=="analytics-geo-audience/v1")throw Error("Invalid geographic audience response");read.data=d;paint();
     }).catch(function(error){if(S.geoAudience!==read)return;read.error=error;paint();});
@@ -744,7 +750,7 @@
     if(d.suppressed)return card("Audience · "+scope,"",'<p>This state has fewer than five page views in this window. Its metrics are folded to protect small groups.</p>',true);
     var t=d.totals||{};
     return card("Audience at a glance",scope,'<div class="cra-kpis">'+kpi("Unique visitors",n(t.visitors),"distinct devices")+kpi("Sessions",n(t.sessions))+kpi("Returning visitors",n(t.returning),"2+ sessions here in this window")+kpi("Single-page sessions",t.bounce_rate==null?"—":n(t.bounce_rate)+"%")+kpi("Music plays",n(t.plays))+kpi("Page views",n(t.page_views))+'</div>',true)+
-      '<div class="cra-grid">'+card("Audience trend",scope+" · unique visitors per bucket; do not add buckets for the total",line(d.series,"visitors","sessions","Unique visitors","Sessions",{xKey:"bucket",hourly:true}),true)+
+      '<div class="cra-grid">'+card("Audience trend",scope+" · unique visitors per bucket; do not add buckets for the total",line(d.series,"visitors","sessions","Unique visitors","Sessions",{xKey:"bucket",hourly:true,labelFor:function(r){return String(r.bucket_label||r.bucket||"").replace("T"," ").slice(5,16);}}),true)+
       card("Acquisition",scope+" · unique visitors by recorded source",donut(d.sources||[],"source","people"))+
       card("Paths",scope+" · page transitions within this location",rank((d.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+
       card("Pages",scope+" · unique visitors per page",rank(d.pages||[],"path","visitors"))+
@@ -1145,7 +1151,7 @@ if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites(
     render:render,
     top:topHtml,
     filters:filters,
-    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,filterCount:filterCount},
+    geo:{aggregate:geoAggregate,layers:GEO_LAYERS,min:GEO_MIN,payload:geoPayload,tooltip:tooltipFor,pick:pickRegion,select:pickPlace,states:stateData,stateFilters:geographicStateFilters,filterCount:filterCount},
     state:S
   };
 })();

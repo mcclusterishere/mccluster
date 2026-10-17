@@ -122,3 +122,9 @@ test('rapid geographic selection ignores stale reads and clearing selection rest
  assert.equal(s.geoAudience.data.totals.visitors,7);assert.doesNotMatch(A.render(),/99/);
  A.geo.pick('',false);assert.equal(s.geoAudience,null);assert.match(A.render(),/Unique visitors<\/small><strong>40/);
 });
+
+test('a department never queries aliases shared by its broader region',async()=>{
+ const A=context().analytics,s=A.state;s.geo.region='FR';s.geo.adm.FR=JSON.parse(await readFile('data/geo/admin1/FR.json','utf8'));
+ const ain=s.geo.adm.FR.states.find(x=>x.k==='FR-01'),f=A.geo.stateFilters(ain);
+ assert.ok(f.codes.includes('01'));assert.ok(!f.codes.includes('ARA'));assert.ok(f.names.includes('ain'));assert.ok(!f.names.includes('rhonealpes'));
+});

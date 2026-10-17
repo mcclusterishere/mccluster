@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 317,
-  "latest_version": "20261017041532",
-  "latest_name": "analytics_geo_audience_regions_v3",
-  "ledger_sha256": "81c137d22e22fe19e56693aaca1f23e9665c6d393433fc334224762de1316aed",
+  "migration_count": 318,
+  "latest_version": "20261017042608",
+  "latest_name": "analytics_geo_audience_region_backfill_v4",
+  "ledger_sha256": "8cc9cf130f843e97166515f271fcb8c2b076d5b13a063c6b4960b9fb31bc9eb7",
   "migrations": [
     {
       "version": "0001",
@@ -1274,6 +1274,10 @@
     {
       "version": "20261017041532",
       "name": "analytics_geo_audience_regions_v3"
+    },
+    {
+      "version": "20261017042608",
+      "name": "analytics_geo_audience_region_backfill_v4"
     }
   ]
 }

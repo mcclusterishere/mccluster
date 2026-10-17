@@ -24,6 +24,8 @@ create policy desk_read on public.events_lean for select to authenticated using 
 \i supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql
 \i supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql
 insert into public.events_lean select (private.events_lean_row(e)).* from public.events e;
+update public.events_lean set region=null,region_code=null;
+\i supabase/migrations/20261017042608_analytics_geo_audience_region_backfill_v4.sql
 create trigger events_lean_sync after insert or update on public.events for each row execute function private.events_lean_sync();
 -- Existing trigger behavior and all prior projected fields survive the added region fields.
 insert into public.events(at,name,device_id,session_id,country,region,edge,props) values ('2026-10-15','song_start','outside','outside','US','New York','{"cf-region-code":"ny"}','{"experience_arm":"control","decision_id":"d-test"}');
