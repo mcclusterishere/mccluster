@@ -30,8 +30,10 @@ The separate owner Roadshow quote workflow is not a public booking backend.
 Live fulfilment is not activated: there is no approved supplier account, partner
 token or contracted markup in this checkout. Present directions and clearly
 labelled external searches today; never invent supplier endpoints or fares.
-Lowest-cost and free-option flags are planning preferences, not live inventory
-filters. Actual booking must replace a leg's search action only after activation.
+Cost/free-option controls remain withheld until usable supplier inventory is
+available. The draft schema reserves those preference fields but the public UI
+does not expose inert filters. Actual booking must replace a leg's search action
+only after activation.
 
 An API integration belongs in the canonical `workers/mccluster` service. It must
 keep partner credentials server-side, normalize time-limited quotes, bind quote

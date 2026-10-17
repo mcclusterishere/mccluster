@@ -49,9 +49,6 @@
 .wt-toolbar button { display:flex;align-items:center;gap:7px;flex:none;min-height:46px;padding:0 2px 9px;border:0;border-bottom:2px solid transparent;background:none;color:#a9aeb4;font:400 14px var(--mn-ui);cursor:pointer; }
 .wt-toolbar [aria-pressed="true"] { color:#fff;border-bottom-color:#e6002d; }
 .wt-icon { width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round; }
-.wt-preferences { display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px; }
-.wt-preferences label { display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:1px solid #ffffff22;border-radius:25px;font-size:12px;color:#cbd0d4;cursor:pointer; }
-.wt-preferences input { accent-color:#e6002d;width:16px;height:16px;margin:0;font-size:16px; }
 .wt-empty { padding:22px 0 18px; }
 .wt-empty h3 { margin:0 0 8px;font:400 20px/1.25 Georgia,serif;color:#eee9e1; }
 .wt-empty p,.wt-note { color:#9da4ac;font:400 13px/1.6 var(--mn-ui);margin:5px 0 12px; }

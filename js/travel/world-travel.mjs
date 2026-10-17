@@ -36,7 +36,6 @@ panel.innerHTML = `
       <button type="button" id="wtMore" aria-expanded="false" aria-controls="wtMoreModes">••• More</button>
     </nav>
     <nav id="wtMoreModes" class="wt-toolbar" aria-label="More transport" hidden>${['transit','walk','cycle'].map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="false">${icon(m)}${labels[m]}</button>`).join('')}</nav>
-    <div class="wt-preferences"><label><input id="wtLowest" type="checkbox">Prefer lowest cost</label><label><input id="wtFree" type="checkbox">Include free options</label></div>
     <div id="wtItinerary"></div>
     <details class="wt-details" id="wtDetails"><summary>Airports, stations &amp; final address</summary><div class="wt-fields">
       <label class="wt-field"><span>Departure airport or station</span><input id="wtDepartureHub" name="departureHub" maxlength="240" placeholder="Choose your departure point"></label>
@@ -72,7 +71,7 @@ function read() {
   return normalizeJourney({ ...draft, from:pick('from','wtFrom'), to:pick('to','wtTo'),
     departure:$('wtDeparture').value, returning:$('wtReturning').value, travelers:Number($('wtTravelers').value),
     departureHub:$('wtDepartureHub').value, arrivalHub:$('wtArrivalHub').value, stay:$('wtStay').value,
-    lowestCost:$('wtLowest').checked, freeOptions:$('wtFree').checked });
+    lowestCost:draft.lowestCost, freeOptions:draft.freeOptions });
 }
 function renderGlobe(fly=false) {
   send({type:'hu:travel-mode',on:currentMode==='travel'});
@@ -91,7 +90,6 @@ function renderItinerary() {
 function syncInputs() {
   $('wtFrom').value=draft.from?.label||'';$('wtTo').value=draft.to?.label||'';
   for(const [key,id] of [['departure','wtDeparture'],['returning','wtReturning'],['travelers','wtTravelers'],['departureHub','wtDepartureHub'],['arrivalHub','wtArrivalHub'],['stay','wtStay']])$(id).value=draft[key];
-  $('wtLowest').checked=draft.lowestCost;$('wtFree').checked=draft.freeOptions;
   $('wtReturnField').hidden=!draft.returning;$('wtAddReturn').setAttribute('aria-expanded',String(!!draft.returning));
   $('wtReturning').min=draft.departure;
   document.querySelectorAll('[data-travel-kind][aria-pressed]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.travelKind===draft.mode)));
