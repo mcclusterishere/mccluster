@@ -5,6 +5,7 @@ import { createAudienceScienceRoutes } from './audience-science.js';
 import { createExperienceAnalyticsRoutes } from './experience.js';
 import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
+import { dataCoverage, boundedReads } from './coverage.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -531,6 +532,7 @@ export async function businessSnapshot(env, windowSpec = null) {
 
   const since = windowSpec?.since || null;
   const until = windowSpec?.until || null;
+  const readErrors = {};
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
@@ -541,53 +543,48 @@ export async function businessSnapshot(env, windowSpec = null) {
     completesTotal, completesWindow, creatorProfilesTotal, creatorProfilesWindow,
     creatorTracksTotal, creatorTracksWindow, publishedTracksTotal, activeOffersTotal,
     paidOrdersTotal, paidOrdersWindow, entitlementsTotal, entitlementsWindow, paidOrderRows
-  ] = await Promise.all([
-    sbCount(env, 'network_posts'),
-    sbCount(env, 'network_follows', 'follower_m_uid'),
-    sbCount(env, 'network_reactions', 'post_id'),
-    sbCount(env, 'network_profiles', 'm_uid'),
-    since ? sbCount(env, 'network_posts', 'id', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null),
-    since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null),
-
-    /* Event counts read events_lean, the narrow copy kept in step by a
-       trigger (same id, name and at). Twenty exact counts in parallel over
-       the full events rows (props, device and edge blobs, ~1.4 KB each)
-       hit the 8 s statement limit, answered this route with a 502 and
-       loaded the database for every visitor while they ran. */
-    sbCountFiltered(env, 'events_lean', 'id', {}, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', {}, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.click' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null),
-
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, null, 'at'),
-    since ? sbCountFiltered(env, 'events_lean', 'id', { name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null),
-
-    sbCount(env, 'music_creator_profiles', 'm_uid'),
-    since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null),
-    sbCount(env, 'creator_tracks'),
-    since ? sbCount(env, 'creator_tracks', 'id', since, until) : Promise.resolve(null),
-    sbCountFiltered(env, 'creator_tracks', 'id', { status: 'eq.published' }),
-    sbCountFiltered(env, 'music_license_offers', 'id', { active: 'eq.true', checkout_enabled: 'eq.true' }),
-    sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }),
-    since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since, 'created_at', until) : Promise.resolve(null),
-    sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }),
-    since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null),
-    sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')
-  ]);
+  ] = await boundedReads([
+    {key: 'postsTotal', run: () => sbCount(env, 'network_posts')},
+    {key: 'followsTotal', run: () => sbCount(env, 'network_follows', 'follower_m_uid')},
+    {key: 'reactionsTotal', run: () => sbCount(env, 'network_reactions', 'post_id')},
+    {key: 'profilesTotal', run: () => sbCount(env, 'network_profiles', 'm_uid')},
+    {key: 'postsWindow', run: () => since ? sbCount(env, 'network_posts', 'id', since, until) : Promise.resolve(null)},
+    {key: 'followsWindow', run: () => since ? sbCount(env, 'network_follows', 'follower_m_uid', since, until) : Promise.resolve(null)},
+    {key: 'reactionsWindow', run: () => since ? sbCount(env, 'network_reactions', 'post_id', since, until) : Promise.resolve(null)},
+    {key: 'profilesWindow', run: () => since ? sbCount(env, 'network_profiles', 'm_uid', since, until) : Promise.resolve(null)},
+    {key: 'eventsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, null, 'at')},
+    {key: 'eventsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'pageViewsTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, null, 'at')},
+    {key: 'pageViewsWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.page_view' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'clicksTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, null, 'at')},
+    {key: 'clicksWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.click' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'acquiredTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, null, 'at')},
+    {key: 'acquiredWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.acquired' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'legacyPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, null, 'at')},
+    {key: 'legacyPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.album_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'musicPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, null, 'at')},
+    {key: 'musicPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'previewPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, null, 'at')},
+    {key: 'previewPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_preview_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'fullPlaysTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, null, 'at')},
+    {key: 'fullPlaysWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_full_play' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'completesTotal', run: () => sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, null, 'at')},
+    {key: 'completesWindow', run: () => since ? sbCountFiltered(env, 'events_lean', 'id', { site_id: 'is.null', is_bot: 'not.is.true', name: 'eq.music_complete' }, since, 'at', until) : Promise.resolve(null)},
+    {key: 'creatorProfilesTotal', run: () => sbCount(env, 'music_creator_profiles', 'm_uid')},
+    {key: 'creatorProfilesWindow', run: () => since ? sbCount(env, 'music_creator_profiles', 'm_uid', since, until) : Promise.resolve(null)},
+    {key: 'creatorTracksTotal', run: () => sbCount(env, 'creator_tracks')},
+    {key: 'creatorTracksWindow', run: () => since ? sbCount(env, 'creator_tracks', 'id', since, until) : Promise.resolve(null)},
+    {key: 'publishedTracksTotal', run: () => sbCountFiltered(env, 'creator_tracks', 'id', { status: 'eq.published' })},
+    {key: 'activeOffersTotal', run: () => sbCountFiltered(env, 'music_license_offers', 'id', { active: 'eq.true', checkout_enabled: 'eq.true' })},
+    {key: 'paidOrdersTotal', run: () => sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' })},
+    {key: 'paidOrdersWindow', run: () => since ? sbCountFiltered(env, 'music_orders', 'id', { status: 'eq.paid' }, since, 'created_at', until) : Promise.resolve(null)},
+    {key: 'entitlementsTotal', run: () => sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' })},
+    {key: 'entitlementsWindow', run: () => since ? sbCountFiltered(env, 'music_entitlements', 'id', { revoked_at: 'is.null' }, since, 'created_at', until) : Promise.resolve(null)},
+    {key: 'paidOrderRows', run: () => sbRows(env, 'music_orders?status=eq.paid&select=amount_cents,platform_fee_cents,creator_net_cents,created_at')}
+  ].map(task => async () => {
+    try { return await task.run(); }
+    catch { readErrors[task.key] = 'Data read unavailable'; return null; }
+  }), 4);
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
@@ -595,16 +592,19 @@ export async function businessSnapshot(env, windowSpec = null) {
   const commerce = await loadCommerceSummary((path) => sbRows(env, path), windowSpec)
     .catch((err) => ({ available: false, reason: String(err?.message || err).slice(0, 200) }));
 
+  if (commerce.available === false) readErrors.commerce = 'Verified commerce read unavailable';
   const paidRowsInWindow = since
-    ? paidOrderRows.filter((row) => {
+    ? paidOrderRows?.filter((row) => {
         const at = Date.parse(row.created_at || '');
         return at >= Date.parse(since) && at < Date.parse(until);
       })
     : paidOrderRows;
-  const sum = (rows, field) => rows.reduce((n, row) => n + Number(row?.[field] || 0), 0);
+  const sum = (rows, field) => rows == null ? null : rows.reduce((n, row) => n + Number(row?.[field] || 0), 0);
 
   return {
     generated_at: new Date().toISOString(),
+    read_errors: readErrors,
+    partial: Object.keys(readErrors).length > 0,
     timezone: timeZone,
     window: windowSpec,
     users: {
@@ -639,8 +639,8 @@ export async function businessSnapshot(env, windowSpec = null) {
       legacy_album_plays: { total: legacyPlaysTotal, in_window: legacyPlaysWindow },
       inline_plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },
       plays: {
-        total: Number(legacyPlaysTotal || 0) + Number(musicPlaysTotal || 0),
-        in_window: windowSpec ? Number(legacyPlaysWindow || 0) + Number(musicPlaysWindow || 0) : null
+        total: legacyPlaysTotal == null || musicPlaysTotal == null ? null : Number(legacyPlaysTotal) + Number(musicPlaysTotal),
+        in_window: windowSpec && legacyPlaysWindow != null && musicPlaysWindow != null ? Number(legacyPlaysWindow) + Number(musicPlaysWindow) : null
       },
       preview_plays: { total: previewPlaysTotal, in_window: previewPlaysWindow },
       full_plays: { total: fullPlaysTotal, in_window: fullPlaysWindow },
@@ -1044,20 +1044,7 @@ export async function handleAnalyticsRequest(request, env, user) {
     if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
     try {
       const { org } = await requireHouseOwner(env, user);
-      const definitions = [
-        ['headlines', 'media_news_articles', {}], ['publishers', 'media_news_sources', {}],
-        ['ingest_records', 'ops_ingest_records', { org_id: 'eq.' + org.id }],
-        ['connectors', 'ops_ingest_connectors', { org_id: 'eq.' + org.id }],
-        ['missions', 'action_missions', {}], ['proofs', 'action_proofs', {}],
-        ['observability', 'control_observability_events', { org_id: 'eq.' + org.id }]
-      ];
-      const metrics = {};
-      // Bound fan-out; a missing table never turns into a measured zero.
-      for (let i = 0; i < definitions.length; i += 3) await Promise.all(definitions.slice(i,i+3).map(async ([key,table,filters]) => {
-        try { metrics[key] = { count: await sbCountFiltered(env,table,'id',filters), status: 'measured' }; }
-        catch { metrics[key] = { count: null, status: 'unavailable' }; }
-      }));
-      return json({ ok: true, measured_at: new Date().toISOString(), scope: 'Current stored records · all time', metrics });
+      return json(await dataCoverage(env, org.id, url));
     } catch (error) { return json({ error: error.message }, error.status || 502); }
   }
 

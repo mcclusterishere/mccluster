@@ -38,3 +38,63 @@ Country selection narrows the geographic trend and signup journey list. Other ca
 Phone, tablet and desktop screenshots were inspected. Browser checks use deterministic API fixtures; they are not a signed-in production data audit. The schema directory was checked against live metadata. Prior production RPC/schema verification is recorded in `ANALYTICS-DATA-REPAIR-2026-10-17.md`.
 
 The request-status list covers initial dashboard reads; on-demand state/country drilldowns, camera checks and provider queries retain their own local statuses. A successful business response can contain an unavailable commerce sub-result, shown as a dash rather than invented revenue. Unpopulated intelligence archives remain empty until authorized data is actually written.
+
+
+## Deeper data coverage repair — October 17 follow-up
+
+Production reads distinguish real ingestion gaps from display failures:
+
+| Check | Observed result |
+| --- | --- |
+| Raw and lean analytics events | 117,665 rows each at the audit; a separate anti-join found no missing lean event IDs |
+| News collection | 4,237 headlines; latest import October 17 at 05:05 UTC |
+| House ingestion | 36 stored records, latest October 2; four registered connectors; no recorded runs |
+| House intelligence evidence | Zero records |
+| House social metric snapshots | Zero records |
+| Spatial archive | `seek_first_sources`, entities and ingestion-run relations absent |
+
+Counts are point-in-time audit evidence, not values hardcoded into the interface.
+The governed spatial replay migrations have not been applied by this change.
+An absent schema, disabled collector, empty archive and failed query require
+different remedies; no provider is automatically enabled or copied into storage.
+
+### Repaired connections and representation
+
+- The field directory fetched `docs/analytics/application-schema-inventory.json`,
+  but deployment strips `docs`. Its shipping copy now lives under `data/analytics`.
+  Directory retries are available after transient failures.
+- Business measurements previously used one all-or-nothing `Promise.all` over
+  37 database reads. Reads now have bounded concurrency and independent failure
+  results. Unknown music components remain unknown when combined. Partial results
+  are marked visibly rather than blanking working measurements.
+- Business event counts now use the same first-party and non-bot boundary as the
+  audience data. Other customer properties and bot traffic are excluded.
+- Data explorer measures 21 explicit datasets with total count, selected-window
+  count, latest activity, time field, family, scope and destination. It never adds
+  different record types into a misleading total. Range-read failures retain a
+  successful total count. Quiet activity is a prompt to inspect collection, not
+  a claim that a provider has failed.
+- Dataset measurement runs on demand, with three concurrent table reads, rather
+  than scanning every table on each Analytics open. The existing owner gate and
+  house organization filters remain authoritative.
+- Datasets, Connections and Field directory are separate local tools. Family,
+  status and text filters narrow the explorer; selecting a row reveals its detail.
+- World intelligence now exposes the existing USGS collector health endpoint:
+  enabled/off, schema readiness, latest attempt and last successful run. A provider
+  snapshot remains distinct from stored history.
+
+No database migration, background collector activation, credential change or
+provider persistence change is part of this repair. Spatial provisioning,
+collector operation and missing external social measurements remain explicitly
+visible follow-up work, rather than being presented as connected data.
+
+### Follow-up validation
+
+- 890 root and Worker analytics tests passed before final review; the 24 focused
+  tests passed after tightening range-error handling and the on-demand workspace link.
+- Browser regression passed all five phone, tablet, desktop and workspace viewports,
+  including dataset filters/details, field-directory loading, preserved globe,
+  no overflow and no automatic ingestion. Screenshots use deterministic fixtures.
+- Live schema metadata confirms each provisioned dataset's time and organization
+  columns; only the already-identified spatial relations are absent.
+- Program coverage gate: 466 passed, zero failed.

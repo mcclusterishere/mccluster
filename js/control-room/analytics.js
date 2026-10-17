@@ -948,7 +948,7 @@
     var root=panel||S.host,deck=window.CR.analyticsDeck,saved=deck?deck.before(root):null;
     root.innerHTML=render();bind(root);if(root.querySelectorAll)bindCarousels(root);drawReach();syncGlobe(false);
     if(deck){deck.bind(root,S,selectSection,function(){loadSites().then(load);},saved);deck.fit(S.host);}
-    if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory")window.CR.analyticsUnified.loadInventory(paint);if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
+    if(window.CR.analyticsUnified){window.CR.analyticsUnified.bind(root,S.request,paint);if(S.section==="inventory"){loadCoverage();if(window.CR.analyticsUnified.state.panel==="fields")window.CR.analyticsUnified.loadInventory(paint);}if(S.section==="intelligence"&&!window.CR.analyticsUnified.state.sources&&!window.CR.analyticsUnified.state.error&&!window.CR.analyticsUnified.state.busy)window.CR.analyticsUnified.load(S.request,paint);}
     if(S.section==="cameras"&&window.CR.analyticsCameras)window.CR.analyticsCameras.bind(root,S.request,paint);
     if(S.section==="forensics"&&window.CR.forensics){var fh=S.host.querySelector("[data-crf-host]");if(fh)window.CR.forensics.mount(fh,{request:S.request,range:S.range});}
     if(S.section==="setup"&&(!S.pulse||S.pulse.site!==S.site))loadPulse();
@@ -989,7 +989,7 @@
     else if(x.name==="identity")S.data.identity=v||{};
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="experience")S.data.experience=v||null;
-    else if(x.name==="business")S.data.business=v||null;
+    else if(x.name==="business"){S.data.business=v||null;if(v&&v.snapshot&&v.snapshot.partial)S.errors.business=new Error("Some business measurements are unavailable; available values are retained.");}
     else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
@@ -1015,6 +1015,11 @@
       }
       pump();
     });
+  }
+  function loadCoverage(force){
+    if(sid()!==null||!S.range||S.coverageLoading===S.seq||!force&&S.completed&&S.completed.coverage)return;
+    var q=S.seq,r=S.range;S.coverageLoading=q;delete S.errors.coverage;paint();
+    return S.request('/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until)).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
   }
   function load(){
     var r=range(S.rangeId);if(!r){S.error=new Error("Choose a valid custom date range.");paint();return Promise.resolve();}
@@ -1052,7 +1057,6 @@
       {name:"visitors",run:function(){return site===null?S.request("/v1/analytics/visitors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)+"&limit=1"):Promise.resolve(null);}},
       {name:"flows",run:function(){return site===null?S.request("/v1/analytics/flows?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
       {name:"errors",run:function(){return site===null?S.request("/v1/analytics/errors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
-      {name:"coverage",run:function(){return site===null?S.request("/v1/analytics/coverage"):Promise.resolve(null);}},
       {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
     return runLimited(tasks,4,function(x){
@@ -1147,7 +1151,7 @@
       if(!S.onResize){S.onResize=function(){clearTimeout(S.resizeTimer);S.resizeTimer=setTimeout(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);var b=S.host&&S.host.querySelector("[data-cra-reach]");if(b&&Number(b.getAttribute("data-w"))!==Math.max(260,Math.floor(b.clientWidth||320)))drawReach();},120);};if(window.addEventListener)window.addEventListener("resize",S.onResize);}
 if(window.ResizeObserver&&!S.deckObserver){S.deckObserver=new ResizeObserver(function(){if(window.CR.analyticsDeck)window.CR.analyticsDeck.fit(S.host);});var shellNode=document.querySelector(".cr-shell");if(shellNode)S.deckObserver.observe(shellNode);}
 if(!S.range)S.range=range(S.rangeId);paint();if(!S.loaded&&!S.loading)loadSites().then(load);},
-    refresh:function(){return loadSites().then(load);},
+    loadCoverage:loadCoverage,refresh:function(){return loadSites().then(load);},
     render:render,
     top:topHtml,
     filters:filters,

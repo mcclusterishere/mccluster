@@ -158,3 +158,18 @@ body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-su
 .cu-heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:#c2bec8;margin:8px 0}.cu-heat-legend i{height:5px;flex:1;border-radius:9px;background:linear-gradient(90deg,#393b40,var(--an-accent,#e23948))}
 
 .cad-body .cra-kpi small{color:#b8b4c0}
+
+.cu-inventory-tabs{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding:2px 0;scrollbar-width:thin}
+.cu-inventory-tabs button{flex:none;min-height:44px;padding:9px 14px;border:1px solid #38323d;border-radius:8px;background:#17151c;color:#c9c3cf;font:inherit;font-size:13px}
+.cu-inventory-tabs button[aria-pressed="true"]{background:#30202a;border-color:#925468;color:#fff}
+.cu-dataset-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.cu-dataset-filters label{display:grid;gap:6px;min-width:0;font-size:12px;color:#bcb5c4}
+.cu-dataset-filters label:first-child{grid-column:1/-1}
+.cu-dataset-filters input,.cu-dataset-filters select{min-width:0;width:100%;min-height:44px;padding:8px;background:#0e0d12;color:#eee;border:1px solid #3c3542;border-radius:7px}
+.cu-dataset-list{display:grid;gap:0}
+.cad-body .cu-dataset-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(54px,.3fr) minmax(54px,.3fr);gap:8px;align-items:center;width:100%;padding:13px 2px;text-align:left;border:0;border-top:1px solid #302a36;border-radius:0;background:none;color:#eee;font:inherit}
+.cu-dataset-row>span{min-width:0}.cu-dataset-row>span:not(:first-child){text-align:right}
+.cu-dataset-row b{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cu-dataset-row small{display:block;color:#aaa0b3;font-size:11px;line-height:1.5;margin-top:4px}
+.cad-body .cu-dataset-row[aria-pressed="true"]{background:#261b24;box-shadow:inset 2px 0 #e5869a;padding-left:8px}
+@media(min-width:40rem){.cu-dataset-filters{grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr))}.cu-dataset-filters label:first-child{grid-column:auto}}
