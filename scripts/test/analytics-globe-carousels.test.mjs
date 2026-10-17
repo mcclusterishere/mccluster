@@ -107,8 +107,8 @@ test('boundaries: Natural Earth 110m, public domain, ISO-2 keyed, provenance and
   assert.match(tool, /natural-earth-vector\/\$\{VERSION\}\/geojson\/ne_110m_admin_0_countries\.geojson/);
 });
 
-test('pending country reads: security invoker over events_lean, country only, anon revoked, rollback written', async () => {
-  const sql = await read('supabase/pending/analytics_country_v1.sql');
+test('applied country reads: security invoker over events_lean, country only, anon revoked, rollback written', async () => {
+  const sql = await read('supabase/migrations/20261017030551_analytics_country_v1.sql');
   for (const fn of ['analytics_country_totals', 'analytics_country_series']) {
     assert.match(sql, new RegExp('create or replace function public\\.' + fn));
     assert.match(sql, new RegExp('revoke all on function public\\.' + fn + '\\([^)]*\\) from public, anon'));

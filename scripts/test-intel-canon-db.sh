@@ -19,9 +19,9 @@ apply supabase/tests/intel_canon_deps.stub.sql
 apply supabase/replay_migrations/20261005063813_canonical_ai_context_decisions_v1.sql
 apply supabase/migrations/20261002061056_action_network_gamification_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "alter table public.action_missions add column if not exists kind text not null default 'civic'" >/dev/null
-apply supabase/pending/20261015210000_intel_mission_canon_v1.sql
+apply supabase/migrations/20261017030617_intel_mission_canon_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/intel_mission_canon.behaviour.sql
 apply supabase/pending/20261015210000_intel_mission_canon_v1.rollback.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -At -c "select 'intel tables after rollback: ' || count(*) from pg_tables where schemaname='public' and tablename like 'intel\_%'"
-apply supabase/pending/20261015210000_intel_mission_canon_v1.sql
+apply supabase/migrations/20261017030617_intel_mission_canon_v1.sql
 echo "intel canon chain: ok"

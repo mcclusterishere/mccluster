@@ -1,4 +1,4 @@
--- Behaviour test for supabase/pending/analytics_country_v1.sql on a scratch
+-- Behaviour test for supabase/migrations/20261017030551_analytics_country_v1.sql on a scratch
 -- Postgres (scripts/test-analytics-country-db.sh). Test-only.
 -- events_lean stand-in: the production columns these reads use, with an
 -- owner-only RLS policy shaped like "only the desk reads it".
@@ -11,7 +11,7 @@ grant select on table public.events_lean to authenticated;
 create policy desk_reads on public.events_lean for select to authenticated
   using (coalesce(current_setting('request.jwt.claims', true)::jsonb->>'email','') = 'owner@example.test');
 
-\i supabase/pending/analytics_country_v1.sql
+\i supabase/migrations/20261017030551_analytics_country_v1.sql
 
 -- fixtures: 6 US page views from 4 devices, 1 bot (US), 2 GB, 1 unknown country, 1 bad code, 1 other site, 1 out of window
 insert into public.events_lean(at,name,device_id,session_id,is_bot,country,site_id) values
