@@ -113,3 +113,44 @@ body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-su
   .cad-body .cu-fact>strong{font-size:28px}.cad-body .cu-metrics>.cu-fact{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){.cad-app *{scroll-behavior:auto!important}}
+
+/* Legible, touch-sized controls; detail stays inside the active chapter. */
+.cad-app .cu-georows button{min-height:44px;align-items:center;font-size:12px;padding:7px 0}
+.cad-app .cu-geo-summary .cu-note,.cad-app .cu-geo-summary>small{font-size:11px;line-height:1.4}
+.cad-app .cu-geo-summary{scrollbar-width:thin}
+.cad-app .cra-pill__filters,.cad-app .cra-pill__select{min-height:44px}
+.cad-app .cra-summary{font-size:10px}
+.cad-arrows button{min-height:44px;width:44px;border-radius:12px}
+.cad-footer button{min-height:44px}
+.cad-footer{gap:5px;padding:5px 10px}
+.cad-footer>span:first-child{min-width:0;line-height:1.4}
+.cad-footer .cad-swipe-hint{display:none}
+.cad-body .cu-overview-metrics{margin-bottom:14px}
+.cu-metric-link{position:relative;text-align:left;color:inherit;cursor:pointer;min-height:108px}
+.cu-metric-link i{position:absolute;right:10px;top:8px;font:14px/1 system-ui;color:#bc8f9c}
+.cad-body .cu-metric-link>span{padding-right:13px}
+.cad-body .cu-metric-link:hover{background:#24212a;border-color:#755160}
+.cad-body .cu-fact>small{font-size:11px;line-height:1.4;color:#b2acbb}
+.cad-body .cu-fact>span{font-size:12px}
+.cad-body .cu-card p,.cad-body .cu-note{color:#b6b2bf}
+.cad-body .cu-card h2,.cad-body .cra-card h2{font-weight:500;letter-spacing:-.03em}
+.cad-body .cra-ac__line{stroke:#e5869a}
+.cad-body .cra-ac__s0{stop-color:#c75c77;stop-opacity:.36}
+.cad-body .cra-ac__s1{stop-color:#c75c77;stop-opacity:.02}
+.cra-ac__point{fill:transparent;stroke:transparent;outline:none}
+.cra-ac__point:hover,.cra-ac__point:focus{fill:#fff;stroke:#e5869a;stroke-width:3}
+.cad-scope,.cad-read-warning{margin:0 0 12px;padding:11px 12px;border:1px solid #51404a;border-radius:10px;background:#211a21;font:12px/1.5 var(--ui,system-ui);color:#ddcbd4}
+.cad-scope b,.cad-scope span{display:block}.cad-scope span{color:#b9b2bd;margin-top:3px}
+.cad-read-warning summary{cursor:pointer;min-height:24px}.cad-read-warning p{overflow-wrap:anywhere}
+.cad-read-warning button{min-height:44px;padding:8px 12px;border:1px solid #6c4b5a;border-radius:8px;background:#30222c;color:#f9e0ea;font:inherit}
+.cad-health ul{list-style:none;padding:0;margin:0}
+.cad-health li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2c2831}
+.cad-health li>div{min-width:0}.cad-health li b{font:500 13px/1.4 var(--ui,system-ui)}
+.cad-health li small{display:block;font-size:12px;line-height:1.5;color:#ada6b5;overflow-wrap:anywhere}
+.cad-health li button{flex:none}
+.cad-body .cu-detail>summary{min-height:44px;padding:12px 4px;font-size:13px;cursor:pointer;color:#cdbfcf}
+.cad-body .cra-loading{padding:24px 12px;color:#b9b2c2;font-size:14px}
+@media(min-width:40rem){
+  .cad-body .cu-overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cad-footer{padding:6px 18px;gap:8px;font-size:11px}
+}

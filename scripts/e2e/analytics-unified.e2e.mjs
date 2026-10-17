@@ -94,7 +94,7 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/v1/analytics/flows') return json(route, FIX.flows);
     if (p === '/v1/analytics/errors') return json(route, FIX.errors);
     if (p === '/v1/analytics/regions') return json(route, pendingRpc ? (new URL(req.url()).searchParams.get('country') === 'US' ? FIX.regions : { ok: true, pending: false, country: new URL(req.url()).searchParams.get('country'), min: 5, regions: [], folded: 0, unknown: 0 }) : { ok: true, pending: true, country: new URL(req.url()).searchParams.get('country'), regions: [], folded: 0, unknown: 0 });
-    if (p === '/v1/intel/geo') return json(route, { code: 'intel_schema_not_ready' }, 503);
+    if (p === '/v1/intel/geo') return json(route, {ok:true,audience:'owner',totals:{records:0,located:0,unknown_location:0,suppressed_records:0,suppressed_buckets:0},buckets:[]});
     return json(route, { ok: true });
   });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
@@ -134,6 +134,8 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
  const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
  const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','world']),tabs);
+ check(size.width,'overview exposes six connected metrics',await page.locator('.cu-overview-metrics .cu-metric-link').count()===6);
+ check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
  await page.locator('[data-cra-sec="intelligence"]').first().click();await page.waitForSelector('[data-cu-source="cctv"]');
  check(size.width,'missing archive shown',await page.locator('[data-cu-details]').innerText().then(x=>x.includes('not provisioned')));
@@ -170,7 +172,9 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   await page.waitForTimeout(200);
   check(size.width,'touch swipe changes the whole chapter',await page.locator('[role=tab][aria-selected=true]').innerText()==='Audience');
  }
- await page.locator('[data-cra-sec="inventory"]').first().click();await page.waitForSelector('#cuFieldSearch');
+ await page.locator('[data-cad-health]').click();await page.waitForSelector('#cuFieldSearch');
+ check(size.width,'data status reaches all applicable connections',await page.locator('.cad-health li').count()===23);
+ await page.screenshot({path:OUT+'/connections-'+size.width+(size.workspace?'-workspace':'')+'.png'});
  await page.locator('#cuFieldSearch').fill('analytics_site_daily');await page.locator('#cuFieldSearch').press('Tab');
  check(size.width,'field directory searches audited schema',await page.locator('[data-cu-details] .cu-records').innerText().then(x=>x.includes('analytics_site_daily')));
  check(size.width,'no automatic ingestion',!calls.some(x=>x.includes('/ingest/')));

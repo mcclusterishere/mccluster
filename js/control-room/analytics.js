@@ -457,6 +457,7 @@
     return'<svg class="cra-area-chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(aria)+'"><defs><linearGradient id="'+gid+'" x1="0" x2="0" y1="0" y2="1"><stop class="cra-ac__s0" offset="0"/><stop class="cra-ac__s1" offset="1"/></linearGradient></defs>'+
       [0.5,1].map(function(q){var y=Y(mx*q).toFixed(1);return'<line class="cra-ac__grid" x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'"/>';}).join("")+
       '<polygon fill="url(#'+gid+')" points="'+P.l+','+(H-P.b)+' '+pts+' '+(W-P.r)+','+(H-P.b)+'"/><polyline class="cra-ac__line" points="'+pts+'"/>'+
+      rows.map(function(r,i){var label=labelFor(r)+' · '+aria+': '+n(r[key]);return '<circle class="cra-ac__point" cx="'+X(i).toFixed(1)+'" cy="'+Y(r[key]).toFixed(1)+'" r="4" tabindex="0" role="img" aria-label="'+e(label)+'"><title>'+e(label)+'</title></circle>';}).join('')+
       ticks.filter(function(t,i,a){return a.indexOf(t)===i;}).map(function(t,i){return'<text class="cra-ac__x" x="'+X(t).toFixed(1)+'" y="'+(H-5)+'" text-anchor="'+(i===0?"start":t===rows.length-1?"end":"middle")+'">'+e(labelFor(rows[t]))+'</text>';}).join("")+'</svg>';
   }
   function bars(rows,labelKey,valueKey,max){
@@ -506,14 +507,14 @@
     return slide("Reach",'<div class="cra-slide__head">'+seg("reach",[["views","Views"],["sources","Sources"],["returning","Returning"]],mode)+'</div>'+body,"reach");
   }
   function signupSlide(){
-    var b=S.data.business,u=b&&b.users||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;
+    var b=S.data.business&&S.data.business.snapshot,u=b&&b.users||{},sel=S.geo.region&&/^[A-Z]{2}$/.test(S.geo.region)?S.geo.region:null;
     var js=(S.data.identity&&S.data.identity.journeys)||[],inCountry=sel?js.filter(function(j){return geoCountry(j.country)===sel;}).length:null;
     var rows=(u.created_by_day||[]).map(function(r){return{day:r.day,page_views:r.count};});
     return slide("Sign-ups",'<div class="cra-reach-main">'+big(sel?inCountry:(b?u.created_in_window:null),"Accounts created",scopeLabel(),b?nn(u.confirmed_in_window)+" confirmed · "+nn(u.active_in_window)+" signed in":"")+
       '<div class="cra-reach-chart">'+area(rows,"page_views",function(r){return String(r.day||"").slice(5);},"Accounts created per day")+'</div></div>',"signups");
   }
   function musicSlide(){
-    var m=S.data.business&&S.data.business.music,w=function(x){return x?x.in_window:null;};
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.music,w=function(x){return x?x.in_window:null;};
     var pv=m?w(m.preview_plays):null,fl=m?w(m.full_plays):null,cp=m?w(m.completions):null;
     return slide("Music",big(m?w(m.plays):null,"Music plays","Worldwide · "+(S.range&&S.range.label||""),"previews counted apart from full listens")+
       split("Previews",pv==null?null:Number(pv),"Full listens",fl==null?null:Number(fl))+
@@ -556,7 +557,7 @@
       bars([{label:"In progress",v:sum("in_progress")},{label:"Proof submitted",v:sum("submitted")},{label:"Verified by an admin",v:sum("verified")},{label:"Rejected",v:sum("rejected")}],"label","v",4),"missions");
   }
   function communitySlide(){
-    var m=S.data.business&&S.data.business.mnet,w=function(k){return m&&m[k]?m[k].created_in_window:null;};
+    var m=S.data.business&&S.data.business.snapshot&&S.data.business.snapshot.mnet,w=function(k){return m&&m[k]?m[k].created_in_window:null;};
     return slide("Community",big(w("posts"),"Posts","Human Uprise · "+(S.range&&S.range.label||""),m&&m.profiles?nn(m.profiles.total)+" member profiles in all":"")+
       bars([{label:"Posts",v:w("posts")},{label:"Reactions",v:w("reactions")},{label:"Follows",v:w("follows")},{label:"New profiles",v:w("profiles")}],"label","v",4),"community");
   }
@@ -719,7 +720,9 @@
     var scopedGap=house?"":'<div class="cra-error">The conversion funnel is hidden for this external property because the deployed backend does not expose a site-scoped funnel. Control will not mix another property into this view.</div>';
     var funnelCard=house?card("Conversion funnel","People reaching each stage.",funnel(S.data.funnel||[]),true):"";
     var trend=trafficTrend(S.data.traffic||{});
-    return (house?'<div class="cra-grid">'+audienceScience()+'</div>':"")+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("");
+    var totals=(S.data.traffic||{}).totals||{},vis=S.data.visitors&&S.data.visitors.counts,flows=S.data.flows&&S.data.flows.flows;
+    var summary=card("Audience at a glance","Selected property · all countries · "+(S.range&&S.range.label||""),'<div class="cra-kpis">'+kpi("Visitors",n(totals.visitors),"distinct devices")+kpi("Sessions",n(totals.sessions))+kpi("Returning visitors",n(vis&&vis.returning),house?"more than one session":"first-party only")+kpi("Single-page sessions",flows?n(flows.bounce_rate)+"%":"—",house?"recorded sessions":"first-party only")+'</div>',true);
+    return summary+scopedGap+'<div class="cra-grid">'+card("Audience trend",S.rangeId==="24h"?"Every one-hour bucket in the selected 24-hour window. Tap or hover any hour for exact values.":"Sessions and unique visitors inside the exact selected timestamp window.",line(trend.rows,"sessions","visitors","Sessions","Visitors",trend.opts),true)+funnelCard+card("Acquisition quality","People by source.",donut(S.data.acquisition||[],"source","people"))+card("Paths","Page-to-page movement.",rank((S.data.paths||[]).map(function(r){return{label:r.from_page+" → "+r.to_page,count:r.moves};}),"label","count"))+'</div>'+["funnel","acquisition","paths"].map(err).join("")+'<div class="cra-grid">'+card("Page performance","Attention, depth and friction · selected property.",pagePerformance((S.data.traffic||{}).pages),true)+'</div>'+(house?'<details class="cu-detail"><summary>Listening behavior & measurement method</summary><div class="cra-grid">'+audienceScience()+'</div></details>':"");
   }
   function content(){
     var rows=(S.data.content||[]).slice().sort(function(a,b){return(Number(b.listeners)||0)-(Number(a.listeners)||0);}),ev=S.data.contentEvents||[];
@@ -730,6 +733,9 @@
     return'<div class="cra-grid">'+musicSummary+card("Reach vs repeat","Each dot is one track. Further right: more different people started it. Higher: each of them started it more times (1\u00d7 = once each). Tap a dot or a row to line up its numbers. Sign-ups counts accounts whose last song before joining was this one.",'<div class="cra-reach" data-cra-reach></div>',true)+card("Media event mix","Composition of player events.",donut(ev,"event_name","events"))+card("Top tracks","Starts by track.",rank(rows,"track","starts"))+card("Track detail","Full selected-window ledger.",table,true)+'</div>'+err("content")+err("contentEvents");
   }
   function identity(){
+    if(sid()!==null)return card("Signup journeys","First-party only","<p>Select McCluster first-party to see account attribution.</p>",true);
+    if(S.errors.identity)return err("identity");
+    if(!S.completed||!S.completed.identity)return '<p class="cra-loading" role="status">Reading signup journeys…</p>';
     var d=S.data.identity||{},c=d.coverage||{},js=d.journeys||[],t=d.tracks||[];
     var accounts=Number(c.accounts)||js.length,linked=Number(c.bridged_accounts)||0,heard=Number(c.attributed_accounts)||0;
     var sourced=js.filter(function(j){return j.source&&j.source!=="direct";}).length;
@@ -852,6 +858,7 @@
   function adaptive(){
     if(sid()!==null)return'<div class="cra-grid">'+card("Adaptive Experience","The research and decision ledger is first-party only.","<p>Select McCluster first-party to inspect production policies, experiments and decision evidence.</p>",true)+'</div>';
     if(S.errors.experience)return err("experience");
+    if(!S.completed||!S.completed.experience)return '<p class="cra-loading" role="status">Reading adaptive decisions…</p>';
     var d=S.data.experience||{},t=d.totals||{},reg=d.registry||{},experiments=reg.experiments||[],policies=reg.policies||[],projects=reg.research_projects||[],recent=d.recent||[];
     var k='<div class="cra-kpis">'+
       kpi("Decisions",n(t.decisions||0))+
@@ -885,6 +892,9 @@
     var trendScope=(countrySeries?countryName(country):"Worldwide")+" · "+(S.range&&S.range.label||"")+(country&&!countrySeries?" · country trend unavailable":"");
     var summary=unified?unified.overview(S,{scopeLabel:function(){return trendScope;},chart:area(countrySeries||pvRows(),"page_views",pvLabel,"Page views over time, "+trendScope),bars:bars}):carousels();
     var detail=S.section==="overview"?summary+'<details class="cu-detail"><summary>All measured metrics & geographic coverage</summary>'+geoCard()+overview()+'</details>':body();
+    if(S.geo.region)detail='<p class="cad-scope"><b>Globe: '+e(S.geo.state&&stateOf(S.geo.state)?stateOf(S.geo.state).n:country?countryName(country):S.geo.region)+'</b><span>Cards cover all countries unless labeled otherwise. Country selection narrows the reach trend and journey list.</span></p>'+detail;
+    var failed=Object.keys(S.errors||{});
+    if(failed.length&&!S.error&&S.section!=="inventory")detail='<details class="cad-read-warning"><summary>'+failed.length+' data '+(failed.length===1?'source needs':'sources need')+' attention</summary><p>'+failed.map(function(k){return e(k)+': '+e(S.errors[k].message||S.errors[k]);}).join('<br>')+'</p><button type="button" data-cra-sec="inventory">Inspect data connections</button></details>'+detail;
     if(S.error)detail='<p class="cra-error" role="alert">Analytics load failed. '+e(S.error.message||S.error)+' · Refresh to retry.</p>'+detail;
     return window.CR.analyticsDeck?window.CR.analyticsDeck.render(S,detail):'<div class="cra"><p>'+e(st)+'</p>'+tabs()+detail+'</div>';
   }

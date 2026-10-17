@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-10-16",
+  "audited_at": "2026-10-17",
   "kind": "schema-metadata-only",
   "relations": [
     {
@@ -3798,6 +3798,165 @@
         "last_body",
         "last_direction",
         "message_count"
+      ]
+    },
+    {
+      "name": "intel_briefing_citations",
+      "columns": [
+        "org_id",
+        "briefing_id",
+        "ordinal",
+        "claim_id",
+        "evidence_id",
+        "locator"
+      ]
+    },
+    {
+      "name": "intel_briefings",
+      "columns": [
+        "id",
+        "org_id",
+        "title",
+        "body",
+        "status",
+        "drafting",
+        "author_id",
+        "evidence_oldest_at",
+        "evidence_newest_at",
+        "as_of",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_claim_evidence",
+      "columns": [
+        "org_id",
+        "claim_id",
+        "evidence_id",
+        "stance",
+        "note",
+        "added_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_claims",
+      "columns": [
+        "id",
+        "org_id",
+        "statement",
+        "subject_kind",
+        "purpose",
+        "status",
+        "confidence",
+        "region_label",
+        "created_by",
+        "reviewed_by",
+        "reviewed_at",
+        "visibility",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "intel_decision_basis",
+      "columns": [
+        "id",
+        "org_id",
+        "decision_id",
+        "briefing_id",
+        "claim_id",
+        "evidence_id",
+        "recorded_by",
+        "recorded_at"
+      ]
+    },
+    {
+      "name": "intel_evidence",
+      "columns": [
+        "id",
+        "org_id",
+        "kind",
+        "source_record_id",
+        "outcome_id",
+        "title",
+        "summary",
+        "publisher",
+        "source_url",
+        "license",
+        "attribution",
+        "retrieved_at",
+        "observed_at",
+        "content_sha256",
+        "measures",
+        "lat",
+        "lon",
+        "geo_source",
+        "region_label",
+        "review_status",
+        "reviewed_by",
+        "reviewed_at",
+        "visibility",
+        "retention_until",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "intel_mission_decisions",
+      "columns": [
+        "mission_id",
+        "org_id",
+        "decision_id",
+        "objectives",
+        "scope",
+        "region_label",
+        "target_measures",
+        "idempotency_key",
+        "linked_by",
+        "linked_at"
+      ]
+    },
+    {
+      "name": "intel_outcome_proofs",
+      "columns": [
+        "org_id",
+        "outcome_id",
+        "proof_id"
+      ]
+    },
+    {
+      "name": "intel_outcomes",
+      "columns": [
+        "id",
+        "org_id",
+        "mission_id",
+        "decision_id",
+        "summary",
+        "occurred_at",
+        "measures",
+        "status",
+        "submitted_by",
+        "reviewed_by",
+        "reviewed_at",
+        "review_note",
+        "idempotency_key",
+        "created_at"
+      ]
+    },
+    {
+      "name": "intel_reviews",
+      "columns": [
+        "id",
+        "org_id",
+        "subject_type",
+        "subject_id",
+        "from_status",
+        "to_status",
+        "confidence",
+        "reviewer_id",
+        "note",
+        "reviewed_at"
       ]
     },
     {
