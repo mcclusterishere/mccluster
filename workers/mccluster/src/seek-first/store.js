@@ -291,7 +291,7 @@ export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {})
   entitlements.js applies, so open data works the moment the schema exists and
   restricted lanes stay closed until the owner writes a grant.
 */
-export async function entitlementRows(env, orgId, sourceKey = null) {
+export async function entitlementRows(env, orgId, sourceKey = null, { strict = false } = {}) {
   if (!configured(env)) return new Map();
   const parts = [
     `org_id=eq.${encodeURIComponent(orgId)}`,
@@ -301,7 +301,8 @@ export async function entitlementRows(env, orgId, sourceKey = null) {
   try {
     const rows = await db(env, `seek_first_source_entitlements?${parts.join('&')}`);
     return new Map((rows || []).map((row) => [row.source_key, row]));
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     // A missing schema must not stop a keyless open-data read.
     return new Map();
   }

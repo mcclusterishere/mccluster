@@ -201,10 +201,10 @@ test('flag off: the scheduled hook makes no network or database call, and manual
   assert.ok(!h.calls.some((c) => c.url.includes('earthquake.usgs.gov') || c.url.includes('/rpc/')), 'refusal writes nothing');
 });
 
-test('wrangler.toml ships the collector flag off', async () => {
+test('wrangler.toml enables the owner-authorized private collector', async () => {
   const { readFile } = await import('node:fs/promises');
   const toml = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
-  assert.match(toml, /^INTEL_USGS_COLLECTOR_ENABLED = "false"$/m);
+  assert.match(toml, /^INTEL_USGS_COLLECTOR_ENABLED = "true"$/m);
 });
 
 test('owner routes refuse anonymous callers and members', async (t) => {
