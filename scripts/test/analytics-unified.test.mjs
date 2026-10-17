@@ -157,3 +157,12 @@ test('collector state distinguishes configuration from successful ingestion',asy
  const C=context(),out=C.analyticsUnified.operations(C.analytics.state);
  assert.match(out,/Open dataset explorer/);assert.doesNotMatch(out,/Current stored records/);
  });
+
+test('failed-range filters include datasets whose all-time counts succeeded',()=>{
+ const C=context(),s=C.analytics.state,U=C.analyticsUnified;
+ s.data.coverage={datasets:[
+  {key:'failed',label:'Failed range',family:'Community',state:'populated',count:12,window_count:null,window_status:'unavailable',scope:'House'},
+  {key:'missing',label:'Missing range storage',family:'Community',state:'populated',count:9,window_count:null,window_status:'missing',scope:'House'}]};
+ U.state.datasetStatus='unavailable';let out=U.inventory();assert.match(out,/data-cu-dataset="failed"/);assert.doesNotMatch(out,/data-cu-dataset="missing"/);
+ U.state.datasetStatus='missing';out=U.inventory();assert.match(out,/data-cu-dataset="missing"/);assert.doesNotMatch(out,/data-cu-dataset="failed"/);
+});

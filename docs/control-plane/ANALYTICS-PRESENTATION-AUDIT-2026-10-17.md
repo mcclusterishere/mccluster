@@ -90,8 +90,9 @@ visible follow-up work, rather than being presented as connected data.
 
 ### Follow-up validation
 
-- 890 root and Worker analytics tests passed before final review; the 24 focused
-  tests passed after tightening range-error handling and the on-demand workspace link.
+- 890 root and Worker analytics tests passed before final review; the 26 focused
+  tests passed after tightening range-error handling and the on-demand workspace link. Review regressions also cover unavailable question
+  answers and filters for failed selected-range reads.
 - Browser regression passed all five phone, tablet, desktop and workspace viewports,
   including dataset filters/details, field-directory loading, preserved globe,
   no overflow and no automatic ingestion. Screenshots use deterministic fixtures.

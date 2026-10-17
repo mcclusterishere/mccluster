@@ -678,6 +678,9 @@ export function answerBusinessQuestion(question, snapshot) {
   const wantsDaily = /\b(by day|daily|each day|per day)\b/.test(lower);
   const wantsPercent = /%|\bpercent(?:age)?\b|\bwhat share\b/.test(lower);
   const windowed = Boolean(snapshot.window);
+  const unavailable = (metric) => ({ understood: true, available: false, metric, value: null,
+    answer: 'That measurement is unavailable because its data read failed. Retry after checking the data connection.',
+    context: { window: snapshot.window } });
   const temporalIntent = /\b(joined|new|created|signed\s*up|recent|today|yesterday|week|month|day|hour)\b/.test(lower);
 
   if (temporalIntent && !windowed) {
@@ -697,11 +700,11 @@ export function answerBusinessQuestion(question, snapshot) {
     if (/\bplatform fee|platform revenue\b/.test(lower)) {
       metric = windowed ? 'music.revenue.platform_fee_cents_in_window' : 'music.revenue.platform_fee_cents';
       value = windowed ? snapshot.music.revenue.platform_fee_cents_in_window : snapshot.music.revenue.platform_fee_cents;
-      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' platform music revenue';
+      label = '$' + (value == null ? 'unavailable' : (Number(value) / 100).toFixed(2)) + ' platform music revenue';
     } else if (/\brevenue\b|\bgross\b/.test(lower)) {
       metric = windowed ? 'music.revenue.gross_cents_in_window' : 'music.revenue.gross_cents';
       value = windowed ? snapshot.music.revenue.gross_cents_in_window : snapshot.music.revenue.gross_cents;
-      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' gross music revenue';
+      label = '$' + (value == null ? 'unavailable' : (Number(value) / 100).toFixed(2)) + ' gross music revenue';
     } else if (/\bpreview/.test(lower)) {
       metric = 'music.preview_plays.' + w;
       value = snapshot.music.preview_plays[w];
@@ -743,6 +746,7 @@ export function answerBusinessQuestion(question, snapshot) {
       label = value + ' music plays';
     }
 
+    if (value == null) return unavailable(metric);
     return {
       understood: true,
       metric,
@@ -759,6 +763,7 @@ export function answerBusinessQuestion(question, snapshot) {
         : /\bacquisitions?\b/.test(lower) ? 'acquisitions'
           : 'events';
     const value = snapshot.platform[bucket][w];
+    if (value == null) return unavailable('platform.' + bucket + '.' + w);
     return {
       understood: true,
       metric: 'platform.' + bucket + '.' + w,
@@ -815,6 +820,7 @@ export function answerBusinessQuestion(question, snapshot) {
     const bucket = snapshot.mnet[subject];
     const value = windowed ? bucket.created_in_window : bucket.total;
     const metric = 'mnet.' + subject + '.' + (windowed ? 'created_in_window' : 'total');
+    if (value == null) return unavailable(metric);
     return {
       understood: true,
       metric,

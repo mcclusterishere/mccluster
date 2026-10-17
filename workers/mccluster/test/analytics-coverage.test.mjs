@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {dataCoverage,DATASETS} from '../src/analytics/coverage.js';
-import {businessSnapshot} from '../src/analytics/router.js';
+import {businessSnapshot,answerBusinessQuestion} from '../src/analytics/router.js';
 const env={SUPABASE_URL:'https://db.test',SUPABASE_SERVICE_ROLE_KEY:'test'};
 const reply=(body,status=200,count=0)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','content-range':'0-0/'+count}});
 
@@ -53,4 +53,16 @@ test('business snapshot retains unrelated measurements when one source fails and
    assert.equal(result.music.plays.total,null);assert.equal(result.music.plays.in_window,null);
    assert.ok(result.read_errors.postsTotal);assert.ok(peak<=4);
  }finally{globalThis.fetch=original;}
+});
+
+test('business answers preserve failed revenue and count reads as unavailable, and measured zero as zero',()=>{
+ for(const window of [null,{label:'24 hours'}]){
+  const snapshot={window,music:{revenue:{gross_cents:null,gross_cents_in_window:null,platform_fee_cents:null,platform_fee_cents_in_window:null},plays:{total:null,in_window:null}},platform:{page_views:{total:null,in_window:null}},mnet:{posts:{total:null,created_in_window:null}}};
+  for(const question of ['music revenue','platform music revenue','music plays','page views','Mnet posts']){
+   const out=answerBusinessQuestion(question,snapshot);
+   assert.equal(out.value,null);assert.equal(out.available,false);assert.match(out.answer,/unavailable/);assert.doesNotMatch(out.answer,/\$0\.00|null plays|null.*posts/);
+  }
+  snapshot.music.revenue.gross_cents=0;snapshot.music.revenue.gross_cents_in_window=0;
+  const out=answerBusinessQuestion('music revenue',snapshot);assert.equal(out.value,0);assert.match(out.answer,/\$0\.00/);
+ }
 });
