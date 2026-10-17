@@ -5,6 +5,7 @@ import whip from './whip/identity-gateway.js';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
+import research from './research/index.js';
 import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { handleWorldLayers } from './world-layers.js';
 import { handleWorldCctv } from './world-cctv.js';
@@ -261,6 +262,10 @@ export default {
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
+
+      if (path === '/v1/research' || path.startsWith('/v1/research/')) {
+        return research.fetch(request, env, { requireHouseOwner, sb });
+      }
 
       if (path === '/internal/here-tenant-agent' && request.method === 'GET') {
         await requireHouseOwner(request, env);
