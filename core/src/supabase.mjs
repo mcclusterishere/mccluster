@@ -79,7 +79,7 @@ export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } =
     org_id: `eq.${orgId}`,
     status: 'eq.running',
     locked_at: `lt.${cutoff}`,
-    select: 'id,attempts,max_attempts,locked_at,locked_by',
+    select: 'id,org_id,attempts,max_attempts,locked_at,locked_by',
     order: 'locked_at.asc',
     limit: '100',
   });
@@ -88,6 +88,7 @@ export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } =
   let recovered = 0;
 
   for (const job of rows) {
+    if (job.org_id !== orgId) continue;
     const attempts = Number(job.attempts || 0);
     const maxAttempts = Math.max(1, Number(job.max_attempts || 3));
     const exhausted = attempts >= maxAttempts;
@@ -128,7 +129,7 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
     org_id: `eq.${orgId}`,
     status: 'eq.queued',
     created_at: `lt.${cutoff}`,
-    select: 'id,job_type,created_at',
+    select: 'id,org_id,job_type,created_at',
     order: 'created_at.asc',
     limit: '200',
   });
@@ -137,6 +138,7 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
   let quarantined = 0;
 
   for (const job of rows) {
+    if (job.org_id !== orgId) continue;
     if (supported.has(job.job_type)) continue;
     const match = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued' });
     const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
@@ -181,7 +183,7 @@ export async function claimNext(supportedTypes) {
   const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
 
   for (const job of rows) {
-    if (!supported.has(job.job_type)) continue;
+    if (job.org_id !== orgId || !supported.has(job.job_type)) continue;
     const attempts = Number(job.attempts || 0) + 1;
     const patchParams = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued' });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
