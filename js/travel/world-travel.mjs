@@ -199,7 +199,12 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==
 });
 
 $('wtForm').addEventListener('input',e=>{changed();if(e.target.id==='wtDeparture')$('wtReturning').min=e.target.value;try{draft=read();renderItinerary();renderGlobe();}catch(err){status(err.message);}});
-$('wtForm').onsubmit=e=>{e.preventDefault();try{draft=read();renderItinerary();renderGlobe(true);status('Your draft is ready. Add the airport, station or stay details as you choose them.');$('wtItinerary').scrollIntoView({block:'nearest',behavior:'auto'});}catch(err){status(err.message);}};
+function requireEndpoints(action){
+  const missing=!draft.from?'From':!draft.to?'To':null;
+  if(!missing)return true;
+  status(`Add ${missing==='From'?'a starting point':'a destination'} before ${action}.`);$('wt'+missing).focus();return false;
+}
+$('wtForm').onsubmit=e=>{e.preventDefault();try{draft=read();if(!requireEndpoints('planning this journey'))return;renderItinerary();renderGlobe(true);status('Your draft is ready. Add the airport, station or stay details as you choose them.');$('wtItinerary').scrollIntoView({block:'nearest',behavior:'auto'});}catch(err){status(err.message);}};
 $('wtSwap').onclick=()=>{try{draft=read();[draft.from,draft.to]=[draft.to,draft.from];[draft.departureHub,draft.arrivalHub]=[draft.arrivalHub,draft.departureHub];draft.stay='';changed();syncInputs();renderGlobe(true);}catch(e){status(e.message);}};
 $('wtAddReturn').onclick=()=>{const show=$('wtReturnField').hidden;$('wtReturnField').hidden=!show;$('wtAddReturn').textContent=show?'Remove return':'Add return date';$('wtAddReturn').setAttribute('aria-expanded',String(show));if(show)$('wtReturning').focus();else{$('wtReturning').value='';draft.returning='';changed();renderItinerary();}};
 $('wtMore').onclick=()=>{const show=$('wtMoreModes').hidden;$('wtMoreModes').hidden=!show;$('wtMore').setAttribute('aria-expanded',String(show));};
@@ -221,7 +226,7 @@ const signIn=()=>{$('mnGuestSignIn').click();};
 const store=()=>journeyStore(window.MCC_SUPA);
 $('wtSave').onclick=async()=>{
   if(busy)return;if(!account()){signIn();return;}
-  try{draft=read();if(!draft.from||!draft.to){$('wtForm').reportValidity();return;}
+  try{draft=read();if(!requireEndpoints('saving your journey')||!$('wtForm').reportValidity())return;
     busy=true;$('wtSave').disabled=true;status('Saving your private draft…');const owner=account(),version=revision;
     const row=await store().save(draft,savedId);if(account()!==owner)return;
     savedId=row.id;dirty=version!==revision;$('wtDraftStatus').textContent=dirty?'Unsaved':'Saved';status(dirty?'Earlier changes saved. Save again to include your latest edits.':'Saved to your account. Your journey is private.');

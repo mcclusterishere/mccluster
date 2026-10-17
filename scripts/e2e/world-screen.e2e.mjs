@@ -361,9 +361,13 @@ if(runs('travel-location')) for(const geo of ['granted','delayed']){
 }
 
 if(runs('travel-fallback')) {
-  const {ctx,page}=await open(DEVICES[0],{member:false,noGlobe:true});
+  const {ctx,page,world}=await open(DEVICES[0],{member:true,noGlobe:true});
   try{
     await page.evaluate(()=>window.MCC_WORLD_MODE.set('travel'));
+    await page.fill('#wtTo','Lisbon');await page.click('[data-travel-kind=flight]');await page.click('#wtForm button[type=submit]');
+    check('travel-fallback','long-distance planning explains and focuses a missing origin',await page.locator('#wtFrom').evaluate(e=>e===document.activeElement)&&/starting point/.test(await page.textContent('#wtMessage')));
+    await page.click('[data-travel-kind=drive]');await page.click('#wtSave');
+    check('travel-fallback','saving a destination-only draft explains the missing origin without a write',await page.locator('#wtFrom').evaluate(e=>e===document.activeElement)&&/before saving/.test(await page.textContent('#wtMessage'))&&req(world,'POST',/^\/travel_journeys$/).length===0);
     await page.fill('#wtFrom','My town');await page.fill('#wtTo','Lisbon');await page.click('[data-travel-kind=flight]');await page.click('#wtForm button[type=submit]');
     check('travel-fallback','a trip remains usable without Cesium/WebGL',await page.locator('.wt-leg').count()===4&&await page.isVisible('#wtSave'));
   }finally{await ctx.close();}
