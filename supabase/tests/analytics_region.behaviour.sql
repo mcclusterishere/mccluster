@@ -1,11 +1,11 @@
--- Behaviour test for supabase/pending/analytics_region_v1.sql on a scratch
+-- Behaviour test for supabase/migrations/20261017030554_analytics_region_v1.sql on a scratch
 -- Postgres (scripts/test-analytics-region-db.sh). Test-only.
 -- events stand-in: only the production columns this read uses.
 create table public.events(
   id uuid primary key default gen_random_uuid(), at timestamptz not null, site_id uuid, name text not null,
   device_id text, is_bot boolean, country text, region text, city text, latitude double precision, longitude double precision, edge jsonb);
 
-\i supabase/pending/analytics_region_v1.sql
+\i supabase/migrations/20261017030554_analytics_region_v1.sql
 
 -- fixtures: CT 6 views (4 devices, code + name), NY 3 views (folded), MA 1 view (folded),
 -- 2 US views with no region (GPC), 1 bot in CT, 1 GB, 1 other site, 1 out of window

@@ -1,7 +1,7 @@
 # Intel → mission canon
 
-Status: design + **pending** migration, 2026-10-15. Not applied to production.
-Migration: `supabase/pending/20261015210000_intel_mission_canon_v1.sql`
+Status: **applied in production 2026-10-17** to repair the Analytics intelligence projection. The collector remains separately gated.
+Migration: `supabase/migrations/20261017030617_intel_mission_canon_v1.sql`
 (rollback: `…_intel_mission_canon_v1.rollback.sql`). Behaviour test:
 `supabase/tests/intel_mission_canon.behaviour.sql`, run by
 `scripts/test-intel-canon-db.sh`. Companion: `HALO-INTEL-IMPLEMENTATION-MAP.md`.

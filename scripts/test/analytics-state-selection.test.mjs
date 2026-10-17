@@ -82,9 +82,10 @@ test('data: 1:50m countries and large lakes, delta-encoded, small enough for a p
   assert.equal(JSON.parse(await read('data/geo/country-boundaries-110m.json')).countries.length, 177);
 });
 
-test('pending region read: admin only (service_role), folds under 5, never finer than a region, not applied', async () => {
-  const sql = await read('supabase/pending/analytics_region_v1.sql');
-  assert.match(sql, /NOT applied in production/);
+test('applied region read: admin only (service_role), folds under 5, never finer than a region', async () => {
+  const sql = await read('supabase/migrations/20261017030554_analytics_region_v1.sql');
+  const ledger = JSON.parse(await read('supabase/production-ledger.json'));
+  assert.ok(ledger.migrations.some(m => m.name === 'analytics_region_v1' && m.version === '20261017030554'));
   assert.match(sql, /revoke all on function public\.analytics_region_totals\(text, timestamptz, timestamptz, uuid\) from public, anon, authenticated;/);
   assert.match(sql, /grant execute on function public\.analytics_region_totals\(text, timestamptz, timestamptz, uuid\) to service_role;/);
   assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /to authenticated/);

@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 311,
-  "latest_version": "20261016151123",
-  "latest_name": "world_gdelt_gkg_news_v1",
-  "ledger_sha256": "67232dfc2b21a1db0e82d5749300de87ae61d691ada171f8edabc4b0f951d45a",
+  "migration_count": 314,
+  "latest_version": "20261017030617",
+  "latest_name": "intel_mission_canon_v1",
+  "ledger_sha256": "cefea79766e58115f5392181ccca5e4e60bf88c1d7da7f4ff845c2ecb914baa3",
   "migrations": [
     {
       "version": "0001",
@@ -1250,6 +1250,18 @@
     {
       "version": "20261016151123",
       "name": "world_gdelt_gkg_news_v1"
+    },
+    {
+      "version": "20261017030551",
+      "name": "analytics_country_v1"
+    },
+    {
+      "version": "20261017030554",
+      "name": "analytics_region_v1"
+    },
+    {
+      "version": "20261017030617",
+      "name": "intel_mission_canon_v1"
     }
   ]
 }

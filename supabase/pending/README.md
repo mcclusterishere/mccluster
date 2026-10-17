@@ -203,3 +203,9 @@ records the private funding opportunities and partner mission drafts. It publish
 no missions and enables no claims or compensation. With it the ledger and drift
 contract covered all 310 production migrations then (311 since
 20261016151123).
+
+Promoted 2026-10-17 to repair Analytics missing-function responses:
+- `20261017030551_analytics_country_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+- `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+- `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.
