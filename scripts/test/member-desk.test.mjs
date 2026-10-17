@@ -64,7 +64,7 @@ test("desk deep links and the old Policy address", () => {
 test("nav: Policy is no longer a separate destination; every door opens the desk", async () => {
   const [mnet, page, globe, eq, tabbar] = await Promise.all([read("mnet.html"), read("action-policy.html"), read("action-globe.html"), read("equity-uprise.html"), read("js/tabbar.js")]);
   assert.doesNotMatch(mnet, /href="action-policy\.html"/, "the World links nowhere else for Policy");
-  assert.match(mnet, /<button type="button" data-hu-desk-open="policy">Policy<\/button>/);
+  assert.doesNotMatch(mnet, /data-world-chip="policy"/, "the minimal globe does not add a separate Policy control");
   for (const s of ["js/member-desk-core.js", "js/identity-capture-core.js", "js/profile-edit-gate.js", "js/member-desk.js"]) assert.ok(mnet.indexOf(s) > mnet.indexOf("js/tabbar.js"), s + " loads after the bar");
   assert.match(mnet, /css\/member-desk\.css/);
   assert.doesNotMatch(globe, /href="action-policy\.html"/);

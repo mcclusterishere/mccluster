@@ -116,9 +116,9 @@
 
   /* ---------------- the browser part ---------------- */
   function mount(viewer, opts) {
-    const C = window.Cesium, o = opts || {};
+    const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, outline: null, rwb: null, wash: null, flags: null, labels: null, highlight: null, lastT: 0, camKey: '', failed: false };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, outline: null, rwb: null, wash: null, flags: null, labels: null, highlight: null, lastT: 0, camKey: '', failed: false };
     const scratchRect = new C.Rectangle(), scratchColor = new C.Color(), scratchU8 = new Uint8Array(4), scratchShow = new Uint8Array(1), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), view = [0, 0, 0, 0];
     const outlineBase = C.Color.fromCssColorString('#f4f1ea');
     const button = addButton();
@@ -127,6 +127,7 @@
 
     function safeStorage() { try { return window.localStorage; } catch (e) { return null; } }
     function addButton() {
+      if (quiet) return null;
       const row = document.querySelector('.globe-data');
       if (!row) return null;
       const b = document.createElement('button');
@@ -154,7 +155,7 @@
       if (!f) { card.hidden = true; card.innerHTML = ''; return; }
       const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features);
       const n = p.a2 ? counts[p.a2] || 0 : 0;
-      card.innerHTML = (p.flag ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
+      card.innerHTML = (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
         '<span class="country-card__text"><b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small></span>' +
         '<button type="button" class="country-card__close" aria-label="Show every country">×</button>';
       card.querySelector('button').onclick = () => select(null);
@@ -197,9 +198,9 @@
       st.features = (data.features || []).filter((f) => f && f.properties && Array.isArray(f.properties.label));
       const plain = [], usInst = [];
       st.items = st.features.map((f) => {
-        const p = f.properties, us = p.a2 === 'US';
+        const p = f.properties, us = !quiet && p.a2 === 'US';
         const id = 'hu-country-' + (p.a2 || p.a3);
-        const inst = us ? ringInstances(f, id, 9, null) : ringInstances(f, id, 1.4, outlineBase.withAlpha(0.5));
+        const inst = us ? ringInstances(f, id, 9, null) : ringInstances(f, id, quiet ? .7 : 1.4, outlineBase.withAlpha(quiet ? .25 : .5));
         (us ? usInst : plain).push(...inst);
         return { f, code: p.a2 || p.a3, us, box: p.main_bbox || p.bbox, ids: inst.map((x) => x.id), attrs: null, alpha: 1, applied: -1, flag: null, label: null };
       });
@@ -208,7 +209,7 @@
       const rwb = new C.Material({ translucent: true, fabric: { type: 'HuRedWhiteBlue', uniforms: { alpha: 1 }, source: 'czm_material czm_getMaterial(czm_materialInput materialInput){czm_material m=czm_getDefaultMaterial(materialInput);float t=abs(materialInput.st.t-0.5)*2.0;vec3 c=t<0.34?vec3(0.698,0.133,0.204):(t<0.68?vec3(1.0):vec3(0.235,0.231,0.431));m.diffuse=c;m.alpha=alpha;return m;}' } });
       if (usInst.length) st.rwb = viewer.scene.primitives.add(new Line({ geometryInstances: usInst, appearance: new C.PolylineMaterialAppearance({ material: rwb, translucent: true }), asynchronous: true }));
       const usF = st.features.find((f) => f.properties.a2 === 'US');
-      if (usF) {
+      if (usF && !quiet) {
         /* thirteen stripes, faint, over the land (Stripe repeats in pairs: 6.5 pairs = 13 stripes) */
         const stripes = C.Material.fromType('Stripe', { horizontal: true, evenColor: new C.Color(0.698, 0.133, 0.204, 0.2), oddColor: new C.Color(1, 1, 1, 0.1), repeat: 6.5, offset: 0 });
         const appearance = new C.MaterialAppearance({ material: stripes, flat: true, translucent: true, materialSupport: C.MaterialAppearance.MaterialSupport.TEXTURED });
@@ -221,6 +222,7 @@
       st.labels = viewer.scene.primitives.add(new C.LabelCollection({ scene: viewer.scene }));
       const cell = sprite && sprite.index && sprite.index.cell, order = sprite && sprite.index && sprite.index.order;
       st.items.forEach((it) => {
+        if (quiet) return;
         const p = it.f.properties, pos = C.Cartesian3.fromDegrees(p.label[0], p.label[1], 0);
         const n = order && p.flag ? order.indexOf(p.a2) : -1;
         if (n >= 0 && sprite.img) {
@@ -291,7 +293,7 @@
       it.applied = a;
       if (it.us) { if (st.rwbMat) st.rwbMat.uniforms.alpha = 0.95 * a; if (st.rwb) st.rwb.show = a > 0.01; }
       else if (it.attrs) {
-        C.Color.clone(outlineBase, scratchColor); scratchColor.alpha = (it.code === st.selected ? 0.95 : 0.5) * a;
+        C.Color.clone(outlineBase, scratchColor); scratchColor.alpha = (it.code === st.selected ? 0.95 : quiet ? 0.25 : 0.5) * a;
         C.ColorGeometryInstanceAttribute.toValue(scratchColor, scratchU8);
         C.ShowGeometryInstanceAttribute.toValue(a > 0.01, scratchShow);
         for (const at of it.attrs) { at.color = scratchU8; at.show = scratchShow; }
@@ -322,7 +324,7 @@
       return Promise.all([fetch(SPRITE_INDEX).then((r) => (r.ok ? r.json() : null)), new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = SPRITE_URL; })])
         .then(([index, img]) => ({ index, img })).catch(() => ({ index: null, img: null }));
     }
-    Promise.all([fetch(DATA_URL).then((r) => { if (!r.ok) throw Error('countries ' + r.status); return r.json(); }), loadSprite()])
+    Promise.all([fetch(DATA_URL).then((r) => { if (!r.ok) throw Error('countries ' + r.status); return r.json(); }), quiet ? Promise.resolve(null) : loadSprite()])
       .then(([data, sprite]) => build(data, sprite))
       .catch((e) => { st.failed = true; try { console.warn('[world countries] ' + (e && e.message || e)); } catch (_) {} });
     const api = {

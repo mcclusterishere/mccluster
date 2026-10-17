@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-theme-lock="dark" class="hu-editorial">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,6 +12,7 @@
   <script src="js/theme.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage">
@@ -24,9 +25,10 @@
       </a>
       <!-- search the World: places and causes on the globe, words in the feed,
            people, groups and missions. A bar in the header at every width. -->
+      <button class="hu-search-toggle" id="huSearchToggle" type="button" aria-label="Search the world" aria-expanded="false" aria-controls="mnSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
       <form class="mn__search" id="mnSearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-        <input id="mnSearchInput" type="search" placeholder="Search places, people, or causes…" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80" role="combobox" aria-controls="mnSuggest" aria-expanded="false" aria-autocomplete="list">
+        <input id="mnSearchInput" type="search" placeholder="Search the world" aria-label="Search places, people, or causes" autocomplete="off" maxlength="80" role="combobox" aria-controls="mnSuggest" aria-expanded="false" aria-autocomplete="list">
         <!-- PEOPLE, GROUPS AND MISSIONS LIVE IN SEARCH (owner, 2026-10-14):
              places and pinned missions, open missions, people and groups that
              match, and the three full lists, all from the one field -->
@@ -234,18 +236,15 @@
       </section>
 
       <section class="mn__view" id="mnFeedView" hidden>
-        <!-- THE WORLD SCREEN (owner's contract, docs/action-network/
-             WORLD-SCREEN-UX-HANDOFF-20261014.md): one persistent screen,
-             about 45% globe on top, a 15% context strip, 35% real member
-             feed that scrolls on its own. The globe never scrolls away.
-             A pin fills the strip and narrows the feed to posts the server
-             ties to that mission; a post with such a mission can show it on
-             the Earth. The frame reads public, admin-approved pins only. -->
+        <!-- Approved graphite reference: a scrolling phone stack and an iPad
+             landscape split. Only a visitor's selection opens mission context.
+             The shared navigation and supplied artwork remain authoritative. -->
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
+          <div class="hu-world-heading"><h1>World</h1><p>Discover meaningful work.</p></div>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <a class="mn__world-expand" href="action-globe.html?explore=1">Full world ↗</a>
+          <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
-          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Do something about it"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button>
+
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
           <!-- the corner tag: how many public missions are pinned (the caption says the same, so this is decoration for a reader) -->
@@ -253,23 +252,23 @@
           <!-- THE DATA LAYERS (owner, 2026-10-15): what the Earth is showing besides missions, and the one lead
                that rides with Flights: the owner's Vaunt referral. Written by the globe's hu:layer messages. -->
           <p class="mn__world-layers" id="mnWorldLayers" aria-live="polite" hidden></p>
+          <details class="hu-world-filters" id="huWorldFilters">
+            <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6"/></svg><span>Missions <span aria-hidden="true">·</span> <span id="huRegionLabel">All regions</span></span><span aria-hidden="true">⌄</span></summary>
+            <div class="mn__world-idle" id="mnWorldIdle">
+              <h2 class="mn__world-idle-h">Explore the world</h2>
+              <p class="mn__world-caption" id="mnWorldCaption" role="status">Tap a marker or search to discover missions.</p>
+              <nav class="mn__world-chips" aria-label="Explore the globe">
+                <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
+                <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
+                <button type="button" data-world-chip="near">Near me</button>
+              </nav>
+            </div>
+          </details>
         </section>
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
                what a guest sees first, and what anyone sees with no mission
                picked. The chips act on the globe; nothing here is invented. -->
-          <div class="mn__world-idle" id="mnWorldIdle">
-            <p class="mn__eyebrow">Explore the world</p>
-            <h2 class="mn__world-idle-h">Find a mission or region</h2>
-            <p class="mn__world-caption" id="mnWorldCaption">Tap a marker or search to discover action around the world.</p>
-            <nav class="mn__world-chips" aria-label="Explore the globe">
-              <button type="button" data-world-chip="missions">Missions <b id="mnWorldChipCount"></b></button>
-              <button type="button" data-world-chip="regional" aria-pressed="true">Regional impact</button>
-              <!-- Policy is part of the member desk over the globe, not a page of its own (owner, 2026-10-15) -->
-              <button type="button" data-hu-desk-open="policy">Policy</button>
-              <button type="button" data-world-chip="near">Near me</button>
-            </nav>
-          </div>
           <!-- THE MISSION CARD: the pin you tapped (or the newest pinned
                mission, labelled as such). Art is the mission's kind, drawn as
                an icon, because missions carry no photo and none is invented. -->
@@ -293,14 +292,15 @@
           </article>
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World feed">
-        <!-- the feed is the feed: no filter row over it (owner, 2026-10-15: "shouldn't even be a toggle. Just let the screen be.") -->
-        <!-- CLIPS, in context: paid clipping campaigns are work, not posts, so
-             they are a door at the top of the feed, shown only while
-             campaigns are open, with their real terms -->
-        <aside class="mn__clipdoor" id="mnClipDoor" hidden>
-          <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
-          <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
-        </aside>
+          <div class="hu-feed-tabs" role="group" aria-label="Feed content">
+            <button type="button" data-hu-feed="all" aria-pressed="true">For you</button>
+            <button type="button" data-hu-feed="community" aria-pressed="false">Community</button>
+          </div>
+          <section class="hu-mission-preview" aria-labelledby="huMissionHeading">
+            <div class="hu-section-head"><h2 id="huMissionHeading">Open missions</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
+            <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>
+          </section>
+          <h2 class="hu-section-label">From the community</h2>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -311,7 +311,7 @@
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
         <aside class="mn__guest-card" id="mnGuestCard">
-          <p><strong>Member posts live here.</strong> These are the public ones. Sign in to see your network, to post, and to join or fund a mission.</p>
+          <p>Sign in to share an update and connect.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
         </aside>
         <!-- THE WORLD FIRST (owner, 2026-10-15: a signed-in member saw no globe). A member who has not finished
@@ -366,6 +366,11 @@
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
+        <!-- Published clipping campaigns remain available after the community feed. -->
+        <aside class="mn__clipdoor" id="mnClipDoor" hidden>
+          <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
+          <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
+        </aside>
         <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
       </div>
       </section>

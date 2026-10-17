@@ -1035,7 +1035,7 @@
     paintMore();
     var focus = state.world.focus, query = state.world.query;
     /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
-    var news = focus && focus.filter ? [] : state.news;
+    var news = (focus && focus.filter) || state.editorialFeed === "community" ? [] : state.news;
     paintNewsCredit(false);
     if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
@@ -2976,19 +2976,10 @@
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
     root.classList.toggle("mn-world-on", on);
     if (!on) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
-    root.classList.add("mn-world-fit");
-    root.classList.toggle("mn-world-overlay", window.innerWidth < 600);
-    window.scrollTo(0, 0);
-    var room = Math.floor(window.innerHeight - view.getBoundingClientRect().top), usable = room - clear;
-    /* upright: one stacked screen from a small phone up. On its side a phone
-       has too little height to stack, so the Earth takes the left and the
-       strip and feed the right, still one screen. */
-    var portrait = window.innerHeight > window.innerWidth;
-    /* the thresholds were tuned to the room above the bar, so that is what they judge; the screen itself is the whole viewport */
-    var side = !portrait && usable < WORLD_FIT_MIN && usable >= WORLD_FIT_MIN_SIDE;
-    root.classList.toggle("mn-world-side", side);
-    if (!side && usable < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
-    view.style.setProperty("--mn-world-h", room + "px");
+    // Owner-approved October 16 reference: scrollable phone stack, split tablet landscape.
+    // CSS owns the responsive composition; never resize the page while a person reads.
+    root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side");
+    view.style.removeProperty("--mn-world-h");
   }
   /* the mission card's art is its kind, as an icon: missions carry no photo
      and the World never invents one */
@@ -2998,11 +2989,29 @@
     show_up: '<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
     mission: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>'
   };
+  function paintMissionPreview() {
+    var host = $("huMissionList"); if (!host) return;
+    var list = Object.keys(state.world.missions).map(function (id) { return state.world.missions[id]; });
+    host.innerHTML = list.length ? list.slice(0, 2).map(function (m) {
+      return '<button type="button" class="hu-mission-row" data-hu-mission="' + esc(m.mission_id) + '">' +
+        '<span class="hu-mission-symbol" aria-hidden="true">' + (PATH_ART[m.action_path] || PATH_ART.mission) + '</span>' +
+        '<span><strong>' + esc(m.title) + '</strong><small>' + esc(m.region_label || 'Worldwide') + '</small><span class="hu-mission-link">View mission ↗</span></span></button>';
+    }).join('') : '<p class="hu-muted">No published missions on the map yet.</p>';
+    host.querySelectorAll('[data-hu-mission]').forEach(function (button) {
+      button.onclick = function () {
+        var m = state.world.missions[button.dataset.huMission];
+        if (!m) return;
+        setWorldFocus(Object.assign({}, m, { filter: false }));
+        focusOnGlobe(m.mission_id);
+        $("mnWorldFocus").scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      };
+    });
+  }
   function paintWorldFocus() {
     var f = state.world.focus, host = $("mnWorldFocus"), idle = $("mnWorldIdle");
     if (!host) return;
     host.hidden = !f;
-    if (idle) idle.hidden = !!f;
+    if (idle) idle.hidden = false;
     if (!f) return;
     var known = state.world.missions[f.mission_id] || {}, st = state.world.stats[f.mission_id];
     var path = String(f.action_path || known.action_path || "mission");
@@ -3200,6 +3209,28 @@
       var song = new URLSearchParams(location.search).get("song");
       if (song && song.length <= 160) frame.src = "action-globe.html?embedded=1&surface=network&song=" + encodeURIComponent(song);
     } catch (_) {}
+    var searchToggle = $("huSearchToggle");
+    function closeSearch() { document.documentElement.classList.remove('hu-search-open'); searchToggle.setAttribute('aria-expanded', 'false'); }
+    if (searchToggle) searchToggle.onclick = function () {
+      var on = document.documentElement.classList.toggle('hu-search-open');
+      searchToggle.setAttribute('aria-expanded', String(on));
+      if (on) $("mnSearchInput").focus();
+    };
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (document.documentElement.classList.contains('hu-search-open')) { closeSearch(); searchToggle.focus(); }
+      if ($("huWorldFilters").open) { $("huWorldFilters").open = false; $("huWorldFilters").querySelector('summary').focus(); }
+    });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#huWorldFilters')) $("huWorldFilters").open = false;
+    });
+    document.querySelectorAll('[data-hu-feed]').forEach(function(button) {
+      button.onclick = function() {
+        state.editorialFeed = button.dataset.huFeed;
+        document.querySelectorAll('[data-hu-feed]').forEach(function(b) { b.setAttribute('aria-pressed', String(b === button)); });
+        renderFeed(false);
+      };
+    });
     frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
     window.addEventListener("message", function (ev) {
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
@@ -3213,9 +3244,9 @@
           state.world.missions[clean.mission_id] = clean;
           if (!state.world.latest) state.world.latest = clean;
         });
-        /* with nothing picked yet, the strip shows the newest pinned mission,
-           labelled as the latest, without moving the Earth or the feed */
-        if (!state.world.focus && state.world.latest && !state.guest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
+        /* Published missions lead the feed; selection stays with the visitor. */
+        paintMissionPreview();
+        if (d.dataUnavailable) $("huMissionList").innerHTML = '<p class="hu-muted">Mission pins could not load. Use the all-missions button to browse available work.</p>';
         /* a guest starts at Explore the world (owner's signed-out reference) */
         if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
         if ($("mnWorldTagCount")) $("mnWorldTagCount").textContent = String(Object.keys(state.world.pins).length);
@@ -3230,6 +3261,7 @@
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
       } else if (d.type === "hu:globe-unavailable") {
+        $("huMissionList").innerHTML = '<p class="hu-muted">The map is unavailable. Use the all-missions button to browse available work.</p>';
         if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;
@@ -3238,6 +3270,8 @@
       } else if (d.type === "hu:selection-cleared") {
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
+      } else if (d.type === "hu:country") {
+        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {
@@ -3329,7 +3363,7 @@
     if (form && input) {
       /* a phone's bar is short: one word there, the whole invitation from 600px */
       var wide = window.matchMedia ? window.matchMedia("(min-width: 600px)") : null;
-      var placeholder = function () { input.placeholder = !wide || wide.matches ? "Search places, people, or causes\u2026" : "Search"; };
+      var placeholder = function () { input.placeholder = "Search the world"; };
       placeholder();
       if (wide && wide.addEventListener) wide.addEventListener("change", placeholder);
       input.addEventListener("input", function () {

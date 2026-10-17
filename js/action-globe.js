@@ -14,8 +14,15 @@ const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
+// Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
+const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 /* the network band is short, so its Earth starts closer and fills the frame */
-function homeAltitude(){return document.documentElement.classList.contains('globe-surface-network')||EXPLORE?12500000:19000000}
+function homeAltitude(){
+ if(EDITORIAL&&viewer){const canvas=viewer.scene.canvas,fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.9);return Cesium.Ellipsoid.WGS84.maximumRadius/Math.sin(angle)-Cesium.Ellipsoid.WGS84.maximumRadius}
+ return document.documentElement.classList.contains('globe-surface-network')||EXPLORE?12500000:19000000
+}
+function homePosition(){return Cesium.Cartesian3.fromDegrees(EDITORIAL?-35:0,EDITORIAL?25:15,homeAltitude())}
+
 let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
@@ -56,12 +63,12 @@ if(d.type==='hu:creator-mode'){const b=$('ctlAudience');if(b){b.hidden=!d.on;if(
 if(d.type==='hu:audience-points'&&Array.isArray(d.points)&&viewer){drawAudience(d.points.slice(0,250));return}
 if(d.type==='hu:analytics-points'&&ANALYTICS&&Array.isArray(d.points)){analytics.points=d.points.slice(0,300);analytics.selected=typeof d.selected==='string'?d.selected:null;drawAnalytics();return}
 if(d.type==='hu:analytics-select'&&ANALYTICS){selectAnalytics(typeof d.code==='string'?d.code:null,true);return}
-if(d.type==='hu:clear-selection'&&viewer){selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setSelection(false);closeDetail();viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude()),duration:1.4})}});let missions=[],allMissions=[],cities=[],regions=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true,activeRegion=null,regionOutlines=[];
+if(d.type==='hu:clear-selection'&&viewer){selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setSelection(false);closeDetail();viewer.camera.flyTo({destination:homePosition(),duration:1.4})}});let missions=[],allMissions=[],cities=[],regions=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true,activeRegion=null,regionOutlines=[];
 async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
 function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
 function draw(){clear(missionPins);clear(cityPins);drawContinents();
 /* a mission can have many pins (countries, an origin, a context region): every pin opens the same mission */
-if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach(p=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context';missionPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000),billboard:{image:glowPin(off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e'),width:ctx?22:30,height:ctx?22:30,scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
+if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach(p=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context';missionPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000),billboard:{image:glowPin(off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e'),width:EDITORIAL?(ctx?12:16):(ctx?22:30),height:EDITORIAL?(ctx?12:16):(ctx?22:30),scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
 if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
 function show(n){if(!missions.length)return;const next=(n+missions.length)%missions.length;const m=missions[next];i=next;selectionShown=true;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=p.properties?.missionIndex?.getValue()===i?1.5:1});$('title').textContent=m.title;$('description').textContent=m.description;$('path').textContent=(m.action_path||'mission').replace('_',' ').toUpperCase()+' · '+m.region_label;$('position').textContent=(i+1)+' / '+missions.length;$('missionLink').href='mnet.html?mission='+encodeURIComponent(m.mission_id);setSelection(true);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude,1150000),orientation:{heading:Cesium.Math.toRadians(0),pitch:Cesium.Math.toRadians(-75),roll:0},duration:2.2,easingFunction:Cesium.EasingFunction.QUADRATIC_IN_OUT})}
 function setMode(mode){if(mode==='feed'){$('worldFeed').scrollTo({top:0,behavior:'smooth'});$('feedMode').classList.add('is-active');$('globeMode').classList.remove('is-active');}else{$('globeMode').classList.add('is-active');$('feedMode').classList.remove('is-active');closeDetail();}viewer?.resize();}
@@ -100,6 +107,15 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
     darkness is pushed out of reach so it never paints over the city lights. */
  const R=Cesium.Ellipsoid.WGS84.maximumRadius;viewer.clock.clockStep=Cesium.ClockStep.SYSTEM_CLOCK;sc.globe.enableLighting=true;sc.globe.dynamicAtmosphereLighting=true;sc.globe.dynamicAtmosphereLightingFromSun=true;
  sc.globe.lightingFadeOutDistance=R+1.2e6;sc.globe.lightingFadeInDistance=R+3e6;sc.globe.nightFadeOutDistance=R+1.2e6;sc.globe.nightFadeInDistance=1e9;sc.globe.atmosphereLightIntensity=8;if(sc.skyAtmosphere)sc.skyAtmosphere.show=true;sc.globe.showGroundAtmosphere=true;sc.globe.atmosphereBrightnessShift=-0.05;sc.globe.atmosphereSaturationShift=0.1;sc.globe.atmosphereHueShift=-0.04;if(sc.skyAtmosphere){sc.skyAtmosphere.brightnessShift=0.15;sc.skyAtmosphere.saturationShift=0.1}
+ if(EDITORIAL){
+  sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#20262a');
+  if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
+  sc.globe.enableLighting=true;sc.light=new Cesium.DirectionalLight({direction:Cesium.Cartesian3.normalize(new Cesium.Cartesian3(-.5,.6,-1),new Cesium.Cartesian3()),intensity:1.4});sc.globe.atmosphereSaturationShift=-1;sc.globe.atmosphereBrightnessShift=-.25;
+  if(sc.skyAtmosphere){sc.skyAtmosphere.saturationShift=-1;sc.skyAtmosphere.brightnessShift=-.3}
+  dayLayer.saturation=0;dayLayer.brightness=.8;dayLayer.contrast=1.15;dayLayer.gamma=1.1;
+  if(nightLayer)nightLayer.show=false;if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=.55;cloudLayer.alpha=.25}
+ }
+ window.__huGlobeStyle=()=>({editorial:EDITORIAL,saturation:dayLayer&&dayLayer.saturation,stars:!!(sc.skyBox&&sc.skyBox.show)});
  /* a hook for the browser test: the evidence shots wait for the tiles */
  window.__huGlobeSettled=()=>!!(viewer&&viewer.scene.globe.tilesLoaded);viewer.camera.percentageChanged=0.08;
  /* labels draw over the limb instead of being cut by it, so only those on the near side of the Earth show */
@@ -109,7 +125,7 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
 const CONTINENTS=[['North America',-100,46],['South America',-60,-16],['Europe',14,53],['Africa',19,4],['Asia',92,38],['Oceania',138,-26]];
 /* rough boxes, only to word a label; never used for eligibility or anything a member does */
 function continentOf(lat,lon){if(lat<-8&&(lon>110||lon<-150))return 'Oceania';if(lon<-25)return lat>8||lon<-82?'North America':'South America';if(lon>34&&lat>12&&lat<42)return 'Asia';if(lat>35&&lon<45)return 'Europe';if(lat<=37&&lon<52)return 'Africa';return lat>-11?'Asia':'Oceania'}
-function drawContinents(){clear(continentLabels);if(!showMissions)return;const counts={};missions.forEach(m=>{const seen=new Set();(m.pins||[m]).forEach(p=>{if(Number.isFinite(p.latitude)&&Number.isFinite(p.longitude)){const k=continentOf(p.latitude,p.longitude);if(!seen.has(k)){seen.add(k);counts[k]=(counts[k]||0)+1}}})});
+function drawContinents(){clear(continentLabels);if(EDITORIAL||!showMissions)return;const counts={};missions.forEach(m=>{const seen=new Set();(m.pins||[m]).forEach(p=>{if(Number.isFinite(p.latitude)&&Number.isFinite(p.longitude)){const k=continentOf(p.latitude,p.longitude);if(!seen.has(k)){seen.add(k);counts[k]=(counts[k]||0)+1}}})});
  const far=new Cesium.DistanceDisplayCondition(7000000,Number.POSITIVE_INFINITY);
  CONTINENTS.forEach(([name,lon,lat])=>{const n=counts[name];if(!n)return;const at=Cesium.Cartesian3.fromDegrees(lon,lat,250000);
   continentLabels.push(viewer.entities.add({position:at,label:{text:name,font:'600 14px Inter,system-ui,sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.fromCssColorString('#03060c'),outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,distanceDisplayCondition:far,disableDepthTestDistance:Number.POSITIVE_INFINITY,pixelOffset:new Cesium.Cartesian2(0,-9)}}));
@@ -119,12 +135,12 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{missions:()=>allMissions,regions:()=>regions,onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}})}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c})}})}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
- if(dayLayer)dayLayer.show=!night;if(cloudLayer)cloudLayer.show=!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
- g.enableLighting=!night;g.atmosphereBrightnessShift=night?-0.35:-0.05;
- const b=$('ctlLayers');if(b){b.setAttribute('aria-pressed',mode==='auto'?'false':'true');b.title={auto:'The Earth (tap for night)',night:'Night Earth (tap for street map)',map:'Street map (tap for the Earth)'}[mode]}}
+ if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
+ g.enableLighting=EDITORIAL||!night;g.atmosphereBrightnessShift=EDITORIAL?-.25:night?-0.35:-0.05;
+ const b=$('ctlLayers');if(b){b.setAttribute('aria-pressed',mode==='auto'?'false':'true');b.title=EDITORIAL?(mode==='map'?'Street map (tap for the Earth)':'The Earth (tap for street map)'):{auto:'The Earth (tap for night)',night:'Night Earth (tap for street map)',map:'Street map (tap for the Earth)'}[mode]}}
 let audiencePins=[];
 /* a hook for the browser test, like __huGlobeSettled: how many audience points are drawn */
 window.__huAudienceCount=()=>audiencePins.length;
@@ -318,14 +334,26 @@ function drawAnalytics(){if(!viewer)return;analytics.entities.forEach(e=>viewer.
    analytics.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(lon,lat,2000),label:{text:v.toLocaleString(),font:'600 12px Inter, system-ui, sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE},properties:{analyticsCode:p.code}}));return}
   analytics.entities.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(lon,lat,2000),point:{pixelSize:Math.round(8+22*Math.sqrt(v/max))*(on?1.25:1),color:Cesium.Color.fromCssColorString(on?'#ff3d5e':'#4fd1ff').withAlpha(on?.95:.75),outlineColor:Cesium.Color.WHITE.withAlpha(.9),outlineWidth:on?2.5:1.2},
    label:{text:String(p.name||p.code).slice(0,40)+' · '+v.toLocaleString(),font:'600 12px Inter, system-ui, sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,on?3e7:9e6)},properties:{analyticsCode:p.code}}))})}
-function selectAnalytics(code,fly){analytics.selected=code||null;drawAnalytics();if(!fly||!viewer)return;const p=analytics.points.find(x=>x.code===code);if(p)viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(Number(p.lon),Number(p.lat),7000000),duration:1.2});else viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude()),duration:1.2})}
+function selectAnalytics(code,fly){analytics.selected=code||null;drawAnalytics();if(!fly||!viewer)return;const p=analytics.points.find(x=>x.code===code);if(p)viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(Number(p.lon),Number(p.lat),7000000),duration:1.2});else viewer.camera.flyTo({destination:homePosition(),duration:1.2})}
+function wireEditorialTools(){
+ if(!EDITORIAL)return;
+ const credit=document.querySelector('.osm-credit'),ionCredit=$('ionCredits');
+ if(credit){credit.innerHTML='<a href="https://earthdata.nasa.gov/">NASA imagery</a> · <a href="https://www.naturalearthdata.com/">Natural Earth</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ';if(ionCredit)credit.appendChild(ionCredit)}
+ const row=document.querySelector('.globe-data'),nav=document.querySelector('.globe-controls');
+ const tools=document.createElement('details');tools.className='globe-editorial-tools';
+ tools.innerHTML='<summary aria-label="Globe controls"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6"/></svg></summary>';
+ const panel=document.createElement('div');panel.className='globe-editorial-tools__panel';
+ if(nav)panel.appendChild(nav);if(row)panel.appendChild(row);tools.appendChild(panel);document.body.appendChild(tools);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tools.open){tools.open=false;tools.querySelector('summary').focus()}});
+ document.addEventListener('click',e=>{if(!tools.contains(e.target))tools.open=false});
+}
 function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};
  on('ctlAudience',()=>{const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
- on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude()),duration:1.4});tell({type:'hu:selection-cleared'})});
+ on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:homePosition(),duration:1.4});tell({type:'hu:selection-cleared'})});
  /* Near me answers in #status; inside the network that line is hidden, so hand the page that one answer */
  on('ctlLocate',()=>{const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
  const zoom=f=>{const h=viewer.camera.positionCartographic.height;f?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)};on('ctlZoomIn',()=>zoom(true));on('ctlZoomOut',()=>zoom(false));
- on('ctlLayers',()=>setLayer({auto:'night',night:'map',map:'auto'}[layerMode]||'auto'));}
+ on('ctlLayers',()=>setLayer(EDITORIAL?(layerMode==='map'?'auto':'map'):({auto:'night',night:'map',map:'auto'}[layerMode]||'auto')));}
 /* ---------- THE EARTH UP CLOSE: Cesium ion, for signed-in members (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker";
    the public gets the globe and its free layers, the paid map data is for members) ----------
    From far out the Earth stays NASA's, exactly as above. Coming down, Cesium ion takes over: Cesium World Terrain under everything,
@@ -362,7 +390,7 @@ function ionRetry(resource,error){const code=error&&error.statusCode;
 /* back to NASA's Earth and the street map, with nothing more asked of ion on this page */
 function ionOff(why){if(!ion)return;ionWarn('off',why);ion=null;document.documentElement.classList.remove('globe-ion');if(!viewer)return;
  if(ionImagery){if(viewer.imageryLayers.contains(ionImagery))viewer.imageryLayers.remove(ionImagery,true);ionImagery=null}
- if(cloudLayer)cloudLayer.alpha=1;if(nightLayer)nightLayer.nightAlpha=1;
+ if(cloudLayer)cloudLayer.alpha=EDITORIAL?.25:1;if(nightLayer)nightLayer.nightAlpha=1;
  if(ionBuildings){viewer.scene.primitives.remove(ionBuildings);ionBuildings=null}
  if(ionGround){ionGround=false;viewer.scene.globe.terrainProvider=new Cesium.EllipsoidTerrainProvider()}
  if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}
@@ -378,7 +406,7 @@ function addIonImagery(k){const id=ion&&Array.isArray(ion.imagery)?ion.imagery[k
  const layer=Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(id),{alpha:0});ionImagery=layer;
  layer.readyEvent.addEventListener(()=>{if(ionImagery===layer&&layerMode==='auto'&&mapLayer)mapLayer.show=false});
  layer.errorEvent.addEventListener(e=>{ionWarn('imagery '+id,e);if(viewer.imageryLayers.contains(layer))viewer.imageryLayers.remove(layer,true);
-  if(ionImagery===layer){ionImagery=null;if(cloudLayer)cloudLayer.alpha=1;if(nightLayer)nightLayer.nightAlpha=1;if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}addIonImagery(k+1)});
+  if(ionImagery===layer){ionImagery=null;if(cloudLayer)cloudLayer.alpha=EDITORIAL?.25:1;if(nightLayer)nightLayer.nightAlpha=1;if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}addIonImagery(k+1)});
  viewer.imageryLayers.add(layer,viewer.imageryLayers.indexOf(dayLayer)+1)}
 function addIonBuildings(){if(!ion||!Number.isInteger(ion.buildings)||!viewer)return;
  const coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
@@ -387,7 +415,7 @@ function addIonBuildings(){if(!ion||!Number.isInteger(ion.buildings)||!viewer)re
 function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartographic.height,auto=layerMode==='auto';
  if(!ionImageryTried&&auto&&h<ION_HI){ionImageryTried=true;addIonImagery(0)}
  if(ionImagery){const on=auto&&h<(ionImagery.show?ION_OFF:ION_HI);if(ionImagery.show!==on)ionImagery.show=on;const a=Math.min(1,Math.max(0,(ION_HI-h)/(ION_HI-ION_FULL)));if(ionImagery.alpha!==a)ionImagery.alpha=a;
-  if(cloudLayer){const c=ionImagery.ready&&on?1-a:1;if(cloudLayer.alpha!==c)cloudLayer.alpha=c}
+  if(cloudLayer){const c=(ionImagery.ready&&on?1-a:1)*(EDITORIAL?.25:1);if(cloudLayer.alpha!==c)cloudLayer.alpha=c}
   /* Black Marble is opaque and sits over the aerial imagery; on the night side it would cover the ground at every height */
   if(nightLayer){const n=ionImagery.ready&&on?1-a:1;if(nightLayer.nightAlpha!==n)nightLayer.nightAlpha=n}}
  /* OSM Buildings sit on Cesium World Terrain's heights; on the flat fallback they would float or sink, so they wait for the real ground */
@@ -396,9 +424,10 @@ function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartog
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
  wireDataLayers();const ionP=ionStatus(),dataP=Promise.all([rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
- ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
+ ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();wireEditorialTools();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
- viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(0,15,homeAltitude())});
+ viewer.camera.setView({destination:homePosition()});
+ if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
 viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */

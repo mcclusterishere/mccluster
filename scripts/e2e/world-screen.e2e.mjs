@@ -233,18 +233,25 @@ const DEVICES = [
 ];
 
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
 async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0 }) {
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
-  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
+  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
+    const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
+    if (!rel || rel.includes('..')) return route.abort();
+    try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
+    catch { return route.abort(); }
+  });
+  await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r=>r.abort());
   await routeBackends(ctx, world, { member, creator, verified });
   const page = await ctx.newPage();
   const errors = [];
@@ -267,23 +274,61 @@ const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(
 const ONLY = process.env.E2E_ONLY || '';
 const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 
+/* The 2026-10-16 approved reference, including its explicit real-navigation exception.
+   E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE || d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
+  const scope = `editorial-${device.name}-${member ? 'member' : 'guest'}`;
+  const {ctx,page,world,errors} = await open(device,{member});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    check(scope,'actual Cesium uses the graphite style and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===0 && !s.stars; }));
+    check(scope,'published missions populate the preview', await page.locator('[data-hu-mission]').count()===2);
+    const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
+    check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
+    check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
+      const g=document.getElementById('mnWorld').getBoundingClientRect(),f=document.getElementById('mnWorldFeed').getBoundingClientRect();
+      return innerWidth>=1000 ? f.left>=g.right-1 : f.top>=g.bottom-1;
+    }));
+    const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
+    check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
+    check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    await page.click('#huWorldFilters summary');
+    check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
+    await page.keyboard.press('Escape');
+    check(scope,'Escape closes the filter',!(await page.locator('#huWorldFilters').evaluate(e=>e.open)));
+    if(device.viewport.width<600)await page.click('#huSearchToggle');
+    await page.fill('#mnSearchInput','Mill');
+    await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
+    check(scope,'search still finds a published mission',/Clean up the Mill River/.test(await page.textContent('#mnSuggestRows')));
+    await page.keyboard.press('Escape');
+    await page.click('[data-hu-mission="'+M1+'"]');
+    await page.waitForSelector('#mnWorldFocus:not([hidden])');
+    check(scope,'mission preview selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
+    await page.click('#mnWorldFocusClear');
+    await page.click('[data-hu-feed="community"]');
+    check(scope,'Community keeps member posts and hides the news stream',await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()===0);
+    await page.click('[data-hu-feed="all"]');
+    check(scope,'For you restores the news stream',await page.locator('#mnFeed [data-news-id]').count()>0);
+    await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
+    await page.screenshot({path:join(OUT,scope+'-feed.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally {await ctx.close();}
+}
+
 /* ---------- member, every device: composition and navigation ---------- */
 for (const device of DEVICES) {
   if (!runs(device.name)) continue;
   const { ctx, page, world, errors } = await open(device, { member: true });
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
-  check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
-  /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
-  /* the bottom app bar never leaves (owner, 2026-10-15), signed in or not */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
-  /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
-  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
-  /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
-  if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
+  check(device.name, 'the visitor selects a mission; no context card opens by itself', await page.isHidden('#mnWorldFocus'));
+  check(device.name, 'the real shared bar is visible and the feed has clearance', !s.barHidden && s.feedPad >= s.vh - s.barTop + 8, s);
+  check(device.name, 'phone/tablet stack scrolls; wide landscape has a feed column', await page.evaluate(() => {
+    const g=document.getElementById('mnWorld').getBoundingClientRect(), f=document.getElementById('mnWorldFeed').getBoundingClientRect();
+    return innerWidth >= 1000 ? f.left >= g.right - 1 : f.top >= g.bottom - 1;
+  }), s);
   check(device.name, 'no sideways overflow', s.scrollW === s.clientW, s);
-  check(device.name, 'the strip opens on the newest pinned mission, labelled as the latest', (await page.isVisible('#mnWorldFocusFlag')) && /Latest/.test(await page.textContent('#mnWorldFocusFlag')));
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
   check(device.name, 'app bar is exactly Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
   check(device.name, 'feed shows member posts (author, text, Share; no like, comment or reaction), not mission cards', await page.evaluate(() => {
@@ -300,9 +345,9 @@ if (runs('member-interactions')) {
   const device = DEVICES[0];
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
-  const feedScroll = await page.evaluate(async () => { const f = document.getElementById('mnWorldFeed'); f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
-  check(scope, 'the feed scrolls on its own and the page stays put', feedScroll.feed > 0 && feedScroll.page === 0, feedScroll);
-  await page.$eval('#mnWorldFeed', (f) => { f.scrollTop = 0; });
+  const feedScroll = await page.evaluate(async () => { const f = document.scrollingElement; f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
+  check(scope, 'the phone page scrolls through the feed', feedScroll.feed > 0 && feedScroll.page > 0, feedScroll);
+  await page.evaluate(() => window.scrollTo(0, 0));
 
   // Post
   await page.fill('#mnPostBody', 'E2E: posted from the World screen');
@@ -585,7 +630,7 @@ if (runs('layers-guest')) {
    the whole 30, 40 rule"): "Full world ↗" opens action-globe.html?explore=1 on its own, the Earth edge to edge ---------- */
 async function openExplore(device, { member }) {
   const world = freshWorld();
-  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
     if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }

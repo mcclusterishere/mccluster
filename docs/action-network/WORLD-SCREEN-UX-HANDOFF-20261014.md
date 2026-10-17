@@ -1,5 +1,7 @@
 # Action Network — World screen UX contract and Claude handoff (2026-10-14)
 
+> Visual composition superseded by [the approved editorial reference](EDITORIAL-WORLD-REFERENCE-20261016.md). Existing data, privacy and action semantics remain in force.
+
 **Owner direction: this is the required destination UX, not optional inspiration.** The globe is its **own dedicated World screen**. It must coexist with the actual Action Network social feed in one persistent viewport. Do not reinterpret "world as feed" as a fullscreen globe that replaces social posting or as two mutually exclusive Map/Discover screens.
 
 ## Above-the-fold screen allocation
