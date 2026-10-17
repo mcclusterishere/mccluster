@@ -19,6 +19,7 @@ import { IntelError, configured, resolveHouseOrg, rpc, select } from './store.js
 import { USGS_CONNECTOR, USGS_CONNECTOR_KEY, collectorEnabled, runUsgsCollector } from './usgs-collector.js';
 
 import { createIndicatorClient, IndicatorError } from './world-indicators.js';
+import { buildNewsContext, newsContextQuery } from './news-context.js';
 const indicatorClient = createIndicatorClient();
 
 const SERVICE = 'mccluster-intel';
@@ -150,6 +151,20 @@ export async function handleIntelRequest(request, env, options = {}) {
     if (path === '/v1/intel/geo' && request.method === 'GET') return await geo(request, env, url, options);
 
     const user = await options.requireHouseOwner(request, env);
+    if (path === '/v1/intel/news-context') {
+      if (request.method !== 'GET') {
+        const response = reply(request, env, { ok: false, error: 'Method not allowed', code: 'method_not_allowed' }, 405);
+        response.headers.set('allow', 'GET');
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      }
+      const query = newsContextQuery(url.searchParams);
+      const org = await resolveHouseOrg(env);
+      const data = await buildNewsContext(env, org.id, query, options.newsContext || {});
+      const response = reply(request, env, data);
+      response.headers.set('cache-control', 'private, no-store');
+      return response;
+    }
     if (path === '/v1/intel/world-indicators') {
       if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
       if ([...url.searchParams.keys()].some(k => !['economy', 'indicators'].includes(k) || url.searchParams.getAll(k).length !== 1)) throw bad('Unsupported or repeated parameter');
@@ -383,7 +398,18 @@ export async function handleIntelRequest(request, env, options = {}) {
 
     return fail(request, env, 'Not found', 404);
   } catch (error) {
+    if (path === '/v1/intel/news-context' && !(error instanceof IntelError) && [401, 403, 503].includes(error?.status)) {
+      const code = error.status === 401 ? 'authentication_required' : error.status === 403 ? 'house_owner_required' : 'authorization_unavailable';
+      const response = reply(request, env, { ok: false, error: error.status === 403 ? 'McCluster house owner access required' : 'Intel authorization is unavailable', code }, error.status);
+      response.headers.set('cache-control', 'private, no-store');
+      return response;
+    }
     if (error instanceof IntelError) {
+      if (path === '/v1/intel/news-context') {
+        const response = reply(request, env, { ok: false, error: error.message, code: error.code }, error.status);
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      }
       return fail(request, env, error.message, error.status, { code: error.code, ...(error.detail ? { detail: error.detail } : {}) });
     }
     throw error;

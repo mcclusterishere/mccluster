@@ -1,0 +1,37 @@
+/* The owner News context card follows the existing flat Control system. */
+.nc-card{overflow-wrap:anywhere}
+.nc-card #ncCompare{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:16px 0 10px}
+.nc-card #ncCompare label{min-width:0;font-size:13px}
+.nc-card #ncCompare input,.nc-card #ncCompare select{min-height:44px;max-width:100%;width:100%;box-sizing:border-box;border:1px solid #3a3a40;border-radius:8px;background:#09090b;color:#eee;font:16px/1.4 var(--ui,system-ui);padding:9px 10px}
+.cad-body .cu-card.nc-card button,.cad-body .cu-card.nc-card a,.nc-card summary{min-height:44px}
+.nc-card button{font-size:14px}
+.nc-card p,.nc-card .nc-notes{font-size:13px;line-height:1.5}
+.nc-card #ncScope,.nc-card .nc-snapshot{font-size:12px;color:#b6b6be}
+.nc-card .nc-rows{display:grid;gap:10px;margin:14px 0}
+.nc-card .nc-rows>div{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;min-width:0}
+.nc-card .nc-rows dt{font-size:12px;color:#aaaab1}
+.nc-card .nc-rows dd{font-size:14px;line-height:1.4;margin:0;color:#eeeef0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.nc-card .nc-results{border-top:1px solid #333338;margin-top:18px;padding-top:4px}
+.nc-card h3{font-size:20px;line-height:1.25;margin:16px 0 8px}
+.nc-card h3 a{font-size:18px;line-height:1.4;display:block;padding:4px 0}
+.nc-card h4{font-size:15px;line-height:1.4;margin:12px 0 6px}
+.nc-card details{border-block:1px solid #303034;margin:12px 0;padding:0 2px}
+.nc-card summary{display:list-item;box-sizing:border-box;padding:12px 0;font-size:14px;line-height:1.4;cursor:pointer}
+.nc-card .nc-indicators{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding-bottom:12px}
+.nc-card .nc-indicator{min-width:0;border:1px solid #333338;border-radius:10px;padding:12px;background:#0d0d10}
+.nc-card .nc-indicator h4{margin:0 0 12px}
+.nc-card .nc-story{border-top:1px solid #333338;padding:4px 0 16px}
+.nc-card .nc-story:first-child{border-top:0}
+.nc-card .nc-context-note{border-left:2px solid #66616a;padding-left:12px}
+.nc-card .nc-notes{margin:12px 0;padding-left:20px;color:#b6b6be}
+.nc-card .nc-notes li{margin:6px 0}
+.nc-card .nc-comparisons{display:grid;gap:10px;padding:0;list-style:none}
+.nc-card .nc-comparisons li{display:grid;gap:4px;font-size:13px;line-height:1.4}
+.nc-card .nc-comparisons b{font-weight:500}
+.nc-card .nc-comparisons span{color:#b6b6be;font-variant-numeric:tabular-nums}
+.nc-card .nc-source+.nc-source,.nc-card .nc-event+.nc-event{border-top:1px solid #303034;padding-top:8px}
+@media(min-width:45rem){
+  .nc-card #ncCompare{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end}
+  .nc-card .nc-rows>div{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:14px}
+}
+@media(min-width:72rem){.nc-card .nc-indicators{grid-template-columns:repeat(2,minmax(0,1fr))}}
