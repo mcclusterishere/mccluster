@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 402,
+  "candidate_count": 403,
   "capability_source_count": 99,
-  "support_only_count": 303,
+  "support_only_count": 304,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3066,6 +3066,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-approved travel-first public World presentation standard and preserved reference; records existing mission and internal-intelligence boundaries without defining building geometry or a program capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
