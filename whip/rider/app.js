@@ -1,7 +1,8 @@
 (() => {
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
   const OFFICIAL_BRAND='Whip Equipped',OFFICIAL_CORAL='#F04449',OFFICIAL_ORANGE='#F6AD62',BRAND_ICON='assets/we-icon.png';
-  const API_BASE=(new URLSearchParams(location.search).get('api')||localStorage.getItem('we-api-base')||'https://api.mccluster.org').replace(/\/$/,'');
+  // Do not allow a shared link or old local preference to redirect credentials.
+  const API_BASE='https://api.mccluster.org';
   const SESSION_KEY='we-rider-session';
   let session=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
   const RIDER_ID=()=>session?.user?.id||localStorage.getItem('we-rider-id')||'demo-rider';
