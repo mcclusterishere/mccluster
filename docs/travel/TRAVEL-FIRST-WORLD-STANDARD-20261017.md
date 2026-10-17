@@ -5,6 +5,12 @@ World homepage.** The owner re-supplied the earlier reference below and explicit
 identified it as the actual standard: cleaner, more premium, and travel first.
 This is the controlling public-entry direction, not another optional visual idea.
 
+**Subsequent owner correction, October 17:** the attractive travel surface must
+work as a directions product. Start with current location and “Where are you
+going?”, reveal transport choices after a destination, and keep street routes
+and navigation in World. Flights, dates and stays are optional longer-trip
+planning. This correction controls the initial workflow described below.
+
 ![Owner-approved travel-first World reference](references/travel-first-world-approved-20261017.jpeg)
 
 The reference is preserved byte-for-byte from
@@ -21,12 +27,15 @@ The reference is preserved byte-for-byte from
    Retain direct globe interaction, Full world, location and zoom controls.
 3. **Travel · Missions · Posts**, with **Travel selected by default for guests**.
    These are local World modes. They do not replace the shared bottom bar.
-4. **“Your whole journey”**: From, To, Dates and Travelers; flights, trains,
-   rides and stays, with additional travel modes available in context. Lowest-cost
-   and free options belong to the journey experience when backed by usable data.
-5. An ordered itinerary spanning the whole trip: getting to departure, the
-   long-distance leg, arrival transport and somewhere to stay. Keep planning,
-   requested and confirmed states distinct. Use contextual actions for each leg.
+4. **“Where are you going?”**: request optional current location after the entry
+   privacy notice, show the starting point, and ask for a destination. Manual
+   address entry works when location is denied. Reveal Drive, Walk, Bike and Get
+   a ride after a selected destination; getting directions is an explicit action.
+5. Street-following geometry, estimated time and distance, turn instructions,
+   and foreground GPS guidance stay in World. “Plan a longer trip” progressively
+   reveals flights, trains, dates, travelers and stays, with an ordered itinerary
+   for the long-distance journey. Planning, requested and confirmed states remain
+   distinct. No provider link means a reservation has been made.
 6. A destination card and an understandable planned connection on the globe,
    linked to the visitor's chosen destination and actual draft. New Haven,
    New York and Lisbon in the reference illustrate a journey; they are not a
@@ -112,16 +121,33 @@ Address autocomplete uses Photon / OpenStreetMap, including building numbers and
 coordinates where supplied. Search is debounced, bounded and abortable. Its public
 endpoint permits modest use, has no availability guarantee, and needs a hosted or
 contracted replacement before substantial traffic. See https://github.com/komoot/photon.
-Provider outages explicitly offer city-only fallback and typed-address directions.
-Suggestions are candidates, not an assertion that an address was verified.
+Provider outages explicitly offer a labeled city-center fallback. Precise street
+directions need selected coordinates; free text is never silently treated as a
+verified address. Suggestions are candidates, not an assertion that an address
+was verified.
 
 Travel requests browser location once per tab after the entry privacy notice is
 accepted. Denial leaves manual entry available; the location button retries on
 request. A late response cannot overwrite an edited trip. GPS is not sent to the
-autocomplete service. Coordinates remain in memory until an explicit private save
-or navigation handoff; travel inputs remain excluded from analytics capture.
+autocomplete service. Travel keeps its draft and GPS fixes in memory; explicit
+Save persists a private journey. Get directions sends the chosen endpoints to
+the routing service, and Continue in Uber shares pickup and destination with
+Uber. Travel inputs, routes and handoff URLs remain excluded from click capture.
+This is not a statement that the separate, previously approved site analytics
+location feature has been removed.
 
-Start directions opens Google Maps with the selected coordinates and transport
-mode, requesting navigation where supported. This is a real navigation handoff,
-not embedded turn-by-turn guidance, a road route computed by the globe, or a ride
-booking. Flight searches continue to use human-readable endpoint names.
+The earlier Google Maps handoff is superseded for Drive, Walk and Bike by the
+canonical `POST /v1/travel/route` service and in-page navigation. Routes come from
+a bounded, noncommercial FOSSGIS / OSRM pilot. They contain real road/path
+geometry and turns, with estimates that do not include live traffic. A separate
+McCluster TomTom adapter is available for a future provider connection; Halo's
+key is neither shared nor copied.
+
+Get a ride offers an explicit Uber handoff with the chosen pickup and destination.
+Availability, price and confirmation happen in Uber. World has no connected taxi
+dispatch, supplier booking API or commission flow; the older Whip rider prototype
+is not evidence of a live service. Flight searches continue to use human-readable
+endpoint names.
+
+See [in-app navigation operations](IN-APP-NAVIGATION.md) for the route contract,
+provider limits, privacy boundaries, verification and upgrade path.

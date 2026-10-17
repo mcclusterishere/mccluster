@@ -16,7 +16,167 @@ const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentF
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
-let travelMode=false,journeyPoints=[],journeyEntities=[];
+let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
+// Private travel state lives only in this frame. The parent owns GPS permission,
+// routing and navigation; neither coordinates nor route geometry enter analytics.
+const MAX_TRAVEL_ROUTE_POINTS=10000,MAX_TRAVEL_ACCURACY=100000;
+let travelSceneReady=false,roadRoute=null,roadPositions=[],roadEntities=[],routeFlyPending=false;
+let currentLocation=null,locationEntities=[],locationFlyPending=false,locationAnimatePending=false,travelCameraQueued=false;
+let travelControlsQueued=false;
+function travelCoordinates(value){
+ if(!Array.isArray(value)||value.length!==2)return null;
+ const [lon,lat]=value;
+ return typeof lon==='number'&&typeof lat==='number'&&Number.isFinite(lon)&&Number.isFinite(lat)&&Math.abs(lon)<=180&&Math.abs(lat)<=90?[lon,lat]:null;
+}
+function travelRoute(value){
+ if(!value||typeof value!=='object'||!Array.isArray(value.geometry)||value.geometry.length<2||value.geometry.length>MAX_TRAVEL_ROUTE_POINTS)return null;
+ const origin=travelCoordinates(value.origin),destination=travelCoordinates(value.destination),geometry=[];
+ if(!origin||!destination)return null;
+ for(let n=0;n<value.geometry.length;n++){
+  const point=travelCoordinates(value.geometry[n]);if(!point)return null;
+  const previous=geometry[geometry.length-1];if(!previous||previous[0]!==point[0]||previous[1]!==point[1])geometry.push(point);
+ }
+ return geometry.length>1?{origin,destination,geometry}:null;
+}
+function sameTravelRoute(a,b){
+ return !!a&&!!b&&a.geometry.length===b.geometry.length&&a.origin.every((v,n)=>v===b.origin[n])&&a.destination.every((v,n)=>v===b.destination[n])&&a.geometry.every((p,n)=>p[0]===b.geometry[n][0]&&p[1]===b.geometry[n][1]);
+}
+function travelMotion(seconds){return matchMedia('(prefers-reduced-motion: reduce)').matches?0:seconds}
+function travelVisibility(){
+ journeyEntities.forEach(e=>e.show=travelMode&&!roadRoute);
+ roadEntities.forEach(e=>e.show=travelMode);
+ locationEntities.forEach(e=>e.show=travelMode);
+ if(viewer&&mapLayer&&layerMode==='auto')mapLayer.show=streetAuto(viewer.camera.positionCartographic.height);
+}
+function focusTravelPosition(coordinates,{accuracy=0,follow=false,animate=true}={}){
+ if(!travelMode||!travelSceneReady||!viewer)return;
+ const c=Cesium.Cartographic.fromDegrees(...coordinates),ground=viewer.scene.globe.getHeight(c);
+ const height=Math.max(follow?750:1500,Math.min(600000,accuracy*4));
+ const view={destination:Cesium.Cartesian3.fromDegrees(...coordinates,(Number.isFinite(ground)?Math.max(0,ground):0)+height),orientation:{heading:0,pitch:-Math.PI/2,roll:0}};
+ if(animate)viewer.camera.flyTo({...view,duration:travelMotion(.9)});else{viewer.camera.cancelFlight();viewer.camera.setView(view)}
+}
+function fitTravelPositions(positions){
+ if(!positions.length||!travelMode||!travelSceneReady||!viewer)return;
+ const sphere=Cesium.BoundingSphere.fromPoints(positions),canvas=viewer.scene.canvas;
+ const fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=Math.max(1,canvas.clientWidth)/Math.max(1,canvas.clientHeight);
+ const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.72);
+ // Fit the actual route, including bends, with room for pins at phone width.
+ // There is deliberately no whole-Earth minimum camera height here.
+ const range=Math.max(1100,sphere.radius/Math.sin(angle));
+ viewer.camera.flyToBoundingSphere(sphere,{offset:new Cesium.HeadingPitchRange(0,-Math.PI/2,range),duration:travelMotion(1.1)});
+}
+function scheduleTravelCamera(){
+ if(travelCameraQueued||!travelSceneReady||!viewer||!travelMode)return;
+ travelCameraQueued=true;requestAnimationFrame(()=>{
+  travelCameraQueued=false;if(!travelMode||!viewer)return;
+  if(currentLocation?.follow&&locationFlyPending)focusTravelPosition(currentLocation.coordinates,{accuracy:currentLocation.accuracy||0,follow:true,animate:locationAnimatePending});
+  else if(routeFlyPending&&roadRoute)fitTravelPositions([...roadPositions,Cesium.Cartesian3.fromDegrees(...roadRoute.origin),Cesium.Cartesian3.fromDegrees(...roadRoute.destination)]);
+  else if(locationFlyPending&&currentLocation)focusTravelPosition(currentLocation.coordinates,{accuracy:currentLocation.accuracy||0});
+  else if(journeyFlyPending&&!roadRoute)drawJourney(journeyPoints,true);
+  routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;
+ });
+}
+function drawRoadRoute(){
+ if(!travelSceneReady||!viewer||ANALYTICS)return;
+ clear(roadEntities);roadPositions=[];
+ if(roadRoute){
+  const red=Cesium.Color.fromCssColorString('#c93051'),white=Cesium.Color.WHITE;
+  roadPositions=roadRoute.geometry.map(p=>Cesium.Cartesian3.fromDegrees(...p));
+  roadEntities.push(viewer.entities.add({show:travelMode,polyline:{positions:roadPositions,width:6,clampToGround:true,classificationType:Cesium.ClassificationType.TERRAIN,zIndex:20,material:new Cesium.PolylineOutlineMaterialProperty({color:red,outlineColor:white.withAlpha(.95),outlineWidth:1.5})}}));
+  [[roadRoute.origin,'Start',white],[roadRoute.destination,'Destination',red]].forEach(([coordinates,text,color])=>{
+   roadEntities.push(viewer.entities.add({show:travelMode,position:Cesium.Cartesian3.fromDegrees(...coordinates),point:{pixelSize:text==='Start'?10:14,color,outlineColor:text==='Start'?Cesium.Color.fromCssColorString('#253142'):white,outlineWidth:3,heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:50000},label:{text,font:'600 13px system-ui,sans-serif',fillColor:white,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,-24),heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:50000,distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,200000)}}));
+  });
+ }
+ travelVisibility();scheduleTravelCamera();
+}
+function drawTravelLocation(){
+ if(!travelSceneReady||!viewer||ANALYTICS)return;
+ if(!currentLocation){clear(locationEntities);travelVisibility();return}
+ const position=Cesium.Cartesian3.fromDegrees(...currentLocation.coordinates),blue=Cesium.Color.fromCssColorString('#369aff');
+ if(!locationEntities[0])locationEntities.push(viewer.entities.add({show:travelMode,position,point:{pixelSize:15,color:blue,outlineColor:Cesium.Color.WHITE,outlineWidth:3,heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:50000},label:{text:'You are here',font:'600 13px system-ui,sans-serif',fillColor:Cesium.Color.WHITE,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,24),heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:50000,distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,60000)}}));
+ else locationEntities[0].position=position;
+ const accuracy=currentLocation.accuracy;
+ if(accuracy>0){
+  if(!locationEntities[1])locationEntities.push(viewer.entities.add({show:travelMode,position,ellipse:{semiMajorAxis:accuracy,semiMinorAxis:accuracy,material:blue.withAlpha(.14),heightReference:Cesium.HeightReference.CLAMP_TO_GROUND,classificationType:Cesium.ClassificationType.TERRAIN}}));
+  else{const circle=locationEntities[1];circle.position=position;circle.ellipse.semiMajorAxis=accuracy;circle.ellipse.semiMinorAxis=accuracy}
+ }else if(locationEntities[1])viewer.entities.remove(locationEntities.pop());
+ travelVisibility();scheduleTravelCamera();
+}
+function setTravelLocation(data){
+ if(data.coordinates===null){
+  if(currentLocation?.follow&&viewer)viewer.camera.cancelFlight();currentLocation=null;locationFlyPending=locationAnimatePending=false;drawTravelLocation();return;
+ }
+ const coordinates=travelCoordinates(data.coordinates);if(!coordinates)return;
+ const follow=data.follow===true,previousFollow=currentLocation?.follow===true;
+ const accuracy=typeof data.accuracy==='number'&&Number.isFinite(data.accuracy)&&data.accuracy>=0&&data.accuracy<=MAX_TRAVEL_ACCURACY?data.accuracy:null;
+ currentLocation={coordinates,accuracy,follow};
+ locationFlyPending=locationFlyPending||data.fly===true||follow;
+ locationAnimatePending=locationAnimatePending||data.fly===true||(follow&&!previousFollow);
+ drawTravelLocation();
+}
+function restoreTravelScene(){
+ drawJourney(journeyPoints,false);drawRoadRoute();drawTravelLocation();travelVisibility();scheduleTravelCamera();
+}
+function pauseTravelFollow(){
+ if(!travelMode||ANALYTICS)return;
+ if(currentLocation)currentLocation.follow=false;
+ routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;
+ if(viewer)viewer.camera.cancelFlight();
+ tell({type:'hu:map-interaction'});
+}
+function wireTravelGestures(){
+ const canvas=viewer.scene.canvas,pointers=new Map();let dragging=false;
+ // Camera.changed also fires for our own GPS updates. Only real input pauses
+ // following, so the next location fix respects a person's map inspection.
+ canvas.addEventListener('pointerdown',e=>{pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size>1){dragging=true;pauseTravelFollow()}},{passive:true});
+ canvas.addEventListener('pointermove',e=>{const start=pointers.get(e.pointerId);if(start&&!dragging&&Math.hypot(e.clientX-start[0],e.clientY-start[1])>3){dragging=true;pauseTravelFollow()}},{passive:true});
+ const end=e=>{pointers.delete(e.pointerId);if(!pointers.size)dragging=false};
+ window.addEventListener('pointerup',end,{passive:true});window.addEventListener('pointercancel',end,{passive:true});
+ canvas.addEventListener('pointerleave',()=>{pointers.clear();dragging=false},{passive:true});
+ canvas.addEventListener('wheel',pauseTravelFollow,{passive:true});
+ for(const id of ['ctlZoomIn','ctlZoomOut'])$(id)?.addEventListener('click',pauseTravelFollow,{capture:true});
+ wireTravelControlLayout();
+}
+function liftTravelControls(){
+ const rail=document.querySelector('.globe-travel-controls');if(!rail)return;
+ rail.style.removeProperty('bottom');rail.style.removeProperty('flex-direction');
+ if(!travelMode||!parentFrame||!window.frameElement)return;
+ try{
+  // The dock belongs to the parent, so only its actual overlap with this
+  // iframe should lift these controls. A phone's stacked map stays at 26px.
+  const frame=window.frameElement.getBoundingClientRect(),doc=parentFrame.document;
+  const rect=selector=>{const el=doc.querySelector(selector),r=el?.getBoundingClientRect();return r&&r.width&&r.height?r:null};
+  const dock=rect('.appbar'),expand=rect('.mn__world-expand'),modes=rect('.wt-world-modes');
+  const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+  const initial=rail.getBoundingClientRect();
+  const column={left:frame.left+initial.left,right:frame.left+initial.right,top:frame.top,bottom:frame.bottom};
+  if(!dock||!overlap(column,dock))return;
+  let bottom=Math.max(26,Math.ceil(frame.bottom-dock.top)+12);
+  const position=()=>{const r=rail.getBoundingClientRect();return{left:frame.left+r.left,right:frame.left+r.right,top:frame.bottom-bottom-r.height,bottom:frame.bottom-bottom}};
+  if(overlap(position(),expand))rail.style.flexDirection='row';
+  // On a short landscape map the horizontal rail may share a row with the
+  // mode switch. Move the controls above that row and Expand, without shrinkage.
+  for(let n=0;n<3;n++){
+   const hit=[expand,modes].find(r=>overlap(position(),r));if(!hit)break;
+   rail.style.flexDirection='row';bottom=Math.max(bottom,Math.ceil(frame.bottom-hit.top)+12);
+  }
+  rail.style.bottom=bottom+'px';
+ }catch(_){/* A standalone or differently hosted frame keeps its own controls. */}
+}
+function scheduleTravelControls(){
+ if(travelControlsQueued)return;travelControlsQueued=true;
+ requestAnimationFrame(()=>{travelControlsQueued=false;liftTravelControls()});
+}
+function wireTravelControlLayout(){
+ window.addEventListener('resize',scheduleTravelControls,{passive:true});
+ try{
+  if(!parentFrame)return;parentFrame.addEventListener('resize',scheduleTravelControls,{passive:true});
+  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,.mn__world-expand,.wt-world-modes')])if(el)observer.observe(el)}
+ }catch(_){}
+ scheduleTravelControls();
+}
+// Verification exposes counts only, never a visitor's precise location or route.
+window.__huNavigation=()=>({travel:travelMode,routePoints:roadRoute?.geometry.length||0,routeEntities:roadEntities.length,routeVisible:travelMode&&roadEntities.length>0,location:!!currentLocation,locationEntities:locationEntities.length,locationVisible:travelMode&&locationEntities.length>0,following:travelMode&&currentLocation?.follow===true});
 function travelStyle(){
  if(!viewer||!EDITORIAL)return;
  dayLayer.saturation=1.1;dayLayer.brightness=1.05;
@@ -30,23 +190,26 @@ function setTravelMode(on){
  if(changed||on){showMissions=!on;showCities=!on;draw();}
  const rail=document.querySelector('.globe-travel-controls'),nav=document.querySelector('.globe-controls');
  if(rail&&nav)for(const id of ['ctlLocate','ctlZoomIn','ctlZoomOut']){const b=$(id);if(b){if(on)rail.appendChild(b);else nav.insertBefore(b,$('ctlLayers'));}}
- journeyEntities.forEach(e=>e.show=on);
+ if(!on&&changed){viewer.camera.cancelFlight();routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;if(currentLocation)currentLocation.follow=false;}
+ travelVisibility();scheduleTravelControls();if(on)scheduleTravelCamera();
 }
 function drawJourney(points,fly){
- if(!viewer||ANALYTICS)return;
+ if(!viewer||!travelSceneReady||ANALYTICS)return;
  clear(journeyEntities);
- const valid=points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&Array.isArray(p.coordinates)&&p.coordinates.length===2&&p.coordinates.every(v=>typeof v==='number'&&Number.isFinite(v))&&Math.abs(p.coordinates[0])<=180&&Math.abs(p.coordinates[1])<=90);
+ const valid=points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates));
  const gold=Cesium.Color.fromCssColorString('#f3ead7');
- valid.forEach(p=>journeyEntities.push(viewer.entities.add({show:travelMode,position:Cesium.Cartesian3.fromDegrees(...p.coordinates,20000),point:{pixelSize:8,color:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:2},label:{text:p.label.slice(0,80),font:'500 13px system-ui,sans-serif',fillColor:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,20)}})));
- let center=valid[0]?.coordinates,altitude=6000000;
- if(valid.length===2){try{
+ const framePositions=valid.map(p=>Cesium.Cartesian3.fromDegrees(...p.coordinates)),show=travelMode&&!roadRoute;
+ valid.forEach(p=>journeyEntities.push(viewer.entities.add({show,position:Cesium.Cartesian3.fromDegrees(...p.coordinates),point:{pixelSize:8,color:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:2,heightReference:Cesium.HeightReference.CLAMP_TO_GROUND},label:{text:p.label.slice(0,80),font:'500 13px system-ui,sans-serif',fillColor:gold,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,20),heightReference:Cesium.HeightReference.CLAMP_TO_GROUND}})));
+ // A flight draft may show its planned connection. Ground directions never get
+ // a guessed straight line while their real road route is loading.
+ if(journeyConnect&&!roadRoute&&valid.length===2){try{
   const path=new Cesium.EllipsoidGeodesic(Cesium.Cartographic.fromDegrees(...valid[0].coordinates),Cesium.Cartographic.fromDegrees(...valid[1].coordinates));
   if(path.surfaceDistance>100){const positions=Array.from({length:81},(_,i)=>{const t=i/80,c=path.interpolateUsingFraction(t);return Cesium.Cartesian3.fromRadians(c.longitude,c.latitude,20000+Math.sin(Math.PI*t)*Math.min(1000000,path.surfaceDistance*.08))});
-   journeyEntities.push(viewer.entities.add({show:travelMode,polyline:{positions,width:2,material:new Cesium.PolylineDashMaterialProperty({color:gold,dashLength:12}),arcType:Cesium.ArcType.NONE}}));
-   const mid=path.interpolateUsingFraction(.5);center=[Cesium.Math.toDegrees(mid.longitude),Cesium.Math.toDegrees(mid.latitude)];altitude=Math.max(4000000,Math.min(22000000,path.surfaceDistance*1.3));
+   journeyEntities.push(viewer.entities.add({show,polyline:{positions,width:2,material:new Cesium.PolylineDashMaterialProperty({color:gold,dashLength:12}),arcType:Cesium.ArcType.NONE}}));
+   framePositions.push(...positions);
   }
  }catch(_){/* Near-antipodal cities still get two truthful points, without a guessed path. */}}
- if(fly&&travelMode&&center){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(...center,Math.max(altitude,homeAltitude())),duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:1.2});}
+ if(fly&&show)fitTravelPositions(framePositions);
 }
 window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:journeyEntities.length});
 /* the network band is short, so its Earth starts closer and fills the frame */
@@ -95,7 +258,19 @@ function focusMission(id){
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
-if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){journeyPoints=d.points.slice(0,2);drawJourney(journeyPoints,d.fly===true);return}
+if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
+ journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
+ journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;
+}
+if(d.type==='hu:route'&&!ANALYTICS){
+ const next=d.route===null?null:travelRoute(d.route);if(d.route!==null&&!next)return;
+ const changed=roadRoute!==next&&!sameTravelRoute(roadRoute,next);roadRoute=next;routeFlyPending=!!next&&(routeFlyPending||d.fly===true);
+ if(changed){drawJourney(journeyPoints,false);drawRoadRoute()}else scheduleTravelCamera();return;
+}
+if(d.type==='hu:location'&&!ANALYTICS){setTravelLocation(d);return}
+if(d.type==='hu:route-step'&&!ANALYTICS&&travelMode&&roadRoute){
+ const coordinates=travelCoordinates(d.coordinates);if(coordinates){if(currentLocation)currentLocation.follow=false;routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;focusTravelPosition(coordinates)}return;
+}
 if(d.type==='hu:search'&&typeof d.q==='string'&&viewer){searchPins(d.q.slice(0,80));return}
 if(d.type==='hu:focus-mission'&&typeof d.missionId==='string'){if(!viewer||!focusMission(d.missionId))tell({type:'hu:selection-cleared'});return}
 if(d.type==='hu:regional'&&viewer){showCities=!!d.on;draw();tell({type:'hu:status',text:!showCities?'Regional impact is hidden.':cities.length?cities.length+(cities.length===1?' region shows its':' regions show their')+' totals: members who agreed to be counted, and verified actions.':'No region has five members who agreed to be counted yet.'});return}
@@ -108,6 +283,11 @@ if(d.type==='hu:audience-points'&&Array.isArray(d.points)&&viewer&&!lockOf('audi
 if(d.type==='hu:analytics-points'&&ANALYTICS&&Array.isArray(d.points)){analytics.points=d.points.slice(0,300);analytics.selected=typeof d.selected==='string'?d.selected:null;drawAnalytics();return}
 if(d.type==='hu:analytics-select'&&ANALYTICS){selectAnalytics(typeof d.code==='string'?d.code:null,true);return}
 if(d.type==='hu:clear-selection'&&viewer){selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setSelection(false);closeDetail();viewer.camera.flyTo({destination:homePosition(),duration:1.4})}});let missions=[],allMissions=[],cities=[],regions=[],i=0,viewer,missionPins=[],cityPins=[],showMissions=true,showCities=true,activeRegion=null,regionOutlines=[];
+window.addEventListener('pagehide',()=>{
+ roadRoute=currentLocation=null;journeyPoints=[];roadPositions=[];routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;
+ if(viewer){clear(roadEntities);clear(locationEntities);clear(journeyEntities)}
+});
+window.addEventListener('pageshow',event=>{if(event.persisted&&readyMessage)tell(readyMessage)});
 async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
 function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
 function draw(){clear(missionPins);clear(cityPins);drawContinents();
@@ -413,7 +593,7 @@ function wireControls(){const on=(id,f)=>{const b=$(id);if(b)b.onclick=f};
  on('ctlAudience',()=>{if(lockOf('audience'))return;const b=$('ctlAudience'),next=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',next?'true':'false');if(!next)drawAudience([]);tell({type:'hu:audience',on:next})});
  on('ctlWorld',()=>{selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});setLayer(layerMode==='map'?'auto':layerMode);viewer.camera.flyTo({destination:homePosition(),duration:1.4});tell({type:'hu:selection-cleared'})});
  /* Near me answers in #status; inside the network that line is hidden, so hand the page that one answer */
- on('ctlLocate',()=>{const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
+ on('ctlLocate',()=>{if(travelMode&&parentFrame){tell({type:'hu:request-location'});return}const st=$('status'),mo=new MutationObserver(()=>{tell({type:'hu:status',text:String(st.textContent||'').slice(0,200)});mo.disconnect()});mo.observe(st,{childList:true,characterData:true,subtree:true});$('nearMe').click();setTimeout(()=>mo.disconnect(),15000)});
  const zoom=f=>{const h=viewer.camera.positionCartographic.height;f?viewer.camera.zoomIn(h*.45):viewer.camera.zoomOut(h*.8)};on('ctlZoomIn',()=>zoom(true));on('ctlZoomOut',()=>zoom(false));
  on('ctlLayers',()=>setLayer(EDITORIAL?(layerMode==='map'?'auto':'map'):({auto:'night',night:'map',map:'auto'}[layerMode]||'auto')));}
 /* ---------- THE EARTH UP CLOSE: Cesium ion, for signed-in members (owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster worker";
@@ -437,8 +617,9 @@ let ion=null,ionGround=false,ionImagery=null,ionImageryTried=false,ionBuildings=
 /* hooks for the browser test, like __huGlobeSettled */
 window.__huIon=()=>({on:!!ion,ground:!!(viewer&&viewer.scene.globe.terrainProvider),terrain:!!(viewer&&viewer.scene.globe.terrainProvider&&!(viewer.scene.globe.terrainProvider instanceof Cesium.EllipsoidTerrainProvider)),imagery:!!(ionImagery&&ionImagery.ready),imageryShown:!!(ionImagery&&ionImagery.show),buildings:!!ionBuildings,buildingsShown:!!(ionBuildings&&ionBuildings.show),street:!!(mapLayer&&mapLayer.show),clouds:cloudLayer?Math.round(cloudLayer.alpha*100)/100:null,nightLights:nightLayer?Math.round(nightLayer.nightAlpha*100)/100:null,groundIsIon:ionGround,height:viewer?Math.round(viewer.camera.positionCartographic.height):null});
 function ionWarn(what,e){if(!ion)return;try{console.warn('[world ion] '+what+': '+(e&&e.message||e))}catch(_){}}
-/* the automatic street map below 900 km, unless ion's aerial imagery is there to show the ground instead */
-function streetAuto(h){return h<900000&&!(ionImagery&&ionImagery.ready)}
+/* At navigation height, roads stay legible even when the member has aerial imagery.
+   Outside travel, the existing ion / NASA / street transition is unchanged. */
+function streetAuto(h){return h<900000&&((travelMode&&!!(roadRoute||currentLocation))||!(ionImagery&&ionImagery.ready))}
 function ionBearer(){const t=sessionToken();return t?'Bearer '+t:''}
 function ionStatus(){if(!ionBearer())return Promise.resolve(null);const late=new Promise(r=>setTimeout(()=>r(null),ION_WAIT));
  const ask=fetch(API+'/v1/world/ion',{headers:{accept:'application/json',authorization:ionBearer()}}).then(r=>r.ok?r.json():null).then(s=>s&&s.available===true&&s.assets&&Number.isInteger(s.assets.terrain)?s.assets:null).catch(()=>null);
@@ -466,7 +647,7 @@ function startIon(){if(!ion||!viewer)return;const bearer=ionBearer();if(!bearer)
  viewer.scene.preRender.addEventListener(ionFrame)}
 function addIonImagery(k){const id=ion&&Array.isArray(ion.imagery)?ion.imagery[k]:undefined;if(!Number.isInteger(id)||!viewer)return;
  const layer=Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(id),{alpha:0});ionImagery=layer;
- layer.readyEvent.addEventListener(()=>{if(ionImagery===layer&&layerMode==='auto'&&mapLayer)mapLayer.show=false});
+ layer.readyEvent.addEventListener(()=>{if(ionImagery===layer&&layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)});
  layer.errorEvent.addEventListener(e=>{ionWarn('imagery '+id,e);if(viewer.imageryLayers.contains(layer))viewer.imageryLayers.remove(layer,true);
   if(ionImagery===layer){ionImagery=null;if(cloudLayer)cloudLayer.alpha=EDITORIAL?EDITORIAL_CLOUD_ALPHA:1;if(nightLayer)nightLayer.nightAlpha=1;if(layerMode==='auto'&&mapLayer)mapLayer.show=streetAuto(viewer.camera.positionCartographic.height)}addIonImagery(k+1)});
  viewer.imageryLayers.add(layer,viewer.imageryLayers.indexOf(dayLayer)+1)}
@@ -474,7 +655,7 @@ function addIonBuildings(){if(!ion||!Number.isInteger(ion.buildings)||!viewer)re
  const coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
  Cesium.Cesium3DTileset.fromIonAssetId(ion.buildings,{maximumScreenSpaceError:coarse?24:16}).then(ts=>{if(!ion){ts.destroy();return}ts.show=false;ts.style=new Cesium.Cesium3DTileStyle({color:"color('#e4e8ee')"});ionBuildings=viewer.scene.primitives.add(ts)},e=>ionWarn('buildings',e))}
 /* every frame: what ion shows at this height, with a little hysteresis so nothing flickers on the line */
-function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartographic.height,auto=layerMode==='auto';
+function ionFrame(){if(!ion||!viewer)return;const h=viewer.camera.positionCartographic.height,auto=layerMode==='auto'&&!(travelMode&&(roadRoute||currentLocation)&&h<900000);
  if(!ionImageryTried&&auto&&h<ION_HI){ionImageryTried=true;addIonImagery(0)}
  if(ionImagery){const on=auto&&h<(ionImagery.show?ION_OFF:ION_HI);if(ionImagery.show!==on)ionImagery.show=on;const a=Math.min(1,Math.max(0,(ION_HI-h)/(ION_HI-ION_FULL)));if(ionImagery.alpha!==a)ionImagery.alpha=a;
   if(cloudLayer){const c=(ionImagery.ready&&on?1-a:1)*(EDITORIAL?EDITORIAL_CLOUD_ALPHA:1);if(cloudLayer.alpha!==c)cloudLayer.alpha=c}
@@ -488,9 +669,9 @@ async function boot(){paintMembersDoor();
  wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
  ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();wireEditorialTools();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
- viewer.camera.setView({destination:homePosition()});
+ viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
-viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
@@ -499,5 +680,8 @@ $('globeMode').onclick=()=>setMode('globe');$('feedMode').onclick=()=>setMode('f
 $('previous').onclick=()=>show(i-1);$('next').onclick=()=>show(i+1);
 $('missionsLayer').onclick=()=>{showMissions=!showMissions;draw()};$('citiesLayer').onclick=()=>{showCities=!showCities;draw()};
 let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY},{passive:true});deck.addEventListener('touchend',e=>{if(touchY===undefined)return;const d=e.changedTouches[0].clientY-touchY;if(Math.abs(d)>45)show(i+(d<0?1:-1));touchY=undefined},{passive:true});
+// Navigation can start as soon as the renderer is ready. Public mission RPCs
+// enrich this message later; they cannot hold a visitor's street map hostage.
+if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
 try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS){showMissions=false;showCities=false}draw();if(!ANALYTICS)drawBoundaries();$('status').textContent=missions.length?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 if(window.Cesium)boot().catch(e=>{$('status').hidden=false;$('status').textContent='Interactive globe unavailable on this device. Mission browsing will be available when the map can load.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage);console.warn(e)});else{$('status').textContent='Unable to load globe.';readyMessage={type:'hu:globe-unavailable'};tell(readyMessage)}})();

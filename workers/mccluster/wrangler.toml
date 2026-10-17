@@ -56,6 +56,15 @@ CORE_BROKER_URL = "https://core.mccluster.org"
 # optionally, CF_STREAM_WEBHOOK_SECRET (Stream video webhook HMAC).
 LIVE_MISSIONS_ENABLED = "false"
 
+# Free noncommercial directions pilot only: no paid routing or supplier
+# commissions. Global single-flight quota: <=1 request/sec, <=1000/day.
+# Replace BEFORE commercial/high-volume travel. Independent McCluster key:
+# TRAVEL_ROUTING_PROVIDER="tomtom" + secret TRAVEL_TOMTOM_API_KEY.
+# Halo's TOMTOM_API_KEY is never read or copied by Travel.
+TRAVEL_ROUTING_PROVIDER = "fossgis-pilot"
+TRAVEL_ROUTING_PILOT = "noncommercial"
+TRAVEL_OSRM_BASE = "https://routing.openstreetmap.de/"
+
 # MCP_EDGE service binding is intentionally absent.
 # Activate only after workers/mccluster-mcp exists in the Cloudflare account
 # and the public contract at mcp.mccluster.org passes:

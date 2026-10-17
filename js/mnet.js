@@ -3205,7 +3205,7 @@
     /* the music player's "See this song's impact" lands here with ?song= */
     try {
       var song = new URLSearchParams(location.search).get("song");
-      if (song && song.length <= 160) frame.src = "action-globe.html?embedded=1&surface=network&song=" + encodeURIComponent(song);
+      if (song && song.length <= 160) frame.src += "&song=" + encodeURIComponent(song);
     } catch (_) {}
     var searchToggle = $("huSearchToggle");
     function closeSearch() { document.documentElement.classList.remove('hu-search-open'); searchToggle.setAttribute('aria-expanded', 'false'); }
