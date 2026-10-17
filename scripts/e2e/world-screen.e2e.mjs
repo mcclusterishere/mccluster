@@ -146,6 +146,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
+    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
