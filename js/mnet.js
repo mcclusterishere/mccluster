@@ -2946,12 +2946,10 @@
      to fly to a mission or to let go. Nothing private crosses: the frame
      only ever holds public, admin-approved mission pins.
 
-     Layout (owner's contract, WORLD-SCREEN-UX-HANDOFF-20261014.md): when
-     the World tab is open and the screen is tall enough, the view is sized
-     to the room between the tabs and the app bar, so globe, context strip
-     and feed are all on screen and only the feed scrolls. On a short
-     screen (a phone on its side) the same pieces simply stack and scroll. */
-  var WORLD_ID = /^[0-9a-f-]{36}$/i, WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200;
+     October 17: the globe stays visible. Mission context and the community
+     share one independently scrolling panel, stacked on portrait screens and
+     alongside the globe on wide/landscape screens. */
+  var WORLD_ID = /^[0-9a-f-]{36}$/i;
   function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
   function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
   function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
@@ -2976,7 +2974,7 @@
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
     root.classList.toggle("mn-world-on", on);
     if (!on) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
-    // Owner-approved October 16 reference: scrollable phone stack, split tablet landscape.
+    // October 17: persistent globe and independently scrolling feed at every size.
     // CSS owns the responsive composition; never resize the page while a person reads.
     root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side");
     view.style.removeProperty("--mn-world-h");

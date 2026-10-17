@@ -287,12 +287,20 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
     check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
       const g=document.getElementById('mnWorld').getBoundingClientRect(),f=document.getElementById('mnWorldFeed').getBoundingClientRect();
-      return innerWidth>=1000 ? f.left>=g.right-1 : f.top>=g.bottom-1;
+      return (innerWidth>=1000 || (innerWidth>=600 && innerWidth>innerHeight)) ? f.left>=g.right-1 : f.top>=g.bottom-1;
     }));
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
     check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
-    if(member) check(scope,'Live remains compact and leaves the World heading clear',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect(),h=document.querySelector('.hu-world-heading h1').getBoundingClientRect();return r.width<=100 && r.left>=h.right && getComputedStyle(e).backgroundImage==='none';}));
+    check(scope,'redundant World heading removed and its space reclaimed',await page.locator('.hu-world-heading').count()===0 && await page.evaluate(()=>Math.abs(document.getElementById('mnWorldFrame').getBoundingClientRect().top-document.getElementById('mnWorld').getBoundingClientRect().top)<2));
+    check(scope,'feed scrolls while globe and page remain stationary',await page.evaluate(()=>{
+      const feed=document.getElementById('mnWorldFeed'),globe=document.getElementById('mnWorld'),before=globe.getBoundingClientRect().toJSON(),pageY=scrollY;
+      feed.scrollTop=120;
+      const after=globe.getBoundingClientRect();
+      const ok=feed.scrollTop>0 && after.top===before.top && after.bottom===before.bottom && scrollY===pageY && after.top>=0 && after.bottom<=innerHeight && feed.getBoundingClientRect().bottom<=innerHeight+1;
+      feed.scrollTop=0;return ok;
+    }));
+    if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
     await page.click('#huWorldFilters summary');
     check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
@@ -324,6 +332,14 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'For you restores the news stream',await page.locator('#mnFeed [data-news-id]').count()>0);
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
+    if(member){
+      await page.click('#mnWorldEup');
+      await page.waitForSelector('#mnMissionsView:not([hidden])');
+      check(scope,'leaving World restores normal page scrolling',await page.evaluate(()=>!document.documentElement.classList.contains('mn-world-on') && getComputedStyle(document.documentElement).overflowY!=='hidden'));
+      await page.click('#mnToWorld');
+      await page.waitForFunction(()=>document.documentElement.classList.contains('mn-world-on'));
+      check(scope,'returning to World restores the scrolling feed',await page.locator('#mnWorldFeed').evaluate(e=>getComputedStyle(e).overflowY==='auto' && e.scrollHeight>e.clientHeight));
+    }
     check(scope,'no JavaScript errors',errors.length===0,errors);
   } finally {await ctx.close();}
 }
@@ -336,9 +352,9 @@ for (const device of DEVICES) {
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'the visitor selects a mission; no context card opens by itself', await page.isHidden('#mnWorldFocus'));
   check(device.name, 'the real shared bar is visible and the feed has clearance', !s.barHidden && s.feedPad >= s.vh - s.barTop + 8, s);
-  check(device.name, 'phone/tablet stack scrolls; wide landscape has a feed column', await page.evaluate(() => {
+  check(device.name, 'portrait stacks the fixed globe and scrolling feed; landscape adds a column', await page.evaluate(() => {
     const g=document.getElementById('mnWorld').getBoundingClientRect(), f=document.getElementById('mnWorldFeed').getBoundingClientRect();
-    return innerWidth >= 1000 ? f.left >= g.right - 1 : f.top >= g.bottom - 1;
+    return (innerWidth >= 1000 || (innerWidth >= 600 && innerWidth > innerHeight)) ? f.left >= g.right - 1 : f.top >= g.bottom - 1;
   }), s);
   check(device.name, 'no sideways overflow', s.scrollW === s.clientW, s);
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
@@ -357,9 +373,9 @@ if (runs('member-interactions')) {
   const device = DEVICES[0];
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
-  const feedScroll = await page.evaluate(async () => { const f = document.scrollingElement; f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
-  check(scope, 'the phone page scrolls through the feed', feedScroll.feed > 0 && feedScroll.page > 0, feedScroll);
-  await page.evaluate(() => window.scrollTo(0, 0));
+  const feedScroll = await page.evaluate(async () => { const f = document.getElementById('mnWorldFeed'); f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
+  check(scope, 'the phone feed scrolls while the page stays fixed', feedScroll.feed > 0 && feedScroll.page === 0, feedScroll);
+  await page.evaluate(() => { document.getElementById('mnWorldFeed').scrollTop = 0; });
 
   // Post
   await page.fill('#mnPostBody', 'E2E: posted from the World screen');
