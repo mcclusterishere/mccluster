@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 319,
-  "latest_version": "20261017050521",
-  "latest_name": "travel_journeys_private_v1",
-  "ledger_sha256": "528af5914adc43c31dd4bb56a3ea46c48731492f3d6e9a637894c6950b7e58f9",
+  "migration_count": 323,
+  "latest_version": "20261017214808",
+  "latest_name": "mcp_approval_scope_v1",
+  "ledger_sha256": "07b9c016ee02f3a6e848992711df7715e3a5e4daa5d2c6834aab1df4fd6f5061",
   "migrations": [
     {
       "version": "0001",
@@ -1282,6 +1282,22 @@
     {
       "version": "20261017050521",
       "name": "travel_journeys_private_v1"
+    },
+    {
+      "version": "20261017054833",
+      "name": "analytics_ingestion_pipeline_v1"
+    },
+    {
+      "version": "20261017164335",
+      "name": "action_archive_cohort_v1"
+    },
+    {
+      "version": "20261017164416",
+      "name": "action_mission_reset_v1"
+    },
+    {
+      "version": "20261017214808",
+      "name": "mcp_approval_scope_v1"
     }
   ]
 }

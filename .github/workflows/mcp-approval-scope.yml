@@ -2,7 +2,7 @@ name: MCP Approval Scope (isolated PostgreSQL)
 on:
   pull_request:
     paths:
-      - 'supabase/pending/20261017_mcp_approval_scope_v1.sql'
+      - 'supabase/migrations/20261017214808_mcp_approval_scope_v1.sql'
       - 'supabase/tests/mcp_approval_scope.*.sql'
       - 'supabase/functions/inbox/index.ts'
       - '.github/workflows/mcp-approval-scope.yml'
@@ -31,5 +31,5 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_approval_scope.stub.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261017_mcp_approval_scope_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017214808_mcp_approval_scope_v1.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_approval_scope.behaviour.sql
