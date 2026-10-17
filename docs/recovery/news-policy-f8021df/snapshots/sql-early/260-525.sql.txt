@@ -1,0 +1,266 @@
+$$;
+create function private.eu_news_project_role(p_project_id uuid) returns text
+language sql stable security definer set search_path = '' as $$
+  select case when private.eu_news_project_allowed(p_project_id) then
+    case when private.eu_news_house_manager() then 'principal-investigator' else (
+      select m.role from public.eu_research_members m where m.research_project_id=p_project_id
+      and m.m_uid=private.eu_news_actor() and m.status='active') end end
+$$;
+create function private.eu_news_project_intel_eligible(p_project_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.eu_research_projects p where p.id=p_project_id
+    and private.eu_news_project_allowed(p.id) and public.intel_is_org_admin(p.org_id)
+    and not exists(select 1 from public.eu_research_members m
+      where m.research_project_id=p.id and m.status='active'
+      and not private.eu_news_member_is_intel_admin(m.m_uid,p.org_id)))
+$$;
+create function private.eu_news_project_shape(p_project_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('id',p.id,'title',p.title,'org_id',p.org_id,'visibility',p.visibility,'status',p.status,
+    'role',private.eu_news_project_role(p.id),
+    'can_write',p.status='active' and private.eu_news_project_role(p.id) in ('principal-investigator','editor','researcher','contributor'),
+    'can_review',p.status='active' and private.eu_news_project_role(p.id) in ('principal-investigator','editor','reviewer'),
+    'can_approve',p.status='active' and private.eu_news_project_role(p.id) in ('principal-investigator','editor'),
+    'can_manage_members',private.eu_news_house_manager(),
+    'intel_restricted',exists(select 1 from private.eu_news_intel_projects n where n.project_id=p.id),
+    'can_capture_intel',p.status='active' and private.eu_news_project_intel_eligible(p.id))
+  from public.eu_research_projects p where p.id=p_project_id and private.eu_news_project_allowed(p.id)
+$$;
+create function private.eu_news_hash(p_value jsonb) returns text
+language sql immutable set search_path = '' as $$ select encode(sha256(convert_to(p_value::text,'UTF8')),'hex') $$;
+create function private.eu_news_rate(p_actor uuid,p_action text,p_limit integer) returns void
+language plpgsql security definer set search_path = '' as $$
+declare v_hits integer;
+begin
+  insert into private.eu_news_rate_windows as r(actor_m_uid,action,window_start,hits)
+    values(p_actor,p_action,date_trunc('minute',clock_timestamp()),1)
+  on conflict(actor_m_uid,action) do update set
+    window_start=excluded.window_start,
+    hits=case when r.window_start=excluded.window_start then r.hits+1 else 1 end
+  where r.window_start<>excluded.window_start or r.hits<p_limit
+  returning hits into v_hits;
+  if v_hits is null then raise exception using errcode='P0001',message='rate_limit_exceeded'; end if;
+end $$;
+create function private.eu_news_request_get(p_actor uuid,p_operation text,p_request_id uuid,p_payload jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_row private.eu_news_requests%rowtype;
+begin
+  if p_request_id is null then return null; end if;
+  perform pg_advisory_xact_lock(hashtextextended(p_actor::text||':'||p_operation||':'||p_request_id::text,0));
+  select * into v_row from private.eu_news_requests
+    where actor_m_uid=p_actor and operation=p_operation and request_id=p_request_id;
+  if not found then return null; end if;
+  if v_row.fingerprint<>private.eu_news_hash(p_payload) then
+    raise exception using errcode='22023',message='idempotency_key_reused_with_different_input';
+  end if;
+  return v_row.response;
+end $$;
+create function private.eu_news_request_put(p_actor uuid,p_operation text,p_request_id uuid,p_payload jsonb,p_response jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_request_id is not null then
+    insert into private.eu_news_requests(actor_m_uid,operation,request_id,fingerprint,response)
+      values(p_actor,p_operation,p_request_id,private.eu_news_hash(p_payload),p_response);
+  end if;
+end $$;
+
+create function private.media_news_article_get(p_article_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select to_jsonb(a)||jsonb_build_object('publisher',a.publisher_domain,'domain',a.publisher_domain,
+    'first_seen_at',case when a.ingestion_provider='gdelt_gkg_v2' then a.published_at else a.imported_at end,
+    'published_at',case when a.ingestion_provider='gdelt_gkg_v2' then null else a.published_at end,
+    'place',a.headline_location_label,'lat',a.headline_latitude,'lon',a.headline_longitude,
+    'title_basis',case when a.ingestion_provider='gdelt_gkg_v2' then 'url_slug' else 'publisher_metadata' end)
+  from public.media_news_article_records a where a.id=p_article_id
+$$;
+create function private.media_news_content_get(p_article_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('payload',payload,'grant_id',grant_id,'adapter_id',adapter_id,
+    'content_hash',content_hash,'ingested_at',ingested_at)
+  from public.media_news_article_content where article_id=p_article_id
+$$;
+create function private.media_news_content_put(p_article_id uuid,p_payload jsonb,p_grant_id text,p_content_hash text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_url text; v_block jsonb; v_length integer:=0;
+begin
+  if jsonb_typeof(p_payload) is distinct from 'object' or octet_length(p_payload::text)>1500000
+    or length(coalesce(p_grant_id,'')) not between 1 and 200 or p_content_hash is null or p_content_hash !~ '^[0-9a-f]{64}$'
+    or length(coalesce(p_payload->>'adapter_id','')) not between 1 and 200
+    or p_payload->'body'->'complete' is distinct from 'true'::jsonb
+    or p_payload->'body'->>'format' is distinct from 'text_blocks'
+    or jsonb_typeof(p_payload->'body'->'blocks') is distinct from 'array'
+  then raise exception using errcode='22023',message='invalid_native_article_payload'; end if;
+  if jsonb_array_length(p_payload->'body'->'blocks') not between 1 and 2000 then
+    raise exception using errcode='22023',message='invalid_native_article_blocks';
+  end if;
+  for v_block in select value from jsonb_array_elements(p_payload->'body'->'blocks') loop
+    if jsonb_typeof(v_block) is distinct from 'object' or v_block->>'type' is null
+      or v_block->>'type' not in ('paragraph','heading','quote')
+      or jsonb_typeof(v_block->'text') is distinct from 'string'
+      or length(btrim(v_block->>'text')) not between 1 and 40000 then
+      raise exception using errcode='22023',message='invalid_native_article_blocks';
+    end if;
+    v_length:=v_length+length(v_block->>'text');
+  end loop;
+  if v_length>300000 then raise exception using errcode='22023',message='native_article_too_large'; end if;
+  select canonical_url into v_url from public.media_news_article_records where id=p_article_id;
+  if not found then raise exception using errcode='P0002',message='article_not_found'; end if;
+  if p_payload->>'canonical_url' is distinct from v_url then
+    raise exception using errcode='22023',message='canonical_article_mismatch';
+  end if;
+  insert into public.media_news_article_content(article_id,payload,grant_id,adapter_id,content_hash)
+  values(p_article_id,p_payload,p_grant_id,p_payload->>'adapter_id',p_content_hash)
+  on conflict(article_id) do update set payload=excluded.payload,grant_id=excluded.grant_id,
+    adapter_id=excluded.adapter_id,content_hash=excluded.content_hash,ingested_at=clock_timestamp();
+  return jsonb_build_object('article_id',p_article_id,'stored',true,'content_hash',p_content_hash);
+end $$;
+
+create function private.media_news_comment_shape(p_comment_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('id',c.id,'article_id',c.article_id,'parent_id',c.parent_id,
+    'body',case when c.status='visible' then c.body else '' end,
+    'author_label',case when c.status='visible' then 'Member '||substr(private.eu_news_hash(jsonb_build_array(c.article_id,c.author_m_uid)),1,8) else null end,
+    'status',c.status,'created_at',c.created_at,'updated_at',c.updated_at,
+    'can_delete',c.status='visible' and c.author_m_uid=private.eu_news_actor(),
+    'can_report',c.status='visible' and private.eu_news_actor() is not null and c.author_m_uid<>private.eu_news_actor(),
+    'can_reply',c.status='visible' and c.parent_id is null,
+    'can_moderate',private.eu_news_house_manager() and c.status<>'deleted')
+  from public.media_news_comments c where c.id=p_comment_id
+$$;
+create function private.media_news_comments_list(p_article_id uuid,p_before text default null,p_limit integer default 30) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_at timestamptz; v_id uuid; v_items jsonb; v_next text; v_count integer;
+begin
+  if p_limit is null or p_limit not between 1 and 100 then raise exception using errcode='22023',message='invalid_page_limit'; end if;
+  if not exists(select 1 from public.media_news_article_records where id=p_article_id) then
+    raise exception using errcode='P0002',message='article_not_found';
+  end if;
+  if p_before is not null then
+    if length(p_before)>140 or length(p_before)-length(replace(p_before,'|',''))<>1 then
+      raise exception using errcode='22023',message='invalid_comment_cursor';
+    end if;
+    begin v_at:=split_part(p_before,'|',1)::timestamptz; v_id:=split_part(p_before,'|',2)::uuid;
+    exception when others then raise exception using errcode='22023',message='invalid_comment_cursor'; end;
+    if v_at is null or v_id is null then raise exception using errcode='22023',message='invalid_comment_cursor'; end if;
+  end if;
+  with page as (
+    select id,created_at from public.media_news_comments where article_id=p_article_id
+      and (p_before is null or (created_at,id)<(v_at,v_id))
+    order by created_at desc,id desc limit p_limit+1
+  ), shown as (select * from page order by created_at desc,id desc limit p_limit)
+  select (select coalesce(jsonb_agg(private.media_news_comment_shape(id) order by created_at desc,id desc),'[]') from shown),
+    (select count(*) from page),
+    (select created_at::text||'|'||id::text from shown order by created_at,id limit 1)
+  into v_items,v_count,v_next;
+  return jsonb_build_object('items',v_items,'next_before',case when v_count>p_limit then v_next else null end);
+end $$;
+create function private.media_news_comment_create(p_article_id uuid,p_body text,p_parent_id uuid default null,p_request_id uuid default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_id uuid; v_parent public.media_news_comments%rowtype;
+  v_input jsonb; v_result jsonb;
+begin
+  if p_body is null or length(btrim(p_body)) not between 1 and 4000 then raise exception using errcode='22023',message='invalid_comment_body'; end if;
+  v_input:=jsonb_build_object('article',p_article_id,'body',p_body,'parent',p_parent_id);
+  v_result:=private.eu_news_request_get(v_actor,'comment',p_request_id,v_input);
+  if v_result is not null then return private.media_news_comment_shape((v_result->>'id')::uuid); end if;
+  if not exists(select 1 from public.media_news_article_records where id=p_article_id) then raise exception using errcode='P0002',message='article_not_found'; end if;
+  if p_parent_id is not null then
+    select * into v_parent from public.media_news_comments where id=p_parent_id for share;
+    if not found or v_parent.article_id<>p_article_id or v_parent.status<>'visible' or v_parent.parent_id is not null then
+      raise exception using errcode='22023',message='invalid_reply_parent';
+    end if;
+  end if;
+  perform private.eu_news_rate(v_actor,'comment',20);
+  insert into public.media_news_comments(article_id,author_m_uid,parent_id,body)
+    values(p_article_id,v_actor,p_parent_id,btrim(p_body)) returning id into v_id;
+  insert into private.media_news_comment_actions(comment_id,actor_m_uid,action) values(v_id,v_actor,'created');
+  v_result:=private.media_news_comment_shape(v_id);
+  perform private.eu_news_request_put(v_actor,'comment',p_request_id,v_input,jsonb_build_object('id',v_id));
+  return v_result;
+end $$;
+create function private.media_news_comment_delete(p_comment_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_row public.media_news_comments%rowtype;
+begin
+  select * into v_row from public.media_news_comments where id=p_comment_id for update;
+  if not found then raise exception using errcode='P0002',message='comment_not_found'; end if;
+  if v_row.author_m_uid<>v_actor then raise exception using errcode='42501',message='comment_author_required'; end if;
+  if v_row.status<>'deleted' then
+    update public.media_news_comments set status='deleted',body='',updated_at=clock_timestamp() where id=p_comment_id;
+    insert into private.media_news_comment_actions(comment_id,actor_m_uid,action) values(p_comment_id,v_actor,'deleted');
+  end if;
+  return jsonb_build_object('id',p_comment_id,'status','deleted');
+end $$;
+create function private.media_news_comment_report(p_comment_id uuid,p_reason text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_row public.media_news_comments%rowtype;
+begin
+  if p_reason is null or length(btrim(p_reason)) not between 1 and 1000 then raise exception using errcode='22023',message='invalid_report_reason'; end if;
+  select * into v_row from public.media_news_comments where id=p_comment_id for share;
+  if not found or v_row.status<>'visible' then raise exception using errcode='P0002',message='comment_not_found'; end if;
+  if v_row.author_m_uid=v_actor then raise exception using errcode='22023',message='cannot_report_own_comment'; end if;
+  perform pg_advisory_xact_lock(hashtextextended('report:'||p_comment_id::text||':'||v_actor::text,0));
+  if not exists(select 1 from private.media_news_comment_reports where comment_id=p_comment_id and reporter_m_uid=v_actor) then
+    perform private.eu_news_rate(v_actor,'report',20);
+    insert into private.media_news_comment_reports(comment_id,reporter_m_uid,reason) values(p_comment_id,v_actor,btrim(p_reason));
+  end if;
+  return jsonb_build_object('reported',true);
+end $$;
+create function private.media_news_comment_moderate(p_comment_id uuid,p_status text,p_note text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_row public.media_news_comments%rowtype;
+begin
+  if not private.eu_news_house_manager() then raise exception using errcode='42501',message='house_owner_required'; end if;
+  if p_status is null or p_status not in ('hidden','visible') or length(btrim(coalesce(p_note,''))) not between 1 and 1000 then
+    raise exception using errcode='22023',message='invalid_moderation';
+  end if;
+  select * into v_row from public.media_news_comments where id=p_comment_id for update;
+  if not found then raise exception using errcode='P0002',message='comment_not_found'; end if;
+  if v_row.status='deleted' then raise exception using errcode='22023',message='deleted_comment_cannot_be_restored'; end if;
+  update public.media_news_comments set status=p_status,updated_at=clock_timestamp() where id=p_comment_id;
+  insert into private.media_news_comment_actions(comment_id,actor_m_uid,action,note)
+    values(p_comment_id,v_actor,case when p_status='visible' then 'restored' else 'hidden' end,btrim(p_note));
+  return jsonb_build_object('id',p_comment_id,'status',p_status);
+end $$;
+
+-- Additional restrictive policies close the legacy any-linked-credential RLS
+-- route for the rows this workflow creates, without widening any old policy.
+create function private.eu_news_project_read_guard(p_project_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select not exists(select 1 from private.eu_news_protected_projects p where p.project_id=p_project_id)
+    or private.eu_news_project_allowed(p_project_id)
+$$;
+create function private.eu_news_source_read_guard(p_source_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select not exists(select 1 from private.eu_news_source_provenance where source_id=p_source_id)
+    or exists(select 1 from private.eu_news_source_provenance s where s.source_id=p_source_id
+      and private.eu_news_project_allowed(s.project_id))
+$$;
+create function private.eu_news_claim_read_guard(p_claim_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select not exists(select 1 from private.eu_news_claim_origins where claim_id=p_claim_id)
+    or exists(select 1 from private.eu_news_claim_origins c where c.claim_id=p_claim_id
+      and private.eu_news_project_allowed(c.project_id))
+$$;
+create function private.eu_news_manuscript_read_guard(p_manuscript_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.eu_manuscripts m where m.id=p_manuscript_id
+    and private.eu_news_project_read_guard(m.research_project_id))
+$$;
+create function private.eu_news_section_read_guard(p_section_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.eu_manuscript_sections s where s.id=p_section_id
+    and private.eu_news_manuscript_read_guard(s.manuscript_id))
+$$;
+create policy eu_news_projects_boundary on public.eu_research_projects as restrictive for select to anon,authenticated
+  using(private.eu_news_project_read_guard(id));
+create policy eu_news_members_boundary on public.eu_research_members as restrictive for select to authenticated
+  using(private.eu_news_project_read_guard(research_project_id));
+create policy eu_news_sources_boundary on public.eu_sources as restrictive for select to authenticated
+  using(private.eu_news_project_read_guard(research_project_id) and private.eu_news_source_read_guard(id));
+create policy eu_news_claims_boundary on public.eu_claims as restrictive for select to authenticated
+  using(private.eu_news_project_read_guard(research_project_id) and private.eu_news_claim_read_guard(id));
+create policy eu_news_evidence_boundary on public.eu_claim_evidence as restrictive for select to authenticated
+  using(private.eu_news_claim_read_guard(claim_id) and private.eu_news_source_read_guard(source_id));
+create policy eu_news_manuscripts_boundary on public.eu_manuscripts as restrictive for select to authenticated
+  using(private.eu_news_project_read_guard(research_project_id));
