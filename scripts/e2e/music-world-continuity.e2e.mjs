@@ -267,8 +267,11 @@ try{
     await page.locator('.world-audio__play').click();
     await page.waitForFunction(()=>MCC_MUSIC.access()==='loading');
     await page.evaluate(()=>__resolveGate({state:'locked'}));
-    await page.waitForFunction(()=>MCC_MUSIC.access()==='preview'&&!MCC_MUSIC.audio.paused);
-    check('retry resolves current access and uses the public preview when locked',await page.evaluate(()=>__gateClaims===1&&MCC_MUSIC.audio.currentSrc.includes('niggy-nigg-preview')));
+    // HTMLAudioElement.currentSrc can lag the selected access state until
+    // the new media resource starts loading. Assert the final actual source,
+    // not an instantaneous intermediate state after access resolution.
+    await page.waitForFunction(()=>MCC_MUSIC.access()==='preview'&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentSrc.includes('niggy-nigg-preview'),{timeout:7000});
+    check('retry resolves current access and uses the public preview when locked',await page.evaluate(()=>__gateClaims===1&&MCC_MUSIC.audio.currentSrc.includes('niggy-nigg-preview')&&MCC_MUSIC.audio.currentTime<4.1));
     await context.close();
   }
   {
