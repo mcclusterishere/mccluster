@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 402,
+  "candidate_count": 403,
   "capability_source_count": 99,
-  "support_only_count": 303,
-  "checks_total": 1511,
-  "checks_passed": 1511,
+  "support_only_count": 304,
+  "checks_total": 1515,
+  "checks_passed": 1515,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -159,6 +159,7 @@
     "docs/social-desk-setup.md",
     "docs/stocksy-shot-list.md",
     "docs/the-mission-fund.md",
+    "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
     "end-racism.html",
@@ -416,7 +417,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "402 entries"
+      "detail": "403 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7965,6 +7966,26 @@
     },
     {
       "name": "supabase/tests/analytics_geo_audience.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md support rationale present",
       "passed": true,
       "detail": ""
     }

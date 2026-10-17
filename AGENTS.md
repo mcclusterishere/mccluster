@@ -120,6 +120,19 @@ inherits them. Keep local filters, chapter tabs and editor tools within their
 destination. Embedded frames retain host-owned navigation. See
 `docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
 
+### Public World: travel first
+
+Owner correction, 2026-10-17: the logged-out World homepage is **travel first**.
+Before changing its presentation or default content, read
+`docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md` and its preserved approved
+reference. The guest starts in **Travel**, beside **Missions** and **Posts**, with
+the cinematic globe, destination search and **Your whole journey** planner as
+the focus. The mission/community-first public entry is superseded. Keep shared
+bottom navigation, top-right account/profile and internal-only intelligence
+boundaries. Do not confuse this public travel surface with admin Analytics or
+Matthew's personal homepage. The standard records the target; check the actual
+implementation before claiming its journey or booking capabilities are live.
+
 On the control repo:
 
 - `AGENTS.md` (this law + local product gates)
