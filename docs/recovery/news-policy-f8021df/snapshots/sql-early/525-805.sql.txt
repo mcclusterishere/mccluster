@@ -1,0 +1,281 @@
+  using(private.eu_news_project_read_guard(research_project_id));
+create policy eu_news_sections_boundary on public.eu_manuscript_sections as restrictive for select to authenticated
+  using(private.eu_news_manuscript_read_guard(manuscript_id));
+create policy eu_news_revisions_boundary on public.eu_section_revisions as restrictive for select to authenticated
+  using(private.eu_news_section_read_guard(section_id));
+create policy eu_news_review_comments_boundary on public.eu_review_comments as restrictive for select to authenticated
+  using(private.eu_news_manuscript_read_guard(manuscript_id));
+
+create function private.eu_news_workspace() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.eu_news_require_actor();
+  return jsonb_build_object('projects',(select coalesce(jsonb_agg(private.eu_news_project_shape(p.id) order by p.updated_at desc,p.id),'[]')
+    from (select id,updated_at from public.eu_research_projects where private.eu_news_project_allowed(id) order by updated_at desc,id limit 100) p),
+    'can_create',private.eu_news_house_manager());
+end $$;
+create function private.eu_news_project_get(p_project_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_project jsonb; v_actor uuid:=private.eu_news_require_actor();
+begin
+  v_project:=private.eu_news_project_shape(p_project_id);
+  if v_project is null then raise exception using errcode='42501',message='project_access_denied'; end if;
+  return jsonb_build_object('project',v_project,
+    'sources',(select coalesce(jsonb_agg(to_jsonb(s) order by s.created_at,s.id),'[]') from
+      (select s.* from public.eu_sources s where s.research_project_id=p_project_id order by s.created_at,s.id limit 500) s),
+    'claims',(select coalesce(jsonb_agg(to_jsonb(c)||jsonb_build_object('text',c.claim,'created_by',c.created_by_m_uid,
+      'can_review',(v_project->>'can_review')::boolean and c.created_by_m_uid is distinct from v_actor) order by c.created_at,c.id),'[]')
+      from (select * from public.eu_claims where research_project_id=p_project_id order by created_at,id limit 500) c),
+    'evidence',(select coalesce(jsonb_agg(to_jsonb(e)),'[]') from (select e.* from public.eu_claim_evidence e
+      join public.eu_claims c on c.id=e.claim_id join public.eu_sources s on s.id=e.source_id
+      where c.research_project_id=p_project_id and s.research_project_id=p_project_id limit 1000) e),
+    'manuscripts',(select coalesce(jsonb_agg(jsonb_build_object('id',m.id,'title',m.title,'status',m.status,
+      'revision',m.current_revision,'body',s.body_markdown,'created_by',m.created_by_m_uid,'updated_at',m.updated_at)),'[]')
+      from private.eu_news_manuscripts n join public.eu_manuscripts m on m.id=n.manuscript_id
+      join public.eu_manuscript_sections s on s.id=n.section_id where n.project_id=p_project_id),
+    'reviews',(select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'claim_id',r.claim_id,'from_status',r.from_status,
+      'to_status',r.to_status,'note',r.note,'actor_m_uid',r.actor_m_uid,'created_at',r.created_at) order by r.created_at desc),'[]')
+      from (select * from private.eu_news_claim_reviews where project_id=p_project_id order by created_at desc limit 500) r),
+    'members',case when private.eu_news_house_manager() then (select coalesce(jsonb_agg(jsonb_build_object('m_uid',m.m_uid,'role',m.role,'status',m.status)),'[]')
+      from public.eu_research_members m where m.research_project_id=p_project_id) else '[]'::jsonb end);
+end $$;
+create function private.eu_news_project_create(p_title text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_org uuid; v_id uuid:=gen_random_uuid();
+begin
+  if not private.eu_news_house_manager() then raise exception using errcode='42501',message='house_owner_required'; end if;
+  if p_title is null or length(btrim(p_title)) not between 1 and 200 then raise exception using errcode='22023',message='invalid_project_title'; end if;
+  select id into v_org from public.orgs where slug='mccluster';
+  if v_org is null then raise exception using errcode='P0002',message='house_org_missing'; end if;
+  perform private.eu_news_rate(v_actor,'project_create',10);
+  insert into public.eu_research_projects(id,org_id,slug,title,visibility,owner_m_uid,settings)
+    values(v_id,v_org,'news-policy-'||v_id::text,btrim(p_title),'private',v_actor,'{"news_policy_managed":true}'::jsonb);
+  insert into private.eu_news_protected_projects(project_id,registered_by_m_uid) values(v_id,v_actor);
+  insert into public.eu_research_members(research_project_id,m_uid,role,status)
+    values(v_id,v_actor,'principal-investigator','active');
+  return jsonb_build_object('project',private.eu_news_project_shape(v_id));
+end $$;
+create function private.eu_news_project_member_set(p_project_id uuid,p_m_uid uuid,p_role text,p_active boolean default true) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_project public.eu_research_projects%rowtype; v_member jsonb;
+begin
+  if not private.eu_news_house_manager() then raise exception using errcode='42501',message='house_owner_required'; end if;
+  if p_role is null or p_role not in ('principal-investigator','editor','researcher','reviewer','contributor','observer') or p_active is null then
+    raise exception using errcode='22023',message='invalid_project_role';
+  end if;
+  select * into v_project from public.eu_research_projects where id=p_project_id for update;
+  if not found or not exists(select 1 from private.eu_news_protected_projects where project_id=p_project_id) then
+    raise exception using errcode='P0002',message='project_not_found'; end if;
+  if not exists(select 1 from public.orgs where id=v_project.org_id and slug='mccluster') then
+    raise exception using errcode='42501',message='house_project_required';
+  end if;
+  if not exists(select 1 from public.m_people where id=p_m_uid and status='active') then raise exception using errcode='22023',message='active_member_required'; end if;
+  if p_active and exists(select 1 from private.eu_news_intel_projects where project_id=p_project_id)
+    and not private.eu_news_member_is_intel_admin(p_m_uid,v_project.org_id) then
+    raise exception using errcode='42501',message='intel_admin_membership_required';
+  end if;
+  perform private.eu_news_rate(v_actor,'membership',30);
+  insert into public.eu_research_members(research_project_id,m_uid,role,status)
+    values(p_project_id,p_m_uid,p_role,case when p_active then 'active' else 'removed' end)
+  on conflict(research_project_id,m_uid) do update set role=excluded.role,status=excluded.status
+  returning jsonb_build_object('m_uid',m_uid,'role',role,'status',status) into v_member;
+  return jsonb_build_object('member',v_member);
+end $$;
+
+create function private.eu_news_capture_evidence(p_project_id uuid,p_article_id uuid default null,p_intel_evidence_id uuid default null,
+  p_claim text default null,p_claim_type text default 'factual',p_relation text default 'supports',
+  p_locator text default null,p_note text default null,p_request_id uuid default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_project public.eu_research_projects%rowtype;
+  v_article public.media_news_article_records%rowtype; v_intel public.intel_evidence%rowtype;
+  v_source public.eu_sources%rowtype; v_claim public.eu_claims%rowtype; v_evidence public.eu_claim_evidence%rowtype;
+  v_snapshot jsonb; v_input jsonb; v_result jsonb; v_hash text;
+begin
+  if num_nonnulls(p_article_id,p_intel_evidence_id)<>1 or p_claim is null or length(btrim(p_claim)) not between 1 and 4000
+    or p_claim_type is null or p_claim_type not in ('factual','analytic','recommendation','definition','estimate')
+    or p_relation is null or p_relation not in ('supports','contradicts','context','method')
+    or length(coalesce(p_locator,''))>500 or length(coalesce(p_note,''))>3000 then
+    raise exception using errcode='22023',message='invalid_evidence_input';
+  end if;
+  select * into v_project from public.eu_research_projects where id=p_project_id for update;
+  if not found or v_project.status<>'active' or coalesce(private.eu_news_project_role(p_project_id),'') not in ('principal-investigator','editor','researcher','contributor') then
+    raise exception using errcode='42501',message='project_write_access_required';
+  end if;
+  v_input:=jsonb_build_object('project',p_project_id,'article',p_article_id,'intel',p_intel_evidence_id,'claim',p_claim,
+    'type',p_claim_type,'relation',p_relation,'locator',p_locator,'note',p_note);
+  v_result:=private.eu_news_request_get(v_actor,'capture',p_request_id,v_input);
+  if v_result is not null then return v_result; end if;
+  perform private.eu_news_rate(v_actor,'capture',30);
+  if p_article_id is not null then
+    select * into v_article from public.media_news_article_records where id=p_article_id;
+    if not found then raise exception using errcode='P0002',message='article_not_found'; end if;
+    v_snapshot:=jsonb_build_object('kind','news_metadata','article_id',v_article.id,'title',v_article.title,
+      'publisher',v_article.publisher_domain,'canonical_url',v_article.canonical_url,
+      'published_at',case when v_article.ingestion_provider='gdelt_gkg_v2' then null else v_article.published_at end,
+      'first_seen_at',case when v_article.ingestion_provider='gdelt_gkg_v2' then v_article.published_at else v_article.imported_at end,
+      'title_basis',case when v_article.ingestion_provider='gdelt_gkg_v2' then 'url_slug' else 'publisher_metadata' end,
+      'ingestion_provider',v_article.ingestion_provider,'retrieved_at',v_article.imported_at,'gdelt_file',v_article.gdelt_file,
+      'location_basis',v_article.location_basis,'location_label',v_article.headline_location_label,
+      'latitude',v_article.headline_latitude,'longitude',v_article.headline_longitude,
+      'content_scope','metadata_only','assertion','An ingested article is a source, not verified proof.');
+  else
+    if not private.eu_news_project_intel_eligible(p_project_id) then
+      raise exception using errcode='42501',message='intel_restricted_project_required';
+    end if;
+    select * into v_intel from public.intel_evidence where id=p_intel_evidence_id and org_id=v_project.org_id for share;
+    if not found then raise exception using errcode='42501',message='intel_evidence_access_denied'; end if;
+    if v_intel.review_status='rejected' or (v_intel.retention_until is not null and v_intel.retention_until<now()) then
+      raise exception using errcode='22023',message='intel_evidence_unavailable';
+    end if;
+    -- The applied canon exposes individual records to org admins only. Its
+    -- classification cannot be widened by copying into a fellow's workspace.
+    insert into private.eu_news_intel_projects(project_id,restricted_by_m_uid) values(p_project_id,v_actor) on conflict(project_id) do nothing;
+    update public.eu_research_projects set visibility='private',settings=settings||'{"news_policy_intel_restricted":true}'::jsonb where id=p_project_id;
+    v_snapshot:=jsonb_build_object('kind','canonical_intel','intel_evidence_id',v_intel.id,'org_id',v_intel.org_id,
+      'title',v_intel.title,'summary',v_intel.summary,'publisher',v_intel.publisher,'source_url',v_intel.source_url,
+      'license',v_intel.license,'attribution',v_intel.attribution,'retrieved_at',v_intel.retrieved_at,
+      'observed_at',v_intel.observed_at,'content_sha256',v_intel.content_sha256,
+      'review_status_at_capture',v_intel.review_status,'visibility_at_capture',v_intel.visibility,
+      'source_record_id',v_intel.source_record_id,'outcome_id',v_intel.outcome_id);
+  end if;
+  v_hash:=private.eu_news_hash(v_snapshot);
+  select s.* into v_source from public.eu_sources s join private.eu_news_source_provenance n on n.source_id=s.id
+    where n.project_id=p_project_id and (n.article_id=p_article_id or n.intel_evidence_id=p_intel_evidence_id);
+  if not found then
+    insert into public.eu_sources(org_id,research_project_id,source_type,title,publisher,published_at,url,canonical_url,
+      external_ids,snapshot_ref,sha256,citation,verification,last_checked_at,added_by_m_uid)
+    values(v_project.org_id,p_project_id,case when p_article_id is not null then 'news' else 'canonical-intel' end,
+      coalesce(v_article.title,v_intel.title),coalesce(v_article.publisher_domain,v_intel.publisher),
+      case when p_article_id is not null then case when v_article.ingestion_provider='gdelt_gkg_v2' then null else v_article.published_at end else v_intel.observed_at end,coalesce(v_article.canonical_url,v_intel.source_url,''),
+      coalesce(v_article.canonical_url,v_intel.source_url,''),jsonb_strip_nulls(jsonb_build_object('article_id',p_article_id,'intel_evidence_id',p_intel_evidence_id)),
+      v_snapshot,v_hash,jsonb_build_object('snapshot_sha256',v_hash,'source_kind',v_snapshot->>'kind'),
+      'retrieved',clock_timestamp(),v_actor) returning * into v_source;
+    insert into private.eu_news_source_provenance(source_id,project_id,org_id,article_id,intel_evidence_id,snapshot,snapshot_sha256,captured_by_m_uid)
+      values(v_source.id,p_project_id,v_project.org_id,p_article_id,p_intel_evidence_id,v_snapshot,v_hash,v_actor);
+  end if;
+  insert into public.eu_claims(org_id,research_project_id,claim,claim_type,status,created_by_m_uid)
+    values(v_project.org_id,p_project_id,btrim(p_claim),p_claim_type,'draft',v_actor) returning * into v_claim;
+  insert into public.eu_claim_evidence(claim_id,source_id,relation,locator,note)
+    values(v_claim.id,v_source.id,p_relation,coalesce(p_locator,''),coalesce(p_note,'')) returning * into v_evidence;
+  insert into private.eu_news_claim_origins(claim_id,source_id,project_id) values(v_claim.id,v_source.id,p_project_id);
+  v_result:=jsonb_build_object('source',to_jsonb(v_source),'claim',to_jsonb(v_claim),'evidence',to_jsonb(v_evidence));
+  perform private.eu_news_request_put(v_actor,'capture',p_request_id,v_input,v_result);
+  return v_result;
+end $$;
+
+create function private.eu_news_claim_review(p_claim_id uuid,p_decision text,p_note text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_claim public.eu_claims%rowtype; v_role text; v_project uuid;
+begin
+  if p_decision is null or p_decision not in ('supported','contested','approved','retired')
+    or length(btrim(coalesce(p_note,''))) not between 1 and 3000 then raise exception using errcode='22023',message='invalid_claim_review'; end if;
+  select research_project_id into v_project from public.eu_claims where id=p_claim_id;
+  -- Same lock order as capture/memo/member mutation prevents stale authorization.
+  perform 1 from public.eu_research_projects where id=v_project for update;
+  select * into v_claim from public.eu_claims where id=p_claim_id for update;
+  if not found then raise exception using errcode='P0002',message='claim_not_found'; end if;
+  v_role:=private.eu_news_project_role(v_claim.research_project_id);
+  if coalesce(v_role,'') not in ('principal-investigator','editor','reviewer')
+    or not exists(select 1 from public.eu_research_projects where id=v_claim.research_project_id and status='active')
+    or (p_decision in ('approved','retired') and v_role not in ('principal-investigator','editor')) then
+    raise exception using errcode='42501',message='independent_reviewer_required';
+  end if;
+  if v_claim.created_by_m_uid is null or v_claim.created_by_m_uid=v_actor then
+    raise exception using errcode='42501',message='self_review_forbidden';
+  end if;
+  if not exists(select 1 from private.eu_news_claim_origins where claim_id=p_claim_id) then
+    raise exception using errcode='22023',message='claim_requires_news_workspace_capture';
+  end if;
+  if p_decision in ('approved','supported') and not exists(select 1 from public.eu_claim_evidence e
+    join public.eu_sources s on s.id=e.source_id where e.claim_id=p_claim_id and e.relation='supports'
+    and s.research_project_id=v_claim.research_project_id and s.org_id=v_claim.org_id
+    and s.verification not in ('broken','superseded')) then raise exception using errcode='22023',message='supporting_source_required'; end if;
+  if p_decision='approved' and exists(select 1 from public.eu_claim_evidence e
+    join private.eu_news_source_provenance n on n.source_id=e.source_id
+    join public.intel_evidence i on i.id=n.intel_evidence_id
+    where e.claim_id=p_claim_id and i.review_status<>'accepted') then
+    raise exception using errcode='22023',message='accepted_intel_source_required';
+  end if;
+  perform private.eu_news_rate(v_actor,'review',30);
+  insert into private.eu_news_claim_reviews(claim_id,project_id,actor_m_uid,from_status,to_status,note,claim_snapshot)
+    values(p_claim_id,v_claim.research_project_id,v_actor,v_claim.status,p_decision,btrim(p_note),to_jsonb(v_claim));
+  update public.eu_claims set status=p_decision,approved_by_m_uid=case when p_decision='approved' then v_actor else null end
+    where id=p_claim_id returning * into v_claim;
+  return jsonb_build_object('claim',to_jsonb(v_claim));
+end $$;
+
+create function private.eu_news_memo_save(p_project_id uuid,p_title text,p_body text,p_expected_revision integer default 0,
+  p_submit_for_review boolean default false,p_request_id uuid default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_actor uuid:=private.eu_news_require_actor(); v_project public.eu_research_projects%rowtype;
+  v_registry private.eu_news_manuscripts%rowtype; v_manuscript public.eu_manuscripts%rowtype; v_section public.eu_manuscript_sections%rowtype;
+  v_revision_id bigint; v_input jsonb; v_result jsonb; v_basis jsonb;
+begin
+  if p_title is null or length(btrim(p_title)) not between 1 and 200 or p_body is null or length(p_body)>40000
+    or p_expected_revision is null or p_expected_revision<0 or p_submit_for_review is null
+    or (p_submit_for_review and length(btrim(p_body))=0) then raise exception using errcode='22023',message='invalid_memo_input'; end if;
+  select * into v_project from public.eu_research_projects where id=p_project_id for update;
+  if not found or v_project.status<>'active' or coalesce(private.eu_news_project_role(p_project_id),'') not in ('principal-investigator','editor','researcher','contributor') then
+    raise exception using errcode='42501',message='project_write_access_required'; end if;
+  v_input:=jsonb_build_object('project',p_project_id,'title',p_title,'body',p_body,'revision',p_expected_revision,'submit',p_submit_for_review);
+  v_result:=private.eu_news_request_get(v_actor,'memo',p_request_id,v_input);
+  if v_result is not null then return v_result; end if;
+  select * into v_registry from private.eu_news_manuscripts where project_id=p_project_id;
+  if found then select * into v_manuscript from public.eu_manuscripts where id=v_registry.manuscript_id for update; end if;
+  if coalesce(v_manuscript.current_revision,0)<>p_expected_revision then
+    raise exception using errcode='40001',message='memo_revision_conflict';
+  end if;
+  if v_manuscript.status in ('approved','published','superseded') then
+    raise exception using errcode='22023',message='memo_not_editable';
+  end if;
+  if p_submit_for_review and not exists(select 1 from public.eu_claims c join public.eu_claim_evidence e on e.claim_id=c.id
+    where c.research_project_id=p_project_id and c.status<>'retired') then
+    raise exception using errcode='22023',message='memo_evidence_required'; end if;
+  perform private.eu_news_rate(v_actor,'memo',20);
+  if v_manuscript.id is null then
+    insert into public.eu_manuscripts(org_id,research_project_id,title,created_by_m_uid)
+      values(v_project.org_id,p_project_id,btrim(p_title),v_actor) returning * into v_manuscript;
+    insert into public.eu_manuscript_sections(manuscript_id,section_key,heading,last_editor_m_uid)
+      values(v_manuscript.id,'policy-memo',btrim(p_title),v_actor) returning * into v_section;
+    insert into private.eu_news_manuscripts(project_id,manuscript_id,section_id)
+      values(p_project_id,v_manuscript.id,v_section.id) returning * into v_registry;
+  end if;
+  update public.eu_manuscripts set title=btrim(p_title),current_revision=current_revision+1,
+    status=case when p_submit_for_review then 'internal-review' else 'draft' end
+    where id=v_manuscript.id returning * into v_manuscript;
+  update public.eu_manuscript_sections set heading=btrim(p_title),body_markdown=p_body,last_editor_m_uid=v_actor,
+    status=case when p_submit_for_review then 'in-review' else 'draft' end,updated_at=clock_timestamp()
+    where id=v_registry.section_id returning * into v_section;
+  insert into public.eu_section_revisions(section_id,revision_no,body_markdown,heading,change_summary,created_by_m_uid)
+    values(v_section.id,v_manuscript.current_revision,p_body,btrim(p_title),
+      case when p_submit_for_review then 'Submitted for internal review' else 'Saved draft' end,v_actor) returning id into v_revision_id;
+  select jsonb_build_object('claims',coalesce((select jsonb_agg(jsonb_build_object('id',c.id,'claim',c.claim,'status',c.status))
+    from public.eu_claims c where c.research_project_id=p_project_id),'[]'::jsonb),
+    'sources',coalesce((select jsonb_agg(jsonb_build_object('id',s.id,'sha256',s.sha256,'verification',s.verification))
+    from public.eu_sources s where s.research_project_id=p_project_id),'[]'::jsonb),
+    'evidence',coalesce((select jsonb_agg(to_jsonb(e)) from public.eu_claim_evidence e join public.eu_claims c on c.id=e.claim_id
+    where c.research_project_id=p_project_id),'[]'::jsonb)) into v_basis;
+  insert into private.eu_news_memo_revision_basis(section_revision_id,manuscript_id,actor_m_uid,source_claim_snapshot,submitted_for_review)
+    values(v_revision_id,v_manuscript.id,v_actor,v_basis,p_submit_for_review);
+  v_result:=jsonb_build_object('manuscript',jsonb_build_object('id',v_manuscript.id,'title',v_manuscript.title,
+    'status',v_manuscript.status,'revision',v_manuscript.current_revision,'body',v_section.body_markdown,'updated_at',v_manuscript.updated_at));
+  perform private.eu_news_request_put(v_actor,'memo',p_request_id,v_input,v_result);
+  return v_result;
+end $$;
+
+-- Guard provenance and approvals even when an old service-side gateway tries
+-- a direct REST update instead of these new, authorized transactions.
+create function private.eu_news_immutable() returns trigger
+language plpgsql set search_path = '' as $$ begin raise exception using errcode='42501',message='immutable_policy_provenance'; end $$;
+create trigger media_news_article_records_immutable before update or delete on public.media_news_article_records for each row execute function private.eu_news_immutable();
+create trigger eu_news_protected_projects_immutable before update or delete on private.eu_news_protected_projects for each row execute function private.eu_news_immutable();
+create trigger eu_news_intel_projects_immutable before update or delete on private.eu_news_intel_projects for each row execute function private.eu_news_immutable();
+create trigger eu_news_source_provenance_immutable before update or delete on private.eu_news_source_provenance for each row execute function private.eu_news_immutable();
+create trigger eu_news_claim_origins_immutable before update or delete on private.eu_news_claim_origins for each row execute function private.eu_news_immutable();
+create trigger eu_news_claim_reviews_immutable before update or delete on private.eu_news_claim_reviews for each row execute function private.eu_news_immutable();
+create trigger eu_news_memo_revision_basis_immutable before update or delete on private.eu_news_memo_revision_basis for each row execute function private.eu_news_immutable();
+create trigger media_news_comment_actions_immutable before update or delete on private.media_news_comment_actions for each row execute function private.eu_news_immutable();
+create function private.eu_news_source_guard() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if exists(select 1 from private.eu_news_source_provenance where source_id=old.id) then
