@@ -246,7 +246,7 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0 }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false }) {
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
@@ -256,7 +256,8 @@ async function open(device, { member, creator = true, verified = true, bootFail 
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
-  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
+  if(noGlobe)await ctx.route('https://cesium.com/**',r=>r.abort());
+  else if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
     if (!rel || rel.includes('..')) return route.abort();
     try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
@@ -277,7 +278,7 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   if(process.env.E2E_ONLY !== 'travel')await page.evaluate(()=>window.MCC_WORLD_MODE.set('posts'));
   /* evidence shots wait for the Earth's tiles, up to 25s */
   const globe = page.frame({ url: /action-globe\.html/ });
-  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+  if (globe&&!noGlobe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(1500);
   return { ctx, page, world, errors };
 }
@@ -322,6 +323,15 @@ if(runs('travel')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_
       await page.click('#wtSave');check(scope,'guest save opens same-page sign-in without writing',await page.isVisible('#mnSignedOut')&&req(world,'POST',/^\/travel_journeys$/).length===0);
     }
     check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+if(runs('travel-fallback')) {
+  const {ctx,page}=await open(DEVICES[0],{member:false,noGlobe:true});
+  try{
+    await page.evaluate(()=>window.MCC_WORLD_MODE.set('travel'));
+    await page.fill('#wtFrom','My town');await page.fill('#wtTo','Lisbon');await page.click('#wtForm button[type=submit]');
+    check('travel-fallback','a trip remains usable without Cesium/WebGL',await page.locator('.wt-leg').count()===4&&await page.isVisible('#wtSave'));
   }finally{await ctx.close();}
 }
 

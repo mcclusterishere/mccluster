@@ -126,6 +126,7 @@ search.onsubmit=e=>{e.preventDefault();try{const label=$('wtSearch').value.trim(
 function setMode(mode) {
   if(!['travel','missions','posts'].includes(mode))return;
   currentMode=mode;root.dataset.worldMode=mode;if(mode!=='travel')root.classList.remove('wt-expanded');
+  frame.title=mode==='travel'?'Travel globe. Drag to explore; selected cities and your planned connection appear here.':'Human Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open');$('huSearchToggle').setAttribute('aria-expanded','false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.worldMode===mode)));
   document.querySelectorAll('.wt-suggest').forEach(el=>el.hidden=true);
@@ -139,6 +140,7 @@ $('mnWorldFeed').addEventListener('touchstart',e=>{touchStart=e.target.closest('
 $('mnWorldFeed').addEventListener('touchend',e=>{if(!touchStart)return;const dx=e.changedTouches[0].clientX-touchStart.x,dy=e.changedTouches[0].clientY-touchStart.y;touchStart=null;if(Math.abs(dx)>100&&Math.abs(dx)>Math.abs(dy)*2){const modes=['travel','missions','posts'];setMode(modes[(modes.indexOf(currentMode)+(dx<0?1:2))%3]);}},{passive:true});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;
   if(e.data?.type==='hu:globe-ready')renderGlobe();
+  if(e.data?.type==='hu:globe-unavailable')status('The interactive globe is unavailable here. You can still search places and plan your journey.');
   if(e.data?.type==='hu:country'&&currentMode==='travel'&&e.data.country?.name){try{draft=read();draft.to={label:String(e.data.country.name).slice(0,240),coordinates:null};changed();syncInputs();status('Country selected. Search for a city or enter your destination to refine the trip.');}catch(err){status(err.message);}}
   if(e.data?.type==='hu:mission-selected'&&currentMode==='travel')setMode('missions');
 });

@@ -29,7 +29,7 @@ function setTravelMode(on){
  if(!viewer)return;travelStyle();
  if(changed||on){showMissions=!on;showCities=!on;draw();}
  const rail=document.querySelector('.globe-travel-controls'),nav=document.querySelector('.globe-controls');
- if(rail&&nav)for(const id of ['ctlLocate','ctlZoomIn','ctlZoomOut']){const b=$(id);if(b)(on?rail:nav).appendChild(b);}
+ if(rail&&nav)for(const id of ['ctlLocate','ctlZoomIn','ctlZoomOut']){const b=$(id);if(b){if(on)rail.appendChild(b);else nav.insertBefore(b,$('ctlLayers'));}}
  journeyEntities.forEach(e=>e.show=on);
 }
 function drawJourney(points,fly){
