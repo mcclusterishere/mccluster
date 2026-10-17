@@ -248,7 +248,7 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied' }) {
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
@@ -258,6 +258,13 @@ async function open(device, { member, creator = true, verified = true, bootFail 
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
+  await ctx.addInitScript(mode=>{window.__travelGeoRequests=0;Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(ok,fail){window.__travelGeoRequests++;if(mode==='granted')ok({coords:{longitude:-72.93,latitude:41.31}});else if(mode==='delayed')window.__travelGeoResolve=()=>ok({coords:{longitude:-72.93,latitude:41.31}});else fail({code:1});}}});},geo);
+  await ctx.route('https://photon.komoot.io/**',async route=>{
+    const q=new URL(route.request().url()).searchParams.get('q')||'';
+    if(q.includes('unavailable'))return route.fulfill({status:503,body:'unavailable'});
+    const address=/350|Fifth/.test(q),lisbon=/Lisbon/i.test(q);
+    return route.fulfill({contentType:'application/json',body:JSON.stringify({features:[{geometry:{type:'Point',coordinates:address?[-73.9857,40.7484]:lisbon?[-9.14,38.72]:[-72.93,41.31]},properties:address?{name:'Empire State Building',housenumber:'350',street:'Fifth Avenue',city:'New York',state:'New York',country:'United States'}:lisbon?{name:'Lisbon',country:'Portugal'}:{name:'New Haven',state:'Connecticut',country:'United States'}}]})});
+  });
   if(noGlobe)await ctx.route('https://cesium.com/**',r=>r.abort());
   else if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
@@ -299,19 +306,25 @@ if(runs('travel')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_
     check(scope,'Travel is the default and the planner is visible',await page.getAttribute('html','data-world-mode')==='travel'&&await page.isVisible('#wtPlanner'));
     check(scope,'travel scene hides mission pins and keeps visible zoom controls',await globe.evaluate(()=>window.__huJourney().travel)&&await globe.isVisible('#ctlZoomIn'));
     await page.screenshot({path:join(OUT,scope+'-initial.png')});
+    check(scope,'compact modes and header overlay share the globe',await page.evaluate(()=>{const g=document.getElementById('mnWorld').getBoundingClientRect(),h=document.querySelector('.mn__top').getBoundingClientRect(),m=document.querySelector('.wt-world-modes').getBoundingClientRect();return g.top===0&&h.top>=g.top&&h.bottom<g.bottom&&m.width<=240&&m.height<=44;}));
+    if(!member)check(scope,'Join clears the shared account control',await page.evaluate(()=>document.getElementById('mnGuestJoin').getBoundingClientRect().right+6<=document.getElementById('mccAuthChip').getBoundingClientRect().left));
+    check(scope,'location is requested once and denial leaves manual entry usable',await page.evaluate(()=>window.__travelGeoRequests===1)&&await page.isEnabled('#wtFrom')&&/Location access is off/.test(await page.textContent('#wtLocationStatus')));
+    await page.fill('#wtTo','350 Fifth Avenue');await page.locator('#wtToResults button').first().click();
+    const direct=new URL(await page.getAttribute('#wtNavigate','href'));check(scope,'real address suggestion becomes navigable coordinates',direct.searchParams.get('destination')==='40.7484,-73.9857'&&direct.searchParams.get('dir_action')==='navigate');
+
     await page.fill('#wtFrom','New Haven');await page.locator('#wtFromResults button').first().click();
     await page.fill('#wtTo','Lisbon');await page.locator('#wtToResults button').first().click();
-    await page.fill('#wtDeparture','2026-11-04');await page.click('#wtForm button[type=submit]');
+    await page.click('[data-travel-kind=flight]');await page.fill('#wtDeparture','2026-11-04');await page.click('#wtForm button[type=submit]');
     await globe.waitForFunction(()=>window.__huJourney().entities===3,{},{timeout:6000}).catch(async()=>{console.log('JOURNEY DEBUG',await globe.evaluate(()=>window.__huJourney()),await page.inputValue('#wtFrom'),await page.inputValue('#wtTo'),await page.textContent('#wtMessage'),errors);});
     check(scope,'chosen cities draw two points and a planned connection',await globe.evaluate(()=>window.__huJourney().points===2&&window.__huJourney().entities===3));
     check(scope,'whole trip has four legs without invented fares',await page.locator('.wt-leg').count()===4&&!/\$\d/.test(await page.textContent('#wtItinerary')));
     await page.click('.wt-leg [data-edit=departureHub]');await page.fill('#wtDepartureHub','JFK Terminal 4');await page.fill('#wtArrivalHub','Lisbon airport');await page.fill('#wtStay','My stay, Lisbon');
-    const href=await page.locator('.wt-leg a').first().getAttribute('href');check(scope,'departure directions use explicit origin and airport',new URL(href).searchParams.get('origin').startsWith('New Haven')&&new URL(href).searchParams.get('destination')==='JFK Terminal 4');
+    const href=await page.locator('.wt-leg a').first().getAttribute('href');check(scope,'departure directions use explicit origin and airport',new URL(href).searchParams.get('origin')==='41.31,-72.93'&&new URL(href).searchParams.get('destination')==='JFK Terminal 4');
     await page.locator('#wtDetails').evaluate(e=>e.open=false);
     await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.waitForTimeout(1500);
     const dimensions=await page.evaluate(()=>{const r=document.documentElement,f=document.getElementById('mnWorldFeed'),g=document.getElementById('mnWorld'),before=g.getBoundingClientRect().top;f.scrollTop=130;return{sw:r.scrollWidth,cw:r.clientWidth,scroll:f.scrollTop,fixed:before===g.getBoundingClientRect().top,pageY:scrollY,minInput:Math.min(...[...document.querySelectorAll('#wtForm input')].filter(e=>e.offsetParent).map(e=>parseFloat(getComputedStyle(e).fontSize)))}});
     check(scope,'readable controls, no document overflow and stationary globe',dimensions.sw===dimensions.cw&&dimensions.fixed&&dimensions.pageY===0&&dimensions.minInput>=16,dimensions);
-    await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
+    await page.locator('#wtOptions').evaluate(e=>e.open=false);await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
     await page.click('.wt-world-modes [data-world-mode=missions]');check(scope,'Missions opens real published missions',await page.isVisible('[data-hu-mission]')&&await page.isHidden('#wtPlanner'));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the draft',/Lisbon/.test(await page.inputValue('#wtTo')));
@@ -328,11 +341,30 @@ if(runs('travel')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_
   }finally{await ctx.close();}
 }
 
+if(runs('travel-location')) for(const geo of ['granted','delayed']){
+  const {ctx,page}=await open(DEVICES[0],{member:false,noGlobe:true,geo});
+  try{
+    await page.evaluate(()=>window.MCC_WORLD_MODE.set('travel'));
+    if(geo==='granted'){
+      check('travel-location','approved GPS fills the origin',await page.inputValue('#wtFrom')==='Current location');
+      await page.fill('#wtTo','Empire State Building');
+      check('travel-location','navigation uses GPS coordinates',new URL(await page.getAttribute('#wtNavigate','href')).searchParams.get('origin')==='41.31,-72.93');
+    }else{
+      await page.fill('#wtFrom','My chosen starting address');
+      await page.evaluate(()=>window.__travelGeoResolve());
+      check('travel-location','late GPS cannot replace an edited trip',await page.inputValue('#wtFrom')==='My chosen starting address');
+    }
+    await page.fill('#wtTo','unavailable address');
+    await page.waitForSelector('#wtToResults .wt-search-note');
+    check('travel-location','provider outage keeps typed-address directions usable',new URL(await page.getAttribute('#wtNavigate','href')).searchParams.get('destination')==='unavailable address');
+  }finally{await ctx.close();}
+}
+
 if(runs('travel-fallback')) {
   const {ctx,page}=await open(DEVICES[0],{member:false,noGlobe:true});
   try{
     await page.evaluate(()=>window.MCC_WORLD_MODE.set('travel'));
-    await page.fill('#wtFrom','My town');await page.fill('#wtTo','Lisbon');await page.click('#wtForm button[type=submit]');
+    await page.fill('#wtFrom','My town');await page.fill('#wtTo','Lisbon');await page.click('[data-travel-kind=flight]');await page.click('#wtForm button[type=submit]');
     check('travel-fallback','a trip remains usable without Cesium/WebGL',await page.locator('.wt-leg').count()===4&&await page.isVisible('#wtSave'));
   }finally{await ctx.close();}
 }
@@ -350,7 +382,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
     check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
       const g=document.getElementById('mnWorld').getBoundingClientRect(),f=document.getElementById('mnWorldFeed').getBoundingClientRect();
-      return (innerWidth>=1000 || (innerWidth>=600 && innerWidth>innerHeight)) ? f.left>=g.right-1 : f.top>=g.bottom-1;
+      return (innerWidth>=1000 || (innerWidth>=600 && innerWidth>innerHeight)) ? f.left>=g.right-1 : Math.abs(f.top-g.bottom)<=8;
     }));
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);

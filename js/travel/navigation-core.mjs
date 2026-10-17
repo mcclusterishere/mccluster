@@ -62,7 +62,8 @@ function placeParameter(place) {
  */
 export function directionsLink(options) {
   record(options, 'options');
-  const { provider, origin = null, destination, mode = 'driving' } = options;
+  const { provider, origin = null, destination, mode = 'driving', navigate = false } = options;
+  if (typeof navigate !== 'boolean') throw new TypeError('navigate must be boolean');
   if (!['google', 'apple'].includes(provider)) throw new TypeError('Unknown map provider');
   if (!Object.values(MODES).includes(mode)) throw new TypeError('Unsupported ground travel mode');
   const dest = normalizePlace(destination);
@@ -70,6 +71,7 @@ export function directionsLink(options) {
   const google = provider === 'google';
   const url = new URL(google ? 'https://www.google.com/maps/dir/' : 'https://maps.apple.com/directions');
   if (google) url.searchParams.set('api', '1');
+  if (google && navigate) url.searchParams.set('dir_action', 'navigate');
   url.searchParams.set('destination', placeParameter(dest));
   if (from) url.searchParams.set(google ? 'origin' : 'source', placeParameter(from));
   url.searchParams.set(google ? 'travelmode' : 'mode', google && mode === 'cycling' ? 'bicycling' : mode);

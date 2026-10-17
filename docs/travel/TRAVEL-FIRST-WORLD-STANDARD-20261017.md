@@ -99,3 +99,29 @@ The architectural and internal-intelligence boundaries remain in force.
 
 This change records the approved standard and current implementation gap.
 It does not itself change the deployed homepage or claim a completed booking system.
+
+## Phone revision: unified World and real addresses
+
+The owner's subsequent direction replaces the segmented header with controls over
+the globe. Travel / Missions / Posts has a compact 32px visual pill within 44px
+touch targets. The planner leads with From, To and ground directions; dates,
+travelers, airports and stays are expandable. Flights retain the whole-journey
+legs. The shared account control stays at the top right and the dock stays global.
+
+Address autocomplete uses Photon / OpenStreetMap, including building numbers and
+coordinates where supplied. Search is debounced, bounded and abortable. Its public
+endpoint permits modest use, has no availability guarantee, and needs a hosted or
+contracted replacement before substantial traffic. See https://github.com/komoot/photon.
+Provider outages explicitly offer city-only fallback and typed-address directions.
+Suggestions are candidates, not an assertion that an address was verified.
+
+Travel requests browser location once per tab after the entry privacy notice is
+accepted. Denial leaves manual entry available; the location button retries on
+request. A late response cannot overwrite an edited trip. GPS is not sent to the
+autocomplete service. Coordinates remain in memory until an explicit private save
+or navigation handoff; travel inputs remain excluded from analytics capture.
+
+Start directions opens Google Maps with the selected coordinates and transport
+mode, requesting navigation where supported. This is a real navigation handoff,
+not embedded turn-by-turn guidance, a road route computed by the globe, or a ride
+booking. Flight searches continue to use human-readable endpoint names.
