@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 403,
+  "candidate_count": 404,
   "capability_source_count": 99,
-  "support_only_count": 304,
+  "support_only_count": 305,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3073,6 +3073,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Owner-approved travel-first public World presentation standard and preserved reference; records existing mission and internal-intelligence boundaries without defining building geometry or a program capability."
+    },
+    {
+      "path": "data/analytics/application-schema-inventory.json",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shipping copy of the read-only application schema field directory. Existing program relation names are metadata only; this file adds no physical building capability or program authority."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
