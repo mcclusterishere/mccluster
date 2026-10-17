@@ -352,7 +352,7 @@ for (const device of DEVICES) {
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
   check(device.name, 'the visitor selects a mission; no context card opens by itself', await page.isHidden('#mnWorldFocus'));
   check(device.name, 'the real shared bar is visible and the feed has clearance', !s.barHidden && s.feedPad >= s.vh - s.barTop + 8, s);
-  check(device.name, 'phone/tablet stack scrolls; wide landscape has a feed column', await page.evaluate(() => {
+  check(device.name, 'portrait stacks the fixed globe and scrolling feed; landscape adds a column', await page.evaluate(() => {
     const g=document.getElementById('mnWorld').getBoundingClientRect(), f=document.getElementById('mnWorldFeed').getBoundingClientRect();
     return (innerWidth >= 1000 || (innerWidth >= 600 && innerWidth > innerHeight)) ? f.left >= g.right - 1 : f.top >= g.bottom - 1;
   }), s);
@@ -373,9 +373,9 @@ if (runs('member-interactions')) {
   const device = DEVICES[0];
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
-  const feedScroll = await page.evaluate(async () => { const f = document.scrollingElement; f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
-  check(scope, 'the phone page scrolls through the feed', feedScroll.feed > 0 && feedScroll.page > 0, feedScroll);
-  await page.evaluate(() => window.scrollTo(0, 0));
+  const feedScroll = await page.evaluate(async () => { const f = document.getElementById('mnWorldFeed'); f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
+  check(scope, 'the phone feed scrolls while the page stays fixed', feedScroll.feed > 0 && feedScroll.page === 0, feedScroll);
+  await page.evaluate(() => { document.getElementById('mnWorldFeed').scrollTop = 0; });
 
   // Post
   await page.fill('#mnPostBody', 'E2E: posted from the World screen');
