@@ -41,7 +41,15 @@ async function scenario({ member = false, expired = false, errorCode = null, mal
     const req = route.request(), url = new URL(req.url());
     const record = { url: req.url(), method: req.method(), headers: req.headers(), body: req.postData() || '' };
     state.requests.push(record);
-    if (url.origin === BASE) return route.continue();
+    if (url.origin === BASE) {
+      if (url.pathname === '/js/tabbar.js') {
+        // Observe the moment the real navigation starts, without replacing any
+        // of its behavior or exposing a real invitation outside this fixture.
+        const source = await readFile(join(ROOT, 'js/tabbar.js'), 'utf8');
+        return route.fulfill({ status: 200, contentType: 'text/javascript', body: 'window.__cohortNavBoot = { hash: location.hash, invitation: sessionStorage.getItem("mcc.cohort.invitation") };\n' + source });
+      }
+      return route.continue();
+    }
     const headers = { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'authorization,apikey,content-type,prefer', 'access-control-allow-methods': 'GET,POST,OPTIONS,PATCH,DELETE' };
     const json = (body, status = 200) => route.fulfill({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
@@ -92,12 +100,22 @@ try {
     const s = await scenario(); await open(s);
     await s.page.waitForSelector('#claimSignIn:not([hidden])');
     check('private fragment is removed and retained only for the same tab', new URL(s.page.url()).hash === '' && await tokenSaved(s) === INVITE);
+    const navigation = await s.page.evaluate(() => window.__cohortNavBoot);
+    check('the actual shared navigation starts only after the private fragment is stored and removed', navigation?.hash === '' && JSON.parse(navigation?.invitation || 'null')?.token === INVITE && await s.page.locator('.appbar').count() === 1);
     check('preview identifies the intended participant without auto-claim', (await s.page.locator('#claimTitle').innerText()).includes('Ocho Great') && s.state.claims.length === 0 && await s.page.locator('#claimConfirm').isDisabled());
     await fit(s, 'invitation sign-in fits 390px'); await s.page.screenshot({ path: join(OUT, 'invitation-signin-390.png') });
     await s.page.locator('#claimEmail').fill('cohort-fixture@example.invalid'); await s.page.locator('#claimPassword').fill('Fixture Password 123');
     await s.page.locator('#claimSignIn button').click(); await s.page.waitForFunction(() => !document.getElementById('claimConfirm').disabled);
     check('sign-in uses the existing M Account JSON contract', s.state.signIns.length === 1 && s.state.signIns[0].email === USER.email && s.state.signIns[0].password === 'Fixture Password 123');
     check('sign-in does not claim and clears the password input', s.state.claims.length === 0 && await s.page.locator('#claimPassword').inputValue() === '');
+    await s.page.locator('#claimConfirm').scrollIntoViewIfNeeded();
+    const connect = await s.page.locator('#claimConfirm').evaluate(button => {
+      const bounds = button.getBoundingClientRect();
+      const hit = document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+      return { visible: bounds.top >= 0 && bounds.bottom <= innerHeight, unobstructed: hit === button || button.contains(hit), enabled: !button.disabled };
+    });
+    check('the shared app bar leaves the enabled Connect button visible and unobstructed at 390px', connect.visible && connect.unobstructed && connect.enabled, connect);
+    await s.page.screenshot({ path: join(OUT, 'ready-to-connect-390.png') });
     s.state.deferClaim = true; await s.page.locator('#claimConfirm').click(); await s.page.waitForFunction(() => document.getElementById('claimConfirm').disabled);
     await s.page.evaluate(() => { document.getElementById('claimConfirm').click(); document.getElementById('claimConfirm').click(); });
     check('explicit claim serializes duplicate taps', s.state.claims.length === 1);
