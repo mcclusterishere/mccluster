@@ -1,0 +1,322 @@
+/* Native news and Equity Uprise research use the canonical database.
+ * Public metadata/discussion RPCs run as anon or the visitor's own JWT.
+ * Every write runs under that same JWT; it never borrows service authority.
+ * The service key is used only for the full-text store behind reader grants.
+ * Article URLs are provenance. This module never fetches a publisher URL. */
+import { allowedOrigins, reply } from './lib/http.js';
+import { APPROVED_READER_GRANTS, readerSourceDecision, readerArticleDecision, READER_POLICY_VERSION } from './news-reader-policy.js';
+
+export const NEWS_POLICY_PREFIX = '/v1/news-policy';
+const PUBLIC_KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+const UUID_SOURCE = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const UUID = new RegExp('^' + UUID_SOURCE + '$', 'i');
+const MAX_BODY = 96 * 1024;
+const MAX_CONTENT = 512 * 1024;
+const MAX_RESPONSE = 2 * 1024 * 1024;
+const TIMEOUT = 12000;
+
+export class NewsPolicyError extends Error {
+  constructor(message, status = 400, code = 'invalid_request') { super(message); this.status = status; this.code = code; }
+}
+function bad(message, code = 'invalid_request') { return new NewsPolicyError(message, 400, code); }
+function id(value, label = 'id', optional = false) {
+  if (optional && (value === undefined || value === null || value === '')) return null;
+  if (typeof value !== 'string' || !UUID.test(value)) throw bad(label + ' must be a valid ID.');
+  return value.toLowerCase();
+}
+function text(value, label, max, optional = false) {
+  if (optional && (value === undefined || value === null)) return '';
+  if (typeof value !== 'string' || (!optional && !value.trim()) || value.length > max) throw bad(label + ' is missing or too long.');
+  return value.trim();
+}
+function choice(value, label, values, fallback) {
+  const item = value === undefined ? fallback : value;
+  if (!values.includes(item)) throw bad('Invalid ' + label + '.');
+  return item;
+}
+function integer(value, label, min, max, fallback) {
+  const n = value === undefined || value === null || value === '' ? fallback : Number(value);
+  if (!Number.isSafeInteger(n) || n < min || n > max) throw bad('Invalid ' + label + '.');
+  return n;
+}
+function bool(value, label, fallback = false) {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'boolean') throw bad('Invalid ' + label + '.');
+  return value;
+}
+function authHeader(request, env, required = false) {
+  const h = request.headers.get('authorization') || '';
+  if (!h) { if (required) throw new NewsPolicyError('Sign in to continue.', 401, 'authentication_required'); return null; }
+  if (!/^Bearer [A-Za-z0-9._-]+$/i.test(h) || h.length > 8192 || [env.SUPABASE_SERVICE_ROLE_KEY, env.SUPABASE_PUBLISHABLE_KEY, env.SUPABASE_ANON_KEY, PUBLIC_KEY].filter(Boolean).includes(h.slice(7))) {
+    throw new NewsPolicyError('A member session is required.', 401, 'invalid_session');
+  }
+  return h;
+}
+export async function boundedJson(response, maxBytes = MAX_RESPONSE) {
+  const declared = Number(response.headers.get('content-length') || 0);
+  if (declared > maxBytes) throw new NewsPolicyError('The response is too large.', 413, 'payload_too_large');
+  if (!response.body) return null;
+  const reader = response.body.getReader(), decoder = new TextDecoder('utf-8', { fatal: true });
+  let total = 0, result = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) { await reader.cancel(); throw new NewsPolicyError('The request is too large.', 413, 'payload_too_large'); }
+      result += decoder.decode(value, { stream: true });
+    }
+    result += decoder.decode();
+    if (!result.trim()) return null;
+    return JSON.parse(result);
+  } catch (error) {
+    if (error instanceof NewsPolicyError || error.name === 'AbortError') throw error;
+    throw new NewsPolicyError('Invalid JSON.', 400, 'invalid_json');
+  } finally { reader.releaseLock(); }
+}
+async function body(request, maxBytes = MAX_BODY) {
+  if (!/^application\/json(?:;|$)/i.test(request.headers.get('content-type') || '')) throw new NewsPolicyError('Send a JSON request.', 415, 'json_required');
+  const data = await boundedJson(request, maxBytes);
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw bad('Send a JSON object.', 'invalid_json');
+  return data;
+}
+function databaseError(status, data) {
+  const code = String(data && data.code || ''), message = String(data && data.message || '');
+  if (['PGRST202', 'PGRST205', '42883', '42P01'].includes(code)) return new NewsPolicyError('News and policy storage is not available yet.', 503, 'news_policy_not_ready');
+  if (status === 401 || code === 'PGRST301' || /authentication_required|not_signed_in|sign_in_required/.test(message)) return new NewsPolicyError('Sign in to continue.', 401, 'authentication_required');
+  if (message === 'intel_restricted_project_required') return new NewsPolicyError('This global data record needs a separate project whose members have permission to use it.', 403, 'intel_restricted_project_required');
+  if (['self_review_not_allowed', 'self_review_forbidden'].includes(message)) return new NewsPolicyError('Another authorized project reviewer must review your claim.', 403, 'self_review_not_allowed');
+  if (code === '42501' || status === 403) return new NewsPolicyError('Your account does not have permission for this action.', 403, 'access_denied');
+  if (code === 'P0002' || /^(article|comment|project|claim|manuscript)_not_found$/.test(message)) return new NewsPolicyError('This record is not available.', 404, 'not_found');
+  if (code === '40001' || /revision_conflict|stale_revision/.test(message)) return new NewsPolicyError('A newer draft was saved. Reload before saving your changes.', 409, 'revision_conflict');
+  if (code === '23505' || /idempotency_conflict|request_id_conflict/.test(message)) return new NewsPolicyError('That request was already used for different content.', 409, 'request_conflict');
+  if (/rate_limit/.test(message) || code === 'P0429') return new NewsPolicyError('Please wait before posting again.', 429, 'rate_limited');
+  if (code === '22023' || code === '23514' || code === '22P02') return bad('The supplied values are not valid.', 'invalid_values');
+  if (status >= 500) return new NewsPolicyError('The news and policy service is temporarily unavailable.', 503, 'service_unavailable');
+  return new NewsPolicyError('This action is not available in the current state.', 409, 'action_unavailable');
+}
+export async function newsPolicyRpc(env, name, args, authorization, { fetchImpl = fetch, service = false } = {}) {
+  if (service && !env.SUPABASE_SERVICE_ROLE_KEY) throw new NewsPolicyError('Article content storage is unavailable.', 503, 'service_unavailable');
+  const headers = { apikey: service ? env.SUPABASE_SERVICE_ROLE_KEY : (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || PUBLIC_KEY), 'content-type': 'application/json' };
+  if (service) headers.authorization = 'Bearer ' + env.SUPABASE_SERVICE_ROLE_KEY;
+  else if (authorization) headers.authorization = authorization;
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), TIMEOUT);
+  try {
+    const response = await fetchImpl(env.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/rpc/' + name, {
+      method: 'POST', headers, body: JSON.stringify(args || {}), redirect: 'manual', signal: controller.signal
+    });
+    if (response.status >= 300 && response.status < 400) {
+      if (response.body) await response.body.cancel();
+      throw new NewsPolicyError('The service returned an unexpected redirect.', 502, 'invalid_service_response');
+    }
+    let data;
+    try { data = await boundedJson(response); }
+    catch (error) { if (error.name === 'AbortError') throw error; throw new NewsPolicyError('The service returned an invalid response.', 502, 'invalid_service_response'); }
+    if (!response.ok) throw databaseError(response.status, data);
+    return data;
+  } catch (error) {
+    if (error instanceof NewsPolicyError) throw error;
+    throw new NewsPolicyError('The news and policy service is temporarily unavailable.', 503, error.name === 'AbortError' ? 'service_timeout' : 'service_unavailable');
+  } finally { clearTimeout(timer); }
+}
+
+function respond(request, env, data, status = 200) {
+  const response = reply(request, env, data, status);
+  response.headers.set('cache-control', 'private, no-store');
+  response.headers.set('vary', 'Origin, Authorization');
+  response.headers.set('x-content-type-options', 'nosniff');
+  response.headers.set('referrer-policy', 'no-referrer');
+  if (status === 429) response.headers.set('retry-after', '60');
+  return request.method === 'HEAD' ? new Response(null, { status, headers: response.headers }) : response;
+}
+function articleShape(row) {
+  if (!row) return null;
+  return {
+    ...row, publisher: row.publisher || row.publisher_domain || row.domain || '',
+    domain: row.domain || row.publisher_domain || '',
+    first_seen_at: row.first_seen_at || row.seen_at || row.published_at || null,
+    place: row.place || row.headline_location_label || '',
+    lat: row.lat === undefined ? row.headline_latitude : row.lat,
+    lon: row.lon === undefined ? row.headline_longitude : row.lon,
+    title_basis: row.title_basis || (row.ingestion_provider === 'gdelt_gkg_v2' ? 'url_slug' : 'source_metadata')
+  };
+}
+
+export async function articleContentHash(payload) {
+  // A fixed tuple is stable after Postgres JSONB reorders object keys.
+  const value = [payload.canonical_url, payload.adapter_id, payload.title, payload.publisher, payload.byline, payload.attribution,
+    payload.requirements_reviewed, payload.body.complete, payload.body.format, payload.body.blocks.map(block => [block.type, block.text])];
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value)));
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// RPC dispatch is intentionally explicit. A client cannot name a function or
+// pass actor/org/reviewer identifiers into a privileged database request.
+export async function handleNewsPolicy(request, env, options = {}) {
+  const url = new URL(request.url), path = url.pathname.replace(/\/+$/, '');
+  if (!(path === NEWS_POLICY_PREFIX || path.startsWith(NEWS_POLICY_PREFIX + '/'))) return null;
+  const route = path.slice(NEWS_POLICY_PREFIX.length), method = request.method;
+  try {
+    if (!env.SUPABASE_URL) throw new NewsPolicyError('The news and policy service is not configured.', 503, 'service_unavailable');
+    const origin = request.headers.get('origin');
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && origin && !allowedOrigins(env).includes(origin)) throw new NewsPolicyError('This origin is not allowed.', 403, 'origin_denied');
+    const authorization = authHeader(request, env);
+    const rpc = (name, args, service = false) => newsPolicyRpc(env, name, args, authorization, { ...options, service });
+    const write = () => authHeader(request, env, true);
+    const methodDenied = () => respond(request, env, { ok: false, error: 'Method not allowed.', code: 'method_not_allowed' }, 405);
+    let match;
+    if (method === 'OPTIONS') return respond(request, env, { ok: true });
+    if ((match = new RegExp('^/articles/(' + UUID_SOURCE + ')$', 'i').exec(route))) {
+      const articleId = id(match[1]);
+      if (!['GET', 'HEAD'].includes(method)) return respond(request, env, { ok: false, error: 'Method not allowed.', code: 'method_not_allowed' }, 405);
+      const article = articleShape(await rpc('media_news_article_get', { p_article_id: articleId }));
+      if (!article) throw new NewsPolicyError('This article is not available.', 404, 'not_found');
+      const grants = options.readerGrants || APPROVED_READER_GRANTS;
+      const now = options.now === undefined ? Date.now() : options.now;
+      const source = readerSourceDecision(article.canonical_url, grants, now);
+      let reader = { status: 'metadata_only', policy: READER_POLICY_VERSION };
+      if (source.allowed) {
+        try {
+          const stored = await rpc('media_news_content_get', { p_article_id: articleId }, true);
+          const payload = stored && stored.payload;
+          const decision = readerArticleDecision(payload, grants, now);
+          if (payload && payload.canonical_url === article.canonical_url && decision.allowed && stored.grant_id === decision.grant_id && stored.content_hash === await articleContentHash(payload)) {
+            reader = { status: 'full_text', body: payload.body, title: payload.title, publisher: payload.publisher, byline: payload.byline, attribution: payload.attribution, policy: READER_POLICY_VERSION, content_hash: stored.content_hash };
+          }
+        } catch (_) {
+          // Optional full text cannot take away the permanent discussion and
+          // evidence record. No cache, publisher redirect, or external fallback.
+          reader = { status: 'unavailable', policy: READER_POLICY_VERSION };
+        }
+      }
+      return respond(request, env, { ok: true, article, reader });
+    }
+    if ((match = new RegExp('^/articles/(' + UUID_SOURCE + ')/content$', 'i').exec(route))) {
+      if (method !== 'POST') return respond(request, env, { ok: false, error: 'Method not allowed.', code: 'method_not_allowed' }, 405);
+      write();
+      if (typeof options.requireHouseOwner !== 'function') throw new NewsPolicyError('Content review is unavailable.', 503, 'review_unavailable');
+      try { await options.requireHouseOwner(request, env); }
+      catch (error) { throw new NewsPolicyError('Owner access is required to import article content.', error.status === 401 ? 401 : 403, 'owner_required'); }
+      const articleId = id(match[1]), article = await rpc('media_news_article_get', { p_article_id: articleId });
+      if (!article) throw new NewsPolicyError('This article is not available.', 404, 'not_found');
+      const supplied = await body(request, MAX_CONTENT), raw = supplied.article;
+      const grants = options.readerGrants || APPROVED_READER_GRANTS;
+      const now = options.now === undefined ? Date.now() : options.now;
+      const decision = readerArticleDecision(raw, grants, now);
+      if (!decision.allowed || raw.canonical_url !== article.canonical_url) throw new NewsPolicyError('A current approved content grant, complete text, and attribution are required.', 422, 'reader_permission_required');
+      const payload = {
+        canonical_url: raw.canonical_url, adapter_id: raw.adapter_id,
+        title: raw.title, publisher: raw.publisher, byline: raw.byline, attribution: raw.attribution,
+        requirements_reviewed: true,
+        body: { complete: true, format: 'text_blocks', blocks: raw.body.blocks.map(block => ({ type: block.type, text: block.text })) }
+      };
+      const hash = await articleContentHash(payload);
+      await rpc('media_news_content_put', { p_article_id: articleId, p_payload: payload, p_grant_id: decision.grant_id, p_content_hash: hash }, true);
+      return respond(request, env, { ok: true, article_id: articleId, content_hash: hash, policy: READER_POLICY_VERSION }, 201);
+    }
+    if ((match = new RegExp('^/articles/(' + UUID_SOURCE + ')/comments$', 'i').exec(route))) {
+      const articleId = id(match[1]);
+      if (method === 'GET' || method === 'HEAD') {
+        const result = await rpc('media_news_comments_list', {
+          p_article_id: articleId,
+          p_before: text(url.searchParams.get('before'), 'Comment cursor', 128, true) || null,
+          p_limit: integer(url.searchParams.get('limit'), 'Page size', 1, 50, 30)
+        });
+        return respond(request, env, { ok: true, ...result });
+      }
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const comment = await rpc('media_news_comment_create', {
+        p_article_id: articleId, p_body: text(input.body, 'Comment', 4000),
+        p_parent_id: id(input.parent_id, 'Parent comment', true), p_request_id: id(input.request_id, 'Request', true)
+      });
+      return respond(request, env, { ok: true, comment }, 201);
+    }
+    if ((match = new RegExp('^/comments/(' + UUID_SOURCE + ')$', 'i').exec(route))) {
+      if (method !== 'DELETE') return methodDenied();
+      write(); const result = await rpc('media_news_comment_delete', { p_comment_id: id(match[1]) });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if ((match = new RegExp('^/comments/(' + UUID_SOURCE + ')/report$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const result = await rpc('media_news_comment_report', { p_comment_id: id(match[1]), p_reason: text(input.reason, 'Report reason', 1000) });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if ((match = new RegExp('^/comments/(' + UUID_SOURCE + ')/moderate$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const result = await rpc('media_news_comment_moderate', {
+        p_comment_id: id(match[1]), p_status: choice(input.status, 'moderation status', ['hidden', 'visible']),
+        p_note: text(input.note, 'Moderation note', 1000)
+      });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if (route === '/workspace') {
+      if (method !== 'GET' && method !== 'HEAD') return methodDenied();
+      write(); const result = await rpc('eu_news_workspace');
+      return respond(request, env, { ok: true, ...result });
+    }
+    if (route === '/projects') {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const result = await rpc('eu_news_project_create', { p_title: text(input.title, 'Project title', 200) });
+      return respond(request, env, { ok: true, ...result }, 201);
+    }
+    if ((match = new RegExp('^/projects/(' + UUID_SOURCE + ')$', 'i').exec(route))) {
+      if (method !== 'GET' && method !== 'HEAD') return methodDenied();
+      write(); const result = await rpc('eu_news_project_get', { p_project_id: id(match[1]) });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if ((match = new RegExp('^/projects/(' + UUID_SOURCE + ')/members$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const result = await rpc('eu_news_project_member_set', {
+        p_project_id: id(match[1]), p_m_uid: id(input.m_uid, 'Member'),
+        p_role: choice(input.role, 'project role', ['principal-investigator', 'editor', 'researcher', 'reviewer', 'contributor', 'observer']),
+        p_active: bool(input.active, 'member status', true)
+      });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if ((match = new RegExp('^/projects/(' + UUID_SOURCE + ')/evidence$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const articleId = id(input.article_id, 'Article', true), intelId = id(input.intel_evidence_id, 'Global evidence', true);
+      if (!!articleId === !!intelId) throw bad('Choose one article or global evidence record.');
+      const result = await rpc('eu_news_capture_evidence', {
+        p_project_id: id(match[1]), p_article_id: articleId, p_intel_evidence_id: intelId,
+        p_claim: text(input.claim, 'Claim', 4000),
+        p_claim_type: choice(input.claim_type, 'claim type', ['factual', 'analytic', 'recommendation', 'definition', 'estimate'], 'factual'),
+        p_relation: choice(input.relation, 'evidence relationship', ['supports', 'contradicts', 'context', 'method'], 'supports'),
+        p_locator: text(input.locator, 'Source locator', 500, true), p_note: text(input.note, 'Research note', 3000, true),
+        p_request_id: id(input.request_id, 'Request', true)
+      });
+      return respond(request, env, { ok: true, ...result }, 201);
+    }
+    if ((match = new RegExp('^/claims/(' + UUID_SOURCE + ')/review$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      const result = await rpc('eu_news_claim_review', {
+        p_claim_id: id(match[1]), p_decision: choice(input.decision, 'review decision', ['supported', 'contested', 'approved', 'retired']),
+        p_note: text(input.note, 'Review note', 3000)
+      });
+      return respond(request, env, { ok: true, ...result });
+    }
+    if ((match = new RegExp('^/projects/(' + UUID_SOURCE + ')/memo$', 'i').exec(route))) {
+      if (method !== 'POST') return methodDenied();
+      write(); const input = await body(request);
+      // Preserve manuscript whitespace; it is a user-authored draft, never HTML.
+      text(input.body, 'Manuscript', 40000);
+      const result = await rpc('eu_news_memo_save', {
+        p_project_id: id(match[1]), p_title: text(input.title, 'Manuscript title', 200), p_body: input.body,
+        p_expected_revision: integer(input.expected_revision, 'Expected revision', 0, 2147483646, 0),
+        p_submit_for_review: bool(input.submit_for_review, 'review submission'), p_request_id: id(input.request_id, 'Request', true)
+      });
+      return respond(request, env, { ok: true, ...result });
+    }
+    return respond(request, env, { ok: false, error: 'This news or policy route does not exist.', code: 'not_found' }, 404);
+  } catch (error) {
+    const known = error instanceof NewsPolicyError;
+    return respond(request, env, { ok: false, error: known ? error.message : 'The news and policy service is temporarily unavailable.', code: known ? error.code : 'service_unavailable' }, known ? error.status : 503);
+  }
+}
