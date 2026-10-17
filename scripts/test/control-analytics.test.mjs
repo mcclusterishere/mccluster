@@ -182,7 +182,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 

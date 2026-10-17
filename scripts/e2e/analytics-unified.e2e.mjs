@@ -104,6 +104,10 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/rest/v1/rpc/analytics_hourly') return json(route, HOURS);
     if (p === '/rest/v1/rpc/analytics_top') return json(route, body.p_dim === 'country' ? FIX.country : body.p_dim === 'source' ? FIX.source : body.p_dim === 'network' ? FIX.network : []);
     if (p === '/rest/v1/rpc/analytics_country_totals') return pendingRpc ? json(route, FIX.countryTotals) : json(route, { code: 'PGRST202', message: 'Could not find the function public.analytics_country_totals' }, 404);
+    if (p === '/rest/v1/rpc/analytics_geo_audience') {
+      const state=Array.isArray(body.p_region_codes),v=state?9:body.p_country==='US'?18:7;
+      return json(route,{schema:'analytics-geo-audience/v1',country:body.p_country,suppressed:false,totals:{visitors:v,sessions:v+4,returning:2,page_views:v*2,plays:3,bounce_rate:25},series:FIX.series(body.p_country).map(r=>({...r,visitors:1,sessions:2})),sources:[{source:'Scoped source',people:v}],paths:[{from_page:'/local',to_page:'/song',moves:2}],pages:[{path:'/local',visitors:v}],stages:[{stage:'content',visitors:3}]});
+    }
     if (p === '/rest/v1/rpc/analytics_country_series') return pendingRpc ? json(route, FIX.series(body.p_country)) : json(route, { code: 'PGRST202', message: 'Could not find the function' }, 404);
     if (p === '/rest/v1/rpc/action_mission_stats') return json(route, FIX.missions);
     return json(route, []);
@@ -137,6 +141,20 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'overview exposes six connected metrics',await page.locator('.cu-overview-metrics .cu-metric-link').count()===6);
  check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
+ const heat=await page.evaluate(()=>{const g=window.__craGlobe();return{us:g.fill('US'),gb:g.fill('GB'),none:g.fill('AU'),metric:window.CR.analytics.state.geo.layer};});
+ check(size.width,'visitor heat map starts populated with distinct intensities',heat.metric==='visitors'&&JSON.stringify(heat.us)!==JSON.stringify(heat.gb)&&JSON.stringify(heat.gb)!==JSON.stringify(heat.none),heat);
+ check(size.width,'unique visitors lead the overview',await page.locator('.cu-overview-metrics button').first().innerText().then(t=>t.startsWith('Unique visitors')));
+ await page.locator('[role=tab][data-cra-sec="audience"]').click();
+ await page.locator('#craCountry').selectOption('US');
+ await page.waitForFunction(()=>window.CR.analytics.state.geoAudience?.data?.totals.visitors===18);
+ check(size.width,'country filters all audience cards',await page.locator('.cad-body').innerText().then(t=>/unique visitors\s+18/i.test(t)&&t.includes('Scoped source')&&!t.includes('all countries')));
+ await page.waitForFunction(()=>!!document.querySelector('#craCountry option[value="US/US-CT"]'));
+ await page.locator('#craCountry').selectOption('US/US-CT');
+ await page.waitForFunction(()=>window.CR.analytics.state.geoAudience?.data?.totals.visitors===9);
+ check(size.width,'state filters audience cards',await page.locator('.cad-body').innerText().then(t=>t.includes('Connecticut')&&/unique visitors\s+9/i.test(t)));
+ await page.screenshot({path:OUT+'/audience-state-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('#craCountry').selectOption('');
+ check(size.width,'clear restores global audience',await page.locator('.cad-body').innerText().then(t=>/unique visitors\s+40/i.test(t)&&!t.includes('Scoped source')));
  await page.locator('[data-cra-sec="intelligence"]').first().click();await page.waitForSelector('[data-cu-source="cctv"]');
  check(size.width,'missing archive shown',await page.locator('[data-cu-details]').innerText().then(x=>x.includes('not provisioned')));
  await page.locator('[data-cu-source="cctv"]').click();

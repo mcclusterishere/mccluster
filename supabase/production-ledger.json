@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 314,
-  "latest_version": "20261017030617",
-  "latest_name": "intel_mission_canon_v1",
-  "ledger_sha256": "cefea79766e58115f5392181ccca5e4e60bf88c1d7da7f4ff845c2ecb914baa3",
+  "migration_count": 317,
+  "latest_version": "20261017041532",
+  "latest_name": "analytics_geo_audience_regions_v3",
+  "ledger_sha256": "81c137d22e22fe19e56693aaca1f23e9665c6d393433fc334224762de1316aed",
   "migrations": [
     {
       "version": "0001",
@@ -1262,6 +1262,18 @@
     {
       "version": "20261017030617",
       "name": "intel_mission_canon_v1"
+    },
+    {
+      "version": "20261017040826",
+      "name": "analytics_geo_audience_v1"
+    },
+    {
+      "version": "20261017041311",
+      "name": "analytics_geo_audience_hotpath_v2"
+    },
+    {
+      "version": "20261017041532",
+      "name": "analytics_geo_audience_regions_v3"
     }
   ]
 }

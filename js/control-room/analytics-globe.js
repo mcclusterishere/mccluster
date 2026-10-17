@@ -20,9 +20,7 @@
    What it draws, and nothing else:
      the dark globe, the borders, a faint graticule (the glow rim is CSS,
      css/control-analytics.css, from --an-rim);
-     no choropleth: every place stays grey (owner, 2026-10-16: "a grey sphere that only lights up when selected
-                  boundaries are selected"); the panel's aggregate (already folded, under 5 never present) only
-                  feeds the selected place's label
+     country heat map: relative measured visitor intensity, dark for no measured data; selection keeps a bright edge.
      cells        intel 10-degree cells, drawn as cells, never as points
      selection    ONE place: a country, or a state / province inside it. Filled
                   and outlined in --an-accent, the camera flies to fit it, and a
@@ -92,11 +90,11 @@
      Match by code first, then by name, then by Natural Earth's grouping (a French region over its departements, a UK
      nation over its councils). A row that matches nothing is counted as unmatched, never guessed onto a shape.
      Returns {byKey: {stateKey: {value, area, members}}, unmatched}. Pure: the panel and the tests call it. */
-  function matchRegions(states, rows) {
+  function matchRegions(states, rows, metric) {
     var byKey = {}, unmatched = 0;
     states = states || [];
     (rows || []).forEach(function (r) {
-      var v = Number(r.page_views) || 0, code = String(r.code || "").toUpperCase(), nm = norm(r.name), hit = [];
+      var v = Number(r[metric||"page_views"]) || 0, code = String(r.code || "").toUpperCase(), nm = norm(r.name), hit = [];
       if (code) hit = states.filter(function (s) { return (s.codes || []).indexOf(code) >= 0; });
       if (hit.length > 1) { var exact = hit.filter(function (s) { return String(s.k || "").split("-")[1] === code; }); if (exact.length) hit = exact; }
       if (!hit.length && nm) hit = states.filter(function (s) { return (s.names || []).indexOf(nm) >= 0 || norm(s.n) === nm; });
@@ -149,11 +147,16 @@
     function countryColor(code) {
       var sel = api.sel;
       if (code && code === sel.country) return sel.state ? C["land-context"] : C.accent.withAlpha(0.62);
+      var p=valueOf(code),max=Math.max.apply(null,api.data.points.map(function(p){return Number(p.value)||0;}).concat([1]));
+      if(p&&p.value>0)return Cs.Color.lerp(C.land,C.accent,0.22+0.68*Math.sqrt(p.value/max),new Cs.Color()).withAlpha(1);
       return C.land;
     }
     function stateColor(k) {
       var sel = api.sel;
-      if (!sel.state) return C.land.withAlpha(0.012); /* invisible but still tappable over the country's fill */
+      if (!sel.state) {
+        var counts=api.data.states&&api.data.states.byKey||{},row=counts[k],max=Math.max.apply(null,Object.keys(counts).map(function(key){return counts[key].value;}).concat([1]));
+        return row&&row.value>0?Cs.Color.lerp(C.land,C.accent,0.22+0.68*Math.sqrt(row.value/max),new Cs.Color()).withAlpha(1):C.land.withAlpha(0.012);
+      } /* invisible but still tappable over the country's fill */
       if (k === sel.state) return C.accent.withAlpha(0.66);
       return C["land-context"];
     }

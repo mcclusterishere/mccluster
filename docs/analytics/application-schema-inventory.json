@@ -3320,7 +3320,9 @@
         "experience_surface",
         "experience_policy",
         "experience_experiment",
-        "experience_arm"
+        "experience_arm",
+        "region",
+        "region_code"
       ]
     },
     {
