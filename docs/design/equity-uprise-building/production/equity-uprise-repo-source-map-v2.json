@@ -863,6 +863,13 @@
       "rationale": "Repository governance and branch-lifecycle documentation mentions Equity Uprise only when describing shared contract checks and historical branch handling; it does not define a building capability."
     },
     {
+      "path": "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md",
+      "classification": "planning_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Weekly owner/backend objective and research-governance plan; coordinates existing mapped Policy Lab, analytics, spatial intelligence, evidence and publication capabilities without defining a separate building capability."
+    },
+    {
       "path": "docs/control-plane/SECURITY-POSTURE.md",
       "classification": "documentation_support",
       "capability_ids": [],
