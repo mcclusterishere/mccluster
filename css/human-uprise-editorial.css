@@ -37,7 +37,9 @@ html.hu-editorial, .hu-editorial body { background:#090b0d; color:#eef0f1; }
 .hu-world-heading p {margin:6px 0 0;font-size:14px;color:var(--mn-dim);}
 .hu-editorial .mn__world-expand {top:auto;bottom:18px;right:12px;min-height:44px;width:44px;padding:10px;justify-content:center;border:1px solid #ffffff35;background:#101316d9;box-shadow:none;color:#d8dce0;}
 .hu-editorial .mn__world-tag {display:none;}
-.hu-editorial .mn__world-live {top:20px;right:8px;box-shadow:none;background:#151a1e;border:1px solid #394047;}
+.hu-editorial .mn #mnWorldLive {top:20px;left:auto;right:12px;width:auto;max-width:100px;min-height:44px;padding:0 12px;box-shadow:none;background:#151a1e;border:1px solid #394047;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:none;}
+.hu-editorial #mnWorldLive i {width:6px;height:6px;background:var(--mn-hot);animation:none;}
+.hu-editorial .mn__avatar-dot,.hu-editorial .mn__bell-count {box-shadow:none;animation:none;}
 .hu-editorial .mn__world-layers {bottom:74px;left:12px;right:12px;background:#111519;box-shadow:none;border:1px solid #394047;}
 .hu-world-filters {position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:7;max-width:calc(100% - 122px);color:#d8dce0;}
 .hu-world-filters summary {display:flex;align-items:center;justify-content:center;gap:10px;list-style:none;min-height:44px;padding:0 14px;border:1px solid #ffffff35;border-radius:30px;background:#101316e8;font-size:12px;cursor:pointer;white-space:nowrap;}

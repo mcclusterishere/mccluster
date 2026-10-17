@@ -292,6 +292,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
     check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
     check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
+    if(member) check(scope,'Live remains compact and leaves the World heading clear',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect(),h=document.querySelector('.hu-world-heading h1').getBoundingClientRect();return r.width<=100 && r.left>=h.right && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
     await page.click('#huWorldFilters summary');
     check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
