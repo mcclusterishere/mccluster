@@ -1,7 +1,7 @@
 (() => {
   const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
   const OFFICIAL={name:'Whip Equipped',accent:'#F04449',accent2:'#F6AD62'};
-  const params=new URLSearchParams(location.search),apiBase=(params.get('api')||localStorage.getItem('we-api-base')||'https://api.mccluster.org').replace(/\/$/,'');
+  const params=new URLSearchParams(location.search),apiBase='https://api.mccluster.org';
   const SESSION_KEY='we-renter-session';let session=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
   const renterId=()=>session?.user?.id||localStorage.getItem('we-renter-id')||'demo-renter';
   let vehicles=[
