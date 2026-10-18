@@ -177,12 +177,27 @@
     if (!frame || !frame.contentWindow || !frameOrigin) return;
     frame.contentWindow.postMessage(Object.assign({channel:CHANNEL, id:channelId}, data), frameOrigin);
   }
+  function alignWorldTransport() {
+    if (!IS_WORLD || (!attached && root.parent !== root)) return;
+    var expand = doc.querySelector(".mn__world-expand");
+    if (!expand) return;
+    var rect = expand.getBoundingClientRect();
+    if (rect.width < 20 || rect.top < 55 || rect.top > root.innerHeight - 65) return;
+    var top = Math.max(67, Math.round(rect.top - 60));
+    if (attached && channelId && parentOrigin) {
+      root.parent.postMessage({channel:CHANNEL, type:"controls-position", id:channelId, top:top}, parentOrigin);
+    } else if (controls) controls.style.top = top + "px";
+  }
   function layout() {
+    alignWorldTransport();
     if (attached) return;
     var dock = doc.querySelector(".appbar"), rect = dock && dock.getBoundingClientRect();
     var navClear = rect && rect.height ? Math.max(0, root.innerHeight - rect.top) : 88;
     if (controls) controls.style.setProperty("--world-audio-nav-clear", navClear + "px");
-    var reserve = Math.min(280, Math.ceil(navClear + (controls && !controls.hidden ? controls.getBoundingClientRect().height + 16 : 0)));
+    /* The World player is no longer a bottom bar: only the app navigation
+       requires vertical clearance. Keep the old calculation in Music. */
+    var extra = IS_WORLD || open ? 0 : controls && !controls.hidden ? controls.getBoundingClientRect().height + 16 : 0;
+    var reserve = Math.min(280, Math.ceil(navClear + extra));
     if (open && frameClearance !== reserve) { frameClearance = reserve; send({type:"layout", clearance:reserve}); }
     if (IS_WORLD && root.parent === root && controls && !controls.hidden) {
       doc.documentElement.style.setProperty("--mcc-world-audio-clear", reserve + "px");
@@ -294,7 +309,7 @@
     frameLayout(data.clearance);
     frameVisibility(data.visible);
     root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
-    paint();
+    paint(); alignWorldTransport();
   }
   function navigate(href) {
     if (attached) {
@@ -336,6 +351,7 @@
   root.addEventListener("mcc:music-state", paint);
   root.addEventListener("mcc:appbar-admin", paint);
   root.addEventListener("resize", layout);
+  root.addEventListener("mcc:world-mode", layout);
   root.addEventListener("popstate", function () {
     var state = history.state && history.state.mccWorldAudio;
     if (state && musicSurface()) openWorld(state.href, {history:true, gesture:false});
@@ -355,6 +371,9 @@
     if (d.type === "hello") { send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
     if (d.id !== channelId) return;
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
+    else if (d.type === "controls-position" && controls && open && Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
+      controls.style.top = Math.round(d.top) + "px";
+    }
     else if (d.type === "music") closeWorld(true);
     else if (d.type === "pause") pause();
   });
