@@ -36,7 +36,7 @@ export function bookingSettings(env) {
 }
 export function bookingReadiness(env) {
   const commercialRouting = env.TRAVEL_ROUTING_PROVIDER === 'tomtom' && !!env.TRAVEL_TOMTOM_API_KEY;
-  const launchApproval = env.WHIP_RIDES_LIVE === 'true' && env.WHIP_LAUNCH_APPROVED === 'true';
+  const launchApproval = env.WHIP_RIDES_LIVE === 'true' && env.WHIP_LAUNCH_APPROVED === 'true' && env.ALLOW_DEMO_IDENTITIES !== 'true';
   const payment = !!env.STRIPE_SECRET_KEY && !!env.STRIPE_WEBHOOK_SECRET && !!env.STRIPE_PUBLISHABLE_KEY;
   const persistence = env.WHIP_BOOKING_DATABASE_READY === 'true';
   const quoteAuth = typeof env.WHIP_BOOKING_QUOTE_SECRET === 'string' && env.WHIP_BOOKING_QUOTE_SECRET.length >= 32;
