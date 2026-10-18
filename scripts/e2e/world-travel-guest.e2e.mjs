@@ -253,6 +253,9 @@ try {
   await picked.page.locator('#wtMapNavGo').click();
   await picked.page.evaluate(coordinates => __geo.emit(coordinates), fixture.routes[0].geometry[0]);
   await picked.page.waitForFunction(() => __geo.watchCount() === 1 && !document.getElementById('wtMapNavStop').hidden);
+  // Parent geolocation and child Cesium postMessage are asynchronous: wait for
+  // the actual location-follow update rather than racing the queued message.
+  await picked.frame.waitForFunction(() => __huNavigation().following, null, {timeout:5000});
   check('map-pick', 'full-map Go starts GPS guidance; Stop remains accessible in the expanded Earth',
     await exposed(picked.page, 'wtMapNavStop') && await picked.frame.evaluate(() => __huNavigation().following));
   await picked.page.screenshot({ path:join(OUT, 'guest-map-picked-route-expanded-390.png') });
