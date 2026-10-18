@@ -18,6 +18,7 @@
   var IS_GLOBE_FRAME = /\/action-globe\.html$/.test(location.pathname) && root.parent !== root;
   var theme = null, controls = null, shell = null, frame = null, status = null;
   var open = false, attached = false, parentOrigin = "", frameOrigin = "", channelId = "";
+  var addressSuggestionsOpen = false;
   var worldHref = "", frameReady = false, readyTimer = null, loadGeneration = 0;
   var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
@@ -27,6 +28,15 @@
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
   }
   function savePreference() { try { localStorage.setItem(PREF, JSON.stringify(preference)); } catch (_) {} }
+  function suspendTransportForSuggestions(active) {
+    if (!controls) return;
+    // A cross-origin iframe option cannot outrank the parent music controls.
+    // Hide only chrome temporarily; do not stop the actual playing Audio.
+    var quiet = active === true && (open || IS_WORLD);
+    controls.classList.toggle('world-audio--suggest-open',quiet);
+    controls.inert = quiet;
+    controls.setAttribute('aria-hidden',String(quiet));
+  }
   function event(name, detail) { root.dispatchEvent(new CustomEvent(name, {detail: detail || {}})); }
   function urlOf(href) { try { return new URL(href, location.href); } catch (_) { return null; } }
   function cleanHref(href) {
@@ -290,6 +300,8 @@
     // Clear the compact World offset before restoring Music. Leaving this
     // inline top together with the Music bottom makes a full-height overlay.
     if (controls) controls.style.removeProperty("top");
+    addressSuggestionsOpen = false;
+    suspendTransportForSuggestions(false);
     delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
     hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
     doc.title = baseTitle;
@@ -312,6 +324,8 @@
     frameLayout(data.clearance);
     frameVisibility(data.visible);
     root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
+    if(addressSuggestionsOpen)root.parent.postMessage(
+      {channel:CHANNEL,type:"address-suggestions",id:channelId,active:true},parentOrigin);
     paint(); alignWorldTransport();
   }
   function navigate(href) {
@@ -353,6 +367,13 @@
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
   root.addEventListener("mcc:appbar-admin", paint);
+  root.addEventListener('mcc:travel-autocomplete', function(e) {
+    addressSuggestionsOpen = e.detail?.active === true;
+    if(attached && channelId && parentOrigin)
+      root.parent.postMessage({channel:CHANNEL,type:'address-suggestions',
+        id:channelId,active:addressSuggestionsOpen},parentOrigin);
+    else if(IS_WORLD)suspendTransportForSuggestions(addressSuggestionsOpen);
+  });
   root.addEventListener("resize", layout);
   root.addEventListener("mcc:world-mode", layout);
   root.addEventListener("popstate", function () {
@@ -379,6 +400,10 @@
     }
     else if (d.type === "music") closeWorld(true);
     else if (d.type === "pause") pause();
+    else if(d.type==='address-suggestions' && typeof d.active==='boolean'){
+      addressSuggestionsOpen=d.active;
+      suspendTransportForSuggestions(d.active);
+    }
   });
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
