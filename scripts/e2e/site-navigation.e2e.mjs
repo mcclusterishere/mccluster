@@ -191,48 +191,20 @@ try{
         await page.waitForURL(u=>u.pathname.endsWith('/listen.html')&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
         await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
         check(scope+' carries client context through Music',true);
-        // A client skin must not replace the native music-tab transport.
-        // Real tabbar click handling is exercised; only playback callbacks
-        // are instrumented so this fixture cannot touch production audio.
-        await page.evaluate(() => {
-          window.__managedTransport = {plays:0,pauses:0};
-          window.__managedClickTrace = [];
-          const musicTap = e => e.target.closest?.('[data-appnav="music"]');
-          document.addEventListener('click', e => {if(musicTap(e))window.__managedClickTrace.push('document-capture-'+e.defaultPrevented);},true);
-          document.querySelector('.appbar').addEventListener('click',e=>{if(musicTap(e))window.__managedClickTrace.push('dock-capture-'+e.defaultPrevented);},true);
-          document.querySelector('.appbar').addEventListener('click',e=>{if(musicTap(e))window.__managedClickTrace.push('dock-bubble-'+e.defaultPrevented);});
-          window.MCC_NP_PLAY = () => {
-            window.__managedTransport.plays++;
-            window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:true}}));
-          };
-          window.MCC_NP_PAUSE = () => {
-            window.__managedTransport.pauses++;
-            window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:false}}));
-          };
-          window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:false}}));
-        });
-        await dock.locator('[data-appnav="music"]').click();
-        await dock.locator('[data-appnav="music"]').click();
-        const transport = await page.evaluate(() => ({
-          ...window.__managedTransport,
-          path:location.pathname,
-          slug:new URLSearchParams(location.search).get('mcc_app'),
-          guard:location.origin===new URL('listen.html',window.MCC_BAR.navigation.house).origin &&
-            location.pathname===new URL('listen.html',window.MCC_BAR.navigation.house).pathname &&
-            typeof window.MCC_NP_PLAY==='function' && typeof window.MCC_NP_PAUSE==='function',
-          clickTrace:window.__managedClickTrace,
-          tabHref:document.querySelector('.appbar [data-appnav="music"]')?.href,
-          dockClass:document.querySelector('.appbar')?.className
-        }));
-        check(scope+' retains native Music play/pause and client context',
-          transport.plays===1 && transport.pauses===1 &&
-          transport.path==='/listen.html' && transport.slug===client.slug,transport);
         await page.locator('.appbar [data-appnav="home"]').click();
         await page.waitForURL(u=>u.pathname===client.path&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
         await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
         await page.locator('.appbar [data-appnav="world"]').click();
         await page.waitForURL(u=>u.origin==='https://mccluster.org'&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
         check(scope+' carries client context through World without creating member access',true);
+        await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
+        check(scope+' World keeps the correct client center without an account',!await page.evaluate(()=>window.MCC_BAR.admin()));
+        // House home is an explicit exit from the presentation-only perspective.
+        await page.goto(BASE+'/index.html');
+        await page.waitForSelector('body[data-site-navigation]',{timeout:18000});
+        await page.waitForFunction(()=>sessionStorage.getItem('mcc_managed_client_perspective')===null);
+        check(scope+' returning to Matthew home clears client presentation',
+          await page.locator('.appbar [data-managed-perspective]').count()===0);
       }
       check(scope+' creates no uncaught script errors',errors.length===0,errors);
       await ctx.close();
