@@ -1452,3 +1452,21 @@ body.has-appbar { padding-bottom: 0; }
 .mn__business-listing { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mn-rule-2); min-width: 0; }
 .mn__business-listing .mn__primary { margin-top: 14px; }
 .mn__panel [data-focus="business"] { margin-top: 8px; max-width: 100%; white-space: normal; }
+
+/* Unified timeline: replies render inside the same card for posts and news.
+   GDELT remains visibly attributed once, without explanatory banners. */
+.mn-world-on #mnFeed .mn__comments{grid-column:1/-1;min-width:0;margin-top:13px;padding:15px;border-top:1px solid rgba(220,233,245,.13);background:rgba(9,16,25,.44);border-radius:14px}
+.mn__comments[hidden]{display:none!important}
+.mn__comments-list{display:grid;gap:11px;margin-bottom:14px}
+.mn__comment{min-width:0;padding:10px 12px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.025)}
+.mn__comment strong{font-weight:750;color:#f4f1ea;font-size:13px}
+.mn__comment time{margin-left:9px;color:#95a6b7;font-size:11px;font-weight:600}
+.mn__comment p{margin:5px 0 0;white-space:pre-wrap;color:#dbe1e9;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.mn__comments-empty{font-size:14px;color:#a7b3c1}
+.mn__comment-status{font-size:12px;color:#b2c0ce;margin:9px 0 0}
+.mn__comment-status.is-error{color:#ffb1a6}
+.mn__comment-status.is-ok{color:#b7e7cd}
+.mn__action--comment[aria-expanded="true"]{color:#e9c796}
+.mn__news-meta::before{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:linear-gradient(135deg,#f6e2bf,#a9895e);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 11px rgba(205,163,105,.18)}
+.mn__news-chip::before{background:#d2b283;box-shadow:0 0 0 2px rgba(210,178,131,.12)}
+@media(prefers-reduced-motion:reduce){.mn__comment,.mn__comments{animation:none!important;transition:none!important}}
