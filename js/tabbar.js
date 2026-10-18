@@ -525,7 +525,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* the middle cell: the M, or the creator whose perspective this session holds */
+    /* Center tab: visited profile > authenticated owner profile > original guest house. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
@@ -678,11 +678,19 @@
     var session = readAuthSession();
     if (!session || session.access_token !== adminSession) paintAdmin(false);
     if (!session || !session.access_token) {
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      lastVerifiedSubject=""; storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return Promise.resolve(AUTH_STATE);
     }
     var payload = jwtPayload(session.access_token);
+    var subject = String(payload.sub || "");
+    if (subject !== lastVerifiedSubject) {
+      ++selfProfileEpoch; SELF_PROFILE=null;
+      PERSPECTIVE=readPerspective();
+      lastVerifiedSubject=subject;
+    }
     var exp = Number(payload.exp || 0) * 1000;
     paintAuthState(exp > Date.now(), null, false);
     return loadCanonicalAuth().then(function (mcc) {
@@ -694,10 +702,13 @@
       // the new session instead of accepting an old result or leaving it pending.
       if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
       paintAuthState(!!user, user, true);
+      if(user && subject)resolveOwnPerspective(subject,user);
       checkAdmin();
       return AUTH_STATE;
     }).catch(function () {
       if (attempt !== authEpoch) return AUTH_STATE;
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return AUTH_STATE;
@@ -1182,6 +1193,7 @@
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
+    ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
     navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
