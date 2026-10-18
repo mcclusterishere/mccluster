@@ -233,10 +233,45 @@ function setWorldNewsPins(items,on){
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
  });drawWorldNewsPins();
 }
+/* A calibrated enamel-and-gold pin, not an undifferentiated bright dot.
+   Draw once on a small transparent canvas; the Earth still supplies precise
+   geographic placement and accessible story selection in the shared feed. */
+let worldNewsMarkerImage=null;
+function worldNewsMarker(){
+ if(worldNewsMarkerImage)return worldNewsMarkerImage;
+ const c=document.createElement('canvas');c.width=c.height=96;
+ const g=c.getContext('2d'),x=48,y=45;
+ const glow=g.createRadialGradient(x,y,5,x,y,42);
+ glow.addColorStop(0,'rgba(245,221,180,.30)');
+ glow.addColorStop(.5,'rgba(214,178,119,.12)');
+ glow.addColorStop(1,'rgba(214,178,119,0)');
+ g.fillStyle=glow;g.fillRect(0,0,96,96);
+ g.save();g.translate(x,y);g.rotate(Math.PI/4);
+ g.shadowBlur=8;g.shadowColor='rgba(244,213,164,.48)';
+ const shell=g.createLinearGradient(-16,-16,17,18);
+ shell.addColorStop(0,'#f7e9c8');shell.addColorStop(.45,'#d0a971');shell.addColorStop(1,'#896540');
+ g.fillStyle=shell;g.fillRect(-15,-15,30,30);
+ g.shadowBlur=0;
+ g.fillStyle='#13202c';g.fillRect(-11.5,-11.5,23,23);
+ g.strokeStyle='rgba(255,255,255,.34)';g.lineWidth=1;
+ g.strokeRect(-10.5,-10.5,21,21);
+ g.restore();
+ g.beginPath();g.arc(x,y,4.2,0,Math.PI*2);
+ g.fillStyle='#f8e4b8';g.shadowBlur=6;g.shadowColor='#f0cf9b';g.fill();
+ worldNewsMarkerImage=c.toDataURL('image/png');
+ return worldNewsMarkerImage;
+}
 function drawWorldNewsPins(){
  if(!viewer)return;clear(publicNewsPins);if(!publicNewsOn||travelMode||ANALYTICS)return;
- const color=Cesium.Color.fromCssColorString('#e4b866');
- publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),point:{pixelSize:10,color,outlineColor:Cesium.Color.BLACK,outlineWidth:2},properties:{worldNewsId:x.id}})));
+ const marker=worldNewsMarker();
+ publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({
+   position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),
+   billboard:{image:marker,width:27,height:27,
+     verticalOrigin:Cesium.VerticalOrigin.CENTER,
+     scaleByDistance:new Cesium.NearFarScalar(150000,1.12,22000000,.48),
+     distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,25000000)},
+   properties:{worldNewsId:x.id}
+ })));
 }
 window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
 
@@ -379,7 +414,34 @@ const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Blac
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
-function glowPin(color){if(pinCache[color])return pinCache[color];const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,2,32,32,32);r.addColorStop(0,'#ffffff');r.addColorStop(.18,color);r.addColorStop(.42,color+'99');r.addColorStop(1,color+'00');g.fillStyle=r;g.beginPath();g.arc(32,32,32,0,Math.PI*2);g.fill();return pinCache[color]=c.toDataURL()}
+/* Mission markers share the refined enamel language: legible at phone zoom,
+   hue encodes the original action type; no overbright blurry white-center dots.
+   Cached per hue so thousands of visible points share only a few GPU textures. */
+function glowPin(color){
+ if(pinCache[color])return pinCache[color];
+ const c=document.createElement('canvas');c.width=c.height=88;
+ const g=c.getContext('2d'),cx=44,cy=41;
+ const halo=g.createRadialGradient(cx,cy,8,cx,cy,40);
+ halo.addColorStop(0,'rgba(241,223,198,.23)');
+ halo.addColorStop(.52,'rgba(184,152,121,.09)');
+ halo.addColorStop(1,'rgba(184,152,121,0)');
+ g.fillStyle=halo;g.fillRect(0,0,88,88);
+ g.save();g.translate(cx,cy);g.rotate(Math.PI/4);
+ g.shadowBlur=9;g.shadowColor=color;
+ g.fillStyle='#0d1721';g.fillRect(-18,-18,36,36);
+ const bezel=g.createLinearGradient(-18,-18,18,18);
+ bezel.addColorStop(0,'#f0ded0');bezel.addColorStop(.43,color);
+ bezel.addColorStop(1,'#6b7a8b');
+ g.strokeStyle=bezel;g.lineWidth=3;g.strokeRect(-16,-16,32,32);
+ g.shadowBlur=0;
+ g.strokeStyle='rgba(255,255,255,.24)';g.lineWidth=1;g.strokeRect(-12,-12,24,24);
+ g.restore();
+ const jewel=g.createRadialGradient(cx-2,cy-3,0,cx,cy,8);
+ jewel.addColorStop(0,'#fff1dd');jewel.addColorStop(.35,color);jewel.addColorStop(1,'#192331');
+ g.fillStyle=jewel;g.beginPath();g.arc(cx,cy,7,0,Math.PI*2);g.fill();
+ g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();
+ return pinCache[color]=c.toDataURL('image/png');
+}
 function sizeEditorialResolution(){
  const canvas=viewer.scene.canvas,pixels=Math.max(1,canvas.clientWidth*canvas.clientHeight);
  viewer.resolutionScale=Math.max(1,Math.min(window.devicePixelRatio||1,2,Math.sqrt(800000/pixels)));
