@@ -346,6 +346,22 @@ const chooseTravelPlace = async (page, id, query) => {
       && list && !list.hidden && [...list.querySelectorAll('button')]
         .some(button => button.textContent?.includes(expected));
   }, {id, expected}, {timeout: 25000});
+  // Diagnostic for the desktop-only CI interaction stall: check actual
+  // viewport geometry, computed visibility and nearest clipping ancestor.
+  // No addresses or private coordinates are printed, only boolean/layout data.
+  if (process.env.E2E_ONLY === 'travel-desktop') {
+    console.log('TRAVEL_SUGGEST_LAYOUT',JSON.stringify(await page.evaluate(({id,expected}) => {
+      const list=document.getElementById(id+'Results');
+      const row=[...list.querySelectorAll('button')].find(b=>b.textContent?.includes(expected));
+      const rect=node=>{const r=node?.getBoundingClientRect();return r?{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}:null};
+      const style=node=>{const s=node&&getComputedStyle(node);return s?{display:s.display,visibility:s.visibility,opacity:s.opacity,overflow:s.overflow}:null};
+      const feed=document.getElementById('mnWorldFeed');
+      return {row:rect(row),rowStyle:style(row),list:rect(list),listStyle:style(list),
+        field:rect(list?.parentElement),fieldStyle:style(list?.parentElement),feed:rect(feed),feedStyle:style(feed),
+        rootExpanded:document.documentElement.classList.contains('wt-expanded'),scrollTop:Math.round(feed?.scrollTop||0),
+        rowVisible:!!(row?.offsetWidth&&row?.offsetHeight)};
+    },{id,expected})));
+  }
   await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
