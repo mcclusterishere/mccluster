@@ -27,7 +27,7 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     </div>
     <button id="weBookCancelRide" type="button" hidden>Cancel ride request</button>
     <p class="we-book-terms">Pickup and destination coordinates are sent to Whip Equipped only when you request a quote. A fare quote is not a reservation, payment authorization is not driver acceptance, and no pickup is promised until a cleared driver accepts.</p>
-    <a href="whip/driver/" id="weBookDriver">Are you a driver? Apply to Whip ↗</a>
+    <a href="https://matthew.mccluster.org/whip/driver/" id="weBookDriver">Are you a driver? Apply to Whip ↗</a>
   `;
   document.body.append(dialog);
   const $ = id => dialog.querySelector('#' + id);
