@@ -13,7 +13,13 @@
   <link rel="apple-touch-icon" href="assets/we-icon.png" />
   <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="../../css/style.css?v=__STAMP__" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .bottom-nav { display:none!important }
+    #driverSheet { padding-bottom:110px }
+    body { padding-bottom:var(--mn-bar-clear,96px) }
+  </style>
   <title>Whip Equipped Driver</title>
 </head>
 <body>
@@ -116,7 +122,7 @@
       </section>
     </main>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" hidden aria-hidden="true">
       <button class="active"><span>⌖</span><small>Drive</small></button>
       <button><span>▤</span><small>Earnings</small></button>
       <button><span>◈</span><small>Safety</small></button>
@@ -125,6 +131,8 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="../../js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="../../js/tabbar.js?v=__STAMP__"></script>
   <script src="app.js"></script>
   <script src="identity-client.js"></script>
 </body>
