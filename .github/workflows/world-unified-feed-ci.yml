@@ -1,0 +1,38 @@
+name: Unified World feed and discussions
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mnet.html'
+      - 'js/mnet.js'
+      - 'js/world-news-globe.js'
+      - 'js/action-globe.js'
+      - 'css/mnet.css'
+      - 'css/world-news-globe.css'
+      - 'workers/mccluster/src/platform-api.js'
+      - 'supabase/pending/world_news_discussions_v1.sql'
+      - 'scripts/test/world-news-globe-source.test.mjs'
+      - 'scripts/test/world-unified-feed.test.mjs'
+      - '.github/workflows/world-unified-feed-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: unified-world-feed-release-contract
+  cancel-in-progress: true
+jobs:
+  source-and-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Syntax, release boundaries and news comment authorization
+        run: |
+          set -euo pipefail
+          for file in js/mnet.js js/world-news-globe.js js/action-globe.js workers/mccluster/src/platform-api.js; do node --check "$file"; done
+          node --test scripts/test/world-news-globe-source.test.mjs scripts/test/world-news-feed.test.mjs scripts/test/world-unified-feed.test.mjs scripts/test/mnet-real-network.test.mjs
