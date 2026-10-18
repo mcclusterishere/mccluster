@@ -37,7 +37,7 @@ async function signedIn(req,env,fetchFn=fetch) {
   const auth=req.headers.get('authorization')||'';
   if(!/^Bearer \S+$/.test(auth))throw fail('login_required','Sign in with your M Account to book a ride.',401);
   const response=await fetchFn(env.SUPABASE_URL+'/auth/v1/user',{
-    headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:auth},redirect:'error'
+    headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:auth},redirect:'manual'
   });
   if(!response.ok)throw fail('login_required','Your login expired. Sign in again.',401);
   const user=await response.json();
