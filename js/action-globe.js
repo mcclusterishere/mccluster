@@ -414,7 +414,34 @@ const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Blac
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
-function glowPin(color){if(pinCache[color])return pinCache[color];const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,2,32,32,32);r.addColorStop(0,'#ffffff');r.addColorStop(.18,color);r.addColorStop(.42,color+'99');r.addColorStop(1,color+'00');g.fillStyle=r;g.beginPath();g.arc(32,32,32,0,Math.PI*2);g.fill();return pinCache[color]=c.toDataURL()}
+/* Mission markers share the refined enamel language: legible at phone zoom,
+   hue encodes the original action type; no overbright blurry white-center dots.
+   Cached per hue so thousands of visible points share only a few GPU textures. */
+function glowPin(color){
+ if(pinCache[color])return pinCache[color];
+ const c=document.createElement('canvas');c.width=c.height=88;
+ const g=c.getContext('2d'),cx=44,cy=41;
+ const halo=g.createRadialGradient(cx,cy,8,cx,cy,40);
+ halo.addColorStop(0,'rgba(241,223,198,.23)');
+ halo.addColorStop(.52,'rgba(184,152,121,.09)');
+ halo.addColorStop(1,'rgba(184,152,121,0)');
+ g.fillStyle=halo;g.fillRect(0,0,88,88);
+ g.save();g.translate(cx,cy);g.rotate(Math.PI/4);
+ g.shadowBlur=9;g.shadowColor=color;
+ g.fillStyle='#0d1721';g.fillRect(-18,-18,36,36);
+ const bezel=g.createLinearGradient(-18,-18,18,18);
+ bezel.addColorStop(0,'#f0ded0');bezel.addColorStop(.43,color);
+ bezel.addColorStop(1,'#6b7a8b');
+ g.strokeStyle=bezel;g.lineWidth=3;g.strokeRect(-16,-16,32,32);
+ g.shadowBlur=0;
+ g.strokeStyle='rgba(255,255,255,.24)';g.lineWidth=1;g.strokeRect(-12,-12,24,24);
+ g.restore();
+ const jewel=g.createRadialGradient(cx-2,cy-3,0,cx,cy,8);
+ jewel.addColorStop(0,'#fff1dd');jewel.addColorStop(.35,color);jewel.addColorStop(1,'#192331');
+ g.fillStyle=jewel;g.beginPath();g.arc(cx,cy,7,0,Math.PI*2);g.fill();
+ g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();
+ return pinCache[color]=c.toDataURL('image/png');
+}
 function sizeEditorialResolution(){
  const canvas=viewer.scene.canvas,pixels=Math.max(1,canvas.clientWidth*canvas.clientHeight);
  viewer.resolutionScale=Math.max(1,Math.min(window.devicePixelRatio||1,2,Math.sqrt(800000/pixels)));
