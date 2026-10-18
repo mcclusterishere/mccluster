@@ -589,7 +589,10 @@ $('mnWorldFeed').addEventListener('touchend', e => {
 $('mnWorldFeed').addEventListener('touchcancel', () => { touchStart = null; }, { passive:true });
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.source !== frame.contentWindow) return;
-  if (e.data?.type === 'hu:globe-ready') renderGlobe(!!route || !!liveFix);
+  if (e.data?.type === 'hu:globe-ready') {
+    for (const button of panel.querySelectorAll('[data-map-pick]')) button.disabled = false;
+    renderGlobe(!!route || !!liveFix);
+  }
   if (e.data?.type === 'hu:travel-location-selected' && currentMode === 'travel' && mapPick &&
       e.data.kind === mapPick && hasCoordinates({ coordinates:e.data.coordinates })) {
     const kind = mapPick, [longitude, latitude] = e.data.coordinates;
@@ -598,7 +601,13 @@ window.addEventListener('message', e => {
     setMapPick(null);
     choosePlace(kind, { label, coordinates:[longitude, latitude] }, { source:'manual' });
   }
-  if (e.data?.type === 'hu:globe-unavailable') { renderGlobe(false); status('The interactive map is unavailable here. You can still use route steps and live directions.'); }
+  if (e.data?.type === 'hu:globe-unavailable') {
+    if (mapPick) setMapPick(null);
+    for (const button of panel.querySelectorAll('[data-map-pick]')) {
+      button.disabled = true; button.title = 'The interactive globe is unavailable. Use an address instead.';
+    }
+    renderGlobe(false); status('The interactive map is unavailable here. You can still use route steps and live directions.');
+  }
   if (e.data?.type === 'hu:request-location' && currentMode === 'travel') void locate();
   if (e.data?.type === 'hu:map-interaction' && currentMode === 'travel') { navigationFollow = false; renderDirections(); }
   if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name) {
@@ -747,7 +756,7 @@ window.addEventListener('storage', sessionChanged);
 for (const event of ['mcc:auth', 'mcc:auth-changed', 'mcc:auth-state']) window.addEventListener(event, sessionChanged);
 new MutationObserver(() => {
   sessionChanged();
-  if (!root.classList.contains('mn-world-on') && (navigating || locating || rideLocating || routeController)) suspendTravel('Navigation paused. Return to Travel to continue.');
+  if (!root.classList.contains('mn-world-on') && (navigating || locating || rideLocating || routeController || mapPick)) suspendTravel('Navigation paused. Return to Travel to continue.');
   autoLocate();
 }).observe(root, { attributes:true, attributeFilter:['class'] });
 window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
