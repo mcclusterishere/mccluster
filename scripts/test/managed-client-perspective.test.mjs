@@ -31,3 +31,9 @@ test('church assistant is truthfully identified as integration preview', () => {
   assert.match(html, /verified live backend/);
   assert.doesNotMatch(html, /role="textbox"|<form[^>]+assistant/i);
 });
+
+test('published church prayer line provides the access code and dial link', () => {
+  const html = read('partners/shiloh-church-gpt.html');
+  assert.match(html, /access code <strong>1054312#<\/strong>/);
+  assert.match(html, /href="tel:\+16053135088"/);
+});
