@@ -77,7 +77,18 @@
     var actions=el('div','dc-actions');if(e.recording_url)actions.append(link(e.recording_label||'Watch the archived livestream',e.recording_url,'dc-button',true));
     if(doc.getElementById('mnWorldFrame'))actions.append(button('Show on the globe',function(){focusEvent(e);}));
     else actions.append(link('See on the globe','mnet.html?mode=missions&completed='+encodeURIComponent(e.slug),'dc-button'));
-    box.append(actions);return box;
+    box.append(actions);
+    if(Array.isArray(e.work_ids)&&e.work_ids.length){
+      var feed=el('section','dc-event-feed');feed.append(el('h3','','Event feed'));
+      var list=el('ol','dc-event-feed__list');
+      e.work_ids.forEach(function(id){
+        var w=data.works.find(function(item){return (item.slug||item.id)===id;});if(!w)return;
+        var li=el('li');li.append(link(w.title,PAGE+'#'+encodeURIComponent(id),'dc-button'));
+        var media=[].concat(w.assets||[],w.recordings||[]).find(function(m){return m&&m.url;});
+        if(media)li.append(link(media.kind==='audio'?'Listen ↗':'Watch ↗',media.url,'dc-small',true));
+        list.append(li);
+      });feed.append(list);box.append(feed);
+    }return box;
   }
   function postToGlobe(message){var f=doc.getElementById('mnWorldFrame');if(f&&f.contentWindow)f.contentWindow.postMessage(message,location.origin);}
   function eventPayload(e){return {id:e.slug,title:'Docket 516R · completed capstone',latitude:e.latitude,longitude:e.longitude,date:String(e.starts_at||'').slice(0,10),url:new URL(PAGE+'#capstone',location.href).href};}

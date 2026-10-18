@@ -1164,7 +1164,7 @@
     return out;
   }
   /* a news card wears the World's card, keyed data-news-id (data-post-id is a member's post): the publisher, when it was
-     seen and the place it mentions, the headline out to the publisher, and the place on the Earth. No pictures and no
+     seen and the place it mentions, the headline in an in-app discovery reader, and the place on the Earth. No pictures and no
      publisher marks: the words only. */
   function newsCard(n) {
     var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
@@ -1172,8 +1172,8 @@
       '<p class="mn__news-meta"><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
-      '<a class="mn__news-title" href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer">' + esc(n.title) +
-        '<span class="sr-only"> (opens ' + esc(n.domain || "the publisher") + ' in a new tab)</span></a>' +
+      '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
+        '<span class="sr-only"> (opens an in-app news discovery record)</span></button>' +
       (n.lat !== null && n.lon !== null
         ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
         : '') +
@@ -1186,6 +1186,15 @@
     if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
+    root.querySelectorAll("[data-news-open]").forEach(function (b) {
+      b.onclick = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var id = b.getAttribute("data-news-open"), story = state.news.find(function (n) { return n.id === id; });
+        if (!story) return;
+        if (window.MCC_WORLD_NEWS_READER && window.MCC_WORLD_NEWS_READER.open) window.MCC_WORLD_NEWS_READER.open(story, b);
+        else setStatus($("mnFeedStatus"), "The in-app news reader is temporarily unavailable.", "error");
+      };
+    });
     root.querySelectorAll("[data-news-place]").forEach(function (b) {
       b.onclick = function (e) {
         e.preventDefault(); e.stopPropagation();
