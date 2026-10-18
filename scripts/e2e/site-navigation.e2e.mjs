@@ -191,6 +191,31 @@ try{
         await page.waitForURL(u=>u.pathname.endsWith('/listen.html')&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
         await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
         check(scope+' carries client context through Music',true);
+        // A client skin must not replace the native music-tab transport.
+        // Real tabbar click handling is exercised; only playback callbacks
+        // are instrumented so this fixture cannot touch production audio.
+        await page.evaluate(() => {
+          window.__managedTransport = {plays:0,pauses:0};
+          window.MCC_NP_PLAY = () => {
+            window.__managedTransport.plays++;
+            window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:true}}));
+          };
+          window.MCC_NP_PAUSE = () => {
+            window.__managedTransport.pauses++;
+            window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:false}}));
+          };
+          window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:false}}));
+        });
+        await dock.locator('[data-appnav="music"]').click();
+        await dock.locator('[data-appnav="music"]').click();
+        const transport = await page.evaluate(() => ({
+          ...window.__managedTransport,
+          path:location.pathname,
+          slug:new URLSearchParams(location.search).get('mcc_app')
+        }));
+        check(scope+' retains native Music play/pause and client context',
+          transport.plays===1 && transport.pauses===1 &&
+          transport.path==='/listen.html' && transport.slug===client.slug,transport);
         await page.locator('.appbar [data-appnav="home"]').click();
         await page.waitForURL(u=>u.pathname===client.path&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
         await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
