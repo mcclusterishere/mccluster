@@ -2547,6 +2547,10 @@
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
+  /* Public display name; stable mission IDs and the published historical source remain unchanged. */
+  function publicMission(m) {
+    return m && m.title === "Write the Change" ? Object.assign({}, m, { title: "Write a Song" }) : m;
+  }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
   function loadMissions(){
@@ -2564,7 +2568,7 @@
       if(version!==missionListVersion)return;
       missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
-      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
+      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
@@ -2657,7 +2661,7 @@
   function fetchMission(id){
     var hit=missions.all.find(function(x){return x.id===id;});
     if(hit)return Promise.resolve(hit);
-    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
+    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]?publicMission(rows[0]):null;});
   }
   function clearMissionCapture(){
     if(missions.proofPreview){try{URL.revokeObjectURL(missions.proofPreview);}catch(_){} missions.proofPreview="";}
@@ -3054,6 +3058,10 @@
     if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
     worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
       onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onCompleted:function(host) {
+        if (!window.DocketCohortShowcase || !window.DocketCohortShowcase.mountSeries) throw Error("Completed mission series is unavailable.");
+        return window.DocketCohortShowcase.mountSeries(host);
+      },
       onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
     });
     if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
@@ -3068,10 +3076,7 @@
     return worldMissionDeckRequest;
   }
   window.addEventListener("mcc:world-mode",function(e){
-    if(e.detail&&e.detail.mode==="missions"){
-      loadWorldMissionDeck();
-      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
-    }
+    if(e.detail&&e.detail.mode==="missions") loadWorldMissionDeck();
   });
   function paintMissionPreview() {
     var host = $("huMissionList"); if (!host) return;
