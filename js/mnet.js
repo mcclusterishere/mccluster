@@ -3076,7 +3076,16 @@
     return worldMissionDeckRequest;
   }
   window.addEventListener("mcc:world-mode",function(e){
-    if(e.detail&&e.detail.mode==="missions") loadWorldMissionDeck();
+    if(e.detail&&e.detail.mode==="missions"){
+      loadWorldMissionDeck();
+      /* The confirmed cohort capstone remains mapped independently of whether
+         someone has opened the Completed tab yet. */
+      if(window.DocketCohortShowcase&&window.DocketCohortShowcase.ensureMap)window.DocketCohortShowcase.ensureMap();
+      if(new URLSearchParams(location.search).has("completed")){
+        var completedTab=document.querySelector('.mn-swipe__filters [data-status="completed"]');
+        if(completedTab&&completedTab.getAttribute("aria-selected")!=="true")completedTab.click();
+      }
+    }
   });
   function paintMissionPreview() {
     var host = $("huMissionList"); if (!host) return;
