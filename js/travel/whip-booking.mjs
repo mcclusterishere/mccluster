@@ -18,6 +18,7 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     <p id="weBookStatus" role="status" aria-live="polite"></p>
     <div id="weBookPrice" class="we-book-price" hidden></div>
     <button id="weBookQuote" type="button" class="we-book-primary">Get Whip fare quote</button>
+    <button id="weBookResume" type="button" class="we-book-primary" hidden>Resume my ride request</button>
     <button id="weBookConfirm" type="button" class="we-book-primary" hidden>Request this ride</button>
     <div id="weBookPayment" hidden>
       <p>Secure payment authorization</p>
@@ -41,16 +42,33 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     return responseData(await api(path,options));
   };
   const money = cents => (Number(cents)/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
+  // Persist only a random opaque ride ID in the current tab; server checks
+  // M Account ownership again after the Stripe redirect.
+  const SAVED_RIDE_KEY='mcc.whip.ride.v1',RIDE_MAX_AGE_MS=24*60*60*1000;
   let quote=null,quotedTrip='',requestId=null,ride=null,poll=null,payment=null,busy=false;
+  function savedRideId(){
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(SAVED_RIDE_KEY)||'null');
+      return saved && /^[0-9a-f-]{36}$/i.test(saved.id) && Date.now()-saved.at<RIDE_MAX_AGE_MS
+        && Date.now()>=saved.at ? saved.id : null;
+    }catch{return null}
+  }
+  function rememberRide(id){
+    if(!/^[0-9a-f-]{36}$/i.test(String(id||'')))return;
+    try{sessionStorage.setItem(SAVED_RIDE_KEY,JSON.stringify({id,at:Date.now()}));}catch{}
+  }
+  function clearSavedRide(){try{sessionStorage.removeItem(SAVED_RIDE_KEY)}catch{}}
   function notify(message) { $('weBookStatus').textContent=String(message || ''); }
   function setBusy(on) {
     busy=on;
-    for(const name of ['weBookQuote','weBookConfirm','weBookAuthorize','weBookCancelRide']) $(name).disabled=on;
+    for(const name of ['weBookQuote','weBookResume','weBookConfirm','weBookAuthorize','weBookCancelRide']) $(name).disabled=on;
   }
   function reset({keepRide=false}={}) {
     quote=null;quotedTrip='';requestId=null;
     if(!keepRide)ride=null;
     $('weBookPrice').hidden=true;$('weBookConfirm').hidden=true;$('weBookQuote').hidden=false;
+    $('weBookResume').hidden=!savedRideId();
+    $('weBookResume').textContent='Resume my ride request';
     $('weBookPayment').hidden=true;$('weBookCancelRide').hidden=!ride;
     $('weBookPaymentElement').replaceChildren();
     payment=null;
@@ -84,18 +102,63 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
         const data=await request('/api/rides/'+encodeURIComponent(ride.id));
         if(!data.ride)return;
         ride=data.ride;notify(statusForRide(ride));
-        if(['COMPLETED','CANCELED'].includes(ride.status))stopPolling();
+        if(['COMPLETED','CANCELED'].includes(ride.status)){stopPolling();clearSavedRide();}
       }catch{notify('Trip updates are temporarily unavailable. Your booking record is still on Whip.');}
     },6000);
   }
+  async function resumeSavedRide({fromRedirect=false}={}){
+    const id=savedRideId();
+    if(!id)return false;
+    try{
+      const response=await request('/api/rides/'+encodeURIComponent(id));
+      const restored=response.ride;
+      if(!restored||restored.id!==id)throw Error('The server could not verify this trip.');
+      ride=restored;quote=null;requestId=null;payment=null;
+      $('weBookJourney').textContent=[ride.pickup_label,ride.dropoff_label].filter(Boolean).join(' → ') || 'Saved Whip trip';
+      $('weBookQuote').hidden=true;$('weBookConfirm').hidden=true;$('weBookPrice').hidden=true;
+      $('weBookPayment').hidden=true;
+      const ended=['CANCELED','COMPLETED'].includes(ride.status);
+      const paid=['paid','authorized'].includes(ride.payment_status);
+      $('weBookCancelRide').hidden=ended;
+      $('weBookResume').hidden=paid||ended;
+      $('weBookResume').textContent='Resume secure payment';
+      notify(ended||paid?statusForRide(ride):
+        'Your request was restored, but payment authorization is not confirmed. You can resume the payment. No pickup is promised.');
+      if(ended)clearSavedRide();else startPolling();
+      if(fromRedirect&&!dialog.open)dialog.showModal();
+      return true;
+    }catch(error){
+      if([401,403,404].includes(error.status))clearSavedRide();
+      notify('Unable to restore your previous request: '+(error.message||'Sign in and try again.'));
+      if(fromRedirect&&!dialog.open)dialog.showModal();
+      return false;
+    }
+  }
   button.onclick = () => {
+    reset();stopPolling();
+    if(savedRideId()){
+      $('weBookJourney').textContent='Your previous Whip ride';
+      notify('Resume your existing request before creating another one.');
+      dialog.showModal();
+      return;
+    }
     try{
       const selected=trip();
-      reset();stopPolling();
       $('weBookJourney').textContent=(selected.pickup_label||'Selected pickup')+' → '+(selected.dropoff_label||'Selected destination');
-      notify('');
-      dialog.showModal();
-    }catch(error){panel.querySelector('#wtRideLocationStatus').textContent=error.message;}
+      notify('');dialog.showModal();
+    }catch(error){
+      const status=panel.querySelector('#wtRideLocationStatus');if(status)status.textContent=error.message;
+    }
+  };
+  $('weBookResume').onclick=async()=>{
+    if(busy)return;
+    setBusy(true);
+    try{
+      if(ride&&!['paid','authorized'].includes(ride.payment_status)){
+        await authorizeRide();$('weBookResume').hidden=true;
+      }else await resumeSavedRide();
+    }catch(error){notify(error.message||'Payment could not be resumed.');}
+    finally{setBusy(false)}
   };
   $('weBookClose').onclick=()=>dialog.close();
   dialog.addEventListener('close',()=>{stopPolling();if(!busy)reset();});
@@ -132,6 +195,7 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
       const result=await request('/api/rides',{method:'POST',
         body:{quote_token:quote.token,request_id:requestId}});
       ride=result.ride;
+      rememberRide(ride?.id);
       $('weBookConfirm').hidden=true;$('weBookQuote').hidden=true;
       $('weBookCancelRide').hidden=false;
       notify('Request saved. Secure payment authorization is required before a driver can accept.');
@@ -169,7 +233,12 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     try{
       const result=await payment.stripe.confirmPayment({
         elements:payment.elements,
-        confirmParams:{return_url:location.origin+location.pathname},
+        confirmParams:{return_url:(()=>{
+          // Stripe never receives ride identifiers, locations or tokens.
+          const url=new URL(location.origin+location.pathname);
+          url.searchParams.set('we_ride_return','1');
+          return url.href;
+        })()},
         redirect:'if_required'
       });
       if(result.error)throw Error(result.error.message||'Payment authorization failed.');
@@ -187,11 +256,25 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     try{
       const result=await request('/api/rides/'+encodeURIComponent(ride.id)+'/status',
         {method:'PATCH',body:{status:'CANCELED'}});
-      ride=result.ride||ride;stopPolling();
+      ride=result.ride||ride;stopPolling();clearSavedRide();
       $('weBookCancelRide').hidden=true;$('weBookPayment').hidden=true;
       notify('Cancellation requested. Your payment release is handled by Whip and the payment provider.');
     }catch(error){notify(error.message);}
     finally{setBusy(false);}
   };
+  window.addEventListener('mcc:auth-changed',()=>{
+    if(!window.MCC?.session?.()?.access_token){
+      stopPolling();clearSavedRide();
+      if(dialog.open)dialog.close();
+    }
+  });
+  // A return from payment authentication reloads this document. Rehydrate
+  // only from same-tab state and an authorized server read.
+  if(new URLSearchParams(location.search).get('we_ride_return')==='1'){
+    const url=new URL(location.href);
+    url.searchParams.delete('we_ride_return');
+    history.replaceState(history.state,'',url.href);
+    void resumeSavedRide({fromRedirect:true});
+  }
   return {dialog,button,close:()=>dialog.close()};
 }
