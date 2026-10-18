@@ -219,6 +219,8 @@ test('the rider can recover a saved ride after Stripe redirect without leaking t
   assert.match(ui,/request\('\/api\/rides\/'.*?encodeURIComponent\(id\)/);
   assert.match(ui,/return_url:\(\(\)=>\{/);
   assert.match(ui,/url\.searchParams\.set\('we_ride_return','1'\)/);
+  assert.match(ui,/payment_intent_client_secret/);
+  assert.match(ui,/searchParams\.delete\(field\)/);
   assert.doesNotMatch(ui,/return_url:.*ride\.id/);
   assert.match(ui,/clearSavedRide\(\)/);
   assert.match(ui,/weBookCancelRide/);
