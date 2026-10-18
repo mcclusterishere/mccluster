@@ -8,10 +8,17 @@ alter table public.drivers
   add column if not exists license_expires_at timestamptz,
   add column if not exists insurance_expires_at timestamptz,
   add column if not exists screening_expires_at timestamptz,
+  add column if not exists application_consent_at timestamptz,
+  add column if not exists application_consent_version text,
   add column if not exists reviewed_at timestamptz,
   add column if not exists reviewed_by uuid;
 do $$
 begin
+  if not exists(select 1 from pg_constraint where conname='whip_driver_application_consent_v1') then
+    alter table public.drivers add constraint whip_driver_application_consent_v1
+      check((application_consent_at is null and application_consent_version is null)
+        or (application_consent_at is not null and application_consent_version='whip-driver-application-v1'));
+  end if;
   if not exists(select 1 from pg_constraint where conname='whip_driver_approval_valid_v1') then
     alter table public.drivers add constraint whip_driver_approval_valid_v1
       check(approval_status in ('pending','approved','rejected','suspended')
@@ -76,8 +83,6 @@ begin
   if length(trim(p_pickup_label))<3 or length(p_pickup_label)>200 or
      length(trim(p_dropoff_label))<3 or length(p_dropoff_label)>200 or
      p_pickup_lat is null or p_dropoff_lat is null or p_pickup_lng is null or p_dropoff_lng is null or
-     not isfinite(p_pickup_lat) or not isfinite(p_pickup_lng) or
-     not isfinite(p_dropoff_lat) or not isfinite(p_dropoff_lng) or
      abs(p_pickup_lat)>90 or abs(p_dropoff_lat)>90 or abs(p_pickup_lng)>180 or abs(p_dropoff_lng)>180 or
      p_fare_cents not between 100 and 1000000 or p_platform_fee_cents not between 0 and p_fare_cents or
      p_miles not between 0.1 and 310 or p_minutes not between 1 and 2000 then
