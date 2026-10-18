@@ -101,10 +101,11 @@ try{
   const s=await make();await archivePage(s);
   check('successful public archive loads directly without static substitution',s.world.archiveReads===1&&s.world.staticReads===0);
   check('project has exactly nine song panels and ten people',await s.page.locator('.dc-work').count()===9&&await s.page.locator('.dc-person').count()===10);
-  check('two Environmental Injustice recordings stay in one mission',await s.page.locator('#docket-516r-environmental-injustice audio').count()===2);
+  check('two Environmental Injustice versions keep independent Music links',await s.page.locator('#docket-516r-environmental-injustice a').filter({hasText:'Play in Music'}).count()===2);
   const players=await s.page.locator('audio,video').evaluateAll(nodes=>nodes.map(n=>({tag:n.tagName,src:n.src})));
-  check('direct media use native players; no Drive URL is passed to a player',players.filter(p=>p.tag==='AUDIO').length===4&&players.filter(p=>p.tag==='VIDEO').length===3&&players.every(p=>!p.src.includes('drive.google.com')),players);
-  check('Drive song recordings use external links',await s.page.locator('.dc-work a').filter({hasText:'Listen in the archive'}).count()===6);
+  check('published audio delegates playback to Music; direct video previews remain local',players.filter(p=>p.tag==='AUDIO').length===0&&players.filter(p=>p.tag==='VIDEO').length===3&&players.every(p=>!p.src.includes('drive.google.com')),players);
+  check('published songs point at canonical Music routes',await s.page.locator('.dc-work a').filter({hasText:'Play in Music'}).count()===4);
+  check('unpublished archives retain labelled archive links',await s.page.locator('.dc-work a').filter({hasText:'Listen in the archive'}).count()===6);
   check('cohort video is included',await s.page.locator(`a[href="${archive.media.find(m=>m.kind==='cohort_video').url}"]`).count()===1);
   check('primary link text contrasts with its light background',await s.page.locator('a.dc-button--primary').evaluateAll(nodes=>nodes.every(n=>{const c=getComputedStyle(n);return c.color==='rgb(20, 23, 25)'&&c.backgroundColor==='rgb(244, 241, 234)';})));
   await fit(s.page,'project page fits 390px');await s.page.screenshot({path:join(OUT,'project-390.png')});
@@ -166,31 +167,34 @@ try{
  {
   const s=await make();await s.page.goto(BASE+'/mnet.html?view=feed');await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
   check('World still defaults to Travel',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='travel');
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');
+  await s.page.click('.wt-world-modes [data-world-mode="missions"]');
+  await s.page.click('.mn-swipe__filters [data-status="completed"]');
+  await s.page.waitForSelector('#mnCompletedMissions .dc-series');
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:completed-missions'&&m.events.length===1));
   const marker=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);
   check('Missions sends the one confirmed capstone place',marker.on===true&&marker.events.length===1&&marker.events[0].id===archive.event.slug&&marker.events[0].latitude===archive.event.latitude&&marker.events[0].longitude===archive.event.longitude&&marker.events[0].date==='2025-10-05',marker);
-  await s.page.getByRole('button',{name:'Show on the globe',exact:true}).click();
+  await s.page.locator('#mnCompletedMissions .dc-series__summary').click();
+  await s.page.getByRole('button',{name:'Show on globe',exact:true}).click();
   await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
   const focus=(await globeMessages(s.page)).filter(m=>m.type==='hu:focus-place').at(-1);check('capstone button focuses its public venue',focus?.lat===archive.event.latitude&&focus?.lon===archive.event.longitude);
-  await s.page.evaluate(()=>{const n=document.querySelector('#dcPreviewCapstone');window.__archiveScrolls=0;n.scrollIntoView=()=>window.__archiveScrolls++;window.postMessage({type:'hu:completed-selected',eventId:'docket-516r-2025-capstone'},location.origin);});
+  await s.page.evaluate(()=>{const n=document.querySelector('#mnCompletedMissions');window.__archiveScrolls=0;n.scrollIntoView=()=>window.__archiveScrolls++;window.postMessage({type:'hu:completed-selected',eventId:'docket-516r-2025-capstone'},location.origin);});
   await s.page.waitForTimeout(30);check('parent ignores spoofed marker selection from the page',await s.page.evaluate(()=>window.__archiveScrolls)===0);
   const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(id=>parent.postMessage({type:'hu:completed-selected',eventId:id},location.origin),archive.event.slug);
   await s.page.waitForFunction(()=>window.__archiveScrolls===1);check('real globe marker selection opens the capstone context',true);
   for(const mode of ['posts','travel']){await s.page.click(`.wt-world-modes [data-world-mode="${mode}"]`);await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.filter(m=>m.type==='hu:completed-missions').at(-1)?.on===false);const last=(await globeMessages(s.page)).filter(m=>m.type==='hu:completed-missions').at(-1);check(mode+' hides completed markers',last.on===false&&last.events.length===0);}
-  await s.page.click('.wt-world-modes [data-world-mode="missions"]');check('returning to Missions does not duplicate the showcase',await s.page.locator('#mnCompletedMissions .dc-stats').count()===1);await fit(s.page,'World showcase fits 390px');
+  await s.page.click('.wt-world-modes [data-world-mode="missions"]');check('returning to Missions does not duplicate the showcase',await s.page.locator('#mnCompletedMissions .dc-series').count()===1);await fit(s.page,'World showcase fits 390px');
   await s.page.locator('#mnCompletedMissions').screenshot({path:join(OUT,'world-showcase-390.png')});
   await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForFunction(()=>window.MCC_WORLD_MODE&&document.documentElement.classList.contains('mn-world-on'));
   check('archive map deep link opens Missions',await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions');
   if(await s.page.evaluate(()=>MCC_WORLD_MODE.get())==='missions'){
-   await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
+   await s.page.waitForSelector('#mnCompletedMissions .dc-series');await s.page.waitForFunction(()=>document.querySelector('#mnWorldFrame').contentWindow.__received.some(m=>m.type==='hu:focus-place'));
    const f=(await globeMessages(s.page)).filter(m=>m.type==='hu:focus-place').at(-1);check('archive map deep link focuses the selected capstone',f?.lat===archive.event.latitude&&f?.lon===archive.event.longitude);
   }
   check('World integration has no script errors',s.errors.length===0,s.errors);await close(s);
  }
  for(const deferred of ['globe','archive']){
   const s=await make({manualGlobeReady:deferred==='globe',archiveDelay:deferred==='archive'?400:0});
-  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedMissions .dc-preview__event');
+  await s.page.goto(BASE+'/mnet.html?mode=missions&completed='+archive.event.slug);await s.page.waitForSelector('#mnCompletedMissions .dc-series');
   if(deferred==='globe'){
    check('deep link waits until the globe is ready',!(await globeMessages(s.page)).some(m=>m.type==='hu:focus-place'));
    const frame=s.page.frames().find(f=>f.url().includes('/action-globe.html'));await frame.evaluate(()=>window.__releaseReady());
