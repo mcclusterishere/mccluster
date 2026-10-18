@@ -61,13 +61,39 @@ function render(data){
   $('mfOwnerPanel').hidden=!mine;
   $('mfDriverPanel').hidden=true;
   $('mfWhip').hidden=true;
+  $('mfOperatorPanel').hidden=true;
+  $('mfOperatorList').replaceChildren();
   // The bar owns the selected profile while signed in. Someone else's public
   // records may be displayed, but nothing on this page changes their data.
   if(window.MCC_BAR?.perspective)window.MCC_BAR.perspective({
     kind:'member',handle:personId,name,avatar:safeImage(p.avatar_url)
   });
-  if(mine)void driverWorkspace();
+  if(mine){void driverWorkspace();void operatorWorkspace();}
 }
+
+async function operatorWorkspace(){
+  try{
+    const data=await api('/api/operators/mine'),tenants=(Array.isArray(data.tenants)?data.tenants:[]);
+    const owned=tenants.filter(t=>['owner','admin','manager'].includes(String(t.role||'').toLowerCase())&&t.id&&t.name);
+    if(!owned.length||!self)return;
+    const list=$('mfOperatorList');list.replaceChildren();
+    for(const tenant of owned){
+      const article=document.createElement('div');article.className='mf__operator-tenant';
+      const heading=document.createElement('strong'),copy=document.createElement('span');
+      heading.textContent=String(tenant.name).slice(0,100);
+      copy.textContent=' · '+String(tenant.role).slice(0,25)+' access';
+      article.append(heading,copy);
+      // A public profile is a presentation, not an authority boundary.
+      // The operator studio independently checks membership on every write.
+      const a=document.createElement('a');a.className='mf__button';
+      a.href='whip/rider/';a.textContent='Open managed mobility room ↗';
+      if(tenant.slug==='whip-equipped')article.append(a);
+      list.append(article);
+    }
+    $('mfOperatorPanel').hidden=false;
+  }catch{/* No operator account or unavailable service does not block the public page. */}
+}
+
 async function driverWorkspace(){
   try{
     const data=await api('/api/drivers/me');
@@ -126,7 +152,7 @@ window.addEventListener('mcc:auth-changed',()=>{
   if(!window.MCC?.session?.()?.access_token) {
     ++sessionEpoch;
     self=null;identity=null;record=null;
-    $('mfCustomize').hidden=true;$('mfOwnerPanel').hidden=true;$('mfDriverPanel').hidden=true;$('mfWhip').hidden=true;
+    $('mfCustomize').hidden=true;$('mfOwnerPanel').hidden=true;$('mfDriverPanel').hidden=true;$('mfWhip').hidden=true;$('mfOperatorPanel').hidden=true;
     message('Signed out. Your private editing controls are no longer available.');
     return;
   }
