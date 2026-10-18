@@ -1199,7 +1199,7 @@ if (runs('news-guest')) {
   let st = await newsState(page), seq = await feedSeq(page);
   check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', seq === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
   const reads = req(world, 'GET', /^\/v1\/world\/news$/);
-  check(scope, 'the news is read from the Worker with no session, beside the posts', reads.length === 1 && reads.every((r) => !r.auth) && /[?&]limit=20$/.test(reads[0].search), reads);
+  check(scope, 'the mixed feed and geographic news read the Worker without a session', reads.some((r) => /[?&]limit=20$/.test(r.search)) && reads.length <= 2 && reads.every((r) => !r.auth && /[?&]limit=(?:20|50)$/.test(r.search)), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
   const ids = await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((x) => x.getAttribute('data-news-id')));
    check(scope, 'every headline stays on McCluster as a first-party reader button; no pictures or marks', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
@@ -1216,6 +1216,10 @@ if (runs('news-guest')) {
   await page.evaluate(showCredit);
   await page.waitForTimeout(700);
   await page.screenshot({ path: join(OUT, 'news-feed-iphone.png') });
+  /* Search opens contextually on phone; Travel intentionally hides the World search control. */
+  await page.locator('.wt-world-modes [data-world-mode="posts"]').click();
+  await page.locator('#huSearchToggle').click();
+  await page.locator('#mnSearchInput').waitFor({state:'visible'});
   /* search reads the news too: its headlines and its publishers */
   await page.fill('#mnSearchInput', 'transit'); await page.waitForTimeout(500);
   const byTitle = await newsState(page);
