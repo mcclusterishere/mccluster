@@ -26,7 +26,7 @@ const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coord
   place.coordinates.every(Number.isFinite) && Math.abs(place.coordinates[0]) <= 180 && Math.abs(place.coordinates[1]) <= 90;
 const freshDraft = () => normalizeJourney({ mode:'drive' });
 let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0;
-let catalogPromise, currentMode = 'travel';
+let catalogPromise, currentMode = 'travel', hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
 const addressSearch = createAddressSearch();
@@ -50,7 +50,7 @@ panel.innerHTML = `
     </div>
     <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite">Allow location, or enter your starting address.</p>
     <p id="wtEndpointHint" class="wt-location-status" role="status" aria-live="polite"></p>
-    <p id="wtRoutePrivacy" class="wt-route-privacy">Tapping Get directions sends your route endpoints to the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>. Keep this page open during navigation.</p>
+    <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
     <div id="wtGroundOptions" class="wt-ground-options" hidden>
       <nav class="wt-toolbar wt-local-toolbar" aria-label="Directions mode">${groundModes.map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="${m === 'drive'}">${icon(m)}${labels[m]}</button>`).join('')}</nav>
       <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Get a ride</button>
@@ -93,7 +93,7 @@ panel.innerHTML = `
     </details>
     <div id="wtSaveRow" class="wt-save-row" hidden><button class="wt-text-button" id="wtSave" type="button">Save journey</button></div>
   </form>
-  <div class="wt-footer"><p id="wtSaveHint">Sign in to save. Explore freely.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
+  <div class="wt-footer" id="wtSaveFooter" hidden><p id="wtSaveHint">Your saved journeys are private.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
   <p class="wt-attribution">Address search: <a href="https://photon.komoot.io/" target="_blank" rel="noopener noreferrer">Photon</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Fix the map</a> · <a href="mailto:matthew@mccluster.org">Contact</a></p><p class="wt-message" id="wtMessage" role="status" aria-live="polite"></p>`;
 
 const dialog = document.createElement('dialog');
@@ -117,6 +117,7 @@ async function catalog() {
 }
 function cancelLocate() {
   locationSequence++; originRevision++; locating = false; $('wtLocate').disabled = false;
+  send({ type:'hu:location-state', busy:false });
   if ($('wtLocationStatus').textContent === 'Finding your starting point…') $('wtLocationStatus').textContent = 'Use location, or choose your starting address.';
 }
 function cancelRideRefresh() {
@@ -224,18 +225,19 @@ function renderRide() {
     try { link.href = rideHandoff({ origin:fix?.coordinates || draft.from.coordinates, destination:draft.to.coordinates, originLabel:devicePickup ? 'Current location' : draft.from.label, destinationLabel:draft.to.label }); }
     catch { link.hidden = true; $('wtRideHint').textContent = 'Choose a pickup and destination before continuing in Uber.'; }
   }
-  if (fix && !$('wtRidePanel').hidden && !document.hidden) rideExpiryTimer = setTimeout(renderRide, Math.max(50, fix.timestamp + rideFixMaxAge - Date.now() + 10));
+  if (fix && !$('wtRidePanel').hidden && hostVisible && !document.hidden) rideExpiryTimer = setTimeout(renderRide, Math.max(50, fix.timestamp + rideFixMaxAge - Date.now() + 10));
 }
 function renderDirections() {
   const destinationReady = hasCoordinates(draft.to), endpointsReady = destinationReady && hasCoordinates(draft.from);
   $('wtEndpointHint').textContent = endpointHint();
   $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady;
-  $('wtSaveRow').hidden = !draft.from || !draft.to;
+  $('wtSaveRow').hidden = !account() || !draft.from || !draft.to;
   $('wtDirections').hidden = !destinationReady || (!isGround() && draft.mode !== 'transit');
   renderRide();
   const button = $('wtNavigate'), loading = ['loading', 'rerouting'].includes(routeState);
   button.disabled = !endpointsReady || loading || !isGround(); button.hidden = navigating;
-  button.textContent = loading ? 'Finding your route…' : route ? 'Start navigation' : routeState === 'error' ? 'Try route again' : 'Get directions';
+  button.textContent = loading ? 'Finding your route…' : route ? 'Go' : routeState === 'error' ? 'Try route again' : 'Get directions';
+  button.setAttribute('aria-label', route ? 'Go — start live navigation' : button.textContent);
   $('wtStopNavigation').hidden = !navigating; $('wtRecenter').hidden = !navigating || navigationFollow || !liveFix;
   $('wtRouteCard').hidden = !route; $('wtSteps').hidden = !route; $('wtRouteAttribution').hidden = !route;
   $('wtRouteMessage').textContent = routeState === 'loading' ? 'Finding a route between your selected places…' : routeState === 'rerouting' ? 'Recalculating from your current location…' : routeError || (draft.mode === 'transit' ? 'Transit directions are not connected here yet. Choose Drive, Walk or Bike.' : '');
@@ -298,6 +300,7 @@ function choosePlace(key, row, { source = 'manual' } = {}) {
   if (key === 'from') { originSource = source; ridePickupFix = null; }
   changed({ preserveOriginLookup:key === 'to' }); closeSearches(); syncInputs(); renderGlobe(true);
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
+  if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
 }
 function autocomplete(id, resultId, key) {
   const input = $(id), results = $(resultId); let seq = 0, timer;
@@ -317,7 +320,7 @@ function autocomplete(id, resultId, key) {
         results.replaceChildren();
         for (const row of matches) {
           const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'option'); button.textContent = row.label;
-          button.onclick = () => { try { choosePlace(key, row); close(); input.focus(); } catch (error) { status(error.message); } }; results.append(button);
+          button.onclick = e => { try { input.blur(); choosePlace(key, row); close(); if (!e.detail) input.focus({ preventScroll:true }); } catch (error) { status(error.message); } }; results.append(button);
         }
         if (fallback || !matches.length) {
           const note = document.createElement('small'); note.className = 'wt-search-note';
@@ -349,26 +352,29 @@ for (const [id, key] of [['wtFrom','from'],['wtTo','to'],['wtDepartureHub','depa
   autocomplete(id, results.id, key);
 }
 
-async function requestRoute({ reroute = false, originOverride = null } = {}) {
-  if (!isGround() || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || currentMode !== 'travel' || document.hidden) { renderDirections(); return; }
+async function requestRoute({ reroute = false, originOverride = null, reveal = false } = {}) {
+  if (!isGround() || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || !hostVisible || currentMode !== 'travel' || document.hidden) { renderDirections(); return; }
   if (routeState === 'loading' && !reroute) return;
   const origin = originOverride || draft.from.coordinates, destination = [...draft.to.coordinates], mode = draft.mode;
   if (!hasCoordinates({ coordinates:origin })) return;
   routeController?.abort(); const controller = new AbortController(); routeController = controller;
   const request = ++routeSequence, version = revision, epoch = tripEpoch;
   routeState = reroute ? 'rerouting' : 'loading'; routeError = ''; retryOrigin = originOverride; renderDirections();
+  if (reveal) $('wtNavigate').scrollIntoView({ block:'nearest', behavior:'auto' });
   try {
     const result = await fetchRoute({ origin:[...origin], destination, mode }, { signal:controller.signal });
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch || currentMode !== 'travel' || document.hidden) return;
     route = { ...result, origin:[...origin], destination, mode, fromLive:!!originOverride };
     routeState = 'ready'; routeError = ''; retryOrigin = null; progress = null; offRouteFixes = 0;
     renderSteps(); renderDirections(); renderGlobe(!navigating);
+    if (reveal) $('wtRouteCard').scrollIntoView({ block:'start', behavior:'auto' });
     if (navigating && liveFix) applyFix(liveFix, false);
   } catch (error) {
     if (controller.signal.aborted || request !== routeSequence || version !== revision || epoch !== tripEpoch) return;
     stopNavigation('', { resetProgress:true }); route = null; routeState = 'error';
     routeError = error?.message || 'Directions could not be loaded. Try again or choose another starting point.';
     send({ type:'hu:route', route:null }); renderSteps(); renderDirections();
+    if (reveal) $('wtRouteMessage').scrollIntoView({ block:'start', behavior:'auto' });
   } finally { if (request === routeSequence) routeController = null; }
 }
 function locationError(error) {
@@ -380,38 +386,41 @@ function positionFix(position) {
   if (!hasCoordinates({ coordinates }) || !Number.isFinite(accuracy) || accuracy < 0) throw Error('Your location could not be read. Try again or enter your starting address.');
   return { coordinates, accuracy, timestamp:Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
 }
-async function locate() {
-  if (navigating) {
-    navigationFollow = true;
-    if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:true, fly:true });
-    renderDirections(); return;
-  }
-  if (locating || currentMode !== 'travel') return;
+async function locate({ automatic = false } = {}) {
+  if (locating || !hostVisible || currentMode !== 'travel') return;
   if (!navigator.geolocation) { $('wtLocationStatus').textContent = 'Location is unavailable here. Enter your starting address.'; $('wtFrom').focus(); return; }
-  closeSearches(); invalidateRoute(); renderDirections(); locating = true; autoLocated = true;
+  const wasNavigating = navigating, navigationVersion = navigationSequence;
+  closeSearches(); if (!wasNavigating) invalidateRoute(); renderDirections(); locating = true; autoLocated = true;
   const request = ++locationSequence, fromVersion = originRevision, initialFrom = $('wtFrom').value, epoch = tripEpoch, owner = account();
   $('wtLocate').disabled = true; $('wtLocationStatus').textContent = 'Finding your starting point…';
+  send({ type:'hu:location-state', busy:true });
   try {
-    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }));
+    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, timeout:12000, maximumAge:automatic ? 60000 : 0 }));
     if (request !== locationSequence) return;
-    if (originRevision !== fromVersion || $('wtFrom').value !== initialFrom || epoch !== tripEpoch || account() !== owner || currentMode !== 'travel' || document.hidden) { cancelLocate(); return; }
+    if (originRevision !== fromVersion || $('wtFrom').value !== initialFrom || epoch !== tripEpoch || account() !== owner || currentMode !== 'travel' || document.hidden || (wasNavigating && (!navigating || navigationSequence !== navigationVersion))) { cancelLocate(); return; }
     const fix = positionFix(position);
+    if (wasNavigating) {
+      navigationFollow = true;
+      if (!liveFix || fix.timestamp > liveFix.timestamp) { liveFix = fix; applyFix(fix); }
+      send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:navigating, fly:true });
+      $('wtLocationStatus').textContent = 'Location updated.'; renderDirections(); return;
+    }
     choosePlace('from', { label:'Current location', coordinates:fix.coordinates }, { source:'device' }); liveFix = fix;
     $('wtLocationStatus').textContent = fix.accuracy > 100 ? 'Using your approximate location. Choose an address for a more precise starting point.' : 'Starting from your current location.';
     root.classList.add('wt-local-map');
     send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, fly:true }); renderDirections();
   } catch (error) {
     if (request === locationSequence) $('wtLocationStatus').textContent = typeof error?.code === 'number' ? locationError(error) : error?.message || locationError(error);
-  } finally { if (request === locationSequence) { locating = false; $('wtLocate').disabled = false; } }
+  } finally { if (request === locationSequence) { locating = false; $('wtLocate').disabled = false; send({ type:'hu:location-state', busy:false }); } }
 }
 function autoLocate() {
-  if (autoLocated || currentMode !== 'travel' || !root.classList.contains('mn-world-on') || draft.from || !window.MCC_PRIVACY?.accepted?.()) return;
+  if (autoLocated || !hostVisible || currentMode !== 'travel' || !root.classList.contains('mn-world-on') || draft.from || !window.MCC_PRIVACY?.accepted?.()) return;
   autoLocated = true;
   try { if (sessionStorage.getItem('wt_location_asked')) return; sessionStorage.setItem('wt_location_asked', '1'); } catch { /* Location remains optional when browser storage is unavailable. */ }
-  void locate();
+  void locate({ automatic:true });
 }
 async function refreshRidePickup() {
-  if (rideLocating || originSource !== 'device' || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || currentMode !== 'travel' || document.hidden) return;
+  if (rideLocating || originSource !== 'device' || !hasCoordinates(draft.from) || !hasCoordinates(draft.to) || !hostVisible || currentMode !== 'travel' || document.hidden) return;
   if (!navigator.geolocation) { $('wtRideLocationStatus').textContent = 'Location is unavailable. Choose a starting address for pickup.'; return; }
   rideLocating = true;
   const request = ++rideLocationSequence, version = revision, epoch = tripEpoch, fromVersion = originRevision, owner = account();
@@ -430,7 +439,7 @@ async function refreshRidePickup() {
   finally { if (request === rideLocationSequence) { rideLocating = false; renderRide(); } }
 }
 function applyFix(fix, allowReroute = true) {
-  if (!navigating || !route) return;
+  if (!navigating || !route || !hostVisible) return;
   const next = navigationProgress(route, fix.coordinates, { accuracy:fix.accuracy, previousProgressMeters:progress?.distanceAlongMeters || 0 });
   send({ type:'hu:location', coordinates:fix.coordinates, accuracy:fix.accuracy, follow:navigationFollow && next.usable !== false });
   if (next.usable === false) { offRouteFixes = 0; navigationNotice = 'Location accuracy is low. Waiting for a clearer signal…'; renderDirections(); return; }
@@ -445,13 +454,13 @@ function applyFix(fix, allowReroute = true) {
   renderDirections();
 }
 function startNavigation() {
-  if (!route || navigating || currentMode !== 'travel' || document.hidden) return;
+  if (!route || navigating || !hostVisible || currentMode !== 'travel' || document.hidden) return;
   if (!navigator.geolocation) { navigationNotice = 'Live location is unavailable here. Your step-by-step directions are still available.'; renderDirections(); return; }
   cancelLocate(); navigating = true; progress = null; offRouteFixes = 0; navigationFollow = true;
   navigationNotice = 'Finding your location. Keep this page open for live directions.';
   const request = ++navigationSequence; let lastWatchTimestamp = 0;
   root.classList.add('wt-navigating'); renderDirections();
-  $('wtNavigation').scrollIntoView({ block:'nearest', behavior:'auto' });
+  $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' });
   try {
     const watch = navigator.geolocation.watchPosition(position => {
       if (request !== navigationSequence || !navigating || document.hidden || currentMode !== 'travel') return;
@@ -463,7 +472,7 @@ function startNavigation() {
       } catch (error) { stopNavigation(error.message, { resetProgress:true }); renderDirections(); }
     }, error => {
       if (request !== navigationSequence || !navigating) return;
-      stopNavigation(error?.code === 1 ? 'Location access is off. Enable it to use live navigation; your route steps are still available.' : 'Live location was interrupted. Tap Start navigation to retry; your route steps are still available.', { resetProgress:true }); renderDirections();
+      stopNavigation(error?.code === 1 ? 'Location access is off. Enable it to use live navigation; your route steps are still available.' : 'Live location was interrupted. Tap Go to retry; your route steps are still available.', { resetProgress:true }); renderDirections();
     }, { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
     if (request !== navigationSequence || !navigating) navigator.geolocation.clearWatch(watch);
     else navigationWatch = watch;
@@ -479,7 +488,11 @@ $('wtStopNavigation').onclick = () => {
   stopNavigation(rerouting ? 'Navigation stopped. Recalculate before starting again.' : 'Navigation stopped. Your route steps are still available.', { resetProgress:true });
   if (rerouting) { route = null; send({ type:'hu:route', route:null }); } renderDirections();
 };
-$('wtRecenter').onclick = () => void locate();
+$('wtRecenter').onclick = () => {
+  navigationFollow = true;
+  if (liveFix) send({ type:'hu:location', coordinates:liveFix.coordinates, accuracy:liveFix.accuracy, follow:true, fly:true });
+  renderDirections();
+};
 $('wtRide').onclick = () => { const show = $('wtRidePanel').hidden; $('wtRidePanel').hidden = !show; $('wtRide').setAttribute('aria-expanded', String(show)); if (!show) cancelRideRefresh(); renderRide(); };
 $('wtRideLocate').onclick = () => void refreshRidePickup();
 $('wtUber').onclick = e => {
@@ -504,6 +517,7 @@ function setMode(mode) {
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
+  window.dispatchEvent(new CustomEvent('mcc:world-mode', { detail:{ mode } }));
 }
 window.MCC_WORLD_MODE = { set:setMode, get:() => currentMode };
 const modeButtons = [...document.querySelectorAll('.wt-world-modes button')];
@@ -518,15 +532,16 @@ modeButtons.forEach(button => {
   };
 });
 let touchStart = null;
-$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.target.closest('input,select,button,a,summary,.wt-toolbar') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
+$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
 $('mnWorldFeed').addEventListener('touchend', e => {
   if (!touchStart) return; const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y; touchStart = null;
   if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) { const modes = ['travel', 'missions', 'posts']; setMode(modes[(modes.indexOf(currentMode) + (dx < 0 ? 1 : 2)) % 3]); }
 }, { passive:true });
+$('mnWorldFeed').addEventListener('touchcancel', () => { touchStart = null; }, { passive:true });
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.source !== frame.contentWindow) return;
   if (e.data?.type === 'hu:globe-ready') renderGlobe(!!route || !!liveFix);
-  if (e.data?.type === 'hu:globe-unavailable') status('The interactive map is unavailable here. You can still use route steps and live directions.');
+  if (e.data?.type === 'hu:globe-unavailable') { renderGlobe(false); status('The interactive map is unavailable here. You can still use route steps and live directions.'); }
   if (e.data?.type === 'hu:request-location' && currentMode === 'travel') void locate();
   if (e.data?.type === 'hu:map-interaction' && currentMode === 'travel') { navigationFollow = false; renderDirections(); }
   if (e.data?.type === 'hu:country' && currentMode === 'travel' && e.data.country?.name) {
@@ -559,7 +574,7 @@ $('wtForm').onsubmit = e => {
   } catch (error) { status(error.message); }
 };
 $('wtSwap').onclick = () => {
-  try { const hadRoute = !!route; draft = read(); [draft.from, draft.to] = [draft.to, draft.from]; [draft.departureHub, draft.arrivalHub] = [draft.arrivalHub, draft.departureHub]; draft.stay = ''; originSource = 'manual'; ridePickupFix = null; changed(); closeSearches(); syncInputs(); $('wtLocationStatus').textContent = 'Starting from your selected address.'; renderGlobe(true); if (hadRoute) void requestRoute(); }
+  try { draft = read(); [draft.from, draft.to] = [draft.to, draft.from]; [draft.departureHub, draft.arrivalHub] = [draft.arrivalHub, draft.departureHub]; draft.stay = ''; originSource = 'manual'; ridePickupFix = null; changed(); closeSearches(); syncInputs(); $('wtLocationStatus').textContent = 'Starting from your selected address.'; renderGlobe(true); void requestRoute({ reveal:true }); }
   catch (error) { status(error.message); }
 };
 $('wtAddReturn').onclick = () => {
@@ -577,9 +592,8 @@ panel.addEventListener('click', e => {
     if (mode) {
       if (mode.dataset.travelKind === 'stay') { editField('stay'); return; }
       if (mode.dataset.travelKind === draft.mode) return;
-      const hadRoute = !!route;
       draft = read(); draft.mode = mode.dataset.travelKind; $('wtOptions').open = ['flight', 'train'].includes(draft.mode);
-      changed(); closeSearches(); syncInputs(); if (hadRoute) void requestRoute();
+      changed(); closeSearches(); syncInputs(); void requestRoute({ reveal:true });
     }
     if (edit) editField(edit.dataset.edit);
   } catch (error) { status(error.message); }
@@ -636,7 +650,8 @@ dialog.addEventListener('close', () => { listRequest++; $('wtSavedList').replace
 $('wtNew').onclick = () => { if (dirty && !window.confirm('Start a new journey and discard your unsaved changes?')) return; replaceDraft(freshDraft()); };
 let lastOwner = account();
 function sessionChanged() {
-  const owner = account(); $('wtSaveHint').textContent = owner ? 'Your saved journeys are private.' : 'Sign in to save. Explore freely.';
+  const owner = account(); $('wtSaveFooter').hidden = !owner; $('wtDraftStatus').hidden = !owner;
+  $('wtSaveRow').hidden = !owner || !draft.from || !draft.to;
   if (lastOwner && owner !== lastOwner) { listRequest++; replaceDraft(freshDraft()); } lastOwner = owner;
 }
 function suspendTravel(message) {
@@ -644,8 +659,13 @@ function suspendTravel(message) {
   if (routeState === 'rerouting') { route = null; send({ type:'hu:route', route:null }); } routeState = route ? 'ready' : 'idle';
   if (navigating) stopNavigation(message, { resetProgress:true }); renderDirections();
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Start navigation when you return.'); else renderRide(); });
-window.addEventListener('pagehide', () => suspendTravel('Navigation paused. Tap Start navigation when you return.'));
+document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTravel('Navigation paused. Tap Go when you return.'); else renderRide(); });
+window.addEventListener('pagehide', () => suspendTravel('Navigation paused. Tap Go when you return.'));
+window.addEventListener('mcc:world-audio-visibility', e => {
+  hostVisible = e.detail?.visible !== false;
+  if (!hostVisible) suspendTravel('Navigation paused. Tap Go when you return.');
+  else renderRide();
+});
 window.addEventListener('storage', sessionChanged);
 for (const event of ['mcc:auth', 'mcc:auth-changed', 'mcc:auth-state']) window.addEventListener(event, sessionChanged);
 new MutationObserver(() => {
@@ -653,8 +673,8 @@ new MutationObserver(() => {
   if (!root.classList.contains('mn-world-on') && (navigating || locating || rideLocating || routeController)) suspendTravel('Navigation paused. Return to Travel to continue.');
   autoLocate();
 }).observe(root, { attributes:true, attributeFilter:['class'] });
-window.addEventListener('beforeunload', e => { if (dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
 syncInputs(); sessionChanged();
-const query = new URLSearchParams(location.search);
-setMode(query.has('mission') ? 'missions' : query.has('song') ? 'posts' : 'travel');
+const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
+setMode(query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : ['travel', 'missions', 'posts'].includes(requestedMode) ? requestedMode : 'travel');
 send({ type:'hu:hello' }); autoLocate();

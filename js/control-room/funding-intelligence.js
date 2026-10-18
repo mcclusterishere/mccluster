@@ -38,7 +38,7 @@
     var metrics=Array.isArray(d.metric_keys)?d.metric_keys:[];
     return '<article class="cro-card" style="margin:0 0 10px">' +
       '<div class="cro-item__head"><div><p class="cro-meta">'+e(d.draft_id)+' · '+e(d.mission_category)+'</p><h3>'+e(d.title)+'</h3></div>'+status('PRIVATE DRAFT')+'</div>'+
-      '<p>'+e(d.instruction)+'</p><p class="cro-meta"><b>Funder metrics:</b> '+e(metrics.join(', ')||'Pending')+'</p>'+
+      '<p>'+e(d.instruction)+'</p><p class="cro-meta"><b>Planned outcomes:</b> '+e(metrics.join(', ')||'Pending')+'</p>'+
       '<p class="cro-meta"><b>Verification:</b> '+e(d.proof_policy)+'</p>'+
       '<p class="cro-meta"><b>Presentation:</b> '+e(d.presenting_to)+
       ' · '+e(d.relationship_status).replace(/_/g,' ')+'</p>'+
@@ -56,14 +56,14 @@
       '<button class="cr-btn" type="button" data-funding-refresh>Refresh catalog</button></div>'+
       '<p class="cro-note">Discovery does not imply eligibility, partnership, award availability or allowable participant compensation. Drafts cannot be claimed.</p>'+
       warning+
-      '<div class="cro-tabs"><button type="button" data-funding-view="drafts" class="cro-tab'+(F.mode==='drafts'?' is-on':'')+'">Partner drafts ('+drafts.length+')</button>'+
+      '<div class="cro-tabs"><button type="button" data-funding-view="drafts" class="cro-tab'+(F.mode==='drafts'?' is-on':'')+'">Mission arsenal ('+drafts.length+')</button>'+
       '<button type="button" data-funding-view="catalog" class="cro-tab'+(F.mode==='catalog'?' is-on':'')+'">Funding programs ('+opportunities.length+')</button>'+
       '<button type="button" data-funding-view="opportunities" class="cro-tab'+(F.mode==='opportunities'?' is-on':'')+'">Federal opportunities</button>'+
       '<button type="button" data-funding-view="past_awards" class="cro-tab'+(F.mode==='past_awards'?' is-on':'')+'">Federal past awards</button></div>'+
       (F.mode==='drafts' ?
-        '<label class="cro-meta" for="crFundPartner">Private partner presentation</label> <select id="crFundPartner" class="cr-input" style="width:min(100%,520px)"><option value="all">All prospective partners</option>'+
+        '<label class="cro-meta" for="crFundPartner">Partner or prospect</label> <select id="crFundPartner" class="cr-input" style="width:min(100%,520px)"><option value="all">All partners and prospects</option>'+
         partners.map(function(p){return '<option value="'+e(p)+'"'+(F.partner===p?' selected':'')+'>'+e(p)+'</option>';}).join('')+'</select>'+
-        '<p class="cro-meta">'+selected.length+' unpublished mission proposals. No partner authorization or reward is recorded.</p>'+
+        '<p class="cro-meta">'+selected.length+' missions in development. Each needs a confirmed activity and operating plan before publication.</p>'+
         (selected.length?selected.map(draftCard).join(''):'<p class="cro-note">No drafts available in this view; verify the pending database migration.</p>')+
         (selected.length?'<button class="cr-btn" data-funding-brief type="button">Copy partner briefing text</button><p class="cro-meta" id="crFundingCopyStatus" aria-live="polite"></p>':'')
       :F.mode==='catalog' ?
@@ -91,9 +91,9 @@
   function briefing() {
     var rows=((F.catalog&&F.catalog.drafts)||[]).filter(function(d){return F.partner==='all'||d.presenting_to===F.partner;});
     return 'Action Network — INTERNAL partner proposal (NOT FUNDED OR AUTHORIZED)\n'+
-      'Presenting to: '+(F.partner==='all'?'multiple prospective partners':F.partner)+'\n\n'+
+      'Presenting to: '+(F.partner==='all'?'partners and prospects':F.partner)+'\n\n'+
       rows.map(function(d){return d.title+'\nActivity: '+d.instruction+'\nMetrics: '+(d.metric_keys||[]).join(', ')+
-        '\nProof: '+d.proof_policy+'\nStatus: PRIVATE DRAFT; no funding, claims, or affiliation asserted.\n';}).join('\n');
+        '\nProof: '+d.proof_policy+'\nRelationship: '+String(d.relationship_status||'prospective_lead').replace(/_/g,' ')+'\nStatus: PRIVATE DRAFT; this activity is not yet authorized or funded.\n';}).join('\n');
   }
   function bind(root) {
     if(!root||!root.querySelector('#crFundingIntelligence'))return;

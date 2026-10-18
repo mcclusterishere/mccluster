@@ -16,8 +16,10 @@ test("desk capability matrix: what each kind of member sees", () => {
   const cap = (x) => D.capabilities(x);
   const guest = cap({ signedIn: false, creator: true, entitlement: { paid: true }, ladder: { policy_seats: [{}] } });
   assert.deepEqual(guest, { signedIn: false, creator: false, business: false, fellow: false }, "a guest gets nothing from claims");
-  assert.deepEqual(D.sections(guest), ["welcome", "policy"]);
-  assert.equal(D.policyMode(guest), "public");
+  assert.deepEqual(D.sections(guest), [], "guests have no member workspace on World");
+  assert.equal(D.policyMode(guest), null);
+  assert.deepEqual(D.sections(null), []);
+  assert.equal(D.policyMode({ fellow: true }), null, "a fellow claim cannot open a signed-out desk");
 
   const fan = cap({ signedIn: true });
   assert.deepEqual(D.sections(fan), ["profile", "missions", "notifications", "policy"]);
