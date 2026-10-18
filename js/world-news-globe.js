@@ -57,8 +57,16 @@
     card.scrollIntoView({block:'center',behavior:'smooth'});
     card.querySelector('[data-discussion-toggle]')?.click();
   }
+  function discussionAvailable(id) {
+    const card = [...(feed?.querySelectorAll('[data-news-id]') || [])]
+      .find(el => el.dataset.newsId === id);
+    // Actual live feed capabilities own the input. Never advertise a dead
+    // discussion action while the server flag or SQL migration is disabled.
+    return !!card?.querySelector('[data-discussion-toggle]');
+  }
   function openStory(story, opener) {
     if (!valid(story)) return;
+    discuss.hidden = !discussionAvailable(story.id);
     prior = opener || null;
     currentId = story.id;
     title.textContent = story.title;
@@ -69,8 +77,12 @@
   }
   discuss.onclick = () => {
     const id = currentId;
+    if (!id || !discussionAvailable(id)) {
+      discuss.hidden = true;
+      return; // The modal stays open; the Close button remains useful.
+    }
     reader.close();
-    if (id) discussion(id);
+    discussion(id);
   };
   window.MCC_WORLD_NEWS_READER = {open:openStory};
   window.addEventListener('mcc:world-news-loaded', sync);

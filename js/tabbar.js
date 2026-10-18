@@ -479,7 +479,12 @@
       var id=data&&data.identity||{},profile=data&&data.profile||{};
       SELF_PROFILE=cleanPerspective({kind:"member",handle:id.mccluster_id,
         name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
-      if(!PERSPECTIVE&&SELF_PROFILE)paintPerspective();
+      if(!PERSPECTIVE&&SELF_PROFILE&&!wingOn) {
+        paintPerspective();
+        HOME_BAR=dock.innerHTML;
+      }
+      // An open wing will pick up SELF_PROFILE when revert() restores the
+      // closed bar. Never overwrite the wing's anchor while it is open.
     }).catch(function(){/* An unfinished account still has the normal platform entrance. */});
   }
 
@@ -1100,7 +1105,11 @@
     wingOn = null;
     dock.classList.remove("appbar--morph");
     dock.innerHTML = HOME_BAR;
-    paintSound(); // the snapshot is from boot, when nothing was playing yet
+    if (SELF_PROFILE && !PERSPECTIVE) {
+      paintPerspective();
+      HOME_BAR = dock.innerHTML;
+    }
+    paintSound(); // restore live audio after refreshing the current profile
   }
 
   /* the hold belongs to the bar, not to the browser. Without this, a long

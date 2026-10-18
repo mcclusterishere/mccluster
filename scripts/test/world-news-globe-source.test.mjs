@@ -22,6 +22,9 @@ test('World has one mixed feed: news + posts, no separate News page or public ca
   assert.match(reader,/MCC_WORLD_NEWS_READER/);
   assert.match(reader,/worldNewsReader/);
   assert.match(reader,/Join the conversation/);
+  assert.match(reader,/discuss\.hidden = !discussionAvailable\(story\.id\)/);
+  assert.match(reader,/card\?\.querySelector\('\[data-discussion-toggle\]'\)/);
+  assert.match(reader,/!id \|\| !discussionAvailable\(id\)/);
   assert.match(reader,/document\.body\.appendChild\(reader\)/);
   assert.doesNotMatch(reader,/in-app full text is unavailable|publisher permission|discovery record, not|innerHTML|window\.open|fetch\(.*\.url/);
   assert.match(travel,/data-world-mode/);
@@ -63,7 +66,11 @@ test('Native post and news comments share one UI; new news writes are flag gated
   assert.match(client,/\/v1\/world\/news\//);
   assert.match(api,/function handleWorldNewsDiscussion\(/);
   assert.match(api,/WORLD_NEWS_COMMENTS_ENABLED/);
-  assert.match(api,/networkBlocked\(env,muid,comment\.author_m_uid\)/);
+  assert.match(api,/blockedByViewer,blockedViewer/);
+  assert.match(api,/blocked_m_uid=in\.\(/);
+  assert.match(api,/blocker_m_uid=in\.\(/);
+  assert.doesNotMatch(api,/await networkBlocked\(env,muid,comment\.author_m_uid\)/,
+    'news comment reads must not perform one database lookup per author');
   assert.match(sql,/create table if not exists public\.media_news_comments/);
   assert.match(sql,/references public\.media_news_articles\(id\)/);
   assert.match(sql,/enable row level security/);
