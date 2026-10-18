@@ -493,6 +493,10 @@
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
       openDeepLinkedGroup();
+      try {
+        var publicHandle = new URLSearchParams(location.search).get("profile");
+        if(publicHandle && /^[a-z0-9][a-z0-9._-]{2,39}$/.test(publicHandle.toLowerCase()) && !state.guest)openPerson(publicHandle.toLowerCase());
+      } catch (_) {}
       /* A deep link to a mission or a group wins over the first-run tour. */
       if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
