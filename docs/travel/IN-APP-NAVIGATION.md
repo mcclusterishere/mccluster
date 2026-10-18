@@ -7,15 +7,25 @@ destination field. Browser permission follows the existing entry privacy notice.
 Denial, timeout and devices without geolocation leave manual starting-address
 entry available. No example city is represented as the visitor's location.
 
-Selecting a destination reveals Drive, Walk, Bike and Get a ride. **Get
-directions** requests a route; selection, entry, saved-journey loading and GPS
-acquisition do not prefetch routes. Changing mode or swapping places after a
-route has already been requested is an explicit request for replacement
+Owner correction, October 17: selecting a destination reveals Drive, Walk, Bike
+and Get a ride and immediately requests directions once both selected endpoints
+have coordinates. Choosing a starting address or allowing the pending location
+request completes that same flow if the destination was chosen first. Typing
+unselected text, opening Travel and loading a saved journey do not send routing
+requests. The endpoint-sharing notice is visible before a destination is chosen.
+Changing the ground mode or swapping selected places requests replacement
 directions. “Plan a longer trip” contains flights, trains, dates and stays.
+
+The location button explicitly requests a fresh device fix (`maximumAge: 0`),
+including after denial or timeout, and shows a pending state on both the planner
+and globe controls. A browser that has already blocked permission may require
+the visitor to enable it in browser settings; the page cannot force that system
+prompt to reopen. Recenter is a separate navigation action. The globe uses a
+blue location dot and accuracy ring without a duplicate “You are here” label.
 
 A successful route shows estimated time and distance, the actual road/path
 polyline on the existing Cesium globe, and a list of turn instructions. Selecting
-a turn focuses that place on the map. **Start navigation** starts a foreground
+a turn focuses that place on the map. **Go** starts a foreground
 GPS watch, displays the next turn and remaining distance, and follows the current
 position. Two usable off-route fixes can trigger a new route from the current
 location, with a 30-second rerouting cooldown. Poor accuracy cannot advance the
@@ -23,8 +33,10 @@ route or falsely report arrival. Ambiguous crossings favor continuity with the
 current progress instead of jumping to a later loop.
 
 Stop, leaving Travel, hiding the page, leaving World, sign-out and switching an
-existing account cancel the applicable watches or in-flight work. Late responses cannot restore an old
-trip. Returning to a hidden page requires Start navigation again. Route steps
+existing account cancel the applicable watches or in-flight work. Returning to
+Music also pauses navigation when World is retained for continuous audio. Late
+responses cannot restore an old trip. Returning to World or a hidden page
+requires Go again; the selected places and a completed route remain available. Route steps
 remain useful when live GPS or WebGL is unavailable. This release does not provide
 offline maps, background navigation, spoken instructions, live traffic in the
 pilot, or a certified navigation device.
@@ -116,8 +128,11 @@ the deployed commit and route endpoint before reporting it live.
 
 ## Location and ride boundaries
 
-Travel stores draft and route state in memory. Only explicit Save writes a
-private journey through the existing account store. Route POST bodies carry
+Travel stores draft and route state in memory. Guests see directions and Go
+without journey-save controls or an unsaved-journey exit prompt. Signing in adds
+the secondary save controls. Only explicit Save writes a private journey through
+the existing account store. Exit prompts apply only to unsaved edits to an
+already-saved member journey. Route POST bodies carry
 coordinates and transport mode, not identity, address labels or an auth token.
 The routing provider receives route endpoints and may log requests under its
 policy. Photon receives the search query, without GPS bias. The map's existing
@@ -157,7 +172,7 @@ smoke requests were made separately through the permitted network path.
 Live FOSSGIS requests between New Haven Green and Union Station returned distinct
 road/path routes in all three modes. This is a provider contract smoke test,
 not a claim of physical on-road navigation testing. Browser checks exercise the
-actual Cesium renderer, phone/tablet/desktop layouts, no-prefetch selection,
+actual Cesium renderer, phone/tablet/desktop layouts, selected-endpoint routing,
 permission denial, route errors, guidance, cancellation and mode isolation.
 
 Primary references reviewed for this implementation:

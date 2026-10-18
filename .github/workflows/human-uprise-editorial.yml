@@ -8,6 +8,8 @@ on:
       - 'css/human-uprise-editorial.css'
       - 'css/globe-editorial.css'
       - 'css/world-travel.css'
+      - 'css/member-desk.css'
+      - 'css/world-audio-continuity.css'
       - 'js/travel/**'
       - 'data/travel/**'
       - 'js/analytics.js'
@@ -15,9 +17,18 @@ on:
       - 'supabase/tests/travel_journeys.behaviour.sql'
       - 'scripts/test/travel-journeys-db.mjs'
       - 'js/mnet.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'js/world-audio-continuity.js'
+      - 'js/music-engine.js'
+      - 'js/pip.js'
+      - 'js/tabbar.js'
       - 'js/action-globe.js'
       - 'js/world-countries.js'
       - 'scripts/e2e/world-screen.e2e.mjs'
+      - 'scripts/e2e/member-desk.e2e.mjs'
+      - 'scripts/e2e/world-travel-guest.e2e.mjs'
+      - 'scripts/e2e/music-world-continuity.e2e.mjs'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -27,8 +38,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   browser:
+    name: browser (${{ matrix.suite }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [database, editorial, travel, guest-travel, member-desk, music-world, navigation]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -40,19 +56,28 @@ jobs:
         run: |
           npm install --prefix /tmp/hu-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0 cesium@1.131.0 @electric-sql/pglite@0.3.14
           /tmp/hu-qa/node_modules/.bin/playwright install --with-deps chromium
-      - name: Check phone, tablet, desktop and shared navigation
+      - name: Check ${{ matrix.suite }} independently
         env:
           PLAYWRIGHT_DIR: /tmp/hu-qa/node_modules
           CESIUM_DIR: /tmp/hu-qa/node_modules/cesium/Build/Cesium
           PGLITE_DIR: /tmp/hu-qa/node_modules
+        shell: bash
         run: |
-          node scripts/test/travel-journeys-db.mjs
-          E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world
-          E2E_ONLY=travel node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel
-          node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation
+          set -euo pipefail
+          mkdir -p /tmp/hu-proof
+          case "${{ matrix.suite }}" in
+            database) node scripts/test/travel-journeys-db.mjs ;;
+            editorial) E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world ;;
+            travel) E2E_ONLY=travel node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel ;;
+            guest-travel) node scripts/e2e/world-travel-guest.e2e.mjs /tmp/hu-proof/guest-travel ;;
+            member-desk) node scripts/e2e/member-desk.e2e.mjs /tmp/hu-proof/member-desk ;;
+            music-world) node scripts/e2e/music-world-continuity.e2e.mjs /tmp/hu-proof/music-world ;;
+            navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
+            *) echo 'Unknown suite' >&2; exit 2 ;;
+          esac
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: human-uprise-editorial-${{ github.run_id }}
+          name: human-uprise-editorial-${{ github.run_id }}-${{ matrix.suite }}
           path: /tmp/hu-proof
           retention-days: 7

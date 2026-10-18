@@ -20,12 +20,14 @@
                          and the analytics sites they own (their RLS)
      fellow              the policy memo desk (js/policy-fellowship-desk.js),
                          moved here from action-policy.html
-     everyone            the public policy registry (js/action-policy.js)
+     signed-in members   the public policy registry (js/action-policy.js)
    Every number comes from an existing endpoint under its existing
    permissions; nothing is computed or invented here.
 
    ?desk=1 or ?desk=<section> opens it (action-policy.html sends inbound
-   links to ?desk=policy). Closing it takes the parameter off the address. */
+   links to ?desk=policy). Closing it takes the parameter off the address.
+   Owner correction, 2026-10-17: guests stay in World. No desk, policy
+   welcome panel or desk control is mounted for a signed-out visitor. */
 (function () {
   "use strict";
   var C = window.MCC_DESK_CORE;
@@ -65,15 +67,18 @@
   function identity() { var m = mnet(); try { return m && m.identity ? m.identity() || {} : {}; } catch (e) { return {}; } }
   function profile() { var m = mnet(); try { return m && m.profile ? m.profile() || {} : {}; } catch (e) { return {}; } }
 
-  var S = { open: false, section: null, caps: null, data: {}, loading: false, policyLoaded: false, seq: 0 };
+  var S = { open: false, section: null, caps: null, data: {}, loading: false, policyLoaded: false, seq: 0, openSeq: 0, authDenied: false };
 
   /* ---------- the Desk tab on the bar ---------- */
   var DESK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5h18"/><path d="M5 9.5V19M19 9.5V19"/><path d="M8.5 9.5V6.8a1.3 1.3 0 0 1 1.3-1.3h4.4a1.3 1.3 0 0 1 1.3 1.3v2.7"/><path d="M5 14h6"/></svg>';
   function ensureTab() {
     var dock = document.querySelector(".appbar");
     if (!dock) return null;
-    if (dock.classList.contains("appbar--admin")) return null;
     var tab = dock.querySelector("[data-hu-desk]");
+    if (!signedIn() || dock.classList.contains("appbar--admin")) {
+      if (tab) tab.remove();
+      return null;
+    }
     if (!tab) {
       tab = document.createElement("button");
       tab.type = "button";
@@ -94,7 +99,7 @@
   function watchBar() {
     var dock = document.querySelector(".appbar");
     if (!dock || typeof MutationObserver !== "function") return;
-    new MutationObserver(function () { if (!dock.querySelector("[data-hu-desk]") && !dock.classList.contains("appbar--morph")) ensureTab(); })
+    new MutationObserver(function () { if (!signedIn() || !dock.classList.contains("appbar--morph")) ensureTab(); })
       .observe(dock, { childList: true });
   }
 
@@ -120,6 +125,7 @@
   }
 
   function signedIn() {
+    if (S.authDenied) return false;
     try { var s = window.MCC && MCC.session && MCC.session(); return !!(s && s.access_token); } catch (e) { return false; }
   }
 
@@ -128,7 +134,7 @@
     var seq = ++S.seq;
     if (!signedIn()) { S.caps = C.capabilities({ signedIn: false }); return Promise.resolve(S.caps); }
     return waitForIdentity(3000).then(function (id) {
-    if (seq !== S.seq) return S.caps;
+    if (seq !== S.seq || !signedIn()) return null;
     /* creator: the one-click onboarding's own server answer (music_creator_state(), #447) when it is
        applied; until then the member's own music_creator_profiles row, which is what that answer reads */
     var creator = rpc("music_creator_state").then(function (st) {
@@ -141,7 +147,7 @@
     var sites = rest("analytics_sites?select=id,name,status&order=created_at.desc&limit=20").catch(function () { return []; });
     var ladder = rpc("policy_ladder_status").catch(function (e) { return missing(e) ? { closed: true } : null; });
     return Promise.all([creator, ent, sites, ladder]).then(function (o) {
-      if (seq !== S.seq) return S.caps;
+      if (seq !== S.seq || !signedIn()) return null;
       S.data.creatorRow = (o[0] || [])[0] || null;
       S.data.entitlement = o[1];
       S.data.sites = o[2] || [];
@@ -286,6 +292,8 @@
   }
 
   function open(section) {
+    if (!signedIn()) { clearDesk(); return false; }
+    var openSeq = ++S.openSeq;
     var el = ensureSheet();
     S.open = true;
     if (section && C.SECTIONS[section]) S.section = section;
@@ -295,12 +303,18 @@
     $("huDeskBody").innerHTML = note("Opening your desk…");
     $("huDeskTabs").innerHTML = "";
     setParam(S.section || "1");
-    loadCaps().then(function () { if (!S.open) return; paintTabs(); setParam(S.section); paintBody(); });
+    loadCaps().then(function (caps) {
+      if (!S.open || openSeq !== S.openSeq || !signedIn() || !caps || !caps.signedIn) return;
+      paintTabs(); setParam(S.section); paintBody();
+    });
     try { if (window.MCC_TRACK) window.MCC_TRACK("desk_open", { section: S.section || "" }); } catch (e) { /* analytics never breaks the desk */ }
+    return true;
   }
   function close() {
     var el = $("huDesk");
     S.open = false;
+    S.openSeq++;
+    S.seq++;
     stopCapture();
     if (el) el.hidden = true;
     document.documentElement.classList.remove("hu-desk-on");
@@ -308,6 +322,12 @@
     setParam(null);
     var tab = document.querySelector("[data-hu-desk]");
     if (tab) try { tab.focus({ preventScroll: true }); } catch (e) { /* focus is a courtesy */ }
+  }
+  function clearDesk() {
+    close();
+    S.section = null; S.caps = null; S.data = {}; S.policyLoaded = false; S.policyHolder = null;
+    var el = $("huDesk");
+    if (el) el.remove();
   }
   function setParam(v) {
     try {
@@ -335,13 +355,31 @@
     if (t.closest("[data-hu-desk-bell]")) { var bell = $("mnBell"); close(); if (bell) bell.click(); return; }
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.open) close(); });
-  window.addEventListener("mcc:auth-changed", function () { S.caps = null; S.data = {}; S.policyLoaded = false; S.policyHolder = null; var p = $("huDeskPolicy"); if (p && p.parentNode) p.parentNode.removeChild(p); if (S.open) open(S.section); });
+  window.addEventListener("mcc:auth-changed", function (event) {
+    var wasOpen = S.open, section = S.section;
+    S.authDenied = !!(event.detail && event.detail.signed_in === false);
+    clearDesk();
+    if (signedIn()) { ensureTab(); if (wasOpen) open(section); }
+  });
+  window.addEventListener("mcc:auth-state", function (event) {
+    if (!event.detail || typeof event.detail.signed_in !== "boolean") return;
+    S.authDenied = !event.detail.signed_in;
+    if (!signedIn()) clearDesk(); else ensureTab();
+  });
+  window.addEventListener("storage", function (event) {
+    if (event.key === "mccdb_session" || event.key === null) {
+      if (!signedIn()) clearDesk();
+    }
+  });
 
   function boot() {
     ensureTab();
     watchBar();
     var want = C.deskParam(location.search);
-    if (want) open(want === "open" ? null : want);
+    if (want) {
+      if (signedIn()) open(want === "open" ? null : want);
+      else setParam(null);
+    }
   }
   window.HU_DESK = { open: open, close: close, isOpen: function () { return S.open; }, state: S };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
