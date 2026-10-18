@@ -1,6 +1,6 @@
 {
   "schema_version": "2.1.0",
-  "audit_date": "2026-09-26",
+  "audit_date": "2026-10-18",
   "repo": "mcclusterishere/mccluster",
   "audited_head": "audit/branch-reconciliation-20260926",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 412,
+  "candidate_count": 418,
   "capability_source_count": 104,
-  "support_only_count": 308,
+  "support_only_count": 314,
   "entries": [
     {
       "path": ".cursorrules",
@@ -355,18 +355,18 @@
       "rationale": "Approved identity artwork; branding asset, not an independent program capability."
     },
     {
-      "path": "assets/img/equity-uprise-mark.png",
-      "classification": "presentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
-    },
-    {
       "path": "assets/img/equity-uprise-mark-white.png",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "The owner-authorized white variant of the approved identity artwork (owner, 2026-10-15: paint it white): the tile-less mark's own shape and alpha, every visible pixel white, for the World's dark grounds. Branding asset, not a capability."
+    },
+    {
+      "path": "assets/img/equity-uprise-mark.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The same approved identity artwork with its white tile made transparent (owner, 2026-10-15); every dark pixel as supplied. Branding asset, not a capability."
     },
     {
       "path": "assets/img/eu-favicon.png",
@@ -392,6 +392,16 @@
       "rationale": "Static registry and MusicRecording markup generated from data/catalogue.json and data/albums.json; the same music-catalogue capability listen.html and the catalogue data already carry."
     },
     {
+      "path": "cohort-profile.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "profiles",
+        "fellowship-cohort"
+      ],
+      "support_only": false,
+      "rationale": "Public profile for an organizer-confirmed Equity Uprise cohort participant, showing attributed completed work and the participant's separately controlled provider webpage. Extends the existing people directory and actual cohort record."
+    },
+    {
       "path": "crm.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -411,6 +421,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Institutional Desk styling; presentation only."
+    },
+    {
+      "path": "css/mission-swipe-deck.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing mission-card presentation rules; not a separate building capability."
     },
     {
       "path": "css/mnet.css",
@@ -455,6 +472,24 @@
       "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
     },
     {
+      "path": "css/world-audio-continuity.css",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Music and World transport styling; shared product UI rather than building capability."
+    },
+    {
+      "path": "data/action/docket-516r-archive.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-cohort",
+        "music-catalogue",
+        "rally-media"
+      ],
+      "support_only": false,
+      "rationale": "Public Docket 516R cohort manifest containing contributor credits, nine completed compositions with ten recording versions, and the October 2025 capstone media. Supplies the existing cohort, listening and rally archive capabilities; contains no private claim credentials or agreements."
+    },
+    {
       "path": "data/albums.json",
       "classification": "capability_source",
       "capability_ids": [
@@ -462,6 +497,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/analytics/application-schema-inventory.json",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shipping copy of the read-only application schema field directory. Existing program relation names are metadata only; this file adds no physical building capability or program authority."
     },
     {
       "path": "data/brands.json",
@@ -671,6 +713,18 @@
       "rationale": "Published at the root (2026-10-03, owner request) as the front page of the Equity Uprise group on the Uprise Action Network. The evidence-room capability is already declared public; classification unchanged."
     },
     {
+      "path": "docket-516r-cohort.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "profiles",
+        "fellowship-cohort",
+        "music-catalogue",
+        "rally-media"
+      ],
+      "support_only": false,
+      "rationale": "Public entry point for the completed Docket 516R cohort, its songs and capstone, with participant provider webpages. Represents existing people, cohort, music and rally media capabilities without changing their floor or access authority."
+    },
+    {
       "path": "docs/ACTION-NETWORK-REWARD-SYSTEM.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -779,6 +833,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/analytics/application-schema-inventory.json",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only application schema metadata for the unified owner analytics field directory. Includes existing program relation names but defines no physical building capability or new program authority."
+    },
+    {
       "path": "docs/control-plane/BRANCH-RECONCILIATION-2026-09-26.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -798,6 +859,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "docs/control-plane/EQUITY-UPRISE-MISSION-SERIES-AND-SONG-CTA.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed song/series release proposal and capability boundary documentation only."
     },
     {
       "path": "docs/control-plane/GMAIL-CONNECT.md",
@@ -1158,6 +1226,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Owner-approved travel-first public World presentation standard and preserved reference; records existing mission and internal-intelligence boundaries without defining building geometry or a program capability."
+    },
+    {
       "path": "docs/uprise-world/AUDIT-REPORT.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -1249,6 +1324,16 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/cohort-profile.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "profiles",
+        "fellowship-cohort"
+      ],
+      "support_only": false,
+      "rationale": "Renders the public cohort profile, supported song credits and claimed account link from the published Action Network archive. Implements the existing people directory and actual Equity Uprise cohort record."
+    },
+    {
       "path": "js/control-room/clipping.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1263,6 +1348,18 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/docket-cohort-showcase.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "profiles",
+        "fellowship-cohort",
+        "music-catalogue",
+        "rally-media"
+      ],
+      "support_only": false,
+      "rationale": "Renders the Docket 516R contributor webpages, completed song recordings and archived capstone, including its historical event map marker. Binds existing people, cohort, listening and rally media capabilities to the Action Network archive without creating new building geometry or mission awards."
     },
     {
       "path": "js/equity-uprise-fellowship-live.js",
@@ -1363,6 +1460,13 @@
       "rationale": "Action Network live strip, watch screen and broadcast studio; calls the eu_is_admin desk check to show the kill switch. Not a building capability."
     },
     {
+      "path": "js/mnet-tour.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public navigation guidance and product onboarding; no independent building capability."
+    },
+    {
       "path": "js/mnet.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -1416,6 +1520,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/travel/world-travel.mjs",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public routing and mobility user interface; not a building-specific program capability."
+    },
+    {
+      "path": "js/world-audio-continuity.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared audio continuity across music and World; no separate building-specific capability."
     },
     {
       "path": "lanes.html",
@@ -1518,6 +1636,13 @@
       "rationale": "Public evidence-backed newsroom; contains Equity Uprise recognition text but adds no building capability."
     },
     {
+      "path": "packages/release-policy/globe.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared optional-globe release policy, including the existing Halo projection route. Adds no building geometry or program capability."
+    },
+    {
       "path": "platform/sql/001_init.sql",
       "classification": "capability_source",
       "capability_ids": [
@@ -1605,7 +1730,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -1666,41 +1791,6 @@
       "rationale": "Unit test of the World screen's navigation and emblem/Fund contract; names the Equity Uprise emblem path. Not a building capability."
     },
     {
-      "path": "scripts/test/identity-verification-levels.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
-    },
-    {
-      "path": "scripts/test/member-desk.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
-    },
-    {
-      "path": "scripts/test/mission-pins-arcs-business.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
-    },
-    {
-      "path": "scripts/test/policy-fellowship-ladder.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
-    },
-    {
-      "path": "scripts/test/world-first-and-layers.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
-    },
-    {
       "path": "scripts/test/action-network.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1750,6 +1840,34 @@
       "rationale": "Tests of Human Uprise's own door on this side of the edge: the bar across hosts, a creator's perspective, the Artists rail and the authorities that name the host. Not a building capability."
     },
     {
+      "path": "scripts/test/identity-verification-levels.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/member-desk.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/mission-pins-arcs-business.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/policy-fellowship-ladder.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
       "path": "scripts/test/product-context.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -1797,6 +1915,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Edge Function deploy-pipeline regression coverage; it names Equity Uprise functions only as deploy targets that import shared code. Test support, not a physical building capability."
+    },
+    {
+      "path": "scripts/test/world-first-and-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
     },
     {
       "path": "services.html",
@@ -2372,6 +2497,41 @@
       "rationale": "Applied SQL reconciled from production (#465): private Action Network funding opportunities and partner mission drafts, readable only by eu_is_admin() admins. Publishes no mission and funds no bounty; not a building capability."
     },
     {
+      "path": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
+    },
+    {
+      "path": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network historical project, contributor, completed work and event storage, with private invitations and participant-controlled provider pages. Shared persistence and identity infrastructure for the public archive; defines no independent building capability."
+    },
+    {
+      "path": "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network mission catalog reset, paused-assignment preservation and private partner-development arsenal. Reuses the existing Equity Uprise campaign and mobilization infrastructure without defining a building capability or publishing held mission concepts."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2405,6 +2565,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
@@ -2746,11 +2920,32 @@
       "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
     },
     {
+      "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database dependency fixture for bounty first-claim and reclaim behavior. Defines a test-only eu_is_admin stand-in; never applied to a real project and not a building capability."
+    },
+    {
       "path": "supabase/tests/action_mission_pins.stub.sql",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "supabase/tests/action_mission_reset.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Isolated database fixture for the Action Network mission reset regression gate, including the existing Equity Uprise campaign context. Test infrastructure only; defines no program capability."
+    },
+    {
+      "path": "supabase/tests/analytics_geo_audience.behaviour.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",
@@ -2875,41 +3070,6 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
-      "path": "supabase/pending/action_globe_demo_pins_v1.sql",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
-    },
-    {
-      "path": "workers/mccluster/src/live/index.js",
-      "classification": "shared_frontend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
-    },
-    {
-      "path": "workers/mccluster/src/world-layers.js",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
-    },
-    {
-      "path": "workers/mccluster/test/live-missions.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
-    },
-    {
-      "path": "workers/mccluster/test/world-layers.test.mjs",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Unit test of the World's data-layer routes: trimming, caching, stale answers and member gating. Not a building capability."
-    },
-    {
       "path": "workers/mccluster/src/human-uprise/router.js",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -2924,6 +3084,13 @@
       ],
       "support_only": false,
       "rationale": "Routes the sanitized Equity Uprise Halo Globe projection while preserving the owner-only Seek First surface."
+    },
+    {
+      "path": "workers/mccluster/src/live/index.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
       "path": "workers/mccluster/src/music/tracks.js",
@@ -2956,6 +3123,13 @@
       "rationale": "Implements the read-only, entitlement-filtered Halo Globe projection contract."
     },
     {
+      "path": "workers/mccluster/src/world-layers.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The World's data layers for the globe: flights (public), satellites and launches (members), fetched from OpenSky, CelesTrak and Launch Library 2 and cached by the Worker. Names the globe entry contract; not a building capability."
+    },
+    {
       "path": "workers/mccluster/test/fbi.test.mjs",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -2975,6 +3149,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests of the Human Uprise host router: inert elsewhere, the World and its rooms passed through, every other path sent to Matthew's property. Not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/live-missions.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
       "path": "workers/mccluster/test/mission-proof-media.test.mjs",
@@ -2998,39 +3179,11 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
-      "path": "world-news.html",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
-    },
-    {
-      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
-      "classification": "runtime_security_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
-    },
-    {
-      "path": "supabase/tests/action_bounty_claim_guard.stub.sql",
+      "path": "workers/mccluster/test/world-layers.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Scratch-database dependency fixture for bounty first-claim and reclaim behavior. Defines a test-only eu_is_admin stand-in; never applied to a real project and not a building capability."
-    },
-    {
-      "path": "docs/analytics/application-schema-inventory.json",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Read-only application schema metadata for the unified owner analytics field directory. Includes existing program relation names but defines no physical building capability or new program authority."
-    },
-    {
-      "path": "packages/release-policy/globe.mjs",
-      "classification": "runtime_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared optional-globe release policy, including the existing Halo projection route. Adds no building geometry or program capability."
+      "rationale": "Unit test of the World's data-layer routes: trimming, caching, stale answers and member gating. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/world-release.test.mjs",
@@ -3040,122 +3193,11 @@
       "rationale": "Tests the shared admin-preview and withdrawal boundary around existing globe routes. Adds no building geometry or program capability."
     },
     {
-      "path": "supabase/migrations/20261017040826_analytics_geo_audience_v1.sql",
+      "path": "world-news.html",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
-    },
-    {
-      "path": "supabase/migrations/20261017041311_analytics_geo_audience_hotpath_v2.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
-    },
-    {
-      "path": "supabase/migrations/20261017041532_analytics_geo_audience_regions_v3.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
-    },
-    {
-      "path": "supabase/tests/analytics_geo_audience.behaviour.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Geographic audience reporting and regression coverage reuse the existing admin-role helper. No independent building capability or spatial authority."
-    },
-    {
-      "path": "docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Owner-approved travel-first public World presentation standard and preserved reference; records existing mission and internal-intelligence boundaries without defining building geometry or a program capability."
-    },
-    {
-      "path": "data/analytics/application-schema-inventory.json",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shipping copy of the read-only application schema field directory. Existing program relation names are metadata only; this file adds no physical building capability or program authority."
-    },
-    {
-      "path": "cohort-profile.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "profiles",
-        "fellowship-cohort"
-      ],
-      "support_only": false,
-      "rationale": "Public profile for an organizer-confirmed Equity Uprise cohort participant, showing attributed completed work and the participant's separately controlled provider webpage. Extends the existing people directory and actual cohort record."
-    },
-    {
-      "path": "data/action/docket-516r-archive.json",
-      "classification": "capability_source",
-      "capability_ids": [
-        "fellowship-cohort",
-        "music-catalogue",
-        "rally-media"
-      ],
-      "support_only": false,
-      "rationale": "Public Docket 516R cohort manifest containing contributor credits, nine completed compositions with ten recording versions, and the October 2025 capstone media. Supplies the existing cohort, listening and rally archive capabilities; contains no private claim credentials or agreements."
-    },
-    {
-      "path": "docket-516r-cohort.html",
-      "classification": "capability_source",
-      "capability_ids": [
-        "profiles",
-        "fellowship-cohort",
-        "music-catalogue",
-        "rally-media"
-      ],
-      "support_only": false,
-      "rationale": "Public entry point for the completed Docket 516R cohort, its songs and capstone, with participant provider webpages. Represents existing people, cohort, music and rally media capabilities without changing their floor or access authority."
-    },
-    {
-      "path": "js/cohort-profile.js",
-      "classification": "capability_source",
-      "capability_ids": [
-        "profiles",
-        "fellowship-cohort"
-      ],
-      "support_only": false,
-      "rationale": "Renders the public cohort profile, supported song credits and claimed account link from the published Action Network archive. Implements the existing people directory and actual Equity Uprise cohort record."
-    },
-    {
-      "path": "js/docket-cohort-showcase.js",
-      "classification": "capability_source",
-      "capability_ids": [
-        "profiles",
-        "fellowship-cohort",
-        "music-catalogue",
-        "rally-media"
-      ],
-      "support_only": false,
-      "rationale": "Renders the Docket 516R contributor webpages, completed song recordings and archived capstone, including its historical event map marker. Binds existing people, cohort, listening and rally media capabilities to the Action Network archive without creating new building geometry or mission awards."
-    },
-    {
-      "path": "supabase/migrations/20261017164335_action_archive_cohort_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied Action Network historical project, contributor, completed work and event storage, with private invitations and participant-controlled provider pages. Shared persistence and identity infrastructure for the public archive; defines no independent building capability."
-    },
-    {
-      "path": "supabase/migrations/20261017164416_action_mission_reset_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Applied Action Network mission catalog reset, paused-assignment preservation and private partner-development arsenal. Reuses the existing Equity Uprise campaign and mobilization infrastructure without defining a building capability or publishing held mission concepts."
-    },
-    {
-      "path": "supabase/tests/action_mission_reset.stub.sql",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Isolated database fixture for the Action Network mission reset regression gate, including the existing Equity Uprise campaign context. Test infrastructure only; defines no program capability."
+      "rationale": "Public worldwide news globe and GDELT feed gateway; not a physical building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
