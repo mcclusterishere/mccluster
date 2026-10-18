@@ -338,8 +338,7 @@ const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 const chooseTravelPlace = async (page, id, query) => {
   // The prior address options may still be attached while Photon refreshes.
   // Wait for suggestions belonging to this query, and never select the stale first row.
-  const expected = query === '350 Fifth Avenue' ? 'Empire State Building'
-    : query === 'Union Station' ? 'Union Station' : 'New Haven';
+  const expected = query === '350 Fifth Avenue' ? 'Empire State Building' : query;
   await page.fill('#'+id, query);
   await page.waitForFunction(({id, expected}) => {
     const input = document.getElementById(id), list = document.getElementById(id+'Results');
