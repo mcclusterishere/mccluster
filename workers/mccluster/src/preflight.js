@@ -26,6 +26,7 @@ export const PREFLIGHT_FIRST_PREFIXES = [
   '/v1/mnet', '/v1/developer', '/v1/fbi', '/v1/platform',
   '/v1/compute', '/v1/ai',
   '/v1/creator-billing', '/v1/creator-sites', '/v1/action-connect',
+  '/v1/action-archive',
   '/v1/identity'
 ];
 

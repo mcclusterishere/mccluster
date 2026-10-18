@@ -200,6 +200,7 @@ function setTravelMode(on){
  if(changed||on){showMissions=!on;showCities=!on;draw();}
  if(!on&&changed){viewer.camera.cancelFlight();routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;if(currentLocation)currentLocation.follow=false;}
  travelVisibility();scheduleTravelControls();if(on)scheduleTravelCamera();
+ drawCompletedEvents();
 }
 function drawJourney(points,fly){
  if(!viewer||!travelSceneReady||ANALYTICS)return;
@@ -220,6 +221,32 @@ function drawJourney(points,fly){
  if(fly&&show)fitTravelPositions(framePositions);
 }
 window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:journeyEntities.length});
+/* Completed cohort events are public places supplied by the World Missions archive.
+   Keep this layer separate from live missions, member locations and travel paths. */
+let completedEvents=[],completedPins=[],completedOn=false;
+function sanitizeCompletedEvents(rows){
+ const seen=new Set();return (Array.isArray(rows)?rows:[]).slice(0,50).flatMap(e=>{
+  if(!e||typeof e.id!=='string'||!/^[A-Za-z0-9][A-Za-z0-9:_-]{0,99}$/.test(e.id)||seen.has(e.id)||typeof e.title!=='string')return [];
+  const latitude=e.latitude,longitude=e.longitude,title=e.title.replace(/\s+/g,' ').trim().slice(0,120);
+  if(!title||typeof latitude!=='number'||typeof longitude!=='number'||!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180||(latitude===0&&longitude===0))return [];
+  let date='';if(typeof e.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(e.date)){const d=new Date(e.date+'T00:00:00Z');if(Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===e.date)date=e.date;}
+  seen.add(e.id);return [{id:e.id,title,latitude,longitude,date}];
+ });
+}
+function completedVisible(){return !!parentFrame&&!ANALYTICS&&!travelMode&&completedOn;}
+function setCompletedEvents(rows,on){
+ if(!parentFrame||ANALYTICS)return;completedEvents=sanitizeCompletedEvents(rows);completedOn=on===true;drawCompletedEvents();
+}
+function drawCompletedEvents(){
+ if(!viewer)return;clear(completedPins);if(!completedVisible())return;
+ const green=Cesium.Color.fromCssColorString('#83e2bc');
+ completedEvents.forEach(e=>completedPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(e.longitude,e.latitude,3000),point:{pixelSize:13,color:green,outlineColor:Cesium.Color.fromCssColorString('#07231c'),outlineWidth:3},label:{text:'Completed · '+e.title+(e.date?' · '+e.date:''),font:'600 12px system-ui,sans-serif',fillColor:green,outlineColor:Cesium.Color.BLACK,outlineWidth:3,style:Cesium.LabelStyle.FILL_AND_OUTLINE,pixelOffset:new Cesium.Cartesian2(0,-24),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,8000000)},properties:{completedEventId:e.id}})));
+}
+function selectCompletedEvent(id){
+ if(!completedVisible()||!completedEvents.some(e=>e.id===id))return false;
+ tell({type:'hu:completed-selected',eventId:id});return true;
+}
+window.__huCompletedMissions=()=>({on:completedVisible(),events:completedEvents.length,pins:completedPins.length});
 /* the network band is short, so its Earth starts closer and fills the frame */
 function homeAltitude(){
  if(EDITORIAL&&viewer){const canvas=viewer.scene.canvas,fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.9);return Cesium.Ellipsoid.WGS84.maximumRadius/Math.sin(angle)-Cesium.Ellipsoid.WGS84.maximumRadius}
@@ -266,6 +293,7 @@ function focusMission(id){
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
+if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
  journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
  journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;
@@ -680,7 +708,7 @@ async function boot(){paintMembersDoor();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
-viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}

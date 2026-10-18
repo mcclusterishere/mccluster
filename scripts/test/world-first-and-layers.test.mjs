@@ -24,7 +24,14 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.doesNotMatch(js, /if \(boot\.next_step === "profile"\) \{\n        fillProfileForm\(false\);\n        showGate\("profile"\);/, 'the old gate is gone');
   assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'public posts until the step is done');
   assert.match(js, /if \(askToFinish\("mission"\)\) return;/, 'joining a mission asks to finish');
-  assert.match(js, /\$\("mnMissionJoin"\)\.addEventListener\("click",function\(e\)\{if\(askToFinish\("mission"\)\)return;joinMission\(e\);\}\);/, 'the dialog\'s join too: missions may be browsed, the join itself asks');
+  assert.match(js, /\$\("mnMissionJoin"\)\.addEventListener\("click",function\(\)\{joinMission\(\);\}\);/, 'the dialog calls the same guarded join function as the mission deck');
+  const joinStart = js.indexOf('  function joinMission(){');
+  const joinEnd = js.indexOf('  function uploadProofFile(', joinStart);
+  assert.ok(joinStart > 0 && joinEnd > joinStart, 'the shared join function is present');
+  const join = js.slice(joinStart, joinEnd);
+  assert.match(join, /if\(needsStep\(\)\|\|state\.stall==="retry"\)\{[\s\S]*?if\(askToFinish\("mission"\)\)return Promise\.resolve\(\{accepted:false,/, 'the shared join refuses incomplete profiles before acceptance');
+  const profileGate = join.indexOf('if(askToFinish("mission"))return Promise.resolve({accepted:false,');
+  assert.ok(profileGate >= 0 && profileGate < join.indexOf('sbRpc('), 'the profile gate precedes every join RPC');
   assert.match(js, /if \(name !== "feed" && name !== "missions" && askToFinish\(name\)\) return;/, 'the member rooms ask to finish; the feed and the missions stay open');
   assert.match(js, /\$\("mnFinishGo"\)\.onclick = function \(\) \{\n      if \(state\.stall === "signin"\) \{ openSignIn\("signin", "Your sign-in ended\. Sign in again\."\); return; \}\n      if \(state\.stall === "retry"\) \{ retryStall\(\); return; \}\n      askToFinish\("act"\);\n    \};/, 'the card\'s one button: sign in again, try again, or finish the step');
   assert.match(js, /setView\(needsStep\(\) \? "feed" : "profile"\)/, 'a finished profile lands back on the feed');

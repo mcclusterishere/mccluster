@@ -1,5 +1,16 @@
 # Pending migrations
 
+Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
+`supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
+`action_mission_reset_v1.sql` is
+`supabase/migrations/20261017164416_action_mission_reset_v1.sql`.
+The Docket 516R public archive has ten cohort profiles, ten separate provider
+webpages, nine canonical completed songs and one capstone event. Three simple
+missions remain open; larger concepts are private partner-development drafts.
+The exact production SQL and ledger are recorded. Regression gate:
+`bash scripts/test-action-archive-db.sh`; public source and release notes:
+`docs/control-plane/MISSION-RESET-DOCKET-516R.md`.
+
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and
 `docs/control-plane/DRIFT-CONTRACT.md`). A migration that is written, reviewed

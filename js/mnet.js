@@ -2441,6 +2441,7 @@
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
   var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",liveSession:"",liveMission:"",returnHref:"",proofFile:null,proofPreview:""};
+  var worldMissionDeck=null,worldMissionDeckLoaded=false,worldMissionDeckRequest=null;
   function sbRest(path,init){
     var token=sessionToken()||SB_KEY; init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -2542,7 +2543,8 @@
   function loadMissions(){
     var version=++missionListVersion;
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
-    loadActionRecord();
+    if(!state.guest&&state.user)loadActionRecord();
+    if(worldMissionDeck)worldMissionDeck.loading();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
     return Promise.all([
       /* select=* carries kind, so clip campaigns can be left to the Clips tab */
@@ -2558,8 +2560,11 @@
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
+      if(worldMissionDeck)worldMissionDeck.update(missions.all);
+      worldMissionDeckLoaded=true;
       setStatus($("mnMissionStatus"),"");
-    }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+      return true;
+    }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
@@ -2808,7 +2813,7 @@
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
-      if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
+      if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return {opened:false,message:"That mission is not available any more."};}
       missions.current=m;missions.assignment=null;clearMissionCapture();antisocialReset();
       if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
@@ -2840,12 +2845,12 @@
       setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
-      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return;}
+      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
-        var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
+        var a=rows&&rows[0];if(!a||a.status==="withdrawn")return {opened:true};
         missions.assignment=a;$("mnMissionJoin").hidden=true;
-        if(m.id===ANTISOCIAL_ID){antisocialPaint();return;}
+        if(m.id===ANTISOCIAL_ID){antisocialPaint();return {opened:true};}
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
         var assignmentMessage=a.status==="submitted"
           ?"Proof submitted for review. You can replace it until it is reviewed."
@@ -2855,21 +2860,34 @@
               ?"Proof was not verified. Fix the proof and submit it again. The reviewer note is in Your Action Record."
               :"Mission in progress.";
         setStatus($("mnMissionDialogStatus"),assignmentMessage,a.status==="rejected"?"error":"ok");
+        return {opened:true};
       });
-    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
+    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");return {opened:false,message:e.message||"Mission could not load."};});
   }
   function joinMission(){
-    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");
-    if(b.disabled)return;
+    var m=missions.current;if(!m)return Promise.resolve({accepted:false});var b=$("mnMissionJoin");
+    if(b.disabled)return Promise.resolve({accepted:false});
+    if(state.guest||!sessionToken()){
+      if($("mnMissionDialog").open)$("mnMissionDialog").close();
+      askToSignIn("mission");return Promise.resolve({accepted:false,message:"Sign in to continue with this mission."});
+    }
+    if(needsStep()||state.stall==="retry"){
+      if($("mnMissionDialog").open)$("mnMissionDialog").close();
+      if(askToFinish("mission"))return Promise.resolve({accepted:false,message:"Finish your profile to continue with this mission."});
+    }
     b.disabled=true;
     var joinRequest = missions.liveSession&&missions.liveMission===m.id
       ? sbRpc("join_action_mission_live",{p_mission_id:m.id,p_live_session_id:missions.liveSession})
       : missions.content&&missions.attributedMission===m.id
         ? sbRpc("join_action_mission_attributed",{p_mission_id:m.id,p_content_id:missions.content,p_source:missions.source||"network"})
         : sbRpc("join_action_mission",{p_mission_id:m.id});
-    joinRequest
+    return joinRequest
       .then(function(r){
-        if(!missions.current||missions.current.id!==m.id)return;
+        if(!r||!/^[0-9a-f-]{36}$/i.test(String(r.assignment_id||""))||["joined","in_progress","submitted","verified","rejected"].indexOf(r.status)<0){
+          throw new Error(typeof (r&&r.message)==="string"?r.message:"This mission has not returned an active assignment. Try again or check its requirements.");
+        }
+        var result={accepted:true,message:"Accepted “"+m.title+"”. Continue in the mission window."};
+        if(!missions.current||missions.current.id!==m.id)return result;
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=m.id===ANTISOCIAL_ID;
         if(m.id===ANTISOCIAL_ID)antisocialPaint();
         setStatus($("mnMissionDialogStatus"),m.id===ANTISOCIAL_ID?"Mission started. Begin Level 1: High Five. Record only with permission.":"Mission started. Describe what you're about to do, then open the camera.","ok");
@@ -2877,9 +2895,10 @@
         if(focusTarget&&!focusTarget.closest("[hidden]"))focusTarget.focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
         loadMissions();
+        return result;
       })
-      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
-      .then(function(){b.disabled=false;});
+      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");return {accepted:false,error:true,message:e.message||"Could not start mission."};})
+      .then(function(result){b.disabled=false;return result;});
   }
   function uploadProofFile(file){
     return uploadMediaWithPoster(file);
@@ -2932,7 +2951,7 @@
     }
     $("mnRefreshMissions").addEventListener("click",loadMissions);
     $("mnMissionClose").addEventListener("click",closeMission);
-    $("mnMissionJoin").addEventListener("click",function(e){if(askToFinish("mission"))return;joinMission(e);});
+    $("mnMissionJoin").addEventListener("click",function(){joinMission();});
     if($("mnAntisocialForm"))$("mnAntisocialForm").addEventListener("submit",antisocialSubmit);
     $("mnMissionProof").addEventListener("submit",submitMissionProof);
     if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
@@ -2992,8 +3011,62 @@
     show_up: '<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
     mission: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>'
   };
+  function prepareWorldMission(id){
+    if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}
+    if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}
+    missions.focus="";
+  }
+  function openWorldMission(m){
+    prepareWorldMission(m.id);focusOnGlobe(m.id);
+    return openMission(m.id);
+  }
+  function acceptWorldMission(m){
+    prepareWorldMission(m.id);
+    /* Retain the selected mission through auth/onboarding. Returning opens
+       its real workflow; it does not silently submit another acceptance. */
+    try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+    if(state.guest||!sessionToken()){
+      askToSignIn("mission");return Promise.resolve({accepted:false,message:"Sign in to continue with “"+m.title+"”."});
+    }
+    if(askToFinish("mission"))return Promise.resolve({accepted:false,message:"Finish your profile to continue with “"+m.title+"”."});
+    return openWorldMission(m).then(function(result){
+      if(!result||!result.opened||!missions.current||missions.current.id!==m.id||!$("mnMissionDialog").open){
+        return {accepted:false,error:!!(result&&result.message),message:result&&result.message||"Mission kept. You can accept it again when you’re ready."};
+      }
+      var a=missions.assignment;
+      if(a&&["joined","in_progress","submitted","verified","rejected"].indexOf(a.status)>=0){
+        return {accepted:true,message:"Your existing “"+m.title+"” mission is open."};
+      }
+      return joinMission();
+    });
+  }
+  function ensureWorldMissionDeck(){
+    if(worldMissionDeck)return worldMissionDeck;
+    if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
+    worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
+      onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
+    });
+    if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
+    return worldMissionDeck;
+  }
+  function loadWorldMissionDeck(){
+    if(!ensureWorldMissionDeck())return Promise.resolve();
+    if(worldMissionDeckRequest)return worldMissionDeckRequest;
+    if(worldMissionDeckLoaded)return Promise.resolve();
+    /* The mission catalogue works even if WebGL or public pins are unavailable. */
+    worldMissionDeckRequest=loadMissions().then(function(){worldMissionDeckRequest=null;});
+    return worldMissionDeckRequest;
+  }
+  window.addEventListener("mcc:world-mode",function(e){
+    if(e.detail&&e.detail.mode==="missions"){
+      loadWorldMissionDeck();
+      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
+    }
+  });
   function paintMissionPreview() {
     var host = $("huMissionList"); if (!host) return;
+    if(ensureWorldMissionDeck()){loadWorldMissionDeck();return;}
     var list = Object.keys(state.world.missions).map(function (id) { return state.world.missions[id]; });
     host.innerHTML = list.length ? list.slice(0, 2).map(function (m) {
       return '<button type="button" class="hu-mission-row" data-hu-mission="' + esc(m.mission_id) + '">' +
@@ -3249,7 +3322,7 @@
         });
         /* Published missions lead the feed; selection stays with the visitor. */
         paintMissionPreview();
-        if (d.dataUnavailable) $("huMissionList").innerHTML = '<p class="hu-muted">Mission pins could not load. Use the all-missions button to browse available work.</p>';
+        if (d.dataUnavailable && !worldMissionDeck) $("huMissionList").innerHTML = '<p class="hu-muted">Mission pins could not load. Use the all-missions button to browse available work.</p>';
         /* a guest starts at Explore the world (owner's signed-out reference) */
         if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
         if ($("mnWorldTagCount")) $("mnWorldTagCount").textContent = String(Object.keys(state.world.pins).length);
@@ -3264,7 +3337,8 @@
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
       } else if (d.type === "hu:globe-unavailable") {
-        $("huMissionList").innerHTML = '<p class="hu-muted">The map is unavailable. Use the all-missions button to browse available work.</p>';
+        if(ensureWorldMissionDeck())loadWorldMissionDeck();
+        else $("huMissionList").innerHTML = '<p class="hu-muted">The map is unavailable. Use the all-missions button to browse available work.</p>';
         if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;

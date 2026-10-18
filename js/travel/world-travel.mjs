@@ -517,6 +517,7 @@ function setMode(mode) {
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();
+  window.dispatchEvent(new CustomEvent('mcc:world-mode', { detail:{ mode } }));
 }
 window.MCC_WORLD_MODE = { set:setMode, get:() => currentMode };
 const modeButtons = [...document.querySelectorAll('.wt-world-modes button')];
@@ -531,11 +532,12 @@ modeButtons.forEach(button => {
   };
 });
 let touchStart = null;
-$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.target.closest('input,select,button,a,summary,.wt-toolbar') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
+$('mnWorldFeed').addEventListener('touchstart', e => { touchStart = e.touches.length !== 1 || e.target.closest('input,select,button,a,summary,.wt-toolbar,[data-mission-deck]') ? null : { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
 $('mnWorldFeed').addEventListener('touchend', e => {
   if (!touchStart) return; const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y; touchStart = null;
   if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2) { const modes = ['travel', 'missions', 'posts']; setMode(modes[(modes.indexOf(currentMode) + (dx < 0 ? 1 : 2)) % 3]); }
 }, { passive:true });
+$('mnWorldFeed').addEventListener('touchcancel', () => { touchStart = null; }, { passive:true });
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || e.source !== frame.contentWindow) return;
   if (e.data?.type === 'hu:globe-ready') renderGlobe(!!route || !!liveFix);
@@ -673,6 +675,6 @@ new MutationObserver(() => {
 }).observe(root, { attributes:true, attributeFilter:['class'] });
 window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
 syncInputs(); sessionChanged();
-const query = new URLSearchParams(location.search);
-setMode(query.has('mission') ? 'missions' : query.has('song') ? 'posts' : 'travel');
+const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
+setMode(query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : ['travel', 'missions', 'posts'].includes(requestedMode) ? requestedMode : 'travel');
 send({ type:'hu:hello' }); autoLocate();
