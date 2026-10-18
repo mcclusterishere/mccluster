@@ -355,6 +355,8 @@
      to McCluster's house, the M as supplied, beside Everything. The house
      clears it: standing at Matthew's front door, the M is back. */
   var PERSPECTIVE_KEY = "mcc_perspective";
+  var PERSPECTIVE_SUB_KEY = "mcc_perspective_account";
+  var SELF_PROFILE = null, selfProfileEpoch = 0, lastVerifiedSubject = "";
   var HANDLE_RE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var HOUSE_ROOM = WINGS.home.slots[0];
   var HOUSE_LABEL = (function () {
@@ -365,30 +367,53 @@
   function attrOf(x) { return textOf(x).replace(/"/g, "&quot;"); }
   function cleanPerspective(p) {
     if (!p || typeof p !== "object") return null;
+    if (p.kind === "house") return { kind:"house" };
     var handle = String(p.handle || "").trim().toLowerCase();
     if (!HANDLE_RE.test(handle)) return null;
     var name = String(p.name || "").replace(/\s+/g, " ").trim().slice(0, 60) || "@" + handle;
     var avatar = "";
     try { var u = new URL(String(p.avatar || ""), location.href); if (u.protocol === "https:") avatar = u.href; } catch (e) {}
-    return { handle: handle, name: name, avatar: avatar };
+    return { kind:p.kind === "artist" ? "artist" : "member", handle:handle, name:name, avatar:avatar };
+  }
+  function currentSubject() {
+    var session = readAuthSession(), token = session && session.access_token;
+    return token ? String(jwtPayload(token).sub || "") : "";
   }
   function readPerspective() {
-    try { return cleanPerspective(JSON.parse(sessionStorage.getItem(PERSPECTIVE_KEY) || "null")); } catch (e) { return null; }
+    try {
+      var sub=currentSubject();
+      return sub && sessionStorage.getItem(PERSPECTIVE_SUB_KEY)===sub
+        ? cleanPerspective(JSON.parse(sessionStorage.getItem(PERSPECTIVE_KEY)||"null")) : null;
+    } catch(e) { return null; }
   }
   function storePerspective(p) {
-    try { if (p) sessionStorage.setItem(PERSPECTIVE_KEY, JSON.stringify(p)); else sessionStorage.removeItem(PERSPECTIVE_KEY); } catch (e) {}
+    try {
+      var sub=currentSubject();
+      if(p && sub) {
+        sessionStorage.setItem(PERSPECTIVE_KEY,JSON.stringify(p));
+        sessionStorage.setItem(PERSPECTIVE_SUB_KEY,sub);
+      } else {
+        sessionStorage.removeItem(PERSPECTIVE_KEY);
+        sessionStorage.removeItem(PERSPECTIVE_SUB_KEY);
+      }
+    }catch(e){}
   }
-  var AT_HOUSE = !ON_WORLD_HOST && (function () {
-    try { return samePath(location.pathname) === samePath(new URL(HOUSE + "index.html", location.href).pathname); } catch (e) { return false; }
-  })();
-  var PERSPECTIVE = AT_HOUSE ? null : readPerspective();
-  if (AT_HOUSE) storePerspective(null);
+  /* Visiting the actual founder's profile is an explicit perspective switch.
+     Opening /index.html normally does not replace the signed-in member's home. */
+  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\\.html$/.test(location.pathname) ||
+    new URLSearchParams(location.search).get("front")==="house");
+  var PERSPECTIVE=readPerspective();
+  if(HOUSE_VISIT && currentSubject()) {
+    PERSPECTIVE={kind:"house"};storePerspective(PERSPECTIVE);
+  }
   function initialOf(name) { var m = String(name).match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
   function shortName(name) { var w = String(name).split(" ")[0]; return w.length > 12 ? w.slice(0, 11) + "\u2026" : w; }
   function paintPerspective() {
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
-    var p = PERSPECTIVE, label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
+    var p = PERSPECTIVE || (AUTH_STATE.signed_in ? SELF_PROFILE : null),
+      label = homeTab.querySelector("span:last-child"), coin = homeTab.querySelector(".appbar__m");
+    if(p && p.kind==="house") p=null;
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */
@@ -403,7 +428,8 @@
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + "music-creator.html?handle=" + encodeURIComponent(p.handle);
+    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+      "?handle=" + encodeURIComponent(p.handle);
     homeTab.href = door;
     homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
     homeTab.setAttribute("data-perspective", p.handle);
@@ -414,16 +440,16 @@
     }
     if (label) label.textContent = shortName(p.name);
     /* their own front page lights the middle coin, as the house lights the M */
-    var theirs = /music-creator\.html$/.test(location.pathname) &&
+    var theirs = /(?:music-creator|member-front)\.html$/.test(location.pathname) &&
       String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
     homeTab.classList.toggle("is-here", theirs);
     WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html", "mmark", "McCluster", { title: "McCluster, the house",
+    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
       sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
   }
   function setPerspective(raw) {
     var p = cleanPerspective(raw);
-    if (!p) return false;
+    if (!p || !AUTH_STATE.signed_in) return false;
     PERSPECTIVE = p;
     storePerspective(p);
     if (wingOn) revert();
@@ -438,7 +464,24 @@
     paintPerspective();
     HOME_BAR = dock.innerHTML;
   }
-  window.addEventListener("mcc:perspective", function (e) { setPerspective(e.detail); });
+  window.addEventListener("mcc:perspective",function(e) { if(AUTH_STATE.signed_in)setPerspective(e.detail); });
+  window.addEventListener("mcc:perspective-house",function() {
+    if(AUTH_STATE.signed_in)setPerspective({kind:"house"});
+  });
+  function resolveOwnPerspective(subject,user) {
+    var seq=++selfProfileEpoch;
+    if(!subject||!user||!window.MCC||typeof window.MCC.api!=="function")return;
+    window.MCC.api("/v1/mnet/bootstrap?app_key=mccluster-web").then(function(response) {
+      if(!response.ok)throw Error("Profile unavailable");
+      return response.json();
+    }).then(function(data) {
+      if(seq!==selfProfileEpoch||!AUTH_STATE.signed_in||currentSubject()!==subject)return;
+      var id=data&&data.identity||{},profile=data&&data.profile||{};
+      SELF_PROFILE=cleanPerspective({kind:"member",handle:id.mccluster_id,
+        name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
+      if(!PERSPECTIVE&&SELF_PROFILE)paintPerspective();
+    }).catch(function(){/* An unfinished account still has the normal platform entrance. */});
+  }
 
   function readAuthSession() {
     try { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); }
@@ -482,7 +525,7 @@
     body.classList.toggle("mcc-auth-out", !signedIn);
     body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
 
-    /* the middle cell: the M, or the creator whose perspective this session holds */
+    /* Center tab: visited profile > authenticated owner profile > original guest house. */
     paintPerspective();
     /* Exactly three columns, signed in or not. Record and Analytics were
        member-only columns; they are contextual now (Create in the World
@@ -635,11 +678,19 @@
     var session = readAuthSession();
     if (!session || session.access_token !== adminSession) paintAdmin(false);
     if (!session || !session.access_token) {
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      lastVerifiedSubject=""; storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return Promise.resolve(AUTH_STATE);
     }
     var payload = jwtPayload(session.access_token);
+    var subject = String(payload.sub || "");
+    if (subject !== lastVerifiedSubject) {
+      ++selfProfileEpoch; SELF_PROFILE=null;
+      PERSPECTIVE=readPerspective();
+      lastVerifiedSubject=subject;
+    }
     var exp = Number(payload.exp || 0) * 1000;
     paintAuthState(exp > Date.now(), null, false);
     return loadCanonicalAuth().then(function (mcc) {
@@ -651,10 +702,13 @@
       // the new session instead of accepting an old result or leaving it pending.
       if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
       paintAuthState(!!user, user, true);
+      if(user && subject)resolveOwnPerspective(subject,user);
       checkAdmin();
       return AUTH_STATE;
     }).catch(function () {
       if (attempt !== authEpoch) return AUTH_STATE;
+      ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
+      storePerspective(null);
       paintAuthState(false, null, true);
       paintAdmin(false);
       return AUTH_STATE;
@@ -1139,6 +1193,7 @@
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
+    ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
     navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },

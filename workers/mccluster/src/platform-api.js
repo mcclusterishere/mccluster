@@ -1220,12 +1220,62 @@ async function handleFbi(req,env,path,url){
   return fail(req,env,'Not found',404);
 }
 
+/* News lives in the same timeline as member posts, but its canonical
+   ingestion rows are not fabricated network_posts. Comments are first-party
+   member work linked to a retained article record. No publisher text is copied.
+   The explicit flag remains OFF until the pending private schema is approved. */
+async function handleWorldNewsDiscussion(req,env,path){
+  const match=path.match(/^\/v1\/world\/news\/([0-9a-f-]{36})\/comments$/i);
+  if(!match)return null;
+  if(!uuidLike(match[1]))return fail(req,env,'Story not found',404);
+  if(req.method!=='GET'&&req.method!=='POST')return fail(req,env,'Method not allowed',405);
+  if(String(env.WORLD_NEWS_COMMENTS_ENABLED||'').toLowerCase()!=='true')
+    return fail(req,env,'Discussion is not available yet',503);
+  const user=await authUser(req,env);
+  if(req.method==='POST'&&!user)return fail(req,env,'Sign in to comment',401);
+  const muid=user?await currentMuid(env,user.id):null;
+  if(req.method==='POST'&&!muid)return fail(req,env,'McCluster identity unavailable',409);
+  const articleId=match[1];
+  const articles=await service(env,'media_news_articles?id=eq.'+articleId+
+    '&select=id,canonical_url,imported_at&limit=1');
+  const article=articles?.[0];
+  if(!article||!/^https?:\/\//i.test(String(article.canonical_url||'')))
+    return fail(req,env,'Story not found',404);
+  if(req.method==='POST'){
+    const active=await service(env,'m_people?id=eq.'+muid+'&status=eq.active&select=id&limit=1');
+    if(!active?.length)return fail(req,env,'Complete your account before commenting',403);
+    const input=await json(req),body=String(input?.body||'').trim();
+    if(chars(body)<1||chars(body)>1000)
+      return fail(req,env,'Comment must contain 1–1000 characters',400);
+    const created=await service(env,'media_news_comments',{
+      method:'POST',headers:{prefer:'return=representation'},
+      body:JSON.stringify({article_id:articleId,author_m_uid:muid,body})
+    });
+    return reply(req,env,{comment:created?.[0]||null},201);
+  }
+  const rows=await service(env,'media_news_comments?article_id=eq.'+articleId+
+    '&deleted_at=is.null&state=eq.visible&select=id,article_id,author_m_uid,body,created_at&order=created_at.asc&limit=100');
+  const allowed=[];
+  for(const comment of rows||[]){
+    if(!muid||!await networkBlocked(env,muid,comment.author_m_uid))allowed.push(comment);
+  }
+  const actors=await networkActors(env,allowed.map(c=>c.author_m_uid));
+  const response=reply(req,env,{comments:allowed.map(c=>({
+    id:c.id,article_id:c.article_id,body:c.body,created_at:c.created_at,
+    actor:{display_name:actors[c.author_m_uid]?.display_name||'Member',
+      mccluster_id:actors[c.author_m_uid]?.mccluster_id||''}
+  }))});
+  response.headers.set('cache-control','private, no-store');
+  return response;
+}
+
 export async function handlePlatformApi(req,env){
   if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return null;
   const url=new URL(req.url),path=url.pathname.replace(/\/+$/,'')||'/';
   if(path==='/v1/platform/catalog'&&req.method==='GET'){
     const [products,apps]=await Promise.all([service(env,'api_products?enabled=eq.true&order=product_key.asc&select=product_key,name,description,unit_name,default_unit_cost'),service(env,'platform_apps?enabled=eq.true&order=product_family.asc,name.asc&select=app_key,name,product_family,kind,public_url')]); return reply(req,env,{...CATALOG,api_products:products||[],apps:apps||[]});
   }
+  if(path.startsWith('/v1/world/news/')) return handleWorldNewsDiscussion(req,env,path);
   if(path.startsWith('/v1/developer/')) return handleDeveloper(req,env,path,url);
   if(path==='/v1/mnet'||path.startsWith('/v1/mnet/')) return handleMnet(req,env,path,url);
   if(path.startsWith('/v1/fbi/')) return handleFbi(req,env,path,url);
