@@ -214,7 +214,7 @@ try {
         destination:Cesium.Cartesian3.fromDegrees(lon,lat,2300),
         orientation:{heading:0,pitch:-Math.PI/2,roll:0}
       });
-      return Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+      return Cesium.SceneTransforms.worldToWindowCoordinates(
         viewer.scene, Cesium.Cartesian3.fromDegrees(lon,lat));
     }, coordinates);
     assert.ok(position && Number.isFinite(position.x) && Number.isFinite(position.y), 'New Haven point projects into Cesium canvas');
