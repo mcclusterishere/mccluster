@@ -22,6 +22,9 @@ test('World has one mixed feed: news + posts, no separate News page or public ca
   assert.match(reader,/MCC_WORLD_NEWS_READER/);
   assert.match(reader,/worldNewsReader/);
   assert.match(reader,/Join the conversation/);
+  assert.match(reader,/discuss\.hidden = !discussionAvailable\(story\.id\)/);
+  assert.match(reader,/card\?\.querySelector\('\[data-discussion-toggle\]'\)/);
+  assert.match(reader,/!id \|\| !discussionAvailable\(id\)/);
   assert.match(reader,/document\.body\.appendChild\(reader\)/);
   assert.doesNotMatch(reader,/in-app full text is unavailable|publisher permission|discovery record, not|innerHTML|window\.open|fetch\(.*\.url/);
   assert.match(travel,/data-world-mode/);
