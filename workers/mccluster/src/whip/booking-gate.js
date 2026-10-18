@@ -93,6 +93,24 @@ export function createWhipBookingGate(next=app,options={}) {
           'Ride booking is in preparation. No live driver or fare has been promised.'});
     }
 
+    if(path==='/api/drivers/clearance'&&req.method==='GET'){
+      try{
+        const u=await signedIn(req,env,fetchFn);
+        const rows=await service(env,'drivers?auth_user_id=eq.'+encodeURIComponent(u.id)+
+          '&select=id,tenant_id&limit=1',{},fetchFn);
+        const driver=rows?.[0];
+        if(!driver)return clean({driver_id:null,approval_status:'not_applied',can_drive:false});
+        const clears=await service(env,'whip_driver_clearances?driver_id=eq.'+encodeURIComponent(driver.id)+
+          '&tenant_id=eq.'+encodeURIComponent(driver.tenant_id)+
+          '&select=approval_status,approved_at,identity_checked_at,background_checked_at,local_authority_checked_at,insurance_expires_at,license_expires_at,revoked_at&limit=1',{},fetchFn);
+        const clearance=clears?.[0]||null;
+        return clean({driver_id:driver.id,
+          approval_status:clearance?.approval_status||'pending',
+          can_drive:!!approvedClearance(clearance,now())&&isLive(env),
+          service_live:isLive(env)});
+      }catch(error){const p=bookingProblem(error);return clean(p,p.status)}
+    }
+
     if(path==='/api/rides'&&req.method==='POST' || path==='/api/rides/quote'&&req.method==='POST'){
       try{
         const user=await signedIn(req,env,fetchFn),body=await readBody(req);
