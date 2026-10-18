@@ -303,10 +303,18 @@ function choosePlace(key, row, { source = 'manual' } = {}) {
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
   if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
 }
+// The parent Music transport floats above a cross-origin World iframe.
+ // Raising the suggestion z-index inside that iframe cannot outrank it:
+ // announce visible autocomplete instead, so the authenticated audio bridge
+ // can temporarily suppress only the transport UI, not the playing audio.
+function announceAddressPicking(){
+  const active = !!panel.querySelector('.wt-suggest:not([hidden])');
+  window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete',{detail:{active}}));
+}
 function autocomplete(id, resultId, key) {
   const input = $(id), results = $(resultId); let seq = 0, timer;
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', resultId); input.setAttribute('aria-expanded', 'false'); results.setAttribute('role', 'listbox');
-  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); };
+  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
   searchClosers.push(close);
   input.addEventListener('input', () => {
     close(); addressController?.abort(); addressController = new AbortController(); const signal = addressController.signal;
@@ -327,7 +335,7 @@ function autocomplete(id, resultId, key) {
           const note = document.createElement('small'); note.className = 'wt-search-note';
           note.textContent = fallback ? 'Address search is unavailable. These city matches lead to a city center; try again for a precise address.' : 'No matching place yet. Add the street number, city or postal code, then choose a result.'; results.append(note);
         }
-        results.hidden = false; input.setAttribute('aria-expanded', 'true');
+        results.hidden = false; input.setAttribute('aria-expanded', 'true'); announceAddressPicking();
       } catch { if (request === seq && !signal.aborted) status('Address search is unavailable. Try again shortly; directions need a selected location.'); }
       finally { if (request === seq) input.removeAttribute('aria-busy'); }
     }, 650);
