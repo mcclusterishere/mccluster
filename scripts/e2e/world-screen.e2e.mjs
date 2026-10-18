@@ -1222,7 +1222,7 @@ const newsState = (page) => page.evaluate(() => {
     /* a short publisher name is shown whole; only a long one is cut, inside its card */
     domains: cards.slice(0, 2).map((c) => { const d = c.querySelector('.mn__news-domain'); return d ? d.scrollWidth <= d.clientWidth : null; }),
     links: cards.map((c) => { const b = c.querySelector('button.mn__news-title'); return b && { id: b.dataset.newsOpen, href: b.getAttribute('href'), type: b.type }; }),
-    imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture,svg').length, 0) };
+    imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture').length, 0) };
 });
 /* the state without the per-card links, for a readable log line */
 const brief = ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains }) => ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains });
@@ -1240,7 +1240,7 @@ if (runs('news-guest')) {
   check(scope, 'the mixed feed and geographic news read the Worker without a session', reads.some((r) => /[?&]limit=20$/.test(r.search)) && reads.length <= 2 && reads.every((r) => !r.auth && /[?&]limit=(?:20|50)$/.test(r.search)), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
   const ids = await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((x) => x.getAttribute('data-news-id')));
-   check(scope, 'every headline stays on McCluster as a first-party reader button; no pictures or marks', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
+   check(scope, 'every headline stays in-app, without publisher photos or logos; comment icons are allowed', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
    const worldUrlBeforeNews = page.url();
    await page.locator('#mnFeed [data-news-id] .mn__news-title').first().click();
    const modal = page.locator('#worldNewsReader');
