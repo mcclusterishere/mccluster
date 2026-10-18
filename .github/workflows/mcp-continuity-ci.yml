@@ -18,6 +18,12 @@ jobs:
         run: npm ci --prefix workers/mccluster --ignore-scripts --no-audit --no-fund
       - name: Verify Core contracts and preview runtime
         run: npm run check --prefix core && npm test --prefix core
+      - name: Install FFmpeg for real Website Studio media tests
+        if: ${{ hashFiles('scripts/test/website-studio-connected.test.mjs') != '' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
       - name: Verify complete Worker and isolated transport suites
         run: |
           npm test --prefix workers/mccluster
