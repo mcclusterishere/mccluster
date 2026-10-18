@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101115">
+  <title>Book a ride · Whip Equipped LLC</title>
+  <meta name="description" content="Whip Equipped LLC: choose a pickup and destination, review the verified fare, and request a licensed, approved driver.">
+  <link rel="stylesheet" href="../css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="ride-booking.css?v=__STAMP__">
+</head>
+<body class="we-booking">
+  <main class="we-book" id="weBook">
+    <header class="we-head">
+      <p class="we-eyebrow">WHIP EQUIPPED LLC · MOBILITY</p>
+      <h1>Find your ride.</h1>
+      <p>Choose real pickup and drop-off locations. Your fare, when available, comes from the operator's verified routing and pricing service—not a preset estimate.</p>
+    </header>
+    <section class="we-status" id="weService" aria-live="polite">Checking whether Whip Equipped is accepting real rides…</section>
+    <section class="we-card" aria-label="Plan your ride">
+      <div class="we-fields">
+        <div class="we-field">
+          <label for="wePickup">Pick up</label>
+          <div class="we-field-control"><input id="wePickup" type="search" placeholder="Enter a full pickup address" autocomplete="off" maxlength="200" aria-controls="wePickupResults" aria-expanded="false"><button id="weLocate" type="button" aria-label="Use current location">◎</button></div>
+          <div class="we-options" id="wePickupResults" role="listbox" hidden></div>
+        </div>
+        <div class="we-field">
+          <label for="weDropoff">Drop off</label>
+          <input id="weDropoff" type="search" placeholder="Where are you going?" autocomplete="off" maxlength="200" aria-controls="weDropoffResults" aria-expanded="false">
+          <div class="we-options" id="weDropoffResults" role="listbox" hidden></div>
+        </div>
+      </div>
+      <p class="we-note">Select both suggestions before pricing. Address search uses Photon; precise coordinates are sent to the commercial route provider only when you explicitly request a fare.</p>
+      <button type="button" id="weQuote" class="we-cta" disabled>Get verified fare</button>
+      <p class="we-message" id="weMessage" role="status" aria-live="polite"></p>
+    </section>
+    <section class="we-card" id="weQuoteCard" hidden aria-label="Fare quotation">
+      <p class="we-eyebrow">WE STANDARD · OPERATOR-VERIFIED QUOTE</p>
+      <div class="we-quote"><strong id="weFare"></strong><span id="weDistance"></span></div>
+      <p id="weQuoteExpiry" class="we-note"></p>
+      <p class="we-note">A quoted fare is not a confirmed ride. Your card must be authorized and an approved driver must actually accept the request.</p>
+      <button type="button" class="we-cta" id="weConfirm">Authorize payment and request driver</button>
+    </section>
+    <section class="we-card" id="wePayCard" hidden aria-label="Secure payment authorization">
+      <h2>Authorize your fare</h2>
+      <div id="wePaymentElement"></div>
+      <button id="wePay" type="button" class="we-cta">Authorize ride payment</button>
+      <button id="weCancelPayment" type="button" class="we-subtle">Cancel this request</button>
+      <p id="wePaymentNotice" role="status"></p>
+    </section>
+    <section class="we-card" id="weRideCard" hidden aria-label="Ride request status">
+      <p class="we-eyebrow">RIDE REQUEST</p>
+      <h2 id="weRideStatus">Awaiting an approved driver</h2>
+      <p id="weRideDetails"></p>
+      <p class="we-note" id="weRideCaution">This is a request, not a dispatched or confirmed booking until an approved driver accepts.</p>
+      <button id="weCancelRide" type="button" class="we-subtle">Cancel request</button>
+    </section>
+    <footer class="we-closer">
+      <p>Offered by Whip Equipped LLC, a separate company. Driver approval, insurance, legally required disclosures and operational availability are prerequisites to live booking.</p>
+      <a href="driver/">Apply to drive</a> · <a href="../mnet.html?view=feed">World</a>
+    </footer>
+  </main>
+  <script src="../js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="../js/tabbar.js?v=__STAMP__"></script>
+  <script type="module" src="ride-booking.mjs?v=__STAMP__"></script>
+</body>
+</html>
