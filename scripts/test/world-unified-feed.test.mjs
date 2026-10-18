@@ -5,10 +5,10 @@ import {handlePlatformApi} from '../../workers/mccluster/src/platform-api.js';
 const ID='11111111-1111-4111-8111-111111111111';
 const MUID='22222222-2222-4222-8222-222222222222';
 const AUTH='33333333-3333-4333-8333-333333333333';
-const URL='https://api.mccluster.org/v1/world/news/'+ID+'/comments';
+const COMMENT_URL='https://api.mccluster.org/v1/world/news/'+ID+'/comments';
 const env={SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-service-key',WORLD_NEWS_COMMENTS_ENABLED:'true'};
 const response=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
-const req=(method='GET',body)=>new Request(URL,{method,...(body?{body:JSON.stringify(body),headers:{'content-type':'application/json',authorization:'Bearer test-user-token'}}:method==='POST'?{headers:{authorization:'Bearer test-user-token'}}:{})});
+const req=(method='GET',body)=>new Request(COMMENT_URL,{method,...(body?{body:JSON.stringify(body),headers:{'content-type':'application/json',authorization:'Bearer test-user-token'}}:method==='POST'?{headers:{authorization:'Bearer test-user-token'}}:{})});
 
 test('news discussions fail closed until approved database migration and flag activation',async()=>{
   let fetched=false;const original=globalThis.fetch;
@@ -47,7 +47,7 @@ test('news discussions authorize writes, preserve publisher boundary, and allow 
     assert.equal(r.headers.get('cache-control'),'private, no-store');
     assert.ok(calls.every(x=>x.path!=='/story'));
     // A guest may not create content and cannot claim another member identity.
-    r=await handlePlatformApi(new Request(URL,{method:'POST',headers:{'content-type':'application/json'},body:'{"body":"Guest"}'}),env);
+    r=await handlePlatformApi(new Request(COMMENT_URL,{method:'POST',headers:{'content-type':'application/json'},body:'{"body":"Guest"}'}),env);
     assert.equal(r.status,401);
     assert.equal(writes.length,0);
     r=await handlePlatformApi(req('POST',{body:'a'.repeat(1001)}),env);
