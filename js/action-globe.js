@@ -167,7 +167,7 @@ function liftTravelControls(){
   const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
   const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
   const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
-  const obstacles=[dock,...['#mccWorldAudioControls','.mn__world-expand','.wt-world-modes','.wt-headline','.wt-destination','.mn__top'].map(rect)].filter(r=>overlap(frame,r));
+  const obstacles=[dock,...['#mccWorldAudioControls','.mn__world-expand','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r));
   const preferred=getComputedStyle(rail).flexDirection;
   for(const direction of [preferred,preferred==='row'?'column':'row']){
    rail.style.flexDirection=direction;const size=rail.getBoundingClientRect();
@@ -195,7 +195,7 @@ function wireTravelControlLayout(){
  window.addEventListener('resize',scheduleTravelControls,{passive:true});
  try{
   if(!parentFrame)return;parentFrame.addEventListener('resize',scheduleTravelControls,{passive:true});parentFrame.addEventListener('mcc:world-audio-layout',scheduleTravelControls);
-  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,.mn__world-expand,.wt-world-modes')])if(el)observer.observe(el)}
+  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,.mn__world-expand,.wt-world-modes,#wtMapNav,#wtMapPickBanner')])if(el)observer.observe(el)}
  }catch(_){}
  scheduleTravelControls();
 }
