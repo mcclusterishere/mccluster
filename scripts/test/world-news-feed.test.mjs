@@ -117,3 +117,20 @@ test('a news card flies the Earth to the place it mentions, and the frame checks
   assert.deepEqual(calls, [data], 'the same-origin parent can focus the place a story mentions');
   for (const src of [globe, js]) assert.doesNotMatch(src, /event here|events? happened|happened here/i, 'a story mentions a place; it does not put an event there');
 });
+
+test('news cards fail closed until backend capability explicitly enables comment controls', async () => {
+  const js = await read('js/mnet.js');
+  const card = new Function('state','esc','timeAgo','ICON','discussionHtml',
+    fnSource(js, 'newsCard') + '\nreturn newsCard;');
+  const story = { id:'11111111-1111-4111-8111-111111111111',title:'A public news headline',
+    domain:'publisher.example',seen_at:'2026-10-18T12:00:00Z',place:'',lat:null,lon:null };
+  const esc = s => String(s);
+  const args = [esc,()=>'',{comment:'COMMENT_ICON'},()=>'<section class="mn__comments">'];
+  const inactive = card({newsCommentsAvailable:false},...args)(story);
+  assert.doesNotMatch(inactive,/data-discussion-toggle|COMMENT_ICON|mn__comments/);
+  const active = card({newsCommentsAvailable:true},...args)(story);
+  assert.match(active,/data-discussion-toggle/);
+  assert.match(active,/COMMENT_ICON/);
+  assert.match(js,/\/v1\/world\/news\/comments-capability/);
+  assert.match(js,/data\.available === true/);
+});
