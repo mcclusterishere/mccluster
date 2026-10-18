@@ -216,7 +216,7 @@
     if (shell) return;
     loadStyle(); shell = doc.createElement("section"); shell.id = "mccWorldAudioShell";
     shell.setAttribute("aria-label", "World"); shell.hidden = true;
-    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Human Uprise World";
+    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Equity Uprise World";
     frame.allow = "geolocation; autoplay; fullscreen; camera; microphone";
     frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
     status = doc.createElement("div"); status.className = "world-audio-status";
@@ -242,7 +242,7 @@
     createShell(); ensureControls();
     var wasOpen = open; open = true; shell.hidden = false;
     doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
-    concealMusic(); doc.title = "World · Human Uprise";
+    concealMusic(); doc.title = "World · Equity Uprise";
     if (!wasOpen && !options.history) {
       var address = new URL(baseHref); address.searchParams.set("world", "1");
       history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);
