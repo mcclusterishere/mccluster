@@ -164,4 +164,42 @@ try{
     check('embedded globe has no duplicate navigation or profile',await page.locator('.appbar,#mccAuthChip,#mccControlToggle').count()===0);
     await ctx.close();
   }
+  /* The managed client perspective is presentation-only, and must survive
+     phone/tablet/desktop navigation without inventing account privileges. */
+  for (const client of [
+    {slug:'faith-and-results',path:'/partners/faith-and-results.html',name:'Faith'},
+    {slug:'shiloh-church-gpt',path:'/partners/shiloh-church-gpt.html',name:'Shiloh'}
+  ]) {
+    for (const width of [390,820,1280]) {
+      const {ctx,page,errors}=await setup(width,'guest');
+      const scope=client.name+' client '+width+'px';
+      await page.goto(BASE+client.path);
+      await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
+      const dock=page.locator('.appbar');
+      check(scope+' keeps exactly one shared three-tab bar',
+        await dock.count()===1 && await dock.locator('a[data-appnav]').count()===3);
+      check(scope+' puts approved client identity in the middle, not a role',
+        (await dock.locator('[data-appnav="home"]').getAttribute('aria-label')||'').includes('Open '+(client.name==='Faith'?'Faith & Results':'Shiloh Baptist Church')+' app')
+        && await page.evaluate(()=>!window.MCC_BAR.admin()));
+      check(scope+' has a visible accessible main headline and no side scrolling',
+        await page.locator('main h1').isVisible() && await fits(page));
+      check(scope+' retains the approved preview notice',
+        client.name!=='Shiloh'||await page.getByText('INTEGRATION PREVIEW').count()>0);
+      await page.screenshot({path:join(OUT,'managed-'+client.slug+'-'+width+'.png')});
+      if (width===390) {
+        await dock.locator('[data-appnav="music"]').click();
+        await page.waitForURL(u=>u.pathname.endsWith('/listen.html')&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
+        await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
+        check(scope+' carries client context through Music',true);
+        await page.locator('.appbar [data-appnav="home"]').click();
+        await page.waitForURL(u=>u.pathname===client.path&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
+        await page.waitForSelector('.appbar [data-appnav="home"][data-managed-perspective="'+client.slug+'"]',{timeout:18000});
+        await page.locator('.appbar [data-appnav="world"]').click();
+        await page.waitForURL(u=>u.origin==='https://mccluster.org'&&u.searchParams.get('mcc_app')===client.slug,{timeout:18000});
+        check(scope+' carries client context through World without creating member access',true);
+      }
+      check(scope+' creates no uncaught script errors',errors.length===0,errors);
+      await ctx.close();
+    }
+  }
 }finally{await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}
