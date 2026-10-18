@@ -68,7 +68,8 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
   assert.match(bar, /mmark: \["assets\/img\/m-mark\.png", "appbar__m"\],/);
   assert.match(bar, /WINGS\.home\.slots\[0\] = \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster",/);
   /* Matthew's front door lets the perspective go */
-  assert.match(bar, /var PERSPECTIVE=readPerspective\(\);/);\n  assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
+  assert.match(bar, /var PERSPECTIVE=readPerspective\(\);/);
+  assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
   assert.match(bar, /perspective: function \(p\) \{ return arguments\.length \? setPerspective\(p\) : PERSPECTIVE; \},/);
   /* the painted bar is what a held wing comes back to */
   assert.match(bar, /paintPerspective\(\);\n    HOME_BAR = dock\.innerHTML;/);
