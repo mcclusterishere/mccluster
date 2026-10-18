@@ -87,12 +87,14 @@ async function requireUser(req, env) {
   if (!user) throw Object.assign(new Error('Authentication required'), { status: 401 });
   return user;
 }
-async function requireOperator(req, env, tenantId) {
+async function requireOperator(req, env, tenantId, roles = ['owner','admin']) {
   const user = await requireUser(req, env);
-  if (user.demo && req.headers.get('x-we-role') === 'operator') return user;
-  let rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
-  if (!rows?.length && user.email) rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&email=eq.${encodeURIComponent(user.email)}&select=*`);
-  if (!rows?.length) throw Object.assign(new Error('Operator access required'), { status: 403 });
+  // Demo role headers and email matching are not operator authority. Require
+  // an immutable authenticated account ID linked to the operator and role.
+  if (user.demo) throw Object.assign(new Error('Verified operator login required'), { status: 403 });
+  const rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=role,auth_user_id&limit=1`);
+  if (!rows?.length || !roles.includes(rows[0].role))
+    throw Object.assign(new Error('Insufficient operator role'), { status: 403 });
   return user;
 }
 function requestIdentity(req, user, fallback) { return user?.id || req.headers.get('x-we-user-id') || fallback; }
@@ -295,7 +297,7 @@ export default {
 
       const connectStatusMatch = path.match(/^\/api\/operators\/([^/]+)\/stripe\/status$/);
       if (connectStatusMatch && req.method === 'GET') {
-        const tenantId = connectStatusMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId);
+        const tenantId = connectStatusMatch[1]; await requireOperator(req, env, tenantId, ['owner','admin','finance']); const t = await tenantById(env, tenantId);
         if (!t?.stripe_account_id) return reply(env, { connected: false, ready: false });
         const account = await retrieveConnectedAccount(env, t.stripe_account_id);
         const updated = await patchTenant(env, t.id, { stripe_charges_enabled: Boolean(account.charges_enabled), stripe_payouts_enabled: Boolean(account.payouts_enabled), stripe_details_submitted: Boolean(account.details_submitted) });
@@ -317,7 +319,7 @@ export default {
 
       const operatorDashboard = path.match(/^\/api\/operators\/([^/]+)\/dashboard$/);
       if (operatorDashboard && req.method === 'GET') {
-        const tenantId = operatorDashboard[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
+        const tenantId = operatorDashboard[1]; await requireOperator(req, env, tenantId, ['owner','admin','finance']); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
         const [rides, rentals, vehicles, payments] = await Promise.all([
           sb(env, `rides?tenant_id=eq.${t.id}&select=id,status,fare_cents,requested_at&order=requested_at.desc&limit=25`),
           sb(env, `rental_bookings?tenant_id=eq.${t.id}&select=id,status,total_cents,payment_status,created_at&order=created_at.desc&limit=25`),
@@ -369,8 +371,23 @@ export default {
       const acceptMatch = path.match(/^\/api\/rides\/([^/]+)\/accept$/);
       if (acceptMatch && req.method === 'POST') {
         const body = await req.json(), current = await getRide(env, acceptMatch[1]); if (!current) return fail(env, 'Ride not found', 404); if (current.status !== 'REQUESTED') return fail(env, 'Ride is no longer available', 409);
-        if (!body.driver_id) return fail(env, 'driver_id is required'); const drivers = await sb(env, `drivers?id=eq.${encodeURIComponent(body.driver_id)}&select=*`), driver = drivers?.[0]; if (!driver) return fail(env, 'Driver not found', 404);
-        const ride = await patchRide(env, current.id, { status: 'ACCEPTED', driver_id: driver.id, accepted_at: new Date().toISOString(), driver_name: driver.display_name, driver_vehicle: [driver.vehicle_color, driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(' '), driver_plate: driver.license_plate, driver_rating: driver.rating }); return reply(env, { ride });
+        if (!body.driver_id) return fail(env, 'driver_id is required');
+        const drivers = await sb(env, `drivers?id=eq.${encodeURIComponent(body.driver_id)}&select=*`), driver = drivers?.[0];
+        if (!driver || !driver.online || driver.tenant_id !== current.tenant_id)
+          return fail(env, 'An available driver from this operator is required', 403);
+        // The final update checks status, assignment and payment again INSIDE
+        // the database update. Two drivers cannot both claim one REQUESTED ride.
+        // The outer gateway separately verifies the authenticated driver's ID.
+        const accepted = await sb(env,
+          `rides?id=eq.${encodeURIComponent(current.id)}&tenant_id=eq.${encodeURIComponent(driver.tenant_id)}&status=eq.REQUESTED&driver_id=is.null&payment_status=in.(authorized,paid)&select=*`,
+          {method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({
+            status:'ACCEPTED',driver_id:driver.id,accepted_at:new Date().toISOString(),
+            driver_name:driver.display_name,
+            driver_vehicle:[driver.vehicle_color,driver.vehicle_make,driver.vehicle_model].filter(Boolean).join(' '),
+            driver_plate:driver.license_plate,driver_rating:driver.rating
+          })});
+        if (!accepted?.length) return fail(env, 'Ride already accepted or payment is unavailable', 409);
+        return reply(env, { ride:accepted[0] });
       }
       const statusMatch = path.match(/^\/api\/rides\/([^/]+)\/status$/);
       if (statusMatch && req.method === 'PATCH') {
