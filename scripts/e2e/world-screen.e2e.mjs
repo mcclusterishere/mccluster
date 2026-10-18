@@ -1183,7 +1183,7 @@ const newsState = (page) => page.evaluate(() => {
     cardsFit: cards.every((c) => c.scrollWidth <= c.clientWidth + 1 && c.getBoundingClientRect().right <= innerWidth + 0.5),
     /* a short publisher name is shown whole; only a long one is cut, inside its card */
     domains: cards.slice(0, 2).map((c) => { const d = c.querySelector('.mn__news-domain'); return d ? d.scrollWidth <= d.clientWidth : null; }),
-    links: cards.map((c) => { const l = c.querySelector('a.mn__news-title'); return l && { href: l.getAttribute('href'), target: l.target, rel: l.rel }; }),
+    links: cards.map((c) => { const b = c.querySelector('button.mn__news-title'); return b && { id: b.dataset.newsOpen, href: b.getAttribute('href'), type: b.type }; }),
     imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture,svg').length, 0) };
 });
 /* the state without the per-card links, for a readable log line */
@@ -1202,7 +1202,12 @@ if (runs('news-guest')) {
   check(scope, 'the news is read from the Worker with no session, beside the posts', reads.length === 1 && reads.every((r) => !r.auth) && /[?&]limit=20$/.test(reads[0].search), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
   const ids = await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((x) => x.getAttribute('data-news-id')));
-  check(scope, 'every headline goes out to its publisher in a new tab, noopener noreferrer; no pictures, no marks', st.links.length === 20 && st.links.every((l, k) => l && l.href === urlOf(world, ids[k]) && l.target === '_blank' && l.rel === 'noopener noreferrer') && st.imgs === 0, st.links.slice(0, 2));
+   check(scope, 'every headline stays on McCluster as a first-party reader button; no pictures or marks', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
+   const worldUrlBeforeNews = page.url();
+   await page.locator('#mnFeed [data-news-id] .mn__news-title').first().click();
+   const modal = page.locator('#worldNewsReader');
+   check(scope, 'headline opens the in-app record and does not navigate to publisher', await modal.isVisible() && page.url() === worldUrlBeforeNews && (await modal.locator('h3').textContent()) === world.news[0].title);
+   await modal.getByRole('button', { name: 'Close' }).click();
   const meta = await page.$eval('#mnFeed [data-news-id]', (c) => c.querySelector('.mn__news-meta').textContent);
   check(scope, 'a card reads publisher · time ago · the place it mentions', /^news0\.example\s*·\s*\d+[mh]\s*·\s*Nairobi, Nairobi Area, Kenya$/.test(meta.trim()), meta);
   check(scope, 'a card without a place has no "On the Earth"', (await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((c) => !!c.querySelector('[data-news-place]')))).every((has, k) => has === (k % 4 !== 2)));

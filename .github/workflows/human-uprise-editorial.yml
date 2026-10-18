@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, navigation]
+        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -76,6 +76,7 @@ jobs:
             guest-travel) node scripts/e2e/world-travel-guest.e2e.mjs /tmp/hu-proof/guest-travel ;;
             member-desk) node scripts/e2e/member-desk.e2e.mjs /tmp/hu-proof/member-desk ;;
             music-world) node scripts/e2e/music-world-continuity.e2e.mjs /tmp/hu-proof/music-world ;;
+            news-guest) E2E_ONLY=news-guest node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/news-guest ;;
             navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac

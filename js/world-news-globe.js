@@ -14,17 +14,18 @@ readerNotice.textContent='This is a news discovery record, not the full publishe
 const readerClose=document.createElement('button');readerClose.type='button';readerClose.textContent='Close';
 readerClose.onclick=()=>reader.close();
 reader.append(readerTitle,readerMeta,readerNotice,readerClose);
-deck.appendChild(reader);
+document.body.appendChild(reader);
 let priorFocus=null;
 reader.addEventListener('close',()=>{priorFocus?.focus?.();priorFocus=null;});
 function openStory(x,opener){
  priorFocus=opener;
  readerTitle.textContent=x.title;
  readerMeta.textContent=x.domain+(x.place?' · Mentioned place: '+x.place:'')+(x.seen_at?' · '+new Date(x.seen_at).toLocaleString():'');
- reader.showModal();
+ if(!reader.open)reader.showModal();
 }
 const geo=x=>x&&Number.isFinite(x.lat)&&Number.isFinite(x.lon)&&Math.abs(x.lat)<=90&&Math.abs(x.lon)<=180&&!(x.lat===0&&x.lon===0);
 const valid=x=>x&&typeof x.id==='string'&&typeof x.title==='string'&&typeof x.domain==='string'&&typeof x.url==='string'&&/^https?:\/\//.test(x.url);
+window.MCC_WORLD_NEWS_READER={open:(story,opener)=>{if(valid(story))openStory(story,opener||null)}};
 function send(data){frame.contentWindow?.postMessage(data,location.origin)}
 function pins(){return items.filter(geo).slice(-120).map(x=>({id:x.id,lat:x.lat,lon:x.lon}))}
 function sync(){send({type:'hu:world-news-pins',on:active,items:active?pins():[]})}
@@ -41,7 +42,7 @@ async function load(reset){
  if(loading)return;loading=true;more.disabled=true;status.textContent='Loading news…';
  try{const url=API+'?limit=50'+(!reset&&cursor?'&before='+encodeURIComponent(cursor):'');
  const response=await fetch(url,{credentials:'omit'});if(!response.ok)throw Error('Unavailable');
- const data=await response.json();if(!Array.isArray(data?.items))throw Error('Invalid');
+ const data=await response.json();if(data?.ok!==true||data?.unavailable||!Array.isArray(data?.items))throw Error('Invalid or unavailable');
  const seen=new Set(reset?[]:items.map(x=>x.id)),rows=data.items.filter(valid).filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true});
  items=reset?rows:items.concat(rows);cursor=typeof data.next_before==='string'?data.next_before:null;
  status.textContent=items.length?items.length+' news stories loaded. Places are article mentions.':'No news currently available.';render();
