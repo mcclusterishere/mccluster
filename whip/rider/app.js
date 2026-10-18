@@ -43,6 +43,9 @@
   }
 
   async function requestRide(){
+    // The old showcase has illustrative prices and car markers. Real booking
+    // must go through the separate server-verified quote and approval flow.
+    location.href='../ride-booking.html'; return;
     if(!state.selectedRide)return;if(!(await ensureAuth()))return;
     $('#confirmRide').disabled=true;$('#confirmRide').textContent='Preparing secure ride…';
     try{
@@ -61,5 +64,12 @@
   function normalizePaymentCopy(){const row=$('.payment-row button');if(row){const strong=$('strong',row);if(strong)strong.textContent='Secure card / wallet'}const fee=$('#receiptPlatformFee');if(fee?.parentElement)fee.parentElement.style.display='none'}
   function bindEvents(){$('#destinationButton').addEventListener('click',()=>{setState('search');setTimeout(()=>$('#dropoffInput').focus(),150)});$$('.quick-card').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.destination,presets={Home:[3.2,11],Work:[6.1,17],Airport:[13.6,27]};chooseDestination(p,...presets[p])}));$$('.back-btn').forEach(b=>b.addEventListener('click',()=>setState(b.dataset.back)));$$('#suggestions button').forEach(b=>b.addEventListener('click',()=>chooseDestination(b.dataset.place,b.dataset.miles,b.dataset.minutes)));$('#dropoffInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim())chooseDestination(e.target.value.trim(),5.5,16)});$('#confirmRide').addEventListener('click',requestRide);$('#cancelMatch').addEventListener('click',async()=>{if(state.activeRide){try{await api(`/api/rides/${state.activeRide.id}/status`,{method:'PATCH',body:JSON.stringify({status:'CANCELED'})})}catch{}state.activeRide=null;clearInterval(state.pollTimer)}setState('options')});$('#simulateComplete').addEventListener('click',()=>{});$('#newRide').addEventListener('click',()=>{state.destination=null;state.selectedRide=null;state.activeRide=null;clearInterval(state.pollTimer);setState('home')});$$('.stars button').forEach((star,i,stars)=>star.addEventListener('click',()=>stars.forEach((s,n)=>s.classList.toggle('active',n<=i))));$('#brandButton').addEventListener('click',openOperator);$('#operatorNav').addEventListener('click',()=>location.href=`operator.html?api=${encodeURIComponent(API_BASE)}`);$('#closeOperator').addEventListener('click',closeOperator);$('#applyBrand').addEventListener('click',applyBrand);$('#upgradeButton').addEventListener('click',()=>location.href=`operator.html?api=${encodeURIComponent(API_BASE)}`);$('#locateButton').addEventListener('click',()=>{if(!navigator.geolocation||!state.map)return;navigator.geolocation.getCurrentPosition(p=>{const ll=[p.coords.latitude,p.coords.longitude];state.pickupMarker.setLatLng(ll);state.map.setView(ll,15,{animate:true})},()=>{},{enableHighAccuracy:true,timeout:6000})})}
   function revealApp(){const splash=$('#splashScreen');if(splash)setTimeout(()=>splash.classList.add('hide'),950)}
-  document.addEventListener('DOMContentLoaded',async()=>{initMap();bindEvents();hydrateBrand();renderRideOptions();normalizePaymentCopy();revealApp();await recoverRide();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})});
+  document.addEventListener('DOMContentLoaded',async()=>{
+    const banner=document.createElement('div');
+    banner.setAttribute('role','status');
+    banner.style.cssText='position:fixed;top:80px;left:12px;right:12px;z-index:60;max-width:550px;margin:auto;padding:11px 16px;border-radius:16px;background:#10151bef;color:#fff;border:1px solid #f6ad6277;font:600 13px/1.5 system-ui,sans-serif;text-align:center';
+    const link=document.createElement('a');link.href='../ride-booking.html';link.textContent='Open real ride booking and verified fares →';link.style.cssText='color:#f6ad62;display:block;margin-top:4px';
+    banner.append(document.createTextNode('This ride showcase uses illustrative prices and vehicles, not live availability.'),link);
+    document.body.append(banner);
+    initMap();bindEvents();hydrateBrand();renderRideOptions();normalizePaymentCopy();revealApp();await recoverRide();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})});
 })();
