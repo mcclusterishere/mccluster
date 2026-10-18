@@ -215,7 +215,7 @@ function setTravelMode(on){
  scheduleTravelControls();
  if(!viewer)return;travelStyle();
  if(changed||on){showMissions=!on;showCities=!on;draw();}
- if(!on){travelPickKind(null)}
+ if(!on&&typeof travelPickKind==='function'){travelPickKind(null)}
  if(!on&&changed){viewer.camera.cancelFlight();routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;if(currentLocation)currentLocation.follow=false;}
  travelVisibility();scheduleTravelControls();if(on)scheduleTravelCamera();
  drawCompletedEvents();
