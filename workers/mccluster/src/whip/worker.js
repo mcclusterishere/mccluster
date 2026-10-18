@@ -287,10 +287,12 @@ export default {
       if (onboardingMatch && req.method === 'POST') {
         const tenantId = onboardingMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId);
         if (!t?.stripe_account_id) return fail(env, 'Create the connected account first', 409);
-        const body = await req.json().catch(() => ({}));
+        // Stripe onboarding must return to the platform's verified operator
+        // room. Caller-chosen URLs could redirect operators to a phishing
+        // domain after sensitive financial onboarding.
         const link = await createAccountLink(env, t.stripe_account_id, {
-          returnUrl: body.return_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
-          refreshUrl: body.refresh_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
+          returnUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
+          refreshUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
         });
         return reply(env, { url: link.url, expires_at: link.expires_at });
       }
@@ -307,11 +309,10 @@ export default {
       const whiteLabelMatch = path.match(/^\/api\/operators\/([^/]+)\/white-label\/checkout$/);
       if (whiteLabelMatch && req.method === 'POST') {
         const tenantId = whiteLabelMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
-        const body = await req.json().catch(() => ({}));
         const session = await createWhiteLabelSubscriptionCheckout(env, {
           tenantId: t.id, tenantSlug: t.slug, email: t.contact_email,
-          successUrl: body.success_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
-          cancelUrl: body.cancel_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
+          successUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
+          cancelUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
         });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'white_label_subscription', resource_id: t.id, stripe_checkout_session_id: session.id, amount_cents: 3300, application_fee_cents: 0, status: 'checkout_created' });
         return reply(env, { checkout_url: session.url, session_id: session.id });
