@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,follow">
+  <title>Member front page · McCluster</title>
+  <meta name="description" content="A member-owned front page on the McCluster platform.">
+  <link rel="icon" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/member-front.css?v=__STAMP__">
+</head>
+<body class="member-front" data-member-front="1">
+  <main id="memberFront" class="mf" aria-live="polite">
+    <section class="mf__identity" aria-labelledby="mfName">
+      <p class="mf__eyebrow">YOUR WORLD · YOUR FRONT PAGE</p>
+      <div class="mf__cover" id="mfCover" aria-hidden="true"></div>
+      <div class="mf__hero">
+        <div class="mf__avatar" id="mfAvatar" aria-label="Member avatar">M</div>
+        <p class="mf__handle" id="mfHandle"></p>
+        <h1 id="mfName">Opening member profile…</h1>
+        <p class="mf__headline" id="mfHeadline"></p>
+        <p class="mf__bio" id="mfBio"></p>
+        <div class="mf__counts" id="mfCounts" hidden></div>
+        <div class="mf__actions">
+          <a id="mfSite" class="mf__button" hidden target="_blank" rel="noopener noreferrer">Visit their site ↗</a>
+          <button id="mfCustomize" type="button" class="mf__button mf__button--primary" hidden>Customize my page</button>
+          <a id="mfNetwork" class="mf__button" href="mnet.html?view=feed">See their social profile ↗</a>
+          <a id="mfWhip" class="mf__button" href="whip/driver/" hidden>Whip Equipped driver room ↗</a>
+        </div>
+      </div>
+    </section>
+    <section class="mf__panel" id="mfOwnerPanel" hidden aria-labelledby="mfOwnerTitle">
+      <p class="mf__eyebrow">OWN YOUR MIDDLE TAB</p>
+      <h2 id="mfOwnerTitle">Your page. Your workspace.</h2>
+      <p>Make your name, bio, imagery and destination yours. The same M Account owns your profile throughout the platform.</p>
+      <div class="mf__tiles">
+        <a href="mnet.html?view=profile">Profile and conversations ↗</a>
+        <a href="sites.html">Website and storefront tools ↗</a>
+        <a href="mnet.html?view=feed">Your World feed ↗</a>
+      </div>
+    </section>
+    <section class="mf__panel mf__whip" id="mfDriverPanel" hidden aria-labelledby="mfDriverTitle">
+      <p class="mf__eyebrow">WHIP EQUIPPED LLC · DRIVER</p>
+      <h2 id="mfDriverTitle">Your driver workspace</h2>
+      <p id="mfDriverStatus">Checking your driver application…</p>
+      <a class="mf__button mf__button--primary" href="whip/driver/">Open Whip Equipped Driver ↗</a>
+      <p class="mf__muted">Applying to drive does not authorize dispatch or establish a rideshare business. Driver approval, insurance and operating permissions are controlled by Whip Equipped LLC.</p>
+    </section>
+    <p class="mf__status" id="mfStatus" role="status"></p>
+    <nav class="mf__breadcrumb" aria-label="Other perspectives">
+      <a href="index.html?front=house" data-founder-perspective>Matthew's front page</a>
+      <a href="mnet.html?view=feed">Explore the World</a>
+    </nav>
+  </main>
+  <dialog id="mfEditor" class="mf__editor" aria-labelledby="mfEditorTitle">
+    <form method="dialog" id="mfEditForm">
+      <h2 id="mfEditorTitle">Customize your page</h2>
+      <p>These fields update your existing public M Account profile. No new identity is created.</p>
+      <label>Display name<input name="display_name" maxlength="120" required></label>
+      <label>Headline<input name="headline" maxlength="160"></label>
+      <label>Bio<textarea name="bio" maxlength="2400" rows="5"></textarea></label>
+      <label>Avatar image URL<input name="avatar_url" inputmode="url" placeholder="https://…"></label>
+      <label>Cover image URL<input name="banner_url" inputmode="url" placeholder="https://…"></label>
+      <label>Website URL<input name="website_url" inputmode="url" placeholder="https://…"></label>
+      <p class="mf__muted">Profile fields protected by verification or review remain subject to the existing account rules.</p>
+      <p id="mfEditStatus" role="status"></p>
+      <div class="mf__actions"><button value="cancel" type="button" id="mfCancel">Cancel</button><button value="save" type="submit" class="mf__button mf__button--primary">Save my page</button></div>
+    </form>
+  </dialog>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/member-front.js?v=__STAMP__"></script>
+</body>
+</html>
