@@ -303,6 +303,9 @@
 }
 
 /* Travel: pick exact endpoints on the existing Earth, without new map chrome. */
+/* Autocomplete options must stack above the new picker row, not behind it. */
+.wt-fields--main { position:relative;z-index:2; }
+.wt-map-pick-actions { position:relative;z-index:1; }
 .wt-map-pick-actions { display:flex;gap:8px;margin:8px 0 2px; }
 .wt-map-pick-actions button { flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #ffffff33;border-radius:12px;background:#171d23;color:#e7ecf0;font:400 12px/1.3 var(--mn-ui);cursor:pointer; }
 .wt-map-pick-actions button[aria-pressed="true"] { border-color:#ec4667;background:#4a1826;color:#fff; }
