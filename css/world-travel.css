@@ -314,12 +314,12 @@
 .wt-map-pick-banner { top:clamp(96px,28%,205px);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px; }
 .wt-map-pick-banner span { flex:1;min-width:0;font:500 14px/1.4 var(--mn-ui); }
 .wt-map-pick-banner button { flex:none;min-height:44px;border:1px solid #ffffff55;border-radius:22px;padding:8px 14px;background:#27313b;color:#fff;font:500 13px var(--mn-ui);cursor:pointer; }
-.wt-map-nav { bottom:88px;padding:12px; }
-/* On phones the three Cesium location/zoom controls own the right gutter.
-   Keep Go and turn instructions out of that rail regardless of map movement. */
-@media(max-width:600px) {
- .wt-map-nav { left:12px;transform:none;width:calc(100% - 88px);max-width:none; }
- .wt-map-nav-actions button { padding:8px;font-size:13px; }
+/* The right-hand globe zoom/location rail has priority on narrow screens. */
+.wt-map-nav { bottom:88px;padding:12px;left:12px;transform:none;width:calc(100% - 88px);max-width:none; }
+.wt-map-nav-actions button { padding:8px;font-size:13px; }
+@media(min-width:601px) {
+ .wt-map-nav { left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px)); }
+ .wt-map-nav-actions button { padding:9px 12px;font-size:15px; }
 }
 .wt-map-nav p { margin:0 0 9px;color:#f3f4f1;font:500 15px/1.4 var(--mn-ui);overflow-wrap:anywhere; }
 .wt-map-nav-actions { display:flex;gap:8px; }
