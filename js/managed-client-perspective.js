@@ -91,12 +91,6 @@
     if (!tab || !dock.contains(tab)) return;
     var key = tab.getAttribute("data-appnav");
     if (key !== "home" && key !== "music" && key !== "world") return;
-    // On the Music document, the shared bar is the real play/pause transport.
-    // Do not swallow that click: the current URL already retains mcc_app.
-    if (key === "music" && location.origin === new URL(music).origin &&
-        location.pathname === new URL(music).pathname &&
-        typeof window.MCC_NP_PLAY === "function" &&
-        typeof window.MCC_NP_PAUSE === "function") return;
     event.preventDefault();
     event.stopImmediatePropagation();
     bar.navigation.go(key === "home" ? home : (key === "music" ? music : world));
