@@ -1,7 +1,7 @@
 import { guardWorldRelease } from './world-release.js';
 import { handleFundingIntelligence, FUNDING_PREFIX } from './funding-intelligence.js';
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
-import whip from './whip/identity-gateway.js';
+import whip from './whip/booking-router.mjs';
 import {handleAtNight} from './at-night.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
