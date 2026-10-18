@@ -59,16 +59,18 @@ test('the news read is a bare public GET with no session, beside the posts, and 
   assert.match(fnSource(js, 'applyNews'), /else if \(before && res && res\.status === 400\) state\.newsBefore = null;/, 'a refused cursor stops the news paging');
 });
 
-test('a news card is the World card keyed data-news-id: words only, out to the publisher in a new tab, and the place on the Earth', async () => {
+test('a news card is the World card keyed data-news-id: first-party reader with no outbound headline link, and the place on the Earth', async () => {
   const js = await read('js/mnet.js'), html = await read('mnet.html'), css = await read('css/mnet.css');
   const card = fnSource(js, 'newsCard');
   assert.match(card, /'<article class="mn__post-card mn__news-card" data-news-id="' \+ esc\(n\.id\) \+ '">'/);
   assert.doesNotMatch(card, /data-post-id/, 'tests and handlers key member posts on data-post-id');
-  assert.match(card, /<a class="mn__news-title" href="' \+ esc\(n\.url\) \+ '" target="_blank" rel="noopener noreferrer">' \+ esc\(n\.title\)/);
+  assert.match(card, /<button type="button" class="mn__news-title" data-news-open="' \+ esc\(n\.id\) \+ '">' \+ esc\(n\.title\)/);
+  assert.doesNotMatch(card, /target="_blank"|href="/, 'a news headline cannot take the user to a publisher');
   assert.doesNotMatch(card, /<img|background-image|favicon|logo/i, 'no pictures and no publisher marks (CLAUDE.md rule 10)');
   assert.match(card, /data-news-place data-lat="' \+ esc\(n\.lat\) \+ '" data-lon="' \+ esc\(n\.lon\) \+ '"/);
   assert.match(card, />On the Earth<\/button>/);
   assert.match(fnSource(js, 'bindNewsActions'), /tellWorld\(\{ type: "hu:focus-place", lat: lat, lon: lon, label: label \}\);/);
+  assert.match(fnSource(js, 'bindNewsActions'), /MCC_WORLD_NEWS_READER\.open\(story, b\)/, 'legacy feed opens the shared first-party reader');
   assert.match(fnSource(js, 'bindNewsActions'), /mentioned in this story/, 'the place is mentioned, never "where it happened"');
   /* the clean-up, run: only absolute http(s) links, and a place only when both numbers are real and in range */
   const clean = new Function('location', 'URL', fnSource(js, 'safeHttpUrl') + '\n' + fnSource(js, 'cleanNews') + '\nreturn cleanNews;')({ origin: 'https://mccluster.org' }, URL);
