@@ -7,7 +7,7 @@ const handleRE=/^[a-z0-9][a-z0-9._-]{2,39}$/;
 const query=new URLSearchParams(location.search);
 const requested=String(query.get('handle')||'').trim().toLowerCase();
 const form=$('mfEditForm'),editor=$('mfEditor');
-let self=null,identity=null,record=null,handle=requested;
+let self=null,identity=null,record=null,handle=requested,sessionEpoch=0;
 function message(text){$('mfStatus').textContent=text||'';}
 function safeImage(value){
   try{const u=new URL(String(value||''));return u.protocol==='https:'&&u.username===''&&u.password===''&&u.href.length<=2000?u.href:'';}catch{return'';}
@@ -122,6 +122,15 @@ form.addEventListener('submit',async event=>{
   }catch(error){$('mfEditStatus').textContent=error.message||'Save failed. Your original profile is unchanged.';}
   finally{save.disabled=false;}
 });
-window.addEventListener('mcc:auth-changed',()=>{location.reload();});
+window.addEventListener('mcc:auth-changed',()=>{
+  if(!window.MCC?.session?.()?.access_token) {
+    ++sessionEpoch;
+    self=null;identity=null;record=null;
+    $('mfCustomize').hidden=true;$('mfOwnerPanel').hidden=true;$('mfDriverPanel').hidden=true;$('mfWhip').hidden=true;
+    message('Signed out. Your private editing controls are no longer available.');
+    return;
+  }
+  location.reload();
+});
 start();
 })();
