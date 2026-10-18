@@ -70,7 +70,7 @@
         "experiment_id": "synthetic-eval-01",
         "candidate_id": "arm-c-demo",
         "baseline_id": "arm-b-demo",
-        "sample_count": 50,
+        "sample_count": 0,
         "critical_violations": 0,
         "verdict": "inconclusive",
         "evidence_refs": [
@@ -84,7 +84,58 @@
           }
         ],
         "evaluated_at": "2026-10-18T00:00:00Z",
-        "notes": "No evaluation ran; never use this fixture as performance evidence."
+        "notes": "Synthetic protocol example only: zero measured tasks, null metrics and confidence bounds. No benchmark was run, no pass claim.",
+        "metrics": {
+          "candidate": {
+            "verified_completion_rate": null,
+            "false_completion_claim_rate": null,
+            "source_status_fidelity": null,
+            "unauthorized_effects": null,
+            "tool_selection_accuracy": null,
+            "recovery_rate": null,
+            "cost_per_verified_success_usd": null,
+            "latency_p50_ms": null,
+            "latency_p95_ms": null,
+            "abstention_calibration_error": null,
+            "human_review_load": null
+          },
+          "baseline": {
+            "verified_completion_rate": null,
+            "false_completion_claim_rate": null,
+            "source_status_fidelity": null,
+            "unauthorized_effects": null,
+            "tool_selection_accuracy": null,
+            "recovery_rate": null,
+            "cost_per_verified_success_usd": null,
+            "latency_p50_ms": null,
+            "latency_p95_ms": null,
+            "abstention_calibration_error": null,
+            "human_review_load": null
+          },
+          "candidate_denominators": {
+            "eligible_tasks": 0,
+            "claimed_completions": 0,
+            "source_condition_cases": 0,
+            "tool_selection_cases": 0,
+            "recovery_cases": 0,
+            "verified_successes": 0,
+            "attempts": 0
+          },
+          "baseline_denominators": {
+            "eligible_tasks": 0,
+            "claimed_completions": 0,
+            "source_condition_cases": 0,
+            "tool_selection_cases": 0,
+            "recovery_cases": 0,
+            "verified_successes": 0,
+            "attempts": 0
+          },
+          "verified_completion_delta_ci": {
+            "lower": null,
+            "upper": null
+          },
+          "confidence_method": null
+        }
       }
     },
     {
