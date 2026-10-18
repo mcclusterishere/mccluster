@@ -63,13 +63,62 @@ export default { async fetch(request,env,ctx) {
   const guardedRide=path==='/api/rides'&&request.method==='POST';
   const quoted=path==='/api/rides/quote'&&request.method==='POST';
   const payment=/^\/api\/rides\/([0-9a-f-]{36})\/payment-intent$/i.test(path)&&request.method==='POST';
-  const accept=/^\/api\/rides\/([0-9a-f-]{36})\/accept$/i.exec(path);
+  const accept=request.method==='POST'?path.match(/^\\/api\\/rides\\/([0-9a-f-]{36})\\/accept$/i):null;
   const offers=path==='/api/offers'&&request.method==='GET';
   const presence=/^\/api\/drivers\/([0-9a-f-]{36})\/presence$/i.test(path)&&request.method==='PATCH';
   const rideStatus=/^\/api\/rides\/([0-9a-f-]{36})\/status$/i.test(path)&&request.method==='PATCH';
-  if((guardedRide||quoted||payment||accept||offers||presence||rideStatus)&&!activeBindings(env).live)
+  const cancelRide=rideStatus&&String((await request.clone().json().catch(()=>({}))).status||'').toUpperCase()==='CANCELED';
+  const applying=path==='/api/drivers/me'&&request.method==='POST';
+  const operatorReview=request.method==='POST'?path.match(/^\\/api\\/operators\\/([0-9a-f-]{36})\\/drivers\\/([0-9a-f-]{36})\\/review$/i):null;
+  if(applying) {
+    if(env.WHIP_DRIVER_APPLICATION_SCHEMA_READY!=='true')return json(request,env,{code:'driver_signup_not_ready',
+      error:'Driver applications need an approved consent migration before they can be saved.'},503);
+    try {
+      const user=await auth(request,env),body=await jsonBody(request);
+      const allowed=new Set(['tenant_slug','display_name','license_plate','phone','vehicle_make','vehicle_model','vehicle_color','seats','application_consent','consent_version']);
+      if(Object.keys(body).some(k=>!allowed.has(k)))throw new TypeError('Driver application contains a restricted field.');
+      if(body.application_consent!==true||body.consent_version!=='whip-driver-application-v1')
+        throw new TypeError('Read and accept the current Whip Equipped driver application consent.');
+      if(body.tenant_slug!=='whip-equipped')throw new TypeError('Unsupported operator.');
+      const displayName=validLabel(body.display_name),plate=String(body.license_plate||'').trim().toUpperCase();
+      if(plate.length<2||plate.length>16||!/^[A-Z0-9 -]+$/.test(plate))throw new TypeError('Enter your registered license plate.');
+      const seats=Number(body.seats||4);
+      if(!Number.isInteger(seats)||seats<1||seats>8)throw new TypeError('Enter the number of passenger seats.');
+      const existing=await one(env,'drivers?auth_user_id=eq.'+encodeURIComponent(user.id)+'&select=*');
+      if(existing)return json(request,env,{driver:existing,approved:false,already_received:true});
+      const tenant=await one(env,'tenants?slug=eq.whip-equipped&select=id');
+      if(!tenant)throw new Error('Whip Equipped operator is unavailable.');
+      const values={tenant_id:tenant.id,auth_user_id:user.id,display_name:displayName,license_plate:plate,
+        phone:String(body.phone||'').trim().slice(0,35)||null,vehicle_make:String(body.vehicle_make||'').trim().slice(0,50)||null,
+        vehicle_model:String(body.vehicle_model||'').trim().slice(0,50)||null,vehicle_color:String(body.vehicle_color||'').trim().slice(0,35)||null,
+        seats,online:false,approval_status:'pending',compliance_verified:false,
+        application_consent_at:new Date().toISOString(),application_consent_version:body.consent_version};
+      const rows=await rest(env,'drivers?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(values)});
+      return json(request,env,{driver:rows?.[0],approved:false,message:'Application received. A driver may not receive or accept rides until independently screened and approved.'},201);
+    }catch(e){return json(request,env,{error:e.status===503?'Driver sign-up is not ready.':e.message},e.status||statusCode(e));}
+  }
+  if(operatorReview) {
+    try{
+      const user=await auth(request,env),body=await jsonBody(request);
+      const [_,tenantId,driverId]=operatorReview;
+      const allowed=new Set(['action','evidence_reference','license_expires_at','insurance_expires_at','screening_expires_at']);
+      if(Object.keys(body).some(k=>!allowed.has(k)))throw new TypeError('Restricted driver review field.');
+      const membership=await one(env,'operator_members?tenant_id=eq.'+tenantId+'&auth_user_id=eq.'+encodeURIComponent(user.id)+'&role=in.(owner,admin)&select=id');
+      if(!membership)return json(request,env,{error:'Whip Equipped operator review requires an owner or admin role.'},403);
+      if(!['approved','rejected','suspended'].includes(body.action))throw new TypeError('Invalid review decision.');
+      const evidence=String(body.evidence_reference||'').trim();
+      if(evidence.length<20||evidence.length>200)throw new TypeError('A documented evidence reference is required.');
+      const result=await rest(env,'rpc/whip_review_driver',{method:'POST',body:JSON.stringify({
+        p_tenant_id:tenantId,p_driver_id:driverId,p_reviewer_id:user.id,p_action:body.action,p_evidence_reference:evidence,
+        p_license_expires_at:body.license_expires_at||null,p_insurance_expires_at:body.insurance_expires_at||null,
+        p_screening_expires_at:body.screening_expires_at||null})});
+      return json(request,env,{review:result});
+    }catch(e){return json(request,env,{error:e.status===503?'Driver review is not ready.':e.message},e.status||statusCode(e));}
+  }
+
+  if((guardedRide||quoted||payment||accept||offers||presence||(rideStatus&&!cancelRide))&&!activeBindings(env).live)
     return unavailable(request,env);
-  if(!(guardedRide||quoted||payment||accept||offers||presence||rideStatus))return app.fetch(request,env,ctx);
+  if(cancelRide||!(guardedRide||quoted||payment||accept||offers||presence||rideStatus))return app.fetch(request,env,ctx);
   try {
     if(quoted) {
       const user=await auth(request,env),body=await jsonBody(request);
@@ -108,7 +157,7 @@ export default { async fetch(request,env,ctx) {
       return json(request,env,{ride:data.ride,reused:data.reused===true,
         confirmed:false,next_step:'authorize_payment_then_wait_for_verified_driver'},data.reused?200:201);
     }
-    if(offers||presence||accept||(rideStatus&&request.method==='PATCH')) {
+    if(offers||presence||accept||(rideStatus&&!cancelRide)) {
       const {driver}=await driverFor(request,env);
       if(!approvedDriver(driver))return json(request,env,{error:'Whip Equipped driver screening or credentials are not approved.'},403);
       if(accept) {
