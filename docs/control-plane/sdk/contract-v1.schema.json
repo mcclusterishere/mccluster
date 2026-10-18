@@ -242,7 +242,34 @@
           "type": "string",
           "maxLength": 100
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "queued",
+                  "running",
+                  "awaiting_approval"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "job_id"
+            ],
+            "properties": {
+              "job_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          }
+        }
+      ]
     },
     "ReflectionProposal": {
       "type": "object",
@@ -377,7 +404,8 @@
         "critical_violations",
         "verdict",
         "evidence_refs",
-        "evaluated_at"
+        "evaluated_at",
+        "metrics"
       ],
       "properties": {
         "kind": {
@@ -407,7 +435,7 @@
         },
         "sample_count": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 0
         },
         "critical_violations": {
           "type": "integer",
@@ -424,33 +452,63 @@
         "metrics": {
           "type": "object",
           "additionalProperties": false,
+          "description": "Candidate/baseline observations are distinct. An unrun fixture reports null measurements, zero denominators and null paired CI; it can only be inconclusive.",
+          "required": [
+            "candidate",
+            "baseline",
+            "candidate_denominators",
+            "baseline_denominators",
+            "verified_completion_delta_ci",
+            "confidence_method"
+          ],
           "properties": {
-            "success_rate": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
+            "candidate": {
+              "$ref": "#/$defs/EvaluationArmMetrics"
             },
-            "verified_completion_rate": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
+            "baseline": {
+              "$ref": "#/$defs/EvaluationArmMetrics"
             },
-            "abstention_calibration_error": {
-              "type": "number",
-              "minimum": 0
+            "candidate_denominators": {
+              "$ref": "#/$defs/EvaluationDenominators"
             },
-            "median_latency_ms": {
-              "type": "number",
-              "minimum": 0
+            "baseline_denominators": {
+              "$ref": "#/$defs/EvaluationDenominators"
             },
-            "cost_per_verified_success_usd": {
-              "type": "number",
-              "minimum": 0
+            "verified_completion_delta_ci": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "lower",
+                "upper"
+              ],
+              "properties": {
+                "lower": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": -1,
+                  "maximum": 1
+                },
+                "upper": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": -1,
+                  "maximum": 1
+                }
+              }
             },
-            "recovery_rate": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
+            "confidence_method": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "paired_bootstrap",
+                null
+              ]
             }
           }
         },
@@ -470,7 +528,60 @@
           "type": "string",
           "maxLength": 1500
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "critical_violations": {
+                "minimum": 1
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "fail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verdict": {
+                "const": "pass"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "critical_violations": {
+                "const": 0
+              },
+              "sample_count": {
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sample_count": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "inconclusive"
+              }
+            }
+          }
+        }
+      ]
     },
     "ErrorResponse": {
       "type": "object",
@@ -536,6 +647,150 @@
             "invalid",
             "partial"
           ]
+        }
+      }
+    },
+    "EvaluationArmMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified_completion_rate",
+        "false_completion_claim_rate",
+        "source_status_fidelity",
+        "unauthorized_effects",
+        "tool_selection_accuracy",
+        "recovery_rate",
+        "cost_per_verified_success_usd",
+        "latency_p50_ms",
+        "latency_p95_ms",
+        "abstention_calibration_error",
+        "human_review_load"
+      ],
+      "properties": {
+        "verified_completion_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "false_completion_claim_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source_status_fidelity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "unauthorized_effects": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "tool_selection_accuracy": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recovery_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cost_per_verified_success_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "latency_p50_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "latency_p95_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "abstention_calibration_error": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "human_review_load": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "EvaluationDenominators": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_tasks",
+        "claimed_completions",
+        "source_condition_cases",
+        "tool_selection_cases",
+        "recovery_cases",
+        "verified_successes",
+        "attempts"
+      ],
+      "properties": {
+        "eligible_tasks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "claimed_completions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_condition_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tool_selection_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovery_cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verified_successes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }
