@@ -63,25 +63,27 @@
   function mount(host, options) {
     if (!host) return null;
     options = options || {};
-    var doc = host.ownerDocument, state = createState(), ready = false, busy = false, error = "", drag = null, card = null;
+    var doc = host.ownerDocument, state = createState(), ready = false, busy = false, error = "", drag = null, card = null, view = "open", completedLoaded = false;
     var uid = "mission-deck-" + (++sequence), announcement = "";
     host.classList.add("mn-swipe");
     host.setAttribute("data-mission-deck", "");
-    host.innerHTML = '<nav class="mn-swipe__filters" aria-label="Mission categories"></nav>' +
-      '<div class="mn-swipe__top"><p class="mn-swipe__count"></p><button class="mn-swipe__undo" type="button">Undo pass</button></div>' +
-      '<p class="mn-swipe__hint" id="' + uid + '-hint">Swipe left to pass. Swipe right to accept.</p>' +
-      '<div class="mn-swipe__stage"></div><p class="mn-swipe__status" role="status" aria-live="polite" aria-atomic="true"></p>';
+    host.innerHTML = '<div class="mn-swipe__top"><div class="mn-swipe__filters" role="tablist" aria-label="Mission status">' +
+      '<button type="button" role="tab" data-status="open" aria-selected="true">Open</button>' +
+      '<button type="button" role="tab" data-status="completed" aria-selected="false">Completed</button></div>' +
+      '<button class="mn-swipe__undo" type="button" aria-label="Undo last pass" title="Undo last pass">↶</button></div>' +
+      '<p class="mn-swipe__count"></p><div class="mn-swipe__stage"></div>' +
+      '<div class="mn-swipe__completed" role="tabpanel" aria-label="Completed mission series" hidden></div>' +
+      '<p class="mn-swipe__status" role="status" aria-live="polite" aria-atomic="true"></p>';
     var filters = host.querySelector(".mn-swipe__filters"), stage = host.querySelector(".mn-swipe__stage"), status = host.querySelector(".mn-swipe__status");
-    var count = host.querySelector(".mn-swipe__count"), undo = host.querySelector(".mn-swipe__undo");
+    var count = host.querySelector(".mn-swipe__count"), undo = host.querySelector(".mn-swipe__undo"), completed = host.querySelector(".mn-swipe__completed");
     function el(tag, className, value) {
       var node = doc.createElement(tag); if (className) node.className = className; if (value != null) node.textContent = String(value); return node;
     }
     function button(className, label, callback) {
       var b = el("button", className, label); b.type = "button"; b.onclick = callback; return b;
     }
-    CATEGORIES.forEach(function (value) {
-      var b = button("", LABELS[value], function () { if (busy) return; resetDrag(); state.selectCategory(value); announcement = ""; render(); });
-      b.dataset.category = value; filters.appendChild(b);
+    filters.querySelectorAll("[data-status]").forEach(function (b) {
+      b.onclick = function () { if (busy) return; view = b.dataset.status; announcement = ""; say(""); render(); };
     });
     function say(message, failed) {
       announcement = message || ""; status.textContent = announcement; status.classList.toggle("is-error", !!failed);
@@ -99,10 +101,26 @@
     function render() {
       resetDrag();
       host.setAttribute("aria-busy", String(busy || !ready));
-      filters.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.category === state.category())); b.disabled = busy; });
+      filters.querySelectorAll("[data-status]").forEach(function (b) {
+        b.setAttribute("aria-selected", String(b.dataset.status === view)); b.tabIndex = b.dataset.status === view ? 0 : -1; b.disabled = busy;
+      });
+      var isCompleted = view === "completed";
+      stage.hidden = count.hidden = undo.hidden = isCompleted; completed.hidden = !isCompleted;
+      if (isCompleted) {
+        resetDrag();
+        if (!completedLoaded) {
+          completedLoaded = true;
+          completed.textContent = "Loading completed missions…";
+          if (options.onCompleted) Promise.resolve().then(function () { return options.onCompleted(completed); }).catch(function () {
+            completedLoaded = false; completed.textContent = "Completed missions could not load. Switch tabs to retry.";
+          });
+          else completed.textContent = "No completed mission series is published yet.";
+        }
+        return;
+      }
       undo.disabled = busy || !state.canUndo();
       var list = state.available(), m = state.current();
-      count.textContent = !ready ? "Loading missions…" : list.length + (list.length === 1 ? " mission to explore" : " missions to explore");
+      count.textContent = !ready ? "Loading open missions…" : list.length + (list.length === 1 ? " open mission" : " open missions");
       stage.replaceChildren(); card = null;
       if (!ready || error || !m) {
         var empty = el("div", "mn-swipe__empty");
@@ -113,7 +131,7 @@
         stage.appendChild(empty); return;
       }
       card = el("article", "mn-swipe__card"); card.tabIndex = 0; card.dataset.mission = key(m);
-      card.setAttribute("aria-labelledby", uid + "-title"); card.setAttribute("aria-describedby", uid + "-hint");
+      card.setAttribute("aria-labelledby", uid + "-title");
       card.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight");
       var stamps = el("div", "mn-swipe__stamps"); stamps.setAttribute("aria-hidden", "true");
       stamps.appendChild(el("span", "mn-swipe__stamp mn-swipe__stamp--pass", "PASS"));
