@@ -26,7 +26,9 @@
   consent_version:'whip-driver-application-v1'})});state.driver=data.driver;m.remove();await recoverActive()}catch(err){$('#profileError',m).textContent=err.message}};return false}
   async function presence(online){
     if(!state.driver)throw new Error('Driver account required.');
-    const pos=await getPosition(false);
+    const pos=await getPosition(online);
+    if(online&&(!pos||!Number.isFinite(pos.lat)||!Number.isFinite(pos.lng)))
+      throw new Error('Allow a fresh GPS location before going online.');
     const data=await api(`/api/drivers/${state.driver.id}/presence`,{
       method:'PATCH',body:JSON.stringify({online,lat:pos?.lat,lng:pos?.lng,heading:pos?.heading})});
     if(!data.driver||data.driver.online!==online)throw new Error('Driver availability was not confirmed by the operator.');
