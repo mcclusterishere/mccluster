@@ -73,7 +73,7 @@ end $$;
 reset role;
 set role authenticated;
 select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
-do $$ begin if (select count(*) from creator_site_drafts)<>0 then raise exception 'cross-owner draft read';end if;
+do $$ begin if (select count(*) from creator_site_drafts)<>1 or exists (select 1 from creator_site_drafts where owner_m_uid<>'22222222-2222-4222-8222-222222222222'::uuid) then raise exception 'authenticated user saw another owner draft';end if;
  begin perform public.studio_publish_v2('11111111-1111-4111-8111-111111111111','dddddddd-dddd-4ddd-8ddd-dddddddddddd',1);raise exception 'browser called private writer';exception when insufficient_privilege then null;end;
  begin update creator_site_drafts set owner_m_uid='22222222-2222-4222-8222-222222222222';raise exception 'browser reassigned owner';exception when insufficient_privilege then null;end;
 end $$;
