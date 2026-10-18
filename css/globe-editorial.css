@@ -26,6 +26,7 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 .globe-travel-controls {display:none;}
 .globe-travel .globe-travel-controls {display:flex;position:fixed;right:9px;bottom:26px;z-index:12;flex-direction:column;gap:5px;}
 .globe-travel .globe-travel-controls .globe-ctl {width:44px;height:44px;padding:10px;background:#101316da;border-radius:50%;}
+.globe-travel .globe-travel-controls .globe-ctl[aria-busy="true"] {opacity:.55;border-color:#c1d3df;cursor:progress;}
 .globe-travel .globe-travel-controls svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4;}
 .globe-travel .globe-editorial-tools {display:none;}
 .globe-travel .country-card {display:none;}

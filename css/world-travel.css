@@ -137,6 +137,7 @@
 .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) {
   margin:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.43fr) minmax(0,.57fr);
 }
+.hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.35fr) minmax(0,.65fr); }
 .hu-travel-enabled.mn-world-on .mn__world-home { margin:0;grid-row:1;grid-column:1; }
 .hu-travel-enabled.mn-world-on .mn__world-frame { inset:0;width:100%;height:100%; }
 .hu-travel-enabled.mn-world-on .wt-headline { top:70px;left:16px;font-size:24px;z-index:9; }
@@ -206,6 +207,7 @@
 }
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
+  .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on .mn__world-feed { grid-row:1;grid-column:2;margin:72px 16px 0 0;padding-top:20px;border:1px solid #ffffff20;border-radius:22px 22px 0 0; }
   .hu-travel-enabled.mn-world-on .wt-world-modes { bottom:calc(var(--mn-bar-clear,96px) + 28px); }
   .hu-travel-enabled.mn-world-on .wt-destination,.hu-travel-enabled.mn-world-on .hu-world-filters { bottom:calc(var(--mn-bar-clear,96px) + 58px); }
@@ -249,11 +251,11 @@
 .wt-directions { min-width:0; }
 .wt-route-message { margin:8px 0 12px;color:#d4dce3;font:400 13px/1.5 var(--mn-ui); }
 .wt-route-message:empty { display:none; }
-.wt-route-card { margin:0 0 12px;padding:15px;border:1px solid #ffffff25;border-radius:16px;background:#111a22; }
+.wt-route-card { margin:0 0 8px;padding:8px 12px;border:1px solid #ffffff25;border-radius:16px;background:#111a22;scroll-margin-top:4px; }
 .wt-route-summary { display:flex;align-items:baseline;gap:12px;flex-wrap:wrap; }
 .wt-route-summary strong { color:#f6f4ee;font:500 27px/1.2 var(--mn-ui);letter-spacing:-.025em; }
 .wt-route-summary span { color:#c2cdd7;font:400 15px/1.4 var(--mn-ui); }
-.wt-route-label { margin:7px 0 0;color:#a9b7c3;font:400 12px/1.5 var(--mn-ui); }
+.wt-route-label { margin:4px 0 0;color:#a9b7c3;font:400 12px/1.5 var(--mn-ui); }
 .wt-route-actions { display:flex;gap:8px;flex-wrap:wrap; }
 .wt-route-actions button { flex:1;min-width:0;min-height:48px;padding:11px 14px;border:1px solid #ffffff40;border-radius:25px;background:#19232c;color:#f4f5f6;font:400 15px/1.4 var(--mn-ui);cursor:pointer; }
 .wt-route-actions .wt-primary { background:#b90029;border-color:#e52c52; }
@@ -264,6 +266,12 @@
 .wt-nav-distance { margin:0 0 5px;color:#cce1d9;font:500 13px/1.4 var(--mn-ui); }
 .wt-navigation h3 { margin:0;color:#f4faf6;font:500 22px/1.25 var(--mn-ui);letter-spacing:-.015em;overflow-wrap:anywhere; }
 .wt-nav-remaining { margin:10px 0 0;color:#b6d2c7;font:400 12px/1.4 var(--mn-ui); }
+/* Live guidance already contains remaining time and distance. Keep its turn
+   and full-size Stop/Recenter controls together above the listening dock. */
+.wt-navigating :is(#wtRouteSummary,#wtRouteLabel) { display:none; }
+.wt-navigating .wt-route-card { padding:0;border:0;background:none;margin-bottom:8px; }
+.wt-navigating .wt-navigation { margin:0;padding:10px 12px; }
+.wt-navigating .wt-navigation h3 { font-size:20px; }
 .wt-steps { min-width:0;border-top:1px solid #ffffff20; }
 .wt-steps>summary { min-height:48px;padding:14px 0;color:#d7e0e7;font:400 14px/1.45 var(--mn-ui);cursor:pointer; }
 .wt-steps ol { margin:0;padding:0 0 0 26px;color:#91a4b6; }

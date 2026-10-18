@@ -9,7 +9,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const OUT=process.argv[2]||join(ROOT,'e2e-out','docket-cohort');
-const require=createRequire(import.meta.url),{chromium}=require('playwright');
+const require=createRequire(import.meta.url);
+let chromium;
+try { ({chromium}=require('playwright')); }
+catch { ({chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules','x'))('playwright')); }
 const archive=JSON.parse(await readFile(join(ROOT,'data/action/docket-516r-archive.json'),'utf8'));
 const TYPES={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
 async function file(path){const p=normalize(decodeURIComponent(path)).replace(/^([.][.][/\\])+/,'');return {body:await readFile(join(ROOT,p)),contentType:TYPES[extname(p)]||'application/octet-stream'};}
