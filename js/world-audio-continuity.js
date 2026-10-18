@@ -287,6 +287,9 @@
     if (!open) return;
     send({type:"visibility", visible:false});
     open = false; shell.hidden = true;
+    // Clear the compact World offset before restoring Music. Leaving this
+    // inline top together with the Music bottom makes a full-height overlay.
+    if (controls) controls.style.removeProperty("top");
     delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
     hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
     doc.title = baseTitle;
