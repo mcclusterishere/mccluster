@@ -87,7 +87,12 @@ export default {async fetch(req,env,ctx){
 
     // Add a lead from an authenticated operator/admin workflow without exposing the table directly.
     if(path==='/api/sales/leads'&&req.method==='POST'){
-      await requireUser(req,env);const body=await req.json();if(!body.company_name)return fail(env,'company_name is required');const rows=await sb(env,'sales_leads?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({company_name:body.company_name,market:body.market||null,website:body.website||null,email:body.email||null,phone:body.phone||null,fleet_note:body.fleet_note||null,app_gap_note:body.app_gap_note||null,source_url:body.source_url||null,status:body.status||'prospect'})});return reply(env,{lead:rows[0]},201)
+      const user=await requireUser(req,env);
+      // Creating an internal sales record is a privileged operator workflow,
+      // not a side effect every authenticated public member may initiate.
+      const memberships=await sb(env,`operator_members?auth_user_id=eq.${encodeURIComponent(user.id)}&role=in.(owner,admin,dispatcher)&select=id&limit=1`);
+      if(!memberships?.length)return fail(env,'Sales lead access requires an authorized operator',403);
+      const body=await req.json();if(!body.company_name)return fail(env,'company_name is required');const rows=await sb(env,'sales_leads?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({company_name:body.company_name,market:body.market||null,website:body.website||null,email:body.email||null,phone:body.phone||null,fleet_note:body.fleet_note||null,app_gap_note:body.app_gap_note||null,source_url:body.source_url||null,status:body.status||'prospect'})});return reply(env,{lead:rows[0]},201)
     }
 
     // Core handles Stripe Connect, payments, dispatch, rental lifecycle and partner referrals.
