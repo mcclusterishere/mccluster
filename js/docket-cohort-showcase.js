@@ -6,7 +6,7 @@
   var API='https://api.mccluster.org/v1/action-archive/';
   var promise=null, current=null, worldMode='travel',globeReady=false;
   var pendingEventFocus=new URLSearchParams(location.search).get('completed');
-  var mounted=new WeakSet(), doc=document;
+  var mounted=new WeakSet(), mountedSeries=new WeakSet(), doc=document;
   function el(tag,cls,text){var n=doc.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
   function safeUrl(value){try{var u=new URL(String(value||''),location.href);return u.protocol==='https:'||u.origin===location.origin?u.href:null;}catch(_){return null;}}
   function link(label,url,cls,external){var a=el('a',cls,label),safe=safeUrl(url);if(safe)a.href=safe;if(external){a.target='_blank';a.rel='noopener noreferrer';}return a;}
@@ -49,17 +49,19 @@
     var wrap=el('div','dc-recording'),url=safeUrl(m.url);
     wrap.append(el('p','dc-recording__title',m.title||m.version_label||'Recording'));
     if(m.version_label&&m.version_label!==m.title)wrap.append(el('p','dc-small',m.version_label));
-    if(url&&m.playback==='direct'){
-      var isAudio=m.kind==='audio',player=el(isAudio?'audio':'video');player.controls=true;player.preload='none';
-      if(!isAudio){player.playsInline=true;var poster=safeUrl(m.poster_url);if(poster)player.poster=poster;}
-      player.src=url;player.setAttribute('aria-label',m.title||'Play recording');wrap.append(player);
+    var canonical=m.kind==='audio'&&safeUrl(m.release_url);
+    if(canonical)wrap.append(link('Play in Music →',canonical,'dc-button'));
+    else if(url&&m.kind!=='audio'&&m.playback==='direct'){
+      var player=el('video');player.controls=true;player.preload='none';player.playsInline=true;
+      var poster=safeUrl(m.poster_url);if(poster)player.poster=poster;
+      player.src=url;player.setAttribute('aria-label',m.title||'Watch recording');wrap.append(player);
     }else if(url){wrap.append(link(m.kind==='audio'?'Listen in the archive ↗':'Watch in the archive ↗',url,'dc-button',true));}
     if(m.archive_version&&m.archive_version.url)wrap.append(link('2025 archive recording ↗',m.archive_version.url,'dc-small',true));
     return wrap;
   }
   function workCard(work,open){
     var box=el('details','dc-work');box.id=work.slug||work.id;if(open)box.open=true;
-    var summary=el('summary','',work.title);summary.append(el('span','dc-work__meta','Completed · '+(work.year||2025)+' · Write the Change'));box.append(summary);
+    var summary=el('summary','',work.title);summary.append(el('span','dc-work__meta','Completed · '+(work.year||2025)+' · Write a Song'));box.append(summary);
     if(Array.isArray(work.credits)&&work.credits.length){var ul=el('ul','dc-work__credits');work.credits.forEach(function(c){
       var li=el('li');if(c.participant_slug)li.append(link(c.display_name,participantUrl(c.participant_slug)));else li.append(doc.createTextNode(c.display_name||'Contributor'));
       li.append(doc.createTextNode(' · '+(c.role||'Contributor')));ul.append(li);
@@ -107,6 +109,100 @@
       host.append(songs,link('Explore the songs and the cohort →',PAGE,'dc-button dc-button--primary'),eventCard(data,true));syncMap();
     }catch(_){mounted.delete(host);host.replaceChildren(el('h2','','Docket 516R'),el('p','','The archive could not load right now.'),link('Open the cohort archive',PAGE,'dc-button'));}
   }
+
+  /* Completed work is a reusable series surface: no duplicated song players,
+     no invented recording locations and no new mission assignments. */
+  async function mountSeries(host){
+    if(!host||mountedSeries.has(host))return;
+    mountedSeries.add(host);
+    try{
+      var data=await load(),works=data.works.filter(function(w){return w&&w.status==='completed'&&(w.id||w.slug);});
+      host.replaceChildren();
+      if(!works.length){host.append(el('p','dc-small','No completed missions are published yet.'));return;}
+      var series=el('details','dc-series');
+      var summary=el('summary','dc-series__summary'),name=el('span','dc-series__name');
+      name.append(el('strong','',data.project.title||'Docket 516R'),el('small','','Write a Song · '+works.length+' completed · '+(data.project.year||2025)));
+      summary.append(name,el('span','dc-series__chevron','View series ↓'));series.append(summary);
+      var body=el('div','dc-series__body'),card=el('article','dc-series__card');
+      card.tabIndex=0;card.setAttribute('aria-label','Completed mission card. Use left and right arrows to browse.');
+      var controls=el('div','dc-series__controls'),position=el('span','dc-series__position');
+      var previous=button('← Previous',function(){move(-1);},'dc-series__previous');
+      var next=button('Next →',function(){move(1);},'dc-series__next');
+      controls.append(previous,position,next);
+      var detail=el('dialog','dc-series__dialog');detail.setAttribute('aria-label','Completed mission details');
+      detail.addEventListener('close',function(){detail.querySelectorAll('audio,video').forEach(function(media){media.pause();});});
+      var index=0;
+      function focusGlobe(){
+        if(!data.event)return;
+        if(window.MCC_WORLD_MODE&&window.MCC_WORLD_MODE.get()!=='missions')window.MCC_WORLD_MODE.set('missions');
+        focusEvent(data.event);
+        var world=doc.getElementById('mnWorld');if(world)world.scrollIntoView({block:'start',behavior:'smooth'});
+      }
+      function showDetail(work){
+        var contents=el('div','dc-series__detail');
+        contents.append(button('Close ✕',function(){detail.close();},'dc-series__close'));
+        contents.append(el('p','dc-kicker','Completed mission · Write a Song'),el('h2','',work.title));
+        contents.append(el('p','dc-small','Completed by the '+(data.project.year||2025)+' Equity Rise cohort. The public work and verified credits are collected below.'));
+        var credits=work.credits||[];
+        if(credits.length){
+          var creditList=el('ul','dc-work__credits');
+          credits.forEach(function(c){
+            var li=el('li');
+            if(c.participant_slug)li.append(link(c.display_name,participantUrl(c.participant_slug)));
+            else li.append(doc.createTextNode(c.display_name||'Contributor'));
+            li.append(doc.createTextNode(' · '+(c.role||'Contributor')));creditList.append(li);
+          });contents.append(creditList);
+        }
+        (work.recordings||[]).forEach(function(m){contents.append(mediaCard(m));});
+        (work.assets||[]).forEach(function(m){contents.append(mediaCard(m));});
+        if(data.event){
+          contents.append(el('p','dc-small','This song belongs to the Docket 516R series. The globe pin marks the documented cohort showcase, not an unverified recording address.'));
+          contents.append(button('Show cohort showcase on globe',focusGlobe,'dc-button'));
+        }
+        contents.append(link('See the full cohort record',PAGE+'#'+encodeURIComponent(work.slug||work.id),'dc-button'));
+        detail.replaceChildren(contents);
+        if(typeof detail.showModal==='function')detail.showModal();
+      }
+      function paint(){
+        var work=works[index],recording=(work.recordings||[]).find(function(m){return m&&safeUrl(m.release_url);});
+        position.textContent=(index+1)+' / '+works.length;
+        previous.disabled=index===0;next.disabled=index===works.length-1;
+        card.replaceChildren(el('p','dc-kicker','Completed · '+(work.year||data.project.year||2025)),
+          el('h3','',work.title),el('p','dc-series__type','Write a Song · Write the Change'));
+        var credited=(work.credits||[]).map(function(c){return c.display_name;}).filter(Boolean);
+        if(credited.length)card.append(el('p','dc-series__credits',credited.join(' · ')));
+        var media=el('p','dc-series__media',
+          (work.recordings||[]).length+' recording'+((work.recordings||[]).length===1?'':'s')+
+          ' · '+(work.assets||[]).length+' visual'+((work.assets||[]).length===1?'':'s'));
+        card.append(media);
+        var actions=el('div','dc-series__actions');
+        actions.append(button('Read full mission',function(){showDetail(work);},'dc-button'));
+        if(recording)actions.append(link('Play in Music →',recording.release_url,'dc-button dc-button--primary'));
+        if(data.event)actions.append(button('Show on globe',focusGlobe,'dc-button'));
+        card.append(actions);
+      }
+      function move(step){index=Math.max(0,Math.min(works.length-1,index+step));paint();card.focus({preventScroll:true});}
+      card.addEventListener('keydown',function(e){
+        if(e.target!==card||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+        if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();move(e.key==='ArrowLeft'?-1:1);}
+      });
+      var start=null;
+      card.addEventListener('pointerdown',function(e){if(e.isPrimary&&e.button===0&&!e.target.closest('a,button'))start={id:e.pointerId,x:e.clientX,y:e.clientY};});
+      card.addEventListener('pointerup',function(e){if(!start||start.id!==e.pointerId)return;
+        var dx=e.clientX-start.x,dy=e.clientY-start.y;start=null;
+        if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)move(dx<0?1:-1);
+      });
+      card.addEventListener('pointercancel',function(){start=null;});
+      body.append(card,controls,link('Explore the full Docket 516R series →',PAGE,'dc-series__archive'));
+      series.append(body);host.append(series,detail);paint();syncMap();
+    }catch(e){
+      mountedSeries.delete(host);
+      host.replaceChildren(el('p','dc-small','Completed missions could not load.'),
+        link('View the cohort archive',PAGE,'dc-button'));
+      throw e;
+    }
+  }
+  function ensureMap(){return load().then(function(){syncMap();}).catch(function(){});}
   function personCard(p){var a=el('article','dc-person');a.append(link(p.display_name,participantUrl(p.slug),'dc-person__name'),el('p','',roles(p)),badge());var actions=el('div','dc-actions');if(p.provider_page!==null)actions.append(link('Webpage',pageUrl(p.slug),'dc-button'));actions.append(link('Profile',profileUrl(p),'dc-button'));a.append(actions);return a;}
   async function authed(path,init){if(!window.MCC||!MCC.api)throw Error('Sign in to edit your webpage.');var r=await MCC.api('/v1/action-archive/'+path,init);var d=await r.json();if(!r.ok)throw Error(d.message||d.error||'The change could not be saved.');return d;}
   async function ownerEditor(host,p,applyPage){
@@ -162,16 +258,21 @@
     var event=el('section','dc-section');event.append(eventCard(data,false));host.append(event);
     var extra=(data.media||[]).filter(function(m){return m.kind==='cohort_video'||m.kind==='cohort_promo'||m.id===PROJECT+':cohort-promo';});
     if(extra.length){var media=el('section','dc-section');media.append(el('h2','','From the cohort'));extra.forEach(function(m){media.append(mediaCard(m));});host.append(media);}
-    var links=el('div','dc-actions');links.append(link('Try Write the Change','mnet.html?mission=053cbd0d-6bdb-49c6-bd80-8c5b8be36068','dc-button dc-button--primary'),link('Explore the public record',data.project.canonical_url||'docket-516.html','dc-button'));host.append(links);
+    var links=el('div','dc-actions');links.append(link('Try Write a Song','mnet.html?mission=053cbd0d-6bdb-49c6-bd80-8c5b8be36068','dc-button dc-button--primary'),link('Explore the public record',data.project.canonical_url||'docket-516.html','dc-button'));host.append(links);
     openHash(host);
   }
   window.addEventListener('mcc:world-mode',function(e){worldMode=e.detail&&e.detail.mode||'travel';syncMap();});
   window.addEventListener('message',function(e){
     var f=doc.getElementById('mnWorldFrame');if(!f||e.source!==f.contentWindow||e.origin!==location.origin)return;
     var d=e.data||{};if(d.type==='hu:globe-ready'){globeReady=true;syncMap();}
-    if(d.type==='hu:completed-selected'&&current&&current.event&&d.eventId===current.event.slug){var target=doc.getElementById('dcPreviewCapstone');if(target)target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});}
+    if(d.type==='hu:completed-selected'&&current&&current.event&&d.eventId===current.event.slug){
+      var tab=doc.querySelector('.mn-swipe__filters [data-status="completed"]');
+      if(tab&&tab.getAttribute('aria-selected')!=='true')tab.click();
+      var target=doc.getElementById('dcPreviewCapstone')||doc.getElementById('mnCompletedMissions');
+      if(target)target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+    }
   });
-  window.DocketCohortShowcase={mount:mount};
+  window.DocketCohortShowcase={mount:mount,mountSeries:mountSeries,ensureMap:ensureMap};
   var page=doc.getElementById('docketCohortPage');
   window.addEventListener('hashchange',function(){if(page)openHash(page);});
   if(page)load().then(function(data){var person=new URLSearchParams(location.search).get('person');if(person)renderPerson(page,data,person);else renderProject(page,data);}).catch(function(){page.replaceChildren(el('h1','','Docket 516R'),el('p','','The archive could not load right now.'),link('Open the released recordings','album.html?album=equity-uprise','dc-button'));});
