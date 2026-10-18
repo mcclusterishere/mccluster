@@ -18,6 +18,7 @@
   var IS_GLOBE_FRAME = /\/action-globe\.html$/.test(location.pathname) && root.parent !== root;
   var theme = null, controls = null, shell = null, frame = null, status = null;
   var open = false, attached = false, parentOrigin = "", frameOrigin = "", channelId = "";
+  var addressSuggestionsOpen = false;
   var worldHref = "", frameReady = false, readyTimer = null, loadGeneration = 0;
   var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
@@ -27,6 +28,16 @@
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
   }
   function savePreference() { try { localStorage.setItem(PREF, JSON.stringify(preference)); } catch (_) {} }
+  function suspendTransportForSuggestions(active) {
+    if (!controls) return;
+    // The address selector is inside the cross-origin World frame. Its option
+    // cannot rise above this parent's z-index-2201 audio transport. Hide the
+    // controls temporarily, NOT the playing audio, so the input is usable.
+    var quiet = active === true && (open || IS_WORLD);
+    controls.classList.toggle('world-audio--suggest-open', quiet);
+    controls.inert = quiet;
+    controls.setAttribute('aria-hidden', String(quiet));
+  }
   function event(name, detail) { root.dispatchEvent(new CustomEvent(name, {detail: detail || {}})); }
   function urlOf(href) { try { return new URL(href, location.href); } catch (_) { return null; } }
   function cleanHref(href) {
@@ -272,6 +283,8 @@
     if (!open) return;
     send({type:"visibility", visible:false});
     open = false; shell.hidden = true;
+    addressSuggestionsOpen = false;
+    suspendTransportForSuggestions(false);
     delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
     hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
     doc.title = baseTitle;
@@ -294,6 +307,8 @@
     frameLayout(data.clearance);
     frameVisibility(data.visible);
     root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
+    if (addressSuggestionsOpen) root.parent.postMessage(
+      {channel:CHANNEL,type:"address-suggestions",id:channelId,active:true},parentOrigin);
     paint();
   }
   function navigate(href) {
@@ -335,6 +350,16 @@
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
   root.addEventListener("mcc:appbar-admin", paint);
+  root.addEventListener('mcc:travel-autocomplete', function(e) {
+    addressSuggestionsOpen = e.detail?.active === true;
+    if (attached && channelId && parentOrigin) {
+      // The parent validates exact frame source, origin and session nonce.
+      root.parent.postMessage({channel:CHANNEL,type:'address-suggestions',
+        id:channelId,active:addressSuggestionsOpen},parentOrigin);
+    } else if (IS_WORLD) {
+      suspendTransportForSuggestions(addressSuggestionsOpen);
+    }
+  });
   root.addEventListener("resize", layout);
   root.addEventListener("popstate", function () {
     var state = history.state && history.state.mccWorldAudio;
@@ -357,6 +382,10 @@
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
     else if (d.type === "music") closeWorld(true);
     else if (d.type === "pause") pause();
+    else if (d.type === 'address-suggestions' && typeof d.active === 'boolean') {
+      addressSuggestionsOpen = d.active;
+      suspendTransportForSuggestions(d.active);
+    }
   });
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
