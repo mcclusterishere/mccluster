@@ -176,3 +176,14 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   const entry = await read('workers/mccluster/src/entry-platform.js');
   assert.match(entry, /const handoff = await handleAuthHandoff\(request, env\);/);
 });
+
+test('async member bootstrap refreshes wing snapshot and Whip approval is server-owned',async()=>{
+  const bar=await read('js/tabbar.js');
+  const front=await read('js/member-front.js');
+  assert.match(bar,/if\(!PERSPECTIVE&&SELF_PROFILE&&!wingOn\)\s*\{\s*paintPerspective\(\);\s*HOME_BAR=dock\.innerHTML;/);
+  assert.match(bar,/if \(SELF_PROFILE && !PERSPECTIVE\) \{\s*paintPerspective\(\);\s*HOME_BAR = dock\.innerHTML;/);
+  assert.match(front,/\/api\/drivers\/clearance/);
+  assert.match(front,/clearance\?\.can_drive===true/);
+  assert.doesNotMatch(front,/driver\.compliance_verified/);
+  assert.doesNotMatch(front,/driver\.approval_status/);
+});
