@@ -2,7 +2,7 @@
  * External ride/payment APIs cannot accept client-picked fares or a self-
  * asserted driver role. The lifted satellite code remains byte-identical. */
 import app from './identity-gateway.js';
-import { performStreetRoute } from '../travel-routing-provider.js';
+
 import { bookingSettings, bookingReadiness, bookingLocations, calculateFare,
   signQuote, verifyQuote, bookingRequestId, bookingProblem, BOOKING_QUOTE_TTL_MS } from './booking-core.js';
 import { boundedJson } from '../../../../js/travel/route-core.mjs';
@@ -75,8 +75,19 @@ async function driverClearance(env,req,driverId,fetchFn,now) {
 }
 const mode = val=>val && ['standard'].includes(val) ? val : 'standard';
 const noLive = ()=>problem('service_not_live','Whip Equipped is accepting driver applications but is not dispatching paid rides yet.',503);
+/* Reuse the canonical Durable Object quota and provider, not a second
+ * uncontrolled upstream request path that can run up commercial API costs. */
+async function quotaControlledStreetRoute(input,env) {
+  if (!env.HereTenantAgent)throw fail('route_quota_unavailable','The commercial routing capacity is not connected.',503);
+  const id=env.HereTenantAgent.idFromName('travel:street-routing:mccluster');
+  const outcome=await env.HereTenantAgent.get(id).routeTravel(input);
+  if (!outcome?.route)throw fail('route_unavailable',typeof outcome?.error==='string'
+    ? outcome.error:'Verified street routing is temporarily unavailable.',
+    Number.isInteger(outcome?.status)?outcome.status:503);
+  return outcome.route;
+}
 export function createWhipBookingGate(next=app,options={}) {
-  const runRoute=options.route || performStreetRoute;
+  const runRoute=options.route || quotaControlledStreetRoute;
   const fetchFn=options.fetch || fetch;
   const now=options.now || Date.now;
   const randomId=options.randomId || (()=>crypto.randomUUID());
