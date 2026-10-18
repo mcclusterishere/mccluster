@@ -1220,6 +1220,24 @@ async function handleFbi(req,env,path,url){
   return fail(req,env,'Not found',404);
 }
 
+/* A lightweight public feature handshake. The flag alone is insufficient:
+   production also needs the reviewed schema deployed. Never expose disabled
+   news comment controls (or probe the missing table while the flag is OFF). */
+async function handleNewsDiscussionCapability(req,env){
+  if(req.method!=='GET')return fail(req,env,'Method not allowed',405);
+  const active=String(env.WORLD_NEWS_COMMENTS_ENABLED||'').toLowerCase()==='true';
+  let available=false;
+  if(active){
+    try{
+      const rows=await service(env,'media_news_comments?select=id&limit=0');
+      available=Array.isArray(rows);
+    }catch(_){/* Schema not deployed or inaccessible: fail closed. */}
+  }
+  const response=reply(req,env,{available});
+  response.headers.set('cache-control','private, no-store');
+  return response;
+}
+
 /* News lives in the same timeline as member posts, but its canonical
    ingestion rows are not fabricated network_posts. Comments are first-party
    member work linked to a retained article record. No publisher text is copied.
@@ -1255,10 +1273,22 @@ async function handleWorldNewsDiscussion(req,env,path){
   }
   const rows=await service(env,'media_news_comments?article_id=eq.'+articleId+
     '&deleted_at=is.null&state=eq.visible&select=id,article_id,author_m_uid,body,created_at&order=created_at.asc&limit=100');
-  const allowed=[];
-  for(const comment of rows||[]){
-    if(!muid||!await networkBlocked(env,muid,comment.author_m_uid))allowed.push(comment);
+  /* Two bounded, parallel block lookups rather than two serial queries per
+     comment. Both block directions apply. No user-blocked authors leak. */
+  const authors=muid?uniq((rows||[]).map(c=>c.author_m_uid)).filter(id=>uuidLike(id)&&id!==muid):[];
+  let blocked=new Set();
+  if(authors.length){
+    const filter=authors.join(',');
+    const [blockedByViewer,blockedViewer]=await Promise.all([
+      service(env,'network_blocks?blocker_m_uid=eq.'+muid+
+        '&blocked_m_uid=in.('+filter+')&select=blocked_m_uid'),
+      service(env,'network_blocks?blocked_m_uid=eq.'+muid+
+        '&blocker_m_uid=in.('+filter+')&select=blocker_m_uid')
+    ]);
+    blocked=new Set([...(blockedByViewer||[]).map(x=>x.blocked_m_uid),
+      ...(blockedViewer||[]).map(x=>x.blocker_m_uid)]);
   }
+  const allowed=(rows||[]).filter(comment=>!blocked.has(comment.author_m_uid));
   const actors=await networkActors(env,allowed.map(c=>c.author_m_uid));
   const response=reply(req,env,{comments:allowed.map(c=>({
     id:c.id,article_id:c.article_id,body:c.body,created_at:c.created_at,
@@ -1275,6 +1305,7 @@ export async function handlePlatformApi(req,env){
   if(path==='/v1/platform/catalog'&&req.method==='GET'){
     const [products,apps]=await Promise.all([service(env,'api_products?enabled=eq.true&order=product_key.asc&select=product_key,name,description,unit_name,default_unit_cost'),service(env,'platform_apps?enabled=eq.true&order=product_family.asc,name.asc&select=app_key,name,product_family,kind,public_url')]); return reply(req,env,{...CATALOG,api_products:products||[],apps:apps||[]});
   }
+  if(path==='/v1/world/news/comments-capability') return handleNewsDiscussionCapability(req,env);
   if(path.startsWith('/v1/world/news/')) return handleWorldNewsDiscussion(req,env,path);
   if(path.startsWith('/v1/developer/')) return handleDeveloper(req,env,path,url);
   if(path==='/v1/mnet'||path.startsWith('/v1/mnet/')) return handleMnet(req,env,path,url);

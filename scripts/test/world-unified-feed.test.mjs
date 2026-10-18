@@ -64,3 +64,70 @@ test('news discussions authorize writes, preserve publisher boundary, and allow 
     assert.equal(writes.length,1);
   }finally{globalThis.fetch=original;}
 });
+
+test('news comment availability is disabled until BOTH the flag and the database table are ready',{concurrency:false},async()=>{
+  const original=globalThis.fetch, calls=[];
+  try{
+    const url='https://api.mccluster.org/v1/world/news/comments-capability';
+    globalThis.fetch=async resource=>{
+      calls.push(new URL(String(resource)).pathname);
+      return response([],200);
+    };
+    let res=await handlePlatformApi(new Request(url),{...env,WORLD_NEWS_COMMENTS_ENABLED:'false'});
+    assert.deepEqual(await res.json(),{available:false});
+    assert.equal(calls.length,0,'flag OFF must not probe a pending schema');
+    res=await handlePlatformApi(new Request(url),env);
+    assert.deepEqual(await res.json(),{available:true});
+    assert.equal(calls.length,1,'ready schema requires one controlled existence check');
+    globalThis.fetch=async resource=>{
+      calls.push(new URL(String(resource)).pathname);
+      return response({code:'42P01',message:'relation missing'},404);
+    };
+    res=await handlePlatformApi(new Request(url),env);
+    assert.deepEqual(await res.json(),{available:false});
+    assert.match(res.headers.get('cache-control'),/no-store/);
+  }finally{globalThis.fetch=original;}
+});
+
+test('batch comment visibility checks apply both directions of blocking in only two lookups',{concurrency:false},async()=>{
+  const original=globalThis.fetch,calls=[];
+  const blockedByMe='44444444-4444-4444-8444-444444444444';
+  const blockedMe='55555555-5555-4555-8555-555555555555';
+  const publicAuthor='66666666-6666-4666-8666-666666666666';
+  const comments=[
+    {id:'77777777-7777-4777-8777-777777777777',author_m_uid:MUID,body:'My own comment',created_at:'2026-10-18T12:00:00Z',article_id:ID},
+    {id:'88888888-8888-4888-8888-888888888888',author_m_uid:blockedByMe,body:'Hidden one',created_at:'2026-10-18T12:01:00Z',article_id:ID},
+    {id:'99999999-9999-4999-8999-999999999999',author_m_uid:blockedMe,body:'Hidden two',created_at:'2026-10-18T12:02:00Z',article_id:ID},
+    {id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',author_m_uid:publicAuthor,body:'Visible friend',created_at:'2026-10-18T12:03:00Z',article_id:ID}
+  ];
+  try{
+    globalThis.fetch=async (resource,options={})=>{
+      const url=new URL(String(resource)),p=url.pathname;calls.push({path:p,search:url.search});
+      if(p==='/auth/v1/user')return response({id:AUTH});
+      if(p==='/rest/v1/m_auth_user_links'){
+        if(url.searchParams.has('auth_user_id'))return response([{m_uid:MUID}]);
+        return response([]);
+      }
+      if(p==='/rest/v1/media_news_articles')return response([{id:ID,canonical_url:'https://publisher.example/story'}]);
+      if(p==='/rest/v1/media_news_comments')return response(comments);
+      if(p==='/rest/v1/network_blocks'){
+        if(url.searchParams.get('blocker_m_uid')==='eq.'+MUID)
+          return response([{blocked_m_uid:blockedByMe}]);
+        if(url.searchParams.get('blocked_m_uid')==='eq.'+MUID)
+          return response([{blocker_m_uid:blockedMe}]);
+        throw Error('unexpected block query');
+      }
+      if(p==='/rest/v1/network_profiles')return response([]);
+      if(p==='/rest/v1/platform_profiles')return response([]);
+      throw Error('unexpected query '+p);
+    };
+    const reqAuth=new Request(COMMENT_URL,{method:'GET',headers:{authorization:'Bearer test-user-token'}});
+    const res=await handlePlatformApi(reqAuth,env);
+    assert.equal(res.status,200);
+    const data=await res.json();
+    assert.deepEqual(data.comments.map(x=>x.body),['My own comment','Visible friend']);
+    const blockCalls=calls.filter(x=>x.path==='/rest/v1/network_blocks');
+    assert.equal(blockCalls.length,2,'100 replies must not trigger 200 serial queries');
+    assert.ok(blockCalls.every(x=>x.search.includes('in.(')),'lookup is limited to displayed authors');
+  }finally{globalThis.fetch=original;}
+});

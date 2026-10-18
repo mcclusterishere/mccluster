@@ -11,6 +11,8 @@
     /* the World's news (GET /v1/world/news): the page read so far, and its cursor (undefined: not read yet; null: no more) */
     news: [],
     newsBefore: undefined,
+    newsCommentsAvailable: false,
+    newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
     threadPost: null,
@@ -1246,6 +1248,22 @@
       });
     }).catch(function () { return { ok: false, status: 0 }; });
   }
+  /* Never show news comment inputs before the Worker confirms BOTH that the
+     operator enabled the feature and the approved table is actually present.
+     No bearer credentials leave the current origin with this public read. */
+  function ensureNewsCommentsCapability() {
+    if (state.newsCommentsCapabilityAsked || !state.news.length) return;
+    state.newsCommentsCapabilityAsked = true;
+    fetch('https://api.mccluster.org/v1/world/news/comments-capability',
+      { credentials:'omit', cache:'no-store' })
+      .then(function (res) { return res.ok ? res.json() : {available:false}; })
+      .then(function (data) {
+        if (data && data.available === true) {
+          state.newsCommentsAvailable = true;
+          if ($('mnFeed')) renderFeed(false);
+        }
+      }).catch(function () { /* disabled or unreachable: no unusable UI */ });
+  }
   function applyNews(res, before) {
     if (res && res.ok) {
       var list = before ? state.news.slice() : [], have = {};
@@ -1253,6 +1271,7 @@
       res.items.forEach(function (n) { if (!have[n.id]) { have[n.id] = true; list.push(n); } });
       state.news = list;
       state.newsBefore = res.next;
+      ensureNewsCommentsCapability();
       window.dispatchEvent(new CustomEvent('mcc:world-news-loaded'));
     } else if (before && res && res.status === 400) state.newsBefore = null;
     /* anything else keeps what was there: a first page that did not come is asked for again with the next Load more,
@@ -1278,12 +1297,13 @@
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
-        '<span class="sr-only"> (open story and discussion)</span></button>' +
+        '<span class="sr-only"> (open story)</span></button>' +
       (n.lat !== null && n.lon !== null
         ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
         : '') +
-      '<div class="mn__post-actions"><button type="button" class="mn__action mn__action--comment" data-discussion-toggle aria-expanded="false" aria-label="Comment on news">' + ICON.comment + '<span class="mn__action-label">Comment</span></button></div>' +
-      discussionHtml('news', n.id) +
+      (state.newsCommentsAvailable
+        ? '<div class="mn__post-actions"><button type="button" class="mn__action mn__action--comment" data-discussion-toggle aria-expanded="false" aria-label="Comment on news">' + ICON.comment + '<span class="mn__action-label">Comment</span></button></div>' + discussionHtml('news', n.id)
+        : '') +
     '</article>';
   }
   function paintNewsCredit(on) { var c = $("mnNewsCredit"); if (c) c.hidden = !on; }
