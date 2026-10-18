@@ -362,7 +362,23 @@ const chooseTravelPlace = async (page, id, query) => {
         rowVisible:!!(row?.offsetWidth&&row?.offsetHeight)};
     },{id,expected})));
   }
-  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  const option = page.locator('#'+id+'Results button').filter({hasText:expected}).first();
+  try { await option.click({noWaitAfter:true,timeout:5000}); }
+  catch (error) {
+    // The Cesium canvas continuously paints while the suggestion popup is
+    // shown. If the intended option is truly exposed and enabled, an actual
+    // forced pointer click can bypass Playwright's overly strict stable-frame
+    // heuristic. Never bypass an obscured, disabled or hidden option.
+    const exposed = await option.evaluate(el => {
+      const r=el.getBoundingClientRect(), style=getComputedStyle(el);
+      const x=(r.left+r.right)/2, y=(r.top+r.bottom)/2;
+      const hit=document.elementFromPoint(x,y);
+      return r.width>0&&r.height>0&&!el.disabled&&style.visibility==='visible'
+        &&style.display!=='none'&&(hit===el||el.contains(hit));
+    });
+    if (!exposed) throw error;
+    await option.click({force:true,noWaitAfter:true,timeout:5000});
+  }
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
     return input && input.value !== query && input.value.includes(expected)
