@@ -177,3 +177,16 @@ test('old or externally created rides cannot open payment intents',async()=>{
   const res=await f.gate.fetch(request('/api/rides/'+RIDE+'/payment-intent','POST',{}),env());
   assert.equal(res.status,403);assert.equal(f.delegated.length,0);
 });
+
+test('driver clearance status is read-only and never inferred from a member\'s self-edited vehicle profile',async()=>{
+  const approved=fixture(),pending=fixture({clearance:'pending'});
+  const a=await approved.gate.fetch(request('/api/drivers/clearance','GET'),env());
+  assert.equal(a.status,200);
+  const good=await a.json();
+  assert.deepEqual({status:good.approval_status,canDrive:good.can_drive},
+    {status:'approved',canDrive:true});
+  const p=await pending.gate.fetch(request('/api/drivers/clearance','GET'),env());
+  assert.equal(p.status,200);
+  assert.equal((await p.json()).can_drive,false);
+  assert.equal(pending.delegated.length,0);
+});
