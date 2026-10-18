@@ -50,3 +50,28 @@
 @media (prefers-reduced-motion:reduce) {
   .mn-swipe__card { transition:none; }
 }
+
+
+/* Equity Uprise: one compact status switch, not discovery-category chrome. */
+.mn-swipe { padding:0 0 8px; }
+.mn-swipe__top { display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 0 2px; }
+.mn-swipe__filters { display:inline-flex;flex:none;gap:2px;overflow:visible;padding:3px;border:1px solid #ffffff22;border-radius:24px;background:#11161bcf; }
+.mn-swipe__filters button { padding:7px 12px;min-height:35px;border-radius:20px;font-size:12px;line-height:1.1;color:#d0cdd0; }
+.mn-swipe__filters button[aria-selected="true"] { color:#141619;background:#f1eee6;border-color:#f1eee6; }
+.mn-swipe__filters button[aria-selected="false"] { background:transparent;border-color:transparent; }
+.mn-swipe__undo { flex:none;display:grid;place-items:center;min-width:38px;min-height:38px;padding:0 4px;border:1px solid #ffffff3b;border-radius:50%;background:#181c21;font:500 23px/1 system-ui,sans-serif!important;text-decoration:none;color:#f6f0e9; }
+.mn-swipe__count { margin:3px 2px 4px;color:#a9a7a2;font-size:11px; }
+.mn-swipe__stage { padding:4px 1px 12px; }
+.mn-swipe__card { padding:15px 15px 13px;border-radius:18px;box-shadow:none; }
+.mn-swipe__category { margin:0 0 5px;font-size:10px; }
+.mn-swipe__card h3 { font-size:clamp(21px,5vw,29px); }
+.mn-swipe__description { margin:8px 0 0;font-size:13px;line-height:1.45; }
+.mn-swipe__review { margin:1px 0;font-size:11px; }
+.mn-swipe__tools { margin:0; }
+.mn-swipe__details { padding:5px 0;font-size:12px!important; }
+.mn-swipe__actions { margin:5px 0 0;gap:8px; }
+.mn-swipe__actions button { min-height:44px;padding:8px 10px;font-size:13px; }
+.mn-swipe__status { margin:0 4px;min-height:0; }
+.mn-swipe__status:empty { display:none; }
+.mn-swipe__completed { min-width:0;padding:2px 0 12px; }
+@media(min-width:600px){ .mn-swipe__card { padding:19px; }.mn-swipe__description { font-size:14px; } }
