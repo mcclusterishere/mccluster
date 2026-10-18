@@ -191,9 +191,15 @@ try {
     await s.page.locator('.mn-swipe__card').focus(); await s.page.keyboard.press('ArrowLeft');
     assert.equal(await s.current(), ids[2]);
     await s.page.locator('.mn-swipe__undo').click(); assert.equal(await s.current(), ids[1]);
-    await s.page.locator('[data-category="earn"]').click();
+    await s.page.locator('[data-status="completed"]').click();
+    await s.page.locator('#mnCompletedMissions .dc-series').waitFor();
     assert.equal(await s.page.locator('.mn-swipe__card').count(), 0);
-    await s.page.locator('[data-category="all"]').click();
+    await s.page.locator('.dc-series__summary').click();
+    assert.match(await s.page.locator('.dc-series__name').textContent(), /Docket 516R.*Write a Song/);
+    assert.match(await s.page.locator('.dc-series__position').textContent(), /1 \/ 9/);
+    await s.page.locator('.dc-series__next').click();
+    assert.match(await s.page.locator('.dc-series__position').textContent(), /2 \/ 9/);
+    await s.page.locator('[data-status="open"]').click();
     assert.equal(await s.current(), ids[1]);
     const sizes = await fit(s.page);
     await s.page.locator('.mn-swipe__actions').evaluate(n => n.scrollIntoView({ block: 'end', behavior: 'auto' }));
