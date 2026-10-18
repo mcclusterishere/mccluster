@@ -3,6 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { createManualPaymentIntent } from '../src/whip/stripe.js';
 import { bookingReadiness, bookingLocations, calculateFare, signQuote, verifyQuote, bookingSettings } from '../src/whip/booking-core.js';
 import { createWhipBookingGate } from '../src/whip/booking-gate.js';
 globalThis.crypto ||= webcrypto;
@@ -189,4 +191,37 @@ test('driver clearance status is read-only and never inferred from a member\'s s
   assert.equal(p.status,200);
   assert.equal((await p.json()).can_drive,false);
   assert.equal(pending.delegated.length,0);
+});
+
+test('repeated payment intent creation uses one Stripe idempotency identity', {concurrency:false},async()=>{
+  const original=globalThis.fetch,requests=[];
+  try{
+    globalThis.fetch=async(resource,options)=>{
+      requests.push({url:String(resource),method:options.method,headers:options.headers,body:options.body});
+      return json({id:'pi_fixture',client_secret:'pi_fixture_secret',status:'requires_payment_method'});
+    };
+    const settings={STRIPE_SECRET_KEY:'sk_test_fixture'};
+    const input={kind:'ride',resourceId:RIDE,amountCents:900,applicationFeeCents:27,
+      tenantId:TENANT,connectedAccountId:'acct_fixture'};
+    await createManualPaymentIntent(settings,input);
+    await createManualPaymentIntent(settings,input);
+    assert.equal(requests.length,2);
+    assert.equal(requests[0].headers['Idempotency-Key'],'whip-ride-'+RIDE);
+    assert.equal(requests[1].headers['Idempotency-Key'],requests[0].headers['Idempotency-Key']);
+    assert.equal(requests[0].headers['Stripe-Account'],'acct_fixture');
+  }finally{globalThis.fetch=original;}
+});
+test('the rider can recover a saved ride after Stripe redirect without leaking trip data in the return URL',async()=>{
+  const ui=await readFile(new URL('../../../js/travel/whip-booking.mjs',import.meta.url),'utf8');
+  const backend=await readFile(new URL('../src/whip/worker.js',import.meta.url),'utf8');
+  assert.match(ui,/SAVED_RIDE_KEY='mcc\.whip\.ride\.v1'/);
+  assert.match(ui,/resumeSavedRide\(\{fromRedirect:true\}\)/);
+  assert.match(ui,/request\('\/api\/rides\/'.*?encodeURIComponent\(id\)/);
+  assert.match(ui,/return_url:\(\(\)=>\{/);
+  assert.match(ui,/url\.searchParams\.set\('we_ride_return','1'\)/);
+  assert.doesNotMatch(ui,/return_url:.*ride\.id/);
+  assert.match(ui,/clearSavedRide\(\)/);
+  assert.match(ui,/weBookCancelRide/);
+  assert.match(backend,/retrievePaymentIntent\(env, ride\.stripe_payment_intent_id, t\.stripe_account_id\)/);
+  assert.match(backend,/metadata\?\.resource_id !== ride\.id/);
 });
