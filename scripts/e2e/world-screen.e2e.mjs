@@ -174,6 +174,12 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       const lim = Math.min(20, Number(u.searchParams.get('limit')) || 20);
       return json(route, { ok: true, items: world.news.slice(at, at + lim), next_before: at + lim < world.news.length ? 'cur|' + (at + lim) : null, attribution: GDELT });
     }
+    /* Mimic the only circumstance in which the UI may expose news comments:
+       the reviewed backend explicitly advertises that its table is available. */
+    if (u.pathname === '/v1/world/news/comments-capability') {
+      if (auth) return json(route, {error:'Capability must not require a user session'},400);
+      return json(route, {available:true});
+    }
     // Staged news-comment API fixture: source-backed and first-party only.
     const newsComment = u.pathname.match(/^\/v1\/world\/news\/([0-9a-f-]{36})\/comments$/);
     if (newsComment) {
@@ -702,6 +708,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       (await page.locator('.wt-world-modes [data-world-mode=posts]').textContent()).trim()==='Feed');
     check(scope,'the one feed interleaves community posts and publisher-attributed headlines',
       await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()>0);
+    await page.waitForSelector('#mnFeed [data-news-id] [data-discussion-toggle]',{timeout:15000});
     check(scope,'member posts and news use the same inline discussion control',
       await page.locator('#mnFeed [data-post-id] [data-discussion-toggle]').count()>0 &&
       await page.locator('#mnFeed [data-news-id] [data-discussion-toggle]').count()>0);
