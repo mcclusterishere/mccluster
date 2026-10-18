@@ -354,14 +354,7 @@ export default {
         // in the separately reviewed booking PR intercepts this route before
         // reaching the core. Fail closed when that gate is not installed.
         return fail(env, 'A verified server-issued quote is required to book a ride', 428);
-        /* Legacy implementation deliberately unreachable until migration:
-        const user = await requireUser(req, env); const body = await req.json(); const t = await tenant(env, body.tenant_slug || 'whip-equipped'); const fare = Math.max(0, Number(body.fare_cents || 0));
-        const platformFee = t.white_label_enabled ? 0 : Math.round(fare * Number(t.platform_fee_percent || 0.03));
-        const ride = { tenant_id: t.id, rider_id: requestIdentity(req, user, 'demo-rider'), rider_name: body.rider_name || user.user_metadata?.full_name || 'Rider', status: 'REQUESTED', pickup_label: body.pickup_label || 'Current location', pickup_lat: body.pickup_lat ?? null, pickup_lng: body.pickup_lng ?? null, dropoff_label: body.dropoff_label, dropoff_lat: body.dropoff_lat ?? null, dropoff_lng: body.dropoff_lng ?? null, miles: body.miles ?? null, minutes: body.minutes ?? null, ride_tier: body.ride_tier || 'WE Standard', fare_cents: fare, platform_fee_cents: platformFee, pickup_pin: String(Math.floor(1000 + Math.random() * 9000)), payment_status: 'unpaid' };
-        if (!ride.dropoff_label || !fare) return fail(env, 'dropoff_label and fare_cents are required');
-        const rows = await sb(env, 'rides?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(ride) }); return reply(env, { ride: rows[0] }, 201);
       }
-      */
       const rideMatch = path.match(/^\/api\/rides\/([^/]+)$/);
       if (rideMatch && req.method === 'GET') { await requireUser(req, env); const ride = await getRide(env, rideMatch[1]); return ride ? reply(env, { ride }) : fail(env, 'Ride not found', 404); }
 
