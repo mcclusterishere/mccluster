@@ -245,7 +245,7 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News</button></nav>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">Feed</button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;v=__STAMP__" title="Human Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
@@ -272,7 +272,7 @@
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World content" tabindex="0">
         <section id="wtPlanner" aria-labelledby="wtTitle"></section>
-        <div id="wtSocial"><section id="worldNewsDeck" class="world-news-deck" aria-label="Geographic news feed" hidden><h2>News around the world</h2><p>Story locations are GDELT mentions, not verified event locations. Headlines open an in-app discovery record; full articles require publisher permission.</p><div id="worldNewsEntries"></div><button type="button" id="worldNewsMore" hidden>Load more news</button><p id="worldNewsStatus" role="status"></p></section>
+        <div id="wtSocial"><!-- One stream: public news, community posts, and verified activity are interleaved below. -->
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
                what a guest sees first, and what anyone sees with no mission
@@ -299,10 +299,6 @@
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-          <div class="hu-feed-tabs" role="group" aria-label="Feed content">
-            <button type="button" data-hu-feed="all" aria-pressed="true">For you</button>
-            <button type="button" data-hu-feed="community" aria-pressed="false">Community</button>
-          </div>
           <section class="hu-mission-preview" aria-labelledby="huMissionHeading">
             <div class="hu-section-head"><h2 id="huMissionHeading">Choose your next mission</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions and your Action Record"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
             <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>
@@ -311,7 +307,6 @@
             <h2>Already made a difference</h2>
             <p><a href="docket-516r-cohort.html">Explore the completed Docket 516R cohort →</a></p>
           </section>
-          <h2 class="hu-section-label">From the community</h2>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
