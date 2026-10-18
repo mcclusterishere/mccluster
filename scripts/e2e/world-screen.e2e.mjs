@@ -336,7 +336,23 @@ const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 /* Travel acceptance: the shipping UI and real Cesium, with recorded public road routes.
    Provider fixtures never claim to be a live service, a fare or a dispatched ride. */
 const chooseTravelPlace = async (page, id, query) => {
-  await page.fill('#'+id, query); await page.locator('#'+id+'Results button').first().click();
+  // The prior address options may still be attached while Photon refreshes.
+  // Wait for suggestions belonging to this query, and never select the stale first row.
+  const expected = query === '350 Fifth Avenue' ? 'Empire State Building'
+    : query === 'Union Station' ? 'Union Station' : 'New Haven';
+  await page.fill('#'+id, query);
+  await page.waitForFunction(({id, expected}) => {
+    const input = document.getElementById(id), list = document.getElementById(id+'Results');
+    return input?.getAttribute('aria-expanded') === 'true' && !input.hasAttribute('aria-busy')
+      && list && !list.hidden && [...list.querySelectorAll('button')]
+        .some(button => button.textContent?.includes(expected));
+  }, {id, expected}, {timeout: 25000});
+  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  await page.waitForFunction(({id, query, expected}) => {
+    const input = document.getElementById(id);
+    return input && input.value !== query && input.value.includes(expected)
+      && input.getAttribute('aria-expanded') === 'false';
+  }, {id, query, expected}, {timeout: 15000});
 };
 const showTravelRoute = async page => {
   const label = await page.textContent('#wtNavigate');
