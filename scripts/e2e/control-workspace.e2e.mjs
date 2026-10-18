@@ -100,21 +100,26 @@ async function setup(viewport,{owner=true,loggedIn=true,reduced=false}={}){
   page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|favicon/.test(m.text()))errors.push(m.text());});
   return{ctx,page,auth,calls,errors};
 }
+async function navigate(page, hash) {
+  await page.click('#mccControlToggle');
+  await page.locator('#mccDestinations:popover-open').waitFor();
+  await page.locator('[data-control-route="'+hash+'"]').click();
+  await page.waitForFunction(hash => location.hash === hash && document.getElementById('crSurface').getAttribute('data-cr-surface') === hash.slice(1).split(':')[0], hash);
+}
 async function overflow(page){return page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));}
 async function shot(page,name){await page.evaluate(()=>{const tag=document.querySelector('.cw-brand b');if(tag)tag.textContent='SYNTHETIC TEST DATA';});await page.screenshot({path:join(OUT,name+'.png')});}
 try{
   for(const size of [{width:1180,height:820},{width:820,height:1180},{width:390,height:844}]){
     const key=size.width+'x'+size.height;const {ctx,page,calls,errors}=await setup(size,{reduced:true});
     await page.goto(BASE+'/control.html?workspace=1#analytics',{waitUntil:'domcontentloaded'});
-    await page.waitForSelector('body[data-control-workspace="owner"]');
+    await page.waitForSelector('body[data-control-workspace="owner"][data-admin-navigation][data-site-navigation]');
     await page.waitForFunction(()=>window.CR.analytics.state.globe?.ready&&window.CR.analytics.state.loaded,null,{timeout:90000});
-    const tabs=await page.locator('.cw-pages [data-cw-page]').allTextContents();
-    check(key+' exactly three main pages',JSON.stringify(tabs)===JSON.stringify(['Intelligence','Operations','Studio']),tabs);
+    check(key+' shared dock replaces duplicate page navigation',await page.locator('.cw-pages').isHidden() && await page.locator('#mccControlToggle').isVisible());
     check(key+' real segmented black globe',await page.evaluate(()=>window.__craGlobe().countries===242));
     check(key+' default makes no Halo request',!calls.some(c=>c.host==='prime.mccluster.org'));
     await page.waitForTimeout(600);let dimensions=await overflow(page);check(key+' no horizontal page overflow',dimensions.width===dimensions.scroll,dimensions);
     await shot(page,'intelligence-'+key);
-    await page.click('#cwAccount');
+    await page.click('#mccAuthChip');
     check(key+' Account remains open after a touch click',await page.locator('#crAccountMenu').evaluate(e=>e.classList.contains('is-open')));
     await page.click('#cwPlace');
     await page.click('#cwAsk');
@@ -126,18 +131,18 @@ try{
     await page.waitForFunction(()=>window.__craGlobe().state==='US-CT');
     await page.evaluate(()=>window.__keptGlobe=window.CR.analytics.state.globe);
     await page.waitForTimeout(500);await shot(page,'intelligence-connecticut-'+key);
-    await page.click('.cw-pages [data-cw-page="operations"]');
+    await navigate(page, '#home');
     await page.waitForFunction(()=>document.body.dataset.cwPage==='operations');
     check(key+' globe suspended in Operations',await page.evaluate(()=>window.__keptGlobe.active===false));
-    await page.selectOption('#cwRoute','#work:people');
+    await navigate(page, '#work:people');
     await page.waitForFunction(()=>location.hash==='#work:people');
     check(key+' people stays native Control workflow',await page.locator('#crSurface').getAttribute('data-cr-surface')==='work');
     await shot(page,'operations-'+key);
-    await page.click('.cw-pages [data-cw-page="studio"]');await page.waitForFunction(()=>document.body.dataset.cwPage==='studio');
-    await page.selectOption('#cwRoute','#create:library');
+    await navigate(page, '#create:projects');await page.waitForFunction(()=>document.body.dataset.cwPage==='studio');
+    await navigate(page, '#create:library');
     await page.waitForFunction(()=>location.hash==='#create:library');await shot(page,'studio-'+key);
     check(key+' Studio has no Earth in its page',await page.locator('#crSurface .crg-canvas').count()===0);
-    await page.click('.cw-pages [data-cw-page="intelligence"]');
+    await page.click('.appbar [data-appnav="analytics"]');
     await page.waitForFunction(()=>window.CR.analytics.state.globe?.active&&document.body.dataset.cwPage==='intelligence');
     check(key+' exact same globe instance retained',await page.evaluate(()=>window.CR.analytics.state.globe===window.__keptGlobe));
     check(key+' geographic selection survives round trip',await page.evaluate(()=>window.CR.analytics.state.geo.state==='US-CT'));
@@ -167,7 +172,7 @@ try{
   {
     const {ctx,page,auth}=await setup({width:1180,height:820},{reduced:true});
     await page.goto(BASE+'/control.html?workspace=1#analytics',{waitUntil:'domcontentloaded'});
-    await page.waitForSelector('body[data-control-workspace="owner"]');
+    await page.waitForSelector('body[data-control-workspace="owner"][data-admin-navigation][data-site-navigation]');
     auth.owner=false;
     await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mcc:auth-changed',{detail:{signed_in:true}})));
     await page.waitForSelector('body[data-cw-blocked="true"]');

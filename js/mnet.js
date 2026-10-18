@@ -1035,7 +1035,7 @@
     paintMore();
     var focus = state.world.focus, query = state.world.query;
     /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
-    var news = focus && focus.filter ? [] : state.news;
+    var news = (focus && focus.filter) || state.editorialFeed === "community" ? [] : state.news;
     paintNewsCredit(false);
     if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
@@ -2441,6 +2441,7 @@
      The page only reads. */
   var FELLOWSHIP_MIN_VERIFIED = 3; // owner-set threshold; see docs/ACTION-NETWORK-REWARD-SYSTEM.md
   var missions={all:[],current:null,assignment:null,record:null,fellowship:null,stats:{},deepLinked:false,campaign:"",content:"",source:"",attributedMission:"",liveSession:"",liveMission:"",returnHref:"",proofFile:null,proofPreview:""};
+  var worldMissionDeck=null,worldMissionDeckLoaded=false,worldMissionDeckRequest=null;
   function sbRest(path,init){
     var token=sessionToken()||SB_KEY; init=init||{}; var headers=Object.assign({apikey:SB_KEY,authorization:"Bearer "+token,"content-type":"application/json"},init.headers||{});
     return fetch(SB_URL+"/rest/v1/"+path,Object.assign({},init,{headers:headers})).then(parse);
@@ -2542,7 +2543,8 @@
   function loadMissions(){
     var version=++missionListVersion;
     var host=$("mnMissionList"); if(!host)return Promise.resolve(); setStatus($("mnMissionStatus"),"Loading missions…");
-    loadActionRecord();
+    if(!state.guest&&state.user)loadActionRecord();
+    if(worldMissionDeck)worldMissionDeck.loading();
     var campaignFilter=missions.campaign?"&campaign_id=eq."+encodeURIComponent(missions.campaign):"";
     return Promise.all([
       /* select=* carries kind, so clip campaigns can be left to the Clips tab */
@@ -2558,8 +2560,11 @@
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
       host.innerHTML=helpGateway+(missions.all.length?missions.all.map(missionCard).join(""):(helpGateway?"":'<div class="mn__empty">No open missions right now.</div>'));
+      if(worldMissionDeck)worldMissionDeck.update(missions.all);
+      worldMissionDeckLoaded=true;
       setStatus($("mnMissionStatus"),"");
-    }).catch(function(e){if(version===missionListVersion)setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");});
+      return true;
+    }).catch(function(e){if(version===missionListVersion){setStatus($("mnMissionStatus"),e.message||"Missions could not load.","error");if(worldMissionDeck)worldMissionDeck.fail(e.message||"Missions could not load.");}return false;});
   }
 
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
@@ -2808,7 +2813,7 @@
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
-      if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return;}
+      if(!m){setStatus($("mnMissionStatus"),"That mission is not available any more.","error");return {opened:false,message:"That mission is not available any more."};}
       missions.current=m;missions.assignment=null;clearMissionCapture();antisocialReset();
       if($("mnMissionProofStatement"))$("mnMissionProofStatement").value="";
       if($("mnMissionProofUrl"))$("mnMissionProofUrl").value="";
@@ -2840,12 +2845,12 @@
       setStatus($("mnMissionDialogStatus"),open?"":"This mission is not taking new people.");
       if(!$("mnMissionDialog").open)$("mnMissionDialog").showModal();
       try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
-      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return;}
+      if(!state.user||!state.user.id){setStatus($("mnMissionDialogStatus"),"Sign in to join this mission.");return {opened:true};}
       return sbRest("action_mission_assignments?mission_id=eq."+encodeURIComponent(m.id)+"&user_id=eq."+encodeURIComponent(state.user.id)+"&select=id,status&limit=1").then(function(rows){
         if(version!==missionOpenVersion||!missions.current||missions.current.id!==m.id)return;
-        var a=rows&&rows[0];if(!a||a.status==="withdrawn")return;
+        var a=rows&&rows[0];if(!a||a.status==="withdrawn")return {opened:true};
         missions.assignment=a;$("mnMissionJoin").hidden=true;
-        if(m.id===ANTISOCIAL_ID){antisocialPaint();return;}
+        if(m.id===ANTISOCIAL_ID){antisocialPaint();return {opened:true};}
         $("mnMissionProof").hidden=!(a.status==="joined"||a.status==="in_progress"||a.status==="submitted"||a.status==="rejected");
         var assignmentMessage=a.status==="submitted"
           ?"Proof submitted for review. You can replace it until it is reviewed."
@@ -2855,21 +2860,34 @@
               ?"Proof was not verified. Fix the proof and submit it again. The reviewer note is in Your Action Record."
               :"Mission in progress.";
         setStatus($("mnMissionDialogStatus"),assignmentMessage,a.status==="rejected"?"error":"ok");
+        return {opened:true};
       });
-    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");});
+    }).catch(function(e){if(version===missionOpenVersion)setStatus($("mnMissionStatus"),e.message||"Mission could not load.","error");return {opened:false,message:e.message||"Mission could not load."};});
   }
   function joinMission(){
-    var m=missions.current;if(!m)return;var b=$("mnMissionJoin");
-    if(b.disabled)return;
+    var m=missions.current;if(!m)return Promise.resolve({accepted:false});var b=$("mnMissionJoin");
+    if(b.disabled)return Promise.resolve({accepted:false});
+    if(state.guest||!sessionToken()){
+      if($("mnMissionDialog").open)$("mnMissionDialog").close();
+      askToSignIn("mission");return Promise.resolve({accepted:false,message:"Sign in to continue with this mission."});
+    }
+    if(needsStep()||state.stall==="retry"){
+      if($("mnMissionDialog").open)$("mnMissionDialog").close();
+      if(askToFinish("mission"))return Promise.resolve({accepted:false,message:"Finish your profile to continue with this mission."});
+    }
     b.disabled=true;
     var joinRequest = missions.liveSession&&missions.liveMission===m.id
       ? sbRpc("join_action_mission_live",{p_mission_id:m.id,p_live_session_id:missions.liveSession})
       : missions.content&&missions.attributedMission===m.id
         ? sbRpc("join_action_mission_attributed",{p_mission_id:m.id,p_content_id:missions.content,p_source:missions.source||"network"})
         : sbRpc("join_action_mission",{p_mission_id:m.id});
-    joinRequest
+    return joinRequest
       .then(function(r){
-        if(!missions.current||missions.current.id!==m.id)return;
+        if(!r||!/^[0-9a-f-]{36}$/i.test(String(r.assignment_id||""))||["joined","in_progress","submitted","verified","rejected"].indexOf(r.status)<0){
+          throw new Error(typeof (r&&r.message)==="string"?r.message:"This mission has not returned an active assignment. Try again or check its requirements.");
+        }
+        var result={accepted:true,message:"Accepted “"+m.title+"”. Continue in the mission window."};
+        if(!missions.current||missions.current.id!==m.id)return result;
         missions.assignment={id:r.assignment_id,status:r.status};b.hidden=true;$("mnMissionProof").hidden=m.id===ANTISOCIAL_ID;
         if(m.id===ANTISOCIAL_ID)antisocialPaint();
         setStatus($("mnMissionDialogStatus"),m.id===ANTISOCIAL_ID?"Mission started. Begin Level 1: High Five. Record only with permission.":"Mission started. Describe what you're about to do, then open the camera.","ok");
@@ -2877,9 +2895,10 @@
         if(focusTarget&&!focusTarget.closest("[hidden]"))focusTarget.focus();
         if(window.MCC_TRACK)window.MCC_TRACK("mission_join",{mission:m.id,content:missions.content||null,source:missions.source||null,live_session:missions.liveSession||null});
         loadMissions();
+        return result;
       })
-      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");})
-      .then(function(){b.disabled=false;});
+      .catch(function(e){if(missions.current&&missions.current.id===m.id)setStatus($("mnMissionDialogStatus"),e.message||"Could not start mission.","error");return {accepted:false,error:true,message:e.message||"Could not start mission."};})
+      .then(function(result){b.disabled=false;return result;});
   }
   function uploadProofFile(file){
     return uploadMediaWithPoster(file);
@@ -2932,7 +2951,7 @@
     }
     $("mnRefreshMissions").addEventListener("click",loadMissions);
     $("mnMissionClose").addEventListener("click",closeMission);
-    $("mnMissionJoin").addEventListener("click",function(e){if(askToFinish("mission"))return;joinMission(e);});
+    $("mnMissionJoin").addEventListener("click",function(){joinMission();});
     if($("mnAntisocialForm"))$("mnAntisocialForm").addEventListener("submit",antisocialSubmit);
     $("mnMissionProof").addEventListener("submit",submitMissionProof);
     if($("mnMissionCameraGo"))$("mnMissionCameraGo").addEventListener("click",function(){$("mnMissionCameraFile").click();});
@@ -2946,12 +2965,10 @@
      to fly to a mission or to let go. Nothing private crosses: the frame
      only ever holds public, admin-approved mission pins.
 
-     Layout (owner's contract, WORLD-SCREEN-UX-HANDOFF-20261014.md): when
-     the World tab is open and the screen is tall enough, the view is sized
-     to the room between the tabs and the app bar, so globe, context strip
-     and feed are all on screen and only the feed scrolls. On a short
-     screen (a phone on its side) the same pieces simply stack and scroll. */
-  var WORLD_ID = /^[0-9a-f-]{36}$/i, WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200;
+     October 17: the globe stays visible. Mission context and the community
+     share one independently scrolling panel, stacked on portrait screens and
+     alongside the globe on wide/landscape screens. */
+  var WORLD_ID = /^[0-9a-f-]{36}$/i;
   function worldFrame() { var f = $("mnWorldFrame"); return f && f.contentWindow; }
   function tellWorld(msg) { var w = worldFrame(); if (w) try { w.postMessage(msg, location.origin); } catch (_) {} }
   function pathLabel(path) { return String(path || "mission").replace(/_/g, " "); }
@@ -2966,6 +2983,11 @@
       var cs = getComputedStyle(bar);
       if (cs.position === "fixed" && cs.display !== "none") clear = Math.ceil((parseFloat(cs.bottom) || 0) + bar.offsetHeight + 10);
     }
+    // Music can retain this real World document inside its listening session.
+    // Its verified frame bridge measures the parent transport; the local bar
+    // is hidden then, so measuring only that bar would erase the safe area.
+    var audioClear = parseFloat(document.documentElement.style.getPropertyValue("--mcc-world-audio-clear")) || 0;
+    if (audioClear >= 50 && audioClear <= 280) clear = Math.max(clear, audioClear);
     document.documentElement.style.setProperty("--mn-bar-clear", clear + "px");
     return clear;
   }
@@ -2976,19 +2998,10 @@
     var on = state.currentView === "feed" && !view.hidden && !!app && !app.hidden;
     root.classList.toggle("mn-world-on", on);
     if (!on) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
-    root.classList.add("mn-world-fit");
-    root.classList.toggle("mn-world-overlay", window.innerWidth < 600);
-    window.scrollTo(0, 0);
-    var room = Math.floor(window.innerHeight - view.getBoundingClientRect().top), usable = room - clear;
-    /* upright: one stacked screen from a small phone up. On its side a phone
-       has too little height to stack, so the Earth takes the left and the
-       strip and feed the right, still one screen. */
-    var portrait = window.innerHeight > window.innerWidth;
-    /* the thresholds were tuned to the room above the bar, so that is what they judge; the screen itself is the whole viewport */
-    var side = !portrait && usable < WORLD_FIT_MIN && usable >= WORLD_FIT_MIN_SIDE;
-    root.classList.toggle("mn-world-side", side);
-    if (!side && usable < (portrait ? WORLD_FIT_MIN_PORTRAIT : WORLD_FIT_MIN)) { root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side"); view.style.removeProperty("--mn-world-h"); return; }
-    view.style.setProperty("--mn-world-h", room + "px");
+    // October 17: persistent globe and independently scrolling feed at every size.
+    // CSS owns the responsive composition; never resize the page while a person reads.
+    root.classList.remove("mn-world-fit", "mn-world-overlay", "mn-world-side");
+    view.style.removeProperty("--mn-world-h");
   }
   /* the mission card's art is its kind, as an icon: missions carry no photo
      and the World never invents one */
@@ -2998,11 +3011,83 @@
     show_up: '<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
     mission: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>'
   };
+  function prepareWorldMission(id){
+    if(missions.attributedMission&&missions.attributedMission!==id){missions.content="";missions.source="";missions.attributedMission="";}
+    if(missions.liveMission&&missions.liveMission!==id){missions.liveSession="";missions.liveMission="";}
+    missions.focus="";
+  }
+  function openWorldMission(m){
+    prepareWorldMission(m.id);focusOnGlobe(m.id);
+    return openMission(m.id);
+  }
+  function acceptWorldMission(m){
+    prepareWorldMission(m.id);
+    /* Retain the selected mission through auth/onboarding. Returning opens
+       its real workflow; it does not silently submit another acceptance. */
+    try{history.replaceState(null,"",missionHref(m.id));}catch(_){}
+    if(state.guest||!sessionToken()){
+      askToSignIn("mission");return Promise.resolve({accepted:false,message:"Sign in to continue with “"+m.title+"”."});
+    }
+    if(askToFinish("mission"))return Promise.resolve({accepted:false,message:"Finish your profile to continue with “"+m.title+"”."});
+    return openWorldMission(m).then(function(result){
+      if(!result||!result.opened||!missions.current||missions.current.id!==m.id||!$("mnMissionDialog").open){
+        return {accepted:false,error:!!(result&&result.message),message:result&&result.message||"Mission kept. You can accept it again when you’re ready."};
+      }
+      var a=missions.assignment;
+      if(a&&["joined","in_progress","submitted","verified","rejected"].indexOf(a.status)>=0){
+        return {accepted:true,message:"Your existing “"+m.title+"” mission is open."};
+      }
+      return joinMission();
+    });
+  }
+  function ensureWorldMissionDeck(){
+    if(worldMissionDeck)return worldMissionDeck;
+    if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
+    worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
+      onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
+    });
+    if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
+    return worldMissionDeck;
+  }
+  function loadWorldMissionDeck(){
+    if(!ensureWorldMissionDeck())return Promise.resolve();
+    if(worldMissionDeckRequest)return worldMissionDeckRequest;
+    if(worldMissionDeckLoaded)return Promise.resolve();
+    /* The mission catalogue works even if WebGL or public pins are unavailable. */
+    worldMissionDeckRequest=loadMissions().then(function(){worldMissionDeckRequest=null;});
+    return worldMissionDeckRequest;
+  }
+  window.addEventListener("mcc:world-mode",function(e){
+    if(e.detail&&e.detail.mode==="missions"){
+      loadWorldMissionDeck();
+      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
+    }
+  });
+  function paintMissionPreview() {
+    var host = $("huMissionList"); if (!host) return;
+    if(ensureWorldMissionDeck()){loadWorldMissionDeck();return;}
+    var list = Object.keys(state.world.missions).map(function (id) { return state.world.missions[id]; });
+    host.innerHTML = list.length ? list.slice(0, 2).map(function (m) {
+      return '<button type="button" class="hu-mission-row" data-hu-mission="' + esc(m.mission_id) + '">' +
+        '<span class="hu-mission-symbol" aria-hidden="true">' + (PATH_ART[m.action_path] || PATH_ART.mission) + '</span>' +
+        '<span><strong>' + esc(m.title) + '</strong><small>' + esc(m.region_label || 'Worldwide') + '</small><span class="hu-mission-link">View mission ↗</span></span></button>';
+    }).join('') : '<p class="hu-muted">No published missions on the map yet.</p>';
+    host.querySelectorAll('[data-hu-mission]').forEach(function (button) {
+      button.onclick = function () {
+        var m = state.world.missions[button.dataset.huMission];
+        if (!m) return;
+        setWorldFocus(Object.assign({}, m, { filter: false }));
+        focusOnGlobe(m.mission_id);
+        $("mnWorldFocus").scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      };
+    });
+  }
   function paintWorldFocus() {
     var f = state.world.focus, host = $("mnWorldFocus"), idle = $("mnWorldIdle");
     if (!host) return;
     host.hidden = !f;
-    if (idle) idle.hidden = !!f;
+    if (idle) idle.hidden = false;
     if (!f) return;
     var known = state.world.missions[f.mission_id] || {}, st = state.world.stats[f.mission_id];
     var path = String(f.action_path || known.action_path || "mission");
@@ -3198,8 +3283,30 @@
     /* the music player's "See this song's impact" lands here with ?song= */
     try {
       var song = new URLSearchParams(location.search).get("song");
-      if (song && song.length <= 160) frame.src = "action-globe.html?embedded=1&surface=network&song=" + encodeURIComponent(song);
+      if (song && song.length <= 160) frame.src += "&song=" + encodeURIComponent(song);
     } catch (_) {}
+    var searchToggle = $("huSearchToggle");
+    function closeSearch() { document.documentElement.classList.remove('hu-search-open'); searchToggle.setAttribute('aria-expanded', 'false'); }
+    if (searchToggle) searchToggle.onclick = function () {
+      var on = document.documentElement.classList.toggle('hu-search-open');
+      searchToggle.setAttribute('aria-expanded', String(on));
+      if (on) $("mnSearchInput").focus();
+    };
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (document.documentElement.classList.contains('hu-search-open')) { closeSearch(); searchToggle.focus(); }
+      if ($("huWorldFilters").open) { $("huWorldFilters").open = false; $("huWorldFilters").querySelector('summary').focus(); }
+    });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#huWorldFilters')) $("huWorldFilters").open = false;
+    });
+    document.querySelectorAll('[data-hu-feed]').forEach(function(button) {
+      button.onclick = function() {
+        state.editorialFeed = button.dataset.huFeed;
+        document.querySelectorAll('[data-hu-feed]').forEach(function(b) { b.setAttribute('aria-pressed', String(b === button)); });
+        renderFeed(false);
+      };
+    });
     frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
     window.addEventListener("message", function (ev) {
       if (ev.origin !== location.origin || ev.source !== frame.contentWindow) return;
@@ -3213,9 +3320,9 @@
           state.world.missions[clean.mission_id] = clean;
           if (!state.world.latest) state.world.latest = clean;
         });
-        /* with nothing picked yet, the strip shows the newest pinned mission,
-           labelled as the latest, without moving the Earth or the feed */
-        if (!state.world.focus && state.world.latest && !state.guest) setWorldFocus(Object.assign({}, state.world.latest, { filter: false, latest: true }));
+        /* Published missions lead the feed; selection stays with the visitor. */
+        paintMissionPreview();
+        if (d.dataUnavailable && !worldMissionDeck) $("huMissionList").innerHTML = '<p class="hu-muted">Mission pins could not load. Use the all-missions button to browse available work.</p>';
         /* a guest starts at Explore the world (owner's signed-out reference) */
         if ($("mnWorldChipCount")) $("mnWorldChipCount").textContent = Object.keys(state.world.missions).length || "";
         if ($("mnWorldTagCount")) $("mnWorldTagCount").textContent = String(Object.keys(state.world.pins).length);
@@ -3230,6 +3337,8 @@
            the first page of the feed is still on its way */
         if (!state.loadingFeed) renderFeed(false);
       } else if (d.type === "hu:globe-unavailable") {
+        if(ensureWorldMissionDeck())loadWorldMissionDeck();
+        else $("huMissionList").innerHTML = '<p class="hu-muted">The map is unavailable. Use the all-missions button to browse available work.</p>';
         if (caption) caption.textContent = "The globe can\u2019t run on this device. Everything else works: the feed is below.";
       } else if (d.type === "hu:mission-selected" && d.mission && WORLD_ID.test(String(d.mission.mission_id || ""))) {
         var m = d.mission, id = String(m.mission_id), fromFeed = state.world.fromFeed === id;
@@ -3238,6 +3347,8 @@
       } else if (d.type === "hu:selection-cleared") {
         state.world.fromFeed = "";
         if (state.world.focus) setWorldFocus(null);
+      } else if (d.type === "hu:country") {
+        $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {
@@ -3329,7 +3440,7 @@
     if (form && input) {
       /* a phone's bar is short: one word there, the whole invitation from 600px */
       var wide = window.matchMedia ? window.matchMedia("(min-width: 600px)") : null;
-      var placeholder = function () { input.placeholder = !wide || wide.matches ? "Search places, people, or causes\u2026" : "Search"; };
+      var placeholder = function () { input.placeholder = "Search the world"; };
       placeholder();
       if (wide && wide.addEventListener) wide.addEventListener("change", placeholder);
       input.addEventListener("input", function () {

@@ -215,8 +215,14 @@ export async function handleAiRequest(request, env, user) {
   }
   if (!user) return fail(request, env, 'Authentication required', 401);
 
-  const orgId = url.searchParams.get('org_id') || (await houseOrgId(env));
+  // House Core is not a tenant service. Resolve the only authorized organization
+  // server-side before checking caller membership or accepting work.
+  const orgId = await houseOrgId(env);
   if (!orgId) return fail(request, env, 'McCluster house organization is not configured', 503);
+  const requestedOrgId = url.searchParams.get('org_id');
+  if (requestedOrgId && requestedOrgId !== orgId) {
+    return fail(request, env, 'McCluster house organization only', 403);
+  }
 
   const membershipsRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id,role&limit=1`,

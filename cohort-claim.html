@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Claim your cohort profile · McCluster</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cohort-account.css">
+  <style>body > nav.appbar { margin-bottom: 0; }</style>
+  <!-- Deferred scripts run in order: the private fragment is removed before
+       account initialization and the canonical navigation can read the URL. -->
+  <script src="js/cohort-claim.js" defer></script>
+  <script src="js/mcc-auth.js" defer></script>
+  <script src="js/tabbar.js" defer></script>
+</head>
+<body>
+  <main>
+    <nav><a href="docket-516r-cohort.html">Docket 516R</a></nav>
+    <p class="eyebrow">Your work. Your profile.</p>
+    <h1 id="claimTitle">Claim your cohort profile.</h1>
+    <p class="muted" id="claimIntro">Open the private invitation Matthew sent you to connect your cohort profile and provider webpage to your M Account.</p>
+    <p class="status" id="claimStatus" role="status" aria-live="polite">Checking your invitation…</p>
+    <section class="panel" id="claimAccount" hidden>
+      <h2>Your M Account</h2>
+      <p id="accountState" class="status" role="status" aria-live="polite">Checking sign-in…</p>
+      <form id="claimSignIn" class="signin" hidden>
+        <label>Email<input id="claimEmail" type="email" autocomplete="username" required></label>
+        <label>Password<input id="claimPassword" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <div class="actions" id="accountLinks" hidden>
+        <a href="account.html" target="_blank" rel="noopener noreferrer">Create an account</a>
+        <a href="forgot-password.html" target="_blank" rel="noopener noreferrer">Reset your password</a>
+      </div>
+      <p class="muted" id="returnNote" hidden>After creating your account in the new tab, return here and check your sign-in.</p>
+      <div class="actions"><button id="claimRefresh" type="button">Check sign-in</button><button class="primary" id="claimConfirm" type="button" disabled>Connect my profile</button><button id="claimSwitch" type="button" hidden>Use a different account</button></div>
+      <p id="claimSetup" hidden><a href="mccluster-creator-studio.html" target="_blank" rel="noopener noreferrer">Finish my account profile</a>, then return here to connect it.</p>
+      <p class="muted">Your cohort webpage is included. You can edit its introduction after claiming it.</p>
+    </section>
+    <section class="panel" id="claimDone" hidden>
+      <h2>Your profile is connected.</h2>
+      <p>You can now open your provider webpage and customize its introduction. Your M Account remains the account you use across McCluster.</p>
+      <div class="actions"><a class="button primary" id="claimProvider" href="docket-516r-cohort.html">Open my webpage</a><a class="button" id="claimProfile" href="docket-516r-cohort.html">View my profile</a></div>
+      <p><a href="mccluster-creator-studio.html">Edit my account profile</a></p>
+    </section>
+  </main>
+</body>
+</html>

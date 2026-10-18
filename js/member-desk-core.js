@@ -57,7 +57,7 @@
      phone sees everything the desktop sees. */
   function sections(caps) {
     var c = caps || {};
-    if (!c.signedIn) return ["welcome", "policy"];
+    if (!c.signedIn) return [];
     var out = ["profile"];
     if (c.fellow) out.push("policy");
     out.push("missions", "notifications");
@@ -67,12 +67,13 @@
     return out;
   }
 
-  /* public: the registry anyone can read; ladder: the starter missions and
-     the next step; memo_desk: a fellow's memos, editor and research */
+  /* The World desk is a member surface. The public registry's data contract
+     is unchanged, but guests do not enter a policy workspace here. */
   function policyMode(caps) {
     var c = caps || {};
+    if (!c.signedIn) return null;
     if (c.fellow) return "memo_desk";
-    return c.signedIn ? "ladder" : "public";
+    return "ladder";
   }
 
   /* ?desk=1 opens the desk on its first section; ?desk=<section> on that one */

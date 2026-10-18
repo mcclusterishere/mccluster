@@ -14,7 +14,7 @@ Design authority: Matthew's approved Analytics concept, 16 October 2026. The exi
 
 ## Audited evidence and limits
 
-The database metadata query inspected 522 tables/views across application and platform schemas; 455 were in `public`. `application-schema-inventory.json` records the public relation/column metadata as of 16 October 2026. This proves schema presence, not row completeness, permission to read every row, freshness or operational health. System-maintained row estimates were used only for investigation and are not displayed as business totals.
+The database metadata query inspected 522 tables/views across application and platform schemas; 455 were in `public`. `data/analytics/application-schema-inventory.json` records the public relation/column metadata as of 16 October 2026. This proves schema presence, not row completeness, permission to read every row, freshness or operational health. System-maintained row estimates were used only for investigation and are not displayed as business totals.
 
 The live metadata inventory contained no `seek_first_*` spatial archive or `intel_*` canon tables. The existing spatial route checks `seek_first_sources`; the intel service reports `intel_schema_not_ready` when its required functions are absent. This PR does not silently apply the historical spatial replay migrations or the pending intel migration. Existing transient reads and the new UI can work independently of storage readiness. Provisioning the governed archive remains an explicit production migration task with its own review and validation.
 

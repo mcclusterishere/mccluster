@@ -15,15 +15,14 @@ test('Human Uprise World tab puts the globe over the live feed',()=>{
  assert.doesNotMatch(read('css/mnet.css'),/\.mn__legacy-feed/);
 });
 
-test("World screen follows the owner's contract: 45-50% globe, ~15% context, 30-35% feed that scrolls on its own",()=>{
- const html=read('mnet.html'), css=read('css/mnet.css'), js=read('js/mnet.js');
- assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldContext"[\s\S]*?id="mnWorldFeed"/);
- assert.match(css,/\.mn-world-fit \.mn__world-home \{ flex: 49 1 0;/);
- assert.match(css,/\.mn-world-fit \.mn__world-context \{ flex: none; min-height: clamp\(92px, 14dvh, 150px\); \}/);
- assert.match(css,/\.mn-world-fit \.mn__world-feed \{ flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;/);
- assert.match(css,/html\.mn-world-fit, html\.mn-world-fit body \{ overflow: hidden;/,'only the feed scrolls, so the globe never leaves the screen');
+test("World keeps the globe visible while its mission and community panel scrolls",()=>{
+ const html=read('mnet.html'), css=read('css/human-uprise-editorial.css'), js=read('js/mnet.js');
+ assert.match(html,/id="mnWorld"[\s\S]*?id="mnWorldFeed"[\s\S]*?id="mnWorldContext"/);
+ assert.doesNotMatch(html,/hu-world-heading|Discover meaningful work/);
+ assert.match(css,/grid-template-rows:minmax\(0,\.48fr\) minmax\(0,\.52fr\)/);
+ assert.match(css,/\.mn__world-feed \{[^}]*min-height:0;overflow-y:auto;overscroll-behavior:contain/);
+ assert.match(css,/html\.hu-editorial\.mn-world-on[^}]*overflow:hidden/);
  assert.match(js,/function sizeWorld\(\)/);
- assert.match(js,/WORLD_FIT_MIN = 440, WORLD_FIT_MIN_PORTRAIT = 340, WORLD_FIT_MIN_SIDE = 200/,'short screens fall back to a stacked, scrolling page instead of hiding content');
  /* a post shows its mission on the Earth without narrowing the feed being read */
  assert.match(js,/filter: !fromFeed/);
  /* one World for everyone: the Globe column and the standalone route both land on it */
@@ -68,7 +67,7 @@ test('Cesium imagery is constructed with the provider the runtime actually ships
  }
  for(const f of ['action-globe.html','guest-globe.html','world-news.html'])assert.match(read(f),/openstreetmap\.org\/copyright/,f+': OpenStreetMap tiles carry attribution');
 });
-test('the Earth has three looks from one button: lit by the real sun, night with city lights, street map; all NASA or OSM, nothing drawn',()=>{
+test('editorial Earth and street map preserve the NASA/OSM sources and analytics lighting modes',()=>{
   const js=read('js/action-globe.js'), html=read('action-globe.html');
   assert.match(js,/const DAY_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/BlueMarble_NextGeneration\//);
   assert.match(js,/const NIGHT_TILES='https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/VIIRS_Black_Marble\//);
@@ -77,9 +76,9 @@ test('the Earth has three looks from one button: lit by the real sun, night with
   assert.match(js,/viewer\.clock\.clockStep=Cesium\.ClockStep\.SYSTEM_CLOCK/,'real-time clock keeps the Sun and day/night boundary current');
   assert.match(js,/sc\.globe\.dynamicAtmosphereLightingFromSun=true/,'the atmosphere uses the same real Sun');
   assert.match(js,/lightingFadeOutDistance=R\+1\.2e6/,'fade distances carry the radius: Cesium measures them from the centre');
-  assert.match(js,/on\('ctlLayers',\(\)=>setLayer\(\{auto:'night',night:'map',map:'auto'\}\[layerMode\]\|\|'auto'\)\)/,'Earth -> night -> street -> Earth');
+  assert.match(js,/setLayer\(EDITORIAL\?\(layerMode==='map'\?'auto':'map'\)/,'the editorial globe cycles between Earth and street map');
   assert.match(js,/nightLayer\.dayAlpha=night\?1:0/,'night mode shows the city lights everywhere');
-  assert.match(js,/g\.enableLighting=!night/);
+  assert.match(js,/g\.enableLighting=EDITORIAL\|\|!night/);
   assert.match(html,/NASA Blue Marble, Black Marble<\/a>, <a href="https:\/\/visibleearth\.nasa\.gov\/"/,'the imagery credit names its sources');
   assert.ok(require('node:fs').existsSync(new URL('../../assets/img/globe/nasa-clouds-2048.webp',import.meta.url)),'the cloud layer is committed');
 });

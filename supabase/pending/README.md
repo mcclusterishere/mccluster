@@ -1,5 +1,16 @@
 # Pending migrations
 
+Promoted on 2026-10-17: `action_archive_cohort_v1.sql` is
+`supabase/migrations/20261017164335_action_archive_cohort_v1.sql`, and
+`action_mission_reset_v1.sql` is
+`supabase/migrations/20261017164416_action_mission_reset_v1.sql`.
+The Docket 516R public archive has ten cohort profiles, ten separate provider
+webpages, nine canonical completed songs and one capstone event. Three simple
+missions remain open; larger concepts are private partner-development drafts.
+The exact production SQL and ledger are recorded. Regression gate:
+`bash scripts/test-action-archive-db.sh`; public source and release notes:
+`docs/control-plane/MISSION-RESET-DOCKET-516R.md`.
+
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and
 `docs/control-plane/DRIFT-CONTRACT.md`). A migration that is written, reviewed
@@ -203,3 +214,9 @@ records the private funding opportunities and partner mission drafts. It publish
 no missions and enables no claims or compensation. With it the ledger and drift
 contract covered all 310 production migrations then (311 since
 20261016151123).
+
+Promoted 2026-10-17 to repair Analytics missing-function responses:
+- `20261017030551_analytics_country_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+- `20261017030554_analytics_region_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+- `20261017030617_intel_mission_canon_v1.sql` is applied in production; its exact SQL is in `supabase/migrations/`.
+The applied SQL headers retain their original pending wording to preserve byte-for-byte production history. The intel rollback remains in this folder; collectors remain separately controlled.

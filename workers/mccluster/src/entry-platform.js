@@ -20,6 +20,8 @@ import { handleCreatorPublish } from './creator-site-publish.js';
 import { handleCreatorSiteView } from './creator-site-view.js';
 import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
+import { handleActionArchive } from './action-archive.js';
+import { handleTravelRouting } from './travel-routing.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -66,6 +68,9 @@ export default {
       const preflight = preflightResponse(request, env);
       if (preflight) return preflight;
 
+      const travel = await handleTravelRouting(request, env);
+      if (travel) return travel;
+
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
       /* live missions (./live/index.js): flagged off with LIVE_MISSIONS_ENABLED;
@@ -82,6 +87,9 @@ export default {
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
       const handoff = await handleAuthHandoff(request, env);
       if (handoff) return handoff;
+
+      const archive = await handleActionArchive(request, env);
+      if (archive) return archive;
 
       const creatorSiteView = await handleCreatorSiteView(request, env);
       if (creatorSiteView) return creatorSiteView;

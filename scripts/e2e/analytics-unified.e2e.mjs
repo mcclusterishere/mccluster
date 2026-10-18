@@ -87,6 +87,11 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/v1/workspaces/me') return json(route, { profile:{id:'11111111-1111-4111-8111-111111111111'}, default_org_id: 'o1', workspaces: [{ org_id: 'o1', slug: 'mccluster', kind: 'studio', name: 'McCluster', role: 'owner', enabled: true }] });
     if(p==='/v1/analytics/cameras')return json(route,{ok:true,catalog_count:3,stale_count:0,retrieved_at:new Date().toISOString(),packs:[{name:'Test provider',cameras:3,status:'ok'}],cameras:[1,2,3].map(id=>({id:String(id),name:'Camera '+id,pack:'Test provider'}))});
     if(p==='/v1/analytics/cameras/check')return json(route,{ok:true,checks:[{id:'1',status:'image_received',checked_at:new Date().toISOString(),image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFqoAAAAASUVORK5CYII='},{id:'2',status:'unavailable',checked_at:new Date().toISOString()},{id:'3',status:'image_received',image:'data:image/png;base64,YmFk',checked_at:new Date().toISOString()}]});
+    if(p==='/v1/intel/health')return json(route,{schema_ready:true,collector:{enabled:false},latest_run:null,last_successful_run:null});
+    if(p==='/v1/analytics/coverage')return json(route,{schema:'analytics-coverage/v2',measured_at:new Date().toISOString(),summary:{datasets:3,populated:1,empty:1,quiet:0,unavailable:1},datasets:[
+      {key:'headlines',label:'News headlines',family:'Intelligence',state:'populated',count:4200,window_count:40,window_status:'measured',scope:'News catalog',section:'intelligence',time_field:'imported_at',latest_at:new Date().toISOString(),next_step:'Open analysis'},
+      {key:'evidence',label:'Evidence',family:'Intelligence',state:'empty',count:0,window_count:0,scope:'House',section:'intelligence',time_field:'created_at',next_step:'No stored records'},
+      {key:'spatial',label:'Spatial archive',family:'Intelligence',state:'missing',count:null,window_count:null,scope:'House',section:'intelligence',time_field:'last_seen_at',next_step:'Provision storage'}]});
     if (p === '/v1/analytics/business') return json(route, {ok:true,snapshot:FIX.business});
     if (p === '/v1/analytics/audience-science') return json(route, {version:'fixture',totals:{music_listeners:18,returning_listeners:7},profiles:[],signals:[],track_affinity:[]});
     if (p === '/v1/analytics/identity') return json(route, FIX.identity);
@@ -94,7 +99,7 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/v1/analytics/flows') return json(route, FIX.flows);
     if (p === '/v1/analytics/errors') return json(route, FIX.errors);
     if (p === '/v1/analytics/regions') return json(route, pendingRpc ? (new URL(req.url()).searchParams.get('country') === 'US' ? FIX.regions : { ok: true, pending: false, country: new URL(req.url()).searchParams.get('country'), min: 5, regions: [], folded: 0, unknown: 0 }) : { ok: true, pending: true, country: new URL(req.url()).searchParams.get('country'), regions: [], folded: 0, unknown: 0 });
-    if (p === '/v1/intel/geo') return json(route, { code: 'intel_schema_not_ready' }, 503);
+    if (p === '/v1/intel/geo') return json(route, {ok:true,audience:'owner',totals:{records:0,located:0,unknown_location:0,suppressed_records:0,suppressed_buckets:0},buckets:[]});
     return json(route, { ok: true });
   });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
@@ -104,6 +109,10 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     if (p === '/rest/v1/rpc/analytics_hourly') return json(route, HOURS);
     if (p === '/rest/v1/rpc/analytics_top') return json(route, body.p_dim === 'country' ? FIX.country : body.p_dim === 'source' ? FIX.source : body.p_dim === 'network' ? FIX.network : []);
     if (p === '/rest/v1/rpc/analytics_country_totals') return pendingRpc ? json(route, FIX.countryTotals) : json(route, { code: 'PGRST202', message: 'Could not find the function public.analytics_country_totals' }, 404);
+    if (p === '/rest/v1/rpc/analytics_geo_audience') {
+      const state=Array.isArray(body.p_region_codes),v=state?9:body.p_country==='US'?18:7;
+      return json(route,{schema:'analytics-geo-audience/v1',country:body.p_country,suppressed:false,totals:{visitors:v,sessions:v+4,returning:2,page_views:v*2,plays:3,bounce_rate:25},series:FIX.series(body.p_country).map(r=>({...r,visitors:1,sessions:2})),sources:[{source:'Scoped source',people:v}],paths:[{from_page:'/local',to_page:'/song',moves:2}],pages:[{path:'/local',visitors:v}],stages:[{stage:'content',visitors:3}]});
+    }
     if (p === '/rest/v1/rpc/analytics_country_series') return pendingRpc ? json(route, FIX.series(body.p_country)) : json(route, { code: 'PGRST202', message: 'Could not find the function' }, 404);
     if (p === '/rest/v1/rpc/action_mission_stats') return json(route, FIX.missions);
     return json(route, []);
@@ -134,7 +143,23 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
  check(size.width,'document has no dashboard scroll',await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),await page.evaluate(()=>({height:document.documentElement.scrollHeight,window:innerHeight,body:getComputedStyle(document.body).paddingBottom})));
  const originalGlobe=await page.locator('[data-cra-globe]').evaluate(el=>{el.dataset.testIdentity='same-earth';return el.querySelectorAll('canvas').length;});
  const tabs=await page.locator('.appbar [data-appnav]').evaluateAll(nodes=>nodes.map(n=>n.dataset.appnav));check(size.width,'original five tab bar',JSON.stringify(tabs)===JSON.stringify(['music','admin-home','home','analytics','world']),tabs);
+ check(size.width,'overview exposes six connected metrics',await page.locator('.cu-overview-metrics .cu-metric-link').count()===6);
+ check(size.width,'trend exposes exact keyboard values',await page.locator('.cra-ac__point[tabindex="0"]').count()===24);
  await page.screenshot({path:OUT+'/unified-'+size.width+(size.workspace?'-workspace':'')+'.png',fullPage:false});
+ const heat=await page.evaluate(()=>{const g=window.__craGlobe();return{us:g.fill('US'),gb:g.fill('GB'),none:g.fill('AU'),metric:window.CR.analytics.state.geo.layer};});
+ check(size.width,'visitor heat map starts populated with distinct intensities',heat.metric==='visitors'&&JSON.stringify(heat.us)!==JSON.stringify(heat.gb)&&JSON.stringify(heat.gb)!==JSON.stringify(heat.none),heat);
+ check(size.width,'unique visitors lead the overview',await page.locator('.cu-overview-metrics button').first().innerText().then(t=>t.startsWith('Unique visitors')));
+ await page.locator('[role=tab][data-cra-sec="audience"]').click();
+ await page.locator('#craCountry').selectOption('US');
+ await page.waitForFunction(()=>window.CR.analytics.state.geoAudience?.data?.totals.visitors===18);
+ check(size.width,'country filters all audience cards',await page.locator('.cad-body').innerText().then(t=>/unique visitors\s+18/i.test(t)&&t.includes('Scoped source')&&!t.includes('all countries')));
+ await page.waitForFunction(()=>!!document.querySelector('#craCountry option[value="US/US-CT"]'));
+ await page.locator('#craCountry').selectOption('US/US-CT');
+ await page.waitForFunction(()=>window.CR.analytics.state.geoAudience?.data?.totals.visitors===9);
+ check(size.width,'state filters audience cards',await page.locator('.cad-body').innerText().then(t=>t.includes('Connecticut')&&/unique visitors\s+9/i.test(t)));
+ await page.screenshot({path:OUT+'/audience-state-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('#craCountry').selectOption('');
+ check(size.width,'clear restores global audience',await page.locator('.cad-body').innerText().then(t=>/unique visitors\s+40/i.test(t)&&!t.includes('Scoped source')));
  await page.locator('[data-cra-sec="intelligence"]').first().click();await page.waitForSelector('[data-cu-source="cctv"]');
  check(size.width,'missing archive shown',await page.locator('[data-cu-details]').innerText().then(x=>x.includes('not provisioned')));
  await page.locator('[data-cu-source="cctv"]').click();
@@ -170,7 +195,18 @@ for(const size of [{width:390,height:844},{width:820,height:1180},{width:1280,he
   await page.waitForTimeout(200);
   check(size.width,'touch swipe changes the whole chapter',await page.locator('[role=tab][aria-selected=true]').innerText()==='Audience');
  }
- await page.locator('[data-cra-sec="inventory"]').first().click();await page.waitForSelector('#cuFieldSearch');
+ check(size.width,'dataset counts are not fetched on every dashboard open',!calls.some(x=>x.includes('/analytics/coverage')));
+ await page.locator('[data-cad-health]').click();await page.waitForSelector('[data-cu-dataset="headlines"]');
+ check(size.width,'dataset explorer shows measured empty and missing states',await page.locator('.cu-dataset-list').innerText().then(t=>t.includes('Empty')&&t.includes('Storage missing')));
+ await page.locator('#cuDatasetStatus').selectOption('empty');
+ check(size.width,'dataset health filter narrows the view',await page.locator('[data-cu-dataset]').count()===1);
+ await page.locator('#cuDatasetStatus').selectOption('');await page.locator('[data-cu-dataset="headlines"]').click();
+ check(size.width,'dataset details show time scope and provenance',await page.locator('.cad-body').innerText().then(t=>t.includes('Latest stored activity')&&t.includes('imported_at')));
+ await page.screenshot({path:OUT+'/datasets-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('[data-cu-panel="connections"]').click();
+ check(size.width,'data status reaches all applicable connections',await page.locator('.cad-health li').count()===23);
+ await page.screenshot({path:OUT+'/connections-'+size.width+(size.workspace?'-workspace':'')+'.png'});
+ await page.locator('[data-cu-panel="fields"]').click();await page.waitForSelector('#cuFieldSearch');
  await page.locator('#cuFieldSearch').fill('analytics_site_daily');await page.locator('#cuFieldSearch').press('Tab');
  check(size.width,'field directory searches audited schema',await page.locator('[data-cu-details] .cu-records').innerText().then(x=>x.includes('analytics_site_daily')));
  check(size.width,'no automatic ingestion',!calls.some(x=>x.includes('/ingest/')));

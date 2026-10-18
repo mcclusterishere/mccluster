@@ -119,6 +119,7 @@ test('all seven Analytics sections render representative successful data',async(
   A.init({request:()=>Promise.resolve({}),supa:()=>Promise.resolve([])});
   A.state.range={label:'7 days',since:'2026-09-20T00:00:00Z',until:'2026-09-27T00:00:00Z'};
   A.state.loaded=true;
+  A.state.completed={identity:true,experience:true};
   A.state.data={
     traffic:{byDay:[{day:'2026-09-27',page_views:10,visitors:4,sessions:5}],totals:{page_views:10,visitors:4,sessions:5,plays:3,events:20},pages:[{path:'index.html',views:10,prior_views:8,view_change_pct:25,visitors:4,sessions:5,median_visible_s:22,p75_visible_s:48,avg_depth:61,engaged_30_pct:40,action_events:2,return_pct:20,short_exit_pct:10,quality_score:67.2,confidence:.28,overall_score:55.4}],sources:[{source:'direct',count:5}],countries:[{country:'US',count:4}],networks:[{network:'wifi',count:4}]},
     funnel:[{arrived:10,heard_something:8,engaged:6,searched:3,asked_for_something:2,made_an_account:1,confirmed_the_email:1,reached_checkout:1,paid:0}],
@@ -181,7 +182,7 @@ test('one range controls all analytics panels and stale requests cannot repaint'
   assert.match(js,/if\(q!==S\.seq\)return/);
   assert.match(js,/p_since:r\.since,p_until:r\.until/);
   assert.doesNotMatch(js,/daily=\{p_since:r\.querySince/);
-  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);paint\(\)/,
+  assert.match(js,/S\.loading=true;S\.loaded=false;S\.error=null;S\.errors=\{\};S\.completed=\{\};S\.data=blankData\(\);loadGeoAudience\(\);paint\(\)/,
     'range selection must repaint immediately before the network read completes');
 });
 

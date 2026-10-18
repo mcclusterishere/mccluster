@@ -1,3 +1,5 @@
+/* Current release policy: world-release.js requires house-owner preview before
+   this adapter; responses cannot outlive a release check in browser caches. */
 /* THE WORLD'S CESIUM ION, FOR SIGNED-IN MEMBERS, WITHOUT HANDING OUT THE KEY.
 
    Owner, 2026-10-15: "I added an ion, cesium ion key to the McCluster
@@ -141,7 +143,7 @@ async function askIon(id, token, origin, fetchImpl) {
 
 function answer(request, env, body, maxAge = BROWSER_MAX_AGE) {
   const res = reply(request, env, body);
-  res.headers.set('cache-control', `private, max-age=${maxAge}`);
+  res.headers.set('cache-control', 'private, no-store');
   res.headers.set('vary', 'Origin, Authorization');
   return res;
 }
@@ -155,8 +157,8 @@ export async function handleWorldIon(request, env, { fetchImpl = fetch, cacheImp
   const ion = cesiumIonToken(env);
   if (path === WORLD_ION_PATH) {
     const res = reply(request, env, { ok: true, available: Boolean(ion), members_only: true, binding: ion ? ion.name : null, assets: ION_ASSETS });
-    res.headers.set('cache-control', `public, max-age=${BROWSER_MAX_AGE}`);
-    res.headers.set('vary', 'Origin');
+    res.headers.set('cache-control', 'private, no-store');
+    res.headers.set('vary', 'Origin, Authorization');
     return res;
   }
 

@@ -19,6 +19,7 @@ async function panel() {
   vm.runInContext(await read('js/control-room/analytics-globe.js'), ctx);
   vm.runInContext(await read('js/control-room/analytics.js'), ctx);
   const A = ctx.window.CR.analytics;
+  A.state.geo.layer="pageviews";A.state.ui.reach="views";
   const asked = [];
   A.init({ request: (u) => { asked.push(u); return new Promise(() => {}); }, supa: () => Promise.resolve([]) });
   A.state.range = { id: '24h', label: '24 hours', since: '2026-10-15T00:00:00Z', until: '2026-10-16T00:00:00Z' };
@@ -82,9 +83,10 @@ test('data: 1:50m countries and large lakes, delta-encoded, small enough for a p
   assert.equal(JSON.parse(await read('data/geo/country-boundaries-110m.json')).countries.length, 177);
 });
 
-test('pending region read: admin only (service_role), folds under 5, never finer than a region, not applied', async () => {
-  const sql = await read('supabase/pending/analytics_region_v1.sql');
-  assert.match(sql, /NOT applied in production/);
+test('applied region read: admin only (service_role), folds under 5, never finer than a region', async () => {
+  const sql = await read('supabase/migrations/20261017030554_analytics_region_v1.sql');
+  const ledger = JSON.parse(await read('supabase/production-ledger.json'));
+  assert.ok(ledger.migrations.some(m => m.name === 'analytics_region_v1' && m.version === '20261017030554'));
   assert.match(sql, /revoke all on function public\.analytics_region_totals\(text, timestamptz, timestamptz, uuid\) from public, anon, authenticated;/);
   assert.match(sql, /grant execute on function public\.analytics_region_totals\(text, timestamptz, timestamptz, uuid\) to service_role;/);
   assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /to authenticated/);
@@ -127,10 +129,11 @@ test('one selection: the dropdown value "US/US-CT" selects the state in its coun
   assert.equal(A.state.geo.state, null);
 });
 
-test('a grey sphere: no arcs, no dots but the selection\'s, no choropleth, no legend; state files only for the admin globe', async () => {
+test('a measured heat map without arcs; state files stay admin-only', async () => {
   const globe = await read('js/control-room/analytics-globe.js');
   assert.doesNotMatch(globe, /arcPositions|glowImage|bucket\(/);
   assert.equal((globe.match(/new Cs\.BillboardCollection/g) || []).length, 1, 'the one white dot at the selected place');
+  assert.match(globe, /Cs\.Color\.lerp\(C\.land,C\.accent/);
   assert.match(globe, /return C\.land;/);
   const js = await read('js/control-room/analytics.js');
   assert.doesNotMatch(js, /data-cra-legend|ORIGIN/);

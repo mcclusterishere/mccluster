@@ -1,4 +1,4 @@
--- Behaviour test for supabase/pending/20261015210000_intel_mission_canon_v1.sql.
+-- Behaviour test for supabase/migrations/20261017030617_intel_mission_canon_v1.sql.
 -- Runs the whole loop as the real API roles on a throwaway database:
 -- collect -> evidence -> claim -> briefing -> decision -> mission -> outcome
 -- -> evidence again, plus the failure, privacy, privilege and purpose rules.

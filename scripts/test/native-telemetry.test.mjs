@@ -477,3 +477,12 @@ test('the link to the notice is visible as a link', async () => {
   assert.match(html, /\.fan__fine a \{[^}]*text-decoration: underline/,
     'and the link must look like one');
 });
+
+test('private journey controls never expose text or outbound route URLs to click telemetry', async () => {
+  const js=await read('js/analytics.js'),start=js.indexOf('  function describe(el)'),end=js.indexOf('\n  /* ===',start);
+  const describe=new Function(js.slice(start,end)+'; return describe;')();
+  const privateLink={tagName:'A',id:'',className:'wt-route',closest:()=>({}),get textContent(){throw Error('Private text was read');},getAttribute(){throw Error('Private URL was read');}};
+  assert.deepEqual(describe(privateLink),{tag:'a',sel:'a.wt-route',text:null,href:null,cta:null});
+  const publicLink={tagName:'A',id:'about',className:'',closest:()=>null,textContent:'About',getAttribute:key=>key==='href'?'/about':null};
+  assert.equal(describe(publicLink).href,'/about');assert.equal(describe(publicLink).text,'About');
+});

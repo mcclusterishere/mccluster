@@ -14,6 +14,15 @@ on:
       - 'supabase/tests/action_clipping_regression.sql'
       - 'supabase/tests/action_bounty_claim_guard*'
       - 'scripts/test-action-bounty-claim-db.sh'
+      - 'supabase/tests/action_archive*'
+      - 'supabase/tests/action_mission_reset*'
+      - 'scripts/test-action-archive-db.sh'
+      - 'scripts/test/action-archive-db.mjs'
+      - 'scripts/test/mission-swipe-deck.test.mjs'
+      - 'scripts/test/completed-mission-globe.test.mjs'
+      - 'js/mission-swipe-deck.js'
+      - 'js/action-globe.js'
+      - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
       - 'supabase/functions/stripe-webhook/commerce.ts'
       - 'scripts/stripe-test/**'
@@ -35,6 +44,15 @@ on:
       - 'supabase/tests/action_clipping_regression.sql'
       - 'supabase/tests/action_bounty_claim_guard*'
       - 'scripts/test-action-bounty-claim-db.sh'
+      - 'supabase/tests/action_archive*'
+      - 'supabase/tests/action_mission_reset*'
+      - 'scripts/test-action-archive-db.sh'
+      - 'scripts/test/action-archive-db.mjs'
+      - 'scripts/test/mission-swipe-deck.test.mjs'
+      - 'scripts/test/completed-mission-globe.test.mjs'
+      - 'js/mission-swipe-deck.js'
+      - 'js/action-globe.js'
+      - 'workers/mccluster/src/action-archive.js'
       - 'supabase/tests/commerce_stripe_*'
       - 'supabase/functions/stripe-webhook/commerce.ts'
       - 'scripts/stripe-test/**'
@@ -64,6 +82,8 @@ jobs:
           node-version: '22'
       - name: Run compute/provider security tests
         run: node --test workers/mccluster/test/compute-security.test.mjs
+      - name: Check cohort API and mission interaction boundaries
+        run: node --test workers/mccluster/test/action-archive.test.mjs scripts/test/mission-swipe-deck.test.mjs scripts/test/completed-mission-globe.test.mjs
       - name: Assert rate limiter precedes API handlers
         run: |
           grep -F "enforceApiRateLimit" workers/mccluster/src/entry-platform.js
@@ -138,6 +158,13 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
         run: bash scripts/test-action-bounty-claim-db.sh
+      - name: Prove cohort ownership and mission reset behavior in separate scratch databases
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash scripts/test-action-archive-db.sh
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

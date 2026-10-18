@@ -16,8 +16,10 @@ test("desk capability matrix: what each kind of member sees", () => {
   const cap = (x) => D.capabilities(x);
   const guest = cap({ signedIn: false, creator: true, entitlement: { paid: true }, ladder: { policy_seats: [{}] } });
   assert.deepEqual(guest, { signedIn: false, creator: false, business: false, fellow: false }, "a guest gets nothing from claims");
-  assert.deepEqual(D.sections(guest), ["welcome", "policy"]);
-  assert.equal(D.policyMode(guest), "public");
+  assert.deepEqual(D.sections(guest), [], "guests have no member workspace on World");
+  assert.equal(D.policyMode(guest), null);
+  assert.deepEqual(D.sections(null), []);
+  assert.equal(D.policyMode({ fellow: true }), null, "a fellow claim cannot open a signed-out desk");
 
   const fan = cap({ signedIn: true });
   assert.deepEqual(D.sections(fan), ["profile", "missions", "notifications", "policy"]);
@@ -64,7 +66,7 @@ test("desk deep links and the old Policy address", () => {
 test("nav: Policy is no longer a separate destination; every door opens the desk", async () => {
   const [mnet, page, globe, eq, tabbar] = await Promise.all([read("mnet.html"), read("action-policy.html"), read("action-globe.html"), read("equity-uprise.html"), read("js/tabbar.js")]);
   assert.doesNotMatch(mnet, /href="action-policy\.html"/, "the World links nowhere else for Policy");
-  assert.match(mnet, /<button type="button" data-hu-desk-open="policy">Policy<\/button>/);
+  assert.doesNotMatch(mnet, /data-world-chip="policy"/, "the minimal globe does not add a separate Policy control");
   for (const s of ["js/member-desk-core.js", "js/identity-capture-core.js", "js/profile-edit-gate.js", "js/member-desk.js"]) assert.ok(mnet.indexOf(s) > mnet.indexOf("js/tabbar.js"), s + " loads after the bar");
   assert.match(mnet, /css\/member-desk\.css/);
   assert.doesNotMatch(globe, /href="action-policy\.html"/);

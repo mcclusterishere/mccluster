@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 311,
-  "latest_version": "20261016151123",
-  "latest_name": "world_gdelt_gkg_news_v1",
-  "ledger_sha256": "67232dfc2b21a1db0e82d5749300de87ae61d691ada171f8edabc4b0f951d45a",
+  "migration_count": 323,
+  "latest_version": "20261017214808",
+  "latest_name": "mcp_approval_scope_v1",
+  "ledger_sha256": "07b9c016ee02f3a6e848992711df7715e3a5e4daa5d2c6834aab1df4fd6f5061",
   "migrations": [
     {
       "version": "0001",
@@ -1250,6 +1250,54 @@
     {
       "version": "20261016151123",
       "name": "world_gdelt_gkg_news_v1"
+    },
+    {
+      "version": "20261017030551",
+      "name": "analytics_country_v1"
+    },
+    {
+      "version": "20261017030554",
+      "name": "analytics_region_v1"
+    },
+    {
+      "version": "20261017030617",
+      "name": "intel_mission_canon_v1"
+    },
+    {
+      "version": "20261017040826",
+      "name": "analytics_geo_audience_v1"
+    },
+    {
+      "version": "20261017041311",
+      "name": "analytics_geo_audience_hotpath_v2"
+    },
+    {
+      "version": "20261017041532",
+      "name": "analytics_geo_audience_regions_v3"
+    },
+    {
+      "version": "20261017042608",
+      "name": "analytics_geo_audience_region_backfill_v4"
+    },
+    {
+      "version": "20261017050521",
+      "name": "travel_journeys_private_v1"
+    },
+    {
+      "version": "20261017054833",
+      "name": "analytics_ingestion_pipeline_v1"
+    },
+    {
+      "version": "20261017164335",
+      "name": "action_archive_cohort_v1"
+    },
+    {
+      "version": "20261017164416",
+      "name": "action_mission_reset_v1"
+    },
+    {
+      "version": "20261017214808",
+      "name": "mcp_approval_scope_v1"
     }
   ]
 }

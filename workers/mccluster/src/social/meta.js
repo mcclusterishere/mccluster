@@ -1,4 +1,3 @@
-import { scoreMetrics } from './router.js';
 import { recordEvent } from '../lib/observability.js';
 import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
 
@@ -46,7 +45,8 @@ function graphVersion(env) {
 
 export async function graphGet(env, path, token) {
   const res = await fetch(`https://graph.facebook.com/${graphVersion(env)}/${path}`, {
-    headers: { authorization: `Bearer ${token}` }
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(15000)
   });
   const text = await res.text();
   let data = null;
@@ -323,7 +323,7 @@ export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMi
       const me = await graphGet(env, `${encodeURIComponent(account.external_account_id)}?fields=username,followers_count,media_count`, token);
       await Promise.all([
         patchInstagramChannel(env, orgId, { last_ok_at: checkedAt, last_error: null, last_error_at: null }),
-        patch(env, 'social_accounts', account.id, { last_synced_at: checkedAt })
+        patch(env, 'social_accounts', account.id, { last_synced_at: checkedAt, provider_metrics: { recorded_at: checkedAt, followers: me?.followers_count ?? null, media_count: me?.media_count ?? null } })
       ]);
       results.push({
         org_id: orgId,
@@ -345,7 +345,7 @@ export async function checkInstagramConnectionHealth(env, { limit = 10, maxAgeMi
 
 function metricValue(payload) {
   const value = payload?.data?.[0]?.values?.[0]?.value;
-  return typeof value === 'number' ? value : Number(value || 0);
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 async function safeInsight(env, mediaId, metric, token) {
@@ -392,29 +392,27 @@ async function syncPostInsights(env, post) {
   ]);
 
   const metrics = {
-    views: views ?? 0,
-    reach: reach ?? 0,
-    likes: Number(fields.like_count || 0),
-    comments: Number(fields.comments_count || 0),
-    shares: shares ?? 0,
-    saves: saved ?? 0,
-    follows: 0,
-    profile_visits: 0,
-    dms: 0,
-    leads: 0,
-    watch_time_seconds: 0,
-    avg_watch_time_seconds: 0,
+    views, reach,
+    likes: typeof fields.like_count === 'number' ? fields.like_count : null,
+    comments: typeof fields.comments_count === 'number' ? fields.comments_count : null,
+    shares, saves: saved,
+    follows: null,
+    profile_visits: null,
+    dms: null,
+    leads: null,
+    watch_time_seconds: null,
+    avg_watch_time_seconds: null,
     retention_3s: null
   };
-  const scored = scoreMetrics(metrics);
+  if (Object.values(metrics).every(value => value === null)) throw new Error('instagram_measurements_unavailable');
   const snapshot = await insert(env, 'social_metric_snapshots', {
     org_id: post.org_id,
     post_id: post.id,
     ...metrics,
-    score: scored.score,
-    raw: { graph_fields: fields, synced_metrics: ['views', 'reach', 'saved', 'shares'] }
+    score: null,
+    source: 'platform_api',
+    raw: { graph_fields: fields, measured_metrics: Object.keys(metrics).filter(key => metrics[key] !== null), unavailable_metrics: Object.keys(metrics).filter(key => metrics[key] === null) }
   });
-  if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
 
   const syncedAt = new Date();
   await patch(env, 'social_posts', post.id, {
@@ -422,7 +420,7 @@ async function syncPostInsights(env, post) {
     last_insights_synced_at: syncedAt.toISOString(),
     next_insights_sync_at: nextInsightsAt(post.published_at, syncedAt)
   });
-  return { post_id: post.id, snapshot_id: snapshot?.id || null, score: scored.score };
+  return { post_id: post.id, snapshot_id: snapshot?.id || null, score: null };
 }
 
 async function claimInsightPosts(env, limit) {
@@ -439,15 +437,64 @@ export async function syncInstagramInsights(env, { limit = 25 } = {}) {
   const results = [];
   for (const post of posts) {
     try {
-      results.push(await syncPostInsights(env, post));
+      const result = await syncPostInsights(env, post);
+      results.push(result);
+      recordEvent({ orgId: post.org_id, name: 'social.insights.sync', kind: 'job', resourceType: 'social_post', resourceId: post.id, outcome: result.deferred ? 'retry' : 'ok', detail: { snapshot_id: result.snapshot_id || null, reason: result.reason || null } });
     } catch (error) {
       try {
         await patch(env, 'social_posts', post.id, {
           next_insights_sync_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
         });
       } catch {}
+      recordEvent({ orgId: post.org_id, name: 'social.insights.failed', kind: 'job', level: 'warn', outcome: 'retry', resourceType: 'social_post', resourceId: post.id, message: 'Provider measurements unavailable; retry scheduled' });
       results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return { checked: posts.length, results };
+}
+
+
+// One bounded page per account/tick. Ignore duplicate posts so discovery cannot
+// overwrite campaign, variant or publishing links. Never follow provider next URLs.
+export async function discoverInstagramMedia(env, { limit = 5 } = {}) {
+  const accounts = await db(env, 'rpc/claim_instagram_discovery_accounts', {
+    method: 'POST', body: JSON.stringify({ p_limit: Math.min(10, Math.max(1, Number(limit) || 5)) })
+  });
+  const results = [];
+  for (const account of accounts || []) {
+    try {
+      const token = await tokenFor(env, account);
+      if (!token) throw new Error('credential_secret_not_configured');
+      const query = new URLSearchParams({ fields: 'id,caption,media_type,media_product_type,permalink,timestamp', limit: '50' });
+      if (account.media_discovery_cursor) query.set('after', account.media_discovery_cursor);
+      const page = await graphGet(env, `${encodeURIComponent(account.external_account_id)}/media?${query}`, token);
+      if (!Array.isArray(page?.data)) throw new Error('instagram_media_invalid_payload');
+      const rows = page.data.map(media => {
+        if (!media.id || !Number.isFinite(Date.parse(media.timestamp))) throw new Error('instagram_media_invalid_record');
+        return { org_id: account.org_id, account_id: account.id, external_media_id: String(media.id),
+          permalink: media.permalink || null, caption: media.caption || null, publish_mode: 'imported',
+          published_at: new Date(media.timestamp).toISOString(), metadata: { source: 'meta_graph', media_type: media.media_type, media_product_type: media.media_product_type } };
+      });
+      const inserted = rows.length ? await db(env, 'social_posts?on_conflict=account_id,external_media_id', {
+        method: 'POST', headers: { prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify(rows)
+      }) : [];
+      const cursor = page.paging?.next ? page.paging?.cursors?.after : null;
+      if (page.paging?.next && (!cursor || cursor === account.media_discovery_cursor)) throw new Error('instagram_media_cursor_stalled');
+      await patch(env, 'social_accounts', account.id, {
+        media_discovery_cursor: cursor || null, last_media_discovery_at: new Date().toISOString(), media_discovery_error: null,
+        next_media_discovery_at: new Date(Date.now() + (cursor ? 5 : 60) * 60000).toISOString()
+      });
+      recordEvent({ orgId: account.org_id, name: 'social.media.discovered', kind: 'job', resourceType: 'social_account', resourceId: account.id, detail: { seen: rows.length, imported: inserted?.length || 0 } });
+      results.push({ account_id: account.id, seen: rows.length, imported: inserted?.length || 0, has_more: Boolean(cursor) });
+    } catch (error) {
+      // Only codes are persisted; provider errors can include request details.
+      const code = error?.detail?.error?.code;
+      const reason = code ? `meta_error_${code}` : 'instagram_media_discovery_failed';
+      await patch(env, 'social_accounts', account.id, { media_discovery_error: reason,
+        next_media_discovery_at: new Date(Date.now() + 60 * 60000).toISOString() });
+      recordEvent({ orgId: account.org_id, name: 'social.media.discovery_failed', kind: 'job', level: 'warn', outcome: 'retry', resourceType: 'social_account', resourceId: account.id, message: reason });
+      results.push({ account_id: account.id, error: reason });
+    }
+  }
+  return { checked: accounts?.length || 0, results };
 }

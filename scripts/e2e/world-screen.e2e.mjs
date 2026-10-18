@@ -42,7 +42,7 @@ try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
 /* ---------- a static server for this checkout ---------- */
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try {
@@ -65,10 +65,14 @@ const MISSIONS = [
   { mission_id: '33333333-3333-4333-8333-333333333333', title: 'Translate the shelter guide', description: 'Make the guide readable in three languages.', action_path: 'create', region_key: 'JP-13', region_label: 'Tokyo', latitude: 35.7, longitude: 139.7 },
 ];
 const STATS = [{ mission_id: M1, joined: 12, submitted: 3, verified: 9 }];
-/* an open mission with no pin (search must still find it), and a clip job (never a mission) */
+const COHORT_ARCHIVE = JSON.parse(await readFile(join(ROOT, 'data/action/docket-516r-archive.json'), 'utf8'));
+/* The table includes the pinned missions, an open mission without a pin
+   (search must still find it), and a clip job (never a mission card).
+   Public discovery requires an explicitly open status, just like the DB. */
 const OPEN_MISSIONS = [
-  { id: '44444444-4444-4444-8444-444444444441', title: 'Write to the river council', description: 'Ask for a cleanup budget.', domain: 'civic', kind: 'mission' },
-  { id: '44444444-4444-4444-8444-444444444442', title: 'Clip the river song', description: 'Paid clipping.', domain: 'music', kind: 'clip' },
+  ...MISSIONS.map((m) => ({ id: m.mission_id, campaign_id: 'camp-1', title: m.title, description: m.description, domain: m.action_path === 'create' ? 'creative' : 'community', discovery_category: m.action_path === 'create' ? 'create' : 'help', kind: 'mission', difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'desk', skills: ['field'], capacity: null, status: 'open', starts_at: null, ends_at: null })),
+  { id: '44444444-4444-4444-8444-444444444441', title: 'Write to the river council', description: 'Ask for a cleanup budget.', domain: 'advocacy', discovery_category: 'create', kind: 'mission', status: 'open' },
+  { id: '44444444-4444-4444-8444-444444444442', title: 'Clip the river song', description: 'Paid clipping.', domain: 'music', kind: 'clip', status: 'open' },
 ];
 const CLIPS = [{ mission_id: '44444444-4444-4444-8444-444444444442', title: 'Clip Docket 516R', base_cpm_cents: 300, platforms: ['instagram'] }];
 const GROUPS = [{ id: 'g1', slug: 'river-keepers', name: 'River Keepers', purpose: 'Keep the Mill River clean.', visibility: 'open', member_count: 14, joined: false }];
@@ -107,16 +111,29 @@ function freshNews(now) {
   });
 }
 const item = (p) => ({ item_type: 'post', post_id: p.id, occurred_at: p.created_at, actor: p.author, post: { id: p.id, body: p.body, visibility: p.visibility, created_at: p.created_at, content_id: p.content_id || null, like_count: p.like_count, liked_by_me: p.liked_by_me, author_m_uid: p.author.m_uid, media: p.media || [] } });
+const TRAVEL_ROUTES = JSON.parse(await readFile(join(ROOT, 'scripts/e2e/fixtures/travel-new-haven-routes.json'), 'utf8')).routes;
+const TRAVEL_ORIGIN = TRAVEL_ROUTES[0].origin, TRAVEL_DESTINATION = TRAVEL_ROUTES[0].destination;
 
 async function routeBackends(ctx, world, { member, creator = true, verified = true }) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', (route) => {
     const u = route.request().url();
+    if (u.includes('/rest/v1/travel_journeys')) {
+      const request=route.request(),method=request.method();world.journeys ||= [];
+      world.requests.push({m:method,path:'/travel_journeys',auth:!!request.headers().authorization,body:request.postDataJSON()});
+      if(!member)return json(route,{error:'unauthorized'},401);
+      if(world.journeyFail)return json(route,{error:'unavailable'},503);
+      const id=new URL(u).searchParams.get('id')?.replace('eq.','');
+      if(method==='POST'){const row={id:'99999999-9999-4999-8999-999999999999',plan:request.postDataJSON().plan,updated_at:new Date().toISOString()};world.journeys.push(row);return json(route,[row]);}
+      if(method==='PATCH'){const row=world.journeys.find(x=>x.id===id);if(row)row.plan=request.postDataJSON().plan;return json(route,row?[row]:[]);}
+      if(method==='DELETE'){world.journeys=world.journeys.filter(x=>x.id!==id);return json(route,[]);}
+      return json(route,world.journeys);
+    }
     if (u.includes('/auth/v1/user')) return member && world.userCheck ? json(route, { code: world.userCheck, error_code: 'session_not_found' }, world.userCheck) : member ? json(route, { id: 'auth-you', email: 'fixture@example.invalid' }) : json(route, { msg: 'no session' }, 401);
     if (u.includes('action_globe_public_region_missions')) return json(route, MISSIONS);
     if (u.includes('action_mission_stats')) return json(route, STATS);
     if (u.includes('clip_campaigns_open')) return json(route, CLIPS);
-    if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = MISSIONS.find((x) => u.includes(x.mission_id)); return json(route, m ? [{ id: m.mission_id, campaign_id: 'camp-1', title: m.title, description: m.description, domain: 'civic', difficulty: 1, base_points: 10, proof_required: true, verification_mode: 'desk', skills: ['field'], capacity: null, status: 'open', starts_at: null, ends_at: null }] : []); }
+    if (u.includes('/rest/v1/action_missions?id=eq.')) { const m = OPEN_MISSIONS.find((x) => u.includes(x.id)); return json(route, m ? [m] : []); }
     if (u.includes('/rest/v1/action_missions?')) return json(route, OPEN_MISSIONS);
     if (u.includes('/rest/v1/action_mission_assignments?')) return json(route, []);
     /* the campaign's governed support rail is open for this fixture */
@@ -135,6 +152,17 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     world.requests.push({ m, path: u.pathname, search: u.search, auth: !!auth, body });
     if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': BASE, 'access-control-allow-headers': 'authorization,content-type', 'access-control-allow-methods': 'GET,POST,DELETE' } });
+    if (u.pathname === '/v1/travel/route') {
+      if (auth || m !== 'POST' || u.search || !body || Object.keys(body).sort().join(',') !== 'destination,mode,origin') return json(route, { error:'Invalid public route request' }, 400);
+      const fixture = TRAVEL_ROUTES.find(r => r.mode === body.mode && JSON.stringify(r.origin) === JSON.stringify(body.origin) && JSON.stringify(r.destination) === JSON.stringify(body.destination));
+      const respond = () => world.routeFail ? json(route, { error:'Street directions are temporarily unavailable. Please try again.' }, 503)
+        : fixture ? json(route, { ok:true, route:fixture }) : json(route, { error:'No recorded test route reaches those selected places.' }, 422);
+      if (world.holdRoute) { (world.heldRoutes ||= []).push(() => respond().catch(() => {})); return; }
+      return respond();
+    }
+    // These personas are ordinary members, not operators. A catch-all 200 must not grant admin navigation.
+    if (u.pathname === '/v1/status') return json(route, { error: 'Forbidden' }, 403);
+    if (u.pathname === '/v1/action-archive/docket-516r-2025') return json(route, COHORT_ARCHIVE);
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     if (u.pathname === '/v1/world/news') {
       if (world.newsFail === 'abort') return route.abort('failed');
@@ -233,33 +261,71 @@ const DEVICES = [
 ];
 
 await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0 }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html' }) {
   const world = freshWorld();
   world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
-  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
-    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
     window.__shared = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: (d) => { window.__shared.push(d.url); return Promise.resolve(); } });
   }, member);
+  await ctx.addInitScript(({mode,origin}) => {
+    window.__travelGeoMode=mode;window.__travelGeoRequests=0;window.__travelWatchStarts=0;window.__travelWatchStops=0;
+    const watches=new Map();let nextWatch=0;
+    const fix=(coordinates=window.__travelGeoCoordinates||origin,accuracy=12,timestamp=Date.now())=>({coords:{longitude:coordinates[0],latitude:coordinates[1],accuracy},timestamp});
+    window.__travelWatchCount=()=>watches.size;
+    window.__travelPushFix=(coordinates=origin,accuracy=12,timestamp=Date.now())=>{for(const watch of watches.values())watch.ok(fix(coordinates,accuracy,timestamp))};
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition(ok,fail){window.__travelGeoRequests++;if(window.__travelGeoMode==='delayed')window.__travelGeoResolve=()=>ok(fix());else queueMicrotask(()=>window.__travelGeoMode==='granted'?ok(fix()):fail({code:1}));},
+      watchPosition(ok,fail){const id=++nextWatch;window.__travelWatchStarts++;watches.set(id,{ok,fail});window.__travelLateFix=coordinates=>ok(fix(coordinates));queueMicrotask(()=>{if(watches.has(id))window.__travelGeoMode==='granted'?ok(fix()):fail({code:1})});return id;},
+      clearWatch(id){if(watches.delete(id))window.__travelWatchStops++;}
+    }});
+  },{mode:geo,origin:TRAVEL_ORIGIN});
+  await ctx.route('https://photon.komoot.io/**',async route=>{
+    const q=new URL(route.request().url()).searchParams.get('q')||'';
+    if(q.includes('unavailable'))return route.fulfill({status:503,body:'unavailable'});
+    const address=/350|Fifth|Empire/i.test(q),lisbon=/Lisbon/i.test(q),station=/Union|Station/i.test(q);
+    return route.fulfill({contentType:'application/json',body:JSON.stringify({features:[{geometry:{type:'Point',coordinates:address?[-73.9857,40.7484]:lisbon?[-9.14,38.72]:station?TRAVEL_DESTINATION:TRAVEL_ORIGIN},properties:address?{name:'Empire State Building',housenumber:'350',street:'Fifth Avenue',city:'New York',state:'New York',country:'United States'}:lisbon?{name:'Lisbon',country:'Portugal'}:station?{name:'Union Station',city:'New Haven',state:'Connecticut',country:'United States'}:{name:'New Haven',state:'Connecticut',country:'United States'}}]})});
+  });
+  if(noGlobe)await ctx.route('https://cesium.com/**',r=>r.abort());
+  else if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async route => {
+    const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
+    if (!rel || rel.includes('..')) return route.abort();
+    try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, rel)), contentType: TYPES[extname(rel)] || 'application/octet-stream' }); }
+    catch { return route.abort(); }
+  });
+  await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r=>r.abort());
   await routeBackends(ctx, world, { member, creator, verified });
   const page = await ctx.newPage();
   const errors = [];
+  const archiveNetwork = [];
+  const archiveOutcome = (request, outcome, detail = {}) => {
+    const url = new URL(request.url());
+    if (url.pathname !== '/v1/action-archive/docket-516r-2025' && url.pathname !== '/data/action/docket-516r-archive.json') return;
+    archiveNetwork.push({ at: new Date().toISOString(), outcome, method: request.method(), url: url.origin + url.pathname, ...detail });
+  };
+  page.on('request', request => archiveOutcome(request, 'request'));
+  page.on('response', response => archiveOutcome(response.request(), 'response', { status: response.status(), contentType: response.headers()['content-type'] || null }));
+  page.on('requestfinished', request => archiveOutcome(request, 'finished'));
+  page.on('requestfailed', request => archiveOutcome(request, 'failed', { error: request.failure()?.errorText || null }));
   page.on('pageerror', (e) => errors.push(e.message));
   /* the globe catches its own start-up failure and only warns; that is still a failure here */
   page.on('console', (m) => { if (/TypeError|ReferenceError|SyntaxError/.test(m.text())) errors.push(m.text().slice(0, 300)); });
-  await page.goto(BASE + '/action-globe.html', { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(/mnet\.html\?view=feed/, { timeout: 15000 });
+  await page.goto(BASE + entryPath, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(entryPath.startsWith('/mnet.html') ? /mnet\.html(?:\?|$)/ : /mnet\.html\?view=feed/, { timeout: 15000 });
   await page.waitForFunction(() => /pinned on the Earth|No missions are pinned|could not load|can.t run/.test((document.getElementById('mnWorldCaption') || {}).textContent || ''), null, { timeout: 90000 });
-  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000 });
+  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000, state:'attached' });
+  await page.waitForFunction(()=>!!window.MCC_WORLD_MODE);
+  if(!travel&&process.env.E2E_ONLY !== 'travel')await page.evaluate(()=>window.MCC_WORLD_MODE.set('posts'));
   /* evidence shots wait for the Earth's tiles, up to 25s */
   const globe = page.frame({ url: /action-globe\.html/ });
-  if (globe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
+  if (globe&&!noGlobe) await globe.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  return { ctx, page, world, errors };
+  return { ctx, page, world, errors, archiveNetwork };
 }
 const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(r.path));
 
@@ -267,23 +333,387 @@ const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(
 const ONLY = process.env.E2E_ONLY || '';
 const runs = (scope) => !ONLY || scope.startsWith(ONLY);
 
+/* Travel acceptance: the shipping UI and real Cesium, with recorded public road routes.
+   Provider fixtures never claim to be a live service, a fare or a dispatched ride. */
+const chooseTravelPlace = async (page, id, query) => {
+  // The prior address options may still be attached while Photon refreshes.
+  // Wait for suggestions belonging to this query, and never select the stale first row.
+  const expected = query === '350 Fifth Avenue' ? 'Empire State Building' : query;
+  await page.fill('#'+id, query);
+  await page.waitForFunction(({id, expected}) => {
+    const input = document.getElementById(id), list = document.getElementById(id+'Results');
+    return input?.getAttribute('aria-expanded') === 'true' && !input.hasAttribute('aria-busy')
+      && list && !list.hidden && [...list.querySelectorAll('button')]
+        .some(button => button.textContent?.includes(expected));
+  }, {id, expected}, {timeout: 25000});
+  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  await page.waitForFunction(({id, query, expected}) => {
+    const input = document.getElementById(id);
+    return input && input.value !== query && input.value.includes(expected)
+      && input.getAttribute('aria-expanded') === 'false';
+  }, {id, query, expected}, {timeout: 15000});
+};
+const showTravelRoute = async page => {
+  const label = await page.textContent('#wtNavigate');
+  if (label === 'Get directions' || label === 'Try route again') await page.click('#wtNavigate');
+  await page.waitForSelector('#wtRouteCard:not([hidden])');
+  await page.waitForFunction(()=>document.getElementById('wtNavigate').textContent==='Go');
+};
+const releaseTravelRoutes = async world => { world.holdRoute=false; await Promise.all((world.heldRoutes||[]).splice(0).map(release=>release())); };
+const waitForHeldTravelRoute = async (world, page) => {
+  const deadline = Date.now() + 5000;
+  while (!(world.heldRoutes || []).length && Date.now() < deadline) await page.waitForTimeout(25);
+  if (!(world.heldRoutes || []).length) throw new Error('The route request did not reach the held provider fixture');
+};
+const panTravelMap = async (page, globe) => {
+  // The mode tabs and transport legitimately move with viewport clearance.
+  // Drag a point that is actually exposed in both documents, so this checks
+  // real map input rather than accidentally clicking a floating control.
+  const point = await globe.evaluate(() => {
+    const canvas = document.querySelector('#globe canvas'), r = canvas.getBoundingClientRect();
+    const frame = window.frameElement, f = frame.getBoundingClientRect();
+    const exposed = (x,y) => document.elementFromPoint(x,y) === canvas && parent.document.elementFromPoint(f.left+x,f.top+y) === frame;
+    for (const fy of [.35,.55,.75,.2,.85]) for (const fx of [.2,.4,.6]) {
+      const x = r.left+r.width*fx, y = r.top+r.height*fy;
+      if (exposed(x,y) && exposed(x+35,y+25)) return {x:f.left+x,y:f.top+y};
+    }
+    return null;
+  });
+  if (!point) throw new Error('No exposed canvas area is available for a navigation pan');
+  await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+35,point.y+25,{steps:4});await page.mouse.up();
+};
+
+if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE||d.name===process.env.EDITORIAL_DEVICE)) {
+  const member=device.name==='desktop',scope=`travel-${device.name}`;
+  if(!runs(scope))continue;
+  const {ctx,page,world,errors,archiveNetwork}=await open(device,{member,travel:true});
+  try{
+    const globe=page.frame({url:/action-globe\.html/});
+    check(scope,'Travel opens with location and destination; flights and extra fields stay tucked away',await page.getAttribute('html','data-world-mode')==='travel'&&await page.isVisible('#wtPlanner')&&await page.isHidden('#wtGroundOptions')&&await page.isHidden('#wtOptions')&&await page.isHidden('[data-travel-kind=flight]')&&await page.isHidden('#wtDirections'));
+    check(scope,'travel scene hides mission pins and keeps visible zoom controls',await globe.evaluate(()=>window.__huJourney().travel)&&await globe.isVisible('#ctlZoomIn'));
+    const [dock,expand,modes,credit,...controls]=await Promise.all([
+      page.locator('.appbar').boundingBox(),page.locator('.mn__world-expand').boundingBox(),page.locator('.wt-world-modes').boundingBox(),
+      globe.locator('.osm-credit a[href="https://www.openstreetmap.org/copyright"]').boundingBox(),
+      ...['ctlLocate','ctlZoomIn','ctlZoomOut'].map(id=>globe.locator('#'+id).boundingBox())
+    ]);
+    const overlaps=(a,b)=>a&&b&&a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
+    const clearChrome=controls.every(r=>r&&r.width>=44&&r.height>=44&&![dock,expand,modes].some(other=>overlaps(r,other)))&&!overlaps(credit,dock)&&!overlaps(credit,modes);
+    check(scope,'44px map controls and attribution stay clear of the parent dock and overlays',clearChrome,clearChrome?undefined:{dock,expand,modes,credit,controls});
+    await page.screenshot({path:join(OUT,scope+'-initial.png')});
+    check(scope,'compact modes and header overlay share the globe',await page.evaluate(()=>{const g=document.getElementById('mnWorld').getBoundingClientRect(),h=document.querySelector('.mn__top').getBoundingClientRect(),m=document.querySelector('.wt-world-modes').getBoundingClientRect();return g.top===0&&h.top>=g.top&&h.bottom<g.bottom&&m.width<=240&&m.height<=44;}));
+    if(!member)check(scope,'Join clears the shared account control',await page.evaluate(()=>document.getElementById('mnGuestJoin').getBoundingClientRect().right+6<=document.getElementById('mccAuthChip').getBoundingClientRect().left));
+    check(scope,'location is requested once, denial keeps manual entry, no navigation watch starts',await page.evaluate(()=>window.__travelGeoRequests===1&&window.__travelWatchStarts===0)&&await page.isEnabled('#wtFrom')&&/Location access is off/.test(await page.textContent('#wtLocationStatus')));
+    await chooseTravelPlace(page,'wtTo','350 Fifth Avenue');
+    check(scope,'selected address reveals ground options and waits for a selected starting point',/Empire State Building/.test(await page.inputValue('#wtTo'))&&await page.isVisible('#wtGroundOptions')&&await page.isDisabled('#wtNavigate')&&await page.isHidden('[data-travel-kind=flight]')&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+    await chooseTravelPlace(page,'wtTo','Union Station');await chooseTravelPlace(page,'wtFrom','New Haven');
+    await showTravelRoute(page);
+    check(scope,'selecting both endpoints automatically presents directions and Go',req(world,'POST',/^\/v1\/travel\/route$/).length===1&&await page.textContent('#wtNavigate')==='Go');
+    await globe.waitForFunction(points=>window.__huNavigation().routeVisible&&window.__huNavigation().routePoints===points,TRAVEL_ROUTES[0].geometry.length,{timeout:15000});
+    await page.waitForTimeout(1400);
+    await globe.waitForFunction(()=>window.__huGlobeSettled(),null,{timeout:10000}).catch(()=>{});
+    const posted=req(world,'POST',/^\/v1\/travel\/route$/);
+    check(scope,'ground directions use a public POST containing only selected coordinates and mode',posted.length===1&&!posted[0].auth&&!posted[0].search&&JSON.stringify(posted[0].body)===JSON.stringify({origin:TRAVEL_ORIGIN,destination:TRAVEL_DESTINATION,mode:'drive'}),posted);
+    check(scope,'street route and readable turn steps replace external-map navigation',await page.getAttribute('#wtNavigate','href')===null&&await page.locator('#wtRouteSteps [data-step-index]').count()===TRAVEL_ROUTES[0].steps.length&&/min/.test(await page.textContent('#wtRouteSummary'))&&await globe.evaluate(()=>__huNavigation().routeEntities===3&&__huIon().height<100000));
+    await page.locator('#wtSteps').evaluate(e=>e.open=true);
+    check(scope,'every displayed instruction comes from the selected route',JSON.stringify(await page.locator('#wtRouteSteps button > span').allTextContents())===JSON.stringify(TRAVEL_ROUTES[0].steps.map(s=>s.instruction)));
+    await page.locator('#wtSteps').evaluate(e=>e.open=false);
+    await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-route.png')});
+    await page.click('#wtRide');const uber=new URL(await page.getAttribute('#wtUber','href'));
+    const pickup=JSON.parse(uber.searchParams.get('pickup')),dropoff=JSON.parse(uber.searchParams.get('drop[0]'));
+    check(scope,'ride handoff names Uber, passes exact places and makes no dispatch or price promise',uber.origin==='https://m.uber.com'&&pickup.longitude===TRAVEL_ORIGIN[0]&&pickup.latitude===TRAVEL_ORIGIN[1]&&dropoff.longitude===TRAVEL_DESTINATION[0]&&dropoff.latitude===TRAVEL_DESTINATION[1]&&/not connected here yet/.test(await page.textContent('#wtRidePanel'))&&/confirm your ride in Uber/.test(await page.textContent('#wtRideHint')));
+    await page.click('#wtRide');await page.evaluate(()=>window.__travelGeoMode='granted');await page.click('#wtNavigate');
+    await page.waitForFunction(()=>document.documentElement.classList.contains('wt-navigating')&&window.__travelWatchCount()===1);
+    await page.evaluate(coordinates=>window.__travelPushFix(coordinates,12,Date.now()+25),TRAVEL_ROUTES[0].geometry[15]);
+    await globe.waitForFunction(()=>__huNavigation().following&&__huIon().height<2500);
+    check(scope,'Go runs one live watch and displays the current maneuver',await page.isVisible('#wtNavigation')&&(await page.textContent('#wtNavInstruction')).length>0&&await page.evaluate(()=>window.__travelWatchStarts===1&&window.__travelWatchCount()===1));
+    await page.screenshot({path:join(OUT,scope+'-navigation.png')});
+    await panTravelMap(page,globe);
+    await page.waitForSelector('#wtRecenter:not([hidden])');
+    await page.evaluate(coordinates=>window.__travelPushFix(coordinates,12,Date.now()+50),TRAVEL_ROUTES[0].geometry[16]);
+    await globe.waitForFunction(()=>!__huNavigation().following);
+    check(scope,'dragging the map pauses following without stopping navigation',await page.isVisible('#wtRecenter')&&await page.evaluate(()=>__travelWatchCount()===1)&&await globe.evaluate(()=>!__huNavigation().following));
+    await page.click('#wtRecenter');await globe.waitForFunction(()=>__huNavigation().following);
+    check(scope,'Recenter resumes following through the existing location watch',await page.isHidden('#wtRecenter')&&await page.evaluate(()=>__travelWatchStarts===1&&__travelWatchCount()===1));
+    await page.click('#wtStopNavigation');await page.evaluate(()=>window.__travelLateFix([0,0]));
+    check(scope,'Stop clears the watch, rejects late fixes and preserves usable route steps',await page.evaluate(()=>window.__travelWatchCount()===0&&window.__travelWatchStops===1&&!document.documentElement.classList.contains('wt-navigating'))&&await page.isHidden('#wtNavigation')&&await page.locator('#wtRouteSteps button').count()===TRAVEL_ROUTES[0].steps.length);
+
+    await chooseTravelPlace(page,'wtTo','Lisbon');await page.locator('#wtOptions').evaluate(e=>e.open=true);
+    await page.click('[data-travel-kind=flight]');await page.fill('#wtDeparture','2026-11-04');await page.click('#wtPlan');
+    await globe.waitForFunction(()=>window.__huJourney().entities===3,null,{timeout:6000});
+    check(scope,'only explicit longer-trip selection creates the planned flight connection',await globe.evaluate(()=>__huJourney().points===2&&__huJourney().entities===3&&__huNavigation().routePoints===0));
+    check(scope,'whole trip has four unconfirmed legs without invented fares',await page.locator('.wt-leg').count()===4&&!/\$\d/.test(await page.textContent('#wtItinerary')));
+    await page.click('.wt-leg [data-edit=departureHub]');await page.fill('#wtDepartureHub','JFK Terminal 4');await page.fill('#wtArrivalHub','Lisbon airport');await page.fill('#wtStay','My stay, Lisbon');
+    const transfer=new URL(await page.locator('.wt-leg a').first().getAttribute('href'));
+    check(scope,'optional long-trip transfer link retains explicit origin and airport',transfer.searchParams.get('origin')===`${TRAVEL_ORIGIN[1]},${TRAVEL_ORIGIN[0]}`&&transfer.searchParams.get('destination')==='JFK Terminal 4');
+    await page.locator('#wtDetails').evaluate(e=>e.open=false);
+    const dimensions=await page.evaluate(()=>{const r=document.documentElement,f=document.getElementById('mnWorldFeed'),g=document.getElementById('mnWorld'),before=g.getBoundingClientRect().top;f.scrollTop=130;return{sw:r.scrollWidth,cw:r.clientWidth,fixed:before===g.getBoundingClientRect().top,pageY:scrollY,minInput:Math.min(...[...document.querySelectorAll('#wtForm input')].filter(e=>e.offsetParent).map(e=>parseFloat(getComputedStyle(e).fontSize)))}});
+    check(scope,'readable controls, no document overflow and stationary globe',dimensions.sw===dimensions.cw&&dimensions.fixed&&dimensions.pageY===0&&dimensions.minInput>=16,dimensions);
+    await page.locator('#wtOptions').evaluate(e=>e.open=false);await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await globe.waitForFunction(()=>!__huNavigation().travel&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible);
+    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    check(scope,'Missions opens published missions and hides private navigation overlays',await page.isVisible('.mn-swipe__card[data-mission="'+M1+'"]')&&await page.isHidden('#wtPlanner')&&await globe.evaluate(()=>!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    try {
+      await globe.waitForFunction(()=>__huCompletedMissions().on&&__huCompletedMissions().pins===1);
+    } catch (error) {
+      /* Preserve the original gate and failure. Each diagnostic read is bounded
+         and isolated so a stalled frame cannot erase the other evidence. */
+      const capture = async read => {
+        let timer;
+        try { return await Promise.race([Promise.resolve().then(read), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Diagnostic read timed out')), 5000); })]); }
+        catch (failure) { return { diagnostic_error: failure.message || String(failure) }; }
+        finally { clearTimeout(timer); }
+      };
+      const [parentState, globeState, screenshot] = await Promise.all([
+        capture(() => page.evaluate(() => ({
+          mode: document.documentElement.dataset.worldMode,
+          modeApi: window.MCC_WORLD_MODE?.get?.(),
+          showcaseAvailable: !!window.DocketCohortShowcase,
+          previewText: document.getElementById('mnCompletedMissions')?.innerText ?? null,
+          capstonePresent: !!document.getElementById('dcPreviewCapstone'),
+          caption: document.getElementById('mnWorldCaption')?.textContent ?? null,
+          visibility: document.visibilityState
+        }))),
+        capture(() => globe.evaluate(() => ({
+          completed: window.__huCompletedMissions?.(),
+          navigation: window.__huNavigation?.(),
+          settled: window.__huGlobeSettled?.(),
+          visibility: document.visibilityState
+        }))),
+        capture(async () => { const path = join(OUT, scope + '-completed-marker-failure.png'); await page.screenshot({ path, timeout: 4500 }); return path; })
+      ]);
+      const diagnostic = { scope, failure: error.message, parentState, globeState, archiveNetwork, archiveRequests: world.requests.filter(request => request.path.startsWith('/v1/action-archive/')), errors: errors.slice(), screenshot };
+      console.error('COMPLETED_MARKER_DIAGNOSTIC ' + JSON.stringify(diagnostic));
+      await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
+      throw error;
+    }
+    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('#dcPreviewCapstone')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
+    await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
+    check(scope,'Posts hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the planning draft',/Lisbon/.test(await page.inputValue('#wtTo')));
+    if(member){
+      await page.click('#wtSave');await page.waitForFunction(()=>document.getElementById('wtDraftStatus').textContent==='Saved');
+      check(scope,'explicit save uses canonical member persistence',world.journeys?.length===1&&req(world,'POST',/^\/travel_journeys$/)[0]?.auth);
+      await page.click('#wtSaved');await page.waitForSelector('.wt-saved-row');await page.click('#wtNew');await globe.waitForFunction(()=>__huNavigation().routePoints===0&&!__huNavigation().location);check(scope,'new journey clears destination and precise map state',await page.inputValue('#wtTo')===''&&await globe.evaluate(()=>__huNavigation().routePoints===0&&!__huNavigation().location));
+      await page.click('#wtSaved');await page.waitForSelector('.wt-saved-row');await page.locator('.wt-saved-row button').first().click();check(scope,'saved draft restores endpoints, not a live watch or route',await page.inputValue('#wtDepartureHub')==='JFK Terminal 4'&&await page.inputValue('#wtStay')==='My stay, Lisbon'&&await page.evaluate(()=>__travelWatchCount()===0));
+      world.journeyFail=true;await page.locator('#wtOptions').evaluate(e=>e.open=true);await page.click('[data-travel-kind=stay]');await page.fill('#wtStay','Changed stay');await page.click('#wtSave');await page.waitForFunction(()=>/could not/.test(document.getElementById('wtMessage').textContent));check(scope,'failed save remains unsaved',await page.textContent('#wtDraftStatus')==='Unsaved');
+    }else{
+      check(scope,'guest Travel keeps saving out of the directions flow',await page.isHidden('#wtSaveRow')&&await page.isHidden('#wtSaveFooter')&&await page.isHidden('#wtDraftStatus')&&req(world,'POST',/^\/travel_journeys$/).length===0);
+    }
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+if(runs('travel-location')) for(const geo of ['granted','delayed','delayed-destination']){
+  const {ctx,page,world}=await open(DEVICES[0],{member:false,noGlobe:true,geo:geo==='delayed-destination'?'delayed':geo,travel:true});
+  try{
+    if(geo==='granted')check('travel-location','approved GPS fills the starting point',await page.inputValue('#wtFrom')==='Current location');
+    else if(geo==='delayed-destination'){
+      await page.fill('#wtTo','350 Fifth Avenue');await page.evaluate(()=>window.__travelGeoResolve());
+      await page.waitForFunction(()=>document.getElementById('wtFrom').value==='Current location');
+      check('travel-location','typing a destination preserves an outstanding origin request',await page.inputValue('#wtFrom')==='Current location'&&await page.inputValue('#wtTo')==='350 Fifth Avenue');
+    }
+    else{await page.fill('#wtFrom','My chosen starting address');await page.evaluate(()=>window.__travelGeoResolve());check('travel-location','late GPS cannot replace an edited trip',await page.inputValue('#wtFrom')==='My chosen starting address');}
+    await page.fill('#wtTo','unavailable address');await page.waitForSelector('#wtToResults .wt-search-note');
+    check('travel-location','an address-provider outage keeps manual input and requires a selected destination',await page.isEnabled('#wtTo')&&await page.isHidden('#wtDirections')&&/suggestions/.test(await page.textContent('#wtEndpointHint'))&&req(world,'POST',/^\/v1\/travel\/route$/).length===0);
+  }finally{await ctx.close();}
+}
+
+if(runs('travel-errors')){
+  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'granted',travel:true});
+  try{
+    const globe=page.frame({url:/action-globe\.html/});await globe.waitForFunction(()=>__huNavigation().locationVisible&&__huIon().height<5000);
+    world.routeFail=true;await chooseTravelPlace(page,'wtTo','Union Station');
+    await page.waitForFunction(()=>document.getElementById('wtNavigate').textContent==='Try route again');
+    check('travel-errors','provider failure shows an honest retry and no fabricated route',await page.isHidden('#wtRouteCard')&&/temporarily unavailable/.test(await page.textContent('#wtRouteMessage'))&&await globe.evaluate(()=>__huNavigation().routePoints===0));
+    world.routeFail=false;await showTravelRoute(page);await page.click('#wtNavigate');await page.waitForFunction(()=>__travelWatchCount()===1);
+    await page.fill('#wtTo','A different address');
+    await globe.waitForFunction(()=>__huNavigation().routePoints===0);
+    check('travel-errors','editing a destination cancels GPS and removes old maneuvers immediately',await page.evaluate(()=>__travelWatchCount()===0)&&await page.locator('#wtRouteSteps button').count()===0&&await globe.evaluate(()=>__huNavigation().routePoints===0));
+    world.holdRoute=true;await chooseTravelPlace(page,'wtTo','Union Station');
+    await page.waitForFunction(()=>document.getElementById('wtNavigate').disabled&&/Finding/.test(document.getElementById('wtNavigate').textContent));
+    await waitForHeldTravelRoute(world, page);
+    await page.fill('#wtTo','350 Fifth Avenue');await releaseTravelRoutes(world);await page.waitForTimeout(250);
+    check('travel-errors','a route response arriving after an edit cannot restore stale steps or geometry',await page.isHidden('#wtRouteCard')&&await page.locator('#wtRouteSteps button').count()===0&&await globe.evaluate(()=>__huNavigation().routePoints===0));
+    world.holdRoute=true;await chooseTravelPlace(page,'wtTo','Union Station');
+    await waitForHeldTravelRoute(world, page);
+    await page.click('.wt-world-modes [data-world-mode=posts]');await releaseTravelRoutes(world);await page.waitForTimeout(250);await page.click('.wt-world-modes [data-world-mode=travel]');
+    check('travel-errors','leaving Travel cancels an outstanding route request',await page.isHidden('#wtRouteCard')&&await globe.evaluate(()=>__huNavigation().routePoints===0)&&await page.evaluate(()=>__travelWatchCount()===0));
+    check('travel-errors','no JavaScript errors',errors.length===0,errors);
+  }finally{await releaseTravelRoutes(world);await ctx.close();}
+}
+
+if(runs('travel-fallback')){
+  const {ctx,page,world}=await open(DEVICES[0],{member:true,noGlobe:true,travel:true});
+  try{
+    await chooseTravelPlace(page,'wtTo','Union Station');await page.locator('#wtOptions').evaluate(e=>e.open=true);await page.click('[data-travel-kind=flight]');await page.click('#wtPlan');
+    check('travel-fallback','long-trip planning focuses a missing starting point',await page.locator('#wtFrom').evaluate(e=>e===document.activeElement)&&/starting point/.test(await page.textContent('#wtMessage')));
+    await chooseTravelPlace(page,'wtFrom','New Haven');await page.click('[data-travel-kind=drive]');await showTravelRoute(page);
+    check('travel-fallback','directions remain usable when Cesium cannot load',await page.isVisible('#wtRouteCard')&&await page.locator('#wtRouteSteps button').count()===TRAVEL_ROUTES[0].steps.length&&req(world,'POST',/^\/v1\/travel\/route$/).length===1);
+    await page.evaluate(()=>window.__travelGeoMode='granted');await page.click('#wtNavigate');await page.waitForFunction(()=>__travelWatchCount()===1);
+    await page.evaluate(()=>{localStorage.removeItem('mccdb_session');window.dispatchEvent(new CustomEvent('mcc:auth-changed'));});
+    await page.waitForFunction(()=>__travelWatchCount()===0&&document.getElementById('wtTo').value==='');
+    check('travel-fallback','sign-out clears private directions and stops the location watch',await page.isHidden('#wtRouteCard')&&await page.locator('#wtRouteSteps button').count()===0&&await page.inputValue('#wtFrom')==='');
+  }finally{await ctx.close();}
+}
+
+if(runs('travel-rides')){
+  const {ctx,page,world}=await open(DEVICES[0],{member:false,noGlobe:true,geo:'granted',travel:true});
+  try{
+    await page.clock.install();await chooseTravelPlace(page,'wtTo','Union Station');await page.click('#wtRide');
+    check('travel-rides','a fresh permitted GPS pickup can open the official Uber handoff',await page.isVisible('#wtUber')&&await page.textContent('#wtRidePickup')==='Pickup: Your current location');
+    await page.clock.fastForward(31000);
+    check('travel-rides','an expired device pickup requires a fresh location before handoff',await page.isHidden('#wtUber')&&await page.isVisible('#wtRideLocate')&&await page.getAttribute('#wtUber','href')===null);
+    const freshPickup=[-72.9275,41.307];await page.evaluate(coordinates=>window.__travelGeoCoordinates=coordinates,freshPickup);
+    await page.click('#wtRideLocate');await page.waitForSelector('#wtUber:not([hidden])');
+    const refreshed=JSON.parse(new URL(await page.getAttribute('#wtUber','href')).searchParams.get('pickup'));
+    check('travel-rides','refresh uses the new pickup and leaves the destination and draft in place',refreshed.longitude===freshPickup[0]&&refreshed.latitude===freshPickup[1]&&await page.isVisible('#wtRidePanel')&&await page.inputValue('#wtFrom')==='Current location'&&/Union Station/.test(await page.inputValue('#wtTo')));
+    const beforeManual=req(world,'POST',/^\/v1\/travel\/route$/).length;
+    await chooseTravelPlace(page,'wtFrom','New Haven');await showTravelRoute(page);if(await page.isHidden('#wtRidePanel'))await page.click('#wtRide');
+    const manual=JSON.parse(new URL(await page.getAttribute('#wtUber','href')).searchParams.get('pickup'));
+    check('travel-rides','a selected manual pickup is preserved even when the blue dot is elsewhere',manual.longitude===TRAVEL_ORIGIN[0]&&manual.latitude===TRAVEL_ORIGIN[1]&&await page.isHidden('#wtRideLocate')&&req(world,'POST',/^\/v1\/travel\/route$/).length===beforeManual+1);
+  }finally{await ctx.close();}
+}
+
+/* A completed event link owns its focus, including when a later Travel GPS
+   request finishes after the visitor has returned to Missions. */
+if(runs('mission-archive')) {
+  const scope='mission-archive-iphone', event=COHORT_ARCHIVE.event;
+  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
+  try{
+    const globe=page.frame({url:/action-globe\.html/});
+    await page.waitForSelector('#dcPreviewCapstone');
+    await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
+    check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
+    const focus=await globe.evaluate(()=>__huFocusPlace());
+    check(scope,'archive and real globe readiness produce the capstone focus',focus?.lat===event.latitude&&focus?.lon===event.longitude&&await globe.evaluate(()=>__huCompletedMissions().on&&!__huNavigation().location&&!__huNavigation().routeVisible),focus);
+    await page.click('.wt-world-modes [data-world-mode=travel]');
+    await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.locator('#dcPreviewCapstone').getByRole('button',{name:'Show on the globe'}).click();
+    await page.evaluate(()=>__travelGeoResolve());
+    await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
+    check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='missions'&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
+    check(scope,'archive browsing makes no routing or persistence request',req(world,'POST',/^\/v1\/travel\/route$|^\/travel_journeys$/).length===0&&await page.evaluate(()=>__travelWatchStarts===0));
+    check(scope,'completed link has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth&&innerWidth===390));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* The 2026-10-16 approved reference, including its explicit real-navigation exception.
+   E2E_ONLY=editorial isolates this suite for CI; actual Cesium is never stubbed. */
+if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITORIAL_DEVICE || d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
+  const scope = `editorial-${device.name}-${member ? 'member' : 'guest'}`;
+  const {ctx,page,world,errors} = await open(device,{member});
+  try {
+    const globe = page.frame({url:/action-globe\.html/});
+    check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' missions to explore');
+    await page.click('.wt-world-modes [data-world-mode=posts]');
+    const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
+    check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
+    check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
+      const g=document.getElementById('mnWorld').getBoundingClientRect(),f=document.getElementById('mnWorldFeed').getBoundingClientRect();
+      return (innerWidth>=1000 || (innerWidth>=600 && innerWidth>innerHeight)) ? f.left>=g.right-1 : Math.abs(f.top-g.bottom)<=8;
+    }));
+    const nav=await page.$$eval('.appbar [data-appnav]',els=>els.map(e=>e.dataset.appnav));
+    check(scope,'canonical Music / M / World destinations are preserved',JSON.stringify(nav)===JSON.stringify(['music','home','world']),nav);
+    check(scope,'globe and feed have no old raised-card decoration',await page.locator('#mnWorld').evaluate(e=>getComputedStyle(e).boxShadow==='none'));
+    check(scope,'approved travel headline is visible above the globe',await page.locator('.wt-headline').isVisible() && await page.textContent('.wt-headline')==='The world is your feed.');
+    check(scope,'feed scrolls while globe and page remain stationary',await page.evaluate(()=>{
+      const feed=document.getElementById('mnWorldFeed'),globe=document.getElementById('mnWorld'),before=globe.getBoundingClientRect().toJSON(),pageY=scrollY;
+      feed.scrollTop=120;
+      const after=globe.getBoundingClientRect();
+      const ok=feed.scrollTop>0 && after.top===before.top && after.bottom===before.bottom && scrollY===pageY && after.top>=0 && after.bottom<=innerHeight && feed.getBoundingClientRect().bottom<=innerHeight+1;
+      feed.scrollTop=0;return ok;
+    }));
+    if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
+    await page.screenshot({path:join(OUT,scope+'.png')});
+    await page.click('#huWorldFilters summary');
+    check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
+    await page.keyboard.press('Escape');
+    check(scope,'Escape closes the filter',!(await page.locator('#huWorldFilters').evaluate(e=>e.open)));
+    if(device.viewport.width<600)await page.click('#huSearchToggle');
+    await page.fill('#mnSearchInput','Mill');
+    await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
+    check(scope,'search still finds a published mission',/Clean up the Mill River/.test(await page.textContent('#mnSuggestRows')));
+    await page.keyboard.press('Escape');
+    // A visitor may browse another country before reading a worldwide mission.
+    // Use the real country picker; a stale country filter must not swallow the choice.
+    // In phone landscape, the mode pill crosses the canvas center. Keep the
+    // same altitude and frame France above it; do not tap through parent UI.
+    const cameraLatitude=device.name==='iphone-landscape'?30:47;
+    await globe.waitForFunction(()=>window.__huCountries?.().ready);
+    await globe.evaluate(lat=>window.__huCountriesCam.view(2,lat,15000000),cameraLatitude);
+    await globe.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await globe.waitForFunction(()=>window.__huCountries?.().alpha.FR>=.15);
+    const canvas=globe.locator('#globe canvas');
+    const tap=await globe.evaluate(lat=>{
+      const C=window.Cesium,canvas=document.querySelector('#globe canvas'),r=canvas.getBoundingClientRect(),frame=window.frameElement,f=frame.getBoundingClientRect();
+      let x=r.width/2,y=r.height/2;
+      if(lat!==47){
+        // Cesium setView defaults to north-up, looking down, with a 60-degree
+        // field of view on the longer axis. Project an interior France point
+        // in that camera's east/north/up frame, then use the real pointer.
+        const camera=C.Cartesian3.fromDegrees(2,lat,15000000),france=C.Cartesian3.fromDegrees(2,47);
+        const inverse=C.Matrix4.inverseTransformation(C.Transforms.eastNorthUpToFixedFrame(camera),new C.Matrix4());
+        const point=C.Matrix4.multiplyByPoint(inverse,france,new C.Cartesian3()),focal=Math.max(r.width,r.height)/(2*Math.tan(Math.PI/6));
+        x+=point.x/-point.z*focal;y-=point.y/-point.z*focal;
+      }
+      const cx=r.left+x,cy=r.top+y;
+      return {x,y,exposed:document.elementFromPoint(cx,cy)===canvas && parent.document.elementFromPoint(f.left+cx,f.top+cy)===frame};
+    },cameraLatitude);
+    check(scope,'country tap reaches the real canvas through both documents',tap.exposed,tap);
+    await canvas.click({position:{x:tap.x,y:tap.y}});
+    await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
+    check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
+    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.locator('.mn-swipe__card[data-mission="'+M1+'"] .mn-swipe__details').click();
+    await page.waitForSelector('#mnMissionDialog[open]');
+    check(scope,'Read full mission opens the canonical mission instructions',await page.textContent('#mnMissionTitle')===MISSIONS[0].title && (await page.textContent('#mnMissionDetail')).includes(MISSIONS[0].description));
+    await page.click('#mnMissionClose');
+    await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
+    check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
+    check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
+    await page.click('#mnWorldFocusClear');
+    await page.click('.wt-world-modes [data-world-mode=posts]');
+    await page.click('[data-hu-feed="community"]');
+    check(scope,'Community keeps member posts and hides the news stream',await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()===0);
+    await page.click('[data-hu-feed="all"]');
+    check(scope,'For you restores the news stream',await page.locator('#mnFeed [data-news-id]').count()>0);
+    await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
+    await page.screenshot({path:join(OUT,scope+'-feed.png')});
+    if(member){
+      await page.click('.wt-world-modes [data-world-mode=missions]');
+      await page.click('#mnWorldEup');
+      await page.waitForSelector('#mnMissionsView:not([hidden])');
+      check(scope,'leaving World restores normal page scrolling',await page.evaluate(()=>!document.documentElement.classList.contains('mn-world-on') && getComputedStyle(document.documentElement).overflowY!=='hidden'));
+      await page.click('#mnToWorld');
+      await page.waitForFunction(()=>document.documentElement.classList.contains('mn-world-on'));
+      await page.click('.wt-world-modes [data-world-mode=posts]');
+      check(scope,'returning to World restores the scrolling feed',await page.locator('#mnWorldFeed').evaluate(e=>getComputedStyle(e).overflowY==='auto' && e.scrollHeight>e.clientHeight));
+    }
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  } finally {await ctx.close();}
+}
+
 /* ---------- member, every device: composition and navigation ---------- */
 for (const device of DEVICES) {
   if (!runs(device.name)) continue;
   const { ctx, page, world, errors } = await open(device, { member: true });
   const s = await split(page);
   check(device.name, 'opened on the World screen from action-globe.html', /mnet\.html\?view=feed/.test(page.url()));
-  check(device.name, 'globe, context strip and a real post all on screen at first load', s.feedTop < s.vh - 60 && s.feedBottom <= s.vh && s.feedBottom - s.feedTop >= Math.min(120, s.vh * 0.25), s);
-  /* the whole screen (owner, 2026-10-15): the feed runs to the bottom edge, under the floating bar, with room to clear it */
-  /* the bottom app bar never leaves (owner, 2026-10-15), signed in or not */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'the feed runs to the bottom of the screen, under the bar, and its padding clears the bar', s.feedBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.barTop < s.vh && s.feedPad >= (s.vh - s.barTop) + 8 && Math.abs(parseFloat(s.clear) - (s.vh - s.barTop + 10)) <= 1, s);
-  /* on a desktop the strip is the bottom-left of the grid: it reaches the bottom edge and its own padding keeps its controls above the bar */
-  if (device.name === 'desktop') check(device.name, 'the desktop strip runs to the bottom edge with its controls clear of the bar', s.ctxBottom >= s.vh - 1 && !s.barHidden && s.barTop !== null && s.ctxPad >= (s.vh - s.barTop) + 8 && s.feedBottom >= s.vh - 1 && s.feedPad >= (s.vh - s.barTop) + 8, s);
-  /* the owner's split, upright: globe 45-50%, context ~15% (never inflated past 17), feed 26%+ */
-  if (device.viewport.height > device.viewport.width) check(device.name, 'portrait split matches the contract', s.globe >= 44 && s.context <= 17 && s.feed >= 26, s);
-  if (device.fit) check(device.name, 'one screen: the page does not scroll, the feed does', await page.evaluate(() => document.documentElement.classList.contains('mn-world-fit')), s);
+  check(device.name, 'the visitor selects a mission; no context card opens by itself', await page.isHidden('#mnWorldFocus'));
+  check(device.name, 'the real shared bar is visible and the feed has clearance', !s.barHidden && s.feedPad >= s.vh - s.barTop + 8, s);
+  check(device.name, 'portrait stacks the fixed globe and scrolling feed; landscape adds a column', await page.evaluate(() => {
+    const g=document.getElementById('mnWorld').getBoundingClientRect(), f=document.getElementById('mnWorldFeed').getBoundingClientRect();
+    return (innerWidth >= 1000 || (innerWidth >= 600 && innerWidth > innerHeight)) ? f.left >= g.right - 1 : f.top >= g.bottom - 1;
+  }), s);
   check(device.name, 'no sideways overflow', s.scrollW === s.clientW, s);
-  check(device.name, 'the strip opens on the newest pinned mission, labelled as the latest', (await page.isVisible('#mnWorldFocusFlag')) && /Latest/.test(await page.textContent('#mnWorldFocusFlag')));
   const bar = await page.$$eval('.appbar [data-appnav], .appbar [data-member-tab]', (a) => a.map((x) => x.getAttribute('data-appnav') || 'member:' + x.getAttribute('data-member-tab')));
   check(device.name, 'app bar is exactly Music | M | Globe', JSON.stringify(bar) === JSON.stringify(['music', 'home', 'world']), bar);
   check(device.name, 'feed shows member posts (author, text, Share; no like, comment or reaction), not mission cards', await page.evaluate(() => {
@@ -301,8 +731,8 @@ if (runs('member-interactions')) {
   const { ctx, page, world, errors } = await open(device, { member: true });
   const scope = 'member-interactions';
   const feedScroll = await page.evaluate(async () => { const f = document.getElementById('mnWorldFeed'); f.scrollTop = 400; await new Promise((r) => setTimeout(r, 300)); return { feed: f.scrollTop, page: scrollY }; });
-  check(scope, 'the feed scrolls on its own and the page stays put', feedScroll.feed > 0 && feedScroll.page === 0, feedScroll);
-  await page.$eval('#mnWorldFeed', (f) => { f.scrollTop = 0; });
+  check(scope, 'the phone feed scrolls while the page stays fixed', feedScroll.feed > 0 && feedScroll.page === 0, feedScroll);
+  await page.evaluate(() => { document.getElementById('mnWorldFeed').scrollTop = 0; });
 
   // Post
   await page.fill('#mnPostBody', 'E2E: posted from the World screen');
@@ -585,10 +1015,10 @@ if (runs('layers-guest')) {
    the whole 30, 40 rule"): "Full world ↗" opens action-globe.html?explore=1 on its own, the Earth edge to edge ---------- */
 async function openExplore(device, { member }) {
   const world = freshWorld();
-  const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.addInitScript((m) => {
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
-    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
+    if (m && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp })); }
   }, member);
   await routeBackends(ctx, world, { member, creator: false, verified: false });
   const page = await ctx.newPage();

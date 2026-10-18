@@ -173,7 +173,7 @@ function generationRequest(request, payload) {
 async function listAccounts(request, env, user) {
   const url = new URL(request.url);
   const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
-  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,status,capabilities,settings,last_synced_at,created_at,updated_at`);
+  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,status,capabilities,settings,last_synced_at,last_media_discovery_at,media_discovery_error,next_media_discovery_at,provider_metrics,created_at,updated_at`);
   return { org_id: org.org_id, accounts: rows || [] };
 }
 

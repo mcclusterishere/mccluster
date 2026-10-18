@@ -24,7 +24,14 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.doesNotMatch(js, /if \(boot\.next_step === "profile"\) \{\n        fillProfileForm\(false\);\n        showGate\("profile"\);/, 'the old gate is gone');
   assert.match(js, /var publicRead = state\.guest \|\| !!needsStep\(\) \|\| !!state\.stall;/, 'public posts until the step is done');
   assert.match(js, /if \(askToFinish\("mission"\)\) return;/, 'joining a mission asks to finish');
-  assert.match(js, /\$\("mnMissionJoin"\)\.addEventListener\("click",function\(e\)\{if\(askToFinish\("mission"\)\)return;joinMission\(e\);\}\);/, 'the dialog\'s join too: missions may be browsed, the join itself asks');
+  assert.match(js, /\$\("mnMissionJoin"\)\.addEventListener\("click",function\(\)\{joinMission\(\);\}\);/, 'the dialog calls the same guarded join function as the mission deck');
+  const joinStart = js.indexOf('  function joinMission(){');
+  const joinEnd = js.indexOf('  function uploadProofFile(', joinStart);
+  assert.ok(joinStart > 0 && joinEnd > joinStart, 'the shared join function is present');
+  const join = js.slice(joinStart, joinEnd);
+  assert.match(join, /if\(needsStep\(\)\|\|state\.stall==="retry"\)\{[\s\S]*?if\(askToFinish\("mission"\)\)return Promise\.resolve\(\{accepted:false,/, 'the shared join refuses incomplete profiles before acceptance');
+  const profileGate = join.indexOf('if(askToFinish("mission"))return Promise.resolve({accepted:false,');
+  assert.ok(profileGate >= 0 && profileGate < join.indexOf('sbRpc('), 'the profile gate precedes every join RPC');
   assert.match(js, /if \(name !== "feed" && name !== "missions" && askToFinish\(name\)\) return;/, 'the member rooms ask to finish; the feed and the missions stay open');
   assert.match(js, /\$\("mnFinishGo"\)\.onclick = function \(\) \{\n      if \(state\.stall === "signin"\) \{ openSignIn\("signin", "Your sign-in ended\. Sign in again\."\); return; \}\n      if \(state\.stall === "retry"\) \{ retryStall\(\); return; \}\n      askToFinish\("act"\);\n    \};/, 'the card\'s one button: sign in again, try again, or finish the step');
   assert.match(js, /setView\(needsStep\(\) \? "feed" : "profile"\)/, 'a finished profile lands back on the feed');
@@ -131,7 +138,7 @@ test('the onboarding is three pages: this, that, that, boom (owner, 2026-10-15)'
 
 test('Full world is a full pane: the Earth edge to edge, the World\'s chrome at home, the layer line painted on its own (owner, 2026-10-15)', async () => {
   const html = await read('action-globe.html'), js = await read('js/action-globe.js'), css = await read('css/action-globe.css'), world = await read('mnet.html');
-  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1">Full world \u2197<\/a>/);
+  assert.match(world, /class="mn__world-expand" href="action-globe\.html\?explore=1" aria-label="Expand the globe">/);
   assert.match(html, /<header><a id="worldBack" href="mnet\.html\?view=feed">\u2190 World<\/a>/, 'the way back is the World');
   assert.match(html, /<p class="explore-line" id="exploreLine" aria-live="polite" hidden><\/p>/);
   assert.match(js, /const EXPLORE=!embedded&&new URLSearchParams\(location\.search\)\.has\('explore'\);if\(EXPLORE\)document\.documentElement\.classList\.add\('globe-explore'\);/);

@@ -4,8 +4,15 @@ on:
     branches: [main]
     paths:
       - 'control.html'
+      - 'js/tabbar.js'
+      - 'js/site-navigation.js'
+      - 'css/site-navigation.css'
+      - 'scripts/e2e/site-navigation.e2e.mjs'
       - 'js/control-room/workspace*.js'
       - 'js/control-room/analytics*.js'
+      - 'js/control-room/news-context.js'
+      - 'css/control-news-context.css'
+      - 'scripts/e2e/news-context.e2e.mjs'
       - 'css/control-analytics*.css'
       - 'workers/mccluster/src/analytics/**'
       - 'workers/mccluster/test/analytics-camera-measurement.test.mjs'
@@ -39,7 +46,7 @@ jobs:
         run: |
           mkdir -p /tmp/control-proof
           git rev-parse HEAD > /tmp/control-proof/source-commit.txt
-          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html js css data/geo assets/img scripts/test scripts/e2e docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
+          git archive --format=tar.gz -o /tmp/control-proof/control-source.tar.gz HEAD control.html js css data/geo data/analytics assets/img scripts/test scripts/e2e docs/control-plane docs/PRODUCT-ARCHITECTURE-ROADMAP.md data/product-context.json AGENTS.md CODEX.md CLAUDE.md package.json workers/mccluster/src workers/mccluster/test tools core
           tar -czf /tmp/control-proof/cesium-1.131.0.tar.gz -C /tmp/control-qa/node_modules/cesium Build/Cesium
       - name: Exercise the actual Control page
         env:
@@ -49,8 +56,10 @@ jobs:
         run: |
           node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-surface.test.mjs
           node --test workers/mccluster/test/analytics-*.test.mjs
+          node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
           node scripts/e2e/analytics-unified.e2e.mjs /tmp/control-proof/analytics
+          node scripts/e2e/news-context.e2e.mjs /tmp/control-proof/news-context
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
