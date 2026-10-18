@@ -121,6 +121,15 @@ begin
     raise exception 'quote_already_used' using errcode='23505';
   end if;
 
+  if exists (
+    select 1 from public.rides prior
+    where prior.rider_id=p_rider_auth_user_id::text
+      and prior.status not in ('CANCELED','COMPLETED')
+      and prior.requested_at>pg_catalog.now()-interval '1 day'
+  ) then
+    raise exception 'active_booking_exists' using errcode='P0001';
+  end if;
+
   if not exists (
     select 1
     from public.drivers driver
