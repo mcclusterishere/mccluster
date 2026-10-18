@@ -13,6 +13,16 @@ const json = async (path) => JSON.parse(await read(path));
  * when implementing the production SDK or publishing a client package.
  */
 function validate(value, schema, definitions, at = 'root') {
+  if (Array.isArray(schema.allOf)) {
+    for (const item of schema.allOf) validate(value, item, definitions, at + '.allOf');
+  }
+  if (schema.if) {
+    let matched = true;
+    try { validate(value, schema.if, definitions, at + '.if'); }
+    catch { matched = false; }
+    if (matched && schema.then) validate(value, schema.then, definitions, at + '.then');
+    else if (!matched && schema.else) validate(value, schema.else, definitions, at + '.else');
+  }
   if (schema.$ref) {
     assert.match(schema.$ref, /^#\/\$defs\/[A-Za-z]+$/);
     const key = schema.$ref.split('/').at(-1);
@@ -132,4 +142,26 @@ test('unavailable approvals never masquerade as verified empty', async () => {
   assert.equal(reflection.proposal_only, true);
   assert.equal(failure.code, 'SOURCE_UNAVAILABLE');
   assert.equal(failure.source_status, 'unavailable');
+});
+
+test('nonterminal execution receipts require a durable non-null job identifier', async()=>{
+ const schema=await json('docs/control-plane/sdk/contract-v1.schema.json');
+ const good=(await json('docs/control-plane/sdk/contract-examples-v1.json')).examples.find(x=>x.payload.kind==='execution.receipt').payload;
+ for(const state of ['queued','running','awaiting_approval']){
+   const broken={...good,state,job_id:null};
+   assert.throws(()=>validate(broken,schema,schema.$defs),'queued receipt with no id must fail');
+   delete broken.job_id;
+   assert.throws(()=>validate(broken,schema,schema.$defs),'missing durable ID must fail');
+   validate({...good,state,job_id:'synthetic-queued-job'},schema,schema.$defs);
+ }
+});
+test('evaluations cannot report pass after a critical violation or omit required metrics',async()=>{
+ const schema=await json('docs/control-plane/sdk/contract-v1.schema.json');
+ const good=(await json('docs/control-plane/sdk/contract-examples-v1.json')).examples.find(x=>x.payload.kind==='evaluation.result').payload;
+ assert.throws(()=>validate({...good,verdict:'pass',critical_violations:1,sample_count:50},schema,schema.$defs));
+ assert.throws(()=>validate({...good,verdict:'inconclusive',critical_violations:1},schema,schema.$defs));
+ const missing={...good};delete missing.metrics;
+ assert.throws(()=>validate(missing,schema,schema.$defs));
+ assert.throws(()=>validate({...good,verdict:'pass',critical_violations:0},schema,schema.$defs),'unrun test cannot claim pass');
+ validate(good,schema,schema.$defs);
 });
