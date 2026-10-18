@@ -54,3 +54,35 @@
 }
 @media (min-width:1000px) { .dc-grid--people { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 
+
+
+/* Completed works are portable mission cards: the series contains the
+   actual work, while the album engine owns released audio playback. */
+.dc-series { overflow:hidden;border:1px solid #ffffff30;border-radius:16px;background:#151a1e; }
+.dc-series__summary { display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:56px;padding:11px 13px;cursor:pointer;list-style:none; }
+.dc-series__summary::-webkit-details-marker { display:none; }
+.dc-series__name { display:flex;flex-direction:column;gap:4px;min-width:0; }
+.dc-series__name strong { color:#f5f1ec;font:600 16px/1.15 system-ui,sans-serif; }
+.dc-series__name small { color:#a9b3bc;font:400 11px/1.35 system-ui,sans-serif; }
+.dc-series__chevron { flex:none;color:#c9c7c2;font-size:11px; }
+.dc-series[open] .dc-series__chevron { visibility:hidden; }
+.dc-series__body { padding:0 10px 13px; }
+.dc-series__card { min-width:0;min-height:190px;display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid #ffffff28;border-radius:14px;background:linear-gradient(155deg,#272b2a,#16191c);touch-action:pan-y pinch-zoom;overflow-wrap:anywhere; }
+.dc-series__card h3 { margin:0;color:#fff;font:500 24px/1.16 Georgia,serif; }
+.dc-series__card .dc-kicker { margin:0; }
+.dc-series__type,.dc-series__credits,.dc-series__media { margin:0;color:#c7c8c5;font:400 12px/1.45 system-ui,sans-serif; }
+.dc-series__media { color:#95aaad; }
+.dc-series__actions { display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;padding-top:8px; }
+.dc-series__actions .dc-button { min-height:42px;padding:9px 12px;font-size:12px; }
+.dc-series__controls { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 1px; }
+.dc-series__controls button { border:0;background:transparent;min-height:44px;min-width:76px;padding:9px;color:#edecea;font:500 12px/1.2 system-ui,sans-serif;cursor:pointer; }
+.dc-series__controls button:disabled { color:#7b868c;cursor:default; }
+.dc-series__position { font:500 11px system-ui,sans-serif;color:#b2bac0; }
+.dc-series__archive { display:inline-block;margin:2px 6px;color:#e9eceb;font:500 12px/1.4 system-ui,sans-serif;text-underline-offset:4px; }
+.dc-series__dialog { width:min(570px,calc(100vw - 26px));max-height:min(80dvh,780px);overflow:auto;box-sizing:border-box;padding:20px;border:1px solid #ffffff3d;border-radius:19px;background:#111820;color:#f3f0ec; }
+.dc-series__dialog::backdrop { background:#010408c9;backdrop-filter:blur(3px); }
+.dc-series__dialog h2 { margin:0 0 12px;font:500 28px/1.12 Georgia,serif; }
+.dc-series__dialog .dc-recording { margin:15px 0;padding-top:11px; }
+.dc-series__dialog .dc-recording .dc-button { margin-top:9px; }
+.dc-series__close { display:block;margin:0 0 16px auto;padding:8px 12px;min-height:40px;border:1px solid #ffffff40;border-radius:24px;background:transparent;color:inherit;font:inherit;cursor:pointer; }
+.dc-series :is(button,a,summary):focus-visible,.dc-series__dialog :is(button,a):focus-visible { outline:2px solid #fff;outline-offset:3px; }
