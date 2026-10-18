@@ -72,10 +72,11 @@
       '<button type="button" role="tab" data-status="completed" aria-selected="false">Completed</button></div>' +
       '<button class="mn-swipe__undo" type="button" aria-label="Undo last pass" title="Undo last pass">↶</button></div>' +
       '<p class="mn-swipe__count"></p><div class="mn-swipe__stage"></div>' +
-      '<div class="mn-swipe__completed" role="tabpanel" aria-label="Completed mission series" hidden></div>' +
+      '<div class="mn-swipe__completed" id="mnCompletedMissions" role="tabpanel" aria-label="Completed mission series" hidden></div>' +
       '<p class="mn-swipe__status" role="status" aria-live="polite" aria-atomic="true"></p>';
     var filters = host.querySelector(".mn-swipe__filters"), stage = host.querySelector(".mn-swipe__stage"), status = host.querySelector(".mn-swipe__status");
     var count = host.querySelector(".mn-swipe__count"), undo = host.querySelector(".mn-swipe__undo"), completed = host.querySelector(".mn-swipe__completed");
+    filters.querySelector('[data-status="completed"]').setAttribute("aria-controls", "mnCompletedMissions");
     function el(tag, className, value) {
       var node = doc.createElement(tag); if (className) node.className = className; if (value != null) node.textContent = String(value); return node;
     }
@@ -84,6 +85,15 @@
     }
     filters.querySelectorAll("[data-status]").forEach(function (b) {
       b.onclick = function () { if (busy) return; view = b.dataset.status; announcement = ""; say(""); render(); };
+      b.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+        e.preventDefault();
+        var tabs = Array.prototype.slice.call(filters.querySelectorAll("[data-status]"));
+        var position = tabs.indexOf(b);
+        var next = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 :
+          (position + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+        tabs[next].click(); tabs[next].focus();
+      });
     });
     function say(message, failed) {
       announcement = message || ""; status.textContent = announcement; status.classList.toggle("is-error", !!failed);
