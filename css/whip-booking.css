@@ -1,0 +1,21 @@
+/* Whip Equipped LLC booking sheet, scoped to the World Travel product. */
+.we-book-dialog {box-sizing:border-box;width:min(520px,calc(100% - 22px));max-height:calc(100dvh - 24px);overflow-y:auto;margin:auto;padding:22px;border-radius:22px;border:1px solid #ffffff3d;background:#10171e;color:#f5f5f4;box-shadow:0 24px 70px #000b;font:400 14px/1.5 system-ui,sans-serif}
+.we-book-dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
+.we-book-head{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.we-book-head h2{font:500 clamp(24px,6vw,34px)/1.2 Georgia,serif;letter-spacing:-.035em;margin:0}
+.we-book-kicker{font:700 10px/1.5 system-ui,sans-serif;color:#f2aa76;letter-spacing:.16em;margin:0 0 6px}
+.we-book-head #weBookClose{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #fff4;background:#22313d;color:white;font-size:24px;cursor:pointer}
+.we-book-dialog #weBookJourney{padding:14px 0;margin:15px 0 8px;border-top:1px solid #fff3;border-bottom:1px solid #fff3;font-weight:600;overflow-wrap:anywhere}
+.we-book-dialog #weBookNotice,.we-book-dialog #weBookStatus,.we-book-terms{font-size:12px;line-height:1.6;color:#c0cbd4}
+.we-book-dialog #weBookStatus{min-height:22px;color:#f6c7ba}
+.we-book-price{margin:12px 0;padding:14px 12px;border:1px solid #ec68715a;border-radius:13px;background:#321e28;color:#fff;font-weight:600}
+.we-book-dialog button.we-book-primary {width:100%;min-height:49px;padding:11px 17px;background:#ce2944;color:white;border:1px solid #fb4661;border-radius:24px;font:600 14px system-ui,sans-serif;cursor:pointer;margin:8px 0}
+.we-book-dialog button[disabled]{opacity:.5;cursor:progress}
+.we-book-dialog #weBookCancelRide{min-height:44px;padding:10px 16px;background:transparent;border:1px solid #fff6;border-radius:22px;color:white;margin:8px 0;cursor:pointer}
+.we-book-dialog #weBookPayment{padding:15px 9px;margin:15px 0;border:1px solid #fff4;border-radius:12px;background:#f6f5f2;color:#172028}
+.we-book-dialog #weBookPayment p{font-size:13px;font-weight:600}
+.we-book-dialog #weBookPaymentElement{min-height:110px}
+.we-book-dialog #weBookDriver{display:inline-block;margin-top:9px;min-height:40px;color:#ffcca4;text-underline-offset:4px}
+.we-book-dialog [hidden]{display:none!important}
+.we-book-dialog :is(button,a):focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:430px){.we-book-dialog{padding:16px;border-radius:16px;max-height:calc(100dvh - 12px)}}
