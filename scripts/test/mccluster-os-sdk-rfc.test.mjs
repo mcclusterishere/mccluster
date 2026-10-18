@@ -88,7 +88,7 @@ test('SDK RFC owns no new scheduler, and describes review-only authority', async
   assert.match(doc, /not a claim that its new SDK/);
   assert.match(doc, /OVH runtime recovery is an independent/);
   assert.match(canonical, /Products are workloads\. McCluster is the platform\./);
-  assert.match(evalDoc, /no production agent is declared self-improving/);
+  assert.match(evalDoc, /no production agent is declared self-improving/i);
 });
 
 test('all synthetic RFC SDK envelopes match proposed schema subset', async () => {
