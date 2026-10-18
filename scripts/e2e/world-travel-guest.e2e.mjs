@@ -224,6 +224,13 @@ try {
   await picked.frame.waitForFunction(() => __huNavigation().mapPicking);
   check('map-pick', 'selecting a starting point expands the Earth and shows a cancelable tap instruction',
     await picked.page.isVisible('#wtMapPickBanner') && await picked.page.evaluate(() => document.documentElement.classList.contains('wt-expanded')));
+  await picked.page.locator('#wtMapPickCancel').click();
+  check('map-pick', 'cancelling a globe pick restores directions without making a route request',
+    await picked.page.isHidden('#wtMapPickBanner') &&
+    await picked.page.evaluate(() => !document.documentElement.classList.contains('wt-expanded')) &&
+    picked.requests.length === 0);
+  await picked.page.locator('#wtPickFrom').click();
+  await picked.frame.waitForFunction(() => __huNavigation().mapPicking);
   await clickWorldPoint(origin);
   await picked.page.waitForFunction(() => document.getElementById('wtFrom').value.startsWith('Pinned map location'));
   check('map-pick', 'actual Cesium click sets a longitude/latitude origin without a GPS permission request',
@@ -251,6 +258,9 @@ try {
   check('map-pick', 'map-pin directions introduce no JavaScript exceptions', picked.errors.length === 0, picked.errors);
   await picked.ctx.close();
   const manual = await open({ width:390,height:844 }, { webgl:false });
+  await manual.page.waitForFunction(() => document.getElementById('wtPickFrom').disabled);
+  check('manual', 'missing Cesium disables map picking without blocking typed addresses',
+    await manual.page.isDisabled('#wtPickFrom') && await manual.page.isDisabled('#wtPickTo'));
   await manual.frame.waitForFunction(() => document.documentElement.classList.contains('globe-travel') && document.querySelector('.globe-travel-controls')?.children.length === 3);
   await manual.page.waitForTimeout(100);
   let manualGeometry = await controls(manual.page);
