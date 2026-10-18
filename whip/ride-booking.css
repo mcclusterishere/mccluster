@@ -1,0 +1,35 @@
+:root{--we-bg:#101114;--we-panel:#191d22;--we-hot:#f04449;--we-warm:#f6ad62;--we-text:#fcf7f3;--we-dim:#b8bec7}
+html,body.we-booking{min-height:100%;background:var(--we-bg);color:var(--we-text);margin:0;color-scheme:dark}
+.we-book{font:400 15px/1.5 system-ui,sans-serif;max-width:750px;margin:auto;min-height:100vh;box-sizing:border-box;padding:24px clamp(14px,4vw,42px) 140px}
+.we-head{padding:20px 5px 28px}
+.we-eyebrow{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.15em;color:var(--we-warm);margin:0 0 10px}
+.we-head h1{margin:0 0 12px;font:500 clamp(40px,8vw,72px)/1.1 Georgia,serif;letter-spacing:-.045em}
+.we-head p:not(.we-eyebrow){margin:0;color:var(--we-dim);max-width:54ch}
+.we-status{padding:14px 18px;margin:0 0 12px;border:1px solid #ffffff27;border-radius:14px;background:#202831;color:#dce4e9}
+.we-status[data-ready="false"]{border-color:#ecb97a72;background:#34251dd9;color:#ffddb2}
+.we-card{background:var(--we-panel);border:1px solid #ffffff28;border-radius:20px;padding:clamp(17px,4vw,28px);margin-bottom:14px}
+.we-fields{display:grid;gap:14px}
+.we-field{position:relative;z-index:2}
+.we-field:focus-within{z-index:4}
+.we-field label{display:block;color:#d8dfe3;font-size:13px;font-weight:600;margin-bottom:6px}
+.we-field input{box-sizing:border-box;width:100%;min-height:52px;background:#101417;border:1px solid #ffffff59;border-radius:12px;color:white;padding:11px 14px;font:400 16px/1.3 system-ui,sans-serif}
+.we-field-control{display:flex;gap:8px;align-items:center}
+.we-field-control input{flex:1;min-width:0}
+.we-field-control button{flex:0 0 52px;min-height:52px;font-size:26px;color:white;background:#2a3139;border:1px solid #ffffff55;border-radius:12px}
+.we-options{position:absolute;top:100%;left:0;right:0;z-index:8;max-height:220px;overflow:auto;border:1px solid #ffffff55;border-radius:12px;background:#222b33;box-shadow:0 16px 38px #000c;padding:4px}
+.we-options button{display:block;width:100%;min-height:44px;padding:10px;color:#fff;background:transparent;border:0;border-radius:8px;text-align:left;font:400 14px/1.5 system-ui,sans-serif;cursor:pointer}
+.we-options button:hover,.we-options button:focus{background:#37424c}
+.we-note,.we-message{font-size:12px;color:var(--we-dim);margin:12px 0}
+.we-message:empty{display:none}
+.we-cta{width:100%;min-height:54px;border:1px solid #f66a67;border-radius:26px;color:#100d0e;background:linear-gradient(115deg,var(--we-warm),var(--we-hot));font:700 15px/1.25 system-ui,sans-serif;cursor:pointer}
+.we-cta:disabled{filter:grayscale(.85);opacity:.6;cursor:not-allowed}
+.we-subtle{width:100%;min-height:48px;margin-top:14px;border:1px solid #ffffff40;border-radius:25px;background:transparent;color:#eef1f3;font:600 14px system-ui,sans-serif;cursor:pointer}
+.we-quote{display:flex;align-items:baseline;flex-wrap:wrap;gap:17px}
+.we-quote strong{font:500 46px Georgia,serif}
+.we-quote span{color:var(--we-dim)}
+.we-card h2{margin:0 0 12px;font:500 27px Georgia,serif}
+.we-closer{margin-top:28px;padding:14px 4px;color:#9ba5b1;font-size:12px}
+.we-closer a{color:#edb1b2;text-underline-offset:4px}
+.we-book :is(button,a,input):focus-visible{outline:2px solid white;outline-offset:3px}
+.we-book [hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.we-book *{animation:none!important;transition:none!important}}
