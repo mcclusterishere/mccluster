@@ -42,7 +42,7 @@ test('World geolocations retain validated article mentions and premium marker id
   assert.match(globe,/properties:\{worldNewsId:x\.id\}/);
   assert.match(globe,/publicNewsOn/);
   assert.match(client,/mn__news-credit|mnNewsCredit/);
-  assert.match(client,/https:\/\/www\.gdeltproject\.org\//);
+  assert.match(await get('mnet.html'),/https:\/\/www\.gdeltproject\.org\//);
   assert.match(globeCss,/world-news-reader::backdrop/);
   assert.match(legacy,/dc-event-feed/);
   const archive = await get('docket-516r-cohort.html');
