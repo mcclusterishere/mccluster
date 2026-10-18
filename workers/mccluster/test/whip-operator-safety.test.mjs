@@ -4,6 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import router from '../src/whip/router.js';
 import worker from '../src/whip/worker.js';
+import gateway from '../src/whip/gateway.js';
+import { readFile } from 'node:fs/promises';
 
 const USER = '11111111-1111-4111-8111-111111111111';
 const TENANT = '22222222-2222-4222-8222-222222222222';
@@ -103,4 +105,46 @@ test('two different available drivers cannot both accept the same authorized rid
     assert.equal(current.driver_id,DRIVER_A);
     assert.equal(calls.filter(x=>x.path==='/rest/v1/rides'&&x.method==='PATCH').length,1);
   }finally{globalThis.fetch=original}
+});
+
+test('dispatch is fail-closed without launch approval and manual driver clearance',{concurrency:false},async()=>{
+  const original=globalThis.fetch,calls=[];
+  let approved=false;
+  globalThis.fetch=async(resource,options={})=>{
+    const u=new URL(String(resource));calls.push(u.pathname);
+    if(u.pathname==='/auth/v1/user')return json({id:USER});
+    if(u.pathname==='/rest/v1/drivers')return json([{
+      id:DRIVER_A,tenant_id:TENANT,online:true,identity_verified:true}]);
+    if(u.pathname==='/rest/v1/whip_driver_clearances')
+      return json(approved?[{
+        approval_status:'approved',approved_at:'2026-10-18T00:00:00Z',
+        identity_checked_at:'2026-10-18T00:00:00Z',background_checked_at:'2026-10-18T00:00:00Z',
+        local_authority_checked_at:'2026-10-18T00:00:00Z',
+        license_expires_at:'2099-01-01T00:00:00Z',insurance_expires_at:'2099-01-01T00:00:00Z',
+        revoked_at:null
+      }]:[]);
+    if(u.pathname==='/rest/v1/rides')return json([]);
+    throw Error('Unexpected fixture '+u.pathname);
+  };
+  try{
+    const off=await gateway.fetch(req('/api/offers'),env);
+    assert.equal(off.status,503);
+    const denied=await gateway.fetch(req('/api/drivers/'+DRIVER_A+'/presence','PATCH',{online:true}),env);
+    assert.equal(denied.status,503);
+    assert.equal(calls.filter(x=>x==='/rest/v1/whip_driver_clearances').length,0,'never probe a pending table before launch');
+    const live={...env,WHIP_RIDES_LIVE:'true',WHIP_LAUNCH_APPROVED:'true',ALLOW_DEMO_IDENTITIES:'false'};
+    const pending=await gateway.fetch(req('/api/offers'),live);
+    assert.equal(pending.status,403);
+    approved=true;
+    const authorized=await gateway.fetch(req('/api/offers'),live);
+    assert.equal(authorized.status,200);
+    assert.deepEqual((await authorized.json()).offers,[]);
+  }finally{globalThis.fetch=original;}
+});
+
+test('Stripe operator onboarding cannot redirect to a browser-supplied attacker domain',async()=>{
+  const source=await readFile(new URL('../src/whip/worker.js',import.meta.url),'utf8');
+  assert.doesNotMatch(source,/body\.return_url|body\.refresh_url|body\.success_url|body\.cancel_url/);
+  assert.match(source,/returnUrl: appUrl\(env,/);
+  assert.match(source,/successUrl: appUrl\(env,/);
 });
