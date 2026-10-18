@@ -100,10 +100,15 @@ async function driverWorkspace(){
     const driver=data.driver;
     if(!driver)return;
     $('mfDriverPanel').hidden=false;$('mfWhip').hidden=false;
-    const approved=driver.approval_status==='approved'&&driver.compliance_verified===true;
+    // /api/drivers/me describes the person's vehicle, not their regulatory
+    // clearance. Only the operator-owned clearance API may authorize driving.
+    const clearance=await api('/api/drivers/clearance').catch(()=>null);
+    const approved=clearance?.approval_status==='approved'&&clearance?.can_drive===true;
     $('mfDriverStatus').textContent=approved
-      ? 'Driver approval verified by Whip Equipped LLC. Review your operating status and available requests in the driver app.'
-      : 'Driver application received. Operator approval, licensing, insurance and screening are still required. You cannot accept trips yet.';
+      ? 'Whip Equipped confirms your operating clearance. Open your driver workspace to manage authorized rides.'
+      : clearance?.approval_status==='rejected'||clearance?.approval_status==='suspended'
+        ? 'Whip Equipped has not authorized this driver account. Contact the operator for review.'
+        : 'Driver profile registered. Your independent operator approval, screening, insurance and license checks are still pending; you cannot accept paid trips yet.';
   }catch{/* Whip is independent; failure never blocks a member-owned page. */}
 }
 async function start(){
