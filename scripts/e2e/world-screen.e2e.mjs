@@ -681,10 +681,14 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');
-    await page.click('[data-hu-feed="community"]');
-    check(scope,'Community keeps member posts and hides the news stream',await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()===0);
-    await page.click('[data-hu-feed="all"]');
-    check(scope,'For you restores the news stream',await page.locator('#mnFeed [data-news-id]').count()>0);
+    check(scope,'one Feed mode, no duplicate News deck or For you/Community tabs',
+      (await page.locator('#worldNewsDeck,.hu-feed-tabs,.hu-section-label').count())===0 &&
+      (await page.locator('.wt-world-modes [data-world-mode=posts]').textContent()).trim()==='Feed');
+    check(scope,'the one feed interleaves community posts and publisher-attributed headlines',
+      await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()>0);
+    check(scope,'member posts and news use the same inline discussion control',
+      await page.locator('#mnFeed [data-post-id] [data-discussion-toggle]').count()>0 &&
+      await page.locator('#mnFeed [data-news-id] [data-discussion-toggle]').count()>0);
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
     if(member){
