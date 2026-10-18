@@ -15,4 +15,8 @@ assert.match(archiveHtml,/css\/world-news-globe\.css/);
 const styles=await get('css/world-news-globe.css');
 assert.match(styles,/dc-event-feed__list/);
 assert.doesNotMatch(src,/innerHTML/);
+assert.match(src,/worldNewsReader/);
+assert.match(src,/showModal\(\)/);
+assert.match(src,/const title=document.createElement\('button'\)/);
+assert.doesNotMatch(src,/title\.href\s*=|window\.open|target=['"]_blank|fetch\(x\.url\)/);
 });

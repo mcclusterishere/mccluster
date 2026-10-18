@@ -3,6 +3,26 @@ const API='https://api.mccluster.org/v1/world/news',frame=document.getElementByI
 if(!frame||!deck)return;
 const host=document.getElementById('worldNewsEntries'),more=document.getElementById('worldNewsMore'),status=document.getElementById('worldNewsStatus');
 let items=[],cursor=null,active=false,loading=false;
+const reader=document.createElement('dialog');
+reader.id='worldNewsReader';
+reader.className='world-news-reader';
+reader.setAttribute('aria-labelledby','worldNewsReaderTitle');
+const readerTitle=document.createElement('h3');readerTitle.id='worldNewsReaderTitle';
+const readerMeta=document.createElement('p');readerMeta.className='world-news-meta';
+const readerNotice=document.createElement('p');
+readerNotice.textContent='This is a news discovery record, not the full publisher article. In-app full text is unavailable until it can be provided with permission.';
+const readerClose=document.createElement('button');readerClose.type='button';readerClose.textContent='Close';
+readerClose.onclick=()=>reader.close();
+reader.append(readerTitle,readerMeta,readerNotice,readerClose);
+deck.appendChild(reader);
+let priorFocus=null;
+reader.addEventListener('close',()=>{priorFocus?.focus?.();priorFocus=null;});
+function openStory(x,opener){
+ priorFocus=opener;
+ readerTitle.textContent=x.title;
+ readerMeta.textContent=x.domain+(x.place?' · Mentioned place: '+x.place:'')+(x.seen_at?' · '+new Date(x.seen_at).toLocaleString():'');
+ reader.showModal();
+}
 const geo=x=>x&&Number.isFinite(x.lat)&&Number.isFinite(x.lon)&&Math.abs(x.lat)<=90&&Math.abs(x.lon)<=180&&!(x.lat===0&&x.lon===0);
 const valid=x=>x&&typeof x.id==='string'&&typeof x.title==='string'&&typeof x.domain==='string'&&typeof x.url==='string'&&/^https?:\/\//.test(x.url);
 function send(data){frame.contentWindow?.postMessage(data,location.origin)}
@@ -13,7 +33,7 @@ function render(){
  const f=document.createDocumentFragment();
  items.forEach(x=>{const card=document.createElement('article');card.className='world-news-entry';card.dataset.newsId=x.id;
  const meta=document.createElement('p');meta.textContent=x.domain+(x.place?' · '+x.place:'')+(x.seen_at?' · '+new Date(x.seen_at).toLocaleString():'');meta.className='world-news-meta';
- const title=document.createElement('a');title.href=x.url;title.target='_blank';title.rel='noopener noreferrer';title.textContent=x.title;card.append(meta,title);
+ const title=document.createElement('button');title.type='button';title.className='world-news-title';title.textContent=x.title;title.onclick=()=>openStory(x,title);card.append(meta,title);
  if(geo(x)){const b=document.createElement('button');b.type='button';b.textContent='Show on globe';b.onclick=()=>locate(x);card.append(b)}f.append(card)});
  host.replaceChildren(f);more.hidden=!cursor;sync()
 }
