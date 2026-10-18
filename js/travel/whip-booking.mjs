@@ -272,7 +272,11 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
   // only from same-tab state and an authorized server read.
   if(new URLSearchParams(location.search).get('we_ride_return')==='1'){
     const url=new URL(location.href);
-    url.searchParams.delete('we_ride_return');
+    // Payment provider redirect artifacts must not linger in URL/history or
+    // propagate through future referrer/analytics requests.
+    for(const field of ['we_ride_return','payment_intent','payment_intent_client_secret',
+      'redirect_status','setup_intent','setup_intent_client_secret'])
+      url.searchParams.delete(field);
     history.replaceState(history.state,'',url.href);
     void resumeSavedRide({fromRedirect:true});
   }
