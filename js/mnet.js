@@ -1133,7 +1133,7 @@
     paintMore();
     var focus = state.world.focus, query = state.world.query;
     /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
-    var news = (focus && focus.filter) || state.editorialFeed === "community" ? [] : state.news;
+    var news = focus && focus.filter ? [] : state.news;
     paintNewsCredit(false);
     if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
@@ -3411,13 +3411,6 @@
     });
     document.addEventListener('click', function(e) {
       if (!e.target.closest('#huWorldFilters')) $("huWorldFilters").open = false;
-    });
-    document.querySelectorAll('[data-hu-feed]').forEach(function(button) {
-      button.onclick = function() {
-        state.editorialFeed = button.dataset.huFeed;
-        document.querySelectorAll('[data-hu-feed]').forEach(function(b) { b.setAttribute('aria-pressed', String(b === button)); });
-        renderFeed(false);
-      };
     });
     frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
     window.addEventListener("message", function (ev) {
