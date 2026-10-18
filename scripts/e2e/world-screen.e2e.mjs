@@ -174,6 +174,22 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       const lim = Math.min(20, Number(u.searchParams.get('limit')) || 20);
       return json(route, { ok: true, items: world.news.slice(at, at + lim), next_before: at + lim < world.news.length ? 'cur|' + (at + lim) : null, attribution: GDELT });
     }
+    // Staged news-comment API fixture: source-backed and first-party only.
+    const newsComment = u.pathname.match(/^\/v1\/world\/news\/([0-9a-f-]{36})\/comments$/);
+    if (newsComment) {
+      const story = world.news.find(x=>x.id===newsComment[1]);
+      if (!story) return json(route,{error:'Story not found'},404);
+      const comments = (world.newsComments ||= {})[story.id] ||= [];
+      if (m === 'POST') {
+        if (!auth) return json(route,{error:'Sign in to comment'},401);
+        const value=String(body?.body||'').trim();
+        if (!value||[...value].length>1000)return json(route,{error:'Invalid comment'},400);
+        const comment={id:world.id(),body:value,actor:ME,created_at:new Date().toISOString()};
+        comments.push(comment);
+        return json(route,{comment},201);
+      }
+      return json(route,{comments});
+    }
     const before = u.searchParams.get('before');
     if (before && Number.isNaN(Date.parse(before))) return json(route, { error: 'bad cursor' }, 400);
     const asOf = (list) => before ? list.filter((p) => p.created_at < before) : list;
@@ -689,6 +705,24 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'member posts and news use the same inline discussion control',
       await page.locator('#mnFeed [data-post-id] [data-discussion-toggle]').count()>0 &&
       await page.locator('#mnFeed [data-news-id] [data-discussion-toggle]').count()>0);
+    if (member) {
+      const firstPost=page.locator('#mnFeed [data-post-id]').first();
+      await firstPost.locator('[data-discussion-toggle]').click();
+      await firstPost.locator('.mn__comment-form input').fill('Ready to work on this together.');
+      await firstPost.locator('.mn__comment-form button').click();
+      await page.waitForFunction(()=>document.querySelector('#mnFeed [data-post-id] .mn__comment')?.textContent?.includes('Ready to work on this together.'),{timeout:5000}).catch(()=>{});
+      check(scope,'member can post a comment on an existing member post',
+        await firstPost.locator('.mn__comment').count()>0 &&
+        (await firstPost.locator('.mn__comments-list').textContent()).includes('Ready to work on this together.'));
+      const firstNews=page.locator('#mnFeed [data-news-id]').first();
+      await firstNews.locator('[data-discussion-toggle]').click();
+      await firstNews.locator('.mn__comment-form input').fill('Here is a community perspective on this headline.');
+      await firstNews.locator('.mn__comment-form button').click();
+      await page.waitForFunction(()=>document.querySelector('#mnFeed [data-news-id] .mn__comment')?.textContent?.includes('Here is a community perspective on this headline.'),{timeout:5000}).catch(()=>{});
+      check(scope,'member can comment on source-backed news inside the same feed',
+        await firstNews.locator('.mn__comment').count()>0 &&
+        (await firstNews.locator('.mn__comments-list').textContent()).includes('Here is a community perspective on this headline.'));
+    }
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
     if(member){
