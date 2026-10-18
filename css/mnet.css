@@ -1470,3 +1470,8 @@ body.has-appbar { padding-bottom: 0; }
 .mn__news-meta::before{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:linear-gradient(135deg,#f6e2bf,#a9895e);border:1px solid rgba(255,255,255,.55);box-shadow:0 0 11px rgba(205,163,105,.18)}
 .mn__news-chip::before{background:#d2b283;box-shadow:0 0 0 2px rgba(210,178,131,.12)}
 @media(prefers-reduced-motion:reduce){.mn__comment,.mn__comments{animation:none!important;transition:none!important}}
+
+/* News cards never let the new comment row push beyond the mobile column.
+   Other kinds of post retain their original button gutter. */
+.mn-world-on #mnFeed .mn__news-card .mn__post-actions{margin:9px 0 0;max-width:100%;min-width:0;box-sizing:border-box;flex-wrap:wrap}
+.mn-world-on #mnFeed .mn__news-card .mn__action--comment{max-width:100%;box-sizing:border-box}
