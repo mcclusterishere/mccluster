@@ -36,6 +36,14 @@ async function setup(width,persona='owner'){
       if(p==='/v1/status') {const status=auth.status;if(auth.delay)await new Promise(resolve=>auth.release=resolve);return json(r,{ok:status===200},status);}
       if(p==='/v1/workspaces/me')return json(r,{ok:true,profile:{id:USER},default_org_id:'o1',workspaces:[{org_id:'o1',slug:'mccluster',name:'McCluster',kind:'studio',role:auth.status===200?'owner':'viewer',enabled:true}]});
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'QA member',onboarding_complete:true},identity:{mccluster_id:'qa-member'},needs_onboarding:false,stats:{}});
+      if(/^\/v1\/mnet\/people\/[^/]+$/.test(p)){
+        const handle=decodeURIComponent(p.split('/').at(-1));
+        return json(r,{identity:{mccluster_id:handle},
+          profile:{display_name:handle==='qa-member'?'QA member':'Other member',bio:'Public introduction',headline:'Member profile'},
+          counts:{followers:3,following:1,posts:2}});
+      }
+      if(p==='/api/drivers/me')return json(r,{driver:null});
+      if(p==='/v1/mnet/profile'&&req.method()==='PATCH')return json(r,{ok:true});
       return json(r,{ok:true,threads:[],apps:[],posts:[],events:[],jobs:[],tools:[],decisions:[],missions:[],layers:[],workspaces:[],sources:[],features:[]});
     }
     if(u.hostname==='cesium.com'&&process.env.CESIUM_DIR){const rel=p.split('/Build/Cesium/')[1];if(rel){const path=resolve(process.env.CESIUM_DIR,rel);if(path.startsWith(resolve(process.env.CESIUM_DIR)+sep)){try{return r.fulfill({body:await readFile(path),contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}}}return r.abort();}
@@ -91,6 +99,50 @@ try{
     await page.waitForFunction(()=>!window.MCC_BAR.admin());
     check(width+' revocation removes admin panel and returns public bar',await page.locator('#mccControlToggle').count()===0&&await page.locator('#mccDestinations').count()===0&&await page.locator('.appbar [data-appnav]').count()===3);
     check(width+' navigation has no script errors',errors.length===0,errors);
+    await ctx.close();
+  }
+  /* Universal perspective: guests get the house, signed-in people get their
+     own front, public profile selection switches center, and exit clears it. */
+  {
+    const {ctx,page,errors}=await setup(390,'member');
+    await page.goto(BASE+'/license.html');
+    await page.waitForFunction(()=>MCC_BAR.ownPerspective()?.handle==='qa-member');
+    check('signed-in center defaults to this member front page',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member');
+    await page.evaluate(()=>dispatchEvent(new CustomEvent('mcc:perspective',{detail:{kind:'member',handle:'other-member',name:'Other member'}})));
+    check('opening another member changes the center destination',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+    await page.reload();
+    await page.waitForFunction(()=>MCC_BAR.auth().verified);
+    check('chosen center perspective survives reloading within account',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+    await page.goto(BASE+'/index.html?front=house');
+    await page.waitForFunction(()=>MCC_BAR.auth().verified);
+    check('visiting founder switches center back to original house',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
+    await page.goto(BASE+'/member-front.html?handle=qa-member');
+    await page.waitForSelector('#mfCustomize:not([hidden])');
+    check('self profile has its own editable page without a duplicate identity',
+      await page.textContent('#mfName')==='QA member'&&await page.locator('.mf__avatar').count()===1);
+    await page.click('#mfCustomize');
+    check('only the actual owner sees the customize editor',await page.locator('#mfEditor').isVisible());
+    await page.locator('#mfCancel').click();
+    await page.goto(BASE+'/member-front.html?handle=other-member');
+    await page.waitForFunction(()=>document.getElementById('mfName').textContent==='Other member');
+    check('other member front has no profile editor controls',await page.isHidden('#mfCustomize'));
+    await page.evaluate(()=>{localStorage.removeItem('mccdb_session');dispatchEvent(new Event('mcc:auth-changed'));});
+    await page.waitForFunction(()=>MCC_BAR.auth().signed_in===false);
+    check('signing out clears selected identity and restores house',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
+    check('member front and bar have no page exceptions',errors.length===0,errors);
+    await ctx.close();
+  }
+  {
+    const {ctx,page}=await setup(390,'guest');
+    await page.goto(BASE+'/license.html');
+    await page.waitForFunction(()=>MCC_BAR.auth().verified);
+    check('guest always starts with Matthews supplied M and house',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/index.html');
     await ctx.close();
   }
   for(const persona of ['guest','member']){
