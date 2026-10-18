@@ -612,7 +612,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
-    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' missions to explore');
+    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
@@ -633,10 +633,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     }));
     if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
-    await page.click('#huWorldFilters summary');
-    check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
-    await page.keyboard.press('Escape');
-    check(scope,'Escape closes the filter',!(await page.locator('#huWorldFilters').evaluate(e=>e.open)));
+    check(scope,'redundant globe region filter is removed from the visible canvas',await page.locator('#huWorldFilters').isHidden());
+    check(scope,'mission status switch is available without category clutter',
+      await page.locator('.mn-swipe__filters [data-status="open"]').count()===1&&await page.locator('.mn-swipe__filters [data-status="completed"]').count()===1);
     if(device.viewport.width<600)await page.click('#huSearchToggle');
     await page.fill('#mnSearchInput','Mill');
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
