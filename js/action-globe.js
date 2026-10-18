@@ -233,10 +233,45 @@ function setWorldNewsPins(items,on){
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
  });drawWorldNewsPins();
 }
+/* A calibrated enamel-and-gold pin, not an undifferentiated bright dot.
+   Draw once on a small transparent canvas; the Earth still supplies precise
+   geographic placement and accessible story selection in the shared feed. */
+let worldNewsMarkerImage=null;
+function worldNewsMarker(){
+ if(worldNewsMarkerImage)return worldNewsMarkerImage;
+ const c=document.createElement('canvas');c.width=c.height=96;
+ const g=c.getContext('2d'),x=48,y=45;
+ const glow=g.createRadialGradient(x,y,5,x,y,42);
+ glow.addColorStop(0,'rgba(245,221,180,.30)');
+ glow.addColorStop(.5,'rgba(214,178,119,.12)');
+ glow.addColorStop(1,'rgba(214,178,119,0)');
+ g.fillStyle=glow;g.fillRect(0,0,96,96);
+ g.save();g.translate(x,y);g.rotate(Math.PI/4);
+ g.shadowBlur=8;g.shadowColor='rgba(244,213,164,.48)';
+ const shell=g.createLinearGradient(-16,-16,17,18);
+ shell.addColorStop(0,'#f7e9c8');shell.addColorStop(.45,'#d0a971');shell.addColorStop(1,'#896540');
+ g.fillStyle=shell;g.fillRect(-15,-15,30,30);
+ g.shadowBlur=0;
+ g.fillStyle='#13202c';g.fillRect(-11.5,-11.5,23,23);
+ g.strokeStyle='rgba(255,255,255,.34)';g.lineWidth=1;
+ g.strokeRect(-10.5,-10.5,21,21);
+ g.restore();
+ g.beginPath();g.arc(x,y,4.2,0,Math.PI*2);
+ g.fillStyle='#f8e4b8';g.shadowBlur=6;g.shadowColor='#f0cf9b';g.fill();
+ worldNewsMarkerImage=c.toDataURL('image/png');
+ return worldNewsMarkerImage;
+}
 function drawWorldNewsPins(){
  if(!viewer)return;clear(publicNewsPins);if(!publicNewsOn||travelMode||ANALYTICS)return;
- const color=Cesium.Color.fromCssColorString('#e4b866');
- publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),point:{pixelSize:10,color,outlineColor:Cesium.Color.BLACK,outlineWidth:2},properties:{worldNewsId:x.id}})));
+ const marker=worldNewsMarker();
+ publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({
+   position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),
+   billboard:{image:marker,width:27,height:27,
+     verticalOrigin:Cesium.VerticalOrigin.CENTER,
+     scaleByDistance:new Cesium.NearFarScalar(150000,1.12,22000000,.48),
+     distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,25000000)},
+   properties:{worldNewsId:x.id}
+ })));
 }
 window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
 
