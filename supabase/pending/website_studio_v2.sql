@@ -99,10 +99,19 @@ declare d public.creator_site_drafts; g public.creator_site_access; v public.cre
   values(d.id,p_actor,d.revision,d.document) on conflict(draft_id,draft_revision) do nothing;
  select * into v from public.creator_site_revisions where draft_id=d.id and draft_revision=d.revision;
  s:='site-'||replace(g.org_id::text,'-','');
+ -- A different Studio owner (or legacy site without a reviewed handoff)
+ -- must never lose their publication merely because the grant has the same org.
+ -- Keep this guard inside ON CONFLICT to protect concurrent first publishes.
  insert into public.creator_published_sites(org_id,slug,title,tagline,bio,studio_revision_id)
   values(g.org_id,s,d.document->>'title','','',v.id)
-  on conflict(org_id) do update set title=excluded.title,studio_revision_id=excluded.studio_revision_id,updated_at=now();
- select slug into s from public.creator_published_sites where org_id=g.org_id;
+  on conflict(org_id) do update set title=excluded.title,studio_revision_id=excluded.studio_revision_id,updated_at=now()
+  where exists (
+    select 1 from public.creator_site_revisions prior
+    where prior.id=public.creator_published_sites.studio_revision_id
+      and prior.owner_m_uid=p_actor
+  )
+  returning slug into s;
+ if not found then raise exception 'published site requires owner-approved handoff' using errcode='42501';end if;
  insert into public.creator_site_events(owner_m_uid,event,reference_id,revision) values(p_actor,'site.published',d.id,d.revision);
  return jsonb_build_object('slug',s,'revision_id',v.id,'revision',d.revision);
 end $$;
@@ -151,9 +160,9 @@ declare a public.creator_site_media_state; begin
  select * into a from public.creator_site_media_state where asset_id=p_id for update;
  if not found or a.ticket_hash is distinct from p_ticket_hash or a.ticket_expires_at<=now() or a.state not in ('queued','processing') then raise exception 'job capability expired' using errcode='42501';end if;
  update public.creator_site_media_state set state=case when p_error is null then 'ready' else 'failed' end,
- output_manifest=case when p_error is null then p_manifest else null end,error=left(p_error,300),ticket_hash=null,updated_at=now() where asset_id=p_id;
+ output_manifest=case when p_error is null then p_manifest else null end,error=left(p_error,300),ticket_hash=null,ticket_expires_at=null,updated_at=now() where asset_id=p_id;
  update public.media_jobs set status=case when p_error is null then 'completed' else 'failed' end,
- result=coalesce(p_manifest,'{}'),error=case when p_error is not null then jsonb_build_object('message',left(p_error,300)) else null end,completed_at=now(),updated_at=now() where id=a.job_id;
+ result=coalesce(p_manifest,'{}'::jsonb),error=case when p_error is not null then jsonb_build_object('message',left(p_error,300)) else '{}'::jsonb end,completed_at=now(),updated_at=now() where id=a.job_id;
  insert into public.creator_site_events(owner_m_uid,event,reference_id) values(a.owner_m_uid,case when p_error is null then 'media.ready' else 'media.failed' end,p_id);
  -- Measured actual cost must arrive from the existing Core cost reconciler.
  -- Do not declare the reserved ceiling an actual cost or zero out reservation.
