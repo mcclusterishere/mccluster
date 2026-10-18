@@ -196,6 +196,11 @@ try{
         // are instrumented so this fixture cannot touch production audio.
         await page.evaluate(() => {
           window.__managedTransport = {plays:0,pauses:0};
+          window.__managedClickTrace = [];
+          const musicTap = e => e.target.closest?.('[data-appnav="music"]');
+          document.addEventListener('click', e => {if(musicTap(e))window.__managedClickTrace.push('document-capture-'+e.defaultPrevented);},true);
+          document.querySelector('.appbar').addEventListener('click',e=>{if(musicTap(e))window.__managedClickTrace.push('dock-capture-'+e.defaultPrevented);},true);
+          document.querySelector('.appbar').addEventListener('click',e=>{if(musicTap(e))window.__managedClickTrace.push('dock-bubble-'+e.defaultPrevented);});
           window.MCC_NP_PLAY = () => {
             window.__managedTransport.plays++;
             window.dispatchEvent(new CustomEvent('mcc:nowplaying',{detail:{playing:true}}));
@@ -211,7 +216,13 @@ try{
         const transport = await page.evaluate(() => ({
           ...window.__managedTransport,
           path:location.pathname,
-          slug:new URLSearchParams(location.search).get('mcc_app')
+          slug:new URLSearchParams(location.search).get('mcc_app'),
+          guard:location.origin===new URL('listen.html',window.MCC_BAR.navigation.house).origin &&
+            location.pathname===new URL('listen.html',window.MCC_BAR.navigation.house).pathname &&
+            typeof window.MCC_NP_PLAY==='function' && typeof window.MCC_NP_PAUSE==='function',
+          clickTrace:window.__managedClickTrace,
+          tabHref:document.querySelector('.appbar [data-appnav="music"]')?.href,
+          dockClass:document.querySelector('.appbar')?.className
         }));
         check(scope+' retains native Music play/pause and client context',
           transport.plays===1 && transport.pauses===1 &&
