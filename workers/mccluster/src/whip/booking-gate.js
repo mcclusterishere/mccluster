@@ -56,10 +56,10 @@ async function tenantById(env,id,fetchFn){
   if(!rows?.[0]||!safeIds(rows[0].id))throw fail('operator_unavailable','This Whip operator is unavailable.',404);
   return rows[0];
 }
-const approvedClearance = c => c && c.approval_status==='approved'&&!!c.approved_at &&
+const approvedClearance = (c,now) => c && c.approval_status==='approved'&&!!c.approved_at &&
   !!c.identity_checked_at&&!!c.background_checked_at&&!!c.local_authority_checked_at &&
-  !c.revoked_at && Date.parse(c.insurance_expires_at)>Date.now() &&
-  Date.parse(c.license_expires_at)>Date.now();
+  !c.revoked_at && Date.parse(c.insurance_expires_at)>now &&
+  Date.parse(c.license_expires_at)>now;
 async function driverClearance(env,req,driverId,fetchFn,now) {
   const user=await signedIn(req,env,fetchFn);
   const rows=await service(env,'drivers?auth_user_id=eq.'+encodeURIComponent(user.id)+
@@ -69,7 +69,7 @@ async function driverClearance(env,req,driverId,fetchFn,now) {
   const rows2=await service(env,'whip_driver_clearances?driver_id=eq.'+encodeURIComponent(driver.id)+
     '&tenant_id=eq.'+encodeURIComponent(driver.tenant_id)+'&select=*&limit=1',{},fetchFn);
   const c=rows2?.[0];
-  if(!approvedClearance(c) || Date.parse(c.insurance_expires_at)<=now || Date.parse(c.license_expires_at)<=now)
+  if(!approvedClearance(c,now))
     throw fail('driver_not_approved','Whip operator clearance, licensing and insurance are required before accepting rides.',403);
   return driver;
 }
