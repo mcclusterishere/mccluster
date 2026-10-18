@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 337,
+  "candidate_count": 338,
   "capability_source_count": 99,
-  "support_only_count": 238,
-  "checks_total": 1251,
-  "checks_passed": 1251,
+  "support_only_count": 239,
+  "checks_total": 1255,
+  "checks_passed": 1255,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -101,6 +101,7 @@
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/PROGRAM-LEDGER.md",
     "docs/control-plane/REPOSITORY-GOVERNANCE.md",
+    "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md",
     "docs/control-plane/SECURITY-POSTURE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
@@ -1960,6 +1961,26 @@
     },
     {
       "name": "docs/control-plane/REPOSITORY-GOVERNANCE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md classified",
+      "passed": true,
+      "detail": "classification='planning_support'"
+    },
+    {
+      "name": "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/RESEARCH-INTELLIGENCE-WEEK-2026-10-12.md support rationale present",
       "passed": true,
       "detail": ""
     },
