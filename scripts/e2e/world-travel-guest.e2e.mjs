@@ -87,7 +87,9 @@ async function open(viewport, { automatic = false, webgl = true, audioParent = f
         const body = req.postDataJSON(); requests.push({ ...body, authenticated:!!req.headers().authorization });
         if (response === 'hold') { held.push(r); return; }
         if (response === 'error') return json(r, { error:'Directions are temporarily unavailable. Try again.' }, 503);
-        const route = fixture.routes.find(route => route.mode === body.mode && JSON.stringify(route.origin) === JSON.stringify(body.origin) && JSON.stringify(route.destination) === JSON.stringify(body.destination));
+        const route = response === 'map-pick'
+          ? { ...fixture.routes[0], origin:body.origin, destination:body.destination }
+          : fixture.routes.find(route => route.mode === body.mode && JSON.stringify(route.origin) === JSON.stringify(body.origin) && JSON.stringify(route.destination) === JSON.stringify(body.destination));
         return route ? json(r, { route }) : json(r, { error:'No matching fixture route.' }, 422);
       }
       if (url.pathname === '/v1/world/access') return json(r, { level:'public', unlocked_layers:[], locked_layers:[] });
@@ -201,6 +203,53 @@ try {
     check(scope, 'no JavaScript exceptions in the full World page or real globe', app.errors.length === 0, app.errors);
     await app.ctx.close();
   }
+  // Actual Cesium map clicks must select endpoints, request a truthful street
+  // route, render its polyline and leave Go/Stop accessible in expanded Earth.
+  const picked = await open({ width:390,height:844 });
+  picked.setResponse('map-pick');
+  const clickWorldPoint = async coordinates => {
+    const position = await picked.frame.evaluate(([lon,lat]) => {
+      const viewer = window.__testViewer;
+      viewer.camera.setView({
+        destination:Cesium.Cartesian3.fromDegrees(lon,lat,2300),
+        orientation:{heading:0,pitch:-Math.PI/2,roll:0}
+      });
+      return Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+        viewer.scene, Cesium.Cartesian3.fromDegrees(lon,lat));
+    }, coordinates);
+    assert.ok(position && Number.isFinite(position.x) && Number.isFinite(position.y), 'New Haven point projects into Cesium canvas');
+    await picked.frame.locator('#globe canvas').first().click({ position:{ x:position.x, y:position.y }, force:true });
+  };
+  await picked.page.locator('#wtPickFrom').click();
+  await picked.frame.waitForFunction(() => __huNavigation().mapPicking);
+  check('map-pick', 'selecting a starting point expands the Earth and shows a cancelable tap instruction',
+    await picked.page.isVisible('#wtMapPickBanner') && await picked.page.evaluate(() => document.documentElement.classList.contains('wt-expanded')));
+  await clickWorldPoint(origin);
+  await picked.page.waitForFunction(() => document.getElementById('wtFrom').value.startsWith('Pinned map location'));
+  check('map-pick', 'actual Cesium click sets a longitude/latitude origin without a GPS permission request',
+    picked.requests.length === 0 && await picked.page.evaluate(() => __geo.calls.length === 0));
+  await picked.page.locator('#wtPickTo').click();
+  await picked.frame.waitForFunction(() => __huNavigation().mapPicking);
+  await clickWorldPoint(destination);
+  await ready(picked.page);
+  await picked.frame.waitForFunction(() => __huNavigation().routePoints > 2 && __huNavigation().routeVisible);
+  check('map-pick', 'two selected globe pins request an anonymous street route and draw its real geometry',
+    picked.requests.length === 1 && picked.requests[0].mode === 'drive' && await picked.frame.evaluate(() => __huNavigation().routeVisible));
+  await picked.page.locator('.mn__world-expand').click();
+  await picked.page.waitForFunction(() => !document.getElementById('wtMapNav').hidden);
+  check('map-pick', 'the expanded Earth retains a usable Go control over the route',
+    await exposed(picked.page, 'wtMapNavGo'));
+  await picked.page.locator('#wtMapNavGo').click();
+  await picked.page.evaluate(coordinates => __geo.emit(coordinates), fixture.routes[0].geometry[0]);
+  await picked.page.waitForFunction(() => __geo.watchCount() === 1 && !document.getElementById('wtMapNavStop').hidden);
+  check('map-pick', 'full-map Go starts GPS guidance; Stop remains accessible in the expanded Earth',
+    await exposed(picked.page, 'wtMapNavStop') && await picked.frame.evaluate(() => __huNavigation().following));
+  await picked.page.screenshot({ path:join(OUT, 'guest-map-picked-route-expanded-390.png') });
+  await picked.page.locator('#wtMapNavStop').click();
+  check('map-pick', 'Stop on the expanded Earth releases the location watch',
+    await picked.page.evaluate(() => __geo.watchCount() === 0));
+  check('map-pick', 'map-pin directions introduce no JavaScript exceptions', picked.errors.length === 0, picked.errors);
+  await picked.ctx.close();
   const manual = await open({ width:390,height:844 }, { webgl:false });
   await manual.frame.waitForFunction(() => document.documentElement.classList.contains('globe-travel') && document.querySelector('.globe-travel-controls')?.children.length === 3);
   await manual.page.waitForTimeout(100);
