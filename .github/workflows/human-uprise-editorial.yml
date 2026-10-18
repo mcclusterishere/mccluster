@@ -8,6 +8,8 @@ on:
       - 'css/human-uprise-editorial.css'
       - 'css/globe-editorial.css'
       - 'css/world-travel.css'
+      - 'css/member-desk.css'
+      - 'css/world-audio-continuity.css'
       - 'js/travel/**'
       - 'data/travel/**'
       - 'js/analytics.js'
@@ -15,9 +17,18 @@ on:
       - 'supabase/tests/travel_journeys.behaviour.sql'
       - 'scripts/test/travel-journeys-db.mjs'
       - 'js/mnet.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'js/world-audio-continuity.js'
+      - 'js/music-engine.js'
+      - 'js/pip.js'
+      - 'js/tabbar.js'
       - 'js/action-globe.js'
       - 'js/world-countries.js'
       - 'scripts/e2e/world-screen.e2e.mjs'
+      - 'scripts/e2e/member-desk.e2e.mjs'
+      - 'scripts/e2e/world-travel-guest.e2e.mjs'
+      - 'scripts/e2e/music-world-continuity.e2e.mjs'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -33,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, travel, navigation]
+        suite: [database, editorial, travel, guest-travel, member-desk, music-world, navigation]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -58,6 +69,9 @@ jobs:
             database) node scripts/test/travel-journeys-db.mjs ;;
             editorial) E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world ;;
             travel) E2E_ONLY=travel node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel ;;
+            guest-travel) node scripts/e2e/world-travel-guest.e2e.mjs /tmp/hu-proof/guest-travel ;;
+            member-desk) node scripts/e2e/member-desk.e2e.mjs /tmp/hu-proof/member-desk ;;
+            music-world) node scripts/e2e/music-world-continuity.e2e.mjs /tmp/hu-proof/music-world ;;
             navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac

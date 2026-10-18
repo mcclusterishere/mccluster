@@ -152,7 +152,8 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   /* leaving: the token rides in the fragment, never a query */
   assert.match(bar, /url\.hash = \(url\.hash && url\.hash !== "#" \? url\.hash \+ "&" : "#"\) \+ HANDOFF \+ "=" \+ encodeURIComponent\(token\);/);
   assert.doesNotMatch(bar, /searchParams\.set\("mcc_handoff"/);
-  assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ location\.href = h; \}, function \(\) \{ location\.href = dest; \}\);/, 'the bar\'s own tabs carry it');
+  assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ navigateDocument\(h\); \}, function \(\) \{ navigateDocument\(dest\); \}\);/, 'the bar\'s own tabs carry the handed-off destination through document navigation');
+  assert.match(bar, /function navigateDocument\(href\) \{\s*if \(window\.MCC_WORLD_AUDIO && window\.MCC_WORLD_AUDIO\.leaveFrame\(href\)\) return;\s*location\.href = href;\s*\}/, 'document navigation passes the same destination to the retained-frame exit or the current window');
   assert.match(bar, /if \(!a \|\| a\.target === "_blank" \|\| a\.hasAttribute\("download"\) \|\| a\.closest\("\.appbar"\)\) return;/, 'any page link carries it; the bar sails itself');
   /* arriving: scrub first, exchange from this origin, verify, store, reload */
   const scrub = bar.indexOf('history.replaceState(null, "", location.pathname + location.search + rest)');
