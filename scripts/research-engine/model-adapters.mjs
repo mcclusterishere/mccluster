@@ -23,7 +23,7 @@ export function modelApproved(manifest, id, stage) {
   if(!m||m.stage!==stage||!m.enabled||!APPROVED_LICENSES.has(m.license)||
      typeof m.approval!=="string"||m.approval.length<10)
     throw Error("research model not licensed and explicitly enabled");
-  if(!["first_party_fft","audio_separator","basic_pitch","music21"].includes(m.adapter))
+  if(!["first_party_fft","beat_this","audio_separator","basic_pitch","music21"].includes(m.adapter))
     throw Error("unknown or unsupported model runner");
   return m;
 }
@@ -58,8 +58,16 @@ export function adapterCommand(model, stage, inputs, outdir, {modelsDir}={}) {
     throw Error("expected 1–32 authorized input files");
   if(stage==="analyze"){
     if(inputs.length!==1)throw Error("analysis receives a single canonical master");
-    return [{exe:process.execPath,args:[join(ROOT,"scripts/music-resonance-analyze.mjs"),
-      inputs[0],"--output",join(outdir,"acoustic-features.json")]}];
+    const first={exe:process.execPath,args:[join(ROOT,"scripts/music-resonance-analyze.mjs"),
+      inputs[0],"--output",join(outdir,"acoustic-features.json")]};
+    if(model.adapter==="first_party_fft")return [first];
+    if(model.adapter!=="beat_this"||!modelsDir)
+      throw Error("unrecognized or unapproved enhanced beat model");
+    return [first,{exe:"python3",args:[
+      join(ROOT,"scripts/research-engine/beat_this_tempo.py"),
+      "--source",inputs[0],"--checkpoint",join(modelsDir,model.checkpoint.filename),
+      "--sha256",model.checkpoint.sha256,"--output",join(outdir,"beat-this.json"),
+      "--device","cpu"]}];
   }
   if(stage==="separate"){
     if(inputs.length!==1||model.adapter!=="audio_separator"||!modelsDir)
@@ -127,7 +135,7 @@ export async function collectStageOutputs(outdir,stage) {
 
 export async function executeApprovedStage(job,manifest,inputs,outputDir,{modelsDir,signal,runner=runProcess}={}) {
   const m=modelApproved(manifest,job.model_id,job.stage);
-  if(m.adapter==="audio_separator")await approvedCheckpoint(m,modelsDir);
+  if(["audio_separator","beat_this"].includes(m.adapter))await approvedCheckpoint(m,modelsDir);
   const commands=adapterCommand(m,job.stage,inputs,outputDir,{modelsDir});
   for(const command of commands)await runner(command.exe,command.args,
     {cwd:outputDir,signal,timeoutMs:job.stage==="separate"?25*60*1000:12*60*1000});
