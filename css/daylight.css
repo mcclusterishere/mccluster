@@ -36,23 +36,23 @@ html[data-daylight="day"] .mn__menu { background:#ffffff; color:#000000; border:
 html[data-daylight="day"] .mn__menu :is(button,a) { color:#000000; }
 /* the globe keeps its dark frame; its chrome goes white with black type */
 html[data-daylight="day"] .wt-headline { color:#ffffff; text-shadow:0 1px 10px #000000b0; }
-html[data-daylight="day"] .hu-editorial .mn__world-home { background:#06090f; }
+html[data-daylight="day"].hu-editorial .mn__world-home { background:#06090f; }
 html[data-daylight="day"] .wt-world-modes::before { background:#ffffffee; border-color:#00000022; }
 html[data-daylight="day"] .wt-world-modes button { color:#333333; }
 html[data-daylight="day"] .wt-world-modes [aria-pressed="true"] { color:#ffffff; }
 html[data-daylight="day"] .wt-world-modes [aria-pressed="true"]::before { background:#dc0f2d; border-color:#dc0f2d; }
-html[data-daylight="day"] .hu-editorial :is(.mn__world-expand,.mn__world-play), html[data-daylight="day"].mn-world-on :is(.mn__world-expand,.mn__world-play) { background:#ffffffee; border:1px solid #00000022; color:#000000; box-shadow:none; }
-html[data-daylight="day"] .hu-editorial .mn #mnWorldLive { background:#ffffff; border-color:#00000033; color:#000000; }
-html[data-daylight="day"] .hu-editorial .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
-html[data-daylight="day"] .hu-travel-enabled.mn-world-on .mn__world-feed, html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
+html[data-daylight="day"].hu-editorial :is(.mn__world-expand,.mn__world-play), html[data-daylight="day"].mn-world-on :is(.mn__world-expand,.mn__world-play) { background:#ffffffee; border:1px solid #00000022; color:#000000; box-shadow:none; }
+html[data-daylight="day"].hu-editorial .mn #mnWorldLive { background:#ffffff; border-color:#00000033; color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
+html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__world-feed, html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
 /* feed, composer, cards */
-html[data-daylight="day"] .mn__composer, html[data-daylight="day"] .hu-editorial .mn__composer { background:#ffffff; border:1px solid #00000022; box-shadow:none; color:#000000; }
+html[data-daylight="day"] .mn__composer, html[data-daylight="day"].hu-editorial .mn__composer { background:#ffffff; border:1px solid #00000022; box-shadow:none; color:#000000; }
 html[data-daylight="day"] .mn__composer :is(textarea,input) { color:#000000; background:transparent; }
 html[data-daylight="day"] .mn__composer :is(textarea,input)::placeholder { color:#555555; }
-html[data-daylight="day"] .hu-editorial #mnFeed .mn__post-card, html[data-daylight="day"] .hu-editorial .mn__guest-card, html[data-daylight="day"] .hu-editorial .mn__mission-card { background:transparent; border-color:#00000018; color:#000000; }
-html[data-daylight="day"] .hu-editorial #mnFeed .mn__post-body, html[data-daylight="day"] .hu-editorial #mnFeed .mn__news-title { color:#000000; }
-html[data-daylight="day"] .hu-editorial .mn__guest-card button, html[data-daylight="day"] .hu-editorial .mn__clipdoor { background:#000000; color:#ffffff; border-color:#000000; }
-html[data-daylight="day"] .hu-editorial .mn__clipdoor :is(a,button,p,h2,h3,span) { color:#ffffff; }
+html[data-daylight="day"].hu-editorial #mnFeed .mn__post-card, html[data-daylight="day"].hu-editorial .mn__guest-card, html[data-daylight="day"].hu-editorial .mn__mission-card { background:transparent; border-color:#00000018; color:#000000; }
+html[data-daylight="day"].hu-editorial #mnFeed .mn__post-body, html[data-daylight="day"].hu-editorial #mnFeed .mn__news-title { color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__guest-card button, html[data-daylight="day"].hu-editorial .mn__clipdoor { background:#000000; color:#ffffff; border-color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__clipdoor :is(a,button,p,h2,h3,span) { color:#ffffff; }
 html[data-daylight="day"] .hu-feed-tabs button { color:#333333; }
 html[data-daylight="day"] .hu-feed-tabs [aria-pressed="true"] { color:#000000; }
 /* missions deck chrome */
@@ -62,7 +62,7 @@ html[data-daylight="day"] .mn-swipe__filters [aria-pressed="true"] { color:#ffff
 html[data-daylight="day"] .mn-swipe__undo { background:#ffffff; border-color:#00000033; color:#000000; }
 html[data-daylight="day"] .mn-swipe__empty { background:#f3f3f3; border-color:#00000022; color:#000000; }
 /* travel planner */
-html[data-daylight="day"] .wt-search, html[data-daylight="day"] .hu-travel-enabled.mn-world-on .wt-search { background:#ffffffee; border-color:#00000022; }
+html[data-daylight="day"] .wt-search, html[data-daylight="day"].hu-travel-enabled.mn-world-on .wt-search { background:#ffffffee; border-color:#00000022; }
 html[data-daylight="day"] .wt-search input, html[data-daylight="day"] #wtTitle, html[data-daylight="day"] .wt-leg strong, html[data-daylight="day"] .wt-empty h3 { color:#000000; }
 html[data-daylight="day"] .wt-search input::placeholder { color:#555555; }
 html[data-daylight="day"] .wt-field { border-color:#00000026; background:#ffffff; }
