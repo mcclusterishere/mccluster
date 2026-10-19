@@ -584,7 +584,7 @@ export async function businessSnapshot(env, windowSpec = null) {
   ].map(task => async () => {
     try { return await task.run(); }
     catch { readErrors[task.key] = 'Data read unavailable'; return null; }
-  }), 4);
+  }), 3); // Keep owner business reads below the dashboard's concurrent RPC load.
 
   /* Verified Stripe sales and bookings from the commerce reconciler, live
      only, net of refunds; test-mode money is reported apart (commerce/
