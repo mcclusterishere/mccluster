@@ -15,6 +15,9 @@
   <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
+  <!-- day or night follows the real Sun before first paint (owner, 2026-10-19) -->
+  <script src="js/daylight.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=__STAMP__"><link rel="stylesheet" href="css/world-news-globe.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -26,6 +29,8 @@
         <img class="mn__brand-mark" src="assets/img/equity-uprise-mark-white.png" alt="" width="36" height="36">
         <span><strong>Equity Uprise</strong><small>A McCluster Corp program</small></span>
       </a>
+      <!-- NOW PLAYING (owner, 2026-10-19): the World music's title scrolls here in white while it plays; hidden when nothing is loaded -->
+      <div class="mn__now" id="mnNowPlaying" hidden aria-live="off"><span class="mn__now-track" id="mnNowPlayingText"></span><span class="mn__now-track mn__now-track--echo" aria-hidden="true"></span></div>
       <!-- search the World: places and causes on the globe, words in the feed,
            people, groups and missions. A bar in the header at every width. -->
       <button class="hu-search-toggle" id="huSearchToggle" type="button" aria-label="Search the world" aria-expanded="false" aria-controls="mnSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
@@ -245,9 +250,13 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">Feed</button></nav>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
           <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
+          <div class="mn__world-stack" id="mnWorldStack">
+          <button class="mn__world-play" id="mnWorldPlay" type="button" aria-label="Play music" aria-pressed="false" hidden><span aria-hidden="true">▶</span></button>
           <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
+          </div>
           <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
 
           <!-- what is on air right now, over the Earth; opens the live rooms -->

@@ -128,7 +128,7 @@ async function controls(page) {
   return page.evaluate(() => {
     const frame = document.getElementById('mnWorldFrame'), f = frame.getBoundingClientRect();
     const rect = element => { const r = element?.getBoundingClientRect(); return r && r.width && r.height ? { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height } : null; };
-    const obstacles = ['.mn__world-expand','.wt-world-modes','.appbar','#mccWorldAudioControls','#wtMapNav','#wtMapPickBanner'].map(selector => ({ selector, rect:rect(document.querySelector(selector)) })).filter(x => x.rect);
+    const obstacles = ['.mn__world-expand','#mnWorldPlay','.wt-world-modes','.appbar','#mccWorldAudioControls','#wtMapNav','#wtMapPickBanner'].map(selector => ({ selector, rect:rect(document.querySelector(selector)) })).filter(x => x.rect);
     if (document.body.dataset.worldAudioChild === 'ready') { const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0; obstacles.push({ selector:'retained-parent-audio', rect:{ left:0, right:innerWidth, top:innerHeight-clearance, bottom:innerHeight } }); }
     const buttons = ['ctlLocate','ctlZoomIn','ctlZoomOut'].map(id => ({ id, rect:rect(frame.contentDocument.getElementById(id)) })).map(x => ({ ...x, rect:{ ...x.rect, left:x.rect.left+f.left, right:x.rect.right+f.left, top:x.rect.top+f.top, bottom:x.rect.bottom+f.top } }));
     const overlap = (a,b) => a.left < b.right-1 && a.right > b.left+1 && a.top < b.bottom-1 && a.bottom > b.top+1;

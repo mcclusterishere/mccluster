@@ -1,0 +1,82 @@
+/* DAYLIGHT (owner, 2026-10-19): the dark World is the night look. By day the
+   chrome inverts to pitch white and black: white pages, black type, the red
+   accent kept. The globe stays the Earth and the top bar stays black so the
+   supplied white mark is never drawn over or recoloured. js/daylight.js sets
+   html[data-daylight] from the real Sun. Mobile first; min-width only. */
+html[data-daylight="day"] {
+  --mn-bg:#ffffff; --mn-raise:#ffffff; --mn-raise-2:#f3f3f3;
+  --mn-ink:#000000; --mn-dim:#262626; --mn-faint:#4d4d4d;
+  --mn-rule:#00000018; --mn-rule-2:#0000002e; --mn-hot:#dc0f2d; --mn-hot-ink:#ffffff;
+  --w-glass:rgba(255,255,255,.9); --w-rim:0 0 0 1px rgba(220,15,45,.3),0 0 16px -6px rgba(220,15,45,.3); --w-edge:0 0 0 1px rgba(0,0,0,.1);
+  color-scheme:light;
+}
+/* the World and the editorial shell re-declare the ink tokens on .mn, nearer the text than html, so the day tokens must
+   be declared there too or the sheet's words stay night-white on the white page */
+html[data-daylight="day"].mn-world-on .mn, html[data-daylight="day"].hu-editorial .mn, html[data-daylight="day"] .mn {
+  --mn-bg:#ffffff; --mn-raise:#ffffff; --mn-raise-2:#f3f3f3;
+  --mn-ink:#000000; --mn-dim:#262626; --mn-faint:#4d4d4d;
+  --mn-rule:#00000018; --mn-rule-2:#0000002e; --mn-hot:#dc0f2d; --mn-hot-ink:#ffffff;
+  --w-glass:rgba(255,255,255,.9); --w-rim:0 0 0 1px rgba(220,15,45,.3),0 0 16px -6px rgba(220,15,45,.3); --w-edge:0 0 0 1px rgba(0,0,0,.1);
+}
+/* words the World paints with fixed night colours inside the feed */
+html[data-daylight="day"].mn-world-on #mnFeed .mn__post-body, html[data-daylight="day"].mn-world-on #mnFeed .mn__news-title, html[data-daylight="day"].mn-world-on #mnFeed .mn__author-name { color:#000000; }
+html[data-daylight="day"].mn-world-on #mnFeed .mn__comments { background:#f3f3f3; border-top-color:#00000018; }
+html[data-daylight="day"].mn-world-on #mnFeed .mn__comments-empty, html[data-daylight="day"].mn-world-on .mn__guest-card p { color:#262626; }
+html[data-daylight="day"].mn-world-on .mn__guest-card strong { color:#000000; }
+html[data-daylight="day"], html[data-daylight="day"] body,
+html[data-daylight="day"].mn-world-on, html[data-daylight="day"].mn-world-on body { background:#ffffff; color:#000000; }
+/* the top bar is the one black band: the supplied white mark, the white title scroll, white icons */
+html[data-daylight="day"] .mn__top { background:#000000; border-bottom-color:#ffffff22; color:#ffffff; }
+/* the Travel World paints its header as a fade over the Earth at (0,4,0); the day band must outrank it */
+html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__top, html[data-daylight="day"].hu-travel-enabled.mn-world-on[data-world-mode] .mn__top { background:#000000; }
+html[data-daylight="day"] .mn__top .mn__brand strong, html[data-daylight="day"] .mn__top .mn__brand small, html[data-daylight="day"] .mn__now { color:#ffffff; }
+html[data-daylight="day"] .mn__top :is(.hu-search-toggle,.mn__bell,.mn__avatar-btn) { color:#ffffff; border-color:#ffffff33; background:transparent; }
+html[data-daylight="day"] .mn__guest-bar :is(.mn__guest-in,.mn__guest-join) { color:#ffffff; background:#161616; border:1px solid #ffffff33; }
+html[data-daylight="day"] .mn__menu { background:#ffffff; color:#000000; border:1px solid #00000022; box-shadow:0 12px 32px -12px #0006; }
+html[data-daylight="day"] .mn__menu :is(button,a) { color:#000000; }
+/* the globe keeps its dark frame; its chrome goes white with black type */
+html[data-daylight="day"] .wt-headline { color:#ffffff; text-shadow:0 1px 10px #000000b0; }
+html[data-daylight="day"].hu-editorial .mn__world-home { background:#06090f; }
+html[data-daylight="day"] .wt-world-modes::before { background:#ffffffee; border-color:#00000022; }
+html[data-daylight="day"] .wt-world-modes button { color:#333333; }
+html[data-daylight="day"] .wt-world-modes [aria-pressed="true"] { color:#ffffff; }
+html[data-daylight="day"] .wt-world-modes [aria-pressed="true"]::before { background:#dc0f2d; border-color:#dc0f2d; }
+html[data-daylight="day"].hu-editorial :is(.mn__world-expand,.mn__world-play), html[data-daylight="day"].mn-world-on :is(.mn__world-expand,.mn__world-play) { background:#ffffffee; border:1px solid #00000022; color:#000000; box-shadow:none; }
+html[data-daylight="day"].hu-editorial .mn #mnWorldLive { background:#ffffff; border-color:#00000033; color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
+html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__world-feed, html[data-daylight="day"].hu-travel-enabled.mn-world-on .mn__world-feed { background:#ffffff; border-top-color:#00000018; }
+/* feed, composer, cards */
+html[data-daylight="day"] .mn__composer, html[data-daylight="day"].hu-editorial .mn__composer { background:#ffffff; border:1px solid #00000022; box-shadow:none; color:#000000; }
+html[data-daylight="day"] .mn__composer :is(textarea,input) { color:#000000; background:transparent; }
+html[data-daylight="day"] .mn__composer :is(textarea,input)::placeholder { color:#555555; }
+html[data-daylight="day"].hu-editorial #mnFeed .mn__post-card, html[data-daylight="day"].hu-editorial .mn__guest-card, html[data-daylight="day"].hu-editorial .mn__mission-card { background:transparent; border-color:#00000018; color:#000000; }
+html[data-daylight="day"].hu-editorial #mnFeed .mn__post-body, html[data-daylight="day"].hu-editorial #mnFeed .mn__news-title { color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__guest-card button, html[data-daylight="day"].hu-editorial .mn__clipdoor { background:#000000; color:#ffffff; border-color:#000000; }
+html[data-daylight="day"].hu-editorial .mn__clipdoor :is(a,button,p,h2,h3,span) { color:#ffffff; }
+html[data-daylight="day"] .hu-feed-tabs button { color:#333333; }
+html[data-daylight="day"] .hu-feed-tabs [aria-pressed="true"] { color:#000000; }
+/* missions deck chrome */
+html[data-daylight="day"] .mn-swipe__filters { background:#ffffffee; border-color:#00000022; }
+html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
+html[data-daylight="day"] .mn-swipe__filters [aria-pressed="true"] { color:#ffffff; background:#dc0f2d; }
+html[data-daylight="day"] .mn-swipe__undo { background:#ffffff; border-color:#00000033; color:#000000; }
+html[data-daylight="day"] .mn-swipe__empty { background:#f3f3f3; border-color:#00000022; color:#000000; }
+/* travel planner */
+html[data-daylight="day"] .wt-search, html[data-daylight="day"].hu-travel-enabled.mn-world-on .wt-search { background:#ffffffee; border-color:#00000022; }
+html[data-daylight="day"] .wt-search input, html[data-daylight="day"] #wtTitle, html[data-daylight="day"] .wt-leg strong, html[data-daylight="day"] .wt-empty h3 { color:#000000; }
+html[data-daylight="day"] .wt-search input::placeholder { color:#555555; }
+html[data-daylight="day"] .wt-field { border-color:#00000026; background:#ffffff; }
+html[data-daylight="day"] .wt-field>span, html[data-daylight="day"] .wt-status, html[data-daylight="day"] .wt-empty p, html[data-daylight="day"] .wt-note, html[data-daylight="day"] .wt-leg small, html[data-daylight="day"] .wt-footer p, html[data-daylight="day"] .wt-details summary { color:#333333; }
+html[data-daylight="day"] .wt-field :is(input,select) { color:#000000; }
+html[data-daylight="day"] .wt-field select option { background:#ffffff; color:#000000; }
+html[data-daylight="day"] .wt-suggest { background:#ffffff; border:1px solid #00000022; box-shadow:0 12px 30px -12px #0005; }
+html[data-daylight="day"] .wt-suggest button { color:#000000; }
+html[data-daylight="day"] .wt-suggest button:is(:hover,:focus-visible) { background:#f0f0f0; }
+html[data-daylight="day"] .wt-date-row button, html[data-daylight="day"] .wt-text-button, html[data-daylight="day"] .wt-toolbar button { color:#000000; }
+html[data-daylight="day"] .wt-toolbar [aria-pressed="true"] { color:#dc0f2d; border-bottom-color:#dc0f2d; }
+html[data-daylight="day"] .wt-inspiration button, html[data-daylight="day"] .wt-actions button, html[data-daylight="day"] .wt-leg a, html[data-daylight="day"] .wt-leg button { background:#000000; color:#ffffff; border-color:#000000; }
+html[data-daylight="day"] .wt-actions .wt-primary { background:#dc0f2d; border-color:#dc0f2d; }
+html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { border-color:#00000026; color:#000000; }
+/* the bottom bar is shared chrome; by day it reads black on white */
+html[data-daylight="day"] .appbar { background:#ffffff; border:1px solid #00000022; box-shadow:0 10px 30px -14px #0005; color:#000000; }
+html[data-daylight="day"] .appbar .appbar__tab { color:#000000; }
