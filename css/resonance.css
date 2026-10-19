@@ -61,6 +61,7 @@ body.resonance{margin:0;background:var(--rs-bg);color:var(--rs-ink);font:15px/1.
 .rs-modes{margin-top:32px}
 .rs-subheading h3{font:450 1.8rem Georgia,serif;margin:0}
 .rs-subheading p{color:var(--rs-muted);font-size:13px}
+.rs-class{color:var(--rs-accent);border-left:3px solid var(--rs-sea);background:var(--rs-surface);padding:12px;font:650 12px/1.5 system-ui,sans-serif;letter-spacing:.035em}
 .rs-mode-list{display:grid;grid-template-columns:1fr;gap:8px;margin:16px 0}
 .rs-mode{display:grid;grid-template-columns:65px minmax(0,1fr) 70px;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--rs-edge);background:var(--rs-surface)}
 .rs-mode span{font-size:12px}.rs-mode meter{width:100%;height:13px;accent-color:#b79c78}.rs-mode small{color:var(--rs-muted);text-align:right;font-variant-numeric:tabular-nums}
