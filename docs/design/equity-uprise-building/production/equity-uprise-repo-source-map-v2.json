@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 337,
+  "candidate_count": 339,
   "capability_source_count": 99,
-  "support_only_count": 238,
+  "support_only_count": 240,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2611,6 +2611,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "docs/action-network/MISSION-AND-SONG-REBOOT-2026-10-13.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network mission/song product plan; an explanatory mapping of services, not building geometry or an independent physical capability."
+    },
+    {
+      "path": "docs/action-network/THREE-PATH-MISSION-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Three-path mission audit and product boundary documentation; does not create an Equity Uprise building capability."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
