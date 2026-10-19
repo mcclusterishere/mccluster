@@ -8,7 +8,8 @@
  const status=document.getElementById("mccShellStatus");
  const nav=document.getElementById("mccShellNav");
  const engine=root.MCC_MUSIC;
- const allowed=new Set(["listen.html","resonance.html","catalogue.html","creator.html"]);
+ const allowed=new Set(["listen.html","resonance.html","catalogue.html","creator.html","research-jobs.html"]);
+ const pathFor=page=>page==="research-jobs.html"?"_unfinished/music-runtime/research-jobs.html":page;
  if(!frame||!engine||!engine.audio)throw Error("Canonical music host is required");
  let active="listen.html",child=null,cleanup=[];
  const message=s=>{status.textContent=s;};
@@ -30,7 +31,7 @@
    if(!allowed.has(page))return;
    if(page===active&&routeName()===page)return;
    active=page;paintNav();
-   frame.src=page;
+   frame.src=pathFor(page);
    message("Opening "+page.replace(".html","")+" without replacing the active Music transport.");
  }
  function childEngineEvent(event){
