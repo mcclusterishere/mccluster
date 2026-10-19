@@ -22,6 +22,8 @@ import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
 import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
+import { handleHouseAgents } from './house-agents.js';
+import { requireHouseOwner } from './index.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -103,6 +105,8 @@ export default {
       if (creatorCheckout) return creatorCheckout;
       const computeResponse = await handleComputeApi(request, env);
       if (computeResponse) return computeResponse;
+      const houseAgents = await handleHouseAgents(request, env, { requireHouseOwner });
+      if (houseAgents) return houseAgents;
       const planResponse = await handlePlatformPlanApi(request, env);
       if (planResponse) return planResponse;
       const response = await handlePlatformApi(request, env);
