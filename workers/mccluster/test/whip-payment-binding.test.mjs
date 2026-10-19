@@ -17,8 +17,8 @@ function ledger(){
     tenants:[{id:TENANT,slug:'whip-equipped',name:'Whip Fixture',stripe_account_id:'acct_owner',stripe_charges_enabled:true,white_label_enabled:false,platform_fee_percent:0.03,stripe_subscription_id:null},
              {id:OTHER,slug:'other',name:'Other Operator',stripe_account_id:'acct_other'}],
     rides:[{id:RIDE,tenant_id:TENANT,status:'IN_PROGRESS',driver_id:'drv-1',fare_cents:2500,payment_status:'authorized',stripe_payment_intent_id:'pi_ride',completed_at:null}],
-    rentals:[{id:RENTAL,tenant_id:TENANT,total_cents:11770,payment_status:'checkout_created',stripe_checkout_session_id:'cs_rental',stripe_payment_intent_id:null}],
-    events:new Map(),payments:[{id:'preexisting-payment',tenant_id:TENANT,resource_type:'rental',resource_id:RENTAL,stripe_checkout_session_id:'cs_rental'}],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,existingSessionStatus:'open'
+    rentals:[{id:RENTAL,tenant_id:TENANT,renter_id:USER,total_cents:11770,payment_status:'checkout_created',stripe_checkout_session_id:'cs_rental',stripe_payment_intent_id:null}],
+    events:new Map(),payments:[{id:'preexisting-payment',tenant_id:TENANT,resource_type:'rental',resource_id:RENTAL,stripe_checkout_session_id:'cs_rental',amount_cents:11770,connected_account_id:'acct_owner'}],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,paymentInsertFailsOnce:false,paymentResponseLostOnce:false,existingSessionStatus:'open'
   };
   state.fetch=async(resource,options={})=>{
     const u=new URL(String(resource)),path=u.pathname,method=options.method||'GET',body=options.body&&!String(resource).includes('api.stripe.com')?JSON.parse(options.body):options.body||null;
@@ -52,7 +52,13 @@ function ledger(){
     if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
     if(path==='/rest/v1/rental_vehicles')return json([{id:'fixture-car',tenant_id:TENANT,daily_rate_cents:5000,location_label:'Lot A',available:true}]);
     if(path==='/rest/v1/payments'){
-      if(method==='POST'){const row={id:'payment-'+(state.payments.length+1),...body};state.payments.push(row);return json([row],201);}
+      if(method==='POST'){
+        if(state.paymentInsertFailsOnce){state.paymentInsertFailsOnce=false;return json({message:'payment ledger unavailable'},503);}
+        if(state.payments.some(p=>p.id===body.id))return json({code:'23505',message:'duplicate key value violates unique constraint "payments_pkey"'},409);
+        const row={id:body.id||'payment-'+(state.payments.length+1),...body};state.payments.push(row);
+        if(state.paymentResponseLostOnce){state.paymentResponseLostOnce=false;throw new Error('insert succeeded but response was lost');}
+        return json([row],201);
+      }
       const tenant=param(u.search,'tenant_id'),session=param(u.search,'stripe_checkout_session_id'),resource=param(u.search,'resource_id');
       return json(state.payments.filter(p=>(!tenant||p.tenant_id===tenant)&&(!session||p.stripe_checkout_session_id===session)&&(!resource||p.resource_id===resource)));
     }
@@ -192,8 +198,8 @@ test('rental bookings are priced by the server from dates, rate and catalogue; b
     assert.equal(plan.status,400);
     assert.equal(state.calls.filter(c=>c.path==='/rest/v1/rental_bookings'&&c.method==='POST').length,1);
   });
-  assert.equal(rentalQuote({daily_rate_cents:1000},{white_label_enabled:true},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-01T06:00:00Z',protection_plan:'none'}).total_cents,1070);
-  assert.equal(rentalQuote({daily_rate_cents:0},{},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-02T00:00:00Z'}).error,'Vehicle has no daily rate');
+  assert.equal(rentalQuote({daily_rate_cents:1000},{slug:'whip-equipped',white_label_enabled:true},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-01T06:00:00Z',protection_plan:'none'}).total_cents,1070);
+  assert.equal(rentalQuote({daily_rate_cents:0},{slug:'whip-equipped'},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-02T00:00:00Z'}).error,'Vehicle has no daily rate');
 });
 
 test('pending webhook claims return retryable 503, and crashed stale claims can be recovered',{concurrency:false},async()=>{
@@ -235,8 +241,8 @@ test('concurrent initial checkout requests share one Stripe session and one book
       worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env)
     ]);
     const payloads=await Promise.all(responses.map(async r=>({status:r.status,body:await r.json()})));
-    assert.equal(payloads.filter(r=>r.status===200).length,1,'one request wins registration');
-    assert.equal(payloads.filter(r=>r.status===503).length,1,'the loser may not expose a checkout URL before the ledger exists');
+    assert.equal(payloads.filter(r=>r.status===200).length,2,'both authorized calls recover the exact same registered session');
+    assert.ok(payloads.every(r=>r.body.session_id==='cs_rental_v1'));
     const retry=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
     assert.equal(retry.status,200,'the retry reuses the fully registered checkout');
     assert.equal((await retry.json()).session_id,'cs_rental_v1');
@@ -250,7 +256,7 @@ test('concurrent initial checkout requests share one Stripe session and one book
 
 test('rental quote uses local calendar days across daylight saving changes',{concurrency:false},()=>{
   const vehicle={daily_rate_cents:5000};
-  const tenant={white_label_enabled:false,platform_fee_percent:0.03};
+  const tenant={slug:'whip-equipped',white_label_enabled:false,platform_fee_percent:0.03};
   const fall=rentalQuote(vehicle,tenant,{
     start_at:'2026-10-31T10:00:00-04:00',end_at:'2026-11-02T10:00:00-05:00',
     time_zone:'America/New_York',protection_plan:'none'
@@ -263,11 +269,51 @@ test('rental quote uses local calendar days across daylight saving changes',{con
   assert.equal(late.days,2,'a genuinely late return is a second billable day');
 });
 
-test('a stored session with no accounting row is never returned for payment',{concurrency:false},async()=>{
+test('a stored session with no accounting row is repaired idempotently before returning its URL',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
     state.payments=[];
     const res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
-    assert.equal(res.status,503);
+    assert.equal(res.status,200,await res.text());
+    assert.equal(state.payments.length,1,'a missing accounting row is reconstructed');
     assert.equal(state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST').length,0);
   });
+});
+
+test('rental checkout and booking reads deny a different authenticated renter',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    state.rentals[0].renter_id=OTHER;
+    const checkout=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(checkout.status,403);
+    const read=await worker.fetch(req('/api/rentals/bookings/'+RENTAL,'GET'),env);
+    assert.equal(read.status,403);
+    assert.equal(state.stripe.length,0,'a non-owner cannot read or create a Stripe session');
+  });
+});
+
+test('checkout registration recovers a failed insert and a lost insert acknowledgment',{concurrency:false},async()=>{
+  for(const mode of ['paymentInsertFailsOnce','paymentResponseLostOnce']){
+    await withLedger(ledger(),async state=>{
+      state.payments=[];state[mode]=true;
+      let res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+      assert.equal(res.status,500,'the first unconfirmed payment registration never returns a checkout URL');
+      res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+      const payload=await res.json();
+      assert.equal(res.status,200,JSON.stringify(payload));
+      assert.equal(payload.session_id,'cs_rental');
+      assert.equal(state.payments.length,1,'one durable accounting row is retained');
+    });
+  }
+});
+
+test('client-controlled time_zone never influences server-owned East Coast billing',{concurrency:false},()=>{
+  const vehicle={daily_rate_cents:5000},tenant={slug:'whip-equipped',white_label_enabled:false};
+  const quote=rentalQuote(vehicle,tenant,{
+    start_at:'2026-10-31T10:00:00-04:00',end_at:'2026-11-02T10:00:00-05:00',
+    time_zone:'Pacific/Auckland',protection_plan:'none'
+  });
+  assert.equal(quote.days,2);
+  const unconfigured=rentalQuote(vehicle,{slug:'other'},{
+    start_at:'2026-10-31T10:00:00-04:00',end_at:'2026-11-02T10:00:00-05:00'
+  });
+  assert.match(unconfigured.error,/time zone has not been configured/);
 });
