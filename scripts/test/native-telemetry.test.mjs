@@ -418,11 +418,11 @@ test('the privacy signal is honoured, not merely written down', async () => {
     'both names must count');
   assert.match(ts, /const quiet = optedOut\(h\);/,
     'the decision must be made once, before any row is built');
-  assert.match(ts, /const minimized = quiet \\|\\| cookieless;/,
+  assert.match(ts, /const minimized = quiet \|\| cookieless;/,
     'visitor data minimization must activate under both opt-out and cookieless mode');
-  assert.match(ts, /const ip = minimized \\? null : validIp\\(callerIp\\(h\\)\\);/,
+  assert.match(ts, /const ip = minimized \? null : validIp\(callerIp\(h\)\);/,
     'IP must be suppressed whenever either privacy restriction applies');
-  assert.match(ts, /const sessionId = persistentAllowed \\? str\\(body\\.session_id, 64\\) : null;/,
+  assert.match(ts, /const sessionId = persistentAllowed \? str\(body\.session_id, 64\) : null;/,
     'a session identifier must require the complete privacy and consent gate');
   assert.match(ts, /const persistentAllowed = !minimized && \(site\.legacy \|\| consentState === "granted"\);/,
     'persistent customer identity requires both no privacy opt-out/cookieless mode and explicit consent');
