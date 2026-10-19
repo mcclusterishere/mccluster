@@ -10,12 +10,14 @@ const publicFiles=[
   ['/',/text\/html/,/<!doctype html|<html/i],
   ['/album.html',/text\/html/,/<html/i],
   ['/mnet.html',/text\/html/,/<html/i],
-  ['/js/tabbar.js',/(?:javascript|text\/plain)/,/.+/]
+  ['/js/tabbar.js',/(?:javascript|text\/plain)/,/.+/],
+  ['/data/environments.json',/(?:application\/json|text\/plain)/,/"environments"/]
 ];
 const privateFiles=[
   '/.mcp.json','/core/src/broker-edge-auth.mjs',
   '/platform/config/server-inventory.json','/dns/mccluster.org.zone',
-  '/data/analytics/application-schema-inventory.json'
+  '/data/analytics/application-schema-inventory.json',
+  '/assets/3d/prim3-site0/PRIM3_Site0_CANONICAL_ARCHITECTURE_v03.json'
 ];
 async function probe(path){
   const res=await fetch(url+path,{redirect:'follow',headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)});
