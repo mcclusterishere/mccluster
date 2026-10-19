@@ -115,13 +115,6 @@ export async function createWhiteLabelSubscriptionCheckout(env, input = {}) {
   });
 }
 
-/* Read the stored Checkout Session before deciding whether another payment
-   attempt is possible. A completed/expired session is never silently replaced. */
-export async function retrieveCheckoutSession(env, sessionId, connectedAccountId) {
-  return stripeRequest(env, 'checkout/sessions/' + encodeURIComponent(sessionId), {},
-    { method: 'GET', account: connectedAccountId });
-}
-
 export async function createDirectCheckout(env, input = {}) {
   const paymentIntentData = {
     metadata: { kind: input.kind, tenant_id: input.tenantId, resource_id: input.resourceId }
@@ -142,7 +135,7 @@ export async function createDirectCheckout(env, input = {}) {
     }],
     payment_intent_data: paymentIntentData,
     metadata: { kind: input.kind, tenant_id: input.tenantId, resource_id: input.resourceId }
-  }, { account: input.connectedAccountId }, { account: input.connectedAccountId, idempotencyKey: input.idempotencyKey });
+  }, { account: input.connectedAccountId, idempotencyKey: input.idempotencyKey });
 }
 
 export async function retrieveCheckoutSession(env, sessionId, connectedAccountId) {
