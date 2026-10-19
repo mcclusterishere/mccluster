@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mccluster.org/schemas/video-recharacterize-job-v1",
+  "title": "McCluster Studio video-to-video fictional-character replacement — proposed V1",
+  "description": "Design-time input validation only. Server must independently verify source ownership, track provenance, likeness authorization, approved character references, permissions, quotas and signed budgets. No runtime implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_asset_id",
+    "target_track_id",
+    "character_id",
+    "character_reference_version_id",
+    "rights_record_id",
+    "mode",
+    "audio_policy",
+    "render_profile",
+    "publication"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "recharacterize-job.v1"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "source_asset_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "description": "Owner-scoped private media asset ID, never raw public URL"
+    },
+    "target_track_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "description": "Server-generated person track from source analysis"
+    },
+    "character_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[a-z0-9-]+$",
+      "maxLength": 120,
+      "description": "Canonical source character, e.g. prim3:royce"
+    },
+    "character_reference_version_id": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 128
+    },
+    "rights_record_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "description": "Existing server-verified rights/release record, not a client consent boolean"
+    },
+    "mode": {
+      "const": "character_replacement"
+    },
+    "audio_policy": {
+      "enum": [
+        "preserve",
+        "mute"
+      ]
+    },
+    "render_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_cost_cents",
+        "max_duration_seconds",
+        "target_height",
+        "fps",
+        "aspect_ratio"
+      ],
+      "properties": {
+        "max_cost_cents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "max_duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 21600,
+          "description": "Upper user-approved payable duration; initial pilot supports only one 5–15sec shot, not an arbitrary duration"
+        },
+        "target_height": {
+          "enum": [
+            480,
+            720,
+            1080
+          ]
+        },
+        "fps": {
+          "enum": [
+            24,
+            25,
+            30
+          ]
+        },
+        "aspect_ratio": {
+          "enum": [
+            "source",
+            "16:9",
+            "9:16",
+            "1:1"
+          ]
+        },
+        "strategy": {
+          "enum": [
+            "quality",
+            "balanced",
+            "speed",
+            "price"
+          ],
+          "default": "balanced"
+        }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "auto_publish",
+        "platforms"
+      ],
+      "properties": {
+        "auto_publish": {
+          "const": false,
+          "description": "User can never auto-publish from the creation request"
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "maxItems": 10,
+          "uniqueItems": true,
+          "description": "Delivery targets are hints; require separate human editor approval and official provider account authorization"
+        }
+      }
+    },
+    "editorial_note": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "reference_appearance_variant_id": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 128
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "recharacterize-job.v1",
+      "source_asset_id": "PRIVATE_SOURCE_ASSET_ID",
+      "target_track_id": "SERVER_SELECTED_PERSON_TRACK_ID",
+      "character_id": "prim3:royce",
+      "character_reference_version_id": "OWNER_APPROVED_REFSET_VERSION_ID",
+      "rights_record_id": "VERIFIED_SOURCE_AND_LIKENESS_RIGHTS_RECORD_ID",
+      "mode": "character_replacement",
+      "audio_policy": "preserve",
+      "render_profile": {
+        "max_cost_cents": 2000,
+        "max_duration_seconds": 15,
+        "target_height": 720,
+        "fps": 24,
+        "aspect_ratio": "source",
+        "strategy": "quality"
+      },
+      "publication": {
+        "auto_publish": false,
+        "platforms": []
+      },
+      "editorial_note": "Private test only. Fictional virtual performer. No publishing."
+    }
+  ]
+}
