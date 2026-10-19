@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'listen.html'
+      - 'helix.html'
+      - 'js/helix/**'
+      - 'css/helix.css'
+      - 'scripts/test/helix-interface.test.mjs'
       - 'album.html'
       - 'catalogue.html'
       - 'creator.html'
@@ -22,6 +26,10 @@ on:
     branches: [main]
     paths:
       - 'listen.html'
+      - 'helix.html'
+      - 'js/helix/**'
+      - 'css/helix.css'
+      - 'scripts/test/helix-interface.test.mjs'
       - 'album.html'
       - 'catalogue.html'
       - 'creator.html'
@@ -50,13 +58,16 @@ jobs:
       - name: Parse music browser modules
         run: |
           node --check js/music-engine.js
+          node --check js/helix/math.mjs
+          node --check js/helix/scene.mjs
+          node --check js/helix/main.mjs
           node --check js/music-community.js
           node --check js/music-creator-profile.js
           node --check js/music-admin.js
       - name: Parse creator studio module
         run: node --check js/music-creator-studio.js
       - name: Run music platform contracts
-        run: node --test scripts/test/music-platform.test.mjs
+        run: node --test scripts/test/music-platform.test.mjs scripts/test/helix-interface.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
