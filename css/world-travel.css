@@ -333,3 +333,10 @@
 @media (min-width:1400px) {
   .wt-fields--main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 }
+
+/* Autocomplete must win the touch target while a destination list is open.
+   Music keeps playing; its floating controls reclaim input after selection. */
+body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
+  pointer-events:none;
+  opacity:.18;
+}
