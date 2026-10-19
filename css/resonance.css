@@ -35,7 +35,7 @@ body.resonance{margin:0;background:var(--rs-bg);color:var(--rs-ink);font:15px/1.
 .rs-model{border:1px solid var(--rs-edge);border-radius:20px;padding:7px 11px;color:var(--rs-muted);font-size:10px;letter-spacing:.1em}
 .rs-simulator{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .rs-visual{position:relative;background:#242620;border:1px solid var(--rs-edge);border-radius:7px;display:flex;flex-direction:column;justify-content:space-between;min-height:350px;overflow:hidden}
-.rs-visual canvas{width:min(82vw,490px);height:min(82vw,490px);aspect-ratio:1;image-rendering:auto;align-self:center;margin:12px auto;display:block;border-radius:50%;border:1px solid #5e6254}
+.rs-visual canvas{width:min(82vw,490px);height:min(82vw,490px);aspect-ratio:1;image-rendering:auto;align-self:center;margin:12px auto;display:block;border-radius:6px;border:1px solid #5e6254}
 .rs-visual-overlay{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;letter-spacing:.12em;color:var(--rs-muted)}
 .rs-visual-note{background:#141612f5;color:var(--rs-muted);font-size:11px;line-height:1.45;padding:13px 14px;margin:0!important}
 .rs-control{background:var(--rs-surface);border:1px solid var(--rs-edge);padding:22px 18px;border-radius:7px}
