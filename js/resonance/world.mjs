@@ -15,7 +15,7 @@ const engine=window.MCC_MUSIC;
 const MODES=modes();
 const state={
   view:"brain",album:0,track:0,albums:[],networks:[],
-  rotation:0,analysis:null,origin:"none",analysisId:null,
+  rotation:0,analysis:null,origin:"none",analysisId:null,surfaceView:false,
   frames:[],activeRegion:null,playing:false
 };
 const MAX_BROWSER_SECONDS=30,MAX_FILES=8,MAX_FILE_BYTES=40*1024*1024;
@@ -23,7 +23,7 @@ const reduced=!!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const weights=new Float32Array(MODES.length);
 weights[0]=1;
 let renderer,scene,camera,water,waterOriginal,brainRoot,dnaRoot,markers=[],rungs=[],particles;
-let lastDraw=0,waterSurface=null,orbit=0.20,tilt=0.13,pointers=new Map(),drag=null;
+let lastDraw=0,waterSurface=null,orbit=0.20,tilt=0.13,pointers=new Map(),drag=null,scrollAccumulator=0;
 let context=null;
 const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
 const selectedRegion=()=>state.networks.find(x=>x.id===state.activeRegion);
@@ -202,18 +202,20 @@ function animate(ms){
   if(document.hidden)return;
   if(ms-lastDraw<(reduced?90:32))return;
   lastDraw=ms;
-  const time=ms/1000;
+  const time=reduced?0:ms/1000;
   const current=state.view;
   const desired=current==="brain"?0:-3.7;
   const center=desired;
   const aspect=camera.aspect;
   const dist=aspect<.8?9.1:7.7;
   // The two specimens occupy the same environment. Focus shifts by mode.
-  const wanted=new THREE.Vector3(center+Math.sin(orbit)*dist*.15,
-    (aspect<.8?.45:.1)+Math.sin(tilt)*.5,
-    dist+Math.cos(orbit)*.18);
+  const wanted=state.surfaceView
+    ? new THREE.Vector3(center+2,8.4,5.8)
+    : new THREE.Vector3(center+Math.sin(orbit)*dist*.15,
+      (aspect<.8?.45:.1)+Math.sin(tilt)*.5,
+      dist+Math.cos(orbit)*.18);
   camera.position.lerp(wanted,.07);
-  camera.lookAt(center,0,0);
+  camera.lookAt(center,state.surfaceView?2.5:0,0);
   brainRoot.rotation.y+=(reduced?0:.0012);
   brainRoot.position.y=-.1+(reduced?0:Math.sin(time*.5)*.045);
   if(!reduced)dnaRoot.rotation.y+=.0008;
@@ -317,9 +319,13 @@ function events(){
     const dx=event.clientX-prev.x,dy=event.clientY-prev.y;
     if(pointers.size===1){
       orbit+=dx*.004;tilt=Math.max(-.8,Math.min(.8,tilt+dy*.003));
-      if(state.view==="dna"&&Math.abs(dy)>18){
-        const tracks=state.albums[state.album]?.tracks||[];
-        if(tracks.length)chooseTrack(state.track+(dy<0?1:-1));
+      if(state.view==="dna"){
+        scrollAccumulator+=dy;
+        if(Math.abs(scrollAccumulator)>=65){
+          const tracks=state.albums[state.album]?.tracks||[];
+          if(tracks.length)chooseTrack(state.track+(scrollAccumulator<0?1:-1));
+          scrollAccumulator=0;
+        }
       }
     }
     pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
@@ -347,6 +353,11 @@ function events(){
       chooseRegion(state.networks[(i+(event.key==="ArrowRight"?1:-1)+state.networks.length)%state.networks.length].id);
       event.preventDefault();
     }
+  });
+  $("rwWaterView").addEventListener("click",()=>{
+    state.surfaceView=!state.surfaceView;
+    $("rwWaterView").textContent=state.surfaceView?"RETURN UNDERWATER":"VIEW WATER FROM ABOVE";
+    updateMessage(state.surfaceView?"Viewing modeled surface modes from above. These are not measured Faraday waves.":"Back underwater: choose brain networks or DNA music.");
   });
   $("rwAlbum").addEventListener("change",e=>chooseAlbum(Number(e.target.value)));
   $("rwPlay").addEventListener("click",()=>playSelected("user_selected"));
@@ -446,7 +457,7 @@ async function analyzePublished(track){
     updateMessage("Restricted or remote media cannot be fetched for analysis; the canonical player enforces the access gate.");
     return;
   }
-  const url=new URL(track.src,location.href);
+  const url=new URL(track.src,document.baseURI);
   if(url.origin!==location.origin)return;
   const res=await fetch(url.href,{credentials:"same-origin"});
   if(!res.ok)throw Error("Published source unavailable");
