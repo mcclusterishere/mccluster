@@ -72,8 +72,8 @@ test('Control Analytics bounds concurrent reads instead of stampeding PostgREST'
   A.mount(host);
   await new Promise((resolve)=>setTimeout(resolve,120));
   assert.ok(completed>=12,'expected the full analytics suite to complete');
-  /* four at a time: the suite gained the reads no screen used to show (visitors, journeys, health, missions, country) */
-  assert.ok(peak<=4,'analytics opened '+peak+' concurrent reads');
+  /* Heavy independent RPCs run two at a time; background writes must retain headroom. */
+  assert.ok(peak<=2,'analytics opened '+peak+' concurrent reads');
   assert.ok(paints>4,'completed reads should repaint progressively');
   assert.equal(A.state.loading,false);
 });
@@ -204,7 +204,7 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
     read('css/control-analytics.css'),
     read('supabase/migrations/20261003223831_analytics_hourly_hotpath_v2.sql')
   ]);
-  assert.match(js,/r\.id==="24h"\?retryStatementTimeout\(function\(\)\{return rpc\("analytics_hourly",daily\);\}\)/);
+  assert.match(js,/r\.id==="24h"\?rpc\("analytics_hourly",daily\)/);
   assert.match(js,/r\.id==="24h"\?Promise\.resolve\(\[\]\):rpc\("analytics_daily",daily\)/);
   assert.match(js,/allLabels:true/);
   assert.match(js,/data-cra-chart-point/);
@@ -226,12 +226,15 @@ test('24h analytics is exactly 24 real hourly buckets with touchable value point
   assert.match(migration,/grant execute on function public\.analytics_hourly.*to authenticated/i);
 });
 
-test('24h analytics retries one transient database statement timeout',async()=>{
+test('all read-only analytics RPCs retry one transient database statement timeout',async()=>{
   const js=await read('js/control-room/analytics.js');
   assert.match(js,/function retryStatementTimeout\(fn\)/);
   assert.match(js,/code!==\"57014\"/);
   assert.match(js,/statement timeout\|canceling statement/i);
-  assert.match(js,/retryStatementTimeout\(function\(\)\{return rpc\(\"analytics_hourly\",daily\);\}\)/);
+  assert.match(js,/function rpc\(name,body\)\{return retryStatementTimeout\(function\(\)\{/);
+  assert.match(js,/r\.id===\"24h\"\?rpc\(\"analytics_hourly\",daily\)/);
+  assert.doesNotMatch(js,/retryStatementTimeout\(function\(\)\{return rpc\(/,
+    'do not nest retries and send more than two attempts');
 });
 
 test('Control Analytics is mobile-first',async()=>{
@@ -297,4 +300,62 @@ test('Audience analytics stays inside the exact selected property and timestamp 
   assert.match(js,/\{name:"business",run:function\(\)\{return site===null\?S\.request/);
   assert.match(js,/Control will not mix another property into this view/);
   assert.doesNotMatch(js,/analytics_engagement_site|analytics_funnel_site/);
+});
+
+
+test('a canceled totals query is retried once and the dashboard retains complete metrics',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        if(totalsAttempts===1){
+          return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+        }
+        return Promise.resolve([{page_views:7,visitors:3,sessions:4,events:12}]);
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2,'one transient retry, never an unbounded loop');
+  assert.equal(A.state.errors.totals,undefined);
+  assert.equal(A.state.data.traffic.totals.page_views,7);
+  assert.equal(A.state.loading,false);
+  assert.doesNotMatch(A.top(),/Partial data/);
+});
+
+test('a persistent statement timeout reports failure after exactly two attempts',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console,setTimeout};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  let totalsAttempts=0;
+  A.init({
+    request:()=>Promise.resolve({}),
+    supa:(path)=>{
+      if(String(path).startsWith('analytics_sites?'))return Promise.resolve([]);
+      if(path==='rpc/analytics_totals'){
+        totalsAttempts++;
+        return Promise.reject(Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'}));
+      }
+      return Promise.resolve([]);
+    }
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,300));
+  assert.equal(totalsAttempts,2);
+  assert.ok(A.state.errors.totals,'the persistent failure must not be hidden');
+  assert.match(A.top(),/Not live/);
 });
