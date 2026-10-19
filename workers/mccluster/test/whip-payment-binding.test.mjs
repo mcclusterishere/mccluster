@@ -90,9 +90,9 @@ test('concurrent duplicate deliveries never acknowledge unfinished work',{concur
   await withLedger(ledger(),async state=>{
     const results=await Promise.allSettled([processStripeEvent(env,rideEvent('evt_race')),processStripeEvent(env,rideEvent('evt_race'))]);
     assert.equal(results.filter(r=>r.status==='fulfilled'&&r.value.applied).length,1);
-    assert.ok(results.every(r=>r.status==='fulfilled'||r.reason?.status===503),'unfinished duplicates ask Stripe to retry');
+    assert.equal(results.filter(r=>r.status==='rejected'&&r.reason?.status===503).length,1,'the losing delivery is told to retry, never acknowledged');
     assert.equal(ridePatches(state).length,1);
-    assert.equal(state.events.get('evt_race').event_type,'payment_intent.amount_capturable_updated');
+    assert.equal(state.events.get('whip:evt_race').event_type,'payment_intent.amount_capturable_updated');
   });
 });
 
@@ -112,7 +112,7 @@ test('an event is applied only to the tenant, intent and amount it is bound to',
       assert.deepEqual(result,{duplicate:false,ignored:true,reason},name);
       assert.equal(ridePatches(state).length,0,name+': nothing changed');
       assert.equal(state.calls.filter(c=>c.path==='/rest/v1/payments'&&c.method==='PATCH').length,0,name+': no payment row changed');
-      assert.ok(state.events.has(event.id),name+': the event is claimed so Stripe stops retrying it');
+      assert.ok(state.events.has('whip:'+event.id),name+': the event is claimed so Stripe stops retrying it');
     });
   }
 });
@@ -121,7 +121,7 @@ test('a failed application releases the claim so Stripe can redeliver',{concurre
   await withLedger(ledger(),async state=>{
     state.ridePatchThrows=true;
     await assert.rejects(processStripeEvent(env,rideEvent('evt_fail')));
-    assert.equal(state.events.has('evt_fail'),false);
+    assert.equal(state.events.has('whip:evt_fail'),false);
     state.ridePatchThrows=false;
     assert.equal((await processStripeEvent(env,rideEvent('evt_fail'))).applied,'payment_intent.amount_capturable_updated');
   });
@@ -206,14 +206,45 @@ test('rental bookings are priced by the server from dates, rate and catalogue; b
 test('pending webhook claims return retryable 503, and crashed stale claims can be recovered',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
     const type='payment_intent.amount_capturable_updated';
-    state.events.set('evt_pending',{event_type:'processing:'+Date.now()+':'+type});
+    state.events.set('whip:evt_pending',{event_type:'processing:'+Date.now()+':'+type});
     await assert.rejects(processStripeEvent(env,rideEvent('evt_pending')),e=>e.status===503);
     assert.equal(ridePatches(state).length,0,'a pending duplicate never applies concurrently');
-    state.events.set('evt_crash',{event_type:'processing:'+(Date.now()-20*60_000)+':'+type});
+    state.events.set('whip:evt_crash',{event_type:'processing:'+(Date.now()-20*60_000)+':'+type});
     const recovered=await processStripeEvent(env,rideEvent('evt_crash'));
     assert.equal(recovered.applied,type);
-    assert.equal(state.events.get('evt_crash').event_type,type,'completion records real Stripe type');
-    assert.equal(state.events.get('evt_crash').processed_at!=null,true);
+    assert.equal(state.events.get('whip:evt_crash').event_type,type,'completion records real Stripe type');
+    assert.equal(state.events.get('whip:evt_crash').processed_at!=null,true);
+  });
+});
+
+test('a bare stripe_events row written by another consumer does not suppress whip; a failed finish keeps the lease',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    const type='payment_intent.amount_capturable_updated';
+    // connect.js and the stripe-webhook function record every event under its bare id.
+    state.events.set('evt_shared',{event_type:type,processed_at:new Date().toISOString()});
+    const first=await processStripeEvent(env,rideEvent('evt_shared'));
+    assert.equal(first.applied,type,'whip applies the event it has not yet seen');
+    assert.equal(state.events.get('whip:evt_shared').event_type,type,'whip finishes under its own key');
+    assert.equal(state.events.get('evt_shared').event_type,type,'the other consumer row is untouched');
+    const again=await processStripeEvent(env,rideEvent('evt_shared'));
+    assert.equal(again.duplicate,true);
+    assert.equal(ridePatches(state).length,1,'applied exactly once');
+  });
+  await withLedger(ledger(),async state=>{
+    const type='payment_intent.amount_capturable_updated';
+    const realFetch=state.fetch;
+    let finishFails=true;
+    // withLedger installed state.fetch already; override the global for this block only (withLedger restores the original).
+    globalThis.fetch=async(resource,options={})=>{
+      const u=new URL(String(resource));
+      if(finishFails&&u.pathname==='/rest/v1/stripe_events'&&(options.method||'GET')==='PATCH'){finishFails=false;return json([]);}
+      return realFetch(resource,options);
+    };
+    await assert.rejects(processStripeEvent(env,rideEvent('evt_finish')),e=>e.status===503);
+    assert.equal(ridePatches(state).length,1,'the ledger write happened');
+    assert.match(state.events.get('whip:evt_finish').event_type,/^processing:/,'the lease is kept, not released, after the writes applied');
+    await assert.rejects(processStripeEvent(env,rideEvent('evt_finish')),e=>e.status===503,'the retry waits for lease recovery instead of re-applying');
+    assert.equal(ridePatches(state).length,1,'no second application over the ledger');
   });
 });
 

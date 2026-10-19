@@ -57,7 +57,11 @@ function rentalDays(start, end, zone) {
   const date = p => Date.UTC(Number(p.year), Number(p.month)-1, Number(p.day));
   const clock = p => Number(p.hour)*3600 + Number(p.minute)*60 + Number(p.second);
   const civil = (date(b)-date(a))/86_400_000;
-  const days = Math.max(1, civil + (clock(b)>clock(a) ? 1 : 0));
+  /* A later wall-clock return is a late return only when more than the
+     civil-day span actually elapsed: an exact 48-hour rental that crosses
+     spring-forward reads 12:00 -> 13:00 and must still be two days. */
+  const late = clock(b) > clock(a) && (end - start) > civil * 86_400_000;
+  const days = Math.max(1, civil + (late ? 1 : 0));
   if (!Number.isInteger(days) || days<1 || Math.abs((end-start)-civil*86_400_000)>90_000_000)
     return { error: 'Rental dates need a consistent pickup and return time' };
   return days;
@@ -238,12 +242,18 @@ function ignored(reason) { return { ignored: true, reason }; }
    (Stripe retries), never a premature 200. A crashed Worker lease can be
    recovered with a conditional compare-and-swap after fifteen minutes. */
 const STRIPE_EVENT_LEASE_MS = 15 * 60_000;
+/* public.stripe_events is shared with the Connect webhook (connect.js) and the
+   Supabase stripe-webhook function, which record every event they receive
+   under its bare Stripe id. If one of them sees evt_X first, a bare row with
+   the real type would read here as 'already applied'. Whip keeps its own key
+   space so only its own finished rows count as duplicates. */
+const stripeEventKey = event => 'whip:' + event.id;
 async function claimStripeEvent(env, event, connectedAccountId) {
-  const key = encodeURIComponent(event.id);
+  const key = encodeURIComponent(stripeEventKey(event));
   const marker = 'processing:' + Date.now() + ':' + event.type;
   try {
     await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ event_id: event.id, event_type: marker, stripe_account_id: connectedAccountId }) });
+      body: JSON.stringify({ event_id: stripeEventKey(event), event_type: marker, stripe_account_id: connectedAccountId }) });
     return { marker };
   } catch (error) {
     if (!/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) throw error;
@@ -265,7 +275,7 @@ async function claimStripeEvent(env, event, connectedAccountId) {
 }
 async function finishStripeEvent(env, event, marker) {
   const rows = await sb(env,
-    'stripe_events?event_id=eq.' + encodeURIComponent(event.id) + '&event_type=eq.' + encodeURIComponent(marker) + '&select=event_id',
+    'stripe_events?event_id=eq.' + encodeURIComponent(stripeEventKey(event)) + '&event_type=eq.' + encodeURIComponent(marker) + '&select=event_id',
     { method: 'PATCH', headers: { Prefer: 'return=representation' },
       body: JSON.stringify({ event_type: event.type, processed_at: new Date().toISOString() }) });
   if (rows?.length !== 1)
@@ -273,7 +283,7 @@ async function finishStripeEvent(env, event, marker) {
 }
 async function releaseStripeEvent(env, event, marker) {
   try {
-    await sb(env, 'stripe_events?event_id=eq.' + encodeURIComponent(event.id) + '&event_type=eq.' + encodeURIComponent(marker),
+    await sb(env, 'stripe_events?event_id=eq.' + encodeURIComponent(stripeEventKey(event)) + '&event_type=eq.' + encodeURIComponent(marker),
       { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
   } catch { /* lease will be retryable after the recovery deadline */ }
 }
@@ -388,12 +398,19 @@ export async function processStripeEvent(env, event) {
   const object = event.data?.object || {}, connectedAccountId = event.account || null;
   const claim = await claimStripeEvent(env, event, connectedAccountId);
   if (claim.duplicate) return { duplicate: true };
+  let applied = false;
   try {
     const result = await applyStripeEvent(env, event, object, connectedAccountId);
+    applied = true;
     await finishStripeEvent(env, event, claim.marker);
     return { duplicate: false, ...result };
   } catch (error) {
-    await releaseStripeEvent(env, event, claim.marker);
+    /* A failed apply releases the lease so Stripe's retry runs it again. A
+       failed finish after a successful apply keeps the lease: the writes are
+       already in the ledger, so the retry must wait for lease recovery rather
+       than re-apply them over later, newer state (a paid booking back to
+       processing). */
+    if (!applied) await releaseStripeEvent(env, event, claim.marker);
     throw error;
   }
 }
