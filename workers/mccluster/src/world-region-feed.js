@@ -102,6 +102,9 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
   const limit = rawLimit === null ? 20 : Number(rawLimit);
   if (!Number.isInteger(limit) || limit < 1 || limit > 30)
     return fail(req, env, 'limit must be 1 to 30', 400);
+  const readPosts = url.searchParams.get('posts') !== '0';
+  const readNews = url.searchParams.get('news') !== '0';
+  if (!readPosts && !readNews) return fail(req, env, 'Select posts or news', 400);
   const postBefore = parseCursor(url.searchParams.get('post_before'));
   const newsBefore = parseCursor(url.searchParams.get('news_before'));
   if (postBefore === false || newsBefore === false)
@@ -121,7 +124,8 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
 
   try {
     const [rawPosts, rawNews] = await Promise.all([
-      db(env, postPath, fetchImpl), db(env, newsPath, fetchImpl)
+      readPosts ? db(env, postPath, fetchImpl) : [],
+      readNews ? db(env, newsPath, fetchImpl) : []
     ]);
     const authors = [...new Set(rawPosts.map(p => p.author_m_uid).filter(id => UUID.test(id)))];
     const profiles = authors.length ? await db(env, 'network_profiles?m_uid=in.(' +
@@ -144,10 +148,10 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
       lon:Number.isFinite(n.headline_longitude)?n.headline_longitude:null,
       country_code:country,location_basis:'article_mentions_place'
     }));
-    const nextPost = allowed.length > limit
+    const nextPost = readPosts && allowed.length > limit
       ? cursor(allowed[limit-1],'created_at')
       : rawPosts.length === limit * 3 ? cursor(rawPosts[rawPosts.length-1],'created_at') : null;
-    const nextNews = rawNews.length === limit
+    const nextNews = readNews && rawNews.length === limit
       ? cursor(rawNews[rawNews.length-1],'published_at') : null;
     const res = reply(req, env, { ok:true, available:true,country,posts,news,
       next_post_before:nextPost,next_news_before:nextNews,
