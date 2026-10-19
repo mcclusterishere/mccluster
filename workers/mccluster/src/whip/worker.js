@@ -88,12 +88,14 @@ async function requireUser(req, env) {
   if (!user) throw Object.assign(new Error('Authentication required'), { status: 401 });
   return user;
 }
-async function requireOperator(req, env, tenantId) {
+async function requireOperator(req, env, tenantId, roles = ['owner','admin']) {
   const user = await requireUser(req, env);
-  if (user.demo && req.headers.get('x-we-role') === 'operator') return user;
-  let rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
-  if (!rows?.length && user.email) rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&email=eq.${encodeURIComponent(user.email)}&select=*`);
-  if (!rows?.length) throw Object.assign(new Error('Operator access required'), { status: 403 });
+  // Demo role headers and email matching are not operator authority. Require
+  // an immutable authenticated account ID linked to the operator and role.
+  if (user.demo) throw Object.assign(new Error('Verified operator login required'), { status: 403 });
+  const rows = await sb(env, `operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=role,auth_user_id&limit=1`);
+  if (!rows?.length || !roles.includes(rows[0].role))
+    throw Object.assign(new Error('Insufficient operator role'), { status: 403 });
   return user;
 }
 function requestIdentity(req, user, fallback) { return user?.id || req.headers.get('x-we-user-id') || fallback; }
@@ -286,17 +288,19 @@ export default {
       if (onboardingMatch && req.method === 'POST') {
         const tenantId = onboardingMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId);
         if (!t?.stripe_account_id) return fail(env, 'Create the connected account first', 409);
-        const body = await req.json().catch(() => ({}));
+        // Stripe onboarding must return to the platform's verified operator
+        // room. Caller-chosen URLs could redirect operators to a phishing
+        // domain after sensitive financial onboarding.
         const link = await createAccountLink(env, t.stripe_account_id, {
-          returnUrl: body.return_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
-          refreshUrl: body.refresh_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
+          returnUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
+          refreshUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
         });
         return reply(env, { url: link.url, expires_at: link.expires_at });
       }
 
       const connectStatusMatch = path.match(/^\/api\/operators\/([^/]+)\/stripe\/status$/);
       if (connectStatusMatch && req.method === 'GET') {
-        const tenantId = connectStatusMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId);
+        const tenantId = connectStatusMatch[1]; await requireOperator(req, env, tenantId, ['owner','admin','finance']); const t = await tenantById(env, tenantId);
         if (!t?.stripe_account_id) return reply(env, { connected: false, ready: false });
         const account = await retrieveConnectedAccount(env, t.stripe_account_id);
         const updated = await patchTenant(env, t.id, { stripe_charges_enabled: Boolean(account.charges_enabled), stripe_payouts_enabled: Boolean(account.payouts_enabled), stripe_details_submitted: Boolean(account.details_submitted) });
@@ -306,11 +310,10 @@ export default {
       const whiteLabelMatch = path.match(/^\/api\/operators\/([^/]+)\/white-label\/checkout$/);
       if (whiteLabelMatch && req.method === 'POST') {
         const tenantId = whiteLabelMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
-        const body = await req.json().catch(() => ({}));
         const session = await createWhiteLabelSubscriptionCheckout(env, {
           tenantId: t.id, tenantSlug: t.slug, email: t.contact_email,
-          successUrl: body.success_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
-          cancelUrl: body.cancel_url || appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
+          successUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
+          cancelUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
         });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'white_label_subscription', resource_id: t.id, stripe_checkout_session_id: session.id, amount_cents: 3300, application_fee_cents: 0, status: 'checkout_created' });
         return reply(env, { checkout_url: session.url, session_id: session.id });
@@ -318,7 +321,7 @@ export default {
 
       const operatorDashboard = path.match(/^\/api\/operators\/([^/]+)\/dashboard$/);
       if (operatorDashboard && req.method === 'GET') {
-        const tenantId = operatorDashboard[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
+        const tenantId = operatorDashboard[1]; await requireOperator(req, env, tenantId, ['owner','admin','finance']); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
         const [rides, rentals, vehicles, payments] = await Promise.all([
           sb(env, `rides?tenant_id=eq.${t.id}&select=id,status,fare_cents,requested_at&order=requested_at.desc&limit=25`),
           sb(env, `rental_bookings?tenant_id=eq.${t.id}&select=id,status,total_cents,payment_status,created_at&order=created_at.desc&limit=25`),
@@ -347,11 +350,12 @@ export default {
 
       // RIDESHARE
       if (path === '/api/rides' && req.method === 'POST') {
-        const user = await requireUser(req, env); const body = await req.json(); const t = await tenant(env, body.tenant_slug || 'whip-equipped'); const fare = Math.max(0, Number(body.fare_cents || 0));
-        const platformFee = t.white_label_enabled ? 0 : Math.round(fare * Number(t.platform_fee_percent || 0.03));
-        const ride = { tenant_id: t.id, rider_id: requestIdentity(req, user, 'demo-rider'), rider_name: body.rider_name || user.user_metadata?.full_name || 'Rider', status: 'REQUESTED', pickup_label: body.pickup_label || 'Current location', pickup_lat: body.pickup_lat ?? null, pickup_lng: body.pickup_lng ?? null, dropoff_label: body.dropoff_label, dropoff_lat: body.dropoff_lat ?? null, dropoff_lng: body.dropoff_lng ?? null, miles: body.miles ?? null, minutes: body.minutes ?? null, ride_tier: body.ride_tier || 'WE Standard', fare_cents: fare, platform_fee_cents: platformFee, pickup_pin: String(Math.floor(1000 + Math.random() * 9000)), payment_status: 'unpaid' };
-        if (!ride.dropoff_label || !fare) return fail(env, 'dropoff_label and fare_cents are required');
-        const rows = await sb(env, 'rides?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(ride) }); return reply(env, { ride: rows[0] }, 201);
+        await requireUser(req, env);
+        // Legacy ride creation accepted client-chosen fare, trip length and
+        // endpoints. It cannot safely create paid work. The signed-quote gate
+        // in the separately reviewed booking PR intercepts this route before
+        // reaching the core. Fail closed when that gate is not installed.
+        return fail(env, 'A verified server-issued quote is required to book a ride', 428);
       }
       const rideMatch = path.match(/^\/api\/rides\/([^/]+)$/);
       if (rideMatch && req.method === 'GET') { await requireUser(req, env); const ride = await getRide(env, rideMatch[1]); return ride ? reply(env, { ride }) : fail(env, 'Ride not found', 404); }
@@ -379,8 +383,23 @@ export default {
       const acceptMatch = path.match(/^\/api\/rides\/([^/]+)\/accept$/);
       if (acceptMatch && req.method === 'POST') {
         const body = await req.json(), current = await getRide(env, acceptMatch[1]); if (!current) return fail(env, 'Ride not found', 404); if (current.status !== 'REQUESTED') return fail(env, 'Ride is no longer available', 409);
-        if (!body.driver_id) return fail(env, 'driver_id is required'); const drivers = await sb(env, `drivers?id=eq.${encodeURIComponent(body.driver_id)}&select=*`), driver = drivers?.[0]; if (!driver) return fail(env, 'Driver not found', 404);
-        const ride = await patchRide(env, current.id, { status: 'ACCEPTED', driver_id: driver.id, accepted_at: new Date().toISOString(), driver_name: driver.display_name, driver_vehicle: [driver.vehicle_color, driver.vehicle_make, driver.vehicle_model].filter(Boolean).join(' '), driver_plate: driver.license_plate, driver_rating: driver.rating }); return reply(env, { ride });
+        if (!body.driver_id) return fail(env, 'driver_id is required');
+        const drivers = await sb(env, `drivers?id=eq.${encodeURIComponent(body.driver_id)}&select=*`), driver = drivers?.[0];
+        if (!driver || !driver.online || driver.tenant_id !== current.tenant_id)
+          return fail(env, 'An available driver from this operator is required', 403);
+        // The final update checks status, assignment and payment again INSIDE
+        // the database update. Two drivers cannot both claim one REQUESTED ride.
+        // The outer gateway separately verifies the authenticated driver's ID.
+        const accepted = await sb(env,
+          `rides?id=eq.${encodeURIComponent(current.id)}&tenant_id=eq.${encodeURIComponent(driver.tenant_id)}&status=eq.REQUESTED&driver_id=is.null&payment_status=in.(authorized,paid)&select=*`,
+          {method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({
+            status:'ACCEPTED',driver_id:driver.id,accepted_at:new Date().toISOString(),
+            driver_name:driver.display_name,
+            driver_vehicle:[driver.vehicle_color,driver.vehicle_make,driver.vehicle_model].filter(Boolean).join(' '),
+            driver_plate:driver.license_plate,driver_rating:driver.rating
+          })});
+        if (!accepted?.length) return fail(env, 'Ride already accepted or payment is unavailable', 409);
+        return reply(env, { ride:accepted[0] });
       }
       const statusMatch = path.match(/^\/api\/rides\/([^/]+)\/status$/);
       if (statusMatch && req.method === 'PATCH') {
@@ -426,12 +445,14 @@ export default {
       const rentalCheckout = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkout$/);
       if (rentalCheckout && req.method === 'POST') {
         const user = await requireUser(req, env); const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404); let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); const vehicle = vehicleRows?.[0];
-        const body = await req.json().catch(() => ({}));
+        // Checkout returns to the platform's own rentals page. A caller-chosen
+        // URL could send a renter to another domain after payment.
+        const rentalReturn = status => appUrl(env, `/whip/rentals/?rental_payment=${status}&booking_id=${encodeURIComponent(booking.id)}`);
         const session = await createDirectCheckout(env, {
           amountCents: booking.total_cents, applicationFeeCents: booking.platform_fee_cents, connectedAccountId: t.stripe_account_id,
           kind: 'rental', tenantId: t.id, resourceId: booking.id, description: `${vehicle?.name || 'Vehicle'} rental`, customerEmail: user.email,
-          successUrl: body.success_url || appUrl(env, `/?rental_payment=success&booking_id=${encodeURIComponent(booking.id)}`),
-          cancelUrl: body.cancel_url || appUrl(env, `/?rental_payment=cancel&booking_id=${encodeURIComponent(booking.id)}`)
+          successUrl: rentalReturn('success'),
+          cancelUrl: rentalReturn('cancel')
         });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'rental', resource_id: booking.id, connected_account_id: t.stripe_account_id, stripe_checkout_session_id: session.id, amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' });
         await patchRental(env, booking.id, { stripe_checkout_session_id: session.id, payment_status: 'checkout_created' });
