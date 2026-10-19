@@ -359,3 +359,24 @@ test('a persistent statement timeout reports failure after exactly two attempts'
   assert.ok(A.state.errors.totals,'the persistent failure must not be hidden');
   assert.match(A.top(),/Not live/);
 });
+
+
+test('a partial business snapshot names failed reads instead of a generic warning',async()=>{
+  const js=await read('js/control-room/analytics.js');
+  const context={window:{CR:{}},console};
+  vm.createContext(context);
+  vm.runInContext(js,context);
+  const A=context.window.CR.analytics;
+  A.init({
+    request:(path)=>Promise.resolve(path.startsWith('/v1/analytics/business?')?
+      {snapshot:{partial:true,read_errors:{musicPlaysTotal:'Data read unavailable',commerce:'Verified commerce read unavailable'}}}:{}),
+    supa:()=>Promise.resolve([])
+  });
+  const host={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+  A.mount(host);
+  await new Promise((resolve)=>setTimeout(resolve,0));
+  assert.equal(A.state.loaded,true);
+  assert.match(A.state.errors.business.message,/musicPlaysTotal/);
+  assert.match(A.state.errors.business.message,/commerce/);
+  assert.match(A.top(),/Partial data/);
+});
