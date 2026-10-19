@@ -131,7 +131,7 @@
         <span class="mn__tabs-thumb" id="mnTabsThumb" aria-hidden="true"></span>
       </nav>
 
-      <section class="mn__view" id="mnLiveView">
+      <section class="mn__view" id="mnLiveView" hidden>
         <section class="mn__onair mn__onair--directory" id="mnLive" aria-live="polite">
           <div class="mn__live-head">
             <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h1 class="mn__live-title">See the work while it happens.</h1></div>
@@ -160,7 +160,8 @@
         <section class="mn__understand"><div><p>UNDERSTAND → ACT</p><h2>See what’s happening. Decide what you’ll do.</h2><small>Live rooms and missions connect attention to measurable work. No points for ideology. No points for outrage. Support does not buy discovery rank.</small></div><a href="action/">Explore initiatives →</a></section>
       </section>
 
-      <section class="mn__view" id="mnFeedView" hidden>
+      <section class="mn__view" id="mnFeedView">
+        <div class="mn__quicklinks"><button type="button" data-mn-view="live">Live rooms</button></div>
         <!-- CAMPAIGNS: the network's live campaigns, one swipe across. A card
              is the door into its campaign page; the dot pulses because the
              count under it is live. -->
@@ -214,6 +215,7 @@
       </section>
 
       <section class="mn__view" id="mnMissionsView" hidden>
+        <div class="mn__quicklinks"><button type="button" data-mn-view="clips">Clipping campaigns</button></div>
         <div class="mn__section-head"><div><p class="mn__eyebrow">Pick your move</p><h2>Missions worth finishing</h2></div><button class="mn__quiet" id="mnRefreshMissions" type="button">Refresh</button></div>
         <section class="mn__record" id="mnRecord" hidden aria-live="polite"></section>
         <div class="mn__missions" id="mnMissionList" aria-live="polite"></div>
@@ -317,6 +319,7 @@
       </section>
 
       <section class="mn__view" id="mnProfileView" hidden>
+        <div class="mn__quicklinks"><button type="button" data-mn-view="discover">Find people</button></div>
         <button class="mn__back" id="mnProfileViewBack" type="button" data-mn-view="feed">← Back to newsfeed</button>
         <div class="mn__frontpage" id="mnFrontPage" hidden>
           <div class="mn__frontpage-head"><div><span>Front page</span><strong id="mnFrontPageTitle">Your public home</strong></div><a id="mnFrontPageOpen" target="_blank" rel="noopener">Open site ↗</a></div>
