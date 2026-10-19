@@ -30,12 +30,20 @@
       navigator.doNotTrack === "1" || window.doNotTrack === "1";
   }
   function uuid() {
-    if (crypto && crypto.randomUUID) return crypto.randomUUID();
-    var b = new Uint8Array(16); crypto.getRandomValues(b);
+    var b = new Uint8Array(16);
+    try {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+      if (typeof crypto === "undefined" || !crypto.getRandomValues) throw new Error("No secure random");
+      crypto.getRandomValues(b);
+    } catch (_) {
+      // Compatibility only: UUID is an event dedupe key, never authentication.
+      for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    }
     b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
     var hex = Array.from(b, function (x) { return x.toString(16).padStart(2, "0"); }).join("");
     return [hex.slice(0, 8),hex.slice(8, 12),hex.slice(12, 16),hex.slice(16, 20),hex.slice(20)].join("-");
   }
+
   function storageGet(storage, key) { try { return storage.getItem(key); } catch (_) { return null; } }
   function storageSet(storage, key, value) { try { storage.setItem(key, value); } catch (_) {} }
   function storageDel(storage, key) { try { storage.removeItem(key); } catch (_) {} }
@@ -145,6 +153,8 @@
       } catch (_) {}
     }
     function attempt(tries) {
+      // A consent withdrawal or new GPC/DNT signal cancels delayed retries.
+      if (!canSend()) return Promise.resolve(null);
       return fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
