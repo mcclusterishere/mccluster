@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
   // Nothing that follows a visitor between sittings survives the signal.
   const persistentAllowed = !quiet && (site.legacy || consentState === "granted");
   const deviceId = persistentAllowed ? str(body.device_id, 64) : null;
-  const sessionId = quiet ? null : str(body.session_id, 64);
+  const sessionId = persistentAllowed ? str(body.session_id, 64) : null;
   const device = quiet ? {} : obj(body.device);
 
   /* A stable, per-event UUID survives a proxy retry or a fallback from the
