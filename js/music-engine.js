@@ -542,7 +542,9 @@
     } catch (e) {}
   }
 
-  function openTrack(albumSlug, title, force) {
+  function openTrack(albumSlug, title, force, selectionOrigin) {
+    // System-selected songs are exposure, not evidence of listener preference.
+    var origin = selectionOrigin === "system_opt_in" ? "system_opt_in" : "user";
     var request;
     return loadLibrary().then(function (by) {
       var t = by[key(albumSlug, title)];
@@ -581,8 +583,8 @@
         startedAt = Date.now();
         setMedia(t);
         paint();
-        trackEvent("music_play", { source: "discovery", access_state: out.state });
-        trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: "discovery" });
+        trackEvent("music_play", { source: origin === "system_opt_in" ? "platform_opt_in_shuffle" : "discovery", selection_origin: origin, access_state: out.state });
+        trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: origin === "system_opt_in" ? "platform_opt_in_shuffle" : "discovery", selection_origin: origin });
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
     }).catch(function (err) {
