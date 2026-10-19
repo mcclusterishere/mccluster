@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, statSync } from "node:fs";
 import { basename, extname } from "node:path";
 import { spawnSync } from "node:child_process";
 import { analyzePcm, analyzeTrackouts } from "../js/resonance/core.mjs";
+import { estimateMusicTheory } from "../js/resonance/theory.mjs";
 
 const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 180;
@@ -101,8 +102,14 @@ export function analyzePaths(files, { trackouts = false } = {}) {
     ? analyzeTrackouts(entries, {maxSeconds:MAX_DURATION_SECONDS})
     : analyzePcm(entries[0].samples, entries[0].sampleRate,
       {maxSeconds:MAX_DURATION_SECONDS});
+  const theory = trackouts
+    ? {combined:estimateMusicTheory(entries[0].samples,entries[0].sampleRate),
+       stems:entries.map(e=>({name:e.name,theory:estimateMusicTheory(e.samples,e.sampleRate)})),
+       note:'Combined harmonic estimate uses first provided stem; original full mix required for reliable key estimation.'}
+    : estimateMusicTheory(entries[0].samples,entries[0].sampleRate);
   return {
     ...result,
+    musicTheory:theory,
     pipeline: { kind: "offline-audio-analysis", version: "v1",
       sampleLimitSeconds: MAX_DURATION_SECONDS,
       originalMix: false, individualStems: trackouts, autonomousGeneClaim: false },
