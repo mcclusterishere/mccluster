@@ -56,8 +56,13 @@ create table if not exists public.network_audio_subscriptions (
  status text not null default 'negotiating' check (status in ('negotiating','active','closed')),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- unique(room_id,listener_m_uid,publisher_m_uid)
+ check(listener_m_uid <> publisher_m_uid)
 );
+-- Only one *active* subscription per listener/publisher pair.
+-- A closed session can be replaced during a reconnect.
+create unique index if not exists network_audio_active_sub_unique
+ on public.network_audio_subscriptions(room_id,listener_m_uid,publisher_m_uid)
+ where status <> 'closed';
 create index if not exists network_audio_sub_room_state
  on public.network_audio_subscriptions(room_id,status);
 
