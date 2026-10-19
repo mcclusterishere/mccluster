@@ -73,13 +73,15 @@ test('Every current catalogue song is a first-class live discovery object', asyn
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });
 
-test('Action Network is live-first without pretending multi-seat video is active', async () => {
+test('Action Network is feed-first while live remains accessible and multi-seat is not advertised', async () => {
   const [html, js, live, worker] = await Promise.all([
     read('mnet.html'), read('js/mnet.js'), read('js/mnet-live.js'), read('workers/mccluster/src/platform-api.js')
   ]);
-  assert.match(js, /currentView:\s*"live"/);
-  assert.match(html, /class="is-active" data-mn-view="live">Live</);
-  assert.match(html, /id="mnFeedView" hidden/);
+  assert.match(js, /currentView:\s*"feed"/, 'the primary experience opens in the feed');
+  assert.match(html, /class="is-active" data-mn-view="feed">Feed</);
+  assert.match(html, /data-mn-view="live">Live rooms</, 'live rooms remain reachable as a secondary feed action');
+  assert.match(html, /id="mnFeedView">/, 'feed is initially visible');
+  assert.match(html, /id="mnLiveView" hidden/, 'live is initially hidden, but accessible');
   assert.match(html, /data-live-kind="mission"/);
   assert.match(html, /data-live-kind="home"/);
   for (const key of ['music','build','learn','field','forum']) assert.match(html, new RegExp('data-live-category="' + key + '"'));
