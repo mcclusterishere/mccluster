@@ -8,6 +8,7 @@
 import * as THREE from "../../vendor/three.module.min.js";
 import { modes, analyzePcm, analyzeTrackouts } from "./core.mjs";
 import { estimateMusicTheory } from "./theory.mjs";
+import { scientificTrackIndex, explainRegion } from "./associations.mjs";
 
 const $ = id => document.getElementById(id);
 const canvas=$("rwCanvas"),app=$("rwApp"),status=$("rwStatus");
@@ -16,7 +17,7 @@ const MODES=modes();
 const state={
   view:"brain",album:0,track:0,albums:[],networks:[],
   rotation:0,analysis:null,origin:"none",analysisId:null,surfaceView:false,
-  frames:[],activeRegion:null,playing:false
+  frames:[],activeRegion:null,playing:false,estimatedTheory:null
 };
 const MAX_BROWSER_SECONDS=30,MAX_FILES=8,MAX_FILE_BYTES=40*1024*1024;
 const reduced=!!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -267,12 +268,32 @@ function chooseTrack(i){
   for(const b of $("rwTracks").querySelectorAll("button"))b.setAttribute("aria-pressed",String(Number(b.dataset.index)===state.track));
   updateMessage("Selected "+tracks[state.track].title+". Tap Play to use the canonical Music transport.");
 }
+function paintRegionResearch(){
+  const el=$("rwRegionAcoustic");if(!el)return;
+  if(!state.analysis){el.textContent="Select or upload music to compare its acoustic measurements with this literature topic. No individual brain activity is measured.";return;}
+  const explanation=explainRegion(state.activeRegion,state.analysis,state.estimatedTheory);
+  el.textContent=explanation.heading+" · "+explanation.observed+". "+explanation.caveat;
+}
+function paintScientificClasses(){
+  const el=$("rwScientificClasses");if(!el)return;
+  el.replaceChildren();
+  if(!state.analysis){el.textContent="Waiting for measured audio…";return;}
+  const index=scientificTrackIndex(state.analysis,state.estimatedTheory);
+  for(const tag of index.tags){
+    const row=document.createElement("div");row.className="rw-scientific-tag";
+    const label=document.createElement("strong");label.textContent=tag.family.replaceAll("-"," ");
+    const value=document.createElement("span");value.textContent=tag.value;
+    const extra=document.createElement("small");extra.textContent=tag.evidence+" · "+tag.meaning;
+    row.append(label,value,extra);el.appendChild(row);
+  }
+}
 function chooseRegion(id){
   const region=state.networks.find(x=>x.id===id);if(!region)return;
   state.activeRegion=id;$("rwRegionName").textContent=region.name;
   $("rwRegionLevel").textContent=region.system.toUpperCase()+" / RESEARCH ASSOCIATION";
   $("rwRegionDetails").textContent=region.evidence;
   $("rwRegionLocation").textContent=region.location+" · "+region.topic;
+  paintRegionResearch();
   const src=$("rwRegionSource");src.textContent=region.source.title+" ↗";src.href=region.source.url;
   for(const button of $("rwRegions").querySelectorAll("button"))button.setAttribute("aria-pressed",String(button.dataset.region===id));
   for(const pin of markers)pin.scale.setScalar(pin.userData.region===id?1.65:1);
@@ -387,6 +408,7 @@ function events(){
 }
 function updateAudioResults(analysis,theory){
   state.analysis=analysis;state.frames=analysis.frames||[];
+  state.estimatedTheory=theory||null;
   const t=theory||{};
   $("rwBpm").textContent=t.tempo?.bpm!=null?String(Math.round(t.tempo.bpm))+" BPM":"—";
   $("rwTempoConfidence").textContent=t.tempo?.reason||"Not available";
@@ -395,6 +417,7 @@ function updateAudioResults(analysis,theory){
   const m=analysis.dominantModes?.[0];
   $("rwMode").textContent=m?"("+m.m+","+m.n+")":"—";
   $("rwBass").textContent=((analysis.features?.lowBandFraction||0)*100).toFixed(1)+"%";
+  paintScientificClasses();paintRegionResearch();
   syncWeights(0);
 }
 function syncWeights(time){
