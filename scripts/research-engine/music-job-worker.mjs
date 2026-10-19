@@ -45,7 +45,7 @@ export class MusicResearchClient {
     return Array.isArray(value)&&name.endsWith("_claim")?value[0]||null:value;
   }
   claim(lease=600){return this.callRpc("mcc_music_research_claim",{
-    p_worker:"mcc-research-container-v1",p_lease_seconds:lease});}
+    p_worker:"mcc-cpu-v1",p_lease_seconds:lease});}
   heartbeat(job,lease){return this.callRpc("mcc_music_research_heartbeat",{
     p_job_id:job.job_id,p_token:job.lease_token,p_seconds:lease});}
   finish(job,result,artifacts){return this.callRpc("mcc_music_research_finish",{
