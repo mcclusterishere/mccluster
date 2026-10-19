@@ -435,12 +435,14 @@ export default {
       const rentalCheckout = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkout$/);
       if (rentalCheckout && req.method === 'POST') {
         const user = await requireUser(req, env); const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404); let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); const vehicle = vehicleRows?.[0];
-        const body = await req.json().catch(() => ({}));
+        // Checkout returns to the platform's own rentals page. A caller-chosen
+        // URL could send a renter to another domain after payment.
+        const rentalReturn = status => appUrl(env, `/whip/rentals/?rental_payment=${status}&booking_id=${encodeURIComponent(booking.id)}`);
         const session = await createDirectCheckout(env, {
           amountCents: booking.total_cents, applicationFeeCents: booking.platform_fee_cents, connectedAccountId: t.stripe_account_id,
           kind: 'rental', tenantId: t.id, resourceId: booking.id, description: `${vehicle?.name || 'Vehicle'} rental`, customerEmail: user.email,
-          successUrl: body.success_url || appUrl(env, `/?rental_payment=success&booking_id=${encodeURIComponent(booking.id)}`),
-          cancelUrl: body.cancel_url || appUrl(env, `/?rental_payment=cancel&booking_id=${encodeURIComponent(booking.id)}`)
+          successUrl: rentalReturn('success'),
+          cancelUrl: rentalReturn('cancel')
         });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'rental', resource_id: booking.id, connected_account_id: t.stripe_account_id, stripe_checkout_session_id: session.id, amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' });
         await patchRental(env, booking.id, { stripe_checkout_session_id: session.id, payment_status: 'checkout_created' });
