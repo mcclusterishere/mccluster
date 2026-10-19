@@ -140,3 +140,27 @@ test("advanced stem and sheet-scoring processes cannot execute without explicit 
   assert.match(script,/shell=False/);
   assert.match(script,/human_review_required/);
 });
+
+test("research families use measured acoustic features, not mood or implied neural activation",async()=>{
+  const {scientificTrackIndex,explainRegion}=await import("../../js/resonance/associations.mjs");
+  const signal=analyzePcm(oscillator(110,3),SR,{maxFrames:5});
+  const theory=estimateMusicTheory(oscillator(110,3),SR);
+  const classified=scientificTrackIndex(signal,theory);
+  assert.equal(classified.schema,"mcc.research.scientific-track-index.v1");
+  assert.ok(classified.tags.some(t=>t.family==="modeled-resonance"));
+  assert.ok(classified.tags.some(t=>t.family==="spectral-distribution"));
+  assert.ok(classified.tags.every(t=>["measured-audio","modeled","estimated-model","insufficient-evidence"].includes(t.evidence)));
+  assert.doesNotMatch(JSON.stringify(classified),/listener.?s (mood|personality)|dopamine release|dna activation/i);
+  const reward=explainRegion("reward",signal,theory);
+  assert.equal(reward.status,"not-measured");
+  assert.match(reward.caveat,/No audio-only features establish enjoyment/);
+  const rhythmic=explainRegion("rhythm",signal,theory);
+  assert.match(rhythmic.claim,/no brain activation/);
+  const world=await read("js/resonance/world.mjs");
+  const markup=await read("_unfinished/research-world/index.html");
+  assert.match(world,/scientificTrackIndex/);
+  assert.match(world,/explainRegion/);
+  assert.match(world,/origin==="random_one_time_opt_in"\?"system_opt_in":"user"/);
+  assert.match(markup,/rwRegionAcoustic/);
+  assert.match(markup,/rwScientificClasses/);
+});
