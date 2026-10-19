@@ -22,4 +22,4 @@
 <button type="submit">Prepare Membership Request</button>
 </form></div></main><script>
 (function(){var p=new URLSearchParams(location.search),c=document.getElementById('context');if(p.get('track'))c.textContent='You came from: '+p.get('track');document.getElementById('application').addEventListener('submit',function(e){e.preventDefault();var f=new FormData(e.currentTarget),body=['Mnet membership application','Name: '+f.get('name'),'Email: '+f.get('email'),'Interests: '+f.getAll('interest').join(', '),'Participation: '+f.get('role'),'Introduction: '+(f.get('intro')||''),'Source: '+(p.get('source')||'direct'),'Track: '+(p.get('track')||'')].join('\n');location.href='mailto:matthew@mccluster.org?subject='+encodeURIComponent('Mnet membership application')+'&body='+encodeURIComponent(body);});})();
-</script></body></html>
+</script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>
