@@ -368,7 +368,39 @@ const chooseTravelPlace = async (page, id, query) => {
       && list && !list.hidden && [...list.querySelectorAll('button')]
         .some(button => button.textContent?.includes(expected));
   }, {id, expected}, {timeout: 25000});
-  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  // Diagnostic for the desktop-only CI interaction stall: check actual
+  // viewport geometry, computed visibility and nearest clipping ancestor.
+  // No addresses or private coordinates are printed, only boolean/layout data.
+  if (process.env.E2E_ONLY === 'travel-desktop') {
+    console.log('TRAVEL_SUGGEST_LAYOUT',JSON.stringify(await page.evaluate(({id,expected}) => {
+      const list=document.getElementById(id+'Results');
+      const row=[...list.querySelectorAll('button')].find(b=>b.textContent?.includes(expected));
+      const rect=node=>{const r=node?.getBoundingClientRect();return r?{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}:null};
+      const style=node=>{const s=node&&getComputedStyle(node);return s?{display:s.display,visibility:s.visibility,opacity:s.opacity,overflow:s.overflow}:null};
+      const feed=document.getElementById('mnWorldFeed');
+      return {row:rect(row),rowStyle:style(row),list:rect(list),listStyle:style(list),
+        field:rect(list?.parentElement),fieldStyle:style(list?.parentElement),feed:rect(feed),feedStyle:style(feed),
+        rootExpanded:document.documentElement.classList.contains('wt-expanded'),scrollTop:Math.round(feed?.scrollTop||0),
+        rowVisible:!!(row?.offsetWidth&&row?.offsetHeight)};
+    },{id,expected})));
+  }
+  const option = page.locator('#'+id+'Results button').filter({hasText:expected}).first();
+  try { await option.click({noWaitAfter:true,timeout:5000}); }
+  catch (error) {
+    // The Cesium canvas continuously paints while the suggestion popup is
+    // shown. If the intended option is truly exposed and enabled, an actual
+    // forced pointer click can bypass Playwright's overly strict stable-frame
+    // heuristic. Never bypass an obscured, disabled or hidden option.
+    const exposed = await option.evaluate(el => {
+      const r=el.getBoundingClientRect(), style=getComputedStyle(el);
+      const x=(r.left+r.right)/2, y=(r.top+r.bottom)/2;
+      const hit=document.elementFromPoint(x,y);
+      return r.width>0&&r.height>0&&!el.disabled&&style.visibility==='visible'
+        &&style.display!=='none'&&(hit===el||el.contains(hit));
+    });
+    if (!exposed) throw error;
+    await option.click({force:true,noWaitAfter:true,timeout:5000});
+  }
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
     return input && input.value !== query && input.value.includes(expected)
@@ -1276,7 +1308,10 @@ if (runs('news-guest')) {
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(2600);
+  /* The flight is an animation: wait for the camera to arrive (bounded), not
+     for a fixed instant that lands mid-descent on a slow runner. The check
+     below still requires the final altitude; only the sampling moment moves. */
+  await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
