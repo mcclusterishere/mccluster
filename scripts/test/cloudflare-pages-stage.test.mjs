@@ -57,7 +57,7 @@ test('file-size, suspicious secrets, and unknown signatures are fail-closed',asy
   for(const mode of ['big','secret','sha']){
     const f=await fixture();
     if(mode==='big'){const path=join(f.input,'assets','img','huge.mp4');await writeFile(path,'');await truncate(path,25*1024*1024+1)}
-    if(mode==='secret')await writeFile(join(f.input,'js','public.js'),'const leaked="sk_live_12345678901234567890";');
+    if(mode==='secret')await writeFile(join(f.input,'js','public.js'),'const leaked='+JSON.stringify(['sk','live','12345678901234567890'].join('_'))+';');
     const r=run(f,mode==='sha'?'not-a-sha':SHA);
     assert.notEqual(r.status,0,mode+' must be refused');
   }
