@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 412,
+  "candidate_count": 413,
   "capability_source_count": 104,
-  "support_only_count": 308,
+  "support_only_count": 309,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1636,6 +1636,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/stage-cloudflare-pages.mjs",
+      "classification": "release_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public-only static asset exporter references the Equity Uprise preview directory as a frontend asset; it does not define any Equity Uprise program capability."
     },
     {
       "path": "scripts/test/action-gamification.test.mjs",
