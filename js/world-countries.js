@@ -155,8 +155,10 @@
       if (!f) { card.hidden = true; card.innerHTML = ''; return; }
       const p = f.properties, counts = missionCounts(o.missions ? o.missions() : [], o.regions ? o.regions() : [], st.features);
       const n = p.a2 ? counts[p.a2] || 0 : 0;
+      const fictional = p.a2 && typeof o.houseAgentCount === 'function'
+        ? Math.max(0, Math.floor(Number(o.houseAgentCount(p.a2)) || 0)) : 0;
       card.innerHTML = (p.flag && !quiet ? '<img class="country-card__flag" src="assets/flags/4x3/' + p.a2.toLowerCase() + '.svg" alt="" width="32" height="24">' : '') +
-        '<span class="country-card__text"><b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small></span>' +
+        '<span class="country-card__text"><b>' + escHtml(p.name) + '</b><small>' + escHtml(countText(n)) + '</small>' + (fictional ? '<small>' + fictional + ' fictional character ' + (fictional === 1 ? 'account' : 'accounts') + ' (not members)</small>' : '') + '</span>' +
         '<button type="button" class="country-card__close" aria-label="Show every country">×</button>';
       card.querySelector('button').onclick = () => select(null);
       card.hidden = false;
@@ -168,7 +170,7 @@
       st.selected = f ? code : null;
       const n = paintCard(f);
       if (f) st.highlight = viewer.scene.primitives.add(polygonPrimitive(f, C.Color.WHITE.withAlpha(0.16)));
-      if (o.onSelect) o.onSelect(f ? { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0 } : null);
+      if (o.onSelect) o.onSelect(f ? { code: f.properties.a2, a3: f.properties.a3, name: f.properties.name, missions: n || 0, fictional_accounts: f.properties.a2 && typeof o.houseAgentCount === 'function' ? Number(o.houseAgentCount(f.properties.a2)) || 0 : 0 } : null);
     }
     function polygonInstances(f, color) {
       return polygonsOf(f).map((poly, k) => new C.GeometryInstance({
