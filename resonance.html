@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index,follow">
+<meta name="description" content="McCluster Resonance Atlas: a research-led way to explore sound spectra, mathematical standing waves, and the limits of music biology.">
+<title>Resonance Atlas · McCluster Music</title>
+<link rel="icon" type="image/png" href="assets/img/m-mark.png">
+<link rel="stylesheet" href="css/style.css?v=__STAMP__">
+<link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+<link rel="stylesheet" href="css/resonance.css?v=__STAMP__">
+</head>
+<body class="resonance">
+<a class="rs-skip" href="#resonanceLab">Skip to resonance laboratory</a>
+<main class="rs-shell">
+  <header class="rs-header">
+    <a href="listen.html" aria-label="Back to McCluster Music">← MUSIC</a>
+    <span>MCCLUSTER / RESONANCE ATLAS</span>
+    <a href="#resonanceReferences">RESEARCH ↗</a>
+  </header>
+
+  <section class="rs-intro" aria-labelledby="resonanceTitle">
+    <p class="rs-eyebrow">THE MUSIC IS THE INPUT. THE GEOMETRY IS THE EXPERIMENT.</p>
+    <div class="rs-formula" aria-label="u of x, y, t equals the sum from k equals one to N of A sub k of t times phi sub k of x, y">
+      <span>u(x,y,t)</span><span class="rs-equals">=</span>
+      <span class="rs-sigma"><sup>N</sup>∑<sub>k=1</sub></span>
+      <span>A<sub>k</sub>(t) · φ<sub>k</sub>(x,y)</span>
+    </div>
+    <h1 id="resonanceTitle">Listen to the <em>structure</em> of music.</h1>
+    <p class="rs-lead">Every recording has spectral energy, timing, and texture. We measure those acoustic features, project them through one explicitly defined vibrating membrane, and reveal the resulting mathematical nodal field. This is an experimental lens on music, not a diagnosis, personality test, or picture of DNA changing.</p>
+    <div class="rs-intro-facts">
+      <div><strong>01 / MEASURED</strong><span>Audio frequency spectrum and temporal change</span></div>
+      <div><strong>02 / MODELLED</strong><span>Resonant mode response and predicted nodes</span></div>
+      <div><strong>03 / INVESTIGATED</strong><span>What studies actually say about music and biology</span></div>
+    </div>
+  </section>
+
+  <section class="rs-lab" id="resonanceLab" aria-labelledby="labTitle">
+    <div class="rs-section-head"><div><p class="rs-eyebrow">EXPERIMENT 001 / FIXED-EDGE MEMBRANE</p><h2 id="labTitle">The resonance field</h2></div><span class="rs-model">MODEL 01 — SIMULATED</span></div>
+    <div class="rs-simulator">
+      <div class="rs-visual">
+        <canvas id="rsField" width="120" height="120" aria-label="Simulated membrane displacement and nodal regions derived from measured audio"></canvas>
+        <div class="rs-visual-overlay"><span>0.0 — NO SOURCE</span><span>FIXED BOUNDARY / 1 m</span></div>
+        <p class="rs-visual-note">The faint threads show predicted nodal regions of an <strong>ideal square membrane</strong>; this is not a photograph of a Chladni plate or a measured DNA response.</p>
+      </div>
+      <div class="rs-control">
+        <h3>Choose an input</h3>
+        <p>Play a published track through the <strong>existing McCluster Music engine</strong>, or analyze audio files locally. The analysis does not upload your recordings.</p>
+        <label for="rsTrack">McCluster catalogue · one canonical player</label>
+        <select id="rsTrack"><option value="">Loading published tracks…</option></select>
+        <div class="rs-actions">
+          <button id="rsPlay" type="button">Play and analyze</button>
+          <button id="rsSurprise" type="button" class="rs-quiet">Surprise me · opt in</button>
+        </div>
+        <div class="rs-divider" role="presentation"><span>OR LOAD LOCAL FILES</span></div>
+        <label for="rsMix">Full mix / one MP3 or WAV</label>
+        <input id="rsMix" type="file" accept="audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg">
+        <label for="rsStems">Trackouts / separate aligned stems</label>
+        <input id="rsStems" type="file" accept="audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg" multiple>
+        <p class="rs-caption">The browser prototype uses the first 45 seconds of decoded audio, up to 8 stems and a 40 MiB total upload-selection cap (local only). The server-side batch analyzer supports longer files. Trackouts are summed at equal gain as a demonstration, not your studio's mastered balance.</p>
+        <p id="rsStatus" class="rs-status" role="status" aria-live="polite">Select a recording to see its measured spectrum and simulated resonance response.</p>
+      </div>
+    </div>
+    <div class="rs-features" id="rsMetrics" aria-label="Audio features">
+      <div><strong id="rsPeak">—</strong><span>Dominant spectral peak · Hz</span></div>
+      <div><strong id="rsCentroid">—</strong><span>Spectral centroid · Hz</span></div>
+      <div><strong id="rsLow">—</strong><span>Low-band energy · 20–250 Hz</span></div>
+      <div><strong id="rsFlatness">—</strong><span>Spectral flatness · 0–1</span></div>
+    </div>
+    <section class="rs-modes" aria-labelledby="modesTitle">
+      <div class="rs-subheading"><h3 id="modesTitle">Excited mathematical modes</h3><p>Calculated membrane eigenmodes, not genres or emotional categories.</p></div>
+      <div id="rsModeList" class="rs-mode-list"></div>
+      <p id="rsStemSummary" class="rs-caption" aria-live="polite"></p>
+    </section>
+  </section>
+
+  <section class="rs-research" aria-labelledby="scienceTitle">
+    <p class="rs-eyebrow">THE SYSTEM / TWO DISTINCT BIOLOGICAL PATHWAYS</p>
+    <h2 id="scienceTitle">What the physics can tell us. What biology has not yet established.</h2>
+    <div class="rs-evidence-grid">
+      <article><span class="rs-index">A / AUDITORY → BIOLOGICAL</span>
+        <h3>Listening and physiology</h3><p>Music is processed by auditory, cognitive, and emotional systems. Small human transcriptomic studies have observed blood gene-expression or microRNA changes following listening or music performance. They do not establish gene-by-song activation, and effects vary across participants and study designs.</p>
+        <a href="https://doi.org/10.7717/peerj.830" target="_blank" rel="noopener noreferrer">Kanduri et al., 2015 ↗</a>
+      </article>
+      <article><span class="rs-index">B / MECHANICAL → CELLULAR</span>
+        <h3>Mechanotransduction</h3><p>Mechanical forces can influence cells, while DNA itself undergoes molecular-scale dynamics. Audible music, ultrasound, and molecular vibrational modes occupy different experimental regimes. Our visual simulator is a square membrane—<strong>not</strong> a model of DNA being directly shaken by music.</p>
+        <a href="https://doi.org/10.1371/journal.pone.0188764" target="_blank" rel="noopener noreferrer">Kumeta et al., 2018 ↗</a>
+      </article>
+    </div>
+    <div class="rs-reason"><h3>Why not sort by genre or mood?</h3><p>A frequency alone doesn't determine a cymatic shape. The resonator's geometry, support, damping, and excitation location matter, so we fix those first. We then organize tracks using <strong>measured frequency content, temporal variation, modal dominance, and spectral texture</strong>. Genre remains optional descriptive metadata—not a scientific prediction of a specific shape or of a listener's personality.</p></div>
+    <div class="rs-reason"><h3>What the player learns—and refuses to assume</h3><p>Playback chosen by a listener must be distinguished from a platform-selected song. Autoplay exposures do not automatically mean preference. No genetic trait, psychological diagnosis, cognitive ability, or medical condition is inferred from listening history. Research participation and any future long-term profile require separate affirmative consent.</p></div>
+  </section>
+  <section class="rs-references" id="resonanceReferences" aria-labelledby="refsTitle">
+    <p class="rs-eyebrow">REPRODUCIBLE SOURCES / READ THE RESEARCH</p>
+    <h2 id="refsTitle">Evidence and methods</h2>
+    <p>The model uses fixed-edge membrane eigenfunctions φ<sub>mn</sub>(x,y) = sin(mπx/L)sin(nπy/L), with natural frequencies f<sub>mn</sub> = c/(2L)√(m²+n²). The sound's measured spectral energy drives a damped-response approximation, normalized for display. Relative amplitudes are <strong>not</strong> calibrated physical displacement and phases are not recovered from a magnitude-only audio spectrum.</p>
+    <ol>
+      <li><a href="https://physicslabs.colorado.edu/demos/oscillations-and-waves/instruments/resonance-in-plates-bars-solids/chladni-figures/" target="_blank" rel="noopener noreferrer">University of Colorado Boulder: Chladni figures and physical boundary conditions</a></li>
+      <li><a href="https://doi.org/10.1103/PhysRevE.52.R4606" target="_blank" rel="noopener noreferrer">Kumar &amp; Bajaj (1995): Competing patterns in the Faraday experiment</a></li>
+      <li><a href="https://doi.org/10.7717/peerj.830" target="_blank" rel="noopener noreferrer">Kanduri et al. (2015): The effect of listening to music on the human transcriptome</a></li>
+      <li><a href="https://doi.org/10.7717/peerj.6660" target="_blank" rel="noopener noreferrer">Nair et al. (2019): Music-performance regulates microRNAs</a></li>
+      <li><a href="https://doi.org/10.1371/journal.pone.0188764" target="_blank" rel="noopener noreferrer">Kumeta et al. (2018): Cellular gene expression responses to audible sound</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatFrequencyData" target="_blank" rel="noopener noreferrer">Web Audio API: spectral-analysis semantics and frequency bins</a></li>
+      <li><a href="https://github.com/MTG/mtg-jamendo-dataset" target="_blank" rel="noopener noreferrer">MTG-Jamendo: tagged music recordings and explicit non-commercial research licensing</a></li>
+    </ol>
+    <p>Full architecture, analysis schema, safety boundaries, and proposed validation protocol: <a href="docs/research/MCCLUSTER-RESONANCE-ATLAS-V1.md">Resonance Atlas research specification</a>.</p>
+  </section>
+  <footer class="rs-footer"><span>MCCLUSTER RESONANCE ATLAS / EXPERIMENTAL v1</span><a href="listen.html">Back to Music ↗</a></footer>
+</main>
+<script src="js/music-engine.js?v=__STAMP__"></script>
+<script src="js/tabbar.js?v=__STAMP__"></script>
+<script type="module" src="js/resonance/atlas-ui.mjs"></script>
+</body>
+</html>
