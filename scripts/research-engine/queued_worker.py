@@ -38,12 +38,14 @@ def verify_profile(job,config):
        profile.get("stage") != job["stage"] or \
        profile.get("license_class") not in LICENSES or not profile.get("approval_reference"):
         raise ValueError("model is not on approved commercial inference allowlist")
-    if job["stage"] != "analyze":
+    if job["stage"] in ("separate","transcribe"):
         local = pathlib.Path(profile.get("checkpoint_file",""))
         expected = profile.get("checkpoint_sha256","")
         if not local.is_file() or not re.fullmatch(r"[0-9a-f]{64}",expected):
             raise ValueError("approved model checkpoint missing or unpinned")
-        if hashlib.file_digest(local.open("rb"),"sha256").hexdigest()!=expected:
+        with local.open("rb") as stream:
+            actual = hashlib.file_digest(stream,"sha256").hexdigest()
+        if actual!=expected:
             raise ValueError("model checkpoint checksum mismatch")
     return profile
 
@@ -99,7 +101,11 @@ class Endpoint:
                 "object_path":path}
 
 def run_model(command,workdir,api,job,limit=MAX_RUNTIME):
-    task=subprocess.Popen(command,cwd=str(workdir),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    # Use files rather than PIPE so chatty inference processes cannot block
+    # indefinitely when their stdout/stderr buffers fill.
+    outlog=tempfile.TemporaryFile()
+    errlog=tempfile.TemporaryFile()
+    task=subprocess.Popen(command,cwd=str(workdir),stdout=outlog,stderr=errlog)
     start=time.monotonic();last=start
     try:
         while task.poll() is None:
@@ -114,13 +120,17 @@ def run_model(command,workdir,api,job,limit=MAX_RUNTIME):
                     raise RuntimeError("worker lease lost")
                 last=time.monotonic()
             time.sleep(.5)
-        out,err=task.communicate(timeout=5)
+        task.wait(timeout=5)
+        errlog.seek(0);err=errlog.read()[-250:]
+        outlog.seek(0);out=outlog.read(4*1024*1024+1)
+        if len(out)>4*1024*1024:raise RuntimeError("inference emitted too much output")
         if task.returncode!=0:
             raise RuntimeError("inference failed with exit status "+str(task.returncode)+
-                               " stderr="+err[-250:].decode("utf8","replace"))
+                               " stderr="+err.decode("utf8","replace"))
         return out
     finally:
         if task.poll() is None:task.kill();task.wait(timeout=5)
+        outlog.close();errlog.close()
 
 def inference(job,profile,api,workdir):
     inputs=job.get("source_objects") or []
@@ -169,7 +179,8 @@ def inference(job,profile,api,workdir):
         for item in sources:
             if item.suffix.lower() not in (".wav",".flac",".mp3",".m4a",".ogg"):
                 raise ValueError("transcription requires isolated audio")
-            run_model(["basic-pitch",str(outdir),str(item)],workdir,api,job)
+            run_model(["basic-pitch",str(outdir),str(item),
+                "--model-path",str(pathlib.Path(profile["checkpoint_file"]))],workdir,api,job)
         outputs=[(x,"midi") for x in sorted(outdir.glob("*.mid")) if x.is_file()]
         if not outputs:raise RuntimeError("transcription returned no MIDI")
         result["estimated_midi_parts"]=len(outputs)
