@@ -53,6 +53,8 @@ function paintPlayback() {
     access === "spent" ? "This one-time listen has ended" :
     active ? (audio.paused ? "Paused" : "Playing") + (stamp ? " · " + stamp : "") :
     "Tap the glowing crossbar to play";
+  // Never show a different track's playback position on the selected rung.
+  scene?.setAudio(active && state.mode === "song" ? audio : null);
   scene?.setPlaying(active && !audio.paused);
 }
 
@@ -333,7 +335,6 @@ async function boot() {
   if (!albums.length) throw new Error("No published albums with tracks");
   scene = new HelixScene(canvas);
   scene.mount(albums);
-  scene.setAudio(transport.audio);
   const requested = new URLSearchParams(location.search).get("album");
   const index = albums.findIndex(a => a.slug === requested);
   if (index >= 0) enterAlbum(index);

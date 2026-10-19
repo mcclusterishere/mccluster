@@ -264,7 +264,7 @@ export class HelixScene {
     const current = this.items[this.albumIndex];
     if (current) {
       const rung = current.rungs[this.trackIndex];
-      if (rung && this.audio && this.mode !== "library") {
+      if (rung && this.audio && this.mode === "song") {
         const duration = Number(this.audio.duration);
         const pct = Number.isFinite(duration) && duration > 0
           ? clamp(this.audio.currentTime / duration, 0, 1) : 0;

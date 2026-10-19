@@ -40,3 +40,6 @@ No unannounced production replacement, no fabricated waveforms or lyrics, no pro
 
 ## Private lab hold: owner directive, October 19, 2026
 Helix is kept entirely inside `_unfinished/helix/`, which `.github/workflows/deploy-pages.yml` strips from the live artifact. The Cloudflare Pages export stages from already published gh-pages, so it inherits that exclusion. NO customer-facing entry link, public route, asset path or feature flag is allowed. Use a developer-local loopback server to inspect the prototype; this is *not* a remote Control owner-authenticated preview. A future remote Control preview must authorize the owner on the server before serving HTML or JavaScript; a client-side role check does not suffice.
+
+## Side-effect safety
+The private lab deliberately omits `js/analytics.js`, `js/listen-ledger.js`, `js/mcc-auth.js`, and `js/gated-audio.js`. Only public audio and configured previews are permitted. The canonical music engine still powers playback, but there are no live analytic counts or signed-master entitlements spent during local design review. The progress marker must not show another track's current position when browsing an unplayed crossbar.

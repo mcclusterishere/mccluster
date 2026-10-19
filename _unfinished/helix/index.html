@@ -48,11 +48,9 @@
     </section>
     <nav class="helix-accessible" id="helixAccessible" aria-label="Keyboard and screen reader music controls"></nav>
   </main>
-  <script src="js/analytics.js?v=__STAMP__"></script>
-  <script src="js/mcc-auth.js?v=__STAMP__"></script>
-  <script src="js/listen-ledger.js?v=__STAMP__"></script>
-  <script src="js/gated-audio.js?v=__STAMP__"></script>
-  <script src="js/music-engine.js?v=__STAMP__"></script>
+  <!-- Internal lab never loads analytics, account tokens, or signed-master entitlements.
+       Music Engine still plays canonical public masters and previews. -->
+  <script src="js/music-engine.js"></script>
   <script type="module" src="_unfinished/helix/main.mjs"></script>
   <script>
     // A blocked ES module or an unsupported graphics device must not strand a listener.
