@@ -105,7 +105,22 @@ def run_model(command,workdir,api,job,limit=MAX_RUNTIME):
     # indefinitely when their stdout/stderr buffers fill.
     outlog=tempfile.TemporaryFile()
     errlog=tempfile.TemporaryFile()
-    task=subprocess.Popen(command,cwd=str(workdir),stdout=outlog,stderr=errlog)
+    # Child model code MUST NOT inherit Supabase service-role secrets.
+    # Restrict outbound networking at the container/pod layer as well.
+    isolated_env={
+        "PATH":os.environ.get("PATH","/usr/local/bin:/usr/bin:/bin"),
+        "HOME":str(workdir),
+        "LANG":"C.UTF-8",
+        "HF_HUB_OFFLINE":"1",
+        "TRANSFORMERS_OFFLINE":"1",
+        "HF_HUB_DISABLE_TELEMETRY":"1",
+        "PYTHONDONTWRITEBYTECODE":"1",
+        "PIP_NO_INDEX":"1",
+        "TOKENIZERS_PARALLELISM":"false",
+        "OMP_NUM_THREADS":"4",
+    }
+    task=subprocess.Popen(command,cwd=str(workdir),stdout=outlog,
+                          stderr=errlog,env=isolated_env)
     start=time.monotonic();last=start
     try:
         while task.poll() is None:
@@ -125,8 +140,9 @@ def run_model(command,workdir,api,job,limit=MAX_RUNTIME):
         outlog.seek(0);out=outlog.read(4*1024*1024+1)
         if len(out)>4*1024*1024:raise RuntimeError("inference emitted too much output")
         if task.returncode!=0:
-            raise RuntimeError("inference failed with exit status "+str(task.returncode)+
-                               " stderr="+err.decode("utf8","replace"))
+            # Model stderr can include filenames or injected user metadata.
+            # Do not copy it into queue status, public logs or review panels.
+            raise RuntimeError("inference failed with exit status "+str(task.returncode))
         return out
     finally:
         if task.poll() is None:task.kill();task.wait(timeout=5)
@@ -234,7 +250,7 @@ def run_once(manifest):
         try:api.rpc("mcc_music_research_fail",{"p_job_id":job["job_id"],
             "p_token":token,"p_error_code":code,"p_retryable":retryable})
         except Exception:pass
-        raise RuntimeError(code+": "+str(exc).splitlines()[0][:200]) from exc
+        raise RuntimeError(code) from None
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser(description=__doc__)
