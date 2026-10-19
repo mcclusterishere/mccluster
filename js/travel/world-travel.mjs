@@ -316,6 +316,13 @@ function fitSuggestions(results, input, { scrolled = false } = {}) {
   const room = () => {
     const top = results.getBoundingClientRect().top;
     const limits = [window.visualViewport?.height ?? innerHeight];
+    // Embedded under the Music continuity shell this document's own app bar is
+    // hidden and the parent's retained bar and transport sit over its bottom
+    // edge. The bridge reserves their height in --mn-bar-clear; honour it.
+    if (document.body.dataset.worldAudioChild === 'ready') {
+      const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0;
+      if (clearance > 0) limits.push((window.visualViewport?.height ?? innerHeight) - clearance);
+    }
     for (const selector of ['.appbar', '#mccWorldAudioControls']) {
       const el = document.querySelector(selector);
       if (el && el.offsetHeight && getComputedStyle(el).visibility !== 'hidden') { const r = el.getBoundingClientRect(); if (r.top > top) limits.push(r.top); }

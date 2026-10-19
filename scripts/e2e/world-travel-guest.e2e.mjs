@@ -247,7 +247,11 @@ try {
     await page.locator('.mn__world-expand').click();
     await page.evaluate(() => { __geo.answer = 'grant'; }); await page.locator('#wtLocate').click();
     await page.waitForFunction(() => document.getElementById('wtFrom').value === 'Current location');
-    await select(page, 'wtTo', 'Union Station'); await ready(page);
+    await page.fill('#wtTo', 'Union Station'); await page.waitForSelector('#wtToResults button');
+    const suggest = await page.evaluate(() => { const list = document.getElementById('wtToResults'), last = list.querySelector('button:last-of-type'), l = list.getBoundingClientRect(), b = last.getBoundingClientRect(); const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0; return { listBottom:l.bottom, lastBottom:b.bottom, limit:innerHeight - clearance, scrolls:list.scrollHeight > list.clientHeight }; });
+    check(scope, 'suggestion list stops above the retained parent app bar and keeps its last option reachable', suggest.listBottom <= suggest.limit + 1 && (suggest.scrolls || suggest.lastBottom <= suggest.limit + 1), suggest);
+    await outerPage.screenshot({ path:join(OUT, `retained-parent-suggestions-${size.width}.png`) });
+    await page.locator('#wtToResults button').first().click(); await ready(page);
     await outerPage.screenshot({ path:join(OUT, `retained-parent-route-${size.width}.png`) });
     check(scope, 'route and Go stay above the retained parent audio controls', await exposed(page, 'wtRouteSummary') && await exposed(page, 'wtNavigate'));
     await page.locator('#wtNavigate').click(); await page.evaluate(coordinates => __geo.emit(coordinates), fixture.routes[0].geometry[0]);
