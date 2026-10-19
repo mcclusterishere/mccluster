@@ -195,6 +195,9 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
     }
     const self=await member(env,rid,muid,fetchImpl);
     if(!self || self.status!=='joined')return error(req,env,'Join this room before requesting media',403);
+    if(req.method==='GET'&&action==='self') {
+      return respond(req,env,{id:muid,role:self.role,muted:self.muted,host:room.host_m_uid===muid});
+    }
     if(req.method==='GET'&&action==='members'){
       const people=await service(env,'network_audio_members','room_id=eq.'+rid+
         '&status=eq.joined&select=m_uid,role,muted,joined_at&order=joined_at.asc&limit=250',{},fetchImpl);
@@ -207,8 +210,10 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
       if(!['host','speaker'].includes(self.role))return error(req,env,'Speaker permission required',403);
       const b=await body(req);
       if(typeof b.unmute!=='boolean')return error(req,env,'Specify unmute',400);
-      if(!b.unmute&&self.sfu_publication_session_id)
+      if(!b.unmute&&self.sfu_publication_session_id) {
         await closeMic(env,self,fetchImpl);
+        await closeSubscriptions(env,rid,'publisher_m_uid=eq.'+muid,fetchImpl);
+      }
       const updated=await patch(env,'network_audio_members','room_id=eq.'+rid+'&m_uid=eq.'+muid+
         '&status=eq.joined',{muted:!b.unmute,...(!b.unmute?{sfu_publication_session_id:null,sfu_publication_mid:null}:{})},fetchImpl);
       if(!updated?.length)return error(req,env,'Membership expired',409);
@@ -254,7 +259,8 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
       const offer=await sfu(env,'POST','/sessions/'+encodeURIComponent(sid)+'/tracks/new',{
         tracks:[{location:'remote',sessionId:p.sfu_publication_session_id,trackName:'mic'}]
       },fetchImpl);
-      if(!validDescription(offer?.sessionDescription,'offer'))
+      if(!validDescription(offer?.sessionDescription,'offer')||
+          !MID.test(offer?.tracks?.[0]?.mid||''))
         return error(req,env,'Provider did not offer audio',502);
       const rows=await record(env,'network_audio_subscriptions',{room_id:rid,listener_m_uid:muid,
         publisher_m_uid:publisher,sfu_session_id:sid,sfu_mid:offer?.tracks?.[0]?.mid||'0'},fetchImpl);
