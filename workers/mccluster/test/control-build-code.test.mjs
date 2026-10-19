@@ -157,13 +157,18 @@ test('an unavailable or malformed approvals read is reported as unknown, never a
     ['non-list', () => json({ not: 'a list' }), 'unavailable', 'unknown'],
     ['malformed row', () => json([{ id: 5 }]), 'unavailable', 'unknown'],
     ['verified none', () => json([]), 'ok', 'none'],
-    ['pending', () => json([{ id: 'a1', state: 'pending', expires_at: null }]), 'ok', 'pending']
+    ['pending', () => json([{ id: 'a1', state: 'pending', expires_at: null }]), 'ok', 'pending'],
+    ['pending, unexpired', () => json([{ id: 'a1', state: 'pending', expires_at: new Date(Date.now() + 3_600_000).toISOString() }]), 'ok', 'pending'],
+    // The decision route only decides rows with expires_at > now(); a pending
+    // row past its deadline must not keep the product polling for it.
+    ['pending, expired', () => json([{ id: 'a1', state: 'pending', expires_at: new Date(Date.now() - 1000).toISOString() }]), 'ok', 'expired']
   ]) {
     const be = backend({ jobs: [job], approvals });
     const res = await withBackend(be, () => handleAiRequest(req('GET', `/v1/ai/build/code/${JOB_ID}`), onEnv, OWNER));
     const { receipt } = await res.json();
     assert.equal(receipt.approval_source, source, name); assert.equal(receipt.approval_state, state, name);
-    assert.equal(receipt.state, state === 'pending' ? 'awaiting_approval' : 'queued', name);
+    assert.equal(receipt.state, state === 'pending' ? 'awaiting_approval' : state === 'expired' ? 'approval_expired' : 'queued', name);
+    if (state === 'expired') assert.equal(receipt.approval.state, 'expired', name);
   }
 });
 test('the deterministic job id is stable, scoped to the organization and a valid UUID', async () => {
@@ -211,6 +216,12 @@ test('a reported draft PR is surfaced as reported, never as verified, and forged
   assert.equal(mapReceipt(null).state, 'unknown');
   assert.equal(mapReceipt({ id: JOB_ID, status: 'queued', input: {} }, { status: 'ok', approval: { id: 'a', state: 'pending' } }).state, 'awaiting_approval');
   assert.equal(mapReceipt({ id: JOB_ID, status: 'queued', input: {} }, { status: 'unavailable', approval: null }).approval_state, 'unknown');
+  const expired = { status: 'ok', approval: { id: 'a', state: 'pending', expires_at: '2020-01-01T00:00:00Z' } };
+  assert.equal(mapReceipt({ id: JOB_ID, status: 'queued', input: {} }, expired).state, 'approval_expired');
+  assert.equal(mapReceipt({ id: JOB_ID, status: 'running', input: {} }, expired).state, 'approval_expired');
+  // A finished job keeps its terminal state; the stale approval row cannot reopen it.
+  assert.equal(mapReceipt({ id: JOB_ID, status: 'done', input: {} }, expired).state, 'completed');
+  assert.equal(mapReceipt({ id: JOB_ID, status: 'queued', input: {} }, expired).approval.state, 'expired');
 });
 test('validation and description are pure and name the same protected paths the executor refuses', () => {
   assert.equal(validateBuildRequest(good, onEnv).ok, true);

@@ -111,7 +111,12 @@ export function mapReceipt(job, approvalRead = { status: 'not_checked', approval
   const status = String(job.status || '').toLowerCase();
   const approvalSource = approvalRead && typeof approvalRead === 'object' && typeof approvalRead.status === 'string' ? approvalRead.status : 'not_checked';
   const approval = approvalSource === 'ok' ? approvalRead.approval : null;
-  const state = approval && approval.state === 'pending' ? 'awaiting_approval'
+  // A pending row past expires_at is not actionable: the decision route only
+  // decides rows with expires_at > now(), so the receipt must not keep the
+  // product polling for an approval nobody can grant.
+  const approvalExpired = !!(approval && approval.state === 'pending' && approval.expires_at && Number.isFinite(Date.parse(approval.expires_at)) && Date.parse(approval.expires_at) <= Date.now());
+  const state = approval && approval.state === 'pending' && !approvalExpired ? 'awaiting_approval'
+    : approvalExpired && (status === 'queued' || status === 'running') ? 'approval_expired'
     : status === 'queued' ? 'queued'
     : status === 'running' ? 'running'
     : status === 'done' || status === 'completed' || status === 'succeeded' ? 'completed'
@@ -145,12 +150,12 @@ export function mapReceipt(job, approvalRead = { status: 'not_checked', approval
     created_at: job.created_at || null,
     updated_at: job.updated_at || null,
     run_after: job.run_after || null,
-    approval: approval ? { id: approval.id, state: approval.state, expires_at: approval.expires_at || null } : null,
+    approval: approval ? { id: approval.id, state: approvalExpired ? 'expired' : approval.state, expires_at: approval.expires_at || null } : null,
     /* ok: the approvals ledger answered (an absent row is a verified absence);
        unavailable: the read failed or returned something invalid, so nothing
        about approvals is known; not_checked: this response did not consult it. */
     approval_source: approvalSource,
-    approval_state: approvalSource === 'ok' ? (approval ? approval.state : 'none') : 'unknown',
+    approval_state: approvalSource === 'ok' ? (approval ? (approvalExpired ? 'expired' : approval.state) : 'none') : 'unknown',
     request_fingerprint: typeof job.input?.request_fingerprint === 'string' ? job.input.request_fingerprint : null,
     reported,
     verification: { draft_pr_verified: false, head_sha: null, note: reported?.draft_pr ? 'Reported by Core. Not yet read back from GitHub.' : null }
