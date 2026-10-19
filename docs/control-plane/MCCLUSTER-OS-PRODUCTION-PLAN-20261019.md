@@ -89,7 +89,12 @@ how much already exists:
 5. **Model goods** (the owner's shower thought): no capability exists yet.
    Required additions, all new forward-only work:
    - capabilities `dataset.build`, `model.finetune`, `model.evaluate`,
-     `model.publish` in the catalog, risk class high, async, approval-gated;
+     `model.publish` in the catalog, async and approval-gated, with the risk
+     classes the registry actually accepts (`read`, `write`, `spend`,
+     `deploy`, `destructive` in `core/src/capabilities/registry.mjs`):
+     `dataset.build` is `write`, `model.finetune` and `model.evaluate` are
+     `spend` (paid GPU time), `model.publish` is `deploy`. There is no
+     `high` class; adding one is a registry change, not a catalog entry;
    - a GPU compute node advertising them through the compute-node protocol
      (the current CPU-only node is not adequate for the proposed practical
    fine-tuning pipeline; tiny CPU experiments remain possible);
@@ -99,7 +104,15 @@ how much already exists:
    - evals are the gate: a trained model is a good only when `model.evaluate`
      passes the pre-registered thresholds (RFC-001 evaluation protocol);
    - publication binds the trained model as a new implementation under an
-     existing capability id, so products never name the model.
+     existing capability id, so products never name the model. The binding
+     carries the owning `org` from `ops_models`, and `CapabilityRegistry.resolve()`
+     must take the caller's org and consider only platform-owned bindings and
+     bindings owned by that org. Today `resolve()` filters by capability,
+     status, tool availability and requested features only
+     (`core/src/capabilities/registry.mjs`), so table-level RLS on
+     `ops_models` is not enough: until the org-aware resolution rule exists,
+     `model.publish` stays blocked, and the rule ships before the first
+     tenant model is bound.
 6. **Mission and service goods**: applications, assignments, proof, payouts
    (`MISSION-APPLICATIONS-AND-MODULAR-PRODUCTS.md`). Missing: the application
    workflow build and migration promotion.
