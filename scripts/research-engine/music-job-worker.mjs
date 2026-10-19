@@ -56,7 +56,7 @@ export class MusicResearchClient {
   async fetchPrivate(bucket,path){
     if(!SOURCES.has(bucket)||!NAME.test(path)||path.includes("..")||path.startsWith("/"))
       throw Error("unsafe or non-allowlisted source reference");
-    const rsp=await this.fetcher(this.origin+"/storage/v1/object/"+bucket+"/"+pathSegments(path),{
+    const rsp=await this.fetcher(this.origin+"/storage/v1/object/authenticated/"+bucket+"/"+pathSegments(path),{
       headers:this.headers,signal:AbortSignal.timeout(120000)
     });
     if(!rsp.ok)throw Error("private source could not be retrieved ("+rsp.status+")");
@@ -78,7 +78,8 @@ export class MusicResearchClient {
     if(result.status===409||result.status===400){
       // Network or DB failure on a previous attempt may have left an identical
       // object; validate its bytes, never overwrite a possibly different file.
-      const earlier=await this.fetcher(address,{headers:this.headers,signal:AbortSignal.timeout(120000)});
+      const earlier=await this.fetcher(this.origin+"/storage/v1/object/authenticated/"+
+        BUCKET_OUT+"/"+pathSegments(path),{headers:this.headers,signal:AbortSignal.timeout(120000)});
       if(earlier.ok){
         const bytes=Buffer.from(await earlier.arrayBuffer());
         if(bytes.length===data.length&&sha(bytes)===sha(data))return;
