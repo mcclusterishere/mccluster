@@ -22,4 +22,4 @@ song.addEventListener('timeupdate',updateScene);song.addEventListener('ended',st
 $('stop').onclick=stopRecord;window.addEventListener('pagehide',()=>{stopRecord();stopCamera();if(recordUrl)URL.revokeObjectURL(recordUrl)});
 document.addEventListener('pointermove',e=>{if(mode==='none')$('room').style.transform='translate('+((e.clientX/innerWidth-.5)*-24)+'px,'+((e.clientY/innerHeight-.5)*-16)+'px)'});
 updateScene();
-})();</script></body></html>
+})();</script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>
