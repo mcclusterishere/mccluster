@@ -16,7 +16,9 @@ create table if not exists public.music_research_models(
   checkpoint_sha256 text check(checkpoint_sha256 is null or checkpoint_sha256~'^[a-f0-9]{64}$'),
   enabled boolean not null default false, approval_reference text, reviewed_at timestamptz,
   constraint approved_research_model check(not enabled or
-    (license_class in ('first_party','approved_commercial') and approval_reference is not null and reviewed_at is not null))
+    (license_class in ('first_party','approved_commercial') and approval_reference is not null
+     and reviewed_at is not null
+     and (stage not in ('separate','transcribe') or checkpoint_sha256 is not null)))
 );
 insert into public.music_research_models(model_id,stage,provider,version,license_class,enabled,approval_reference,reviewed_at)
 values('mcc_spectral_v1','analyze','mccluster','1','first_party',true,
@@ -72,7 +74,21 @@ create table if not exists public.music_research_reviews(
 insert into storage.buckets(id,name,public,file_size_limit)
 values('creator-research-outputs','creator-research-outputs',false,104857600)
 on conflict(id) do update set public=false;
--- Storage remains private; no anonymous/authenticated storage object policies.
+-- Creator may obtain a short-lived signed preview to review their own output.
+-- The bucket stays private; no client inserts/upserts, deletes or public reads.
+-- Joining to the creator-owned artifact row ensures that a guessed path cannot
+-- expose unrelated content in this bucket.
+create policy music_research_creator_artifact_read on storage.objects
+  for select to authenticated using (
+    bucket_id='creator-research-outputs'
+    and exists (
+      select 1 from public.music_research_artifacts a
+      where a.object_path=storage.objects.name
+        and a.creator_m_uid=public.current_m_uid()
+        and a.status in ('quarantined','creator_approved')
+    )
+  );
+
 alter table public.music_research_models enable row level security;
 alter table public.music_research_jobs enable row level security;
 alter table public.music_research_artifacts enable row level security;
