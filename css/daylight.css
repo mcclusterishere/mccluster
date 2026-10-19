@@ -10,6 +10,19 @@ html[data-daylight="day"] {
   --w-glass:rgba(255,255,255,.9); --w-rim:0 0 0 1px rgba(220,15,45,.3),0 0 16px -6px rgba(220,15,45,.3); --w-edge:0 0 0 1px rgba(0,0,0,.1);
   color-scheme:light;
 }
+/* the World and the editorial shell re-declare the ink tokens on .mn, nearer the text than html, so the day tokens must
+   be declared there too or the sheet's words stay night-white on the white page */
+html[data-daylight="day"].mn-world-on .mn, html[data-daylight="day"].hu-editorial .mn, html[data-daylight="day"] .mn {
+  --mn-bg:#ffffff; --mn-raise:#ffffff; --mn-raise-2:#f3f3f3;
+  --mn-ink:#000000; --mn-dim:#262626; --mn-faint:#4d4d4d;
+  --mn-rule:#00000018; --mn-rule-2:#0000002e; --mn-hot:#dc0f2d; --mn-hot-ink:#ffffff;
+  --w-glass:rgba(255,255,255,.9); --w-rim:0 0 0 1px rgba(220,15,45,.3),0 0 16px -6px rgba(220,15,45,.3); --w-edge:0 0 0 1px rgba(0,0,0,.1);
+}
+/* words the World paints with fixed night colours inside the feed */
+html[data-daylight="day"].mn-world-on #mnFeed .mn__post-body, html[data-daylight="day"].mn-world-on #mnFeed .mn__news-title, html[data-daylight="day"].mn-world-on #mnFeed .mn__author-name { color:#000000; }
+html[data-daylight="day"].mn-world-on #mnFeed .mn__comments { background:#f3f3f3; border-top-color:#00000018; }
+html[data-daylight="day"].mn-world-on #mnFeed .mn__comments-empty, html[data-daylight="day"].mn-world-on .mn__guest-card p { color:#262626; }
+html[data-daylight="day"].mn-world-on .mn__guest-card strong { color:#000000; }
 html[data-daylight="day"], html[data-daylight="day"] body,
 html[data-daylight="day"].mn-world-on, html[data-daylight="day"].mn-world-on body { background:#ffffff; color:#000000; }
 /* the top bar is the one black band: the supplied white mark, the white title scroll, white icons */
