@@ -110,3 +110,39 @@ The prototype question asks what auditory feature stood out. Its answer is in-me
 **Data sources:** MTG-Jamendo https://github.com/MTG/mtg-jamendo-dataset; MUSDB18 https://sigsep.github.io/datasets/musdb.html; MAESTRO https://magenta.tensorflow.org/datasets/maestro. Public research availability does not necessarily grant commercial redistribution rights to the recordings.
 
 **Science-label contract:** every displayed output must be labeled as measured, algorithmically estimated, modeled, user-reported or unknown. The system must never display a modeled brain highlight as measured neural activity.
+
+## 9. Scientific indexing and brain-literature navigation
+
+**Implemented in the draft:** js/resonance/associations.mjs classifies sound by modeled membrane modes, measured low-frequency power, spectral centroid/flatness, provisional beat periodicity and tonal distribution. These are PHYSICS-BASED SOUND CLASSES, not moods, genre stereotypes, or health diagnoses. Each feature has an explicit measurement/estimation label and abstains when insufficient evidence exists.
+
+The private underwater research view now displays those measured attributes alongside the selected brain-region literature. For example, a listener can inspect rhythmic-periodicity measurements while reading about putamen/SMA associations in Kasdan et al.'s meta-analysis (https://pmc.ncbi.nlm.nih.gov/articles/PMC9195154/). This is literature navigation, NOT an estimate of that user's neuronal activity. The reward network refuses to infer pleasure or dopamine release from audio features.
+
+**Offline catalogue builder:** scripts/research-engine/build-science-catalogue.mjs can dry-run the existing albums, exclude gated and private media, and generate a versioned public-track acoustic index. It deliberately performs no production persistence, no automatic external downloads and no listener profiling. It cannot claim a universal genre cymatic shape.
+
+## 10. One canonical music and media graph
+
+The draft validator at js/resonance/media-graph.mjs defines a canonical relation for video, audio, images, clips, studio projects and agent-generated material: media ID, media type, producer identity, accountable rights owner, rights status, source lineage, and either a canonical track/project reference or an explicit no-audio reason. Silent images should link to their media record rather than causing unwanted playback. Signed master URLs, tokens, personal DNA and medical traits are forbidden in descriptive records.
+
+The validator is not server authorization. Existing storage grants, RLS, licensed rights, publication review and MCC_MUSIC playback remain authoritative. An approved-agent creation must name its agent run. Opt-in to derived analysis never implies permission to train a commercial model or auto-publish.
+
+User-selected plays, one-time opt-in random plays, system queues, and editorial autoplay must remain distinct. An automatic exposure does not count as affirmative preference. Cross-page uninterrupted playback on iOS requires a persistent player host/shell and browser-gesture-compatible navigation, not repeated new Audio() objects. Integrate each media pathway incrementally after contract review.
+
+## 11. Automatic transcription and source separation — staged model pipeline
+
+| Stage | Input | Output | Limitation |
+| --- | --- | --- | --- |
+| Signal analysis (implemented) | Mix or aligned original stems | Spectral modes, BPM/key hypotheses | Tempo octave, key ambiguity, frequency resolution |
+| Model separation (optional local adapter) | Authorized mixed master | Estimated vocals, drums, bass, other | Bleed/artifacts, NOT original producer trackouts |
+| Drum-class segmentation (not yet integrated) | Original drum stems or specialized percussion model | Candidate kick, snare, hats | Generic drums stem cannot recover exact recorded individual drums |
+| Note transcription (optional adapter) | Isolated pitched material | Provisional MIDI notes | Polyphony and timing errors |
+| Score assembly (optional adapter) | MIDI and meter estimates | Draft MusicXML | Requires musician editing and rights review |
+
+Models worth benchmarking: Demucs https://github.com/facebookresearch/demucs (original repository archived), Basic Pitch https://github.com/spotify/basic-pitch, and MT3 https://research.google/pubs/mt3-multi-task-multitrack-music-transcription/ . Benchmark data: MUSDB18 https://sigsep.github.io/datasets/musdb.html ; Slakh2100 https://arxiv.org/abs/1909.08494 ; MAESTRO https://magenta.tensorflow.org/datasets/maestro . Key validation can compare against Essentia's KeyExtractor https://essentia.upf.edu/reference/streaming_KeyExtractor.html .
+
+Evaluation must show per-instrument separation error, kick/snare/hat confusion, onset timing and note F1, MusicXML editing burden, BPM/half-time ambiguity, key accuracy and abstention rates. Report errors across styles and production conditions.
+
+## 12. Separate open neuroscience and genomic evidence
+
+Music-neuroscience evidence includes Kasdan et al.'s 30-study rhythm meta-analysis https://pmc.ncbi.nlm.nih.gov/articles/PMC9195154/ , Nozaradan et al.'s neural beat/meter EEG study https://pmc.ncbi.nlm.nih.gov/articles/PMC6623069/ , and the OpenMIIR music-perception EEG dataset https://openmiir.github.io/ . Genomic reference resources include the Human Pangenome https://humanpangenome.org/data/ , GTEx tissue transcriptomics https://gtexportal.org/ , and B-form DNA experimental coordinates https://www.rcsb.org/structure/1BNA . These databases do not validate music-induced gene activation for individual listeners. The initial GEO GSE48624 music-listening participant data were withdrawn; do not assume they are downloadable.
+
+The private brain model is hand-built art with schematic markers; it is NOT a registered atlas, MRI, EEG, medical assessment, or individual brain stimulation control. Validation requires real sensors and research ethics. Never treat a 3D highlight as measured neural activity.
