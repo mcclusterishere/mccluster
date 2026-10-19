@@ -102,11 +102,14 @@ export function analyzePaths(files, { trackouts = false } = {}) {
     ? analyzeTrackouts(entries, {maxSeconds:MAX_DURATION_SECONDS})
     : analyzePcm(entries[0].samples, entries[0].sampleRate,
       {maxSeconds:MAX_DURATION_SECONDS});
-  const theory = trackouts
-    ? {combined:estimateMusicTheory(entries[0].samples,entries[0].sampleRate),
-       stems:entries.map(e=>({name:e.name,theory:estimateMusicTheory(e.samples,e.sampleRate)})),
-       note:'Combined harmonic estimate uses first provided stem; original full mix required for reliable key estimation.'}
-    : estimateMusicTheory(entries[0].samples,entries[0].sampleRate);
+  const theory = trackouts ? (() => {
+    const length=Math.min(...entries.map(e=>e.samples.length));
+    const sum=new Float32Array(length);
+    for(const e of entries)for(let i=0;i<length;i++)sum[i]+=e.samples[i]/entries.length;
+    return {combined:estimateMusicTheory(sum,entries[0].sampleRate),
+      stems:entries.map(e=>({name:e.name,theory:estimateMusicTheory(e.samples,e.sampleRate)})),
+      note:"Combined key/tempo reflects an aligned equal-gain estimate; not the mastered mix."};
+  })() : estimateMusicTheory(entries[0].samples,entries[0].sampleRate);
   return {
     ...result,
     musicTheory:theory,
