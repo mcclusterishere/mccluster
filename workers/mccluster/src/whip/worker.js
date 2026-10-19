@@ -589,8 +589,14 @@ export default {
           /* Never replace a still-payable checkout and then ignore its webhook.
              Reuse the exact session or fail closed if it expired or completed. */
           const existing = await retrieveCheckoutSession(env, booking.stripe_checkout_session_id, t.stripe_account_id);
-          if (existing.status === 'open' && existing.url)
+          if (existing.status === 'open' && existing.url) {
+            const ledgerRows = await sb(env,
+              'payments?tenant_id=eq.' + encodeURIComponent(t.id) + '&resource_type=eq.rental&resource_id=eq.' + encodeURIComponent(booking.id) +
+              '&stripe_checkout_session_id=eq.' + encodeURIComponent(existing.id) + '&select=id&limit=1');
+            if (!ledgerRows?.length)
+              return fail(env, 'Checkout is awaiting payment-ledger registration; do not pay until it is reconciled', 503);
             return reply(env, { checkout_url: existing.url, session_id: existing.id, amount_cents: booking.total_cents, reused: true });
+          }
           return fail(env, 'The earlier checkout is no longer open; check payment status or create a new rental booking', 409);
         }
         const vehicleRows = await sb(env, 'rental_vehicles?id=eq.' + encodeURIComponent(booking.vehicle_id) + '&select=*');
@@ -613,7 +619,7 @@ export default {
           const latest = await getRental(env, booking.id);
           if (latest?.stripe_checkout_session_id !== session.id)
             throw Object.assign(new Error('Another checkout was recorded; inspect the booking before retrying'), { status: 409 });
-          return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: booking.total_cents, reused: true });
+          return fail(env, 'Checkout registration is still in progress; retry shortly', 503);
         }
         await recordPayment(env, { tenant_id: t.id, resource_type: 'rental', resource_id: booking.id, connected_account_id: t.stripe_account_id, stripe_checkout_session_id: session.id, amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' });
         return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: booking.total_cents });
