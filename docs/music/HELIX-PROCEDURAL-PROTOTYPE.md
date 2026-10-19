@@ -43,3 +43,6 @@ Helix is kept entirely inside `_unfinished/helix/`, which `.github/workflows/dep
 
 ## Side-effect safety
 The private lab deliberately omits `js/analytics.js`, `js/listen-ledger.js`, `js/mcc-auth.js`, and `js/gated-audio.js`. Only public audio and configured previews are permitted. The canonical music engine still powers playback, but there are no live analytic counts or signed-master entitlements spent during local design review. The progress marker must not show another track's current position when browsing an unplayed crossbar.
+
+## Local-only preview runner
+Run `node tools/helix-local-preview.mjs` from a checkout to serve `http://127.0.0.1:8765/_unfinished/helix/index.html` on the same computer. This custom server binds to `127.0.0.1`, denies public routes and private scripts, whitelists the lab plus its required public media, sends `no-store` and `noindex` headers, and is intentionally unavailable from an external browser. Do not tunnel/forward this port. A private iPhone-accessible Control preview requires a separately implemented server-authenticated owner-only endpoint.
