@@ -22,6 +22,7 @@ import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
 import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
+import { handleAudioRooms } from './audio-sfu-rooms.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -105,6 +106,9 @@ export default {
       if (computeResponse) return computeResponse;
       const planResponse = await handlePlatformPlanApi(request, env);
       if (planResponse) return planResponse;
+      // Audio rooms own their member gate and are explicitly disabled by default.
+      const audio = await handleAudioRooms(request, env);
+      if (audio) return audio;
       const response = await handlePlatformApi(request, env);
       if (response) return response;
     } catch (error) {
