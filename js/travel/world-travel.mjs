@@ -742,7 +742,7 @@ panel.addEventListener('click', e => {
     }
     if (chip) {
       const which = chip.dataset.travelChip || chip.dataset.travelPlan;
-      chooseMode(which === 'rides' ? (isGround() || draft.mode === 'transit' ? draft.mode : 'drive') : (draft.mode === 'train' ? 'train' : 'flight'), { shape: which, details: which === 'multi' });
+      chooseMode(which === 'rides' ? (isGround() || draft.mode === 'transit' ? draft.mode : 'drive') : 'flight', { shape: which, details: which === 'multi' });
       if (which !== 'rides' && !draft.to) { $('wtEndpointHint').textContent = which === 'multi' ? 'Choose a destination to draft a door-to-door trip.' : 'Choose a destination to plan flights.'; $('wtTo').focus(); }
       return;
     }

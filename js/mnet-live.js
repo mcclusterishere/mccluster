@@ -117,7 +117,7 @@
     if (!host || !trackEl) return;
     host.hidden = false;
     $("mnGoLive").hidden = !live.can;
-    paintWorldSignal();
+    loadWorldSignal();
     trackEl.innerHTML = live.list.length
       ? live.list.map(liveCard).join("")
       : '<div class="mn__live-empty"><b>Nobody is live in this lane right now.</b><span>' +
@@ -143,14 +143,22 @@
       '<button type="button" class="mn__livehero-join" data-live="' + esc(s.id) + '">Join live <span aria-hidden="true">›</span></button>' +
     '</article>';
   }
+  /* The World's badge and hero count the WHOLE directory. When the Live tab is filtered, live.list is the filtered
+     view, so the World's copy of the unfiltered directory (live.world) is fetched on its own and refreshed on the
+     same cadence; a room that ends never stays advertised behind a filter. */
+  function loadWorldSignal() {
+    if (!live.kind && !live.category) { live.world = live.list.slice(); paintWorldSignal(); return Promise.resolve(); }
+    return M.api("/v1/mnet/live/directory").then(function (out) { live.world = (out && out.sessions) || []; })
+      .catch(function () { live.world = []; }).then(paintWorldSignal);
+  }
   function paintWorldSignal() {
-    var badge = $("mnWorldLive"), count = $("mnWorldLiveCount"), go = $("mnComposerLive"), hero = $("mnLiveHero");
+    var badge = $("mnWorldLive"), count = $("mnWorldLiveCount"), go = $("mnComposerLive"), hero = $("mnLiveHero"), list = live.world || [];
     if (go) go.hidden = !(live.can && live.enabled);
-    if (hero && !live.kind && !live.category) { hero.hidden = !live.list.length; hero.innerHTML = live.list.length ? liveHero(live.list[0]) : ""; }
-    if (!badge || live.kind || live.category) return;
-    badge.hidden = !live.list.length;
-    if (count) count.textContent = live.list.length > 1 ? String(live.list.length) : "";
-    badge.setAttribute("aria-label", live.list.length === 1 ? "Live now: 1 broadcast" : "Live now: " + live.list.length + " broadcasts");
+    if (hero) { hero.hidden = !list.length; hero.innerHTML = list.length ? liveHero(list[0]) : ""; }
+    if (!badge) return;
+    badge.hidden = !list.length;
+    if (count) count.textContent = list.length > 1 ? String(list.length) : "";
+    badge.setAttribute("aria-label", list.length === 1 ? "Live now: 1 broadcast" : "Live now: " + list.length + " broadcasts");
   }
   function setFilter(button, key) {
     var group = button.parentNode;

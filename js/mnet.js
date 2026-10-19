@@ -964,6 +964,29 @@
     var label = $("huRegionLabel") ? String($("huRegionLabel").textContent || "").trim() : "";
     return label && label !== "All regions" ? label : "";
   }
+  /* A story's place reads "City, Area, Country" (GDELT's label). It is in the picked country when its tail names that
+     country: the globe's name for it, or one of the names publishers use. A substring is not enough (Guinea is not
+     Papua New Guinea; Niger is not Nigeria), so the match is the whole tail after a comma, or the whole label. */
+  function placeInCountry(place, country) {
+    var aliases = {
+      "united states of america": ["united states", "usa", "u.s.", "us"], "united kingdom": ["uk", "britain", "great britain", "england", "scotland", "wales", "northern ireland"],
+      "russia": ["russian federation"], "czechia": ["czech republic"], "myanmar": ["burma"], "c\u00f4te d'ivoire": ["ivory coast", "cote d'ivoire"],
+      "eswatini": ["swaziland"], "turkey": ["t\u00fcrkiye", "turkiye"], "laos": ["lao people's democratic republic", "lao pdr"], "vietnam": ["viet nam"],
+      "syria": ["syrian arab republic"], "iran": ["iran, islamic republic of"], "bolivia": ["bolivia, plurinational state of"], "venezuela": ["venezuela, bolivarian republic of"],
+      "tanzania": ["united republic of tanzania"], "moldova": ["republic of moldova"], "brunei": ["brunei darussalam"], "timor-leste": ["east timor"],
+      "bahamas": ["the bahamas", "bahamas, the"], "gambia": ["the gambia", "gambia, the"], "congo": ["republic of the congo", "congo, republic of the", "congo-brazzaville"],
+      "dem. rep. congo": ["democratic republic of the congo", "congo, democratic republic of the", "dr congo", "congo-kinshasa"],
+      "north korea": ["korea, north", "democratic people's republic of korea"], "south korea": ["korea, south", "republic of korea", "korea"],
+      "netherlands": ["the netherlands"], "bosnia and herz.": ["bosnia and herzegovina"], "central african rep.": ["central african republic"],
+      "dominican rep.": ["dominican republic"], "eq. guinea": ["equatorial guinea"], "falkland is.": ["falkland islands"], "s. sudan": ["south sudan"],
+      "solomon is.": ["solomon islands"], "w. sahara": ["western sahara"], "n. cyprus": ["northern cyprus"], "north macedonia": ["macedonia"],
+      "palestine": ["palestinian territory", "west bank", "gaza strip"], "taiwan": ["taiwan, province of china"]
+    };
+    if (!place || !country) return false;
+    var tail = String(place).toLocaleLowerCase().trim(), name = String(country.name || country).toLocaleLowerCase().trim();
+    if (!name) return false;
+    return [name].concat(aliases[name] || []).some(function (n) { return tail === n || tail.slice(-n.length - 2) === ", " + n; });
+  }
   function paintFeedScope() {
     var scope = state.feedScope || "global";
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
@@ -1189,7 +1212,7 @@
     if (scope === "news") items = [];
     if (scope === "local") {
       items = [];
-      news = place ? news.filter(function (n) { return n.place && n.place.toLocaleLowerCase().indexOf(place.toLocaleLowerCase()) !== -1; }) : [];
+      news = place ? news.filter(function (n) { return placeInCountry(n.place, state.world.country || { name: place }); }) : [];
     }
     if (!items.length && !news.length) {
       host.innerHTML = '<div class="mn__empty">' + esc(
@@ -3533,6 +3556,8 @@
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:country") {
         $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
+        /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
+        state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;
         paintFeedScope(); if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
