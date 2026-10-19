@@ -29,7 +29,11 @@
      statement cancellation must not permanently blank a whole data family. */
   function rpc(name,body){return retryStatementTimeout(function(){return S.supa("rpc/"+name,{method:"POST",body:body});});}
   function retryStatementTimeout(fn){
-    return Promise.resolve().then(fn).catch(function(error){
+    /* Dispatch the initial RPC synchronously. Globe selections rely on
+       starting the first request before the selection changes again. */
+    var first;
+    try { first=fn(); } catch(error) { first=Promise.reject(error); }
+    return Promise.resolve(first).catch(function(error){
       var code=String(error&&error.code||""),msg=String(error&&error.message||error||"");
       if(code!=="57014"&&!/statement timeout|canceling statement/i.test(msg))throw error;
       return new Promise(function(resolve){setTimeout(resolve,180);}).then(fn);
