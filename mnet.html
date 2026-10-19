@@ -272,7 +272,7 @@
         </section>
         <div class="mn__world-feed" id="mnWorldFeed" aria-label="World content" tabindex="0">
         <section id="wtPlanner" aria-labelledby="wtTitle"></section>
-        <div id="wtSocial"><section id="worldNewsDeck" class="world-news-deck" aria-label="Geographic news feed" hidden><h2>News around the world</h2><p>Story locations are GDELT mentions, not verified event locations. Headlines open an in-app discovery record; full articles require publisher permission.</p><div id="worldNewsEntries"></div><button type="button" id="worldNewsMore" hidden>Load more news</button><p id="worldNewsStatus" role="status"></p></section>
+        <div id="wtSocial"><!-- One stream: public news, community posts, and verified activity are interleaved below. -->
         <section class="mn__world-context" id="mnWorldContext" aria-label="On the globe" aria-live="polite">
           <!-- EXPLORE THE WORLD (owner's signed-out reference, 2026-10-14):
                what a guest sees first, and what anyone sees with no mission
@@ -299,10 +299,6 @@
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-          <div class="hu-feed-tabs" role="group" aria-label="Feed content">
-            <button type="button" data-hu-feed="all" aria-pressed="true">For you</button>
-            <button type="button" data-hu-feed="community" aria-pressed="false">Community</button>
-          </div>
           <section class="hu-mission-preview" aria-labelledby="huMissionHeading">
             <div class="hu-section-head hu-section-head--compact"><h2 id="huMissionHeading">Missions</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions and your Action Record"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
             <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>

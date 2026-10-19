@@ -11,6 +11,27 @@ async function user(req,env){const auth=req.headers.get('authorization')||'';if(
 async function requireUser(req,env){const u=await user(req,env);if(!u)throw Object.assign(new Error('Authentication required'),{status:401});return u}
 async function driverForUser(req,env){const u=await requireUser(req,env);const rows=await sb(env,`drivers?auth_user_id=eq.${encodeURIComponent(u.id)}&select=*`);return{user:u,driver:rows?.[0]||null}}
 async function requireDriver(req,env){const x=await driverForUser(req,env);if(!x.driver)throw Object.assign(new Error('Driver profile required'),{status:409});return x}
+const dispatchEnabled = env => env.WHIP_RIDES_LIVE === 'true' &&
+  env.WHIP_LAUNCH_APPROVED === 'true' && env.ALLOW_DEMO_IDENTITIES !== 'true';
+async function requireClearedDriver(req,env) {
+  const x=await requireDriver(req,env);
+  if(!dispatchEnabled(env))
+    throw Object.assign(new Error('Paid Whip dispatch is not operational yet'),{status:503});
+  if(x.driver.identity_verified!==true)
+    throw Object.assign(new Error('Driver identity verification is required'),{status:403});
+  // A driver can maintain a profile without being authorized to accept paid
+  // rides. Operator-owned clearances are separate from self-edited vehicle
+  // data and fail closed until the pending migration is applied.
+  const rows=await sb(env,`whip_driver_clearances?driver_id=eq.${encodeURIComponent(x.driver.id)}&tenant_id=eq.${encodeURIComponent(x.driver.tenant_id)}&select=approval_status,approved_at,identity_checked_at,background_checked_at,local_authority_checked_at,license_expires_at,insurance_expires_at,revoked_at&limit=1`);
+  const c=rows?.[0],now=Date.now();
+  if(!c||c.approval_status!=='approved'||!c.approved_at||
+     !c.identity_checked_at||!c.background_checked_at||!c.local_authority_checked_at||
+     !!c.revoked_at||!Number.isFinite(Date.parse(c.license_expires_at))||
+     !Number.isFinite(Date.parse(c.insurance_expires_at))||
+     Date.parse(c.license_expires_at)<=now||Date.parse(c.insurance_expires_at)<=now)
+    throw Object.assign(new Error('Whip operator clearance or insurance is not valid'),{status:403});
+  return x;
+}
 async function ride(env,id){const rows=await sb(env,`rides?id=eq.${encodeURIComponent(id)}&select=*`);return rows?.[0]||null}
 async function tenant(env,slug){const rows=await sb(env,`tenants?slug=eq.${encodeURIComponent(slug)}&select=*`);return rows?.[0]||null}
 
@@ -27,12 +48,15 @@ export default{async fetch(req,env,ctx){
       const rows=await sb(env,'drivers?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({tenant_id:t.id,auth_user_id:u.id,display_name:String(body.display_name).trim(),phone:body.phone||null,rating:5,vehicle_make:body.vehicle_make||null,vehicle_model:body.vehicle_model||null,vehicle_color:body.vehicle_color||null,license_plate:String(body.license_plate).trim().toUpperCase(),seats:Number(body.seats||4),online:false})});return reply(env,{driver:rows[0]},201)
     }
     if(path==='/api/offers'&&req.method==='GET'){
-      const {driver}=await requireDriver(req,env);if(!driver.online)return reply(env,{offers:[]});
+      const {driver}=await requireClearedDriver(req,env);if(!driver.online)return reply(env,{offers:[]});
       const rows=await sb(env,`rides?tenant_id=eq.${encodeURIComponent(driver.tenant_id)}&status=eq.REQUESTED&payment_status=in.(authorized,paid)&order=requested_at.asc&limit=20&select=*`);return reply(env,{offers:rows||[]})
     }
     const presence=path.match(/^\/api\/drivers\/([^/]+)\/presence$/);
     if(presence&&req.method==='PATCH'){
-      const {driver}=await requireDriver(req,env);if(driver.id!==presence[1])return fail(env,'Cannot modify another driver',403);return app.fetch(req,env,ctx)
+      const copy=req.clone(),body=await copy.json().catch(()=>({}));
+      const {driver}=body.online===true ? await requireClearedDriver(req,env) : await requireDriver(req,env);
+      if(driver.id!==presence[1])return fail(env,'Cannot modify another driver',403);
+      return app.fetch(req,env,ctx)
     }
     const active=path.match(/^\/api\/drivers\/([^/]+)\/active$/);
     if(active&&req.method==='GET'){
@@ -40,7 +64,7 @@ export default{async fetch(req,env,ctx){
     }
     const accept=path.match(/^\/api\/rides\/([^/]+)\/accept$/);
     if(accept&&req.method==='POST'){
-      const {driver}=await requireDriver(req,env),r=await ride(env,accept[1]);if(!r)return fail(env,'Ride not found',404);if(r.tenant_id!==driver.tenant_id)return fail(env,'Ride belongs to another operator',403);if(r.status!=='REQUESTED')return fail(env,'Ride is no longer available',409);if(!['authorized','paid'].includes(r.payment_status))return fail(env,'Ride payment is not authorized',402);
+      const {driver}=await requireClearedDriver(req,env),r=await ride(env,accept[1]);if(!r)return fail(env,'Ride not found',404);if(r.tenant_id!==driver.tenant_id)return fail(env,'Ride belongs to another operator',403);if(r.status!=='REQUESTED')return fail(env,'Ride is no longer available',409);if(!['authorized','paid'].includes(r.payment_status))return fail(env,'Ride payment is not authorized',402);
       const headers=new Headers(req.headers);headers.set('content-type','application/json');const forwarded=new Request(req.url,{method:'POST',headers,body:JSON.stringify({driver_id:driver.id})});return app.fetch(forwarded,env,ctx)
     }
     const rideStatus=path.match(/^\/api\/rides\/([^/]+)\/status$/);

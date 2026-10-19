@@ -22,7 +22,24 @@ let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,jou
 const MAX_TRAVEL_ROUTE_POINTS=10000,MAX_TRAVEL_ACCURACY=100000;
 let travelSceneReady=false,roadRoute=null,roadPositions=[],roadEntities=[],routeFlyPending=false;
 let currentLocation=null,locationEntities=[],locationFlyPending=false,locationAnimatePending=false,travelCameraQueued=false;
-let travelControlsQueued=false;
+let travelControlsQueued=false, mapPickKind=null;
+// The parent owns the selected endpoints. The Cesium iframe returns only a
+// coordinate chosen by a direct user tap, never passive GPS or route content.
+function travelPickKind(kind){
+ mapPickKind=travelMode&&(kind==='from'||kind==='to')?kind:null;
+ document.documentElement.classList.toggle('globe-map-picking',!!mapPickKind);
+}
+function travelMapPoint(screenPosition){
+ if(!viewer||!screenPosition)return null;
+ try {
+  const ray=viewer.camera.getPickRay(screenPosition);
+  const hit=(ray&&viewer.scene.globe.pick(ray,viewer.scene))||
+   viewer.camera.pickEllipsoid(screenPosition,viewer.scene.globe.ellipsoid);
+  if(!hit)return null;
+  const c=Cesium.Cartographic.fromCartesian(hit);
+  return travelCoordinates([Cesium.Math.toDegrees(c.longitude),Cesium.Math.toDegrees(c.latitude)]);
+ }catch(_){return null}
+}
 function travelCoordinates(value){
  if(!Array.isArray(value)||value.length!==2)return null;
  const [lon,lat]=value;
@@ -150,7 +167,7 @@ function liftTravelControls(){
   const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
   const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
   const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
-  const obstacles=[dock,...['#mccWorldAudioControls','.mn__world-expand','.wt-world-modes','.wt-headline','.wt-destination','.mn__top'].map(rect)].filter(r=>overlap(frame,r));
+  const obstacles=[dock,...['#mccWorldAudioControls','.mn__world-expand','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r));
   const preferred=getComputedStyle(rail).flexDirection;
   for(const direction of [preferred,preferred==='row'?'column':'row']){
    rail.style.flexDirection=direction;const size=rail.getBoundingClientRect();
@@ -178,12 +195,12 @@ function wireTravelControlLayout(){
  window.addEventListener('resize',scheduleTravelControls,{passive:true});
  try{
   if(!parentFrame)return;parentFrame.addEventListener('resize',scheduleTravelControls,{passive:true});parentFrame.addEventListener('mcc:world-audio-layout',scheduleTravelControls);
-  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,.mn__world-expand,.wt-world-modes')])if(el)observer.observe(el)}
+  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,.mn__world-expand,.wt-world-modes,#wtMapNav,#wtMapPickBanner')])if(el)observer.observe(el)}
  }catch(_){}
  scheduleTravelControls();
 }
 // Verification exposes counts only, never a visitor's precise location or route.
-window.__huNavigation=()=>({travel:travelMode,routePoints:roadRoute?.geometry.length||0,routeEntities:roadEntities.length,routeVisible:travelMode&&roadEntities.length>0,location:!!currentLocation,locationEntities:locationEntities.length,locationVisible:travelMode&&locationEntities.length>0,following:travelMode&&currentLocation?.follow===true});
+window.__huNavigation=()=>({mapPicking:!!mapPickKind,travel:travelMode,routePoints:roadRoute?.geometry.length||0,routeEntities:roadEntities.length,routeVisible:travelMode&&roadEntities.length>0,location:!!currentLocation,locationEntities:locationEntities.length,locationVisible:travelMode&&locationEntities.length>0,following:travelMode&&currentLocation?.follow===true});
 function travelStyle(){
  if(!viewer||!EDITORIAL)return;
  dayLayer.saturation=1.1;dayLayer.brightness=1.05;
@@ -198,6 +215,7 @@ function setTravelMode(on){
  scheduleTravelControls();
  if(!viewer)return;travelStyle();
  if(changed||on){showMissions=!on;showCities=!on;draw();}
+ if(!on&&typeof travelPickKind==='function'){travelPickKind(null)}
  if(!on&&changed){viewer.camera.cancelFlight();routeFlyPending=locationFlyPending=locationAnimatePending=journeyFlyPending=false;if(currentLocation)currentLocation.follow=false;}
  travelVisibility();scheduleTravelControls();if(on)scheduleTravelCamera();
  drawCompletedEvents();
@@ -233,10 +251,45 @@ function setWorldNewsPins(items,on){
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
  });drawWorldNewsPins();
 }
+/* A calibrated enamel-and-gold pin, not an undifferentiated bright dot.
+   Draw once on a small transparent canvas; the Earth still supplies precise
+   geographic placement and accessible story selection in the shared feed. */
+let worldNewsMarkerImage=null;
+function worldNewsMarker(){
+ if(worldNewsMarkerImage)return worldNewsMarkerImage;
+ const c=document.createElement('canvas');c.width=c.height=96;
+ const g=c.getContext('2d'),x=48,y=45;
+ const glow=g.createRadialGradient(x,y,5,x,y,42);
+ glow.addColorStop(0,'rgba(245,221,180,.30)');
+ glow.addColorStop(.5,'rgba(214,178,119,.12)');
+ glow.addColorStop(1,'rgba(214,178,119,0)');
+ g.fillStyle=glow;g.fillRect(0,0,96,96);
+ g.save();g.translate(x,y);g.rotate(Math.PI/4);
+ g.shadowBlur=8;g.shadowColor='rgba(244,213,164,.48)';
+ const shell=g.createLinearGradient(-16,-16,17,18);
+ shell.addColorStop(0,'#f7e9c8');shell.addColorStop(.45,'#d0a971');shell.addColorStop(1,'#896540');
+ g.fillStyle=shell;g.fillRect(-15,-15,30,30);
+ g.shadowBlur=0;
+ g.fillStyle='#13202c';g.fillRect(-11.5,-11.5,23,23);
+ g.strokeStyle='rgba(255,255,255,.34)';g.lineWidth=1;
+ g.strokeRect(-10.5,-10.5,21,21);
+ g.restore();
+ g.beginPath();g.arc(x,y,4.2,0,Math.PI*2);
+ g.fillStyle='#f8e4b8';g.shadowBlur=6;g.shadowColor='#f0cf9b';g.fill();
+ worldNewsMarkerImage=c.toDataURL('image/png');
+ return worldNewsMarkerImage;
+}
 function drawWorldNewsPins(){
  if(!viewer)return;clear(publicNewsPins);if(!publicNewsOn||travelMode||ANALYTICS)return;
- const color=Cesium.Color.fromCssColorString('#e4b866');
- publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),point:{pixelSize:10,color,outlineColor:Cesium.Color.BLACK,outlineWidth:2},properties:{worldNewsId:x.id}})));
+ const marker=worldNewsMarker();
+ publicNewsItems.forEach(x=>publicNewsPins.push(viewer.entities.add({
+   position:Cesium.Cartesian3.fromDegrees(x.lon,x.lat,3300),
+   billboard:{image:marker,width:27,height:27,
+     verticalOrigin:Cesium.VerticalOrigin.CENTER,
+     scaleByDistance:new Cesium.NearFarScalar(150000,1.12,22000000,.48),
+     distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,25000000)},
+   properties:{worldNewsId:x.id}
+ })));
 }
 window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
 
@@ -309,6 +362,7 @@ function focusMission(id){
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
+if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
 if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
@@ -379,7 +433,34 @@ const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Blac
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
-function glowPin(color){if(pinCache[color])return pinCache[color];const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,2,32,32,32);r.addColorStop(0,'#ffffff');r.addColorStop(.18,color);r.addColorStop(.42,color+'99');r.addColorStop(1,color+'00');g.fillStyle=r;g.beginPath();g.arc(32,32,32,0,Math.PI*2);g.fill();return pinCache[color]=c.toDataURL()}
+/* Mission markers share the refined enamel language: legible at phone zoom,
+   hue encodes the original action type; no overbright blurry white-center dots.
+   Cached per hue so thousands of visible points share only a few GPU textures. */
+function glowPin(color){
+ if(pinCache[color])return pinCache[color];
+ const c=document.createElement('canvas');c.width=c.height=88;
+ const g=c.getContext('2d'),cx=44,cy=41;
+ const halo=g.createRadialGradient(cx,cy,8,cx,cy,40);
+ halo.addColorStop(0,'rgba(241,223,198,.23)');
+ halo.addColorStop(.52,'rgba(184,152,121,.09)');
+ halo.addColorStop(1,'rgba(184,152,121,0)');
+ g.fillStyle=halo;g.fillRect(0,0,88,88);
+ g.save();g.translate(cx,cy);g.rotate(Math.PI/4);
+ g.shadowBlur=9;g.shadowColor=color;
+ g.fillStyle='#0d1721';g.fillRect(-18,-18,36,36);
+ const bezel=g.createLinearGradient(-18,-18,18,18);
+ bezel.addColorStop(0,'#f0ded0');bezel.addColorStop(.43,color);
+ bezel.addColorStop(1,'#6b7a8b');
+ g.strokeStyle=bezel;g.lineWidth=3;g.strokeRect(-16,-16,32,32);
+ g.shadowBlur=0;
+ g.strokeStyle='rgba(255,255,255,.24)';g.lineWidth=1;g.strokeRect(-12,-12,24,24);
+ g.restore();
+ const jewel=g.createRadialGradient(cx-2,cy-3,0,cx,cy,8);
+ jewel.addColorStop(0,'#fff1dd');jewel.addColorStop(.35,color);jewel.addColorStop(1,'#192331');
+ g.fillStyle=jewel;g.beginPath();g.arc(cx,cy,7,0,Math.PI*2);g.fill();
+ g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();
+ return pinCache[color]=c.toDataURL('image/png');
+}
 function sizeEditorialResolution(){
  const canvas=viewer.scene.canvas,pixels=Math.max(1,canvas.clientWidth*canvas.clientHeight);
  viewer.resolutionScale=Math.max(1,Math.min(window.devicePixelRatio||1,2,Math.sqrt(800000/pixels)));
@@ -725,7 +806,13 @@ async function boot(){paintMembersDoor();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();
  if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
-viewer.screenSpaceEventHandler.setInputAction(p=>{const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+viewer.screenSpaceEventHandler.setInputAction(p=>{
+ if(travelMode&&mapPickKind&&parentFrame&&!ANALYTICS){
+  const coordinates=travelMapPoint(p.position);
+  if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
+  return;
+ }
+ const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
