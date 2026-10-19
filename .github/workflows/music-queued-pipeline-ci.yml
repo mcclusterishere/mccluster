@@ -1,0 +1,68 @@
+name: Music Queue and Persistent Runtime CI
+
+on:
+  pull_request:
+    paths:
+      - '_unfinished/music-runtime/**'
+      - 'config/music-research-models.v1.json'
+      - 'js/music-runtime-shell.js'
+      - 'js/music-engine.js'
+      - 'js/music-research-*.mjs'
+      - 'js/music-creator-studio.js'
+      - 'creator.html'
+      - 'css/music-research-*.css'
+      - 'css/music-runtime-shell.css'
+      - 'scripts/research-engine/**'
+      - 'scripts/test/music-runtime-pipeline.test.mjs'
+      - 'scripts/test/music-queued-js-worker.test.mjs'
+      - 'supabase/pending/music_research_pipeline_v1.sql'
+      - 'supabase/tests/music_research_pipeline_v1.sql'
+      - '.github/workflows/music-queued-pipeline-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  queue-security-contracts:
+    name: Music worker, model license, private artifacts and stage approvals
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Check all queue and Music runtime entrypoints
+        run: |
+          node --check js/music-runtime-shell.js
+          node --check js/music-engine.js
+          node --check js/music-research-review.mjs
+          node --check js/music-research-queue.mjs
+          node --check scripts/research-engine/model-adapters.mjs
+          node --check scripts/research-engine/music-job-worker.mjs
+          python3 - <<'PY'
+          import ast
+          for f in ('tempo_key.py','queued_worker.py','benchmark_tempo_key.py','midi-to-musicxml.py'):
+              ast.parse(open('scripts/research-engine/'+f,encoding='utf-8').read())
+          PY
+      - name: Run actual isolated worker and creator permission contracts
+        run: |
+          node --test scripts/test/music-runtime-pipeline.test.mjs scripts/test/music-queued-js-worker.test.mjs
+      - name: Assert migration and default models are not production-enabling
+        run: |
+          test -f supabase/pending/music_research_pipeline_v1.sql
+          test ! -f supabase/migrations/music_research_pipeline_v1.sql
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const x=JSON.parse(fs.readFileSync('config/music-research-models.v1.json','utf8'));
+          const live=x.models.filter(x=>x.enabled);
+          if(live.length!==1||live[0].id!=='mcc_spectral_v1')process.exit(1);
+          if(x.models.some(x=>x.enabled&&x.checkpoint))process.exit(1);
+          console.log('Only first-party spectral analysis may run without checkpoint approval');
+          JS
