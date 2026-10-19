@@ -160,9 +160,12 @@ try{
     await page.screenshot({path:join(OUT,`world-with-music-${width}.png`)});
     const layout=await page.evaluate(()=>({nav:document.querySelector('.appbar').getBoundingClientRect().toJSON(),controls:document.querySelector('#mccWorldAudioControls').getBoundingClientRect().toJSON(),hidden:document.querySelector('#mccWorldAudioControls').hidden,height:innerHeight}));
     const reserve=await frame.evaluate(()=>parseFloat(document.documentElement.style.getPropertyValue('--mn-bar-clear')));
-    check(`${width}: World receives measured transport clearance`,reserve>=layout.height-layout.controls.top&&layout.controls.height>=44,{layout,reserve});
-    await page.locator('#mccWorldAudioControls .world-audio__mute').click();
-    check(`${width}: mute preserves advancing playback`,(await audioState(page)).muted&&!(await audioState(page)).paused);
+    check(`${width}: World audio is a compact globe-side control; bottom clearance belongs only to navigation`,
+      reserve>=layout.height-layout.nav.top&&layout.controls.height>=44&&layout.controls.width<=60&&layout.controls.top<layout.nav.top,{layout,reserve});
+    check(`${width}: old title and mute chrome is not visible on the globe`,
+      await page.locator('#mccWorldAudioControls .world-audio__title').isHidden()&&await page.locator('#mccWorldAudioControls .world-audio__mute').isHidden());
+    await page.evaluate(()=>{MCC_MUSIC.audio.muted=true;});
+    check(`${width}: music preferences still persist when changed on the player`,(await audioState(page)).muted&&!(await audioState(page)).paused);
     await page.locator('.appbar [data-appnav="music"]').click();
     await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     check(`${width}: Music return retains mute and track`,(await audioState(page)).muted&&(await audioState(page)).src===before.src&&await page.evaluate(()=>__unloads===0));
@@ -172,7 +175,8 @@ try{
     check(`${width}: explicit pause holds position`,paused.paused&&Math.abs((await audioState(page)).time-paused.time)<.1);
     await page.locator('.appbar [data-appnav="music"]').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     await world(page);check(`${width}: World re-entry respects pause and mute`,(await audioState(page)).paused&&(await audioState(page)).muted&&(await audioState(page)).playing===0);
-    await page.locator('#mccWorldAudioControls .world-audio__mute').click();await page.locator('#mccWorldAudioControls .world-audio__play').click();
+    await page.evaluate(()=>{MCC_MUSIC.audio.muted=false;});
+    await page.locator('#mccWorldAudioControls .world-audio__play').click();
     await page.waitForFunction(()=>!MCC_MUSIC.audio.paused);
     await page.goBack();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     const back=await audioState(page);await page.goForward();await page.waitForFunction(()=>MCC_WORLD_AUDIO.active());
@@ -290,9 +294,10 @@ try{
     await page.locator('#wtTo').click();
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
-    await page.locator('.world-audio__mute').click();await page.reload();
+    await page.locator('.world-audio__play').click();await page.reload();
     await page.waitForSelector('#mccWorldAudioControls');await page.locator('#wtTo').click();
-    check('World remembered mute is respected on later visits',await page.evaluate(()=>__audioObjects.every(a=>a.paused||a.muted))&&await page.locator('.world-audio__mute').getAttribute('aria-pressed')==='true');
+    check('World remembers an explicit pause on later visits',
+      await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&await page.locator('.world-audio__play').getAttribute('aria-label')==='Play music');
     await context.close();
   }
   {

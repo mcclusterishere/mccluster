@@ -44,7 +44,7 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
-  /* One telemetry seam for the whole Human Uprise. Product writes remain
+  /* One telemetry seam for the whole Equity Uprise. Product writes remain
      authoritative in the database; these events describe the journey around
      them so Control can answer which surfaces actually move people to act. */
   function track(name, data) {
@@ -257,7 +257,7 @@
     st.className = "mn__field-state" + (kind ? " is-" + kind : "");
     st.textContent = kind === "bad" ? "taken" : "";
     if (field) field.classList.toggle("is-bad", kind === "bad");
-    if (hint) hint.textContent = text || "Your handle across Human Uprise.";
+    if (hint) hint.textContent = text || "Your handle across Equity Uprise.";
   }
   function checkHandle() {
     var v = $("mnHandle").value.trim();
@@ -880,7 +880,7 @@
     return '<div class="mn__actcard">' +
       '<p class="mn__actcard-eyebrow">Verified action</p>' +
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
-      '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
+      '<p class="mn__actcard-foot">Equity Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
@@ -1127,7 +1127,7 @@
     url.searchParams.set("post", b.dataset.post);
     var link = url.toString();
     if (navigator.share) {
-      navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
+      navigator.share({ title:"Equity Uprise", url:link }).catch(function () {});
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
     } else window.prompt("Copy post link",link);
@@ -1811,7 +1811,7 @@
       bindConnectButton($("mnPersonBody"), data.connection, p.m_uid||id.m_uid||data.m_uid, function(){openPerson(handle);});
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Human Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
@@ -2681,6 +2681,10 @@
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
+  /* Public display name; stable mission IDs and the published historical source remain unchanged. */
+  function publicMission(m) {
+    return m && m.title === "Write the Change" ? Object.assign({}, m, { title: "Write a Song" }) : m;
+  }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
   function loadMissions(){
@@ -2698,7 +2702,7 @@
       if(version!==missionListVersion)return;
       missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
-      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
+      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
@@ -2735,7 +2739,7 @@
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
     var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
-    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Human Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Equity Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
     var declined=app&&app.status==="declined";
@@ -2791,7 +2795,7 @@
   function fetchMission(id){
     var hit=missions.all.find(function(x){return x.id===id;});
     if(hit)return Promise.resolve(hit);
-    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
+    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]?publicMission(rows[0]):null;});
   }
   function clearMissionCapture(){
     if(missions.proofPreview){try{URL.revokeObjectURL(missions.proofPreview);}catch(_){} missions.proofPreview="";}
@@ -3188,6 +3192,10 @@
     if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
     worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
       onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onCompleted:function(host) {
+        if (!window.DocketCohortShowcase || !window.DocketCohortShowcase.mountSeries) throw Error("Completed mission series is unavailable.");
+        return window.DocketCohortShowcase.mountSeries(host);
+      },
       onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
     });
     if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
@@ -3204,7 +3212,13 @@
   window.addEventListener("mcc:world-mode",function(e){
     if(e.detail&&e.detail.mode==="missions"){
       loadWorldMissionDeck();
-      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
+      /* The confirmed cohort capstone remains mapped independently of whether
+         someone has opened the Completed tab yet. */
+      if(window.DocketCohortShowcase&&window.DocketCohortShowcase.ensureMap)window.DocketCohortShowcase.ensureMap();
+      if(new URLSearchParams(location.search).has("completed")){
+        var completedTab=document.querySelector('.mn-swipe__filters [data-status="completed"]');
+        if(completedTab&&completedTab.getAttribute("aria-selected")!=="true")completedTab.click();
+      }
     }
   });
   function paintMissionPreview() {
