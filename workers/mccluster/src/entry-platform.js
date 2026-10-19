@@ -22,6 +22,7 @@ import { handleLiveMissions, runLiveMaintenance } from './live/index.js';
 import { handleIdentity } from './identity/router.js';
 import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
+import { handleRegionScope } from './world-region-feed.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -70,6 +71,9 @@ export default {
 
       const travel = await handleTravelRouting(request, env);
       if (travel) return travel;
+      // Public coarse-country discovery; never enters the member auth gate.
+      const regional = await handleRegionScope(request, env);
+      if (regional) return regional;
 
       const billingWebhook = await handleCreatorBillingWebhook(request, env);
       if (billingWebhook) return billingWebhook;
