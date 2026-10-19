@@ -24,6 +24,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTA
 function contract(enabled){return {capability:'code.build',job_type:'code_patch',binding:'core.code.build',enabled,state:enabled?'available':'unavailable',unavailable_reason:enabled?null:'control_build_code_disabled',repositories:['mcclusterishere/mccluster'],risk:'write',approval:'review-required',execution:'async',output:'draft_pr_only',max_attempts:2,priority:80,limits:{task_max:20000,title_max:500,paths_max:20},protected_paths:[],safety:{auto_merge:false,production_deploy:false,isolated_worktree:true,human_review:true}};}
 function receipt(state,extra={}){const base={state,job_id:JOB,correlation_id:JOB,capability:'code.build',job_type:'code_patch',repository:'mcclusterishere/mccluster',idempotency_key:null,title:'Fixture build',allowed_paths:['scripts/test'],attempts:state==='queued'?0:1,max_attempts:2,last_error:null,locked_by:state==='running'?'core:ovh-primary':null,created_at:'2026-10-19T02:00:00Z',updated_at:'2026-10-19T02:01:00Z',run_after:'2026-10-19T02:00:00Z',approval:null,reported:null,verification:{draft_pr_verified:false,head_sha:null,note:null}};return {...base,...extra};}
 async function setup(viewport,{owner=true,enabled=true,ledger}={}){
+  ledger.jobs=ledger.jobs||{};
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true});
   const posts=[],errors=[];
   await ctx.addInitScript(()=>{
@@ -46,13 +47,18 @@ async function setup(viewport,{owner=true,enabled=true,ledger}={}){
           const body=req.postDataJSON();posts.push(body);
           if(!enabled)return json(route,{state:'unavailable',reason:'control_build_code_disabled',capability:'code.build',enabled:false},503);
           if(!UUID.test(body.idempotency_key||''))return json(route,{error:'idempotency_key must be a UUID'},400);
-          const dup=posts.filter(b=>b.idempotency_key===body.idempotency_key).length>1;
-          ledger.state='queued';
+          const fp=JSON.stringify([body.repository,body.task,body.title,body.allowed_paths]);
+          const known=ledger.jobs[body.idempotency_key];
+          if(known&&known.fp!==fp)return json(route,{error:'idempotency_conflict',message:'different payload',job_id:JOB,receipt:receipt('queued')},409);
+          const dup=!!known;
+          ledger.jobs[body.idempotency_key]={fp};ledger.state=ledger.state==='queued'||!known?'queued':ledger.state;
+          /* Lost acknowledgment: the server stored the job but the response never arrives. */
+          if(ledger.loseNext){ledger.loseNext=false;ledger.lost=(ledger.lost||0)+1;return route.abort('failed');}
           return json(route,{queued:!dup,replayed:dup,job_id:JOB,receipt:receipt('queued',{idempotency_key:body.idempotency_key,title:body.title||null,allowed_paths:body.allowed_paths||[]})},dup?200:202);
         }
         if(p==='/v1/ai/build/code/'+JOB&&req.method()==='GET'){
           const st=ledger.state;
-          return json(route,{receipt:receipt(st,st==='completed'?{reported:{branch:'core/job-abc123',pushed:true,draft_pr:'https://github.com/mcclusterishere/mccluster/pull/999',forbidden:null,tests:{ok:true,command:'npm test'},summary:'Fixture summary',agent_output_tail:'fixture log tail'}}:st==='failed'?{last_error:'opencode exited 1 (fixture)'}:{})});
+          return json(route,{receipt:receipt(st,{approval_source:ledger.approvalSource||'ok',approval_state:ledger.approvalSource==='unavailable'?'unknown':'none',...(st==='completed'?{reported:{branch:'core/job-abc123',pushed:true,draft_pr:'https://github.com/mcclusterishere/mccluster/pull/999',forbidden:null,tests:{ok:true,command:'npm test'},summary:'Fixture summary',agent_output_tail:'fixture log tail'}}:st==='failed'?{last_error:'opencode exited 1 (fixture)'}:{})})});
         }
         return json(route,{error:'build not found'},404);
       }
@@ -118,6 +124,35 @@ try{
     await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:15000});
     check(scope,'starting another build uses a fresh idempotency key',posts.length===2&&posts[1].idempotency_key!==posts[0].idempotency_key&&UUID.test(posts[1].idempotency_key),posts.map(p=>p.idempotency_key));
     check(scope,'no script errors',app.errors.length===0,app.errors);
+    await app.ctx.close();
+  }
+  {
+    /* Lost acknowledgment: the server queues the job, the response is lost, the page reloads. */
+    const ledger={state:'queued',loseNext:true};const app=await setup({width:390,height:844},{ledger});const {page,posts}=app;
+    await page.waitForSelector('[data-crb-form]',{state:'visible',timeout:30000});
+    await page.fill('[data-crb-form] [name="task"]','Objective whose acknowledgment will be lost in transit.');
+    await page.locator('[data-crb-form] button[type="submit"]').click();
+    await page.waitForFunction(()=>!!document.querySelector('.crb .cro-note--bad'),null,{timeout:15000});
+    const pendingHeld=await page.evaluate(()=>{try{return JSON.parse(localStorage.getItem('cr_build_code_pending'))}catch(_){return null}});
+    check('lost-ack','the pending key and payload are written before the POST and survive the lost response',ledger.lost===1&&!!pendingHeld&&pendingHeld.body.idempotency_key===posts[0].idempotency_key&&pendingHeld.body.task===posts[0].task,pendingHeld);
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:30000});
+    check('lost-ack','a reload resubmits the SAME key and payload; the server replays, one job exists',posts.length===2&&posts[1].idempotency_key===posts[0].idempotency_key&&posts[1].task===posts[0].task&&Object.keys(ledger.jobs).length===1&&(await page.locator('.crb-meta').textContent()).includes(JOB),posts.map(p=>p.idempotency_key));
+    const pendingAfter=await page.evaluate(()=>localStorage.getItem('cr_build_code_pending'));
+    check('lost-ack','the pending record is released once the job is acknowledged',pendingAfter===null);
+    await page.screenshot({path:join(OUT,'build-lost-ack-390.png')});
+    await app.ctx.close();
+  }
+  {
+    /* Approval ledger unreadable: the receipt must say unknown, not none. */
+    const ledger={state:'queued',approvalSource:'unavailable'};const app=await setup({width:390,height:844},{ledger});const {page}=app;
+    await page.waitForSelector('[data-crb-form]',{state:'visible',timeout:30000});
+    await page.fill('[data-crb-form] [name="task"]','Objective with an unreadable approvals ledger.');
+    await page.locator('[data-crb-form] button[type="submit"]').click();
+    await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:15000});
+    await page.locator('[data-crb="refresh"]').click();
+    await page.waitForFunction(()=>/approval status is unknown/.test(document.querySelector('.crb-receipt')?.textContent||''),null,{timeout:15000});
+    check('approval-source','an unavailable approvals read is shown as unknown, with the job state still from the job ledger',/Queued/.test(await page.locator('.crb-state').textContent()));
     await app.ctx.close();
   }
   {

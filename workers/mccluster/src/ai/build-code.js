@@ -8,7 +8,12 @@
    browser-supplied org, role, admin flags or path scope never grant anything,
    and repository and paths are validated again here against the same rules
    the Core executor enforces. Disabled by default: without the flag the route
-   answers `unavailable`, never a fake success. */
+   answers `unavailable`, never a fake success.
+
+   Exactly-once: the job id is derived from (org, idempotency_key), so the
+   ledger's primary key is the atomic boundary. Two concurrent submissions
+   with one key cannot both insert; the loser reads the winner back. A reused
+   key with a different payload is a conflict, never a silent replay. */
 import { fail, reply } from '../lib/http.js';
 import { recordEvent } from '../lib/observability.js';
 
@@ -92,14 +97,20 @@ export function describe(env) {
     limits: { task_max: LIMITS.task_max, title_max: LIMITS.title_max, paths_max: LIMITS.paths_max },
     protected_paths: SENSITIVE_RULES.map((rule) => rule.source),
     safety: { auto_merge: false, production_deploy: false, isolated_worktree: true, human_review: true },
-    verification: 'A draft PR reported by Core is shown as reported until it is read back from GitHub independently.'
+    verification: 'A draft PR reported by Core is shown as reported until it is read back from GitHub independently.',
+    approval_semantics: 'review-required means the draft PR is reviewed by a human after execution; no pre-execution approval record gates a queued job today.',
+    flag_scope: `${FLAG} gates only this route. It does not cancel jobs already queued, and it does not gate the owner-only POST /v1/ai/jobs route, which accepts code_patch independently.`,
+    submission_path: 'edge writes the canonical ops_agent_jobs row under the owner gate; the core.code.build binding writes the same row from Core. One shared contract is the consolidation target.',
+    idempotency: 'job id is derived from (organization, idempotency_key); the ledger primary key is the atomic boundary; a reused key with a different payload is refused with 409.'
   };
 }
 /* The product never mistakes "unknown" for "empty" or "done". Each state here
    is derived from the stored job row, nothing is inferred from elapsed time. */
-export function mapReceipt(job, approval = null) {
+export function mapReceipt(job, approvalRead = { status: 'not_checked', approval: null }) {
   if (!job) return { state: 'unknown', reason: 'job_not_found' };
   const status = String(job.status || '').toLowerCase();
+  const approvalSource = approvalRead && typeof approvalRead === 'object' && typeof approvalRead.status === 'string' ? approvalRead.status : 'not_checked';
+  const approval = approvalSource === 'ok' ? approvalRead.approval : null;
   const state = approval && approval.state === 'pending' ? 'awaiting_approval'
     : status === 'queued' ? 'queued'
     : status === 'running' ? 'running'
@@ -135,9 +146,38 @@ export function mapReceipt(job, approval = null) {
     updated_at: job.updated_at || null,
     run_after: job.run_after || null,
     approval: approval ? { id: approval.id, state: approval.state, expires_at: approval.expires_at || null } : null,
+    /* ok: the approvals ledger answered (an absent row is a verified absence);
+       unavailable: the read failed or returned something invalid, so nothing
+       about approvals is known; not_checked: this response did not consult it. */
+    approval_source: approvalSource,
+    approval_state: approvalSource === 'ok' ? (approval ? approval.state : 'none') : 'unknown',
+    request_fingerprint: typeof job.input?.request_fingerprint === 'string' ? job.input.request_fingerprint : null,
     reported,
     verification: { draft_pr_verified: false, head_sha: null, note: reported?.draft_pr ? 'Reported by Core. Not yet read back from GitHub.' : null }
   };
+}
+const encoder = new TextEncoder();
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+/* UUID derived from the organization and the client's idempotency key. The
+   same (org, key) always names the same job row, so the primary key refuses a
+   second insert without any extra table, index or lock. Version nibble 8 marks
+   it as a custom, non-random UUID. */
+export async function deterministicJobId(orgId, key) {
+  const hex = await sha256Hex(`mccluster:${CAPABILITY}:${String(orgId).toLowerCase()}:${String(key).toLowerCase()}`);
+  const bytes = hex.slice(0, 32).split('');
+  bytes[12] = '8';
+  bytes[16] = ['8', '9', 'a', 'b'][parseInt(bytes[16], 16) & 3];
+  const h = bytes.join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
+/* What a key is bound to. A second request with the same key must carry the
+   same objective; otherwise the caller gets a conflict instead of someone
+   else's job. */
+export async function requestFingerprint(value) {
+  return sha256Hex(JSON.stringify({ repository: value.repository, task: value.task, title: value.title, allowed_paths: value.allowed_paths }));
 }
 async function readJson(request) {
   const text = await request.text();
@@ -161,13 +201,21 @@ async function readJob(env, orgId, jobId) {
 }
 async function pendingApproval(env, orgId, jobId) {
   const params = new URLSearchParams({ org_id: `eq.${orgId}`, capability: `eq.${CAPABILITY}`, resource_id: `eq.${jobId}`, state: 'eq.pending', select: 'id,state,expires_at', limit: '1' });
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/control_approvals?${params.toString()}`, { headers: serviceHeaders(env) }).catch(() => null);
-  if (!res || !res.ok) return null;
-  const rows = await res.json().catch(() => []);
-  return rows?.[0] || null;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/control_approvals?${params.toString()}`, { headers: serviceHeaders(env) });
+    if (!res.ok) return { status: 'unavailable', approval: null, reason: `approvals read returned ${res.status}` };
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return { status: 'unavailable', approval: null, reason: 'approvals read returned a non-list' };
+    const row = rows[0] || null;
+    if (row && (typeof row.id !== 'string' || typeof row.state !== 'string')) return { status: 'unavailable', approval: null, reason: 'approvals row is malformed' };
+    return { status: 'ok', approval: row };
+  } catch (error) {
+    return { status: 'unavailable', approval: null, reason: error?.message || 'approvals read failed' };
+  }
 }
 async function enqueue(env, orgId, value, user) {
   const row = {
+    id: await deterministicJobId(orgId, value.idempotency_key),
     org_id: orgId,
     job_type: JOB_TYPE,
     target_type: 'repository',
@@ -181,6 +229,7 @@ async function enqueue(env, orgId, value, user) {
       title: value.title,
       allowed_paths: value.allowed_paths,
       idempotency_key: value.idempotency_key,
+      request_fingerprint: await requestFingerprint(value),
       capability: CAPABILITY,
       requested_by: 'control_build',
       requested_by_user: user.id,
@@ -188,9 +237,26 @@ async function enqueue(env, orgId, value, user) {
     }
   };
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_agent_jobs`, { method: 'POST', headers: { ...serviceHeaders(env), Prefer: 'return=representation' }, body: JSON.stringify(row) });
-  const rows = await res.json().catch(() => []);
-  if (!res.ok || !rows?.length) throw Object.assign(new Error(rows?.message || 'failed to queue the build'), { status: 502, detail: rows });
-  return rows[0];
+  const rows = await res.json().catch(() => null);
+  if (res.status === 409 || (rows && !Array.isArray(rows) && String(rows.code) === '23505')) {
+    /* The primary key refused a second row for this (org, key): another
+       request won the race. Read the winner back; the caller compares payloads. */
+    const winner = await readJob(env, orgId, row.id);
+    if (winner) return { job: winner, inserted: false };
+    throw Object.assign(new Error('the build was queued by a concurrent request but could not be read back'), { status: 503 });
+  }
+  if (!res.ok || !Array.isArray(rows) || !rows.length) throw Object.assign(new Error(rows?.message || 'failed to queue the build'), { status: 502, detail: rows });
+  return { job: rows[0], inserted: true };
+}
+async function replayOrConflict(request, env, user, orgId, existing, value) {
+  const expected = await requestFingerprint(value);
+  const stored = existing.input?.request_fingerprint;
+  if (stored && stored !== expected) {
+    recordEvent({ orgId, name: 'control.build.code.conflict', level: 'warn', outcome: 'refused', actorUserId: user.id, resourceType: 'ops_agent_job', resourceId: existing.id, message: 'Idempotency key reused with a different objective' });
+    return reply(request, env, { error: 'idempotency_conflict', message: 'This idempotency key already names a different build. Start a new build to submit a different objective.', job_id: existing.id, receipt: mapReceipt(existing) }, 409);
+  }
+  recordEvent({ orgId, name: 'control.build.code.replayed', level: 'info', outcome: 'ok', actorUserId: user.id, resourceType: 'ops_agent_job', resourceId: existing.id, message: 'Build request replayed to its existing job' });
+  return reply(request, env, { queued: false, replayed: true, job_id: existing.id, receipt: mapReceipt(existing) }, 200);
 }
 /* Runs after the router has verified the caller is a house owner and resolved
    `orgId` server-side. Returns null for paths it does not own. */
@@ -205,12 +271,11 @@ export async function handleBuildCode(request, env, user, orgId, path) {
     const checked = validateBuildRequest(body, env);
     if (!checked.ok) return fail(request, env, checked.error, checked.status);
     try {
+      /* Fast path for retries; the insert below is the real guard. */
       const existing = await findByKey(env, orgId, checked.value.idempotency_key);
-      if (existing) {
-        recordEvent({ orgId, name: 'control.build.code.replayed', level: 'info', outcome: 'ok', actorUserId: user.id, resourceType: 'ops_agent_job', resourceId: existing.id, message: 'Build request replayed to its existing job' });
-        return reply(request, env, { queued: false, replayed: true, job_id: existing.id, receipt: mapReceipt(existing) }, 200);
-      }
-      const job = await enqueue(env, orgId, checked.value, user);
+      if (existing) return replayOrConflict(request, env, user, orgId, existing, checked.value);
+      const { job, inserted } = await enqueue(env, orgId, checked.value, user);
+      if (!inserted) return replayOrConflict(request, env, user, orgId, job, checked.value);
       recordEvent({ orgId, name: 'control.build.code.queued', level: 'info', outcome: 'ok', actorUserId: user.id, resourceType: 'ops_agent_job', resourceId: job.id, message: `Build queued for ${checked.value.repository}`, detail: { repository: checked.value.repository, allowed_paths: checked.value.allowed_paths.length } });
       return reply(request, env, { queued: true, replayed: false, job_id: job.id, receipt: mapReceipt(job), safety: describe(env).safety }, 202);
     } catch (error) {
@@ -222,8 +287,8 @@ export async function handleBuildCode(request, env, user, orgId, path) {
     try {
       const job = await readJob(env, orgId, match[1].toLowerCase());
       if (!job) return fail(request, env, 'build not found', 404);
-      const approval = await pendingApproval(env, orgId, job.id);
-      return reply(request, env, { receipt: mapReceipt(job, approval) });
+      const approvalRead = await pendingApproval(env, orgId, job.id);
+      return reply(request, env, { receipt: mapReceipt(job, approvalRead) });
     } catch (error) {
       return fail(request, env, error.message || 'build read failed', error.status || 500, error.detail);
     }

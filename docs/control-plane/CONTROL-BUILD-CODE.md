@@ -61,13 +61,25 @@ the path for remote agents; it is not required for Control to queue a build.
 - Paths: plain prefixes only, no traversal, no absolute paths, and never a protected location. The protected list mirrors the executor's `SENSITIVE` rules (`.git`, workflows, actions, migrations, systemd, `.env`, SSH keys, credential/secret names). The executor remains the authority; the edge refuses early.
 - Budget: priority 80, two attempts, McCluster-owned compute. The browser cannot raise either.
 
-## Idempotency
+## Idempotency: exactly once, enforced by the ledger
 
-The browser generates one UUID per build attempt and keeps it in
-`localStorage` until the server acknowledges a job. The server looks up
-`ops_agent_jobs` by `org_id + job_type + input->>idempotency_key` before
-inserting. A replay returns the existing job with `replayed: true` and writes
-nothing. A reload or lost network therefore cannot queue a second job.
+- **Atomic boundary.** The job `id` is derived from `(organization, idempotency_key)`
+  (`deterministicJobId`: SHA-256, formatted as a version-8 UUID). The
+  `ops_agent_jobs` primary key therefore refuses a second row for the same key.
+  Two concurrent submissions cannot both insert; the loser receives the
+  unique-violation (`409` / `23505`), reads the winner back and answers with
+  the same job. The pre-insert lookup is only a fast path for retries.
+- **Payload binding.** `input.request_fingerprint` is the SHA-256 of
+  `{repository, task, title, allowed_paths}`. A request that reuses a key with a
+  different fingerprint is refused with `409 idempotency_conflict` and the
+  existing job id; it never replays someone else's objective.
+- **Lost acknowledgment.** The browser writes the pending attempt (key and the
+  exact payload, scoped to the signed-in user) to `localStorage` **before** the
+  POST. If the response is lost or the page reloads, the module resubmits that
+  exact key and payload; the server replays the queued job or confirms nothing
+  was queued. The pending record is cleared only when a job is acknowledged or
+  the owner starts a new build.
+- No migration, index, lock or extra table is needed for any of this.
 
 ## Receipt states
 
@@ -76,6 +88,7 @@ nothing. A reload or lost network therefore cannot queue a second job.
 | `queued` | row status `queued` |
 | `running` | row status `running` |
 | `awaiting_approval` | a pending `control_approvals` row for `code.build` naming the job (none is created today; mapped for when Core does) |
+| `approval_source` | `ok` (the approvals ledger answered; an absent row is a verified absence), `unavailable` (read failed, non-2xx or malformed: nothing about approvals is known, `approval_state` is `unknown` and the UI says so), `not_checked` |
 | `completed` | row status `done` |
 | `failed` | row status `failed`, `last_error` shown |
 | `cancelled` | row status `cancelled` / `skipped` |
@@ -85,6 +98,25 @@ nothing. A reload or lost network therefore cannot queue a second job.
 A draft PR URL in the row's output is shown as **reported, not verified**.
 Phase B adds the independent GitHub read-back (PR number, head SHA) and only
 then flips `verification.draft_pr_verified`.
+
+## What the flag does and does not do
+
+`CONTROL_BUILD_CODE_ENABLED` gates **this route and screen only**. It does not
+cancel jobs already queued, and it does not gate the existing owner-only
+`POST /v1/ai/jobs`, whose accepted job types include `code_patch`. It is not a
+universal code-execution kill switch; the contract payload and the screen say
+so. A common execution gate across both entry points is a follow-up.
+
+## Submission path and consolidation
+
+This route writes the canonical row directly with the Worker's service role,
+under the owner gate. It does not invoke the `core.code.build` binding over the
+Edge→Core bridge. `review-required` means a human reviews the draft PR after
+the run; no pre-execution approval record gates a queued job today. A static
+drift test asserts the edge row shape matches what `core/src/tools/control.mjs`
+writes. The long-term single authorized submission path is one shared contract
+module consumed by both Core and the edge; until then any change to either
+writer must update the drift test.
 
 ## Rollback
 
@@ -97,7 +129,9 @@ falls back to "Build unavailable".
 
 1. The OVH node must be able to fetch the private repository (#510) and run `gh` with a scoped token.
 2. Core runtime at the approved SHA, verified on `/health`.
-3. One deliberately trivial allowlisted task, then independent read-back of the job completion and the draft PR head on GitHub.
+3. Evidence of the runner's OS-level boundary for the code agent: dedicated OS user, filesystem limited to the worktree, no outbound network except the configured model endpoint and the push, no credentials readable by the agent. A worktree plus the post-hoc changed-file policy is not that boundary.
+4. The first live task uses an explicit, bounded `allowed_paths`; an empty scope (whole repository minus protected paths) is not acceptable for the first run.
+5. One deliberately trivial allowlisted task, then independent read-back of the job completion and the draft PR head and checks on GitHub.
 
 ## Release ledger
 
