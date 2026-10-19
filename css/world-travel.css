@@ -112,6 +112,38 @@
   .hu-travel-enabled .mn__world-feed { margin:15px 20px 0 0;padding:22px 22px calc(var(--mn-bar-clear,96px) + 20px);border:1px solid #ffffff22;border-radius:18px 18px 0 0;background:#0e1113; }
   .wt-headline { top:24px; }
 }
+/* Travel: pick exact endpoints on the existing Earth, without new map chrome. */
+/* Autocomplete options must stack above the new picker row, not behind it. */
+.wt-fields--main { position:relative;z-index:2; }
+.wt-map-pick-actions { position:relative;z-index:1; }
+.wt-map-pick-actions { display:flex;gap:8px;margin:8px 0 2px; }
+.wt-map-pick-actions button { flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #ffffff33;border-radius:12px;background:#171d23;color:#e7ecf0;font:400 12px/1.3 var(--mn-ui);cursor:pointer; }
+.wt-map-pick-actions button[aria-pressed="true"] { border-color:#ec4667;background:#4a1826;color:#fff; }
+.wt-map-pick-banner,.wt-map-nav { position:absolute;left:50%;transform:translateX(-50%);z-index:17;width:min(420px,calc(100% - 24px));box-sizing:border-box;background:#111820f0;color:#f2f4f5;border:1px solid #ffffff55;border-radius:16px;box-shadow:0 6px 28px #0009;pointer-events:auto; }
+.wt-map-pick-banner[hidden],.wt-map-nav[hidden] { display:none!important; }
+.wt-map-pick-banner { top:clamp(96px,28%,205px);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px; }
+.wt-map-pick-banner span { flex:1;min-width:0;font:500 14px/1.4 var(--mn-ui); }
+.wt-map-pick-banner button { flex:none;min-height:44px;border:1px solid #ffffff55;border-radius:22px;padding:8px 14px;background:#27313b;color:#fff;font:500 13px var(--mn-ui);cursor:pointer; }
+/* The right-hand globe zoom/location rail has priority on narrow screens. */
+.wt-map-nav { bottom:88px;padding:12px;left:12px;transform:none;width:calc(100% - 88px);max-width:none; }
+.wt-map-nav-actions button { padding:8px;font-size:13px; }
+@media(min-width:601px) {
+ .wt-map-nav { left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px)); }
+ .wt-map-nav-actions button { padding:9px 12px;font-size:15px; }
+}
+.wt-map-nav p { margin:0 0 9px;color:#f3f4f1;font:500 15px/1.4 var(--mn-ui);overflow-wrap:anywhere; }
+.wt-map-nav-actions { display:flex;gap:8px; }
+.wt-map-nav-actions button { min-height:48px;flex:1;padding:9px 12px;border-radius:26px;border:1px solid #ffffff44;background:#222d37;color:#f3f4f5;font:500 15px var(--mn-ui);cursor:pointer; }
+.wt-map-nav-actions #wtMapNavGo { background:#bf0028;border-color:#f12b51; }
+.wt-map-nav-actions button:disabled { opacity:.5;cursor:wait; }
+.wt-map-nav-actions button[hidden] { display:none!important; }
+@media(max-height:450px) {
+ .wt-map-pick-banner { top:70px;padding:5px 10px; }
+ .wt-map-nav { bottom:77px;padding:7px 10px; }
+ .wt-map-nav p { font-size:13px;margin-bottom:5px; }
+ .wt-map-nav-actions button { min-height:44px; }
+}
+
 @media (min-width:1400px) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); }
   .wt-fields--main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
@@ -302,34 +334,9 @@
   .wt-fields--main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 }
 
-/* Travel: pick exact endpoints on the existing Earth, without new map chrome. */
-/* Autocomplete options must stack above the new picker row, not behind it. */
-.wt-fields--main { position:relative;z-index:2; }
-.wt-map-pick-actions { position:relative;z-index:1; }
-.wt-map-pick-actions { display:flex;gap:8px;margin:8px 0 2px; }
-.wt-map-pick-actions button { flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #ffffff33;border-radius:12px;background:#171d23;color:#e7ecf0;font:400 12px/1.3 var(--mn-ui);cursor:pointer; }
-.wt-map-pick-actions button[aria-pressed="true"] { border-color:#ec4667;background:#4a1826;color:#fff; }
-.wt-map-pick-banner,.wt-map-nav { position:absolute;left:50%;transform:translateX(-50%);z-index:17;width:min(420px,calc(100% - 24px));box-sizing:border-box;background:#111820f0;color:#f2f4f5;border:1px solid #ffffff55;border-radius:16px;box-shadow:0 6px 28px #0009;pointer-events:auto; }
-.wt-map-pick-banner[hidden],.wt-map-nav[hidden] { display:none!important; }
-.wt-map-pick-banner { top:clamp(96px,28%,205px);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px; }
-.wt-map-pick-banner span { flex:1;min-width:0;font:500 14px/1.4 var(--mn-ui); }
-.wt-map-pick-banner button { flex:none;min-height:44px;border:1px solid #ffffff55;border-radius:22px;padding:8px 14px;background:#27313b;color:#fff;font:500 13px var(--mn-ui);cursor:pointer; }
-/* The right-hand globe zoom/location rail has priority on narrow screens. */
-.wt-map-nav { bottom:88px;padding:12px;left:12px;transform:none;width:calc(100% - 88px);max-width:none; }
-.wt-map-nav-actions button { padding:8px;font-size:13px; }
-@media(min-width:601px) {
- .wt-map-nav { left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px)); }
- .wt-map-nav-actions button { padding:9px 12px;font-size:15px; }
-}
-.wt-map-nav p { margin:0 0 9px;color:#f3f4f1;font:500 15px/1.4 var(--mn-ui);overflow-wrap:anywhere; }
-.wt-map-nav-actions { display:flex;gap:8px; }
-.wt-map-nav-actions button { min-height:48px;flex:1;padding:9px 12px;border-radius:26px;border:1px solid #ffffff44;background:#222d37;color:#f3f4f5;font:500 15px var(--mn-ui);cursor:pointer; }
-.wt-map-nav-actions #wtMapNavGo { background:#bf0028;border-color:#f12b51; }
-.wt-map-nav-actions button:disabled { opacity:.5;cursor:wait; }
-.wt-map-nav-actions button[hidden] { display:none!important; }
-@media(max-height:450px) {
- .wt-map-pick-banner { top:70px;padding:5px 10px; }
- .wt-map-nav { bottom:77px;padding:7px 10px; }
- .wt-map-nav p { font-size:13px;margin-bottom:5px; }
- .wt-map-nav-actions button { min-height:44px; }
+/* Autocomplete must win the touch target while a destination list is open.
+   Music keeps playing; its floating controls reclaim input after selection. */
+body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
+  pointer-events:none;
+  opacity:.18;
 }

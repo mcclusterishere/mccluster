@@ -352,12 +352,9 @@ function choosePlace(key, row, { source = 'manual' } = {}) {
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
   if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
 }
-// The parent Music transport floats above a cross-origin World iframe.
- // Raising the suggestion z-index inside that iframe cannot outrank it:
- // announce visible autocomplete instead, so the authenticated audio bridge
- // can temporarily suppress only the transport UI, not the playing audio.
+// Cross-origin music chrome cannot be covered by the iframe's own z-index.
 function announceAddressPicking(){
-  const active = !!panel.querySelector('.wt-suggest:not([hidden])');
+  const active=!!panel.querySelector('.wt-suggest:not([hidden])');
   window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete',{detail:{active}}));
 }
 function autocomplete(id, resultId, key) {

@@ -36,10 +36,9 @@ export async function stripeRequest(env, path, params = {}, options = {}) {
     'content-type': 'application/x-www-form-urlencoded'
   };
   if (options.account) headers['Stripe-Account'] = options.account;
-  // Stripe's idempotency key prevents duplicate authorization when a rider
-  // retries after a network timeout or two overlapping browser submissions.
-  if (method === 'POST' && options.idempotencyKey)
-    headers['Idempotency-Key'] = String(options.idempotencyKey).slice(0,255);
+  // A retried capture or cancel must not act twice. Callers pass a key bound
+  // to the ride and the action so Stripe replays the first outcome.
+  if (options.idempotencyKey) headers['Idempotency-Key'] = String(options.idempotencyKey);
   const response = await fetch(url, { method, headers, body: method === 'GET' ? undefined : form.toString() });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
