@@ -738,7 +738,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.click('.wt-world-modes [data-world-mode=posts]');
     check(scope,'one Feed mode, no duplicate News deck or For you/Community tabs',
       (await page.locator('#worldNewsDeck,.hu-feed-tabs,.hu-section-label').count())===0 &&
-      (await page.locator('.wt-world-modes [data-world-mode=posts]').textContent()).trim()==='Feed');
+      (await page.locator('.wt-world-modes [data-world-mode=posts]').textContent()).trim()==='News feed');
     check(scope,'the one feed interleaves community posts and publisher-attributed headlines',
       await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()>0);
     await page.waitForSelector('#mnFeed [data-news-id] [data-discussion-toggle]',{timeout:15000});

@@ -23,6 +23,14 @@
   var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
   var lastAnnouncement = {}, preference = readPreference();
+  /* THE CORNER STACK (owner, 2026-10-19): on the World screen the play/pause
+     sits with the fullscreen control (#mnWorldPlay), the song title scrolls in
+     the top bar (#mnNowPlaying) and timed lyrics, when a track has them in
+     data/lyrics/<slug>.json, take the headline's place line by line. The
+     standalone World owns its Audio element, so its button plays directly.
+     Inside the Music shell the parent keeps the transport (a frame message
+     cannot carry Safari's media activation); the child only displays state. */
+  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null;
 
   function readPreference() {
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
@@ -80,6 +88,74 @@
     return null;
   }
   function player() { return selected() || theme; }
+  function clusterButton() { return doc.getElementById("mnWorldPlay"); }
+  function slugOf(audio) {
+    var src = audio && (audio.currentSrc || audio.src) || "", m = /\/([^\/?#]+)\.[a-z0-9]+(?:[?#]|$)/i.exec(src);
+    return m ? m[1].toLowerCase() : "";
+  }
+  function loadLyrics(slug) {
+    if (!slug) return Promise.resolve(null);
+    if (!lyricCache[slug]) lyricCache[slug] = fetch(ROOT + "data/lyrics/" + encodeURIComponent(slug) + ".json", {credentials:"omit"})
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var lines = d && Array.isArray(d.lines) ? d.lines.filter(function (l) { return l && typeof l.text === "string" && Number.isFinite(l.t); }) : [];
+        lines.sort(function (a, b) { return a.t - b.t; });
+        return lines.length ? lines : null;
+      })
+      .catch(function () { return null; });
+    return lyricCache[slug];
+  }
+  function lineAt(lines, t) {
+    var lo = 0, hi = lines.length - 1, hit = -1;
+    while (lo <= hi) { var mid = (lo + hi) >> 1; if (lines[mid].t <= t) { hit = mid; lo = mid + 1; } else hi = mid - 1; }
+    return hit < 0 ? "" : lines[hit].text;
+  }
+  function lyricTick(audio) {
+    var p = player(); if (!p || p.audio !== audio) return;
+    var slug = slugOf(audio); if (!slug) return;
+    lyricSlug = slug;
+    loadLyrics(slug).then(function (lines) {
+      if (lyricSlug !== slug) return;
+      var next = lines && !audio.paused && !audio.ended ? lineAt(lines, audio.currentTime) : "";
+      if (next === lyricLine) return;
+      lyricLine = next; paintCluster(clusterState()); sendState();
+    });
+  }
+  function clusterState() {
+    var p = player();
+    if (!p) return {present:false, playing:false, loading:false, title:"", line:""};
+    var playing = !p.audio.paused && !p.audio.ended;
+    return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : ""};
+  }
+  function paintCluster(st) {
+    var b = clusterButton(), box = doc.getElementById("mnNowPlaying"), h = doc.querySelector(".wt-headline");
+    if (b) {
+      // Attached to the Music shell the parent's transport is the one that can
+      // start sound, so this button stays out of the way there.
+      b.hidden = attached || !st.present; b.disabled = !!st.loading;
+      b.setAttribute("aria-pressed", String(!!st.playing));
+      b.setAttribute("aria-label", st.playing ? "Pause music" : "Play music");
+      if (b.firstElementChild) b.firstElementChild.textContent = st.playing ? "Ⅱ" : "▶";
+    }
+    if (box) {
+      var text = doc.getElementById("mnNowPlayingText"), echo = box.querySelector(".mn__now-track--echo");
+      box.hidden = !st.present || !st.title;
+      if (text && text.textContent !== st.title) { text.textContent = st.title; if (echo) echo.textContent = st.title; }
+      box.classList.toggle("is-playing", !!st.playing);
+    }
+    if (h) {
+      if (headlineBase === null) headlineBase = h.textContent;
+      var want = st.line || headlineBase;
+      if (h.textContent !== want) h.textContent = want;
+      h.classList.toggle("is-lyric", !!st.line);
+    }
+  }
+  function sendState() { if (!attached && open && frame && frameReady) send(Object.assign({type:"state"}, clusterState())); }
+  function bindCluster() {
+    var b = clusterButton(); if (!b || b.dataset.mccBound) return;
+    b.dataset.mccBound = "1";
+    b.addEventListener("click", function () { if (!attached) toggle(); });
+  }
   function loadStyle() {
     if (doc.getElementById("mccWorldAudioStyle")) return;
     var link = doc.createElement("link"); link.id = "mccWorldAudioStyle"; link.rel = "stylesheet";
@@ -88,8 +164,12 @@
   function watch(audio) {
     if (!audio || observedAudio.has(audio)) return;
     observedAudio.add(audio);
+    audio.addEventListener("timeupdate", function () {
+      var now = Date.now(); if (now - lyricAt < 250) return; lyricAt = now; lyricTick(audio);
+    });
     ["play", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
       audio.addEventListener(name, function () {
+        if (name === "play" || name === "pause" || name === "ended") lyricTick(audio);
         if (name === "play" && theme && audio !== theme.audio) theme.audio.pause();
         if (name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
         if (name === "volumechange") { preference.muted = audio.muted; savePreference(); }
@@ -161,7 +241,7 @@
   function paint() {
     var p = player();
     if (controls) {
-      controls.hidden = attached || !p || !(open || IS_WORLD || p === theme);
+      controls.hidden = attached || !p || !(open || IS_WORLD || p === theme) || (IS_WORLD && !attached && !!clusterButton());
       if (p) {
         doc.getElementById("mccWorldAudioTitle").textContent = p.title || "Your music";
         var error = !!p.audio.error, playing = !p.audio.paused && !p.audio.ended;
@@ -174,6 +254,7 @@
         m.setAttribute("aria-pressed", String(p.audio.muted)); m.textContent = p.audio.muted ? "Unmute" : "Mute";
       }
     }
+    if (attached) { if (remoteState) paintCluster(remoteState); } else { paintCluster(clusterState()); sendState(); }
     if (open) markWorld();
     layout();
   }
@@ -336,7 +417,7 @@
     root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
     if (addressSuggestionsOpen) root.parent.postMessage(
       {channel:CHANNEL,type:"address-suggestions",id:channelId,active:true},parentOrigin);
-    paint();
+    paint(); bindCluster();
     alignWorldTransport();
   }
   function navigate(href) {
@@ -373,7 +454,7 @@
     ensureTheme(); // metadata only; no automatic playback on Music.
     watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));
   }
-  if (IS_WORLD && root.parent === root) { ensureTheme(); ensureControls(); paint(); }
+  if (IS_WORLD && root.parent === root) { ensureTheme(); ensureControls(); bindCluster(); paint(); }
   root.addEventListener("mcc:nowplaying", function (e) { lastAnnouncement = e.detail || {}; paint(); });
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
@@ -412,12 +493,17 @@
       if (e.source !== root.parent || e.origin !== parentOrigin || d.id !== channelId) return;
       if (d.type === "layout") frameLayout(d.clearance);
       if (d.type === "visibility") frameVisibility(d.visible);
+      if (d.type === "state") {
+        remoteState = {present:d.present === true, playing:d.playing === true, loading:d.loading === true,
+          title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : ""};
+        paintCluster(remoteState);
+      }
       return;
     }
     if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;
     if (d.type === "hello") { send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
     if (d.id !== channelId) return;
-    if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
+    if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); sendState(); }
     else if (d.type === "controls-position" && controls && open) {
       if (d.top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
       else if (Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
@@ -439,10 +525,10 @@
     if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   doc.addEventListener("pointerdown", function (e) {
-    if (!e.isTrusted || e.target.closest?.("#mccWorldAudioControls,video,audio")) return;
+    if (!e.isTrusted || e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay,video,audio")) return;
     touch();
   }, {capture:true, passive:true});
-  doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !e.target.closest?.("#mccWorldAudioControls")) touch(); }, true);
+  doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay")) touch(); }, true);
   doc.addEventListener("play", function (e) {
     if (!attached || e.target.muted || e.target.volume === 0) return;
     root.parent.postMessage({channel:CHANNEL, type:"pause", id:channelId}, parentOrigin);

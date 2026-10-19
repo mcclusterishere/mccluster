@@ -204,7 +204,7 @@ window.__huNavigation=()=>({mapPicking:!!mapPickKind,travel:travelMode,routePoin
 function travelStyle(){
  if(!viewer||!EDITORIAL)return;
  dayLayer.saturation=1.1;dayLayer.brightness=1.05;
- if(nightLayer){nightLayer.show=travelMode;nightLayer.dayAlpha=travelMode?.35:0;nightLayer.nightAlpha=1;nightLayer.brightness=travelMode?2:6;}
+ if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=travelMode?.35:0;nightLayer.nightAlpha=1;nightLayer.brightness=travelMode?2:2.4;}
  if(cloudLayer)cloudLayer.alpha=travelMode?.3:EDITORIAL_CLOUD_ALPHA;
 }
 function setTravelMode(on){
@@ -398,9 +398,11 @@ window.addEventListener('pagehide',()=>{
 window.addEventListener('pageshow',event=>{if(event.persisted&&readyMessage)tell(readyMessage)});
 async function rpc(name){const r=await fetch(SB+'/rest/v1/rpc/'+name,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});if(!r.ok)throw Error('RPC '+r.status);return r.json()}
 function clear(arr){arr.forEach(e=>viewer.entities.remove(e));arr.length=0}
-function draw(){clear(missionPins);clear(cityPins);drawContinents();
+function draw(){clear(missionPins);clear(missionHalos);clear(cityPins);drawContinents();
 /* a mission can have many pins (countries, an origin, a context region): every pin opens the same mission */
-if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach(p=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context';missionPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000),billboard:{image:glowPin(off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e'),width:EDITORIAL?(ctx?12:16):(ctx?22:30),height:EDITORIAL?(ctx?12:16):(ctx?22:30),scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
+if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach((p,k)=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context',color=off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e',size=EDITORIAL?(ctx?16:22):(ctx?22:30),position=Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000);
+ if(!off){const phase=(n*7+k*3)%11,halo=size*2.6;missionHalos.push(viewer.entities.add({position,billboard:{image:glowHalo(color),width:halo,height:halo,scale:PULSE?new Cesium.CallbackProperty(()=>1+.24*Math.sin(Date.now()/280+phase),false):1.12,color:Cesium.Color.fromAlpha(Cesium.Color.WHITE,.85),eyeOffset:new Cesium.Cartesian3(0,0,120)},properties:{missionIndex:n,halo:true}}))}
+ missionPins.push(viewer.entities.add({position,billboard:{image:glowPin(color),width:size,height:size,scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
 if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
 function show(n){if(!missions.length)return;const next=(n+missions.length)%missions.length;const m=missions[next];i=next;selectionShown=true;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=p.properties?.missionIndex?.getValue()===i?1.5:1});$('title').textContent=m.title;$('description').textContent=m.description;$('path').textContent=(m.action_path||'mission').replace('_',' ').toUpperCase()+' · '+m.region_label;$('position').textContent=(i+1)+' / '+missions.length;$('missionLink').href='mnet.html?mission='+encodeURIComponent(m.mission_id);setSelection(true);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude,1150000),orientation:{heading:Cesium.Math.toRadians(0),pitch:Cesium.Math.toRadians(-75),roll:0},duration:2.2,easingFunction:Cesium.EasingFunction.QUADRATIC_IN_OUT})}
 function setMode(mode){if(mode==='feed'){$('worldFeed').scrollTo({top:0,behavior:'smooth'});$('feedMode').classList.add('is-active');$('globeMode').classList.remove('is-active');}else{$('globeMode').classList.add('is-active');$('feedMode').classList.remove('is-active');closeDetail();}viewer?.resize();}
@@ -433,6 +435,10 @@ const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Blac
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
+/* MISSION PINS PULSE (owner, 2026-10-19: the dots were too easy to miss). A red halo breathes behind every open mission pin; it is
+   the pin's hit area too. Reduced motion keeps the halo still. */
+const missionHalos=[],PULSE=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function glowHalo(color){const key='halo:'+color;if(pinCache[key])return pinCache[key];const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');const r=g.createRadialGradient(48,48,6,48,48,46);r.addColorStop(0,color+'e6');r.addColorStop(.35,color+'80');r.addColorStop(.7,color+'26');r.addColorStop(1,color+'00');g.fillStyle=r;g.fillRect(0,0,96,96);return pinCache[key]=c.toDataURL('image/png')}
 /* Mission markers share the refined enamel language: legible at phone zoom,
    hue encodes the original action type; no overbright blurry white-center dots.
    Cached per hue so thousands of visible points share only a few GPU textures. */
@@ -476,10 +482,12 @@ function styleScene(){const sc=viewer.scene;sc.backgroundColor=Cesium.Color.from
   sizeEditorialResolution();
   sc.backgroundColor=Cesium.Color.fromCssColorString('#090b0d');sc.globe.baseColor=Cesium.Color.fromCssColorString('#082b4b');
   if(sc.skyBox)sc.skyBox.show=false;if(sc.sun)sc.sun.show=false;if(sc.moon)sc.moon.show=false;
-  sc.globe.enableLighting=true;sc.light=new Cesium.DirectionalLight({direction:Cesium.Cartesian3.normalize(new Cesium.Cartesian3(-.5,.6,-1),new Cesium.Cartesian3()),intensity:1.4});sc.globe.dynamicAtmosphereLightingFromSun=false;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;
+  /* DAY AND NIGHT BY THE REAL SUN (owner, 2026-10-19): the lit side and the dark side follow the actual time, not a studio lamp.
+     The night side carries the Black Marble city lights; the Sun disc itself stays hidden on the editorial globe. */
+  sc.globe.enableLighting=true;sc.light=new Cesium.SunLight();sc.globe.dynamicAtmosphereLightingFromSun=true;sc.globe.atmosphereSaturationShift=.1;sc.globe.atmosphereBrightnessShift=-.05;
   if(sc.skyAtmosphere){sc.skyAtmosphere.saturationShift=.1;sc.skyAtmosphere.brightnessShift=.05}
   dayLayer.saturation=1.1;dayLayer.brightness=1.05;dayLayer.contrast=1.05;dayLayer.gamma=1.1;
-  if(nightLayer)nightLayer.show=false;if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=1.1;cloudLayer.alpha=EDITORIAL_CLOUD_ALPHA}
+  if(nightLayer){nightLayer.show=true;nightLayer.dayAlpha=0;nightLayer.nightAlpha=1;nightLayer.brightness=2.4}if(cloudLayer){cloudLayer.show=true;cloudLayer.saturation=0;cloudLayer.brightness=1.1;cloudLayer.alpha=EDITORIAL_CLOUD_ALPHA}
  }
  window.__huGlobeStyle=()=>({editorial:EDITORIAL,saturation:dayLayer&&dayLayer.saturation,cloudAlpha:cloudLayer&&cloudLayer.alpha,atmosphereSaturation:sc.globe.atmosphereSaturationShift,stars:!!(sc.skyBox&&sc.skyBox.show)});
  travelStyle();

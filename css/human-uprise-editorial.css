@@ -38,6 +38,27 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-editorial .mn__world-home {grid-row:1;height:100%;min-height:0;max-height:none;margin:0 -20px;border:0;border-radius:0;box-shadow:none;background:#090b0d;overflow:visible;}
 .hu-editorial .mn__world-frame {position:absolute;inset:0 0 62px;width:100%;height:calc(100% - 62px);background:#090b0d;}
 .hu-editorial .mn__world-expand {top:auto;bottom:18px;right:12px;min-height:44px;width:44px;padding:10px;justify-content:center;border:1px solid #ffffff35;background:#101316d9;box-shadow:none;color:#d8dce0;}
+/* THE CORNER STACK (owner, 2026-10-19): the World music play/pause sits directly over the fullscreen control, same size, same place. */
+.mn__world-stack {position:absolute;z-index:2;top:10px;right:10px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+.mn__world-stack .mn__world-expand {position:static;top:auto;right:auto;bottom:auto;}
+.mn-world-overlay .mn__world-stack {top:calc(64px + env(safe-area-inset-top,0px));}
+.hu-editorial .mn__world-stack {top:auto;bottom:18px;right:12px;}
+.mn__world-play {display:none;}
+.hu-editorial .mn__world-play:not([hidden]) {display:grid;place-items:center;}
+.hu-editorial .mn__world-play {min-height:44px;width:44px;height:44px;padding:0;border:1px solid #ffffff35;border-radius:50%;background:#101316d9;box-shadow:none;color:#d8dce0;font:500 17px/1 var(--mn-ui);cursor:pointer;}
+.mn-world-on .mn__world-play {border:0;background:var(--w-glass);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),var(--w-rim);}
+.hu-editorial .mn__world-play[aria-pressed="true"] {color:#fff;}
+.hu-editorial .mn__world-play:disabled {opacity:.5;cursor:default;}
+/* NOW PLAYING (owner, 2026-10-19): the song title in white between the mark and the bell; it scrolls while the music plays. */
+.mn__now {flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;color:#fff;font:500 13px/1.3 var(--mn-ui);letter-spacing:.02em;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+.mn__now[hidden] {display:none;}
+.mn__now-track {display:inline-block;padding-right:48px;}
+.mn__now:not(.is-playing) .mn__now-track--echo {display:none;}
+.mn__now:not(.is-playing) {text-overflow:ellipsis;-webkit-mask-image:none;mask-image:none;}
+.mn__now.is-playing .mn__now-track {animation:mn-now-scroll 14s linear infinite;}
+@keyframes mn-now-scroll {from {transform:translateX(0);} to {transform:translateX(-100%);}}
+@media (prefers-reduced-motion:reduce) {.mn__now .mn__now-track {animation:none!important;} .mn__now-track--echo {display:none!important;} .mn__now {text-overflow:ellipsis;-webkit-mask-image:none;mask-image:none;}}
+.wt-headline.is-lyric {font-style:italic;}
 .hu-editorial .mn__world-tag {display:none;}
 .hu-editorial .mn #mnWorldLive {top:20px;left:auto;right:12px;width:auto;max-width:100px;min-height:44px;padding:0 12px;box-shadow:none;background:#151a1e;border:1px solid #394047;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:none;}
 .hu-editorial #mnWorldLive i {width:6px;height:6px;background:var(--mn-hot);animation:none;}
@@ -114,7 +135,7 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
   .hu-editorial.mn-world-on #mnFeedView:not([hidden]) {grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);margin-inline:-32px;}
   .hu-editorial .mn__world-home {grid-column:1;grid-row:1;margin:0;border-right:1px solid var(--mn-rule);}
   .hu-editorial .mn__world-frame {inset:0 0 calc(var(--mn-bar-clear,96px) + 62px);height:calc(100% - var(--mn-bar-clear,96px) - 62px);}
-  .hu-editorial .mn__world-expand,.hu-world-filters {bottom:calc(var(--mn-bar-clear,96px) + 12px);}
+  .hu-editorial .mn__world-stack,.hu-world-filters {bottom:calc(var(--mn-bar-clear,96px) + 12px);}
   .hu-editorial .mn__world-feed {grid-column:2;grid-row:1;padding:0 28px calc(var(--mn-bar-clear,96px) + 16px);}
   .hu-feed-tabs {border-top:0;}
 }

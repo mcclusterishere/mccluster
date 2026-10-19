@@ -288,16 +288,31 @@ try{
     await context.close();
   }
   {
-    const {context,page}=await setup();await page.goto(WORLD+'/?view=feed');
-    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&document.getElementById('mccWorldAudioControls'));
+    const {context,page}=await setup();
+    /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
+    await context.route('**/data/lyrics/heal-the-3rd-world.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Heal the 3rd World',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
+    await page.goto(WORLD+'/?view=feed');
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&document.getElementById('mnWorldPlay'));
     check('standalone World prepares the theme without autoplay',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
+    check('the corner play button sits in the globe stack with the fullscreen control and the floating transport stays out of the World',
+      await page.locator('#mnWorldStack #mnWorldPlay').isVisible()&&await page.locator('#mnWorldStack .mn__world-expand').isVisible()&&await page.locator('#mccWorldAudioControls').isHidden()
+      &&await page.evaluate(()=>{const p=document.getElementById('mnWorldPlay').getBoundingClientRect(),x=document.querySelector('.mn__world-expand').getBoundingClientRect();return p.width>=44&&p.height>=44&&Math.abs(p.right-x.right)<2&&p.bottom<=x.top+1;}));
+    check('before the first touch the title is named but still, and the headline is the headline',(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&(await page.locator('.wt-headline').textContent())==='The world is your feed.');
     await page.locator('#wtTo').click();
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
-    await page.locator('.world-audio__play').click();await page.reload();
-    await page.waitForSelector('#mccWorldAudioControls');await page.locator('#wtTo').click();
+    await page.waitForFunction(()=>document.getElementById('mnNowPlaying').classList.contains('is-playing'));
+    check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())==='Heal the 3rd World'
+      &&await page.evaluate(()=>{const b=document.getElementById('mnNowPlaying').getBoundingClientRect(),m=document.querySelector('.mn__brand').getBoundingClientRect(),s=document.getElementById('huSearchToggle').getBoundingClientRect();return b.left>=m.right-1&&b.right<=s.left+1&&getComputedStyle(document.getElementById('mnNowPlayingText')).color==='rgb(255, 255, 255)';}));
+    await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='Fixture line one',null,{timeout:8000});
+    check('timed lyrics take the headline line by line',await page.locator('.wt-headline').getAttribute('class')==='wt-headline is-lyric'&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Pause music');
+    await page.locator('#mnWorldPlay').click();
+    await page.waitForFunction(()=>document.querySelector('.wt-headline').textContent==='The world is your feed.');
+    check('pausing from the corner restores the headline and keeps the title static',await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&!(await page.locator('#mnNowPlaying').getAttribute('class')||'').includes('is-playing')&&await page.locator('#mnNowPlaying').isVisible());
+    await page.reload();
+    await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTo').click();
     check('World remembers an explicit pause on later visits',
-      await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&await page.locator('.world-audio__play').getAttribute('aria-label')==='Play music');
+      await page.evaluate(()=>__audioObjects.every(a=>a.paused))&&await page.locator('#mnWorldPlay').getAttribute('aria-label')==='Play music');
     await context.close();
   }
   {
