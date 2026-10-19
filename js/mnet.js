@@ -1036,20 +1036,31 @@
   }
   function loadPlaceFeed(reset) {
     var p = state.placeScope, c = state.world.country;
-    if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) return Promise.resolve();
-    if (reset) { p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.loaded=false; }
+    /* Clear prior country's contents synchronously; even a delayed old
+       response cannot reveal one country's feed beneath another heading. */
+    if (reset) {
+      p.seq++; p.country=c && c.code || null;
+      p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.loaded=false; p.error="";
+    }
+    if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) {
+      if (state.feedScope === "local") renderFeed(false);
+      return Promise.resolve();
+    }
     if (!reset && !p.postBefore && !p.newsBefore) return Promise.resolve();
     var seq = ++p.seq, url="https://api.mccluster.org/v1/world/region-feed?country=" +
       encodeURIComponent(c.code) + "&limit=20";
     if (!reset && p.postBefore) url += "&post_before=" + encodeURIComponent(p.postBefore);
+    else if (!reset) url += "&posts=0";
     if (!reset && p.newsBefore) url += "&news_before=" + encodeURIComponent(p.newsBefore);
+    else if (!reset) url += "&news=0";
     p.working=true; p.error="";
     if (state.feedScope === "local") renderFeed(false);
     return fetch(url,{credentials:"omit",cache:"no-store"}).then(function (r) {
       if (!r.ok) throw new Error("The country's feed is not available yet.");
       return r.json();
     }).then(function (data) {
-      if (seq !== p.seq || !data || data.ok !== true || data.country !== c.code || data.available !== true)
+      if (seq !== p.seq || p.country !== c.code ||
+          !data || data.ok !== true || data.country !== c.code || data.available !== true)
         return;
       p.posts = reset ? (data.posts||[]) : p.posts.concat(data.posts||[]);
       var incoming = (data.news||[]).map(cleanNews).filter(Boolean);
