@@ -16,6 +16,7 @@ const MAX_TOTAL_BYTES = 40 * 1024 * 1024;
 let catalogue = [], selection = null, activeAnalysis = null, currentFrame = -1;
 let sourceIdentity = null, liveEngine = false, running = false;
 let context = null;
+let analysisGeneration = 0; // overlapping decode operations must never repaint a newer selection
 
 function setStatus(message) { status.textContent = message; }
 
@@ -137,6 +138,7 @@ async function decode(blob) {
 }
 
 async function fileAnalysis(files, stems) {
+  const ticket = ++analysisGeneration;
   if (!files.length || files.length > MAX_FILES || files.some(f => !f.type.startsWith("audio/") &&
       !/\.(mp3|wav|m4a|flac|aac|ogg)$/i.test(f.name))) {
     throw Error("Select between 1 and 8 supported audio files");
@@ -148,7 +150,9 @@ async function fileAnalysis(files, stems) {
   const results = [];
   for (const file of files) {
     setStatus("Locally decoding " + file.name + " (nothing is uploaded)…");
-    results.push({name:file.name, ...(await decode(file))});
+    const pcm = await decode(file);
+    if (ticket !== analysisGeneration) return;
+    results.push({name:file.name, ...pcm});
   }
   const grouped = stems ? analyzeTrackouts(results,{maxSeconds:MAX_BROWSER_SECONDS})
     : null;
@@ -164,7 +168,7 @@ async function fileAnalysis(files, stems) {
     " seconds locally. The field is a mathematical response of an ideal membrane, not a recorded cymatic experiment.");
 }
 
-async function publicTrackAnalysis(entry) {
+async function publicTrackAnalysis(entry, ticket) {
   if (!entry || entry.track.gated) throw Error("Gated recordings cannot be independently decoded here");
   const audioUrl = new URL(entry.track.src || "", location.href);
   if (audioUrl.origin !== location.origin || !/^\/assets\/audio\/[^?]+$/i.test(audioUrl.pathname)) {
@@ -178,6 +182,7 @@ async function publicTrackAnalysis(entry) {
   if (blob.size > MAX_TOTAL_BYTES) throw Error("This audio exceeds the on-device analysis cap");
   const pcm = await decode(blob);
   const analysis = analyzePcm(pcm.samples, pcm.sampleRate,{maxSeconds:MAX_BROWSER_SECONDS});
+  if (ticket !== analysisGeneration) return;
   setAnalysis(analysis, entry.album.slug + ":" + entry.track.title, true);
   $("rsStemSummary").textContent = "Published McCluster catalogue · complete mix. No separate audio player or gated master was loaded.";
   setStatus("Audio decoded locally from the published file. Pattern moves with the canonical Music playhead. Only the first 45 seconds are modeled in this prototype.");
@@ -186,6 +191,7 @@ async function publicTrackAnalysis(entry) {
 async function beginTrack(entry, origin) {
   if (!engine?.play) throw Error("The canonical Music engine is unavailable");
   if (!entry) throw Error("Pick a published track first");
+  const ticket = ++analysisGeneration;
   selection = entry;
   const identity = entry.album.slug + ":" + entry.track.title;
   sourceIdentity = identity;
@@ -194,8 +200,8 @@ async function beginTrack(entry, origin) {
   // progress, media session, and play accounting.
   const play = engine.play(entry.album.slug, entry.track.title, false, origin);
   setStatus("Playing through McCluster Music; preparing local resonance analysis…");
-  try { await Promise.all([play, publicTrackAnalysis(entry)]); }
-  catch (error) {setStatus("Playback or visual analysis unavailable: " + error.message);}
+  try { await Promise.all([play, publicTrackAnalysis(entry, ticket)]); }
+  catch (error) {if (ticket === analysisGeneration) setStatus("Playback or visual analysis unavailable: " + error.message);}
 }
 
 function selectEntries(data) {
@@ -237,7 +243,12 @@ $("rsSurprise").addEventListener("click",()=>{
   const sample = new Uint32Array(1);
   if (globalThis.crypto?.getRandomValues) crypto.getRandomValues(sample);
   else sample[0] = Math.floor(Math.random()*4294967295);
-  const i = sample[0] % catalogue.length;
+  // Avoid a second "surprise" tap merely toggling the currently playing song.
+  const current = engine?.current?.();
+  const eligible = catalogue.filter(e => !current || e.album.slug !== current.albumSlug || e.track.title !== current.title);
+  const pool = eligible.length ? eligible : catalogue;
+  const picked = pool[sample[0] % pool.length];
+  const i = catalogue.indexOf(picked);
   $("rsTrack").value = String(i);
   // A single explicit click is consent for THIS random selection, not sitewide
   // autoplay, continuous tracking, profiling, or a persistent personalization flag.
