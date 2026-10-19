@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 337,
+  "candidate_count": 338,
   "capability_source_count": 99,
-  "support_only_count": 238,
+  "support_only_count": 239,
   "entries": [
     {
       "path": "_unfinished/equity-uprise/dashboard.html",
@@ -2611,6 +2611,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "supabase/migrations/20261013180000_qt6kv_creator_isrc_ledger.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "ISRC catalog/reservation infrastructure for music creator attribution; it supplies shared record-keeping, not a new Equity Uprise physical building capability. Migration remains gated separately by production ledger."
     }
   ],
   "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
