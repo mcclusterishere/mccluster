@@ -600,6 +600,7 @@ $("trackForm").addEventListener("submit", async (e) => {
   try {
     if (!profile) throw new Error("Save your creator profile first.");
     const master = $("trackMaster").files[0];
+    const researchQueueOptIn = $("researchQueueOptIn")?.checked === true;
     let preview = $("trackPreview").files[0] || null;
     const art = $("trackArt").files[0] || null;
     const access = $("trackAccess").value;
@@ -766,6 +767,19 @@ $("trackForm").addEventListener("submit", async (e) => {
     void import("./resonance/upload-hook.mjs")
       .then(module => module.analyzeCreatorUpload(master, track.id))
       .catch(() => { const result = document.getElementById("creatorResearchResult"); if (result) { result.hidden = false; result.textContent = "Research Engine unavailable locally; release was submitted as normal."; } });
+    if (researchQueueOptIn) {
+      // The release is committed first. Only then may the creator opt into
+      // queued private analysis; missing migration/model approval never rolls
+      // back an authorized release or overrides its moderation state.
+      void import("./music-research-review.mjs")
+        .then(m=>m.enqueueNewCreatorAnalysis(track.id))
+        .then(()=>window.dispatchEvent(new Event("mcc:research-queued")))
+        .catch(error=>{
+          const output=document.getElementById("researchReviewStatus");
+          if(output)output.textContent="Release submitted, but queued analysis was not started: "+
+            String(error?.message||"research infrastructure pending approval");
+        });
+    }
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
     if (!committed && (createdTrackId || uploaded.length)) {

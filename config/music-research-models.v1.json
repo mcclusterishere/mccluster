@@ -1,0 +1,107 @@
+{
+  "schema": "mcc.music.research.model-registry.v1",
+  "purpose": "Execution allowlist for server-controlled research jobs, separate from DB licensing approval",
+  "restrictions": [
+    "A code license does not license model checkpoints or training recordings",
+    "No model downloads during production jobs",
+    "No model inference on a rights-uncleared master"
+  ],
+  "models": [
+    {
+      "id": "mcc_spectral_v1",
+      "stage": "analyze",
+      "adapter": "first_party_fft",
+      "version": "1",
+      "enabled": true,
+      "license": "first_party",
+      "approval": "docs/research/MCCLUSTER-RESONANCE-ATLAS-V1.md",
+      "checkpoint": null
+    },
+    {
+      "id": "mcc_beat_this_reviewed_v1",
+      "stage": "analyze",
+      "adapter": "beat_this",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "review_required",
+      "approval": null,
+      "checkpoint": {
+        "filename": null,
+        "sha256": null,
+        "licenseEvidence": null
+      },
+      "outputs": [
+        "features"
+      ],
+      "notes": "Beat This! MIT code and model weights; do not enable before training-data clearance, checkpoint SHA and commercial use approval."
+    },
+    {
+      "id": "mcc_separator_reviewed_v1",
+      "stage": "separate",
+      "adapter": "audio_separator",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "unverified",
+      "approval": null,
+      "checkpoint": {
+        "filename": null,
+        "sha256": null,
+        "licenseEvidence": null
+      },
+      "outputs": [
+        "stem"
+      ],
+      "notes": "BS/Mel-Band RoFormer, Demucs or MDX adapter; architecture is not a checkpoint license"
+    },
+    {
+      "id": "mcc_basicpitch_reviewed_v1",
+      "stage": "transcribe",
+      "adapter": "basic_pitch",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "review_required",
+      "approval": null,
+      "checkpoint": null,
+      "outputs": [
+        "midi"
+      ],
+      "notes": "Default CLI may retrieve models; preload permitted signed version and run offline only"
+    },
+    {
+      "id": "mcc_engraver_v1",
+      "stage": "engrave",
+      "adapter": "music21",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "review_required",
+      "approval": null,
+      "checkpoint": null,
+      "outputs": [
+        "musicxml"
+      ],
+      "notes": "Post-MIDI draft score only; creator review required"
+    },
+    {
+      "id": "mcc_muscriptor_research_only",
+      "stage": "transcribe",
+      "adapter": "muscriptor",
+      "version": "2026",
+      "enabled": false,
+      "license": "CC-BY-NC-4.0-weight-noncommercial",
+      "approval": null,
+      "checkpoint": null,
+      "notes": "No commercial inference enabled without separately licensed weights"
+    },
+    {
+      "id": "mcc_essentia_evaluation_only",
+      "stage": "analyze",
+      "adapter": "essentia",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "AGPLv3-or-commercial-license",
+      "approval": null,
+      "checkpoint": null,
+      "notes": "Use for benchmark only until commercial license is obtained"
+    }
+  ]
+}

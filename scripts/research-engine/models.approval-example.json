@@ -1,0 +1,37 @@
+{
+  "schema": "mcc.research.model-approval.v1",
+  "note": "Operator-controlled template. Copy to a NON-repository secret path after legal and artifact approval; do not enable a model solely by changing this file.",
+  "models": {
+    "mcc_spectral_v1": {
+      "stage": "analyze",
+      "license_class": "first_party",
+      "enabled": true,
+      "approval_reference": "docs/research/MCCLUSTER-RESONANCE-ATLAS-V1.md",
+      "enhanced_tempo_key": true
+    },
+    "licensed_roformer_v1": {
+      "stage": "separate",
+      "license_class": "unknown",
+      "enabled": false,
+      "approval_reference": null,
+      "checkpoint_file": "/opt/mcc/models/approved-separator.ckpt",
+      "checkpoint_sha256": null
+    },
+    "licensed_basic_pitch_v1": {
+      "stage": "transcribe",
+      "license_class": "unknown",
+      "enabled": false,
+      "approval_reference": null,
+      "checkpoint_file": "/opt/mcc/models/approved-transcriber.bin",
+      "checkpoint_sha256": null
+    },
+    "licensed_musicxml_v1": {
+      "stage": "engrave",
+      "license_class": "unknown",
+      "enabled": false,
+      "approval_reference": null,
+      "checkpoint_file": "/opt/mcc/models/approved-engraver.bin",
+      "checkpoint_sha256": null
+    }
+  }
+}

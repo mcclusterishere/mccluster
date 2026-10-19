@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-research-review.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/creator-onboarding.css?v=__STAMP__">
@@ -167,6 +168,7 @@
           </div>
           <div class="creator-field wide"><label for="trackDescription">Release notes</label><textarea id="trackDescription" maxlength="2000"></textarea></div>
           <div class="creator-field"><label for="trackMaster">Master audio</label><input id="trackMaster" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/flac" required></div>
+          <label class="creator-check wide"><input type="checkbox" id="researchQueueOptIn"><span>After my release is successfully submitted, request private BPM/key and resonance analysis in the queued Research Engine. I understand derived processing is optional, requires my rights attestation, and each subsequent stage needs separate approval.</span></label>
           <div class="creator-field"><label for="trackPreview">Preview audio</label><input id="trackPreview" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav"><small id="previewHelp" style="color:var(--mc-dim)">Required for account-only and licensable tracks.</small></div>
           <div class="creator-field wide"><label for="trackArt">Artwork</label><input id="trackArt" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></div>
           <div class="creator-field"><label for="trackMusicVideo">Music video URL</label><input id="trackMusicVideo" type="url" placeholder="https:// or your hosted music-video URL"></div>
@@ -201,6 +203,14 @@
         </form>
       </section>
     </div>
+    <section class="creator-section mcc-research-workbench" id="creatorResearchWorkbench" aria-labelledby="researchWorkbenchTitle">
+      <div class="creator-head"><span>RESEARCH ENGINE / PRIVATE CREATOR WORKBENCH</span></div>
+      <h2 id="researchWorkbenchTitle">Your audio research jobs</h2>
+      <p>Every stage is queued and private. Listen to or inspect derived stems, MIDI and MusicXML before approving the next stage. No score is automatically published, and unlicensed models cannot run.</p>
+      <button class="creator-btn" id="researchRefresh" type="button">Refresh processing status</button>
+      <p id="researchReviewStatus" class="creator-status" role="status" aria-live="polite"></p>
+      <div id="researchJobs" class="mcc-research-jobs" aria-label="Private authorized research jobs"></div>
+    </section>
   </main>
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
@@ -208,6 +218,7 @@
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
+  <script type="module" src="js/music-research-review.mjs?v=__STAMP__"></script>
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
