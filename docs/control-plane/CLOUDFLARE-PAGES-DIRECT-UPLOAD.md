@@ -49,7 +49,8 @@ export PAGES_PUBLIC_EXPORT=/srv/mccluster/releases/public-export
 export PAGES_RELEASE_DIR=/srv/mccluster/releases/pages-dist-NEW
 export MC_SOURCE_SHA="$(git -C /srv/mccluster/source rev-parse HEAD)"
 export CLOUDFLARE_ACCOUNT_ID="<account identifier>"
-export CLOUDFLARE_API_TOKEN="<token from secure runner environment>"
+# CLOUDFLARE_API_TOKEN is supplied by a root-only secret injection mechanism,
+# never typed in the command line, saved in shell history or committed to Git.
 export WRANGLER_BIN=/usr/local/bin/wrangler
 export PAGES_PROJECT_NAME=mccluster-web
 
