@@ -142,3 +142,52 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 
 .hu-editorial .mn__clipdoor {margin-top:24px;border:1px solid var(--mn-rule);border-radius:6px;background:#101316;box-shadow:none;}
 .hu-editorial #mnNewsCredit {font-weight:400;}
+
+/* THE FEED (owner's reference, 2026-10-19): scope chips, a composer that names the place, media-first cards, the live
+   hero. Mobile first; wider screens only get more room. */
+.hu-feed-scope {display:flex;gap:8px;margin:4px 0 12px;padding:2px 0 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.hu-feed-scope::-webkit-scrollbar {display:none;}
+.hu-feed-scope button {flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #ffffff2a;border-radius:24px;background:#12171c;color:#e4e8ec;font:400 14px var(--mn-ui);white-space:nowrap;cursor:pointer;}
+.hu-feed-scope button svg {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+.hu-feed-scope [aria-pressed="true"] {background:#c00028;border-color:#f0284d;color:#fff;box-shadow:0 8px 24px -12px #ff1744aa;}
+.hu-editorial .mn__composer {margin-top:0;padding:8px 10px;border-radius:30px;}
+.hu-editorial .mn__composer-head {grid-template-columns:40px minmax(0,1fr) auto;gap:10px;}
+.hu-editorial .mn__composer textarea {font-size:max(16px,1rem);}
+.mn__live-hero {margin:14px 0 4px;}
+.mn__live-hero[hidden] {display:none;}
+.mn__livehero-card {position:relative;padding:16px;border:1px solid #ffffff22;border-radius:22px;background:radial-gradient(120% 120% at 100% 0%,#3a1020,#121619 60%);color:#f2f1ed;}
+.mn__livehero-top {display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.mn__livehero-badge {display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 12px;border-radius:16px;background:#d8002a;color:#fff;font:600 12px/1 var(--mn-ui);letter-spacing:.08em;text-transform:uppercase;}
+.mn__livehero-badge i {width:7px;height:7px;border-radius:50%;background:#fff;animation:mn-livehero-pulse 1.4s ease-in-out infinite;}
+.mn__livehero-count {color:#d2d6da;font:400 13px var(--mn-ui);}
+.mn__livehero-card h3 {margin:0;font:400 clamp(22px,6vw,28px)/1.15 Georgia,'Times New Roman',serif;letter-spacing:-.02em;}
+.mn__livehero-card p {margin:6px 0 0;color:#c9ced3;font:400 14px/1.5 var(--mn-ui);}
+.mn__livehero-host {color:#a9b1b8;font-size:13px;}
+.mn__livehero-join {display:inline-flex;align-items:center;gap:8px;min-height:48px;margin-top:14px;padding:0 20px;border:1px solid #ff3b5c;border-radius:26px;background:#d8002a;color:#fff;font:500 15px var(--mn-ui);cursor:pointer;}
+@keyframes mn-livehero-pulse {0%,100%{opacity:1;}50%{opacity:.35;}}
+@media (prefers-reduced-motion:reduce) {.mn__livehero-badge i {animation:none;}}
+/* media first: the picture or clip leads, the words sit beside it; actions run under both */
+.hu-editorial #mnFeed .mn__post-card.has-media {display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:12px;align-items:start;}
+.hu-editorial #mnFeed .mn__post-card.has-media .mn__pin {grid-column:1 / -1;}
+.hu-editorial #mnFeed .mn__post-thumb {grid-column:1;grid-row:span 1;min-width:0;}
+.hu-editorial #mnFeed .mn__post-thumb .mn__post-media {margin:0;border-radius:14px;overflow:hidden;}
+.hu-editorial #mnFeed .mn__post-thumb .mn__post-media.is-grid {grid-template-columns:minmax(0,1fr);gap:4px;}
+.hu-editorial #mnFeed .mn__post-thumb .mn__post-media-item {aspect-ratio:1;border-radius:12px;}
+.hu-editorial #mnFeed .mn__post-thumb .mn__post-media-item img,.hu-editorial #mnFeed .mn__post-thumb .mn__post-media-item video {width:100%;height:100%;max-height:none;object-fit:cover;}
+.hu-editorial #mnFeed .mn__post-thumb .mn__post-media-loading {min-height:112px;font-size:11px;}
+.hu-editorial #mnFeed .mn__post-card.has-media .mn__post-main {grid-column:2;min-width:0;}
+.hu-editorial #mnFeed .mn__post-card.has-media :is(.mn__media-locked,.mn__post-actions,.mn__comments) {grid-column:1 / -1;}
+.hu-editorial #mnFeed .mn__post-card.has-media .mn__post-head {margin-bottom:8px;}
+.hu-editorial #mnFeed .mn__post-card.has-media .mn__post-body {margin:6px 0 0;font-size:15px;line-height:1.5;}
+.hu-editorial #mnFeed .mn__post-card.is-media-open.has-media {grid-template-columns:minmax(0,1fr);}
+.hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-thumb .mn__post-media-item {aspect-ratio:auto;}
+.hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-thumb .mn__post-media-item img,.hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-thumb .mn__post-media-item video {height:auto;max-height:360px;object-fit:contain;}
+.hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-main {grid-column:1;}
+.mn__news-avatar {display:inline-grid;place-items:center;width:28px;height:28px;margin-right:8px;border-radius:50%;background:#1d2b4a;color:#dfe7ff;font:700 10px/1 var(--mn-ui);letter-spacing:.04em;vertical-align:middle;}
+/* the initials are paint, not words: the card's text stays publisher · time · place */
+.mn__news-avatar::before {content:attr(data-initials);}
+.hu-editorial #mnFeed .mn__news-meta {display:flex;align-items:center;flex-wrap:wrap;gap:4px 0;}
+@media (min-width:600px) {
+  .hu-editorial #mnFeed .mn__post-card.has-media {grid-template-columns:160px minmax(0,1fr);column-gap:16px;}
+  .hu-editorial #mnFeed .mn__post-thumb .mn__post-media-loading {min-height:160px;}
+}

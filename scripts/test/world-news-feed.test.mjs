@@ -134,3 +134,16 @@ test('news cards fail closed until backend capability explicitly enables comment
   assert.match(js,/\/v1\/world\/news\/comments-capability/);
   assert.match(js,/data\.available === true/);
 });
+
+test('Local matches a story to the picked country by its tail, by name or alias, never by substring', async () => {
+  const js = await read('js/mnet.js');
+  const inCountry = new Function(fnSource(js, 'placeInCountry') + '\nreturn placeInCountry;')();
+  assert.equal(inCountry('Nairobi, Nairobi Area, Kenya', { code:'KE', name:'Kenya' }), true);
+  assert.equal(inCountry('New Haven, Connecticut, United States', { code:'US', name:'United States of America' }), true, 'the globe says United States of America, publishers say United States');
+  assert.equal(inCountry('Port Moresby, National Capital, Papua New Guinea', { code:'GN', name:'Guinea' }), false, 'Guinea is not Papua New Guinea');
+  assert.equal(inCountry('Lagos, Lagos, Nigeria', { code:'NE', name:'Niger' }), false, 'Niger is not Nigeria');
+  assert.equal(inCountry('Seoul, Seoul-teukbyeolsi, Korea, South', { code:'KR', name:'South Korea' }), true, 'a comma inside the publisher name still matches');
+  assert.equal(inCountry('Kenya', { name:'Kenya' }), true, 'a country-level label matches on its own');
+  assert.equal(inCountry('', { name:'Kenya' }), false);
+  assert.equal(inCountry('Nairobi, Nairobi Area, Kenya', null), false);
+});

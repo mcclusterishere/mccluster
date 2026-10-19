@@ -80,3 +80,36 @@ html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { bo
 /* the bottom bar is shared chrome; by day it reads black on white */
 html[data-daylight="day"] .appbar { background:#ffffff; border:1px solid #00000022; box-shadow:0 10px 30px -14px #0005; color:#000000; }
 html[data-daylight="day"] .appbar .appbar__tab { color:#000000; }
+/* travel sheet (owner's reference, 2026-10-19) */
+html[data-daylight="day"] .wt-sheet-grab { background:#00000030; }
+html[data-daylight="day"] .wt-activity, html[data-daylight="day"] .wt-kinds button, html[data-daylight="day"] .wt-go-row button, html[data-daylight="day"] .wt-plan-cards button { background:#ffffff; border-color:#00000026; color:#000000; }
+html[data-daylight="day"] .wt-activity b, html[data-daylight="day"] .wt-plan-cards b, html[data-daylight="day"] .wt-plan-text small, html[data-daylight="day"] .wt-field-glyph { color:#555555; }
+html[data-daylight="day"] .wt-kinds [aria-pressed="true"] { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .wt-trip { background:#ffffff; border-color:#00000026; }
+html[data-daylight="day"] .wt-trip::before { border-left-color:#00000055; }
+html[data-daylight="day"] .wt-trip .wt-field { background:transparent; }
+html[data-daylight="day"] .wt-trip .wt-field + .wt-field { border-top-color:#00000018; }
+html[data-daylight="day"] .wt-trip .wt-field:focus-within { background:#f4f4f4; }
+html[data-daylight="day"] .wt-field-tools .wt-field-tool, html[data-daylight="day"] .wt-origin-field .wt-field-tools .wt-locate { color:#000000; }
+html[data-daylight="day"] .wt-field-tool[aria-pressed="true"] { background:#dc0f2d; color:#ffffff; box-shadow:none; }
+html[data-daylight="day"] .wt-plan-icon { background:#000000; color:#ffffff; }
+html[data-daylight="day"] .wt-section-h, html[data-daylight="day"] .wt-plan-text strong { color:#000000; }
+/* feed (owner's reference, 2026-10-19) */
+html[data-daylight="day"] .hu-feed-scope button { background:#ffffff; border-color:#00000026; color:#000000; }
+html[data-daylight="day"] .hu-feed-scope [aria-pressed="true"] { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; box-shadow:none; }
+html[data-daylight="day"] .mn__livehero-card { background:#ffffff; border-color:#00000026; color:#000000; }
+html[data-daylight="day"] .mn__livehero-card p, html[data-daylight="day"] .mn__livehero-count { color:#444444; }
+html[data-daylight="day"] .mn__news-avatar { background:#000000; color:#ffffff; }
+/* mission deck */
+html[data-daylight="day"] .mn-swipe__card { background:#ffffff; border-color:#00000026; color:#000000; box-shadow:0 18px 40px -28px #0006; }
+html[data-daylight="day"] .mn-swipe__card h3, html[data-daylight="day"] .mn-swipe__description, html[data-daylight="day"] .mn-swipe__tag, html[data-daylight="day"] .mn-swipe__details { color:#000000; }
+html[data-daylight="day"] .mn-swipe__tag { background:#f2f2f2; border-color:#00000020; }
+html[data-daylight="day"] .mn-swipe__tag--xp { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; }
+html[data-daylight="day"] .mn-swipe__peek { background:#eeeeee; border-color:#00000020; }
+html[data-daylight="day"] .mn-swipe__actions .mn-swipe__pass { background:#ffffff; border-color:#00000033; color:#000000; }
+html[data-daylight="day"] .mn-swipe__browse, html[data-daylight="day"] .mn-swipe__count { color:#444444; }
+html[data-daylight="day"] .mn-swipe__dots i { background:#00000025; }
+html[data-daylight="day"] .mn-swipe__dots i.is-on { background:#dc0f2d; }
+html[data-daylight="day"] .mn-swipe__filters { background:#ffffff; border-color:#00000026; }
+html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
+html[data-daylight="day"] .mn-swipe__filters button[aria-selected="true"] { background:#000000; color:#ffffff; border-color:#000000; }

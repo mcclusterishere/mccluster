@@ -321,6 +321,15 @@
         </section>
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
+        <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Global is everything, Live and
+             People are the rooms and the directory, News is the publishers only. Nothing here is a new feed; it narrows the one stream. -->
+        <nav class="hu-feed-scope" id="mnFeedScope" aria-label="What the feed shows">
+          <button type="button" data-feed-scope="local" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Local</button>
+          <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Global</button>
+          <button type="button" data-mn-view="live"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Live</button>
+          <button type="button" data-feed-scope="news" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg>News</button>
+          <button type="button" data-mn-view="discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18.5a4.5 4.5 0 0 1 7 0"/></svg>People</button>
+        </nav>
         <aside class="mn__guest-card" id="mnGuestCard">
           <p>Sign in to share an update and connect.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
@@ -335,7 +344,7 @@
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
-            <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="What’s happening?" aria-label="Post text"></textarea>
+            <textarea id="mnPostBody" maxlength="2000" rows="1" placeholder="Share a live moment from the world…" aria-label="Post text"></textarea>
             <!-- CREATE, in context: record, film or write with the full tools -->
             <a class="mn__create" href="create.html" aria-label="Record or create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
           </div>
@@ -373,6 +382,8 @@
 
         <!-- WORLD NEWS (owner, 2026-10-15): one member post to one news item, ingested from GDELT into the McCluster plane
              and served by the Worker. GDELT's licence asks for this credit; it shows whenever a news card does. -->
+        <!-- ON AIR: the first live room, as a hero over the stream; painted by js/mnet-live.js from the real directory, hidden when nobody is live -->
+        <div class="mn__live-hero" id="mnLiveHero" hidden></div>
         <p class="mn__news-credit" id="mnNewsCredit" hidden>World news from <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener noreferrer">The GDELT Project</a></p>
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>

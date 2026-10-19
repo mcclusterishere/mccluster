@@ -9,6 +9,16 @@
   "use strict";
   var CATEGORIES = ["all", "create", "help", "explore", "earn"];
   var LABELS = { all: "All", create: "Create", help: "Help", explore: "Explore", earn: "Earn" };
+  /* The card's art is its kind, drawn as a glyph: missions carry no photo and none is invented (owner's reference, 2026-10-19). */
+  var GLYPH = {
+    help: 'M12 21s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.4-7 10-7 10Z',
+    create: 'M4 20l4-1 10-10-3-3L5 16zM13 7l3 3M3 21h18',
+    explore: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm3.5-1.5-2 6.5-6.5 2 2-6.5z',
+    earn: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v10m3-7.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.2 1.3 2 3 2.3 3 1.1 3 2.3-1.3 2.2-3 2.2-3-1.1-3-2.5',
+    other: 'M12 3l2.7 5.6 6.3.9-4.5 4.3 1 6.2L12 17l-5.5 3 1-6.2L3 9.5l6.3-.9z'
+  };
+  var MARK = { pass: 'M6 6l12 12M18 6 6 18', accept: 'M12 20.5s-8-5-8-11a4.5 4.5 0 0 1 8-2.8 4.5 4.5 0 0 1 8 2.8c0 6-8 11-8 11Z' };
+  function svg(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>'; }
   var sequence = 0;
   function key(m) { return String(m && (m.id || m.mission_id) || ""); }
   function category(m) {
@@ -143,6 +153,13 @@
         if (ready && !error && state.canUndo()) empty.appendChild(button("mn-swipe__details", "Review passed missions", function () { state.resetPasses(); announcement = ""; render(); focusCard(); }));
         stage.appendChild(empty); return;
       }
+      /* THE DECK (owner's reference, 2026-10-19): the open mission on top, the next two peeking out behind it, the
+         kind as art, the facts the row carries as chips, X and heart under the card, dots for how many are left. */
+      var deck = el("div", "mn-swipe__deck");
+      list.slice(1, 3).forEach(function (next, i) {
+        var peek = el("div", "mn-swipe__peek"); peek.dataset.category = category(next) || "other";
+        peek.setAttribute("aria-hidden", "true"); peek.style.setProperty("--peek", String(i + 1)); deck.appendChild(peek);
+      });
       card = el("article", "mn-swipe__card"); card.tabIndex = 0; card.dataset.mission = key(m);
       card.setAttribute("aria-labelledby", uid + "-title");
       card.setAttribute("aria-keyshortcuts", "ArrowLeft ArrowRight");
@@ -150,21 +167,36 @@
       stamps.appendChild(el("span", "mn-swipe__stamp mn-swipe__stamp--pass", "PASS"));
       stamps.appendChild(el("span", "mn-swipe__stamp mn-swipe__stamp--accept", "ACCEPT")); card.appendChild(stamps);
       var type = category(m), meta = el("p", "mn-swipe__category", type ? LABELS[type] : String(m.domain || "Mission").replace(/_/g, " "));
-      card.dataset.category = type || "other"; card.appendChild(meta);
-      var title = el("h3", "", m.title || "Mission"); title.id = uid + "-title"; card.appendChild(title);
+      card.dataset.category = type || "other";
+      var art = el("div", "mn-swipe__art"); art.setAttribute("aria-hidden", "true"); art.innerHTML = svg(GLYPH[type] || GLYPH.other);
+      art.appendChild(meta); card.appendChild(art);
+      var body = el("div", "mn-swipe__body"); card.appendChild(body);
+      var title = el("h3", "", m.title || "Mission"); title.id = uid + "-title"; body.appendChild(title);
       var description = el("div", "mn-swipe__description");
       description.appendChild(el("p", "", brief(m.description)));
-      card.appendChild(description);
-      if (m.proof_required) card.appendChild(el("p", "mn-swipe__review", "Submit your result for review when you finish."));
+      body.appendChild(description);
+      var tags = el("div", "mn-swipe__tags"), points = Number(m.points);
+      if (points > 0) tags.appendChild(el("span", "mn-swipe__tag mn-swipe__tag--xp", "XP +" + points));
+      if (m.region_label) tags.appendChild(el("span", "mn-swipe__tag", String(m.region_label)));
+      if (type && m.domain && String(m.domain).toLowerCase() !== type) tags.appendChild(el("span", "mn-swipe__tag", String(m.domain).replace(/_/g, " ")));
+      if (m.proof_required) { var review = el("span", "mn-swipe__tag mn-swipe__review", "Proof reviewed"); review.title = "Submit your result for review when you finish."; tags.appendChild(review); }
+      if (tags.childNodes.length) body.appendChild(tags);
       var tools = el("div", "mn-swipe__tools");
       if (options.onOpen) tools.appendChild(button("mn-swipe__details", "Read full mission", function () { if (!busy) options.onOpen(m); }));
-      card.appendChild(tools);
+      body.appendChild(tools);
+      deck.appendChild(card); stage.appendChild(deck);
       var actions = el("div", "mn-swipe__actions");
-      var pass = button("mn-swipe__pass", "← Pass", function () { decide("pass"); });
-      var accept = button("mn-swipe__accept", busy ? "Opening…" : "Accept →", function () { decide("accept"); });
+      var pass = button("mn-swipe__pass", "", function () { decide("pass"); });
+      pass.innerHTML = svg(MARK.pass) + '<span class="sr-only">Pass</span>';
+      var accept = button("mn-swipe__accept", "", function () { decide("accept"); });
+      accept.innerHTML = svg(MARK.accept) + '<span class="sr-only">' + (busy ? "Opening…" : "Accept") + '</span>';
       pass.setAttribute("aria-label", "Pass mission: " + m.title); accept.setAttribute("aria-label", "Accept mission: " + m.title);
-      pass.disabled = accept.disabled = busy; actions.appendChild(pass); actions.appendChild(accept); card.appendChild(actions);
-      stage.appendChild(card);
+      pass.disabled = accept.disabled = busy;
+      var browse = el("div", "mn-swipe__browse"), dots = el("div", "mn-swipe__dots"); dots.setAttribute("aria-hidden", "true");
+      for (var d = 0; d < Math.min(list.length, 5); d++) { var dot = el("i", d === 0 ? "is-on" : ""); dots.appendChild(dot); }
+      browse.appendChild(dots); browse.appendChild(el("span", "mn-swipe__hint", "Swipe to browse missions"));
+      var arrows = el("span", "mn-swipe__arrows", "← →"); arrows.setAttribute("aria-hidden", "true"); browse.appendChild(arrows);
+      actions.appendChild(pass); actions.appendChild(browse); actions.appendChild(accept); stage.appendChild(actions);
       card.addEventListener("keydown", function (e) {
         if (e.target !== card || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
         if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); decide(e.key === "ArrowLeft" ? "pass" : "accept"); }

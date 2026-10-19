@@ -83,7 +83,8 @@ test('Action Network is world-first while live remains accessible and multi-seat
   assert.match(html, /id="mnWorldLive"[^>]*data-mn-view="live"[^>]*hidden/);
   assert.match(html, /id="mnComposerLive"[^>]*hidden/);
   assert.match(live, /function paintWorldSignal\(\)/);
-  assert.match(live, /if \(!badge \|\| live\.kind \|\| live\.category\) return;/, 'the badge never counts a filtered list');
+  assert.match(live, /live\.world = \(out && out\.sessions\) \|\| \[\]/, 'the badge and the feed hero count the whole directory, never a filtered list');
+  assert.match(live, /list = live\.world \|\| \[\]/, 'the World signal paints from its own unfiltered copy');
   assert.match(live, /go\.hidden = !\(live\.can && live\.enabled\)/, 'Go live shows only when it would work');
   assert.match(html, /id="mnFeedView" hidden/);
   assert.match(html, /data-live-kind="mission"/);

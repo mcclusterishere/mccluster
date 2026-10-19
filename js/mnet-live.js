@@ -117,7 +117,7 @@
     if (!host || !trackEl) return;
     host.hidden = false;
     $("mnGoLive").hidden = !live.can;
-    paintWorldSignal();
+    loadWorldSignal();
     trackEl.innerHTML = live.list.length
       ? live.list.map(liveCard).join("")
       : '<div class="mn__live-empty"><b>Nobody is live in this lane right now.</b><span>' +
@@ -128,13 +128,37 @@
      not a room in a menu. The badge over the globe counts what is on air
      across every lane (never a filtered list) and opens the directory;
      hosts go live from the composer. Both stay hidden until this knows. */
+  /* ON AIR OVER THE STREAM (owner's reference, 2026-10-19): the first live room as a hero card above the feed, from the
+     same directory the badge counts. Hidden when nobody is live; never a placeholder broadcast. */
+  function liveHero(s) {
+    var room = s.room || {}, host = s.host || {}, m = s.metrics || {};
+    var viewers = s.room_kind === "mission" ? Number(m.joined || 0) : Number(m.unique_viewers || 0);
+    return '<article class="mn__livehero-card">' +
+      '<div class="mn__livehero-top"><span class="mn__livehero-badge"><i aria-hidden="true"></i>Live</span>' +
+        '<span class="mn__livehero-count">' + esc(viewers.toLocaleString()) + (s.room_kind === "mission" ? " joined" : " watching") + '</span></div>' +
+      '<h3>' + esc(room.title || s.title) + '</h3>' +
+      (room.title && room.title !== s.title ? '<p>' + esc(s.title) + '</p>' : '') +
+      '<p class="mn__livehero-host">' + esc(personName(host)) + ' · ' + esc(since(s.started_at)) +
+        (s.category_key ? ' · ' + esc(s.category_key) : '') + '</p>' +
+      '<button type="button" class="mn__livehero-join" data-live="' + esc(s.id) + '">Join live <span aria-hidden="true">›</span></button>' +
+    '</article>';
+  }
+  /* The World's badge and hero count the WHOLE directory. When the Live tab is filtered, live.list is the filtered
+     view, so the World's copy of the unfiltered directory (live.world) is fetched on its own and refreshed on the
+     same cadence; a room that ends never stays advertised behind a filter. */
+  function loadWorldSignal() {
+    if (!live.kind && !live.category) { live.world = live.list.slice(); paintWorldSignal(); return Promise.resolve(); }
+    return M.api("/v1/mnet/live/directory").then(function (out) { live.world = (out && out.sessions) || []; })
+      .catch(function () { live.world = []; }).then(paintWorldSignal);
+  }
   function paintWorldSignal() {
-    var badge = $("mnWorldLive"), count = $("mnWorldLiveCount"), go = $("mnComposerLive");
+    var badge = $("mnWorldLive"), count = $("mnWorldLiveCount"), go = $("mnComposerLive"), hero = $("mnLiveHero"), list = live.world || [];
     if (go) go.hidden = !(live.can && live.enabled);
-    if (!badge || live.kind || live.category) return;
-    badge.hidden = !live.list.length;
-    if (count) count.textContent = live.list.length > 1 ? String(live.list.length) : "";
-    badge.setAttribute("aria-label", live.list.length === 1 ? "Live now: 1 broadcast" : "Live now: " + live.list.length + " broadcasts");
+    if (hero) { hero.hidden = !list.length; hero.innerHTML = list.length ? liveHero(list[0]) : ""; }
+    if (!badge) return;
+    badge.hidden = !list.length;
+    if (count) count.textContent = list.length > 1 ? String(list.length) : "";
+    badge.setAttribute("aria-label", list.length === 1 ? "Live now: 1 broadcast" : "Live now: " + list.length + " broadcasts");
   }
   function setFilter(button, key) {
     var group = button.parentNode;
@@ -438,9 +462,13 @@
   }
 
   function wire() {
-    $("mnLiveTrack").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-live]");
-      if (b) openWatch(b.getAttribute("data-live"));
+    /* the directory's cards and the feed's on-air hero open the same room */
+    [$("mnLiveTrack"), $("mnLiveHero")].forEach(function (host) {
+      if (!host) return;
+      host.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-live]");
+        if (b) openWatch(b.getAttribute("data-live"));
+      });
     });
     $("mnLiveFilters").addEventListener("click", function (e) {
       var k = e.target.closest("[data-live-kind]"), cat = e.target.closest("[data-live-category]");
