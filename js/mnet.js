@@ -1325,7 +1325,7 @@
   function newsCard(n) {
     var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
     return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
-      '<p class="mn__news-meta"><span class="mn__news-avatar" aria-hidden="true">' + esc(String(n.domain || "news").replace(/^www\./, "").slice(0, 2).toUpperCase()) + '</span><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
+      '<p class="mn__news-meta"><span class="mn__news-avatar" aria-hidden="true" data-initials="' + esc(String(n.domain || "news").replace(/^www\./, "").slice(0, 2).toUpperCase()) + '"></span><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +

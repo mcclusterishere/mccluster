@@ -184,6 +184,8 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-thumb .mn__post-media-item img,.hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-thumb .mn__post-media-item video {height:auto;max-height:360px;object-fit:contain;}
 .hu-editorial #mnFeed .mn__post-card.is-media-open .mn__post-main {grid-column:1;}
 .mn__news-avatar {display:inline-grid;place-items:center;width:28px;height:28px;margin-right:8px;border-radius:50%;background:#1d2b4a;color:#dfe7ff;font:700 10px/1 var(--mn-ui);letter-spacing:.04em;vertical-align:middle;}
+/* the initials are paint, not words: the card's text stays publisher · time · place */
+.mn__news-avatar::before {content:attr(data-initials);}
 .hu-editorial #mnFeed .mn__news-meta {display:flex;align-items:center;flex-wrap:wrap;gap:4px 0;}
 @media (min-width:600px) {
   .hu-editorial #mnFeed .mn__post-card.has-media {grid-template-columns:160px minmax(0,1fr);column-gap:16px;}
