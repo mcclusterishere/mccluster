@@ -118,6 +118,9 @@
       stage.hidden = count.hidden = undo.hidden = isCompleted; completed.hidden = !isCompleted;
       if (isCompleted) {
         resetDrag();
+        // The open card leaves the DOM with its tab; render() rebuilds it from
+        // state when Open is selected again, so nothing is lost by clearing.
+        stage.replaceChildren(); card = null;
         if (!completedLoaded) {
           completedLoaded = true;
           completed.textContent = "Loading completed missions…";
