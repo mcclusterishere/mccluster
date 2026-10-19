@@ -161,7 +161,7 @@ test("research families use measured acoustic features, not mood or implied neur
   assert.match(world,/scientificTrackIndex/);
   assert.match(world,/explainRegion/);
   assert.match(world,/origin==="random_one_time_opt_in"\?"system_opt_in":"user"/);
-  assert.match(world,/album\.slug\+"\\|"\+track\.title/,"album-and-title key disambiguates same-named tracks");
+  assert.ok(world.includes('album.slug+"|"+track.title'),"album-and-title key disambiguates same-named tracks");
   assert.match(world,/state\.analysisId!==sourceId/,"discard stale decoded audio");
   assert.match(world,/!track\.gated/,"opt-in shuffle may not select gated tracks");
   assert.match(world,/const results=await Promise\.allSettled/,"playback failures are reported independently of analysis");
