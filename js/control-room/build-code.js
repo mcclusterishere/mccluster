@@ -84,7 +84,7 @@
   function receiptCard(){
     var r=S.receipt;
     if(!S.job)return"";
-    if(!r)return'<section class="cro-card crb-receipt" data-crb-state="loading"><h2>Build receipt</h2>'+(S.loadingReceipt?note("Reading the job ledger…"):S.receiptError?note("The receipt could not be read: "+e(S.receiptError.message||S.receiptError),true):"")+'</section>';
+    if(!r)return'<section class="cro-card crb-receipt" data-crb-state="loading"><h2>Build receipt</h2>'+(S.loadingReceipt?note("Reading the job ledger…"):S.receiptError?note("The receipt could not be read: "+(S.receiptError.message||S.receiptError),true):"")+'<div class="crb-actions"><button class="cr-btn" type="button" data-crb="refresh"'+(S.loadingReceipt?" disabled":"")+'>Refresh</button><button class="cr-btn cr-btn--ghost" type="button" data-crb="new">Start another build</button></div></section>';
     var st=r.state||"unknown",rep=r.reported||{};
     var head='<div class="crb-state crb-state--'+e(st)+'"><b>'+e(STATE_LABEL[st]||st)+'</b><span>'+e(STATE_TEXT[st]||"")+'</span></div>';
     var meta='<dl class="crb-meta">'+
@@ -131,7 +131,23 @@
       (S.reconciling?note(S.reconciling):"")+
       '<div class="crb-actions"><button class="cr-btn cr-btn--primary" type="submit"'+(disabled||S.submitting?" disabled":"")+'>'+(S.submitting?(S.reconciling?"Checking…":"Queuing…"):"Queue build")+'</button></div></form></section>';
   }
+  function syncIdentity(){
+    var current=who();
+    if(current===S.ownerUser)return;
+    clearTimeout(S.timer);S.timer=null;
+    S.ownerUser=current;S.job=null;S.receipt=null;S.receiptError=null;S.submitError=null;
+    S.status=null;S.statusError=null;S.lastRefresh=null;S.reconciling=null;
+    S.form={repository:"",task:"",title:"",paths:""};S.key=uuid();
+    /* No stored objective, receipt or pending POST can be restored while
+       signed out or under a different account. */
+    if(!current)return;
+    var last=recall(),pending=recallPending();
+    if(last){S.job=last.job_id;S.key=last.key||S.key;loadReceipt();}
+    else if(pending)reconcile(pending);
+  }
   function render(){
+    syncIdentity();
+    if(!S.ownerUser)return'<div class="cro crb">'+note("Sign in to view or recover your builds.")+'</div>';
     if(!S.status&&!S.loadingStatus&&!S.statusError)loadStatus();
     var head=S.loadingStatus&&!S.status?note("Reading the build contract…"):S.statusError?note("The build route could not be read: "+(S.statusError.message||S.statusError),true):"";
     return'<div class="cro crb">'+head+receiptCard()+(S.job?"":formCard())+'</div>';
@@ -148,10 +164,12 @@
   function init(opts){
     S.request=opts.request;S.rerender=opts.render;S.orgId=opts.orgId||null;
     if(!S.key)S.key=uuid();
-    var last=recall(),pending=recallPending();
-    if(last){S.job=last.job_id;S.key=last.key||S.key;loadReceipt();}
-    else if(pending){reconcile(pending);}
-    document.addEventListener("visibilitychange",function(){if(document.hidden){clearTimeout(S.timer);S.timer=null;}else schedule();});
+    syncIdentity();
+    if(S.identityTimer)clearInterval(S.identityTimer);
+    S.identityTimer=setInterval(function(){if(who()!==S.ownerUser){syncIdentity();redraw();}},1000);
+    window.addEventListener("focus",function(){syncIdentity();redraw();});
+    document.addEventListener("visibilitychange",function(){if(document.hidden){clearTimeout(S.timer);S.timer=null;}else{syncIdentity();schedule();}});
+    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"){syncIdentity();redraw();}});
   }
   window.CR.buildCode={init:init,render:render,bind:bind,state:S,ROUTE:ROUTE};
 })();
