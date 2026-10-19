@@ -50,6 +50,7 @@ function paintPlayback() {
   $("helixPlayback").textContent = access === "loading" ? "Preparing audio…" :
     access === "preview" ? "Preview · " + stamp :
     access === "unavailable" ? "Audio unavailable" :
+    access === "spent" ? "This one-time listen has ended" :
     active ? (audio.paused ? "Paused" : "Playing") + (stamp ? " · " + stamp : "") :
     "Tap the glowing crossbar to play";
   scene?.setPlaying(active && !audio.paused);
@@ -358,7 +359,8 @@ async function boot() {
   canvas.addEventListener("touchcancel", () => { pinch = null; });
   canvas.addEventListener("gesturestart", event => event.preventDefault(), { passive: false });
   window.addEventListener("mcc:music-selected", syncFromEngine);
-  window.addEventListener("mcc:music-state", syncFromEngine);
+  // Don't make every playback tick override an in-progress helix selection.
+  window.addEventListener("mcc:music-state", paintPlayback);
   transport.audio.addEventListener("timeupdate", paintPlayback);
   transport.audio.addEventListener("pause", paintPlayback);
   transport.audio.addEventListener("play", paintPlayback);
