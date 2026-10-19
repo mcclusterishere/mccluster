@@ -32,3 +32,6 @@ html.globe-editorial, .globe-editorial body, .globe-editorial #globe {background
 .globe-travel .country-card {display:none;}
 
 @media (min-aspect-ratio:2/1) { .globe-travel .globe-travel-controls { flex-direction:row; } }
+
+/* Only an explicit pick action turns the Earth into a location selector. */
+.globe-map-picking #globe canvas { cursor:crosshair!important; }
