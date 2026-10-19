@@ -30,4 +30,4 @@
 .mn-audio-dialog #mnAudioPlayers audio{display:block;width:100%;margin:8px 0}
 .mn-audio-dialog #mnAudioRoomNote{font-size:13px;min-height:20px;color:#d2d2d2}
 .mn-audio-dialog [hidden],.mn-audio [hidden]{display:none!important}
-@media(prefers-reduced-motion:reduce){.mn-audio*,.mn-audio-dialog *{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.mn-audio *,.mn-audio-dialog *{animation:none!important;transition:none!important}}
