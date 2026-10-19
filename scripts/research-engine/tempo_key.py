@@ -109,7 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("input_audio")
     parser.add_argument("--output",default=None,help="New private JSON artifact")
     args=parser.parse_args()
-    result=json.dumps(estimate(Path(args.input_audio)),indent=2)+"\\n"
+    result=json.dumps(estimate(Path(args.input_audio)),indent=2)+"\n"
     if args.output:
         output=Path(args.output)
         if output.exists() or output.suffix.lower()!=".json":
