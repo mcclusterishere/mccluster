@@ -14,27 +14,44 @@ const param=(search,key)=>{const m=search.match(new RegExp('(?:^|[?&])'+key+'=eq
 
 function ledger(){
   const state={
-    tenants:[{id:TENANT,slug:'whip-equipped',name:'Whip Fixture',stripe_account_id:'acct_owner',white_label_enabled:false,platform_fee_percent:0.03,stripe_subscription_id:null},
+    tenants:[{id:TENANT,slug:'whip-equipped',name:'Whip Fixture',stripe_account_id:'acct_owner',stripe_charges_enabled:true,white_label_enabled:false,platform_fee_percent:0.03,stripe_subscription_id:null},
              {id:OTHER,slug:'other',name:'Other Operator',stripe_account_id:'acct_other'}],
     rides:[{id:RIDE,tenant_id:TENANT,status:'IN_PROGRESS',driver_id:'drv-1',fare_cents:2500,payment_status:'authorized',stripe_payment_intent_id:'pi_ride',completed_at:null}],
     rentals:[{id:RENTAL,tenant_id:TENANT,total_cents:11770,payment_status:'checkout_created',stripe_checkout_session_id:'cs_rental',stripe_payment_intent_id:null}],
-    events:new Set(),calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false
+    events:new Map(),payments:[],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,existingSessionStatus:'open'
   };
   state.fetch=async(resource,options={})=>{
     const u=new URL(String(resource)),path=u.pathname,method=options.method||'GET',body=options.body&&!String(resource).includes('api.stripe.com')?JSON.parse(options.body):options.body||null;
     state.calls.push({path,query:u.search,method,body,headers:options.headers||{}});
-    if(u.hostname==='api.stripe.com'){state.stripe.push({path,method,headers:options.headers||{}});if(state.stripeFails)return json({error:{message:'stripe down'}},500);return json({id:'pi_ride',status:'succeeded'});}
+    if(u.hostname==='api.stripe.com'){
+      state.stripe.push({path,method,headers:options.headers||{}});
+      if(state.stripeFails)return json({error:{message:'stripe down'}},500);
+      if(path==='/v1/checkout/sessions'&&method==='POST')
+        return json({id:'cs_rental_v1',status:'open',url:'https://checkout.stripe.com/fixture-v1'});
+      if(path.startsWith('/v1/checkout/sessions/')&&method==='GET')
+        return json({id:path.split('/').at(-1),status:state.existingSessionStatus,url:state.existingSessionStatus==='open'?'https://checkout.stripe.com/existing':null});
+      return json({id:'pi_ride',status:'succeeded'});
+    }
     if(path==='/auth/v1/user')return json({id:USER,email:'renter@example.invalid'});
     if(path==='/rest/v1/stripe_events'){
-      if(method==='POST'){if(state.events.has(body.event_id))return json({code:'23505',message:'duplicate key value violates unique constraint "stripe_events_pkey"'},409);state.events.add(body.event_id);return new Response('',{status:201});}
-      if(method==='DELETE'){state.events.delete(param(u.search,'event_id'));return new Response('',{status:204});}
+      const id=param(u.search,'event_id'),eventType=param(u.search,'event_type');
+      if(method==='POST'){
+        if(state.events.has(body.event_id))return json({code:'23505',message:'duplicate key value violates unique constraint "stripe_events_pkey"'},409);
+        state.events.set(body.event_id,{...body,processed_at:new Date().toISOString()});
+        return new Response('',{status:201});
+      }
+      const saved=state.events.get(id);
+      const match=saved&&(!eventType||saved.event_type===eventType);
+      if(method==='GET')return json(match?[saved]:[]);
+      if(method==='PATCH'){if(match)Object.assign(saved,body);return json(match?[saved]:[]);}
+      if(method==='DELETE'){if(match)state.events.delete(id);return new Response('',{status:204});}
     }
     if(path==='/rest/v1/tenants'){const id=param(u.search,'id'),acct=param(u.search,'stripe_account_id');const rows=state.tenants.filter(t=>(!id||t.id===id)&&(!acct||t.stripe_account_id===acct));if(method==='PATCH')rows.forEach(t=>Object.assign(t,body));return json(rows);}
     if(path==='/rest/v1/rides'){const id=param(u.search,'id'),st=param(u.search,'status'),drv=param(u.search,'driver_id');let rows=state.rides.filter(r=>(!id||r.id===id)&&(!st||r.status===st)&&(!drv||r.driver_id===drv));
       if(method==='PATCH'){if(state.ridePatchThrows)return json({message:'rides unavailable'},503);if(state.raceAway)rows=[];rows.forEach(r=>Object.assign(r,body));return json(rows);}return json(rows);}
-    if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const rows=state.rentals.filter(r=>r.id===id);if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
+    if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
     if(path==='/rest/v1/rental_vehicles')return json([{id:'fixture-car',tenant_id:TENANT,daily_rate_cents:5000,location_label:'Lot A',available:true}]);
-    if(path==='/rest/v1/payments')return json([]);
+    if(path==='/rest/v1/payments'){if(method==='POST'){const row={id:'payment-'+(state.payments.length+1),...body};state.payments.push(row);return json([row],201);}return json([]);}
     throw Error('Unexpected fixture request: '+method+' '+u.href);
   };
   return state;
@@ -58,11 +75,13 @@ test('a bound ride authorization applies once and scopes the payments update to 
   });
 });
 
-test('concurrent duplicate deliveries apply exactly once',{concurrency:false},async()=>{
+test('concurrent duplicate deliveries never acknowledge unfinished work',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
-    const results=await Promise.all([processStripeEvent(env,rideEvent('evt_race')),processStripeEvent(env,rideEvent('evt_race'))]);
-    assert.equal(results.filter(r=>r.duplicate).length,1);
+    const results=await Promise.allSettled([processStripeEvent(env,rideEvent('evt_race')),processStripeEvent(env,rideEvent('evt_race'))]);
+    assert.equal(results.filter(r=>r.status==='fulfilled'&&r.value.applied).length,1);
+    assert.ok(results.every(r=>r.status==='fulfilled'||r.reason?.status===503),'unfinished duplicates ask Stripe to retry');
     assert.equal(ridePatches(state).length,1);
+    assert.equal(state.events.get('evt_race').event_type,'payment_intent.amount_capturable_updated');
   });
 });
 
@@ -171,4 +190,68 @@ test('rental bookings are priced by the server from dates, rate and catalogue; b
   });
   assert.equal(rentalQuote({daily_rate_cents:1000},{white_label_enabled:true},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-01T06:00:00Z',protection_plan:'none'}).total_cents,1070);
   assert.equal(rentalQuote({daily_rate_cents:0},{},{start_at:'2026-01-01T00:00:00Z',end_at:'2026-01-02T00:00:00Z'}).error,'Vehicle has no daily rate');
+});
+
+test('pending webhook claims return retryable 503, and crashed stale claims can be recovered',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    const type='payment_intent.amount_capturable_updated';
+    state.events.set('evt_pending',{event_type:'processing:'+Date.now()+':'+type});
+    await assert.rejects(processStripeEvent(env,rideEvent('evt_pending')),e=>e.status===503);
+    assert.equal(ridePatches(state).length,0,'a pending duplicate never applies concurrently');
+    state.events.set('evt_crash',{event_type:'processing:'+(Date.now()-20*60_000)+':'+type});
+    const recovered=await processStripeEvent(env,rideEvent('evt_crash'));
+    assert.equal(recovered.applied,type);
+    assert.equal(state.events.get('evt_crash').event_type,type,'completion records real Stripe type');
+    assert.equal(state.events.get('evt_crash').processed_at!=null,true);
+  });
+});
+
+test('recorded rental Checkout Session is reused, never replaced or charged again',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    let res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(res.status,200,await res.text());
+    const first=await res.json().catch(()=>null);
+    assert.equal(first?.session_id,'cs_rental');
+    assert.equal(first?.reused,true);
+    assert.equal(state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST').length,0);
+    state.existingSessionStatus='complete';
+    res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(res.status,409,'a completed session is never silently replaced');
+    state.existingSessionStatus='expired';
+    res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(res.status,409,'an expired session requires a new booking');
+  });
+});
+
+test('concurrent initial checkout requests share one Stripe session and one booking claim',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    state.rentals[0].stripe_checkout_session_id=null;state.rentals[0].payment_status='unpaid';
+    const responses=await Promise.all([
+      worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env),
+      worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env)
+    ]);
+    const payloads=await Promise.all(responses.map(async r=>({status:r.status,body:await r.json()})));
+    assert.ok(payloads.every(r=>r.status===200),JSON.stringify(payloads));
+    assert.ok(payloads.every(r=>r.body.session_id==='cs_rental_v1'));
+    const creations=state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST');
+    assert.equal(creations.length,2,'two requests reach Stripe but share one idempotency key');
+    assert.ok(creations.every(c=>c.headers['Idempotency-Key']==='whip-rental-'+RENTAL+'-checkout-v1'));
+    assert.equal(state.payments.length,1,'only the booking CAS winner records a payment');
+    assert.equal(state.rentals[0].stripe_checkout_session_id,'cs_rental_v1');
+  });
+});
+
+test('rental quote uses local calendar days across daylight saving changes',{concurrency:false},()=>{
+  const vehicle={daily_rate_cents:5000};
+  const tenant={white_label_enabled:false,platform_fee_percent:0.03};
+  const fall=rentalQuote(vehicle,tenant,{
+    start_at:'2026-10-31T10:00:00-04:00',end_at:'2026-11-02T10:00:00-05:00',
+    time_zone:'America/New_York',protection_plan:'none'
+  });
+  assert.equal(fall.days,2,'two local days spanning 49 elapsed hours must cost two days');
+  const late=rentalQuote(vehicle,tenant,{
+    start_at:'2026-11-05T10:00:00-05:00',end_at:'2026-11-06T11:00:00-05:00',
+    time_zone:'America/New_York',protection_plan:'none'
+  });
+  assert.equal(late.days,2,'a genuinely late return is a second billable day');
 });
