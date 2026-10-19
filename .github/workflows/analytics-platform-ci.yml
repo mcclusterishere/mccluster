@@ -14,6 +14,8 @@ on:
       - 'listen.html'
       - 'action/index.html'
       - 'js/action.js'
+      - 'workers/mccluster/src/experience/**'
+      - 'workers/mccluster/test/experience-evidence.test.mjs'
       - 'scripts/test/adaptive-compatibility.test.mjs'
       - 'js/live-content.js'
       - 'js/name-integrity.js'
@@ -40,6 +42,8 @@ on:
       - 'listen.html'
       - 'action/index.html'
       - 'js/action.js'
+      - 'workers/mccluster/src/experience/**'
+      - 'workers/mccluster/test/experience-evidence.test.mjs'
       - 'scripts/test/adaptive-compatibility.test.mjs'
       - 'js/live-content.js'
       - 'js/name-integrity.js'
@@ -71,6 +75,7 @@ jobs:
           node --check js/experience.js
           node --check js/adaptive-surfaces.js
           node --check js/action.js
+          node --check workers/mccluster/src/experience/router.js
           node --check js/live-content.js
           node --check js/name-integrity.js
           node --check workers/mccluster/src/analytics/router.js
@@ -79,6 +84,8 @@ jobs:
         run: node --test scripts/test/analytics-platform.test.mjs
       - name: Run adaptive compatibility contracts
         run: node --test scripts/test/adaptive-compatibility.test.mjs
+      - name: Run production experience policy contracts
+        run: node --test workers/mccluster/test/experience-evidence.test.mjs
       - name: Run account identity and privacy gate contracts
         run: node --test scripts/test/account-identity-gate.test.mjs
 

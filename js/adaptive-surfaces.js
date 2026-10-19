@@ -45,7 +45,10 @@
     }catch(_){}
     var map=byId(local);
     var selected=decision&&decision.ok&&Array.isArray(decision.candidates)
-      ? decision.candidates.map(function(c){return map[String(c.id)];}).filter(Boolean)
+      ? decision.candidates.map(function(c){
+          var localCandidate=map[String(c.id)];
+          return localCandidate ? Object.assign({},localCandidate,{position:Number.isFinite(Number(c.position))?Number(c.position):localCandidate.position}) : null;
+        }).filter(Boolean)
       : local.slice(0,maxItems);
     if(!selected.length)selected=local.slice(0,maxItems);
     return {decision:decision&&decision.ok?decision:null,candidates:selected,fallback:!(decision&&decision.ok)};
@@ -71,24 +74,46 @@
     },{threshold:[0.55]});
     io.observe(el);
   }
+  function hasSession(){
+    try{var s=JSON.parse(localStorage.getItem("mccdb_session")||"null");return !!(s&&s.access_token);}catch(_){return false;}
+  }
   function card(candidate,decision,surface){
     var href=safeHref(candidate.href);
-    var a=doc.createElement(href?"a":"div");
-    a.className="adaptive-card";
-    if(href)a.href=href;
-    a.dataset.candidateId=candidate.id;
+    var wrap=doc.createElement("article");
+    wrap.className="adaptive-card";
+    wrap.dataset.candidateId=candidate.id;
+    var main=doc.createElement(href?"a":"div");
+    main.className="adaptive-card__main";
+    if(href)main.href=href;
     var k=doc.createElement("span");k.className="adaptive-card__k";k.textContent=candidate.eyebrow||"Next";
     var b=doc.createElement("b");b.textContent=candidate.label||candidate.id;
     var s=doc.createElement("small");s.textContent=candidate.sub||"";
     var go=doc.createElement("span");go.className="adaptive-card__go";go.textContent="→";go.setAttribute("aria-hidden","true");
-    a.append(k,b,s,go);
+    main.append(k,b,s,go);
+    wrap.appendChild(main);
+    if(hasSession()&&root.MCC_EXPERIENCE&&typeof root.MCC_EXPERIENCE.prefer==="function"){
+      var tune=doc.createElement("div");tune.className="adaptive-card__tune";tune.setAttribute("aria-label","Tune this recommendation");
+      [["more","More like this"],["less","Less like this"]].forEach(function(pair){
+        var btn=doc.createElement("button");btn.type="button";btn.textContent=pair[1];btn.dataset.preference=pair[0];
+        btn.addEventListener("click",function(){
+          btn.disabled=true;
+          root.MCC_EXPERIENCE.prefer(surface,candidate.id,pair[0]).then(function(out){
+            btn.disabled=false;
+            if(!out||!out.ok)return;
+            Array.prototype.forEach.call(tune.querySelectorAll("button"),function(x){x.classList.toggle("is-on",x===btn);});
+          });
+        });
+        tune.appendChild(btn);
+      });
+      wrap.appendChild(tune);
+    }
     evidence("impression",decision,candidate,{surface:surface});
-    watchVisible(a,decision,candidate,surface);
-    a.addEventListener("click",function(){
+    watchVisible(wrap,decision,candidate,surface);
+    main.addEventListener("click",function(){
       evidence("interact",decision,candidate,{surface:surface});
       if(root.MCC_TRACK)root.MCC_TRACK("foryou_tap",{dom:candidate.meta&&candidate.meta.domain||"",surface:surface,candidate_id:candidate.id});
     });
-    return a;
+    return wrap;
   }
   async function mount(rootEl,surface,candidates,opts){
     if(typeof rootEl==="string")rootEl=doc.querySelector(rootEl);
@@ -103,16 +128,16 @@
   }
   function globalCandidates(){
     return [
-      {id:"music",kind:"destination",eyebrow:"Listen",label:"Music",sub:"Play the catalog, watch the music videos, keep your rotation.",href:"listen.html",meta:{domain:"music"}},
-      {id:"action",kind:"destination",eyebrow:"Do something",label:"Action Network",sub:"Pick an action and turn attention into a mission.",href:"action/",meta:{domain:"civic"}},
-      {id:"client",kind:"destination",eyebrow:"Build something",label:"Work with McCluster",sub:"Web, media, music and operating systems for your project.",href:"hire.html",meta:{domain:"client"}}
+      {id:"music",kind:"destination",eyebrow:"Listen",label:"Music",sub:"Play the catalog, watch the music videos, keep your rotation.",href:"listen.html",meta:{domain:"music",topic:"music discovery"}},
+      {id:"action",kind:"destination",eyebrow:"Do something",label:"Action Network",sub:"Pick an action and turn attention into a mission.",href:"action/",meta:{domain:"action",topic:"missions"}},
+      {id:"client",kind:"destination",eyebrow:"Build something",label:"Work with McCluster",sub:"Web, media, music and operating systems for your project.",href:"hire.html",meta:{domain:"client",topic:"services"}}
     ];
   }
   function musicCandidates(){
     return [
-      {id:"here-album",kind:"music",eyebrow:"Keep listening",label:"I AM HERE",sub:"Six tracks in the album player.",href:"album.html?album=here",meta:{domain:"music"}},
-      {id:"here-videos",kind:"music",eyebrow:"Watch",label:"Music Videos",sub:"The records as full-screen music videos with live lyrics.",href:"music-videos.html?album=here",meta:{domain:"music"}},
-      {id:"creator-studio",kind:"creator",eyebrow:"Make your own",label:"Creator Studio",sub:"Release music into the same network people listen in.",href:"creator.html",meta:{domain:"artist"}}
+      {id:"here-album",kind:"music",eyebrow:"Keep listening",label:"I AM HERE",sub:"Six tracks in the album player.",href:"album.html?album=here",meta:{domain:"music",topic:"album"}},
+      {id:"here-videos",kind:"music",eyebrow:"Watch",label:"Music Videos",sub:"The records as full-screen music videos with live lyrics.",href:"music-videos.html?album=here",meta:{domain:"music",topic:"music video"}},
+      {id:"creator-studio",kind:"creator",eyebrow:"Make your own",label:"Creator Studio",sub:"Release music into the same network people listen in.",href:"creator.html",meta:{domain:"artist",topic:"creator tools"}}
     ];
   }
   async function rank(surface,items,toCandidate,opts){

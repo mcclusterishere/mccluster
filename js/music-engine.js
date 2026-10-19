@@ -22,6 +22,9 @@
   var previewLimit = 0;
   var startedAt = 0;
   var CREATOR_TRACKS = {};
+  var PARTNER_DESTINATIONS = {};
+  var PARTNER_LOADING = {};
+  var PARTNER_API = "https://api.mccluster.org";
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 
@@ -38,6 +41,85 @@
     if (!isFinite(sec) || sec < 0) sec = 0;
     var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
     return m + ":" + String(s).padStart(2, "0");
+  }
+
+  function slugify(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+  function currentCatalogKey() {
+    if (!current || current.creatorTrackId || !current.albumSlug || !current.title) return "";
+    return slugify(current.albumSlug) + ":" + slugify(current.title);
+  }
+  function safePartnerUrl(value) {
+    try {
+      var u = new URL(String(value || ""), location.href);
+      return /^(https?:)$/.test(u.protocol) ? u.href : "";
+    } catch (_) { return ""; }
+  }
+  function renderPartnerDestinations(key, rows) {
+    var host = doc.getElementById("musicNowPartners");
+    if (!host || key !== currentCatalogKey()) return;
+    host.textContent = "";
+    (rows || []).forEach(function (row) {
+      var href = safePartnerUrl(row && row.href);
+      if (!href) return;
+      var a = doc.createElement("a");
+      a.className = "music-now__partner";
+      a.href = href;
+      if (new URL(href, location.href).origin !== location.origin) {
+        a.target = "_blank";
+        a.rel = "noopener";
+      }
+      var eyebrow = doc.createElement("span");
+      eyebrow.textContent = row.material_connection ? "Sponsored / paid relationship" :
+        row.relationship === "credit" ? "Credit" : "Partner";
+      var label = doc.createElement("b");
+      label.textContent = row.label || row.organization && row.organization.name || "Partner";
+      a.append(eyebrow, label);
+      if (row.disclosure) {
+        var disclosure = doc.createElement("small");
+        disclosure.textContent = row.disclosure;
+        a.appendChild(disclosure);
+      }
+      a.addEventListener("click", function () {
+        trackEvent("music_partner_open", {
+          catalog_key: key,
+          partner_id: row.id || null,
+          relationship: row.relationship || null,
+          organization: row.organization && row.organization.slug || null,
+          material_connection: row.material_connection === true
+        });
+      });
+      host.appendChild(a);
+    });
+    host.hidden = !host.children.length;
+  }
+  function paintPartnerDestinations() {
+    var host = doc.getElementById("musicNowPartners");
+    if (!host) return;
+    var key = currentCatalogKey();
+    if (!key) { host.textContent = ""; host.hidden = true; return; }
+    if (PARTNER_DESTINATIONS[key]) {
+      renderPartnerDestinations(key, PARTNER_DESTINATIONS[key]);
+      return;
+    }
+    host.textContent = "";
+    host.hidden = true;
+    if (PARTNER_LOADING[key]) return;
+    PARTNER_LOADING[key] = fetch(PARTNER_API + "/v1/music/credits?key=" + encodeURIComponent(key), {
+      headers: { accept: "application/json" },
+      cache: "no-cache"
+    }).then(function (res) {
+      if (!res.ok) throw new Error("partner destinations unavailable");
+      return res.json();
+    }).then(function (data) {
+      PARTNER_DESTINATIONS[key] = data && Array.isArray(data.destinations) ? data.destinations : [];
+      renderPartnerDestinations(key, PARTNER_DESTINATIONS[key]);
+    }).catch(function () {
+      PARTNER_DESTINATIONS[key] = [];
+    }).finally(function () {
+      delete PARTNER_LOADING[key];
+    });
   }
   function trackEvent(name, extra) {
     if (!root.MCC_TRACK) return;
@@ -113,6 +195,7 @@
             '<span id="musicNowAlbum"></span>' +
             '<span id="musicNowMode"></span>' +
           '</div>' +
+          '<div class="music-now__partners" id="musicNowPartners" hidden></div>' +
         '</div>' +
       '</div>';
     doc.body.appendChild(now);
@@ -309,6 +392,7 @@
         detail.href = "listen.html";
         detail.textContent = "Music";
       }
+      paintPartnerDestinations();
     }
 
     doc.querySelectorAll("[data-music-play]").forEach(function (b) {

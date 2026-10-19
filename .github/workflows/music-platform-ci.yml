@@ -16,6 +16,10 @@ on:
       - 'supabase/functions/music-*/**'
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
+      - 'workers/mccluster/src/music/**'
+      - 'data/brands.json'
+      - 'js/mnet.js'
+      - 'scripts/test/ecosystem-partnerships.test.mjs'
       - 'scripts/test/music-platform.test.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
@@ -34,6 +38,10 @@ on:
       - 'supabase/functions/music-*/**'
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
+      - 'workers/mccluster/src/music/**'
+      - 'data/brands.json'
+      - 'js/mnet.js'
+      - 'scripts/test/ecosystem-partnerships.test.mjs'
       - 'scripts/test/music-platform.test.mjs'
 
 permissions:
@@ -53,10 +61,13 @@ jobs:
           node --check js/music-community.js
           node --check js/music-creator-profile.js
           node --check js/music-admin.js
+          node --check workers/mccluster/src/music/router.js
       - name: Parse creator studio module
         run: node --check js/music-creator-studio.js
       - name: Run music platform contracts
         run: node --test scripts/test/music-platform.test.mjs
+      - name: Run ecosystem partnership contracts
+        run: node --test scripts/test/ecosystem-partnerships.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest

@@ -3,10 +3,15 @@
 .adaptive-wrap[hidden]{display:none}
 .adaptive-wrap__k{margin:0 0 .7rem;font:800 .72rem/1.2 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--pulse,#e5383b)}
 .adaptive-grid{display:grid;grid-template-columns:1fr;gap:.7rem}
-.adaptive-card{position:relative;display:grid;grid-template-columns:1fr auto;grid-template-areas:"k go" "b go" "s go";gap:.2rem .8rem;padding:1rem 1.05rem;border-radius:18px;text-decoration:none;color:inherit;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.035));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.12)}
+.adaptive-card{position:relative;display:flex;flex-direction:column;border-radius:18px;color:inherit;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.035));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.12);overflow:hidden}
+.adaptive-card__main{display:grid;grid-template-columns:1fr auto;grid-template-areas:"k go" "b go" "s go";gap:.2rem .8rem;padding:1rem 1.05rem;text-decoration:none;color:inherit;flex:1}
 .adaptive-card__k{grid-area:k;font:800 .62rem/1.2 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--pulse,#e5383b)}
 .adaptive-card b{grid-area:b;font:800 1rem/1.2 system-ui,sans-serif}
 .adaptive-card small{grid-area:s;color:rgba(244,239,230,.66);font:600 .78rem/1.45 system-ui,sans-serif}
 .adaptive-card__go{grid-area:go;align-self:center;font:700 1.25rem/1 system-ui,sans-serif}
-.adaptive-card:focus-visible{outline:2px solid var(--pulse,#e5383b);outline-offset:3px}
+.adaptive-card__main:focus-visible{outline:2px solid var(--pulse,#e5383b);outline-offset:-3px}
+.adaptive-card__tune{display:flex;gap:6px;padding:0 10px 10px}
+.adaptive-card__tune button{appearance:none;border:1px solid rgba(255,255,255,.13);background:rgba(0,0,0,.16);color:inherit;border-radius:999px;padding:6px 9px;font:700 .62rem/1 system-ui,sans-serif;opacity:.66}
+.adaptive-card__tune button:hover,.adaptive-card__tune button.is-on{opacity:1;border-color:var(--pulse,#e5383b)}
+.adaptive-card__tune button.is-on{background:color-mix(in srgb,var(--pulse,#e5383b) 22%,transparent)}
 @media(min-width:760px){.adaptive-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.adaptive-card{min-height:8.4rem}}

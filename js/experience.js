@@ -153,6 +153,26 @@
     }, extra || {}));
   }
 
+  async function preferenceRequest(method, surface, key, value) {
+    var token=sessionToken();
+    if(!token) return {ok:false,error:"authentication required"};
+    var headers={"content-type":"application/json","authorization":"Bearer "+token};
+    var url=API+"/v1/experience/preferences";
+    if(method==="GET" && surface) url += "?surface="+encodeURIComponent(surface);
+    var opts={method:method,headers:headers};
+    if(method!=="GET") opts.body=JSON.stringify({surface:surface,key:key,value:value});
+    try{
+      var res=await fetch(url,opts);
+      var data=await res.json().catch(function(){return null;});
+      if(!res.ok||!data||!data.ok) return {ok:false,error:data&&data.error||"preference unavailable"};
+      if(root.MCC_TRACK && method==="POST") root.MCC_TRACK("experience_preference_set",{surface:surface,candidate_id:key,value:value});
+      return data;
+    }catch(error){return {ok:false,error:error&&error.message||"preference unavailable"};}
+  }
+  function preferences(surface){return preferenceRequest("GET",surface);}
+  function prefer(surface,key,value){return preferenceRequest("POST",surface,key,value);}
+  function clearPreference(surface,key){return preferenceRequest("DELETE",surface,key);}
+
   root.MCC_EXPERIENCE = {
     decide: decide,
     impression: impression,
@@ -160,6 +180,9 @@
     interact: interact,
     dismissed: dismissed,
     outcome: outcome,
+    preferences: preferences,
+    prefer: prefer,
+    clearPreference: clearPreference,
     decisionProps: decisionProps
   };
 })(window);
