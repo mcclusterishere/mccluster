@@ -368,7 +368,39 @@ const chooseTravelPlace = async (page, id, query) => {
       && list && !list.hidden && [...list.querySelectorAll('button')]
         .some(button => button.textContent?.includes(expected));
   }, {id, expected}, {timeout: 25000});
-  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  // Diagnostic for the desktop-only CI interaction stall: check actual
+  // viewport geometry, computed visibility and nearest clipping ancestor.
+  // No addresses or private coordinates are printed, only boolean/layout data.
+  if (process.env.E2E_ONLY === 'travel-desktop') {
+    console.log('TRAVEL_SUGGEST_LAYOUT',JSON.stringify(await page.evaluate(({id,expected}) => {
+      const list=document.getElementById(id+'Results');
+      const row=[...list.querySelectorAll('button')].find(b=>b.textContent?.includes(expected));
+      const rect=node=>{const r=node?.getBoundingClientRect();return r?{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}:null};
+      const style=node=>{const s=node&&getComputedStyle(node);return s?{display:s.display,visibility:s.visibility,opacity:s.opacity,overflow:s.overflow}:null};
+      const feed=document.getElementById('mnWorldFeed');
+      return {row:rect(row),rowStyle:style(row),list:rect(list),listStyle:style(list),
+        field:rect(list?.parentElement),fieldStyle:style(list?.parentElement),feed:rect(feed),feedStyle:style(feed),
+        rootExpanded:document.documentElement.classList.contains('wt-expanded'),scrollTop:Math.round(feed?.scrollTop||0),
+        rowVisible:!!(row?.offsetWidth&&row?.offsetHeight)};
+    },{id,expected})));
+  }
+  const option = page.locator('#'+id+'Results button').filter({hasText:expected}).first();
+  try { await option.click({noWaitAfter:true,timeout:5000}); }
+  catch (error) {
+    // The Cesium canvas continuously paints while the suggestion popup is
+    // shown. If the intended option is truly exposed and enabled, an actual
+    // forced pointer click can bypass Playwright's overly strict stable-frame
+    // heuristic. Never bypass an obscured, disabled or hidden option.
+    const exposed = await option.evaluate(el => {
+      const r=el.getBoundingClientRect(), style=getComputedStyle(el);
+      const x=(r.left+r.right)/2, y=(r.top+r.bottom)/2;
+      const hit=document.elementFromPoint(x,y);
+      return r.width>0&&r.height>0&&!el.disabled&&style.visibility==='visible'
+        &&style.display!=='none'&&(hit===el||el.contains(hit));
+    });
+    if (!exposed) throw error;
+    await option.click({force:true,noWaitAfter:true,timeout:5000});
+  }
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
     return input && input.value !== query && input.value.includes(expected)
