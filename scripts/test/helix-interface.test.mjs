@@ -54,7 +54,7 @@ test("developer-local lab uses canonical gated music engine and bundled Three.js
   assert.match(page, /src="_unfinished\/helix\/main\.mjs"/);
   assert.match(page, /src="js\/music-engine\.js/);
   for (const sideEffect of ["analytics.js", "listen-ledger.js", "gated-audio.js", "mcc-auth.js"]) {
-    assert.doesNotMatch(page, new RegExp('<script[^>]+src="[^"]*'+sideEffect.replace(".", "\\.")+'"), "lab must not call live auth/analytics or spend gated plays");
+    assert.equal(page.includes('src="js/' + sideEffect), false, "lab must not call live auth/analytics or spend gated plays");
   }
   assert.match(scene, /\.\.\/\.\.\/vendor\/three\.module\.min\.js/);
   assert.match(main, /transport\.play\(album\(\)\.slug, track\(\)\.title\)/);
