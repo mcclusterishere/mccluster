@@ -18,6 +18,14 @@ const paths = {
   stay:'M3 19V6m0 8h18v5M3 9h7v5m0-5h8a3 3 0 0 1 3 3v2',
   walk:'M14 3h.01M11 8l3 1 3 4M8 13l3-5-1 8-4 5m4-5 5 2 2 4',
   cycle:'M7 8h10l3 10M7 8l-3 9h10L9 5H6M16 5h3M7 18a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm17 0a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
+  globe:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 0c-3 3-3 15 0 18m0-18c3 3 3 15 0 18M3 12h18M5 7.5h14M5 16.5h14',
+  target:'M12 4v3m0 10v3M4 12h3m10 0h3M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z',
+  search:'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm5 11.5L20 20',
+  clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v5l3 2',
+  route:'M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12-10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v6',
+  near:'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Zm0-8.7a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6Z',
+  saved:'M6 3h12v18l-6-4-6 4z',
+  luggage:'M8 7V4h8v3M4 7h16v12H4zM9 11v4m6-4v4M8 19v2m8-2v2',
 };
 const icon = name => `<svg class="wt-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.drive}"/></svg>`;
 const labels = { flight:'Flights', train:'Trains', drive:'Drive', stay:'Stays', transit:'Transit', walk:'Walk', cycle:'Bike' };
@@ -26,7 +34,7 @@ const isGround = () => groundModes.includes(draft.mode);
 const hasCoordinates = place => Array.isArray(place?.coordinates) && place.coordinates.length === 2 &&
   place.coordinates.every(Number.isFinite) && Math.abs(place.coordinates[0]) <= 180 && Math.abs(place.coordinates[1]) <= 90;
 const freshDraft = () => normalizeJourney({ mode:'drive' });
-let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0;
+let draft = freshDraft(), savedId = null, dirty = false, busy = false, revision = 0, tripEpoch = 0, tripShape = 'rides';
 let catalogPromise, currentMode = 'travel', hostVisible = document.body.dataset.worldAudioVisible !== 'false';
 const send = data => frame?.contentWindow?.postMessage(data, location.origin);
 const status = (message = '') => { $('wtMessage').textContent = message; };
@@ -46,19 +54,22 @@ let originSource = 'manual', ridePickupFix = null, rideLocating = false, rideLoc
 const rideFixMaxAge = 30000;
 
 panel.innerHTML = `
-  <header class="wt-planner-head"><h2 id="wtTitle">Where are you going?</h2><span class="wt-status" id="wtDraftStatus">Draft</span></header>
+  <div class="wt-sheet-grab" aria-hidden="true"></div>
+  <header class="wt-planner-head"><h2 id="wtTitle">Where to?</h2><span class="wt-status" id="wtDraftStatus">Draft</span><button type="button" id="wtActivity" class="wt-activity">${icon('clock')}<span>Activity</span><b aria-hidden="true">›</b></button></header>
   <form id="wtForm">
-    <div class="wt-fields wt-fields--main">
-      <div class="wt-field wt-origin-field"><label for="wtFrom">Starting point</label><button type="button" id="wtLocate" class="wt-locate" aria-label="Use my current location" title="Use my location">◎</button><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location or enter an address" aria-describedby="wtLocationStatus"><div id="wtFromResults" class="wt-suggest" hidden></div></div>
-      <div class="wt-field"><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Search an address or place" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div id="wtToResults" class="wt-suggest" hidden></div></div>
+    <!-- THE TRIP CARD (owner's reference, 2026-10-19): pickup over destination, joined by a dotted thread. The pickup
+         reads "Use my location" until the member types or pins something else; the globe pins sit inside each row. -->
+    <div class="wt-fields wt-fields--main wt-trip">
+      <div class="wt-field wt-origin-field"><span class="wt-trip-dot wt-trip-dot--from" aria-hidden="true"></span><label for="wtFrom">Pickup</label><input id="wtFrom" name="from" autocomplete="off" maxlength="240" placeholder="Use my location" aria-describedby="wtLocationStatus"><div class="wt-field-tools"><button type="button" id="wtPickFrom" class="wt-field-tool" data-map-pick="from" aria-pressed="false" aria-label="Pick your starting point on the globe" title="Pick on the globe">${icon('globe')}</button><button type="button" id="wtLocate" class="wt-locate wt-field-tool" aria-label="Use my current location" title="Use my location">${icon('target')}</button></div><div id="wtFromResults" class="wt-suggest" hidden></div></div>
+      <div class="wt-field wt-destination-field"><span class="wt-trip-dot wt-trip-dot--to" aria-hidden="true"></span><label for="wtTo">Destination</label><input id="wtTo" name="to" autocomplete="off" maxlength="240" placeholder="Where would you like to go?" required aria-describedby="wtEndpointHint wtRoutePrivacy"><div class="wt-field-tools"><span class="wt-field-glyph" aria-hidden="true">${icon('search')}</span><button type="button" id="wtPickTo" class="wt-field-tool" data-map-pick="to" aria-pressed="false" aria-label="Pick your destination on the globe" title="Pick on the globe">${icon('globe')}</button></div><div id="wtToResults" class="wt-suggest" hidden></div></div>
     </div>
-    <div class="wt-map-pick-actions" role="group" aria-label="Choose trip endpoints on the globe">
-      <button id="wtPickFrom" type="button" data-map-pick="from" aria-pressed="false">Pick start on globe</button>
-      <button id="wtPickTo" type="button" data-map-pick="to" aria-pressed="false">Pick destination on globe</button>
-    </div>
+    <!-- trip type: Rides is the street route (drive, walk, bike, a ride); Flights and Multi-city open the longer-trip planner -->
+    <nav class="wt-kinds" aria-label="Trip type"><button type="button" data-travel-chip="rides" aria-pressed="true">${icon('drive')}<span>Rides</span></button><button type="button" data-travel-chip="flights" aria-pressed="false">${icon('flight')}<span>Flights</span></button><button type="button" data-travel-chip="multi" aria-pressed="false">${icon('route')}<span>Multi-city</span></button></nav>
     <p id="wtLocationStatus" class="wt-location-status" role="status" aria-live="polite">Allow location, or enter your starting address.</p>
     <p id="wtEndpointHint" class="wt-location-status" role="status" aria-live="polite"></p>
     <p id="wtRoutePrivacy" class="wt-route-privacy">Choose a destination to get directions. Your starting point and destination are shared with the <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">routing provider</a>.</p>
+    <!-- GO SOMEWHERE: real shortcuts only. Home and Work are not stored anywhere, so they are not offered. -->
+    <section class="wt-go" id="wtGo" aria-labelledby="wtGoTitle"><h3 id="wtGoTitle" class="wt-section-h">Go somewhere</h3><div class="wt-go-row"><button type="button" data-travel-go="near">${icon('near')}<span>Near me</span></button><button type="button" data-travel-go="airports">${icon('flight')}<span>Airports</span></button><button type="button" data-travel-go="hotels">${icon('stay')}<span>Hotels</span></button><button type="button" data-travel-go="globe">${icon('globe')}<span>On the globe</span></button><button type="button" data-travel-go="saved">${icon('saved')}<span>Saved</span></button></div></section>
     <div id="wtGroundOptions" class="wt-ground-options" hidden>
       <nav class="wt-toolbar wt-local-toolbar" aria-label="Directions mode">${groundModes.map(m => `<button type="button" data-travel-kind="${m}" aria-pressed="${m === 'drive'}">${icon(m)}${labels[m]}</button>`).join('')}</nav>
       <button id="wtRide" class="wt-ride-button" type="button" aria-expanded="false" aria-controls="wtRidePanel">Get a ride</button>
@@ -99,6 +110,8 @@ panel.innerHTML = `
       <div id="wtItinerary"></div><div id="wtStaySearch" class="wt-stay-search" hidden></div>
       <div class="wt-actions"><button class="wt-primary" id="wtPlan" type="submit" hidden>Plan journey <span aria-hidden="true">→</span></button></div>
     </details>
+    <!-- PLAN A TRIP: both cards open the planning draft that already exists; nothing is priced or booked here -->
+    <section class="wt-plan" aria-labelledby="wtPlanTitle"><h3 id="wtPlanTitle" class="wt-section-h">Plan a trip</h3><div class="wt-plan-cards"><button type="button" data-travel-plan="flights"><span class="wt-plan-icon">${icon('flight')}</span><span class="wt-plan-text"><strong>Search flights</strong><small>Compare dates and routes</small></span><b aria-hidden="true">›</b></button><button type="button" data-travel-plan="multi"><span class="wt-plan-icon">${icon('luggage')}</span><span class="wt-plan-text"><strong>Door-to-door</strong><small>Rides + flights + rides in one draft</small></span><b aria-hidden="true">›</b></button></div></section>
     <div id="wtSaveRow" class="wt-save-row" hidden><button class="wt-text-button" id="wtSave" type="button">Save journey</button></div>
   </form>
   <div class="wt-footer" id="wtSaveFooter" hidden><p id="wtSaveHint">Your saved journeys are private.</p><button class="wt-text-button" type="button" id="wtSaved">Saved journeys</button></div>
@@ -261,7 +274,7 @@ function renderDirections() {
   renderMapNav();
   const destinationReady = hasCoordinates(draft.to), endpointsReady = destinationReady && hasCoordinates(draft.from);
   $('wtEndpointHint').textContent = endpointHint();
-  $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady;
+  $('wtGroundOptions').hidden = !destinationReady; $('wtOptions').hidden = !destinationReady; $('wtGo').hidden = destinationReady;
   $('wtSaveRow').hidden = !account() || !draft.from || !draft.to;
   $('wtDirections').hidden = !destinationReady || (!isGround() && draft.mode !== 'transit');
   renderRide();
@@ -324,6 +337,8 @@ function syncInputs() {
   $('wtReturnField').hidden = !draft.returning; $('wtAddReturn').setAttribute('aria-expanded', String(!!draft.returning));
   $('wtAddReturn').textContent = draft.returning ? 'Remove return' : 'Add return date'; $('wtReturning').min = draft.departure;
   panel.querySelectorAll('[data-travel-kind][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelKind === draft.mode)));
+  if (isGround() || draft.mode === 'transit') tripShape = 'rides'; else if (tripShape === 'rides') tripShape = 'flights';
+  panel.querySelectorAll('[data-travel-chip]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.travelChip === tripShape)));
   renderItinerary(); renderGlobe();
 }
 function setMapPick(kind = null) {
@@ -695,18 +710,47 @@ function editField(key) {
   const ids = { from:'wtFrom', departureHub:'wtDepartureHub', arrivalHub:'wtArrivalHub', stay:'wtStay' };
   if (key !== 'from') { $('wtOptions').open = true; $('wtDetails').open = true; } $(ids[key] || 'wtFrom').focus();
 }
+/* Rides, Flights and Multi-city are the three shapes a trip takes here. Rides is the street route (and a ride);
+   Flights and Multi-city are the same longer-trip draft, Multi-city with the airports and stay fields open. */
+function chooseMode(kind, { shape = null, details = false } = {}) {
+  if (shape) tripShape = shape;
+  if (details) { $('wtOptions').open = true; $('wtDetails').open = true; }
+  if (kind === draft.mode) { syncInputs(); return; }
+  draft = read(); draft.mode = kind; $('wtOptions').open = ['flight', 'train'].includes(draft.mode) || details;
+  changed(); closeSearches(); syncInputs(); void requestRoute({ reveal:true });
+}
+function goSomewhere(what) {
+  if (what === 'near') { $('wtLocate').click(); return; }
+  if (what === 'globe') { $('wtPickTo').click(); return; }
+  if (what === 'saved') { $('wtSaved').click(); return; }
+  if (what === 'hotels') {
+    if (!draft.to) { $('wtEndpointHint').textContent = 'Choose a destination, then search places to stay there.'; $('wtTo').focus(); return; }
+    editField('stay'); return;
+  }
+  if (what === 'airports') {
+    const to = $('wtTo'); to.value = 'Airport'; to.focus(); to.dispatchEvent(new Event('input', { bubbles:true }));
+    $('wtEndpointHint').textContent = 'Add the city to find its airport, then choose a result.';
+  }
+}
 panel.addEventListener('click', e => {
   const mode = e.target.closest('[data-travel-kind]'), edit = e.target.closest('[data-edit]');
+  const chip = e.target.closest('[data-travel-chip],[data-travel-plan]'), go = e.target.closest('[data-travel-go]');
   try {
     if (mode) {
       if (mode.dataset.travelKind === 'stay') { editField('stay'); return; }
-      if (mode.dataset.travelKind === draft.mode) return;
-      draft = read(); draft.mode = mode.dataset.travelKind; $('wtOptions').open = ['flight', 'train'].includes(draft.mode);
-      changed(); closeSearches(); syncInputs(); void requestRoute({ reveal:true });
+      chooseMode(mode.dataset.travelKind); return;
     }
+    if (chip) {
+      const which = chip.dataset.travelChip || chip.dataset.travelPlan;
+      chooseMode(which === 'rides' ? (isGround() || draft.mode === 'transit' ? draft.mode : 'drive') : (draft.mode === 'train' ? 'train' : 'flight'), { shape: which, details: which === 'multi' });
+      if (which !== 'rides' && !draft.to) { $('wtEndpointHint').textContent = which === 'multi' ? 'Choose a destination to draft a door-to-door trip.' : 'Choose a destination to plan flights.'; $('wtTo').focus(); }
+      return;
+    }
+    if (go) { goSomewhere(go.dataset.travelGo); return; }
     if (edit) editField(edit.dataset.edit);
   } catch (error) { status(error.message); }
 });
+$('wtActivity').onclick = () => $('wtSaved').click();
 const expanded = $('mnWorld').querySelector('.mn__world-expand');
 for (const button of panel.querySelectorAll('[data-map-pick]')) {
   button.addEventListener('click', () => setMapPick(mapPick === button.dataset.mapPick ? null : button.dataset.mapPick));

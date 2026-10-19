@@ -765,8 +765,13 @@
     var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
     var pinned = !!(item && item.payload && item.payload.pinned);
     var onGlobe = !!(state.world.focus && postMissionId(item) === state.world.focus.mission_id);
-    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + (onGlobe ? ' is-on-globe' : '') + '" data-post-id="' + esc(id || "") + '">' +
+    /* media first (owner's reference, 2026-10-19): a post with a picture or clip leads with it, the words beside; a post
+       without one is the words alone. The same markup serves both; the layout is the card's class. */
+    var media = postMediaHtml(post);
+    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + (onGlobe ? ' is-on-globe' : '') + (media ? ' has-media' : '') + '" data-post-id="' + esc(id || "") + '">' +
       (pinned ? '<span class="mn__pin">Pinned</span>' : '') +
+      (media ? '<div class="mn__post-thumb">' + media + '</div>' : '') +
+      '<div class="mn__post-main">' +
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
@@ -774,7 +779,7 @@
       actionCardHtml(id) +
       collaborationCardHtml(id) +
       trackCardHtml(item, post) +
-      postMediaHtml(post) +
+      '</div>' +
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
@@ -952,6 +957,23 @@
     });
   }
   /* what a post actually carries, for the feed tabs; no invented topics */
+  /* THE FEED'S SCOPE (owner's reference, 2026-10-19). Local is the place the Earth is on (the country picked on the globe):
+     stories that mention it. Member posts are not placed on the map, so Local shows the place's news and says so. News is the
+     publishers only; Global is the one interleaved stream. Live and People are views, not scopes. */
+  function localPlace() {
+    var label = $("huRegionLabel") ? String($("huRegionLabel").textContent || "").trim() : "";
+    return label && label !== "All regions" ? label : "";
+  }
+  function paintFeedScope() {
+    var scope = state.feedScope || "global";
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
+    var body = $("mnPostBody"), place = localPlace();
+    if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
+  }
+  function setFeedScope(scope) {
+    state.feedScope = ["local", "global", "news"].indexOf(scope) >= 0 ? scope : "global";
+    paintFeedScope(); renderFeed(false); track("feed_scope", { scope: state.feedScope });
+  }
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
     if (item && item.news) return [item.title, item.domain, item.place].join(" ").toLocaleLowerCase().indexOf(query.toLocaleLowerCase()) !== -1;
@@ -1163,8 +1185,18 @@
       items = items.filter(function (item) { return feedMatches(item, query); });
       news = news.filter(function (n) { return feedMatches(n, query); });
     }
+    var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
+    if (scope === "news") items = [];
+    if (scope === "local") {
+      items = [];
+      news = place ? news.filter(function (n) { return n.place && n.place.toLocaleLowerCase().indexOf(place.toLocaleLowerCase()) !== -1; }) : [];
+    }
     if (!items.length && !news.length) {
-      host.innerHTML = '<div class="mn__empty">' + esc(query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
+      host.innerHTML = '<div class="mn__empty">' + esc(
+        scope === "local" && !place ? "Tap a country on the globe to see the news that mentions it. Member posts are not placed on the map yet." :
+        scope === "local" ? "No story mentions " + place + " yet." :
+        scope === "news" ? "No world news is loaded yet." :
+        query ? "Nothing in your feed matches \u201c" + query + "\u201d." : "Nothing on the feed yet.") + '</div>';
       return;
     }
     var seen = state.seen || (state.seen = {}), order = 0;
@@ -1293,7 +1325,7 @@
   function newsCard(n) {
     var sep = '<span class="mn__news-sep" aria-hidden="true">\u00b7</span>';
     return '<article class="mn__post-card mn__news-card" data-news-id="' + esc(n.id) + '">' +
-      '<p class="mn__news-meta"><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
+      '<p class="mn__news-meta"><span class="mn__news-avatar" aria-hidden="true">' + esc(String(n.domain || "news").replace(/^www\./, "").slice(0, 2).toUpperCase()) + '</span><span class="mn__news-domain">' + esc(n.domain) + '</span>' +
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
@@ -2180,6 +2212,8 @@
     $("mnSignedOutBack").onclick = function () { showGate("app"); setView("feed"); if (!state.feed.length) loadFeed(true); };
     $("mnEditProfile").onclick = editProfile;
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
+    document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { setFeedScope(b.dataset.feedScope); }; });
+    paintFeedScope();
     $("mnBell").onclick = function () { setView("notifications"); };
     $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
     $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
@@ -3499,6 +3533,7 @@
         if (state.world.focus) setWorldFocus(null);
       } else if (d.type === "hu:country") {
         $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
+        paintFeedScope(); if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {

@@ -445,6 +445,14 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     const globe=page.frame({url:/action-globe\.html/});
     check(scope,'Travel opens with location and destination; flights and extra fields stay tucked away',await page.getAttribute('html','data-world-mode')==='travel'&&await page.isVisible('#wtPlanner')&&await page.isHidden('#wtGroundOptions')&&await page.isHidden('#wtOptions')&&await page.isHidden('[data-travel-kind=flight]')&&await page.isHidden('#wtDirections'));
     check(scope,'travel scene hides mission pins and keeps visible zoom controls',await globe.evaluate(()=>window.__huJourney().travel)&&await globe.isVisible('#ctlZoomIn'));
+    /* the owner's sheet (2026-10-19): Where to?, pickup over destination with the globe pins inside the rows, Rides chosen,
+       shortcuts that all do something real, and the two planning doors; no Home/Work, no priced rides */
+    check(scope,'the Travel sheet reads Where to? with pickup over destination, Rides chosen, real shortcuts and planning doors',
+      (await page.textContent('#wtTitle')).trim()==='Where to?'&&await page.getAttribute('#wtFrom','placeholder')==='Use my location'&&await page.isVisible('#wtActivity')
+      &&await page.getAttribute('[data-travel-chip=rides]','aria-pressed')==='true'&&await page.isVisible('#wtGo')
+      &&(await page.locator('#wtGo button').allTextContents()).map(t=>t.trim()).join('|')==='Near me|Airports|Hotels|On the globe|Saved'
+      &&await page.isVisible('[data-travel-plan=flights]')&&await page.isVisible('[data-travel-plan=multi]')&&await page.isHidden('[data-travel-kind=flight]')
+      &&await page.evaluate(()=>{const f=document.getElementById('wtFrom').getBoundingClientRect(),t=document.getElementById('wtTo').getBoundingClientRect(),p=document.getElementById('wtPickTo').getBoundingClientRect(),l=document.getElementById('wtLocate').getBoundingClientRect();return f.bottom<=t.top+1&&p.width>=44&&p.height>=44&&l.width>=44&&l.height>=44&&p.top>=t.top-12&&p.bottom<=t.bottom+12;}));
     const [dock,expand,modes,credit,...controls]=await Promise.all([
       page.locator('.appbar').boundingBox(),page.locator('.mn__world-expand').boundingBox(),page.locator('.wt-world-modes').boundingBox(),
       globe.locator('.osm-credit a[href="https://www.openstreetmap.org/copyright"]').boundingBox(),
