@@ -163,14 +163,14 @@ export async function retrievePaymentIntent(env, paymentIntentId, connectedAccou
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, { method: 'GET', account: connectedAccountId });
 }
 
-export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents) {
+export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents, idempotencyKey) {
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/capture`, {
     amount_to_capture: amountCents ? Math.round(amountCents) : undefined
-  }, { account: connectedAccountId });
+  }, { account: connectedAccountId, idempotencyKey });
 }
 
-export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId) {
-  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId });
+export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId, idempotencyKey) {
+  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId, idempotencyKey });
 }
 
 export async function createRefund(env, input = {}) {

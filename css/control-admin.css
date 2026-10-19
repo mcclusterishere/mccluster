@@ -79,3 +79,20 @@
 @media (min-width:36rem){
   .cro-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
+
+/* Control · Create · Build · Code. Phone first; wider screens add a column. */
+.crb .cro-card{margin-top:10px}
+.crb-contract{margin:0 0 10px;padding-left:18px;color:var(--cr-muted,#b9c0c7);font-size:13px;line-height:1.5}
+.crb-form{display:grid;gap:10px}
+.crb-form label{display:grid;gap:4px;font-size:13px;color:var(--cr-muted,#b9c0c7)}
+.crb-form .cr-input,.crb-form .cr-textarea{font-size:max(16px,1em);width:100%;box-sizing:border-box}
+.crb-state{display:grid;gap:4px;padding:10px 12px;border-radius:10px;background:#171b1f;border:1px solid #2a3137;margin:8px 0}
+.crb-state b{font-size:15px}.crb-state span{font-size:13px;color:var(--cr-muted,#b9c0c7)}
+.crb-state--completed{border-color:#2f6b3f}.crb-state--failed,.crb-state--unavailable{border-color:#7a2a33}.crb-state--running{border-color:#5a4a1a}
+.crb-meta{display:grid;grid-template-columns:minmax(0,1fr);gap:2px 10px;margin:10px 0;font-size:13px}
+.crb-meta dt{color:var(--cr-muted,#b9c0c7)}.crb-meta dd{margin:0 0 6px;overflow-wrap:anywhere}
+.crb-reported{margin-top:8px}.crb-reported h3{margin:0 0 6px;font-size:14px}
+.crb-pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto;font-size:12px;background:#0f1215;padding:8px;border-radius:8px}
+.crb-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.crb-actions .cr-btn{min-height:44px}
+@media (min-width:760px){.crb-meta{grid-template-columns:max-content minmax(0,1fr)}.crb-meta dd{margin:0}}

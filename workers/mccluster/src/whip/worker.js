@@ -32,6 +32,30 @@ const RENTAL_TRANSITIONS = {
   COMPLETED: [], CANCELED: []
 };
 
+/* Rental money is quoted by the server from the dates, the vehicle's stored
+   daily rate and a server-side catalogue. The browser names options, never
+   amounts: client-supplied cents are ignored. */
+const RENTAL_PROTECTION_PLANS = { none: 0, standard: 900 };          // cents per day
+const RENTAL_EXTRAS = { refuel: 5500, mount: 800, seat: 1400 };     // cents per rental
+const RENTAL_TAX_BPS = 700;
+const WHIP_CURRENCY = 'usd';
+function cents(value) { const n = Number(value); return Number.isFinite(n) ? Math.round(n) : NaN; }
+export function rentalQuote(vehicle, tenant, body = {}) {
+  const start = Date.parse(body?.start_at), end = Date.parse(body?.end_at);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return { error: 'start_at and end_at are required' };
+  if (end <= start) return { error: 'end_at must be after start_at' };
+  const days = Math.max(1, Math.ceil((end - start) / 86_400_000));
+  const plan = body?.protection_plan == null ? 'standard' : String(body.protection_plan);
+  if (!Object.hasOwn(RENTAL_PROTECTION_PLANS, plan)) return { error: 'Unknown protection plan' };
+  const extraIds = Array.isArray(body?.extras) ? [...new Set(body.extras.map(String))] : [];
+  if (extraIds.some(id => !Object.hasOwn(RENTAL_EXTRAS, id))) return { error: 'Unknown rental extra' };
+  const daily = cents(vehicle?.daily_rate_cents); if (!(daily > 0)) return { error: 'Vehicle has no daily rate' };
+  const extras = extraIds.reduce((sum, id) => sum + RENTAL_EXTRAS[id], 0), protection = RENTAL_PROTECTION_PLANS[plan] * days;
+  const subtotal = daily * days + extras + protection, tax = Math.round(subtotal * RENTAL_TAX_BPS / 10_000), total = subtotal + tax;
+  const platform = tenant?.white_label_enabled ? 0 : Math.round(total * Number(tenant?.platform_fee_percent || 0.03));
+  return { days, daily_rate_cents: daily, extras_cents: extras, protection_cents: protection, tax_cents: tax, platform_fee_cents: platform, total_cents: total, protection_plan: plan, extras: extraIds };
+}
+
 function cors(env) {
   return {
     'access-control-allow-origin': env.ALLOWED_ORIGIN || '*',
@@ -133,92 +157,139 @@ async function ensureStripeTenant(env, t) {
   return t;
 }
 
-async function processStripeEvent(env, event) {
-  const prior = await sb(env, `stripe_events?event_id=eq.${encodeURIComponent(event.id)}&select=event_id`);
-  if (prior?.length) return { duplicate: true };
-  const object = event.data?.object || {};
-  const connectedAccountId = event.account || null;
-
+/* A verified Stripe signature proves Stripe sent the event, not which
+   McCluster tenant or transaction it may change. Each state change below first
+   binds the event to the resource it names: that resource's tenant must own
+   the connected account the event arrived on, a stored intent/session id must
+   match, and amount and currency must equal the ledger's. Mismatches are
+   claimed (so Stripe stops retrying) and reported, never applied. */
+function ignored(reason) { return { ignored: true, reason }; }
+async function claimStripeEvent(env, event, connectedAccountId) {
+  // event_id is the primary key: the first insert wins; a retry or a concurrent
+  // duplicate delivery conflicts and is never applied twice.
+  try {
+    await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ event_id: event.id, event_type: event.type, stripe_account_id: connectedAccountId }) });
+    return true;
+  } catch (error) {
+    if (/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) return false;
+    throw error;
+  }
+}
+async function releaseStripeEvent(env, event) {
+  try { await sb(env, `stripe_events?event_id=eq.${encodeURIComponent(event.id)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); } catch { /* the claim stays; Stripe's retry reports the duplicate */ }
+}
+function sameAccount(tenant, connectedAccountId) { return Boolean(tenant?.stripe_account_id) && connectedAccountId === tenant.stripe_account_id; }
+function sameCurrency(object) { return String(object?.currency || '').toLowerCase() === WHIP_CURRENCY; }
+async function boundRide(env, object, connectedAccountId) {
+  const id = object.metadata?.resource_id; if (!id) return { error: 'resource_missing' };
+  const ride = await getRide(env, id); if (!ride) return { error: 'ride_not_found' };
+  if (object.metadata?.tenant_id && object.metadata.tenant_id !== ride.tenant_id) return { error: 'tenant_mismatch' };
+  const tenant = await tenantById(env, ride.tenant_id);
+  if (!sameAccount(tenant, connectedAccountId)) return { error: 'account_mismatch' };
+  if (ride.stripe_payment_intent_id && ride.stripe_payment_intent_id !== object.id) return { error: 'payment_intent_mismatch' };
+  if (cents(object.amount) !== cents(ride.fare_cents) || !sameCurrency(object)) return { error: 'amount_mismatch' };
+  return { ride, tenant };
+}
+async function boundRental(env, object, connectedAccountId, shape) {
+  const id = object.metadata?.resource_id; if (!id) return { error: 'resource_missing' };
+  const booking = await getRental(env, id); if (!booking) return { error: 'rental_not_found' };
+  if (object.metadata?.tenant_id && object.metadata.tenant_id !== booking.tenant_id) return { error: 'tenant_mismatch' };
+  const tenant = await tenantById(env, booking.tenant_id);
+  if (!sameAccount(tenant, connectedAccountId)) return { error: 'account_mismatch' };
+  if (shape === 'session') {
+    if (booking.stripe_checkout_session_id && booking.stripe_checkout_session_id !== object.id) return { error: 'session_mismatch' };
+    if (cents(object.amount_total) !== cents(booking.total_cents)) return { error: 'amount_mismatch' };
+  } else {
+    if (booking.stripe_payment_intent_id && booking.stripe_payment_intent_id !== object.id) return { error: 'payment_intent_mismatch' };
+    if (cents(object.amount) !== cents(booking.total_cents)) return { error: 'amount_mismatch' };
+  }
+  if (!sameCurrency(object)) return { error: 'amount_mismatch' };
+  return { booking, tenant };
+}
+async function boundPlatformTenant(env, object, connectedAccountId) {
+  // Platform subscriptions are not Connect events: one arriving on a connected
+  // account is not this platform's to apply.
+  if (connectedAccountId) return { error: 'account_mismatch' };
+  const id = object.metadata?.tenant_id; if (!id) return { error: 'resource_missing' };
+  const tenant = await tenantById(env, id); if (!tenant) return { error: 'tenant_not_found' };
+  return { tenant };
+}
+async function applyStripeEvent(env, event, object, connectedAccountId) {
   if (event.type === 'account.updated') {
+    if (!connectedAccountId || connectedAccountId !== object.id) return ignored('account_mismatch');
     const rows = await sb(env, `tenants?stripe_account_id=eq.${encodeURIComponent(object.id)}&select=id`);
     for (const row of rows || []) await patchTenant(env, row.id, {
       stripe_charges_enabled: Boolean(object.charges_enabled), stripe_payouts_enabled: Boolean(object.payouts_enabled), stripe_details_submitted: Boolean(object.details_submitted)
     });
+    return { applied: event.type, tenants: (rows || []).length };
   }
 
   if (event.type === 'checkout.session.completed') {
     const kind = object.metadata?.kind;
-    const tenantId = object.metadata?.tenant_id;
-    const resourceId = object.metadata?.resource_id;
-    if (kind === 'we_white_label' && tenantId) {
-      await patchTenant(env, tenantId, {
+    if (kind === 'we_white_label') {
+      const bound = await boundPlatformTenant(env, object, connectedAccountId); if (bound.error) return ignored(bound.error);
+      if (bound.tenant.stripe_subscription_id && typeof object.subscription === 'string' && bound.tenant.stripe_subscription_id !== object.subscription) return ignored('subscription_mismatch');
+      await patchTenant(env, bound.tenant.id, {
         stripe_customer_id: typeof object.customer === 'string' ? object.customer : null,
         stripe_subscription_id: typeof object.subscription === 'string' ? object.subscription : null,
         subscription_status: 'active', white_label_enabled: true, platform_fee_percent: 0
       });
+      return { applied: event.type };
     }
-    if (kind === 'rental' && resourceId) {
-      await patchRental(env, resourceId, {
-        payment_status: object.payment_status === 'paid' ? 'paid' : 'processing',
-        stripe_checkout_session_id: object.id,
-        stripe_payment_intent_id: typeof object.payment_intent === 'string' ? object.payment_intent : null
-      });
-      await updatePayments(env, `stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, {
-        status: object.payment_status === 'paid' ? 'paid' : 'processing',
-        stripe_payment_intent_id: typeof object.payment_intent === 'string' ? object.payment_intent : null
-      });
+    if (kind === 'rental') {
+      const bound = await boundRental(env, object, connectedAccountId, 'session'); if (bound.error) return ignored(bound.error);
+      const intent = typeof object.payment_intent === 'string' ? object.payment_intent : null;
+      await patchRental(env, bound.booking.id, { payment_status: object.payment_status === 'paid' ? 'paid' : 'processing', stripe_checkout_session_id: object.id, stripe_payment_intent_id: intent });
+      await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status: object.payment_status === 'paid' ? 'paid' : 'processing', stripe_payment_intent_id: intent });
+      return { applied: event.type };
     }
+    return ignored('unknown_kind');
   }
 
-  if (event.type === 'checkout.session.async_payment_succeeded') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'rental' && resourceId) await patchRental(env, resourceId, { payment_status: 'paid' });
-    await updatePayments(env, `stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status: 'paid' });
-  }
-  if (event.type === 'checkout.session.async_payment_failed') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'rental' && resourceId) await patchRental(env, resourceId, { payment_status: 'failed' });
-    await updatePayments(env, `stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status: 'failed' });
+  if (event.type === 'checkout.session.async_payment_succeeded' || event.type === 'checkout.session.async_payment_failed') {
+    if (object.metadata?.kind !== 'rental') return ignored('unknown_kind');
+    const bound = await boundRental(env, object, connectedAccountId, 'session'); if (bound.error) return ignored(bound.error);
+    const status = event.type.endsWith('succeeded') ? 'paid' : 'failed';
+    await patchRental(env, bound.booking.id, { payment_status: status });
+    await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status });
+    return { applied: event.type };
   }
 
-  if (event.type === 'payment_intent.amount_capturable_updated') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'ride' && resourceId) await patchRide(env, resourceId, { payment_status: 'authorized', stripe_payment_intent_id: object.id });
-    await updatePayments(env, `stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status: 'authorized' });
-  }
-  if (event.type === 'payment_intent.succeeded') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'ride' && resourceId) await patchRide(env, resourceId, { payment_status: 'paid', stripe_payment_intent_id: object.id });
-    if (object.metadata?.kind === 'rental' && resourceId) await patchRental(env, resourceId, { payment_status: 'paid', stripe_payment_intent_id: object.id });
-    await updatePayments(env, `stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status: 'paid' });
-  }
-  if (event.type === 'payment_intent.payment_failed') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'ride' && resourceId) await patchRide(env, resourceId, { payment_status: 'failed' });
-    if (object.metadata?.kind === 'rental' && resourceId) await patchRental(env, resourceId, { payment_status: 'failed' });
-    await updatePayments(env, `stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status: 'failed' });
-  }
-  if (event.type === 'payment_intent.canceled') {
-    const resourceId = object.metadata?.resource_id;
-    if (object.metadata?.kind === 'ride' && resourceId) await patchRide(env, resourceId, { payment_status: 'canceled' });
-    await updatePayments(env, `stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status: 'canceled' });
+  if (event.type === 'payment_intent.amount_capturable_updated' || event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
+    const kind = object.metadata?.kind;
+    const status = event.type === 'payment_intent.amount_capturable_updated' ? 'authorized' : event.type === 'payment_intent.succeeded' ? 'paid' : event.type === 'payment_intent.payment_failed' ? 'failed' : 'canceled';
+    let tenant;
+    if (kind === 'ride') {
+      const bound = await boundRide(env, object, connectedAccountId); if (bound.error) return ignored(bound.error);
+      tenant = bound.tenant;
+      await patchRide(env, bound.ride.id, status === 'failed' || status === 'canceled' ? { payment_status: status } : { payment_status: status, stripe_payment_intent_id: object.id });
+    } else if (kind === 'rental' && (status === 'paid' || status === 'failed')) {
+      const bound = await boundRental(env, object, connectedAccountId, 'intent'); if (bound.error) return ignored(bound.error);
+      tenant = bound.tenant;
+      await patchRental(env, bound.booking.id, status === 'paid' ? { payment_status: 'paid', stripe_payment_intent_id: object.id } : { payment_status: 'failed' });
+    } else return ignored('unknown_kind');
+    await updatePayments(env, `tenant_id=eq.${encodeURIComponent(tenant.id)}&stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status });
+    return { applied: event.type };
   }
 
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-    const tenantId = object.metadata?.tenant_id;
-    if (tenantId) {
-      const active = event.type !== 'customer.subscription.deleted' && ['active','trialing'].includes(object.status);
-      await patchTenant(env, tenantId, {
-        stripe_subscription_id: object.id,
-        subscription_status: object.status || (active ? 'active' : 'canceled'),
-        white_label_enabled: active,
-        platform_fee_percent: active ? 0 : 0.03
-      });
-    }
+    const bound = await boundPlatformTenant(env, object, connectedAccountId); if (bound.error) return ignored(bound.error);
+    if (bound.tenant.stripe_subscription_id && bound.tenant.stripe_subscription_id !== object.id) return ignored('subscription_mismatch');
+    const active = event.type !== 'customer.subscription.deleted' && ['active','trialing'].includes(object.status);
+    await patchTenant(env, bound.tenant.id, {
+      subscription_status: object.status || (active ? 'active' : 'canceled'),
+      white_label_enabled: active,
+      platform_fee_percent: active ? 0 : 0.03
+    });
+    return { applied: event.type };
   }
-
-  await sb(env, 'stripe_events', { method: 'POST', body: JSON.stringify({ event_id: event.id, event_type: event.type, stripe_account_id: connectedAccountId }) });
-  return { duplicate: false };
+  return ignored('unhandled_event');
+}
+export async function processStripeEvent(env, event) {
+  const object = event.data?.object || {}, connectedAccountId = event.account || null;
+  if (!(await claimStripeEvent(env, event, connectedAccountId))) return { duplicate: true };
+  try { return { duplicate: false, ...(await applyStripeEvent(env, event, object, connectedAccountId)) }; }
+  catch (error) { await releaseStripeEvent(env, event); throw error; }
 }
 
 export default {
@@ -405,16 +476,31 @@ export default {
       if (statusMatch && req.method === 'PATCH') {
         const body = await req.json(), current = await getRide(env, statusMatch[1]); if (!current) return fail(env, 'Ride not found', 404); const next = String(body.status || '').toUpperCase();
         if (!TRANSITIONS[current.status]?.includes(next)) return fail(env, `Illegal transition ${current.status} -> ${next}`, 409); if (current.driver_id && body.driver_id && current.driver_id !== body.driver_id) return fail(env, 'Ride belongs to another driver', 403);
-        const t = await tenantById(env, current.tenant_id);
-        if (next === 'COMPLETED' && current.stripe_payment_intent_id) {
-          if (current.payment_status !== 'authorized') return fail(env, 'Ride payment is not authorized for capture', 402);
-          await capturePaymentIntent(env, current.stripe_payment_intent_id, t.stripe_account_id, current.fare_cents);
-        }
-        if (next === 'CANCELED' && current.stripe_payment_intent_id && !['paid','canceled'].includes(current.payment_status)) {
-          await cancelPaymentIntent(env, current.stripe_payment_intent_id, t.stripe_account_id);
-        }
+        if (next === 'COMPLETED' && current.stripe_payment_intent_id && current.payment_status !== 'authorized') return fail(env, 'Ride payment is not authorized for capture', 402);
         const timestamps = {}; if (next === 'DRIVER_ARRIVED') timestamps.arrived_at = new Date().toISOString(); if (next === 'IN_PROGRESS') timestamps.started_at = new Date().toISOString(); if (next === 'COMPLETED') timestamps.completed_at = new Date().toISOString();
-        return reply(env, { ride: await patchRide(env, current.id, { status: next, ...timestamps }) });
+        // The transition is claimed INSIDE the database update: the row must
+        // still hold the status this request read, so two concurrent cancel or
+        // complete requests cannot both act, and the Stripe side effect below
+        // runs for the one request that won.
+        const claimed = await sb(env,
+          `rides?id=eq.${encodeURIComponent(current.id)}&status=eq.${encodeURIComponent(current.status)}${current.driver_id ? `&driver_id=eq.${encodeURIComponent(current.driver_id)}` : ''}&select=*`,
+          { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ status: next, ...timestamps, updated_at: new Date().toISOString() }) });
+        if (!claimed?.length) return fail(env, 'Ride changed before this update; refresh and try again', 409);
+        if (current.stripe_payment_intent_id && (next === 'COMPLETED' || (next === 'CANCELED' && !['paid','canceled'].includes(current.payment_status)))) {
+          const t = await tenantById(env, current.tenant_id);
+          try {
+            // The key binds the action to this ride, so a retried request can
+            // never capture or release the same authorization twice.
+            if (next === 'COMPLETED') await capturePaymentIntent(env, current.stripe_payment_intent_id, t.stripe_account_id, current.fare_cents, `whip-ride-${current.id}-capture`);
+            else await cancelPaymentIntent(env, current.stripe_payment_intent_id, t.stripe_account_id, `whip-ride-${current.id}-cancel`);
+          } catch (error) {
+            // The money did not move: give the ride back the status it had.
+            await sb(env, `rides?id=eq.${encodeURIComponent(current.id)}&status=eq.${encodeURIComponent(next)}&select=id`,
+              { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status: current.status, completed_at: current.completed_at ?? null, updated_at: new Date().toISOString() }) }).catch(() => {});
+            return fail(env, `Payment ${next === 'COMPLETED' ? 'capture' : 'release'} failed: ${error.message}`, 502);
+          }
+        }
+        return reply(env, { ride: claimed[0] });
       }
       const presenceMatch = path.match(/^\/api\/drivers\/([^/]+)\/presence$/);
       if (presenceMatch && req.method === 'PATCH') {
@@ -433,10 +519,8 @@ export default {
       if (path === '/api/rentals/bookings' && req.method === 'POST') {
         const user = await requireUser(req, env); const body = await req.json(), t = await tenant(env, body.tenant_slug || 'whip-equipped');
         const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(body.vehicle_id || '')}&tenant_id=eq.${t.id}&available=eq.true&select=*`), vehicle = vehicleRows?.[0]; if (!vehicle) return fail(env, 'Rental vehicle not found or unavailable', 404);
-        const days = Math.max(1, Number(body.rental_days || 1)), daily = Number(vehicle.daily_rate_cents), extras = Math.max(0, Number(body.extras_cents || 0)), protection = Math.max(0, Number(body.protection_cents || 0)), tax = Math.max(0, Number(body.tax_cents || 0));
-        const subtotal = daily * days + extras + protection, total = subtotal + tax, platform = t.white_label_enabled ? 0 : Math.round(total * Number(t.platform_fee_percent || 0.03));
-        const booking = { tenant_id: t.id, vehicle_id: vehicle.id, renter_id: requestIdentity(req, user, 'demo-renter'), status: 'CHECKIN_REQUIRED', start_at: body.start_at, end_at: body.end_at, pickup_label: body.pickup_label || vehicle.location_label, rental_days: days, daily_rate_cents: daily, extras_cents: extras, protection_cents: protection, tax_cents: tax, platform_fee_cents: platform, total_cents: total, payment_status: 'unpaid' };
-        if (!booking.start_at || !booking.end_at) return fail(env, 'start_at and end_at are required');
+        const quote = rentalQuote(vehicle, t, body); if (quote.error) return fail(env, quote.error, 400);
+        const booking = { tenant_id: t.id, vehicle_id: vehicle.id, renter_id: requestIdentity(req, user, 'demo-renter'), status: 'CHECKIN_REQUIRED', start_at: body.start_at, end_at: body.end_at, pickup_label: body.pickup_label || vehicle.location_label, rental_days: quote.days, daily_rate_cents: quote.daily_rate_cents, extras_cents: quote.extras_cents, protection_cents: quote.protection_cents, tax_cents: quote.tax_cents, platform_fee_cents: quote.platform_fee_cents, total_cents: quote.total_cents, payment_status: 'unpaid' };
         const rows = await sb(env, 'rental_bookings?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(booking) }); return reply(env, { booking: rows[0], vehicle }, 201);
       }
       const rentalMatch = path.match(/^\/api\/rentals\/bookings\/([^/]+)$/);

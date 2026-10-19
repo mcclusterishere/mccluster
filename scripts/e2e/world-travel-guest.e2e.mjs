@@ -164,6 +164,11 @@ try {
     await page.fill('#wtTo', 'Union Station');
     await page.locator('#wtToResults button').first().waitFor();
     check(scope, 'typing a destination does not send route coordinates', app.requests.length === 0);
+    check(scope, 'the suggestion list is bounded above the app bar so every row can be reached', await page.evaluate(() => {
+      const list = document.getElementById('wtToResults'), bar = document.querySelector('.appbar'), rect = list.getBoundingClientRect();
+      const barTop = bar && bar.offsetHeight ? bar.getBoundingClientRect().top : innerHeight;
+      return !!list.style.maxHeight && rect.bottom <= barTop + 1 && rect.bottom <= innerHeight;
+    }));
     await page.locator('#wtToResults button').first().click(); await ready(page);
     check(scope, 'selecting a destination automatically returns guest directions and Go', app.requests.length === 1 && !app.requests[0].authenticated && await page.isVisible('#wtRouteSummary'), app.requests);
     await page.screenshot({ path:join(OUT, `guest-route-preview-${scope}.png`) });
@@ -285,7 +290,10 @@ try {
   check('manual', 'manual origin completes directions even when GPS and WebGL are unavailable', manual.requests.length === 1 && await manual.page.isVisible('#wtRouteSummary'));
   await manual.page.screenshot({ path:join(OUT, 'guest-directions-webgl-unavailable-390.png') });
   await manual.page.locator('#wtNavigate').click(); await manual.page.evaluate(() => __geo.failWatch());
-  check('manual', 'denied live navigation preserves readable route steps and a Go retry', await manual.page.isVisible('#wtRouteCard') && await manual.page.textContent('#wtNavigate') === 'Go' && await manual.page.evaluate(() => __geo.watchCount() === 0));
+  await manual.page.waitForFunction(() => /Location access is off/.test(document.getElementById('wtDirectionsHint').textContent));
+  check('manual', 'Go keeps navigating from the first step when live location is denied; Stop stays available', await manual.page.isVisible('#wtRouteCard') && await manual.page.evaluate(() => document.documentElement.classList.contains('wt-navigating') && __geo.watchCount() === 0 && document.getElementById('wtNavigate').hidden && !document.getElementById('wtStopNavigation').hidden) && await manual.page.isVisible('#wtNavInstruction') && (await manual.page.textContent('#wtNavInstruction')).trim().length > 0);
+  await manual.page.locator('#wtStopNavigation').click();
+  check('manual', 'Stop after a denied location returns a Go retry with the route steps intact', await manual.page.isVisible('#wtRouteCard') && !(await manual.page.evaluate(() => document.getElementById('wtNavigate').hidden)) && await manual.page.textContent('#wtNavigate') === 'Go');
   await manual.ctx.close();
   const late = await open({ width:390,height:844 }, { automatic:true });
   await late.page.waitForFunction(() => __geo.calls.some(c => c.kind === 'once'));
@@ -305,7 +313,11 @@ try {
     await page.locator('.mn__world-expand').click();
     await page.evaluate(() => { __geo.answer = 'grant'; }); await page.locator('#wtLocate').click();
     await page.waitForFunction(() => document.getElementById('wtFrom').value === 'Current location');
-    await select(page, 'wtTo', 'Union Station'); await ready(page);
+    await page.fill('#wtTo', 'Union Station'); await page.waitForSelector('#wtToResults button');
+    const suggest = await page.evaluate(() => { const list = document.getElementById('wtToResults'), last = list.querySelector('button:last-of-type'), l = list.getBoundingClientRect(), b = last.getBoundingClientRect(); const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0; return { listBottom:l.bottom, lastBottom:b.bottom, limit:innerHeight - clearance, scrolls:list.scrollHeight > list.clientHeight }; });
+    check(scope, 'suggestion list stops above the retained parent app bar and keeps its last option reachable', suggest.listBottom <= suggest.limit + 1 && (suggest.scrolls || suggest.lastBottom <= suggest.limit + 1), suggest);
+    await outerPage.screenshot({ path:join(OUT, `retained-parent-suggestions-${size.width}.png`) });
+    await page.locator('#wtToResults button').first().click(); await ready(page);
     await outerPage.screenshot({ path:join(OUT, `retained-parent-route-${size.width}.png`) });
     check(scope, 'route and Go stay above the retained parent audio controls', await exposed(page, 'wtRouteSummary') && await exposed(page, 'wtNavigate'));
     await page.locator('#wtNavigate').click(); await page.evaluate(coordinates => __geo.emit(coordinates), fixture.routes[0].geometry[0]);
