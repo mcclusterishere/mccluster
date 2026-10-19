@@ -454,9 +454,13 @@
   }
 
   function wire() {
-    $("mnLiveTrack").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-live]");
-      if (b) openWatch(b.getAttribute("data-live"));
+    /* the directory's cards and the feed's on-air hero open the same room */
+    [$("mnLiveTrack"), $("mnLiveHero")].forEach(function (host) {
+      if (!host) return;
+      host.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-live]");
+        if (b) openWatch(b.getAttribute("data-live"));
+      });
     });
     $("mnLiveFilters").addEventListener("click", function (e) {
       var k = e.target.closest("[data-live-kind]"), cat = e.target.closest("[data-live-category]");
