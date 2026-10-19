@@ -61,11 +61,17 @@ function rentalDays(start, end, zone) {
     return { error: 'Rental dates need a consistent pickup and return time' };
   return days;
 }
-export function rentalQuote(vehicle, tenant, body = {}) {
+export function rentalQuote(vehicle, tenant, body = {}, serverTimeZone) {
   const start = Date.parse(body?.start_at), end = Date.parse(body?.end_at);
   if (!Number.isFinite(start) || !Number.isFinite(end)) return { error: 'start_at and end_at are required' };
   if (end <= start) return { error: 'end_at must be after start_at' };
-  const days = rentalDays(start, end, vehicle?.time_zone || tenant?.time_zone || body?.time_zone || null);
+  /* The Acworth, GA pilot lot uses Eastern Time. Only a server-controlled
+     pickup-zone setting may influence the quote; the browser's time_zone
+     field is ignored. New operator fleets must configure their pickup zone. */
+  const zone = vehicle?.time_zone || tenant?.time_zone ||
+    (tenant?.slug === 'whip-equipped' ? (serverTimeZone || 'America/New_York') : null);
+  if (!zone) return { error: 'Pickup time zone has not been configured for this rental fleet' };
+  const days = rentalDays(start, end, zone);
   if (typeof days === 'object') return days;
   const plan = body?.protection_plan == null ? 'standard' : String(body.protection_plan);
   if (!Object.hasOwn(RENTAL_PROTECTION_PLANS, plan)) return { error: 'Unknown protection plan' };
@@ -165,6 +171,44 @@ async function recordPayment(env, payment) {
 async function updatePayments(env, filter, patch) {
   return sb(env, `payments?${filter}&select=*`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }) });
 }
+
+/* Payment registration uses a deterministic UUID derived from the booking
+   and Stripe session. The existing payments.id primary key makes recovery
+   and concurrent registration atomic without a production migration. */
+async function rentalPaymentId(booking, sessionId) {
+  const bytes = new TextEncoder().encode('whip:rental-checkout:' + booking.tenant_id + ':' + booking.id + ':' + sessionId);
+  const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+  const variant = ((parseInt(digest[16],16)&3)|8).toString(16);
+  return digest.slice(0,8)+'-'+digest.slice(8,12)+'-8'+digest.slice(13,16)+'-'+variant+digest.slice(17,20)+'-'+digest.slice(20,32);
+}
+async function ensureRentalCheckoutPayment(env, booking, tenant, sessionId) {
+  const filter = 'tenant_id=eq.' + encodeURIComponent(tenant.id) +
+    '&resource_type=eq.rental&resource_id=eq.' + encodeURIComponent(booking.id) +
+    '&stripe_checkout_session_id=eq.' + encodeURIComponent(sessionId);
+  const matches = await sb(env, 'payments?' + filter + '&select=*&limit=1');
+  const valid = row => row && row.tenant_id === tenant.id &&
+    row.resource_id === String(booking.id) && row.resource_type === 'rental' &&
+    row.stripe_checkout_session_id === sessionId &&
+    Number(row.amount_cents) === Number(booking.total_cents) &&
+    row.connected_account_id === tenant.stripe_account_id;
+  if (matches?.length) {
+    if (!valid(matches[0])) throw Object.assign(new Error('Stored checkout ledger differs from the booking'), { status: 409 });
+    return matches[0];
+  }
+  const id = await rentalPaymentId(booking, sessionId);
+  const record = { id, tenant_id: tenant.id, resource_type: 'rental', resource_id: booking.id,
+    connected_account_id: tenant.stripe_account_id, stripe_checkout_session_id: sessionId,
+    amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' };
+  try { return await recordPayment(env, record); }
+  catch (error) {
+    if (!/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) throw error;
+    const found = await sb(env, 'payments?id=eq.' + encodeURIComponent(id) + '&select=*');
+    if (found?.length === 1 && valid(found[0])) return found[0];
+    throw Object.assign(new Error('Checkout payment claim conflicted with a different ledger row'), { status: 409 });
+  }
+}
+
 async function ensureStripeTenant(env, t) {
   if (!stripeConfigured(env)) throw Object.assign(new Error('Stripe payments are not configured'), { status: 503 });
   if (!t.stripe_account_id) throw Object.assign(new Error('Operator must finish Stripe Connect onboarding before accepting payments'), { status: 409 });
@@ -571,7 +615,7 @@ export default {
       if (path === '/api/rentals/bookings' && req.method === 'POST') {
         const user = await requireUser(req, env); const body = await req.json(), t = await tenant(env, body.tenant_slug || 'whip-equipped');
         const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(body.vehicle_id || '')}&tenant_id=eq.${t.id}&available=eq.true&select=*`), vehicle = vehicleRows?.[0]; if (!vehicle) return fail(env, 'Rental vehicle not found or unavailable', 404);
-        const quote = rentalQuote(vehicle, t, body); if (quote.error) return fail(env, quote.error, 400);
+        const quote = rentalQuote(vehicle, t, body, env.WHIP_RENTAL_TIME_ZONE); if (quote.error) return fail(env, quote.error, 400);
         const booking = { tenant_id: t.id, vehicle_id: vehicle.id, renter_id: requestIdentity(req, user, 'demo-renter'), status: 'CHECKIN_REQUIRED', start_at: body.start_at, end_at: body.end_at, pickup_label: body.pickup_label || vehicle.location_label, rental_days: quote.days, daily_rate_cents: quote.daily_rate_cents, extras_cents: quote.extras_cents, protection_cents: quote.protection_cents, tax_cents: quote.tax_cents, platform_fee_cents: quote.platform_fee_cents, total_cents: quote.total_cents, payment_status: 'unpaid' };
         const rows = await sb(env, 'rental_bookings?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(booking) }); return reply(env, { booking: rows[0], vehicle }, 201);
       }
