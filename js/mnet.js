@@ -15,6 +15,8 @@
     newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
+    placeScope: { enabled:false, country:null, posts:[], news:[], postBefore:null, newsBefore:null,
+      loaded:false, error:'', seq:0, working:false },
     threadPost: null,
     currentView: "feed",
     mediaAssets: [],
@@ -987,15 +989,97 @@
     if (!name) return false;
     return [name].concat(aliases[name] || []).some(function (n) { return tail === n || tail.slice(-n.length - 2) === ", " + n; });
   }
+  /* The feature flag comes from the Worker. Country comes only from its
+     coarse Cloudflare edge signal; choosing a different country on the
+     globe overrides that default. Never auto-tag a member's posts. */
+  function placeName(code) {
+    try { return new Intl.DisplayNames([navigator.language || "en"],{type:"region"}).of(code) || code; }
+    catch (e) { return code; }
+  }
+  function paintPlaceOptIn() {
+    var widget = $("mnPostPlaceLabel"), check = $("mnPostPlaceOptIn"), country = state.world.country;
+    if (!widget) return;
+    var available = !!(state.placeScope.enabled && country && /^[A-Z]{2}$/.test(country.code||"") &&
+      $("mnVisibility") && $("mnVisibility").value === "public");
+    widget.hidden = !available;
+    var target = widget.querySelector("span");
+    if (target) target.textContent = available ? "Add this public post to " + (country.name || placeName(country.code)) + "'s local feed" : "";
+    if (!available && check) check.checked = false;
+  }
+  function ensurePlaceOptIn() {
+    if ($("mnPostPlaceLabel") || !$("mnComposer")) return;
+    var actions = $("mnComposer").querySelector(".mn__composer-actions");
+    if (!actions) return;
+    var label = document.createElement("label"), check = document.createElement("input"), txt = document.createElement("span");
+    label.id = "mnPostPlaceLabel"; label.className = "mn__place-optin"; label.hidden = true;
+    check.id = "mnPostPlaceOptIn"; check.type = "checkbox";
+    label.append(check,txt);
+    actions.parentNode.insertBefore(label,actions);
+    if ($("mnVisibility")) $("mnVisibility").addEventListener("change",paintPlaceOptIn);
+    paintPlaceOptIn();
+  }
+  function loadPlaceStatus() {
+    fetch("https://api.mccluster.org/v1/world/place-scope", { credentials:"omit", cache:"no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (status) {
+        if (!status || status.enabled !== true) return;
+        state.placeScope.enabled = true;
+        ensurePlaceOptIn();
+        if (!state.world.country && typeof status.country === "string" && /^[A-Z]{2}$/.test(status.country)) {
+          var name = placeName(status.country);
+          state.world.country = { code:status.country, name:name };
+          if ($("huRegionLabel")) $("huRegionLabel").textContent = name;
+          setFeedScope("local"); // Country only; no GPS and no user-post location write.
+        } else if (state.feedScope === "local") loadPlaceFeed(true);
+        paintPlaceOptIn();
+      }).catch(function () { /* remain on the working Global feed */ });
+  }
+  function loadPlaceFeed(reset) {
+    var p = state.placeScope, c = state.world.country;
+    if (!p.enabled || !c || !/^[A-Z]{2}$/.test(c.code||"")) return Promise.resolve();
+    if (reset) { p.postBefore=null; p.newsBefore=null; p.posts=[]; p.news=[]; p.loaded=false; }
+    if (!reset && !p.postBefore && !p.newsBefore) return Promise.resolve();
+    var seq = ++p.seq, url="https://api.mccluster.org/v1/world/region-feed?country=" +
+      encodeURIComponent(c.code) + "&limit=20";
+    if (!reset && p.postBefore) url += "&post_before=" + encodeURIComponent(p.postBefore);
+    if (!reset && p.newsBefore) url += "&news_before=" + encodeURIComponent(p.newsBefore);
+    p.working=true; p.error="";
+    if (state.feedScope === "local") renderFeed(false);
+    return fetch(url,{credentials:"omit",cache:"no-store"}).then(function (r) {
+      if (!r.ok) throw new Error("The country's feed is not available yet.");
+      return r.json();
+    }).then(function (data) {
+      if (seq !== p.seq || !data || data.ok !== true || data.country !== c.code || data.available !== true)
+        return;
+      p.posts = reset ? (data.posts||[]) : p.posts.concat(data.posts||[]);
+      var incoming = (data.news||[]).map(cleanNews).filter(Boolean);
+      p.news = reset ? incoming : p.news.concat(incoming);
+      p.postBefore = data.next_post_before || null;
+      p.newsBefore = data.next_news_before || null;
+      p.loaded=true; p.error="";
+      if (state.feedScope === "local") renderFeed(false);
+      paintMore();
+    }).catch(function () {
+      if (seq !== p.seq) return;
+      p.error="This country's feed is temporarily unavailable.";
+      p.loaded=true;
+      if (state.feedScope === "local") renderFeed(false);
+    }).finally(function () { if (seq === p.seq) p.working=false; });
+  }
   function paintFeedScope() {
     var scope = state.feedScope || "global";
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.feedScope === scope)); });
     var body = $("mnPostBody"), place = localPlace();
     if (body) body.placeholder = "Share a live moment from " + (place || "the world") + "\u2026";
+    paintPlaceOptIn();
   }
   function setFeedScope(scope) {
     state.feedScope = ["local", "global", "news"].indexOf(scope) >= 0 ? scope : "global";
-    paintFeedScope(); renderFeed(false); track("feed_scope", { scope: state.feedScope });
+    paintFeedScope();
+    if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+    else renderFeed(false);
+    paintMore();
+    track("feed_scope", { scope: state.feedScope });
   }
   function feedMatches(item, query) {
     /* a news card answers to its headline, its publisher and the place it mentions */
@@ -1183,16 +1267,24 @@
     if (!append) host.innerHTML = "";
     paintMore();
     var focus = state.world.focus, query = state.world.query;
-    /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
-    var news = focus && focus.filter ? [] : state.news;
+    var regionMode = state.feedScope === "local" && state.placeScope.enabled;
+    var items = regionMode ? state.placeScope.posts : state.feed;
+    /* World geography is a country-scoped server read when the feature is enabled. */
+    var news = focus && focus.filter ? [] : (regionMode ? state.placeScope.news : state.news);
     paintNewsCredit(false);
-    if (!state.feed.length && !news.length) {
+    if (!items.length && !news.length) {
+      if (regionMode) {
+        host.innerHTML='<div class="mn__empty">' + esc(
+          state.placeScope.error || (!state.world.country ? "Tap a country on the globe." :
+          !state.placeScope.loaded ? "Loading local posts and news…" :
+          "No public post or news item is associated with this country yet.")) + '</div>';
+        paintMore(); return;
+      }
       host.innerHTML = state.guest
         ? '<div class="mn__empty">No public posts yet. Sign in to see your network and post the first thing.</div>'
         : '<div class="mn__empty">Nothing on the feed yet. Take a mission below, or post the first thing.</div>';
       return;
     }
-    var items = state.feed;
     if (focus && focus.filter) {
       items = items.filter(function (item) { return postMissionId(item) === focus.mission_id; });
       if (!items.length) {
@@ -1210,7 +1302,7 @@
     }
     var scope = state.feedScope || "global", place = scope === "local" ? localPlace() : "";
     if (scope === "news") items = [];
-    if (scope === "local") {
+    if (scope === "local" && !regionMode) {
       items = [];
       news = place ? news.filter(function (n) { return placeInCountry(n.place, state.world.country || { name: place }); }) : [];
     }
@@ -1365,13 +1457,20 @@
   /* Load more while either stream has another page (the news only counts while it is shown) */
   function paintMore() {
     var more = $("mnMore"), focus = state.world.focus;
-    if (more) more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
+    if (!more) return;
+    if (state.feedScope === "local" && state.placeScope.enabled) {
+      more.hidden = !(state.placeScope.postBefore || state.placeScope.newsBefore);
+      return;
+    }
+    more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));
   }
   function bindNewsActions(root) {
     root.querySelectorAll("[data-news-open]").forEach(function (b) {
       b.onclick = function (e) {
         e.preventDefault(); e.stopPropagation();
-        var id = b.getAttribute("data-news-open"), story = state.news.find(function (n) { return n.id === id; });
+        var id = b.getAttribute("data-news-open"),
+          all = state.feedScope === "local" && state.placeScope.enabled ? state.placeScope.news : state.news,
+          story = all.find(function (n) { return n.id === id; });
         if (!story) return;
         if (window.MCC_WORLD_NEWS_READER && window.MCC_WORLD_NEWS_READER.open) window.MCC_WORLD_NEWS_READER.open(story, b);
         else setStatus($("mnFeedStatus"), "The in-app news reader is temporarily unavailable.", "error");
@@ -1492,11 +1591,17 @@
       method:"POST",
       body:{ body:body, visibility:$("mnVisibility").value, track:selectedTrack,
              media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
-             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }) }
+             poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }),
+             /* Opt-in, never inferred from visitor IP or automatic globe scope. */
+             country_code:state.placeScope.enabled && $("mnPostPlaceOptIn") &&
+               $("mnPostPlaceOptIn").checked && $("mnVisibility").value === "public" &&
+               state.world.country ? state.world.country.code : undefined }
     }).then(function () {
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
       clearMediaQueue();
+      if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+      if (state.placeScope.enabled && state.feedScope === "local") loadPlaceFeed(true);
       setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
       /* a fresh post must be seen landing, so let go of any mission the
@@ -2226,7 +2331,10 @@
         .then(function () { $("mnAcceptConversation").hidden=true; $("mnMessageForm").hidden=false; setStatus($("mnConversationStatus"),"Accepted.","ok"); return loadConversations(); })
         .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
     };
-    $("mnMore").onclick = function () { loadFeed(false); };
+    $("mnMore").onclick = function () {
+      if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(false);
+      else loadFeed(false);
+    };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
     wireMenu();
     $("mnGuestSignIn").onclick = function () { openSignIn("signin"); };
@@ -2237,6 +2345,7 @@
     document.querySelectorAll("[data-mn-view]").forEach(function (b) { b.onclick = function () { setView(b.dataset.mnView); }; });
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { setFeedScope(b.dataset.feedScope); }; });
     paintFeedScope();
+    loadPlaceStatus();
     $("mnBell").onclick = function () { setView("notifications"); };
     $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
     $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
@@ -3558,7 +3667,10 @@
         $("huRegionLabel").textContent = d.country && typeof d.country.name === "string" ? d.country.name.slice(0, 80) : "All regions";
         /* the country's identity rides with its name, so Local can match a story's country rather than a substring */
         state.world.country = d.country && typeof d.country.name === "string" ? { code: String(d.country.code || "").toUpperCase().slice(0, 2), name: d.country.name.slice(0, 80) } : null;
-        paintFeedScope(); if (state.feedScope === "local") renderFeed(false);
+        if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
+        paintFeedScope();
+        if (state.feedScope === "local" && state.placeScope.enabled) loadPlaceFeed(true);
+        else if (state.feedScope === "local") renderFeed(false);
       } else if (d.type === "hu:audience") {
         showAudience(!!d.on);
       } else if (d.type === "hu:ask-sign-in") {
