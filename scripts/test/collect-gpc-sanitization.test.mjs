@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
 
 const source = await readFile(new URL('../../supabase/functions/collect/index.ts', import.meta.url), 'utf8');
 const compiled = stripTypeScriptTypes(source, { mode: 'strip' });
@@ -13,12 +14,15 @@ async function collect({ headers = {}, body }) {
   const ctx = {
     Deno: { env: { get: name => name === 'SUPABASE_URL' ? 'https://local.test.supabase.co' : 'not-a-real-secret' },
       serve: fn => { handler = fn; } },
-    Response, Request, Headers, TextEncoder, URL, console,
+    Response, Request, Headers, TextEncoder, URL, console, crypto: webcrypto, setTimeout,
     fetch: async (url, init = {}) => {
       const href = String(url);
       calls.push({ href, method: init.method || 'GET', body: init.body });
       if (href.endsWith('/auth/v1/user')) return new Response(JSON.stringify({ id: '123e4567-e89b-42d3-a456-426614174000' }), {status:200});
-      if (href.endsWith('/rest/v1/events')) return new Response('', {status:201});
+      if (href.includes('/rest/v1/events?on_conflict=id')) {
+        const rows = JSON.parse(init.body);
+        return new Response(JSON.stringify(rows.map(({id})=>({id}))), {status:201, headers:{'content-type':'application/json'}});
+      }
       throw new Error('Unexpected egress: ' + href);
     }
   };
@@ -36,8 +40,8 @@ async function collect({ headers = {}, body }) {
     })
   });
   const response = await handler(request);
-  return {response, calls, rows: calls.find(x=>x.href.endsWith('/rest/v1/events'))?.body
-    ? JSON.parse(calls.find(x=>x.href.endsWith('/rest/v1/events')).body) : []};
+  return {response, calls, rows: calls.find(x=>x.href.includes('/rest/v1/events?on_conflict=id'))?.body
+    ? JSON.parse(calls.find(x=>x.href.includes('/rest/v1/events?on_conflict=id')).body) : []};
 }
 
 for (const header of [{ 'sec-gpc': '1' }, { dnt:'1' }]) {
@@ -64,4 +68,15 @@ test('without privacy signal the existing event contract is preserved', async ()
   assert.match(rows[0].path,/profile\/private/);
   assert.equal(rows[0].props.email,'person@example.test');
   assert.equal(calls.filter(x=>x.href.endsWith('/auth/v1/user')).length,1);
+});
+
+test('each recorded event has a valid UUID, while opt-out still discards all identifiers and metadata', async () => {
+  const quiet = await collect({headers:{'sec-gpc':'1'},body:{device_id:'should-be-discarded',session_id:'session',events:[{id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',name:'page_view',path:'/secret',props:{email:'private@example.test'}}]}});
+  assert.equal(quiet.rows[0].id,'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+  assert.equal(quiet.rows[0].device_id,null);
+  assert.equal(quiet.rows[0].session_id,null);
+  assert.equal(quiet.rows[0].path,'/');
+  assert.deepEqual(JSON.parse(JSON.stringify(quiet.rows[0].props)),{});
+  const invalid = await collect({body:{events:[{id:'not-a-uuid',name:'page_view',path:'/'}]}});
+  assert.match(invalid.rows[0].id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i);
 });
