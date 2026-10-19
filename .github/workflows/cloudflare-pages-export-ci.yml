@@ -33,7 +33,7 @@ jobs:
           node --test scripts/test/cloudflare-pages-stage.test.mjs
       - name: Stage the currently published GitHub Pages tree as a non-deploying canary
         run: |
-          git fetch origin gh-pages:refs/remotes/origin/gh-pages
+          git fetch --force origin gh-pages:refs/remotes/origin/gh-pages
           git worktree add --detach "${RUNNER_TEMP}/mccluster-published-export" origin/gh-pages
           node scripts/stage-cloudflare-pages.mjs \
             --input "${RUNNER_TEMP}/mccluster-published-export" \
