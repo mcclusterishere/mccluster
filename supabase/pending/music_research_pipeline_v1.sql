@@ -147,7 +147,8 @@ begin
    where creator_m_uid=v_owner and track_id=p_track_id and stage=p_stage and idempotency_key=p_idempotency_key;
    return v_id;
  end if;
- select pgmq.send('mcc_music_research_v1',jsonb_build_object('job_id',v_id)) into v_msg;
+ select pgmq.send('mcc_music_research_v1',jsonb_build_object('job_id',v_id,
+   'stage',p_stage,'resource',case when p_stage in ('separate','transcribe') then 'gpu' else 'cpu' end)) into v_msg;
  update public.music_research_jobs set msg_id=v_msg where id=v_id;
  return v_id;
 end $fn$;
@@ -199,11 +200,21 @@ create or replace function public.mcc_music_research_claim(
 language plpgsql security definer set search_path='' as $fn$
 declare v_msg pgmq.message_record;v_job public.music_research_jobs%rowtype;
  v_track public.creator_tracks%rowtype;v_inputs jsonb;v_token uuid;v_count int;
+ v_selector jsonb;
 begin
  if length(coalesce(p_worker,'')) not between 3 and 100 or p_lease_seconds not between 60 and 1800
    then raise exception 'invalid worker or lease';end if;
+ -- Resource-aware PGMQ read. CPU workers cannot steal GPU-only inference;
+ -- GPU workers cannot starve the inexpensive first-party analysis queue.
+ if p_worker like 'mcc-cpu-%' then
+   v_selector:=jsonb_build_object('resource','cpu');
+ elsif p_worker like 'mcc-gpu-%' then
+   v_selector:=jsonb_build_object('resource','gpu');
+ else
+   raise exception 'worker capability is not approved';
+ end if;
  for v_count in 1..5 loop
-   select * into v_msg from pgmq.read('mcc_music_research_v1',p_lease_seconds,1);
+   select * into v_msg from pgmq.read('mcc_music_research_v1',p_lease_seconds,1,v_selector);
    if v_msg.msg_id is null then return;end if;
    select * into v_job from public.music_research_jobs j
       where j.id=(v_msg.message->>'job_id')::uuid for update;
