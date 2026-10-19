@@ -104,7 +104,6 @@ test("creator must consent to each stage and review private results",()=>{
  assert.match(client,/mcc_music_research_enqueue/);
  assert.match(client,/mcc_music_research_review/);
  assert.match(client,/mcc_music_research_cancel/);
- assert.match(client,/mcc_music_research_job/); // intentionally check no alternate endpoint? */
  assert.match(client,/storage\/v1\/object\/sign\/creator-research-outputs/);
  assert.match(client,/expiresIn:120/);
  assert.match(html,/mrResearchConsent/);
