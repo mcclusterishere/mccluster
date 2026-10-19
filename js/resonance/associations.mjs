@@ -14,7 +14,7 @@ export function scientificTrackIndex(resonance, theory) {
   const first=resonance?.dominantModes?.[0];
   if(first && Number.isInteger(first.m) && Number.isInteger(first.n)){
     result.push({id:"mode",family:"modeled-resonance",value:"Membrane mode ("+first.m+","+first.n+")",
-      evidence:"modelled",meaning:"Leading response for this stated resonator, not a song's universal shape"});
+      evidence:"modeled",meaning:"Leading response for this stated resonator, not a song's universal shape"});
   }
   if(bass!=null)result.push({id:"bass",family:"spectral-distribution",
     value:bass>=.44?"Low-frequency enriched":bass<=.16?"Less low-frequency energy":"Mixed low-frequency energy",
