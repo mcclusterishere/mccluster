@@ -11,12 +11,16 @@ const event = { id:uuid, name:'page_view', path:'/test', props:{label:'a synthet
 
 async function collector({tenant=false, errors=[], initialCommitOnFailure=false, quiet=false}={}) {
   const persisted = new Map(), requests=[];
-  let handler;
+  let handler, authRequests=0;
   const ctx={
     Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://local.test':'a-placeholder'},serve:fn=>{handler=fn;}},
     Request,Response,Headers,URL,TextEncoder,console,crypto:webcrypto,setTimeout,
     fetch:async (url,init={})=>{
       const u=String(url),method=init.method||'GET';
+      if(u.includes('/auth/v1/user')){
+        authRequests++;
+        return new Response(JSON.stringify({id:'33333333-3333-4333-8333-333333333333'}),{status:200});
+      }
       if(u.includes('/rest/v1/analytics_sites?'))
         return new Response(JSON.stringify([{id:'11111111-1111-4111-8111-111111111111',consent_mode:'cookieless'}]),{status:200});
       if(u.includes('/rest/v1/analytics_site_domains?'))
@@ -45,12 +49,13 @@ async function collector({tenant=false, errors=[], initialCommitOnFailure=false,
       {site_key:'mca_'+'a'.repeat(32),consent_state:'cookieless',device_id:'must-be-dropped',session_id:'must-be-dropped',events:[e]}:
       {device_id:'synthetic-browser',session_id:'synthetic-visit',events:[e]};
     const req=new Request('https://api.mccluster.org/functions/v1/collect',{method:'POST',
-      headers:{'content-type':'application/json','user-agent':'test-browser','origin':'https://tenant.example.test',...(quiet?{'dnt':'1'}:{})},
+      headers:{'content-type':'application/json','user-agent':'test-browser','origin':'https://tenant.example.test',
+        ...(tenant?{'authorization':'Bearer synthetic-valid-token'}:{}),...(quiet?{'dnt':'1'}:{})},
       body:JSON.stringify(body)});
     const r=await handler(req);
     return {status:r.status,body:await r.json()};
   };
-  return {send,persisted,requests};
+  return {send,persisted,requests,authRequests:()=>authRequests};
 }
 
 test('repeated event IDs are ignored rather than double-counted in PostgREST',async()=>{
@@ -102,6 +107,11 @@ test('cookie-free tenant tracking drops both device and session IDs at the write
   assert.equal(saved.device_id,null);
   assert.equal(saved.session_id,null);
   assert.equal(saved.uid,null);
+  assert.equal(saved.ip,null);
+  assert.equal(saved.user_agent,null);
+  assert.equal(saved.path,'/');
+  assert.deepEqual(JSON.parse(JSON.stringify(saved.props)),{});
+  assert.equal(c.authRequests(),0,'do not even look up a signed-in visitor under cookieless collection');
   assert.equal(saved.name,'page_view');
   assert.equal(saved.id,uuid);
 });
