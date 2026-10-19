@@ -288,6 +288,10 @@ Deno.serve(async (req) => {
   const sessionId = quiet ? null : str(body.session_id, 64);
   const device = quiet ? {} : obj(body.device);
 
+  /* A stable, per-event UUID survives a proxy retry or a fallback from the
+     Worker to this Edge Function. Unlike device/session IDs, this identifier
+     denotes exactly one emitted event and is not a cross-visit identity. */
+  const EVENT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const rows: Record<string, unknown>[] = [];
   for (const e of incoming.slice(0, MAX_EVENTS)) {
     const ev = obj(e);
@@ -299,7 +303,9 @@ Deno.serve(async (req) => {
        if a forged or stale browser client tries to send one anyway. */
     if (quiet && name === "precise_location") continue;
 
+    const proposedId = str(ev.id, 36);
     rows.push({
+      id: proposedId && EVENT_UUID.test(proposedId) ? proposedId.toLowerCase() : crypto.randomUUID(),
       site_id: site.siteId,
       source_host: site.host,
       name,
@@ -337,24 +343,45 @@ Deno.serve(async (req) => {
 
   if (!rows.length) return json({ ok: true, written: 0 });
 
-  const r = await fetch(`${SB}/rest/v1/events`, {
+  /* The events primary key already exists. Ignore collisions by id so
+     a timeout after a successful commit and the browser's direct fallback
+     cannot record an event twice. Only IDs are returned to the collector;
+     the browser never receives event rows, IPs or other collected fields. */
+  const endpoint = `${SB}/rest/v1/events?on_conflict=id&select=id`;
+  const options = {
     method: "POST",
     headers: {
       apikey: SRV,
       Authorization: `Bearer ${SRV}`,
       "Content-Type": "application/json",
-      Prefer: "return=minimal",
+      Prefer: "resolution=ignore-duplicates,return=representation",
     },
     body: JSON.stringify(rows),
-  });
-
-  // A collector that cannot write says so. The browser ignores the answer —
-  // nobody's afternoon should stop because a statistic did not land — but the
-  // status is real, so a check of this endpoint tells the truth about whether
-  // the house is actually recording anything. That is the whole complaint
-  // this replaces: something that looked wired and was not.
-  if (!r.ok) {
-    return json({ ok: false, reason: `insert ${r.status}`, detail: (await r.text()).slice(0, 300) }, 502);
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(endpoint, options);
+      if (r.ok) {
+        const inserted = await r.json().catch(() => null);
+        if (!Array.isArray(inserted)) {
+          // No safe receipt means an ambiguous commit. The stable IDs make
+          // one retry harmless, but never report an unverified write as done.
+          if (attempt === 0) { await new Promise((resolve) => setTimeout(resolve, 180)); continue; }
+          return json({ ok: false, reason: "insert receipt unavailable", retryable: true }, 502);
+        }
+        return json({ ok: true, received: rows.length, written: inserted.length });
+      }
+      const detail = (await r.text()).slice(0, 300);
+      const retryable = r.status === 429 || r.status >= 500 || /57014|statement timeout|canceling statement/i.test(detail);
+      if (!retryable || attempt === 1)
+        return json({ ok: false, reason: `insert ${r.status}`, retryable }, 502);
+    } catch {
+      if (attempt === 1)
+        return json({ ok: false, reason: "insert transport unavailable", retryable: true }, 502);
+    }
+    // Bounded recovery from a canceled PostgREST transaction; never loop on
+    // policy/validation errors or claim a success without an insert receipt.
+    await new Promise((resolve) => setTimeout(resolve, 180));
   }
-  return json({ ok: true, written: rows.length });
+  return json({ ok: false, reason: "insert retry exhausted", retryable: true }, 502);
 });
