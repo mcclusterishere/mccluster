@@ -630,7 +630,12 @@ export default {
         const rows = await sb(env, 'rental_bookings?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(booking) }); return reply(env, { booking: rows[0], vehicle }, 201);
       }
       const rentalMatch = path.match(/^\/api\/rentals\/bookings\/([^/]+)$/);
-      if (rentalMatch && req.method === 'GET') { const user = await requireUser(req, env); const booking = await getRental(env, rentalMatch[1]); if (!booking) return fail(env, 'Rental booking not found', 404); if (String(booking.renter_id) !== String(user.id)) return fail(env, 'Booking belongs to another renter', 403); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); return reply(env, { booking, vehicle: vehicleRows?.[0] || null }); }
+      if (rentalMatch && req.method === 'GET') {
+        const user = await requireUser(req, env); const booking = await getRental(env, rentalMatch[1]); if (!booking) return fail(env, 'Rental booking not found', 404);
+        // Reads mirror security.js canAccessRental: the renter, or an operator
+        // member whose role may inspect reservation records. Viewers may not.
+        if (String(booking.renter_id) !== String(user.id)) await requireOperator(req, env, booking.tenant_id, ['owner', 'admin', 'dispatcher', 'finance']);
+        const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); return reply(env, { booking, vehicle: vehicleRows?.[0] || null }); }
 
       const rentalCheckout = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkout$/);
       if (rentalCheckout && req.method === 'POST') {

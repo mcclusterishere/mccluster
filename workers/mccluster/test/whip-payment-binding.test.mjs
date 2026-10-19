@@ -18,7 +18,7 @@ function ledger(){
              {id:OTHER,slug:'other',name:'Other Operator',stripe_account_id:'acct_other'}],
     rides:[{id:RIDE,tenant_id:TENANT,status:'IN_PROGRESS',driver_id:'drv-1',fare_cents:2500,payment_status:'authorized',stripe_payment_intent_id:'pi_ride',completed_at:null}],
     rentals:[{id:RENTAL,tenant_id:TENANT,renter_id:USER,total_cents:11770,payment_status:'checkout_created',stripe_checkout_session_id:'cs_rental',stripe_payment_intent_id:null}],
-    events:new Map(),payments:[{id:'preexisting-payment',tenant_id:TENANT,resource_type:'rental',resource_id:RENTAL,stripe_checkout_session_id:'cs_rental',amount_cents:11770,connected_account_id:'acct_owner'}],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,paymentInsertFailsOnce:false,paymentResponseLostOnce:false,existingSessionStatus:'open'
+    events:new Map(),payments:[{id:'preexisting-payment',tenant_id:TENANT,resource_type:'rental',resource_id:RENTAL,stripe_checkout_session_id:'cs_rental',amount_cents:11770,connected_account_id:'acct_owner'}],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,paymentInsertFailsOnce:false,paymentResponseLostOnce:false,existingSessionStatus:'open',operators:[]
   };
   state.fetch=async(resource,options={})=>{
     const u=new URL(String(resource)),path=u.pathname,method=options.method||'GET',body=options.body&&!String(resource).includes('api.stripe.com')?JSON.parse(options.body):options.body||null;
@@ -50,6 +50,7 @@ function ledger(){
     if(path==='/rest/v1/rides'){const id=param(u.search,'id'),st=param(u.search,'status'),drv=param(u.search,'driver_id');let rows=state.rides.filter(r=>(!id||r.id===id)&&(!st||r.status===st)&&(!drv||r.driver_id===drv));
       if(method==='PATCH'){if(state.ridePatchThrows)return json({message:'rides unavailable'},503);if(state.raceAway)rows=[];rows.forEach(r=>Object.assign(r,body));return json(rows);}return json(rows);}
     if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
+    if(path==='/rest/v1/operator_members'){const tenant=param(u.search,'tenant_id'),who=param(u.search,'auth_user_id');return json(state.operators.filter(o=>o.tenant_id===tenant&&o.auth_user_id===who));}
     if(path==='/rest/v1/rental_vehicles')return json([{id:'fixture-car',tenant_id:TENANT,daily_rate_cents:5000,location_label:'Lot A',available:true}]);
     if(path==='/rest/v1/payments'){
       if(method==='POST'){
@@ -279,6 +280,27 @@ test('a stored session with no accounting row is repaired idempotently before re
   });
 });
 
+test('operator members who may inspect reservations can read a renter booking; viewers and non-members cannot; checkout stays renter-only',{concurrency:false},async()=>{
+  for(const role of ['finance','dispatcher','admin','owner']){
+    await withLedger(ledger(),async state=>{
+      state.rentals[0].renter_id=OTHER;state.operators.push({tenant_id:TENANT,auth_user_id:USER,role});
+      const read=await worker.fetch(req('/api/rentals/bookings/'+RENTAL,'GET'),env);
+      assert.equal(read.status,200,role+' may read the reservation');
+      assert.equal((await read.json()).booking.id,RENTAL);
+      const checkout=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+      assert.equal(checkout.status,403,role+' may not start the renter\'s checkout');
+      assert.equal(state.stripe.length,0);
+    });
+  }
+  await withLedger(ledger(),async state=>{
+    state.rentals[0].renter_id=OTHER;state.operators.push({tenant_id:TENANT,auth_user_id:USER,role:'viewer'});
+    assert.equal((await worker.fetch(req('/api/rentals/bookings/'+RENTAL,'GET'),env)).status,403,'a viewer may not inspect reservation records');
+  });
+  await withLedger(ledger(),async state=>{
+    state.rentals[0].renter_id=OTHER;state.operators.push({tenant_id:OTHER,auth_user_id:USER,role:'owner'});
+    assert.equal((await worker.fetch(req('/api/rentals/bookings/'+RENTAL,'GET'),env)).status,403,'membership in another tenant grants nothing');
+  });
+});
 test('rental checkout and booking reads deny a different authenticated renter',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
     state.rentals[0].renter_id=OTHER;
