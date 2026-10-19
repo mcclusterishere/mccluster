@@ -1,6 +1,7 @@
 import { fail, reply } from '../lib/http.js';
 import { recordEvent } from '../lib/observability.js';
 import { queueObjectiveSynthesis } from './objectives.js';
+import { handleBuildCode, ROUTE as BUILD_CODE_ROUTE } from './build-code.js';
 
 const MAX_BODY = 512 * 1024;
 const OWNER_JOB_TYPES = new Set([
@@ -231,6 +232,10 @@ export async function handleAiRequest(request, env, user) {
   const memberships = await membershipsRes.json().catch(() => []);
   if (!memberships?.length) return fail(request, env, 'McCluster house owner access required', 403);
 
+  /* Control → Build → Code. Same gate, same org, same job ledger. */
+  const build = await handleBuildCode(request, env, user, orgId, path);
+  if (build) return build;
+
   if (path === '/v1/ai' && request.method === 'GET') {
     return reply(request, env, {
       ok: true,
@@ -241,6 +246,7 @@ export async function handleAiRequest(request, env, user) {
       decisions: '/v1/ai/decisions',
       task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
+      build_code: BUILD_CODE_ROUTE,
       status: '/v1/ai/status',
       system_health: '/v1/ai/system-health',
       objective_synthesis: 'automatic after successful context ingest',

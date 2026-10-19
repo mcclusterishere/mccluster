@@ -260,7 +260,7 @@
     /* The bar takes this creator's perspective for the session (js/tabbar.js):
        their front page in the middle cell, their own picture or initial.
        Owner, 2026-10-14: "experience the site from their perspective". */
-    var perspective = { handle: p.handle, name: p.artist_name, avatar: avatar || "" };
+    var perspective = { kind: "artist", handle: p.handle, name: p.artist_name, avatar: avatar || "" };
     try { root.sessionStorage.setItem("mcc_perspective", JSON.stringify(perspective)); } catch (_) {}
     try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {}
 
