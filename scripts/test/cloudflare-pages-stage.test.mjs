@@ -64,9 +64,7 @@ test('file-size, suspicious secrets, and unknown signatures are fail-closed',asy
 });
 test('public export does not follow symlinks into private runtime files',async()=>{
   const f=await fixture();
-  await symlink(join(f.root,'outside-secret'),'../secret',{type:'file'}).catch(async()=>{
-    await symlink('outside-secret',join(f.input,'js','link.js'));
-  });
+  await symlink(join(f.root,'outside-secret'),join(f.input,'js','link.js'));
   const r=run(f);
   assert.notEqual(r.status,0);
   assert.match(r.stderr,/Symbolic link/);
