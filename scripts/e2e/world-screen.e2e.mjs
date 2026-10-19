@@ -387,6 +387,16 @@ const chooseTravelPlace = async (page, id, query) => {
   const option = page.locator('#'+id+'Results button').filter({hasText:expected}).first();
   try { await option.click({noWaitAfter:true,timeout:5000}); }
   catch (error) {
+    // The globe iframe shares the page's renderer, so on a slow CI runner the
+    // click can be delivered while Playwright's input acknowledgement stalls
+    // behind a Cesium frame. If the selection already landed (the field holds
+    // the chosen place and the list closed), the click did its job; the same
+    // outcome is asserted below. Otherwise fall back as before.
+    const landed = await page.evaluate(({id, query, expected}) => {
+      const input = document.getElementById(id);
+      return !!input && input.value !== query && input.value.includes(expected) && input.getAttribute('aria-expanded') === 'false';
+    }, {id, query, expected});
+    if (!landed) {
     // The Cesium canvas continuously paints while the suggestion popup is
     // shown. If the intended option is truly exposed and enabled, an actual
     // forced pointer click can bypass Playwright's overly strict stable-frame
@@ -400,6 +410,7 @@ const chooseTravelPlace = async (page, id, query) => {
     });
     if (!exposed) throw error;
     await option.click({force:true,noWaitAfter:true,timeout:5000});
+    }
   }
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
