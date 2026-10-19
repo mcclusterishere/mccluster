@@ -30,7 +30,7 @@ async function setup(width=390,member=false,{parentScript}={}){
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
   await context.addInitScript(({HOUSE,member,token})=>{
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));
+    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
     const NativeAudio=window.Audio;
     window.__audioObjects=[];window.__audioEvents=[];window.__unloads=0;window.__bridgeMessages=[];
