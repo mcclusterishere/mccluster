@@ -13,4 +13,4 @@ try{if(url){URL.revokeObjectURL(url);url=null}$('download').hidden=true;chunks=[
 $('stop').onclick=()=>{if(recorder?.state==='recording')recorder.stop();$('start').disabled=false};
 $('discard').onclick=()=>{if(url)URL.revokeObjectURL(url);url=null;chunks=[];$('download').hidden=true;$('discard').disabled=true;status('Local recording discarded.')};
 window.addEventListener('pagehide',()=>{if(recorder?.state==='recording')recorder.stop();cleanup();if(url)URL.revokeObjectURL(url)});
-})();</script></body></html>
+})();</script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>
