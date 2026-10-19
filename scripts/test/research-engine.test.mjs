@@ -164,3 +164,41 @@ test("research families use measured acoustic features, not mood or implied neur
   assert.match(markup,/rwRegionAcoustic/);
   assert.match(markup,/rwScientificClasses/);
 });
+
+test("science-first catalogue refuses gated audio, unsafe sources, and invented measurements",async()=>{
+  const {eligibleTrack,buildIndex}=await import("../research-engine/build-science-catalogue.mjs");
+  const album={slug:"here"};
+  assert.equal(eligibleTrack(album,{title:"Public",src:"assets/audio/public.mp3"}),true);
+  assert.equal(eligibleTrack(album,{title:"Protected",src:"assets/audio/master.mp3",gated:{bucket:"private"}}),false);
+  assert.equal(eligibleTrack(album,{title:"Unsafe",src:"../private/master.mp3"}),false);
+  assert.equal(eligibleTrack(album,{title:"External",src:"https://elsewhere.test/music.mp3"}),false);
+  const plan=await buildIndex({dryRun:true,maxTracks:2});
+  assert.equal(plan.schema,"mcc.research.catalogue-index.v1");
+  assert.equal(plan.tracks.length,0,"a dry run must not invent analysis");
+  assert.ok(plan.eligible.length<=2);
+  assert.match(plan.caveat,/No genre, mood, DNA activation/);
+});
+
+test("music-first media graph requires provenance, rights, explicit audio linkage and honest autoplay evidence",async()=>{
+  const {validateMusicMediaRelation,researchAllowedForAsset,playbackSelectionEvidence}=
+    await import("../../js/resonance/media-graph.mjs");
+  const media={mediaId:"asset_123",mediaKind:"video",
+    producer:{kind:"approved_agent",id:"agent_mcc"},
+    rights:{status:"pending_rights",ownerId:"creator_A"},
+    provenance:{agentRunId:"run_123",transform:"visualize"},
+    audioRelation:{kind:"track",trackId:"track_public"}};
+  const valid=validateMusicMediaRelation(media);
+  assert.equal(valid.audioRelation.trackId,"track_public");
+  assert.equal(researchAllowedForAsset(valid,{researchOptIn:true}).analysisPermitted,false);
+  assert.equal(researchAllowedForAsset({...media,rights:{status:"approved",ownerId:"creator_A"}},{researchOptIn:true}).analysisPermitted,true);
+  assert.throws(()=>validateMusicMediaRelation({...media,audioRelation:null}),/declare its relationship/);
+  assert.throws(()=>validateMusicMediaRelation({...media,audioRelation:{kind:"track",trackId:"x",masterUrl:"signed-secret"}}),/signed media URLs/);
+  assert.throws(()=>validateMusicMediaRelation({...media,provenance:null}),/attributable run ID/);
+  assert.throws(()=>validateMusicMediaRelation({...media,subjectDna:"GCTA"}),/personal DNA/);
+  const queued=playbackSelectionEvidence("system_queue",{affirmativePreference:true});
+  assert.equal(queued.inferPreference,false);
+  assert.equal(queued.needsGesture,true);
+  const chosen=playbackSelectionEvidence("user_selected");
+  assert.equal(chosen.inferPreference,false,"one play is not a stable preference");
+  assert.equal(chosen.inferBrainActivity,false);
+});
