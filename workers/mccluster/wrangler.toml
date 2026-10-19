@@ -27,6 +27,11 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 # The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
 # production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
 WORLD_NEWS_INGEST_ENABLED = "true"
+# Audio-only rooms through Cloudflare Realtime SFU. Do not enable until
+# pending SQL 20261019235000_network_sfu_audio_rooms.sql is applied,
+# secrets AUDIO_SFU_APP_ID and AUDIO_SFU_APP_SECRET are configured,
+# privacy, moderation and multi-browser tests have passed.
+AUDIO_SFU_ROOMS_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
