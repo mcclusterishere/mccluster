@@ -299,3 +299,19 @@ grant execute on function public.mcc_music_research_claim(text,integer),
  public.mcc_music_research_heartbeat(uuid,uuid,integer),
  public.mcc_music_research_finish(uuid,uuid,jsonb,jsonb),
  public.mcc_music_research_fail(uuid,uuid,text,boolean) to service_role;
+
+
+-- Authenticated creators may discover only operator-approved models. No model download URLs.
+create or replace function public.mcc_music_research_available_models()
+returns table(model_id text,stage text,version text)
+language plpgsql security definer set search_path='' as $fn$
+begin
+ if auth.uid() is null or public.current_m_uid() is null then
+   raise exception 'creator authentication required';
+ end if;
+ return query select m.model_id,m.stage,m.version from public.music_research_models m
+   where m.enabled and m.license_class in ('first_party','approved_commercial')
+     and m.reviewed_at is not null order by m.stage,m.model_id;
+end $fn$;
+revoke all on function public.mcc_music_research_available_models() from public,anon,authenticated;
+grant execute on function public.mcc_music_research_available_models() to authenticated;
