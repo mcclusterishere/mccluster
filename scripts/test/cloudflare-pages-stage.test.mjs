@@ -108,7 +108,7 @@ test('keys glued to identifier characters are refused; long snake_case identifie
     assert.match(r.stderr,/Possible secret/);
   }
   const f=await fixture();
-  await writeFile(join(f.input,'js','public.js'),'const laughs_at_the_joke_counter_total_value_for_session=1;const AKIAFOO=2;');
+  await writeFile(join(f.input,'js','public.js'),'const weighed_against_the_counter_total_value_for_session=1;const AKIAFOO=2;');
   const r=run(f);
   assert.equal(r.status,0,r.stderr);
 });
