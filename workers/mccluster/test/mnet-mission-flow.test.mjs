@@ -39,13 +39,16 @@ function harness(){
   const fetchStart=source.indexOf('  function fetchMission(id){');
   const fetchEnd=source.indexOf('  function clearMissionCapture(){',fetchStart);
   assert.ok(fetchStart>0&&fetchEnd>fetchStart);
+  const missionDisplayStart=source.indexOf('  function publicMission(m) {');
+  const missionDisplayEnd=source.indexOf('  var MISSION_FIELDS=',missionDisplayStart);
+  assert.ok(missionDisplayStart>0&&missionDisplayEnd>missionDisplayStart,'mission public-title mapper exists');
   // Exercise the real account predicates; only the UI prompt and transport are doubles.
   const sessionStart=source.indexOf('  function sessionToken() {');
   const sessionEnd=source.indexOf('  function storagePath(',sessionStart);
   const stepStart=source.indexOf('  function needsStep() {');
   const stepEnd=source.indexOf('  function paintFinishCard(',stepStart);
   assert.ok(sessionStart>0&&sessionEnd>sessionStart&&stepStart>0&&stepEnd>stepStart);
-  vm.runInNewContext(source.slice(sessionStart,sessionEnd)+source.slice(stepStart,stepEnd)+source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
+  vm.runInNewContext(source.slice(sessionStart,sessionEnd)+source.slice(stepStart,stepEnd)+source.slice(missionDisplayStart,missionDisplayEnd)+source.slice(fetchStart,fetchEnd)+block+';globalThis.actions={openMission,joinMission,submitMissionProof};',context);
   return {actions:context.actions,missions,calls,el,state,session};
 }
 test('rapid mission switches ignore stale detail response',async()=>{

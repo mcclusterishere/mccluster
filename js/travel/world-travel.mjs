@@ -604,7 +604,7 @@ function setMode(mode) {
   if (mode !== currentMode) { setMapPick(null); invalidateRoute(); closeSearches(); }
   currentMode = mode; root.dataset.worldMode = mode;
   if (mode !== 'travel') root.classList.remove('wt-expanded');
-  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Human Uprise globe. Drag to explore; select a mission pin to see its details.';
+  frame.title = mode === 'travel' ? 'Travel map. Drag to explore; your selected places and road directions appear here.' : 'Equity Uprise globe. Drag to explore; select a mission pin to see its details.';
   root.classList.remove('hu-search-open'); $('huSearchToggle').setAttribute('aria-expanded', 'false');
   document.querySelectorAll('[data-world-mode][aria-pressed]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.worldMode === mode)));
   $('mnWorldFeed').scrollTop = 0; renderDirections(); renderGlobe(); autoLocate();

@@ -541,7 +541,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
       throw error;
     }
-    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('#dcPreviewCapstone')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('.mn-swipe__filters [data-status="completed"]')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
     check(scope,'Posts hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
@@ -637,7 +637,7 @@ if(runs('mission-archive')) {
   const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
   try{
     const globe=page.frame({url:/action-globe\.html/});
-    await page.waitForSelector('#dcPreviewCapstone');
+    await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
@@ -645,7 +645,9 @@ if(runs('mission-archive')) {
     await page.click('.wt-world-modes [data-world-mode=travel]');
     await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
     await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.locator('#dcPreviewCapstone').getByRole('button',{name:'Show on the globe'}).click();
+    const completedSeries=page.locator('#mnCompletedSeries .dc-series');
+    if(!(await completedSeries.evaluate(e=>e.open)))await completedSeries.locator('summary').click();
+    await completedSeries.getByRole('button',{name:'Show on globe'}).click();
     await page.evaluate(()=>__travelGeoResolve());
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='missions'&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
@@ -666,7 +668,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
-    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' missions to explore');
+    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
@@ -687,10 +689,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     }));
     if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
-    await page.click('#huWorldFilters summary');
-    check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
-    await page.keyboard.press('Escape');
-    check(scope,'Escape closes the filter',!(await page.locator('#huWorldFilters').evaluate(e=>e.open)));
+    check(scope,'redundant globe region filter is removed from the visible canvas',await page.locator('#huWorldFilters').isHidden());
+    check(scope,'mission status switch is available without category clutter',
+      await page.locator('.mn-swipe__filters [data-status="open"]').count()===1&&await page.locator('.mn-swipe__filters [data-status="completed"]').count()===1);
     if(device.viewport.width<600)await page.click('#huSearchToggle');
     await page.fill('#mnSearchInput','Mill');
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');

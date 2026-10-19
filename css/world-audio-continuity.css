@@ -24,3 +24,26 @@ body[data-world-audio-child]>.appbar { display:none!important; }
 .world-audio-status :is(button,a) { display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:10px 16px;border:1px solid #fff5;border-radius:24px;background:none;color:inherit;font:inherit;text-decoration:none;cursor:pointer; }
 @media (min-width:720px) { .world-audio { gap:8px;padding-inline:10px; } .world-audio__title span { font-size:14px; } }
 @media print { #mccWorldAudioShell,#mccWorldAudioControls { display:none!important; } }
+
+
+/* Equity Uprise World has one unobtrusive transport next to the globe tools.
+   The Music page keeps the full title/mute/player UI. One Audio element
+   remains authoritative in both cases; CSS never introduces a second player. */
+html.hu-travel-enabled.mn-world-on .world-audio,
+html.world-audio-open .world-audio {
+  left:auto;right:max(12px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 160px);
+  bottom:auto;transform:none;width:52px;height:52px;
+  display:flex;align-items:center;justify-content:center;gap:0;
+  padding:3px;border-radius:50%;border:1px solid #ffffff5b;
+  background:#151c23ed;box-shadow:0 4px 15px #0008;
+}
+html.hu-travel-enabled.mn-world-on .world-audio :is(.world-audio__title,.world-audio__mute),
+html.world-audio-open .world-audio :is(.world-audio__title,.world-audio__mute) { display:none!important; }
+html.hu-travel-enabled.mn-world-on .world-audio .world-audio__play,
+html.world-audio-open .world-audio .world-audio__play {
+  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+  display:grid;place-items:center;border-radius:50%;
+  background:transparent;color:#f4f4f2;font-size:21px;line-height:1;
+}
+html.hu-travel-enabled.mn-world-on .world-audio .world-audio__play:focus-visible,
+html.world-audio-open .world-audio .world-audio__play:focus-visible { outline:2px solid #fff;outline-offset:3px; }
