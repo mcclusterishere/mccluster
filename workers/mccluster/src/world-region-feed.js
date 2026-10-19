@@ -124,13 +124,8 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch } = {}) {
       db(env, postPath, fetchImpl), db(env, newsPath, fetchImpl)
     ]);
     const authors = [...new Set(rawPosts.map(p => p.author_m_uid).filter(id => UUID.test(id)))];
-    const profiles = authors.length ? await db(env, query('network_profiles', {
-      m_uid:'in.(' + authors.join(',') + ')', visibility:'eq.public'
-    }, 'created_at', null, authors.length,
-    'm_uid,display_name,avatar_url,verification_state,created_at,id'), fetchImpl)
-      // network_profiles is keyed by m_uid (no id); fetch through explicit projection below.
-      .catch(() => db(env, 'network_profiles?m_uid=in.(' + authors.join(',') +
-        ')&visibility=eq.public&select=m_uid,display_name,avatar_url,verification_state', fetchImpl)) : [];
+    const profiles = authors.length ? await db(env, 'network_profiles?m_uid=in.(' +
+      authors.join(',') + ')&visibility=eq.public&select=m_uid,display_name,avatar_url,verification_state', fetchImpl) : [];
     const byUid = new Map(profiles.map(p => [p.m_uid,p]));
     const allowed = rawPosts.filter(p => p.visibility === 'public' &&
       p.country_code === country && !p.deleted_at && !p.reply_to_id &&
