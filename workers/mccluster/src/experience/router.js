@@ -179,7 +179,10 @@ function featureVector(events, candidates, surfaceKey, prefs, policy) {
       if (exact && ['experience_interaction','experience_outcome','experience_dismissed'].includes(event.name)) answered += 1;
       signal += eventWeight(event.name) * match * decay;
     }
-    const recentAffinity = clamp01(signal <= 0 ? 0 : 1 - Math.exp(-signal / 2.5));
+    // Exact, fresh engagement must be able to outweigh the bounded editorial prior.
+    // Saturate over roughly one high-intent interaction; weak topical matches
+    // and older events still decay before the policy's weighted score is applied.
+    const recentAffinity = clamp01(signal <= 0 ? 0 : 1 - Math.exp(-signal / 0.6));
     const preference = prefs[candidate.id] === 'more' ? 1 : prefs[candidate.id] === 'less' ? -1 : 0;
     const unanswered = Math.max(0, visible - answered);
     const fatiguePenalty = Math.min(
