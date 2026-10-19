@@ -170,8 +170,15 @@ export class HelixScene {
     const progress = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), new THREE.MeshBasicMaterial({ color: baseColor }));
     strand.add(progress);
     progress.visible = false;
+    // Two energy markers run through the DNA rails at the selected song's time.
+    const flow = [0, 1].map(() => {
+      const node = new THREE.Mesh(new THREE.SphereGeometry(0.073, 11, 8), new THREE.MeshBasicMaterial({ color: baseColor }));
+      node.visible = false;
+      strand.add(node);
+      return node;
+    });
     this.scene.add(root);
-    return { root, strand, vial, glassMat, caps, vialHit, profile, rungs, progress, railMaterial, baseColor };
+    return { root, strand, vial, glassMat, caps, vialHit, profile, rungs, progress, flow, railMaterial, baseColor };
   }
 
   setMode(mode, albumIndex = this.albumIndex, trackIndex = this.trackIndex) {
@@ -264,7 +271,18 @@ export class HelixScene {
         current.progress.visible = true;
         current.progress.position.copy(rung.a).lerp(rung.b, pct);
         current.progress.scale.setScalar(this.playing && this.motion ? 1 + 0.08 * Math.sin(now * 0.009) : 1);
-      } else current.progress.visible = false;
+        const along = clamp(rung.spec.u + 0.11 * (pct - 0.5), 0, 1);
+        current.flow.forEach((node, side) => {
+          node.visible = this.mode === "song";
+          node.position.copy(V(strandPoint(along, side, current.profile)));
+          node.scale.setScalar(this.playing ? 1.12 : 0.85);
+        });
+        current.railMaterial.emissiveIntensity = this.playing && this.mode === "song" ? 0.45 : 0.27;
+      } else {
+        current.progress.visible = false;
+        current.flow.forEach(node => { node.visible = false; });
+        current.railMaterial.emissiveIntensity = 0.27;
+      }
     }
     this.renderer.render(this.scene, this.camera);
   }
