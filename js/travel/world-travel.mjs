@@ -358,6 +358,12 @@ function announceAddressPicking(){
 }
 function autocomplete(id, resultId, key) {
   const input = $(id), results = $(resultId); let seq = 0, timer;
+  const refit = () => fitSuggestions(results, input, { scrolled:true });
+  window.addEventListener('resize', refit, { passive:true }); window.visualViewport?.addEventListener('resize', refit, { passive:true });
+  $('mnWorldFeed').addEventListener('scroll', refit, { passive:true });
+  // announceAddressPicking() fires right after a list is shown: fit it then, so the
+  // measurement happens with the options rendered and the viewport settled.
+  window.addEventListener('mcc:travel-autocomplete', e => { if (e.detail?.active && !results.hidden) fitSuggestions(results, input); });
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', resultId); input.setAttribute('aria-expanded', 'false'); results.setAttribute('role', 'listbox');
   const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
   searchClosers.push(close);
@@ -507,16 +513,47 @@ function applyFix(fix, allowReroute = true) {
   } else { offRouteFixes = 0; navigationNotice = ''; }
   renderDirections();
 }
+// Keep every suggestion reachable: the list may not run under the fixed app
+// bar, the transport or the keyboard-shrunk viewport. It scrolls inside itself.
+function fitSuggestions(results, input, { scrolled = false } = {}) {
+  if (results.hidden) return;
+  const room = () => {
+    const top = results.getBoundingClientRect().top;
+    const limits = [window.visualViewport?.height ?? innerHeight];
+    // Embedded under the Music continuity shell this document's own app bar is
+    // hidden and the parent's retained bar and transport sit over its bottom
+    // edge. The bridge reserves their height in --mn-bar-clear; honour it.
+    if (document.body.dataset.worldAudioChild === 'ready') {
+      const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0;
+      if (clearance > 0) limits.push((window.visualViewport?.height ?? innerHeight) - clearance);
+    }
+    for (const selector of ['.appbar', '#mccWorldAudioControls']) {
+      const el = document.querySelector(selector);
+      if (el && el.offsetHeight && getComputedStyle(el).visibility !== 'hidden') { const r = el.getBoundingClientRect(); if (r.top > top) limits.push(r.top); }
+    }
+    return Math.floor(Math.min(...limits) - top - 8);
+  };
+  let available = room();
+  // With the keyboard open the field can sit at the bottom of the visible area.
+  // Bring it to the top of the panel once so the list has somewhere to open.
+  if (available < 132 && !scrolled && input) { input.scrollIntoView({ block:'start', behavior:'auto' }); available = room(); }
+  results.style.maxHeight = `${Math.max(132, available)}px`;
+}
 function startNavigation() {
   if (!route || navigating || !hostVisible || currentMode !== 'travel' || document.hidden) return;
-  if (!navigator.geolocation) { navigationNotice = 'Live location is unavailable here. Your step-by-step directions are still available.'; renderDirections(); return; }
-  cancelLocate(); navigating = true; progress = null; offRouteFixes = 0; navigationFollow = true;
+  cancelLocate(); navigating = true; offRouteFixes = 0; navigationFollow = true;
+  // Directions start at the route's first step right away. A live location
+  // fix refines them; a missing or denied location never blocks Go.
+  try { progress = navigationProgress(route, route.origin, { accuracy:0, previousProgressMeters:0 }); } catch { progress = null; }
+  const request = ++navigationSequence; let lastWatchTimestamp = 0, watchId = null;
+  root.classList.add('wt-navigating');
+  const stepsOnly = message => { navigationWatch = null; if (watchId !== null) { try { navigator.geolocation.clearWatch(watchId); } catch {} watchId = null; } navigationNotice = message; renderDirections(); };
+  if (!navigator.geolocation) { stepsOnly('Live location is unavailable here. Follow the steps below from your starting point.'); $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' }); return; }
   navigationNotice = 'Finding your location. Keep this page open for live directions.';
-  const request = ++navigationSequence; let lastWatchTimestamp = 0;
-  root.classList.add('wt-navigating'); renderDirections();
+  renderDirections();
   $('wtNavigation').scrollIntoView({ block:'start', behavior:'auto' });
   try {
-    const watch = navigator.geolocation.watchPosition(position => {
+    watchId = navigator.geolocation.watchPosition(position => {
       if (request !== navigationSequence || !navigating || document.hidden || currentMode !== 'travel') return;
       try {
         const fix = positionFix(position);
@@ -526,11 +563,11 @@ function startNavigation() {
       } catch (error) { stopNavigation(error.message, { resetProgress:true }); renderDirections(); }
     }, error => {
       if (request !== navigationSequence || !navigating) return;
-      stopNavigation(error?.code === 1 ? 'Location access is off. Enable it to use live navigation; your route steps are still available.' : 'Live location was interrupted. Tap Go to retry; your route steps are still available.', { resetProgress:true }); renderDirections();
+      stepsOnly(error?.code === 1 ? 'Location access is off. Follow the steps below; enable location for live guidance.' : 'Live location was interrupted. Follow the steps below, or tap Stop and then Go to retry.');
     }, { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
-    if (request !== navigationSequence || !navigating) navigator.geolocation.clearWatch(watch);
-    else navigationWatch = watch;
-  } catch { stopNavigation('Live location could not start. Your step-by-step directions are still available.', { resetProgress:true }); renderDirections(); }
+    if (request !== navigationSequence || !navigating) navigator.geolocation.clearWatch(watchId);
+    else navigationWatch = watchId;
+  } catch { stepsOnly('Live location could not start. Follow the steps below from your starting point.'); }
 }
 $('wtLocate').onclick = () => void locate();
 $('wtNavigate').onclick = () => {
