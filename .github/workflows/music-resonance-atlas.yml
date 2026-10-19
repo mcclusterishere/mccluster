@@ -1,0 +1,37 @@
+name: Music Resonance Atlas CI
+
+on:
+  pull_request:
+    paths:
+      - 'resonance.html'
+      - 'css/resonance.css'
+      - 'js/resonance/**'
+      - 'js/music-engine.js'
+      - 'listen.html'
+      - 'scripts/music-resonance-analyze.mjs'
+      - 'scripts/test/music-resonance.test.mjs'
+      - 'docs/research/MCCLUSTER-RESONANCE-ATLAS-V1.md'
+      - '.github/workflows/music-resonance-atlas.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audio-model-and-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout immutable PR head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check runtime availability
+        run: node --version
+      - name: Parse all shared analysis entrypoints
+        run: |
+          node --check js/resonance/core.mjs
+          node --check js/resonance/atlas-ui.mjs
+          node --check scripts/music-resonance-analyze.mjs
+      - name: Run deterministic resonance and safety contracts
+        run: node --test scripts/test/music-resonance.test.mjs
