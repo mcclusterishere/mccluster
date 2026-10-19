@@ -4,7 +4,8 @@
  */
 import {createHash} from "node:crypto";
 import {createReadStream} from "node:fs";
-import {access, readdir, realpath, stat} from "node:fs/promises";
+import {access, readdir, realpath, stat, readFile, writeFile} from "node:fs/promises";
+import {reconcileMusicTheory} from "../../js/resonance/tempo-key-consensus.mjs";
 import {spawn} from "node:child_process";
 import {join, resolve, relative, sep} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -137,8 +138,42 @@ export async function executeApprovedStage(job,manifest,inputs,outputDir,{models
   const m=modelApproved(manifest,job.model_id,job.stage);
   if(["audio_separator","beat_this"].includes(m.adapter))await approvedCheckpoint(m,modelsDir);
   const commands=adapterCommand(m,job.stage,inputs,outputDir,{modelsDir});
+  if(job.stage==="analyze"&&process.env.MCC_ENHANCED_CPU==="1") {
+    // Explicitly opted-in, preinstalled CPU image. It does not load any
+    // hidden model checkpoints and is labeled independent experimental evidence.
+    commands.push({exe:"python3",args:[
+      join(ROOT,"scripts/research-engine/tempo_key.py"),inputs[0],
+      "--output",join(outputDir,"tempo-key-librosa.json")]});
+  }
   for(const command of commands)await runner(command.exe,command.args,
     {cwd:outputDir,signal,timeoutMs:job.stage==="separate"?25*60*1000:12*60*1000});
+  let summary=null;
+  if(job.stage==="analyze") {
+    const baseline=JSON.parse(await readFile(join(outputDir,"acoustic-features.json"),"utf8"));
+    const votes=[{method:"mcc_onset_chroma_v1",
+      tempo:baseline.musicTheory?.tempo,key:baseline.musicTheory?.key}];
+    async function optionalVote(filename,method){
+      try{
+        const result=JSON.parse(await readFile(join(outputDir,filename),"utf8"));
+        votes.push({method,tempo:result.tempo,key:result.key});
+      }catch(error){
+        if(error?.code!=="ENOENT")throw error;
+      }
+    }
+    await optionalVote("beat-this.json","beat_this_v1");
+    await optionalVote("tempo-key-librosa.json","librosa_harmonic_cqt_v2");
+    const consensus=reconcileMusicTheory(votes);
+    await writeFile(join(outputDir,"tempo-key-consensus.json"),
+      JSON.stringify(consensus,null,2)+"\n",{flag:"wx",mode:0o600});
+    summary={
+      tempo_key_baseline:baseline.musicTheory||null,
+      tempo_key_v2:consensus,
+      resonance:{
+        model:baseline.model,features:baseline.features,
+        dominantModes:(baseline.dominantModes||[]).slice(0,5)
+      }
+    };
+  }
   const artifacts=await collectStageOutputs(outputDir,job.stage);
-  return {stage:job.stage,modelId:m.id,modelVersion:m.version,artifacts};
+  return {stage:job.stage,modelId:m.id,modelVersion:m.version,artifacts,summary};
 }
