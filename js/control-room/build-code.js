@@ -33,7 +33,7 @@
     var expectedUser=who();
     S.loadingStatus=true;S.statusError=null;redraw();
     return S.request(ROUTE).then(function(d){if(expectedUser!==who())return;S.status=d||null;if(!S.form.repository&&d&&d.repositories&&d.repositories.length)S.form.repository=d.repositories[0];})
-      .catch(function(err){if(expectedUser===who())S.statusError=err;}).then(function(){S.loadingStatus=false;redraw();});
+      .catch(function(err){if(expectedUser===who())S.statusError=err;}).then(function(){if(expectedUser!==who())return;S.loadingStatus=false;redraw();});
   }
   function loadReceipt(){
     if(!S.job||!S.request||!who()||S.loadingReceipt)return Promise.resolve();
@@ -41,7 +41,7 @@
     S.loadingReceipt=true;S.receiptError=null;redraw();
     return S.request(ROUTE+"/"+S.job).then(function(d){if(expectedUser!==who()||expectedJob!==S.job)return;S.receipt=d&&d.receipt||null;S.lastRefresh=new Date().toISOString();})
       .catch(function(err){if(expectedUser!==who()||expectedJob!==S.job)return;S.receiptError=err;if(err&&err.status===404){S.receipt={state:"unknown",reason:"job_not_found"};}})
-      .then(function(){S.loadingReceipt=false;redraw();schedule();});
+      .then(function(){if(expectedUser!==who()||expectedJob!==S.job)return;S.loadingReceipt=false;redraw();schedule();});
   }
   function schedule(){
     clearTimeout(S.timer);S.timer=null;
@@ -63,7 +63,7 @@
            reload resubmits the SAME key rather than minting a new job. */
         S.submitError=err;
       })
-      .then(function(){S.submitting=false;S.reconciling=null;redraw();});
+      .then(function(){if(expectedUser!==who())return;S.submitting=false;S.reconciling=null;redraw();});
   }
   function submit(){
     syncIdentity();
@@ -137,6 +137,7 @@
     clearTimeout(S.timer);S.timer=null;
     S.ownerUser=current;S.job=null;S.receipt=null;S.receiptError=null;S.submitError=null;
     S.status=null;S.statusError=null;S.lastRefresh=null;S.reconciling=null;
+    S.submitting=false;S.loadingStatus=false;S.loadingReceipt=false;
     S.form={repository:"",task:"",title:"",paths:""};S.key=uuid();
     /* No stored objective, receipt or pending POST can be restored while
        signed out or under a different account. */
