@@ -153,7 +153,13 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
     try{
       const rows=await service(env,'network_audio_rooms','status=eq.live&'+(country?'country_code=eq.'+country+'&':'')+
         'select=id,title,category_key,country_code,max_speakers,created_at&order=created_at.desc&limit=40',{},fetchImpl);
-      return respond(req,env,{rooms:rows||[],enabled:true});
+      // Independently project public fields; don't trust an unexpected
+      // PostgREST response to enforce field-level confidentiality.
+      return respond(req,env,{rooms:(rows||[]).filter(r=>validUuid(r.id)&&r.status==='live')
+        .map(r=>({id:r.id,title:String(r.title||'').slice(0,120),
+          category_key:r.category_key||'',country_code:isCountry(r.country_code)?r.country_code:null,
+          max_speakers:Math.min(4,Number(r.max_speakers)||1),
+          created_at:r.created_at||null})),enabled:true});
     }catch(e){return apiError(req,env,e);}
   }
   if(!['POST','GET'].includes(req.method))return error(req,env,'Unsupported method',405);
