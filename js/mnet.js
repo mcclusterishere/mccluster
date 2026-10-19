@@ -495,6 +495,10 @@
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
       openDeepLinkedGroup();
+      try {
+        var publicHandle = new URLSearchParams(location.search).get("profile");
+        if(publicHandle && /^[a-z0-9][a-z0-9._-]{2,39}$/.test(publicHandle.toLowerCase()) && !state.guest)openPerson(publicHandle.toLowerCase());
+      } catch (_) {}
       /* A deep link to a mission or a group wins over the first-run tour. */
       if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
@@ -1778,9 +1782,16 @@
       api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
     ]).then(function (all) {
       var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, presentation=data.presentation||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
+      /* One shared center-tab perspective for every member, not only artists.
+         The public record from the API supplies the canonical name and image. */
+      try { window.dispatchEvent(new CustomEvent("mcc:perspective", { detail: {
+        kind:"member", handle:String(id.mccluster_id||handle).toLowerCase(),
+        name:name, avatar:safeHttpUrl(p.avatar_url)
+      } })); } catch (_) {}
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
-      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
+      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
+      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
