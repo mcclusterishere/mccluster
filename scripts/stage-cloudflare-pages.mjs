@@ -28,7 +28,7 @@ const allowedExtensions = new Set([
   '.gif','.ico','.woff','.woff2','.ttf','.otf',
   '.mp3','.m4a','.wav','.ogg','.mp4','.webm','.mov','.vtt','.srt',
   '.pdf','.glb','.gltf','.bin','.obj','.mtl','.hdr','.ktx2',
-  '.wasm','.geojson','.csv'
+  '.wasm','.geojson','.csv','.ics','.vcf','.docx'
 ]);
 const forbiddenFiles = new Set([
   'AGENTS.md','CLAUDE.md','CODEX.md','GEMINI.md','README.md',
@@ -60,6 +60,9 @@ function shouldPublish(path) {
   if (pieces.some(x=>x.startsWith('.') || forbiddenSegments.test(x))) return false;
   if (forbiddenFiles.has(posix) || privateName.test(posix)) return false;
   if (pieces.length > 1 && !allowedDirectories.has(pieces[0])) return false;
+  if (posix.endsWith('.docx') && !posix.startsWith('assets/resume/')) return false;
+  /* One pre-compressed GLB is an intentional 3D asset, not a code archive. */
+  if (posix.endsWith('.glb.gz') && posix.startsWith('assets/3d/')) return true;
   const name = basename(posix);
   const dot = name.lastIndexOf('.');
   if (dot < 0 || !allowedExtensions.has(name.slice(dot).toLowerCase())) return false;
