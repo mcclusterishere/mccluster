@@ -238,13 +238,16 @@ export class HelixScene {
       item.vialHit.visible = library;
       // In the close view, rotate the selected rung toward the camera.
       const rung = item.rungs[this.trackIndex];
-      const angle = close && rung ? -(item.profile.phase + item.profile.turns * Math.PI * 2 * rung.spec.u) : 0;
+      const angle = close && rung ? item.profile.phase + item.profile.turns * Math.PI * 2 * rung.spec.u : 0;
       item.strand.rotation.y += (angle - item.strand.rotation.y) * blend;
     });
   }
 
   draw() {
-    if (!this.live || document.hidden) return;
+    if (!this.live || document.hidden) {
+      this.frame = null;
+      return;
+    }
     this.frame = window.requestAnimationFrame(() => this.draw());
     const now = performance.now();
     // Limit redraw power on an iPhone; camera transitions still feel fluid.
