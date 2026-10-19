@@ -6,6 +6,7 @@ import {
   createAccountLink,
   createWhiteLabelSubscriptionCheckout,
   createDirectCheckout,
+  retrieveCheckoutSession,
   createManualPaymentIntent,
   capturePaymentIntent,
   cancelPaymentIntent,
@@ -39,11 +40,33 @@ const RENTAL_EXTRAS = { refuel: 5500, mount: 800, seat: 1400 };     // cents per
 const RENTAL_TAX_BPS = 700;
 const WHIP_CURRENCY = 'usd';
 function cents(value) { const n = Number(value); return Number.isFinite(n) ? Math.round(n) : NaN; }
+/* Bill full calendar rental days in the pickup time zone, not elapsed UTC
+   hours. A 49-hour fall-DST interval from 10am to 10am is two local days;
+   a genuine 25-hour late return outside that shift is two billable days. */
+function rentalDays(start, end, zone) {
+  const elapsedDays = Math.max(1, Math.ceil((end - start) / 86_400_000));
+  if (!zone) return elapsedDays;
+  let parts;
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: String(zone), year: 'numeric', month: '2-digit',
+      day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    parts = [start, end].map(value => Object.fromEntries(fmt.formatToParts(new Date(value)).map(p => [p.type, p.value])));
+  } catch { return { error: 'Invalid rental time zone' }; }
+  const [a,b] = parts;
+  const date = p => Date.UTC(Number(p.year), Number(p.month)-1, Number(p.day));
+  const clock = p => Number(p.hour)*3600 + Number(p.minute)*60 + Number(p.second);
+  const civil = (date(b)-date(a))/86_400_000;
+  const days = Math.max(1, civil + (clock(b)>clock(a) ? 1 : 0));
+  if (!Number.isInteger(days) || days<1 || Math.abs((end-start)-civil*86_400_000)>90_000_000)
+    return { error: 'Rental dates need a consistent pickup and return time' };
+  return days;
+}
 export function rentalQuote(vehicle, tenant, body = {}) {
   const start = Date.parse(body?.start_at), end = Date.parse(body?.end_at);
   if (!Number.isFinite(start) || !Number.isFinite(end)) return { error: 'start_at and end_at are required' };
   if (end <= start) return { error: 'end_at must be after start_at' };
-  const days = Math.max(1, Math.ceil((end - start) / 86_400_000));
+  const days = rentalDays(start, end, vehicle?.time_zone || tenant?.time_zone || body?.time_zone || null);
+  if (typeof days === 'object') return days;
   const plan = body?.protection_plan == null ? 'standard' : String(body.protection_plan);
   if (!Object.hasOwn(RENTAL_PROTECTION_PLANS, plan)) return { error: 'Unknown protection plan' };
   const extraIds = Array.isArray(body?.extras) ? [...new Set(body.extras.map(String))] : [];
@@ -163,19 +186,51 @@ async function ensureStripeTenant(env, t) {
    match, and amount and currency must equal the ledger's. Mismatches are
    claimed (so Stripe stops retrying) and reported, never applied. */
 function ignored(reason) { return { ignored: true, reason }; }
+/* Keep a lease in the existing event_type column while an event is in
+   flight, and change it to the real Stripe type ONLY after all ledger writes
+   succeed. Existing completed rows already contain the real event type. This
+   requires no production schema change. A duplicate pending delivery gets 503
+   (Stripe retries), never a premature 200. A crashed Worker lease can be
+   recovered with a conditional compare-and-swap after fifteen minutes. */
+const STRIPE_EVENT_LEASE_MS = 15 * 60_000;
 async function claimStripeEvent(env, event, connectedAccountId) {
-  // event_id is the primary key: the first insert wins; a retry or a concurrent
-  // duplicate delivery conflicts and is never applied twice.
+  const key = encodeURIComponent(event.id);
+  const marker = 'processing:' + Date.now() + ':' + event.type;
   try {
-    await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ event_id: event.id, event_type: event.type, stripe_account_id: connectedAccountId }) });
-    return true;
+    await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ event_id: event.id, event_type: marker, stripe_account_id: connectedAccountId }) });
+    return { marker };
   } catch (error) {
-    if (/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) return false;
-    throw error;
+    if (!/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) throw error;
   }
+  const rows = await sb(env, 'stripe_events?event_id=eq.' + key + '&select=event_type');
+  const previous = rows?.[0]?.event_type;
+  if (previous === event.type) return { duplicate: true };
+  const pending = /^processing:(\d+):(.+)$/.exec(previous || '');
+  if (!pending || pending[2] !== event.type)
+    throw Object.assign(new Error('Stripe event has a conflicting claim'), { status: 409 });
+  const age = Date.now() - Number(pending[1]);
+  if (age >= STRIPE_EVENT_LEASE_MS) {
+    const taken = await sb(env,
+      'stripe_events?event_id=eq.' + key + '&event_type=eq.' + encodeURIComponent(previous) + '&select=event_id',
+      { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ event_type: marker }) });
+    if (taken?.length === 1) return { marker };
+  }
+  throw Object.assign(new Error('Stripe event processing is in progress; retry delivery'), { status: 503 });
 }
-async function releaseStripeEvent(env, event) {
-  try { await sb(env, `stripe_events?event_id=eq.${encodeURIComponent(event.id)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); } catch { /* the claim stays; Stripe's retry reports the duplicate */ }
+async function finishStripeEvent(env, event, marker) {
+  const rows = await sb(env,
+    'stripe_events?event_id=eq.' + encodeURIComponent(event.id) + '&event_type=eq.' + encodeURIComponent(marker) + '&select=event_id',
+    { method: 'PATCH', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ event_type: event.type, processed_at: new Date().toISOString() }) });
+  if (rows?.length !== 1)
+    throw Object.assign(new Error('Stripe event completion was not confirmed'), { status: 503 });
+}
+async function releaseStripeEvent(env, event, marker) {
+  try {
+    await sb(env, 'stripe_events?event_id=eq.' + encodeURIComponent(event.id) + '&event_type=eq.' + encodeURIComponent(marker),
+      { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+  } catch { /* lease will be retryable after the recovery deadline */ }
 }
 function sameAccount(tenant, connectedAccountId) { return Boolean(tenant?.stripe_account_id) && connectedAccountId === tenant.stripe_account_id; }
 function sameCurrency(object) { return String(object?.currency || '').toLowerCase() === WHIP_CURRENCY; }
@@ -286,9 +341,16 @@ async function applyStripeEvent(env, event, object, connectedAccountId) {
 }
 export async function processStripeEvent(env, event) {
   const object = event.data?.object || {}, connectedAccountId = event.account || null;
-  if (!(await claimStripeEvent(env, event, connectedAccountId))) return { duplicate: true };
-  try { return { duplicate: false, ...(await applyStripeEvent(env, event, object, connectedAccountId)) }; }
-  catch (error) { await releaseStripeEvent(env, event); throw error; }
+  const claim = await claimStripeEvent(env, event, connectedAccountId);
+  if (claim.duplicate) return { duplicate: true };
+  try {
+    const result = await applyStripeEvent(env, event, object, connectedAccountId);
+    await finishStripeEvent(env, event, claim.marker);
+    return { duplicate: false, ...result };
+  } catch (error) {
+    await releaseStripeEvent(env, event, claim.marker);
+    throw error;
+  }
 }
 
 export default {
@@ -518,18 +580,42 @@ export default {
 
       const rentalCheckout = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkout$/);
       if (rentalCheckout && req.method === 'POST') {
-        const user = await requireUser(req, env); const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404); let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); const vehicle = vehicleRows?.[0];
-        // Checkout returns to the platform's own rentals page. A caller-chosen
-        // URL could send a renter to another domain after payment.
-        const rentalReturn = status => appUrl(env, `/whip/rentals/?rental_payment=${status}&booking_id=${encodeURIComponent(booking.id)}`);
+        const user = await requireUser(req, env);
+        const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404);
+        if (booking.payment_status === 'paid' || booking.payment_status === 'processing')
+          return fail(env, 'Payment already submitted; check the booking status', 409);
+        let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t);
+        if (booking.stripe_checkout_session_id) {
+          /* Never replace a still-payable checkout and then ignore its webhook.
+             Reuse the exact session or fail closed if it expired or completed. */
+          const existing = await retrieveCheckoutSession(env, booking.stripe_checkout_session_id, t.stripe_account_id);
+          if (existing.status === 'open' && existing.url)
+            return reply(env, { checkout_url: existing.url, session_id: existing.id, amount_cents: booking.total_cents, reused: true });
+          return fail(env, 'The earlier checkout is no longer open; check payment status or create a new rental booking', 409);
+        }
+        const vehicleRows = await sb(env, 'rental_vehicles?id=eq.' + encodeURIComponent(booking.vehicle_id) + '&select=*');
+        const vehicle = vehicleRows?.[0];
+        const rentalReturn = status => appUrl(env, '/whip/rentals/?rental_payment=' + status + '&booking_id=' + encodeURIComponent(booking.id));
+        /* Stripe deduplicates concurrent and lost-response POSTs for this exact
+           booking. Combined with the stored-session gate, a second payable
+           Checkout Session cannot replace the original. */
         const session = await createDirectCheckout(env, {
           amountCents: booking.total_cents, applicationFeeCents: booking.platform_fee_cents, connectedAccountId: t.stripe_account_id,
-          kind: 'rental', tenantId: t.id, resourceId: booking.id, description: `${vehicle?.name || 'Vehicle'} rental`, customerEmail: user.email,
-          successUrl: rentalReturn('success'),
-          cancelUrl: rentalReturn('cancel')
+          kind: 'rental', tenantId: t.id, resourceId: booking.id, description: (vehicle?.name || 'Vehicle') + ' rental', customerEmail: user.email,
+          successUrl: rentalReturn('success'), cancelUrl: rentalReturn('cancel'),
+          idempotencyKey: 'whip-rental-' + booking.id + '-checkout-v1'
         });
+        const bound = await sb(env,
+          'rental_bookings?id=eq.' + encodeURIComponent(booking.id) + '&stripe_checkout_session_id=is.null&select=id',
+          { method: 'PATCH', headers: { Prefer: 'return=representation' },
+            body: JSON.stringify({ stripe_checkout_session_id: session.id, payment_status: 'checkout_created', updated_at: new Date().toISOString() }) });
+        if (bound?.length !== 1) {
+          const latest = await getRental(env, booking.id);
+          if (latest?.stripe_checkout_session_id !== session.id)
+            throw Object.assign(new Error('Another checkout was recorded; inspect the booking before retrying'), { status: 409 });
+          return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: booking.total_cents, reused: true });
+        }
         await recordPayment(env, { tenant_id: t.id, resource_type: 'rental', resource_id: booking.id, connected_account_id: t.stripe_account_id, stripe_checkout_session_id: session.id, amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' });
-        await patchRental(env, booking.id, { stripe_checkout_session_id: session.id, payment_status: 'checkout_created' });
         return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: booking.total_cents });
       }
 
