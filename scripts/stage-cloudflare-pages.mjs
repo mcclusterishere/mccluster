@@ -48,7 +48,7 @@ const forbiddenSegments = /^(?:\.git|\.github|\.cursor|\.claude|node_modules|__t
 const privateName = /(?:^|[/])(?:[^/]*\.(?:pem|key|crt|p12|pfx|sql|db|sqlite|ts|tsx|py|sh|service|timer|map|md|mdx|yaml|yml|toml|lock)|[^/]*(?:credentials|secrets?|private-key)[^/]*)$/i;
 const credentialPatterns = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
-  /\bsk_live_[A-Za-z0-9]{10,}\b/,
+  /sk_live_[A-Za-z0-9]{10,}\b/,
   /\bgh[pousr]_[A-Za-z0-9_]{30,}\b/,
   /\bAKIA[0-9A-Z]{16}\b/
 ];
@@ -70,7 +70,9 @@ function shouldPublish(path) {
   if (pieces[0] === 'assets') {
     if (pieces.length < 3 || !publicAssetGroups.has(pieces[1])) return false;
     if (pieces[1] === 'brand' && !/\.(?:png|jpe?g|webp|avif|svg|gif|css|json)$/i.test(posix)) return false;
-    if (pieces[1] === 'credentials' && !posix.toLowerCase().endsWith('.pdf')) return false;
+    /* Credentials are the published PDFs plus the raster scans that pages such
+       as policy.html and the credentials gallery load as posters and figures. */
+    if (pieces[1] === 'credentials' && !/\.(?:pdf|jpe?g|png|webp|avif)$/i.test(posix)) return false;
     if (pieces[1] === 'resume' && !/\.(?:pdf|docx)$/i.test(posix)) return false;
   }
   if (posix.endsWith('.docx') && !posix.startsWith('assets/resume/')) return false;

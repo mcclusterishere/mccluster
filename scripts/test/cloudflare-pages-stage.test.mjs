@@ -17,6 +17,9 @@ async function fixture(){
   await writeFile(join(input,'404.html'),'<!doctype html><html><body>Not found</body></html>');
   await writeFile(join(input,'js','tabbar.js'),'export const bar=true;');
   await writeFile(join(input,'assets','img','icon.png'),'fixture');
+  await mkdir(join(input,'assets','credentials','img'),{recursive:true});
+  await writeFile(join(input,'assets','credentials','img','proclamation.jpg'),'scan');
+  await writeFile(join(input,'assets','credentials','img','notes.txt'),'not a credential asset');
   await mkdir(join(input,'data'),{recursive:true});
   await writeFile(join(input,'data','environments.json'),'{"environments":{"here":{"bg":"assets/img/icon.png"}}}');
   return {root,input,output};
@@ -47,13 +50,15 @@ test('public-only staging strips even source accidentally retained by legacy gh-
   assert.equal(await exists(join(f.output,'assets','3d','prim3-site0','MasterFacility.glb')),false);
   assert.equal(await exists(join(f.output,'data','environments.json')),true,'album presentation environments remain public');
   assert.equal(await exists(join(f.output,'js','tabbar.js')),true);
+  assert.equal(await exists(join(f.output,'assets','credentials','img','proclamation.jpg')),true,'credential scans referenced by policy.html stay public');
+  assert.equal(await exists(join(f.output,'assets','credentials','img','notes.txt')),false,'only credential documents and scans are published');
   const excluded=JSON.parse(await readFile(f.output+'.excluded.json','utf8'));
   assert.ok(excluded.excluded_paths.includes('core/'));
   assert.ok(excluded.excluded_paths.some(p=>p.startsWith('assets/3d/')));
   assert.equal(await exists(join(f.output,'excluded.json')),false,'operator report is never web-delivered');
   const record=JSON.parse(await readFile(join(f.output,'mccluster-release.json'),'utf8'));
   assert.equal(record.source_sha,SHA);
-  assert.equal(record.asset_count,6);
+  assert.equal(record.asset_count,7);
   assert.ok(/^[0-9a-f]{64}$/.test(record.manifest_sha256));
 });
 test('raw private main repository is refused instead of silently sanitized',async()=>{
