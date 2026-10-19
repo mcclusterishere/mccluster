@@ -104,6 +104,17 @@ def estimate(path, max_seconds=210):
                            "compare on labeled data before production quality claims"]}
 
 if __name__ == "__main__":
-    if len(sys.argv)!=2:
-        raise SystemExit("usage: python tempo_key.py INPUT_AUDIO")
-    print(json.dumps(estimate(Path(sys.argv[1])),indent=2))
+    import argparse
+    parser=argparse.ArgumentParser(description="Local non-clinical BPM/key estimate")
+    parser.add_argument("input_audio")
+    parser.add_argument("--output",default=None,help="New private JSON artifact")
+    args=parser.parse_args()
+    result=json.dumps(estimate(Path(args.input_audio)),indent=2)+"\\n"
+    if args.output:
+        output=Path(args.output)
+        if output.exists() or output.suffix.lower()!=".json":
+            raise SystemExit("expected a new .json output")
+        with output.open("x",encoding="utf8") as file:
+            file.write(result)
+    else:
+        print(result,end="")
