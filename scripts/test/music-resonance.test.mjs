@@ -127,3 +127,25 @@ test("research modes stay reproducible for repeat audio inputs",()=>{
   const b=analyzePcm(samples,SR,{maxFrames:4});
   assert.deepEqual(a,b);
 });
+
+test("site analytics separates platform-served exposure from a deliberate music choice", async () => {
+  const { summarizeAudienceScience } = await import("../../workers/mccluster/src/analytics/audience-science.js");
+  const at = "2026-10-19T18:30:00Z", visitor = "resonance-science-test-device";
+  const base = {at,device_id:visitor,session_id:"s1",is_bot:false};
+  const report = summarizeAudienceScience([
+    {...base,name:"music_play",track:"chosen track",source:"discovery"},
+    {...base,name:"music_play",track:"served track",source:"platform_opt_in_shuffle"},
+    {...base,name:"music_complete",track:"served track",source:"platform_opt_in_shuffle"},
+    {...base,name:"music_play",track:"queue track",source:"platform_queue"},
+    {...base,name:"music_full_play",track:"queue track",source:"platform_queue"},
+    {...base,name:"music_complete",track:"queue track",source:"platform_queue"}
+  ]);
+  assert.equal(report.profiles.length,1);
+  const p=report.profiles[0];
+  assert.equal(p.music_starts,1);
+  assert.equal(p.system_served_starts,2);
+  assert.equal(p.completions,0);
+  assert.equal(p.full_plays,0);
+  assert.deepEqual(p.track_distribution.map(x=>x.track),["chosen track"]);
+  assert.equal(report.totals.system_served_music_starts,2);
+});
