@@ -97,16 +97,19 @@ window.MCC_TRACK = (function () {
   }
 
   function uuid() {
+    var b = new Uint8Array(16);
     try {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-      var b = new Uint8Array(16);
+      if (!window.crypto || !crypto.getRandomValues) throw new Error("No secure random available");
       crypto.getRandomValues(b);
-      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
-      var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-      return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
     } catch (e) {
-      return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      /* UUIDs are dedupe keys, never credentials. Even a legacy browser
+         without Web Crypto must mint a *valid stable UUIDv4* per event. */
+      for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     }
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
   }
 
   /* ---- the device ----
@@ -336,7 +339,10 @@ window.MCC_TRACK = (function () {
       /* A normal page can retry transient failures once more; a page being
          torn down cannot rely on delayed work, so it uses keepalive instead.
          This is bounded best-effort delivery, not a durable offline queue. */
-      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(route);
+      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () {
+        if (!mccPrivacyAcknowledged() || privacySignal()) return null;
+        return route();
+      });
     });
   }
 
