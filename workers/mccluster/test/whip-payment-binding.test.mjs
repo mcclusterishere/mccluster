@@ -209,8 +209,8 @@ test('pending webhook claims return retryable 503, and crashed stale claims can 
 test('recorded rental Checkout Session is reused, never replaced or charged again',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
     let res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
-    assert.equal(res.status,200,await res.text());
-    const first=await res.json().catch(()=>null);
+    const first=await res.json();
+    assert.equal(res.status,200,JSON.stringify(first));
     assert.equal(first?.session_id,'cs_rental');
     assert.equal(first?.reused,true);
     assert.equal(state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST').length,0);
