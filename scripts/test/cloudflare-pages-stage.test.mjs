@@ -15,6 +15,7 @@ async function fixture(){
   await mkdir(join(input,'assets','img'),{recursive:true});
   await writeFile(join(input,'index.html'),'<!doctype html><html><body>McCluster</body></html>');
   await writeFile(join(input,'404.html'),'<!doctype html><html><body>Not found</body></html>');
+  await writeFile(join(input,'LICENSE'),'MIT License');
   await writeFile(join(input,'js','tabbar.js'),'export const bar=true;');
   await writeFile(join(input,'assets','img','icon.png'),'fixture');
   await mkdir(join(input,'assets','credentials','img'),{recursive:true});
@@ -47,6 +48,7 @@ test('public-only staging strips even source accidentally retained by legacy gh-
   assert.equal(await exists(join(f.output,'platform','config','server-inventory.json')),false);
   assert.equal(await exists(join(f.output,'data','analytics','application-schema-inventory.json')),false);
   assert.equal(await exists(join(f.output,'CNAME')),false);
+  assert.equal(await exists(join(f.output,'LICENSE')),true,'the licence index.html links to stays published');
   assert.equal(await exists(join(f.output,'assets','3d','prim3-site0','MasterFacility.glb')),false);
   assert.equal(await exists(join(f.output,'data','environments.json')),true,'album presentation environments remain public');
   assert.equal(await exists(join(f.output,'js','tabbar.js')),true);
@@ -58,7 +60,7 @@ test('public-only staging strips even source accidentally retained by legacy gh-
   assert.equal(await exists(join(f.output,'excluded.json')),false,'operator report is never web-delivered');
   const record=JSON.parse(await readFile(join(f.output,'mccluster-release.json'),'utf8'));
   assert.equal(record.source_sha,SHA);
-  assert.equal(record.asset_count,7);
+  assert.equal(record.asset_count,8);
   assert.ok(/^[0-9a-f]{64}$/.test(record.manifest_sha256));
 });
 test('raw private main repository is refused instead of silently sanitized',async()=>{

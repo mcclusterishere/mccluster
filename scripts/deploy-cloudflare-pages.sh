@@ -31,6 +31,13 @@ if ! command -v "${WRANGLER_BIN}" >/dev/null 2>&1; then
   echo "Wrangler is missing. Install a reviewed, pinned version on the release runner." >&2; exit 2
 fi
 
+# The project must exist as a Direct Upload project whose production branch is
+# "main"; otherwise --branch=main lands as a preview deployment and the
+# production alias never serves the release. Fail before uploading anything.
+if ! "${WRANGLER_BIN}" pages project list 2>/dev/null | grep -Eq "(^|[[:space:]|])${PAGES_PROJECT_NAME}([[:space:]|]|$)"; then
+  echo "Pages project ${PAGES_PROJECT_NAME} was not found for this account/token. Create it once with:" >&2
+  echo "  wrangler pages project create ${PAGES_PROJECT_NAME} --production-branch=main" >&2; exit 2
+fi
 echo "Deploying sanitized website to ${PAGES_PROJECT_NAME} (no custom-domain changes)"
 "${WRANGLER_BIN}" pages deploy "${PAGES_RELEASE_DIR}" \
   --project-name="${PAGES_PROJECT_NAME}" \
