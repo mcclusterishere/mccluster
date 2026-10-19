@@ -18,7 +18,7 @@ function ledger(){
              {id:OTHER,slug:'other',name:'Other Operator',stripe_account_id:'acct_other'}],
     rides:[{id:RIDE,tenant_id:TENANT,status:'IN_PROGRESS',driver_id:'drv-1',fare_cents:2500,payment_status:'authorized',stripe_payment_intent_id:'pi_ride',completed_at:null}],
     rentals:[{id:RENTAL,tenant_id:TENANT,total_cents:11770,payment_status:'checkout_created',stripe_checkout_session_id:'cs_rental',stripe_payment_intent_id:null}],
-    events:new Map(),payments:[],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,existingSessionStatus:'open'
+    events:new Map(),payments:[{id:'preexisting-payment',tenant_id:TENANT,resource_type:'rental',resource_id:RENTAL,stripe_checkout_session_id:'cs_rental'}],calls:[],stripe:[],raceAway:false,stripeFails:false,ridePatchThrows:false,existingSessionStatus:'open'
   };
   state.fetch=async(resource,options={})=>{
     const u=new URL(String(resource)),path=u.pathname,method=options.method||'GET',body=options.body&&!String(resource).includes('api.stripe.com')?JSON.parse(options.body):options.body||null;
@@ -51,7 +51,11 @@ function ledger(){
       if(method==='PATCH'){if(state.ridePatchThrows)return json({message:'rides unavailable'},503);if(state.raceAway)rows=[];rows.forEach(r=>Object.assign(r,body));return json(rows);}return json(rows);}
     if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
     if(path==='/rest/v1/rental_vehicles')return json([{id:'fixture-car',tenant_id:TENANT,daily_rate_cents:5000,location_label:'Lot A',available:true}]);
-    if(path==='/rest/v1/payments'){if(method==='POST'){const row={id:'payment-'+(state.payments.length+1),...body};state.payments.push(row);return json([row],201);}return json([]);}
+    if(path==='/rest/v1/payments'){
+      if(method==='POST'){const row={id:'payment-'+(state.payments.length+1),...body};state.payments.push(row);return json([row],201);}
+      const tenant=param(u.search,'tenant_id'),session=param(u.search,'stripe_checkout_session_id'),resource=param(u.search,'resource_id');
+      return json(state.payments.filter(p=>(!tenant||p.tenant_id===tenant)&&(!session||p.stripe_checkout_session_id===session)&&(!resource||p.resource_id===resource)));
+    }
     throw Error('Unexpected fixture request: '+method+' '+u.href);
   };
   return state;
@@ -225,14 +229,17 @@ test('recorded rental Checkout Session is reused, never replaced or charged agai
 
 test('concurrent initial checkout requests share one Stripe session and one booking claim',{concurrency:false},async()=>{
   await withLedger(ledger(),async state=>{
-    state.rentals[0].stripe_checkout_session_id=null;state.rentals[0].payment_status='unpaid';
+    state.rentals[0].stripe_checkout_session_id=null;state.rentals[0].payment_status='unpaid';state.payments=[];
     const responses=await Promise.all([
       worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env),
       worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env)
     ]);
     const payloads=await Promise.all(responses.map(async r=>({status:r.status,body:await r.json()})));
-    assert.ok(payloads.every(r=>r.status===200),JSON.stringify(payloads));
-    assert.ok(payloads.every(r=>r.body.session_id==='cs_rental_v1'));
+    assert.equal(payloads.filter(r=>r.status===200).length,1,'one request wins registration');
+    assert.equal(payloads.filter(r=>r.status===503).length,1,'the loser may not expose a checkout URL before the ledger exists');
+    const retry=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(retry.status,200,'the retry reuses the fully registered checkout');
+    assert.equal((await retry.json()).session_id,'cs_rental_v1');
     const creations=state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST');
     assert.equal(creations.length,2,'two requests reach Stripe but share one idempotency key');
     assert.ok(creations.every(c=>c.headers['Idempotency-Key']==='whip-rental-'+RENTAL+'-checkout-v1'));
@@ -254,4 +261,13 @@ test('rental quote uses local calendar days across daylight saving changes',{con
     time_zone:'America/New_York',protection_plan:'none'
   });
   assert.equal(late.days,2,'a genuinely late return is a second billable day');
+});
+
+test('a stored session with no accounting row is never returned for payment',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    state.payments=[];
+    const res=await worker.fetch(req('/api/rentals/bookings/'+RENTAL+'/checkout','POST',{}),env);
+    assert.equal(res.status,503);
+    assert.equal(state.stripe.filter(x=>x.path==='/v1/checkout/sessions'&&x.method==='POST').length,0);
+  });
 });
