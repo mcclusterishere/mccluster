@@ -46,7 +46,10 @@
   function schedule(){
     clearTimeout(S.timer);S.timer=null;
     var st=S.receipt&&S.receipt.state;
-    if(S.job&&who()===S.ownerUser&&(S.receiptError||st==="queued"||st==="running"||st==="awaiting_approval")&&!document.hidden)S.timer=setTimeout(loadReceipt,POLL_MS);
+    /* Re-poll only while the job is live or the last read failed transiently.
+       A 404 (job gone) or 403 is final; Refresh covers a manual retry. */
+    var err=S.receiptError,transient=!!err&&(!err.status||err.status>=500||err.status===408||err.status===429);
+    if(S.job&&who()===S.ownerUser&&(transient||st==="queued"||st==="running"||st==="awaiting_approval")&&!document.hidden)S.timer=setTimeout(loadReceipt,POLL_MS);
   }
   function paths(){return S.form.paths.split(/\n|,/).map(function(x){return x.trim();}).filter(Boolean);}
   function send(body,label){
@@ -131,6 +134,7 @@
       (S.reconciling?note(S.reconciling):"")+
       '<div class="crb-actions"><button class="cr-btn cr-btn--primary" type="submit"'+(disabled||S.submitting?" disabled":"")+'>'+(S.submitting?(S.reconciling?"Checking…":"Queuing…"):"Queue build")+'</button></div></form></section>';
   }
+  function resync(){var before=S.ownerUser;syncIdentity();if(S.ownerUser!==before)redraw();}
   function syncIdentity(){
     var current=who();
     if(current===S.ownerUser)return;
@@ -167,11 +171,14 @@
     if(!S.key)S.key=uuid();
     syncIdentity();
     if(S.identityTimer)clearInterval(S.identityTimer);
-    S.identityTimer=setInterval(function(){if(who()!==S.ownerUser){syncIdentity();redraw();}},1000);
-    window.addEventListener("mcc:auth-changed",function(){syncIdentity();redraw();});
-    window.addEventListener("focus",function(){syncIdentity();redraw();});
-    document.addEventListener("visibilitychange",function(){if(document.hidden){clearTimeout(S.timer);S.timer=null;}else{syncIdentity();schedule();}});
-    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"){syncIdentity();redraw();}});
+    /* redraw() is the host's full surface render; it must run only when the
+       signed-in identity actually changed, or a window focus would rebuild
+       whatever surface is open and drop its unsaved DOM-only drafts. */
+    S.identityTimer=setInterval(resync,1000);
+    window.addEventListener("mcc:auth-changed",resync);
+    window.addEventListener("focus",resync);
+    document.addEventListener("visibilitychange",function(){if(document.hidden){clearTimeout(S.timer);S.timer=null;}else{resync();schedule();}});
+    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session")resync();});
   }
   window.CR.buildCode={init:init,render:render,bind:bind,state:S,ROUTE:ROUTE};
 })();
