@@ -302,46 +302,21 @@ function choosePlace(key, row, { source = 'manual' } = {}) {
   if (key === 'from') $('wtLocationStatus').textContent = liveFix ? 'Starting from your selected address. The blue dot shows your last location.' : 'Starting from your selected address.';
   if (key === 'from' || key === 'to') void requestRoute({ reveal:true });
 }
-// The parent Music transport floats above the World in a fixed layer that the
-// suggestion list cannot outrank. Announce visible autocomplete so the audio
-// bridge hides only the transport chrome, never the playing audio.
-function announceAddressPicking() {
-  const active = !!panel.querySelector('.wt-suggest:not([hidden])');
-  window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete', { detail:{ active } }));
-}
-// Keep every suggestion reachable: the list may not run under the fixed app
-// bar, the transport or the keyboard-shrunk viewport. It scrolls inside itself.
-function fitSuggestions(results, input, { scrolled = false } = {}) {
-  if (results.hidden) return;
-  const room = () => {
-    const top = results.getBoundingClientRect().top;
-    const limits = [window.visualViewport?.height ?? innerHeight];
-    // Embedded under the Music continuity shell this document's own app bar is
-    // hidden and the parent's retained bar and transport sit over its bottom
-    // edge. The bridge reserves their height in --mn-bar-clear; honour it.
-    if (document.body.dataset.worldAudioChild === 'ready') {
-      const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0;
-      if (clearance > 0) limits.push((window.visualViewport?.height ?? innerHeight) - clearance);
-    }
-    for (const selector of ['.appbar', '#mccWorldAudioControls']) {
-      const el = document.querySelector(selector);
-      if (el && el.offsetHeight && getComputedStyle(el).visibility !== 'hidden') { const r = el.getBoundingClientRect(); if (r.top > top) limits.push(r.top); }
-    }
-    return Math.floor(Math.min(...limits) - top - 8);
-  };
-  let available = room();
-  // With the keyboard open the field can sit at the bottom of the visible area.
-  // Bring it to the top of the panel once so the list has somewhere to open.
-  if (available < 132 && !scrolled && input) { input.scrollIntoView({ block:'start', behavior:'auto' }); available = room(); }
-  results.style.maxHeight = `${Math.max(132, available)}px`;
+// Cross-origin music chrome cannot be covered by the iframe's own z-index.
+function announceAddressPicking(){
+  const active=!!panel.querySelector('.wt-suggest:not([hidden])');
+  window.dispatchEvent(new CustomEvent('mcc:travel-autocomplete',{detail:{active}}));
 }
 function autocomplete(id, resultId, key) {
   const input = $(id), results = $(resultId); let seq = 0, timer;
   const refit = () => fitSuggestions(results, input, { scrolled:true });
   window.addEventListener('resize', refit, { passive:true }); window.visualViewport?.addEventListener('resize', refit, { passive:true });
   $('mnWorldFeed').addEventListener('scroll', refit, { passive:true });
+  // announceAddressPicking() fires right after a list is shown: fit it then, so the
+  // measurement happens with the options rendered and the viewport settled.
+  window.addEventListener('mcc:travel-autocomplete', e => { if (e.detail?.active && !results.hidden) fitSuggestions(results, input); });
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-controls', resultId); input.setAttribute('aria-expanded', 'false'); results.setAttribute('role', 'listbox');
-  const close = () => { seq++; clearTimeout(timer); results.hidden = true; results.style.maxHeight = ''; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
+  const close = () => { seq++; clearTimeout(timer); results.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-busy'); announceAddressPicking(); };
   searchClosers.push(close);
   input.addEventListener('input', () => {
     close(); addressController?.abort(); addressController = new AbortController(); const signal = addressController.signal;
@@ -362,7 +337,7 @@ function autocomplete(id, resultId, key) {
           const note = document.createElement('small'); note.className = 'wt-search-note';
           note.textContent = fallback ? 'Address search is unavailable. These city matches lead to a city center; try again for a precise address.' : 'No matching place yet. Add the street number, city or postal code, then choose a result.'; results.append(note);
         }
-        results.hidden = false; input.setAttribute('aria-expanded', 'true'); fitSuggestions(results, input); announceAddressPicking();
+        results.hidden = false; input.setAttribute('aria-expanded', 'true'); announceAddressPicking();
       } catch { if (request === seq && !signal.aborted) status('Address search is unavailable. Try again shortly; directions need a selected location.'); }
       finally { if (request === seq) input.removeAttribute('aria-busy'); }
     }, 650);
@@ -488,6 +463,32 @@ function applyFix(fix, allowReroute = true) {
     }
   } else { offRouteFixes = 0; navigationNotice = ''; }
   renderDirections();
+}
+// Keep every suggestion reachable: the list may not run under the fixed app
+// bar, the transport or the keyboard-shrunk viewport. It scrolls inside itself.
+function fitSuggestions(results, input, { scrolled = false } = {}) {
+  if (results.hidden) return;
+  const room = () => {
+    const top = results.getBoundingClientRect().top;
+    const limits = [window.visualViewport?.height ?? innerHeight];
+    // Embedded under the Music continuity shell this document's own app bar is
+    // hidden and the parent's retained bar and transport sit over its bottom
+    // edge. The bridge reserves their height in --mn-bar-clear; honour it.
+    if (document.body.dataset.worldAudioChild === 'ready') {
+      const clearance = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mn-bar-clear')) || 0;
+      if (clearance > 0) limits.push((window.visualViewport?.height ?? innerHeight) - clearance);
+    }
+    for (const selector of ['.appbar', '#mccWorldAudioControls']) {
+      const el = document.querySelector(selector);
+      if (el && el.offsetHeight && getComputedStyle(el).visibility !== 'hidden') { const r = el.getBoundingClientRect(); if (r.top > top) limits.push(r.top); }
+    }
+    return Math.floor(Math.min(...limits) - top - 8);
+  };
+  let available = room();
+  // With the keyboard open the field can sit at the bottom of the visible area.
+  // Bring it to the top of the panel once so the list has somewhere to open.
+  if (available < 132 && !scrolled && input) { input.scrollIntoView({ block:'start', behavior:'auto' }); available = room(); }
+  results.style.maxHeight = `${Math.max(132, available)}px`;
 }
 function startNavigation() {
   if (!route || navigating || !hostVisible || currentMode !== 'travel' || document.hidden) return;
