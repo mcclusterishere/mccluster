@@ -57,6 +57,7 @@ async function setup(viewport,{owner=true,enabled=true,ledger}={}){
           return json(route,{queued:!dup,replayed:dup,job_id:JOB,receipt:receipt('queued',{idempotency_key:body.idempotency_key,title:body.title||null,allowed_paths:body.allowed_paths||[]})},dup?200:202);
         }
         if(p==='/v1/ai/build/code/'+JOB&&req.method()==='GET'){
+          if(ledger.failReceiptOnce){ledger.failReceiptOnce=false;return json(route,{error:'receipt temporarily unavailable'},503);}
           const st=ledger.state;
           return json(route,{receipt:receipt(st,{approval_source:ledger.approvalSource||'ok',approval_state:ledger.approvalSource==='unavailable'?'unknown':'none',...(st==='completed'?{reported:{branch:'core/job-abc123',pushed:true,draft_pr:'https://github.com/mcclusterishere/mccluster/pull/999',forbidden:null,tests:{ok:true,command:'npm test'},summary:'Fixture summary',agent_output_tail:'fixture log tail'}}:st==='failed'?{last_error:'opencode exited 1 (fixture)'}:{})})});
         }
@@ -168,6 +169,47 @@ try{
     await app.page.waitForTimeout(2500);
     const gated=await app.page.evaluate(()=>{const gate=document.getElementById('cpGate');const form=document.querySelector('[data-crb-form]');const err=document.querySelector('.crb .cro-note--bad');return {gateShown:!!gate&&!gate.hidden&&getComputedStyle(gate).display!=='none',formShown:!!form,errorShown:!!err};});
     check('member','a signed-in non-owner never reaches an enabled Build form and submits nothing',app.posts.length===0&&(!gated.formShown||gated.errorShown),gated);
+    await app.ctx.close();
+  }
+  {
+    /* A transient first receipt read cannot strand the owner without controls. */
+    const ledger={state:'queued',failReceiptOnce:false};
+    const app=await setup({width:390,height:844},{ledger});const {page,posts}=app;
+    await page.waitForSelector('[data-crb-form]',{state:'visible',timeout:30000});
+    await page.fill('[data-crb-form] [name="task"]','Fixture receipt recovery without another job.');
+    await page.locator('[data-crb-form] button[type="submit"]').click();
+    await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:15000});
+    ledger.failReceiptOnce=true;
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>/receipt could not be read/i.test(document.querySelector('.crb-receipt')?.textContent||''),null,{timeout:30000});
+    const controls=await page.locator('.crb-receipt [data-crb="refresh"],.crb-receipt [data-crb="new"]').count();
+    check('receipt-failure','a failed first read retains both Refresh and Start another build',controls===2);
+    await page.locator('.crb-receipt [data-crb="refresh"]').click();
+    await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:15000});
+    check('receipt-failure','retry recovers the same stored receipt without queuing again',posts.length===1);
+    await app.ctx.close();
+  }
+  {
+    /* A's stored objective can NEVER reappear or be re-posted as B. */
+    const ledger={state:'queued'};const app=await setup({width:390,height:844},{ledger});const {page,posts}=app;
+    await page.waitForSelector('[data-crb-form]',{state:'visible',timeout:30000});
+    await page.fill('[data-crb-form] [name="task"]','Confidential objective of account A.');
+    await page.locator('[data-crb-form] button[type="submit"]').click();
+    await page.waitForSelector('.crb-receipt[data-crb-state="queued"]',{timeout:15000});
+    const changed=await page.evaluate(()=>{
+      const original=window.MCC_SUPA.uid, a=original();
+      const key='623e4567-e89b-42d3-a456-426614174555';
+      localStorage.setItem('cr_build_code_pending',JSON.stringify({user:a,body:{repository:'mcclusterishere/mccluster',task:'A private pending objective',idempotency_key:key,allowed_paths:[]}}));
+      window.MCC_SUPA.uid=()=> '22222222-2222-4222-8222-222222222222';
+      const b=window.CR.buildCode.render();
+      const noCrossAccount=window.CR.buildCode.state.job===null&&!b.includes('Confidential objective')&&!b.includes('A private pending objective');
+      window.MCC_SUPA.uid=()=> '';
+      const unsigned=window.CR.buildCode.render();
+      const noSignedOut=window.CR.buildCode.state.job===null&&unsigned.includes('Sign in')&&!unsigned.includes('A private pending objective');
+      window.MCC_SUPA.uid=original;
+      return {noCrossAccount,noSignedOut};
+    });
+    check('identity','restoration is scoped to the exact signed-in user, including sign-out',changed.noCrossAccount&&changed.noSignedOut&&posts.length===1,changed);
     await app.ctx.close();
   }
 }finally{await browser.close();}

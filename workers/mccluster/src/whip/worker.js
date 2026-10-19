@@ -6,6 +6,7 @@ import {
   createAccountLink,
   createWhiteLabelSubscriptionCheckout,
   createDirectCheckout,
+  retrieveCheckoutSession,
   createManualPaymentIntent,
   retrievePaymentIntent,
   capturePaymentIntent,
@@ -40,11 +41,43 @@ const RENTAL_EXTRAS = { refuel: 5500, mount: 800, seat: 1400 };     // cents per
 const RENTAL_TAX_BPS = 700;
 const WHIP_CURRENCY = 'usd';
 function cents(value) { const n = Number(value); return Number.isFinite(n) ? Math.round(n) : NaN; }
-export function rentalQuote(vehicle, tenant, body = {}) {
+/* Bill full calendar rental days in the pickup time zone, not elapsed UTC
+   hours. A 49-hour fall-DST interval from 10am to 10am is two local days;
+   a genuine 25-hour late return outside that shift is two billable days. */
+function rentalDays(start, end, zone) {
+  const elapsedDays = Math.max(1, Math.ceil((end - start) / 86_400_000));
+  if (!zone) return elapsedDays;
+  let parts;
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: String(zone), year: 'numeric', month: '2-digit',
+      day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    parts = [start, end].map(value => Object.fromEntries(fmt.formatToParts(new Date(value)).map(p => [p.type, p.value])));
+  } catch { return { error: 'Invalid rental time zone' }; }
+  const [a,b] = parts;
+  const date = p => Date.UTC(Number(p.year), Number(p.month)-1, Number(p.day));
+  const clock = p => Number(p.hour)*3600 + Number(p.minute)*60 + Number(p.second);
+  const civil = (date(b)-date(a))/86_400_000;
+  /* A later wall-clock return is a late return only when more than the
+     civil-day span actually elapsed: an exact 48-hour rental that crosses
+     spring-forward reads 12:00 -> 13:00 and must still be two days. */
+  const late = clock(b) > clock(a) && (end - start) > civil * 86_400_000;
+  const days = Math.max(1, civil + (late ? 1 : 0));
+  if (!Number.isInteger(days) || days<1 || Math.abs((end-start)-civil*86_400_000)>90_000_000)
+    return { error: 'Rental dates need a consistent pickup and return time' };
+  return days;
+}
+export function rentalQuote(vehicle, tenant, body = {}, serverTimeZone) {
   const start = Date.parse(body?.start_at), end = Date.parse(body?.end_at);
   if (!Number.isFinite(start) || !Number.isFinite(end)) return { error: 'start_at and end_at are required' };
   if (end <= start) return { error: 'end_at must be after start_at' };
-  const days = Math.max(1, Math.ceil((end - start) / 86_400_000));
+  /* The Acworth, GA pilot lot uses Eastern Time. Only a server-controlled
+     pickup-zone setting may influence the quote; the browser's time_zone
+     field is ignored. New operator fleets must configure their pickup zone. */
+  const zone = vehicle?.time_zone || tenant?.time_zone ||
+    (tenant?.slug === 'whip-equipped' ? (serverTimeZone || 'America/New_York') : null);
+  if (!zone) return { error: 'Pickup time zone has not been configured for this rental fleet' };
+  const days = rentalDays(start, end, zone);
+  if (typeof days === 'object') return days;
   const plan = body?.protection_plan == null ? 'standard' : String(body.protection_plan);
   if (!Object.hasOwn(RENTAL_PROTECTION_PLANS, plan)) return { error: 'Unknown protection plan' };
   const extraIds = Array.isArray(body?.extras) ? [...new Set(body.extras.map(String))] : [];
@@ -143,6 +176,44 @@ async function recordPayment(env, payment) {
 async function updatePayments(env, filter, patch) {
   return sb(env, `payments?${filter}&select=*`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }) });
 }
+
+/* Payment registration uses a deterministic UUID derived from the booking
+   and Stripe session. The existing payments.id primary key makes recovery
+   and concurrent registration atomic without a production migration. */
+async function rentalPaymentId(booking, sessionId) {
+  const bytes = new TextEncoder().encode('whip:rental-checkout:' + booking.tenant_id + ':' + booking.id + ':' + sessionId);
+  const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+  const variant = ((parseInt(digest[16],16)&3)|8).toString(16);
+  return digest.slice(0,8)+'-'+digest.slice(8,12)+'-8'+digest.slice(13,16)+'-'+variant+digest.slice(17,20)+'-'+digest.slice(20,32);
+}
+async function ensureRentalCheckoutPayment(env, booking, tenant, sessionId) {
+  const filter = 'tenant_id=eq.' + encodeURIComponent(tenant.id) +
+    '&resource_type=eq.rental&resource_id=eq.' + encodeURIComponent(booking.id) +
+    '&stripe_checkout_session_id=eq.' + encodeURIComponent(sessionId);
+  const matches = await sb(env, 'payments?' + filter + '&select=*&limit=1');
+  const valid = row => row && row.tenant_id === tenant.id &&
+    row.resource_id === String(booking.id) && row.resource_type === 'rental' &&
+    row.stripe_checkout_session_id === sessionId &&
+    Number(row.amount_cents) === Number(booking.total_cents) &&
+    row.connected_account_id === tenant.stripe_account_id;
+  if (matches?.length) {
+    if (!valid(matches[0])) throw Object.assign(new Error('Stored checkout ledger differs from the booking'), { status: 409 });
+    return matches[0];
+  }
+  const id = await rentalPaymentId(booking, sessionId);
+  const record = { id, tenant_id: tenant.id, resource_type: 'rental', resource_id: booking.id,
+    connected_account_id: tenant.stripe_account_id, stripe_checkout_session_id: sessionId,
+    amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' };
+  try { return await recordPayment(env, record); }
+  catch (error) {
+    if (!/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) throw error;
+    const found = await sb(env, 'payments?id=eq.' + encodeURIComponent(id) + '&select=*');
+    if (found?.length === 1 && valid(found[0])) return found[0];
+    throw Object.assign(new Error('Checkout payment claim conflicted with a different ledger row'), { status: 409 });
+  }
+}
+
 async function ensureStripeTenant(env, t) {
   if (!stripeConfigured(env)) throw Object.assign(new Error('Stripe payments are not configured'), { status: 503 });
   if (!t.stripe_account_id) throw Object.assign(new Error('Operator must finish Stripe Connect onboarding before accepting payments'), { status: 409 });
@@ -164,19 +235,57 @@ async function ensureStripeTenant(env, t) {
    match, and amount and currency must equal the ledger's. Mismatches are
    claimed (so Stripe stops retrying) and reported, never applied. */
 function ignored(reason) { return { ignored: true, reason }; }
+/* Keep a lease in the existing event_type column while an event is in
+   flight, and change it to the real Stripe type ONLY after all ledger writes
+   succeed. Existing completed rows already contain the real event type. This
+   requires no production schema change. A duplicate pending delivery gets 503
+   (Stripe retries), never a premature 200. A crashed Worker lease can be
+   recovered with a conditional compare-and-swap after fifteen minutes. */
+const STRIPE_EVENT_LEASE_MS = 15 * 60_000;
+/* public.stripe_events is shared with the Connect webhook (connect.js) and the
+   Supabase stripe-webhook function, which record every event they receive
+   under its bare Stripe id. If one of them sees evt_X first, a bare row with
+   the real type would read here as 'already applied'. Whip keeps its own key
+   space so only its own finished rows count as duplicates. */
+const stripeEventKey = event => 'whip:' + event.id;
 async function claimStripeEvent(env, event, connectedAccountId) {
-  // event_id is the primary key: the first insert wins; a retry or a concurrent
-  // duplicate delivery conflicts and is never applied twice.
+  const key = encodeURIComponent(stripeEventKey(event));
+  const marker = 'processing:' + Date.now() + ':' + event.type;
   try {
-    await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ event_id: event.id, event_type: event.type, stripe_account_id: connectedAccountId }) });
-    return true;
+    await sb(env, 'stripe_events', { method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ event_id: stripeEventKey(event), event_type: marker, stripe_account_id: connectedAccountId }) });
+    return { marker };
   } catch (error) {
-    if (/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) return false;
-    throw error;
+    if (!/23505|duplicate key|already exists|conflict/i.test(String(error?.message || ''))) throw error;
   }
+  const rows = await sb(env, 'stripe_events?event_id=eq.' + key + '&select=event_type');
+  const previous = rows?.[0]?.event_type;
+  if (previous === event.type) return { duplicate: true };
+  const pending = /^processing:(\d+):(.+)$/.exec(previous || '');
+  if (!pending || pending[2] !== event.type)
+    throw Object.assign(new Error('Stripe event has a conflicting claim'), { status: 409 });
+  const age = Date.now() - Number(pending[1]);
+  if (age >= STRIPE_EVENT_LEASE_MS) {
+    const taken = await sb(env,
+      'stripe_events?event_id=eq.' + key + '&event_type=eq.' + encodeURIComponent(previous) + '&select=event_id',
+      { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ event_type: marker }) });
+    if (taken?.length === 1) return { marker };
+  }
+  throw Object.assign(new Error('Stripe event processing is in progress; retry delivery'), { status: 503 });
 }
-async function releaseStripeEvent(env, event) {
-  try { await sb(env, `stripe_events?event_id=eq.${encodeURIComponent(event.id)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }); } catch { /* the claim stays; Stripe's retry reports the duplicate */ }
+async function finishStripeEvent(env, event, marker) {
+  const rows = await sb(env,
+    'stripe_events?event_id=eq.' + encodeURIComponent(stripeEventKey(event)) + '&event_type=eq.' + encodeURIComponent(marker) + '&select=event_id',
+    { method: 'PATCH', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ event_type: event.type, processed_at: new Date().toISOString() }) });
+  if (rows?.length !== 1)
+    throw Object.assign(new Error('Stripe event completion was not confirmed'), { status: 503 });
+}
+async function releaseStripeEvent(env, event, marker) {
+  try {
+    await sb(env, 'stripe_events?event_id=eq.' + encodeURIComponent(stripeEventKey(event)) + '&event_type=eq.' + encodeURIComponent(marker),
+      { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+  } catch { /* lease will be retryable after the recovery deadline */ }
 }
 function sameAccount(tenant, connectedAccountId) { return Boolean(tenant?.stripe_account_id) && connectedAccountId === tenant.stripe_account_id; }
 function sameCurrency(object) { return String(object?.currency || '').toLowerCase() === WHIP_CURRENCY; }
@@ -287,9 +396,23 @@ async function applyStripeEvent(env, event, object, connectedAccountId) {
 }
 export async function processStripeEvent(env, event) {
   const object = event.data?.object || {}, connectedAccountId = event.account || null;
-  if (!(await claimStripeEvent(env, event, connectedAccountId))) return { duplicate: true };
-  try { return { duplicate: false, ...(await applyStripeEvent(env, event, object, connectedAccountId)) }; }
-  catch (error) { await releaseStripeEvent(env, event); throw error; }
+  const claim = await claimStripeEvent(env, event, connectedAccountId);
+  if (claim.duplicate) return { duplicate: true };
+  let applied = false;
+  try {
+    const result = await applyStripeEvent(env, event, object, connectedAccountId);
+    applied = true;
+    await finishStripeEvent(env, event, claim.marker);
+    return { duplicate: false, ...result };
+  } catch (error) {
+    /* A failed apply releases the lease so Stripe's retry runs it again. A
+       failed finish after a successful apply keeps the lease: the writes are
+       already in the ledger, so the retry must wait for lease recovery rather
+       than re-apply them over later, newer state (a paid booking back to
+       processing). */
+    if (!applied) await releaseStripeEvent(env, event, claim.marker);
+    throw error;
+  }
 }
 
 export default {
@@ -519,27 +642,60 @@ export default {
       if (path === '/api/rentals/bookings' && req.method === 'POST') {
         const user = await requireUser(req, env); const body = await req.json(), t = await tenant(env, body.tenant_slug || 'whip-equipped');
         const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(body.vehicle_id || '')}&tenant_id=eq.${t.id}&available=eq.true&select=*`), vehicle = vehicleRows?.[0]; if (!vehicle) return fail(env, 'Rental vehicle not found or unavailable', 404);
-        const quote = rentalQuote(vehicle, t, body); if (quote.error) return fail(env, quote.error, 400);
+        const quote = rentalQuote(vehicle, t, body, env.WHIP_RENTAL_TIME_ZONE); if (quote.error) return fail(env, quote.error, 400);
         const booking = { tenant_id: t.id, vehicle_id: vehicle.id, renter_id: requestIdentity(req, user, 'demo-renter'), status: 'CHECKIN_REQUIRED', start_at: body.start_at, end_at: body.end_at, pickup_label: body.pickup_label || vehicle.location_label, rental_days: quote.days, daily_rate_cents: quote.daily_rate_cents, extras_cents: quote.extras_cents, protection_cents: quote.protection_cents, tax_cents: quote.tax_cents, platform_fee_cents: quote.platform_fee_cents, total_cents: quote.total_cents, payment_status: 'unpaid' };
         const rows = await sb(env, 'rental_bookings?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(booking) }); return reply(env, { booking: rows[0], vehicle }, 201);
       }
       const rentalMatch = path.match(/^\/api\/rentals\/bookings\/([^/]+)$/);
-      if (rentalMatch && req.method === 'GET') { await requireUser(req, env); const booking = await getRental(env, rentalMatch[1]); if (!booking) return fail(env, 'Rental booking not found', 404); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); return reply(env, { booking, vehicle: vehicleRows?.[0] || null }); }
+      if (rentalMatch && req.method === 'GET') {
+        const user = await requireUser(req, env); const booking = await getRental(env, rentalMatch[1]); if (!booking) return fail(env, 'Rental booking not found', 404);
+        // Reads mirror security.js canAccessRental: the renter, or an operator
+        // member whose role may inspect reservation records. Viewers may not.
+        if (String(booking.renter_id) !== String(user.id)) await requireOperator(req, env, booking.tenant_id, ['owner', 'admin', 'dispatcher', 'finance']);
+        const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); return reply(env, { booking, vehicle: vehicleRows?.[0] || null }); }
 
       const rentalCheckout = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkout$/);
       if (rentalCheckout && req.method === 'POST') {
-        const user = await requireUser(req, env); const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404); let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t); const vehicleRows = await sb(env, `rental_vehicles?id=eq.${encodeURIComponent(booking.vehicle_id)}&select=*`); const vehicle = vehicleRows?.[0];
-        // Checkout returns to the platform's own rentals page. A caller-chosen
-        // URL could send a renter to another domain after payment.
-        const rentalReturn = status => appUrl(env, `/whip/rentals/?rental_payment=${status}&booking_id=${encodeURIComponent(booking.id)}`);
+        const user = await requireUser(req, env);
+        const booking = await getRental(env, rentalCheckout[1]); if (!booking) return fail(env, 'Rental booking not found', 404);
+        if (String(booking.renter_id) !== String(user.id)) return fail(env, 'Booking belongs to another renter', 403);
+        if (booking.payment_status === 'paid' || booking.payment_status === 'processing')
+          return fail(env, 'Payment already submitted; check the booking status', 409);
+        let t = await tenantById(env, booking.tenant_id); t = await ensureStripeTenant(env, t);
+        if (booking.stripe_checkout_session_id) {
+          /* Never replace a still-payable checkout and then ignore its webhook.
+             Reuse the exact session or fail closed if it expired or completed. */
+          const existing = await retrieveCheckoutSession(env, booking.stripe_checkout_session_id, t.stripe_account_id);
+          if (existing.status === 'open' && existing.url) {
+            await ensureRentalCheckoutPayment(env, booking, t, existing.id);
+            return reply(env, { checkout_url: existing.url, session_id: existing.id, amount_cents: booking.total_cents, reused: true });
+          }
+          return fail(env, 'The earlier checkout is no longer open; check payment status or create a new rental booking', 409);
+        }
+        const vehicleRows = await sb(env, 'rental_vehicles?id=eq.' + encodeURIComponent(booking.vehicle_id) + '&select=*');
+        const vehicle = vehicleRows?.[0];
+        const rentalReturn = status => appUrl(env, '/whip/rentals/?rental_payment=' + status + '&booking_id=' + encodeURIComponent(booking.id));
+        /* Stripe deduplicates concurrent and lost-response POSTs for this exact
+           booking. Combined with the stored-session gate, a second payable
+           Checkout Session cannot replace the original. */
         const session = await createDirectCheckout(env, {
           amountCents: booking.total_cents, applicationFeeCents: booking.platform_fee_cents, connectedAccountId: t.stripe_account_id,
-          kind: 'rental', tenantId: t.id, resourceId: booking.id, description: `${vehicle?.name || 'Vehicle'} rental`, customerEmail: user.email,
-          successUrl: rentalReturn('success'),
-          cancelUrl: rentalReturn('cancel')
+          kind: 'rental', tenantId: t.id, resourceId: booking.id, description: (vehicle?.name || 'Vehicle') + ' rental', customerEmail: user.email,
+          successUrl: rentalReturn('success'), cancelUrl: rentalReturn('cancel'),
+          idempotencyKey: 'whip-rental-' + booking.id + '-checkout-v1'
         });
-        await recordPayment(env, { tenant_id: t.id, resource_type: 'rental', resource_id: booking.id, connected_account_id: t.stripe_account_id, stripe_checkout_session_id: session.id, amount_cents: booking.total_cents, application_fee_cents: booking.platform_fee_cents, status: 'checkout_created' });
-        await patchRental(env, booking.id, { stripe_checkout_session_id: session.id, payment_status: 'checkout_created' });
+        const bound = await sb(env,
+          'rental_bookings?id=eq.' + encodeURIComponent(booking.id) + '&stripe_checkout_session_id=is.null&select=id',
+          { method: 'PATCH', headers: { Prefer: 'return=representation' },
+            body: JSON.stringify({ stripe_checkout_session_id: session.id, payment_status: 'checkout_created', updated_at: new Date().toISOString() }) });
+        if (bound?.length !== 1) {
+          const latest = await getRental(env, booking.id);
+          if (latest?.stripe_checkout_session_id !== session.id)
+            throw Object.assign(new Error('Another checkout was recorded; inspect the booking before retrying'), { status: 409 });
+          await ensureRentalCheckoutPayment(env, latest, t, session.id);
+          return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: latest.total_cents, reused: true });
+        }
+        await ensureRentalCheckoutPayment(env, booking, t, session.id);
         return reply(env, { checkout_url: session.url, session_id: session.id, amount_cents: booking.total_cents });
       }
 
