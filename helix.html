@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" class="helix-mode">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090f">
+  <meta name="color-scheme" content="dark">
+  <title>Helix · McCluster Music</title>
+  <meta name="description" content="Explore McCluster music through interactive 3D album DNA. Select a vial, enter a strand, and touch a song to listen.">
+  <link rel="canonical" href="https://matthew.mccluster.org/helix.html">
+  <link rel="icon" href="assets/img/m-mark.png" type="image/png">
+  <link rel="stylesheet" href="css/helix.css?v=__STAMP__">
+</head>
+<body>
+  <main id="helixApp" class="helix-app" data-view="library">
+    <canvas id="helixCanvas" tabindex="0" aria-label="Interactive 3D music helix. Use left and right arrows for albums, up and down for tracks, Enter to select and Escape to move back."></canvas>
+    <div class="helix-vignette" aria-hidden="true"></div>
+    <header class="helix-top">
+      <a class="helix-exit" href="listen.html" aria-label="Back to Music">← <span>Music</span></a>
+      <span class="helix-wordmark">McCluster <strong>HELIX</strong></span>
+      <span class="helix-level" id="helixLevel">ALBUM DNA</span>
+    </header>
+    <div class="helix-identification">
+      <p class="helix-eyebrow" id="helixEyebrow">SELECT A SPECIMEN</p>
+      <h1 id="helixAlbum">Your music, encoded.</h1>
+      <p class="helix-artist" id="helixArtist">McCluster Music</p>
+    </div>
+    <div class="helix-lower">
+      <section class="helix-song" id="helixSong" aria-label="Selected track" hidden>
+        <span class="helix-counter" id="helixCounter"></span>
+        <h2 id="helixSongName"></h2>
+        <p id="helixPlayback" class="helix-playback"></p>
+      </section>
+      <section class="helix-lyrics" id="helixLyrics" aria-label="Song lyrics" hidden>
+        <p class="helix-lyrics__heading">WORDS INSIDE THE STRAND</p>
+        <p class="helix-lyrics__text" id="helixLyricText"></p>
+      </section>
+      <p class="helix-help" id="helixHelp">Swipe sideways to change albums · Tap a vial to enter</p>
+    </div>
+    <p class="helix-notice" id="helixNotice" role="status" aria-live="polite">Encoding the library…</p>
+    <section class="helix-fallback" id="helixFallback" aria-label="Music library fallback" hidden>
+      <h2>Music is still here.</h2>
+      <p id="helixFallbackReason">3D is unavailable on this device. You can listen through the regular music page.</p>
+      <a href="listen.html">Open Music</a>
+    </section>
+    <nav class="helix-accessible" id="helixAccessible" aria-label="Keyboard and screen reader music controls"></nav>
+  </main>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/listen-ledger.js?v=__STAMP__"></script>
+  <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/music-engine.js?v=__STAMP__"></script>
+  <script type="module" src="js/helix/main.mjs?v=__STAMP__"></script>
+  <script>
+    // A blocked ES module or an unsupported graphics device must not strand a listener.
+    window.addEventListener("error", function (event) {
+      if (window.MCC_HELIX_READY || !event.target || event.target.tagName !== "SCRIPT") return;
+      const fallback = document.getElementById("helixFallback");
+      fallback.hidden = false;
+      document.getElementById("helixFallbackReason").textContent = "The 3D viewer could not load. The music library is still available.";
+    }, true);
+  </script>
+</body>
+</html>
