@@ -11,6 +11,8 @@
     /* the World's news (GET /v1/world/news): the page read so far, and its cursor (undefined: not read yet; null: no more) */
     news: [],
     newsBefore: undefined,
+    newsCommentsAvailable: false,
+    newsCommentsCapabilityAsked: false,
     newsSeq: 0,
     loadingFeed: false,
     threadPost: null,
@@ -42,7 +44,7 @@
     node.classList.toggle("is-error", kind === "error");
     node.classList.toggle("is-ok", kind === "ok");
   }
-  /* One telemetry seam for the whole Human Uprise. Product writes remain
+  /* One telemetry seam for the whole Equity Uprise. Product writes remain
      authoritative in the database; these events describe the journey around
      them so Control can answer which surfaces actually move people to act. */
   function track(name, data) {
@@ -255,7 +257,7 @@
     st.className = "mn__field-state" + (kind ? " is-" + kind : "");
     st.textContent = kind === "bad" ? "taken" : "";
     if (field) field.classList.toggle("is-bad", kind === "bad");
-    if (hint) hint.textContent = text || "Your handle across Human Uprise.";
+    if (hint) hint.textContent = text || "Your handle across Equity Uprise.";
   }
   function checkHandle() {
     var v = $("mnHandle").value.trim();
@@ -493,6 +495,10 @@
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
       openDeepLinkedGroup();
+      try {
+        var publicHandle = new URLSearchParams(location.search).get("profile");
+        if(publicHandle && /^[a-z0-9][a-z0-9._-]{2,39}$/.test(publicHandle.toLowerCase()) && !state.guest)openPerson(publicHandle.toLowerCase());
+      } catch (_) {}
       /* A deep link to a mission or a group wins over the first-run tour. */
       if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
@@ -772,12 +778,13 @@
       (post.media_locked ? '<button class="mn__media-locked" type="button" data-guest-ask="media">Sign in to see ' + (post.media_locked > 1 ? 'these photos and videos' : 'this photo or video') + '</button>' : '') +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
-          /* THE EMBLEM OR FUND IT (owner, 2026-10-14): no like, no comment, no reaction. A post that carries a mission offers the emblem (join) and Fund in its mission banner; every card keeps Share and Save. */
+          /* A post keeps the familiar Comment, Share and Save actions; mission participation and funding still use their separate controlled routes. */
+          '<button class="mn__action mn__action--comment" type="button" data-discussion-toggle aria-expanded="false" aria-label="Comment on post">' + ICON.comment + '<span class="mn__action-label">Comment</span></button>' +
           '<button class="mn__action mn__action--share" type="button" data-action="share" data-post="' + esc(id) + '" aria-label="Share post">' + ICON.share + '<span class="mn__action-label">Share</span></button>' +
           '<button class="mn__action mn__action--save' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '" aria-pressed="' + saved + '" aria-label="Save for later">' +
             ICON.save + '</button>' +
           (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '" aria-label="Delete">' + ICON.trash + '</button>' : '') +
-        '</div>') +
+        '</div>' + discussionHtml('post', id)) +
     '</article>';
   }
 
@@ -873,7 +880,7 @@
     return '<div class="mn__actcard">' +
       '<p class="mn__actcard-eyebrow">Verified action</p>' +
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
-      '<p class="mn__actcard-foot">Human Uprise · Don\u2019t just watch. Act.</p>' +
+      '<p class="mn__actcard-foot">Equity Uprise · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
@@ -956,6 +963,103 @@
     return '<button class="mn__globe-chip" type="button" data-globe-mission="' + esc(missionId) + '">Locate on globe</button>';
   }
 
+  /* One comment system in the timeline: post replies use the existing
+     authorized Mnet route, news replies use the reviewed news-discussion route.
+     Nothing is copied from a publisher to create the discussion. */
+  function discussionHtml(kind, id) {
+    return '<section class="mn__comments" data-discussion-kind="' + esc(kind) +
+      '" data-discussion-id="' + esc(id || '') + '" aria-label="Conversation" hidden>' +
+      '<div class="mn__comments-list" role="list"></div>' +
+      '<form class="mn__comment-form"><label class="sr-only">Write a comment</label>' +
+      '<input class="mn__comment-input" type="text" maxlength="1000" autocomplete="off" placeholder="Add to the conversation..." aria-label="Write a comment">' +
+      '<button type="submit">Reply</button></form>' +
+      '<p class="mn__comment-status" role="status" aria-live="polite"></p></section>';
+  }
+  function discussionRoute(panel) {
+    var type = panel.dataset.discussionKind, id = panel.dataset.discussionId;
+    if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
+    return type === 'news' ? '/v1/world/news/' + encodeURIComponent(id) + '/comments'
+      : type === 'post' ? '/v1/mnet/posts/' + encodeURIComponent(id) + '/replies' : null;
+  }
+  function paintDiscussion(panel, comments) {
+    var list = panel.querySelector('.mn__comments-list');
+    list.replaceChildren();
+    if (!comments.length) {
+      var empty = document.createElement('p');
+      empty.className = 'mn__comments-empty';
+      empty.textContent = 'Start the conversation.';
+      list.appendChild(empty);
+      return;
+    }
+    comments.forEach(function (comment) {
+      var row = document.createElement('div');
+      row.className = 'mn__comment';
+      row.setAttribute('role','listitem');
+      var by = document.createElement('strong');
+      by.textContent = String(comment.actor?.display_name || comment.actor?.mccluster_id || 'Member').slice(0,100);
+      var time = document.createElement('time');
+      time.textContent = timeAgo(comment.created_at || '');
+      var body = document.createElement('p');
+      body.textContent = String(comment.body || '').slice(0,1000);
+      row.append(by,time,body);
+      list.appendChild(row);
+    });
+  }
+  function loadDiscussion(panel) {
+    var path = discussionRoute(panel);
+    if (!path) return Promise.resolve();
+    var status = panel.querySelector('.mn__comment-status');
+    setStatus(status,'Loading comments…');
+    var read = state.guest
+      ? fetch('https://api.mccluster.org' + path, { credentials:'omit' }).then(parse)
+      : api(path);
+    return read.then(function (data) {
+      if (!panel.isConnected || panel.hidden) return;
+      paintDiscussion(panel, Array.isArray(data.comments) ? data.comments : []);
+      panel.dataset.loaded='true';
+      setStatus(status,'');
+    }).catch(function (error) {
+      if (!panel.isConnected || panel.hidden) return;
+      setStatus(status,error.message || 'Comments are temporarily unavailable.','error');
+    });
+  }
+  function bindDiscussions(root) {
+    root.querySelectorAll('[data-discussion-toggle]').forEach(function (button) {
+      button.onclick = function (e) {
+        e.preventDefault();
+        var card = button.closest('.mn__post-card'), panel = card?.querySelector('.mn__comments');
+        if (!panel) return;
+        if (state.guest && panel.dataset.discussionKind === 'post') { askToSignIn('comment'); return; }
+        var open = panel.hidden;
+        panel.hidden = !open;
+        button.setAttribute('aria-expanded', String(open));
+        if (open) {
+          if (!panel.dataset.loaded) void loadDiscussion(panel);
+          panel.querySelector('input')?.focus({preventScroll:true});
+        }
+      };
+    });
+    root.querySelectorAll('.mn__comment-form').forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (state.guest) { askToSignIn('comment'); return; }
+        if (askToFinish('post')) return;
+        var panel = form.closest('.mn__comments'), route = panel && discussionRoute(panel);
+        var input = form.querySelector('input'), body = input?.value.trim() || '';
+        var status = panel?.querySelector('.mn__comment-status'), button = form.querySelector('button');
+        if (!route || !body || [...body].length > 1000) { setStatus(status,'Write a comment under 1,000 characters.','error'); return; }
+        button.disabled = true;
+        setStatus(status,'Posting…');
+        api(route,{method:'POST',body:{body}}).then(function () {
+          input.value = '';
+          return loadDiscussion(panel);
+        }).then(function () { setStatus(status,'Comment posted.','ok'); }).catch(function (error) {
+          setStatus(status,error.message || 'Comment could not be posted.','error');
+        }).finally(function () { button.disabled=false; });
+      });
+    });
+  }
+
   function bindFeedActions(root) {
     if (state.guest) {
       /* read-only: the same buttons, but each one is a door to sign in,
@@ -1023,7 +1127,7 @@
     url.searchParams.set("post", b.dataset.post);
     var link = url.toString();
     if (navigator.share) {
-      navigator.share({ title:"Human Uprise", url:link }).catch(function () {});
+      navigator.share({ title:"Equity Uprise", url:link }).catch(function () {});
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
     } else window.prompt("Copy post link",link);
@@ -1035,7 +1139,7 @@
     paintMore();
     var focus = state.world.focus, query = state.world.query;
     /* a mission picked on the Earth narrows the feed to the posts about it: the news steps aside until it is let go */
-    var news = (focus && focus.filter) || state.editorialFeed === "community" ? [] : state.news;
+    var news = focus && focus.filter ? [] : state.news;
     paintNewsCredit(false);
     if (!state.feed.length && !news.length) {
       host.innerHTML = state.guest
@@ -1089,6 +1193,7 @@
     paintNewsCredit(news.length > 0);
     bindFeedActions(host);
     bindNewsActions(host);
+    bindDiscussions(host);
   }
 
   /* A THIN FEED STILL HAS SOMETHING TO DO. While the network is small, open
@@ -1130,6 +1235,7 @@
     if (!domain) try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch (e) {}
     return { news: true, id: id, title: title, url: url, domain: domain.slice(0, 120), seen_at: String(n.seen_at || ""), place: n.place ? String(n.place).slice(0, 120) : "", lat: located ? lat : null, lon: located ? lon : null };
   }
+  window.MCC_WORLD_NEWS_ITEMS = function () { return state.news.slice(); };
   /* never rejects, nor throws (even building the address): { ok, items, next } for a page, { ok: false, status } for anything else */
   function fetchNews(before) {
     return Promise.resolve().then(function () {
@@ -1142,6 +1248,22 @@
       });
     }).catch(function () { return { ok: false, status: 0 }; });
   }
+  /* Never show news comment inputs before the Worker confirms BOTH that the
+     operator enabled the feature and the approved table is actually present.
+     No bearer credentials leave the current origin with this public read. */
+  function ensureNewsCommentsCapability() {
+    if (state.newsCommentsCapabilityAsked || !state.news.length) return;
+    state.newsCommentsCapabilityAsked = true;
+    fetch('https://api.mccluster.org/v1/world/news/comments-capability',
+      { credentials:'omit', cache:'no-store' })
+      .then(function (res) { return res.ok ? res.json() : {available:false}; })
+      .then(function (data) {
+        if (data && data.available === true) {
+          state.newsCommentsAvailable = true;
+          if ($('mnFeed')) renderFeed(false);
+        }
+      }).catch(function () { /* disabled or unreachable: no unusable UI */ });
+  }
   function applyNews(res, before) {
     if (res && res.ok) {
       var list = before ? state.news.slice() : [], have = {};
@@ -1149,6 +1271,8 @@
       res.items.forEach(function (n) { if (!have[n.id]) { have[n.id] = true; list.push(n); } });
       state.news = list;
       state.newsBefore = res.next;
+      ensureNewsCommentsCapability();
+      window.dispatchEvent(new CustomEvent('mcc:world-news-loaded'));
     } else if (before && res && res.status === 400) state.newsBefore = null;
     /* anything else keeps what was there: a first page that did not come is asked for again with the next Load more,
        and a later page that did not come is asked for again from the same cursor */
@@ -1173,9 +1297,12 @@
         (timeAgo(n.seen_at) ? sep + '<span class="mn__news-time">' + esc(timeAgo(n.seen_at)) + '</span>' : '') +
         (n.place ? sep + '<span class="mn__news-place">' + esc(n.place) + '</span>' : '') + '</p>' +
       '<button type="button" class="mn__news-title" data-news-open="' + esc(n.id) + '">' + esc(n.title) +
-        '<span class="sr-only"> (opens an in-app news discovery record)</span></button>' +
+        '<span class="sr-only"> (open story)</span></button>' +
       (n.lat !== null && n.lon !== null
         ? '<button class="mn__globe-chip mn__news-chip" type="button" data-news-place data-lat="' + esc(n.lat) + '" data-lon="' + esc(n.lon) + '" data-label="' + esc(n.place) + '" aria-label="On the Earth: ' + esc(n.place || "the place this story mentions") + '">On the Earth</button>'
+        : '') +
+      (state.newsCommentsAvailable
+        ? '<div class="mn__post-actions"><button type="button" class="mn__action mn__action--comment" data-discussion-toggle aria-expanded="false" aria-label="Comment on news">' + ICON.comment + '<span class="mn__action-label">Comment</span></button></div>' + discussionHtml('news', n.id)
         : '') +
     '</article>';
   }
@@ -1655,9 +1782,16 @@
       api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
     ]).then(function (all) {
       var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, presentation=data.presentation||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
+      /* One shared center-tab perspective for every member, not only artists.
+         The public record from the API supplies the canonical name and image. */
+      try { window.dispatchEvent(new CustomEvent("mcc:perspective", { detail: {
+        kind:"member", handle:String(id.mccluster_id||handle).toLowerCase(),
+        name:name, avatar:safeHttpUrl(p.avatar_url)
+      } })); } catch (_) {}
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
-      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
+      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
+      $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
@@ -1677,7 +1811,7 @@
       bindConnectButton($("mnPersonBody"), data.connection, p.m_uid||id.m_uid||data.m_uid, function(){openPerson(handle);});
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Human Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
@@ -2547,6 +2681,10 @@
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
     return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(m.domain||"community")+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
+  /* Public display name; stable mission IDs and the published historical source remain unchanged. */
+  function publicMission(m) {
+    return m && m.title === "Write the Change" ? Object.assign({}, m, { title: "Write a Song" }) : m;
+  }
   var MISSION_FIELDS="id,campaign_id,title,description,domain,difficulty,base_points,proof_required,verification_mode,skills,capacity,status,starts_at,ends_at";
   var missionListVersion=0;
   function loadMissions(){
@@ -2564,7 +2702,7 @@
       if(version!==missionListVersion)return;
       missions.extras={};(Array.isArray(out[2])?out[2]:[]).forEach(function(x){if(x&&x.mission_id)missions.extras[x.mission_id]=x;});
       /* clip campaigns are paid work and live in the Clips tab */
-      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";});missions.stats={};
+      missions.all=(out[0]||[]).filter(function(m){return m.kind!=="clip";}).map(publicMission);missions.stats={};
       (out[1]||[]).forEach(function(st){if(st&&st.mission_id)missions.stats[st.mission_id]=st;});
       var helpGateway=(!missions.campaign||missions.campaign==="homelessness-action-001")
         ? '<article class="mn__panel"><p class="mn__eyebrow">Help · private resource navigation</p><h3>Find services for yourself or someone you know</h3><p>Official national and international resource directories. No account or public proof required.</p><a class="mn__primary" href="/help.html">Find help now ↗</a></article>' : "";
@@ -2601,7 +2739,7 @@
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
     var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
-    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Human Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Equity Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
     var declined=app&&app.status==="declined";
@@ -2657,7 +2795,7 @@
   function fetchMission(id){
     var hit=missions.all.find(function(x){return x.id===id;});
     if(hit)return Promise.resolve(hit);
-    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]||null;});
+    return sbRest("action_missions?id=eq."+encodeURIComponent(id)+"&select="+MISSION_FIELDS+"&limit=1").then(function(rows){return rows&&rows[0]?publicMission(rows[0]):null;});
   }
   function clearMissionCapture(){
     if(missions.proofPreview){try{URL.revokeObjectURL(missions.proofPreview);}catch(_){} missions.proofPreview="";}
@@ -3054,6 +3192,10 @@
     if(!window.MCC_MISSION_DECK||!$("huMissionList"))return null;
     worldMissionDeck=window.MCC_MISSION_DECK.mount($("huMissionList"),{
       onAccept:acceptWorldMission,onOpen:openWorldMission,
+      onCompleted:function(host) {
+        if (!window.DocketCohortShowcase || !window.DocketCohortShowcase.mountSeries) throw Error("Completed mission series is unavailable.");
+        return window.DocketCohortShowcase.mountSeries(host);
+      },
       onRefresh:function(){worldMissionDeckLoaded=false;return loadWorldMissionDeck();}
     });
     if(worldMissionDeckLoaded)worldMissionDeck.update(missions.all);
@@ -3070,7 +3212,13 @@
   window.addEventListener("mcc:world-mode",function(e){
     if(e.detail&&e.detail.mode==="missions"){
       loadWorldMissionDeck();
-      if(window.DocketCohortShowcase&&$("mnCompletedMissions"))window.DocketCohortShowcase.mount($("mnCompletedMissions"));
+      /* The confirmed cohort capstone remains mapped independently of whether
+         someone has opened the Completed tab yet. */
+      if(window.DocketCohortShowcase&&window.DocketCohortShowcase.ensureMap)window.DocketCohortShowcase.ensureMap();
+      if(new URLSearchParams(location.search).has("completed")){
+        var completedTab=document.querySelector('.mn-swipe__filters [data-status="completed"]');
+        if(completedTab&&completedTab.getAttribute("aria-selected")!=="true")completedTab.click();
+      }
     }
   });
   function paintMissionPreview() {
@@ -3308,13 +3456,6 @@
     });
     document.addEventListener('click', function(e) {
       if (!e.target.closest('#huWorldFilters')) $("huWorldFilters").open = false;
-    });
-    document.querySelectorAll('[data-hu-feed]').forEach(function(button) {
-      button.onclick = function() {
-        state.editorialFeed = button.dataset.huFeed;
-        document.querySelectorAll('[data-hu-feed]').forEach(function(b) { b.setAttribute('aria-pressed', String(b === button)); });
-        renderFeed(false);
-      };
     });
     frame.addEventListener("load", function () { tellWorld({ type: "hu:hello" }); });
     window.addEventListener("message", function (ev) {

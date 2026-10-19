@@ -18,6 +18,7 @@
   var IS_GLOBE_FRAME = /\/action-globe\.html$/.test(location.pathname) && root.parent !== root;
   var theme = null, controls = null, shell = null, frame = null, status = null;
   var open = false, attached = false, parentOrigin = "", frameOrigin = "", channelId = "";
+  var addressSuggestionsOpen = false;
   var worldHref = "", frameReady = false, readyTimer = null, loadGeneration = 0;
   var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
@@ -27,6 +28,16 @@
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
   }
   function savePreference() { try { localStorage.setItem(PREF, JSON.stringify(preference)); } catch (_) {} }
+  function suspendTransportForSuggestions(active) {
+    if (!controls) return;
+    // The address selector is inside the cross-origin World frame. Its option
+    // cannot rise above this parent's z-index-2201 audio transport. Hide the
+    // controls temporarily, NOT the playing audio, so the input is usable.
+    var quiet = active === true && (open || IS_WORLD);
+    controls.classList.toggle('world-audio--suggest-open', quiet);
+    controls.inert = quiet;
+    controls.setAttribute('aria-hidden', String(quiet));
+  }
   function event(name, detail) { root.dispatchEvent(new CustomEvent(name, {detail: detail || {}})); }
   function urlOf(href) { try { return new URL(href, location.href); } catch (_) { return null; } }
   function cleanHref(href) {
@@ -177,12 +188,36 @@
     if (!frame || !frame.contentWindow || !frameOrigin) return;
     frame.contentWindow.postMessage(Object.assign({channel:CHANNEL, id:channelId}, data), frameOrigin);
   }
+  function placeTransport(top, right) {
+    if (attached && channelId && parentOrigin) {
+      root.parent.postMessage({channel:CHANNEL, type:"controls-position", id:channelId, top:top, right:right}, parentOrigin);
+    } else if (controls && top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
+    else if (controls) { controls.style.top = top + "px"; controls.style.right = right + "px"; }
+  }
+  function alignWorldTransport() {
+    if (!IS_WORLD || (!attached && root.parent !== root)) return;
+    /* The compact offset belongs to the World screen only. Off that screen
+       (Missions, Tour, profile) the bar keeps its bottom geometry; an inline
+       top left behind would stretch it into a full-height overlay. */
+    var onWorld = doc.documentElement.classList.contains("mn-world-on");
+    var expand = onWorld ? doc.querySelector(".mn__world-expand") : null;
+    var rect = expand ? expand.getBoundingClientRect() : null;
+    if (!rect || rect.width < 20 || rect.top < 55 || rect.top > root.innerHeight - 65) { placeTransport(null, null); return; }
+    /* Sit directly above the fullscreen control, sharing its right edge. In
+       landscape the globe is the left column and that edge is left of the
+       feed, so the transport never lands on the directions or active turn. */
+    placeTransport(Math.max(67, Math.round(rect.top - 60)), Math.max(12, Math.round(root.innerWidth - rect.right)));
+  }
   function layout() {
+    alignWorldTransport();
     if (attached) return;
     var dock = doc.querySelector(".appbar"), rect = dock && dock.getBoundingClientRect();
     var navClear = rect && rect.height ? Math.max(0, root.innerHeight - rect.top) : 88;
     if (controls) controls.style.setProperty("--world-audio-nav-clear", navClear + "px");
-    var reserve = Math.min(280, Math.ceil(navClear + (controls && !controls.hidden ? controls.getBoundingClientRect().height + 16 : 0)));
+    /* The World player is no longer a bottom bar: only the app navigation
+       requires vertical clearance. Keep the old calculation in Music. */
+    var extra = IS_WORLD || open ? 0 : controls && !controls.hidden ? controls.getBoundingClientRect().height + 16 : 0;
+    var reserve = Math.min(280, Math.ceil(navClear + extra));
     if (open && frameClearance !== reserve) { frameClearance = reserve; send({type:"layout", clearance:reserve}); }
     if (IS_WORLD && root.parent === root && controls && !controls.hidden) {
       doc.documentElement.style.setProperty("--mcc-world-audio-clear", reserve + "px");
@@ -216,7 +251,7 @@
     if (shell) return;
     loadStyle(); shell = doc.createElement("section"); shell.id = "mccWorldAudioShell";
     shell.setAttribute("aria-label", "World"); shell.hidden = true;
-    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Human Uprise World";
+    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Equity Uprise World";
     frame.allow = "geolocation; autoplay; fullscreen; camera; microphone";
     frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
     status = doc.createElement("div"); status.className = "world-audio-status";
@@ -242,7 +277,7 @@
     createShell(); ensureControls();
     var wasOpen = open; open = true; shell.hidden = false;
     doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
-    concealMusic(); doc.title = "World · Human Uprise";
+    concealMusic(); doc.title = "World · Equity Uprise";
     if (!wasOpen && !options.history) {
       var address = new URL(baseHref); address.searchParams.set("world", "1");
       history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);
@@ -272,9 +307,14 @@
     if (!open) return;
     send({type:"visibility", visible:false});
     open = false; shell.hidden = true;
+    addressSuggestionsOpen = false;
+    suspendTransportForSuggestions(false);
     delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
     hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
     doc.title = baseTitle;
+    // Clear the compact World offset before restoring Music. Leaving this
+    // inline top together with the Music bottom makes a full-height overlay.
+    if (controls) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
     doc.querySelectorAll(".appbar [data-appnav]").forEach(function (tab) {
       var here = tab.dataset.appnav === "music";
       tab.classList.toggle("is-here", here); tab.removeAttribute("aria-current");
@@ -294,7 +334,10 @@
     frameLayout(data.clearance);
     frameVisibility(data.visible);
     root.parent.postMessage({channel:CHANNEL, type:"ready", id:channelId}, parentOrigin);
+    if (addressSuggestionsOpen) root.parent.postMessage(
+      {channel:CHANNEL,type:"address-suggestions",id:channelId,active:true},parentOrigin);
     paint();
+    alignWorldTransport();
   }
   function navigate(href) {
     if (attached) {
@@ -335,7 +378,27 @@
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
   root.addEventListener("mcc:appbar-admin", paint);
+  root.addEventListener('mcc:travel-autocomplete', function(e) {
+    addressSuggestionsOpen = e.detail?.active === true;
+    if (attached && channelId && parentOrigin) {
+      // The parent validates exact frame source, origin and session nonce.
+      root.parent.postMessage({channel:CHANNEL,type:'address-suggestions',
+        id:channelId,active:addressSuggestionsOpen},parentOrigin);
+    } else if (IS_WORLD) {
+      suspendTransportForSuggestions(addressSuggestionsOpen);
+    }
+  });
   root.addEventListener("resize", layout);
+  root.addEventListener("mcc:world-mode", layout);
+  if (IS_WORLD && typeof MutationObserver === "function") {
+    /* mnet.js toggles html.mn-world-on when the World screen opens or closes
+       without an event; re-run layout so the transport leaves with it. */
+    var layoutQueued = false;
+    new MutationObserver(function () {
+      if (layoutQueued) return; layoutQueued = true;
+      requestAnimationFrame(function () { layoutQueued = false; layout(); });
+    }).observe(doc.documentElement, {attributes:true, attributeFilter:["class"]});
+  }
   root.addEventListener("popstate", function () {
     var state = history.state && history.state.mccWorldAudio;
     if (state && musicSurface()) openWorld(state.href, {history:true, gesture:false});
@@ -355,8 +418,19 @@
     if (d.type === "hello") { send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
     if (d.id !== channelId) return;
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
+    else if (d.type === "controls-position" && controls && open) {
+      if (d.top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
+      else if (Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
+        controls.style.top = Math.round(d.top) + "px";
+        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) controls.style.right = Math.round(d.right) + "px";
+      }
+    }
     else if (d.type === "music") closeWorld(true);
     else if (d.type === "pause") pause();
+    else if (d.type === 'address-suggestions' && typeof d.active === 'boolean') {
+      addressSuggestionsOpen = d.active;
+      suspendTransportForSuggestions(d.active);
+    }
   });
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

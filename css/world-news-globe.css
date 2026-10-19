@@ -1,6 +1,16 @@
-.world-news-deck{color:#f5f2e9;padding:16px 14px}.world-news-deck[hidden]{display:none!important}.world-news-deck h2{font-size:1.15rem;margin:0}.world-news-deck>p,.world-news-meta{color:#aba49b;font-size:.85rem}.world-news-entry{border-top:1px solid #34343a;padding:13px 0;display:flex;align-items:flex-start;flex-direction:column;gap:8px;min-width:0}.world-news-entry a{color:#f5f2e9;overflow-wrap:anywhere}.world-news-entry button,#worldNewsMore{min-height:44px;background:#292521;color:#f4e6cc;border:1px solid #81725b;border-radius:22px;padding:8px 14px;font-size:16px}.world-news-meta{margin:0}.dc-event-feed__list{max-height:350px;overflow:auto;padding-left:1.6em}.dc-event-feed__list li{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
-.world-news-title{border:0;background:transparent;color:#f5f2e9;text-align:left;font-family:inherit;font-size:1rem;font-weight:600;line-height:1.45;padding:0;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;cursor:pointer}.world-news-title:focus-visible{outline:2px solid #e4b866;outline-offset:4px}.world-news-reader{max-width:min(92vw,560px);max-height:80vh;overflow:auto;box-sizing:border-box;border-radius:18px;border:1px solid #81725b;background:#18191e;color:#f5f2e9;padding:22px;box-shadow:0 18px 80px #000b}.world-news-reader::backdrop{background:#000b}.world-news-reader h3{font-size:1.1rem;margin:0 0 12px}.world-news-reader p{line-height:1.5}.world-news-reader button{min-height:44px;margin-top:12px;padding:8px 18px;border-radius:22px;background:#312b23;border:1px solid #a69071;color:#fff}
-
-/* Integrated news headlines use the same first-party reader, never an outbound link. */
+/* Compact first-party story reader; no separate News deck or public legal essay. */
+.dc-event-feed__list{max-height:350px;overflow:auto;padding-left:1.6em}
+.dc-event-feed__list li{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.world-news-reader{box-sizing:border-box;width:min(94vw,600px);max-height:min(83vh,760px);overflow:auto;border:1px solid rgba(211,197,176,.27);border-radius:24px;background:linear-gradient(153deg,#1d2229 0%,#101419 90%);color:#f5f2ec;padding:clamp(22px,4vw,32px);box-shadow:0 25px 90px rgba(0,0,0,.63),inset 0 1px 0 rgba(255,255,255,.1)}
+.world-news-reader::backdrop{background:rgba(3,8,14,.78);backdrop-filter:blur(5px)}
+.world-news-reader__eyebrow{margin:0 0 15px;color:#d9bd91;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.17em;text-transform:uppercase}
+.world-news-reader h3{margin:0 0 16px;color:#f5f2ec;font:600 clamp(22px,4vw,31px)/1.25 Georgia,serif;letter-spacing:-.02em;overflow-wrap:anywhere}
+.world-news-meta{color:#adb7c5;font:500 13px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}
+.world-news-reader__actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.world-news-reader__actions button{min-height:45px;padding:11px 17px;border:1px solid rgba(236,219,195,.26);border-radius:999px;background:#283341;color:#f5f2ec;font:700 14px system-ui,sans-serif;cursor:pointer}
+.world-news-reader__actions button:first-child{background:#e5ddd1;color:#14202c;border-color:#e5ddd1}
+.world-news-reader :is(button):focus-visible{outline:3px solid #f1c78a;outline-offset:3px}
+/* Integrated cards use the existing timeline typography and actions. */
 .mn__news-card button.mn__news-title{background:transparent;border:0;padding:0;text-align:left;font-family:inherit;cursor:pointer}
 .mn__news-card button.mn__news-title::after{content:none}
+@media(prefers-reduced-motion:reduce){.world-news-reader::backdrop{backdrop-filter:none}}

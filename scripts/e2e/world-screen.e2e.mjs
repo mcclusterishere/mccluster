@@ -174,6 +174,28 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
       const lim = Math.min(20, Number(u.searchParams.get('limit')) || 20);
       return json(route, { ok: true, items: world.news.slice(at, at + lim), next_before: at + lim < world.news.length ? 'cur|' + (at + lim) : null, attribution: GDELT });
     }
+    /* Mimic the only circumstance in which the UI may expose news comments:
+       the reviewed backend explicitly advertises that its table is available. */
+    if (u.pathname === '/v1/world/news/comments-capability') {
+      if (auth) return json(route, {error:'Capability must not require a user session'},400);
+      return json(route, {available:true});
+    }
+    // Staged news-comment API fixture: source-backed and first-party only.
+    const newsComment = u.pathname.match(/^\/v1\/world\/news\/([0-9a-f-]{36})\/comments$/);
+    if (newsComment) {
+      const story = world.news.find(x=>x.id===newsComment[1]);
+      if (!story) return json(route,{error:'Story not found'},404);
+      const comments = (world.newsComments ||= {})[story.id] ||= [];
+      if (m === 'POST') {
+        if (!auth) return json(route,{error:'Sign in to comment'},401);
+        const value=String(body?.body||'').trim();
+        if (!value||[...value].length>1000)return json(route,{error:'Invalid comment'},400);
+        const comment={id:world.id(),body:value,actor:ME,created_at:new Date().toISOString()};
+        comments.push(comment);
+        return json(route,{comment},201);
+      }
+      return json(route,{comments});
+    }
     const before = u.searchParams.get('before');
     if (before && Number.isNaN(Date.parse(before))) return json(route, { error: 'bad cursor' }, 400);
     const asOf = (list) => before ? list.filter((p) => p.created_at < before) : list;
@@ -346,7 +368,39 @@ const chooseTravelPlace = async (page, id, query) => {
       && list && !list.hidden && [...list.querySelectorAll('button')]
         .some(button => button.textContent?.includes(expected));
   }, {id, expected}, {timeout: 25000});
-  await page.locator('#'+id+'Results button').filter({hasText: expected}).first().click({noWaitAfter:true,timeout:20000});
+  // Diagnostic for the desktop-only CI interaction stall: check actual
+  // viewport geometry, computed visibility and nearest clipping ancestor.
+  // No addresses or private coordinates are printed, only boolean/layout data.
+  if (process.env.E2E_ONLY === 'travel-desktop') {
+    console.log('TRAVEL_SUGGEST_LAYOUT',JSON.stringify(await page.evaluate(({id,expected}) => {
+      const list=document.getElementById(id+'Results');
+      const row=[...list.querySelectorAll('button')].find(b=>b.textContent?.includes(expected));
+      const rect=node=>{const r=node?.getBoundingClientRect();return r?{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}:null};
+      const style=node=>{const s=node&&getComputedStyle(node);return s?{display:s.display,visibility:s.visibility,opacity:s.opacity,overflow:s.overflow}:null};
+      const feed=document.getElementById('mnWorldFeed');
+      return {row:rect(row),rowStyle:style(row),list:rect(list),listStyle:style(list),
+        field:rect(list?.parentElement),fieldStyle:style(list?.parentElement),feed:rect(feed),feedStyle:style(feed),
+        rootExpanded:document.documentElement.classList.contains('wt-expanded'),scrollTop:Math.round(feed?.scrollTop||0),
+        rowVisible:!!(row?.offsetWidth&&row?.offsetHeight)};
+    },{id,expected})));
+  }
+  const option = page.locator('#'+id+'Results button').filter({hasText:expected}).first();
+  try { await option.click({noWaitAfter:true,timeout:5000}); }
+  catch (error) {
+    // The Cesium canvas continuously paints while the suggestion popup is
+    // shown. If the intended option is truly exposed and enabled, an actual
+    // forced pointer click can bypass Playwright's overly strict stable-frame
+    // heuristic. Never bypass an obscured, disabled or hidden option.
+    const exposed = await option.evaluate(el => {
+      const r=el.getBoundingClientRect(), style=getComputedStyle(el);
+      const x=(r.left+r.right)/2, y=(r.top+r.bottom)/2;
+      const hit=document.elementFromPoint(x,y);
+      return r.width>0&&r.height>0&&!el.disabled&&style.visibility==='visible'
+        &&style.display!=='none'&&(hit===el||el.contains(hit));
+    });
+    if (!exposed) throw error;
+    await option.click({force:true,noWaitAfter:true,timeout:5000});
+  }
   await page.waitForFunction(({id, query, expected}) => {
     const input = document.getElementById(id);
     return input && input.value !== query && input.value.includes(expected)
@@ -487,7 +541,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
       throw error;
     }
-    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('#dcPreviewCapstone')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('.mn-swipe__filters [data-status="completed"]')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
     check(scope,'Posts hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
@@ -583,7 +637,7 @@ if(runs('mission-archive')) {
   const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
   try{
     const globe=page.frame({url:/action-globe\.html/});
-    await page.waitForSelector('#dcPreviewCapstone');
+    await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
@@ -591,7 +645,9 @@ if(runs('mission-archive')) {
     await page.click('.wt-world-modes [data-world-mode=travel]');
     await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
     await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.locator('#dcPreviewCapstone').getByRole('button',{name:'Show on the globe'}).click();
+    const completedSeries=page.locator('#mnCompletedSeries .dc-series');
+    if(!(await completedSeries.evaluate(e=>e.open)))await completedSeries.locator('summary').click();
+    await completedSeries.getByRole('button',{name:'Show on globe'}).click();
     await page.evaluate(()=>__travelGeoResolve());
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='missions'&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
@@ -612,7 +668,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
-    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' missions to explore');
+    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
@@ -633,10 +689,9 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     }));
     if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
-    await page.click('#huWorldFilters summary');
-    check(scope,'compact filter opens access to missions and regions',await page.isVisible('#mnWorldIdle'));
-    await page.keyboard.press('Escape');
-    check(scope,'Escape closes the filter',!(await page.locator('#huWorldFilters').evaluate(e=>e.open)));
+    check(scope,'redundant globe region filter is removed from the visible canvas',await page.locator('#huWorldFilters').isHidden());
+    check(scope,'mission status switch is available without category clutter',
+      await page.locator('.mn-swipe__filters [data-status="open"]').count()===1&&await page.locator('.mn-swipe__filters [data-status="completed"]').count()===1);
     if(device.viewport.width<600)await page.click('#huSearchToggle');
     await page.fill('#mnSearchInput','Mill');
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
@@ -681,10 +736,33 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');
-    await page.click('[data-hu-feed="community"]');
-    check(scope,'Community keeps member posts and hides the news stream',await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()===0);
-    await page.click('[data-hu-feed="all"]');
-    check(scope,'For you restores the news stream',await page.locator('#mnFeed [data-news-id]').count()>0);
+    check(scope,'one Feed mode, no duplicate News deck or For you/Community tabs',
+      (await page.locator('#worldNewsDeck,.hu-feed-tabs,.hu-section-label').count())===0 &&
+      (await page.locator('.wt-world-modes [data-world-mode=posts]').textContent()).trim()==='Feed');
+    check(scope,'the one feed interleaves community posts and publisher-attributed headlines',
+      await page.locator('#mnFeed [data-post-id]').count()>0 && await page.locator('#mnFeed [data-news-id]').count()>0);
+    await page.waitForSelector('#mnFeed [data-news-id] [data-discussion-toggle]',{timeout:15000});
+    check(scope,'member posts and news use the same inline discussion control',
+      await page.locator('#mnFeed [data-post-id] [data-discussion-toggle]').count()>0 &&
+      await page.locator('#mnFeed [data-news-id] [data-discussion-toggle]').count()>0);
+    if (member) {
+      const firstPost=page.locator('#mnFeed [data-post-id]').first();
+      await firstPost.locator('[data-discussion-toggle]').click();
+      await firstPost.locator('.mn__comment-form input').fill('Ready to work on this together.');
+      await firstPost.locator('.mn__comment-form button').click();
+      await page.waitForFunction(()=>document.querySelector('#mnFeed [data-post-id] .mn__comment')?.textContent?.includes('Ready to work on this together.'),{timeout:5000}).catch(()=>{});
+      check(scope,'member can post a comment on an existing member post',
+        await firstPost.locator('.mn__comment').count()>0 &&
+        (await firstPost.locator('.mn__comments-list').textContent()).includes('Ready to work on this together.'));
+      const firstNews=page.locator('#mnFeed [data-news-id]').first();
+      await firstNews.locator('[data-discussion-toggle]').click();
+      await firstNews.locator('.mn__comment-form input').fill('Here is a community perspective on this headline.');
+      await firstNews.locator('.mn__comment-form button').click();
+      await page.waitForFunction(()=>document.querySelector('#mnFeed [data-news-id] .mn__comment')?.textContent?.includes('Here is a community perspective on this headline.'),{timeout:5000}).catch(()=>{});
+      check(scope,'member can comment on source-backed news inside the same feed',
+        await firstNews.locator('.mn__comment').count()>0 &&
+        (await firstNews.locator('.mn__comments-list').textContent()).includes('Here is a community perspective on this headline.'));
+    }
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
     if(member){
@@ -1184,7 +1262,7 @@ const newsState = (page) => page.evaluate(() => {
     /* a short publisher name is shown whole; only a long one is cut, inside its card */
     domains: cards.slice(0, 2).map((c) => { const d = c.querySelector('.mn__news-domain'); return d ? d.scrollWidth <= d.clientWidth : null; }),
     links: cards.map((c) => { const b = c.querySelector('button.mn__news-title'); return b && { id: b.dataset.newsOpen, href: b.getAttribute('href'), type: b.type }; }),
-    imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture,svg').length, 0) };
+    imgs: cards.reduce((n, c) => n + c.querySelectorAll('img,picture').length, 0) };
 });
 /* the state without the per-card links, for a readable log line */
 const brief = ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains }) => ({ posts, news, credit, creditText, href, target, rel, more, status, sw, cw, cardsFit, domains });
@@ -1202,7 +1280,7 @@ if (runs('news-guest')) {
   check(scope, 'the mixed feed and geographic news read the Worker without a session', reads.some((r) => /[?&]limit=20$/.test(r.search)) && reads.length <= 2 && reads.every((r) => !r.auth && /[?&]limit=(?:20|50)$/.test(r.search)), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
   const ids = await page.$$eval('#mnFeed [data-news-id]', (a) => a.map((x) => x.getAttribute('data-news-id')));
-   check(scope, 'every headline stays on McCluster as a first-party reader button; no pictures or marks', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
+   check(scope, 'every headline stays in-app, without publisher photos or logos; comment icons are allowed', st.links.length === 20 && st.links.every((l, k) => l && l.id === ids[k] && l.href === null && l.type === 'button') && st.imgs === 0, st.links.slice(0, 2));
    const worldUrlBeforeNews = page.url();
    await page.locator('#mnFeed [data-news-id] .mn__news-title').first().click();
    const modal = page.locator('#worldNewsReader');
@@ -1231,7 +1309,10 @@ if (runs('news-guest')) {
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(2600);
+  /* The flight is an animation: wait for the camera to arrive (bounded), not
+     for a fixed instant that lands mid-descent on a slow runner. The check
+     below still requires the final altitude; only the sampling moment moves. */
+  await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
