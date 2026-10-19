@@ -28,7 +28,7 @@ async function setup(width=390,role='owner'){
   const context=await browser.newContext({viewport:{width,height:900},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   const behavior={owner:role==='owner',mode:'full',release:null},calls=[],errors=[];
   await context.addInitScript(({role})=>{
-    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));
+    localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(role==='guest')return;
     const exp=Math.floor(Date.now()/1000)+3600,id='11111111-1111-4111-8111-111111111111';
     localStorage.setItem('mccdb_session',JSON.stringify({access_token:'x.'+btoa(JSON.stringify({exp,sub:id,email:'fixture@invalid.test'})).replace(/=+$/,'')+'.y',refresh_token:'fixture-refresh',expires_at:exp,user:{id,email:'fixture@invalid.test'}}));

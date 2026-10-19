@@ -62,7 +62,7 @@ async function context(viewport, { member = false, eligible = false, owner = fal
   const mobile = viewport.width < 600;
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile });
   await ctx.addInitScript((m) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     if (m) { const exp = Math.floor(Date.now() / 1000) + 3600; localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: '11111111-1111-4111-8111-111111111111', email: 'owner@test' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp, user: { id: '11111111-1111-4111-8111-111111111111', email: 'owner@test' } })); }
   }, member);
   const calls = [];
@@ -73,7 +73,7 @@ async function context(viewport, { member = false, eligible = false, owner = fal
     if (p === '/v1/world/access') return json(route, auth
       ? { level: owner ? 'owner' : 'fan', unlocked_layers: ['flights', 'satellites', 'launches', 'intel', 'music', 'transport'].concat(eligible ? ['cctv'] : []), locked_layers: FAN_LOCKED('privacy_acknowledgement_required').filter((l) => !(eligible && l.id === 'cctv')), layers: { transport: WHIP_LAYER }, approximate_location: { source: 'ip_approximate', country: 'US', region: 'Connecticut', city: 'New Haven', lat: 41.3, lon: -72.9 } }
       : { level: 'public', unlocked_layers: ['flights'], locked_layers: ['satellites', 'launches', 'intel', 'music', 'cctv', 'audience', 'transport'].map((id) => ({ id, reason: 'sign_in_required', next_step: 'sign_in' })), layers: { transport: WHIP_LAYER } });
-    if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, privacy_acknowledged: eligible, mission_completed: eligible }, reason: eligible ? null : 'privacy_acknowledgement_required', privacy_version: '2026-09-26' } : { eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false }, reason: 'sign_in_required' });
+    if (p === '/v1/world/cctv/eligibility') return json(route, auth ? { eligible, checks: { signed_in: true, privacy_acknowledged: eligible, mission_completed: eligible }, reason: eligible ? null : 'privacy_acknowledgement_required', privacy_version: '2026-10-19' } : { eligible: false, checks: { signed_in: false, privacy_acknowledged: false, mission_completed: false }, reason: 'sign_in_required' });
     if (p === '/v1/world/cctv/sources') return eligible && auth ? json(route, SOURCES) : json(route, { error: 'no' }, 403);
     if (p.startsWith('/v1/world/cctv/frame/')) return eligible && auth ? route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': '*', 'x-cctv-source': 'upstream-image', 'x-cctv-provider': 'City of Austin', 'last-modified': new Date(Date.now() - 40000).toUTCString(), 'x-cctv-retrieved-at': new Date().toISOString(), 'x-cctv-license': 'public' }, body: FRAME }) : json(route, { error: 'no' }, 403);
     if (p === '/v1/intel/geo') return intel ? json(route, INTEL) : json(route, { code: 'intel_schema_not_ready' }, 503);
@@ -184,7 +184,7 @@ for (const size of SIZES) {
     await page.click('[data-cctv-privacy]');
     await page.waitForTimeout(800);
     const put = sbCalls[0] ? JSON.parse(sbCalls[0]) : null;
-    check(`member-${size.name}`, "agreeing records the privacy version and time on the member's own record, and no position", !!put && put.data && put.data.privacy_policy_version === '2026-09-26' && !!Date.parse(put.data.privacy_acknowledged_at) && !/lat|lon|coords/i.test(sbCalls[0]), sbCalls);
+    check(`member-${size.name}`, "agreeing records the privacy version and time on the member's own record, and no position", !!put && put.data && put.data.privacy_policy_version === '2026-10-19' && !!Date.parse(put.data.privacy_acknowledged_at) && !/lat|lon|coords/i.test(sbCalls[0]), sbCalls);
     check(`member-${size.name}`, 'no location-consent route is ever called', !calls.some((c) => /location-consent/.test(c.p)));
     await page.$eval('#cctvClose', (b) => b.click());
     /* Whip Equipped: open to a member; rides are not live; drivers are asked to sign up with Whip */

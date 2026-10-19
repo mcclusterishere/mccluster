@@ -4,7 +4,7 @@
    override of browser/OS permissions or privacy signals. */
 (function (w, d) {
   "use strict";
-  var VERSION = "2026-09-26";
+  var VERSION = "2026-10-19";
   var KEY = "mcc_privacy_ack";
   var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 
@@ -140,13 +140,13 @@
     gate.innerHTML =
       '<div class="mccpg__card">' +
       '<h1 id="mccPrivacyGateTitle">Privacy before entry</h1>' +
-      '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Review it before entering.</p>' +
+      '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them. Review the updated notice before entering.</p>' +
       '<p><b>This acknowledgement is not blanket consent.</b> Precise location and other protected device permissions still use their own browser or operating-system controls, and privacy signals remain honored.</p>' +
       '<div class="mccpg__actions">' +
       '<a href="/privacy.html">Review the Privacy Policy</a>' +
       '<button type="button" id="mccPrivacyAgree">I agree &amp; continue</button>' +
       '</div>' +
-      '<small>Privacy notice version 2026-09-26</small>' +
+      '<small>Privacy notice version 2026-10-19</small>' +
       '</div>';
     d.body.appendChild(gate);
     var btn = d.getElementById("mccPrivacyAgree");
