@@ -168,6 +168,7 @@
     syncIdentity();
     if(S.identityTimer)clearInterval(S.identityTimer);
     S.identityTimer=setInterval(function(){if(who()!==S.ownerUser){syncIdentity();redraw();}},1000);
+    window.addEventListener("mcc:auth-changed",function(){syncIdentity();redraw();});
     window.addEventListener("focus",function(){syncIdentity();redraw();});
     document.addEventListener("visibilitychange",function(){if(document.hidden){clearTimeout(S.timer);S.timer=null;}else{syncIdentity();schedule();}});
     window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"){syncIdentity();redraw();}});
