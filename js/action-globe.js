@@ -167,7 +167,7 @@ function liftTravelControls(){
   const overlap=(a,b)=>a&&b&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
   const clearance=parseFloat(parentFrame.getComputedStyle(doc.documentElement).getPropertyValue('--mn-bar-clear'))||0;
   const dock=rect('.appbar')||(doc.body.dataset.worldAudioChild==='ready'&&clearance>0?{left:0,right:doc.documentElement.clientWidth,top:parentFrame.innerHeight-clearance,bottom:parentFrame.innerHeight}:null);
-  const obstacles=[dock,...['#mccWorldAudioControls','.mn__world-expand','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r));
+  const obstacles=[dock,...['#mccWorldAudioControls','#mnWorldStack','.mn__world-expand','#mnWorldPlay','.wt-world-modes','.wt-headline','.wt-destination','.mn__top','#wtMapNav','#wtMapPickBanner'].map(rect)].filter(r=>overlap(frame,r));
   const preferred=getComputedStyle(rail).flexDirection;
   for(const direction of [preferred,preferred==='row'?'column':'row']){
    rail.style.flexDirection=direction;const size=rail.getBoundingClientRect();
@@ -195,7 +195,7 @@ function wireTravelControlLayout(){
  window.addEventListener('resize',scheduleTravelControls,{passive:true});
  try{
   if(!parentFrame)return;parentFrame.addEventListener('resize',scheduleTravelControls,{passive:true});parentFrame.addEventListener('mcc:world-audio-layout',scheduleTravelControls);
-  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,.mn__world-expand,.wt-world-modes,#wtMapNav,#wtMapPickBanner')])if(el)observer.observe(el)}
+  if(window.ResizeObserver){const observer=new ResizeObserver(scheduleTravelControls);for(const el of [window.frameElement,...parentFrame.document.querySelectorAll('.appbar,#mccWorldAudioControls,#mnWorldStack,#mnWorldPlay,.mn__world-expand,.wt-world-modes,#wtMapNav,#wtMapPickBanner')])if(el)observer.observe(el)}
  }catch(_){}
  scheduleTravelControls();
 }
@@ -435,9 +435,11 @@ const NIGHT_TILES='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Blac
 const CLOUDS='assets/img/globe/nasa-clouds-2048.webp';
 const EDITORIAL_CLOUD_ALPHA=.65;
 let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto',selectionShown=false,continentLabels=[];const pinCache={};
-/* MISSION PINS PULSE (owner, 2026-10-19: the dots were too easy to miss). A red halo breathes behind every open mission pin; it is
-   the pin's hit area too. Reduced motion keeps the halo still. */
+/* MISSION PINS PULSE (owner, 2026-10-19: the dots were too easy to miss). A red halo breathes behind every open mission pin. It is
+   decoration only: a tap falls through it to the pin, a marker or the country underneath, so a wide halo over a small country
+   never swallows that country's tap. Reduced motion keeps the halo still. */
 const missionHalos=[],PULSE=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function pickSolid(position){const list=viewer.scene.drillPick(position,6)||[];return list.find(x=>!(x&&x.id&&x.id.properties&&x.id.properties.halo))||null}
 function glowHalo(color){const key='halo:'+color;if(pinCache[key])return pinCache[key];const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');const r=g.createRadialGradient(48,48,6,48,48,46);r.addColorStop(0,color+'e6');r.addColorStop(.35,color+'80');r.addColorStop(.7,color+'26');r.addColorStop(1,color+'00');g.fillStyle=r;g.fillRect(0,0,96,96);return pinCache[key]=c.toDataURL('image/png')}
 /* Mission markers share the refined enamel language: legible at phone zoom,
    hue encodes the original action type; no overbright blurry white-center dots.
@@ -820,7 +822,7 @@ viewer.screenSpaceEventHandler.setInputAction(p=>{
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=viewer.scene.pick(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
