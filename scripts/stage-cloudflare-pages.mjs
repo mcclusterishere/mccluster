@@ -40,7 +40,7 @@ const allowedExtensions = new Set([
 const forbiddenFiles = new Set([
   'AGENTS.md','CLAUDE.md','CODEX.md','GEMINI.md','README.md',
   'package.json','package-lock.json','wrangler.toml','wrangler.jsonc',
-  '.mcp.json','.cursorrules','CNAME','CITATION.cff','LICENSE',
+  '.mcp.json','.cursorrules','CNAME','CITATION.cff',
   'data/analytics/application-schema-inventory.json',
   'data/clients.json','whip/manufacturing-crm.json'
 ]);
@@ -80,6 +80,9 @@ function shouldPublish(path) {
     if (pieces[1] === 'resume' && !/\.(?:pdf|docx)$/i.test(posix)) return false;
   }
   if (posix.endsWith('.docx') && !posix.startsWith('assets/resume/')) return false;
+  /* index.html declares <link rel="license" href="LICENSE">; the licence text is
+     public by definition and has no extension, so it passes before the gate. */
+  if (posix === 'LICENSE') return true;
   const name = basename(posix);
   const dot = name.lastIndexOf('.');
   if (dot < 0 || !allowedExtensions.has(name.slice(dot).toLowerCase())) return false;

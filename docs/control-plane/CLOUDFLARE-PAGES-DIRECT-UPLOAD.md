@@ -59,6 +59,8 @@ node /srv/mccluster/source/scripts/smoke-cloudflare-pages.mjs \
   --url https://mccluster-web.pages.dev --commit "$MC_SOURCE_SHA"
 ```
 
+The project is created once, as a Direct Upload project whose **production branch is `main`**: `wrangler pages project create mccluster-web --production-branch=main`. The deploy script refuses to upload when the project is missing, because a release sent with `--branch=main` to a project whose production branch is something else becomes a preview deployment and `mccluster-web.pages.dev` never serves it.
+
 Use `PAGES_STAGE_ONLY=1` to stage without uploading (with a separate empty release directory). There is no connected GitHub integration and no Pages custom domain yet. The script never calls GitHub.
 
 ## Acceptance before the domain cutover
