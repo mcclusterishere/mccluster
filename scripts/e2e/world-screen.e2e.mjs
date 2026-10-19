@@ -523,7 +523,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
           mode: document.documentElement.dataset.worldMode,
           modeApi: window.MCC_WORLD_MODE?.get?.(),
           showcaseAvailable: !!window.DocketCohortShowcase,
-          previewText: document.getElementById('mnCompletedMissions')?.innerText ?? null,
+          seriesText: document.getElementById('mnCompletedSeries')?.innerText ?? null,
           capstonePresent: !!document.getElementById('dcPreviewCapstone'),
           caption: document.getElementById('mnWorldCaption')?.textContent ?? null,
           visibility: document.visibilityState
