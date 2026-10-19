@@ -25,9 +25,15 @@
   }
   function sid(){return S.site===FIRST?null:S.site;}
   function settled(name,p){return p.then(function(v){return{name:name,ok:true,value:v};}).catch(function(err){return{name:name,ok:false,error:err};});}
-  function rpc(name,body){return S.supa("rpc/"+name,{method:"POST",body:body});}
+  /* Every RPC used by Control Analytics is read-only. A transient PostgREST
+     statement cancellation must not permanently blank a whole data family. */
+  function rpc(name,body){return retryStatementTimeout(function(){return S.supa("rpc/"+name,{method:"POST",body:body});});}
   function retryStatementTimeout(fn){
-    return Promise.resolve().then(fn).catch(function(error){
+    /* Dispatch the initial RPC synchronously. Globe selections rely on
+       starting the first request before the selection changes again. */
+    var first;
+    try { first=fn(); } catch(error) { first=Promise.reject(error); }
+    return Promise.resolve(first).catch(function(error){
       var code=String(error&&error.code||""),msg=String(error&&error.message||error||"");
       if(code!=="57014"&&!/statement timeout|canceling statement/i.test(msg))throw error;
       return new Promise(function(resolve){setTimeout(resolve,180);}).then(fn);
@@ -989,7 +995,15 @@
     else if(x.name==="identity")S.data.identity=v||{};
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="experience")S.data.experience=v||null;
-    else if(x.name==="business"){S.data.business=v||null;if(v&&v.snapshot&&v.snapshot.partial)S.errors.business=new Error("Some business measurements are unavailable; available values are retained.");}
+    else if(x.name==="business"){
+      S.data.business=v||null;
+      if(v&&v.snapshot&&v.snapshot.partial){
+        var missing=Object.keys(v.snapshot.read_errors||{});
+        S.errors.business=new Error(missing.length
+          ?"Partial business measurements: "+missing.slice(0,8).join(", ")+(missing.length>8?" (+"+(missing.length-8)+" more)":"")+"; available values are retained."
+          :"Some business measurements are unavailable; available values are retained.");
+      }
+    }
     else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
@@ -1031,7 +1045,7 @@
        result could paint. Keep the full suite, but bound fan-out and paint
        each completed read immediately. */
     var tasks=[
-      {name:"hourly",run:function(){return r.id==="24h"?retryStatementTimeout(function(){return rpc("analytics_hourly",daily);}):Promise.resolve([]);}},
+      {name:"hourly",run:function(){return r.id==="24h"?rpc("analytics_hourly",daily):Promise.resolve([]);}},
       {name:"daily",run:function(){return r.id==="24h"?Promise.resolve([]):rpc("analytics_daily",daily);}},
       {name:"totals",run:function(){return rpc("analytics_totals",args);}},
       {name:"business",run:function(){return site===null?S.request("/v1/analytics/business?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
@@ -1059,7 +1073,10 @@
       {name:"errors",run:function(){return site===null?S.request("/v1/analytics/errors?since="+encodeURIComponent(r.since)+"&until="+encodeURIComponent(r.until)):Promise.resolve(null);}},
       {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
-    return runLimited(tasks,4,function(x){
+    /* Production PostgREST reports an 8-second authenticated statement limit.
+       Two independent dashboard reads at once leave capacity for ingestion and
+       the owner-only business summary; each completed family still paints. */
+    return runLimited(tasks,2,function(x){
       if(q!==S.seq)return;
       applyResult(x);
       S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;
