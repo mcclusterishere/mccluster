@@ -83,7 +83,7 @@ test('public export does not follow symlinks into private runtime files',async()
 test('a credential near the end of a >2 MiB JavaScript bundle cannot bypass the streaming scan',async()=>{
   const f=await fixture();
   const fake=['sk','live','9876543210987654321098765'].join('_');
-  await writeFile(join(f.input,'js','giant.js'),'x'.repeat(2*1024*1024+512)+fake);
+  await writeFile(join(f.input,'js','giant.js'),'x'.repeat(2*1024*1024+512)+'\nconst token = "'+fake+'";');
   const r=run(f);
   assert.notEqual(r.status,0,'large text must be scanned all the way through');
   assert.match(r.stderr,/Possible secret/);
