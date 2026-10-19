@@ -123,7 +123,7 @@ Do not infer health, genes, emotions, race, intelligence, politics or other sens
 2. Kumar, K. & Bajaj, K. (1995). *Competing patterns in the Faraday experiment*. Physical Review E 52, R4606. https://doi.org/10.1103/PhysRevE.52.R4606 . Fluid patterns depend on driving conditions.
 3. Kanduri, C. et al. (2015). *The effect of listening to music on human transcriptome*. PeerJ 3:e830. https://doi.org/10.7717/peerj.830 . Peripheral-blood listening experiment, not direct DNA activation.
 4. Nair, P. S. et al. (2019). *Music-performance regulates microRNAs in professional musicians*. PeerJ 7:e6660. https://doi.org/10.7717/peerj.6660 . Peripheral-blood microRNA response to music performance, not genre fingerprinting.
-5. Kumeta, M. et al. (2018). *Cellular gene expression responses to audible sound*. PLOS ONE. https://doi.org/10.1371/journal.pone.0188764 . Cell-culture response under controlled stimulation; not evidence of acoustic DNA "reprogramming."
+5. Kumeta, M. et al. (2018). *Cell type-specific suppression of mechanosensitive genes by audible sound stimulation*. PLOS ONE. https://doi.org/10.1371/journal.pone.0188764 . Cell-culture response under controlled stimulation; not evidence of acoustic DNA "reprogramming."
 6. MDN Web Docs. *AnalyserNode.getFloatFrequencyData()* https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatFrequencyData . Frequency bins and decibel conventions.
 7. Bogdanov, D. et al. (2019). *The MTG-Jamendo Dataset for Automatic Music Tagging*. https://github.com/MTG/mtg-jamendo-dataset . Genre/metadata methodology and license limitations.
 
