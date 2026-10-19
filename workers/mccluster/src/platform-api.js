@@ -1,4 +1,5 @@
 import { fail, reply } from './lib/http.js';
+import { isCountry } from './intel/news-country-codes.js';
 
 const encoder = new TextEncoder();
 
@@ -291,12 +292,25 @@ async function prepareNetworkPost(env,muid,b,appKey){
     groupId=gid;
     visibility='network';
   }
-  return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null}};
+  /* Region placement is a deliberate, public author action — NEVER IP inferred.
+     OFF until the pending SQL and regional feed have been verified. */
+  const requestedCountry=b.country_code;
+  let countryCode=null;
+  if(requestedCountry!==undefined && requestedCountry!==null && requestedCountry!==''){
+    if(String(env.WORLD_PLACE_SCOPE_ENABLED||'').toLowerCase()!=='true')
+      return {error:'Country placement is not switched on yet.',status:503};
+    if(typeof requestedCountry!=='string'||!isCountry(requestedCountry))
+      return {error:'Choose a valid country on the globe.',status:400};
+    if(visibility!=='public'||groupId)
+      return {error:'Only public posts can be associated with a regional feed.',status:400};
+    countryCode=requestedCountry;
+  }
+  return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null,...(countryCode?{country_code:countryCode}:{})}};
 }
 async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   const posters=draft.poster_by_media||{};
   const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||'',poster_asset_id:posters[a.id]||null}));
-  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId})});
+  const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body:draft.body,post_type:draft.post_type,visibility:draft.visibility,media,metadata:draft.metadata,reply_to_id:draft.reply_to_id,group_id:draft.group_id,source_app_id:draft.source_app_id,scheduled_post_id:scheduledPostId,...(draft.country_code ? {country_code:draft.country_code} : {})})});
   const created=rows?.[0],ids=uniq([...(draft.media_asset_ids||[]),...Object.values(posters).filter(uuidLike)]);
   if(created&&ids.length)await service(env,`network_media_assets?id=in.(${ids.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
   return rows||[];
