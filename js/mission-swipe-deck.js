@@ -72,11 +72,11 @@
       '<button type="button" role="tab" data-status="completed" aria-selected="false">Completed</button></div>' +
       '<button class="mn-swipe__undo" type="button" aria-label="Undo last pass" title="Undo last pass">↶</button></div>' +
       '<p class="mn-swipe__count"></p><div class="mn-swipe__stage"></div>' +
-      '<div class="mn-swipe__completed" id="mnCompletedMissions" role="tabpanel" aria-label="Completed mission series" hidden></div>' +
+      '<div class="mn-swipe__completed" id="mnCompletedSeries" role="tabpanel" aria-label="Completed mission series" hidden></div>' +
       '<p class="mn-swipe__status" role="status" aria-live="polite" aria-atomic="true"></p>';
     var filters = host.querySelector(".mn-swipe__filters"), stage = host.querySelector(".mn-swipe__stage"), status = host.querySelector(".mn-swipe__status");
     var count = host.querySelector(".mn-swipe__count"), undo = host.querySelector(".mn-swipe__undo"), completed = host.querySelector(".mn-swipe__completed");
-    filters.querySelector('[data-status="completed"]').setAttribute("aria-controls", "mnCompletedMissions");
+    filters.querySelector('[data-status="completed"]').setAttribute("aria-controls", "mnCompletedSeries");
     function el(tag, className, value) {
       var node = doc.createElement(tag); if (className) node.className = className; if (value != null) node.textContent = String(value); return node;
     }

@@ -192,7 +192,7 @@ try {
     assert.equal(await s.current(), ids[2]);
     await s.page.locator('.mn-swipe__undo').click(); assert.equal(await s.current(), ids[1]);
     await s.page.locator('[data-status="completed"]').click();
-    await s.page.locator('#mnCompletedMissions .dc-series').waitFor();
+    await s.page.locator('#mnCompletedSeries .dc-series').waitFor();
     assert.equal(await s.page.locator('.mn-swipe__card').count(), 0);
     await s.page.locator('.dc-series__summary').click();
     assert.match(await s.page.locator('.dc-series__name').textContent(), /Docket 516R.*Write a Song/);

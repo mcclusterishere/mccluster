@@ -270,7 +270,7 @@
     if(d.type==='hu:completed-selected'&&current&&current.event&&d.eventId===current.event.slug){
       var tab=doc.querySelector('.mn-swipe__filters [data-status="completed"]');
       if(tab&&tab.getAttribute('aria-selected')!=='true')tab.click();
-      var target=doc.getElementById('dcPreviewCapstone')||doc.getElementById('mnCompletedMissions');
+      var target=doc.getElementById('dcPreviewCapstone')||doc.getElementById('mnCompletedSeries');
       if(target)target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
     }
   });

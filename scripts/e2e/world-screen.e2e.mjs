@@ -583,7 +583,7 @@ if(runs('mission-archive')) {
   const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
   try{
     const globe=page.frame({url:/action-globe\.html/});
-    await page.waitForSelector('#mnCompletedMissions .dc-series__card',{state:'attached'});
+    await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
@@ -591,7 +591,7 @@ if(runs('mission-archive')) {
     await page.click('.wt-world-modes [data-world-mode=travel]');
     await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
     await page.click('.wt-world-modes [data-world-mode=missions]');
-    const completedSeries=page.locator('#mnCompletedMissions .dc-series');
+    const completedSeries=page.locator('#mnCompletedSeries .dc-series');
     if(!(await completedSeries.evaluate(e=>e.open)))await completedSeries.locator('summary').click();
     await completedSeries.getByRole('button',{name:'Show on globe'}).click();
     await page.evaluate(()=>__travelGeoResolve());
