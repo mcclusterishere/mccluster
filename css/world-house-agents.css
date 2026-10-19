@@ -1,0 +1,39 @@
+/* The fictional-actor drawer is an extension of World context, never an
+   account count or engagement claim. It does not change the globe, travel
+   planner, mission card, or shared bottom navigation. Phone first. */
+.world-house-agents {
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid rgba(214,166,255,.4);
+  border-radius: 8px;
+  background: rgba(20,18,26,.94);
+  color: #f7f3fb;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.world-house-agents[hidden],
+.world-house-agents__mission[hidden],
+.world-house-agents small[hidden] {display:none !important}
+.world-house-agents__heading {display:flex;gap:8px;align-items:center;justify-content:space-between}
+.world-house-agents__heading strong {font:600 14px system-ui,sans-serif}
+.world-house-agents__heading button {
+  min-width:44px;min-height:44px; border:1px solid rgba(255,255,255,.25);
+  border-radius:6px;background:transparent;color:inherit;font:600 22px system-ui,sans-serif
+}
+.world-house-agents p {font:400 13px/1.45 system-ui,sans-serif; margin:6px 0 10px}
+.world-house-agents ul {list-style:none;padding:0;margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
+.world-house-agents li {min-width:0}
+.world-house-agents__actor {
+  width:100%;text-align:left;min-height:44px;
+  font:500 14px/1.35 system-ui,sans-serif;
+  padding:9px 8px;color:inherit;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);border-radius:5px
+}
+.world-house-agents__actor:focus-visible,
+.world-house-agents__heading button:focus-visible {outline:2px solid #fff;outline-offset:2px}
+.world-house-agents small {display:block;color:#d8cadf;font:400 12px/1.4 system-ui,sans-serif;padding:0 8px 8px}
+.world-house-agents__mission {padding:0 8px}
+@media (min-width:700px) {
+  .world-house-agents {padding:16px}
+  .world-house-agents ul {grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+}
