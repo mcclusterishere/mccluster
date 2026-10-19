@@ -10,6 +10,16 @@
 (function (root) {
   "use strict";
 
+  // Inside the opt-in persistent Music shell, the top document is the sole
+  // canonical player. Never construct a second Audio element in the subpage.
+  // Ordinary pages retain the existing standalone Music engine unchanged.
+  if (root.parent !== root && root.frameElement &&
+      root.frameElement.hasAttribute("data-mcc-single-music-engine")) {
+    if (!root.parent.MCC_MUSIC) throw new Error("Persistent music host not ready");
+    root.MCC_MUSIC = root.parent.MCC_MUSIC;
+    return;
+  }
+
   var doc = root.document;
   var library = null;
   var loading = null;
