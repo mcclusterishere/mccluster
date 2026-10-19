@@ -1,7 +1,7 @@
 /* Resonance Atlas: browser-only opt-in analysis, canonical MCC_MUSIC playback.
  * There is no second audio element, server upload, inferred personality, or gene claim.
  */
-import { analyzePcm, analyzeTrackouts, modes } from "./core.mjs";
+import { analyzePcm, analyzeTrackouts, modes, resonanceClass } from "./core.mjs";
 
 const $ = id => document.getElementById(id);
 const status = $("rsStatus");
@@ -107,6 +107,8 @@ function renderAt(seconds) {
 function setAnalysis(analysis, identity, tiedToEngine) {
   activeAnalysis = analysis; sourceIdentity = identity; liveEngine = tiedToEngine;
   currentFrame = -1;
+  const cls = resonanceClass(analysis);
+  $("rsClass").textContent = "PHYSICAL RESPONSE CLASS  /  " + cls.key + "  —  " + cls.note;
   renderAt(0);
 }
 
