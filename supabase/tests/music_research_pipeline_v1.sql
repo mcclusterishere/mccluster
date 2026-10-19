@@ -17,7 +17,7 @@ begin
   select b.public into v_public from storage.buckets b where b.id='creator-research-outputs';
   if v_public is distinct from false then raise exception 'research output bucket must be private';end if;
   if not exists(select 1 from pg_policies where schemaname='storage'
-    and tablename='objects' and policyname='music_research_creator_artifact_read') then
+    and tablename='objects' and policyname='music_research_artifact_owner_download') then
     raise exception 'creator-private artifact preview policy missing';end if;
   if has_function_privilege('anon','public.mcc_music_research_claim(text,integer)','EXECUTE') or
      has_function_privilege('authenticated','public.mcc_music_research_claim(text,integer)','EXECUTE') or
@@ -34,7 +34,7 @@ begin
   if exists(select 1 from public.music_research_jobs) then
     raise exception 'fixture must have no inherited music job records';
   end if;
-  if (select count(*) from public.mcc_music_research_claim('test-worker',60))<>0 then
+  if (select count(*) from public.mcc_music_research_claim('mcc-cpu-test',60))<>0 then
     raise exception 'empty queue claim should yield no jobs';
   end if;
   if exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
