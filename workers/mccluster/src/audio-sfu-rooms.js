@@ -5,7 +5,7 @@
    Audio only. No recording, transcription or background capture.
    SQL: supabase/pending/20261019235000_network_sfu_audio_rooms.sql
 */
-import { fail, reply } from './lib/http.js';
+import { fail, reply, corsHeaders } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
 import { isCountry } from './intel/news-country-codes.js';
 
@@ -75,6 +75,26 @@ async function closeMic(env,m,fetchImpl) {
   if(Array.isArray(result?.tracks)&&result.tracks.some(t=>t.error))
     throw Object.assign(new Error('sfu_mic_close_failed'),{status:502});
 }
+async function stopReceiver(env,s,fetchImpl) {
+  if(!s?.sfu_session_id||!MID.test(s.sfu_mid||''))return;
+  const out=await sfu(env,'PUT','/sessions/'+encodeURIComponent(s.sfu_session_id)+
+    '/tracks/close',{tracks:[{mid:s.sfu_mid}],force:true},fetchImpl);
+  if(Array.isArray(out?.tracks)&&out.tracks.some(t=>t.error))
+    throw Object.assign(new Error('sfu_receiver_close_failed'),{status:502});
+}
+async function closeSubscriptions(env,room,scope,fetchImpl) {
+  // A removed or blocked listener must not keep receiving on a still-live
+  // SFU connection. Force-close subscriptions server-side before reporting
+  // successful leave, kick or demotion.
+  const matches=await service(env,'network_audio_subscriptions','room_id=eq.'+room+
+    '&status=neq.closed&'+scope+
+    '&select=id,sfu_session_id,sfu_mid',{},fetchImpl);
+  for(const sub of matches||[]) {
+    await stopReceiver(env,sub,fetchImpl);
+    await patch(env,'network_audio_subscriptions','id=eq.'+sub.id+'&status=neq.closed',
+      {status:'closed'},fetchImpl);
+  }
+}
 async function member(env,room,muid,fetchImpl) {
   const q='room_id=eq.'+room+'&m_uid=eq.'+muid+
     '&select=room_id,m_uid,role,status,muted,sfu_publication_session_id,sfu_publication_mid&limit=1';
@@ -120,7 +140,8 @@ const apiError=(req,env,e)=>error(req,env,e.status===413?'Request too large':
 
 export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now()}={}) {
   const url=new URL(req.url),path=url.pathname.replace(/\/+$/,'')||'/';
-  if(!path.startsWith(ROOT))return null;
+  if(path!==ROOT&&!path.startsWith(ROOT+'/'))return null;
+  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   if(path===ROOT+'/status'&&req.method==='GET')
     return respond(req,env,{ok:true,enabled:audioReady(env),transport:'cloudflare_realtime_sfu',
       recording:false,transcription:false,stage:{max_speakers:4},media_permission:'explicit_only'});
@@ -174,6 +195,11 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
     }
     const self=await member(env,rid,muid,fetchImpl);
     if(!self || self.status!=='joined')return error(req,env,'Join this room before requesting media',403);
+    if(req.method==='GET'&&action==='members'){
+      const people=await service(env,'network_audio_members','room_id=eq.'+rid+
+        '&status=eq.joined&select=m_uid,role,muted,joined_at&order=joined_at.asc&limit=250',{},fetchImpl);
+      return respond(req,env,{members:(people||[]).map(p=>({id:p.m_uid,role:p.role,muted:p.muted}))});
+    }
     if(req.method==='GET'&&action==='publications') {
       return respond(req,env,{publications:await publishList(env,rid,fetchImpl)});
     }
@@ -258,14 +284,33 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
         return error(req,env,'Choose a room member and speaker permission',400);
       const target=await member(env,rid,b.target_m_uid,fetchImpl);
       if(!target||target.status!=='joined')return error(req,env,'Member not in room',404);
-      if(!b.allow&&target.sfu_publication_session_id)await closeMic(env,target,fetchImpl);
+      if(!b.allow) {
+        if(target.sfu_publication_session_id)await closeMic(env,target,fetchImpl);
+        await closeSubscriptions(env,rid,'publisher_m_uid=eq.'+b.target_m_uid,fetchImpl);
+      }
       await rpc(env,'network_audio_assign_speaker',{p_room_id:rid,p_host_m_uid:muid,
         p_target_m_uid:b.target_m_uid,p_speaker:b.allow},fetchImpl);
       if(!b.allow)await clearedMember(env,rid,target,fetchImpl);
       return respond(req,env,{speaker:b.allow});
     }
+    if(req.method==='POST'&&action==='kick'){
+      if(room.host_m_uid!==muid)return error(req,env,'Only the host can remove members',403);
+      const b=await body(req);
+      if(!validUuid(b.target_m_uid)||b.target_m_uid===muid)return error(req,env,'Invalid member',400);
+      const target=await member(env,rid,b.target_m_uid,fetchImpl);
+      if(!target||target.status!=='joined')return error(req,env,'Member not in room',404);
+      if(target.sfu_publication_session_id)await closeMic(env,target,fetchImpl);
+      await closeSubscriptions(env,rid,'or=(listener_m_uid.eq.'+b.target_m_uid+
+        ',publisher_m_uid.eq.'+b.target_m_uid+')',fetchImpl);
+      await clearedMember(env,rid,target,fetchImpl);
+      await patch(env,'network_audio_members','room_id=eq.'+rid+'&m_uid=eq.'+b.target_m_uid,
+        {status:'kicked',role:'listener',muted:true,left_at:new Date(now()).toISOString()},fetchImpl);
+      return respond(req,env,{removed:true});
+    }
     if(req.method==='POST'&&action==='leave') {
       if(self.sfu_publication_session_id)await closeMic(env,self,fetchImpl);
+      await closeSubscriptions(env,rid,'listener_m_uid=eq.'+muid,fetchImpl);
+      await closeSubscriptions(env,rid,'publisher_m_uid=eq.'+muid,fetchImpl);
       await clearedMember(env,rid,self,fetchImpl);
       await patch(env,'network_audio_members','room_id=eq.'+rid+'&m_uid=eq.'+muid,
         {status:'left',muted:true,left_at:new Date(now()).toISOString()},fetchImpl);
@@ -284,6 +329,7 @@ export async function handleAudioRooms(req,env,{fetchImpl=fetch,now=()=>Date.now
         try {await closeMic(env,peer,fetchImpl);await clearedMember(env,rid,peer,fetchImpl);}
         catch {cleanupFailed++;}
       }
+      await closeSubscriptions(env,rid,'id=not.is.null',fetchImpl).catch(()=>{cleanupFailed++;});
       await patch(env,'network_audio_members','room_id=eq.'+rid+'&status=eq.joined',
         {status:'left',muted:true,left_at:new Date(now()).toISOString()},fetchImpl);
       return respond(req,env,{ended:true,cleanup_pending:cleanupFailed>0});
