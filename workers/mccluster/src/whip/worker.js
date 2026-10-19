@@ -292,8 +292,8 @@ export default {
         // room. Caller-chosen URLs could redirect operators to a phishing
         // domain after sensitive financial onboarding.
         const link = await createAccountLink(env, t.stripe_account_id, {
-          returnUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
-          refreshUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
+          returnUrl: appUrl(env, `/whip/rider/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=return`),
+          refreshUrl: appUrl(env, `/whip/rider/operator.html?tenant=${encodeURIComponent(t.id)}&stripe=refresh`)
         });
         return reply(env, { url: link.url, expires_at: link.expires_at });
       }
@@ -312,8 +312,8 @@ export default {
         const tenantId = whiteLabelMatch[1]; await requireOperator(req, env, tenantId); const t = await tenantById(env, tenantId); if (!t) return fail(env, 'Tenant not found', 404);
         const session = await createWhiteLabelSubscriptionCheckout(env, {
           tenantId: t.id, tenantSlug: t.slug, email: t.contact_email,
-          successUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
-          cancelUrl: appUrl(env, `/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
+          successUrl: appUrl(env, `/whip/rider/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=success`),
+          cancelUrl: appUrl(env, `/whip/rider/operator.html?tenant=${encodeURIComponent(t.id)}&white_label=cancel`)
         });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'white_label_subscription', resource_id: t.id, stripe_checkout_session_id: session.id, amount_cents: 3300, application_fee_cents: 0, status: 'checkout_created' });
         return reply(env, { checkout_url: session.url, session_id: session.id });
