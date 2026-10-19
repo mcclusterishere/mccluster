@@ -437,7 +437,7 @@
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
-      "detail": "{\"missing_from_map\":[],\"stale_in_map\":[]}"
+      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
     },
     {
       "name": ".cursorrules capability ids known",

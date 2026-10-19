@@ -8,7 +8,9 @@
   var pendingEventFocus=new URLSearchParams(location.search).get('completed');
   var mounted=new WeakSet(), mountedSeries=new WeakSet(), doc=document;
   function el(tag,cls,text){var n=doc.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=String(text);return n;}
-  function safeUrl(value){try{var u=new URL(String(value||''),location.href);return u.protocol==='https:'||u.origin===location.origin?u.href:null;}catch(_){return null;}}
+  // An absent field is not a link: new URL('', location.href) would resolve
+  // to this page itself and label an archive-only recording as published.
+  function safeUrl(value){if(value==null||String(value).trim()==='')return null;try{var u=new URL(String(value),location.href);return u.protocol==='https:'||u.origin===location.origin?u.href:null;}catch(_){return null;}}
   function link(label,url,cls,external){var a=el('a',cls,label),safe=safeUrl(url);if(safe)a.href=safe;if(external){a.target='_blank';a.rel='noopener noreferrer';}return a;}
   function button(label,fn,cls){var b=el('button',cls||'dc-button',label);b.type='button';b.onclick=fn;return b;}
   function pageUrl(slug){return PAGE+'?person='+encodeURIComponent(slug);}

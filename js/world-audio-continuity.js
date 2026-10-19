@@ -187,16 +187,25 @@
     if (!frame || !frame.contentWindow || !frameOrigin) return;
     frame.contentWindow.postMessage(Object.assign({channel:CHANNEL, id:channelId}, data), frameOrigin);
   }
+  function placeTransport(top, right) {
+    if (attached && channelId && parentOrigin) {
+      root.parent.postMessage({channel:CHANNEL, type:"controls-position", id:channelId, top:top, right:right}, parentOrigin);
+    } else if (controls && top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
+    else if (controls) { controls.style.top = top + "px"; controls.style.right = right + "px"; }
+  }
   function alignWorldTransport() {
     if (!IS_WORLD || (!attached && root.parent !== root)) return;
-    var expand = doc.querySelector(".mn__world-expand");
-    if (!expand) return;
-    var rect = expand.getBoundingClientRect();
-    if (rect.width < 20 || rect.top < 55 || rect.top > root.innerHeight - 65) return;
-    var top = Math.max(67, Math.round(rect.top - 60));
-    if (attached && channelId && parentOrigin) {
-      root.parent.postMessage({channel:CHANNEL, type:"controls-position", id:channelId, top:top}, parentOrigin);
-    } else if (controls) controls.style.top = top + "px";
+    /* The compact offset belongs to the World screen only. Off that screen
+       (Missions, Tour, profile) the bar keeps its bottom geometry; an inline
+       top left behind would stretch it into a full-height overlay. */
+    var onWorld = doc.documentElement.classList.contains("mn-world-on");
+    var expand = onWorld ? doc.querySelector(".mn__world-expand") : null;
+    var rect = expand ? expand.getBoundingClientRect() : null;
+    if (!rect || rect.width < 20 || rect.top < 55 || rect.top > root.innerHeight - 65) { placeTransport(null, null); return; }
+    /* Sit directly above the fullscreen control, sharing its right edge. In
+       landscape the globe is the left column and that edge is left of the
+       feed, so the transport never lands on the directions or active turn. */
+    placeTransport(Math.max(67, Math.round(rect.top - 60)), Math.max(12, Math.round(root.innerWidth - rect.right)));
   }
   function layout() {
     alignWorldTransport();
@@ -376,6 +385,15 @@
   });
   root.addEventListener("resize", layout);
   root.addEventListener("mcc:world-mode", layout);
+  if (IS_WORLD && typeof MutationObserver === "function") {
+    /* mnet.js toggles html.mn-world-on when the World screen opens or closes
+       without an event; re-run layout so the transport leaves with it. */
+    var layoutQueued = false;
+    new MutationObserver(function () {
+      if (layoutQueued) return; layoutQueued = true;
+      requestAnimationFrame(function () { layoutQueued = false; layout(); });
+    }).observe(doc.documentElement, {attributes:true, attributeFilter:["class"]});
+  }
   root.addEventListener("popstate", function () {
     var state = history.state && history.state.mccWorldAudio;
     if (state && musicSurface()) openWorld(state.href, {history:true, gesture:false});
@@ -395,8 +413,12 @@
     if (d.type === "hello") { send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
     if (d.id !== channelId) return;
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); send({type:"visibility", visible:open}); }
-    else if (d.type === "controls-position" && controls && open && Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
-      controls.style.top = Math.round(d.top) + "px";
+    else if (d.type === "controls-position" && controls && open) {
+      if (d.top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
+      else if (Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
+        controls.style.top = Math.round(d.top) + "px";
+        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) controls.style.right = Math.round(d.right) + "px";
+      }
     }
     else if (d.type === "music") closeWorld(true);
     else if (d.type === "pause") pause();

@@ -104,8 +104,9 @@ try{
   check('two Environmental Injustice versions keep independent Music links',await s.page.locator('#docket-516r-environmental-injustice a').filter({hasText:'Play in Music'}).count()===2);
   const players=await s.page.locator('audio,video').evaluateAll(nodes=>nodes.map(n=>({tag:n.tagName,src:n.src})));
   check('published audio delegates playback to Music; direct video previews remain local',players.filter(p=>p.tag==='AUDIO').length===0&&players.filter(p=>p.tag==='VIDEO').length===3&&players.every(p=>!p.src.includes('drive.google.com')),players);
-  check('published songs point at canonical Music routes',await s.page.locator('.dc-work a').filter({hasText:'Play in Music'}).count()===4);
-  check('unpublished archives retain labelled archive links',await s.page.locator('.dc-work a').filter({hasText:'Listen in the archive'}).count()===6);
+  const workLinks=await s.page.locator('.dc-work a').evaluateAll(nodes=>nodes.map(n=>({text:n.textContent.trim(),href:n.getAttribute('href')})));
+  check('published songs point at canonical Music routes',workLinks.filter(l=>/Play in Music/.test(l.text)).length===4,workLinks);
+  check('unpublished archives retain labelled archive links',workLinks.filter(l=>/Listen in the archive/.test(l.text)).length===6,workLinks);
   check('cohort video is included',await s.page.locator(`a[href="${archive.media.find(m=>m.kind==='cohort_video').url}"]`).count()===1);
   check('primary link text contrasts with its light background',await s.page.locator('a.dc-button--primary').evaluateAll(nodes=>nodes.every(n=>{const c=getComputedStyle(n);return c.color==='rgb(20, 23, 25)'&&c.backgroundColor==='rgb(244, 241, 234)';})));
   await fit(s.page,'project page fits 390px');await s.page.screenshot({path:join(OUT,'project-390.png')});

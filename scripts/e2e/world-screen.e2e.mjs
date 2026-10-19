@@ -487,7 +487,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
       throw error;
     }
-    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('#dcPreviewCapstone')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('.mn-swipe__filters [data-status="completed"]')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
     check(scope,'Posts hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
@@ -583,7 +583,7 @@ if(runs('mission-archive')) {
   const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
   try{
     const globe=page.frame({url:/action-globe\.html/});
-    await page.waitForSelector('#dcPreviewCapstone');
+    await page.waitForSelector('#mnCompletedMissions .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
@@ -591,7 +591,9 @@ if(runs('mission-archive')) {
     await page.click('.wt-world-modes [data-world-mode=travel]');
     await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
     await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.locator('#dcPreviewCapstone').getByRole('button',{name:'Show on the globe'}).click();
+    const completedSeries=page.locator('#mnCompletedMissions .dc-series');
+    if(!(await completedSeries.evaluate(e=>e.open)))await completedSeries.locator('summary').click();
+    await completedSeries.getByRole('button',{name:'Show on globe'}).click();
     await page.evaluate(()=>__travelGeoResolve());
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
     check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='missions'&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
