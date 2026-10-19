@@ -93,3 +93,22 @@ test('a credential near the end of a >2 MiB JavaScript bundle cannot bypass the 
   assert.notEqual(r.status,0,'large text must be scanned all the way through');
   assert.match(r.stderr,/Possible secret/);
 });
+
+test('keys glued to identifier characters are refused; long snake_case identifiers are not',async()=>{
+  const glued={
+    stripe:'x'.repeat(40)+['sk','live','ABCDEFGHIJKLMNOP'].join('_'),
+    github:'token'+['ghp',''].join('_')+'A'.repeat(36),
+    aws:'id'+'AKIA'+'ABCDEFGHIJ123456'
+  };
+  for(const [name,text] of Object.entries(glued)){
+    const f=await fixture();
+    await writeFile(join(f.input,'js','public.js'),'const v="'+text+'";');
+    const r=run(f);
+    assert.notEqual(r.status,0,name+' key glued to identifier characters must be refused');
+    assert.match(r.stderr,/Possible secret/);
+  }
+  const f=await fixture();
+  await writeFile(join(f.input,'js','public.js'),'const laughs_at_the_joke_counter_total_value_for_session=1;const AKIAFOO=2;');
+  const r=run(f);
+  assert.equal(r.status,0,r.stderr);
+});

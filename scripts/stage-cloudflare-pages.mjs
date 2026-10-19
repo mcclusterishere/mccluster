@@ -48,9 +48,13 @@ const forbiddenSegments = /^(?:\.git|\.github|\.cursor|\.claude|node_modules|__t
 const privateName = /(?:^|[/])(?:[^/]*\.(?:pem|key|crt|p12|pfx|sql|db|sqlite|ts|tsx|py|sh|service|timer|map|md|mdx|yaml|yml|toml|lock)|[^/]*(?:credentials|secrets?|private-key)[^/]*)$/i;
 const credentialPatterns = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+  /* No leading word boundary: a key glued to other identifier characters in
+     minified or concatenated output is still a leaked key. GitHub tokens are
+     36+ alphanumerics after the prefix, which keeps snake_case identifiers
+     such as laughs_at_the_counter from matching. */
   /sk_live_[A-Za-z0-9]{10,}\b/,
-  /\bgh[pousr]_[A-Za-z0-9_]{30,}\b/,
-  /\bAKIA[0-9A-Z]{16}\b/
+  /gh[pousr]_[A-Za-z0-9]{36,}\b/,
+  /AKIA[0-9A-Z]{16}\b/
 ];
 const MAX_ASSET = 25 * 1024 * 1024;
 const MAX_FILES = 20000;
