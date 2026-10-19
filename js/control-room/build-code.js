@@ -10,49 +10,54 @@
   "use strict";
   window.CR=window.CR||{};
   var ROUTE="/v1/ai/build/code", STORE="cr_build_code_last", PENDING="cr_build_code_pending", POLL_MS=8000;
-  var S={request:null,rerender:null,orgId:null,status:null,statusError:null,loadingStatus:false,form:{repository:"",task:"",title:"",paths:""},key:null,submitting:false,submitError:null,job:null,receipt:null,receiptError:null,loadingReceipt:false,timer:null,lastRefresh:null,reconciling:null};
+  var S={request:null,rerender:null,orgId:null,status:null,statusError:null,loadingStatus:false,form:{repository:"",task:"",title:"",paths:""},key:null,submitting:false,submitError:null,job:null,receipt:null,receiptError:null,loadingReceipt:false,timer:null,lastRefresh:null,reconciling:null,ownerUser:null,identityTimer:null};
   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function note(t,bad){return'<div class="cro-note'+(bad?" cro-note--bad":"")+'">'+e(t)+'</div>';}
   function redraw(){if(S.rerender)S.rerender();}
   function uuid(){return window.crypto&&typeof window.crypto.randomUUID==="function"?window.crypto.randomUUID():null;}
   function who(){try{return window.MCC_SUPA&&typeof window.MCC_SUPA.uid==="function"?String(window.MCC_SUPA.uid()||""):"";}catch(_){return"";}}
   function remember(){try{if(S.job)localStorage.setItem(STORE,JSON.stringify({job_id:S.job,key:S.key,user:who(),at:new Date().toISOString()}));else localStorage.removeItem(STORE);}catch(_){}}
-  function recall(){try{var raw=localStorage.getItem(STORE);var v=raw?JSON.parse(raw):null;if(!v||!/^[0-9a-f-]{36}$/i.test(v.job_id||""))return null;if(v.user&&who()&&v.user!==who())return null;return v;}catch(_){return null;}}
+  function recall(){try{var raw=localStorage.getItem(STORE);var v=raw?JSON.parse(raw):null;if(!v||!/^[0-9a-f-]{36}$/i.test(v.job_id||""))return null;if(!who()||v.user!==who())return null;return v;}catch(_){return null;}}
   /* The pending attempt is written BEFORE the POST. If the server queues the
      job and the acknowledgment is lost, a reload finds this exact key and
      payload and resubmits them; the server replays the existing job instead of
      creating a second one. Cleared only when a job is acknowledged or the
      owner explicitly starts a new build. */
   function payload(){return {repository:S.form.repository,task:S.form.task.trim(),title:S.form.title.trim(),allowed_paths:paths(),idempotency_key:S.key};}
-  function holdPending(body){try{localStorage.setItem(PENDING,JSON.stringify({body:body,user:who(),at:new Date().toISOString()}));}catch(_){}}
+  function holdPending(body){try{if(who())localStorage.setItem(PENDING,JSON.stringify({body:body,user:who(),at:new Date().toISOString()}));}catch(_){}}
   function releasePending(){try{localStorage.removeItem(PENDING);}catch(_){}}
-  function recallPending(){try{var raw=localStorage.getItem(PENDING);var v=raw?JSON.parse(raw):null;if(!v||!v.body||!/^[0-9a-f-]{36}$/i.test(v.body.idempotency_key||""))return null;if(v.user&&who()&&v.user!==who())return null;return v;}catch(_){return null;}}
+  function recallPending(){try{var raw=localStorage.getItem(PENDING);var v=raw?JSON.parse(raw):null;if(!v||!v.body||!/^[0-9a-f-]{36}$/i.test(v.body.idempotency_key||""))return null;if(!who()||v.user!==who())return null;return v;}catch(_){return null;}}
   function when(iso){if(!iso)return"";var d=new Date(iso);return isNaN(d)?"":d.toLocaleString();}
   function loadStatus(){
-    if(S.loadingStatus||!S.request)return Promise.resolve();
+    if(S.loadingStatus||!S.request||!who())return Promise.resolve();
+    var expectedUser=who();
     S.loadingStatus=true;S.statusError=null;redraw();
-    return S.request(ROUTE).then(function(d){S.status=d||null;if(!S.form.repository&&d&&d.repositories&&d.repositories.length)S.form.repository=d.repositories[0];})
-      .catch(function(err){S.statusError=err;}).then(function(){S.loadingStatus=false;redraw();});
+    return S.request(ROUTE).then(function(d){if(expectedUser!==who())return;S.status=d||null;if(!S.form.repository&&d&&d.repositories&&d.repositories.length)S.form.repository=d.repositories[0];})
+      .catch(function(err){if(expectedUser===who())S.statusError=err;}).then(function(){S.loadingStatus=false;redraw();});
   }
   function loadReceipt(){
-    if(!S.job||!S.request)return Promise.resolve();
+    if(!S.job||!S.request||!who()||S.loadingReceipt)return Promise.resolve();
+    var expectedUser=who(),expectedJob=S.job;
     S.loadingReceipt=true;S.receiptError=null;redraw();
-    return S.request(ROUTE+"/"+S.job).then(function(d){S.receipt=d&&d.receipt||null;S.lastRefresh=new Date().toISOString();})
-      .catch(function(err){S.receiptError=err;if(err&&err.status===404){S.receipt={state:"unknown",reason:"job_not_found"};}})
+    return S.request(ROUTE+"/"+S.job).then(function(d){if(expectedUser!==who()||expectedJob!==S.job)return;S.receipt=d&&d.receipt||null;S.lastRefresh=new Date().toISOString();})
+      .catch(function(err){if(expectedUser!==who()||expectedJob!==S.job)return;S.receiptError=err;if(err&&err.status===404){S.receipt={state:"unknown",reason:"job_not_found"};}})
       .then(function(){S.loadingReceipt=false;redraw();schedule();});
   }
   function schedule(){
     clearTimeout(S.timer);S.timer=null;
     var st=S.receipt&&S.receipt.state;
-    if(S.job&&(st==="queued"||st==="running"||st==="awaiting_approval")&&!document.hidden)S.timer=setTimeout(loadReceipt,POLL_MS);
+    if(S.job&&who()===S.ownerUser&&(S.receiptError||st==="queued"||st==="running"||st==="awaiting_approval")&&!document.hidden)S.timer=setTimeout(loadReceipt,POLL_MS);
   }
   function paths(){return S.form.paths.split(/\n|,/).map(function(x){return x.trim();}).filter(Boolean);}
   function send(body,label){
+    var expectedUser=who();
+    if(!expectedUser){S.submitError=new Error('Sign in to recover or queue a build.');redraw();return Promise.resolve();}
     S.submitting=true;S.submitError=null;S.reconciling=label||null;redraw();
     holdPending(body);
     return S.request(ROUTE,{method:"POST",body:body})
-      .then(function(d){S.job=d&&d.job_id||null;S.receipt=d&&d.receipt||null;S.lastRefresh=new Date().toISOString();if(S.job){remember();releasePending();}schedule();})
+      .then(function(d){if(expectedUser!==who())return;S.job=d&&d.job_id||null;S.receipt=d&&d.receipt||null;S.lastRefresh=new Date().toISOString();if(S.job){remember();releasePending();}schedule();})
       .catch(function(err){
+        if(expectedUser!==who())return;
         if(err&&err.status===409&&err.detail&&err.detail.job_id){S.job=err.detail.job_id;S.receipt=err.detail.receipt||null;S.submitError=new Error("This key already names a different build; showing that build. Start a new build to submit a different objective.");remember();releasePending();schedule();return;}
         /* Ambiguous outcome (network lost, 5xx): the pending record stays so a
            reload resubmits the SAME key rather than minting a new job. */
@@ -61,6 +66,7 @@
       .then(function(){S.submitting=false;S.reconciling=null;redraw();});
   }
   function submit(){
+    syncIdentity();
     if(S.submitting||!S.request)return;
     if(!S.key)S.key=uuid();
     if(!S.key){S.submitError=new Error("This browser cannot create an idempotency key.");redraw();return;}
