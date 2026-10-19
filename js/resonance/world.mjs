@@ -476,9 +476,10 @@ async function playSelected(origin){
   if(!track||!engine?.play){updateMessage("The canonical Music player is not available");return;}
   state.origin=origin;state.analysisId=track.title;
   updateMessage(origin==="random_one_time_opt_in"?"One-time random selection; not a preference or endorsement.":"Playing with the canonical Music engine.");
-  // Supplied origin is metadata for a future checked source-of-selection contract;
-  // MCC_MUSIC currently ignores its fourth argument. Never pretend it persisted.
-  const playing=engine.play(album.slug,track.title,false,origin);
+  // The canonical Music engine records user versus platform-selected starts.
+  // The one-time surprise action is system-selected but never implied preference.
+  const attributedOrigin=origin==="random_one_time_opt_in"?"system_opt_in":"user";
+  const playing=engine.play(album.slug,track.title,false,attributedOrigin);
   await Promise.allSettled([playing,analyzePublished(track)]);
 }
 function synchronize(){
