@@ -1,0 +1,54 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; background: #07090f; color: #f3f1ed; }
+body { overflow: hidden; font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+.helix-app { position: relative; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; isolation: isolate; }
+#helixCanvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+#helixCanvas:focus-visible { outline: 2px solid #cceaf5; outline-offset: -3px; }
+.helix-vignette { position: absolute; inset: 0; background: linear-gradient(180deg, #07090fc9 0%, transparent 18%, transparent 53%, #07090faf 84%, #07090ff2 100%); pointer-events: none; }
+.helix-top { position: absolute; top: max(22px, env(safe-area-inset-top)); left: 20px; right: 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; z-index: 2; }
+.helix-exit { color: #b6c2cb; font-size: 13px; text-decoration: none; padding: 11px 0; min-width: 58px; }
+.helix-exit:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.helix-wordmark { font-weight: 550; white-space: nowrap; font-size: 12px; letter-spacing: .015em; }
+.helix-wordmark strong { letter-spacing: .19em; font-size: 11px; margin-left: 3px; font-weight: 780; }
+.helix-level { font-size: 9px; font-weight: 680; color: #8598a9; letter-spacing: .12em; text-align: right; max-width: 70px; line-height: 1.3; }
+.helix-identification { position: absolute; top: calc(max(22px, env(safe-area-inset-top)) + 65px); left: 24px; right: 24px; text-align: center; z-index: 2; pointer-events: none; }
+.helix-eyebrow, .helix-counter, .helix-lyrics__heading { color: #c5bdac; font-size: 10px; font-weight: 700; letter-spacing: .23em; margin: 0 0 9px; }
+.helix-identification h1 { margin: 0; font-size: clamp(22px, 5.6vw, 32px); letter-spacing: -.04em; line-height: 1.1; font-weight: 590; text-wrap: balance; }
+.helix-artist { font-size: 12px; color: #a6b7c1; margin: 6px 0 0; letter-spacing: .08em; }
+.helix-lower { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); left: 20px; right: 20px; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center; pointer-events: none; }
+.helix-song { max-width: 100%; }
+.helix-song h2 { font-weight: 570; font-size: 21px; letter-spacing: -.03em; margin: 0; }
+.helix-playback { font-size: 11px; color: #b5bfc8; margin: 6px 0 0; min-height: 16px; }
+.helix-lyrics { width: min(460px, 96%); margin: 0 auto; padding: 14px 18px; background: linear-gradient(180deg, #101620de, #0b1018e9); border: 1px solid #74899a36; border-radius: 17px; pointer-events: auto; }
+.helix-lyrics__heading { font-size: 9px; color: #b6abb3; }
+.helix-lyrics__text { color: #e7e5e7; font-size: 15px; line-height: 1.6; max-height: min(19vh, 165px); overflow-y: auto; white-space: pre-wrap; text-wrap: pretty; scrollbar-width: thin; margin: 8px 0 0; text-align: center; }
+.helix-help { font-size: 11px; letter-spacing: .015em; color: #a7b3c0; margin: 0; background: #07090f78; border-radius: 20px; padding: 6px 9px; }
+.helix-notice { position: absolute; left: 10%; right: 10%; top: 49%; margin: 0; text-align: center; color: #c9d1dc; font-size: 12px; pointer-events: none; z-index: 3; transition: opacity .3s; }
+.helix-notice.is-hidden { opacity: 0; }
+.helix-fallback { position: absolute; inset: 24% 8% auto; z-index: 6; text-align: center; padding: 25px; background: #0e151ff5; border: 1px solid #3c5365; border-radius: 18px; box-shadow: 0 15px 80px #000a; }
+.helix-fallback h2 { margin-top: 0; }
+.helix-fallback p { color: #c1d0df; }
+.helix-fallback a { color: #f7f7fa; text-decoration: underline; display: inline-block; padding: 10px; }
+.helix-accessible { position: absolute; left: 12px; top: 75px; z-index: 7; width: min(330px, calc(100vw - 24px)); transform: translateX(-200vw); background: #0d1520f5; border-radius: 14px; }
+.helix-accessible:focus-within, .helix-fallback:not([hidden]) ~ .helix-accessible { transform: none; }
+.helix-accessible button { display: block; width: 100%; text-align: left; padding: 12px; border: 0; border-bottom: 1px solid #475466; color: #fff; font: inherit; background: transparent; }
+.helix-accessible button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+.helix-mode .music-mini, .helix-mode .music-now { display: none !important; }
+@media (min-width: 750px) {
+  .helix-top { left: 40px; right: 40px; }
+  .helix-identification { top: 12%; }
+  .helix-lower { bottom: 5%; }
+}
+@media (max-height: 720px) {
+  .helix-identification { top: calc(max(12px, env(safe-area-inset-top)) + 45px); }
+  .helix-top { top: max(10px, env(safe-area-inset-top)); }
+  .helix-lower { bottom: calc(12px + env(safe-area-inset-bottom)); gap: 7px; }
+  .helix-lyrics { padding: 9px 12px; }
+  .helix-lyrics__text { max-height: 16vh; font-size: 13px; }
+  .helix-help { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
