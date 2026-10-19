@@ -22,6 +22,7 @@
   var previewLimit = 0;
   var startedAt = 0;
   var playbackRequest = 0;
+  var activeSelectionOrigin = "user"; // deliberate vs opt-in shuffled vs automatic queue exposure
   var CREATOR_TRACKS = {};
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -46,7 +47,12 @@
       track: current.title,
       album: current.albumName,
       album_slug: current.albumSlug,
-      access_state: currentAccess
+      access_state: currentAccess,
+      selection_origin: activeSelectionOrigin,
+      // Accompanying background/queue plays are measurable exposures, not votes.
+      ...(activeSelectionOrigin === "user" ? {} : {
+        source: activeSelectionOrigin === "system_queue" ? "platform_queue" : "platform_opt_in_shuffle"
+      })
     } : {};
     try { root.MCC_TRACK(name, Object.assign(base, extra || {})); } catch (e) {}
   }
@@ -239,14 +245,14 @@
     return key(a.albumSlug, a.title) === key(b.albumSlug, b.title);
   }
 
-  function playAdjacent(delta) {
+  function playAdjacent(delta, selectionOrigin) {
     if (!current || !queue.length) return Promise.resolve(null);
     var at = queue.findIndex(function (item) { return sameItem(item, current); });
     if (at < 0) at = 0;
     var next = queue[(at + delta + queue.length) % queue.length];
     if (!next) return Promise.resolve(null);
-    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true);
-    return openTrack(next.albumSlug, next.title, true);
+    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true, selectionOrigin);
+    return openTrack(next.albumSlug, next.title, true, selectionOrigin);
   }
 
   function paint() {
@@ -481,7 +487,7 @@
     if (!queue.some(function (q) { return sameItem(q, item); })) queue.push(item);
   }
 
-  function openCreatorTrack(id, force) {
+  function openCreatorTrack(id, force, selectionOrigin) {
     var t = CREATOR_TRACKS[String(id)] || null;
     if (!t) return Promise.reject(new Error("Creator track not registered"));
     var same = current && current.creatorTrackId === t.creatorTrackId;
@@ -493,6 +499,7 @@
     }
     var request = ++playbackRequest;
     audio.pause();
+    activeSelectionOrigin = selectionOrigin === "system_queue" ? "system_queue" : "user";
     current = t;
     currentAccess = "loading";
     announceSelection();
@@ -544,7 +551,7 @@
 
   function openTrack(albumSlug, title, force, selectionOrigin) {
     // System-selected songs are exposure, not evidence of listener preference.
-    var origin = selectionOrigin === "system_opt_in" ? "system_opt_in" : "user";
+    var origin = selectionOrigin === "system_opt_in" || selectionOrigin === "system_queue" ? selectionOrigin : "user";
     var request;
     return loadLibrary().then(function (by) {
       var t = by[key(albumSlug, title)];
@@ -562,6 +569,7 @@
       request = ++playbackRequest;
       audio.pause();
       current = t;
+      activeSelectionOrigin = origin;
       currentAccess = "loading";
       announceSelection();
       previewLimit = 0;
@@ -583,8 +591,9 @@
         startedAt = Date.now();
         setMedia(t);
         paint();
-        trackEvent("music_play", { source: origin === "system_opt_in" ? "platform_opt_in_shuffle" : "discovery", selection_origin: origin, access_state: out.state });
-        trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: origin === "system_opt_in" ? "platform_opt_in_shuffle" : "discovery", selection_origin: origin });
+        var servedFrom = origin === "system_opt_in" ? "platform_opt_in_shuffle" : origin === "system_queue" ? "platform_queue" : "discovery";
+        trackEvent("music_play", { source: servedFrom, selection_origin: origin, access_state: out.state });
+        trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play", { source: servedFrom, selection_origin: origin });
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
     }).catch(function (err) {
@@ -665,7 +674,7 @@
     trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000),
       creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
     paint();
-    if (!previewLimit && queue.length > 1) playAdjacent(1);
+    if (!previewLimit && queue.length > 1) playAdjacent(1, "system_queue");
   });
   audio.addEventListener("error", function () {
     currentAccess = "unavailable";
