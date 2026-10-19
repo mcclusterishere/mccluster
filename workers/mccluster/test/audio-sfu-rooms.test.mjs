@@ -17,7 +17,7 @@ const request=(path,method='GET',body,auth=true)=>new Request('https://api.mcclu
   ...(body?{body:JSON.stringify(body)}:{})});
 const response=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
 function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=false,pubSession=null,
-  profile=HOST,roomStatus='live',subscribed=false,roomExists=true}={}){
+  profile=HOST,identity=HOST,roomStatus='live',subscribed=false,roomExists=true}={}){
   return async(url,opts={})=>{
     const u=new URL(url);const p=u.pathname;
     log.push({host:u.hostname,method:opts.method||'GET',path:p,query:u.search,authorization:opts.headers?.authorization});
@@ -42,7 +42,7 @@ function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=
     }:{can_host:false,allowed_categories:[]});
     if(p.endsWith('/rpc/network_audio_join_room'))return response('joined');
     if(p.endsWith('/rpc/network_audio_assign_speaker'))return response('speaker');
-    if(p.endsWith('/m_auth_user_links'))return response([{m_uid:HOST}]);
+    if(p.endsWith('/m_auth_user_links'))return response([{m_uid:identity}]);
     if(p.endsWith('/network_blocks'))return response(blocked?[{blocker_m_uid:HOST}]:[]);
     if(p.endsWith('/network_audio_rooms')){
       if(opts.method==='POST')return response([{id:ROOM}],201);
@@ -124,7 +124,7 @@ test('granted host creates country-tagged room and joins through atomic DB RPC',
 });
 test('blocked members cannot join or allocate SFU tracks',async()=>{
   const calls=[],r=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/join','POST',{}),ENV,
-    {fetchImpl:fixture(calls,{blocked:true})});
+    {fetchImpl:fixture(calls,{blocked:true,identity:GUEST})});
   assert.equal(r.status,404);
   assert.ok(!calls.some(c=>c.path.endsWith('/rpc/network_audio_join_room')));
 });
@@ -165,13 +165,13 @@ test('answer cannot address a subscription belonging to another listener',async(
   assert.equal(r.status,404);
   assert.ok(!calls.some(c=>c.host==='rtc.live.cloudflare.com'));
 });
-test('nonhost cannot promote or remove other members',async()=>{
+test('nonhost cannot promote, remove or terminate another host room',async()=>{
   const calls=[];
   for(const path of ['speaker','kick','end']){
     const r=await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/'+path,'POST',{
-      target_m_uid:GUEST,allow:true
-    }),ENV,{fetchImpl:fixture(calls,{role:'speaker'})});
-    // Caller resolves HOST in fixture; need room host different for this test.
-    assert.ok([200,403,404,503].includes(r.status));
+      target_m_uid:USER,allow:true
+    }),ENV,{fetchImpl:fixture(calls,{role:'speaker',identity:GUEST,profile:GUEST})});
+    assert.equal(r.status,403,path);
   }
+  assert.ok(!calls.some(c=>c.host==='rtc.live.cloudflare.com'));
 });
