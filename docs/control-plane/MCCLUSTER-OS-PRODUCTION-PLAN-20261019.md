@@ -22,9 +22,13 @@ runtime receipt exist.
 | Queue | no active, queued or stale jobs; one `objective_reflection` timeout; one objective (Autonomous Data Center Pipeline, priority 95) |
 | Compute | one node, CPU only (8 vCPU, 24 GB), one implementation: `ai.chat → qwen3:8b` |
 
-Both the dead GitHub Actions runners (#521) and the stuck OVH reconciler (#510)
-began when the repository turned private on 2026-10-17 ~22:10Z. The two owner
-fixes are one Actions spending limit and one read-only deploy key on the host.
+The pre-runner GitHub Actions failure (#521) and private-repository fetch failure
+(#510) were observed after the repository became private. That timing does not
+establish a shared root cause. #521 requires owner verification of the actual
+runner/account restriction; read-only repository access must be repaired
+separately for host code work. Neither infrastructure track is a blanket
+prerequisite for independently safe documentation, SDK, UI, local-evaluation,
+or Cloudflare work.
 
 ## What "OS" means here, in the existing terms
 
@@ -40,10 +44,11 @@ fixes are one Actions spending limit and one read-only deploy key on the host.
 | SDK: typed contracts for programs | RFC-001 (#518) | proposed |
 | Installations and federation | RFC-002 (#519) | proposed, G0 prototype only |
 
-The OS already exists as a kernel plus scheduler plus one driver. What is
-missing is the product layer: more drivers (GPU), more syscalls (train, evaluate,
-package, publish), and the shell actions that let an operator run a production
-job without reading a runbook.
+The platform already has an operating control plane, durable scheduler and
+one CPU worker, but it is **not yet a general installable operating system**.
+What is missing is the governed product layer: additional compute bindings,
+contracts and evaluations, package/publish lifecycle, and Control actions that
+let operators run verified production jobs without a runbook.
 
 ## Gate status against the finish line
 
@@ -86,7 +91,8 @@ how much already exists:
    - capabilities `dataset.build`, `model.finetune`, `model.evaluate`,
      `model.publish` in the catalog, risk class high, async, approval-gated;
    - a GPU compute node advertising them through the compute-node protocol
-     (the OVH CPU node cannot train anything useful);
+     (the current CPU-only node is not adequate for the proposed practical
+   fine-tuning pipeline; tiny CPU experiments remain possible);
    - a model registry on the shared plane: `ops_models` (id, org, base,
      dataset hash, recipe hash, eval scores, cost, lineage, status) with RLS and
      no browser writes, written only by Core;
@@ -108,12 +114,16 @@ independent axes and all must pass. Prices stay unset until the owner sets them.
 
 ## First slice, 30 days, in dependency order
 
-1. Owner, same day: Actions spending limit; deploy key on the OVH host; main
-   ruleset. Everything below is blind without the first two.
-2. Reconcile OVH to `e553e2dc…` and verify `/health` reports it; close #510.
+1. Independent owner operations: investigate Actions runner failure #521
+   (do not presume billing), establish main branch protection, and restore
+   approved read-only git access for repository-dependent host work. These
+   are distinct gates, **not prerequisites for safe independent PRs**.
+2. Reconcile host runtime only for features that require its execution;
+   verify exact serving SHA and health separately per #510.
 3. Land Wave 1 in order (#512, #516, #502, #514, #520, #513, #517) on real CI.
-4. Promote the pending migrations that the landed PRs depend on, through the
-   ledger steps in `supabase/pending/README.md`.
+4. Separately review and explicitly approve each required forward-only
+   migration, tenant policy and ledger transition before application; do not
+   infer SQL activation from a code merge. Follow `supabase/pending/README.md`.
 5. Prove `code.build` once in production on a trivial task, with the draft PR
    as the receipt. This is the first autonomous production good.
 6. Add one GPU compute node through the compute-node protocol and prove
@@ -129,6 +139,29 @@ independent axes and all must pass. Prices stay unset until the owner sets them.
     Commerce and Control, with meters and SKU placeholders.
 
 Nothing in this slice adds a backend, a queue, an identity or a memory store.
+
+## Parallel track: independent work Claude can execute now
+
+These tasks must proceed on separate, reviewable PRs **without** waiting for
+host credential recovery or a GPU purchase:
+
+- Contract conformance tests for RFC-001 (#518), with synthetic identity,
+  idempotency, missing-versus-empty, retry, and receipt-verification fixtures.
+- A feature-flagged, house-owner-only `Control → Build → Code` interface that
+  uses the **existing** `code.build` capability and canonical job records;
+  never client-supplied grants, direct repo writes or a second scheduler.
+- An installable module-manifest schema and offline package verification
+  prototype using the canonical identity/entitlement boundary.
+- A ten-task synthetic evaluation harness (A/B/C) from RFC-001, growing to
+  the pre-registered 50-case set only after independent scoring works.
+- Focused integration tests for Sovereign G0 and G1a in
+  `mcclusterishere/McCluster-OS`, including cross-installation trust and
+  replay-denial checks. Do **not** wire its experimental filesystem queue
+  into the production authority plane.
+
+No developer may claim a real production `code.build` PR, self-hosted media,
+new model weights, or deployed sovereign node merely from mocked tests or
+from merging these work-in-progress changes.
 
 ## What agents must not do while building this
 
