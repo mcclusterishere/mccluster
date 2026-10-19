@@ -272,21 +272,23 @@ Deno.serve(async (req) => {
     return json({ ok: true, written: 0, reason: "consent required" });
   }
   const quiet = optedOut(h);
-  const ip = quiet ? null : validIp(callerIp(h));
+  const cookieless = !site.legacy && site.consentMode === "cookieless";
+  const minimized = quiet || cookieless;
+  const ip = minimized ? null : validIp(callerIp(h));
   const g = geo(h);
-  const edge = quiet ? { opted_out: "1" } : edgeFacts(h);
+  const edge = minimized ? (quiet ? { opted_out: "1" } : { cookieless: "1" }) : edgeFacts(h);
   const ua = str(h.get("user-agent"), MAX_UA);
   const bot = looksLikeBot(ua);
-  // GPC/DNT applies to *all* persistent identity, even a valid signed-in
-  // session. Do not resolve or store the user id when the signal is present.
-  const uid = quiet ? null : await resolveUid(h.get("authorization"));
+  // GPC/DNT or a cookieless property cannot persist personal identity, even
+  // when a caller mistakenly supplies a valid signed-in bearer token.
+  const uid = minimized ? null : await resolveUid(h.get("authorization"));
 
   // Client-minted, and labelled as such. See the header note.
   // Nothing that follows a visitor between sittings survives the signal.
-  const persistentAllowed = !quiet && (site.legacy || consentState === "granted");
+  const persistentAllowed = !minimized && (site.legacy || consentState === "granted");
   const deviceId = persistentAllowed ? str(body.device_id, 64) : null;
   const sessionId = persistentAllowed ? str(body.session_id, 64) : null;
-  const device = quiet ? {} : obj(body.device);
+  const device = minimized ? {} : obj(body.device);
 
   /* A stable, per-event UUID survives a proxy retry or a fallback from the
      Worker to this Edge Function. Unlike device/session IDs, this identifier
@@ -301,7 +303,7 @@ Deno.serve(async (req) => {
     if (!name) continue;
     /* A privacy signal also blocks any consent-gated precise-location event
        if a forged or stale browser client tries to send one anyway. */
-    if (quiet && name === "precise_location") continue;
+    if (minimized && name === "precise_location") continue;
 
     const proposedId = str(ev.id, 36);
     rows.push({
@@ -311,11 +313,11 @@ Deno.serve(async (req) => {
       name,
       // An opt-out is an aggregate event count, not a record of a personal URL
       // or arbitrary client-supplied metadata (which can contain PII/tokens).
-      path: quiet ? "/" : (str(ev.path, MAX_PATH) ?? ""),
-      props: quiet ? {} : obj(ev.props),
+      path: minimized ? "/" : (str(ev.path, MAX_PATH) ?? ""),
+      props: minimized ? {} : obj(ev.props),
       // The referrer is the browser's own report of where it came from, which
       // is the only place that exists either. It is a claim, and a harmless one.
-      referrer: quiet ? null : str(ev.referrer, MAX_REF),
+      referrer: minimized ? null : str(ev.referrer, MAX_REF),
       // Observed. Never read from the body.
       uid,
       ip,
@@ -323,16 +325,16 @@ Deno.serve(async (req) => {
       // of where the traffic came from is not a person, and everything
       // narrower than that goes: the city, the postal code, the coordinates,
       // the network operator and the user agent.
-      user_agent: quiet ? null : ua,
+      user_agent: minimized ? null : ua,
       country: g.country,
-      region: quiet ? null : g.region,
-      city: quiet ? null : g.city,
-      postal: quiet ? null : g.postal,
-      latitude: quiet ? null : g.latitude,
-      longitude: quiet ? null : g.longitude,
+      region: minimized ? null : g.region,
+      city: minimized ? null : g.city,
+      postal: minimized ? null : g.postal,
+      latitude: minimized ? null : g.latitude,
+      longitude: minimized ? null : g.longitude,
       timezone: g.timezone,
-      asn: quiet ? null : g.asn,
-      asn_org: quiet ? null : g.asn_org,
+      asn: minimized ? null : g.asn,
+      asn_org: minimized ? null : g.asn_org,
       is_bot: bot,
       edge,
       device_id: deviceId,
