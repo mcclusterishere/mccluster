@@ -148,3 +148,14 @@ test('Stripe operator onboarding cannot redirect to a browser-supplied attacker 
   assert.match(source,/returnUrl: appUrl\(env,/);
   assert.match(source,/successUrl: appUrl\(env,/);
 });
+
+test('Stripe operator return, refresh, success and cancel URLs land on the deployed operator room',async()=>{
+  const source=await readFile(new URL('../src/whip/worker.js',import.meta.url),'utf8');
+  // The operator dashboard is served at /whip/rider/operator.html; a bare
+  // /operator.html does not exist, so Stripe would strand operators on a 404
+  // right after financial onboarding or a subscription checkout.
+  assert.doesNotMatch(source,/appUrl\(env, `\/operator\.html/);
+  for(const marker of ['stripe=return','stripe=refresh','white_label=success','white_label=cancel']){
+    assert.match(source,new RegExp('appUrl\\(env, `/whip/rider/operator\\.html\\?tenant=\\$\\{encodeURIComponent\\(t\\.id\\)\\}&'+marker+'`\\)'),marker);
+  }
+});
