@@ -49,6 +49,8 @@ A track's **acoustic signature** is stored independently of musical genre. Candi
 - Frame-wise modal drive for the declared resonator; dominant modal indices and modeled eigenfrequencies.
 - Planned: onsets, rhythmic periodicity, pitch confidence, tuning and harmonics, stereo/spatial energy, perceptual loudness, dynamic change, and models trained under valid audio-data licenses.
 
+A versioned physics-first class is emitted as `membrane-m<n>n<n>/<tonal|mixed|broadband>/<low|mid|high>`. This is a *technical bin* of the specified resonator and its measured audio signature. `signatureSimilarity` compares the top modeled modes and spectral centroids; it is not proof of a matching genre, user preference, or biological response. Class boundaries are heuristics to be validated and calibrated, not discovered universal natural kinds.
+
 **The spectral center is not a genre. A genre is not a unique cymatic pattern.** A change in apparatus or sound design can outweigh between-genre differences. Future genre associations are statistical summaries under a fixed apparatus and reported with uncertainty, sample sizes, and confounder checks—not a prescriptive sorting law.
 
 ### Three intake modes
