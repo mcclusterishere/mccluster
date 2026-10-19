@@ -11,6 +11,7 @@ const state = { mode: "library", album: 0, track: 0 };
 let albums = [];
 let scene = null;
 let pointer = null;
+let pinch = null;
 const lyricCache = new Map();
 
 function announce(message, persist = false) {
@@ -272,9 +273,34 @@ function keydown(event) {
   event.preventDefault();
 }
 
-function onPinch(event) {
-  // iOS trackpad/browser pinch zoom should not magnify the page outside the 3D room.
-  if (event.ctrlKey) event.preventDefault();
+function touchDistance(touches) {
+  const a = touches[0], b = touches[1];
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
+function touchStart(event) {
+  if (event.touches.length !== 2) return;
+  pointer = null; // a two-finger gesture must not also select a crossbar
+  pinch = { start: touchDistance(event.touches), end: touchDistance(event.touches) };
+  event.preventDefault();
+}
+
+function touchMove(event) {
+  if (!pinch || event.touches.length !== 2) return;
+  pinch.end = touchDistance(event.touches);
+  event.preventDefault();
+}
+
+function touchEnd(event) {
+  if (!pinch || event.touches.length >= 2) return;
+  const ratio = pinch.end / Math.max(1, pinch.start);
+  pinch = null;
+  if (ratio < 0.78 && state.mode !== "library") back();
+  else if (ratio > 1.22) {
+    if (state.mode === "library") enterAlbum();
+    else if (state.mode === "album") openSong();
+  }
+  event.preventDefault();
 }
 
 function syncFromEngine() {
@@ -316,18 +342,21 @@ async function boot() {
   canvas.addEventListener("pointerup", pointerUp);
   canvas.addEventListener("pointercancel", () => { pointer = null; });
   canvas.addEventListener("keydown", keydown);
+  let lastWheel = 0;
   canvas.addEventListener("wheel", event => {
+    if (event.ctrlKey) { event.preventDefault(); return; }
     if (Math.abs(event.deltaY) <= 4 || state.mode === "library") return;
     event.preventDefault();
+    const now = performance.now();
+    if (now - lastWheel < 230) return;
+    lastWheel = now;
     stepTrack(event.deltaY > 0 ? 1 : -1);
   }, { passive: false });
+  canvas.addEventListener("touchstart", touchStart, { passive: false });
+  canvas.addEventListener("touchmove", touchMove, { passive: false });
+  canvas.addEventListener("touchend", touchEnd, { passive: false });
+  canvas.addEventListener("touchcancel", () => { pinch = null; });
   canvas.addEventListener("gesturestart", event => event.preventDefault(), { passive: false });
-  canvas.addEventListener("gestureend", event => {
-    event.preventDefault();
-    if (state.mode === "song") back();
-    else if (state.mode === "album") showLibrary();
-  }, { passive: false });
-  canvas.addEventListener("wheel", onPinch, { passive: false });
   window.addEventListener("mcc:music-selected", syncFromEngine);
   window.addEventListener("mcc:music-state", syncFromEngine);
   transport.audio.addEventListener("timeupdate", paintPlayback);
