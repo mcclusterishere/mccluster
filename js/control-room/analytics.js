@@ -991,7 +991,15 @@
     else if(x.name==="identity")S.data.identity=v||{};
     else if(x.name==="audienceScience")S.data.audienceScience=v||null;
     else if(x.name==="experience")S.data.experience=v||null;
-    else if(x.name==="business"){S.data.business=v||null;if(v&&v.snapshot&&v.snapshot.partial)S.errors.business=new Error("Some business measurements are unavailable; available values are retained.");}
+    else if(x.name==="business"){
+      S.data.business=v||null;
+      if(v&&v.snapshot&&v.snapshot.partial){
+        var missing=Object.keys(v.snapshot.read_errors||{});
+        S.errors.business=new Error(missing.length
+          ?"Partial business measurements: "+missing.slice(0,8).join(", ")+(missing.length>8?" (+"+(missing.length-8)+" more)":"")+"; available values are retained."
+          :"Some business measurements are unavailable; available values are retained.");
+      }
+    }
     else if(x.name==="coverage")S.data.coverage=v||null;
   }
   function runLimited(tasks,limit,onResult,shouldContinue){
