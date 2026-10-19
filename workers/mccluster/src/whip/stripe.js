@@ -36,6 +36,9 @@ export async function stripeRequest(env, path, params = {}, options = {}) {
     'content-type': 'application/x-www-form-urlencoded'
   };
   if (options.account) headers['Stripe-Account'] = options.account;
+  // A retried capture or cancel must not act twice. Callers pass a key bound
+  // to the ride and the action so Stripe replays the first outcome.
+  if (options.idempotencyKey) headers['Idempotency-Key'] = String(options.idempotencyKey);
   const response = await fetch(url, { method, headers, body: method === 'GET' ? undefined : form.toString() });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -156,14 +159,14 @@ export async function retrievePaymentIntent(env, paymentIntentId, connectedAccou
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, { method: 'GET', account: connectedAccountId });
 }
 
-export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents) {
+export async function capturePaymentIntent(env, paymentIntentId, connectedAccountId, amountCents, idempotencyKey) {
   return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/capture`, {
     amount_to_capture: amountCents ? Math.round(amountCents) : undefined
-  }, { account: connectedAccountId });
+  }, { account: connectedAccountId, idempotencyKey });
 }
 
-export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId) {
-  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId });
+export async function cancelPaymentIntent(env, paymentIntentId, connectedAccountId, idempotencyKey) {
+  return stripeRequest(env, `payment_intents/${encodeURIComponent(paymentIntentId)}/cancel`, {}, { account: connectedAccountId, idempotencyKey });
 }
 
 export async function createRefund(env, input = {}) {
