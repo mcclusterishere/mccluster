@@ -7,4 +7,4 @@ stage.addEventListener('keydown',e=>{const keys=['ArrowLeft','ArrowRight','Arrow
 document.getElementById('reset').onclick=()=>orient(0,0);
 const ids=['symbol','leftLabel','leftTitle','rightLabel','rightTitle','floor','title','description'];
 document.querySelectorAll('[role=tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',String(b===btn)));ids.forEach((id,i)=>document.getElementById(id).textContent=data[Number(btn.dataset.i)][i]);orient(0,0)}));
-</script></body></html>
+</script><script src="js/tabbar.js?v=__STAMP__"></script></body></html>
