@@ -140,3 +140,31 @@ test('all first-party and SDK events mint UUIDs before enqueueing; no durable cr
   assert.match(sdk,/if \(consentState\(\) !== "granted"\) return null/);
   assert.match(sdk,/if \(tries \|\| teardown \|\| !canSend\(\)/);
 });
+
+
+test('fallback event IDs remain UUIDv4 without Web Crypto',async()=>{
+  const files=[
+    {path:'../../js/analytics.js',end:'/* ---- the device ----'},
+    {path:'../../js/mc-analytics.js',end:'function storageGet('}
+  ];
+  for(const f of files){
+    const js=await readFile(new URL(f.path,import.meta.url),'utf8');
+    const i=js.indexOf('function uuid() {'),end=js.indexOf(f.end,i);
+    assert.ok(i>=0&&end>i,'found UUID function in '+f.path);
+    const method=js.slice(i,end);
+    const id=vm.runInNewContext(method+'\n uuid()',{
+      window:{crypto:null},crypto:undefined,Math,Date,Uint8Array,Array,Error
+    });
+    assert.match(id,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,f.path);
+  }
+});
+
+test('pending retries are canceled when consent is withdrawn or privacy signals appear',async()=>{
+  const [house,sdk]=await Promise.all([
+    readFile(new URL('../../js/analytics.js',import.meta.url),'utf8'),
+    readFile(new URL('../../js/mc-analytics.js',import.meta.url),'utf8')
+  ]);
+  assert.match(house,/if \(!mccPrivacyAcknowledged\(\) \|\| privacySignal\(\)\) return null;/);
+  assert.match(sdk,/function attempt\(tries\) \{[\s\S]*?if \(!canSend\(\)\) return Promise\.resolve\(null\);/);
+  assert.match(sdk,/storageSet\(localStorage, CONSENT_KEY, "denied"\)/);
+});
