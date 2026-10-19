@@ -1,0 +1,148 @@
+{
+  "schema": "mcc.research.brain-networks.v1",
+  "visualContract": "Schematic educational mapping on a stylized procedural model; not atlas registration or live activity",
+  "disclaimer": "Music uses overlapping distributed networks. A selectable region means explore research associations, NOT activate or target that brain structure. Internal structures are indicated by symbolic external markers.",
+  "publicationStatus": "research prototype",
+  "regions": [
+    {
+      "id": "auditory",
+      "name": "Auditory cortex",
+      "system": "auditory",
+      "visualPosition": [
+        1.2,
+        -0.35,
+        0.75
+      ],
+      "location": "Lateral temporal cortex (schematic marker)",
+      "topic": "Pitch, timbre, sound-feature decoding",
+      "associatedFeatures": [
+        "spectralCentroid",
+        "pitch",
+        "harmonicContent"
+      ],
+      "evidence": "Human neuroimaging and lesion studies implicate auditory cortex in pitch perception and musical sound processing; exact keys do not correspond to unique cortical targets.",
+      "source": {
+        "title": "Neural specializations for tonal processing",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/11458830/"
+      },
+      "confidence": "well-established-network"
+    },
+    {
+      "id": "rhythm",
+      "name": "Supplementary motor area",
+      "system": "sensorimotor",
+      "visualPosition": [
+        0.1,
+        1.05,
+        0.5
+      ],
+      "location": "Medial superior frontal cortex (schematic marker)",
+      "topic": "Internal beat timing and motor prediction",
+      "associatedFeatures": [
+        "tempoBpm",
+        "onsetStrength",
+        "rhythmicRegularity"
+      ],
+      "evidence": "A meta-analysis of 30 fMRI studies found supplementary motor area involvement in musical rhythm. Tempo alone cannot guarantee its response.",
+      "source": {
+        "title": "Identifying a brain network for musical rhythm (2022)",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9195154/"
+      },
+      "confidence": "meta-analysis-network"
+    },
+    {
+      "id": "cerebellum",
+      "name": "Cerebellum",
+      "system": "sensorimotor",
+      "visualPosition": [
+        -0.6,
+        -1.06,
+        -0.25
+      ],
+      "location": "Posterior-inferior brain (stylized cerebellum)",
+      "topic": "Precise timing, coordination, rhythmic complexity",
+      "associatedFeatures": [
+        "rhythmicRegularity",
+        "tempoBpm",
+        "onsetStrength"
+      ],
+      "evidence": "Rhythm complexity and sensorimotor synchronization involve cerebellar networks; no direct BPM-to-cerebellum activation mapping exists.",
+      "source": {
+        "title": "From Sound to Movement: Auditory-Motor Entrainment Review",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11592450/"
+      },
+      "confidence": "systematic-review-network"
+    },
+    {
+      "id": "putamen",
+      "name": "Putamen / basal ganglia",
+      "system": "sensorimotor",
+      "visualPosition": [
+        0.05,
+        -0.05,
+        1.31
+      ],
+      "location": "Subcortical — INTERNAL; external marker is conceptual",
+      "topic": "Beat tracking, tempo prediction and internal pulse",
+      "associatedFeatures": [
+        "tempoBpm",
+        "rhythmicRegularity"
+      ],
+      "evidence": "Meta-analysis associates beat-based rhythm processing with bilateral putamen. The external marker does NOT indicate the structure's true cortical-surface location.",
+      "source": {
+        "title": "Musical rhythm: meta-analysis of 30 functional studies",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9195154/"
+      },
+      "confidence": "meta-analysis-network"
+    },
+    {
+      "id": "harmony",
+      "name": "Inferior frontal gyrus",
+      "system": "cognition",
+      "visualPosition": [
+        0.7,
+        0.28,
+        0.9
+      ],
+      "location": "Inferior frontal cortex (schematic marker)",
+      "topic": "Harmonic structure, expectation and musical syntax",
+      "associatedFeatures": [
+        "estimatedKey",
+        "chroma",
+        "harmonicContent"
+      ],
+      "evidence": "Inferior frontal and temporal networks process musical harmonic dependencies; C major, D minor, and other named keys are not individually brain-targeting.",
+      "source": {
+        "title": "Neural networks for harmonic structure in music perception and action",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/27542722/"
+      },
+      "confidence": "task-dependent-network"
+    },
+    {
+      "id": "reward",
+      "name": "Music reward network",
+      "system": "reward",
+      "visualPosition": [
+        -0.45,
+        -0.32,
+        1.15
+      ],
+      "location": "Deep nucleus accumbens/striatum — symbolic outside marker",
+      "topic": "Individual pleasure, familiarity and motivational reward",
+      "associatedFeatures": [
+        "individualRatings"
+      ],
+      "evidence": "Individual listening pleasure has been linked to mesolimbic structures in neuroimaging, but a song's BPM/key alone cannot predict or induce reward, and no user is diagnosed.",
+      "source": {
+        "title": "Brain correlates of music-evoked emotions",
+        "url": "https://www.nature.com/articles/nrn3666"
+      },
+      "confidence": "task-dependent-network"
+    }
+  ],
+  "methods": {
+    "metaanalysis": "Strength of evidence relates to research consistency, never probability of activation for one listener.",
+    "individualDifference": "Responses vary by task, training, familiarity, hearing status, context and individual characteristics; data have not been gathered in this interface.",
+    "markers": "Approximate illustration positions, not stereotaxic coordinates or medical localization."
+  }
+}
