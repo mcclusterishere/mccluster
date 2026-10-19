@@ -80,3 +80,17 @@ body.rw-body{margin:0;background:var(--rw-bg);color:var(--rw-ink);font:15px/1.52
 @media(min-width:700px){.rw-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-column{padding:50px 38px}.rw-data{grid-template-columns:repeat(4,minmax(0,1fr))}.rw-analysis,.rw-questions{padding:54px max(40px,calc((100vw - 1240px)/2))}.rw-files{grid-template-columns:1fr 1fr}.rw-files>.rw-note{grid-column:1/-1}.rw-stage{min-height:700px}.rw-formula{top:115px}.rw-topbar{top:215px}.rw-regions{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:1100px){.rw-regions{grid-template-columns:repeat(3,minmax(0,1fr))}.rw-stage-caption{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Evidence-backed sound classes. Acoustic facts never imply brain activation. */
+.rw-acoustic-note{padding:13px 15px!important;margin:12px 0 18px!important;
+  background:#1a343a;border-left:2px solid #bfc7b1;
+  color:#d5ded7!important;font-size:12px;line-height:1.55}
+.rw-scientific{margin:25px 0 32px;border-top:1px solid var(--rw-line);padding-top:24px}
+.rw-scientific h3{margin:0 0 9px;font-size:12px;letter-spacing:.14em}
+.rw-scientific>p{font-size:12px;color:var(--rw-soft);max-width:700px}
+.rw-scientific-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.rw-scientific-tag{display:grid;gap:4px;background:#112e33;border:1px solid #3c5b5a;padding:15px}
+.rw-scientific-tag strong{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--rw-aqua)}
+.rw-scientific-tag span{font-size:17px;font-weight:680;color:var(--rw-sand)}
+.rw-scientific-tag small{font-size:11px;color:var(--rw-soft);line-height:1.5}
+@media(min-width:720px){.rw-scientific-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
