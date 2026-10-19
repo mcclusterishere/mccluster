@@ -7,6 +7,7 @@ import {
   createWhiteLabelSubscriptionCheckout,
   createDirectCheckout,
   createManualPaymentIntent,
+  retrievePaymentIntent,
   capturePaymentIntent,
   cancelPaymentIntent,
   verifyStripeWebhook
@@ -433,7 +434,16 @@ export default {
       const ridePaymentMatch = path.match(/^\/api\/rides\/([^/]+)\/payment-intent$/);
       if (ridePaymentMatch && req.method === 'POST') {
         await requireUser(req, env); const ride = await getRide(env, ridePaymentMatch[1]); if (!ride) return fail(env, 'Ride not found', 404); let t = await tenantById(env, ride.tenant_id); t = await ensureStripeTenant(env, t);
-        if (ride.stripe_payment_intent_id) return reply(env, { payment_intent_id: ride.stripe_payment_intent_id, connected_account_id: t.stripe_account_id, publishable_key: env.STRIPE_PUBLISHABLE_KEY || null, status: ride.payment_status });
+        if (ride.stripe_payment_intent_id) {
+          // A 3DS return may reload the browser. Only the authenticated rider
+          // (enforced by security.js) can resume the same Stripe intent.
+          const existing = await retrievePaymentIntent(env, ride.stripe_payment_intent_id, t.stripe_account_id);
+          if (existing.metadata?.kind !== 'ride' || existing.metadata?.resource_id !== ride.id)
+            return fail(env, 'Payment does not belong to this trip', 409);
+          return reply(env, { payment_intent_id:existing.id, client_secret:existing.client_secret,
+            connected_account_id:t.stripe_account_id, publishable_key:env.STRIPE_PUBLISHABLE_KEY || null,
+            status:existing.status });
+        }
         const intent = await createManualPaymentIntent(env, { amountCents: ride.fare_cents, applicationFeeCents: ride.platform_fee_cents, connectedAccountId: t.stripe_account_id, kind: 'ride', tenantId: t.id, resourceId: ride.id, description: `${ride.ride_tier}: ${ride.pickup_label} to ${ride.dropoff_label}` });
         await recordPayment(env, { tenant_id: t.id, resource_type: 'ride', resource_id: ride.id, connected_account_id: t.stripe_account_id, stripe_payment_intent_id: intent.id, amount_cents: ride.fare_cents, application_fee_cents: ride.platform_fee_cents, status: intent.status });
         await patchRide(env, ride.id, { stripe_payment_intent_id: intent.id, payment_status: intent.status });

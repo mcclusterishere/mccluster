@@ -4,6 +4,7 @@ import { journeyStore } from './journey-store.mjs';
 import { fetchRoute } from './route-client.mjs';
 import { navigationProgress } from './navigation-progress.mjs';
 import { rideHandoff } from './ride-handoff.mjs';
+import { attachWhipBooking } from './whip-booking.mjs';
 
 const $ = id => document.getElementById(id), root = document.documentElement;
 const frame = $('mnWorldFrame'), panel = $('wtPlanner');
@@ -802,6 +803,17 @@ new MutationObserver(() => {
   autoLocate();
 }).observe(root, { attributes:true, attributeFilter:['class'] });
 window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
+const whipStyle = document.createElement('link');
+whipStyle.rel = 'stylesheet';
+whipStyle.href = new URL('../../css/whip-booking.css?v=__STAMP__', import.meta.url).href;
+document.head.append(whipStyle);
+attachWhipBooking({
+  panel: $('wtRidePanel'),
+  currentTrip: () => hasCoordinates(draft.from) && hasCoordinates(draft.to)
+    ? { origin:[...draft.from.coordinates],destination:[...draft.to.coordinates],
+        pickup_label:draft.from.label,dropoff_label:draft.to.label } : null,
+  accountApi: () => typeof window.MCC?.api === 'function' ? window.MCC.api.bind(window.MCC) : null
+});
 syncInputs(); sessionChanged();
 const query = new URLSearchParams(location.search), requestedMode = query.get('mode');
 setMode(query.has('mission') || query.has('completed') ? 'missions' : query.has('song') ? 'posts' : ['travel', 'missions', 'posts'].includes(requestedMode) ? requestedMode : 'travel');

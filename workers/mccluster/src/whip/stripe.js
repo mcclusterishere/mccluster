@@ -152,7 +152,11 @@ export async function createManualPaymentIntent(env, input = {}) {
     metadata: { kind: input.kind, tenant_id: input.tenantId, resource_id: input.resourceId }
   };
   if (Number(input.applicationFeeCents || 0) > 0) params.application_fee_amount = Math.round(input.applicationFeeCents);
-  return stripeRequest(env, 'payment_intents', params, { account: input.connectedAccountId });
+  if (!input.resourceId) throw new Error('A canonical ride or rental ID is required for idempotent payment creation');
+  return stripeRequest(env, 'payment_intents', params, {
+    account: input.connectedAccountId,
+    idempotencyKey: 'whip-' + String(input.kind || 'payment') + '-' + String(input.resourceId)
+  });
 }
 
 export async function retrievePaymentIntent(env, paymentIntentId, connectedAccountId) {
