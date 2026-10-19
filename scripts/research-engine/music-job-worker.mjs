@@ -177,7 +177,8 @@ export async function processOnce(client,{leaseSeconds=600,registry,modelsDir=nu
       schema:"mcc.music.pipeline.stage-result.v1",
       stage:job.stage,modelId:job.model_id,modelVersion:derived.modelVersion,
       state:"awaiting_creator_review",artifactCount:artifacts.length,
-      noAutomaticPublication:true,derivedNotGroundTruth:true
+      noAutomaticPublication:true,derivedNotGroundTruth:true,
+      ...(derived.summary||{})
     };
     const ok=await client.finish(job,summary,artifacts);
     if(ok!==true)throw Error("finish_not_acknowledged");
