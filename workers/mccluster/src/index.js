@@ -87,7 +87,7 @@ async function equityUpriseRole(req, env) {
   return { user, role };
 }
 
-async function requireHouseOwner(req, env) {
+export async function requireHouseOwner(req, env) {
   const user = await authUser(req, env);
   if (!user) throw Object.assign(new Error('Authentication required'), { status: 401 });
 
