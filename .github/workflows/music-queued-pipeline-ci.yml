@@ -15,6 +15,7 @@ on:
       - 'scripts/research-engine/**'
       - 'scripts/test/music-runtime-pipeline.test.mjs'
       - 'scripts/test/music-queued-js-worker.test.mjs'
+      - 'scripts/test/music-tempo-key-consensus.test.mjs'
       - 'supabase/pending/music_research_pipeline_v1.sql'
       - 'supabase/tests/music_research_pipeline_v1.sql'
       - '.github/workflows/music-queued-pipeline-ci.yml'
@@ -48,12 +49,12 @@ jobs:
           node --check scripts/research-engine/music-job-worker.mjs
           python3 - <<'PY'
           import ast
-          for f in ('tempo_key.py','queued_worker.py','benchmark_tempo_key.py','midi-to-musicxml.py'):
+          for f in ('tempo_key.py','queued_worker.py','benchmark_tempo_key.py','midi-to-musicxml.py','beat_this_tempo.py'):
               ast.parse(open('scripts/research-engine/'+f,encoding='utf-8').read())
           PY
       - name: Run actual isolated worker and creator permission contracts
         run: |
-          node --test scripts/test/music-runtime-pipeline.test.mjs scripts/test/music-queued-js-worker.test.mjs
+          node --test scripts/test/music-runtime-pipeline.test.mjs scripts/test/music-queued-js-worker.test.mjs scripts/test/music-tempo-key-consensus.test.mjs
       - name: Assert migration and default models are not production-enabling
         run: |
           test -f supabase/pending/music_research_pipeline_v1.sql
