@@ -18,6 +18,24 @@
       "checkpoint": null
     },
     {
+      "id": "mcc_beat_this_reviewed_v1",
+      "stage": "analyze",
+      "adapter": "beat_this",
+      "version": "pin-before-enable",
+      "enabled": false,
+      "license": "review_required",
+      "approval": null,
+      "checkpoint": {
+        "filename": null,
+        "sha256": null,
+        "licenseEvidence": null
+      },
+      "outputs": [
+        "features"
+      ],
+      "notes": "Beat This! MIT code and model weights; do not enable before training-data clearance, checkpoint SHA and commercial use approval."
+    },
+    {
       "id": "mcc_separator_reviewed_v1",
       "stage": "separate",
       "adapter": "audio_separator",
