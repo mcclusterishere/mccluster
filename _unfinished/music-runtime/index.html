@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <base href="../../">
+  <title>McCluster Music · Persistent Runtime Lab</title>
+  <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-runtime-shell.css?v=__STAMP__">
+</head>
+<body class="mcc-music-shell">
+  <a class="mcc-shell-skip" href="#mccStage">Skip to workspace</a>
+  <header class="mcc-shell-bar">
+    <span class="mcc-shell-brand">McCluster <strong>MUSIC</strong> <small>RUNTIME LAB</small></span>
+    <nav aria-label="Music workspace" id="mccShellNav">
+      <a href="listen.html" data-shell-page="listen.html" aria-current="page">Listen</a>
+      <a href="resonance.html" data-shell-page="resonance.html">Resonate</a>
+      <a href="catalogue.html" data-shell-page="catalogue.html">Catalogue</a>
+      <a href="creator.html" data-shell-page="creator.html">Creator</a>
+    </nav>
+  </header>
+  <p class="mcc-shell-notice" role="status" id="mccShellStatus">One Music transport across supported workspace rooms. Music starts only after you press Play.</p>
+  <iframe id="mccStage" title="McCluster music workspace"
+    data-mcc-single-music-engine referrerpolicy="same-origin"
+    allow="autoplay" loading="eager"></iframe>
+  <div class="mcc-shell-footer">
+    <span>PLAYBACK LIVES IN THE TOP DOCUMENT</span>
+    <button type="button" id="mccShellNow">Now playing</button>
+    <a href="listen.html" target="_top">Exit lab</a>
+  </div>
+  <!-- Owner-authorized R&D only; the normal publishing pipeline strips _unfinished. -->
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/listen-ledger.js?v=__STAMP__"></script>
+  <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/music-engine.js?v=__STAMP__"></script>
+  <script src="js/music-runtime-shell.js?v=__STAMP__"></script>
+</body>
+</html>
