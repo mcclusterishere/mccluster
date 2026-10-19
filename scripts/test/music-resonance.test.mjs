@@ -149,3 +149,15 @@ test("site analytics separates platform-served exposure from a deliberate music 
   assert.deepEqual(p.track_distribution.map(x=>x.track),["chosen track"]);
   assert.equal(report.totals.system_served_music_starts,2);
 });
+
+test("classification is an acoustic-model key, never an asserted genre or DNA association", async () => {
+  const {resonanceClass,signatureSimilarity}=await import("../../js/resonance/core.mjs");
+  const a=analyzePcm(sine(78),SR,{maxFrames:5});
+  const b=analyzePcm(sine(180),SR,{maxFrames:5});
+  const key=resonanceClass(a);
+  assert.match(key.key,/^membrane-m[1-5]n[1-5]\/(tonal|mixed|broadband)\/(low|mid|high)$/);
+  assert.match(key.note,/not a music genre or biological prediction/);
+  assert.equal(signatureSimilarity(a,a),1);
+  assert.ok(signatureSimilarity(a,b)<signatureSimilarity(a,a));
+  assert.throws(()=>signatureSimilarity(a,{model:"unapproved-v999"}),/mismatched/);
+});
