@@ -4,9 +4,7 @@ on:
   pull_request:
     paths:
       - 'listen.html'
-      - 'helix.html'
-      - 'js/helix/**'
-      - 'css/helix.css'
+      - '_unfinished/helix/**'
       - 'scripts/test/helix-interface.test.mjs'
       - 'album.html'
       - 'catalogue.html'
@@ -26,9 +24,7 @@ on:
     branches: [main]
     paths:
       - 'listen.html'
-      - 'helix.html'
-      - 'js/helix/**'
-      - 'css/helix.css'
+      - '_unfinished/helix/**'
       - 'scripts/test/helix-interface.test.mjs'
       - 'album.html'
       - 'catalogue.html'
@@ -58,9 +54,9 @@ jobs:
       - name: Parse music browser modules
         run: |
           node --check js/music-engine.js
-          node --check js/helix/math.mjs
-          node --check js/helix/scene.mjs
-          node --check js/helix/main.mjs
+          node --check _unfinished/helix/math.mjs
+          node --check _unfinished/helix/scene.mjs
+          node --check _unfinished/helix/main.mjs
           node --check js/music-community.js
           node --check js/music-creator-profile.js
           node --check js/music-admin.js

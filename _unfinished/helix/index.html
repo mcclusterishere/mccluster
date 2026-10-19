@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07090f">
   <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex, nofollow">
+  <base href="../../">
+  <!-- Developer-local Helix lab: production deployment removes the whole _unfinished directory. -->
   <title>Helix · McCluster Music</title>
   <meta name="description" content="Explore McCluster music through interactive 3D album DNA. Select a vial, enter a strand, and touch a song to listen.">
-  <link rel="canonical" href="https://matthew.mccluster.org/helix.html">
+  
   <link rel="icon" href="assets/img/m-mark.png" type="image/png">
-  <link rel="stylesheet" href="css/helix.css?v=__STAMP__">
+  <link rel="stylesheet" href="_unfinished/helix/helix.css">
 </head>
 <body>
   <main id="helixApp" class="helix-app" data-view="library">
@@ -50,7 +53,7 @@
   <script src="js/listen-ledger.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
-  <script type="module" src="js/helix/main.mjs?v=__STAMP__"></script>
+  <script type="module" src="_unfinished/helix/main.mjs"></script>
   <script>
     // A blocked ES module or an unsupported graphics device must not strand a listener.
     window.addEventListener("error", function (event) {

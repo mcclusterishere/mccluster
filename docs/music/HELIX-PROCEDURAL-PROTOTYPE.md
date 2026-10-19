@@ -1,7 +1,7 @@
 # Helix — procedural DNA music interface (prototype)
 
 ## Scope
-A deliberately isolated, iPhone-first WebGL prototype at `helix.html`, linked from `listen.html`. It does **not** replace the production discovery room, creator studio, native app, rights controls, or the persistent music transport.
+A deliberately isolated iPhone-first WebGL lab at `_unfinished/helix/index.html`. There is NO public URL or listener entry point. It does **not** replace the production discovery room, creator studio, native app, rights controls, or the persistent music transport.
 
 ## Data / UI contract
 - One published album in `data/albums.json` → one vial and one mathematical double helix.
@@ -14,10 +14,10 @@ A deliberately isolated, iPhone-first WebGL prototype at `helix.html`, linked fr
 - Album cover art and existing track metadata remain the authority. This view does not invent unpublished album releases or rename tracks.
 
 ## Rendering
-- `js/helix/math.mjs`: pure parametric opposing helices with clean spacing, a stable track-to-rung map and gesture logic.
-- `js/helix/scene.mjs`: local vendored Three.js + TubeGeometry, CylinderGeometry, basic materials and raycast hit targets. Procedural cap, glass vial and inner strand generated in the browser. No static 3D asset required.
-- `js/helix/main.mjs`: fetch canonical catalog, navigate camera modes, trigger canonical transport, load real lyrics, handle iOS gestures and fallback.
-- `css/helix.css`: independent full-screen dark canvas, safe-area aware, readable native DOM typography.
+- `_unfinished/helix/math.mjs`: pure parametric opposing helices with clean spacing, a stable track-to-rung map and gesture logic.
+- `_unfinished/helix/scene.mjs`: local vendored Three.js + TubeGeometry, CylinderGeometry, basic materials and raycast hit targets. Procedural cap, glass vial and inner strand generated in the browser. No static 3D asset required.
+- `_unfinished/helix/main.mjs`: fetch canonical catalog, navigate camera modes, trigger canonical transport, load real lyrics, handle iOS gestures and fallback.
+- `_unfinished/helix/helix.css`: independent full-screen dark canvas, safe-area aware, readable native DOM typography.
 - Draw capped at roughly 45 frames/s and device pixel ratio capped at 1.5; reduced-motion preference disables flourish. The scene is paused when hidden.
 
 ## Waveform honesty
@@ -28,7 +28,7 @@ The existing `js/music-engine.js` owns playback state, previews, signed URLs, me
 
 ## Pre-release checks
 1. `node --test scripts/test/helix-interface.test.mjs`.
-2. Load `helix.html` in desktop Chrome, Firefox, Safari and iPhone Safari; confirm no console errors, Three.js module resolves and catalog fetch succeeds.
+2. Load the development-only `_unfinished/helix/index.html` in desktop Chrome, Firefox, Safari and iPhone Safari; confirm no console errors, Three.js module resolves and catalog fetch succeeds.
 3. Test tap, horizontal swipes, vertical swipes, raycast on every rung and switch from vial to album/song and back.
 4. Test public playback, previews, gated/entitled playback, no unintended seek bypass and lock-screen media session.
 5. Inspect WebGL frame rate, memory and touch hit areas on a physical iPhone; ensure fallback when GPU is disabled.
@@ -37,3 +37,6 @@ The existing `js/music-engine.js` owns playback state, previews, signed URLs, me
 
 ## Non-goals in this first PR
 No unannounced production replacement, no fabricated waveforms or lyrics, no procedural album artwork, no camera/microphone permissions, no on-chain genome or biometric DNA reading.
+
+## Private lab hold: owner directive, October 19, 2026
+Helix is kept entirely inside `_unfinished/helix/`, which `.github/workflows/deploy-pages.yml` strips from the live artifact. The Cloudflare Pages export stages from already published gh-pages, so it inherits that exclusion. NO customer-facing entry link, public route, asset path or feature flag is allowed. Use a developer-local loopback server to inspect the prototype; this is *not* a remote Control owner-authenticated preview. A future remote Control preview must authorize the owner on the server before serving HTML or JavaScript; a client-side role check does not suffice.
