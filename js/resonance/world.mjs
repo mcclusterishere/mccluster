@@ -383,16 +383,18 @@ function events(){
   $("rwAlbum").addEventListener("change",e=>chooseAlbum(Number(e.target.value)));
   $("rwPlay").addEventListener("click",()=>playSelected("user_selected"));
   $("rwSurprise").addEventListener("click",()=>{
-    const total=state.albums.reduce((n,a)=>n+a.tracks.length,0);
-    if(!total)return;
-    const random=new Uint32Array(1);crypto.getRandomValues(random);
-    let selection=random[0]%total;
-    for(let a=0;a<state.albums.length;a++){
-      if(selection<state.albums[a].tracks.length){
-        chooseAlbum(a);chooseTrack(selection);playSelected("random_one_time_opt_in");break;
+    // An explicit one-time surprise must not draw gated masters or remote audio.
+    const candidates=[];
+    state.albums.forEach((album,ai)=>album.tracks.forEach((track,ti)=>{
+      if(!track.gated && typeof track.src==="string" &&
+         /^assets\/audio\/[a-z0-9_.-]+\.(?:mp3|wav|ogg)$/i.test(track.src)){
+        candidates.push({ai,ti});
       }
-      selection-=state.albums[a].tracks.length;
-    }
+    }));
+    if(!candidates.length){updateMessage("No publicly playable catalogue tracks are available");return;}
+    const random=new Uint32Array(1);crypto.getRandomValues(random);
+    const pick=candidates[random[0]%candidates.length];
+    chooseAlbum(pick.ai);chooseTrack(pick.ti);playSelected("random_one_time_opt_in");
   });
   $("rwMix").addEventListener("change",async e=>{try{await analyzeFiles([...e.target.files],false);}catch(error){$("rwFileStatus").textContent=error.message;}});
   $("rwStems").addEventListener("change",async e=>{try{await analyzeFiles([...e.target.files],true);}catch(error){$("rwFileStatus").textContent=error.message;}});
@@ -475,7 +477,7 @@ async function analyzeFiles(files,stems){
     (stems?" Stem extraction from a mixed song requires a separate opt-in ML job.":"");
   updateMessage("Local audio analyzed; the water surface projects the acoustic model.");
 }
-async function analyzePublished(track){
+async function analyzePublished(track, sourceId){
   if(track.gated||!track.src||!/^assets\/audio\/[a-z0-9_.-]+\.(?:mp3|wav|ogg)$/i.test(track.src)){
     updateMessage("Restricted or remote media cannot be fetched for analysis; the canonical player enforces the access gate.");
     return;
@@ -489,7 +491,7 @@ async function analyzePublished(track){
   const blob=await res.blob();
   if(blob.size>MAX_FILE_BYTES)throw Error("On-device analysis cap exceeded");
   const pcm=await decodeBlob(blob);
-  if(state.analysisId!==track.title)return; // reject superseded decode
+  if(state.analysisId!==sourceId)return; // reject superseded decode, including duplicate titles across albums
   updateAudioResults(analyzePcm(pcm.samples,pcm.sampleRate,{maxSeconds:MAX_BROWSER_SECONDS}),
     estimateMusicTheory(pcm.samples,pcm.sampleRate));
   updateMessage("Measured audio ready: tempo/key are estimates, water is a modeled response, brain associations are literature-based.");
@@ -497,18 +499,20 @@ async function analyzePublished(track){
 async function playSelected(origin){
   const album=state.albums[state.album],track=album?.tracks?.[state.track];
   if(!track||!engine?.play){updateMessage("The canonical Music player is not available");return;}
-  state.origin=origin;state.analysisId=track.title;
+  state.origin=origin;state.analysisId=album.slug+"|"+track.title;
   updateMessage(origin==="random_one_time_opt_in"?"One-time random selection; not a preference or endorsement.":"Playing with the canonical Music engine.");
   // The canonical Music engine records user versus platform-selected starts.
   // The one-time surprise action is system-selected but never implied preference.
   const attributedOrigin=origin==="random_one_time_opt_in"?"system_opt_in":"user";
   const playing=engine.play(album.slug,track.title,false,attributedOrigin);
-  await Promise.allSettled([playing,analyzePublished(track)]);
+  const results=await Promise.allSettled([playing,analyzePublished(track,state.analysisId)]);
+  if(results[0].status==="rejected")updateMessage("The canonical player could not start this track: "+String(results[0].reason?.message||"unavailable"));
+  else if(results[1].status==="rejected")updateMessage("Playback is available, but local audio analysis failed: "+String(results[1].reason?.message||"unavailable"));
 }
 function synchronize(){
   if(!engine?.current||!state.frames.length||state.origin==="local")return;
   const item=engine.current();
-  if(!item||item.title!==state.analysisId)return;
+  if(!item||item.albumSlug+"|"+item.title!==state.analysisId)return;
   syncWeights(Math.min(MAX_BROWSER_SECONDS,Number(engine.audio.currentTime)||0));
 }
 async function boot(){
