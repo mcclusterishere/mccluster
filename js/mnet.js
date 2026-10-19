@@ -1281,7 +1281,8 @@
     var regionMode = state.feedScope === "local" && state.placeScope.enabled;
     var items = regionMode ? state.placeScope.posts : state.feed;
     /* World geography is a country-scoped server read when the feature is enabled. */
-    var news = focus && focus.filter ? [] : (regionMode ? state.placeScope.news : state.news);
+    var news = focus && focus.filter ? [] : state.news;
+    if (regionMode && !(focus && focus.filter)) news = state.placeScope.news;
     paintNewsCredit(false);
     if (!items.length && !news.length) {
       if (regionMode) {
