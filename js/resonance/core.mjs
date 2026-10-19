@@ -177,3 +177,49 @@ export function fieldAt(x, y, weights, cfg = RESONATOR) {
   }
   return scale ? sum / Math.sqrt(scale) : 0;
 }
+
+/* Scientific/algorithmic index keys describe one calibrated MODEL only.
+ * Never use them as DNA, listener personality, therapeutic or genre labels.
+ */
+export function resonanceClass(analysis) {
+  if (analysis?.schema !== "mcc.resonance.analysis.v1" ||
+      analysis?.model !== MODEL_VERSION || !analysis.dominantModes?.length) {
+    throw new TypeError("A matching Resonance Atlas analysis is required");
+  }
+  const top = analysis.dominantModes[0];
+  const flatness = Number(analysis.features?.spectralFlatness || 0);
+  const centroid = Number(analysis.features?.centroidHz || 0);
+  const texture = flatness < 0.15 ? "tonal" : flatness < 0.55 ? "mixed" : "broadband";
+  const spectralRegion = centroid < 500 ? "low" : centroid < 2000 ? "mid" : "high";
+  return {
+    schema: "mcc.resonance.class.v1",
+    model: MODEL_VERSION,
+    key: "membrane-m" + top.m + "n" + top.n + "/" + texture + "/" + spectralRegion,
+    dominantMode: {m: top.m, n: top.n, hz: top.hz},
+    texture, spectralRegion,
+    note: "Acoustic/model cluster only; not a music genre or biological prediction"
+  };
+}
+
+/* Acoustic-index candidate similarity; content-based discovery, NOT evidence
+ * of a listener's preference. Higher = more similar within this one model.
+ */
+export function signatureSimilarity(a, b) {
+  if (a?.model !== MODEL_VERSION || b?.model !== MODEL_VERSION) {
+    throw new TypeError("Cannot compare mismatched resonance model versions");
+  }
+  const shape = modes();
+  const drive = signature => {
+    const values = new Map((signature.dominantModes || []).map(x => [x.m + ":" + x.n, x.weight]));
+    return shape.map(mode => Number(values.get(mode.m + ":" + mode.n)) || 0);
+  };
+  const x = drive(a), y = drive(b);
+  const dot = x.reduce((sum,value,i) => sum + value * y[i], 0);
+  const lenA = Math.hypot(...x), lenB = Math.hypot(...y);
+  const modal = lenA && lenB ? dot / (lenA * lenB) : 0;
+  const centroidA = Math.max(20, Number(a.features?.centroidHz) || 20);
+  const centroidB = Math.max(20, Number(b.features?.centroidHz) || 20);
+  const distance = Math.abs(Math.log2(centroidA / centroidB));
+  const centroidMatch = Math.exp(-distance);
+  return round(limit(0.8 * modal + 0.2 * centroidMatch, 0, 1), 4);
+}
