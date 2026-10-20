@@ -56,7 +56,14 @@ export async function executeResidentTool(name, args, context, dependencies = {}
   const query = dependencies.rest || rest;
   if (name === 'operations_read') {
     const snapshot = await (dependencies.coreResume || coreResume)({ orgId, sinceHours: 24, limit: 6 });
-    return { generated_at: snapshot.generated_at, sources: snapshot.sources, degraded_sources: snapshot.degraded_sources, source_errors: snapshot.source_errors, runtime: snapshot.runtime, work: snapshot.work, pending_approvals: snapshot.pending_approvals?.slice(0, 5) ?? null };
+    const work = snapshot.work || {};
+    return {
+      generated_at: snapshot.generated_at, deployed_commit: snapshot.runtime?.core_commit || null,
+      sources: snapshot.sources, degraded_sources: snapshot.degraded_sources, source_errors: snapshot.source_errors,
+      work: Object.fromEntries(['active_jobs', 'stale_running_jobs', 'queued_jobs', 'stale_queued_jobs', 'recent_failures', 'objectives'].map(key => [key, Array.isArray(work[key]) ? work[key].slice(0, 3) : null])),
+      pending_approvals: snapshot.pending_approvals?.slice(0, 3) ?? null,
+      scope: 'At most three records per category; not organization-wide totals. Use job_read for a job result.',
+    };
   }
   if (name === 'memory_search') return (dependencies.searchPrivateContext || searchPrivateContext)({ orgId, query: text(args.query, 500), limit: 6, before });
   if (name === 'ai_diagnostics') return (dependencies.localAiDiagnostics || localAiDiagnostics)();

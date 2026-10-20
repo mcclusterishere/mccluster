@@ -17,6 +17,7 @@ export function inferenceUsage(data = {}) {
   const rate = (count, duration) => Number(duration) > 0 ? Math.round(Number(count || 0) * 1e11 / duration) / 100 : null;
   return {
     prompt_eval_count: data.prompt_eval_count ?? null,
+    prompt_eval_cached_count: data.prompt_eval_cached_count ?? null,
     eval_count: data.eval_count ?? null,
     total_duration_ns: data.total_duration ?? null,
     load_duration_ns: data.load_duration ?? null,

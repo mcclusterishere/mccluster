@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runResidentAgent } from '../src/resident-agent.mjs';
 import { executeResidentTool, safeRepositoryPath, stableAnalysisId } from '../src/resident-tools.mjs';
-import { packHistory, memoryQuery, relevantMemory, memoryUnavailableAnswer } from '../src/resident-context.mjs';
+import { packHistory, memoryQuery, relevantMemory, memoryUnavailableAnswer, memoryPrompt } from '../src/resident-context.mjs';
 import { inferenceSettings, inferenceUsage } from '../src/compute/inference-settings.mjs';
 
 const context = { orgId: 'trusted-house', turnId: 'turn-1', before: '2026-10-20T12:00:00Z' };
@@ -76,6 +76,12 @@ test('memory window exceeds the previous 24 messages and always retains the late
 test('tracked source reads reject traversal and credential files', () => {
   for (const file of ['../core.env', '/etc/passwd', '.env', '.env.production', 'config/private-key.pem', 'a\\..\\b']) assert.throws(() => safeRepositoryPath(file));
   assert.equal(safeRepositoryPath('core/src/runner.mjs'), 'core/src/runner.mjs');
+});
+
+test('retrieval does not resend recent messages and prioritizes user evidence over generated claims', () => {
+  const prompt = memoryPrompt({ available: true, resident_messages: [{ id: 'duplicate', role: 'user', content: 'already in history' }, { id: 'generated', role: 'assistant', content: 'unverified answer' }, { id: 'source', role: 'user', content: 'original fact' }] }, ['duplicate']);
+  assert.doesNotMatch(prompt, /already in history/);
+  assert.ok(prompt.indexOf('original fact') < prompt.indexOf('unverified answer'));
 });
 
 test('inference controls reject unbounded generation and record separate timings', () => {
