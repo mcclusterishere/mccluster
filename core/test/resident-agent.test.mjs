@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runResidentAgent } from '../src/resident-agent.mjs';
 import { executeResidentTool, safeRepositoryPath, stableAnalysisId } from '../src/resident-tools.mjs';
-import { packHistory, memoryQuery, relevantMemory } from '../src/resident-context.mjs';
+import { packHistory, memoryQuery, relevantMemory, memoryUnavailableAnswer } from '../src/resident-context.mjs';
 import { inferenceSettings, inferenceUsage } from '../src/compute/inference-settings.mjs';
 
 const context = { orgId: 'trusted-house', turnId: 'turn-1', before: '2026-10-20T12:00:00Z' };
@@ -68,6 +68,9 @@ test('memory window exceeds the previous 24 messages and always retains the late
   assert.match(memoryQuery('What did we decide about funding and OVH?'), /funding/);
   const memory = await relevantMemory({ orgId: 'house', content: 'funding', before: context.before }, async args => { assert.equal(args.before, context.before); throw new Error('unavailable'); });
   assert.equal(memory.available, false);
+  assert.match(memoryUnavailableAnswer('Use saved memory to recall our code', memory), /will not invent/);
+  assert.equal(memoryUnavailableAnswer('Explain photosynthesis', memory), null);
+  assert.equal(memoryUnavailableAnswer('Use saved memory', { available: true }), null);
 });
 
 test('tracked source reads reject traversal and credential files', () => {
