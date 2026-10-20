@@ -2,6 +2,12 @@
   "schema_version": 1,
   "status": "canonical",
   "law": "Products are workloads. McCluster is the platform.",
+  "public_brand": {
+    "name": "Equity Uprise",
+    "world_experience": "Equity Uprise World",
+    "legacy_domain_and_machine_identifiers_remain_stable": true,
+    "effective_date": "2026-10-20"
+  },
   "planes": {
     "durable_truth": {
       "system": "supabase",
