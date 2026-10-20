@@ -11,7 +11,7 @@
   'use strict';
   var M=w.MCC_MNET, ROOT='/v1/mnet/audio', BASE='https://api.mccluster.org'+ROOT,
       status=null, place=null, current=null, you=null, pass=null, mic=null, sendPc=null,
-      receives=new Map(), poll=null, refreshing=false, beat=0;
+      receives=new Map(), poll=null, refreshing=false, beat=0, places=[];
   if(!M || typeof M.api!=='function')return;
   function $(id){return d.getElementById(id);}
   function signedIn(){try{var s=w.MCC&&w.MCC.session&&w.MCC.session();return !!(s&&s.access_token);}catch(_){return false;}}
@@ -105,12 +105,28 @@
     $('mnAudioForm').onsubmit=function(e){e.preventDefault();void create();};
     // A signed-out visitor starts where their connection is.
     if(!signedIn()&&visitorCountry())place={code:visitorCountry(),name:placeName(visitorCountry())};
-    rooms();eligible();
+    rooms();eligible();livePlaces();
+    setInterval(function(){if(!d.hidden)void livePlaces();},60000);
+  }
+  /* WHERE PEOPLE ARE TALKING: the globe marks each country with a conversation on air, so a tap there opens its
+     rooms (js/action-globe.js draws hu:live-places; a globe that does not know it ignores it). Counts, never people. */
+  function tellGlobe(){
+    var f=$('mnWorldFrame');
+    if(f&&f.contentWindow)try{f.contentWindow.postMessage({type:'hu:live-places',source:'audio',places:places},location.origin);}catch(_){}
+  }
+  async function livePlaces(){
+    try{
+      var data=await open('/rooms'),count={};
+      (data&&data.rooms||[]).forEach(function(r){if(r&&/^[A-Z]{2}$/.test(r.country_code||''))count[r.country_code]=(count[r.country_code]||0)+1;});
+      places=Object.keys(count).map(function(k){return {code:k,count:count[k]};});tellGlobe();
+    }catch(_){}
   }
   // The globe says which country is in view; the room list follows it.
   w.addEventListener('message',function(ev){
     var m=ev.data||{};
-    if(ev.origin!==location.origin||m.type!=='hu:country'||!$('mnAudioDoor'))return;
+    if(ev.origin!==location.origin||!$('mnAudioDoor'))return;
+    if(m.type==='hu:globe-ready'){tellGlobe();return;}
+    if(m.type!=='hu:country')return;
     var code=m.country&&/^[A-Z]{2}$/.test(String(m.country.code||'').toUpperCase())?String(m.country.code).toUpperCase():null;
     var next=code?{code:code,name:typeof m.country.name==='string'?m.country.name.slice(0,80):placeName(code)}
       :(!signedIn()&&visitorCountry()?{code:visitorCountry(),name:placeName(visitorCountry())}:null);

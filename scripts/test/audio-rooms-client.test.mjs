@@ -31,3 +31,12 @@ test('a visitor listens with a pass and no session; going elsewhere asks for sig
   assert.match(js, /if\(pass\)return open\(path,body,pass\);/);
   assert.match(js, /if\(ok\)void join\(r\);else askSignIn\(\);/);
 });
+
+test('the globe hears where conversations are on air as counts per country, never people', () => {
+  const tell = js.slice(js.indexOf('function tellGlobe('), js.indexOf('async function livePlaces('));
+  assert.match(tell, /\{type:'hu:live-places',source:'audio',places:places\}/);
+  assert.match(tell, /location\.origin/);
+  const count = js.slice(js.indexOf('async function livePlaces('), js.indexOf('function paintPlace('));
+  assert.match(count, /return \{code:k,count:count\[k\]\};/);
+  assert.doesNotMatch(count, /display_name|participant_id|host/);
+});
