@@ -3,6 +3,10 @@
   "use strict";
 
   var APP = "mccluster-web";
+  /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "open missions belong in missions not inside the newsfeed"; "the
+     transport and the missions feature will be taken off"). While hu-social-only is on <html> (mnet.html) the feed carries
+     no mission card, list or rail, search finds no missions, and every way into Missions lands on the feed. */
+  var MISSIONS_OFF = document.documentElement.classList.contains("hu-social-only");
   var state = {
     user: null,
     boot: null,
@@ -501,7 +505,6 @@
         paintSelf();
         paintFinishCard();
         $("mnBell").hidden = false;
-        loadRail();
         requestAnimationFrame(function () { moveThumb(false); });
         return loadFeed(true);
       }
@@ -511,7 +514,6 @@
       paintSelf();
       paintCreatorDoor();
       $("mnBell").hidden = false;
-      loadRail();
       loadActionRecord();
       requestAnimationFrame(function () { moveThumb(false); });
       openDeepLinkedMission();
@@ -677,7 +679,7 @@
       var back = $("mnProfileBack"); if (back) back.hidden = true;
       showGate("app");
       paintSelf();
-      var missionDeepLink=/[?&](mission=|view=missions(?:&|$))/.test(location.search);
+      var missionDeepLink=!MISSIONS_OFF&&/[?&](mission=|view=missions(?:&|$))/.test(location.search);
       if(missionDeepLink){
         setView("missions");
         openDeepLinkedMission();
@@ -888,6 +890,7 @@
       '</div>' + missionStatsHtml(c.mission_id) + globeChipHtml(c.mission_id) + '</div>';
   }
   function loadActionOfferCards(items) {
+    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) {
       var p = it.post;
       return p && p.content_id ? p.id : null;
@@ -933,8 +936,8 @@
       '<p class="mn__collab-by">' + esc(c.kind || "work") + ' · by ' + credits.join(' <span aria-hidden="true">&amp;</span> ') + '</p>' +
       '<div class="mn__actcard-row">' +
         (c.link ? '<a class="mn__quiet" href="' + esc(c.link) + '" target="_blank" rel="noopener noreferrer">Open the work ↗</a>' : '') +
-        (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
-      '</div>' + missionStatsHtml(c.mission_id) + '</div>';
+        (c.mission_open && !MISSIONS_OFF ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
+      '</div>' + (MISSIONS_OFF ? '' : missionStatsHtml(c.mission_id)) + '</div>';
   }
   function loadCollaborationCards(items) {
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.metadata && p.metadata.collaboration ? p.id : null; })
@@ -948,6 +951,7 @@
     }).catch(function () { return false; });
   }
   function loadActionCards(items) {
+    if (MISSIONS_OFF) return Promise.resolve(false);
     var ids = (items || []).map(function (it) { var p = it.post; return p && p.post_type === "share" && p.metadata && p.metadata.action ? p.id : null; })
       .filter(function (id) { return id && !(state.actionCards && id in state.actionCards); });
     if (!ids.length) return Promise.resolve(false);
@@ -1460,7 +1464,7 @@
   function paintFeedMissions() {
     var host = $("mnFeedMissions");
     if (!host) return;
-    if (state.feed.length >= 8) { host.hidden = true; return; }
+    if (MISSIONS_OFF || state.feed.length >= 8) { host.hidden = true; return; }
     sbRest("action_missions?status=eq.open&select=id,title,description,domain&order=created_at.desc&limit=3").then(function (rows) {
       rows = rows || [];
       host.hidden = !rows.length;
@@ -1853,7 +1857,7 @@
         }).catch(function(e){card.querySelectorAll("button").forEach(function(x){x.disabled=false;});setStatus($("mnNotificationStatus"),e.message||"That did not go through.","error");});
       });
     });
-    host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){openPerson(b.getAttribute("data-person"));});});
+    host.querySelectorAll("[data-person]").forEach(function(b){b.addEventListener("click",function(){closeAlerts();openPerson(b.getAttribute("data-person"));});});
   }
 
   /* ALERTS ON THIS DEVICE (owner, 2026-10-20; workers/mccluster/src/web-push.js). Never asked for on its own: the
@@ -1910,6 +1914,18 @@
     }).catch(function () { return []; });
   }
 
+  /* NOTIFICATIONS DROP DOWN FROM THE BELL (owner, 2026-10-20) */
+  function openAlerts() {
+    var pop = $("mnAlerts"); if (!pop) return;
+    closeMenu();
+    pop.hidden = false; $("mnBell").setAttribute("aria-expanded", "true");
+    loadNotificationsSilently().then(markNotificationsRead); paintPush();
+    track("mnet_alerts_open", {});
+  }
+  function closeAlerts() {
+    var pop = $("mnAlerts"); if (!pop || pop.hidden) return;
+    pop.hidden = true; $("mnBell").setAttribute("aria-expanded", "false");
+  }
   function markNotificationsRead() {
     return api("/v1/mnet/notifications/read", { method:"POST", body:{} }).then(function () {
       $("mnNotifBadge").hidden = true;
@@ -2308,12 +2324,16 @@
   }
 
   function setView(name) {
+    /* notifications are the bell's drop down, never a page of their own (owner, 2026-10-20) */
+    if (name === "notifications") { if (state.guest) { askToSignIn(name); return; } openAlerts(); return; }
+    if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
     state.currentView = name;
     track("mnet_view", { view:name });
-    ["live","clips","feed","missions","discover","groups","messages","notifications","profile"].forEach(function (view) {
-      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+    closeAlerts();
+    ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
+      var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
       var tab=document.querySelector('[data-mn-view="' + view + '"]');
       if(tab)tab.classList.toggle("is-active",view===name);
@@ -2327,7 +2347,6 @@
     if(name==="discover")loadDiscover();
     if(name==="groups")loadGroups();
     if(name==="messages")loadConversations();
-    if(name==="notifications"){loadNotificationsSilently().then(markNotificationsRead);paintPush();}
     if(name==="profile"){paintSelf();loadDeletion();paintCreatorDoor();}
     window.scrollTo({top:0,behavior:"smooth"});
     sizeWorld();
@@ -2342,30 +2361,6 @@
     thumb.style.transform = "translateX(" + tab.offsetLeft + "px)";
     thumb.classList.add("is-on");
     if (scroll && tab.scrollIntoView) tab.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
-  }
-
-  /* THE CAMPAIGNS RAIL. The same public list the gateways read; a card is
-     the door into its campaign. Hidden, not empty, when nothing is live. */
-  function loadRail() {
-    var track = $("mnRailTrack");
-    if (!track) return;
-    fetch("https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1/rpc/action_campaigns_live", {
-      method: "POST",
-      headers: { apikey: "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4", "content-type": "application/json" },
-      body: "{}"
-    }).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
-      list = Array.isArray(list) ? list : [];
-      if (!list.length) return;
-      track.innerHTML = list.map(function (c, i) {
-        var ch = c.chapter || {}, n = Number(c.people || 0);
-        return '<a class="mn__camp" style="--i:' + i + ';--hue:' + hueOf(c.slug) + '" href="action/?c=' + encodeURIComponent(c.slug) + '">' +
-          '<span class="mn__camp-k"><i class="mn__live"></i>' + esc([ch.region, ch.title].filter(Boolean).join(" · ") || "Live") + '</span>' +
-          '<b>' + esc(c.title) + '</b>' +
-          (ch.line ? '<small>' + esc(ch.line) + '</small>' : '') +
-          '<span class="mn__camp-n"><b>' + n.toLocaleString("en-US") + '</b> ' + (n === 1 ? "person" : "people") + ' in</span></a>';
-      }).join("");
-      $("mnRail").hidden = false;
-    }).catch(function () {});
   }
 
   function editProfile() {
@@ -2566,7 +2561,16 @@
     document.querySelectorAll("[data-feed-scope]").forEach(function (b) { b.onclick = function () { state.world.scopeFromTap = false; setFeedScope(b.dataset.feedScope); }; });
     paintFeedScope();
     loadPlaceStatus();
-    $("mnBell").onclick = function () { setView("notifications"); };
+    $("mnBell").onclick = function () { if ($("mnAlerts").hidden) openAlerts(); else closeAlerts(); };
+    /* a tap anywhere else, or Escape, closes the drop down; the page under it never moved */
+    document.addEventListener("click", function (e) {
+      var pop = $("mnAlerts");
+      if (!pop || pop.hidden || pop.contains(e.target) || $("mnBell").contains(e.target)) return;
+      closeAlerts();
+    }, true);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("mnAlerts").hidden) { closeAlerts(); $("mnBell").focus(); } });
+    /* a tap on the globe lands in its frame, never on this page: the page only sees its window lose focus to the frame */
+    window.addEventListener("blur", function () { setTimeout(function () { var f = document.activeElement; if (f && f.tagName === "IFRAME") closeAlerts(); }, 0); });
     $("mnComposerLive").onclick = function () { if (window.MCC_LIVE && MCC_LIVE.studio) MCC_LIVE.studio(); };
     $("mnProfileBlocked").onclick = function () { setView("discover"); loadBlocked(); };
     window.addEventListener("resize", function () { moveThumb(false); });
@@ -3373,6 +3377,7 @@
     return f;
   }
   function openMission(id){
+    if(MISSIONS_OFF)return;
     var version=++missionOpenVersion;
     return fetchMission(id).then(function(m){
       if(version!==missionOpenVersion)return;
@@ -3493,7 +3498,7 @@
   }
   /* A shared mission link opens that mission, not the feed. */
   function openDeepLinkedMission(){
-    if(missions.deepLinked)return;
+    if(MISSIONS_OFF||missions.deepLinked)return;
     var id=null; try{id=new URLSearchParams(location.search).get("mission");}catch(_){}
     if(!id||!/^[0-9a-f-]{36}$/i.test(id))return;
     missions.deepLinked=true; setView("missions"); openMission(id);
@@ -3732,10 +3737,11 @@
     suggest.n = 0;
     if (q) {
       var hits = function (fields) { return fields.join(" ").toLocaleLowerCase().indexOf(q) !== -1; };
-      var pinned = Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
+      var pinned = MISSIONS_OFF ? [] : Object.keys(state.world.missions).map(function (k) { return state.world.missions[k]; })
         .filter(function (m) { return hits([m.title, m.description, m.region_label, m.action_path]); }).slice(0, 4);
       if (pinned.length) html += suggestHead("On the globe") + pinned.map(function (m) { return suggestRow("globe", m.mission_id, m.title, m.region_label); }).join("");
       if (!state.guest) {
+        if (!suggest.missions && MISSIONS_OFF) suggest.missions = [];
         if (!suggest.missions) {
           suggest.missions = [];
           sbRest("action_missions?status=eq.open&select=id,title,description,domain,kind&order=created_at.desc&limit=200").then(function (rows) {
@@ -3834,7 +3840,8 @@
      terms from the campaigns are shown; hidden while none are open */
   function paintClipDoor() {
     var door = $("mnClipDoor");
-    if (!door) return;
+    /* no campaigns are promoted on the feed while the World is the social feed (owner, 2026-10-20) */
+    if (!door || MISSIONS_OFF) return;
     if (!state.clipOpen) {
       state.clipOpen = [];
       sbRpc("clip_campaigns_open", { p_song: null }).then(function (rows) {
