@@ -27,6 +27,10 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 # The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
 # production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
 WORLD_NEWS_INGEST_ENABLED = "true"
+# Country-scoped public regional feeds and explicit author-assigned post countries.
+# Production SQL pending: supabase/pending/20261019222500_world_place_scope_v1.sql
+# Do not turn on until the migration is applied and public-only feed QA passes.
+WORLD_PLACE_SCOPE_ENABLED = "false"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
