@@ -121,10 +121,6 @@
           <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
           <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
-        <div id="mnCreateNameWrap" hidden>
-          <label class="mn__label" for="mnCreateName">Display name <span>optional</span></label>
-          <input class="mn__input" id="mnCreateName" type="text" autocomplete="name" placeholder="Your name">
-        </div>
         <label class="mn__label" for="mnEmail">Email</label>
         <input class="mn__input" id="mnEmail" type="email" autocomplete="email" placeholder="you@example.com">
         <label class="mn__label" for="mnPassword">Password</label>
@@ -134,6 +130,10 @@
           <input class="mn__input" id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
         </div>
         <button class="mn__primary" id="mnAuthGo" type="button">Sign in</button>
+        <!-- ONE SIGN-UP (owner, 2026-10-20): an account is an email and a password (or Google), and then the same three
+             pages every new member fills in, straight away; the person goes back to where they started after the last one -->
+        <p class="mn__hint" id="mnCreateNote" hidden>Next: your profile, where we can reach you, and your phone. One short page each.</p>
+        <p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy.html">Privacy Policy</a>.</p>
         <button class="mn__secondary" id="mnForgot" type="button">Forgot or don't know your password?</button>
         <p class="mn__hint" id="mnPasswordHint" hidden>Use at least 8 characters.</p>
         <p class="mn__status" id="mnAuthStatus" role="status"></p>
@@ -147,10 +147,13 @@
     </section>
 
     <!-- THE ONBOARDING, THREE PAGES (owner, 2026-10-15: "three pages that look all sexy … you put in this,
-         that, that, boom, it all verifies"). One form, three steps, each saved on its own: 1 the handle and
-         the name (the public profile), 2 the legal name and mailing address (private, fan_profiles, the
-         contact step), 3 phone, email and password (private). The mark in the header is the supplied
-         Equity Uprise artwork, scaled only. Editing an existing profile uses the same form in one page. -->
+         that, that, boom, it all verifies"), AND THE ONE SIGN-UP (owner, 2026-10-20: "that should be the new sign
+         up thing … instead of saying make it yours, it should be like make a profile"). One form, three steps, each
+         saved on its own, in this order: 1 the public profile (username and name), 2 where we can reach you (legal
+         name and mailing address: private, fan_profiles, the contact step), 3 phone and sign-in (phone, the
+         account email, and a password only when the account has none). A new account opens here at once; an
+         unfinished one opens at its first unfinished page. The mark in the header is the supplied Equity Uprise
+         artwork, scaled only. Editing an existing profile uses the same form in one page. -->
     <section class="mn__gate mn__onboard" id="mnProfileGate" hidden>
       <button class="mn__back" id="mnProfileBack" type="button" hidden>← Back to feed</button>
       <div class="mn__steps-row" id="mnStepsRow">
@@ -159,8 +162,8 @@
       </div>
       <form class="mn__profile-form mn__onboard-form" id="mnProfileForm" novalidate>
         <section class="mn__step" id="mnStep1" data-step="1">
-          <h1 class="mn__onboard-h" id="mnProfileTitle">Make it yours<em>.</em></h1>
-          <p class="mn__lede" id="mnProfileLede">Your name. Your place in the movement.</p>
+          <h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>.</em></h1>
+          <p class="mn__lede" id="mnProfileLede">Your username and name. It's how people find you.</p>
           <label class="mn__label" for="mnHandle">Username</label>
           <div class="mn__field mn__field--handle"><span class="mn__field-at" aria-hidden="true">@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname" required><span class="mn__field-state" id="mnHandleState" aria-live="polite"></span></div>
           <p class="mn__hint" id="mnHandleHint">Your handle across Equity Uprise.</p>
@@ -168,11 +171,11 @@
           <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required></div>
           <details class="mn__about" id="mnAbout">
             <summary><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19a6.5 6.5 0 0 1 13 0M15.5 5.2a3.2 3.2 0 0 1 0 6.1M17.5 13.2A6.5 6.5 0 0 1 21.5 19"/></svg></span><span class="mn__about-t"><strong>About you</strong><small>Optional · Private</small></span><i class="mn__about-chev" aria-hidden="true"></i></summary>
-            <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Equity Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">A response is required; “Prefer not to say” is always valid.</p></fieldset>
+            <fieldset class="mn__demographics"><legend>Race / ethnicity <span>private</span></legend><p class="mn__hint">Help Equity Uprise measure who Equity Uprise is reaching. Choose all that describe you, or choose “Prefer not to say.” This is not shown on your profile and does not decide which missions you can join.</p><div class="mn__demo-grid"><label><input type="checkbox" name="mnRace" value="american_indian_alaska_native"> American Indian or Alaska Native</label><label><input type="checkbox" name="mnRace" value="asian"> Asian</label><label><input type="checkbox" name="mnRace" value="black_african_american"> Black or African American</label><label><input type="checkbox" name="mnRace" value="hispanic_latino"> Hispanic or Latino</label><label><input type="checkbox" name="mnRace" value="middle_eastern_north_african"> Middle Eastern or North African</label><label><input type="checkbox" name="mnRace" value="native_hawaiian_pacific_islander"> Native Hawaiian or Pacific Islander</label><label><input type="checkbox" name="mnRace" value="white"> White</label><label><input type="checkbox" name="mnRace" value="another_identity"> Another identity</label><label><input id="mnRaceSkip" type="checkbox"> Prefer not to say</label></div><p class="mn__hint">Optional. Leave it blank or choose “Prefer not to say.”</p></fieldset>
           </details>
         </section>
         <section class="mn__step" id="mnStep2" data-step="2" hidden>
-          <h1 class="mn__onboard-h">Where to reach you<em>.</em></h1>
+          <h1 class="mn__onboard-h">Where we can reach you<em>.</em></h1>
           <p class="mn__lede">Your legal name and mailing address. Private, never on your profile.</p>
           <label class="mn__label" for="mnLegalName">Full legal name</label>
           <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnLegalName" maxlength="160" autocomplete="name" placeholder="First and last name" required></div>
@@ -190,8 +193,8 @@
           <p class="mn__hint">A complete address also makes the account eligible for McCluster's monthly swag selections.</p>
         </section>
         <section class="mn__step" id="mnStep3" data-step="3" hidden>
-          <h1 class="mn__onboard-h">Lock it in<em>.</em></h1>
-          <p class="mn__lede">How we reach you, and how you get back in.</p>
+          <h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>.</em></h1>
+          <p class="mn__lede" id="mnStep3Lede">Your phone is optional and private. Add a password to sign in with your email too.</p>
           <label class="mn__label" for="mnPhone">Phone <span>optional</span></label>
           <div class="mn__field mn__field--phone"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number"></div>
           <p class="mn__hint" id="mnPhoneHint">With your country code first, so we can reach you anywhere in the world.</p>
@@ -352,8 +355,8 @@
              their profile, or their private contact details, still gets the whole World: this card sits where
              the composer would, and posting or joining asks them to finish. Nothing is hidden behind the form. -->
         <aside class="mn__guest-card mn__finish-card" id="mnFinishCard" hidden>
-          <p><strong id="mnFinishTitle">Finish your profile.</strong> <span id="mnFinishWhy">Pick a username so people can find and mention you. Then post, connect and join missions.</span></p>
-          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" id="mnFinishGo">Finish your profile →</button><button class="mn__world-filter" type="button" id="mnStallSignIn" hidden>Sign in again</button></div>
+          <p><strong id="mnFinishTitle">Make your profile.</strong> <span id="mnFinishWhy">A username and a name, so people can find and mention you. Then post, connect and join missions.</span></p>
+          <div class="mn__guest-card-row"><button class="mn__world-go" type="button" id="mnFinishGo">Make your profile →</button><button class="mn__world-filter" type="button" id="mnStallSignIn" hidden>Sign in again</button></div>
         </aside>
         <article class="mn__composer" id="mnComposer">
           <div class="mn__composer-head">
@@ -663,6 +666,8 @@
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/fan-intake.js?v=__STAMP__"></script>
+  <script src="js/name-integrity.js?v=__STAMP__"></script>
+  <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>

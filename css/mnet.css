@@ -104,6 +104,8 @@ html, body { background: #0a0807; }
 .mn__handle-row { display: flex; align-items: center; gap: 8px; color: var(--mn-dim); font-weight: 800; }
 .mn__handle-row .mn__input { margin: 0; }
 .mn__hint { margin: 6px 0 0; color: var(--mn-faint); font-size: 0.8rem; line-height: 1.5; }
+.mn__hint a { color: var(--mn-dim); text-decoration: underline; text-underline-offset: 3px; }
+.mn__input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--mn-hot); }
 .mn__primary, .mn__post {
   min-height: 48px; border: 0; border-radius: 14px; cursor: pointer;
   background: var(--mn-hot); color: var(--mn-hot-ink); font-family: inherit; font-weight: 800; font-size: max(16px, 0.95rem);

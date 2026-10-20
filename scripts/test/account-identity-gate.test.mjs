@@ -41,15 +41,27 @@ test('account intake source names the screen as plausibility screening, not ID v
 });
 
 
+/* ONE SIGN-UP (owner, 2026-10-20: "that 3-panel profile sign up thing … should be the new sign up thing"). The
+   account page's own long create form is gone: Create account hands off to the World's sign-up (an email and a
+   password, then the three pages). Its rules are kept there, asked once: a plausible legal first and last name, the
+   whole mailing address, and the privacy acknowledgement recorded with the account. */
 test('account creation requires legal first and last name, mailing address and privacy acknowledgement', async () => {
   const html = await readFile(join(ROOT, 'account.html'), 'utf8');
-  for (const id of ['acCreateFirst','acCreateLast','acCreateAddr1','acCreateCity','acCreateRegion','acCreatePostal','acCreateCountry','acCreatePrivacy']) {
-    assert.match(html, new RegExp('id="' + id + '"'), id + ' must exist');
+  const mnet = await readFile(join(ROOT, 'mnet.html'), 'utf8');
+  const js = await readFile(join(ROOT, 'js/mnet.js'), 'utf8');
+  for (const id of ['acCreateFirst','acCreateLast','acCreateAddr1','acCreateCity','acCreateRegion','acCreatePostal','acCreateCountry','acCreatePrivacy','acCreatePass']) {
+    assert.doesNotMatch(html, new RegExp('id="' + id + '"'), id + ' belongs to the one sign-up, not a second form');
   }
-  assert.match(html, /MCC_NAME_INTEGRITY\.validate\(first, last\)/);
-  assert.match(html, /privacy_policy_version:\s*"2026-10-19"/);
-  assert.match(html, /shipping_address_line1/);
-  assert.match(html, /complete mailing address are required/i);
+  assert.match(html, /<a class="ac__btn" id="acCreateGo" href="mnet\.html\?join=1">Create account<\/a>/, 'Create account is the one sign-up');
+  assert.match(html, /el\("acCreateGo"\)\.href = "mnet\.html\?join=1" \+ \(NEXT \? "&next=" \+ encodeURIComponent\(NEXT\) : ""\)/, 'and it carries where the person started');
+  /* the rules, on the pages that ask for them */
+  assert.match(mnet, /<script src="js\/name-integrity\.js\?v=__STAMP__"><\/script>/);
+  assert.match(js, /named = MCC_NAME_INTEGRITY\.validate\(parts\.shift\(\) \|\| "", parts\.join\(" "\)\)/, 'page 2 screens the legal name');
+  assert.match(js, /var missing = \["mnLegalName", "mnAddr1", "mnCity", "mnRegion", "mnPostal", "mnCountry"\]/, 'page 2 requires the whole address');
+  assert.match(js, /Fill in your legal name and the whole address\./);
+  assert.match(js, /var ack = window\.MCC_PRIVACY \? \{ privacy_policy_version: MCC_PRIVACY\.version, privacy_acknowledged_at: new Date\(\)\.toISOString\(\) \} : \{\};/, 'the acknowledgement is recorded with the account');
+  assert.match(mnet, /<p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy\.html">Privacy Policy<\/a>\.<\/p>/);
+  assert.match(await readFile(join(ROOT, 'js/live-content.js'), 'utf8'), /var VERSION = "2026-10-19"/, 'the version the person agreed to on the way in');
 });
 
 test('site entry gate is versioned and analytics stays off before acknowledgement', async () => {

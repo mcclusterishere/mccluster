@@ -161,36 +161,16 @@
         <p class="ac__note" id="acMsg"></p>
       </div>
 
-      <div id="acCreatePane" data-private hidden>
+      <!-- ONE SIGN-UP (owner, 2026-10-20: "that 3-panel profile sign up thing … should be the new sign up thing").
+           This page is sign-in and Settings. Making an account is the World's form: an email and a password (or
+           Google), then the three pages (your profile; your legal name and mailing address; your phone), then back to
+           where the person started (?next, carried along). The legal-name check, the full mailing address and the
+           privacy acknowledgement this page's own long form used to ask for are asked once, there. -->
+      <div id="acCreatePane" hidden>
         <p class="ac__lab">Create your M Account</p>
-        <p class="ac__sub">Use your legal name and current mailing address. A complete address makes the account eligible for McCluster monthly swag selections.</p>
-        <div class="fan__row">
-          <input type="text" id="acCreateFirst" placeholder="Legal first name" autocomplete="given-name" maxlength="80" required>
-          <input type="text" id="acCreateLast" placeholder="Legal last name" autocomplete="family-name" maxlength="80" required>
-        </div>
-        <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email" required>
-        <input type="text" id="acCreateAddr1" placeholder="Search and select a Google Places address" autocomplete="off" required><p class="ac__note" id="acPlacesStatus" role="status">Select a Google Places result to continue. Manual entries are not accepted.</p>
-        <input type="text" id="acCreateAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
-        <div class="fan__row">
-          <input type="text" id="acCreateCity" placeholder="City" autocomplete="address-level2" required>
-          <input type="text" id="acCreateRegion" placeholder="State / region" autocomplete="address-level1" required>
-        </div>
-        <div class="fan__row">
-          <input type="text" id="acCreatePostal" placeholder="ZIP / postal code" autocomplete="postal-code" required>
-          <input type="text" id="acCreateCountry" placeholder="Country" autocomplete="country-name" value="United States" required>
-        </div>
-        <input type="password" id="acCreatePass" placeholder="Create password" autocomplete="new-password" minlength="8" required>
-        <input type="password" id="acCreatePass2" placeholder="Confirm password" autocomplete="new-password" minlength="8" required>
-        <label class="fan__check">
-          <input type="checkbox" id="acCreatePrivacy" required>
-          <span><b>I agree to the current Privacy Policy.</b>
-            <em>This acknowledges the notice. Precise location and other protected device permissions are requested separately by your browser or operating system.</em></span>
-        </label>
-        <p class="fan__fine"><a href="privacy.html">Read the Privacy Policy</a>. No purchase or payment is required for monthly swag eligibility.</p>
-        <button class="ac__btn" id="acCreateGo" type="button">Create account</button>
-        <p class="ac__passnote">Use at least 8 characters. Obvious placeholder or fake-name input is rejected; this is not government-ID verification.</p>
-        <p class="ac__note" id="acCreateMsg"></p>
-        <button class="ac__flip" id="acResend" type="button" hidden>Resend verification email</button>
+        <p class="ac__sub" id="acCreateWhy">An email and a password, then three short pages: your profile, where we can reach you, and your phone.</p>
+        <a class="ac__btn" id="acCreateGo" href="mnet.html?join=1">Create account</a>
+        <p class="fan__fine">Creating an account means you agree to the <a href="privacy.html">Privacy Policy</a>. No purchase or payment is required for monthly swag eligibility.</p>
       </div>
 
       <!-- SOCIAL SIGN-IN. Painted only for providers Supabase actually has
@@ -350,6 +330,32 @@
       });
     }
 
+    /* WHERE THE PERSON STARTED (?next=). Signing in here goes back there; Create account carries it into the World's
+       sign-up, which goes back there after its three pages. This origin only (MCC.safeNext): //host, https://host and
+       javascript: are refused, and so is this page itself. */
+    var NEXT = (function () {
+      var raw = ""; try { raw = new URLSearchParams(location.search).get("next") || ""; } catch (_) {}
+      var safe = window.MCC && MCC.safeNext ? MCC.safeNext(raw) : "";
+      return safe && !/(^|\/)account\.html$/.test(safe.split(/[?#]/)[0]) ? safe : "";
+    })();
+    var FROM = /(?:\?|&)from=([a-z0-9-]{1,40})(?:&|$)/i.exec(location.search);
+    el("acCreateGo").href = "mnet.html?join=1" + (NEXT ? "&next=" + encodeURIComponent(NEXT) : "") + (FROM ? "&from=" + FROM[1].toLowerCase() : "");
+    if (NEXT) el("acCreateWhy").textContent += " Then you go back to where you were.";
+
+    /* ONE SIGN-UP: after a sign-in here, a profile that is not done goes to the three pages on the World (at the first
+       unfinished one), a finished one to where the person started, or the World. The bootstrap is the judge; when it
+       cannot answer, the World's own ?finish=1 decides on arrival. */
+    function goOn(next) {
+      var finish = "mnet.html?finish=1" + (next ? "&next=" + encodeURIComponent(next) : "");
+      if (!window.MCC || !MCC.api) { location.replace(finish); return; }
+      MCC.api("/v1/mnet/bootstrap?app_key=mccluster-web").then(function (r) { return r.ok ? r.json() : null; }).then(function (boot) {
+        if (!boot) { location.replace(finish); return; }
+        var unfinished = boot.next_step === "profile" || boot.next_step === "contact" ||
+          !(boot.identity && boot.identity.mccluster_id) || !(boot.profile && String(boot.profile.display_name || "").trim());
+        location.replace(unfinished ? finish : (next || "mnet.html"));
+      }).catch(function () { location.replace(finish); });
+    }
+
     function paint() {
       var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
       el("acDoor").hidden = !!u;
@@ -358,15 +364,13 @@
       el("acWho").textContent = u.name || u.email || "signed in";
       houseOwner(u).then(function (yes) { el("acControl").hidden = !yes; });
       if (window.MCC && MCC.user) MCC.user().then(pwPaint);
+      /* sent here to sign in and go back: straight on, whoever signed in */
+      if (NEXT && !/(?:\?|&)stay=1(?:&|$)/.test(location.search)) { goOn(NEXT); return; }
       houseOwner(u).then(function (yes) {
         if (yes) { openPlane(); return; }
-        window.MCC_FAN.load().then(function (row) {
-          if (profileComplete(row) && !stayOnAccount()) {
-            location.replace("mnet.html");
-            return;
-          }
-          openFan();
-        }).catch(function () { openFan(); });
+        if (!stayOnAccount()) { goOn(""); return; }
+        /* Settings: the account's own contact details, to read and change */
+        openFan();
       });
     }
 
@@ -378,11 +382,9 @@
       el("acCreateTab").classList.toggle("is-on", create);
       el("acSignInTab").setAttribute("aria-selected", create ? "false" : "true");
       el("acCreateTab").setAttribute("aria-selected", create ? "true" : "false");
-      el("acResend").hidden = true;
       el("acMsg").textContent = "";
-      el("acCreateMsg").textContent = "";
       setTimeout(function () {
-        var target = create ? el("acCreateFirst") : el("acInEmail");
+        var target = create ? el("acCreateGo") : el("acInEmail");
         if (target) target.focus();
       }, 0);
     }
@@ -413,127 +415,6 @@
       location.href = "forgot-password.html" + (em ? "?email=" + encodeURIComponent(em) : "");
     };
 
-    el("acResend").onclick = function () {
-      var em = pendingVerificationEmail || el("acCreateEmail").value.trim(), btn = el("acResend");
-      if (!em) return;
-      btn.disabled = true; btn.textContent = "Sending…";
-      MCC.resendSignupVerification(em).then(function () {
-        el("acCreateMsg").textContent = "Verification email sent. Check your inbox and spam folder.";
-        /* Even on success: one message per minute is all this button is
-           for, and the quota it spends is shared with everyone signing
-           up right now. */
-        MCC.holdButton(btn, 60, "Resend verification email");
-      }).catch(function (e) {
-        el("acCreateMsg").textContent = e.message || "Could not resend verification.";
-        if (e.mailQuota) MCC.holdButton(btn, e.retryAfter, "Resend verification email");
-        else { btn.disabled = false; btn.textContent = "Resend verification email"; }
-      });
-    };
-
-    var pendingVerificationEmail = "";
-
-    /* A REFUSAL HAS TO BE SEEN. The message sits under the button, which on
-       a phone with the keyboard up is off screen, and a second tap wrote the
-       same words again, so nothing visibly happened: people pressed "Create
-       account" over and over. Each refusal now takes them to the field that
-       needs them, announces itself, and is counted (the reason only, never
-       what was typed) so the stall shows up in Forensics. */
-    function createFail(msg, fieldId, reason) {
-      var m = el("acCreateMsg");
-      m.textContent = msg;
-      m.setAttribute("role", "alert");
-      m.classList.remove("ac__note--again"); void m.offsetWidth; m.classList.add("ac__note--again");
-      var f = fieldId ? el(fieldId) : null;
-      if (f) {
-        f.setAttribute("aria-invalid", "true");
-        try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); }
-        f.scrollIntoView({ block: "center", behavior: "smooth" });
-      } else {
-        m.scrollIntoView({ block: "center", behavior: "smooth" });
-      }
-      if (window.MCC_TRACK) window.MCC_TRACK("signup_blocked", { reason: reason });
-    }
-    ["acCreateFirst","acCreateLast","acCreateEmail","acCreatePass","acCreatePass2","acCreateAddr1","acCreateCity",
-     "acCreateRegion","acCreatePostal","acCreateCountry","acCreatePrivacy"].forEach(function (id) {
-      var f = el(id);
-      if (f) f.addEventListener("input", function () { f.removeAttribute("aria-invalid"); });
-      if (f) f.addEventListener("change", function () { f.removeAttribute("aria-invalid"); });
-    });
-
-    el("acCreateGo").onclick = function () {
-      if (window.MCC_REQUIRE_GOOGLE_PLACES_ADDRESS === true && (!window.MCC_VERIFIED_ADDRESS || !window.MCC_VERIFIED_ADDRESS.isSelected())) { createFail("Select your real address from Google Places. Typed addresses are not accepted.", "acCreateAddr1", "address_not_selected"); return; }
-      if (el("acCreateGo").disabled) return;
-      if (window.MCC_TRACK) window.MCC_TRACK("signup_started", { flow: "password" });
-      var first = el("acCreateFirst").value.trim(), last = el("acCreateLast").value.trim();
-      var em = el("acCreateEmail").value.trim();
-      var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
-      var required = ["acCreateFirst","acCreateLast","acCreateEmail","acCreatePass",
-                      "acCreateAddr1","acCreateCity","acCreateRegion","acCreatePostal","acCreateCountry"];
-      var missing = required.filter(function (id) { return !el(id).value.trim(); })[0];
-      if (missing) {
-        createFail("Legal first and last name, email, and a complete mailing address are required.", missing,
-          "missing_" + missing.replace(/^acCreate/, "").toLowerCase());
-        return;
-      }
-      var nameCheck = window.MCC_NAME_INTEGRITY && MCC_NAME_INTEGRITY.validate(first, last);
-      if (!nameCheck || !nameCheck.ok) {
-        createFail((nameCheck && nameCheck.reason) || "Enter a plausible legal first and last name.", "acCreateFirst", "name_check");
-        return;
-      }
-      if (!el("acCreatePrivacy").checked) {
-        createFail("Read and agree to the Privacy Policy before creating the account.", "acCreatePrivacy", "privacy_unchecked");
-        return;
-      }
-      if (pw.length < 8) { createFail("Use at least 8 characters.", "acCreatePass", "password_short"); return; }
-      if (pw !== pw2) { createFail("Those passwords do not match.", "acCreatePass2", "password_mismatch"); return; }
-      btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = ""; el("acResend").hidden = true;
-      var display = nameCheck.legal_name;
-      var metadata = {
-        name: display,
-        full_name: display,
-        first_name: nameCheck.first_name,
-        last_name: nameCheck.last_name,
-        google_place_id: window.MCC_VERIFIED_ADDRESS && window.MCC_VERIFIED_ADDRESS.isSelected() ? window.MCC_VERIFIED_ADDRESS.placeId() : null,
-        address_verification_status: "pending_server_validation",
-        shipping_address_line1: el("acCreateAddr1").value.trim(),
-        shipping_address_line2: el("acCreateAddr2").value.trim(),
-        shipping_city: el("acCreateCity").value.trim(),
-        shipping_region: el("acCreateRegion").value.trim(),
-        shipping_postal_code: el("acCreatePostal").value.trim(),
-        shipping_country: el("acCreateCountry").value.trim(),
-        privacy_policy_version: "2026-10-19",
-        privacy_acknowledged_at: new Date().toISOString()
-      };
-      MCC.signUpWithPassword(em, pw, metadata).then(function (result) {
-        if (result && result.session) {
-          if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "immediate" });
-          if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
-          freshSignIn = true;
-          paint();
-          return;
-        }
-        if (result && result.existing) {
-          if (window.MCC_TRACK) window.MCC_TRACK("signup_existing_account", { flow: "password" });
-          el("acInEmail").value = em;
-          setAuthMode("signin");
-          el("acMsg").textContent = "An account already exists for that email. Sign in, or use Forgot password.";
-          return;
-        }
-        pendingVerificationEmail = em;
-        if (window.MCC_TRACK) window.MCC_TRACK("signup_succeeded", { flow: "password", verification: "pending" });
-        el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
-        el("acResend").hidden = false;
-      }).catch(function (e) {
-        var rateLimited = String((e && (e.code || e.status)) || "").includes("429") ||
-          /rate.limit|too many requests/i.test(String(e && e.message || ""));
-        if (window.MCC_TRACK) window.MCC_TRACK("signup_failed", { flow: "password", reason: rateLimited ? "rate_limited" : "server_error" });
-        createFail(rateLimited
-          ? "Too many signup attempts right now. Please wait before trying again; repeated taps will not help. You can also sign in if you already have an account."
-          : (e.message || "Could not create that account."), null,
-          "server_" + String((e && (e.code || e.status)) || "error").slice(0, 40));
-      }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
-    };
-    el("acCreatePass2").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acCreateGo").click(); });
 
     el("acOut").onclick = function () {
       MCC_AUTH.signOut().then(function () { location.reload(); });
@@ -725,8 +606,10 @@
           b.innerHTML = spec[2] + "<span>" + spec[1] + "</span>";
           b.addEventListener("click", function () {
             b.disabled = true;
-            /* /auth/ finishes the PKCE exchange and then forwards here. */
-            MCC.signInWithProvider(key, location.origin + "/auth/?next=/account.html")
+            /* /auth/ finishes the PKCE exchange and then forwards here, with
+               where the person started still on the address (?next) */
+            var back = "/account.html" + (NEXT ? "?next=" + encodeURIComponent(NEXT) : "");
+            MCC.signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(back))
               .catch(function (e) {
                 b.disabled = false;
                 el("acMsg").textContent = e.message || ("Could not start " + key + " sign-in.");
