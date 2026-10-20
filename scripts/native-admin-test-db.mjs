@@ -25,6 +25,7 @@ export async function nativeTestDb(label) {
   const client=postgres(url.href,options);
   const wrap = conn => ({
     native:true,
+    sql:conn,
     query:async (text,values=[])=>({rows:await conn.unsafe(text,values)}),
     exec:text=>conn.unsafe(text),
     transaction:fn=>conn.begin(tx=>fn(wrap(tx)))

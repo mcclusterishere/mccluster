@@ -23,6 +23,8 @@ const apply = async file => {
   console.log(`passed ${file}`);
 };
 function sqlTag(conn) {
+  // Native mode exercises the same tagged driver and JSON/array encoders as production.
+  if (conn.native) return conn.sql;
   const tag = async (strings, ...values) => {
     const args = values.map((v,i) => v?.__json ? JSON.stringify(v.value)
       : Array.isArray(v) && strings[i+1].startsWith('::uuid[]') ? `{${v.join(',')}}` : v);
@@ -34,6 +36,7 @@ function sqlTag(conn) {
   return tag;
 }
 const sql = sqlTag(db);
+const json = value => db.native ? db.sql.json(value) : JSON.stringify(value);
 const ORG='00000000-0000-4000-8000-0000000000a1';
 const OTHER='00000000-0000-4000-8000-0000000000a2';
 const OWNER='00000000-0000-4000-8000-00000000000b';
@@ -81,6 +84,8 @@ try {
       try { await waitForBlocked(observer,2); } finally { release(); await observer.close(); }
       await blocker;
       const [firstRace,secondRace]=await pending;
+      assert.equal(typeof firstRace.decision.metadata,'object','metadata is a JSON object, not a double-encoded string');
+      assert.equal(firstRace.decision.metadata.idempotency_key,raceInput.idempotency_key);
       assert.equal(secondRace.decision.id,firstRace.decision.id);
       assert.equal(Number(firstRace.created)+Number(secondRace.created),1);
       // Both sessions race to persist the basis and audit for the same proposal.
@@ -134,7 +139,7 @@ try {
   assert.equal((await readiness()).actionable,false,'revoked approver has no execution authority');
   await db.query("update public.org_members set role='owner' where org_id=$1 and profile_id=$2",[ORG,OWNER]);
   await assert.rejects(()=>db.query("update ai_context.decisions set decision='silently changed' where id=$1",[id]),/immutable/);
-  const missionArgs=[ORG,OWNER,id,'reviewed-mission','{"title":"Preparedness follow-up"}'];
+  const missionArgs=[ORG,OWNER,id,'reviewed-mission',json({title:'Preparedness follow-up'})];
   const mission=(await one('select public.intel_create_mission_from_decision($1,$2,$3,$4,$5) as r',missionArgs)).r;
   assert.equal(mission.created,true);
   assert.equal((await one('select public.intel_create_mission_from_decision($1,$2,$3,$4,$5) as r',missionArgs)).r.created,false);
@@ -147,7 +152,7 @@ try {
   assert.equal((await readiness()).needs_review,true);
   await assert.rejects(()=>db.query("insert into public.action_mission_assignments(mission_id,user_id,status) values($1,$2,'joined')",[mission.mission_id,MEMBER]),/authorized approver/);
   assert.equal((await one('select status from public.intel_briefings where id=$1',[briefing])).status,'draft','retracted claim visibly queues briefing review');
-  await assert.rejects(()=>db.query('select public.intel_create_mission_from_decision($1,$2,$3,$4,$5)',[ORG,OWNER,id,'after-retraction','{"title":"Must fail"}']),/reviewed basis changed/);
+  await assert.rejects(()=>db.query('select public.intel_create_mission_from_decision($1,$2,$3,$4,$5)',[ORG,OWNER,id,'after-retraction',json({title:'Must fail'})]),/reviewed basis changed/);
   await db.query("select public.intel_review($1,$2,'claim',$3,'supported','Re-review')",[ORG,OWNER,claim]);
   assert.equal((await readiness()).actionable,false,'re-review never revives old approval');
   await db.query("update public.intel_briefings set status='final' where id=$1",[briefing]);
@@ -160,11 +165,11 @@ try {
   // prior accepted evidence plus affected claim for review.
   await db.query("update public.ops_ingest_records set source_ref=jsonb_build_object('updated_at','2026-10-15T01:30:00Z') where id=(select source_record_id from public.intel_evidence where id=$1)",[evidence]);
   await db.exec("update public.ops_ingest_runs set started_at=now()-interval '2 hours',finished_at=now()-interval '1 hour'");
-  const run=(await one('select public.intel_collector_begin($1,$2,$3,900) as r',[ORG,'usgs.earthquakes','{}'])).r;
+  const run=(await one('select public.intel_collector_begin($1,$2,$3,900) as r',[ORG,'usgs.earthquakes',json({})])).r;
   assert.equal((await one("select public.intel_revision_time('2026-10-15T00:30:00-03:00') > public.intel_revision_time('2026-10-15T01:30:00Z') as later")).later,true);
   assert.equal((await one("select public.intel_revision_time('invalid') as t")).t,null);
   const changed=[{external_id:'us7000aaaa',record_kind:'earthquake',idempotency_key:'usgs:us7000aaaa:revision2',content_hash:'d'.repeat(64),title:'Corrected seismic report',observed_at:'2026-10-15T01:00:00Z',source_ref:{updated_at:'2026-10-15T00:30:00-03:00'}}];
-  await db.query('select public.intel_collector_commit($1,$2,$3,$4)',[ORG,run.run_id,JSON.stringify(changed),'{}']);
+  await db.query('select public.intel_collector_commit($1,$2,$3,$4)',[ORG,run.run_id,json(changed),json({})]);
   assert.equal((await one('select review_status from public.intel_evidence where id=$1',[evidence])).review_status,'unreviewed');
   assert.equal((await one('select status from public.intel_claims where id=$1',[claim])).status,'under_review');
   assert.equal((await readiness()).actionable,false);
