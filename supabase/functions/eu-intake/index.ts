@@ -2,7 +2,7 @@
 // status, roles, approvals or publication state. Every accepted submission is
 // normalized into the canonical graph and emits an immutable event.
 import {
-  cors, db, emitEvent, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
+  cors, db, emitEvent, ilikeExact, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
 } from "../_shared/eu-policy-os.ts";
 
 function arr(v: unknown, max = 30) {
@@ -23,8 +23,9 @@ async function publicInitiative(orgId: string, id: unknown) {
 
 async function upsertStakeholder(orgId: string, input: Record<string, unknown>, source: string) {
   const email = safeEmail(input.email);
-  if (!email) throw new Error("valid email required");
-  const existing = await db(`eu_stakeholders?org_id=eq.${orgId}&email=ilike.${encodeURIComponent(email)}&select=id,name,email&limit=1`);
+  const emailMatch = ilikeExact(email);
+  if (!email || !emailMatch) throw new Error("valid email required");
+  const existing = await db(`eu_stakeholders?org_id=eq.${orgId}&email=${emailMatch}&select=id,name,email&limit=1`);
   if (existing?.length) {
     const id = existing[0].id;
     await db(`eu_stakeholders?id=eq.${id}`, {
@@ -48,8 +49,9 @@ async function upsertStakeholder(orgId: string, input: Record<string, unknown>, 
   const orgName = safeText(input.organization, 220);
   const domain = safeText(input.organization_domain, 200).toLowerCase();
   if (orgName) {
-    let orgRows = domain
-      ? await db(`eu_stakeholder_orgs?org_id=eq.${orgId}&domain=ilike.${encodeURIComponent(domain)}&select=id&limit=1`)
+    const domainMatch = ilikeExact(domain);
+    let orgRows = domainMatch
+      ? await db(`eu_stakeholder_orgs?org_id=eq.${orgId}&domain=${domainMatch}&select=id&limit=1`)
       : [];
     if (!orgRows?.length) {
       orgRows = await db("eu_stakeholder_orgs", {
@@ -140,7 +142,8 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
   const org = await orgBySlug("mccluster");
   const email = safeEmail(body.email);
   const name = safeText(body.name, 160);
-  if (!email || !name) throw new Error("name and valid email required");
+  const emailMatch = ilikeExact(email);
+  if (!email || !emailMatch || !name) throw new Error("name and valid email required");
   const caller = await verifyCaller(req);
   const stakeholder = await upsertStakeholder(org.id, body, "equity-uprise-fellowship");
   const initiativeIds = arr(body.initiative_ids, 20);
@@ -150,7 +153,7 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
     if (i) validInitiatives.push(i.id);
   }
 
-  const prior = await db(`eu_fellowship_applications?org_id=eq.${org.id}&email=ilike.${encodeURIComponent(email)}&stage=not.in.(declined,withdrawn)&select=id,stage&order=created_at.desc&limit=1`);
+  const prior = await db(`eu_fellowship_applications?org_id=eq.${org.id}&email=${emailMatch}&stage=not.in.(declined,withdrawn)&select=id,stage&order=created_at.desc&limit=1`);
   if (prior?.length) return { ok: true, application_id: prior[0].id, stage: prior[0].stage, duplicate: true };
 
   const bookingToken = randomToken();

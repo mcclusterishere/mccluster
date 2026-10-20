@@ -1,7 +1,7 @@
 // Google Workspace bridge for the Policy OS.
 // Gmail remains a transport/replica. Relevant threads are normalized into
 // eu_communications and drive stakeholder stages/events automatically.
-import { cors, db, emitEvent, json, orgBySlug, safeEmail, safeText } from "../_shared/eu-policy-os.ts";
+import { cors, db, emitEvent, ilikeExact, json, orgBySlug, safeEmail, safeText } from "../_shared/eu-policy-os.ts";
 
 import { secretMatches } from "../_shared/secret-match.ts";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -76,7 +76,10 @@ function bodyText(part: any): string {
 
 async function relationshipByEmail(orgId: string, addresses: string[]) {
   for (const email of addresses) {
-    const people = await db(`eu_stakeholders?org_id=eq.${orgId}&email=ilike.${encodeURIComponent(email)}&select=id,email&limit=1`);
+    // Addresses come from mail headers anyone can write; never a pattern.
+    const match = ilikeExact(email);
+    if (!match) continue;
+    const people = await db(`eu_stakeholders?org_id=eq.${orgId}&email=${match}&select=id,email&limit=1`);
     if (!people?.length) continue;
     const links = await db(`eu_stakeholder_links?stakeholder_id=eq.${people[0].id}&select=id,initiative_id,stage,stage_source&order=updated_at.desc&limit=1`);
     if (links?.length) return { stakeholder: people[0], link: links[0] };

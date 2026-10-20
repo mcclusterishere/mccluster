@@ -57,7 +57,26 @@ export function reply(request, env, data, status = 200) {
   });
 }
 
+/* A raw PostgREST / Postgres error body is exactly {code, details, hint,
+   message}: table, column, constraint and sometimes row values. Many
+   handlers throw it as `detail`, and fail() cannot tell an owner from an
+   anonymous caller, so that shape never leaves the Worker; only its code
+   does, and the whole thing goes to the log. Details a handler shapes on
+   purpose ({ code: 'work_not_provisioned' }, budgets, retry_after) are
+   untouched. */
+const POSTGREST_ERROR_KEYS = ['code', 'details', 'hint', 'message'];
+
+export function isPostgrestError(detail) {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return false;
+  const keys = Object.keys(detail).sort();
+  return keys.length === POSTGREST_ERROR_KEYS.length && keys.every((key, i) => key === POSTGREST_ERROR_KEYS[i]);
+}
+
 export function fail(request, env, message, status = 400, detail) {
+  if (isPostgrestError(detail)) {
+    logEvent('warn', { event: 'error_detail_redacted', status, message, detail });
+    detail = { code: detail.code };
+  }
   return reply(request, env, { error: message, detail }, status);
 }
 
