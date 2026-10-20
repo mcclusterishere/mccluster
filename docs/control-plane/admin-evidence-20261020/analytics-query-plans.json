@@ -1,0 +1,234 @@
+{
+  "schema": "analytics-query-plan-evidence/v1",
+  "captured_at": "2026-10-20T19:41:09.335Z",
+  "environment": "Supabase project zmnhbrjyhxzhkxmhkexs, production planner only",
+  "method": "EXPLAIN (FORMAT JSON), never EXPLAIN ANALYZE; no workload execution or latency measurement",
+  "query": "select count(*) as events, count(distinct device_id) as devices from public.events_lean where site_id is null and not coalesce(is_bot,false) and at>=:since and at<:until",
+  "plans": [
+    {
+      "window": "24h",
+      "since": "2026-10-19T19:00:00Z",
+      "until": "2026-10-20T19:00:00Z",
+      "rows": [
+        {
+          "QUERY PLAN": [
+            {
+              "Plan": {
+                "Node Type": "Aggregate",
+                "Strategy": "Plain",
+                "Partial Mode": "Simple",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 249.41,
+                "Total Cost": 249.42,
+                "Plan Rows": 1,
+                "Plan Width": 16,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 248.35,
+                    "Total Cost": 248.7,
+                    "Plan Rows": 142,
+                    "Plan Width": 36,
+                    "Sort Key": [
+                      "device_id"
+                    ],
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "events_lean_at_idx",
+                        "Relation Name": "events_lean",
+                        "Alias": "events_lean",
+                        "Startup Cost": 0.29,
+                        "Total Cost": 243.27,
+                        "Plan Rows": 142,
+                        "Plan Width": 36,
+                        "Index Cond": "((at >= '2026-10-19 19:00:00+00'::timestamp with time zone) AND (at < '2026-10-20 19:00:00+00'::timestamp with time zone))",
+                        "Filter": "((site_id IS NULL) AND (NOT COALESCE(is_bot, false)))"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "window": "7d",
+      "since": "2026-10-13T19:00:00Z",
+      "until": "2026-10-20T19:00:00Z",
+      "rows": [
+        {
+          "QUERY PLAN": [
+            {
+              "Plan": {
+                "Node Type": "Aggregate",
+                "Strategy": "Plain",
+                "Partial Mode": "Simple",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 4740.7,
+                "Total Cost": 4740.71,
+                "Plan Rows": 1,
+                "Plan Width": 16,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 4709.72,
+                    "Total Cost": 4720.05,
+                    "Plan Rows": 4130,
+                    "Plan Width": 36,
+                    "Sort Key": [
+                      "device_id"
+                    ],
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "events_lean_at_idx",
+                        "Relation Name": "events_lean",
+                        "Alias": "events_lean",
+                        "Startup Cost": 0.29,
+                        "Total Cost": 4461.68,
+                        "Plan Rows": 4130,
+                        "Plan Width": 36,
+                        "Index Cond": "((at >= '2026-10-13 19:00:00+00'::timestamp with time zone) AND (at < '2026-10-20 19:00:00+00'::timestamp with time zone))",
+                        "Filter": "((site_id IS NULL) AND (NOT COALESCE(is_bot, false)))"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "window": "30d",
+      "since": "2026-09-20T19:00:00Z",
+      "until": "2026-10-20T19:00:00Z",
+      "rows": [
+        {
+          "QUERY PLAN": [
+            {
+              "Plan": {
+                "Node Type": "Aggregate",
+                "Strategy": "Plain",
+                "Partial Mode": "Simple",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 10183.06,
+                "Total Cost": 10183.07,
+                "Plan Rows": 1,
+                "Plan Width": 16,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 9944.05,
+                    "Total Cost": 10023.72,
+                    "Plan Rows": 31869,
+                    "Plan Width": 36,
+                    "Sort Key": [
+                      "device_id"
+                    ],
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "events_lean_at_idx",
+                        "Relation Name": "events_lean",
+                        "Alias": "events_lean",
+                        "Startup Cost": 0.29,
+                        "Total Cost": 7560.27,
+                        "Plan Rows": 31869,
+                        "Plan Width": 36,
+                        "Index Cond": "((at >= '2026-09-20 19:00:00+00'::timestamp with time zone) AND (at < '2026-10-20 19:00:00+00'::timestamp with time zone))",
+                        "Filter": "((site_id IS NULL) AND (NOT COALESCE(is_bot, false)))"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "window": "historical",
+      "since": "2026-07-17T00:00:00Z",
+      "until": "2026-10-20T19:00:00Z",
+      "rows": [
+        {
+          "QUERY PLAN": [
+            {
+              "Plan": {
+                "Node Type": "Aggregate",
+                "Strategy": "Plain",
+                "Partial Mode": "Simple",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 14058.8,
+                "Total Cost": 14058.81,
+                "Plan Rows": 1,
+                "Plan Width": 16,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 13618,
+                    "Total Cost": 13764.94,
+                    "Plan Rows": 58773,
+                    "Plan Width": 36,
+                    "Sort Key": [
+                      "device_id"
+                    ],
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "events_lean",
+                        "Alias": "events_lean",
+                        "Startup Cost": 0,
+                        "Total Cost": 8019.34,
+                        "Plan Rows": 58773,
+                        "Plan Width": 36,
+                        "Filter": "((site_id IS NULL) AND (NOT COALESCE(is_bot, false)) AND (at >= '2026-07-17 00:00:00+00'::timestamp with time zone) AND (at < '2026-10-20 19:00:00+00'::timestamp with time zone))"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
