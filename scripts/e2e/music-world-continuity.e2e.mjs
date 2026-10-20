@@ -309,6 +309,8 @@ try{
     await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused));
     check('standalone World first touch starts its own theme directly',await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).length===1));
     await page.waitForFunction(()=>document.getElementById('mnNowPlaying').classList.contains('is-playing'));
+    /* paused flips at once; the media element's play event, which records the start, is queued after it */
+    await page.waitForFunction(()=>__songEvents.some(e=>e.name==='song_start'),null,{timeout:5000}).catch(()=>{});
     check('the first touch is recorded once as the start of that song, the event adding no account or place of its own',
       await page.evaluate(s=>__songEvents.length===1&&__songEvents[0].name==='song_start'&&__songEvents[0].trigger==='first_tap'&&__songEvents[0].song===s.slug&&__songEvents[0].pool===s.pool&&!Object.keys(__songEvents[0]).some(k=>/user|email|lat|lng|country/i.test(k)),theme),await page.evaluate(()=>__songEvents));
     check('the song title scrolls in the top bar while the theme plays',await page.locator('#mnNowPlaying').isVisible()&&(await page.locator('#mnNowPlayingText').textContent())===theme.title
