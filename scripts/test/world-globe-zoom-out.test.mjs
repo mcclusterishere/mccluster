@@ -17,8 +17,12 @@ test('in the World, World (back to the whole Earth) takes the controls menu\'s c
   assert.match(branch, /setTravelMode\(travelMode\);\s*return;/, 'Travel keeps its own rail');
   /* World still does what it did: the whole Earth, the selection let go */
   assert.match(js, /on\('ctlWorld',\(\)=>\{selectionShown=false;[\s\S]{0,200}viewer\.camera\.flyTo\(\{destination:homePosition\(\),duration:1\.4\}\);tell\(\{type:'hu:selection-cleared'\}\)\}\)/);
+  /* and it keeps clear of the page's bar and tabs over this frame, as Travel's controls do */
+  assert.match(js, /function liftWorldCorner\(\)\{[\s\S]{0,400}clearSlot\(corner\.getBoundingClientRect\(\),24,8\)/);
+  assert.match(js, /liftTravelControls\(\);liftWorldCorner\(\)/);
   const css = read('css/globe-editorial.css');
   assert.match(css, /\.globe-editorial \.globe-editorial-world \{position:fixed;bottom:24px;right:8px;z-index:12;\}/, 'the same place the menu was');
-  assert.match(css, /\.globe-editorial \.globe-editorial-world \.globe-ctl \{[^}]*min-width:44px;height:44px;/, 'a 44px target');
+  assert.match(css, /\.globe-editorial \.globe-editorial-world \.globe-ctl \{[^}]*width:44px;height:44px;[^}]*border-radius:50%/, 'the same 44px round button the menu was');
+  assert.match(css, /\.globe-editorial \.globe-editorial-world \.globe-ctl span \{display:none;\}/, 'no wider label to run under the page\'s tabs');
   assert.match(css, /\.globe-travel \.globe-editorial-world/);
 });

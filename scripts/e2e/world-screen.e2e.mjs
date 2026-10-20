@@ -825,16 +825,22 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
     /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):
-       World sits where the controls menu was, and one tap takes the camera back to the whole Earth */
-    const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),h:r&&Math.round(r.height),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
-    check(scope,'the World\'s globe: World, back to the whole Earth, is where the controls menu was; no menu',corner.inCorner&&!corner.menu&&corner.visible&&corner.h>=44&&corner.right<=16&&corner.bottom<=40,corner);
-    /* the whole-Earth height fits the screen (homeAltitude): read it from a first tap, come down to 2,000 km, tap again */
-    const settleAt=async()=>{let last=-1;for(let n=0;n<40;n++){const h=await globe.evaluate(()=>window.__huIon().height);if(Math.abs(h-last)<1000)return h;last=h;await page.waitForTimeout(300);}return last;};
-    await globe.click('#ctlWorld');const whole=await settleAt();
+       World sits where the controls menu was, nothing on the page covers it, and one tap takes the camera back to the whole Earth */
+    const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),w:r&&Math.round(r.width),h:r&&Math.round(r.height),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label'),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
+    const at=await page.evaluate(({cx,cy})=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),x=f.left+cx,y=f.top+cy,top=document.elementFromPoint(x,y);return{x,y,top:top&&(top.id||top.className)}},corner);
+    check(scope,'the World\'s globe: World, back to the whole Earth, is where the controls menu was, the same 44px round button, and nothing on the page covers it',corner.inCorner&&!corner.menu&&corner.visible&&corner.w===44&&corner.h===44&&corner.right<=16&&/whole world/i.test(corner.label)&&at.top==='mnWorldFrame',{corner,at});
+    /* a camera flight is time-based and the software renderer is slow: settled is the same height for two seconds running */
+    const settled=async()=>{let last=null,same=0;for(let n=0;n<60;n++){await page.waitForTimeout(500);const h=Math.round(await globe.evaluate(()=>window.__huIon().height));if(last!==null&&Math.abs(h-last)<50){if(++same>=4)return h}else same=0;last=h}return last};
+    await page.mouse.click(at.x,at.y);const whole=await settled();
     await globe.evaluate(()=>window.__huCountriesCam&&window.__huCountriesCam.view(-73,41,2e6));
     const down=await globe.evaluate(()=>window.__huIon().height);
-    await globe.click('#ctlWorld');const back=await settleAt();
-    check(scope,'one tap on World flies all the way back out to the whole Earth',whole>8e6&&down<2.5e6&&Math.abs(back-whole)<whole*0.02,{whole,down,back});
+    const again=await page.evaluate(({x,y})=>{const t=document.elementFromPoint(x,y);return t&&(t.id||t.className)},at);
+    const inFrame=await globe.evaluate(({cx,cy})=>{const t=document.elementFromPoint(cx,cy),b=t&&t.closest('button');return b?b.id:t&&t.tagName},corner);
+    await page.screenshot({path:join(OUT,scope+'-world-button.png')});
+    /* a loaded software renderer can go seconds between frames: wait for the flight to arrive, then for it to settle */
+    await page.mouse.click(at.x,at.y);
+    const back=await globe.waitForFunction(w=>window.__huIon().height>w*.98,whole,{timeout:45000}).then(settled,()=>globe.evaluate(()=>window.__huIon().height));
+    check(scope,'one tap on World flies all the way back out to the whole Earth',whole>8e6&&down<2.5e6&&Math.abs(back-whole)<whole*0.02,{whole,down,back,again,inFrame});
     /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
     const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
       const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
