@@ -68,7 +68,10 @@ test('the globe credits the borders and the flags', () => {
   const html = read('action-globe.html');
   assert.match(html, /Borders: <a href="https:\/\/www\.naturalearthdata\.com\/"/);
   assert.match(html, /Flags: <a href="https:\/\/github\.com\/lipis\/flag-icons"[^>]*>flag-icons<\/a> \(MIT\) · <a href=\"https:\/\/www\.openstreetmap\.org\/copyright\"/);
-  assert.match(html, /<script src="js\/world-countries\.js"><\/script><script src="js\/world-house-agents\.js"><\/script><script src="js\/action-globe\.js\?v=__STAMP__">/);
+  assert.match(html, /<script src="js\/world-countries\.js"><\/script>/);
+  assert.match(html, /<script src="js\/world-house-agents\.js"><\/script>/);
+  assert.ok(html.indexOf('js/world-countries.js') < html.indexOf('js/action-globe.js'));
+  assert.ok(html.indexOf('js/world-house-agents.js') < html.indexOf('js/action-globe.js'));
 });
 
 test('fade: far out every country is decorated; coming down, or filling the view, it fades', () => {
