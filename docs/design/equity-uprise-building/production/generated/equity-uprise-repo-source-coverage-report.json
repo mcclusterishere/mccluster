@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 420,
+  "candidate_count": 422,
   "capability_source_count": 104,
-  "support_only_count": 316,
-  "checks_total": 1578,
-  "checks_passed": 1578,
+  "support_only_count": 318,
+  "checks_total": 1586,
+  "checks_passed": 1586,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -103,6 +103,7 @@
     "docs/SALES-SITEWIDE-STRIPE-CATALOG-AUDIT-2026-10-09.md",
     "docs/SEO-AEO-AUTHORITY-SYSTEM.md",
     "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md",
+    "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md",
     "docs/action-network/EDITORIAL-WORLD-REFERENCE-20261016.md",
     "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
     "docs/action-network/EQUITY-UPRISE-GRADUATE-CREDIT-REVIEW.md",
@@ -408,6 +409,7 @@
     "vault.html",
     "walls/eu-rally.html",
     "workers/mccluster/src/ai/envelope.js",
+    "workers/mccluster/src/audio-sfu-rooms.js",
     "workers/mccluster/src/company-site/pages.generated.js",
     "workers/mccluster/src/entry-platform.js",
     "workers/mccluster/src/entry.js",
@@ -434,7 +436,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "420 entries"
+      "detail": "422 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2153,6 +2155,26 @@
     },
     {
       "name": "docs/action-network/ANTI-SOCIAL-GET-SOCIAL-AUDIT.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/action-network/AUDIO-SFU-ROOMS-RELEASE.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -7910,6 +7932,26 @@
       "name": "workers/mccluster/src/ai/envelope.js support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/audio-sfu-rooms.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/audio-sfu-rooms.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/audio-sfu-rooms.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/audio-sfu-rooms.js support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "workers/mccluster/src/company-site/pages.generated.js capability ids known",

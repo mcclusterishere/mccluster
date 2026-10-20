@@ -465,6 +465,7 @@
       mission:"Sign in to join this mission.", missions:"Sign in to see every mission and join one.", discover:"Sign in to find people.", media:"Sign in to see photos and video.", post:"Sign in to post.", people:"Sign in to search for people.",
       groups:"Sign in to find and join groups.", live:"Sign in to watch live rooms.", connect:"Sign in to connect with members.", clips:"Sign in to clip songs and get paid on real views.",
       layers:"Sign in to see satellites and space missions on the Earth.",
+      rooms:"Sign in to join conversations anywhere in the world, raise your hand and speak.",
       regions:"Sign in to explore posts, news and conversations in other regions." }[why] || "Sign in to do that.";
     track("guest_sign_in_prompt", { reason: String(why || "act").slice(0, 24) });
     openSignIn("signin", line);
@@ -2933,6 +2934,8 @@
     api: api, sbRest: sbRest, sbRpc: sbRpc, esc: esc, app: APP,
     /* the live studio (js/mnet-live.js) offers to place a broadcast in the country on the globe, when the country feed is on */
     placeForLive: function () { var c = state.world.country; return state.placeScope.enabled && c && /^[A-Z]{2}$/.test(c.code || "") ? { code: c.code, name: c.name || placeName(c.code) } : null; },
+    /* the audio rooms (js/mnet-audio.js) send a signed-out visitor here to go past their own region */
+    signIn: function (why) { askToSignIn(why); },
     identity: function () { return identity(); },
     /* the member desk (js/member-desk.js) reads the profile and opens the editor */
     profile: function () { return profile(); },
