@@ -229,16 +229,32 @@
   function grab(video, opts) {
     opts = opts || {};
     var out = { file: null, width: 0, height: 0, at: 0, reason: "" };
-    var c;
-    try {
-      c = draw(video, opts.maxEdge);
-      if (!c) { out.reason = "no-frame"; return Promise.resolve(out); }
-      c.getContext("2d").getImageData(0, 0, 1, 1);
-    } catch (e) { out.reason = e && e.name === "SecurityError" ? "tainted" : "error"; return Promise.resolve(out); }
-    return toFile(c, baseName(opts.name) + "-poster.jpg").then(function (file) {
-      out.file = file; out.width = c.width; out.height = c.height; out.at = Number((video.currentTime || 0).toFixed(3));
-      if (!file) out.reason = "encode";
-      return out;
+    return settle(video).then(function () {
+      var c;
+      try {
+        c = draw(video, opts.maxEdge);
+        if (!c) { out.reason = "no-frame"; return out; }
+        c.getContext("2d").getImageData(0, 0, 1, 1);
+      } catch (e) { out.reason = e && e.name === "SecurityError" ? "tainted" : "error"; return out; }
+      return toFile(c, baseName(opts.name) + "-poster.jpg").then(function (file) {
+        out.file = file; out.width = c.width; out.height = c.height; out.at = Number((video.currentTime || 0).toFixed(3));
+        if (!file) out.reason = "encode";
+        return out;
+      });
+    });
+  }
+  /* a seek still on its way (a slider let go a moment ago): wait for it to land and its frame to be put up, so the
+     picture taken is the one the person chose, not the one before it */
+  function settle(video) {
+    if (!video.seeking) return Promise.resolve();
+    var framed = null;
+    if (typeof video.requestVideoFrameCallback === "function") {
+      framed = new Promise(function (r) {
+        try { video.requestVideoFrameCallback(function () { r(true); }); } catch (e) { r(false); }
+      });
+    }
+    return until(video, ["seeked"], SEEK_WAIT).catch(function () {}).then(function () {
+      return framed ? Promise.race([framed, wait(FRAME_WAIT)]) : null;
     });
   }
 

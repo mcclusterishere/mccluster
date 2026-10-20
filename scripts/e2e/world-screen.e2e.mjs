@@ -292,6 +292,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (u.pathname === '/v1/mnet/live/eligibility') return json(route, { can_host: false, enabled: false });
     if (u.pathname === '/v1/analytics/my-creator') return json(route, { ok: true, creator: creator, audience: creator ? { countries: [{ country: 'US', views: 42 }, { country: 'GB', views: 7 }], elsewhere_views: 3, unknown_views: 1, min_views: 5 } : { countries: [] } });
     /* MEDIA, as mnet-media answers it: a signed upload slot, finalize, discard, and an hour-long read address */
+    /* a cover upload the storage turns away, when a scenario asks for one */
+    if (u.pathname === '/v1/mnet/media/upload-url' && m === 'POST' && world.failCover && /^image\//.test(String(body?.mime_type || ''))) { world.failCover--; return json(route, { error: 'Storage is busy.' }, 503); }
     if (u.pathname === '/v1/mnet/media/upload-url' && m === 'POST') {
       const id = asset(100 + (world.uploadN = (world.uploadN || 0) + 1)), mime = String(body?.mime_type || ''), kind = /^video\//.test(mime) ? 'video' : /^image\//.test(mime) ? 'image' : 'file';
       const path = `auth-you/${id}-${String(body?.file_name || 'file').replace(/[^a-zA-Z0-9._-]+/g, '-')}`;
@@ -1042,6 +1044,14 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const mark1 = await page.$eval('#crCoverMark', (m) => parseFloat(m.style.left));
     check(scope, 'a tap on a frame of the strip makes it the cover, and the old cover is discarded', covers().length === 2 && mark1 > 80 && !!firstId && world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === firstId), { covers: covers().length, mark1 });
     await page.screenshot({ path: join(OUT, scope + '-edit.png') });
+    /* a new cover that fails to go up gives the one before it back, and that one is still the post's */
+    world.failCover = 1;
+    const tried = covers().length;
+    await page.mouse.click(strip.x + 30, strip.y + strip.height / 2);
+    await until(() => covers().length > tried);
+    await page.waitForFunction(() => document.getElementById('crCover').getAttribute('aria-busy') !== 'true' && parseFloat(document.getElementById('crCoverMark').style.left) > 80, null, { timeout: 15000 }).catch(() => {});
+    const kept = await page.evaluate(() => ({ mark: parseFloat(document.getElementById('crCoverMark').style.left), shown: !document.getElementById('crCoverImg').hidden }));
+    check(scope, 'a new cover that fails to go up gives back the one before it, and nothing is discarded', covers().length === tried + 1 && kept.mark > 80 && kept.shown && !world.requests.some((r) => r.path === '/v1/mnet/media/discard' && r.body.asset_id === idOf(covers()[1])), { kept, covers: covers().length });
     /* the account chip sits over Next at the top right of Create on a phone (as on main; reported, not changed here) */
     await page.$eval('#crEditNext', (b) => b.click());
     await page.waitForSelector('#crDetails:not([hidden])');

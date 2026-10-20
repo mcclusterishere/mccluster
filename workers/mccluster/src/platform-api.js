@@ -873,7 +873,18 @@ async function handleMnet(req,env,path,url){
     if(swap)await attachPosters(env,muid,post.id,swap.attach);
     let out;
     try{out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});}
-    catch(e){if(swap)await releasePosters(env,muid,post.id,swap.attach).catch(()=>{});throw e;}
+    catch(e){
+      /* the write can land and only its answer be lost: let a new picture go only if the post, read again, does not name
+         it. Unsure, it stays attached (an unused picture of the author's own, never a broken thumbnail) */
+      if(swap&&swap.attach.length){
+        const again=await service(env,`network_posts?id=eq.${post.id}&select=media&limit=1`).catch(()=>null);
+        if(Array.isArray(again)){
+          const named=new Set((Array.isArray(again[0]?.media)?again[0].media:[]).map(m=>m&&m.poster_asset_id).filter(Boolean).map(String));
+          await releasePosters(env,muid,post.id,swap.attach.filter(id=>!named.has(String(id)))).catch(()=>{});
+        }
+      }
+      throw e;
+    }
     if(swap&&swap.detach.length){
       /* the old picture is no longer the post's: free it, then clear it out of storage (best effort). A picture a
          mission proof also names stays in storage, so the proof keeps its evidence; unsure, nothing is cleared. */

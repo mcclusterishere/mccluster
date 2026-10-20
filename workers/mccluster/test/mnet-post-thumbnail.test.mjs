@@ -161,3 +161,32 @@ test('if the post write fails, the new picture is let go again', async () => {
   assert.equal(release.body.status, 'ready');
   assert.ok(!calls.some((c) => c.u.includes('/functions/v1/mnet-media')), 'the old picture stays');
 });
+
+test('if the post write lands but its answer is lost, the new picture stays with the post', async () => {
+  const post = { id: POST, author_m_uid: MUID, body: 'my clip', media: media(), metadata: {} };
+  const calls = fake({ post });
+  const base = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    if (String(url).includes('/network_posts') && init.method === 'PATCH') { Object.assign(post, JSON.parse(init.body)); throw new TypeError('connection reset'); }
+    return base(url, init);
+  };
+  const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { poster_by_media: { [VIDEO]: NEW } });
+  assert.equal(res.status, 500);
+  assert.equal(post.media[0].poster_asset_id, NEW, 'the post names the new picture');
+  const releases = assetWrites(calls).filter((c) => c.body.status === 'ready');
+  assert.equal(releases.length, 0, 'the picture the post names is not let go');
+});
+
+test('if the post cannot be read again after a failed write, nothing is let go', async () => {
+  const calls = fake();
+  const base = globalThis.fetch;
+  let patched = false;
+  globalThis.fetch = async (url, init = {}) => {
+    if (String(url).includes('/network_posts') && init.method === 'PATCH') { patched = true; throw new TypeError('connection reset'); }
+    if (patched && String(url).includes('/network_posts')) return new Response(JSON.stringify({ message: 'down' }), { status: 503 });
+    return base(url, init);
+  };
+  const res = await call(`/v1/mnet/posts/${POST}`, 'PATCH', { poster_by_media: { [VIDEO]: NEW } });
+  assert.equal(res.status, 500);
+  assert.equal(assetWrites(calls).filter((c) => c.body.status === 'ready').length, 0);
+});

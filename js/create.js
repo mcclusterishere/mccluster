@@ -412,13 +412,21 @@
         if (seq !== S.coverSeq || url !== S.url) return S.cover;
         $("crCover").removeAttribute("aria-busy");
         if (shot && shot.file) {
-          dropCover(false);
-          var next = { at: shot.at, chosen: !!chosen, file: shot.file, preview: URL.createObjectURL(shot.file) };
+          /* the cover before stays until this one is up: a new picture that fails to go up gives the old one back */
+          var next = { at: shot.at, chosen: !!chosen, file: shot.file, preview: URL.createObjectURL(shot.file), prev: S.cover };
           next.up = uploadCover(shot.file, { width: shot.width, height: shot.height }).then(function (asset) {
             next.asset = asset;
             if (next.dropped) discardUploadAsset(asset);
+            else { retireCover(next.prev, false); next.prev = null; }
             return asset;
-          }, function () { return null; });
+          }, function () {
+            if (S.cover !== next) return null;
+            var back = next.prev;
+            next.prev = null; next.dropped = true;
+            try { URL.revokeObjectURL(next.preview); } catch (e) {}
+            S.cover = back; paintCover();
+            return back && back.up ? back.up : null;
+          });
           S.cover = next;
         }
         paintCover();
@@ -431,10 +439,15 @@
   function dropCover(keep) {
     var c = S.cover;
     S.cover = null;
+    retireCover(c, keep);
+  }
+  /* a cover, and any it was holding on to until it went up */
+  function retireCover(c, keep) {
     if (!c) return;
     c.dropped = true;
     if (c.preview) try { URL.revokeObjectURL(c.preview); } catch (e) {}
     if (c.asset && !(keep && c.sent)) discardUploadAsset(c.asset);
+    if (c.prev) { retireCover(c.prev, keep); c.prev = null; }
   }
   var coverTimer = 0;
   function coverAfterTrim() {
@@ -479,7 +492,8 @@
     return Promise.race([S.coverWork.then(function (c) {
       return c && c.up ? c.up.then(function (asset) { return { c: c, asset: asset }; }) : null;
     }), late]).then(function (r) {
-      if (r && r.asset && S.cover === r.c) { r.c.sent = true; return r.asset; }
+      /* the cover then is the one sent: the newest, or the one before it if the newest did not go up */
+      if (r && r.asset && S.cover && S.cover.asset === r.asset) { S.cover.sent = true; return r.asset; }
       return null;
     }, function () { return null; });
   }
