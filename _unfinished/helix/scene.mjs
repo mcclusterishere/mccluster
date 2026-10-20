@@ -40,6 +40,84 @@ function waveform(spec, signature, material) {
   return new THREE.Line(geometry, material);
 }
 
+
+/* Song lettering is a transparent texture ON the 3D crossbar, never an HTML tab.
+   Each label rotates with its rung: only the selected one turns toward the camera. */
+function rungLettering(title, theta) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "#8de8ff";
+  ctx.shadowBlur = 24;
+  ctx.font = "700 49px -apple-system, system-ui, sans-serif";
+  ctx.fillStyle = "#e5fbff";
+  ctx.fillText(String(title || "").slice(0, 80), 320, 65, 594);
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({
+    map, transparent: true, opacity: 0.42, depthWrite: false,
+    side: THREE.DoubleSide, fog: false
+  });
+  const label = new THREE.Mesh(new THREE.PlaneGeometry(1.85, 0.37), material);
+  label.rotation.y = -theta;
+  label.userData.decorative = true;
+  return label;
+}
+
+/* A purely illustrative, procedural 3D brain in the same WebGL canvas.
+   Visual material is NOT EEG, neuroimaging, cognitive inference, or biometrics. */
+function sonicBrain() {
+  const brain = new THREE.Group();
+  const tissue = new THREE.MeshStandardMaterial({
+    color: "#4b92c3", emissive: "#2a97c7", emissiveIntensity: 0.28,
+    metalness: 0.25, roughness: 0.34, transparent: true, opacity: 0.75,
+    depthWrite: false, depthTest: false, fog: false
+  });
+  const groove = new THREE.LineBasicMaterial({
+    color: "#cbf6ff", transparent: true, opacity: 0.69, depthWrite: false,
+    depthTest: false, fog: false
+  });
+  for (const side of [-1, 1]) {
+    const geometry = new THREE.SphereGeometry(0.52, 32, 20);
+    const pos = geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const r = 1 + 0.038 * Math.sin(27 * x + 14 * y) * Math.cos(14 * y - 7 * z);
+      pos.setXYZ(i, x * r, y * r, z * r);
+    }
+    geometry.computeVertexNormals();
+    const lobe = new THREE.Mesh(geometry, tissue);
+    lobe.position.x = side * 0.31;
+    lobe.scale.set(1.08, 0.92, 0.88);
+    lobe.renderOrder = 95;
+    brain.add(lobe);
+    for (let band = 0; band < 7; band++) {
+      const points = [];
+      for (let i = 0; i <= 32; i++) {
+        const u = i / 32;
+        const xLocal = -0.39 + 0.78 * u;
+        const yLocal = -0.34 + band * 0.112 + 0.035 * Math.sin(13 * u + band * 1.7);
+        const zUnit = Math.sqrt(Math.max(0.04, 1 - (xLocal / 0.56) ** 2 - (yLocal / 0.52) ** 2));
+        points.push(new THREE.Vector3(side * 0.31 + xLocal, yLocal, zUnit * 0.49));
+      }
+      const fold = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), groove);
+      fold.renderOrder = 96;
+      brain.add(fold);
+    }
+  }
+  const cerebellum = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 14), tissue);
+  cerebellum.scale.set(1.25, 0.55, 0.72);
+  cerebellum.position.set(0, -0.43, -0.15);
+  cerebellum.renderOrder = 95;
+  brain.add(cerebellum);
+  return brain;
+}
+
 export class HelixScene {
   constructor(canvas) {
     this.canvas = canvas;
@@ -62,6 +140,12 @@ export class HelixScene {
     const fill = new THREE.PointLight(0x4d6dff, 36, 22);
     fill.position.set(4, -2, 5);
     this.scene.add(fill);
+    // Attach the brain to the camera so it stays within the top 30% on iPhone.
+    this.scene.add(this.camera);
+    this.brain = sonicBrain();
+    this.brain.position.set(0, 1.41, -5.6);
+    this.brain.scale.setScalar(0.69);
+    this.camera.add(this.brain);
 
     this.items = [];
     this.raycaster = new THREE.Raycaster();
@@ -130,12 +214,19 @@ export class HelixScene {
       const waveMaterial = new THREE.LineBasicMaterial({ color: baseColor, transparent: true, opacity: 0.7 });
       const wave = waveform(spec, signature, waveMaterial);
       strand.add(wave);
+      const theta = profile.phase + profile.turns * Math.PI * 2 * spec.u;
+      const label = rungLettering(tracks[spec.index].title, theta);
+      if (label) {
+        label.position.copy(a).lerp(b, 0.5);
+        label.position.z += 0.11;
+        strand.add(label);
+      }
       const hit = rod(a, b, 0.18, new THREE.MeshBasicMaterial({
         transparent: true, opacity: 0.003, depthWrite: false, colorWrite: false
       }), 10);
       hit.userData = { kind: "song", albumIndex, trackIndex: spec.index };
       strand.add(hit);
-      return { spec, a, b, bar, hit, wave, mat, waveMaterial };
+      return { spec, a, b, bar, hit, wave, label, mat, waveMaterial };
     });
     const vial = new THREE.Group();
     root.add(vial);
@@ -196,6 +287,8 @@ export class HelixScene {
         rung.mat.emissiveIntensity = focused ? 1.25 : 0.18;
         rung.mat.color.set(focused ? "#fff9e8" : "#bac9d3");
         rung.waveMaterial.opacity = focused ? 1 : 0.68;
+        if (rung.label) rung.label.material.opacity = focused ? 0.98 :
+          this.mode === "song" ? 0.14 : this.mode === "album" ? 0.48 : 0.22;
       });
     });
   }
@@ -246,7 +339,8 @@ export class HelixScene {
       // In the close view, rotate the selected rung toward the camera.
       const rung = item.rungs[this.trackIndex];
       const angle = close && rung ? item.profile.phase + item.profile.turns * Math.PI * 2 * rung.spec.u : 0;
-      item.strand.rotation.y += (angle - item.strand.rotation.y) * blend;
+      const drift = this.motion ? Math.sin(performance.now() * 0.00028 + index) * (close ? 0.035 : 0.14) : 0;
+      item.strand.rotation.y += (angle + drift - item.strand.rotation.y) * blend;
     });
   }
 
@@ -261,6 +355,9 @@ export class HelixScene {
     if (now - this.lastDraw < 1000 / 45) return;
     this.lastDraw = now;
     this.layout();
+    // Ambient motion is decorative and does not purport to be a brain measurement.
+    this.brain.rotation.y = this.motion ? Math.sin(now * 0.00031) * 0.19 : 0;
+    this.brain.rotation.z = this.motion ? Math.sin(now * 0.00017) * 0.025 : 0;
     const current = this.items[this.albumIndex];
     if (current) {
       const rung = current.rungs[this.trackIndex];
@@ -331,12 +428,18 @@ export class HelixScene {
       item.root.traverse(child => {
         child.geometry?.dispose?.();
         if (child.material && child.material !== item.railMaterial) {
-          if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-          else child.material.dispose();
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(m => { m.map?.dispose?.(); m.dispose(); });
         }
       });
       item.railMaterial.dispose();
     });
+    this.brain.traverse(child => {
+      child.geometry?.dispose?.();
+      // Shared brain tissue/fold materials are disposed once below.
+    });
+    for (const material of [this.brain.children.find(child => child.isMesh)?.material,
+      this.brain.children.find(child => child.isLine)?.material]) material?.dispose?.();
     this.renderer.dispose();
   }
 }
