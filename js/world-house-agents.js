@@ -60,7 +60,8 @@
     if(!viewer||!viewer.entities||!window.Cesium)return null;
     let accounts=[], countries={}, regions=[], markers=[];
     const C=window.Cesium;
-    const deck=document.getElementById('deck');
+    const deck=document.documentElement.classList.contains('globe-surface-network')
+      ? document.body : document.getElementById('deck');
     let panel=null;
     function hide() {if(panel)panel.hidden=true;}
     function ensurePanel(){
