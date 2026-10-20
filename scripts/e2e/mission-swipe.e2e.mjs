@@ -41,7 +41,7 @@ async function scenario({ member = false, viewport = { width: 390, height: 844 }
   const world = { assignments: new Map(), joins: [], proofWrites: 0, deny: false, malformed: false, deferJoin: null, pending: null };
   const ctx = await browser.newContext({ viewport, isMobile: viewport.width < 600, hasTouch: true, serviceWorkers: 'block', reducedMotion: 'reduce' });
   await ctx.addInitScript(({ member, token }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
     if (member) localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'fixture', expires_at: Math.floor(Date.now() / 1000) + 3600 }));
   }, { member, token: token() });

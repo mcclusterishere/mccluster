@@ -501,7 +501,7 @@
         shipping_region: el("acCreateRegion").value.trim(),
         shipping_postal_code: el("acCreatePostal").value.trim(),
         shipping_country: el("acCreateCountry").value.trim(),
-        privacy_policy_version: "2026-09-26",
+        privacy_policy_version: "2026-10-19",
         privacy_acknowledged_at: new Date().toISOString()
       };
       MCC.signUpWithPassword(em, pw, metadata).then(function (result) {

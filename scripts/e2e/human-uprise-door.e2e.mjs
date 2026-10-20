@@ -187,7 +187,7 @@ function check(scope, name, ok, detail) {
 async function open(device, { memberOn = '' } = {}) {
   const ctx = await browser.newContext({ viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile, serviceWorkers: 'block' });
   await ctx.addInitScript(({ memberOn, token }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
     /* signed in on one house only: the other must earn its own session */
     if (memberOn && location.origin === memberOn && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'refresh-house', expires_at: Math.floor(Date.now() / 1000) + 3600 })); }

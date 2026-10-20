@@ -36,7 +36,7 @@ const browser = await chromium.launch({ executablePath:process.env.PLAYWRIGHT_EX
 async function open(viewport, { automatic = false, webgl = true, audioParent = false } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor:1, isMobile:viewport.width < 600, hasTouch:viewport.width < 600, reducedMotion:'reduce' });
   await ctx.addInitScript(({ automatic, origin }) => {
-    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version:'2026-09-26', accepted_at:new Date().toISOString() }));
+    localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version:'2026-10-19', accepted_at:new Date().toISOString() }));
     if (!automatic) sessionStorage.setItem('wt_location_asked', '1');
     // Keep the separately approved analytics location feature out of this
     // travel interaction test, without changing shipping analytics code.
