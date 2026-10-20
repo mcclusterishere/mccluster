@@ -145,8 +145,19 @@ try{
   for(const width of [390,1280]){
     const {context,page,errors}=await setup(width);
     await play(page);
-    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__retentionEvents=__audioEvents.length;});
+    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__retentionEvents=__audioEvents.length;
+      /* NO WORDS AND NO WRONG COLOUR WHILE THE WORLD OPENS (owner, 2026-10-20: "other screens flash up"): every frame from the
+         moment the World frame shows, whether the "Opening World…" copy was on screen and which colour the frame stood in */
+      window.__openFrames=[];let opened=0;const tick=()=>{const shell=document.getElementById('mccWorldAudioShell');
+        if(shell&&!shell.hidden){opened=opened||performance.now();const st=shell.querySelector('.world-audio-status'),p=st&&st.querySelector('p');
+          __openFrames.push({at:Math.round(performance.now()-opened),copy:!!p&&!st.hidden&&getComputedStyle(p).visibility!=='hidden'&&p.getClientRects().length>0,day:shell.classList.contains('is-day')});}
+        if(!opened||performance.now()-opened<2500)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
     const before=await audioState(page),frame=await world(page);
+    await page.waitForTimeout(400);
+    const opening=await page.evaluate(()=>({early:__openFrames.filter(f=>f.at<1400&&f.copy).length,frames:__openFrames.length,day:__openFrames.length?__openFrames[0].day:null,
+      want:window.MCC_DAYLIGHT_CORE?MCC_DAYLIGHT_CORE.estimate(new Date())==='day':null}));
+    check(`${width}: the World frame says nothing for its first moment (no "Opening World…" before 1.4s)`,opening.frames>0&&opening.early===0,opening);
+    check(`${width}: the World frame opens in the World's own colour (white by day, dark by night)`,opening.want!==null&&opening.day===opening.want,opening);
     await page.waitForTimeout(650);const after=await audioState(page);
     check(`${width}: Music document and exact Audio element survive Globe`,after.unloads===0&&await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio));
     check(`${width}: audio keeps advancing with the same source`,after.src===before.src&&after.time>before.time+.4&&!after.paused,{before,after});
@@ -196,6 +207,9 @@ try{
     const identity=await frame.evaluate(()=>JSON.parse(localStorage.getItem('mccdb_session')));
     check('signed-in World uses the existing handoff and its own refreshed session',requests.some(r=>new URL(r.url).pathname==='/v1/auth/handoff')&&identity.refresh_token==='fixture-world-refresh');
     check('handoff fragment is scrubbed before World is ready',!frame.url().includes('mcc_handoff'));
+    /* the World takes the carried session in place (js/mnet.js cancels mcc:handoff): it is never painted twice */
+    check('the World takes the carried sign-in without reloading itself',await frame.evaluate(()=>(performance.getEntriesByType('navigation')[0]||{}).type)!=='reload'&&await frame.evaluate(()=>!document.documentElement.classList.contains('mn-guest')),
+      await frame.evaluate(()=>({nav:(performance.getEntriesByType('navigation')[0]||{}).type,guest:document.documentElement.classList.contains('mn-guest')})));
     const wire=await page.evaluate(()=>JSON.stringify(__bridgeMessages));
     check('generic bridge contains no tokens, audio sources or user data',!/(?:access_token|refresh_token|mcc_handoff|fixture-house-refresh|fixture-world-refresh|audio-fixture|assets\/audio)/.test(wire));
     check('handoff reload never reloads or interrupts the parent player',await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
@@ -356,6 +370,8 @@ try{
     await context.route(WORLD+'/**',r=>r.fulfill({status:503,contentType:'text/html',body:'Fixture: World unavailable'}));
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.waitForFunction(()=>MCC_WORLD_AUDIO.active());
+    /* the recovery words and controls appear once the World is genuinely slow, after the frame's quiet first moment */
+    await page.locator('.world-audio-status button').waitFor({state:'visible',timeout:6000}).catch(()=>{});
     check('World load failure keeps audio and visible recovery controls',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0)&&await page.locator('.world-audio-status button').isVisible()&&await page.locator('.world-audio-status a').isVisible());
     await page.locator('.world-audio-status button').click();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
     check('failed World can return to the same playing Music document',await page.evaluate(()=>!MCC_MUSIC.audio.paused&&__unloads===0));

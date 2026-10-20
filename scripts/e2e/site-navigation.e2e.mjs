@@ -211,6 +211,24 @@ try{
     check('World guest profile does not cover header controls',!overlap);
     await page.screenshot({path:join(OUT,'world-guest-390.png')});await ctx.close();
   }
+  /* NO SCREEN FLASHES (owner, 2026-10-20: "just a smooth transition from screen to screen"): a tab asks for the next page at
+     once (it used to hold 460ms under the veil first), and the veil into the World is the World's own colour */
+  {
+    const {ctx,page,errors}=await setup(390,'guest');await page.goto(BASE+'/license.html');
+    await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_BAR.auth().verified);
+    await page.evaluate(()=>{navigation.addEventListener('navigate',()=>sessionStorage.setItem('__navDelay',String(Math.round(performance.now()-window.__clickAt))));
+      window.__clickAt=performance.now();document.querySelector('.appbar [data-appnav="home"]').click();});
+    await page.waitForURL(/\/index\.html$/,{timeout:15000});
+    const delay=Number(await page.evaluate(()=>sessionStorage.getItem('__navDelay')));
+    check('a bar tab asks for the next page at once, with no hold before it',Number.isFinite(delay)&&delay<200,delay);
+    await page.goto(BASE+'/license.html');
+    await page.waitForFunction(()=>window.MCC_BAR&&window.MCC_DAYLIGHT_CORE);
+    const veil=await page.evaluate(()=>{const h=document.documentElement;document.querySelector('.appbar [data-appnav="world"]').click();
+      return {out:h.classList.contains('pt-out'),day:h.classList.contains('pt-to-day'),night:h.classList.contains('pt-to-night'),want:MCC_DAYLIGHT_CORE.estimate(new Date()),house:!h.dataset.daylight};});
+    check('the veil into the World is the World\'s colour for this hour, and the house page itself is untouched',veil.out&&veil.house&&(veil.want==='day'?veil.day&&!veil.night:veil.night&&!veil.day),veil);
+    check('veil checks have no page errors',errors.length===0,errors);
+    await ctx.close();
+  }
   {
     const {ctx,page}=await setup(390);await page.goto(BASE+'/action-globe.html?embedded=1&surface=network');
     check('embedded globe has no duplicate navigation or profile',await page.locator('.appbar,#mccAuthChip,#mccControlToggle').count()===0);
