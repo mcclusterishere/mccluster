@@ -632,6 +632,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "data/prim3/house-agent-us-cohort.v1.json",
+      "classification": "shared_platform_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "PRIM3 fictional-performer account/agent cohort. References Equity Uprise as story board but defines no building geometry, physical space, or building operations capability."
+    },
+    {
       "path": "data/product-context.json",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -793,6 +800,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public globe entry and its route documentation; separate from the physical Equity Uprise building capability registry."
+    },
+    {
+      "path": "docs/action-network/HOUSE-AGENT-WORLD-V1.md",
+      "classification": "shared_platform_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "House-agent social graph design. References Equity Uprise and the World, not the building's physical spatial program."
     },
     {
       "path": "docs/action-network/HUMAN-UPRISE-WORLD-FEED.md",
@@ -2567,6 +2581,13 @@
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
     },
     {
+      "path": "supabase/pending/20261019210000_house_agent_accounts_v1.sql",
+      "classification": "shared_platform_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform tenant and fictional agent identity schema; historical Equity Uprise board is a story classification, not a new building capability."
+    },
+    {
       "path": "supabase/pending/README.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -3149,6 +3170,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
+    },
+    {
+      "path": "workers/mccluster/test/house-agents.test.mjs",
+      "classification": "shared_platform_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "House-agent RLS, worker and narrative cast tests. Contains Equity Uprise character board labels, not a building system or occupied space."
     },
     {
       "path": "workers/mccluster/test/human-uprise-site.test.mjs",
