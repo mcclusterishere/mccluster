@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" class="rw-root">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<base href="../../">
+<title>Underwater Research Engine · McCluster Music</title>
+<meta name="description" content="Explore sound as underwater resonance, navigate music with an interactive DNA helix, and learn which distributed brain networks researchers associate with music.">
+<link rel="icon" href="assets/img/m-mark.png" type="image/png">
+<link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+<link rel="stylesheet" href="css/resonance-world.css?v=__STAMP__">
+</head>
+<body class="rw-body">
+<a class="rw-skip" href="#rwResearch">Skip 3D environment</a>
+<main id="rwApp">
+  <section class="rw-stage" aria-label="Interactive underwater research engine">
+    <canvas id="rwCanvas" tabindex="0" aria-label="3D underwater water surface, organic DNA music selector and conceptual human brain. Drag to orbit, scroll to change songs."></canvas>
+    <div class="rw-gradient" aria-hidden="true"></div>
+    <header class="rw-header">
+      <a href="listen.html" aria-label="Back to Music">← MUSIC</a>
+      <div class="rw-brand"><span>McCluster</span><strong>RESEARCH ENGINE</strong></div>
+      <a href="resonance.html">THE SCIENCE ↗</a>
+    </header>
+    <div class="rw-formula">
+      <span class="rw-small">SOUND → MODES → WATERFIELD</span>
+      <p aria-label="u of x, y, t equals the sum of A sub k of t times phi sub k of x and y">
+        u(x,y,t) = ∑<sub>k=1</sub><sup>N</sup> A<sub>k</sub>(t) φ<sub>k</sub>(x,y)
+      </p>
+    </div>
+    <div class="rw-topbar" role="tablist" aria-label="Explore underwater systems">
+      <button type="button" role="tab" id="rwBrainMode" aria-selected="true" data-rw-mode="brain">BRAIN <span>01</span></button>
+      <button type="button" role="tab" id="rwDnaMode" aria-selected="false" data-rw-mode="dna">DNA / MUSIC <span>02</span></button>
+    </div>
+    <div class="rw-status" id="rwStatus" role="status" aria-live="polite">Entering the research environment…</div>
+    <div class="rw-depth">
+      <button id="rwWaterView" type="button">VIEW WATER FROM ABOVE</button>
+      <strong id="rwDepthLabel">MUSIC / RESEARCH</strong>
+      <span>EXPLORE BY TOUCH</span>
+    </div>
+    <div class="rw-stage-caption">The surface is a <strong>sound-driven membrane projection</strong> styled as water, not a measured fluid experiment or live neural scan. No guaranteed brain activation.</div>
+    <div id="rwFallback" class="rw-fallback" hidden>
+      <strong>3D unavailable on this device.</strong>
+      <p>All research, catalogue selections and offline audio analysis remain available below.</p>
+    </div>
+  </section>
+
+  <section class="rw-controls" id="rwResearch">
+    <div class="rw-column rw-discover">
+      <p class="rw-label">01 / EXPLORE THE BRAIN</p>
+      <h1>A different way<br>to <em>hear</em> structure.</h1>
+      <p>Drag the brain to rotate. Choose a network to read actual research about how humans process pitch, rhythm, harmony, timing and musical pleasure. Selecting one <strong>does not activate it</strong>.</p>
+      <div class="rw-regions" id="rwRegions" aria-label="Brain networks"></div>
+      <article class="rw-region-info" aria-live="polite">
+        <span class="rw-label" id="rwRegionLevel">SCIENTIFIC ASSOCIATION</span>
+        <h2 id="rwRegionName">Select a network</h2>
+        <p id="rwRegionDetails">Music activates overlapping networks, not one isolated button in the brain.</p>
+        <p class="rw-note" id="rwRegionLocation"></p>
+        <p class="rw-acoustic-note" id="rwRegionAcoustic">Select music to see acoustic measurements relevant to this research topic. The system cannot measure your brain.</p>
+        <a id="rwRegionSource" href="resonance.html">View evidence ↗</a>
+      </article>
+    </div>
+
+    <div class="rw-column rw-selection">
+      <p class="rw-label">02 / NAVIGATE ALBUM DNA</p>
+      <h2>Every crossbar<br>is a <em>track.</em></h2>
+      <p>Select an album specimen, then slide down its strand. These crossbars are an interface metaphor—not an assertion that songs are literal base pairs.</p>
+      <div class="rw-albums"><label for="rwAlbum">Album specimen</label>
+        <select id="rwAlbum"><option>Loading catalogue…</option></select>
+      </div>
+      <div class="rw-trackhead"><strong>TRACKS / RUNG INDEX</strong><span id="rwTrackCount">—</span></div>
+      <div class="rw-tracks" id="rwTracks"></div>
+      <div class="rw-actions">
+        <button id="rwPlay" type="button">Play selected track</button>
+        <button id="rwSurprise" type="button" class="rw-secondary">Surprise selection</button>
+      </div>
+      <p class="rw-note">Playback uses the existing <code>MCC_MUSIC</code> engine and its permissions. The surprise button is a one-time opt-in, not hidden preference evidence.</p>
+    </div>
+  </section>
+
+  <section class="rw-analysis" aria-labelledby="rwAnalysisTitle">
+    <div class="rw-sectionhead"><p class="rw-label">03 / ANALYSIS</p><h2 id="rwAnalysisTitle">What is this song <em>made of?</em></h2></div>
+    <div class="rw-data">
+      <div><span>TEMPO ESTIMATE</span><strong id="rwBpm">—</strong><small id="rwTempoConfidence">No measurement yet</small></div>
+      <div><span>MUSICAL KEY ESTIMATE</span><strong id="rwKey">—</strong><small id="rwKeyConfidence">No measurement yet</small></div>
+      <div><span>DRIVING MODE</span><strong id="rwMode">—</strong><small>Calculated, not photographed</small></div>
+      <div><span>LOW FREQUENCY ENERGY</span><strong id="rwBass">—</strong><small>20–250 Hz share</small></div>
+    </div>
+    <p class="rw-note">Tempo may have half-time/double-time ambiguity; key estimation is uncertain in dense, atonal or percussive music. Pitch, key and BPM do not uniquely activate a brain region.</p>
+    <section class="rw-scientific" aria-label="Physics-first audio classification"><h3>SCIENTIFIC SOUND CLASSES</h3><p>Based on measured spectrum, estimated musical structure, and the stated resonator—not moods, genre stereotypes, or brain activation.</p><div id="rwScientificClasses" class="rw-scientific-grid" aria-live="polite">Waiting for measured audio…</div></section>
+    <div class="rw-files">
+      <div><label for="rwMix">ANALYZE ONE MIX / MP3, WAV, M4A</label><input id="rwMix" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.aac"></div>
+      <div><label for="rwStems">ANALYZE ALIGNED TRACKOUTS / STEMS</label><input id="rwStems" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.aac" multiple></div>
+      <p class="rw-note" id="rwFileStatus" role="status">Selected files are decoded on your device for analysis. Nothing is uploaded, persisted or submitted to a profile by this prototype. On mobile the analysis is limited to 30 seconds and 8 files.</p>
+    </div>
+  </section>
+
+  <section class="rw-questions" aria-labelledby="rwQuestionTitle">
+    <p class="rw-label">04 / OPTIONAL OBSERVATION</p>
+    <h2 id="rwQuestionTitle">What did <em>you</em> hear?</h2>
+    <p>The listening quiz is voluntary, educational and runs locally. No answer is used to diagnose you or infer personal brain activity.</p>
+    <div class="rw-quiz" id="rwQuiz">
+      <fieldset><legend>Which feature stood out while listening?</legend>
+        <label><input name="q-focus" type="radio" value="rhythm"> The rhythm or beat</label>
+        <label><input name="q-focus" type="radio" value="melody"> A melody or harmony</label>
+        <label><input name="q-focus" type="radio" value="timbre"> The sound textures or instruments</label>
+        <label><input name="q-focus" type="radio" value="none"> Not sure</label>
+      </fieldset>
+      <button type="button" id="rwQuizResponse">See related research</button>
+      <p id="rwQuizAnswer" role="status" aria-live="polite">Your answer stays on this page and is cleared when you leave.</p>
+    </div>
+  </section>
+  <footer class="rw-footer"><a href="resonance.html">Research references &amp; methods ↗</a><a href="listen.html">Back to Music ↗</a><span>PRIVATE RESEARCH PROTOTYPE · NOT A CLINICAL TOOL</span></footer>
+</main>
+<script src="js/music-engine.js?v=__STAMP__"></script>
+<script src="js/tabbar.js?v=__STAMP__"></script>
+<script type="module" src="js/resonance/world.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+name: Research Engine CI
+
+on:
+  pull_request:
+    paths:
+      - 'js/resonance/**'
+      - 'resonance.html'
+      - '_unfinished/research-world/**'
+      - 'css/resonance-world.css'
+      - 'css/resonance.css'
+      - 'data/research/music-brain-networks.json'
+      - 'scripts/music-resonance-analyze.mjs'
+      - 'scripts/research-engine/**'
+      - 'scripts/test/research-engine.test.mjs'
+      - 'js/music-creator-studio.js'
+      - 'creator.html'
+      - '.github/workflows/research-engine-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'js/resonance/**'
+      - 'resonance.html'
+      - '_unfinished/research-world/**'
+      - 'scripts/research-engine/**'
+      - 'scripts/test/research-engine.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research-contracts:
+    name: Physics, music theory, boundaries and upload integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Parse research engine modules
+        run: |
+          node --check js/resonance/core.mjs
+          node --check js/resonance/theory.mjs
+          node --check js/resonance/atlas-ui.mjs
+          node --check js/resonance/world.mjs
+          node --check js/resonance/upload-hook.mjs
+          node --check scripts/music-resonance-analyze.mjs
+          node --check js/music-creator-studio.js
+          python -m py_compile scripts/research-engine/derive-stems-score.py
+      - name: Execute deterministic physics, musical estimation and privacy contracts
+        run: node --test scripts/test/research-engine.test.mjs
+      - name: Ensure no public research world shell escaped staging
+        run: |
+          test ! -f resonance-world.html
+          test -f _unfinished/research-world/index.html
+          grep -q '_unfinished' .github/workflows/deploy-pages.yml
+          grep -q 'not a measured fluid experiment or live neural scan' _unfinished/research-world/index.html

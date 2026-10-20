@@ -170,7 +170,9 @@ test('unified transport expands from mini player into full Now Playing', async()
   assert.match(engine,/id = "musicMini"/);
   assert.match(engine,/id = "musicNow"/);
   assert.match(engine,/function openNow\(\)/);
-  assert.match(engine,/function playAdjacent\(delta\)/);
+  assert.match(engine,/function playAdjacent\(delta,\s*selectionOrigin\)/);
+  assert.match(engine,/next\.creatorTrackId[\s\S]*selectionOrigin/,
+    'next-track action must preserve the canonical engine selection provenance');
   assert.match(engine,/setActionHandler\("previoustrack"/);
   assert.match(engine,/setActionHandler\("nexttrack"/);
   assert.match(engine,/music_now_open/);

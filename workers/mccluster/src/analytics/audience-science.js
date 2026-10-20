@@ -71,6 +71,12 @@ function sourceOf(row) {
   catch { return ref.slice(0, 120); }
 }
 
+function systemServed(row) {
+  const src = String(row?.source || row?.src || '').trim().toLowerCase();
+  return src === 'platform_opt_in_shuffle' || src === 'platform_queue' ||
+    row?.props?.selection_origin === 'system_opt_in' || row?.props?.selection_origin === 'system_queue';
+}
+
 function distributionMetrics(trackCounts) {
   const entries = [...trackCounts.entries()].filter(([, n]) => n > 0);
   const total = entries.reduce((sum, [, n]) => sum + n, 0);
@@ -176,6 +182,7 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         events: 0,
         page_views: 0,
         music_starts: 0,
+        system_served_starts: 0,
         full_plays: 0,
         completions: 0,
         shares: 0,
@@ -216,12 +223,17 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
     if (START_EVENT_NAMES.has(name)) {
       const track = cleanTrack(row.track);
       if (track) {
-        b.music_starts++;
-        b.trackCounts.set(track, (b.trackCounts.get(track) || 0) + 1);
+        if (systemServed(row)) b.system_served_starts++;
+        else {
+          b.music_starts++;
+          b.trackCounts.set(track, (b.trackCounts.get(track) || 0) + 1);
+        }
       }
     }
-    if (FULL_EVENT_NAMES.has(name)) b.full_plays++;
-    if (COMPLETE_EVENT_NAMES.has(name)) b.completions++;
+    // Autoplay and automatically advanced songs are still audited as exposure,
+    // but must not inflate voluntary completion/engagement signals.
+    if (FULL_EVENT_NAMES.has(name) && !systemServed(row)) b.full_plays++;
+    if (COMPLETE_EVENT_NAMES.has(name) && !systemServed(row)) b.completions++;
     if (SHARE_EVENT_NAMES.has(name)) b.shares++;
     if (ACTION_EVENT_NAMES.has(name)) b.action_events++;
     if (CONVERSION_EVENT_NAMES.has(name)) b.conversion_events++;
@@ -247,6 +259,7 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
       engaged_seconds: Math.round(b.engaged_seconds),
       source,
       music_starts: starts,
+      system_served_starts: b.system_served_starts,
       full_plays: b.full_plays,
       completions: b.completions,
       completion_rate: starts ? round(Math.min(1, b.completions / starts)) : 0,
@@ -302,11 +315,12 @@ export function summarizeAudienceScience(leanRows = [], identityRows = []) {
         effective_catalog_size: 'exp(H)',
         repeat_ratio: '(music_starts - distinct_tracks) / music_starts'
       },
-      exposure_warning: 'Observed attention is not the same as preference. The current event schema does not fully record every track a visitor was shown, so exposure-adjusted preference is not claimed.'
+      exposure_warning: 'System-tagged opt-in shuffle and queue exposure are measured separately and excluded from voluntary music starts. Untagged historical plays remain ambiguous; exposure-adjusted preference is NOT claimed.'
     },
     totals: {
       profiled_visitors: profiles.length,
       music_listeners: listeners.length,
+      system_served_music_starts: profiles.reduce((n,p) => n + p.system_served_starts, 0),
       identified_listeners: listeners.filter((p) => p.uid).length,
       distribution_eligible: listeners.filter((p) => p.music_starts >= 5).length,
       returning_listeners: listeners.filter((p) => p.sessions >= 2 || p.active_days >= 2).length,

@@ -761,6 +761,11 @@ $("trackForm").addEventListener("submit", async (e) => {
       ? "Uploaded. Held for manual derivative/parody rights review."
       : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
     await loadTracks();
+    // Private/local analysis is non-blocking and cannot change release review status.
+    // The master stays in this tab: do not post it to a model or research endpoint.
+    void import("./resonance/upload-hook.mjs")
+      .then(module => module.analyzeCreatorUpload(master, track.id))
+      .catch(() => { const result = document.getElementById("creatorResearchResult"); if (result) { result.hidden = false; result.textContent = "Research Engine unavailable locally; release was submitted as normal."; } });
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
     if (!committed && (createdTrackId || uploaded.length)) {
