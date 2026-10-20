@@ -66,7 +66,7 @@ Rules that follow from it:
 - **McCluster Corp products hosted on Matthew's property for compatibility:**
   the company's product map (`mccluster-corp.html`, with
   `data/product-context.json`; it explains how the products connect, the
-  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's front page), Equity Uprise,
+  company property links to it, and it keeps its URL), the Docket 516R record (Equity Uprise's civic front page), the Equity Uprise World,
   formerly the Action Network (`/action/`, `mnet.html`, `action-globe.html`, receipts), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the music-creator platform, the privacy policy.
 - **Whip Equipped LLC** (separate company) at `whip.html`.
