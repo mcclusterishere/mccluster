@@ -13,7 +13,7 @@ endless autoplay.
 | Piece | Where | State |
 | --- | --- | --- |
 | **A comment is heard.** A new comment on a post alerts the post's author and anyone who commented on that post in the last 14 days. It never alerts the commenter, never crosses a block in either direction, skips anyone who muted the commenter, and alerts at most 20 people. A failed alert never fails the comment. | `notifyComment` in `workers/mccluster/src/platform-api.js` | Live on deploy. No database change: the Worker already writes the comment with the service role. |
-| **The alert opens the discussion.** "See the comment →" goes to `mnet.html?view=feed&post=…&comments=1`, which scrolls to the post and opens its discussion. | `js/mnet.js` | Live on deploy. |
+| **The alert opens the discussion.** "See the comment →" goes to `mnet.html?view=feed&post=…&comments=1`, which scrolls to the post and opens its discussion. A post older than the first page of the feed is fetched on its own and shown first. | `js/mnet.js` | Live on deploy. |
 | **Next for you.** Once a mission is verified, the Action Record names one open mission the member hasn't taken. It prefers one that shares a skill or field with the work they finished; otherwise it picks the most-joined. Nothing shows when there is nothing new to take. | `nextMission` in `js/mnet.js` | Live on deploy. Uses the open missions the page already loads. |
 | **Alerts on this device.** An opt-in "Turn on" in Notifications. The browser asks for permission only after that tap. The five-minute cron pushes what the bell already shows: at most one push per person per 15 minutes, nothing older than 30 minutes, and each alert claimed once. | `workers/mccluster/src/web-push.js`, `sw.js`, `js/mnet.js` | **Off.** See below. |
 
@@ -48,6 +48,11 @@ It never posts to an address a page supplies. Payloads are encrypted to that
 one browser (RFC 8291) and signed for this server (RFC 8292). A device the
 push service reports as gone (404 or 410) is deleted, and so is a device that
 has failed ten times in a row.
+
+On a shared browser, alerts belong to the member who turned them on:
+- the server tells the page whether this browser's subscription is the signed-in member's;
+- "Turn on" by someone else moves the subscription to them;
+- signing out drops it from the browser (`js/analytics.js`, on every page), so the next person never sees the last member's alerts.
 
 ## What to watch
 

@@ -108,7 +108,21 @@ test('the routes stay off until the flag and both keys are set', async () => {
   assert.equal(res.status, 404);
   assert.equal(calls.some((c) => c.u.includes('network_push_subscriptions')), false);
   res = await call({ WEB_PUSH_ENABLED: 'true', WEB_PUSH_VAPID_PUBLIC_KEY: vapid.pub, WEB_PUSH_VAPID_PRIVATE_KEY: vapid.d }, '/v1/mnet/push');
-  assert.deepEqual(await res.json(), { enabled: true, key: vapid.pub });
+  assert.deepEqual(await res.json(), { enabled: true, key: vapid.pub, subscribed: false });
+});
+
+test('a browser counts as on only when its subscription belongs to the member signed in now', async () => {
+  const vapid = await keyPair('sign'), calls = [];
+  const env = { WEB_PUSH_ENABLED: 'true', WEB_PUSH_VAPID_PUBLIC_KEY: vapid.pub, WEB_PUSH_VAPID_PRIVATE_KEY: vapid.d };
+  const MINE = 'https://fcm.googleapis.com/fcm/send/mine';
+  apiFake(calls, (u, m) => u.includes('/network_push_subscriptions?m_uid=eq.') && m === 'GET'
+    ? new Response(JSON.stringify(u.includes('endpoint=eq.' + MINE) ? [{ id: 's1' }] : [])) : null);
+  let res = await call(env, '/v1/mnet/push?endpoint=' + encodeURIComponent(MINE));
+  assert.equal((await res.json()).subscribed, true);
+  res = await call(env, '/v1/mnet/push?endpoint=' + encodeURIComponent('https://fcm.googleapis.com/fcm/send/someone-elses'));
+  assert.equal((await res.json()).subscribed, false);
+  const lookup = calls.filter((c) => c.u.includes('/network_push_subscriptions?m_uid=eq.'));
+  assert.ok(lookup.every((c) => c.u.includes('m_uid=eq.' + MUID)), 'only the signed-in member\'s rows are consulted');
 });
 
 test('a member saves one subscription per browser, a bad one is refused, and turning off deletes only their own', async () => {

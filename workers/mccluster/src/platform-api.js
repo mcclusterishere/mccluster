@@ -687,7 +687,11 @@ async function handleMnet(req,env,path,url){
      member who last turned it on there. Ten devices at most; a push service URL only. */
   if(path==='/v1/mnet/push'&&req.method==='GET'){
     if(external)return fail(req,env,'Alerts require a McCluster user session',403);
-    return reply(req,env,pushEnabled(env)?{enabled:true,key:env.WEB_PUSH_VAPID_PUBLIC_KEY}:{enabled:false});
+    if(!pushEnabled(env))return reply(req,env,{enabled:false});
+    // whether this browser's subscription belongs to this member (a shared browser can hold someone else's)
+    const endpoint=String(url.searchParams.get('endpoint')||'').slice(0,1000),muid=endpoint?await currentMuid(env,user.id):null;
+    const mine=muid?await service(env,`network_push_subscriptions?m_uid=eq.${muid}&endpoint=eq.${encodeURIComponent(endpoint)}&select=id&limit=1`):[];
+    return reply(req,env,{enabled:true,key:env.WEB_PUSH_VAPID_PUBLIC_KEY,subscribed:!!mine?.length});
   }
   if(path==='/v1/mnet/push/subscriptions'&&['POST','DELETE'].includes(req.method)){
     if(external)return fail(req,env,'Alerts require a McCluster user session',403);

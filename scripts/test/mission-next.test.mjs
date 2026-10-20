@@ -30,6 +30,11 @@ test('the suggestion shares a skill or field with the verified work, and is neve
   assert.equal(next.id, 'b');
 });
 
+test('a finished mission that has since closed still steers the suggestion by its own skills and field', () => {
+  const next = pick({ missions: [{ mission_id: 'closed', status: 'verified', domain: 'civic', skills: ['organizing'] }] }, open.slice(0, 3), { a: { joined: 50 } });
+  assert.equal(next.id, 'c');
+});
+
 test('with nothing nearby, the most joined open mission is suggested', () => {
   const next = pick({ missions: [{ mission_id: 'gone', status: 'verified' }] }, open.slice(0, 3), { a: { joined: 2 }, c: { joined: 7 } });
   assert.equal(next.id, 'c');

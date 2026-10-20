@@ -801,6 +801,8 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       await page.evaluate(()=>window.MCC_MNET.setView('notifications'));
       await page.waitForFunction(()=>!!document.querySelector('#mnNotifications a.mn__notification-action'),null,{timeout:10000}).catch(()=>{});
       check(scope,'a comment alert links to its post with the discussion open',await page.getAttribute('#mnNotifications a.mn__notification-action','href')===`mnet.html?view=feed&post=${CONTENT}&comments=1`);
+      /* the page asks the server only after looking up this browser's own subscription */
+      for(let i=0;i<50&&!req(world,'GET',/^\/v1\/mnet\/push$/).length;i++)await page.waitForTimeout(100);
       check(scope,'the device-alerts row stays hidden while the server has push off',req(world,'GET',/^\/v1\/mnet\/push$/).length>=1&&await page.isHidden('#mnPush'));
       await page.evaluate(()=>window.MCC_MNET.setView('feed'));
     }

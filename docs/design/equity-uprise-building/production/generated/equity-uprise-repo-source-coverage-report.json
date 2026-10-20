@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 419,
+  "candidate_count": 420,
   "capability_source_count": 104,
-  "support_only_count": 315,
-  "checks_total": 1574,
-  "checks_passed": 1574,
+  "support_only_count": 316,
+  "checks_total": 1578,
+  "checks_passed": 1578,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -399,6 +399,7 @@
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/run-eu-tests.sh",
     "supabase/tests/supabase_api_roles.stub.sql",
+    "sw.js",
     "tools/build-catalogue.mjs",
     "tools/build-hire-schema.mjs",
     "tools/build-newsroom.mjs",
@@ -433,7 +434,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "419 entries"
+      "detail": "420 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7737,6 +7738,26 @@
     },
     {
       "name": "supabase/tests/supabase_api_roles.stub.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "sw.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "sw.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "sw.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "sw.js support rationale present",
       "passed": true,
       "detail": ""
     },
