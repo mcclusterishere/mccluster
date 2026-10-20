@@ -10,6 +10,7 @@ own news worth posts and getting them published on GDELT."
    - The post must be Public.
    - Its first line is the article's headline when it is short (110 characters
      or fewer) and more follows. Otherwise the opening is cut at a word.
+
    The morning brief's "Publish as my post" (`brief.html`) has the same line
    for the house owner, ticked: the brief goes out as an article with the
    headlines it cites as its sources, marked as drafted with McCluster AI.
