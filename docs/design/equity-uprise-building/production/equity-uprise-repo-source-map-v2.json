@@ -771,7 +771,7 @@
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Approved Human Uprise globe and social presentation standard; preserves the supplied Equity Uprise artwork and does not define building geometry or program capabilities."
+      "rationale": "Approved Equity Uprise globe and social presentation standard; preserves the supplied Equity Uprise artwork and does not define building geometry or program capabilities."
     },
     {
       "path": "docs/action-network/EQUITY-UPRISE-COHORT-RECONCILED.md",
@@ -799,7 +799,7 @@
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Human Uprise rename and globe-over-feed product contract; not a physical building capability."
+      "rationale": "Equity Uprise rename and globe-over-feed product contract; not a physical building capability."
     },
     {
       "path": "docs/action-network/MISSION-CURATION-RESOURCE-PARTNERS-20261014.md",
@@ -1737,7 +1737,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Browser test of the Human Uprise World screen against a fake backend; names the Equity Uprise emblem only to check the join uses the owner's artwork alone. Not a building capability."
+      "rationale": "Browser test of the Equity Uprise World screen against a fake backend; names the Equity Uprise emblem only to check the join uses the owner's artwork alone. Not a building capability."
     },
     {
       "path": "scripts/kb-build.mjs",
@@ -1844,7 +1844,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Tests of Human Uprise's own door on this side of the edge: the bar across hosts, a creator's perspective, the Artists rail and the authorities that name the host. Not a building capability."
+      "rationale": "Tests of Equity Uprise's own door on this side of the edge: the bar across hosts, a creator's perspective, the Artists rail and the authorities that name the host. Not a building capability."
     },
     {
       "path": "scripts/test/identity-verification-levels.test.mjs",
@@ -2494,7 +2494,7 @@
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Human Uprise mission support; not a building capability."
+      "rationale": "Pending SQL completing the three-level Anti-Social mission: connection writers, publish-together with a vouched jointly credited post, the review that settles both members, levels on the Action Record, and the mission opened. Equity Uprise mission support; not a building capability."
     },
     {
       "path": "supabase/migrations/20261016020407_action_partner_opportunity_drafts_v1.sql",
@@ -2585,7 +2585,7 @@
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending SQL that places every open mission at a regional centroid so the Human Uprise globe has pins; names the globe's regions. Not a building capability."
+      "rationale": "Pending SQL that places every open mission at a regional centroid so the Equity Uprise globe has pins; names the globe's regions. Not a building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",
@@ -3067,7 +3067,7 @@
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "The API Worker's entry: host routing for the company property and Human Uprise's own host, then the platform API. Names the public globe entry contract in a comment; not a building capability."
+      "rationale": "The API Worker's entry: host routing for the company property and Equity Uprise's own host, then the platform API. Names the public globe entry contract in a comment; not a building capability."
     },
     {
       "path": "workers/mccluster/src/entry.js",
@@ -3081,7 +3081,7 @@
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Human Uprise's host router: serves the World on humanuprise.com by host and sends every other path to Matthew's property. Names the public globe entry contract; not a building capability."
+      "rationale": "Equity Uprise's host router: serves the World on humanuprise.com by host and sends every other path to Matthew's property. Names the public globe entry contract; not a building capability."
     },
     {
       "path": "workers/mccluster/src/index.js",
@@ -3155,7 +3155,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Tests of the Human Uprise host router: inert elsewhere, the World and its rooms passed through, every other path sent to Matthew's property. Not a building capability."
+      "rationale": "Tests of the Equity Uprise host router: inert elsewhere, the World and its rooms passed through, every other path sent to Matthew's property. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/live-missions.test.mjs",

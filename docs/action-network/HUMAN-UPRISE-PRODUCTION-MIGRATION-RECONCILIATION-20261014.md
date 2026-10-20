@@ -1,4 +1,4 @@
-# Human Uprise World — production migration reconciliation (2026-10-14)
+# Equity Uprise World — production migration reconciliation (2026-10-14; renamed 2026-10-20)
 
 **Database:** Supabase project `zmnhbrjyhxzhkxmhkexs` (production). **Branch:** `feat/human-uprise-world-feed`, draft PR #432.
 

@@ -252,7 +252,7 @@ Admin first; push features down to other users later."
   | `GET /v1/analytics/flows` | sessions, bounce rate, pages per session, top way in |
   | `GET /v1/analytics/errors` | script errors (site vs injected), dead / rage clicks, blocked journeys (incl. `gated_preview_end`) |
   | `rpc/action_mission_stats` | mission joins, in progress, proof submitted, admin-verified, rejected (all time) |
-  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Human Uprise posts / reactions / follows / profiles |
+  | `/v1/analytics/business` fields already read but not shown | previews vs full listens vs completions, paid orders, sign-ups per day, confirmed and active members, Equity Uprise posts / reactions / follows / profiles |
 
 - **Pending, not applied:** `supabase/pending/analytics_country_v1.sql`
   (`analytics_country_totals`, `analytics_country_series`; security invoker
