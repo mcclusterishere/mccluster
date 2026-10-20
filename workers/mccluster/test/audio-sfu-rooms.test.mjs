@@ -65,8 +65,10 @@ function fixture(log,{active=true,role='listener',muted=true,grant=true,blocked=
     if(p.endsWith('/rpc/network_audio_seat_counts'))return response([{speakers:2,listeners:37,visitors:5}]);
     if(p.endsWith('/rpc/network_audio_directory'))return response([{...hostRoom,created_at:'2026-10-20T11:00:00Z',speakers:2,listeners:37}]);
     if(p.endsWith('/m_auth_user_links'))return response([{m_uid:identity}]);
-    if(p.endsWith('/network_profiles'))return response([{m_uid:HOST,display_name:'Matthew',avatar_url:'https://img.test/m.png'},
-      {m_uid:GUEST,display_name:'Ada',avatar_url:'javascript:alert(1)'}]);
+    if(p.endsWith('/network_profiles'))return response([{m_uid:HOST,display_name:'Matthew',avatar_url:'https://img.test/m.png',visibility:'public'},
+      {m_uid:GUEST,display_name:'Ada',avatar_url:'javascript:alert(1)',visibility:'public'},
+      // a profile that is not public never lends its name, even if a filter upstream let it through
+      {m_uid:USER,display_name:'Hidden Person',avatar_url:'https://img.test/h.png',visibility:'network'}]);
     if(p.endsWith('/network_blocks'))return response(blocked?[{blocker_m_uid:HOST}]:[]);
     if(p.endsWith('/network_audio_rooms')){
       if(opts.method==='POST')return response([{id:ROOM}],201);
@@ -378,4 +380,19 @@ test('a visitor who leaves keeps nothing: receivers closed, seat deleted',async(
   assert.equal(r.status,200);
   const del=calls.find(c=>c.method==='DELETE');
   assert.ok(del&&del.path.endsWith('/network_audio_members')&&del.query.includes('participant_id=eq.'+SEAT_VISITOR));
+});
+
+test('only public profiles lend a name to the stage; anyone else is Member',async()=>{
+  const calls=[];
+  await handleAudioRooms(request(endpoint+'/rooms/'+ROOM+'/stage'),ENV,at(fixture(calls,{role:'host',identity:HOST})));
+  const q=calls.find(c=>c.path.endsWith('/network_profiles'));
+  assert.match(q.query,/visibility=eq\.public/);
+  const r=await handleAudioRooms(request(endpoint+'/rooms?country=US','GET',null,null),ENV,at(async(url,opts)=>{
+    const u=new URL(url);
+    if(u.pathname.endsWith('/rpc/network_audio_directory'))return response([{id:ROOM,title:'T',category_key:'c',country_code:'US',visitors_may_listen:true,max_speakers:4,host_m_uid:USER,speakers:1,listeners:0}]);
+    if(u.pathname.endsWith('/network_profiles'))return response([{m_uid:USER,display_name:'Hidden Person',avatar_url:'https://img.test/h.png',visibility:'network'}]);
+    throw Error('unexpected '+url);
+  }));
+  const room=(await r.json()).rooms[0];
+  assert.deepEqual(room.host,{display_name:'Host',avatar_url:''});
 });

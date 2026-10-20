@@ -180,12 +180,14 @@ async function blocked(env,a,b,fetchImpl) {
   ]);
   return !!(ab?.length||ba?.length);
 }
-// Public names only: what the member chose to show on their profile.
+// Public names only: what the member chose to show on a public profile, as the
+// country feed does. Anyone else on the stage is "Member", with no picture.
 async function names(env,muids,fetchImpl) {
   const ids=[...new Set(muids.filter(validUuid))];
   if(!ids.length)return new Map();
-  const rows=await service(env,'network_profiles','m_uid=in.('+ids.join(',')+')&select=m_uid,display_name,avatar_url',{},fetchImpl).catch(()=>[]);
-  return new Map((rows||[]).map(p=>[p.m_uid,{display_name:String(p.display_name||'').trim().slice(0,80),avatar_url:safeImage(p.avatar_url)}]));
+  const rows=await service(env,'network_profiles','m_uid=in.('+ids.join(',')+')&visibility=eq.public&select=m_uid,display_name,avatar_url,visibility',{},fetchImpl).catch(()=>[]);
+  return new Map((rows||[]).filter(p=>p.visibility==='public')
+    .map(p=>[p.m_uid,{display_name:String(p.display_name||'').trim().slice(0,80),avatar_url:safeImage(p.avatar_url)}]));
 }
 function person(p,people,extra) {
   const n=people.get(p.m_uid)||{};
