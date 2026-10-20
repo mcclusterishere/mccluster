@@ -225,7 +225,7 @@ async function run() {
   const active = new Map();
   const activeControllers = new Map();
   process.on('SIGTERM', () => { for (const controller of activeControllers.values()) controller.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)); });
-  process.on('SIGINT', () => { for (const controller of activeControllers.values()) controller.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)));
+  process.on('SIGINT', () => { for (const controller of activeControllers.values()) controller.abort(new Error('Node shutdown')); gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)); });
 
   let lastHeartbeat = 0;
   let lastProbe = 0;
