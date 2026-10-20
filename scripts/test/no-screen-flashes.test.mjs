@@ -37,12 +37,15 @@ test('before any script asks the network, the head of mnet.html already knows a 
   const head = html.slice(0, html.indexOf('</head>'));
   const script = /<script>(\(function\(\)\{var h=document\.documentElement[\s\S]*?)<\/script>/.exec(head);
   assert.ok(script, 'the boot hints run in the head');
-  const run = ({ session = null, hash = '', search = '', framed = false }) => {
+  let said = [];
+  const run = ({ session = null, hash = '', search = '', framed = false, referrer = '' }) => {
     const classes = new Set();
+    said = [];
     const store = new Map(session ? [['mccdb_session', JSON.stringify(session)]] : []);
-    const ctx = { document: { documentElement: { classList: { add: (c) => classes.add(c) } } }, localStorage: { getItem: (k) => store.get(k) ?? null },
-      location: { hash, search } };
-    ctx.window = framed ? { parent: {} } : null; if (!framed) { ctx.window = {}; ctx.window.parent = ctx.window; }
+    const ctx = { URL, document: { referrer, documentElement: { classList: { add: (c) => classes.add(c) } } }, localStorage: { getItem: (k) => store.get(k) ?? null },
+      location: { hash, search },
+      PerformanceObserver: class { constructor(cb) { this.cb = cb; } observe() { this.cb({ getEntriesByName: (n) => n === 'first-contentful-paint' ? [{}] : [] }); } } };
+    ctx.window = framed ? { parent: { postMessage: (m, o) => said.push([m.channel, m.type, o, Object.keys(m).length]) } } : null; if (!framed) { ctx.window = {}; ctx.window.parent = ctx.window; }
     vm.runInNewContext(script[1], ctx);
     return [...classes].sort();
   };
@@ -51,6 +54,13 @@ test('before any script asks the network, the head of mnet.html already knows a 
   assert.deepEqual(run({ session: { access_token: 'x' } }), [], 'a member: the member World');
   assert.deepEqual(run({ hash: '#mcc_handoff=abc' }), [], 'a sign-in being carried in is a member, not a guest first');
   assert.deepEqual(run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true }), ['mn-music-frame'], 'inside the Music page, the Music page keeps the bar');
+  assert.deepEqual(said, [], 'nothing is said to a page that is not one of the houses');
+  run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true, referrer: 'https://matthew.mccluster.org/' });
+  assert.deepEqual(said, [['mcc-world-audio-v1', 'alive', 'https://matthew.mccluster.org', 2], ['mcc-world-audio-v1', 'painted', 'https://matthew.mccluster.org', 2]],
+    'the Music page hears, with no data, that the World is alive and then that it has painted');
+  run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true, referrer: 'https://example.com/' });
+  assert.deepEqual(said, []);
+  assert.match(read('css/mnet.css'), /html\.mn-guest \.mn__guest-bar\[hidden\] \{ display: flex; \}/, 'a guest\'s way in is in the header from the first paint');
   assert.match(read('css/mnet.css'), /\.mn-boot-signin #mnApp \{ display: none !important; \}/);
   assert.match(read('css/style.css'), /html\.mn-music-frame \.appbar\{display:none!important\}/);
   const js = read('js/mnet.js');
@@ -120,14 +130,17 @@ test('the globe frame is dressed before it paints: its standalone deck never sho
   const html = read('action-globe.html');
   const script = /<script>\/\*[^<]*?\*\/\/\*[^<]*?\*\/(\(function\(\)\{[^<]*?\}\)\(\);)<\/script>/.exec(html);
   assert.ok(script, 'the head script');
-  const run = (search, framed = true) => {
+  const run = (search, framed = true, parentClasses = null) => {
     const classes = new Set(); let replaced = null;
     const ctx = { URLSearchParams, document: { documentElement: { classList: { add: (c) => classes.add(c) } } }, location: { search, replace: (u) => { replaced = u; } } };
-    ctx.window = framed ? { parent: {} } : null; if (!framed) { ctx.window = {}; ctx.window.parent = ctx.window; }
+    ctx.window = framed ? { parent: parentClasses ? { document: { documentElement: { classList: { contains: (c) => parentClasses.includes(c) } } } } : {} } : null; if (!framed) { ctx.window = {}; ctx.window.parent = ctx.window; }
     vm.runInNewContext(script[1], ctx);
     return { classes: [...classes].sort(), replaced };
   };
   assert.deepEqual(run('?embedded=1&surface=network&missions=0&v=1').classes, ['globe-editorial', 'globe-embedded', 'globe-no-missions', 'globe-surface-network']);
+  assert.deepEqual(run('?embedded=1&surface=network&missions=0', true, ['hu-social-only']).classes, ['globe-editorial', 'globe-embedded', 'globe-no-missions', 'globe-surface-network']);
+  assert.deepEqual(run('?embedded=1&surface=network&missions=0', true, ['hu-editorial']).classes, ['globe-editorial', 'globe-embedded', 'globe-surface-network'],
+    'the house owner\'s World (no hu-social-only, js/world-owner-modes.js) keeps the missions, as js/action-globe.js decides');
   assert.deepEqual(run('?embedded=1&surface=analytics').classes, ['globe-embedded', 'globe-surface-analytics']);
   assert.deepEqual(run('?explore=1&missions=0', false).classes, ['globe-editorial', 'globe-explore', 'globe-no-missions']);
   assert.equal(run('?song=x', false).replaced, 'mnet.html?view=feed&song=x', 'the bare route still hands over to the World');
@@ -144,6 +157,9 @@ test('the Music page\'s World frame stands in the World\'s colour, says nothing 
   assert.match(js, /whenPainted\(function \(\) \{\n      if \(channelId !== data\.id\) return;\n      root\.parent\.postMessage\(\{channel:CHANNEL, type:"ready", id:channelId\}, parentOrigin\);/);
   assert.match(css, /\.world-audio-status\.is-quiet > \* \{ visibility:hidden; \}/);
   assert.match(css, /#mccWorldAudioShell\.is-day, #mccWorldAudioShell\.is-day #mccWorldAudioFrame, #mccWorldAudioShell\.is-day \.world-audio-status \{ background:#ffffff;/);
+  assert.match(js, /if \(d\.type === "alive"\) \{ frameAlive = true; return; \}/);
+  assert.match(js, /if \(d\.type === "painted"\) \{ frameAlive = true; if \(!frameReady\) \{ status\.hidden = true; clearTimeout\(quietTimer\); \} return; \}/);
+  assert.ok(js.indexOf('if (d.type === "painted")') > js.indexOf('if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;'), 'only the World frame itself can say it');
   /* a tap that leaves the World does not start its song on the way out */
   assert.match(js, /var LEAVING = "\.appbar,\.mcc-auth-chip";/);
   assert.match(js, /e\.target\.closest\?\.\("#mccWorldAudioControls,#mnWorldPlay,video,audio," \+ LEAVING\)\) return;/);

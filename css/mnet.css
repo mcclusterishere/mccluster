@@ -921,6 +921,9 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
    door to sign in. The composer is replaced by a plain invitation. */
 .mn__guest-bar { display: flex; gap: 6px; align-items: center; }
 .mn__guest-bar[hidden] { display: none; }
+/* a guest's way in is in the header from the first paint: the head of mnet.html already knows a guest (html.mn-guest) before
+   js/mnet.js unhides it, so the header does not shift when it does (owner, 2026-10-20: no flashes) */
+html.mn-guest .mn__guest-bar[hidden] { display: flex; }
 .mn__guest-in, .mn__guest-join { min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
 .mn__guest-in { border: 1px solid var(--mn-rule-2); background: rgba(10, 8, 7, 0.6); color: var(--mn-ink); }
 .mn__guest-join { border: 0; background: var(--mn-hot); color: var(--mn-hot-ink); }

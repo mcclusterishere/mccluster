@@ -625,6 +625,10 @@
     }
     if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;
     if (d.type === "hello") { frameAlive = true; send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
+    /* the World's own head says it is alive, then that it has painted (mnet.html; no data, only the word): the frame keeps
+       quiet while it is alive, and shows the World the moment it is painted, before the bridge has even loaded there */
+    if (d.type === "alive") { frameAlive = true; return; }
+    if (d.type === "painted") { frameAlive = true; if (!frameReady) { status.hidden = true; clearTimeout(quietTimer); } return; }
     if (d.id !== channelId) return;
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); clearTimeout(quietTimer); status.classList.remove("is-quiet"); send({type:"visibility", visible:open}); sendState(); }
     else if (d.type === "controls-position" && controls && open) {

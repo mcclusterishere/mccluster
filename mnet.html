@@ -26,8 +26,10 @@
        room. Before any script asks the network, this reads what the page already knows: a visitor with no stored sign-in
        (and none being carried over in #mcc_handoff) is a guest, so the guest's World paints from the start; ?signin=1 asks
        for the sign-in form, so the World waits under it instead of showing first; inside the Music page's World frame
-       the Music page keeps the one bar. The World's own script and the bar take over from here. -->
-  <script>(function(){var h=document.documentElement,s=null,q=location.search;try{s=JSON.parse(localStorage.getItem("mccdb_session")||"null")}catch(e){}if(!(s&&s.access_token)&&!/(?:^#|&)mcc_handoff=[^&]/.test(location.hash)){h.classList.add("mn-guest");if(/(?:^\?|&)signin=1(?:&|$)/.test(q))h.classList.add("mn-boot-signin")}try{if(window.parent!==window&&/(?:^\?|&)mcc_audio=1(?:&|$)/.test(q))h.classList.add("mn-music-frame")}catch(e){}})();</script>
+       the Music page keeps the one bar, and hears at once that the World is alive and again when it has painted (no data,
+       only those two words), so its frame never fills the wait with words. The World's own script and the bar take over
+       from here. -->
+  <script>(function(){var h=document.documentElement,s=null,q=location.search;try{s=JSON.parse(localStorage.getItem("mccdb_session")||"null")}catch(e){}if(!(s&&s.access_token)&&!/(?:^#|&)mcc_handoff=[^&]/.test(location.hash)){h.classList.add("mn-guest");if(/(?:^\?|&)signin=1(?:&|$)/.test(q))h.classList.add("mn-boot-signin")}try{if(window.parent!==window&&/(?:^\?|&)mcc_audio=1(?:&|$)/.test(q)){h.classList.add("mn-music-frame");var o=new URL(document.referrer).origin;if(/^https:\/\/(?:matthew\.mccluster\.org|(?:www\.)?mccluster\.org|(?:www\.)?humanuprise\.com)$/.test(o)){var say=function(t){window.parent.postMessage({channel:"mcc-world-audio-v1",type:t},o)};say("alive");new PerformanceObserver(function(l){if(l.getEntriesByName("first-contentful-paint").length)say("painted")}).observe({type:"paint",buffered:true})}}}catch(e){}})();</script>
   <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=__STAMP__"><link rel="stylesheet" href="css/world-news-globe.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
