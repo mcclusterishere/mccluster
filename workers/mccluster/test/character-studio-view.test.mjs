@@ -44,7 +44,7 @@ test('Owner can see an editable character engine, not active paid generation', (
   assert.match(page, /ccsForm/);
   assert.match(page, /Compile private preview/);
   assert.match(page, /Save as draft/);
-  assert.match(page, /No agent runs/);
+  assert.match(page, /Nothing is published, billed, or activated/);
   assert.match(page, /no image, voice or video is generated/i);
   assert.equal(requests(), 0);
 });
