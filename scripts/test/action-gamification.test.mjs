@@ -143,7 +143,7 @@ test("the first mission slice: Action Record, receipt and deep links",async()=>{
  assert.match(js,/new URLSearchParams\(location\.search\)\.get\("mission"\)/);
  assert.match(js,/missions\.deepLinked=true; setView\("missions"\); openMission\(id\);/);
  /* receipt: the exact words, back to the exact mission, nothing private */
- for(const line of ["I did something about it","Verified action","HUMAN UPRISE","DON'T JUST WATCH. ACT."])assert.ok(receipt.includes(line),line);
+ for(const line of ["I did something about it","Verified action","EQUITY UPRISE","DON'T JUST WATCH. ACT."])assert.ok(receipt.includes(line),line);
  assert.match(receipt,/rpc\/action_receipt/);
  assert.match(receipt,/"mnet\.html\?mission=" \+ encodeURIComponent\(r\.mission_id\)/);
  assert.match(sql,/where a\.id = p_assignment_id and a\.status = 'verified';/);

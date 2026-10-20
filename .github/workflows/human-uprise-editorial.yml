@@ -1,4 +1,4 @@
-name: Human Uprise responsive visual proof
+name: Equity Uprise responsive visual proof
 on:
   pull_request:
     branches: [main]
