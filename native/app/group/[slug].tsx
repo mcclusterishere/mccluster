@@ -25,7 +25,7 @@ function messageOf(error: unknown) {
 
 function actorName(item: FeedItem) {
   const actor = item.actor || item.post?.actor || {};
-  return actor.display_name || actor.mccluster_id || actor.handle || 'Human Uprise member';
+  return actor.display_name || actor.mccluster_id || actor.handle || 'Equity Uprise member';
 }
 
 export default function GroupScreen() {
@@ -117,7 +117,7 @@ export default function GroupScreen() {
         <Room pulse={color.ruby} />
         <View style={[s.shell, { paddingTop: insets.top + space.md }]}>
           <Back onPress={() => router.back()} />
-          <Text style={s.kicker}>Human Uprise</Text>
+          <Text style={s.kicker}>Equity Uprise</Text>
           <Text style={s.title}>SIGN IN TO OPEN THIS GROUP.</Text>
           <Pressable onPress={() => router.replace({ pathname: '/profile', params: { returnTo: `/group/${slug}` } } as any)} style={s.primary}>
             <Text style={s.primaryText}>Sign in to continue</Text>
@@ -143,7 +143,7 @@ export default function GroupScreen() {
         <Room pulse={color.ruby} />
         <View style={[s.shell, { paddingTop: insets.top + space.md }]}>
           <Back onPress={() => router.back()} />
-          <Text style={s.kicker}>Human Uprise</Text>
+          <Text style={s.kicker}>Equity Uprise</Text>
           <Text style={s.title}>GROUP UNAVAILABLE.</Text>
           <Text style={s.muted}>{message || 'That group could not be opened.'}</Text>
         </View>

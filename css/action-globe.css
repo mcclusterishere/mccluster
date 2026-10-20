@@ -81,7 +81,7 @@ body{background:#050507;color:#f8f8fb;font-family:Inter,ui-sans-serif,system-ui,
 #worldDetail h2{letter-spacing:-.035em}
 @media(prefers-reduced-motion:reduce){.world-story{transition:none}}
 
-/* Network surface (?embedded=1&surface=network): the Earth alone, filling the frame inside the Human Uprise
+/* Network surface (?embedded=1&surface=network): the Earth alone, filling the frame inside the Equity Uprise
    World tab. The parent page owns the feed and mission context; only "Near me" stays on the globe. */
 .globe-surface-network header,.globe-surface-network .world-mode,.globe-surface-network #deck,.globe-surface-network #worldFeed,.globe-surface-network #worldFeed[hidden]{display:none!important}
 .globe-surface-network #globe{inset:0;height:100%}

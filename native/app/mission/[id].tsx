@@ -186,7 +186,7 @@ export default function MissionScreen() {
   if (!session) {
     return (
       <Shell top={insets.top} onBack={() => router.back()}>
-        <Text style={s.kicker}>Human Uprise</Text>
+        <Text style={s.kicker}>Equity Uprise</Text>
         <Text style={s.title}>SIGN IN TO TAKE THIS MISSION.</Text>
         <Text style={s.body}>Sign in with your M Account, then you’ll return to this mission.</Text>
         <Pressable onPress={() => router.replace({ pathname: '/profile', params: { returnTo: `/mission/${id}` } } as any)} style={s.primary}>
@@ -200,7 +200,7 @@ export default function MissionScreen() {
   if (!mission) {
     return (
       <Shell top={insets.top} onBack={() => router.back()}>
-        <Text style={s.kicker}>Human Uprise</Text>
+        <Text style={s.kicker}>Equity Uprise</Text>
         <Text style={s.title}>MISSION UNAVAILABLE.</Text>
         <Text style={s.body}>{status || 'That mission is not available any more.'}</Text>
       </Shell>
@@ -211,11 +211,11 @@ export default function MissionScreen() {
     // a paid clipping campaign: no civic proof or points; it is claimed and paid in Clips
     return (
       <Shell top={insets.top} onBack={() => router.back()}>
-        <Text style={s.kicker}>Human Uprise · Clips</Text>
+        <Text style={s.kicker}>Equity Uprise · Clips</Text>
         <Text style={s.title}>{mission.title}</Text>
         <Text style={s.body}>
           This is a paid clipping campaign. Claim it, post your clip and track your pay in the
-          Clips tab of Human Uprise.
+          Clips tab of Equity Uprise.
         </Text>
       </Shell>
     );

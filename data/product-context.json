@@ -47,7 +47,7 @@
       },
       {
         "id": "participation",
-        "name": "Human Uprise",
+        "name": "Equity Uprise",
         "role": "Action-first member product where campaigns become missions and members can join, act, submit proof, be reviewed and build a verified action record.",
         "surfaces": [
           "https://matthew.mccluster.org/action/",
@@ -95,8 +95,8 @@
   "principles": [
     "One canonical public identity graph for Matthew McCluster, McCluster Corp and the products it actually operates.",
     "Evidence before claims: public-record pages and answer-engine data should point back to a document, primary source, public source code or clearly labeled first-party source.",
-    "Human Uprise rewards useful, completed, verifiable action rather than likes, views, outrage or political viewpoint.",
-    "Human Uprise is the user-facing social-product identity (formerly the Uprise Action Network, renamed 2026-10-14); older implementation naming such as mnet, action_* tables and action-network-* routes is a compatibility detail, not a public brand.",
+    "Equity Uprise rewards useful, completed, verifiable action rather than likes, views, outrage or political viewpoint.",
+    "Equity Uprise is the user-facing social-product identity (formerly the Uprise Action Network, renamed 2026-10-14); older implementation naming such as mnet, action_* tables and action-network-* routes is a compatibility detail, not a public brand.",
     "Control is the operator plane. Public/member surfaces should not require the owner to manually reconcile counts, proofs or campaign state outside the product.",
     "Music and media are not detached side projects: they can be discovery, storytelling and campaign entry points, while retaining their own catalogue and rights records."
   ],
@@ -104,7 +104,7 @@
     "Whip Equipped LLC is a separate company connected through Matthew McCluster's ownership/founding; it is not a McCluster Corp sub-brand.",
     "Two properties, two entities: https://mccluster.org/ is McCluster Corp's property and the Organization's url; https://matthew.mccluster.org/ is Matthew McCluster's. Company product pages hosted on Matthew's property, this product map among them, keep their URLs for compatibility (data/seo/domain-architecture.json).",
     "A public page may explain a product relationship without turning internal, unverified or private context into a public factual claim.",
-    "Payments are a platform capability; the primary Human Uprise participation loop is missions, proof and verification."
+    "Payments are a platform capability; the primary Equity Uprise participation loop is missions, proof and verification."
   ],
   "canonical_sources": [
     "https://matthew.mccluster.org/data/seo/entity-graph.json",
