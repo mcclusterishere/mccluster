@@ -762,6 +762,15 @@ function wireEditorialTools(){
  const credit=document.querySelector('.osm-credit'),ionCredit=$('ionCredits');
  if(credit){credit.innerHTML='<a href="https://earthdata.nasa.gov/">NASA imagery</a> · <a href="https://www.naturalearthdata.com/">Natural Earth</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ';if(ionCredit)credit.appendChild(ionCredit)}
  const row=document.querySelector('.globe-data'),nav=document.querySelector('.globe-controls');
+ /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out from
+    the globe"): in the World, the corner that held the controls menu holds World, one tap back to the whole Earth. The rest of
+    the controls (the Earth / street map switch, the data layers) stay on the full-screen globe; Travel keeps its own rail. */
+ if(document.documentElement.classList.contains('globe-surface-network')){
+  const corner=document.createElement('div');corner.className='globe-editorial-world';const world=$('ctlWorld');if(world)corner.appendChild(world);document.body.appendChild(corner);
+  const shelf=document.createElement('div');shelf.className='globe-editorial-shelf';shelf.hidden=true;if(nav)shelf.appendChild(nav);if(row)shelf.appendChild(row);document.body.appendChild(shelf);
+  const rail=document.createElement('nav');rail.className='globe-travel-controls';rail.setAttribute('aria-label','Travel globe controls');document.body.appendChild(rail);setTravelMode(travelMode);
+  return;
+ }
  const tools=document.createElement('details');tools.className='globe-editorial-tools';
  tools.innerHTML='<summary aria-label="Globe controls"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16M9 3v6M15 9v6M9 15v6"/></svg></summary>';
  const panel=document.createElement('div');panel.className='globe-editorial-tools__panel';

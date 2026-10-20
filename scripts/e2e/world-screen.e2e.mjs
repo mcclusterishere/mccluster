@@ -824,6 +824,17 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
     await page.click('.wt-world-modes [data-world-mode=missions]');
     await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):
+       World sits where the controls menu was, and one tap takes the camera back to the whole Earth */
+    const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),h:r&&Math.round(r.height),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
+    check(scope,'the World\'s globe: World, back to the whole Earth, is where the controls menu was; no menu',corner.inCorner&&!corner.menu&&corner.visible&&corner.h>=44&&corner.right<=16&&corner.bottom<=40,corner);
+    /* the whole-Earth height fits the screen (homeAltitude): read it from a first tap, come down to 2,000 km, tap again */
+    const settleAt=async()=>{let last=-1;for(let n=0;n<40;n++){const h=await globe.evaluate(()=>window.__huIon().height);if(Math.abs(h-last)<1000)return h;last=h;await page.waitForTimeout(300);}return last;};
+    await globe.click('#ctlWorld');const whole=await settleAt();
+    await globe.evaluate(()=>window.__huCountriesCam&&window.__huCountriesCam.view(-73,41,2e6));
+    const down=await globe.evaluate(()=>window.__huIon().height);
+    await globe.click('#ctlWorld');const back=await settleAt();
+    check(scope,'one tap on World flies all the way back out to the whole Earth',whole>8e6&&down<2.5e6&&Math.abs(back-whole)<whole*0.02,{whole,down,back});
     /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
     const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
       const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
