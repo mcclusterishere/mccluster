@@ -1,9 +1,19 @@
+import { rest } from './supabase.mjs';
+
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const API_KEY = String(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 const CONTEXT_TOKEN = String(process.env.MCCLUSTER_CONTEXT_TOKEN || '');
 
 export async function searchPrivateContext({ orgId, query, limit = 8, before = null } = {}) {
-  if (!SB || !CONTEXT_TOKEN) return { available: false, error: 'Private context reader is not configured', messages: [], memories: [], resident_messages: [] };
+  if (!SB || !API_KEY) return { available: false, error: 'Private context reader is not configured', messages: [], memories: [], resident_messages: [] };
+  if (!CONTEXT_TOKEN) {
+    const { body } = await rest('rpc/ops_ai_context_search', {
+      method: 'POST', body: JSON.stringify({ p_org_id: orgId, p_query: String(query || '').slice(0, 500), p_limit: limit, p_before: before || new Date().toISOString() }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!Array.isArray(body?.memories) || !Array.isArray(body?.resident_messages)) throw new Error('Private context RPC returned an invalid result');
+    return { ...body, available: true, transport: 'service_rpc' };
+  }
   const response = await fetch(`${SB}/functions/v1/context-core`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-mccluster-context-token': CONTEXT_TOKEN, ...(API_KEY ? { apikey: API_KEY } : {}) },
