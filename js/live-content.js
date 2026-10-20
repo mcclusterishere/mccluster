@@ -70,11 +70,17 @@
     } catch (_) {}
   }
   /* the signed-in member's session and its claims, read the way js/backend.js reads them */
+  /* mcc_sess_keep is the copy js/backend.js and js/mcc-auth.js restore when the main one was cleared by accident; this
+     runs in the head before either, so it reads the same two shelves */
   function memberSession() {
-    try {
-      var s = JSON.parse(w.localStorage.getItem("mccdb_session") || "null");
-      return s && s.access_token ? s : null;
-    } catch (_) { return null; }
+    var keys = ["mccdb_session", "mcc_sess_keep"];
+    for (var i = 0; i < keys.length; i++) {
+      try {
+        var s = JSON.parse(w.localStorage.getItem(keys[i]) || "null");
+        if (s && s.access_token) return s;
+      } catch (_) {}
+    }
+    return null;
   }
   function claims(token) {
     try { return JSON.parse(atob(String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) || {}; } catch (_) { return {}; }

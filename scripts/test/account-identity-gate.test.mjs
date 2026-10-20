@@ -317,6 +317,10 @@ test("the notice: a signed-in member's own account record is agreement, and agre
   assert.equal(JSON.parse(member.window.localStorage.getItem('mcc_privacy_ack')).accepted_at, '2026-10-19T12:00:00Z', 'the browser copy keeps the record time');
   assert.ok(cookies.all.get('mcc_privacy_ack|.mccluster.org'), 'and the shared cookie is written for the next host');
   assert.equal(member.fetches.length, 0, 'an existing record is not written again');
+  /* the main session cleared by accident, its kept copy still there (js/backend.js and js/mcc-auth.js restore it later) */
+  const kept = storage({ mcc_sess_keep: JSON.stringify({ access_token: jwt({ sub: 'u1', exp: now, user_metadata: { privacy_policy_version: PRIVACY_VERSION, privacy_acknowledged_at: '2026-10-19T12:00:00Z' } }), refresh_token: 'r' }) });
+  const restored = await visit({ url: 'https://mccluster.org/mnet.html', local: kept });
+  assert.equal(restored.shown(), false, 'the kept copy of the session answers too');
 
   for (const meta of [{}, { privacy_policy_version: '2026-01-01', privacy_acknowledged_at: '2026-01-01T00:00:00Z' }, { privacy_policy_version: PRIVACY_VERSION, privacy_acknowledged_at: 'not a date' }]) {
     const stale = await visit({ url: 'https://matthew.mccluster.org/mnet.html', local: signedIn(meta) });
