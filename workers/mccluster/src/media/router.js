@@ -90,6 +90,54 @@ async function saveAssets(env, orgId, jobId, result) {
   });
 }
 
+/* Every fal.ai generation is paid from the house account, whichever org asks.
+   Only the house org (slug `mccluster`, resolved the way ai/router.js and
+   comms/router.js resolve it) may set an arbitrary monthly allowance. Any
+   other org is held to this ceiling and must have an enabled allowance at or
+   below it before it can spend at all: the media_job_spend_guard trigger only
+   enforces an allowance that is stored and enabled, so "no row" would
+   otherwise mean "no monthly limit". There are no per-plan media entitlements
+   yet; when there are, they replace this constant. */
+export const NON_HOUSE_MEDIA_MONTHLY_LIMIT_CENTS = 2_500;
+
+async function houseOrgId(env) {
+  const rows = await db(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+  return rows?.[0]?.id || null;
+}
+
+async function isHouseOrg(env, orgId) {
+  const house = await houseOrgId(env);
+  return Boolean(house) && house === orgId;
+}
+
+function allowanceRequired(message, detail = {}) {
+  return Object.assign(new Error(message), {
+    status: 403,
+    detail: { max_monthly_limit_cents: NON_HOUSE_MEDIA_MONTHLY_LIMIT_CENTS, ...detail }
+  });
+}
+
+/* Refuses a non-house org whose stored allowance is missing, disabled, or
+   above the ceiling (a row written before the ceiling existed). The trigger
+   then enforces that stored limit atomically on insert. */
+async function requireSpendableAllowance(env, orgId) {
+  if (await isHouseOrg(env, orgId)) return;
+  const rows = await db(
+    env,
+    `org_media_budgets?org_id=eq.${encodeURIComponent(orgId)}&select=enabled,monthly_limit_cents&limit=1`
+  );
+  const budget = rows?.[0];
+  const limit = budget?.monthly_limit_cents;
+  if (!budget?.enabled || limit === null || limit === undefined) {
+    throw allowanceRequired('An organization owner must enable a monthly media allowance before generating media');
+  }
+  if (Number(limit) > NON_HOUSE_MEDIA_MONTHLY_LIMIT_CENTS) {
+    throw allowanceRequired('The monthly media allowance is above the limit for this organization; lower it to continue', {
+      monthly_limit_cents: Number(limit)
+    });
+  }
+}
+
 function budgetCents(value) {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
@@ -293,6 +341,12 @@ export async function updateMediaBudget(request, env, user) {
     throw Object.assign(new Error('warn_at_percent must be an integer from 1 to 100'), { status: 400 });
   }
 
+  if (monthlyLimit !== null && monthlyLimit > NON_HOUSE_MEDIA_MONTHLY_LIMIT_CENTS && !(await isHouseOrg(env, org.org_id))) {
+    throw allowanceRequired('monthly_limit_cents is above the media allowance this organization may set', {
+      monthly_limit_cents: monthlyLimit
+    });
+  }
+
   const rows = await db(env, 'org_media_budgets?on_conflict=org_id&select=org_id,enabled,monthly_limit_cents,warn_at_percent,updated_by,created_at,updated_at', {
     method: 'POST',
     headers: { prefer: 'resolution=merge-duplicates,return=representation' },
@@ -375,6 +429,8 @@ export async function createGeneration(request, env, user) {
       }
     });
   }
+
+  await requireSpendableAllowance(env, org.org_id);
 
   const estimateData = estimatePayload(estimate);
   const created = await rpc(env, 'media_create_budgeted_job_v2', {

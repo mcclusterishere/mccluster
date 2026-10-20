@@ -11,6 +11,8 @@ const RIDE='33333333-3333-4333-8333-333333333333', RENTAL='77777777-7777-4777-87
 const env={SUPABASE_URL:'https://fixture.example.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture-only',ALLOWED_ORIGIN:'https://matthew.mccluster.org',STRIPE_SECRET_KEY:'sk_test_fixture',PUBLIC_APP_URL:'https://matthew.mccluster.org'};
 const json=(payload,status=200)=>new Response(JSON.stringify(payload),{status,headers:{'content-type':'application/json'}});
 const param=(search,key)=>{const m=search.match(new RegExp('(?:^|[?&])'+key+'=eq\\.([^&]+)'));return m?decodeURIComponent(m[1]):null;};
+// PostgREST `col=not.in.(a,b)`: the row is kept only when its value is outside the list.
+const outside=(search,key,row)=>{const m=decodeURIComponent(search).match(new RegExp('(?:^|[?&])'+key+'=not\\.in\\.\\(([^)]*)\\)'));return !m||!m[1].split(',').includes(String(row[key]));};
 
 function ledger(){
   const state={
@@ -47,9 +49,9 @@ function ledger(){
       if(method==='DELETE'){if(match)state.events.delete(id);return new Response('',{status:204});}
     }
     if(path==='/rest/v1/tenants'){const id=param(u.search,'id'),acct=param(u.search,'stripe_account_id');const rows=state.tenants.filter(t=>(!id||t.id===id)&&(!acct||t.stripe_account_id===acct));if(method==='PATCH')rows.forEach(t=>Object.assign(t,body));return json(rows);}
-    if(path==='/rest/v1/rides'){const id=param(u.search,'id'),st=param(u.search,'status'),drv=param(u.search,'driver_id');let rows=state.rides.filter(r=>(!id||r.id===id)&&(!st||r.status===st)&&(!drv||r.driver_id===drv));
+    if(path==='/rest/v1/rides'){const id=param(u.search,'id'),st=param(u.search,'status'),drv=param(u.search,'driver_id');let rows=state.rides.filter(r=>(!id||r.id===id)&&(!st||r.status===st)&&(!drv||r.driver_id===drv)&&outside(u.search,'payment_status',r));
       if(method==='PATCH'){if(state.ridePatchThrows)return json({message:'rides unavailable'},503);if(state.raceAway)rows=[];rows.forEach(r=>Object.assign(r,body));return json(rows);}return json(rows);}
-    if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
+    if(path==='/rest/v1/rental_bookings'){if(method==='POST'){const row={id:'new-booking',...body};state.rentals.push(row);return json([row],201);}const id=param(u.search,'id');const onlyNull=u.searchParams.get('stripe_checkout_session_id')==='is.null';const rows=state.rentals.filter(r=>r.id===id&&(!onlyNull||r.stripe_checkout_session_id==null)&&outside(u.search,'payment_status',r));if(method==='PATCH')rows.forEach(r=>Object.assign(r,body));return json(rows);}
     if(path==='/rest/v1/operator_members'){const tenant=param(u.search,'tenant_id'),who=param(u.search,'auth_user_id');return json(state.operators.filter(o=>o.tenant_id===tenant&&o.auth_user_id===who));}
     if(path==='/rest/v1/rental_vehicles')return json([{id:'fixture-car',tenant_id:TENANT,daily_rate_cents:5000,location_label:'Lot A',available:true}]);
     if(path==='/rest/v1/payments'){
@@ -60,8 +62,10 @@ function ledger(){
         if(state.paymentResponseLostOnce){state.paymentResponseLostOnce=false;throw new Error('insert succeeded but response was lost');}
         return json([row],201);
       }
-      const tenant=param(u.search,'tenant_id'),session=param(u.search,'stripe_checkout_session_id'),resource=param(u.search,'resource_id');
-      return json(state.payments.filter(p=>(!tenant||p.tenant_id===tenant)&&(!session||p.stripe_checkout_session_id===session)&&(!resource||p.resource_id===resource)));
+      const tenant=param(u.search,'tenant_id'),session=param(u.search,'stripe_checkout_session_id'),resource=param(u.search,'resource_id'),intent=param(u.search,'stripe_payment_intent_id');
+      const rows=state.payments.filter(p=>(!tenant||p.tenant_id===tenant)&&(!session||p.stripe_checkout_session_id===session)&&(!resource||p.resource_id===resource)&&(method!=='PATCH'||!intent||p.stripe_payment_intent_id===intent)&&outside(u.search,'status',p));
+      if(method==='PATCH')rows.forEach(p=>Object.assign(p,body));
+      return json(rows);
     }
     throw Error('Unexpected fixture request: '+method+' '+u.href);
   };
@@ -369,4 +373,63 @@ test('client-controlled time_zone never influences server-owned East Coast billi
     start_at:'2026-10-31T10:00:00-04:00',end_at:'2026-11-02T10:00:00-05:00'
   });
   assert.match(unconfigured.error,/time zone has not been configured/);
+});
+
+test('late or re-applied Stripe events never move a payment state backwards',{concurrency:false},async()=>{
+  const session=(id,object={})=>({id,type:'checkout.session.completed',account:'acct_owner',data:{object:{id:'cs_rental',amount_total:11770,currency:'usd',payment_status:'paid',payment_intent:'pi_rental',metadata:{kind:'rental',tenant_id:TENANT,resource_id:RENTAL},...object}}});
+  await withLedger(ledger(),async state=>{
+    state.rentals[0].payment_status='paid';state.payments[0].status='paid';
+    // A delayed-method completion (payment_status 'unpaid') delivered after the async success.
+    const late=await processStripeEvent(env,session('evt_late_session',{payment_status:'unpaid'}));
+    assert.equal(late.stale,true);
+    assert.equal(state.rentals[0].payment_status,'paid','a paid rental is never set back to processing');
+    assert.equal(state.payments[0].status,'paid');
+    const failed=await processStripeEvent(env,{...session('evt_late_fail'),type:'checkout.session.async_payment_failed'});
+    assert.equal(failed.stale,true);
+    assert.equal(state.rentals[0].payment_status,'paid');
+  });
+  await withLedger(ledger(),async state=>{
+    // A completed, captured ride: the late authorization notice must not reopen it.
+    Object.assign(state.rides[0],{status:'COMPLETED',payment_status:'paid'});
+    const late=await processStripeEvent(env,rideEvent('evt_late_auth'));
+    assert.equal(late.stale,true);
+    assert.equal(state.rides[0].payment_status,'paid');
+    const failed=await processStripeEvent(env,{...rideEvent('evt_late_failed'),type:'payment_intent.payment_failed'});
+    assert.equal(state.rides[0].payment_status,'paid');
+    assert.equal(failed.stale,true);
+    Object.assign(state.rides[0],{status:'CANCELED',payment_status:'canceled'});
+    await processStripeEvent(env,rideEvent('evt_late_auth_2'));
+    assert.equal(state.rides[0].payment_status,'canceled','a canceled ride is never re-authorized');
+  });
+  await withLedger(ledger(),async state=>{
+    // Forward progress still applies.
+    state.rides[0].payment_status='requires_payment_method';
+    assert.equal((await processStripeEvent(env,rideEvent('evt_fwd'))).stale,undefined);
+    assert.equal(state.rides[0].payment_status,'authorized');
+    assert.equal((await processStripeEvent(env,{...rideEvent('evt_paid'),type:'payment_intent.succeeded'})).stale,undefined);
+    assert.equal(state.rides[0].payment_status,'paid');
+  });
+});
+
+test('a recovered lease re-applies an event as a no-op, not over newer state',{concurrency:false},async()=>{
+  await withLedger(ledger(),async state=>{
+    const type='payment_intent.amount_capturable_updated';
+    state.rides[0].payment_status='requires_capture';
+    // First delivery applied its writes but its completion marker was lost (lease kept).
+    const realFetch=state.fetch;let finishFails=true;
+    globalThis.fetch=async(resource,options={})=>{
+      const u=new URL(String(resource));
+      if(finishFails&&u.pathname==='/rest/v1/stripe_events'&&(options.method||'GET')==='PATCH'){finishFails=false;return json([]);}
+      return realFetch(resource,options);
+    };
+    await assert.rejects(processStripeEvent(env,rideEvent('evt_recover')),e=>e.status===503);
+    assert.equal(state.rides[0].payment_status,'authorized');
+    // The ride is captured meanwhile; then the lease expires and Stripe redelivers.
+    state.rides[0].payment_status='paid';
+    const saved=state.events.get('whip:evt_recover');saved.event_type=saved.event_type.replace(/processing:\d+/,'processing:'+(Date.now()-20*60_000));
+    const again=await processStripeEvent(env,rideEvent('evt_recover'));
+    assert.equal(again.stale,true);
+    assert.equal(state.rides[0].payment_status,'paid','re-application does not reset a paid ride to authorized');
+    assert.equal(state.events.get('whip:evt_recover').event_type,type);
+  });
 });

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 419,
+  "candidate_count": 420,
   "capability_source_count": 104,
-  "support_only_count": 315,
-  "checks_total": 1574,
-  "checks_passed": 1574,
+  "support_only_count": 316,
+  "checks_total": 1578,
+  "checks_passed": 1578,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -244,6 +244,7 @@
     "scripts/test/antisocial-three-levels.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
+    "scripts/test/eu-intake-email-match.test.mjs",
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
@@ -433,7 +434,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "419 entries"
+      "detail": "420 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4832,6 +4833,26 @@
     },
     {
       "name": "scripts/test/domain-architecture.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-intake-email-match.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/eu-intake-email-match.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/eu-intake-email-match.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/eu-intake-email-match.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

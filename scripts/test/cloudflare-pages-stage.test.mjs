@@ -114,3 +114,50 @@ test('keys glued to identifier characters are refused; long snake_case identifie
   const r=run(f);
   assert.equal(r.status,0,r.stderr);
 });
+
+test('forbidden files are matched case-insensitively and the vault intake queue stays private',async()=>{
+  const f=await fixture();
+  await writeFile(join(f.input,'data','Clients.JSON'),'{}');
+  await writeFile(join(f.input,'Package.JSON'),'{}');
+  await writeFile(join(f.input,'data','vault-intake.json'),'{"batches":[]}');
+  const r=run(f);
+  assert.equal(r.status,0,r.stderr);
+  assert.equal(await exists(join(f.output,'Package.JSON')),false);
+  assert.equal(await exists(join(f.output,'data','Clients.JSON')),false);
+  assert.equal(await exists(join(f.output,'data','vault-intake.json')),false);
+});
+
+test('more live-key shapes and a service_role JWT are refused, including in extensionless LICENSE',async()=>{
+  const jwt=role=>['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',Buffer.from(JSON.stringify({iss:'supabase',role})).toString('base64url'),'c2lnbmF0dXJlLXNpZ25hdHVyZQ'].join('.');
+  const leaks={
+    pat:['github','pat',''].join('_')+'A'.repeat(22)+'_'+'B'.repeat(59),
+    restricted:['rk','live','ABCDEFGHIJKLMNOP'].join('_'),
+    webhook:['whsec','ABCDEFGHIJKLMNOPQRSTUVWXYZ012345'].join('_'),
+    serviceRole:jwt('service_role')
+  };
+  for(const [name,text] of Object.entries(leaks)){
+    const f=await fixture();
+    await writeFile(join(f.input,'js','public.js'),'const v="'+text+'";');
+    const r=run(f);
+    assert.notEqual(r.status,0,name+' must be refused');
+    assert.match(r.stderr,/Possible secret/);
+  }
+  const lic=await fixture();
+  await writeFile(join(lic.input,'LICENSE'),'MIT License\n'+leaks.restricted);
+  const l=run(lic);
+  assert.notEqual(l.status,0,'extensionless text is scanned');
+  assert.match(l.stderr,/Possible secret.*LICENSE/);
+  const pub=await fixture();
+  await writeFile(join(pub.input,'js','public.js'),'const anon="'+jwt('anon')+'";const k="'+['sb','publishable','abcdefghijklmnop'].join('_')+'";');
+  const p=run(pub);
+  assert.equal(p.status,0,'public anon JWTs and publishable keys stay publishable: '+p.stderr);
+});
+
+test('GitHub Pages publishes the same tree and records its publisher',async()=>{
+  const f=await fixture();
+  const r=spawnSync(process.execPath,[SCRIPT,'--input',f.input,'--output',f.output,'--commit',SHA,'--publisher','github-pages'],{encoding:'utf8'});
+  assert.equal(r.status,0,r.stderr);
+  assert.equal(JSON.parse(await readFile(join(f.output,'mccluster-release.json'),'utf8')).publisher,'github-pages');
+  const bad=await fixture();
+  assert.notEqual(spawnSync(process.execPath,[SCRIPT,'--input',bad.input,'--output',bad.output,'--commit',SHA,'--publisher','elsewhere'],{encoding:'utf8'}).status,0);
+});

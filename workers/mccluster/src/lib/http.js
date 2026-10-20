@@ -57,8 +57,34 @@ export function reply(request, env, data, status = 200) {
   });
 }
 
+/* SQL errors can contain row values in both message and detail. Recognize
+   standard and extended upstream error shapes, sanitize both response fields,
+   and record only the code/status in shared logs. Domain-safe errors retain
+   their explicitly shaped retry, budget, or provisioning details. */
+const POSTGREST_ERROR_KEYS = ['code', 'details', 'hint', 'message'];
+const SAFE_DATABASE_ERRORS = {
+  MN429: 'Too many requests. Please try again later.',
+  MN413: 'The submission exceeds the permitted size.',
+  MN409: 'This action cannot be completed in its current state.'
+};
+
+export function isPostgrestError(detail) {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return false;
+  return POSTGREST_ERROR_KEYS.every(key => key in detail) ||
+    (typeof detail.message === 'string' && /^(?:[0-9A-Z]{5}|PGRST[0-9A-Z]+)$/.test(String(detail.code || '')));
+}
+
 export function fail(request, env, message, status = 400, detail) {
-  return reply(request, env, { error: message, detail }, status);
+  if (isPostgrestError(detail)) {
+    // Log the code, not row values or user-supplied strings. Both response
+    // message and detail can originate in the same upstream SQL error.
+    logEvent('warn', { event: 'error_detail_redacted', status, code: detail.code });
+    message = SAFE_DATABASE_ERRORS[detail.code] || 'McCluster database request failed';
+    detail = { code: detail.code };
+  }
+  const response = reply(request, env, { error: message, detail }, status);
+  response.headers.set('cache-control', 'no-store');
+  return response;
 }
 
 export function logEvent(level, fields) {

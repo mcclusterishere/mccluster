@@ -2,8 +2,22 @@
 // status, roles, approvals or publication state. Every accepted submission is
 // normalized into the canonical graph and emits an immutable event.
 import {
-  cors, db, emitEvent, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
+  cors, db, emitEvent, ilikeExact, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
 } from "../_shared/eu-policy-os.ts";
+
+function intakeError(message: string, status = 400) {
+  return Object.assign(new Error(message), { status, publicIntakeError: true });
+}
+async function intakeOwner(req: Request, body: Record<string, unknown>) {
+  const email = safeEmail(body.email);
+  if (!email) throw intakeError("name and valid email required");
+  const caller = await verifyCaller(req);
+  if (!caller) throw intakeError("Sign in with your verified email before submitting.", 401);
+  if (!caller.emailVerified || safeEmail(caller.email) !== email) {
+    throw intakeError("The submission email must match your verified account.", 403);
+  }
+  return caller;
+}
 
 function arr(v: unknown, max = 30) {
   return Array.isArray(v) ? v.slice(0, max).map((x) => safeText(x, 120)).filter(Boolean) : [];
@@ -23,8 +37,9 @@ async function publicInitiative(orgId: string, id: unknown) {
 
 async function upsertStakeholder(orgId: string, input: Record<string, unknown>, source: string) {
   const email = safeEmail(input.email);
-  if (!email) throw new Error("valid email required");
-  const existing = await db(`eu_stakeholders?org_id=eq.${orgId}&email=ilike.${encodeURIComponent(email)}&select=id,name,email&limit=1`);
+  const emailMatch = ilikeExact(email);
+  if (!email || !emailMatch) throw new Error("valid email required");
+  const existing = await db(`eu_stakeholders?org_id=eq.${orgId}&email=${emailMatch}&select=id,name,email&limit=1`);
   if (existing?.length) {
     const id = existing[0].id;
     await db(`eu_stakeholders?id=eq.${id}`, {
@@ -48,8 +63,9 @@ async function upsertStakeholder(orgId: string, input: Record<string, unknown>, 
   const orgName = safeText(input.organization, 220);
   const domain = safeText(input.organization_domain, 200).toLowerCase();
   if (orgName) {
-    let orgRows = domain
-      ? await db(`eu_stakeholder_orgs?org_id=eq.${orgId}&domain=ilike.${encodeURIComponent(domain)}&select=id&limit=1`)
+    const domainMatch = ilikeExact(domain);
+    let orgRows = domainMatch
+      ? await db(`eu_stakeholder_orgs?org_id=eq.${orgId}&domain=${domainMatch}&select=id&limit=1`)
       : [];
     if (!orgRows?.length) {
       orgRows = await db("eu_stakeholder_orgs", {
@@ -88,10 +104,11 @@ async function upsertStakeholder(orgId: string, input: Record<string, unknown>, 
   return { id: rows[0].id, email };
 }
 
-async function stakeholderIntake(_req: Request, body: Record<string, unknown>) {
+async function stakeholderIntake(req: Request, body: Record<string, unknown>) {
+  await intakeOwner(req, body);
   const org = await orgBySlug("mccluster");
   const initiative = await publicInitiative(org.id, body.initiative_id);
-  if (!initiative) throw new Error("active public initiative required");
+  if (!initiative) throw intakeError("active public initiative required");
   const person = await upsertStakeholder(org.id, body, "equity-uprise-intake");
 
   const links = await db(
@@ -105,7 +122,7 @@ async function stakeholderIntake(_req: Request, body: Record<string, unknown>) {
         org_id: org.id,
         initiative_id: initiative.id,
         stakeholder_id: person.id,
-        role: safeText(body.role, 100) || "stakeholder",
+        role: "stakeholder",
         stance: ["support","conditional-support","neutral","unknown","concerned","oppose","mixed"].includes(String(body.stance))
           ? body.stance : "unknown",
         contribution_types: arr(body.contribution_types),
@@ -137,11 +154,12 @@ async function stakeholderIntake(_req: Request, body: Record<string, unknown>) {
 }
 
 async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
+  const caller = await intakeOwner(req, body);
   const org = await orgBySlug("mccluster");
   const email = safeEmail(body.email);
   const name = safeText(body.name, 160);
-  if (!email || !name) throw new Error("name and valid email required");
-  const caller = await verifyCaller(req);
+  const emailMatch = ilikeExact(email);
+  if (!email || !emailMatch || !name) throw intakeError("name and valid email required");
   const stakeholder = await upsertStakeholder(org.id, body, "equity-uprise-fellowship");
   const initiativeIds = arr(body.initiative_ids, 20);
   const validInitiatives: string[] = [];
@@ -150,7 +168,7 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
     if (i) validInitiatives.push(i.id);
   }
 
-  const prior = await db(`eu_fellowship_applications?org_id=eq.${org.id}&email=ilike.${encodeURIComponent(email)}&stage=not.in.(declined,withdrawn)&select=id,stage&order=created_at.desc&limit=1`);
+  const prior = await db(`eu_fellowship_applications?org_id=eq.${org.id}&email=${emailMatch}&stage=not.in.(declined,withdrawn)&select=id,stage&order=created_at.desc&limit=1`);
   if (prior?.length) return { ok: true, application_id: prior[0].id, stage: prior[0].stage, duplicate: true };
 
   const bookingToken = randomToken();
@@ -199,7 +217,23 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "POST required" }, 405);
   try {
-    const body = await req.json();
+    // Bounded stream, not only an attacker-controlled Content-Length header.
+    const reader = req.body?.getReader();
+    if (!reader) return json({ error: "JSON body required" }, 400);
+    const chunks: Uint8Array[] = []; let bytes = 0;
+    try {
+      for (;;) {
+        const { value, done } = await reader.read(); if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 64 * 1024) { await reader.cancel(); return json({ error: "Submission too large" }, 413); }
+        chunks.push(value);
+      }
+    } finally { reader.releaseLock(); }
+    const all = new Uint8Array(bytes); let offset = 0;
+    for (const chunk of chunks) { all.set(chunk, offset); offset += chunk.byteLength; }
+    let body;
+    try { body = JSON.parse(new TextDecoder().decode(all)); } catch { return json({ error: "Invalid JSON" }, 400); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "JSON object required" }, 400);
     const verified = await verifyTurnstile(req, body.turnstile_token);
     if (!verified.ok) {
       const failure = turnstileFailure(verified);
@@ -210,7 +244,9 @@ Deno.serve(async (req) => {
     if (action === "fellowship") return json(await fellowshipIntake(req, body));
     return json({ error: "unknown action" }, 400);
   } catch (e) {
-    console.error(e);
-    return json({ error: e instanceof Error ? e.message : "intake failed" }, 400);
+    const error = e as Error & { status?: number; publicIntakeError?: boolean };
+    if (error.publicIntakeError) return json({ error: error.message }, error.status || 400);
+    console.error("intake request failed");
+    return json({ error: "Submission temporarily unavailable" }, 503);
   }
 });

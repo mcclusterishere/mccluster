@@ -32,6 +32,30 @@ const RENTAL_TRANSITIONS = {
   RETURN_DUE: ['COMPLETED'],
   COMPLETED: [], CANCELED: []
 };
+/* A renter drives only the self-service steps the rentals app offers: cancel
+   before pickup, start a checked-in paid rental, begin the return, and finish
+   it once the return checks are recorded. READY_FOR_PICKUP is reached only by
+   completing check-in (/checkin); every other step needs an operator role. */
+const RENTER_RENTAL_TRANSITIONS = {
+  BOOKED: ['CANCELED'], CHECKIN_REQUIRED: ['CANCELED'], READY_FOR_PICKUP: ['ACTIVE','CANCELED'],
+  ACTIVE: ['RETURN_DUE'], RETURN_DUE: ['COMPLETED']
+};
+const RENTAL_STATUS_ROLES = ['owner','admin','dispatcher'];
+/* Drivers see what they need to accept and navigate: never the rider's
+   account id or the pickup PIN the rider reads out at the curb. */
+export const DRIVER_OFFER_FIELDS = 'id,tenant_id,status,payment_status,ride_tier,rider_name,pickup_label,pickup_lat,pickup_lng,dropoff_label,dropoff_lat,dropoff_lng,miles,minutes,fare_cents,platform_fee_cents,requested_at';
+export function withoutPickupPin(ride) { if (!ride) return ride; const { pickup_pin, ...rest } = ride; return rest; }
+/* Stripe may deliver late, out of order, or (after a lost completion) twice.
+   Each payment state may only be entered from a row that is not already in
+   one of these states, so a stale event can never move money state backwards. */
+const PAYMENT_STATE_BLOCKERS = {
+  processing: ['processing','paid','failed','canceled'],
+  authorized: ['authorized','paid','canceled'],
+  paid: ['paid','canceled'],
+  failed: ['failed','authorized','paid','canceled'],
+  canceled: ['canceled','paid']
+};
+const advancesTo = (column, status) => `&${column}=not.in.(${PAYMENT_STATE_BLOCKERS[status].join(',')})`;
 
 /* Rental money is quoted by the server from the dates, the vehicle's stored
    daily rate and a server-side catalogue. The browser names options, never
@@ -85,7 +109,7 @@ export function rentalQuote(vehicle, tenant, body = {}, serverTimeZone) {
   const daily = cents(vehicle?.daily_rate_cents); if (!(daily > 0)) return { error: 'Vehicle has no daily rate' };
   const extras = extraIds.reduce((sum, id) => sum + RENTAL_EXTRAS[id], 0), protection = RENTAL_PROTECTION_PLANS[plan] * days;
   const subtotal = daily * days + extras + protection, tax = Math.round(subtotal * RENTAL_TAX_BPS / 10_000), total = subtotal + tax;
-  const platform = tenant?.white_label_enabled ? 0 : Math.round(total * Number(tenant?.platform_fee_percent || 0.03));
+  const platform = tenant?.white_label_enabled ? 0 : Math.round(total * Number(tenant?.platform_fee_percent ?? 0.03));
   return { days, daily_rate_cents: daily, extras_cents: extras, protection_cents: protection, tax_cents: tax, platform_fee_cents: platform, total_cents: total, protection_plan: plan, extras: extraIds };
 }
 
@@ -168,6 +192,9 @@ async function getRental(env, id) { const rows = await sb(env, `rental_bookings?
 async function patchRental(env, id, patch) {
   const rows = await sb(env, `rental_bookings?id=eq.${encodeURIComponent(id)}&select=*`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }) });
   return rows?.[0] || null;
+}
+async function patchWhere(env, table, id, condition, patch) {
+  return sb(env, `${table}?id=eq.${encodeURIComponent(id)}${condition}&select=id`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }) });
 }
 async function recordPayment(env, payment) {
   const rows = await sb(env, 'payments?select=*', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(payment) });
@@ -348,9 +375,10 @@ async function applyStripeEvent(env, event, object, connectedAccountId) {
     if (kind === 'rental') {
       const bound = await boundRental(env, object, connectedAccountId, 'session'); if (bound.error) return ignored(bound.error);
       const intent = typeof object.payment_intent === 'string' ? object.payment_intent : null;
-      await patchRental(env, bound.booking.id, { payment_status: object.payment_status === 'paid' ? 'paid' : 'processing', stripe_checkout_session_id: object.id, stripe_payment_intent_id: intent });
-      await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status: object.payment_status === 'paid' ? 'paid' : 'processing', stripe_payment_intent_id: intent });
-      return { applied: event.type };
+      const status = object.payment_status === 'paid' ? 'paid' : 'processing';
+      const rows = await patchWhere(env, 'rental_bookings', bound.booking.id, advancesTo('payment_status', status), { payment_status: status, stripe_checkout_session_id: object.id, stripe_payment_intent_id: intent });
+      const ledger = await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}${advancesTo('status', status)}`, { status, stripe_payment_intent_id: intent });
+      return { applied: event.type, ...(rows?.length || ledger?.length ? {} : { stale: true }) };
     }
     return ignored('unknown_kind');
   }
@@ -359,26 +387,26 @@ async function applyStripeEvent(env, event, object, connectedAccountId) {
     if (object.metadata?.kind !== 'rental') return ignored('unknown_kind');
     const bound = await boundRental(env, object, connectedAccountId, 'session'); if (bound.error) return ignored(bound.error);
     const status = event.type.endsWith('succeeded') ? 'paid' : 'failed';
-    await patchRental(env, bound.booking.id, { payment_status: status });
-    await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}`, { status });
-    return { applied: event.type };
+    const rows = await patchWhere(env, 'rental_bookings', bound.booking.id, advancesTo('payment_status', status), { payment_status: status });
+    const ledger = await updatePayments(env, `tenant_id=eq.${encodeURIComponent(bound.tenant.id)}&stripe_checkout_session_id=eq.${encodeURIComponent(object.id)}${advancesTo('status', status)}`, { status });
+    return { applied: event.type, ...(rows?.length || ledger?.length ? {} : { stale: true }) };
   }
 
   if (event.type === 'payment_intent.amount_capturable_updated' || event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
     const kind = object.metadata?.kind;
     const status = event.type === 'payment_intent.amount_capturable_updated' ? 'authorized' : event.type === 'payment_intent.succeeded' ? 'paid' : event.type === 'payment_intent.payment_failed' ? 'failed' : 'canceled';
-    let tenant;
+    let tenant, rows;
     if (kind === 'ride') {
       const bound = await boundRide(env, object, connectedAccountId); if (bound.error) return ignored(bound.error);
       tenant = bound.tenant;
-      await patchRide(env, bound.ride.id, status === 'failed' || status === 'canceled' ? { payment_status: status } : { payment_status: status, stripe_payment_intent_id: object.id });
+      rows = await patchWhere(env, 'rides', bound.ride.id, advancesTo('payment_status', status), status === 'failed' || status === 'canceled' ? { payment_status: status } : { payment_status: status, stripe_payment_intent_id: object.id });
     } else if (kind === 'rental' && (status === 'paid' || status === 'failed')) {
       const bound = await boundRental(env, object, connectedAccountId, 'intent'); if (bound.error) return ignored(bound.error);
       tenant = bound.tenant;
-      await patchRental(env, bound.booking.id, status === 'paid' ? { payment_status: 'paid', stripe_payment_intent_id: object.id } : { payment_status: 'failed' });
+      rows = await patchWhere(env, 'rental_bookings', bound.booking.id, advancesTo('payment_status', status), status === 'paid' ? { payment_status: 'paid', stripe_payment_intent_id: object.id } : { payment_status: 'failed' });
     } else return ignored('unknown_kind');
-    await updatePayments(env, `tenant_id=eq.${encodeURIComponent(tenant.id)}&stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}`, { status });
-    return { applied: event.type };
+    const ledger = await updatePayments(env, `tenant_id=eq.${encodeURIComponent(tenant.id)}&stripe_payment_intent_id=eq.${encodeURIComponent(object.id)}${advancesTo('status', status)}`, { status });
+    return { applied: event.type, ...(rows?.length || ledger?.length ? {} : { stale: true }) };
   }
 
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
@@ -552,7 +580,7 @@ export default {
         return fail(env, 'A verified server-issued quote is required to book a ride', 428);
       }
       const rideMatch = path.match(/^\/api\/rides\/([^/]+)$/);
-      if (rideMatch && req.method === 'GET') { await requireUser(req, env); const ride = await getRide(env, rideMatch[1]); return ride ? reply(env, { ride }) : fail(env, 'Ride not found', 404); }
+      if (rideMatch && req.method === 'GET') { const user = await requireUser(req, env); const ride = await getRide(env, rideMatch[1]); return ride ? reply(env, { ride: String(ride.rider_id) === String(user.id) ? ride : withoutPickupPin(ride) }) : fail(env, 'Ride not found', 404); }
 
       const ridePaymentMatch = path.match(/^\/api\/rides\/([^/]+)\/payment-intent$/);
       if (ridePaymentMatch && req.method === 'POST') {
@@ -573,7 +601,7 @@ export default {
         return reply(env, { payment_intent_id: intent.id, client_secret: intent.client_secret, connected_account_id: t.stripe_account_id, publishable_key: env.STRIPE_PUBLISHABLE_KEY || null, status: intent.status });
       }
 
-      if (path === '/api/offers' && req.method === 'GET') { const rows = await sb(env, 'rides?status=eq.REQUESTED&payment_status=in.(authorized,paid,unpaid)&order=requested_at.asc&limit=20&select=*'); return reply(env, { offers: rows || [] }); }
+      if (path === '/api/offers' && req.method === 'GET') { const rows = await sb(env, 'rides?status=eq.REQUESTED&payment_status=in.(authorized,paid,unpaid)&order=requested_at.asc&limit=20&select=' + DRIVER_OFFER_FIELDS); return reply(env, { offers: rows || [] }); }
       const acceptMatch = path.match(/^\/api\/rides\/([^/]+)\/accept$/);
       if (acceptMatch && req.method === 'POST') {
         const body = await req.json(), current = await getRide(env, acceptMatch[1]); if (!current) return fail(env, 'Ride not found', 404); if (current.status !== 'REQUESTED') return fail(env, 'Ride is no longer available', 409);
@@ -593,13 +621,15 @@ export default {
             driver_plate:driver.license_plate,driver_rating:driver.rating
           })});
         if (!accepted?.length) return fail(env, 'Ride already accepted or payment is unavailable', 409);
-        return reply(env, { ride:accepted[0] });
+        return reply(env, { ride:withoutPickupPin(accepted[0]) });
       }
       const statusMatch = path.match(/^\/api\/rides\/([^/]+)\/status$/);
       if (statusMatch && req.method === 'PATCH') {
         const body = await req.json(), current = await getRide(env, statusMatch[1]); if (!current) return fail(env, 'Ride not found', 404); const next = String(body.status || '').toUpperCase();
         if (!TRANSITIONS[current.status]?.includes(next)) return fail(env, `Illegal transition ${current.status} -> ${next}`, 409); if (current.driver_id && body.driver_id && current.driver_id !== body.driver_id) return fail(env, 'Ride belongs to another driver', 403);
         if (next === 'COMPLETED' && current.stripe_payment_intent_id && current.payment_status !== 'authorized') return fail(env, 'Ride payment is not authorized for capture', 402);
+        // The rider reads the PIN to the driver at the curb; the server, not the driver app, checks it.
+        if (next === 'VERIFIED' && (!current.pickup_pin || typeof body.pickup_pin !== 'string' || body.pickup_pin.trim().toLowerCase() !== String(current.pickup_pin).toLowerCase())) return fail(env, 'That code does not match the rider’s pickup code', 403);
         const timestamps = {}; if (next === 'DRIVER_ARRIVED') timestamps.arrived_at = new Date().toISOString(); if (next === 'IN_PROGRESS') timestamps.started_at = new Date().toISOString(); if (next === 'COMPLETED') timestamps.completed_at = new Date().toISOString();
         // The transition is claimed INSIDE the database update: the row must
         // still hold the status this request read, so two concurrent cancel or
@@ -623,14 +653,15 @@ export default {
             return fail(env, `Payment ${next === 'COMPLETED' ? 'capture' : 'release'} failed: ${error.message}`, 502);
           }
         }
-        return reply(env, { ride: claimed[0] });
+        return reply(env, { ride: withoutPickupPin(claimed[0]) });
       }
       const presenceMatch = path.match(/^\/api\/drivers\/([^/]+)\/presence$/);
       if (presenceMatch && req.method === 'PATCH') {
-        const body = await req.json(), rows = await sb(env, `drivers?id=eq.${encodeURIComponent(presenceMatch[1])}&select=*`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ online: Boolean(body.online), lat: body.lat ?? null, lng: body.lng ?? null, heading: body.heading ?? null, last_seen_at: new Date().toISOString() }) }); return reply(env, { driver: rows?.[0] || null });
+        const body = await req.json(); if (typeof body?.online !== 'boolean') return fail(env, 'online must be true or false', 400);
+        const rows = await sb(env, `drivers?id=eq.${encodeURIComponent(presenceMatch[1])}&select=*`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ online: body.online, lat: body.lat ?? null, lng: body.lng ?? null, heading: body.heading ?? null, last_seen_at: new Date().toISOString() }) }); return reply(env, { driver: rows?.[0] || null });
       }
       const activeDriver = path.match(/^\/api\/drivers\/([^/]+)\/active$/);
-      if (activeDriver && req.method === 'GET') { const rows = await sb(env, `rides?driver_id=eq.${encodeURIComponent(activeDriver[1])}&status=not.in.(COMPLETED,CANCELED)&order=requested_at.desc&limit=1&select=*`); return reply(env, { ride: rows?.[0] || null }); }
+      if (activeDriver && req.method === 'GET') { const rows = await sb(env, `rides?driver_id=eq.${encodeURIComponent(activeDriver[1])}&status=not.in.(COMPLETED,CANCELED)&order=requested_at.desc&limit=1&select=*`); return reply(env, { ride: withoutPickupPin(rows?.[0]) || null }); }
       const activeRider = path.match(/^\/api\/riders\/([^/]+)\/active$/);
       if (activeRider && req.method === 'GET') { const rows = await sb(env, `rides?rider_id=eq.${encodeURIComponent(activeRider[1])}&status=not.in.(COMPLETED,CANCELED)&order=requested_at.desc&limit=1&select=*`); return reply(env, { ride: rows?.[0] || null }); }
 
@@ -703,17 +734,23 @@ export default {
       if (rentalStatus && req.method === 'PATCH') {
         const body = await req.json(), current = await getRental(env, rentalStatus[1]); if (!current) return fail(env, 'Rental booking not found', 404); const next = String(body.status || '').toUpperCase();
         if (!RENTAL_TRANSITIONS[current.status]?.includes(next)) return fail(env, `Illegal rental transition ${current.status} -> ${next}`, 409);
+        const user = await requireUser(req, env);
+        const renterMay = String(current.renter_id) === String(user.id) && RENTER_RENTAL_TRANSITIONS[current.status]?.includes(next) &&
+          (next !== 'COMPLETED' || (current.return_photos_complete === true && current.fuel_return_confirmed === true));
+        if (!renterMay) await requireOperator(req, env, current.tenant_id, RENTAL_STATUS_ROLES).catch(error => { if (error.status !== 403) throw error; throw Object.assign(new Error(next === 'COMPLETED' ? 'Record the return checks before completing the rental' : 'This rental step is performed by the operator'), { status: 403 }); });
         if (next === 'ACTIVE' && current.payment_status !== 'paid') return fail(env, 'Rental payment must be completed before pickup', 402);
         const patch = { status: next }; if (next === 'ACTIVE') patch.activated_at = new Date().toISOString(); if (next === 'COMPLETED') patch.completed_at = new Date().toISOString(); return reply(env, { booking: await patchRental(env, current.id, patch) });
       }
       const rentalCheckin = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/checkin$/);
       if (rentalCheckin && req.method === 'PATCH') {
-        const body = await req.json(), current = await getRental(env, rentalCheckin[1]); if (!current) return fail(env, 'Rental booking not found', 404); if (!['CHECKIN_REQUIRED','READY_FOR_PICKUP'].includes(current.status)) return fail(env, 'Check-in is closed for this rental', 409);
-        const allowed = ['license_verified','pretrip_photos_complete','pickup_instructions_seen']; const patch = {}; for (const key of allowed) if (key in body) patch[key] = Boolean(body[key]); const merged = { ...current, ...patch }; if (merged.license_verified && merged.pretrip_photos_complete && merged.pickup_instructions_seen) patch.status = 'READY_FOR_PICKUP'; return reply(env, { booking: await patchRental(env, current.id, patch) });
+        const body = await req.json(); if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(env, 'Check-in body must be an object', 400); const current = await getRental(env, rentalCheckin[1]); if (!current) return fail(env, 'Rental booking not found', 404); if (!['CHECKIN_REQUIRED','READY_FOR_PICKUP'].includes(current.status)) return fail(env, 'Check-in is closed for this rental', 409);
+        const allowed = ['license_verified','pretrip_photos_complete','pickup_instructions_seen']; const patch = {}; for (const key of allowed) if (key in body) { if (typeof body[key] !== 'boolean') return fail(env, `${key} must be true or false`, 400); patch[key] = body[key]; } const merged = { ...current, ...patch }; if (merged.license_verified && merged.pretrip_photos_complete && merged.pickup_instructions_seen) patch.status = 'READY_FOR_PICKUP'; return reply(env, { booking: await patchRental(env, current.id, patch) });
       }
       const rentalReturn = path.match(/^\/api\/rentals\/bookings\/([^/]+)\/return$/);
       if (rentalReturn && req.method === 'PATCH') {
-        const body = await req.json(), current = await getRental(env, rentalReturn[1]); if (!current) return fail(env, 'Rental booking not found', 404); if (current.status !== 'RETURN_DUE') return fail(env, 'Rental is not in return workflow', 409); return reply(env, { booking: await patchRental(env, current.id, { return_photos_complete: Boolean(body.return_photos_complete), fuel_return_confirmed: Boolean(body.fuel_return_confirmed) }) });
+        const body = await req.json(), current = await getRental(env, rentalReturn[1]); if (!current) return fail(env, 'Rental booking not found', 404); if (current.status !== 'RETURN_DUE') return fail(env, 'Rental is not in return workflow', 409);
+        if (['return_photos_complete','fuel_return_confirmed'].some(key => typeof body?.[key] !== 'boolean')) return fail(env, 'return_photos_complete and fuel_return_confirmed must be true or false', 400);
+        return reply(env, { booking: await patchRental(env, current.id, { return_photos_complete: body.return_photos_complete, fuel_return_confirmed: body.fuel_return_confirmed }) });
       }
       const renterRentals = path.match(/^\/api\/renters\/([^/]+)\/rentals$/);
       if (renterRentals && req.method === 'GET') { const rows = await sb(env, `rental_bookings?renter_id=eq.${encodeURIComponent(renterRentals[1])}&order=created_at.desc&limit=50&select=*`); return reply(env, { bookings: rows || [] }); }
