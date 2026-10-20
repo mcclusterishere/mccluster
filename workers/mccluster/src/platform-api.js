@@ -213,6 +213,8 @@ function postClip(c){
 function postMetadata(b){
   const meta=(b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata))?{...b.metadata}:{};
   delete meta.track; delete meta.clip;
+  /* the newsroom's keys are set only by prepareNetworkPost, after it has checked the author is the house owner */
+  NEWSROOM_KEYS.forEach(k=>delete meta[k]);
   const track=postTrack(b.track||(b.metadata&&b.metadata.track));
   if(track)meta.track=track;
   const clip=postClip(b.clip||(b.metadata&&b.metadata.clip));
@@ -276,6 +278,29 @@ async function handleDeveloper(req,env,path,url){
 /* ONE PATH FOR EVERY POST. The live composer and the scheduler both come
    through here, so a post published by the cron at 9pm has passed exactly
    the checks it would have passed if it had been sent by hand. */
+/* THE NEWSROOM (owner, 2026-10-20: "getting my admin's posts as their own news worth posts"). A post the house owner
+   marks for it is also an article on mccluster.org/news/ (company-site/news.js). Public only, owner only; the sources a
+   morning brief cites ride with it, https links only. */
+const NEWSROOM_KEYS=['newsroom','newsroom_note','newsroom_sources'];
+async function houseOwnerMuids(env){
+  const rows=await service(env,'rpc/mnet_admin_m_uids',{method:'POST',body:'{}'});
+  return (Array.isArray(rows)?rows:[]).map(r=>typeof r==='string'?r:r?.mnet_admin_m_uids).filter(uuidLike);
+}
+function newsroomSources(list){
+  return (Array.isArray(list)?list:[]).slice(0,12).map(s=>{
+    let u;try{u=new URL(String(s?.url||''))}catch{return null}
+    return u.protocol==='https:'&&u.toString().length<=600?{url:u.toString(),title:String(s?.title||'').trim().slice(0,200),domain:u.hostname.replace(/^www\./,'').slice(0,120)}:null;
+  }).filter(Boolean);
+}
+async function newsroomMetadata(env,muid,b,draft){
+  const asked=b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata)?b.metadata:{};
+  if(b.newsroom!==true&&asked.newsroom!==true)return {};
+  if(draft.visibility!=='public'||draft.group_id)return {error:'A newsroom article is public. Choose Public to publish it.',status:400};
+  if(!draft.body)return {error:'A newsroom article needs words.',status:400};
+  if(!(await houseOwnerMuids(env)).includes(muid))return {error:'Only the house owner publishes to the newsroom.',status:403};
+  const note=b.newsroom_note??asked.newsroom_note,sources=newsroomSources(b.newsroom_sources??asked.newsroom_sources);
+  return {meta:{newsroom:true,...(note==='morning_brief'?{newsroom_note:'morning_brief'}:{}),...(sources.length?{newsroom_sources:sources}:{})}};
+}
 async function prepareNetworkPost(env,muid,b,appKey){
   /* A long post is refused, never cut short: the member would lose what
      they wrote without knowing. Comments are retired; every new row here is
@@ -335,7 +360,12 @@ async function prepareNetworkPost(env,muid,b,appKey){
       return {error:'Only public posts can be associated with a regional feed.',status:400};
     countryCode=requestedCountry;
   }
-  return {assets:assets||[],posterAssets:posterAssets||[],draft:{body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null,...(countryCode?{country_code:countryCode}:{})}};
+  const draft={body,media_asset_ids:mediaIds,poster_by_media:posterByMedia,visibility,post_type:postType,metadata:postMetadata(b),reply_to_id:replyTo,group_id:groupId,source_app_id:apps?.[0]?.id||null,...(countryCode?{country_code:countryCode}:{})};
+  /* checked again when a scheduled post goes out: its payload is this draft, newsroom keys and all */
+  const news=await newsroomMetadata(env,muid,b,draft);
+  if(news.error)return news;
+  if(news.meta)Object.assign(draft.metadata,news.meta);
+  return {assets:assets||[],posterAssets:posterAssets||[],draft};
 }
 async function insertNetworkPost(env,muid,draft,assets,scheduledPostId=null){
   const posters=draft.poster_by_media||{};
@@ -785,6 +815,8 @@ async function handleMnet(req,env,path,url){
     if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
+    /* a newsroom article keeps its words (company-site/news.js renders the post's text as the article) */
+    if(post.metadata?.newsroom===true&&patch.body!==undefined&&!patch.body)return fail(req,env,'A newsroom article needs words. Delete the post to take the article down.',400);
     if(b.visibility!==undefined&&!post.reply_to_id&&['public','network','private'].includes(b.visibility))patch.visibility=b.visibility;
     if(!String(patch.body===undefined?post.body:patch.body).trim()&&!(post.media||[]).length)return fail(req,env,'Post body or media is required',400);
     const out=await service(env,`network_posts?id=eq.${post.id}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=representation'},body:JSON.stringify(patch)});

@@ -10,7 +10,7 @@ export const PAGES = {
   },
   "/robots.txt": {
     "type": "text/plain; charset=utf-8",
-    "body": "User-agent: *\nAllow: /\n\nSitemap: https://mccluster.org/sitemap.xml\n"
+    "body": "User-agent: *\nAllow: /\n\nSitemap: https://mccluster.org/sitemap.xml\nSitemap: https://mccluster.org/news/sitemap.xml\n"
   },
   "/sitemap.xml": {
     "type": "application/xml; charset=utf-8",

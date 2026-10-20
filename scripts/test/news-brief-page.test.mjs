@@ -35,3 +35,11 @@ test('the Worker routes are signed-in only and region leaders are the owner\'s t
   assert.match(src, /Only the house owner grants region leaders/);
   assert.match(src, /headlines: sample\.map\(\(\{ n, title, domain, tone \}\) =>/, 'the model sees no link');
 });
+
+test('the house owner can also publish the brief to the newsroom, with the headlines it cites, and sees it ticked', async () => {
+  const [js, html] = await Promise.all([read('js/news-brief.js'), read('brief.html')]);
+  assert.match(html, /<label class="nb__check" id="nbNewsroomRow" hidden><input type="checkbox" id="nbNewsroom" checked>/, 'hidden until the page knows it is the owner');
+  assert.match(js, /\$\("nbNewsroomRow"\)\.hidden = !\(state\.data && state\.data\.owner\)/);
+  assert.match(js, /draft\.newsroom = true; draft\.newsroom_note = "morning_brief"; draft\.newsroom_sources = citedSources\(state\.brief\)/);
+  assert.match(js, /out\.length < 12/, 'at most twelve sources ride with an article');
+});

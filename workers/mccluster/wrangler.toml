@@ -27,6 +27,9 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 # The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
 # production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
 WORLD_NEWS_INGEST_ENABLED = "true"
+# The company's news on mccluster.org/news/ (src/company-site/news.js): the house owner's posts marked "Publish to the
+# newsroom", as articles with an RSS feed and a Google News sitemap. "false" sends /news/* to the personal host again.
+NEWSROOM_ENABLED = "true"
 # Audio-only rooms through Cloudflare Realtime SFU. Do not enable until
 # pending SQL 20261019235000_network_sfu_audio_rooms.sql is applied,
 # secrets AUDIO_SFU_APP_ID and AUDIO_SFU_APP_SECRET are configured,

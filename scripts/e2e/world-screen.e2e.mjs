@@ -140,6 +140,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     if (/\/rpc\/action_bounty_public$/.test(u)) return json(route, { support_open: true, support_note: 'Allocations are verified by the desk.', bounties: [] });
     if (u.includes('/rest/v1/music_creator_profiles?')) return json(route, member && creator ? [{ handle: 'fixture-you' }] : []);
     /* the Action Record: whether this member has completed a mission decides whether Uprise is theirs yet */
+    /* the house owner, as the database says (mnet_is_admin): only they are offered the newsroom */
+    if (/\/rpc\/mnet_is_admin$/.test(u)) return json(route, !!(member && world.admin));
     if (/\/rpc\/action_record$/.test(u)) return json(route, { verified_actions: verified ? 1 : 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
     if (u.includes('action_offer_cards')) {
       const linked = world.posts.filter((p) => p.content_id === CONTENT);
@@ -298,10 +300,10 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false }) {
   const world = freshWorld();
   world.placeHome = placeHome;
-  world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage;
+  world.bootFail = bootFail.slice(); world.userCheck = userCheck; world.newsFail = newsFail; world.postPage = postPage; world.admin = admin;
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: device.viewport, deviceScaleFactor: 2, isMobile: device.mobile, hasTouch: device.mobile });
   /* every frame of the first seconds: did the sign-in form paint on the way into the World? (owner, 2026-10-20) */
   await ctx.addInitScript(() => {
@@ -772,6 +774,40 @@ if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL
     await page.locator('#mnFeed [data-action=share][data-post="'+postId+'"]').click();
     await page.waitForFunction(()=>window.__copied,null,{timeout:3000}).catch(()=>{});
     check(scope,'a country feed\'s public post can be shared',String(await page.evaluate(()=>window.__copied)).includes('post='+postId)&&!/Only public posts can be shared/.test(await page.textContent('#mnFeedStatus')));
+    check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(scope,'no JavaScript errors',errors.length===0,errors);
+  }finally{await ctx.close();}
+}
+
+/* THE NEWSROOM (owner, 2026-10-20): the house owner, and only the house owner, may also publish a post as an article on
+   mccluster.org/news/; the Worker checks again (workers/mccluster/test/newsroom.test.mjs). */
+if (runs('editorial') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (const admin of [true, false]) {
+  const scope = admin ? 'editorial-newsroom-owner' : 'editorial-newsroom-member';
+  const {ctx,page,world,errors} = await open(DEVICES[0],{member:true,admin});
+  try {
+    await page.waitForSelector('#mnPostBody');
+    await page.focus('#mnPostBody');
+    await page.waitForFunction(()=>document.getElementById('mnComposer').classList.contains('is-open'),null,{timeout:5000}).catch(()=>{});
+    await page.waitForTimeout(400);
+    const row=await page.evaluate(()=>{const r=document.getElementById('mnNewsroomRow');const b=r&&r.getBoundingClientRect();return {shown:!!r&&!r.hidden&&getComputedStyle(r).display!=='none',h:b?Math.round(b.height):0,box:document.querySelector('#mnNewsroom')?.getBoundingClientRect().width||0};});
+    if (!admin) {
+      check(scope,'a member is never offered the newsroom',!row.shown,row);
+    } else {
+      check(scope,'the house owner is offered the newsroom while writing, as a full-height tap target',row.shown&&row.h>=44,row);
+      await page.fill('#mnPostBody','Morning brief: what moved yesterday\n\nThe story, in my words.');
+      await page.check('#mnNewsroom');
+      await page.selectOption('#mnVisibility','network');
+      await page.click('#mnPost');
+      check(scope,'a newsroom article must be public, and nothing is sent until it is',/is public/.test(await page.textContent('#mnPostStatus'))&&!req(world,'POST',/^\/v1\/mnet\/posts$/).length);
+      await page.selectOption('#mnVisibility','public');
+      await page.click('#mnPost');
+      await page.waitForFunction(()=>/newsroom/.test(document.getElementById('mnPostStatus').textContent),null,{timeout:8000}).catch(()=>{});
+      const sent=req(world,'POST',/^\/v1\/mnet\/posts$/).at(-1);
+      check(scope,'Post sends the newsroom mark with the owner\'s session',!!sent&&sent.auth&&sent.body.newsroom===true&&sent.body.visibility==='public',sent&&sent.body);
+      const link=await page.getAttribute('#mnPostStatus a','href');
+      check(scope,'and links the article on McCluster Corp\'s site',/^https:\/\/mccluster\.org\/news\/[0-9a-f-]{36}$/.test(link||''),link);
+      check(scope,'the tick clears for the next post',!(await page.isChecked('#mnNewsroom')));
+    }
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
   }finally{await ctx.close();}

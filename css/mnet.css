@@ -212,6 +212,10 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__composer select { -webkit-appearance: none; appearance: none; }
 .mn__composer .mn__track-pick { max-width: 11rem; }
 .mn__post { margin-left: auto; padding: 0 22px; min-height: 40px; border-radius: 999px; transition: transform 0.2s var(--mn-ease), filter 0.2s; }
+/* the house owner's newsroom tick: under the actions, only while the composer is open */
+.mn__newsroom { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin-top: 10px; color: var(--mn-dim); font-size: max(16px, 0.9rem); line-height: 1.4; cursor: pointer; }
+.mn__newsroom input { flex: 0 0 auto; width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--mn-hot); }
+.mn__newsroom[hidden], .mn__composer:not(.is-open) .mn__newsroom { display: none; }
 .mn__post:active { transform: scale(0.95); }
 .mn__media-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
 .mn__media-chip { position: relative; min-height: 76px; overflow: hidden; display: grid; place-items: center; padding: 6px; border-radius: 12px; background: var(--mn-raise-2); color: var(--mn-dim); font-size: 0.72rem; text-align: center; }

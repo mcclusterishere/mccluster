@@ -131,7 +131,23 @@
     if (frame.getAttribute("src") !== site) frame.src = site;
   }
 
+  /* THE NEWSROOM: only the house owner (mnet_is_admin, the database's own definition) is offered it; the Worker checks
+     again on every post (platform-api.js), so this only decides what is shown. It belongs to the account signed in now:
+     another account, or none, hides it and asks again. */
+  var newsroomFor = null;
+  function paintNewsroom() {
+    var row = $("mnNewsroomRow");
+    if (!row) return;
+    var who = !state.guest && state.user && state.user.id || null;
+    if (who === newsroomFor) return;
+    newsroomFor = who;
+    row.hidden = true;
+    if ($("mnNewsroom")) $("mnNewsroom").checked = false;
+    if (!who) return;
+    sbRpc("mnet_is_admin").then(function (yes) { if (newsroomFor === who) row.hidden = yes !== true; }).catch(function () {});
+  }
   function paintSelf() {
+    paintNewsroom();
     var p = profile(), id = identity(), name = p.display_name || (state.user && (state.user.user_metadata && (state.user.user_metadata.name || state.user.user_metadata.full_name))) || state.user && state.user.email || "M";
     $("mnMe").hidden = false;
     setAvatar($("mnAvatar"), $("mnAvatarFallback"), p.avatar_url, name);
@@ -379,6 +395,7 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) {}
@@ -1700,25 +1717,39 @@
     var body = $("mnPostBody").value.trim();
     var selectedTrack = pickedTrack();
     if (!body && !state.mediaAssets.length && !selectedTrack) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
+    var news = !!($("mnNewsroom") && $("mnNewsroom").checked && !$("mnNewsroomRow").hidden);
+    if (news && $("mnVisibility").value !== "public") { setStatus($("mnPostStatus"), "A newsroom article is public. Choose Public to publish it.", "error"); return; }
+    if (news && !body) { setStatus($("mnPostStatus"), "A newsroom article needs words. Write the headline on the first line.", "error"); return; }
     var button = $("mnPost");
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
-    api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
-      method:"POST",
-      body:{ body:body, visibility:$("mnVisibility").value, track:selectedTrack,
+    var draft = { body:body, visibility:$("mnVisibility").value, track:selectedTrack,
              media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }),
              poster_asset_ids:state.mediaAssets.map(function (x) { return x.poster_id || null; }),
              /* Opt-in, never inferred from visitor IP or automatic globe scope. */
              country_code:state.placeScope.enabled && $("mnPostPlaceOptIn") &&
                $("mnPostPlaceOptIn").checked && $("mnVisibility").value === "public" &&
-               state.world.country ? state.world.country.code : undefined }
-    }).then(function () {
+               state.world.country ? state.world.country.code : undefined };
+    if (news) draft.newsroom = true;
+    api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
+      method:"POST",
+      body:draft
+    }).then(function (out) {
       $("mnPostBody").value = "";
       if ($("mnTrackPick")) $("mnTrackPick").value = "";
+      if ($("mnNewsroom")) $("mnNewsroom").checked = false;
       clearMediaQueue();
       if ($("mnPostPlaceOptIn")) $("mnPostPlaceOptIn").checked = false;
       if (state.placeScope.enabled && state.feedScope === "local") loadPlaceFeed(true);
-      setStatus($("mnPostStatus"), "Posted.", "ok");
+      var id = out && out.post && out.post.id;
+      if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
+        /* the article's own address; the newsroom sends it on to the headline's slug */
+        var st = $("mnPostStatus");
+        st.textContent = "Posted, and in the newsroom: ";
+        var link = document.createElement("a");
+        link.href = "https://mccluster.org/news/" + id; link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
+        st.appendChild(link); st.classList.remove("is-error"); st.classList.add("is-ok");
+      } else setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
       /* a fresh post must be seen landing, so let go of any mission the
          feed was narrowed to on the globe */

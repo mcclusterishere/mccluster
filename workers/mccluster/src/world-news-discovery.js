@@ -67,12 +67,14 @@ const COL = Object.freeze({ ID: 0, DATE: 1, COLLECTION: 2, DOMAIN: 3, URL: 4, TH
 const RECORD_START = /^[0-9]{14}-T?[0-9]+\t/;
 
 /* ---------- the screens ---------- */
-/* press-release wires, wire-copy mirrors, automated stock-ticker mills and digests, seen in GDELT's own files */
+/* press-release wires, wire-copy mirrors, automated stock-ticker mills and digests, seen in GDELT's own files; and our own hosts */
 export const BLOCKED_DOMAINS = Object.freeze(new Set([
   'prnewswire.com', 'globenewswire.com', 'businesswire.com', 'einpresswire.com', 'accessnewswire.com', 'accesswire.com',
   'newswiretoday.com', 'massachusettsnewswire.com', 'standardnewswire.com', 'newsfilecorp.com', 'openpr.com', 'prweb.com',
   'prlog.org', 'odwyerpr.com', 'finanznachrichten.de', 'tickerreport.com', 'themarketsdaily.com', 'dailypolitical.com',
-  'marketbeat.com', 'americanbankingnews.com', 'etfdailynews.com', 'miragenews.com', 'homelandsecuritynewswire.com', 'naslovi.net'
+  'marketbeat.com', 'americanbankingnews.com', 'etfdailynews.com', 'miragenews.com', 'homelandsecuritynewswire.com', 'naslovi.net',
+  /* our own hosts: an article from the newsroom (company-site/news.js) is already a post in the World, never outside news */
+  'mccluster.org', 'humanuprise.com'
 ]));
 const TICKER_TITLE = [/\((NASDAQ|NYSE|NYSEARCA|NYSEAMERICAN|NYSEMKT|OTCMKTS|OTC|TSE|TSX|TSXV|LON|LSE|ASX|NSE|BOM|ETR|FRA|CVE):[A-Z0-9.\-]+\)/, /\$[A-Z]{1,5} Stock/, /Shares (Sold|Bought|Acquired) by/i, /Stock Position (Raised|Lowered|Increased|Decreased)/i];
 /* always out, whatever the title says */

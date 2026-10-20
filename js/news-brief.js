@@ -129,18 +129,39 @@
     return lines.join("\n").slice(0, 2000);
   }
   function count() { var n = $("nbPostText").value.length; $("nbPostCount").textContent = n + " / 2000"; $("nbPublishGo").disabled = !n || n > 2000; }
+  /* the headlines the brief cites, in the order it cites them; at most twelve go with a newsroom article */
+  function citedSources(b) {
+    var seen = {}, out = [];
+    [b.overview].concat(b.happened, b.may_mean).join(" ").replace(/\[(\d{1,3})\]/g, function (_, n) {
+      var s = b.sources.filter(function (x) { return String(x.n) === n; })[0];
+      if (s && !seen[n] && out.length < 12) { seen[n] = true; out.push({ title: s.title, url: s.url }); }
+      return _;
+    });
+    return out;
+  }
   function openPublish() {
     if (!state.brief) return;
     $("nbPostText").value = postText(state.brief); count(); $("nbPublishStatus").textContent = "";
+    // the newsroom is the house owner's: the Worker checks again (platform-api.js)
+    $("nbNewsroomRow").hidden = !(state.data && state.data.owner);
     $("nbPublish").showModal(); $("nbPostText").focus();
   }
   function publish(ev) {
     ev.preventDefault();
     var body = $("nbPostText").value.trim(); if (!body) return;
+    var news = !$("nbNewsroomRow").hidden && $("nbNewsroom").checked;
+    var draft = { body: body, visibility: "public" };
+    if (news) { draft.newsroom = true; draft.newsroom_note = "morning_brief"; draft.newsroom_sources = citedSources(state.brief); }
     $("nbPublishGo").disabled = true; $("nbPublishStatus").textContent = "Publishing…";
-    api("/v1/mnet/posts?app_key=mnet-web", { method: "POST", body: { body: body, visibility: "public" } }).then(function () {
-      if (window.MCC_TRACK) MCC_TRACK("brief_published", { country: state.brief.country, day: state.brief.day });
-      $("nbPublish").close(); status("Published on the World feed under your name.", "ok");
+    api("/v1/mnet/posts?app_key=mnet-web", { method: "POST", body: draft }).then(function (out) {
+      if (window.MCC_TRACK) MCC_TRACK("brief_published", { country: state.brief.country, day: state.brief.day, newsroom: news });
+      $("nbPublish").close();
+      var id = out && out.post && out.post.id;
+      if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
+        status("Published on the World feed under your name, and in the newsroom: ", "ok");
+        var a = document.createElement("a"); a.href = "https://mccluster.org/news/" + id; a.target = "_blank"; a.rel = "noopener"; a.textContent = "read the article";
+        $("nbStatus").appendChild(a);
+      } else status("Published on the World feed under your name.", "ok");
     }).catch(function (e) { $("nbPublishStatus").textContent = e.message; }).finally(function () { $("nbPublishGo").disabled = false; });
   }
 
