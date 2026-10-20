@@ -984,6 +984,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
       check(scope,'on the white daytime bar the M is the owner\'s supplied dark M',/m-mark-dark\.png/.test(dayM),dayM);
     }
+    /* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20): by day as by night the header is a fade over the Earth,
+       never a solid band, and its words stay white; every World mode */
+    for(const mode of ['missions','travel','posts']){
+      await page.click('.wt-world-modes [data-world-mode='+mode+']');
+      const top=await page.evaluate(async()=>{const h=document.documentElement,was=h.getAttribute('data-daylight'),t=document.querySelector('.mn__top');
+        const read=()=>{const c=getComputedStyle(t);return {color:c.backgroundColor,image:c.backgroundImage,brand:getComputedStyle(t.querySelector('.mn__brand small')||t).color};};
+        h.setAttribute('data-daylight','day');await new Promise(r=>requestAnimationFrame(r));const day=read();
+        h.setAttribute('data-daylight','night');await new Promise(r=>requestAnimationFrame(r));const night=read();
+        if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return {day,night};});
+      check(scope,'by day the top over the globe is the same transparent fade as by night ('+mode+')',
+        top.day.color==='rgba(0, 0, 0, 0)'&&/linear-gradient/.test(top.day.image)&&top.day.image===top.night.image&&top.day.brand==='rgb(255, 255, 255)',top);
+    }
+    await page.click('.wt-world-modes [data-world-mode=missions]');
     check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
     await page.click('.wt-world-modes [data-world-mode=posts]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
@@ -1638,6 +1651,14 @@ if (runs('news-guest')) {
   await page.fill('#mnSearchInput', ''); await page.waitForTimeout(400);
   check(scope, 'search matches news headlines and publishers', byTitle.news === 19 && byTitle.posts === 0 && byDomain.news === world.news.slice(0, 20).filter((n) => n.domain === 'news2.example').length && byDomain.posts === 0, { byTitle: byTitle.news, byDomain: byDomain.news });
   const globe = page.frame({ url: /action-globe\.html/ });
+  /* THE PINS ARE THE CARDS (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map"): every gold pin
+     on the Earth is a story on the screen, and a narrower feed is a narrower Earth */
+  const pinsAndCards = async () => { await page.waitForTimeout(500); return { pins: (await globe.evaluate(() => window.__huWorldNewsPins())).pins, cards: await page.$$eval('#mnFeed [data-news-id] [data-news-place]', (a) => a.length) }; };
+  await page.fill('#mnSearchInput', 'news2.example');
+  const pinsSearching = await pinsAndCards();
+  await page.fill('#mnSearchInput', '');
+  const pinsAll = await pinsAndCards();
+  check(scope, 'the gold pins are the stories on the screen, and a search narrows both', pinsAll.pins === pinsAll.cards && pinsAll.cards > 0 && pinsSearching.pins === pinsSearching.cards && pinsSearching.cards < pinsAll.cards, { pinsAll, pinsSearching });
   /* a story's place on the Earth, from its card */
   await page.click('#mnFeed [data-news-id] [data-news-place]');
   await globe.waitForFunction(() => window.__huFocusPlace && window.__huFocusPlace(), null, { timeout: 5000 }).catch(() => {});
@@ -1646,6 +1667,8 @@ if (runs('news-guest')) {
      below still requires the final altitude; only the sampling moment moves. */
   await globe.waitForFunction(() => Math.abs(window.__huIon().height - 900000) < 60000, null, { timeout: 12000 }).catch(() => {});
   const sent = await globe.evaluate(() => ({ place: window.__huFocusPlace(), height: window.__huIon().height }));
+  const firstPlaced = await page.$eval('#mnFeed [data-news-id] [data-news-place]', (b) => b.closest('[data-news-id]').getAttribute('data-news-id'));
+  check(scope, 'the tapped story\'s own pin is the one marked on the Earth', (await globe.evaluate(() => window.__huFocusedNewsPin())) === firstPlaced && sent.place && sent.place.id === firstPlaced, { marked: await globe.evaluate(() => window.__huFocusedNewsPin()), firstPlaced });
   check(scope, '"On the Earth" sends the story\'s place to the globe (hu:focus-place), which flies there', !!sent.place && sent.place.lat === -1.28 && sent.place.lon === 36.82 && sent.place.label === 'Nairobi, Nairobi Area, Kenya' && Math.abs(sent.height - 900000) < 60000 && /Nairobi, Nairobi Area, Kenya · mentioned in this story\./.test(await page.textContent('#mnWorldCaption')), sent);
   /* the frame checks what it is sent: strings, out-of-range and missing numbers move nothing */
   await page.evaluate(() => { const w = document.getElementById('mnWorldFrame').contentWindow; [{ type: 'hu:focus-place', lat: '10', lon: 10 }, { type: 'hu:focus-place', lat: 95, lon: 0 }, { type: 'hu:focus-place', lat: 0, lon: 200 }, { type: 'hu:focus-place', lat: NaN, lon: 0 }, { type: 'hu:focus-place' }].forEach((m) => w.postMessage(m, location.origin)); });
@@ -1656,10 +1679,13 @@ if (runs('news-guest')) {
   await globe.evaluate((id) => window.parent.postMessage({ type: 'hu:mission-selected', mission: { mission_id: id, title: 'Clean up the Mill River', region_label: 'Connecticut', action_path: 'show_up' } }, location.origin), M1);
   await page.waitForSelector('#mnWorldFocus:not([hidden])');
   const narrowed = await newsState(page);
+  const pinsNarrowed = await pinsAndCards();
   await page.click('#mnWorldFocusClear');
   await page.waitForTimeout(300);
   const back = await newsState(page);
   check(scope, 'a mission picked on the Earth hides the news and its credit; letting it go brings them back', narrowed.news === 0 && !narrowed.credit && back.news === 20 && back.credit, { narrowed: narrowed.news, back: back.news });
+  const pinsBack = await pinsAndCards();
+  check(scope, 'and the pins follow: none while the mission narrows the feed, the stories\' again after', pinsNarrowed.pins === 0 && pinsBack.pins === pinsBack.cards && pinsBack.cards === pinsAll.cards, { pinsNarrowed, pinsBack });
   /* Load more pages both streams, each from its own cursor, the news cursor passed back verbatim */
   check(scope, 'Load more shows while either stream has another page', st.more);
   await page.click('#mnMore');

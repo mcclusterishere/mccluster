@@ -18,8 +18,8 @@ try { ({ chromium } = require("playwright")); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || "/opt/node-tools/node_modules", "x"))("playwright")); }
 
 const W = 64, H = 48, COLS = 16;
-const data = JSON.parse(readFileSync(join(ROOT, "data/geo/world-countries-110m.json"), "utf8"));
-const order = data.features.filter((f) => f.properties.flag).map((f) => f.properties.a2).sort();
+const data = JSON.parse(readFileSync(join(ROOT, "data/geo/world-countries-10m.json"), "utf8"));
+const order = data.countries.filter((c) => c.properties.flag).map((c) => c.properties.a2).sort();
 const svgs = order.map((a2) => "data:image/svg+xml;base64," + readFileSync(join(ROOT, "assets/flags/4x3", a2.toLowerCase() + ".svg")).toString("base64"));
 const browser = await chromium.launch();
 const page = await browser.newPage();

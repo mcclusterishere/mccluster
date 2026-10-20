@@ -247,9 +247,17 @@ const ROWS = [
   { id: '11111111-1111-4111-8111-111111111111', title: 'Why the milk crisis solution fell flat', url: 'https://www.standardmedia.co.ke/a1', domain: 'standardmedia.co.ke', seen_at: '2026-10-15T22:00:00+00:00', place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28333, lon: 36.8167 },
   { id: '22222222-2222-4222-8222-222222222222', title: 'Jacksonville council approves new park budget', url: 'https://www.news4jax.com/a2', domain: 'news4jax.com', seen_at: '2026-10-15T22:00:00+00:00', place: null, lat: null, lon: null }
 ];
-function db({ fail = false } = {}) {
-  const calls = [];
+/* GDELT's FIPS codes for the two rows: Kenya, and the Gaza Strip (GDELT's own code, which GeoNames does not carry) */
+const FIPS = { [ROWS[0].id]: 'KE', [ROWS[1].id]: 'GZ' };
+function db({ fail = false, noCountries = false } = {}) {
+  const calls = [], reads = [];
   const fetchImpl = async (url, init) => {
+    if (String(url).includes('/rest/v1/media_news_articles?')) {
+      reads.push({ url: String(url), auth: init.headers.authorization });
+      if (noCountries) return json({ message: 'down' }, 500);
+      const ids = decodeURIComponent(String(url)).match(/id=in\.\(([^)]*)\)/)[1].split(',');
+      return json(ids.map((id) => ({ id, location_country_fips: FIPS[id] || null })));
+    }
     const name = String(url).split('/rpc/')[1];
     calls.push({ name, args: JSON.parse(init.body), auth: init.headers.authorization });
     if (fail) return json({ message: 'down' }, 500);
@@ -257,7 +265,7 @@ function db({ fail = false } = {}) {
     if (name === 'media_world_news_places') return json([{ place: 'Nairobi, Nairobi Area, Kenya', lat: -1.28, lon: 36.82, count: '7', title: 'Latest there', url: 'https://x.example/1', seen_at: '2026-10-15T22:00:00+00:00' }, { place: 'Nowhere', lat: null, lon: 1, count: 2, title: 't', url: 'javascript:alert(1)' }]);
     throw new Error('unexpected ' + name);
   };
-  return { fetchImpl, calls };
+  return { fetchImpl, calls, reads };
 }
 const get = (path) => new Request(`https://api.mccluster.org${path}`, { headers: { origin: 'https://matthew.mccluster.org' } });
 
@@ -270,13 +278,25 @@ test('GET /v1/world/news: newest first from our tables, an opaque cursor, GDELT 
   const body = await res.json();
   assert.deepEqual(body.attribution, NEWS_ATTRIBUTION);
   assert.equal(body.items.length, 2);
-  assert.deepEqual(body.items[0], { id: ROWS[0].id, title: ROWS[0].title, url: ROWS[0].url, domain: ROWS[0].domain, seen_at: '2026-10-15T22:00:00.000Z', place: ROWS[0].place, lat: -1.28333, lon: 36.8167 });
+  assert.deepEqual(body.items[0], { id: ROWS[0].id, title: ROWS[0].title, url: ROWS[0].url, domain: ROWS[0].domain, seen_at: '2026-10-15T22:00:00.000Z', place: ROWS[0].place, lat: -1.28333, lon: 36.8167, country: 'KE' });
+  /* the country is ISO, never GDELT's FIPS: the Gaza Strip's GZ is Palestine */
+  assert.equal(body.items[1].country, 'PS');
+  assert.equal(d.reads.length, 1);
+  assert.match(d.reads[0].url, /select=id,location_country_fips&id=in\.\(11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222\)/);
   assert.equal(body.next_before, `2026-10-15T22:00:00.000Z~${ROWS[1].id}`);
   assert.deepEqual(d.calls[0].args, { p_before_at: null, p_before_id: null, p_limit: 2 });
   assert.equal(JSON.stringify(body).includes(KEY), false);
   const next = await handleWorldNews(get(`/v1/world/news?limit=20&before=${encodeURIComponent(body.next_before)}`), ENV, { fetchImpl: d.fetchImpl, cacheImpl: memoryCache() });
   assert.deepEqual(d.calls[1].args, { p_before_at: '2026-10-15T22:00:00.000Z', p_before_id: ROWS[1].id, p_limit: 20 });
   assert.equal((await next.json()).next_before, null, 'a short page is the last');
+});
+
+test('GET /v1/world/news: when the countries cannot be read, the stories still come, without one', async () => {
+  const d = db({ noCountries: true });
+  const body = await (await handleWorldNews(get('/v1/world/news?limit=2'), ENV, { fetchImpl: d.fetchImpl, cacheImpl: memoryCache() })).json();
+  assert.equal(body.items.length, 2);
+  assert.deepEqual(body.items.map((n) => n.country), [null, null]);
+  assert.equal(body.unavailable, undefined);
 });
 
 test('GET /v1/world/news: limits and cursors are checked; a database problem is an empty, honest 200', async () => {
