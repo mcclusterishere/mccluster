@@ -96,7 +96,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.739579,
+          "longitude": -86.843447,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.al.leader",
@@ -166,7 +173,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 63.347356,
+          "longitude": -152.839733,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ak.leader",
@@ -237,7 +251,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.203936,
+          "longitude": -111.606345,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.az.leader",
@@ -309,7 +330,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.895526,
+          "longitude": -92.444626,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ar.leader",
@@ -378,7 +406,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.155177,
+          "longitude": -119.543418,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ca.leader",
@@ -448,7 +483,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.993767,
+          "longitude": -105.508712,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.co.leader",
@@ -519,7 +561,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.579864,
+          "longitude": -72.746657,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ct.leader",
@@ -591,7 +640,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.998566,
+          "longitude": -75.441644,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.de.leader",
@@ -660,7 +716,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 28.398978,
+          "longitude": -82.5143,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.fl.leader",
@@ -730,7 +793,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.629579,
+          "longitude": -83.423511,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ga.leader",
@@ -801,7 +871,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 19.828167,
+          "longitude": -155.495042,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.hi.leader",
@@ -873,7 +950,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.348422,
+          "longitude": -114.558854,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.id.leader",
@@ -942,7 +1026,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.102875,
+          "longitude": -89.152611,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.il.leader",
@@ -1012,7 +1103,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.901314,
+          "longitude": -86.291913,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.in.leader",
@@ -1083,7 +1181,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.070023,
+          "longitude": -93.493349,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ia.leader",
@@ -1155,7 +1260,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.498546,
+          "longitude": -98.38343,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ks.leader",
@@ -1224,7 +1336,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.533684,
+          "longitude": -85.29298,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ky.leader",
@@ -1294,7 +1413,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 30.708319,
+          "longitude": -91.604621,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.la.leader",
@@ -1365,7 +1491,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 45.409284,
+          "longitude": -68.666616,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.me.leader",
@@ -1437,7 +1570,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.946658,
+          "longitude": -76.674494,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.md.leader",
@@ -1506,7 +1646,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.15652,
+          "longitude": -71.489592,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ma.leader",
@@ -1576,7 +1723,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.844177,
+          "longitude": -85.660491,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.mi.leader",
@@ -1647,7 +1801,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 46.315957,
+          "longitude": -94.199604,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.mn.leader",
@@ -1720,7 +1881,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 32.686471,
+          "longitude": -89.656138,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ms.leader",
@@ -1789,7 +1957,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.350751,
+          "longitude": -92.456782,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.mo.leader",
@@ -1859,7 +2034,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.051177,
+          "longitude": -109.634817,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.mt.leader",
@@ -1930,7 +2112,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.543305,
+          "longitude": -99.811864,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ne.leader",
@@ -2003,7 +2192,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.331093,
+          "longitude": -116.615147,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nv.leader",
@@ -2073,7 +2269,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 43.672794,
+          "longitude": -71.584189,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nh.leader",
@@ -2144,7 +2347,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.107274,
+          "longitude": -74.665201,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nj.leader",
@@ -2216,7 +2426,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 34.434684,
+          "longitude": -106.131618,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nm.leader",
@@ -2289,7 +2506,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.913397,
+          "longitude": -75.596272,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ny.leader",
@@ -2359,7 +2583,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.53971,
+          "longitude": -79.130864,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nc.leader",
@@ -2429,7 +2660,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.442174,
+          "longitude": -100.460826,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.nd.leader",
@@ -2500,7 +2738,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.41493,
+          "longitude": -82.711997,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.oh.leader",
@@ -2572,7 +2817,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.590081,
+          "longitude": -97.486779,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ok.leader",
@@ -2641,7 +2893,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 43.971712,
+          "longitude": -120.622958,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.or.leader",
@@ -2711,7 +2970,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 40.904604,
+          "longitude": -77.827523,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.pa.leader",
@@ -2782,7 +3048,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 41.596485,
+          "longitude": -71.52649,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ri.leader",
@@ -2854,7 +3127,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 33.874178,
+          "longitude": -80.854264,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.sc.leader",
@@ -2923,7 +3203,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.446796,
+          "longitude": -100.238176,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.sd.leader",
@@ -2993,7 +3280,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 35.85846,
+          "longitude": -86.349634,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.tn.leader",
@@ -3064,7 +3358,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 31.434703,
+          "longitude": -99.281824,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.tx.leader",
@@ -3136,7 +3437,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 39.334993,
+          "longitude": -111.656333,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.ut.leader",
@@ -3205,7 +3513,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.058954,
+          "longitude": -72.671017,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.vt.leader",
@@ -3276,7 +3591,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 37.522251,
+          "longitude": -78.668194,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.va.leader",
@@ -3348,7 +3670,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 47.407324,
+          "longitude": -120.5758,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.wa.leader",
@@ -3420,7 +3749,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 38.647285,
+          "longitude": -80.618327,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.wv.leader",
@@ -3489,7 +3825,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 44.630907,
+          "longitude": -89.709392,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.wi.leader",
@@ -3560,7 +3903,14 @@
         "locality": null,
         "city": null,
         "public_pin_approved": false,
-        "real_world_presence": false
+        "real_world_presence": false,
+        "reference_point": {
+          "latitude": 42.989659,
+          "longitude": -107.544392,
+          "kind": "us_census_state_representative_point_not_character_gps",
+          "source": "U.S. Census Bureau 2025 National States Gazetteer",
+          "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2025_Gazetteer/2025_Gaz_state_national.zip"
+        }
       },
       "system_account": {
         "handle": "hitman.wy.leader",
