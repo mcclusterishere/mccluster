@@ -1,7 +1,7 @@
 /* Privacy gate enforcement: no McCluster analytics, device/session IDs,
    service-worker registration or location reads begin until the current site-entry
    notice has been acknowledged. The policy page itself can still be read. */
-var MCC_PRIVACY_REQUIRED_VERSION = "2026-09-26";
+var MCC_PRIVACY_REQUIRED_VERSION = "2026-10-19";
 function mccPrivacyAcknowledged() {
   try {
     var v = JSON.parse(localStorage.getItem("mcc_privacy_ack") || "null");

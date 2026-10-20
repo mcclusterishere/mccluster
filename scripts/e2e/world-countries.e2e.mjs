@@ -45,7 +45,7 @@ const REGIONS = [{ region_key: 'GB-LND', region_label: 'London', country_code: '
 async function context(viewport, { reducedMotion = 'no-preference' } = {}) {
   const mobile = viewport.width < 600;
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, reducedMotion });
-  await ctx.addInitScript(() => { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-09-26', accepted_at: new Date().toISOString() })); });
+  await ctx.addInitScript(() => { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); });
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const p = new URL(route.request().url()).pathname;
     if (p === '/v1/world/access') return json(route, { level: 'public', unlocked_layers: ['flights'], locked_layers: ['satellites', 'launches', 'intel', 'music', 'cctv', 'audience', 'transport'].map((id) => ({ id, reason: 'sign_in_required', next_step: 'sign_in' })), layers: {} });

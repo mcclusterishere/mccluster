@@ -66,7 +66,7 @@ import { bearerUser } from './world-layers.js';
 export const HALO_DEFAULT_BASE = 'https://prime.mccluster.org';
 export const LIMITS = Object.freeze({ eligibility: 30, sources: 6, frame: 60 });
 /* the current Privacy Policy version: js/live-content.js VERSION, js/analytics.js MCC_PRIVACY_REQUIRED_VERSION */
-export const PRIVACY_VERSION = '2026-09-26';
+export const PRIVACY_VERSION = '2026-10-19';
 const WINDOW_MS = 60_000;
 const UPSTREAM_TIMEOUT_MS = 12_000;
 const SOURCES_TTL_MS = 60_000;

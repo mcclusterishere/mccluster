@@ -28,7 +28,7 @@ async function scenario({member=false,owner='ocho-great',fallback=false,apiStatu
  if(missingEvent)data.event=null;
  const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block',reducedMotion:'reduce'});
  await ctx.addInitScript(({member,user})=>{
-  localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-09-26',accepted_at:new Date().toISOString()}));localStorage.setItem('mnet_tour_seen','1');
+  localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));localStorage.setItem('mnet_tour_seen','1');
   if(member){const t='x.'+btoa(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600,sub:user.id}))+'.y';localStorage.setItem('mccdb_session',JSON.stringify({access_token:t,refresh_token:'fixture',expires_at:Math.floor(Date.now()/1000)+3600}));}
  },{member,user});
  if(bodyReadFailure)await ctx.addInitScript(({name,path})=>{
