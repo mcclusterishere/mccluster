@@ -381,8 +381,10 @@
     $("mnSignedOut").hidden = which !== "signedout";
     $("mnProfileGate").hidden = which !== "profile";
     $("mnApp").hidden = which !== "app";
-    /* the head of mnet.html held the World back under a ?signin=1 form; a gate is chosen now, so that hold is over */
+    /* the head of mnet.html held the World back under a ?signin=1 form, or put an addressed room up; a gate is chosen now,
+       so those holds are over */
     document.documentElement.classList.remove("mn-boot-signin");
+    document.documentElement.removeAttribute("data-boot-view");
     /* the bar's sign-in chip steps aside while a gate is up, as it does on the World */
     document.documentElement.classList.toggle("mn-gate-on", which !== "app");
     sizeWorld();
@@ -2355,6 +2357,7 @@
     if (MISSIONS_OFF && name === "missions") name = "feed";
     if (state.guest && name !== "feed") { askToSignIn(name); return; }
     if (name !== "feed" && name !== "missions" && askToFinish(name)) return;
+    document.documentElement.removeAttribute("data-boot-view");
     state.currentView = name;
     track("mnet_view", { view:name });
     closeAlerts();
@@ -2381,6 +2384,7 @@
   /* a member's room asked for by address, put on screen while their World loads: only the panel, no reads (they wait for
      the bootstrap, which opens the room properly), so nothing else is drawn first */
   function peekView(name) {
+    document.documentElement.removeAttribute("data-boot-view");
     ["live","clips","feed","missions","discover","groups","messages","profile"].forEach(function (view) {
       var ids={live:"mnLiveView",clips:"mnClipsView",feed:"mnFeedView",missions:"mnMissionsView",discover:"mnDiscoverView",groups:"mnGroupsView",messages:"mnMessagesView",profile:"mnProfileView"};
       var panel=$(ids[view]); if(panel)panel.hidden=view!==name;

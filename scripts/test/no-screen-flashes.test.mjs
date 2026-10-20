@@ -38,11 +38,12 @@ test('before any script asks the network, the head of mnet.html already knows a 
   const script = /<script>(\(function\(\)\{var h=document\.documentElement[\s\S]*?)<\/script>/.exec(head);
   assert.ok(script, 'the boot hints run in the head');
   let said = [];
-  const run = ({ session = null, hash = '', search = '', framed = false, referrer = '' }) => {
+  const run = (o) => runWith(o, () => {});
+  const runWith = ({ session = null, hash = '', search = '', framed = false, referrer = '' }, onView) => {
     const classes = new Set();
     said = [];
     const store = new Map(session ? [['mccdb_session', JSON.stringify(session)]] : []);
-    const ctx = { URL, document: { referrer, documentElement: { classList: { add: (c) => classes.add(c) } } }, localStorage: { getItem: (k) => store.get(k) ?? null },
+    const ctx = { URL, document: { referrer, documentElement: { classList: { add: (c) => classes.add(c), remove: (c) => classes.delete(c) }, setAttribute: (n, v) => { if (n === 'data-boot-view') onView(v); } } }, localStorage: { getItem: (k) => store.get(k) ?? null },
       location: { hash, search },
       PerformanceObserver: class { constructor(cb) { this.cb = cb; } observe() { this.cb({ getEntriesByName: (n) => n === 'first-contentful-paint' ? [{}] : [] }); } } };
     ctx.window = framed ? { parent: { postMessage: (m, o) => said.push([m.channel, m.type, o, Object.keys(m).length]) } } : null; if (!framed) { ctx.window = {}; ctx.window.parent = ctx.window; }
@@ -53,6 +54,17 @@ test('before any script asks the network, the head of mnet.html already knows a 
   assert.deepEqual(run({ search: '?view=feed&signin=1' }), ['mn-boot-signin', 'mn-guest'], 'the sign-in form, not the World first');
   assert.deepEqual(run({ session: { access_token: 'x' } }), [], 'a member: the member World');
   assert.deepEqual(run({ hash: '#mcc_handoff=abc' }), [], 'a sign-in being carried in is a member, not a guest first');
+  /* a member's room asked for by address is painted first; a guest's World is the World */
+  const boot = (o) => { let at = null; const r = runWith(o, (h) => { at = h; }); return { classes: r, view: at }; };
+  assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=profile' }), { classes: [], view: 'profile' });
+  assert.deepEqual(boot({ search: '?view=profile' }), { classes: ['mn-guest'], view: null });
+  assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=groups&group=equity-uprise' }), { classes: [], view: null });
+  assert.deepEqual(boot({ session: { access_token: 'x' }, search: '?view=feed' }), { classes: [], view: null });
+  const css = read('css/mnet.css');
+  assert.match(css, /html\[data-boot-view\] #mnFeedView \{ display: none !important; \}/);
+  assert.match(css, /html\[data-boot-view="profile"\] #mnProfileView \{ display: block; \}/);
+  const mnet = read('js/mnet.js');
+  assert.equal((mnet.match(/document\.documentElement\.removeAttribute\("data-boot-view"\);/g) || []).length, 3, 'showGate, setView and peekView take the room over');
   assert.deepEqual(run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true }), ['mn-music-frame'], 'inside the Music page, the Music page keeps the bar');
   assert.deepEqual(said, [], 'nothing is said to a page that is not one of the houses');
   run({ session: { access_token: 'x' }, search: '?view=feed&mcc_audio=1', framed: true, referrer: 'https://matthew.mccluster.org/' });

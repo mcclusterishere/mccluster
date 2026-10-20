@@ -296,6 +296,12 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 /* before js/mnet.js has run: ?signin=1 asked for the sign-in form, so the World waits under it rather than showing first
    (showGate drops the class). (Inside the Music page's World frame the Music page keeps the one bar: css/style.css.) */
 .mn-boot-signin #mnApp { display: none !important; }
+/* a member's room asked for by address (?view=profile, set by the head of mnet.html) is the room painted first, never the
+   World and then the room; js/mnet.js takes it over at once (peekView, setView and showGate drop the attribute) */
+html[data-boot-view] #mnFeedView { display: none !important; }
+html[data-boot-view="live"] #mnLiveView, html[data-boot-view="clips"] #mnClipsView, html[data-boot-view="discover"] #mnDiscoverView,
+html[data-boot-view="groups"] #mnGroupsView, html[data-boot-view="messages"] #mnMessagesView, html[data-boot-view="profile"] #mnProfileView { display: block; }
+html[data-boot-view] #mnToWorld { display: inline-flex; }
 /* loading lists keep the shape of what is coming (skeletons, below), never a sentence that the answer then replaces */
 .mn__skel--row { grid-template-columns: 44px minmax(0, 1fr) 72px; align-items: center; padding: 12px 14px; border-radius: 16px; }
 .mn__skel--row > div i:last-child { margin-bottom: 0; }
