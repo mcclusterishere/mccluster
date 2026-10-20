@@ -27,7 +27,12 @@ with house as (
     "inner_conflict": "power inherited versus earned",
     "script_series": "The Family Vote",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-al"
+    "agent_id": "house-agent:hitman-us-al",
+    "rival_state_codes": [
+      "MS"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-ak-elias-sato",
@@ -43,7 +48,12 @@ with house as (
     "inner_conflict": "autonomy versus protection",
     "script_series": "Last Outpost",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ak"
+    "agent_id": "house-agent:hitman-us-ak",
+    "rival_state_codes": [
+      "HI"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-az-dario-solis",
@@ -59,7 +69,12 @@ with house as (
     "inner_conflict": "loyalty across competing charters",
     "script_series": "Borderline Authority",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-az"
+    "agent_id": "house-agent:hitman-us-az",
+    "rival_state_codes": [
+      "NM"
+    ],
+    "political_color": "red",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ar-august-holt",
@@ -75,7 +90,12 @@ with house as (
     "inner_conflict": "family tradition versus new leadership",
     "script_series": "The Old Oath",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ar"
+    "agent_id": "house-agent:hitman-us-ar",
+    "rival_state_codes": [
+      "OK"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-ca-nia-reyes",
@@ -91,7 +111,12 @@ with house as (
     "inner_conflict": "independence versus a common voice",
     "script_series": "Afterlight Sessions",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-ca"
+    "agent_id": "house-agent:hitman-us-ca",
+    "rival_state_codes": [
+      "NV"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-co-keenan-price",
@@ -107,7 +132,12 @@ with house as (
     "inner_conflict": "freedom versus coordination",
     "script_series": "Higher Ground",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-co"
+    "agent_id": "house-agent:hitman-us-co",
+    "rival_state_codes": [
+      "WY"
+    ],
+    "political_color": "blue",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-ct-talia-brooks",
@@ -123,7 +153,12 @@ with house as (
     "inner_conflict": "small-state loyalty versus outside influence",
     "script_series": "The Soundline",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-ct"
+    "agent_id": "house-agent:hitman-us-ct",
+    "rival_state_codes": [
+      "NY"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-de-imani-parks",
@@ -139,7 +174,12 @@ with house as (
     "inner_conflict": "survival without selling out",
     "script_series": "Small State Big Moves",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-de"
+    "agent_id": "house-agent:hitman-us-de",
+    "rival_state_codes": [
+      "MD"
+    ],
+    "political_color": "blue",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-fl-mateo-vega",
@@ -155,7 +195,12 @@ with house as (
     "inner_conflict": "public glamour versus private obligations",
     "script_series": "The Sunward Table",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-fl"
+    "agent_id": "house-agent:hitman-us-fl",
+    "rival_state_codes": [
+      "GA"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-ga-zuri-ellis",
@@ -171,7 +216,12 @@ with house as (
     "inner_conflict": "generational authority versus inherited rank",
     "script_series": "The Crown Session",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ga"
+    "agent_id": "house-agent:hitman-us-ga",
+    "rival_state_codes": [
+      "FL"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-hi-leilani-kamaka",
@@ -187,7 +237,12 @@ with house as (
     "inner_conflict": "belonging versus national reach",
     "script_series": "Tidehouse Stories",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-hi"
+    "agent_id": "house-agent:hitman-us-hi",
+    "rival_state_codes": [
+      "AK"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-id-mara-bell",
@@ -203,7 +258,12 @@ with house as (
     "inner_conflict": "control versus adaptation",
     "script_series": "The Charter Line",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-id"
+    "agent_id": "house-agent:hitman-us-id",
+    "rival_state_codes": [
+      "WA"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-il-darnell-monroe",
@@ -219,7 +279,12 @@ with house as (
     "inner_conflict": "fame versus solidarity",
     "script_series": "Relay City",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-il"
+    "agent_id": "house-agent:hitman-us-il",
+    "rival_state_codes": [
+      "IN"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-in-adrian-cross",
@@ -235,7 +300,12 @@ with house as (
     "inner_conflict": "discipline versus relevance",
     "script_series": "Crossroads Ledger",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-in"
+    "agent_id": "house-agent:hitman-us-in",
+    "rival_state_codes": [
+      "IL"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-ia-june-mercer",
@@ -251,7 +321,12 @@ with house as (
     "inner_conflict": "obligation versus merit",
     "script_series": "The Prairie Compact",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ia"
+    "agent_id": "house-agent:hitman-us-ia",
+    "rival_state_codes": [
+      "NE"
+    ],
+    "political_color": "red",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ks-micah-cole",
@@ -267,7 +342,12 @@ with house as (
     "inner_conflict": "prestige versus partnership",
     "script_series": "Flint and Steel",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ks"
+    "agent_id": "house-agent:hitman-us-ks",
+    "rival_state_codes": [
+      "MO"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-ky-laurel-hayes",
@@ -283,7 +363,12 @@ with house as (
     "inner_conflict": "legitimacy versus inheritance",
     "script_series": "The Derby Vote",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ky"
+    "agent_id": "house-agent:hitman-us-ky",
+    "rival_state_codes": [
+      "TN"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-la-simone-duvall",
@@ -299,7 +384,12 @@ with house as (
     "inner_conflict": "heritage versus reinvention",
     "script_series": "Concord Sessions",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-la"
+    "agent_id": "house-agent:hitman-us-la",
+    "rival_state_codes": [
+      "MS"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-me-rowan-vale",
@@ -315,7 +405,12 @@ with house as (
     "inner_conflict": "independence versus community",
     "script_series": "Harbor Radio",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-me"
+    "agent_id": "house-agent:hitman-us-me",
+    "rival_state_codes": [
+      "NH"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-md-ayana-scott",
@@ -331,7 +426,12 @@ with house as (
     "inner_conflict": "compromise versus identity",
     "script_series": "Chesapeake Stories",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-md"
+    "agent_id": "house-agent:hitman-us-md",
+    "rival_state_codes": [
+      "DE"
+    ],
+    "political_color": "blue",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-ma-dominic-bellini",
@@ -347,7 +447,12 @@ with house as (
     "inner_conflict": "local history versus reinvention",
     "script_series": "The Beacon Debate",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-ma"
+    "agent_id": "house-agent:hitman-us-ma",
+    "rival_state_codes": [
+      "RI"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-mi-jalen-pierce",
@@ -363,7 +468,12 @@ with house as (
     "inner_conflict": "legacy versus reform",
     "script_series": "Motor City Oath",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-mi"
+    "agent_id": "house-agent:hitman-us-mi",
+    "rival_state_codes": [
+      "OH"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-mn-celeste-wynn",
@@ -379,7 +489,12 @@ with house as (
     "inner_conflict": "solidarity versus ambition",
     "script_series": "Northstar Nights",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-mn"
+    "agent_id": "house-agent:hitman-us-mn",
+    "rival_state_codes": [
+      "WI"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ms-clarence-knox",
@@ -395,7 +510,13 @@ with house as (
     "inner_conflict": "loyalty versus accountability",
     "script_series": "The Delta Oath",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ms"
+    "agent_id": "house-agent:hitman-us-ms",
+    "rival_state_codes": [
+      "AL",
+      "LA"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-mo-fletcher-king",
@@ -411,7 +532,12 @@ with house as (
     "inner_conflict": "history versus earned influence",
     "script_series": "Under the Arch",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-mo"
+    "agent_id": "house-agent:hitman-us-mo",
+    "rival_state_codes": [
+      "KS"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-mt-sage-reid",
@@ -427,7 +553,12 @@ with house as (
     "inner_conflict": "independence versus shared governance",
     "script_series": "Big Sky Rules",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-mt"
+    "agent_id": "house-agent:hitman-us-mt",
+    "rival_state_codes": [
+      "WY"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-ne-owen-rivera",
@@ -443,7 +574,12 @@ with house as (
     "inner_conflict": "stability versus change",
     "script_series": "Seat at the Table",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ne"
+    "agent_id": "house-agent:hitman-us-ne",
+    "rival_state_codes": [
+      "IA"
+    ],
+    "political_color": "red",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-nv-nadia-torres",
@@ -459,7 +595,13 @@ with house as (
     "inner_conflict": "spectacle versus institutional survival",
     "script_series": "Neon After Dark",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-nv"
+    "agent_id": "house-agent:hitman-us-nv",
+    "rival_state_codes": [
+      "CA",
+      "UT"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-nh-blake-foster",
@@ -475,7 +617,13 @@ with house as (
     "inner_conflict": "freedom versus unity",
     "script_series": "No Permanent Chair",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-nh"
+    "agent_id": "house-agent:hitman-us-nh",
+    "rival_state_codes": [
+      "ME",
+      "VT"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-nj-serena-deluca",
@@ -491,7 +639,13 @@ with house as (
     "inner_conflict": "local voice versus outside dominance",
     "script_series": "Take the Exit",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-nj"
+    "agent_id": "house-agent:hitman-us-nj",
+    "rival_state_codes": [
+      "NY",
+      "PA"
+    ],
+    "political_color": "blue",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-nm-ximena-chavez",
@@ -507,7 +661,13 @@ with house as (
     "inner_conflict": "identity versus consolidation",
     "script_series": "Mesa Frequency",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-nm"
+    "agent_id": "house-agent:hitman-us-nm",
+    "rival_state_codes": [
+      "AZ",
+      "TX"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ny-malik-carter",
@@ -523,7 +683,13 @@ with house as (
     "inner_conflict": "unity versus local sovereignty",
     "script_series": "Five Borough Stories",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-ny"
+    "agent_id": "house-agent:hitman-us-ny",
+    "rival_state_codes": [
+      "CT",
+      "NJ"
+    ],
+    "political_color": "blue",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-nc-andre-moore",
@@ -539,7 +705,13 @@ with house as (
     "inner_conflict": "continuity versus ambition",
     "script_series": "Assembly Sessions",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-nc"
+    "agent_id": "house-agent:hitman-us-nc",
+    "rival_state_codes": [
+      "SC",
+      "VA"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-nd-ingrid-voss",
@@ -555,7 +727,12 @@ with house as (
     "inner_conflict": "continuity versus isolation",
     "script_series": "Frost Line",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-nd"
+    "agent_id": "house-agent:hitman-us-nd",
+    "rival_state_codes": [
+      "SD"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-oh-quentin-shaw",
@@ -571,7 +748,12 @@ with house as (
     "inner_conflict": "authority versus renewal",
     "script_series": "The Directorate",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-oh"
+    "agent_id": "house-agent:hitman-us-oh",
+    "rival_state_codes": [
+      "MI"
+    ],
+    "political_color": "red",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ok-silas-dunn",
@@ -587,7 +769,12 @@ with house as (
     "inner_conflict": "loyalty versus openness",
     "script_series": "Crosswind Council",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ok"
+    "agent_id": "house-agent:hitman-us-ok",
+    "rival_state_codes": [
+      "AR"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-or-cass-morgan",
@@ -603,7 +790,12 @@ with house as (
     "inner_conflict": "anti-hierarchy versus leadership",
     "script_series": "Cascade Commons",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-or"
+    "agent_id": "house-agent:hitman-us-or",
+    "rival_state_codes": [
+      "WA"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-pa-elias-ward",
@@ -619,7 +811,12 @@ with house as (
     "inner_conflict": "power versus legitimacy",
     "script_series": "Keystone Hearings",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-pa"
+    "agent_id": "house-agent:hitman-us-pa",
+    "rival_state_codes": [
+      "NJ"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-ri-gianna-russo",
@@ -635,7 +832,12 @@ with house as (
     "inner_conflict": "small-crew self-determination",
     "script_series": "Anchor Down",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-ri"
+    "agent_id": "house-agent:hitman-us-ri",
+    "rival_state_codes": [
+      "MA"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-sc-bennett-clay",
@@ -651,7 +853,12 @@ with house as (
     "inner_conflict": "ritual versus reform",
     "script_series": "Palmetto Protocol",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-sc"
+    "agent_id": "house-agent:hitman-us-sc",
+    "rival_state_codes": [
+      "NC"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-sd-petra-hall",
@@ -667,7 +874,12 @@ with house as (
     "inner_conflict": "duty versus autonomy",
     "script_series": "Badlands Minutes",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-sd"
+    "agent_id": "house-agent:hitman-us-sd",
+    "rival_state_codes": [
+      "ND"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-tn-marisol-price",
@@ -683,7 +895,12 @@ with house as (
     "inner_conflict": "artistry versus power",
     "script_series": "The Vinyl Council",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-tn"
+    "agent_id": "house-agent:hitman-us-tn",
+    "rival_state_codes": [
+      "KY"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-tx-solomon-vega",
@@ -699,7 +916,12 @@ with house as (
     "inner_conflict": "centralization versus local houses",
     "script_series": "The Lone Star Seat",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-tx"
+    "agent_id": "house-agent:hitman-us-tx",
+    "rival_state_codes": [
+      "NM"
+    ],
+    "political_color": "red",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-ut-noelle-park",
@@ -715,7 +937,12 @@ with house as (
     "inner_conflict": "duty versus personal freedom",
     "script_series": "Summit Charter",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-ut"
+    "agent_id": "house-agent:hitman-us-ut",
+    "rival_state_codes": [
+      "NV"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-vt-eira-reed",
@@ -731,7 +958,12 @@ with house as (
     "inner_conflict": "community versus control",
     "script_series": "Maple Street Radio",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-vt"
+    "agent_id": "house-agent:hitman-us-vt",
+    "rival_state_codes": [
+      "NH"
+    ],
+    "political_color": "blue",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-va-theo-grant",
@@ -747,7 +979,13 @@ with house as (
     "inner_conflict": "negotiation versus belonging",
     "script_series": "Commonwealth Lines",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-va"
+    "agent_id": "house-agent:hitman-us-va",
+    "rival_state_codes": [
+      "NC",
+      "WV"
+    ],
+    "political_color": "blue",
+    "crew_size": 5
   },
   {
     "character_id": "hitman-wa-hana-kim",
@@ -763,7 +1001,13 @@ with house as (
     "inner_conflict": "innovation versus loyalty",
     "script_series": "Raincheck Sessions",
     "chapter_type": "emerging_street_coalition",
-    "agent_id": "house-agent:hitman-us-wa"
+    "agent_id": "house-agent:hitman-us-wa",
+    "rival_state_codes": [
+      "ID",
+      "OR"
+    ],
+    "political_color": "blue",
+    "crew_size": 6
   },
   {
     "character_id": "hitman-wv-gideon-flynn",
@@ -779,7 +1023,12 @@ with house as (
     "inner_conflict": "survival versus tradition",
     "script_series": "Ridge Council",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-wv"
+    "agent_id": "house-agent:hitman-us-wv",
+    "rival_state_codes": [
+      "VA"
+    ],
+    "political_color": "red",
+    "crew_size": 7
   },
   {
     "character_id": "hitman-wi-nora-brennan",
@@ -795,7 +1044,12 @@ with house as (
     "inner_conflict": "compromise versus control",
     "script_series": "Lakeside Ledger",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-wi"
+    "agent_id": "house-agent:hitman-us-wi",
+    "rival_state_codes": [
+      "MN"
+    ],
+    "political_color": "red",
+    "crew_size": 4
   },
   {
     "character_id": "hitman-wy-calvin-boone",
@@ -811,7 +1065,13 @@ with house as (
     "inner_conflict": "order versus legitimacy",
     "script_series": "Open Range Charter",
     "chapter_type": "established_legacy_syndicate",
-    "agent_id": "house-agent:hitman-us-wy"
+    "agent_id": "house-agent:hitman-us-wy",
+    "rival_state_codes": [
+      "CO",
+      "MT"
+    ],
+    "political_color": "red",
+    "crew_size": 5
   }
 ]
 $chapters$::jsonb) as x (
@@ -819,7 +1079,8 @@ $chapters$::jsonb) as x (
     state_code text, state_name text, story_region_key text,
     crew_name text, story_mission text, editorial_mission text,
     personality text, inner_conflict text, script_series text,
-    chapter_type text, agent_id text
+    chapter_type text, agent_id text, rival_state_codes jsonb,
+    political_color text, crew_size integer
   )
 )
 insert into public.house_system_accounts (
@@ -841,7 +1102,8 @@ select
     'voice', s.personality, 'inner_conflict', s.inner_conflict,
     'story_mission', s.story_mission, 'story_series', s.script_series,
     'chapter_state', s.state_code, 'chapter_name', s.crew_name,
-    'fictional_structure', s.chapter_type,
+    'fictional_structure', s.chapter_type, 'palette', s.political_color,
+    'rival_state_codes', s.rival_state_codes, 'proposed_crew_size', s.crew_size,
     'fictional_state_assignment', true, 'verified_resident', false,
     'story_canon_status', 'PROPOSED_NOT_LOCKED'
   ),
