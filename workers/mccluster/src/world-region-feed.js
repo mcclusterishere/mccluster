@@ -6,7 +6,7 @@
    projections: service-role access must NEVER turn into a private-post leak.
 */
 import { corsHeaders, fail, reply } from './lib/http.js';
-import { ISO_TO_FIPS, isCountry, isoFromGdelt } from './intel/news-country-codes.js';
+import { gdeltCodesFor, isCountry, isoFromGdelt } from './intel/news-country-codes.js';
 import { bearerUser } from './world-layers.js';
 
 export const REGION_STATUS = '/v1/world/place-scope';
@@ -143,9 +143,10 @@ export async function handleRegionScope(req, env, { fetchImpl = fetch, now = () 
     group_id: 'is.null', reply_to_id: 'is.null'
   }, 'created_at', postBefore, limit * 3,
   'id,author_m_uid,body,post_type,visibility,media,metadata,country_code,created_at,like_count,removed_at');
-  const fips = ISO_TO_FIPS[country];
+  /* Palestine's stories come filed under the West Bank (WE) and the Gaza Strip (GZ); Serbia's under RI and, from GDELT, RB */
+  const fips = gdeltCodesFor(country);
   const newsPath = query('media_news_articles', {
-    location_country_fips: 'eq.' + fips, ingestion_provider: 'eq.gdelt_gkg_v2',
+    location_country_fips: fips.length > 1 ? 'in.(' + fips.join(',') + ')' : 'eq.' + fips[0], ingestion_provider: 'eq.gdelt_gkg_v2',
     published_at: 'not.is.null'
   }, 'published_at', newsBefore, limit,
   'id,title,canonical_url,published_at,headline_location_label,headline_latitude,headline_longitude,location_country_fips,source_id');

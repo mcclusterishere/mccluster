@@ -16,7 +16,8 @@ const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentF
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
 /* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): missions=0 (mnet.html, for the frame and the expanded globe) draws no
    mission pins, regions or outlines and keeps the mission panels shut, until Missions comes back */
-const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0';if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
+/* the house owner's World keeps them (js/world-owner-modes.js lifts the switch on the page that holds this frame) */
+const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
@@ -250,7 +251,7 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
-let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false;
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='';
 function setWorldNewsPins(items,on){
  if(!parentFrame||ANALYTICS)return;
  publicNewsOn=on===true;const seen=new Set();
@@ -298,6 +299,7 @@ function drawWorldNewsPins(){
      distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,25000000)},
    properties:{worldNewsId:x.id}
  })));
+ markNewsPin();
 }
 window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
 
@@ -621,8 +623,13 @@ function drawLaunches(data){const L=layerState.launches;clearLayer('launches');(
 let lastPlace=null;
 /* a hook for the browser test, like __huGlobeSettled: the last place a news card sent */
 window.__huFocusPlace=()=>lastPlace;
+/* the story's own pin is the one marked (owner, 2026-10-20: a pin near the middle could be a different story): it grows and
+   sits in front; the others go back to their size */
+function markNewsPin(){publicNewsPins.forEach(e=>{const on=!!focusedNews&&e.properties&&e.properties.worldNewsId&&e.properties.worldNewsId.getValue()===focusedNews;e.billboard.scale=on?1.75:1;e.billboard.eyeOffset=new Cesium.Cartesian3(0,0,on?-500:0)})}
+window.__huFocusedNewsPin=()=>{const e=publicNewsPins.find(x=>x.billboard&&x.billboard.scale.getValue&&x.billboard.scale.getValue()>1);return e?e.properties.worldNewsId.getValue():''};
 function focusPlace(d){const lat=d.lat,lon=d.lon;if(typeof lat!=='number'||typeof lon!=='number'||!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return false;
- lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
+ lastPlace={lat,lon,label:typeof d.label==='string'?d.label.slice(0,120):'',id:typeof d.id==='string'?d.id.slice(0,64):''};selectionShown=false;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=1});
+ focusedNews=lastPlace.id;markNewsPin();
  viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(lon,lat,900000),duration:1.4});return true}
 /* the credit line grows when layers are on; the toggles and the controls stay above it, and the page is told how tall it is */
 function creditHeight(){const el=document.querySelector('.osm-credit');return el?Math.ceil(el.getBoundingClientRect().height):0}
