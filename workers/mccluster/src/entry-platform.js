@@ -3,6 +3,7 @@ import { build } from '../.wrangler/build-provenance.mjs';
 import { handlePlatformApi } from './platform-api-metered.js';
 import { publishDueNetworkPosts, reapStaleLiveSessions, pruneNetworkRateEvents, runNetworkPushCycle } from './platform-api.js';
 import { pushEnabled } from './web-push.js';
+import { handleNewsBriefs, seedMorningBriefs, briefsEnabled } from './news-briefs.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
@@ -73,6 +74,9 @@ export default {
 
       const travel = await handleTravelRouting(request, env);
       if (travel) return travel;
+      /* the morning brief, per country, for the owner and region leaders (./news-briefs.js) */
+      const briefs = await handleNewsBriefs(request, env);
+      if (briefs) return briefs;
       // Public coarse-country discovery; never enters the member auth gate.
       const regional = await handleRegionScope(request, env);
       if (regional) return regional;
@@ -135,6 +139,12 @@ export default {
     }));
     ctx.waitUntil(pruneNetworkRateEvents(env).catch((error) => {
       console.error(JSON.stringify({ event: 'mnet_rate_prune_failed', message: error instanceof Error ? error.message : String(error) }));
+    }));
+    /* yesterday's briefs are queued once New York's day is over (./news-briefs.js); off until NEWS_BRIEFS_ENABLED */
+    if (briefsEnabled(env)) ctx.waitUntil(seedMorningBriefs(env).then((report) => {
+      if (report?.queued?.length) console.log(JSON.stringify({ event: 'news_briefs_seeded', ...report }));
+    }).catch((error) => {
+      console.error(JSON.stringify({ event: 'news_briefs_seed_failed', message: error instanceof Error ? error.message : String(error) }));
     }));
     /* alerts on members' devices (./web-push.js); off, with no database call, until WEB_PUSH_ENABLED and the VAPID keys */
     if (pushEnabled(env)) ctx.waitUntil(runNetworkPushCycle(env).catch((error) => {

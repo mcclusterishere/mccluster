@@ -27,7 +27,9 @@ export const PREFLIGHT_FIRST_PREFIXES = [
   '/v1/compute', '/v1/ai',
   '/v1/creator-billing', '/v1/creator-sites', '/v1/action-connect',
   '/v1/action-archive',
-  '/v1/identity'
+  '/v1/identity',
+  /* the morning brief (brief.html): the house owner's and region leaders' session rides with every call */
+  '/v1/news-briefs'
 ];
 
 export function preflightResponse(request, env) {
