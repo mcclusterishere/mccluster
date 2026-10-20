@@ -40,22 +40,28 @@ begin
   ) then
     raise exception 'House Studio owner membership required' using errcode = '42501';
   end if;
-  if p_blueprint is null or jsonb_typeof(p_blueprint) <> 'object'
+  if p_blueprint is null or jsonb_typeof(p_blueprint) is distinct from 'object'
      or length(p_blueprint::text) > 16000
-     or p_blueprint ->> 'schema_version' <> 'character-studio.v1'
-     or p_blueprint -> 'approvals' ->> 'status' <> 'draft'
-     or p_blueprint -> 'approvals' ->> 'published' <> 'false'
-     or p_blueprint -> 'approvals' ->> 'rights_verified' <> 'false'
-     or p_blueprint -> 'approvals' ->> 'canon_approved' <> 'false'
-     or p_blueprint -> 'approvals' ->> 'region_approved' <> 'false'
-     or p_blueprint -> 'agent_contract' ->> 'execution_enabled' <> 'false'
-     or p_blueprint -> 'agent_contract' ->> 'external_publish_enabled' <> 'false'
-     or p_blueprint -> 'agent_contract' ->> 'auto_reply_enabled' <> 'false'
-     or p_blueprint -> 'agent_contract' ->> 'max_autospend_cents' <> '0'
-     or p_blueprint ->> 'narrative_board' <> 'other'
-     or p_blueprint ->> 'identity_kind' not in ('fictional_character','studio_system_persona')
-     or jsonb_typeof(p_blueprint -> 'canon_refs') <> 'array'
-     or jsonb_array_length(p_blueprint -> 'canon_refs') <> 0
+     or (p_blueprint ->> 'schema_version') is distinct from 'character-studio.v1'
+     or (p_blueprint -> 'approvals' ->> 'status') is distinct from 'draft'
+     or (p_blueprint -> 'approvals' ->> 'published') is distinct from 'false'
+     or (p_blueprint -> 'approvals' ->> 'rights_verified') is distinct from 'false'
+     or (p_blueprint -> 'approvals' ->> 'canon_approved') is distinct from 'false'
+     or (p_blueprint -> 'approvals' ->> 'region_approved') is distinct from 'false'
+     or (p_blueprint -> 'agent_contract' ->> 'execution_enabled') is distinct from 'false'
+     or (p_blueprint -> 'agent_contract' ->> 'schedule_enabled') is distinct from 'false'
+     or (p_blueprint -> 'agent_contract' ->> 'external_publish_enabled') is distinct from 'false'
+     or (p_blueprint -> 'agent_contract' ->> 'auto_reply_enabled') is distinct from 'false'
+     or (p_blueprint -> 'agent_contract' ->> 'max_autospend_cents') is distinct from '0'
+     or jsonb_typeof(p_blueprint -> 'agent_contract' -> 'tools_allowed') is distinct from 'array'
+     or (p_blueprint ->> 'narrative_board') is distinct from 'other'
+     or coalesce((p_blueprint ->> 'identity_kind') in ('fictional_character','studio_system_persona'), false) = false
+     or jsonb_typeof(p_blueprint -> 'canon_refs') is distinct from 'array'
+     or jsonb_typeof(p_blueprint -> 'personality') is distinct from 'object'
+     or (p_blueprint -> 'personality' ->> 'real_person_likeness') is distinct from 'not_authorized'
+     or (p_blueprint -> 'personality' ->> 'voice_clone') is distinct from 'not_authorized'
+     or jsonb_array_length(coalesce(p_blueprint -> 'canon_refs','[]'::jsonb)) <> 0
+     or jsonb_array_length(coalesce(p_blueprint -> 'agent_contract' -> 'tools_allowed','[]'::jsonb)) <> 0
   then
     raise exception 'Invalid private character blueprint' using errcode = '22023';
   end if;
